@@ -1,0 +1,29 @@
+id: TECH-269
+type: web platform / dev ergonomics
+title: "`web/.env.local` dev bypass — `DASHBOARD_AUTH_SKIP=1` + middleware env-var check (Stage 5.3 Phase 0) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/.env.local
+  - web/.env.local.example
+  - web/README.md
+  - ia/projects/TECH-265.md
+notes: |
+  Prerequisite to **TECH-265**. `web/.env.local` holds `DASHBOARD_AUTH_SKIP=1` (local-only); `web/.env.local.example` committed w/ inline prod-warning comment; `web/README.md` gains "Local development auth bypass" section; **TECH-265** §2.1 Goals + §5.3 pseudo-code amended — middleware short-circuits on `process.env.DASHBOARD_AUTH_SKIP === '1'` before cookie check. Vercel env vars never set the knob — prod stays gated. Decision Log: single-knob bypass over per-dev cookie stub; committed `.env.local.example` for discoverability; bypass check BEFORE cookie read; never set on Vercel.
+acceptance: |
+  `web/.env.local` gitignored + populated; `.env.local.example` committed; README section landed; TECH-265 spec amended; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-265
+depends_on_raw: none (unblocked TECH-265).
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-269** — `web/.env.local` dev bypass — `DASHBOARD_AUTH_SKIP=1` + middleware env-var check (Stage 5.3 Phase 0) (2026-04-16)
+    - Type: web platform / dev ergonomics
+    - Files: `web/.env.local` (new, gitignored), `web/.env.local.example` (new, committed), `web/README.md`, `ia/projects/TECH-265.md`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Prerequisite to **TECH-265**. `web/.env.local` holds `DASHBOARD_AUTH_SKIP=1` (local-only); `web/.env.local.example` committed w/ inline prod-warning comment; `web/README.md` gains "Local development auth bypass" section; **TECH-265** §2.1 Goals + §5.3 pseudo-code amended — middleware short-circuits on `process.env.DASHBOARD_AUTH_SKIP === '1'` before cookie check. Vercel env vars never set the knob — prod stays gated. Decision Log: single-knob bypass over per-dev cookie stub; committed `.env.local.example` for discoverability; bypass check BEFORE cookie read; never set on Vercel.
+    - Acceptance: `web/.env.local` gitignored + populated; `.env.local.example` committed; README section landed; TECH-265 spec amended; `npm run validate:all` exit 0.
+    - Depends on: none (unblocked TECH-265).

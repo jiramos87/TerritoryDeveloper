@@ -1,0 +1,20 @@
+id: AUDIO-01
+type: audio/feature
+title: "Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: []
+notes: |
+  Ambient effects must vary by camera position and **height** (**HeightMap**) over the map.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
+    - Type: audio/feature
+    - Files: new AudioManager + audio assets
+    - Notes: Ambient effects must vary by camera position and **height** (**HeightMap**) over the map.

@@ -1,0 +1,23 @@
+id: FEAT-09
+type: feature (new system)
+title: Trade / Production / Salaries (deep economy)
+priority: medium
+status: open
+section: Economic depth lane
+spec: ""
+files: 
+  - EconomyManager.cs
+  - CityStats.cs
+notes: |
+  Economic system of production, trade between **RCI** **zones** and salaries. Long-term lane goal: full economic loop from production through trade to consumption.
+acceptance: ""
+depends_on: []
+depends_on_raw: none (**tax→demand** feedback shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-09** — Trade / Production / Salaries (deep economy)
+    - Type: feature (new system)
+    - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
+    - Notes: Economic system of production, trade between **RCI** **zones** and salaries. Long-term lane goal: full economic loop from production through trade to consumption.
+    - Depends on: none (**tax→demand** feedback shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))

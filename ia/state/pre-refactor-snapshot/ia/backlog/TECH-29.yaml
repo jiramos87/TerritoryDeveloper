@@ -1,0 +1,27 @@
+id: TECH-29
+type: tooling / CI
+title: "CI / script: **simulation tick** call-order drift detector"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ia/projects/TECH-29.md
+files: 
+  - tools/
+  - ia/specs/simulation-system.md
+  - .github/workflows/
+  - SimulationManager.cs
+notes: |
+  Fail CI (or print advisory) when `ProcessSimulationTick` step order diverges from manifest without matching spec update. `docs/agent-tooling-verification-priority-tasks.md` task 5. Phase labels should stay aligned with **TECH-16** harness.
+acceptance: ""
+depends_on: 
+  - TECH-16
+depends_on_raw: "**TECH-16** (stable spec-labeled phase names in harness — soft dependency for naming parity)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
+    - Type: tooling / CI
+    - Files: `tools/` (Node or shell), checked-in ordered manifest (derived from `ia/specs/simulation-system.md` **Tick execution order**), optional `.github/workflows/`; `SimulationManager.cs` as truth source to diff
+    - Spec: `ia/projects/TECH-29.md`
+    - Notes: Fail CI (or print advisory) when `ProcessSimulationTick` step order diverges from manifest without matching spec update. `docs/agent-tooling-verification-priority-tasks.md` task 5. Phase labels should stay aligned with **TECH-16** harness.
+    - Depends on: **TECH-16** (stable spec-labeled phase names in harness — soft dependency for naming parity)

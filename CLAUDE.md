@@ -39,6 +39,8 @@ Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash deny
 
 ## 5. Key commands
 
+> **FREEZE — Lifecycle Refactor (M0–M8) active.** Branch `feature/lifecycle-collapse-cognitive-split`. Do NOT run `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, or `/stage-file` outside `ia/projects/lifecycle-refactor-master-plan.md` orchestration until M8 sign-off (T4.2.1). State: `ia/state/lifecycle-refactor-migration.json`. Snapshot: `ia/state/pre-refactor-snapshot/`. Authoritative orchestrator: `ia/projects/lifecycle-refactor-master-plan.md`.
+
 | Command | When |
 |---|---|
 | `npm run validate:all` | After IA / MCP / fixture / index work. Same chain CI runs. |

@@ -1,0 +1,29 @@
+id: TECH-91
+type: refactor / infrastructure
+title: Rename `Cell` → `CityCell` across all city sim files (2026-04-13)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Managers/UnitManagers/CityCell.cs
+  - Cell.cs
+  - Assets/Scripts/Managers/GameManagers/GridManager.cs
+  - Cell
+notes: |
+  Stage 1.2 Phase 1 of cell-type split. Mechanical rename `Cell` → `CityCell` across 35 files (~300 occurrences); `git mv` preserves `.cs.meta` GUID (prefab / scene refs survive); `HeightMap` ↔ `CityCell.height` dual-write (invariant #1) intact via field inheritance from `CellBase`; `IGridManager.GetCell` returns `CityCell`; `CellBase` kept scale-universal (not renamed). Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  class + file named `CityCell`; zero stray bare `Cell` refs outside `CellBase` / `cellArray` / `GetCell`; `npm run unity:compile-check` green; `npm run validate:all` green
+depends_on: 
+  - TECH-90
+depends_on_raw: "**TECH-90**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-91** — Rename `Cell` → `CityCell` across all city sim files (2026-04-13)
+    - Type: refactor / infrastructure
+    - Files: `Assets/Scripts/Managers/UnitManagers/CityCell.cs` (renamed from `Cell.cs`), `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all city sim files referencing `Cell`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 1 of cell-type split. Mechanical rename `Cell` → `CityCell` across 35 files (~300 occurrences); `git mv` preserves `.cs.meta` GUID (prefab / scene refs survive); `HeightMap` ↔ `CityCell.height` dual-write (invariant #1) intact via field inheritance from `CellBase`; `IGridManager.GetCell` returns `CityCell`; `CellBase` kept scale-universal (not renamed). Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: class + file named `CityCell`; zero stray bare `Cell` refs outside `CellBase` / `cellArray` / `GetCell`; `npm run unity:compile-check` green; `npm run validate:all` green
+    - Depends on: **TECH-90**

@@ -1,0 +1,25 @@
+id: TECH-97
+type: verification
+title: "Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1) (2026-04-13)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: []
+notes: |
+  Stage 1.2 Phase 4 regression gate. Added `HeightIntegritySweep` in `AgentTestModeBatchRunner` — iterates grid post-load + post-tick, compares `HeightMap[x,y]` vs `CityCell.height`; emits `height_integrity` JSON block + new exit code `9` on mismatch. Regression run on `reference-flat-32x32` + `--simulation-ticks 3`: exit 0, 1024 cells checked, zero violations post-load + post-tick. Report: `tools/reports/agent-testmode-batch-20260413-212829.json`. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  `height_integrity.post_load.violations == 0` + `post_tick.violations == 0`; batch exit `0`; exit code `9` documented in `ia/skills/agent-test-mode-verify/SKILL.md`
+depends_on: 
+  - TECH-96
+depends_on_raw: "**TECH-96**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-97** — Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1) (2026-04-13)
+    - Type: verification
+    - Files: testmode batch scenario
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 4 regression gate. Added `HeightIntegritySweep` in `AgentTestModeBatchRunner` — iterates grid post-load + post-tick, compares `HeightMap[x,y]` vs `CityCell.height`; emits `height_integrity` JSON block + new exit code `9` on mismatch. Regression run on `reference-flat-32x32` + `--simulation-ticks 3`: exit 0, 1024 cells checked, zero violations post-load + post-tick. Report: `tools/reports/agent-testmode-batch-20260413-212829.json`. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: `height_integrity.post_load.violations == 0` + `post_tick.violations == 0`; batch exit `0`; exit code `9` documented in `ia/skills/agent-test-mode-verify/SKILL.md`
+    - Depends on: **TECH-96**

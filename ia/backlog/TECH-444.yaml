@@ -1,0 +1,34 @@
+id: TECH-444
+type: tech (IA infrastructure / lifecycle tooling)
+title: Rewrite master-plan template — drop Phase layer (Stage 1.2 Phase 1)
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-444.md
+files:
+  - ia/templates/master-plan-template.md
+notes: |
+  Rewrite `ia/templates/master-plan-template.md`: drop Phase bullet lists and `Phase` column from task-table header (`| Task | Name | Phase | Issue | Status | Intent |` → drop `Phase`); keep Stage-level Exit; replace Phase heading w/ Stage-level heading; add `§Stage File Plan` stub (one-liner: "Opus planner writes materialization plan here") + `§Plan Fix` stub; preserve task-table `Issue` + `Status` + `Intent` columns. Pure tooling — zero Unity runtime touch.
+acceptance: |
+  `ia/templates/master-plan-template.md`: Phase layer absent; Stage + Task retained; `§Stage File Plan` + `§Plan Fix` section stubs present; task-table `Phase` column absent. `npm run validate:frontmatter` exit 0; `npm run validate:all` exit 0.
+depends_on:
+  - TECH-443
+depends_on_raw: TECH-443 (snapshot must exist before template rewrite — rollback safety).
+related:
+  - TECH-445
+  - TECH-446
+  - TECH-447
+  - TECH-448
+  - TECH-449
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.2.1
+raw_markdown: |
+  - [ ] **TECH-444** — Rewrite master-plan template (Stage 1.2 Phase 1)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/templates/master-plan-template.md`
+    - Spec: `ia/projects/TECH-444.md`
+    - Notes: Drop Phase column + Phase bullets from template; add `§Stage File Plan` + `§Plan Fix` stubs.
+    - Acceptance: Phase layer absent; stubs present; `validate:all` green.
+    - Depends on: **TECH-443**
+    - Related: TECH-445, TECH-446, TECH-447, TECH-448, TECH-449

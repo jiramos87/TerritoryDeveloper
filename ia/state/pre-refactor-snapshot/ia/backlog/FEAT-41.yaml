@@ -1,0 +1,24 @@
+id: FEAT-41
+type: feature
+title: "**Water body** terrain tools (manual paint/modify, **AUTO** terraform) — extended"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - GridManager.cs
+  - WaterManager.cs
+  - UIManager.cs
+  - TerraformingService.cs
+notes: |
+  Beyond legacy paint-at-**sea level**. Tools to create/modify **water bodies** with proper **surface height (S)**, **shore band**, and **water map** registration. **Water map** persist shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-41** — **Water body** terrain tools (manual paint/modify, **AUTO** terraform) — extended
+    - Type: feature
+    - Files: `GridManager.cs`, `WaterManager.cs`, `UIManager.cs`, `TerraformingService.cs` (as needed)
+    - Notes: Beyond legacy paint-at-**sea level**. Tools to create/modify **water bodies** with proper **surface height (S)**, **shore band**, and **water map** registration. **Water map** persist shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).

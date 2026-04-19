@@ -1,0 +1,46 @@
+id: TECH-58
+type: tooling / agent enablement
+title: "**Agent closeout efficiency:** **project-spec-close** (**MCP** + **Node**) (2026-04-03)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows** + **Tools**; **glossary** **project-spec-close**; **project-spec-close** **`SKILL.md`**; **PROJECT-SPEC-STRUCTURE** **Lessons learned (TECH-58 closure)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+files: 
+  - tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts
+  - tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts
+  - spec-sections.ts
+  - tools/mcp-ia-server/src/tools/spec-section.ts
+  - tools/mcp-ia-server/scripts/project-spec-closeout-report.ts
+  - project-spec-dependents.ts
+  - tools/mcp-ia-server/scripts/verify-mcp.ts
+  - tools/mcp-ia-server/tests/parser/closeout-parse.test.ts
+  - tests/tools/spec-section-batch.test.ts
+  - package.json
+  - closeout:*
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+  - ARCHITECTURE.md
+  - AGENTS.md
+  - ia/rules/agent-router.md
+  - mcp-ia-default.md
+  - ia/skills/project-spec-close/SKILL.md
+  - ia/projects/PROJECT-SPEC-STRUCTURE.md
+  - ia/specs/glossary.md
+  - tools/mcp-ia-server/src/index.ts
+notes: |
+  **Completed (verified — `/project-spec-close` + `project-implementation-validation`):** **`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:worksheet`** / **`closeout:dependents`** / **`closeout:verify`**; shared parser for future **TECH-48**. **TECH-51** closeout ordering unchanged. **`npm run verify`** / **`test:ia`** green.
+acceptance: ""
+depends_on: 
+  - TECH-48
+  - TECH-30
+  - TECH-18
+depends_on_raw: "none (soft: **TECH-48**, **TECH-30**, **TECH-18**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-58** — **Agent closeout efficiency:** **project-spec-close** (**MCP** + **Node**) (2026-04-03)
+    - Type: tooling / agent enablement
+    - Files: `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`; `tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts`, `spec-sections.ts`; `tools/mcp-ia-server/src/tools/spec-section.ts` (shared extract); `tools/mcp-ia-server/scripts/project-spec-closeout-report.ts`, `project-spec-dependents.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/closeout-parse.test.ts`, `tests/tools/spec-section-batch.test.ts`; root `package.json` (`closeout:*`); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`ARCHITECTURE.md`](ARCHITECTURE.md); `AGENTS.md`; `ia/rules/agent-router.md`, `mcp-ia-default.md`; [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md); [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md); [`ia/specs/glossary.md`](ia/specs/glossary.md) — **project-spec-close** / **IA index manifest** / **Reference spec** rows; `tools/mcp-ia-server/src/index.ts` (v0.4.3)
+    - Spec: (removed after closure — [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows** + **Tools**; **glossary** **project-spec-close**; **project-spec-close** **`SKILL.md`**; **PROJECT-SPEC-STRUCTURE** **Lessons learned (TECH-58 closure)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + `project-implementation-validation`):** **`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:worksheet`** / **`closeout:dependents`** / **`closeout:verify`**; shared parser for future **TECH-48**. **TECH-51** closeout ordering unchanged. **`npm run verify`** / **`test:ia`** green.
+    - Depends on: none (soft: **TECH-48**, **TECH-30**, **TECH-18**)

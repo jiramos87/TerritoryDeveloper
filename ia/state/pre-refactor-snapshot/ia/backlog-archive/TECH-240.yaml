@@ -1,0 +1,26 @@
+id: TECH-240
+type: web / dashboard / chart
+title: PlanChart axes + legend + empty-state refinement (Stage 4.3 Phase 1) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons sections skipped_empty by journal persist; full prose in git history only)
+files: 
+  - web/components/PlanChart.tsx
+notes: |
+  Extended TECH-239 skeleton. `axisBottom` — step labels w/ `> 12` char ellipsis truncate (`d.slice(0,11) + '…'`). `axisLeft` — integer ticks via `tickFormat(d3.format('d'))` + `.ticks(Math.min(5, Math.max(1, yMax)))` — 1-tick guard for all-pending plans. Inline legend — `<g>` top-right of main chart `<g>` at `translate(innerW - legendWidth, -MARGIN.top + 2)`; 3 swatch rects + text labels `Pending` / `In Progress` / `Done`. Axis + legend text fills via `var(--color-text-muted)` — no inline hex. Empty-state `<p>` switched from inline-style fallback hex to `className="text-text-muted text-sm"` (Tailwind v4 double-prefix per `web/README.md` §189).
+acceptance: |
+  `axisBottom` + `axisLeft` present w/ truncate + integer ticks; legend renders 3 swatches + labels; axis + legend text via CSS vars; empty-state uses real `@theme` aliases; `npm run validate:all` green.
+depends_on: 
+  - TECH-239
+depends_on_raw: "**TECH-239** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-240** — PlanChart axes + legend + empty-state refinement (Stage 4.3 Phase 1) (2026-04-16)
+    - Type: web / dashboard / chart
+    - Files: `web/components/PlanChart.tsx`
+    - Spec: (removed at closeout — Decision Log + Lessons sections skipped_empty by journal persist; full prose in git history only)
+    - Notes: Extended TECH-239 skeleton. `axisBottom` — step labels w/ `> 12` char ellipsis truncate (`d.slice(0,11) + '…'`). `axisLeft` — integer ticks via `tickFormat(d3.format('d'))` + `.ticks(Math.min(5, Math.max(1, yMax)))` — 1-tick guard for all-pending plans. Inline legend — `<g>` top-right of main chart `<g>` at `translate(innerW - legendWidth, -MARGIN.top + 2)`; 3 swatch rects + text labels `Pending` / `In Progress` / `Done`. Axis + legend text fills via `var(--color-text-muted)` — no inline hex. Empty-state `<p>` switched from inline-style fallback hex to `className="text-text-muted text-sm"` (Tailwind v4 double-prefix per `web/README.md` §189).
+    - Acceptance: `axisBottom` + `axisLeft` present w/ truncate + integer ticks; legend renders 3 swatches + labels; axis + legend text via CSS vars; empty-state uses real `@theme` aliases; `npm run validate:all` green.
+    - Depends on: **TECH-239** (archived)

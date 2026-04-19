@@ -1,0 +1,37 @@
+id: TECH-41
+type: technical / performance enablement
+title: "**JSON** payloads for **current** systems: **geography** params, **cell**/**chunk** interchange, snapshots, DTO layers (2026-04-11)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — **glossary** + **`ARCHITECTURE.md`** + [`docs/schemas/README.md`](docs/schemas/README.md) + **unity-development-context** §10 + **JSON program (TECH-21)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-21**; this row)
+files: 
+  - Assets/StreamingAssets/Config/geography-default.json
+  - Assets/Scripts/Managers/GameManagers/GeographyInitParamsDto.cs
+  - GeographyInitParamsLoader.cs
+  - GeographyManager.cs
+  - MapGenerationSeed.cs
+  - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs
+  - docs/schemas/cell-chunk-interchange.v1.schema.json
+  - world-snapshot-dev.v1.schema.json
+  - docs/schemas/README.md
+  - tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts
+  - scripts/validate-fixtures.ts
+  - tests/schemas/
+  - ia/specs/glossary.md
+  - ARCHITECTURE.md
+notes: |
+  **Completed (verified — `/project-spec-close`):** **Phase B** of **JSON program (TECH-21)**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target: open **Agent** lane row (e.g. **TECH-75d**).
+acceptance: ""
+depends_on: 
+  - TECH-40
+depends_on_raw: none (**TECH-40** completed — **§ Completed** **TECH-40**)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-41** — **JSON** payloads for **current** systems: **geography** params, **cell**/**chunk** interchange, snapshots, DTO layers (2026-04-11)
+    - Type: technical / performance enablement
+    - Files: `Assets/StreamingAssets/Config/geography-default.json`; `Assets/Scripts/Managers/GameManagers/GeographyInitParamsDto.cs`, `GeographyInitParamsLoader.cs`; `GeographyManager.cs`, `MapGenerationSeed.cs`; `Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs`; `docs/schemas/cell-chunk-interchange.v1.schema.json`, `world-snapshot-dev.v1.schema.json`, `docs/schemas/README.md`; `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts`, `scripts/validate-fixtures.ts`, `tests/schemas/`; `ia/specs/glossary.md` — **Interchange JSON**, **geography_init_params**; **`ARCHITECTURE.md`** — **Interchange JSON**; **persistence-system** / **unity-development-context** cross-links
+    - Spec: (removed after closure — **glossary** + **`ARCHITECTURE.md`** + [`docs/schemas/README.md`](docs/schemas/README.md) + **unity-development-context** §10 + **JSON program (TECH-21)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-21**; this row)
+    - Notes: **Completed (verified — `/project-spec-close`):** **Phase B** of **JSON program (TECH-21)**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target: open **Agent** lane row (e.g. **TECH-75d**).
+    - Depends on: none (**TECH-40** completed — **§ Completed** **TECH-40**)

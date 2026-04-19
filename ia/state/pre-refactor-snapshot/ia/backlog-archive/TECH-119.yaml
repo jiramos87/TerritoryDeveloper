@@ -1,0 +1,26 @@
+id: TECH-119
+type: infrastructure / DSP math
+title: Envelope level math (Linear + Exponential per-stage shapes) (2026-04-14)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — Decision Log persisted to Postgres journal)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipEnvelope.cs
+  - BlipEnvelopeStepper.ComputeLevel
+notes: |
+  **Completed (verified — `/project-spec-close`).** Pure static `ComputeLevel(in BlipEnvelopeFlat, BlipEnvStage, int samplesElapsed, int stageDurationSamples, float releaseStartLevel) → float` on `BlipEnvelopeStepper`. Stage × shape routing: Idle/Hold/Sustain flat constants (0f / 1f / `sustainLevel`); Attack/Decay/Release drive Linear or Exponential per `BlipEnvelopeFlat.{attack,decay,release}Shape`. Linear — `t = samplesElapsed / stageDurationSamples` clamped, `start + (target − start) * t`. Exponential — `τ = stageDurationSamples / 4f`, `target + (start − target) * (float)Math.Exp(−samplesElapsed / τ)` (≈98 % settled at 4 τ). Edge — `stageDurationSamples <= 0` → return `target`. Zero allocs, no Unity API. Exponential ≈98 % settled slope + flat-constant assertions deferred to Stage 1.4 T1.4.3.
+acceptance: ""
+depends_on: 
+  - TECH-116
+  - TECH-118
+depends_on_raw: "**TECH-116**, **TECH-118**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes) (2026-04-14)
+    - Type: infrastructure / DSP math
+    - Files: `Assets/Scripts/Audio/Blip/BlipEnvelope.cs` (`BlipEnvelopeStepper.ComputeLevel`)
+    - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+    - Notes: **Completed (verified — `/project-spec-close`).** Pure static `ComputeLevel(in BlipEnvelopeFlat, BlipEnvStage, int samplesElapsed, int stageDurationSamples, float releaseStartLevel) → float` on `BlipEnvelopeStepper`. Stage × shape routing: Idle/Hold/Sustain flat constants (0f / 1f / `sustainLevel`); Attack/Decay/Release drive Linear or Exponential per `BlipEnvelopeFlat.{attack,decay,release}Shape`. Linear — `t = samplesElapsed / stageDurationSamples` clamped, `start + (target − start) * t`. Exponential — `τ = stageDurationSamples / 4f`, `target + (start − target) * (float)Math.Exp(−samplesElapsed / τ)` (≈98 % settled at 4 τ). Edge — `stageDurationSamples <= 0` → return `target`. Zero allocs, no Unity API. Exponential ≈98 % settled slope + flat-constant assertions deferred to Stage 1.4 T1.4.3.
+    - Depends on: **TECH-116**, **TECH-118**

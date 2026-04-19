@@ -1,0 +1,29 @@
+id: TECH-336
+type: infrastructure / data model
+title: Add LandmarkPopGate discriminator (Stage 1.1 T1.1.2)
+priority: medium
+status: open
+section: Multi-scale simulation lane
+spec: ia/projects/TECH-336.md
+files:
+  - Assets/Scripts/Data/Landmarks/LandmarkPopGate.cs
+notes: |
+  Add `Assets/Scripts/Data/Landmarks/LandmarkPopGate.cs` — abstract base `LandmarkPopGate` + two concrete subclasses `ScaleTransitionGate { LandmarkTier fromTier }` + `IntraTierGate { int pop }`. YAML-deserializable via tag field `kind` (`scale_transition` / `intra_tier`). YAML round-trip test deferred to Stage 1.3 T1.3.4. Stage 1.1 Phase 1.
+acceptance: |
+  File compiles clean; base + 2 subclasses present; YAML tag discriminator field `kind` wired; `npm run unity:compile-check` green; `npm run validate:all` green.
+depends_on:
+  - TECH-335
+depends_on_raw: TECH-335 (LandmarkTier enum — hard gate, `ScaleTransitionGate.fromTier` consumes the enum)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-336** — Add LandmarkPopGate discriminator (Stage 1.1 T1.1.2)
+    - Type: infrastructure / data model
+    - Files: `Assets/Scripts/Data/Landmarks/LandmarkPopGate.cs` (new)
+    - Spec: `ia/projects/TECH-336.md`
+    - Notes: Abstract base + `ScaleTransitionGate { LandmarkTier fromTier }` + `IntraTierGate { int pop }`. YAML tag `kind`. Round-trip test at Stage 1.3. Stage 1.1 Phase 1.
+    - Acceptance: compiles clean; 2 subclasses; `validate:all` green.
+    - Depends on: TECH-335 (LandmarkTier enum — hard gate)
+    - Related: TECH-335, TECH-337, TECH-338
+parent_plan: ia/projects/landmarks-master-plan.md
+task_key: T1.1.2

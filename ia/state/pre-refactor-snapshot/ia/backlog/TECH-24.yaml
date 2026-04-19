@@ -1,0 +1,25 @@
+id: TECH-24
+type: tooling / code health
+title: "territory-ia MCP: parser regression policy (tests/fixtures when parsers change)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ""
+files: 
+  - tools/mcp-ia-server/
+  - scripts/verify-mcp.ts
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+notes: |
+  When changing markdown parsers, fuzzy matching, or glossary ranking, extend **`node:test`** fixtures and keep **`npm run verify`** green (same pattern as **`glossary_discover`** / parser fixtures — see archive). No Unity. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-24** — territory-ia MCP: parser regression policy (tests/fixtures when parsers change)
+    - Type: tooling / code health
+    - Files: `tools/mcp-ia-server/` (tests, fixtures, `scripts/verify-mcp.ts` or equivalent), `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
+    - Notes: When changing markdown parsers, fuzzy matching, or glossary ranking, extend **`node:test`** fixtures and keep **`npm run verify`** green (same pattern as **`glossary_discover`** / parser fixtures — see archive). No Unity. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+    - Depends on: none

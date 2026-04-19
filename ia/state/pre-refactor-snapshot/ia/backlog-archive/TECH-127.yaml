@@ -1,0 +1,26 @@
+id: TECH-127
+type: test / infrastructure
+title: Canvas unit tests (pytest, §4 Examples table) (2026-04-14)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+files: 
+  - tools/sprite-gen/tests/test_canvas.py
+notes: |
+  Stage 1.1 Phase 3 opener. Six asserts covering exploration §4 Examples rows — `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`, `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5,16/192)`. Plus `pivot_uv(0)` ValueError guard. Manual pytest gate — `npm run validate:all` does NOT yet cover Python (candidate CI fold-in: Stage 1.3 palette tests).
+acceptance: |
+  `pytest tools/sprite-gen/tests/test_canvas.py` exits 0 (7 passed); all §4 Examples rows covered; `npm run validate:all` green.
+depends_on: 
+  - TECH-124
+depends_on_raw: "**TECH-124**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-127** — Canvas unit tests (pytest, §4 Examples table) (2026-04-14)
+    - Type: test / infrastructure
+    - Files: `tools/sprite-gen/tests/test_canvas.py`
+    - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+    - Notes: Stage 1.1 Phase 3 opener. Six asserts covering exploration §4 Examples rows — `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`, `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5,16/192)`. Plus `pivot_uv(0)` ValueError guard. Manual pytest gate — `npm run validate:all` does NOT yet cover Python (candidate CI fold-in: Stage 1.3 palette tests).
+    - Acceptance: `pytest tools/sprite-gen/tests/test_canvas.py` exits 0 (7 passed); all §4 Examples rows covered; `npm run validate:all` green.
+    - Depends on: **TECH-124**

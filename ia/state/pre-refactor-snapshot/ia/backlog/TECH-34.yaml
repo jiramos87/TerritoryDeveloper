@@ -1,0 +1,26 @@
+id: TECH-34
+type: tooling / IA
+title: Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ia/projects/TECH-34.md
+files: 
+  - tools/
+  - tools/mcp-ia-server/data/gridmanager-regions.json
+  - GridManager.cs
+notes: |
+  Supports **TECH-01** extraction planning and optional future MCP `gridmanager_region_map`. `docs/agent-tooling-verification-priority-tasks.md` task 28. Coordinate MCP registration with **TECH-18** when applicable.
+acceptance: ""
+depends_on: 
+  - TECH-18
+depends_on_raw: "none (MCP wiring: **TECH-18**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-34** — Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks
+    - Type: tooling / IA
+    - Files: `tools/` (Node or C# extractor), output e.g. `tools/mcp-ia-server/data/gridmanager-regions.json`; `GridManager.cs`
+    - Spec: `ia/projects/TECH-34.md`
+    - Notes: Supports **TECH-01** extraction planning and optional future MCP `gridmanager_region_map`. `docs/agent-tooling-verification-priority-tasks.md` task 28. Coordinate MCP registration with **TECH-18** when applicable.
+    - Depends on: none (MCP wiring: **TECH-18**)

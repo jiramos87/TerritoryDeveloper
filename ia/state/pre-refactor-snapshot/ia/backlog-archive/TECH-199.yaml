@@ -1,0 +1,28 @@
+id: TECH-199
+type: infrastructure / tests
+title: Pool + cooldown assertions (Stage 2.4 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+files: 
+  - Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs
+  - Assets/Scripts/Audio/Blip/BlipPlayer.cs
+  - Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs
+notes: |
+  `[UnityTest] Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — rapid-fire leg: 16 `BlipEngine.Play(ToolRoadTick)` single frame, no yield; assert no exception + `BlipPlayer.DebugCursor == 0` post-wrap (new `internal int DebugCursor => _cursor` accessor). Cooldown leg: MVP patches all `cooldownMs: 0`, so called `BlipCooldownRegistry.TryConsume` directly w/ 5 000 ms window using identical DSP timestamp — baseline captured, delta asserted == 1 on `BlockedCount` (new `internal int BlockedCount` counter incremented on `TryConsume == false` branch). Single `yield return null` at method end. Decision Log — plain `internal` accessors (no `#if UNITY_EDITOR`): friend-assembly IVT already grants access, conditional compilation fragments XML-doc + trips analyzers, production cost = one int field + getter negligible; `BlockedCount` not reset between tests (tests compute deltas, matches clock-agnostic registry pattern); cooldown leg bypasses `BlipEngine.Play` because no MVP catalog id has `cooldownMs ≥ 100 ms` and test-time catalog mutation out-of-scope. PlayMode test runner pass deferred to manual trigger; CI batch wiring out-of-scope (covered by TECH-204 orthogonal runner).
+acceptance: |
+  pool wraps w/o exception; `DebugCursor == 0` post-16 plays; cooldown block observed via `BlockedCount` delta == 1; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: 
+  - TECH-197
+depends_on_raw: "**TECH-197** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-199** — Pool + cooldown assertions (Stage 2.4 Phase 2) (2026-04-15)
+    - Type: infrastructure / tests
+    - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`, `Assets/Scripts/Audio/Blip/BlipPlayer.cs`, `Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs`
+    - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+    - Notes: `[UnityTest] Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — rapid-fire leg: 16 `BlipEngine.Play(ToolRoadTick)` single frame, no yield; assert no exception + `BlipPlayer.DebugCursor == 0` post-wrap (new `internal int DebugCursor => _cursor` accessor). Cooldown leg: MVP patches all `cooldownMs: 0`, so called `BlipCooldownRegistry.TryConsume` directly w/ 5 000 ms window using identical DSP timestamp — baseline captured, delta asserted == 1 on `BlockedCount` (new `internal int BlockedCount` counter incremented on `TryConsume == false` branch). Single `yield return null` at method end. Decision Log — plain `internal` accessors (no `#if UNITY_EDITOR`): friend-assembly IVT already grants access, conditional compilation fragments XML-doc + trips analyzers, production cost = one int field + getter negligible; `BlockedCount` not reset between tests (tests compute deltas, matches clock-agnostic registry pattern); cooldown leg bypasses `BlipEngine.Play` because no MVP catalog id has `cooldownMs ≥ 100 ms` and test-time catalog mutation out-of-scope. PlayMode test runner pass deferred to manual trigger; CI batch wiring out-of-scope (covered by TECH-204 orthogonal runner).
+    - Acceptance: pool wraps w/o exception; `DebugCursor == 0` post-16 plays; cooldown block observed via `BlockedCount` delta == 1; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: **TECH-197** (archived)

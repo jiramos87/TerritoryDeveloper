@@ -1,0 +1,16 @@
+id: BUG-18
+type: unknown
+title: Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)

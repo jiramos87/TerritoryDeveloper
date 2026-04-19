@@ -1,0 +1,25 @@
+id: TECH-96
+type: verification
+title: "Testmode smoke: city load + sim tick, no regression (cell-type split) (2026-04-13)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: []
+notes: |
+  Stage 1.2 Phase 4 regression gate. Reused `reference-flat-32x32` smoke scenario; exit 0, `simulation_ticks_applied: 3`, zero C# exceptions on commit `73fd7e8`. Confirmed cell-type split (TECH-90–95) introduced zero behavior regression. Report: `tools/reports/agent-testmode-batch-20260413-211557.json`. Lessons (stale lockfile recovery, `--simulation-ticks N` flag, `--golden-path` upgrade) migrated to `ia/skills/agent-test-mode-verify/SKILL.md` Gotchas. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  testmode batch exit 0 + zero exceptions; `GameSaveManager.LoadGame` + ≥1 sim tick confirmed; batch log + commit hash recorded
+depends_on: 
+  - TECH-95
+depends_on_raw: "**TECH-95**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-96** — Testmode smoke: city load + sim tick, no regression (cell-type split) (2026-04-13)
+    - Type: verification
+    - Files: testmode batch scenario
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 4 regression gate. Reused `reference-flat-32x32` smoke scenario; exit 0, `simulation_ticks_applied: 3`, zero C# exceptions on commit `73fd7e8`. Confirmed cell-type split (TECH-90–95) introduced zero behavior regression. Report: `tools/reports/agent-testmode-batch-20260413-211557.json`. Lessons (stale lockfile recovery, `--simulation-ticks N` flag, `--golden-path` upgrade) migrated to `ia/skills/agent-test-mode-verify/SKILL.md` Gotchas. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: testmode batch exit 0 + zero exceptions; `GameSaveManager.LoadGame` + ≥1 sim tick confirmed; batch log + commit hash recorded
+    - Depends on: **TECH-95**

@@ -1,0 +1,41 @@
+id: TECH-75c
+type: documentation / agent enablement (**Cursor Skill**) + bridge **`kind`**
+title: "**Close Dev Loop**: Cursor Skill orchestrating fix → verify → report (2026-04-09)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **`ia/skills/close-dev-loop/SKILL.md`**; **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+files: 
+  - ia/skills/close-dev-loop/SKILL.md
+  - ia/skills/README.md
+  - AGENTS.md
+  - package.json
+  - unity:compile-check
+  - tools/scripts/unity-compile-check.sh
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - get_compilation_status
+  - tools/mcp-ia-server/src/tools/unity-bridge-command.ts
+  - unity_compile
+  - tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+  - docs/postgres-ia-dev-setup.md
+  - ARCHITECTURE.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **`close-dev-loop`** Skill (before/after **`debug_context_bundle`**, **compile gate**: **`get_compilation_status`** / **`unity_compile`**, **`npm run unity:compile-check`**, **`get_console_logs`**); **`JsonUtility`** response shape note in **unity-development-context** §10. Optional **`unity_debug_bundle`** MCP sugar still deferred.
+acceptance: ""
+depends_on: 
+  - TECH-75b
+depends_on_raw: "none (soft: **`debug_context_bundle`** — **this file** **TECH-75b**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-75c** — **Close Dev Loop**: Cursor Skill orchestrating fix → verify → report (2026-04-09)
+    - Type: documentation / agent enablement (**Cursor Skill**) + bridge **`kind`**
+    - Files: `ia/skills/close-dev-loop/SKILL.md`; `ia/skills/README.md`; [`AGENTS.md`](AGENTS.md); root [`package.json`](package.json) **`unity:compile-check`**; `tools/scripts/unity-compile-check.sh`; `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (**`get_compilation_status`**); `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (**`unity_compile`**); `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md); [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) (**Agent bridge job queue** troubleshooting); [`ARCHITECTURE.md`](ARCHITECTURE.md); orchestration archived (this file **Recent archive**) §7
+    - Spec: (removed after closure — **`ia/skills/close-dev-loop/SKILL.md`**; **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **`close-dev-loop`** Skill (before/after **`debug_context_bundle`**, **compile gate**: **`get_compilation_status`** / **`unity_compile`**, **`npm run unity:compile-check`**, **`get_console_logs`**); **`JsonUtility`** response shape note in **unity-development-context** §10. Optional **`unity_debug_bundle`** MCP sugar still deferred.
+    - Depends on: none (soft: **`debug_context_bundle`** — **this file** **TECH-75b**)
+    - Related: **TECH-75** orchestration, **TECH-75b**, **TECH-75d** (archived), **TECH-75a**

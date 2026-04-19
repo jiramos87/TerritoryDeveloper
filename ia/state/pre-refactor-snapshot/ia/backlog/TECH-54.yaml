@@ -1,0 +1,26 @@
+id: TECH-54
+type: tooling / agent workflow
+title: "**Agent patch proposal staging** (Postgres extension **E3** track)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: none (backlog-only — no `ia/projects/` spec)
+files: 
+  - tools/
+  - docs/
+notes: |
+  Queue **B3**-style idempotent patch envelopes ([`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md)) with explicit lifecycle (**pending** / **approved** / **rejected**) before humans merge changes to git; **`natural_key`** for deduplication. **Not** player **Save data**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+acceptance: |
+  documented state machine + at least one insert/list path (script, SQL, or API); conflict policy recorded in issue **Notes** or [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) / [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) when implementing
+depends_on: []
+depends_on_raw: "none (soft: IA **Postgres** milestone + interchange patterns doc in archive)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-54** — **Agent patch proposal staging** (Postgres extension **E3** track)
+    - Type: tooling / agent workflow
+    - Files: optional **Postgres** migrations; `tools/` or thin HTTP handler; `docs/`
+    - Spec: none (backlog-only — no `ia/projects/` spec)
+    - Notes: Queue **B3**-style idempotent patch envelopes ([`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md)) with explicit lifecycle (**pending** / **approved** / **rejected**) before humans merge changes to git; **`natural_key`** for deduplication. **Not** player **Save data**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+    - Acceptance: documented state machine + at least one insert/list path (script, SQL, or API); conflict policy recorded in issue **Notes** or [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) / [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) when implementing
+    - Depends on: none (soft: IA **Postgres** milestone + interchange patterns doc in archive)

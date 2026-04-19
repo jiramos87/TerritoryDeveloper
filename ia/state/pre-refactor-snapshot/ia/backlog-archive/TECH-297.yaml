@@ -1,0 +1,29 @@
+id: TECH-297
+type: infrastructure / MCP tooling (correctness fix)
+title: Fix `depends_on_raw` soft-marker fallback (Stage 1.1 Phase 1)
+priority: high
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ""
+files:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts
+notes: |
+  Loader precedence already raw-first — delivery was (a) regression fixtures D/E/F in `backlog-yaml-loader.test.ts` locking soft-marker survival (`"FEAT-12 (soft)"` preserved verbatim), fallback synthesis when raw absent (lossy, documented), empty-raw string falls back to array; (b) dropped dead `rec.depends_on_raw !== '""'` sentinel (unreachable post-`unquote`); (c) chain-through assertion on `resolveDependsOnStatus` classifying `(soft)` kind. Upstream emitter always writes `depends_on_raw` — lossy path only hit on malformed hand-edits. Validator schema enforcement deferred to Stage 2.2 / IP8.
+acceptance: |
+  Fallback prefers yaml source; soft markers survive loader; fixtures D/E/F green; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-295
+  - TECH-296
+  - TECH-301
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-297** — Fix `depends_on_raw` soft-marker fallback (Stage 1.1 Phase 1) (2026-04-17)
+    - Type: infrastructure / MCP tooling (correctness fix)
+    - Files: `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-only regression fixture + dead-sentinel cleanup; full prose in git history only)
+    - Notes: Loader precedence already raw-first — delivery was (a) regression fixtures D/E/F in `backlog-yaml-loader.test.ts` locking soft-marker survival (`"FEAT-12 (soft)"` preserved verbatim), fallback synthesis when raw absent (lossy, documented), empty-raw string falls back to array; (b) dropped dead `rec.depends_on_raw !== '""'` sentinel (unreachable post-`unquote`); (c) chain-through assertion on `resolveDependsOnStatus` classifying `(soft)` kind. Upstream emitter always writes `depends_on_raw` — lossy path only hit on malformed hand-edits. Validator schema enforcement deferred to Stage 2.2 / IP8.
+    - Acceptance: Fallback prefers yaml source; soft markers survive loader; fixtures D/E/F green; `npm run validate:all` green.
+    - Related: TECH-295, TECH-296, TECH-301

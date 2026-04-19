@@ -1,0 +1,16 @@
+id: FEAT-26
+type: unknown
+title: Use desirability for building spawn selection (2026-03-10)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **FEAT-26** — Use desirability for building spawn selection (2026-03-10)

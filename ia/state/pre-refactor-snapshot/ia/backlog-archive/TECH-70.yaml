@@ -1,0 +1,31 @@
+id: TECH-70
+type: documentation / tooling / agent enablement
+title: "**UI-as-code** umbrella maintenance & multi-scene **UI** traceability (2026-04-04)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **`ui-design-system.md`** **Codebase inventory (uGUI)** ongoing hygiene + **Machine-readable traceability**; [`docs/reports/README.md`](docs/reports/README.md) **Postgres vs baseline** note; this row)
+files: 
+  - ia/specs/ui-design-system.md
+  - Assets/Scripts/Editor/UiInventoryReportsMenu.cs
+  - docs/reports/ui-inventory-as-built-baseline.json
+  - docs/reports/README.md
+  - ia/specs/unity-development-context.md
+  - db/migrations/0006_editor_export_ui_inventory.sql
+  - editor_export_ui_inventory
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** Umbrella **§4.9** resolutions + **Decision Log**; **baseline JSON** aligned to **Postgres** **`document`** (export timestamp); **`RegionScene`** / **`CityScene`** rename deferred (**BACKLOG** / **`ui-design-system.md`** hygiene when scenes land); **`validate:all`** green on implementation pass. Ongoing hygiene: **`ui-design-system.md`** + baseline JSON (**no** separate open umbrella row after **TECH-67** closure).
+acceptance: ""
+depends_on: 
+  - TECH-67
+depends_on_raw: "none (soft: **TECH-67** program context)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-70** — **UI-as-code** umbrella maintenance & multi-scene **UI** traceability (2026-04-04)
+    - Type: documentation / tooling / agent enablement
+    - Files: **TECH-67** umbrella project spec (**§4.4**, **§4.6**, **§4.9**, **§7** Phase **0** — removed after **TECH-67** closure); [`ia/specs/ui-design-system.md`](ia/specs/ui-design-system.md); [`Assets/Scripts/Editor/UiInventoryReportsMenu.cs`](Assets/Scripts/Editor/UiInventoryReportsMenu.cs); [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json); [`docs/reports/README.md`](docs/reports/README.md); [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) **§10**; [`db/migrations/0006_editor_export_ui_inventory.sql`](db/migrations/0006_editor_export_ui_inventory.sql) (**Postgres** **`editor_export_ui_inventory`**)
+    - Spec: (removed after closure — **`ui-design-system.md`** **Codebase inventory (uGUI)** ongoing hygiene + **Machine-readable traceability**; [`docs/reports/README.md`](docs/reports/README.md) **Postgres vs baseline** note; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** Umbrella **§4.9** resolutions + **Decision Log**; **baseline JSON** aligned to **Postgres** **`document`** (export timestamp); **`RegionScene`** / **`CityScene`** rename deferred (**BACKLOG** / **`ui-design-system.md`** hygiene when scenes land); **`validate:all`** green on implementation pass. Ongoing hygiene: **`ui-design-system.md`** + baseline JSON (**no** separate open umbrella row after **TECH-67** closure).
+    - Depends on: none (soft: **TECH-67** program context)
+    - Related: **TECH-67**, **TECH-33**, **BUG-53**

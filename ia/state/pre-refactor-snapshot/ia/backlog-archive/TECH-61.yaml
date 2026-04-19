@@ -1,0 +1,31 @@
+id: TECH-61
+type: tooling / CI / agent enablement
+title: "**Spec pipeline** layer **A**: repo **scripts** + validation **infrastructure** (`npm run`, optional `tools/invariant-checks/`) (2026-04-04)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — **glossary** **project-implementation-validation** / **`validate:all`**; **project-implementation-validation** **`SKILL.md`**; **`docs/mcp-ia-server.md`**; root **`package.json`**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; **TECH-62** **§ Completed**; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+files: 
+  - package.json
+  - validate:all
+  - description
+  - ia/skills/project-implementation-validation/SKILL.md
+  - docs/mcp-ia-server.md
+  - ia/specs/glossary.md
+  - BACKLOG.md
+  - projects/spec-pipeline-exploration.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **`npm run validate:all`** chains **IA tools** steps 1–4 (**dead project spec**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**); triple-source rule with **project-implementation-validation** manifest and [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml). **Phase 2**/**3** optional scripts (**impact** / **diff** / **backlog-deps**, **`test:invariants`**) deferred per **Decision Log** — pick up under **TECH-30** / follow-up. **Does not** register MCP tools (**TECH-62** layer B **§ Completed** for **territory-ia** extensions — **glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
+acceptance: ""
+depends_on: 
+  - TECH-50
+depends_on_raw: "none (soft: **TECH-50** **§ Completed**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-61** — **Spec pipeline** layer **A**: repo **scripts** + validation **infrastructure** (`npm run`, optional `tools/invariant-checks/`) (2026-04-04)
+    - Type: tooling / CI / agent enablement
+    - Files: root [`package.json`](package.json) (`validate:all`, `description`); [`ia/skills/project-implementation-validation/SKILL.md`](ia/skills/project-implementation-validation/SKILL.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows**; [`ia/specs/glossary.md`](ia/specs/glossary.md) — **project-implementation-validation**, **territory-ia spec-pipeline layer B (TECH-62)**, **territory-ia spec-pipeline program (TECH-60)**, **Documentation** row; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-62**; [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md) (reference)
+    - Spec: (removed after closure — **glossary** **project-implementation-validation** / **`validate:all`**; **project-implementation-validation** **`SKILL.md`**; **`docs/mcp-ia-server.md`**; root **`package.json`**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; **TECH-62** **§ Completed**; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **`npm run validate:all`** chains **IA tools** steps 1–4 (**dead project spec**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**); triple-source rule with **project-implementation-validation** manifest and [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml). **Phase 2**/**3** optional scripts (**impact** / **diff** / **backlog-deps**, **`test:invariants`**) deferred per **Decision Log** — pick up under **TECH-30** / follow-up. **Does not** register MCP tools (**TECH-62** layer B **§ Completed** for **territory-ia** extensions — **glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
+    - Depends on: none (soft: **TECH-50** **§ Completed**)

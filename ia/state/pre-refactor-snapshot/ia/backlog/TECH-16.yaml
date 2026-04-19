@@ -1,0 +1,30 @@
+id: TECH-16
+type: performance / optimization
+title: "**Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ia/projects/TECH-16.md
+files: 
+  - SimulationManager.cs
+  - TimeManager.cs
+  - AutoRoadBuilder.cs
+  - AutoZoningManager.cs
+  - AutoResourcePlanner.cs
+  - UrbanCentroidService.cs
+  - GrowthBudgetManager.cs
+  - DemandManager.cs
+  - CityStats.cs
+notes: |
+  Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
+    - Type: performance / optimization
+    - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
+    - Spec: `ia/projects/TECH-16.md`
+    - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.

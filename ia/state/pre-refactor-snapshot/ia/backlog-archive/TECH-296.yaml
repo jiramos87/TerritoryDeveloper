@@ -1,0 +1,30 @@
+id: TECH-296
+type: infrastructure / MCP tooling
+title: Map new fields in yaml loader (Stage 1.1 Phase 1)
+priority: high
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ""
+files:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts
+notes: |
+  `yamlToIssue` sets `priority`, `related`, `created` from yaml record. Markdown-path callers default to `null` / `[]` when yaml absent. Cover existing fixtures + at least one new fixture with all three fields populated. Depends on TECH-295 type shape.
+acceptance: |
+  Loader maps all three fields; markdown fallback defaults safe; new fixture covers populated + absent cases; `npm run validate:all` green.
+depends_on:
+  - TECH-295
+depends_on_raw: TECH-295
+related:
+  - TECH-295
+  - TECH-297
+  - TECH-300
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-296** — Map new fields in yaml loader (Stage 1.1 Phase 1) (2026-04-17)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-local loader mapping; full prose in git history only)
+    - Notes: `yamlToIssue` sets `priority`, `related`, `created` from yaml record. Markdown-path callers default to `null` / `[]` when yaml absent. Cover existing fixtures + at least one new fixture with all three fields populated. Depends on TECH-295 type shape.
+    - Acceptance: Loader maps all three fields; markdown fallback defaults safe; new fixture covers populated + absent cases; `npm run validate:all` green.
+    - Related: TECH-295, TECH-297, TECH-300

@@ -1,0 +1,25 @@
+id: TECH-258
+type: audio / data model
+title: "`BlipVoiceState` FX state fields (Stage 5.1 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVoiceState.cs
+notes: |
+  Appended 12 blittable `float` fields at struct tail of `BlipVoiceState` — slot-grouped triplets `(dcZ1_N, dcY1_N, ringModPhase_N)` for slots 0..3 (DC blocker input/output z-1 + ring-mod carrier phase). Grouped by slot (not by kind) for cache locality — TECH-260 unrolled dispatch reads all three per-slot fields per `BlipFxChain.ProcessFx` call. Flat-field pattern (not nested `BlipFxVoiceSlot` struct) matches existing `phaseA..D` precedent + avoids `ref state.fxSlot0.dcZ1` indirection against TECH-259 `ref float` kernel params. No `readonly` modifier — `ref`-writable required by TECH-259. No explicit `ResetFxState()` — relies on caller zero-init + `default(BlipVoiceState) = 0f` (per `ia/specs/audio-blip.md §3.2`). Each field carries `<summary>` XML pointing to TECH-259 consumer; inline comment block documents slot-triplet layout. Zero behavior change — `BlipVoice.Render` untouched; MVP golden fixtures stay bit-exact (FX wire lands in TECH-260). Closes Stage 5.1 Phase 1 Exit bullet "`BlipVoiceState` extended w/ FX state". Feeds **TECH-259** + **TECH-260**.
+acceptance: |
+  12 new float fields present w/ exact names; `BlipVoiceState` still blittable (unmanaged-struct compile); `default(BlipVoiceState) = 0f` contract preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none.
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-258** — `BlipVoiceState` FX state fields (Stage 5.1 Phase 1) (2026-04-16)
+    - Type: audio / data model
+    - Files: `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Appended 12 blittable `float` fields at struct tail of `BlipVoiceState` — slot-grouped triplets `(dcZ1_N, dcY1_N, ringModPhase_N)` for slots 0..3 (DC blocker input/output z-1 + ring-mod carrier phase). Grouped by slot (not by kind) for cache locality — TECH-260 unrolled dispatch reads all three per-slot fields per `BlipFxChain.ProcessFx` call. Flat-field pattern (not nested `BlipFxVoiceSlot` struct) matches existing `phaseA..D` precedent + avoids `ref state.fxSlot0.dcZ1` indirection against TECH-259 `ref float` kernel params. No `readonly` modifier — `ref`-writable required by TECH-259. No explicit `ResetFxState()` — relies on caller zero-init + `default(BlipVoiceState) = 0f` (per `ia/specs/audio-blip.md §3.2`). Each field carries `<summary>` XML pointing to TECH-259 consumer; inline comment block documents slot-triplet layout. Zero behavior change — `BlipVoice.Render` untouched; MVP golden fixtures stay bit-exact (FX wire lands in TECH-260). Closes Stage 5.1 Phase 1 Exit bullet "`BlipVoiceState` extended w/ FX state". Feeds **TECH-259** + **TECH-260**.
+    - Acceptance: 12 new float fields present w/ exact names; `BlipVoiceState` still blittable (unmanaged-struct compile); `default(BlipVoiceState) = 0f` contract preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+    - Depends on: none.

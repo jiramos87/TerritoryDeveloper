@@ -1,0 +1,32 @@
+id: TECH-68
+type: documentation / agent enablement
+title: "**As-built** **UI** documentation: align **`ui-design-system.md`** with **shipped** **Canvas** / **HUD** / **popups** (2026-04-04)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **glossary** **UI design system (reference spec)**; **`ui-design-system.md`** **Machine-readable traceability**; **`unity-development-context.md`** **§10**; this row)
+files: 
+  - ia/specs/ui-design-system.md
+  - ia/specs/glossary.md
+  - ia/specs/unity-development-context.md
+  - docs/reports/ui-inventory-as-built-baseline.json
+  - docs/reports/README.md
+  - ARCHITECTURE.md
+  - Assets/Scripts/Editor/UiInventoryReportsMenu.cs
+  - Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs
+  - docs/postgres-ia-dev-setup.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **As-built** reference spec + committed **UI** inventory baseline; **Editor** export + **Postgres** **`ui_inventory`** kind documented without backlog id branding. **Umbrella:** **TECH-67** **§8** first bullet checked; **TECH-69** **Depends on** no longer cites this row.
+acceptance: ""
+depends_on: 
+  - TECH-67
+depends_on_raw: "none (soft: **TECH-67** program context)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-68** — **As-built** **UI** documentation: align **`ui-design-system.md`** with **shipped** **Canvas** / **HUD** / **popups** (2026-04-04)
+    - Type: documentation / agent enablement
+    - Files: `ia/specs/ui-design-system.md`; `ia/specs/glossary.md` (**UI design system (reference spec)**, **UI-as-code program**); `ia/specs/unity-development-context.md` **§10** (UI inventory baseline row); [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json); [`docs/reports/README.md`](docs/reports/README.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) (**UI-as-code** trace); `Assets/Scripts/Editor/UiInventoryReportsMenu.cs`; `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); **TECH-67** umbrella project spec (**Phase 1** — removed after **TECH-67** closure)
+    - Spec: (removed after closure — **glossary** **UI design system (reference spec)**; **`ui-design-system.md`** **Machine-readable traceability**; **`unity-development-context.md`** **§10**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **As-built** reference spec + committed **UI** inventory baseline; **Editor** export + **Postgres** **`ui_inventory`** kind documented without backlog id branding. **Umbrella:** **TECH-67** **§8** first bullet checked; **TECH-69** **Depends on** no longer cites this row.
+    - Depends on: none (soft: **TECH-67** program context)

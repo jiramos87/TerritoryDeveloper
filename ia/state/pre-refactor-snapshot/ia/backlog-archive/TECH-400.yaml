@@ -1,0 +1,37 @@
+id: TECH-400
+type: mcp / infrastructure
+title: "**MCP** — wrap glossary tools in envelope (Stage 2.2 T2.2.3)"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: ia/projects/TECH-400.md
+files:
+  - tools/mcp-ia-server/src/tools/glossary-discover.ts
+  - tools/mcp-ia-server/src/tools/glossary-lookup.ts
+notes: |
+  Wrap `glossary-discover.ts` + `glossary-lookup.ts` (including Stage 1.1 bulk-`terms` path) in `wrapTool`. Ensure `meta.graph_generated_at` + `meta.graph_stale` preview fields flow through envelope `meta` (full freshness logic lands in Stage 3.3 — preview fields only here). Stage 2.2 Phase 2 T2.2.3 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  Both glossary tools return via `wrapTool`; `meta` carries `graph_generated_at?` / `graph_stale?` placeholder fields; bulk `terms` path still returns partial-result shape; typecheck + `validate:all` green.
+depends_on:
+  - TECH-388
+depends_on_raw: "TECH-388 (envelope — hard dep); Stage 1.1 bulk-terms extension already landed (TECH-314 archived)"
+related:
+  - TECH-398
+  - TECH-399
+  - TECH-401
+  - TECH-402
+  - TECH-403
+  - TECH-404
+  - TECH-405
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-400** — **MCP** — wrap glossary tools in envelope (Stage 2.2 T2.2.3)
+    - Type: mcp / infrastructure
+    - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `glossary-lookup.ts`
+    - Spec: `ia/projects/TECH-400.md`
+    - Notes: Wrap both glossary tools (incl. Stage 1.1 bulk-`terms` path) in `wrapTool`; preview `meta.graph_generated_at` / `meta.graph_stale` fields (full freshness logic in Stage 3.3).
+    - Acceptance: envelope wrap; meta placeholders present; bulk-terms still partial-result; typecheck + `validate:all` green.
+    - Depends on: TECH-388
+    - Related: TECH-398, TECH-399, TECH-401, TECH-402, TECH-403, TECH-404, TECH-405
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.2.3

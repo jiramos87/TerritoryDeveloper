@@ -1,0 +1,30 @@
+id: TECH-276
+type: tooling / scaffold
+title: Playwright e2e harness — install + config + scripts + README docs (Stage 6.1) (2026-04-17)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+files: 
+  - web/package.json
+  - web/playwright.config.ts
+  - web/tests/.gitkeep
+  - web/README.md
+  - package.json
+  - validate:e2e
+  - .gitignore
+notes: |
+  Stage 6.1 single-pass scaffold. Installed `@playwright/test`; authored `web/playwright.config.ts` (baseURL from `PLAYWRIGHT_BASE_URL` env w/ `http://localhost:4000` fallback, headless Chromium, `testDir: './tests'`, `outputDir: './playwright-report'`, `workers: CI ? 1 : undefined`); stubbed `web/tests/.gitkeep`; added `test:e2e` + `test:e2e:ci` scripts (both pass `--pass-with-no-tests` so empty dir does not fail CI before first spec); root `validate:e2e` composes `npm --prefix web run test:e2e:ci` (NOT chained into `validate:all` — browser binary install opt-in). README §E2E documents local run, env contract, Vercel preview injection, CI bootstrap. Merges orig Phase 1+2+3 per 2026-04-17 Decision Log.
+acceptance: |
+  `cd web && npm run test:e2e` exits 0 w/ empty `tests/`; `npm run validate:all` green; README §E2E present; `validate:e2e` composes web workspace run.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-276** — Playwright e2e harness — install + config + scripts + README docs (Stage 6.1) (2026-04-17)
+    - Type: tooling / scaffold
+    - Files: `web/package.json`, `web/playwright.config.ts` (new), `web/tests/.gitkeep` (new), `web/README.md` (§E2E append), `package.json` (root — `validate:e2e`), `.gitignore`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+    - Notes: Stage 6.1 single-pass scaffold. Installed `@playwright/test`; authored `web/playwright.config.ts` (baseURL from `PLAYWRIGHT_BASE_URL` env w/ `http://localhost:4000` fallback, headless Chromium, `testDir: './tests'`, `outputDir: './playwright-report'`, `workers: CI ? 1 : undefined`); stubbed `web/tests/.gitkeep`; added `test:e2e` + `test:e2e:ci` scripts (both pass `--pass-with-no-tests` so empty dir does not fail CI before first spec); root `validate:e2e` composes `npm --prefix web run test:e2e:ci` (NOT chained into `validate:all` — browser binary install opt-in). README §E2E documents local run, env contract, Vercel preview injection, CI bootstrap. Merges orig Phase 1+2+3 per 2026-04-17 Decision Log.
+    - Acceptance: `cd web && npm run test:e2e` exits 0 w/ empty `tests/`; `npm run validate:all` green; README §E2E present; `validate:e2e` composes web workspace run.

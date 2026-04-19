@@ -1,0 +1,21 @@
+id: FEAT-15
+type: feature (new system)
+title: Port system / cargo ship animations
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - WaterManager.cs
+notes: |
+  Requires **water body** system with defined **sea** (**water body kind**). Depends on lake generation / water map foundations (archive).
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-15** — Port system / cargo ship animations
+    - Type: feature (new system)
+    - Files: new manager + `WaterManager.cs`
+    - Notes: Requires **water body** system with defined **sea** (**water body kind**). Depends on lake generation / water map foundations (archive).

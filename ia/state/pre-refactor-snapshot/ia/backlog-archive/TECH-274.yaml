@@ -1,0 +1,26 @@
+id: TECH-274
+type: audio / DSP kernel
+title: Chorus + flanger kernels in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 3) (2026-04-17)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipFxChain.cs
+  - Assets/Scripts/Audio/Blip/BlipPatch.cs
+  - Assets/Scripts/Audio/Blip/BlipVoice.cs
+notes: |
+  Replace Stage 5.1 Chorus + Flanger passthrough stubs w/ 2-tap LFO-modulated delay kernels. Chorus rate `p0` Hz, depth `p1` ms, mix `p2`; symmetric taps `(writePos - center ± lfoOffset) mod bufLen`; `x = (1 - p2) * x + p2 * 0.5 * (tap0 + tap1)`. Flanger identical body, depth clamped `[1f, 10f]` ms via `OnValidate`. Per-slot LFO phase reuses `ringModPhase_N` (slot-private — no cross-slot conflict; warn loop dropped per DL). `ProcessFx` signature gained `float p2`; 8 call sites in `BlipVoice.Render` (4 deterministic + 4 live) updated to forward `param2`. Nearest-neighbour taps; linear interp deferred to Stage 5.3+.
+acceptance: |
+  Chorus + Flanger kernels per spec §5.2; Flanger depth clamp 1..10 ms; `BlipFxChainTests.Chorus_WetMixNonZero` + `Flanger_DepthClampedTo10ms` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-274** — Chorus + flanger kernels in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 3) (2026-04-17)
+    - Type: audio / DSP kernel
+    - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Replace Stage 5.1 Chorus + Flanger passthrough stubs w/ 2-tap LFO-modulated delay kernels. Chorus rate `p0` Hz, depth `p1` ms, mix `p2`; symmetric taps `(writePos - center ± lfoOffset) mod bufLen`; `x = (1 - p2) * x + p2 * 0.5 * (tap0 + tap1)`. Flanger identical body, depth clamped `[1f, 10f]` ms via `OnValidate`. Per-slot LFO phase reuses `ringModPhase_N` (slot-private — no cross-slot conflict; warn loop dropped per DL). `ProcessFx` signature gained `float p2`; 8 call sites in `BlipVoice.Render` (4 deterministic + 4 live) updated to forward `param2`. Nearest-neighbour taps; linear interp deferred to Stage 5.3+.
+    - Acceptance: Chorus + Flanger kernels per spec §5.2; Flanger depth clamp 1..10 ms; `BlipFxChainTests.Chorus_WetMixNonZero` + `Flanger_DepthClampedTo10ms` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.

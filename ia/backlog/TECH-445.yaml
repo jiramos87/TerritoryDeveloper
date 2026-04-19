@@ -1,0 +1,34 @@
+id: TECH-445
+type: tech (IA infrastructure / lifecycle tooling)
+title: Rewrite project-spec template — append 5 new sections (Stage 1.2 Phase 1)
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-445.md
+files:
+  - ia/templates/project-spec-template.md
+notes: |
+  Append 5 new sections after `§Verification` in `ia/templates/project-spec-template.md` in this order: `§Project-New Plan` (pair-head plan payload from `/project-new` Opus planner), `§Audit` (Opus audit paragraph post-implementation), `§Code Review` (Opus code-review verdict + notes), `§Code Fix Plan` (structured fix list — Sonnet applier reads verbatim), `§Closeout Plan` (structured migration anchors — Sonnet closeout-applier reads verbatim). Each section = heading + one-sentence placeholder. Pure tooling.
+acceptance: |
+  `ia/templates/project-spec-template.md` carries 5 new sections in order; each = heading + one-sentence placeholder; existing sections untouched; `npm run validate:frontmatter` exit 0; `npm run validate:all` exit 0.
+depends_on:
+  - TECH-443
+depends_on_raw: TECH-443 (snapshot exists).
+related:
+  - TECH-444
+  - TECH-446
+  - TECH-447
+  - TECH-448
+  - TECH-449
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.2.2
+raw_markdown: |
+  - [ ] **TECH-445** — Rewrite project-spec template (Stage 1.2 Phase 1)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/templates/project-spec-template.md`
+    - Spec: `ia/projects/TECH-445.md`
+    - Notes: Append 5 new sections post-§Verification: `§Project-New Plan`, `§Audit`, `§Code Review`, `§Code Fix Plan`, `§Closeout Plan`.
+    - Acceptance: 5 sections present in order; `validate:all` green.
+    - Depends on: **TECH-443**
+    - Related: TECH-444, TECH-446, TECH-447, TECH-448, TECH-449

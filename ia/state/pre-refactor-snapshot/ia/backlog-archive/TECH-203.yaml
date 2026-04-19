@@ -1,0 +1,27 @@
+id: TECH-203
+type: infrastructure / web workspace
+title: Plan-loader README + JSDoc (Stage 3.1 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — Decision Log persisted to Postgres journal)
+files: 
+  - web/README.md
+  - web/lib/plan-loader.ts
+notes: |
+  **Completed (verified — `/project-spec-close`).** `web/README.md` gained §Dashboard between §MDX page pattern + §Tokens — documents `loadAllPlans(): Promise<PlanData[]>` contract, `PlanData` key fields (`title`, `overallStatus`, `steps[]`, `allTasks[]`), "parse.mjs authoritative — plan-loader read-only wrapper" invariant, glob pattern `ia/projects/*master-plan*.md` (code-accurate, NOT shorthand), RSC consumption snippet, empty-dir `[]` return behavior. `web/lib/plan-loader.ts` file-header JSDoc appended single line — `Requires Node 20+ — dynamic ESM import() of parse.mjs relies on Node ≥ 20 stable ESM resolver.` Additive only; existing header bullets untouched. Decision Log — glob wording code-accurate (not master-plan table shorthand) to prevent doc/runtime drift; JSDoc additive (no rewrite); §Dashboard placement between §MDX page pattern + §Tokens keeps narrative order (page patterns → RSC data → tokens → deploy). Closes Stage 3.1 exit criterion on docs.
+acceptance: ""
+depends_on: 
+  - TECH-200
+  - TECH-201
+  - TECH-202
+depends_on_raw: "**TECH-200** (archived), **TECH-201** (archived), **TECH-202** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-203** — Plan-loader README + JSDoc (Stage 3.1 Phase 2) (2026-04-15)
+    - Type: infrastructure / web workspace
+    - Files: `web/README.md` (extend), `web/lib/plan-loader.ts` (extend — JSDoc)
+    - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+    - Notes: **Completed (verified — `/project-spec-close`).** `web/README.md` gained §Dashboard between §MDX page pattern + §Tokens — documents `loadAllPlans(): Promise<PlanData[]>` contract, `PlanData` key fields (`title`, `overallStatus`, `steps[]`, `allTasks[]`), "parse.mjs authoritative — plan-loader read-only wrapper" invariant, glob pattern `ia/projects/*master-plan*.md` (code-accurate, NOT shorthand), RSC consumption snippet, empty-dir `[]` return behavior. `web/lib/plan-loader.ts` file-header JSDoc appended single line — `Requires Node 20+ — dynamic ESM import() of parse.mjs relies on Node ≥ 20 stable ESM resolver.` Additive only; existing header bullets untouched. Decision Log — glob wording code-accurate (not master-plan table shorthand) to prevent doc/runtime drift; JSDoc additive (no rewrite); §Dashboard placement between §MDX page pattern + §Tokens keeps narrative order (page patterns → RSC data → tokens → deploy). Closes Stage 3.1 exit criterion on docs.
+    - Depends on: **TECH-200** (archived), **TECH-201** (archived), **TECH-202** (archived)

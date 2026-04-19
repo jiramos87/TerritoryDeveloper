@@ -1,0 +1,27 @@
+id: TECH-172
+type: infrastructure / audio gating
+title: "`BlipCooldownRegistry` plain class (Stage 2.2 Phase 2) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs
+  - Assets/Scripts/Audio/Blip/BlipCatalog.cs
+notes: |
+  `public sealed class BlipCooldownRegistry` plain class. `Dictionary<BlipId, double> _lastPlayDspTime`. `TryConsume(BlipId id, double nowDspTime, double cooldownMs) → bool` — if unseen OR `(nowDsp - last) * 1000 >= cooldownMs` → record + return `true`; else `false`. Instantiated in `BlipCatalog.Awake` between `_mixerRouter` alloc and `BlipEngine.Bind`; held as `_cooldownRegistry` instance field (invariant #4 — no singleton). Clock-agnostic — caller passes `nowDspTime` (pure-C# testable). Window anchored on first accepted timestamp (blocked attempts do NOT slide window — starvation-safe under rapid spam). No autosave wiring (MVP). Consumer wiring (`BlipEngine.Play` cooldown query + `internal` catalog accessor) deferred to Stage 2.3 T2.3.3. Decision Log — registry clock-agnostic (pure-C# testable w/o PlayMode harness); no `internal` catalog accessor in this spec (T2.3.3 adds when consumer lands — avoid dangling dead code); window anchors on first accepted timestamp (master-plan T2.2.4 pseudocode match); glossary row `Blip cooldown` deferred to Step 2 close (blip-master-plan §Glossary rows — Step 2 Blip-* terms batch-land on Step close).
+acceptance: |
+  first call returns `true`; second within window returns `false`; after-window returns `true` + updates timestamp; catalog holds instance; `unity:compile-check` green.
+depends_on: 
+  - TECH-169
+depends_on_raw: "**TECH-169** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-172** — `BlipCooldownRegistry` plain class (Stage 2.2 Phase 2) (2026-04-15)
+    - Type: infrastructure / audio gating
+    - Files: `Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: `public sealed class BlipCooldownRegistry` plain class. `Dictionary<BlipId, double> _lastPlayDspTime`. `TryConsume(BlipId id, double nowDspTime, double cooldownMs) → bool` — if unseen OR `(nowDsp - last) * 1000 >= cooldownMs` → record + return `true`; else `false`. Instantiated in `BlipCatalog.Awake` between `_mixerRouter` alloc and `BlipEngine.Bind`; held as `_cooldownRegistry` instance field (invariant #4 — no singleton). Clock-agnostic — caller passes `nowDspTime` (pure-C# testable). Window anchored on first accepted timestamp (blocked attempts do NOT slide window — starvation-safe under rapid spam). No autosave wiring (MVP). Consumer wiring (`BlipEngine.Play` cooldown query + `internal` catalog accessor) deferred to Stage 2.3 T2.3.3. Decision Log — registry clock-agnostic (pure-C# testable w/o PlayMode harness); no `internal` catalog accessor in this spec (T2.3.3 adds when consumer lands — avoid dangling dead code); window anchors on first accepted timestamp (master-plan T2.2.4 pseudocode match); glossary row `Blip cooldown` deferred to Step 2 close (blip-master-plan §Glossary rows — Step 2 Blip-* terms batch-land on Step close).
+    - Acceptance: first call returns `true`; second within window returns `false`; after-window returns `true` + updates timestamp; catalog holds instance; `unity:compile-check` green.
+    - Depends on: **TECH-169** (archived)

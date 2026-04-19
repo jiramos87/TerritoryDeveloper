@@ -1,0 +1,29 @@
+id: TECH-250
+type: web / dashboard / docs
+title: Clear-filters `Button` control + multi-select smoke + README §Components update (Stage 4.4 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/app/dashboard/page.tsx
+  - web/README.md
+notes: |
+  Swapped underline `<a>Clear filters</a>` for `<Button variant="ghost" size="sm" href="/dashboard">Clear filters</Button>` (TECH-231 polymorphic `href` path) at `web/app/dashboard/page.tsx`. Visibility gated by existing `anyFilter = multi.plan.length + multi.status.length + multi.phase.length > 0` predicate (landed in TECH-249; no logic change). Full-English "Clear filters" label (caveman-exception — user-facing rendered UI per `agent-output-caveman.md`). Smoke 4-scenario matrix confirmed on dev server (port 4000): two-status multi + combined status+phase + toggle-off round-trip + Clear → bare URL. Appended `web/README.md §Components` Dashboard multi-select paragraph (helpers location `web/lib/dashboard/filter-params.ts`, canonical comma-delimited URL form, Clear control, `anyFilter` predicate shape). Satisfies Stage 4.4 Exit bullet 4.
+acceptance: |
+  Button replaces `<a>`; ghost variant + sm size; visible iff `anyFilter`; smoke matrix manually confirmed; README §Components updated; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-247
+  - TECH-248
+  - TECH-249
+depends_on_raw: "**TECH-247** (archived), **TECH-248** (archived), **TECH-249** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-250** — Clear-filters `Button` control + multi-select smoke + README §Components update (Stage 4.4 Phase 2) (2026-04-16)
+    - Type: web / dashboard / docs
+    - Files: `web/app/dashboard/page.tsx`, `web/README.md`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Swapped underline `<a>Clear filters</a>` for `<Button variant="ghost" size="sm" href="/dashboard">Clear filters</Button>` (TECH-231 polymorphic `href` path) at `web/app/dashboard/page.tsx`. Visibility gated by existing `anyFilter = multi.plan.length + multi.status.length + multi.phase.length > 0` predicate (landed in TECH-249; no logic change). Full-English "Clear filters" label (caveman-exception — user-facing rendered UI per `agent-output-caveman.md`). Smoke 4-scenario matrix confirmed on dev server (port 4000): two-status multi + combined status+phase + toggle-off round-trip + Clear → bare URL. Appended `web/README.md §Components` Dashboard multi-select paragraph (helpers location `web/lib/dashboard/filter-params.ts`, canonical comma-delimited URL form, Clear control, `anyFilter` predicate shape). Satisfies Stage 4.4 Exit bullet 4.
+    - Acceptance: Button replaces `<a>`; ghost variant + sm size; visible iff `anyFilter`; smoke matrix manually confirmed; README §Components updated; `npm run validate:all` exit 0.
+    - Depends on: **TECH-247** (archived), **TECH-248** (archived), **TECH-249** (archived)

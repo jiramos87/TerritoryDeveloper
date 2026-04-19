@@ -1,0 +1,25 @@
+id: TECH-252
+type: web / decision log
+title: Postgres free-tier provider evaluation + Decision Log entry (Stage 5.1 Phase 1) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - ia/projects/web-platform-master-plan.md
+notes: |
+  Locked **Neon free (Launch tier)** as web platform Postgres provider — row appended to orchestrator `§Orchestrator Decision Log` (2026-04-16). Rationale quoted in row: pooled connections 100 >> expected ≤ 20 serverless; storage 0.5 GB vs ≤ 0.1 GB Stage 5.2 stub (monitor at 0.4 GB); egress 5 GB/month; us-east-1 matches Vercel default; `@neondatabase/serverless` HTTP driver sidesteps TCP leak on serverless cold-start; branch preview-DB enables per-PR isolated DBs at TECH-254+. Supabase free rejected — 7-day inactivity pause risks dashboard latency + bundled auth/storage/edge adds scope (auth owned by TECH-253). Vercel Postgres Hobby rejected — 256 MB storage + 1 GB/mo egress near Stage 5.2 ceiling; single-region lock; Neon-backed so no reliability diff vs. Neon direct. No code — Decision Log authoring only per Stage 5.1 design (web platform orchestrator §34 disjoint from Unity runtime invariants #1–#12). Feeds TECH-254 (driver install + pool wiring) + TECH-255 (README §Portal doc).
+acceptance: |
+  Decision Log row appended w/ provider name + limits table + rationale + two alternatives rejected per-alt reason; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-252** — Postgres free-tier provider evaluation + Decision Log entry (Stage 5.1 Phase 1) (2026-04-16)
+    - Type: web / decision log
+    - Files: `ia/projects/web-platform-master-plan.md` (Decision Log row appended)
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Locked **Neon free (Launch tier)** as web platform Postgres provider — row appended to orchestrator `§Orchestrator Decision Log` (2026-04-16). Rationale quoted in row: pooled connections 100 >> expected ≤ 20 serverless; storage 0.5 GB vs ≤ 0.1 GB Stage 5.2 stub (monitor at 0.4 GB); egress 5 GB/month; us-east-1 matches Vercel default; `@neondatabase/serverless` HTTP driver sidesteps TCP leak on serverless cold-start; branch preview-DB enables per-PR isolated DBs at TECH-254+. Supabase free rejected — 7-day inactivity pause risks dashboard latency + bundled auth/storage/edge adds scope (auth owned by TECH-253). Vercel Postgres Hobby rejected — 256 MB storage + 1 GB/mo egress near Stage 5.2 ceiling; single-region lock; Neon-backed so no reliability diff vs. Neon direct. No code — Decision Log authoring only per Stage 5.1 design (web platform orchestrator §34 disjoint from Unity runtime invariants #1–#12). Feeds TECH-254 (driver install + pool wiring) + TECH-255 (README §Portal doc).
+    - Acceptance: Decision Log row appended w/ provider name + limits table + rationale + two alternatives rejected per-alt reason; `npm run validate:all` exit 0.
+    - Depends on: none

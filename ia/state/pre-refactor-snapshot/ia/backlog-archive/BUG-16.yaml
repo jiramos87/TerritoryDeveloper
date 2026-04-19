@@ -1,0 +1,26 @@
+id: BUG-16
+type: fix
+title: Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**) (2026-04-17)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; canonical init-race guard pattern captured in `ia/specs/unity-development-context.md` §6; full prose in git history only)
+files: 
+  - Assets/Scripts/Managers/GameManagers/GeographyManager.cs
+  - Assets/Scripts/Managers/GameManagers/TimeManager.cs
+notes: |
+  `GeographyManager.IsInitialized` flips true at tail of `InitializeGeography()` (post desirability/sorting). `TimeManager` caches ref via `[SerializeField]` + `FindObjectOfType` fallback in new `Awake` (invariant #3); daily-tick block (`if timeElapsed >= 1f`) early-returns when flag false — `HandleOnKeyInput` + accumulator stay unguarded so pause/speed UI responsive during load. Bridge `get_console_logs` fresh-scene smoke: 0 NRE tagged `TimeManager`; compile clean. Grep sweep: `GridManager.Update`/`UIManager.Update` already self-guard — fix self-contained. Edit-mode `testmode-batch` skipped (Editor project lock); bridge compile gate covers.
+acceptance: |
+  `IsInitialized` flips post-pipeline; `TimeManager.Update` tick early-returns pre-init; no fresh-scene NRE; compile clean.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**) (2026-04-17)
+    - Type: fix
+    - Files: `Assets/Scripts/Managers/GameManagers/GeographyManager.cs`, `Assets/Scripts/Managers/GameManagers/TimeManager.cs`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; canonical init-race guard pattern captured in `ia/specs/unity-development-context.md` §6; full prose in git history only)
+    - Notes: `GeographyManager.IsInitialized` flips true at tail of `InitializeGeography()` (post desirability/sorting). `TimeManager` caches ref via `[SerializeField]` + `FindObjectOfType` fallback in new `Awake` (invariant #3); daily-tick block (`if timeElapsed >= 1f`) early-returns when flag false — `HandleOnKeyInput` + accumulator stay unguarded so pause/speed UI responsive during load. Bridge `get_console_logs` fresh-scene smoke: 0 NRE tagged `TimeManager`; compile clean. Grep sweep: `GridManager.Update`/`UIManager.Update` already self-guard — fix self-contained. Edit-mode `testmode-batch` skipped (Editor project lock); bridge compile gate covers.
+    - Acceptance: `IsInitialized` flips post-pipeline; `TimeManager.Update` tick early-returns pre-init; no fresh-scene NRE; compile clean.
+    - Related: **BUG-17** (init ordering sibling), `ia/specs/unity-development-context.md` §6

@@ -1,0 +1,31 @@
+id: TECH-299
+type: infrastructure / MCP tooling
+title: Execute `proposed_solution` decision (Stage 1.1 Phase 2)
+priority: high
+status: closed
+completed: 2026-04-17
+section: Recent archive
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-only issue; full prose in git history only)
+files:
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/scripts/migrate-backlog-to-yaml.mjs
+  - tools/validate-backlog-yaml.mjs
+notes: |
+  Executed Option A (drop) per TECH-298 decision: removed `proposed_solution?: string` from `ParsedBacklogIssue` + `scrapeIssueFields` return type, dropped `"proposed solution"` header remap, removed field assignment in returned object literal. No yaml schema / loader / validator / fixture change. Regression test added in `backlog-parser.test.ts`. `npm run validate:all` green.
+acceptance: |
+  `proposed_solution` removed from parser type + scrape path; regression test lands; MCP payload shape no longer carries field; `npm run validate:all` green.
+depends_on:
+  - TECH-298
+depends_on_raw: TECH-298
+related:
+  - TECH-298
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-299** — Execute `proposed_solution` decision (Stage 1.1 Phase 2) (2026-04-17)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/scripts/migrate-backlog-to-yaml.mjs`, `tools/validate-backlog-yaml.mjs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-only issue; full prose in git history only)
+    - Notes: Executed Option A (drop) per TECH-298 decision. Removed `proposed_solution?: string` from `ParsedBacklogIssue` + `scrapeIssueFields`, dropped `"proposed solution"` header remap, removed field assignment. No yaml schema / loader / validator / fixture change. Regression test added.
+    - Acceptance: `proposed_solution` removed end-to-end; regression test lands; `npm run validate:all` green.
+    - Depends on: TECH-298

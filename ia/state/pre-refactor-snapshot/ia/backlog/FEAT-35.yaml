@@ -1,0 +1,23 @@
+id: FEAT-35
+type: feature
+title: Area demolition tool (bulldozer drag-to-select)
+priority: medium
+status: open
+section: Medium Priority
+spec: ""
+files: 
+  - GridManager.cs
+  - UIManager.cs
+  - CursorManager.cs
+notes: |
+  Manual tool to demolish all **buildings** and **zoning** in a rectangular area at once. Use the same area selection mechanism as **zoning**: hold mouse button, drag to define rectangle, release to demolish. Reuse **zoning**'s start/end position logic (zoningStartGridPosition, zoningEndGridPosition pattern). Demolish each **cell** in the selected area via DemolishCellAt. **Interstate** cells must remain non-demolishable. Consider preview overlay (e.g. red tint) during drag.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
+    - Type: feature
+    - Files: `GridManager.cs`, `UIManager.cs`, `CursorManager.cs`
+    - Notes: Manual tool to demolish all **buildings** and **zoning** in a rectangular area at once. Use the same area selection mechanism as **zoning**: hold mouse button, drag to define rectangle, release to demolish. Reuse **zoning**'s start/end position logic (zoningStartGridPosition, zoningEndGridPosition pattern). Demolish each **cell** in the selected area via DemolishCellAt. **Interstate** cells must remain non-demolishable. Consider preview overlay (e.g. red tint) during drag.

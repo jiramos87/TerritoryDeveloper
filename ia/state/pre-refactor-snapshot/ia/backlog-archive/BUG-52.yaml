@@ -1,0 +1,29 @@
+id: BUG-52
+type: bug (behavior / regression suspicion)
+title: "**AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**) (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - AutoZoningManager.cs
+  - ZoneSegmentStrip
+  - ScanRoadFrontierForZoneable
+  - SelectZoneTypeForRing
+  - ia/specs/simulation-system.md
+notes: |
+  **Root cause:** segment-driven strip zoning in `AutoZoningManager.ZoneSegmentStrip` skipped endpoints (`k=0` / `k=L-1`); segments popped after single pass; no fallback rescan once **road reservation** (axial corridor + extension cells, geo §13.9 rule 4) relaxed. Ruled out stale **road cache**, `TerrainManager.RestoreTerrainForCell` regression, tick ordering. **Fix A:** extended `k` loop bound to `L-1`, guarded `k=0` for true endpoints (no T-joint double-zone). **Fix B:** added `ScanRoadFrontierForZoneable` post-tick pass iterating `GetRoadEdgePositions()` cardinal neighbors, applying `CanZoneCell` under `MaxZonedCellsPerTickSafetyCap` + **growth budget**. Refactored `SelectZoneTypeForSegment` → `SelectZoneTypeForRing(UrbanRing)` via `urbanCentroidService.GetUrbanRing`. Reservation cells still untouchable per §13.9 invariant. Simulation-system spec updated.
+acceptance: |
+  endpoint cells covered; historical reservation cells rescanned once freed; `npm run unity:compile-check` exit 0; `npm run validate:all` clean (TECH-119 dead-spec failure pre-existing, unrelated).
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**) (2026-04-14)
+    - Type: bug (behavior / regression suspicion)
+    - Files: `AutoZoningManager.cs` (`ZoneSegmentStrip`, `ScanRoadFrontierForZoneable`, `SelectZoneTypeForRing`), `ia/specs/simulation-system.md`
+    - Spec: (removed after closure)
+    - Notes: **Root cause:** segment-driven strip zoning in `AutoZoningManager.ZoneSegmentStrip` skipped endpoints (`k=0` / `k=L-1`); segments popped after single pass; no fallback rescan once **road reservation** (axial corridor + extension cells, geo §13.9 rule 4) relaxed. Ruled out stale **road cache**, `TerrainManager.RestoreTerrainForCell` regression, tick ordering. **Fix A:** extended `k` loop bound to `L-1`, guarded `k=0` for true endpoints (no T-joint double-zone). **Fix B:** added `ScanRoadFrontierForZoneable` post-tick pass iterating `GetRoadEdgePositions()` cardinal neighbors, applying `CanZoneCell` under `MaxZonedCellsPerTickSafetyCap` + **growth budget**. Refactored `SelectZoneTypeForSegment` → `SelectZoneTypeForRing(UrbanRing)` via `urbanCentroidService.GetUrbanRing`. Reservation cells still untouchable per §13.9 invariant. Simulation-system spec updated.
+    - Acceptance: endpoint cells covered; historical reservation cells rescanned once freed; `npm run unity:compile-check` exit 0; `npm run validate:all` clean (TECH-119 dead-spec failure pre-existing, unrelated).
+    - Depends on: none

@@ -1,0 +1,26 @@
+id: TECH-130
+type: tooling / scaffold
+title: Next.js 14+ App Router scaffold under `web/` (2026-04-14, superseded)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed — superseded)
+files: 
+  - web/**
+notes: |
+  superseded by **TECH-136** — stage compress (1.1). Scaffold scope carried forward intact into consolidated issue.
+acceptance: |
+  superseded — see **TECH-136** Acceptance.
+depends_on: 
+  - TECH-129
+depends_on_raw: "**TECH-129**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-130** — Next.js 14+ App Router scaffold under `web/` (2026-04-14, superseded)
+    - Type: tooling / scaffold
+    - Files: `web/**` (new subtree)
+    - Spec: (removed — superseded)
+    - Notes: superseded by **TECH-136** — stage compress (1.1). Scaffold scope carried forward intact into consolidated issue.
+    - Acceptance: superseded — see **TECH-136** Acceptance.
+    - Depends on: **TECH-129**

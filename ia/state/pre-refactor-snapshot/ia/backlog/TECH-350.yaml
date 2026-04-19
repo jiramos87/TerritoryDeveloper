@@ -1,0 +1,29 @@
+id: TECH-350
+type: documentation
+title: Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)
+priority: medium
+status: open
+section: Distribution program — Full-Game MVP Bucket 10
+spec: ia/projects/TECH-350.md
+files:
+  - ia/specs/glossary.md
+notes: |
+  Append four rows to `ia/specs/glossary.md` — **BuildInfo ScriptableObject** (ref `Assets/Scripts/Runtime/Distribution/BuildInfo.cs`), **Release manifest (`latest.json`)** (forward-ref Stage 2.2 `web/public/download/latest.json`), **Update notifier** (forward-ref Stage 2.3 `Assets/Scripts/UI/Distribution/UpdateNotifier.cs`), **Unsigned installer tier** (forward-ref Stage 2.1 `tools/scripts/package-mac.sh` + `package-win.ps1`). Follow glossary authoring rules in `ia/rules/terminology-consistency-authoring.md`. Phase 3 single-task by design — single-doc atomic terminology landing; splitting into 4 issues multiplies orchestration cost w/ zero parallelism gain.
+acceptance: |
+  Four rows appended in alpha order; spec references present; forward-refs cite Stage id + filepath; `npm run validate:all` green (glossary lint passes).
+depends_on:
+  - TECH-347
+depends_on_raw: TECH-347 (BuildInfo type must exist before glossary row references it — soft gate; rows reference forward Stage 2.x paths without filed ids so forward-refs are OK)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-350** — Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)
+    - Type: documentation
+    - Files: `ia/specs/glossary.md`
+    - Spec: `ia/projects/TECH-350.md`
+    - Notes: Append rows — **BuildInfo ScriptableObject**, **Release manifest (`latest.json`)**, **Update notifier**, **Unsigned installer tier**. Forward-ref Stage 2.1 / 2.2 / 2.3. Follow `ia/rules/terminology-consistency-authoring.md`.
+    - Acceptance: four rows in alpha order; spec refs + forward-refs present; `validate:all` green.
+    - Depends on: TECH-347
+    - Related: TECH-347, TECH-348, TECH-349
+parent_plan: ia/projects/distribution-master-plan.md
+task_key: T1.1.4

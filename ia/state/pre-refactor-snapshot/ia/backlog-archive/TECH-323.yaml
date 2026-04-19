@@ -1,0 +1,27 @@
+id: TECH-323
+type: infrastructure / MCP tooling
+title: Extract shared lint core `backlog-record-schema.ts` (Stage 1.2 Phase 1)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-17)
+spec: (removed after closure)
+files:
+  - tools/mcp-ia-server/src/parser/backlog-record-schema.ts
+  - tools/validate-backlog-yaml.ts
+notes: |
+  Created `tools/mcp-ia-server/src/parser/backlog-record-schema.ts` exporting pure `validateBacklogRecord(yamlBody: string): { ok, errors, warnings }` + rule-id constants (`E_MISSING_FIELD`, `E_BAD_ID_FORMAT`, `E_BAD_STATUS`, `E_EMPTY_DEPENDS_ON_RAW`). Consolidated `parseYamlScalars` single canonical parser. Renamed `validate-backlog-yaml.mjs` → `.ts` + updated `package.json` to run via `npx tsx` (zero-config — avoids stale-dist trap since `validate:backlog-yaml` runs before `compute-lib:build` in `validate:all`). Unblocks TECH-324 MCP tool.
+acceptance: |
+  `backlog-record-schema.ts` exports pure `validateBacklogRecord` function; `validate-backlog-yaml.ts` imports + delegates; no regression on existing validator fixtures; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-324
+  - TECH-325
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-323** — Extract shared lint core `backlog-record-schema.ts` (Stage 1.2 Phase 1)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/parser/backlog-record-schema.ts`, `tools/validate-backlog-yaml.ts`
+    - Notes: Extracted pure `validateBacklogRecord` + rule-id constants; single canonical yaml parser; validator renamed `.mjs` → `.ts` + run via `npx tsx`. Unblocks TECH-324.
+    - Acceptance: shared core exports pure function; validator delegates; no fixture regression; `npm run validate:all` green.
+    - Related: TECH-324, TECH-325

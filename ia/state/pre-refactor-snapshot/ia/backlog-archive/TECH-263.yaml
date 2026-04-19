@@ -1,0 +1,25 @@
+id: TECH-263
+type: web platform / API stub
+title: "`/api/auth/login` + `/api/auth/register` POST stub handlers (501) (Stage 5.2 Phase 2) (2026-04-17)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/app/api/auth/login/route.ts
+  - web/app/api/auth/register/route.ts
+notes: |
+  Each handler exports `export async function POST(_req: Request): Promise<Response>` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`. TS-typed; zero non-Web imports; no DB / drizzle / auth-lib deps. `Response.json()` (Web standard) over `NextResponse.json()` — no Next-specific cookie / header handling at stub stage. HTTP 501 status semantically signals "endpoint exists but unimplemented" — distinguishes from 404 / 405 for middleware smoke.
+acceptance: |
+  Both routes return HTTP 501 + `{"error":"Not Implemented"}` JSON; `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-263** — `/api/auth/login` + `/api/auth/register` POST stub handlers (501) (Stage 5.2 Phase 2) (2026-04-17)
+    - Type: web platform / API stub
+    - Files: `web/app/api/auth/login/route.ts` (new), `web/app/api/auth/register/route.ts` (new)
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Each handler exports `export async function POST(_req: Request): Promise<Response>` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`. TS-typed; zero non-Web imports; no DB / drizzle / auth-lib deps. `Response.json()` (Web standard) over `NextResponse.json()` — no Next-specific cookie / header handling at stub stage. HTTP 501 status semantically signals "endpoint exists but unimplemented" — distinguishes from 404 / 405 for middleware smoke.
+    - Acceptance: Both routes return HTTP 501 + `{"error":"Not Implemented"}` JSON; `cd web && npm run typecheck` green; `npm run validate:all` exit 0.

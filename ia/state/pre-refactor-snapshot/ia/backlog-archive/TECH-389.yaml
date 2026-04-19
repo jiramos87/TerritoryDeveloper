@@ -1,0 +1,27 @@
+id: TECH-389
+type: mcp / auth
+title: "**MCP** — caller allowlist + checkCaller gate (Stage 2.1 T2.1.2)"
+priority: medium
+status: open
+section: IA infrastructure
+spec: ia/projects/TECH-389.md
+files:
+  - tools/mcp-ia-server/src/auth/caller-allowlist.ts
+notes: |
+  Author `tools/mcp-ia-server/src/auth/caller-allowlist.ts`: per-tool allowlist map `Record<string, string[]>` covering all mutation + authorship tools from Steps 3–4 (pre-populate w/ known callers per exploration §3.8); export `checkCaller(tool, caller_agent)` — throws `{ code: "unauthorized_caller", message, hint }` when caller missing or not in allowlist. Read-only tools skip gate entirely. Gate reused by Stage 4.1 / 4.2 / 5.1 mutation tools. Stage 2.1 T2.1.2 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  `caller-allowlist.ts` exports `checkCaller` + per-tool map; unauthorized caller throws typed error w/ hint; read-only tools bypass gate; typecheck green; `validate:all` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-388
+  - TECH-390
+  - TECH-391
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-389** — **MCP** — caller allowlist + checkCaller gate (Stage 2.1 T2.1.2)
+    - Type: mcp / auth
+    - Files: `tools/mcp-ia-server/src/auth/caller-allowlist.ts`
+    - Notes: Per-tool allowlist map + `checkCaller(tool, caller_agent)`; throws `unauthorized_caller`. Pre-populated w/ Step 3–4 known callers.
+    - Acceptance: exports present; unauthorized throws typed error; read-only bypass; `validate:all` green.
+    - Related: TECH-388, TECH-390, TECH-391

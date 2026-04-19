@@ -1,0 +1,27 @@
+id: TECH-273
+type: audio / DSP kernel
+title: Allpass filter kernel in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 2) (2026-04-17)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipFxChain.cs
+  - Assets/Tests/EditMode/Audio/BlipFxChainTests.cs
+notes: |
+  Replace Stage 5.1 Allpass-case passthrough w/ Schroeder form `float v = delayBuf[(writePos - D + bufLen) % bufLen]; delayBuf[writePos] = x + p1 * v; float y = v - p1 * delayBuf[writePos]; writePos = (writePos + 1) % bufLen; x = y`. No `p1` clamp — Schroeder stable for `|g| < 1` (unlike Comb). EditMode test `BlipFxChainTests.Allpass_FlatMagnitude`: 1024 samples pink noise through allpass, assert `RMS_out ≈ RMS_in ± 15%` (ideal allpass = flat magnitude response; phase-only modification). Zero managed alloc.
+acceptance: |
+  Allpass kernel present; RMS-flat test passes within ±15%; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-271
+depends_on_raw: "**TECH-271**."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-273** — Allpass filter kernel in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 2) (2026-04-17)
+    - Type: audio / DSP kernel
+    - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Tests/EditMode/Audio/BlipFxChainTests.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Replace Stage 5.1 Allpass-case passthrough w/ Schroeder form `float v = delayBuf[(writePos - D + bufLen) % bufLen]; delayBuf[writePos] = x + p1 * v; float y = v - p1 * delayBuf[writePos]; writePos = (writePos + 1) % bufLen; x = y`. No `p1` clamp — Schroeder stable for `|g| < 1` (unlike Comb). EditMode test `BlipFxChainTests.Allpass_FlatMagnitude`: 1024 samples pink noise through allpass, assert `RMS_out ≈ RMS_in ± 15%` (ideal allpass = flat magnitude response; phase-only modification). Zero managed alloc.
+    - Acceptance: Allpass kernel present; RMS-flat test passes within ±15%; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+    - Depends on: **TECH-271**.

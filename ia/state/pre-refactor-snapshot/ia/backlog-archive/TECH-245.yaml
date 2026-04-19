@@ -1,0 +1,26 @@
+id: TECH-245
+type: audio settings / persistence
+title: "`BlipBootstrap.SfxMutedKey` + boot-time mute restore (Stage 4.2 Phase 2) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipBootstrap.cs
+notes: |
+  `public const string SfxMutedKey = "BlipSfxMuted";` already landed at `BlipBootstrap.cs` line 33 alongside TECH-243 consumer — Phase 1 verify-only (no re-declare to avoid double-definition + compile break). Inserted 2-line mute-restore block into `BlipBootstrap.Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (current line 58) and before `if (blipMixer == null)` null guard — `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` clamps to -80 dB ahead of `blipMixer.SetFloat(SfxVolumeParam, db)` apply. Cold-start guarantee: player who muted in prior session hears silence from first Blip play; no unmuted click burst before Options opens + `BlipVolumeController.OnEnable` primes toggle. Existing `Debug.Log($"[Blip] SfxVolume bound headless: {db} dB")` naturally reflects -80 on mute — no extra log. Invariants #3 (`Awake`-only, no per-frame read) + #4 (no new singleton — static const on existing MonoBehaviour) preserved. Satisfies Stage 4.2 Exit bullet "`BlipBootstrap.cs` — new `public const string SfxMutedKey` constant; `Awake` reads `PlayerPrefs.GetInt(SfxMutedKey, 0)` after volume read; if muted, overrides `db = -80f` before `blipMixer.SetFloat`".
+acceptance: |
+  `SfxMutedKey` constant single-declaration; `Awake` reads mute key after dB read; muted path clamps db = -80f before mixer apply; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-243
+depends_on_raw: "**TECH-243** (archived — consumer reads `SfxMutedKey` via `BlipBootstrap` constant)."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-245** — `BlipBootstrap.SfxMutedKey` + boot-time mute restore (Stage 4.2 Phase 2) (2026-04-16)
+    - Type: audio settings / persistence
+    - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: `public const string SfxMutedKey = "BlipSfxMuted";` already landed at `BlipBootstrap.cs` line 33 alongside TECH-243 consumer — Phase 1 verify-only (no re-declare to avoid double-definition + compile break). Inserted 2-line mute-restore block into `BlipBootstrap.Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (current line 58) and before `if (blipMixer == null)` null guard — `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` clamps to -80 dB ahead of `blipMixer.SetFloat(SfxVolumeParam, db)` apply. Cold-start guarantee: player who muted in prior session hears silence from first Blip play; no unmuted click burst before Options opens + `BlipVolumeController.OnEnable` primes toggle. Existing `Debug.Log($"[Blip] SfxVolume bound headless: {db} dB")` naturally reflects -80 on mute — no extra log. Invariants #3 (`Awake`-only, no per-frame read) + #4 (no new singleton — static const on existing MonoBehaviour) preserved. Satisfies Stage 4.2 Exit bullet "`BlipBootstrap.cs` — new `public const string SfxMutedKey` constant; `Awake` reads `PlayerPrefs.GetInt(SfxMutedKey, 0)` after volume read; if muted, overrides `db = -80f` before `blipMixer.SetFloat`".
+    - Acceptance: `SfxMutedKey` constant single-declaration; `Awake` reads mute key after dB read; muted path clamps db = -80f before mixer apply; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+    - Depends on: **TECH-243** (archived — consumer reads `SfxMutedKey` via `BlipBootstrap` constant).

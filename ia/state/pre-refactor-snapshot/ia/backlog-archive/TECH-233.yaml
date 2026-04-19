@@ -1,0 +1,27 @@
+id: TECH-233
+type: web / dashboard
+title: Per-plan completion `StatBar` on dashboard (Stage 4.2 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist skipped both sections empty; Decision Log + Lessons live in git history only)
+files: 
+  - web/app/dashboard/page.tsx
+  - web/components/StatBar.tsx
+notes: |
+  Extended `web/app/dashboard/page.tsx` plan render loop — added module-local `DONE_STATUSES: ReadonlySet<TaskStatus> = new Set(['Done (archived)', 'Done'])` (both terminal forms — single-string compare under-counts unarchived plans); per plan derived `totalCount = plan.allTasks.length` + `completedCount = plan.allTasks.filter(t => DONE_STATUSES.has(t.status)).length` + `statBarLabel = \`${completedCount} / ${totalCount} done\``; rendered `<StatBar label value max />` in plan `<h2>` heading `<div>` next to `BadgeChip` wrapped in `flex-1 min-w-[12rem] max-w-[24rem]`. Passes raw `value` + `max` (not pre-divided pct) — StatBar owns `[0,100]` clamp + `max ≤ 0 → 0` + `(v/m)*100` per TECH-232 contract. Counts from unfiltered `plan.allTasks` — `filterPlans` prunes `plan.steps[*].stages[*].tasks` only, so status/phase chips do not skew plan-level ratio. `plan-loader.ts` + `plan-loader-types.ts` + `parse.mjs` byte-identical. Feeds Stage 4.2 Phase 2; TECH-234 adds per-step row + README §Components docs.
+acceptance: |
+  Per-plan `StatBar` visible every plan section; label `"{done} / {total} done"`; raw `value` + `max` passed; `totalCount === 0` renders without NaN; filter chips leave plan ratio unchanged; plan-loader files untouched; `npm run validate:all` green.
+depends_on: 
+  - TECH-232
+depends_on_raw: "**TECH-232** (archived — soft)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-233** — Per-plan completion `StatBar` on dashboard (Stage 4.2 Phase 2) (2026-04-16)
+    - Type: web / dashboard
+    - Files: `web/app/dashboard/page.tsx`, `web/components/StatBar.tsx`
+    - Spec: (removed at closeout — journal persist skipped both sections empty; Decision Log + Lessons live in git history only)
+    - Notes: Extended `web/app/dashboard/page.tsx` plan render loop — added module-local `DONE_STATUSES: ReadonlySet<TaskStatus> = new Set(['Done (archived)', 'Done'])` (both terminal forms — single-string compare under-counts unarchived plans); per plan derived `totalCount = plan.allTasks.length` + `completedCount = plan.allTasks.filter(t => DONE_STATUSES.has(t.status)).length` + `statBarLabel = \`${completedCount} / ${totalCount} done\``; rendered `<StatBar label value max />` in plan `<h2>` heading `<div>` next to `BadgeChip` wrapped in `flex-1 min-w-[12rem] max-w-[24rem]`. Passes raw `value` + `max` (not pre-divided pct) — StatBar owns `[0,100]` clamp + `max ≤ 0 → 0` + `(v/m)*100` per TECH-232 contract. Counts from unfiltered `plan.allTasks` — `filterPlans` prunes `plan.steps[*].stages[*].tasks` only, so status/phase chips do not skew plan-level ratio. `plan-loader.ts` + `plan-loader-types.ts` + `parse.mjs` byte-identical. Feeds Stage 4.2 Phase 2; TECH-234 adds per-step row + README §Components docs.
+    - Acceptance: Per-plan `StatBar` visible every plan section; label `"{done} / {total} done"`; raw `value` + `max` passed; `totalCount === 0` renders without NaN; filter chips leave plan ratio unchanged; plan-loader files untouched; `npm run validate:all` green.
+    - Depends on: **TECH-232** (archived — soft)

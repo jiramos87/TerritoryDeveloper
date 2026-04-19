@@ -1,0 +1,25 @@
+id: TECH-12
+type: planning / documentation
+title: "Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)"
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: 
+  - ia/specs/isometric-geography-system.md
+  - BACKLOG.md
+  - ARCHITECTURE.md
+notes: |
+  **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
+acceptance: ""
+depends_on: 
+  - FEAT-37
+depends_on_raw: nothing (blocks structured FEAT-37 execution)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
+    - Type: planning / documentation
+    - Files: `ia/specs/isometric-geography-system.md` (§12), `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
+    - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
+    - Depends on: nothing (blocks structured FEAT-37 execution)

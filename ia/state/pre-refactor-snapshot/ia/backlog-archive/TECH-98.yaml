@@ -1,0 +1,25 @@
+id: TECH-98
+type: infrastructure / asset
+title: "`BlipMixer.mixer` asset + three groups + exposed `SfxVolume` param (2026-04-13)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Audio/BlipMixer.mixer
+notes: |
+  Stage 1.1 Phase 1 of Blip audio program. Authored `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer` — binary YAML asset). Three child groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) routed through master. Master `SfxVolume` dB param exposed via `Exposed Parameters` panel (default 0 dB). Satisfies first Stage 1.1 exit criterion — mixer asset + routing surface ready for Step 2 player pool + router to consume. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1.
+acceptance: |
+  asset + three groups + exposed param committed; `validate:all` green
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-98** — `BlipMixer.mixer` asset + three groups + exposed `SfxVolume` param (2026-04-13)
+    - Type: infrastructure / asset
+    - Files: `Assets/Audio/BlipMixer.mixer`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.1 Phase 1 of Blip audio program. Authored `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer` — binary YAML asset). Three child groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) routed through master. Master `SfxVolume` dB param exposed via `Exposed Parameters` panel (default 0 dB). Satisfies first Stage 1.1 exit criterion — mixer asset + routing surface ready for Step 2 player pool + router to consume. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1.
+    - Acceptance: asset + three groups + exposed param committed; `validate:all` green
+    - Depends on: none

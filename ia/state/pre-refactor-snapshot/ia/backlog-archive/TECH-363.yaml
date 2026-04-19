@@ -1,0 +1,29 @@
+id: TECH-363
+type: infrastructure / MCP tooling
+title: Extend `ParsedBacklogIssue` v2 shape (Stage 3.1 Phase 1)
+priority: medium
+status: open
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-363.md
+files:
+  - tools/mcp-ia-server/src/parser/types.ts
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+notes: |
+  Add 9 locator members to `ParsedBacklogIssue`: `parent_plan: string | null`, `task_key: string | null`, `step: number | null`, `stage: string | null`, `phase: number | null`, `router_domain: string | null`, `surfaces: string[]`, `mcp_slices: string[]`, `skill_hints: string[]`. All nullable — keeps markdown-fallback path compilable. No behavior change yet — loader mapping lands in TECH-364. Source: Step 3 Stage 3.1 Phase 1 of `ia/projects/backlog-yaml-mcp-alignment-master-plan.md`.
+acceptance: |
+  9 new members on `ParsedBacklogIssue`; defaults match nullability contract; typecheck green across MCP server; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-364
+  - TECH-365
+  - TECH-366
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-363** — Extend `ParsedBacklogIssue` v2 shape (Stage 3.1 Phase 1)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/parser/types.ts`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`
+    - Spec: `ia/projects/TECH-363.md`
+    - Notes: Add 9 locator fields to `ParsedBacklogIssue` (`parent_plan`, `task_key`, `step`, `stage`, `phase`, `router_domain`, `surfaces`, `mcp_slices`, `skill_hints`). Nullable throughout. No loader mapping yet.
+    - Acceptance: 9 members present; typecheck green; `validate:all` green.
+    - Related: TECH-364, TECH-365, TECH-366

@@ -1,0 +1,28 @@
+id: TECH-208
+type: web (SEO + access gate)
+title: Dashboard Q14 access gate (`robots.ts` disallow + nav/sitemap audit) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+files: 
+  - web/app/robots.ts
+  - web/app/sitemap.ts
+  - web/app/layout.tsx
+notes: |
+  Stage 3.2 Phase 2 / T3.2.4. Baseline already contained `/dashboard` in `robots.ts` disallow `['/design','/dashboard']` (landed alongside TECH-205); Phase 1 degraded to verification + contract lock. Sitemap audit confirmed no `/dashboard` entry — page lives under `web/app/dashboard/` not `web/content/pages/` so auto-scan skips. Layout footer + `web/content/**` grep clean. Build emitted `Disallow: /dashboard` in `.next/` robots artifact. Decision Log — gate layered as `unlinked + robots disallow + internal banner` until Step 4 portal auth (accepts obscure URL not true access control); `/dashboard` intentionally outside MDX content tree so sitemap scan never lists it (no opt-out flag needed).
+acceptance: |
+  `robots.txt` build artifact emits `Disallow: /dashboard`; sitemap + nav audited clean; `validate:all` + `validate:web` green.
+depends_on: 
+  - TECH-205
+depends_on_raw: "**TECH-205** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-208** — Dashboard Q14 access gate (`robots.ts` disallow + nav/sitemap audit) (2026-04-15)
+    - Type: web (SEO + access gate)
+    - Files: `web/app/robots.ts`, `web/app/sitemap.ts`, `web/app/layout.tsx`
+    - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+    - Notes: Stage 3.2 Phase 2 / T3.2.4. Baseline already contained `/dashboard` in `robots.ts` disallow `['/design','/dashboard']` (landed alongside TECH-205); Phase 1 degraded to verification + contract lock. Sitemap audit confirmed no `/dashboard` entry — page lives under `web/app/dashboard/` not `web/content/pages/` so auto-scan skips. Layout footer + `web/content/**` grep clean. Build emitted `Disallow: /dashboard` in `.next/` robots artifact. Decision Log — gate layered as `unlinked + robots disallow + internal banner` until Step 4 portal auth (accepts obscure URL not true access control); `/dashboard` intentionally outside MDX content tree so sitemap scan never lists it (no opt-out flag needed).
+    - Acceptance: `robots.txt` build artifact emits `Disallow: /dashboard`; sitemap + nav audited clean; `validate:all` + `validate:web` green.
+    - Depends on: **TECH-205** (archived)

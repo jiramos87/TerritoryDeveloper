@@ -1,0 +1,27 @@
+id: TECH-213
+type: web (docs / legacy handoff)
+title: Legacy `docs/progress.html` live dashboard banner link (2026-04-15)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-15)
+spec: (removed at closeout — journal persisted Decision Log; banner template edit in `render.mjs`)
+files: 
+  - tools/progress-tracker/render.mjs
+  - docs/progress.html
+notes: |
+  Stage 3.3 Phase 1 / T3.3.1. Inserted inline-styled banner `<div>` in `render.mjs` template immediately after `<body>` before `${header}`; regen via `npm run progress` wrote updated `docs/progress.html`. Href exact `https://web-nine-wheat-35.vercel.app/dashboard`. Decision Log — edited `render.mjs` template (not hand-patched HTML) to survive regen; banner stays passive link (no auto-redirect) pending TECH-214 deprecation trigger.
+acceptance: |
+  banner visible at top of generated `docs/progress.html`; href exact; inline style only; deterministic regen; `validate:all` green.
+depends_on: 
+  - TECH-208
+depends_on_raw: "**TECH-208** (archived — dashboard access gate)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-213** — Legacy `docs/progress.html` live dashboard banner link (2026-04-15)
+    - Type: web (docs / legacy handoff)
+    - Files: `tools/progress-tracker/render.mjs`, `docs/progress.html`
+    - Spec: (removed at closeout — journal persisted Decision Log; banner template edit in `render.mjs`)
+    - Notes: Stage 3.3 Phase 1 / T3.3.1. Inserted inline-styled banner `<div>` in `render.mjs` template immediately after `<body>` before `${header}`; regen via `npm run progress` wrote updated `docs/progress.html`. Href exact `https://web-nine-wheat-35.vercel.app/dashboard`. Decision Log — edited `render.mjs` template (not hand-patched HTML) to survive regen; banner stays passive link (no auto-redirect) pending TECH-214 deprecation trigger.
+    - Acceptance: banner visible at top of generated `docs/progress.html`; href exact; inline style only; deterministic regen; `validate:all` green.
+    - Depends on: **TECH-208** (archived — dashboard access gate)

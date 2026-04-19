@@ -1,0 +1,27 @@
+id: TECH-385
+type: infrastructure / docs
+title: Extend frontmatter schema doc (Stage 3.2 Phase 1)
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-385.md
+files:
+  - ia/templates/frontmatter-schema.md
+notes: |
+  Edit `ia/templates/frontmatter-schema.md` — document `parent_plan` + `task_key` as optional-until-Step-6 fields; valid format (`task_key` regex `^T\d+\.\d+(\.\d+)?$`). Reference exploration source `docs/parent-plan-locator-fields-exploration.md`. Source: Step 3 Stage 3.2 Phase 1.
+acceptance: |
+  `frontmatter-schema.md` documents both fields + regex + optional-until-Step-6 status; `validate:all` green.
+depends_on:
+  - TECH-384
+depends_on_raw: TECH-384 (template mirror — soft)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-385** — Extend frontmatter schema doc (Stage 3.2 Phase 1)
+    - Type: infrastructure / docs
+    - Files: `ia/templates/frontmatter-schema.md`
+    - Spec: `ia/projects/TECH-385.md`
+    - Notes: document `parent_plan` + `task_key` as optional-until-Step-6 fields w/ regex `^T\d+\.\d+(\.\d+)?$`; ref exploration doc.
+    - Acceptance: schema doc updated w/ both fields + regex; `validate:all` green.
+    - Depends on: TECH-384 (template mirror — soft)
+    - Related: TECH-384, TECH-386, TECH-387

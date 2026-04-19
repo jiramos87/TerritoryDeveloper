@@ -1,0 +1,32 @@
+id: TECH-63
+type: documentation / agent enablement (**Cursor Skill** + template edits)
+title: "**Spec pipeline** layer **C**: Cursor **Skills** + **project spec** template (**test contracts**, workflow steps) (2026-04-04)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — **glossary** **territory-ia spec-pipeline layer C (TECH-63)**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) **§7b**; [`ia/skills/README.md`](ia/skills/README.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-62**; this row)
+files: 
+  - ia/skills/project-spec-kickoff/SKILL.md
+  - ia/skills/project-spec-implement/SKILL.md
+  - ia/skills/project-implementation-validation/SKILL.md
+  - ia/skills/project-spec-close/SKILL.md
+  - ia/skills/project-new/SKILL.md
+  - ia/templates/project-spec-template.md
+  - ia/projects/PROJECT-SPEC-STRUCTURE.md
+  - ia/skills/README.md
+  - AGENTS.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **`## 7b. Test Contracts`** in template; **Skills** — **`depends_on_status`** preflight, **`router_for_task`** **`files`**, **Impact preflight**, **Phase exit** / **rollback**; **`AGENTS.md`** **§7b** pointer. **Does not** extend **`project_spec_closeout_digest`** for **§7b** — follow-up **BACKLOG** row if machine-read **test contracts** is required.
+acceptance: ""
+depends_on: 
+  - TECH-62
+depends_on_raw: "**TECH-62** **§ Completed** (soft)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-63** — **Spec pipeline** layer **C**: Cursor **Skills** + **project spec** template (**test contracts**, workflow steps) (2026-04-04)
+    - Type: documentation / agent enablement (**Cursor Skill** + template edits)
+    - Files: `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-implementation-validation/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/project-new/SKILL.md`; `ia/templates/project-spec-template.md`; `ia/projects/PROJECT-SPEC-STRUCTURE.md`; `ia/skills/README.md`; [`AGENTS.md`](AGENTS.md)
+    - Spec: (removed after closure — **glossary** **territory-ia spec-pipeline layer C (TECH-63)**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) **§7b**; [`ia/skills/README.md`](ia/skills/README.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-62**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **`## 7b. Test Contracts`** in template; **Skills** — **`depends_on_status`** preflight, **`router_for_task`** **`files`**, **Impact preflight**, **Phase exit** / **rollback**; **`AGENTS.md`** **§7b** pointer. **Does not** extend **`project_spec_closeout_digest`** for **§7b** — follow-up **BACKLOG** row if machine-read **test contracts** is required.
+    - Depends on: **TECH-62** **§ Completed** (soft)

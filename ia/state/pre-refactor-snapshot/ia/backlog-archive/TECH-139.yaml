@@ -1,0 +1,16 @@
+id: TECH-139
+type: unknown
+title: Blip envelope shape + silence tests (2026-04-14)
+priority: medium
+status: closed
+section: ""
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-139** — Blip envelope shape + silence tests (2026-04-14)

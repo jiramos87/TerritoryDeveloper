@@ -1,0 +1,30 @@
+id: TECH-21
+type: technical / data interchange
+title: "**JSON program** (umbrella; charter closed) (2026-04-03)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — **glossary** **JSON program (TECH-21)**; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-40**/**TECH-41**/**TECH-44a**/**TECH-44**; this row)
+files: 
+  - docs/postgres-interchange-patterns.md
+  - projects/json-use-cases-brainstorm.md
+  - ia/specs/glossary.md
+  - docs/mcp-ia-server.md
+  - ARCHITECTURE.md
+  - ia/specs/persistence-system.md
+  - docs/planned-domain-ideas.md
+  - BACKLOG.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** Umbrella phases **TECH-40**/**TECH-41**/**TECH-44a** **§ Completed**; **Save data** format unchanged without a migration issue; charter **Decision Log** and **Open Questions** trace live in **glossary** + durable docs. **Ongoing process:** any **Save data** change needs a tracked migration issue; keep brainstorm FAQ aligned when editing interchange docs. **B2** append-only line log → **TECH-43** (open). **Postgres**/**IA** evolution: **TECH-44** **§ Completed**, **TECH-18**.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-21** — **JSON program** (umbrella; charter closed) (2026-04-03)
+    - Type: technical / data interchange
+    - Files: [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); `ia/specs/glossary.md` — **JSON program (TECH-21)**, **Interchange JSON (artifact)**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); `ia/specs/persistence-system.md`; `docs/planned-domain-ideas.md`; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-40**, **TECH-41**, **TECH-44a**, **TECH-44**
+    - Spec: (removed after closure — **glossary** **JSON program (TECH-21)**; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-40**/**TECH-41**/**TECH-44a**/**TECH-44**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** Umbrella phases **TECH-40**/**TECH-41**/**TECH-44a** **§ Completed**; **Save data** format unchanged without a migration issue; charter **Decision Log** and **Open Questions** trace live in **glossary** + durable docs. **Ongoing process:** any **Save data** change needs a tracked migration issue; keep brainstorm FAQ aligned when editing interchange docs. **B2** append-only line log → **TECH-43** (open). **Postgres**/**IA** evolution: **TECH-44** **§ Completed**, **TECH-18**.
+    - Depends on: none

@@ -1,0 +1,22 @@
+id: TECH-05
+type: refactor
+title: Extract duplicated dependency resolution pattern
+priority: medium
+status: open
+section: Code Health (technical debt)
+spec: ia/projects/TECH-05.md
+files: 
+  - if (X == null) X = FindObjectOfType<X>()
+notes: |
+  Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
+    - Type: refactor
+    - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
+    - Spec: `ia/projects/TECH-05.md`
+    - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.

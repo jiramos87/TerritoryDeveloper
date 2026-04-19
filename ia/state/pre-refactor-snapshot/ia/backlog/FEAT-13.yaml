@@ -1,0 +1,21 @@
+id: FEAT-13
+type: feature (new system)
+title: Fire / Fire risk / Firefighters
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - CityStats.cs
+notes: |
+  Fire risk and firefighter service system.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-13** — Fire / Fire risk / Firefighters
+    - Type: feature (new system)
+    - Files: new managers + `CityStats.cs`
+    - Notes: Fire risk and firefighter service system.

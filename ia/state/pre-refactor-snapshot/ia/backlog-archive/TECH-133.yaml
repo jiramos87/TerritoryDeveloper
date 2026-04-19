@@ -1,0 +1,27 @@
+id: TECH-133
+type: documentation
+title: Author `web/README.md` (local dev, content conventions, caveman exception) (2026-04-14, superseded)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed — superseded)
+files: 
+  - web/README.md
+notes: |
+  superseded by **TECH-136** — stage compress (1.1). README authoring scope folded into consolidated issue.
+acceptance: |
+  superseded — see **TECH-136** Acceptance.
+depends_on: 
+  - TECH-130
+  - TECH-131
+depends_on_raw: "**TECH-130**, **TECH-131**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-133** — Author `web/README.md` (local dev, content conventions, caveman exception) (2026-04-14, superseded)
+    - Type: documentation
+    - Files: `web/README.md` (new)
+    - Spec: (removed — superseded)
+    - Notes: superseded by **TECH-136** — stage compress (1.1). README authoring scope folded into consolidated issue.
+    - Acceptance: superseded — see **TECH-136** Acceptance.
+    - Depends on: **TECH-130**, **TECH-131**

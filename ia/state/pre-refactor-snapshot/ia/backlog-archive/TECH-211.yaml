@@ -1,0 +1,28 @@
+id: TECH-211
+type: infrastructure / audio authoring
+title: MixerGroup refs + BlipCatalog.entries[] wiring (Stage 3.1 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+files: 
+  - Assets/Audio/Blip/Patches/*.asset
+  - Assets/Prefabs/Audio/BlipBootstrap.prefab
+notes: |
+  assigned `mixerGroup` ref on all 10 **Blip patch** SOs per exploration §14 routing (UI pair → `Blip-UI`; Tool + World pair → `Blip-World`; Eco pair → `Blip-Eco`; Sys → `Blip-Sys`). Populated `BlipCatalog.entries[]` MonoBehaviour on `BlipBootstrap.prefab` catalog child — 10 `BlipPatchEntry` rows (`BlipId` + `BlipPatch` SO ref), no null refs, no duplicate ids. Confirmed `catalogSlot` + `playerSlot` `Transform` fields on root `BlipBootstrap` point to child GOs hosting `BlipCatalog` + `BlipPlayer` MonoBehaviours. Decision Log — catalog is MonoBehaviour on prefab child (not standalone SO) so wiring lives on prefab; patch SO canonical path `Assets/Audio/Blip/Patches/` (not `Assets/Audio/BlipPatches/`); slot typing is `Transform` so acceptance requires both Transform assignment + component presence on child GO.
+acceptance: |
+  10 SOs carry non-null `mixerGroup`; `entries[]` size == 10 w/ no null refs; prefab slots populated; `npm run unity:compile-check` green.
+depends_on: 
+  - TECH-209
+  - TECH-210
+depends_on_raw: "**TECH-209** (archived), **TECH-210** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-211** — MixerGroup refs + BlipCatalog.entries[] wiring (Stage 3.1 Phase 2) (2026-04-15)
+    - Type: infrastructure / audio authoring
+    - Files: `Assets/Audio/Blip/Patches/*.asset`, `Assets/Prefabs/Audio/BlipBootstrap.prefab`
+    - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+    - Notes: assigned `mixerGroup` ref on all 10 **Blip patch** SOs per exploration §14 routing (UI pair → `Blip-UI`; Tool + World pair → `Blip-World`; Eco pair → `Blip-Eco`; Sys → `Blip-Sys`). Populated `BlipCatalog.entries[]` MonoBehaviour on `BlipBootstrap.prefab` catalog child — 10 `BlipPatchEntry` rows (`BlipId` + `BlipPatch` SO ref), no null refs, no duplicate ids. Confirmed `catalogSlot` + `playerSlot` `Transform` fields on root `BlipBootstrap` point to child GOs hosting `BlipCatalog` + `BlipPlayer` MonoBehaviours. Decision Log — catalog is MonoBehaviour on prefab child (not standalone SO) so wiring lives on prefab; patch SO canonical path `Assets/Audio/Blip/Patches/` (not `Assets/Audio/BlipPatches/`); slot typing is `Transform` so acceptance requires both Transform assignment + component presence on child GO.
+    - Acceptance: 10 SOs carry non-null `mixerGroup`; `entries[]` size == 10 w/ no null refs; prefab slots populated; `npm run unity:compile-check` green.
+    - Depends on: **TECH-209** (archived), **TECH-210** (archived)

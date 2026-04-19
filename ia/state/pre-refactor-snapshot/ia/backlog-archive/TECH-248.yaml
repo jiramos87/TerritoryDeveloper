@@ -1,0 +1,25 @@
+id: TECH-248
+type: web / utility module
+title: "`web/lib/dashboard/filter-params.ts` URL helpers (Stage 4.4 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/lib/dashboard/filter-params.ts
+notes: |
+  Authored `web/lib/dashboard/filter-params.ts` — three named exports: `parseFilterValues(params, key): string[]` (accepts comma-delimited + repeated params, dedupes, returns sorted array; duck-typed `{ getAll }` second arm avoids `ReadonlyURLSearchParams` import to preserve RSC purity), `toggleFilterParam(currentSearch, key, value): string` (add/remove value, re-emits canonical comma-delimited single-param form, returns new query string w/o leading `?`), `clearFiltersHref = '/dashboard'` constant. Empty / whitespace tokens stripped during parse. Zero `fs` / `React` / `fetch` imports — RSC + client safe. Verified via throwaway tsx smoke (not committed — `web/` has no test runner) + `cd web && npm run lint && npm run typecheck && npm run build` green + `npm run validate:all` exit 0.
+acceptance: |
+  three named exports present; helpers handle both comma + repeated forms; canonical output comma-delimited; module pure (zero disallowed imports); `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-248** — `web/lib/dashboard/filter-params.ts` URL helpers (Stage 4.4 Phase 1) (2026-04-16)
+    - Type: web / utility module
+    - Files: `web/lib/dashboard/filter-params.ts`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Authored `web/lib/dashboard/filter-params.ts` — three named exports: `parseFilterValues(params, key): string[]` (accepts comma-delimited + repeated params, dedupes, returns sorted array; duck-typed `{ getAll }` second arm avoids `ReadonlyURLSearchParams` import to preserve RSC purity), `toggleFilterParam(currentSearch, key, value): string` (add/remove value, re-emits canonical comma-delimited single-param form, returns new query string w/o leading `?`), `clearFiltersHref = '/dashboard'` constant. Empty / whitespace tokens stripped during parse. Zero `fs` / `React` / `fetch` imports — RSC + client safe. Verified via throwaway tsx smoke (not committed — `web/` has no test runner) + `cd web && npm run lint && npm run typecheck && npm run build` green + `npm run validate:all` exit 0.
+    - Acceptance: three named exports present; helpers handle both comma + repeated forms; canonical output comma-delimited; module pure (zero disallowed imports); `npm run validate:all` exit 0.
+    - Depends on: none

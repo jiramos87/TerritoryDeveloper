@@ -1,0 +1,29 @@
+id: TECH-304
+type: infrastructure / read-model store
+title: "Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)"
+priority: medium
+status: open
+section: Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
+spec: ia/projects/TECH-304.md
+files:
+  - Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs
+  - Assets/Scripts/Managers/GameManagers/StatKey.cs
+  - Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs
+notes: |
+  Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256 (city scale — dormant scales use 64 in Stage 3.1). API: `Publish(StatKey, float delta)` accumulates running value on tick; `Set(StatKey, float value)` overwrites; `FlushToSeries()` writes current running value to ring entry + resets accumulator (called by `CityStatsFacade.EndTick` in Stage 1.2); `GetScalar(StatKey) → float` returns running value; `GetSeries(StatKey, int windowTicks) → float[]` returns last N ring entries newest-last. No Unity deps — testable in plain NUnit. Composed into `CityStatsFacade` (Stage 1.2) + `RegionStatsFacade` / `CountryStatsFacade` (Stage 3.1). Invariants #4 #6 respected (no singleton, not on `GridManager`).
+acceptance: |
+  `ColumnarStatsStore.cs` compiles; ring capacity configurable w/ default 256; `Publish` / `Set` / `FlushToSeries` / `GetScalar` / `GetSeries` methods match Stage 1.1 Exit signatures; no Unity dependency (plain C#); `npm run unity:compile-check` clean; `npm run validate:all` clean.
+depends_on:
+  - TECH-303
+depends_on_raw: TECH-303 (StatKey enum)
+related:
+  - TECH-303
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)
+    - Type: infrastructure / read-model store
+    - Files: `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new); references `Assets/Scripts/Managers/GameManagers/StatKey.cs`, `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs`
+    - Spec: `ia/projects/TECH-304.md`
+    - Notes: Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256. `Publish(StatKey, float delta)` accumulates, `Set(StatKey, float)` overwrites, `FlushToSeries()` writes running value to ring + resets accumulator, `GetScalar` / `GetSeries` readers. Composed into `CityStatsFacade` (Stage 1.2) + region/country facades (Stage 3.1). Invariants #4 #6 respected.
+    - Acceptance: `ColumnarStatsStore.cs` compiles; ring capacity default 256; methods match Stage 1.1 Exit; no Unity dependency; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+    - Depends on: TECH-303 (StatKey enum)

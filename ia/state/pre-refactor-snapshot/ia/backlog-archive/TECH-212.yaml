@@ -1,0 +1,26 @@
+id: TECH-212
+type: infrastructure / tests
+title: BlipCatalog PlayMode smoke (Stage 3.1 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty; Decision Log preserved in git history)
+files: 
+  - Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs
+notes: |
+  added `[Test] Catalog_AllMvpIds_Resolve_WithMixerGroup()` to `BlipPlayModeSmokeTests`. Reuses TECH-196 `Blip.Tests.PlayMode.asmdef` + TECH-197 `[UnitySetUp]` (loads `MainMenu.unity`, caches `BlipCatalog`). Phase 1 asserts `_catalog.IsReady` + `MixerRouter != null`. Phase 2 iterates 10 MVP `BlipId` values (`UiButtonHover`, `UiButtonClick`, `ToolRoadTick`, `ToolRoadComplete`, `ToolBuildingPlace`, `ToolBuildingDenied`, `WorldCellSelected` + 3 Eco/Sys ids) and asserts `patch != null`, `patch.patchHash != 0`, `mixerRouter.Get(id) != null` with id-named failure messages. No new asmdef / scene / SetUp. Locks SO → catalog → mixer-router chain before Stage 3.2 / 3.3 call sites land. Closes Stage 3.1.
+acceptance: |
+  `[Test]` green in PlayMode runner; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: 
+  - TECH-211
+depends_on_raw: "**TECH-211** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-212** — BlipCatalog PlayMode smoke (Stage 3.1 Phase 2) (2026-04-15)
+    - Type: infrastructure / tests
+    - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+    - Spec: (removed at closeout — journal skipped empty; Decision Log preserved in git history)
+    - Notes: added `[Test] Catalog_AllMvpIds_Resolve_WithMixerGroup()` to `BlipPlayModeSmokeTests`. Reuses TECH-196 `Blip.Tests.PlayMode.asmdef` + TECH-197 `[UnitySetUp]` (loads `MainMenu.unity`, caches `BlipCatalog`). Phase 1 asserts `_catalog.IsReady` + `MixerRouter != null`. Phase 2 iterates 10 MVP `BlipId` values (`UiButtonHover`, `UiButtonClick`, `ToolRoadTick`, `ToolRoadComplete`, `ToolBuildingPlace`, `ToolBuildingDenied`, `WorldCellSelected` + 3 Eco/Sys ids) and asserts `patch != null`, `patch.patchHash != 0`, `mixerRouter.Get(id) != null` with id-named failure messages. No new asmdef / scene / SetUp. Locks SO → catalog → mixer-router chain before Stage 3.2 / 3.3 call sites land. Closes Stage 3.1.
+    - Acceptance: `[Test]` green in PlayMode runner; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: **TECH-211** (archived)

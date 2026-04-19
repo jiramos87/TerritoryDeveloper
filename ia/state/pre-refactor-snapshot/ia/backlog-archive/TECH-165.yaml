@@ -1,0 +1,27 @@
+id: TECH-165
+type: feature / web workspace (public user-facing)
+title: Landing page RSC + MDX content (Stage 2.1 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+files: 
+  - web/app/page.tsx
+  - web/content/pages/landing.mdx
+notes: |
+  Stage 2.1 Phase 2 closer. Replaced Next.js boilerplate in `web/app/page.tsx` w/ async RSC — static-imports `Landing` from `@/content/pages/landing.mdx` (via `@next/mdx`) + awaits `loadMdxPage('landing')` for typed frontmatter. Tokens-only styling via `@/lib/tokens` (zero inline hex, zero hardcoded spacing outside scale). Authored `web/content/pages/landing.mdx` — full-English (caveman exception) w/ hero + tagline + what-this-is + CTA to `/install` + `/history`; frontmatter `title` / `description` / `updated`=`2026-04-15`. Decision Log — Path A (static `.mdx` import via `@next/mdx`) over Path B (`next-mdx-remote` runtime compile): landing slug hardcoded, pipeline already wired, zero new dep; frontmatter surfaced via `loadMdxPage` even though body uses static import (single-source validation + typed access); sibling pages under TECH-166 follow same shape. Pattern documented in `web/README.md` §MDX page pattern for future page authors.
+acceptance: |
+  landing route reachable; MDX rendered via loader; tokens-only styling; `npm run validate:web` green.
+depends_on: 
+  - TECH-163
+depends_on_raw: "**TECH-163** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-165** — Landing page RSC + MDX content (Stage 2.1 Phase 2) (2026-04-15)
+    - Type: feature / web workspace (public user-facing)
+    - Files: `web/app/page.tsx`, `web/content/pages/landing.mdx`
+    - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+    - Notes: Stage 2.1 Phase 2 closer. Replaced Next.js boilerplate in `web/app/page.tsx` w/ async RSC — static-imports `Landing` from `@/content/pages/landing.mdx` (via `@next/mdx`) + awaits `loadMdxPage('landing')` for typed frontmatter. Tokens-only styling via `@/lib/tokens` (zero inline hex, zero hardcoded spacing outside scale). Authored `web/content/pages/landing.mdx` — full-English (caveman exception) w/ hero + tagline + what-this-is + CTA to `/install` + `/history`; frontmatter `title` / `description` / `updated`=`2026-04-15`. Decision Log — Path A (static `.mdx` import via `@next/mdx`) over Path B (`next-mdx-remote` runtime compile): landing slug hardcoded, pipeline already wired, zero new dep; frontmatter surfaced via `loadMdxPage` even though body uses static import (single-source validation + typed access); sibling pages under TECH-166 follow same shape. Pattern documented in `web/README.md` §MDX page pattern for future page authors.
+    - Acceptance: landing route reachable; MDX rendered via loader; tokens-only styling; `npm run validate:web` green.
+    - Depends on: **TECH-163** (archived)

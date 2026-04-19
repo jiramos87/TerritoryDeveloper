@@ -1,0 +1,38 @@
+id: TECH-398
+type: mcp / infrastructure
+title: "**MCP** — wrap spec tools in envelope (Stage 2.2 T2.2.1)"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: ""
+files:
+  - tools/mcp-ia-server/src/tools/list-specs.ts
+  - tools/mcp-ia-server/src/tools/spec-outline.ts
+  - tools/mcp-ia-server/src/tools/spec-section.ts
+  - tools/mcp-ia-server/src/tools/spec-sections.ts
+notes: |
+  Wrap `list-specs.ts`, `spec-outline.ts`, `spec-section.ts`, `spec-sections.ts` in `wrapTool` from Stage 2.1 envelope. Add `payload.meta: { section_id, line_range, truncated, total_chars }` to `spec-section` success response. Convert `spec_not_found` / `section_not_found` string errors to typed `ErrorCode` values. Stage 2.2 Phase 1 T2.2.1 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`. Decision Log persisted to `ia_project_spec_journal`.
+acceptance: |
+  All 4 spec tools return via `wrapTool`; `spec_section` success payload includes `meta: { section_id, line_range, truncated, total_chars }`; typed ErrorCode used on not-found paths; existing tests pass w/ snapshot regen; `validate:all` green (excluding pre-existing `validate:master-plan-status` drift).
+depends_on:
+  - TECH-388
+  - TECH-389
+depends_on_raw: "TECH-388 (envelope + wrapTool — hard dep); TECH-389 (caller gate unused here but ships in same module tree)"
+related:
+  - TECH-399
+  - TECH-400
+  - TECH-401
+  - TECH-402
+  - TECH-403
+  - TECH-404
+  - TECH-405
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-398** — **MCP** — wrap spec tools in envelope (Stage 2.2 T2.2.1) (2026-04-18)
+    - Type: mcp / infrastructure
+    - Files: `tools/mcp-ia-server/src/tools/list-specs.ts`, `spec-outline.ts`, `spec-section.ts`, `spec-sections.ts`
+    - Spec: (removed after closure)
+    - Notes: Wrap 4 spec tools in `wrapTool`; add `payload.meta: { section_id, line_range, truncated, total_chars }` to `spec-section`; typed ErrorCode on `spec_not_found` / `section_not_found`. Decision Log persisted to `ia_project_spec_journal`.
+    - Acceptance: all 4 return via envelope; meta present on spec-section success; tests pass post-snapshot regen; `validate:all` green.
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.2.1

@@ -1,0 +1,28 @@
+id: TECH-167
+type: infrastructure / SEO / web workspace
+title: "`sitemap.ts` + `robots.ts` (Stage 2.1 Phase 3) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - web/app/sitemap.ts
+  - web/app/robots.ts
+  - web/lib/site/base-url.ts
+notes: |
+  Stage 2.1 Phase 3 closer. `web/app/sitemap.ts` default-exports async `sitemap()` → `MetadataRoute.Sitemap`; enumerates `web/content/pages/*.mdx` via `fs.readdir` (Node runtime); maps `landing` → `''`, others → slug; absolute URLs via shared `getBaseUrl()` (trims trailing slash; `NEXT_PUBLIC_SITE_URL` w/ `http://localhost:3000` dev fallback); per-entry `lastModified` from TECH-164 loader frontmatter `updated`. `web/app/robots.ts` default-exports `robots()` → `MetadataRoute.Robots` — `{ userAgent: '*', allow: '/', disallow: ['/design', '/dashboard'] }` + `sitemap: ${getBaseUrl()}/sitemap.xml`. `web/lib/site/base-url.ts` shared helper. Decision Log — App Router file-based convention over static `public/sitemap.xml` or custom route handler (native, build-time MDX scan); absolute URLs from env (SEO requirement + staging swappable); disallow `/design` + `/dashboard` at MVP per master-plan Dashboard obscure-URL gate.
+acceptance: |
+  `/sitemap.xml` 200 w/ 4 `<url>` entries (landing, about, install, history) absolute; `/robots.txt` 200 w/ allow/disallow/Sitemap lines; `npm run validate:web` green.
+depends_on: 
+  - TECH-164
+depends_on_raw: "**TECH-164** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-167** — `sitemap.ts` + `robots.ts` (Stage 2.1 Phase 3) (2026-04-15)
+    - Type: infrastructure / SEO / web workspace
+    - Files: `web/app/sitemap.ts`, `web/app/robots.ts`, `web/lib/site/base-url.ts`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: Stage 2.1 Phase 3 closer. `web/app/sitemap.ts` default-exports async `sitemap()` → `MetadataRoute.Sitemap`; enumerates `web/content/pages/*.mdx` via `fs.readdir` (Node runtime); maps `landing` → `''`, others → slug; absolute URLs via shared `getBaseUrl()` (trims trailing slash; `NEXT_PUBLIC_SITE_URL` w/ `http://localhost:3000` dev fallback); per-entry `lastModified` from TECH-164 loader frontmatter `updated`. `web/app/robots.ts` default-exports `robots()` → `MetadataRoute.Robots` — `{ userAgent: '*', allow: '/', disallow: ['/design', '/dashboard'] }` + `sitemap: ${getBaseUrl()}/sitemap.xml`. `web/lib/site/base-url.ts` shared helper. Decision Log — App Router file-based convention over static `public/sitemap.xml` or custom route handler (native, build-time MDX scan); absolute URLs from env (SEO requirement + staging swappable); disallow `/design` + `/dashboard` at MVP per master-plan Dashboard obscure-URL gate.
+    - Acceptance: `/sitemap.xml` 200 w/ 4 `<url>` entries (landing, about, install, history) absolute; `/robots.txt` 200 w/ allow/disallow/Sitemap lines; `npm run validate:web` green.
+    - Depends on: **TECH-164** (archived)

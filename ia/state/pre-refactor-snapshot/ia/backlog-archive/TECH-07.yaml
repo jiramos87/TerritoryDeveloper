@@ -1,0 +1,30 @@
+id: TECH-07
+type: refactor (UI/UX)
+title: "**ControlPanel**: left vertical sidebar layout (category rows) (2026-04-04)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **`ui-design-system.md`** **§3.3** **toolbar**; **glossary** **UI design system (reference spec)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **TECH-08** historical doc bridge; this row)
+files: 
+  - Assets/Scenes/MainScene.unity
+  - UI/City/Canvas
+  - ControlPanel
+  - UIManager.cs
+  - Assets/Scripts/Controllers/UnitControllers/*SelectorButton.cs
+  - ia/specs/ui-design-system.md
+notes: |
+  **Completed (manual scene work + backlog purge):** **Left**-docked **vertical** **toolbar** implemented directly in **`MainScene.unity`**; open **BACKLOG** row retired. **Trace:** prior doc ticket **TECH-08** (archived) linked **§3.3** target copy to this work.
+acceptance: ""
+depends_on: 
+  - TECH-67
+depends_on_raw: "none (soft: **TECH-67** program context)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-07** — **ControlPanel**: left vertical sidebar layout (category rows) (2026-04-04)
+    - Type: refactor (UI/UX)
+    - Files: `Assets/Scenes/MainScene.unity` (**`UI/City/Canvas`**, **`ControlPanel`** hierarchy); `UIManager.cs`; `Assets/Scripts/Controllers/UnitControllers/*SelectorButton.cs` (as wired); `ia/specs/ui-design-system.md` **§3.3**, **§1.3**, **§4.3**, **Codebase inventory (uGUI)**
+    - Spec: (removed after closure — **`ui-design-system.md`** **§3.3** **toolbar**; **glossary** **UI design system (reference spec)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **TECH-08** historical doc bridge; this row)
+    - Notes: **Completed (manual scene work + backlog purge):** **Left**-docked **vertical** **toolbar** implemented directly in **`MainScene.unity`**; open **BACKLOG** row retired. **Trace:** prior doc ticket **TECH-08** (archived) linked **§3.3** target copy to this work.
+    - Depends on: none (soft: **TECH-67** program context)
+    - Related: **TECH-67**

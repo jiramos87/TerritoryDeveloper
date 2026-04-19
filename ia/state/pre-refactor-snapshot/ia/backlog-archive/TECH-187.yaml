@@ -1,0 +1,30 @@
+id: TECH-187
+type: infrastructure / web workspace
+title: Client-side wiki search component (Stage 2.2 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal db_error; Decision Log captured in Notes)
+files: 
+  - web/components/WikiSearch.tsx
+  - web/app/wiki/page.tsx
+  - web/package.json
+  - fuse.js
+  - web/package-lock.json
+notes: |
+  Stage 2.2 Phase 2 closer. Client component `web/components/WikiSearch.tsx` (`'use client'`) fetches `/search-index.json` on mount (unmount-guarded `useEffect`), builds `Fuse` instance in `useMemo` w/ `keys: ['title','body','category']`, `threshold: 0.35`, `includeScore: false`. Controlled input; top 10 results link `/wiki/{slug}` via `next/link` w/ category badge. Imports `SearchRecord` from `@/lib/search/types` (no local redefinition). Token-driven styling via `@/lib/tokens`. Embedded in `web/app/wiki/page.tsx` header below description. `fuse.js` pinned exact version. Decision Log — static JSON + client Fuse (no server infra, 156 records trivially fits memory; alternatives: Route Handler streaming, Algolia — overkill); reuse `SearchRecord` (shape owned by TECH-186 emitter, duplication would drift); threshold `0.35` initial (balance typo tolerance + noise on small record set; `0.3` stricter / `0.4` looser revisit on feedback).
+acceptance: |
+  `/wiki` header shows search input; fuzzy matches span glossary + wiki records linking `/wiki/{slug}`; `fuse.js` pinned exact in `web/package.json`; `web/package-lock.json` updated; `cd web && npm run lint && npm run typecheck && npm run build` green; `npm run validate:web` + `npm run validate:all` green.
+depends_on: 
+  - TECH-186
+depends_on_raw: "**TECH-186** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-187** — Client-side wiki search component (Stage 2.2 Phase 2) (2026-04-15)
+    - Type: infrastructure / web workspace
+    - Files: `web/components/WikiSearch.tsx`, `web/app/wiki/page.tsx` (embed), `web/package.json` (`fuse.js` dep), `web/package-lock.json`
+    - Spec: (removed at closeout — journal db_error; Decision Log captured in Notes)
+    - Notes: Stage 2.2 Phase 2 closer. Client component `web/components/WikiSearch.tsx` (`'use client'`) fetches `/search-index.json` on mount (unmount-guarded `useEffect`), builds `Fuse` instance in `useMemo` w/ `keys: ['title','body','category']`, `threshold: 0.35`, `includeScore: false`. Controlled input; top 10 results link `/wiki/{slug}` via `next/link` w/ category badge. Imports `SearchRecord` from `@/lib/search/types` (no local redefinition). Token-driven styling via `@/lib/tokens`. Embedded in `web/app/wiki/page.tsx` header below description. `fuse.js` pinned exact version. Decision Log — static JSON + client Fuse (no server infra, 156 records trivially fits memory; alternatives: Route Handler streaming, Algolia — overkill); reuse `SearchRecord` (shape owned by TECH-186 emitter, duplication would drift); threshold `0.35` initial (balance typo tolerance + noise on small record set; `0.3` stricter / `0.4` looser revisit on feedback).
+    - Acceptance: `/wiki` header shows search input; fuzzy matches span glossary + wiki records linking `/wiki/{slug}`; `fuse.js` pinned exact in `web/package.json`; `web/package-lock.json` updated; `cd web && npm run lint && npm run typecheck && npm run build` green; `npm run validate:web` + `npm run validate:all` green.
+    - Depends on: **TECH-186** (archived)

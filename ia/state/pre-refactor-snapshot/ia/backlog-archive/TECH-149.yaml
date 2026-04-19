@@ -1,0 +1,29 @@
+id: TECH-149
+type: infrastructure / CLI
+title: "`render {archetype}` CLI command (Stage 1.2 Phase 2) (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed at closeout — journal persist skipped, db_unconfigured)
+files: 
+  - tools/sprite-gen/src/cli.py
+  - tools/sprite-gen/src/__main__.py
+  - tools/sprite-gen/tests/test_cli.py
+notes: |
+  Stage 1.2 Phase 2 opener. `python -m sprite_gen render {archetype}` — resolves `specs/{archetype}.yaml` cwd-independent via `Path(__file__).resolve().parent.parent / "specs"`, loads + validates via `load_spec` (**TECH-148** archived), iterates `range(spec['output'].get('variants', 1))`, applies `apply_variant(spec, idx)` deepcopy + seeded `random.Random(spec.get('seed', 0) + idx)` permutation (material swap within inline family map, prism pitch × `rng.uniform(0.8, 1.2)` clamped `[0, 1]`), calls `compose_sprite` (**TECH-147** archived), writes `out/{spec['output']['name']}_v{idx+1:02d}.png`. `main(argv=None) → int` returns exit code; `__main__.py` two-liner wraps `SystemExit(main())` for fast pytest without subprocess. Decision Log — argparse over click (stdlib, no new dep); variant count reads `spec['output']['variants']` (not top-level) matching TECH-148 schema; output name from `spec['output']['name']` (not `id`, which carries `_v1` suffix); inline material-family swap map temporary until Stage 1.3 palette class metadata lands (**TECH-153**); `main()` returns int over `sys.exit` inside — enables direct-call pytest.
+acceptance: |
+  `python -m sprite_gen render building_residential_small` writes N PNGs to `out/`; exit 0 success, 1 on missing archetype / `yaml.YAMLError` / `SpecValidationError`; deterministic bytes across same-seed runs; `npm run validate:all` green.
+depends_on: 
+  - TECH-147
+  - TECH-148
+depends_on_raw: "**TECH-147** (archived), **TECH-148** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-149** — `render {archetype}` CLI command (Stage 1.2 Phase 2) (2026-04-14)
+    - Type: infrastructure / CLI
+    - Files: `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/src/__main__.py`, `tools/sprite-gen/tests/test_cli.py`
+    - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+    - Notes: Stage 1.2 Phase 2 opener. `python -m sprite_gen render {archetype}` — resolves `specs/{archetype}.yaml` cwd-independent via `Path(__file__).resolve().parent.parent / "specs"`, loads + validates via `load_spec` (**TECH-148** archived), iterates `range(spec['output'].get('variants', 1))`, applies `apply_variant(spec, idx)` deepcopy + seeded `random.Random(spec.get('seed', 0) + idx)` permutation (material swap within inline family map, prism pitch × `rng.uniform(0.8, 1.2)` clamped `[0, 1]`), calls `compose_sprite` (**TECH-147** archived), writes `out/{spec['output']['name']}_v{idx+1:02d}.png`. `main(argv=None) → int` returns exit code; `__main__.py` two-liner wraps `SystemExit(main())` for fast pytest without subprocess. Decision Log — argparse over click (stdlib, no new dep); variant count reads `spec['output']['variants']` (not top-level) matching TECH-148 schema; output name from `spec['output']['name']` (not `id`, which carries `_v1` suffix); inline material-family swap map temporary until Stage 1.3 palette class metadata lands (**TECH-153**); `main()` returns int over `sys.exit` inside — enables direct-call pytest.
+    - Acceptance: `python -m sprite_gen render building_residential_small` writes N PNGs to `out/`; exit 0 success, 1 on missing archetype / `yaml.YAMLError` / `SpecValidationError`; deterministic bytes across same-seed runs; `npm run validate:all` green.
+    - Depends on: **TECH-147** (archived), **TECH-148** (archived)

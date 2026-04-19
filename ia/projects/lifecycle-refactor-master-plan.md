@@ -1,6 +1,6 @@
 # Lifecycle Refactor — Opus Planner / Sonnet Executor + Hierarchy Collapse — Master Plan (Umbrella)
 
-> **Status:** In Progress — Step 1 / Stage 1.1
+> **Status:** In Progress — Step 1 / Stage 1.2
 >
 > **Scope:** Big-bang collapse of Step/Stage/Phase/Task hierarchy to Stage/Task. Introduce Plan-Apply pair pattern (5 seams) with Opus pair-heads and Sonnet pair-tails. Sonnet-ify spec enrichment. Add Opus audit + code-review inline stages. Migrate all 16 open master plans + open project specs + backlog yaml in place. Tooling surface only — zero Unity runtime C# touch.
 >
@@ -34,9 +34,9 @@
 
 ### Step 1 — Foundation: Freeze, Templates & Rules
 
-**Status:** In Progress — Stage 1.1
+**Status:** In Progress — Stage 1.2
 
-**Backlog state (Step 1):** 2 filed (TECH-442, TECH-443)
+**Backlog state (Step 1):** 8 filed (TECH-442, TECH-443, TECH-444, TECH-445, TECH-446, TECH-447, TECH-448, TECH-449)
 
 **Objectives:** Establish migration branch and snapshot pre-refactor state so rollback is safe. Rewrite all foundational authoring surfaces — templates (master-plan + project-spec), hierarchy rules, orchestrator rules, Plan-Apply pair contract, glossary new terms + tombstones. Downstream steps depend on these rewritten surfaces; Step 2 must not start until Stage 1.2 is Final.
 
@@ -70,7 +70,7 @@
 
 #### Stage 1.1 — Branch + Snapshot + Migration State
 
-**Status:** In Progress (2 / 2 tasks filed)
+**Status:** Final (2 / 2 tasks Done)
 
 **Objectives:** Create migration branch. Snapshot current master plans + open specs + backlog yaml so M2/M3 can always re-read from clean state. Write migration JSON with resumability keys.
 
@@ -83,21 +83,21 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Branch creation + freeze note + initial migration JSON.
-- [ ] Phase 2 — Snapshot pre-refactor state + validate integrity.
+- [x] Phase 1 — Branch creation + freeze note + initial migration JSON.
+- [x] Phase 2 — Snapshot pre-refactor state + validate integrity.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Branch + freeze setup | 1 | **TECH-442** | In Review | Create `feature/lifecycle-collapse-cognitive-split` via `git checkout -b`; add freeze note to `CLAUDE.md` §Key commands warning against running `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` until M8 sign-off; write initial `ia/state/lifecycle-refactor-migration.json` (M0 done, M1–M8 pending; per-file arrays for M2: list of all `*master-plan*.md` paths, each `pending`; per-file array for M3: list of all `ia/backlog/*.yaml` + open `ia/projects/{ISSUE_ID}.md` paths). |
-| T1.1.2 | Pre-refactor snapshot | 2 | **TECH-443** | Draft | Copy all `ia/projects/*master-plan*.md`, `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml`, and open `ia/projects/{ISSUE_ID}.md` into `ia/state/pre-refactor-snapshot/` (preserve relative paths); write `ia/state/pre-refactor-snapshot/manifest.json` with file list + counts + git SHA; update migration JSON referencing snapshot path; flip M0 `done` in JSON. |
+| T1.1.1 | Branch + freeze setup | 1 | **TECH-442** | Done (archived) | Create `feature/lifecycle-collapse-cognitive-split` via `git checkout -b`; add freeze note to `CLAUDE.md` §Key commands warning against running `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` until M8 sign-off; write initial `ia/state/lifecycle-refactor-migration.json` (M0 done, M1–M8 pending; per-file arrays for M2: list of all `*master-plan*.md` paths, each `pending`; per-file array for M3: list of all `ia/backlog/*.yaml` + open `ia/projects/{ISSUE_ID}.md` paths). |
+| T1.1.2 | Pre-refactor snapshot | 2 | **TECH-443** | Done (archived) | Copy all `ia/projects/*master-plan*.md`, `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml`, and open `ia/projects/{ISSUE_ID}.md` into `ia/state/pre-refactor-snapshot/` (preserve relative paths); write `ia/state/pre-refactor-snapshot/manifest.json` with file list + counts + git SHA; update migration JSON referencing snapshot path; flip M0 `done` in JSON. |
 
 ---
 
 #### Stage 1.2 — Templates + Rules + Glossary + Plan-Apply Contract
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress
 
 **Objectives:** Rewrite all foundational authoring surfaces so every downstream step authors against the new Stage/Task schema. Templates, rules, and glossary must be consistent before M2 begins touching master plans.
 
@@ -122,12 +122,12 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Rewrite master-plan template | 1 | _pending_ | _pending_ | Rewrite `ia/templates/master-plan-template.md`: drop Phase bullet lists and Phase column from task-table (`\| Task \| Name \| Phase \| Issue \| Status \| Intent \|` → drop `Phase` column); keep Stage-level exit + Phase heading replaced by Stage-level heading; add `§Stage File Plan` stub (one-liner: "Opus planner writes materialization plan here") + `§Plan Fix` stub; preserve task-table `Issue` + `Status` + `Intent` columns. |
-| T1.2.2 | Rewrite project-spec template | 1 | _pending_ | _pending_ | Rewrite `ia/templates/project-spec-template.md`: append 5 new sections after `§Verification` in this order: `§Project-New Plan` (pair-head plan payload from `/project-new` Opus planner), `§Audit` (Opus audit paragraph post-implementation), `§Code Review` (Opus code-review verdict + notes), `§Code Fix Plan` (structured fix list from Opus reviewer; Sonnet applier reads verbatim), `§Closeout Plan` (structured migration anchors from Opus auditor; Sonnet closeout-applier reads verbatim). Each section = heading + one-sentence placeholder. |
-| T1.2.3 | Rewrite project-hierarchy rule | 2 | _pending_ | _pending_ | Rewrite `ia/rules/project-hierarchy.md` §table from 4-row (Step·Stage·Phase·Task) to 2-row (Stage·Task); restate cardinality gate: ≥2 tasks per Stage (hard), ≤6 tasks per Stage (soft); update lazy-materialization rule to Stage granularity (was Phase); update ephemeral-spec rule: Tasks still get individual `ia/projects/{ISSUE_ID}.md` specs. |
-| T1.2.4 | Update orchestrator-vs-spec rule | 2 | _pending_ | _pending_ | Edit `ia/rules/orchestrator-vs-spec.md` R1–R7 status flip matrix: drop any row referencing Phase-level flip (e.g. Phase completion → stage rollup); keep R2 (Stage In Progress flip via `stage-file`) + R5 (Final rollup via `project-stage-close`) + R6 (Final → In Progress via `master-plan-extend`) + R7 (Skeleton → Draft via `stage-decompose`); update all prose that says "Step/Stage/Phase" to "Stage/Task"; verify the orchestrator vs project-spec distinction prose still accurate. |
-| T1.2.5 | Write plan-apply-pair-contract rule | 3 | _pending_ | _pending_ | Write `ia/rules/plan-apply-pair-contract.md`: define canonical `§Plan` section shape — structured list of `{operation, target_path, target_anchor, payload}` tuples; Opus resolves anchors to exact line/heading/glossary-row-id; document 5 pair seams (plan-review→plan-fix-apply, stage-file-plan→stage-file-apply, project-new-plan→project-new-apply, code-review→code-fix-apply, audit→closeout-apply); define validation gate (Sonnet runs appropriate validator per pair; on failure returns control to Opus with error + failing tuple); define escalation rule (ambiguous anchor → immediate return to Opus; Sonnet never guesses); define idempotency requirement. |
-| T1.2.6 | Update glossary + flip M1 done | 3 | _pending_ | _pending_ | Edit `ia/specs/glossary.md`: add 8 new rows — **Plan-Apply pair** (pair pattern where Opus writes structured plan into `§Plan` section; Sonnet applies), **plan review** (Opus stage that reads all Tasks of a Stage together + master-plan header + invariants; outputs `§Plan Fix`), **plan-fix apply** (Sonnet pair-tail that reads `§Plan Fix` + applies edits), **spec enrichment** (Sonnet stage that pulls glossary anchors + tightens spec terminology; replaces kickoff), **Opus audit** (Opus stage post-verify that reads spec→impl→findings→verify output + writes `§Audit` + `§Closeout Plan`), **Opus code review** (Opus stage that reads diff vs spec + invariants + glossary; PASS / minor / `§Code Fix Plan`), **code-fix apply** (Sonnet pair-tail reads `§Code Fix Plan` + applies + re-enters `/verify-loop`), **closeout apply** (Sonnet pair-tail reads `§Closeout Plan` + archives BACKLOG row + deletes spec + validates); redefine **Stage** as parent-of-Task (was child of Step); redefine **Project hierarchy** to 2-level (Stage → Task); tombstone **Phase** (redirect: use Stage) + **Gate** (redirect: use Stage exit criteria); run `npm run validate:frontmatter`; flip M1 done in migration JSON. |
+| T1.2.1 | Rewrite master-plan template | 1 | **TECH-444** | Draft | Rewrite `ia/templates/master-plan-template.md`: drop Phase bullet lists and Phase column from task-table (`\| Task \| Name \| Phase \| Issue \| Status \| Intent \|` → drop `Phase` column); keep Stage-level exit + Phase heading replaced by Stage-level heading; add `§Stage File Plan` stub (one-liner: "Opus planner writes materialization plan here") + `§Plan Fix` stub; preserve task-table `Issue` + `Status` + `Intent` columns. |
+| T1.2.2 | Rewrite project-spec template | 1 | **TECH-445** | Draft | Rewrite `ia/templates/project-spec-template.md`: append 5 new sections after `§Verification` in this order: `§Project-New Plan` (pair-head plan payload from `/project-new` Opus planner), `§Audit` (Opus audit paragraph post-implementation), `§Code Review` (Opus code-review verdict + notes), `§Code Fix Plan` (structured fix list from Opus reviewer; Sonnet applier reads verbatim), `§Closeout Plan` (structured migration anchors from Opus auditor; Sonnet closeout-applier reads verbatim). Each section = heading + one-sentence placeholder. |
+| T1.2.3 | Rewrite project-hierarchy rule | 2 | **TECH-446** | Draft | Rewrite `ia/rules/project-hierarchy.md` §table from 4-row (Step·Stage·Phase·Task) to 2-row (Stage·Task); restate cardinality gate: ≥2 tasks per Stage (hard), ≤6 tasks per Stage (soft); update lazy-materialization rule to Stage granularity (was Phase); update ephemeral-spec rule: Tasks still get individual `ia/projects/{ISSUE_ID}.md` specs. |
+| T1.2.4 | Update orchestrator-vs-spec rule | 2 | **TECH-447** | Draft | Edit `ia/rules/orchestrator-vs-spec.md` R1–R7 status flip matrix: drop any row referencing Phase-level flip (e.g. Phase completion → stage rollup); keep R2 (Stage In Progress flip via `stage-file`) + R5 (Final rollup via `project-stage-close`) + R6 (Final → In Progress via `master-plan-extend`) + R7 (Skeleton → Draft via `stage-decompose`); update all prose that says "Step/Stage/Phase" to "Stage/Task"; verify the orchestrator vs project-spec distinction prose still accurate. |
+| T1.2.5 | Write plan-apply-pair-contract rule | 3 | **TECH-448** | Draft | Write `ia/rules/plan-apply-pair-contract.md`: define canonical `§Plan` section shape — structured list of `{operation, target_path, target_anchor, payload}` tuples; Opus resolves anchors to exact line/heading/glossary-row-id; document 5 pair seams (plan-review→plan-fix-apply, stage-file-plan→stage-file-apply, project-new-plan→project-new-apply, code-review→code-fix-apply, audit→closeout-apply); define validation gate (Sonnet runs appropriate validator per pair; on failure returns control to Opus with error + failing tuple); define escalation rule (ambiguous anchor → immediate return to Opus; Sonnet never guesses); define idempotency requirement. |
+| T1.2.6 | Update glossary + flip M1 done | 3 | **TECH-449** | Draft | Edit `ia/specs/glossary.md`: add 8 new rows — **Plan-Apply pair** (pair pattern where Opus writes structured plan into `§Plan` section; Sonnet applies), **plan review** (Opus stage that reads all Tasks of a Stage together + master-plan header + invariants; outputs `§Plan Fix`), **plan-fix apply** (Sonnet pair-tail that reads `§Plan Fix` + applies edits), **spec enrichment** (Sonnet stage that pulls glossary anchors + tightens spec terminology; replaces kickoff), **Opus audit** (Opus stage post-verify that reads spec→impl→findings→verify output + writes `§Audit` + `§Closeout Plan`), **Opus code review** (Opus stage that reads diff vs spec + invariants + glossary; PASS / minor / `§Code Fix Plan`), **code-fix apply** (Sonnet pair-tail reads `§Code Fix Plan` + applies + re-enters `/verify-loop`), **closeout apply** (Sonnet pair-tail reads `§Closeout Plan` + archives BACKLOG row + deletes spec + validates); redefine **Stage** as parent-of-Task (was child of Step); redefine **Project hierarchy** to 2-level (Stage → Task); tombstone **Phase** (redirect: use Stage) + **Gate** (redirect: use Stage exit criteria); run `npm run validate:frontmatter`; flip M1 done in migration JSON. |
 
 ---
 

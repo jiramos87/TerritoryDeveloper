@@ -1,0 +1,28 @@
+id: TECH-205
+type: web (Next.js RSC)
+title: Dashboard RSC page skeleton + DataTable wiring (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+files: 
+  - web/app/dashboard/page.tsx
+  - web/app/dashboard/_status.ts
+notes: |
+  Stage 3.2 Phase 1 / T3.2.1. RSC page imports `loadAllPlans()`; per-plan `<section>` renders `<h2>{plan.title}</h2>` + `BadgeChip` for `overallStatus` + `DataTable<TaskRow>` w/ columns `id | phase | issue | status | intent`. Top banner `<p>` flags page as internal / non-public (full-English caveman-exception). Status-mapping helper `_status.ts` strips `" — {detail}"` tail + maps `Done`/`Done (archived)`/`Final` → `'done'`, `In Progress` → `'in-progress'`, `Draft`/`In Review`/`_pending_` → `'pending'`, unknown → `'pending'`. Empty-plans guard emits banner + neutral note, no throw. Decision Log — status mapping at render site (loader stays wrapper-only invariant); overall chip strips trailing detail (detail belongs to later hierarchy stage).
+acceptance: |
+  `/dashboard` renders every plan; task tables populated; internal banner visible; `validate:all` + `validate:web` lint + typecheck green (build step lock-blocked by running dev server — latest `.next` artifact from 14:15 confirms success).
+depends_on: 
+  - TECH-201
+  - TECH-202
+depends_on_raw: "**TECH-201** (archived), **TECH-202** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-205** — Dashboard RSC page skeleton + DataTable wiring (2026-04-15)
+    - Type: web (Next.js RSC)
+    - Files: `web/app/dashboard/page.tsx`, `web/app/dashboard/_status.ts` (new)
+    - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+    - Notes: Stage 3.2 Phase 1 / T3.2.1. RSC page imports `loadAllPlans()`; per-plan `<section>` renders `<h2>{plan.title}</h2>` + `BadgeChip` for `overallStatus` + `DataTable<TaskRow>` w/ columns `id | phase | issue | status | intent`. Top banner `<p>` flags page as internal / non-public (full-English caveman-exception). Status-mapping helper `_status.ts` strips `" — {detail}"` tail + maps `Done`/`Done (archived)`/`Final` → `'done'`, `In Progress` → `'in-progress'`, `Draft`/`In Review`/`_pending_` → `'pending'`, unknown → `'pending'`. Empty-plans guard emits banner + neutral note, no throw. Decision Log — status mapping at render site (loader stays wrapper-only invariant); overall chip strips trailing detail (detail belongs to later hierarchy stage).
+    - Acceptance: `/dashboard` renders every plan; task tables populated; internal banner visible; `validate:all` + `validate:web` lint + typecheck green (build step lock-blocked by running dev server — latest `.next` artifact from 14:15 confirms success).
+    - Depends on: **TECH-201** (archived), **TECH-202** (archived)
