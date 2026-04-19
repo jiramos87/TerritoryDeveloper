@@ -1,0 +1,23 @@
+id: TECH-452
+type: tech (IA infrastructure / lifecycle tooling)
+title: Batch-migrate 15 remaining master plans via migrate-master-plans.ts (Stage 2.1 Phase 2)
+priority: high
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-452.md
+files:
+  - tools/scripts/migrate-master-plans.ts
+  - ia/projects/
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Run `npx tsx tools/scripts/migrate-master-plans.ts` against all remaining M2 pending master plans (15 after canary). Monitor per-file progress in migration JSON as script flips entries. On crash: re-run (idempotent — reads snapshot + skips done files). Self-migration requirement: `lifecycle-refactor-master-plan.md` runs last in the batch, after all other plans are validated. After batch completes, set all M2 per-file entries to `done`. Manually diff 2 randomly selected plans (e.g. `zone-s-economy-master-plan.md` + `multi-scale-master-plan.md`) against expected Stage/Task output — spot-check exit bullet merges + task-id renumbering.
+acceptance: |
+  All 15 remaining master plans migrated; per-file entries flipped `done` in migration JSON; 2 manually diffed plans match expected Stage/Task schema; `lifecycle-refactor-master-plan.md` processed last; script idempotent on re-run (zero diff on already-done files).
+depends_on:
+  - TECH-451
+depends_on_raw: TECH-451 (canary + parser fix must land before batch).
+related:
+  - TECH-453
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T2.1.3

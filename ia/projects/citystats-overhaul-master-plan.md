@@ -25,46 +25,13 @@
 
 ---
 
-## Steps
+## Stages
 
 > **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
 
 ---
 
-### Step 1 — Facade + Store Infra (additive, no consumer migration)
-
-**Status:** In Progress — Stage 1.1
-
-**Backlog state (Step 1):** 2 filed (Stage 1.1)
-
-**Objectives:** Bootstrap the typed read-model infrastructure without breaking any existing consumer. `IStatsReadModel` + `StatKey` define the contract; `ColumnarStatsStore` owns the ring buffers; `CityStatsFacade` MonoBehaviour wires into `SimulationManager`'s tick loop. `CityStats` gains shim property wrappers forwarding into the facade; `MetricsRecorder` swaps its per-field reads for `SnapshotForBridge()`. All existing call sites continue to compile and behave identically.
-
-**Exit criteria:**
-
-- `IStatsReadModel.cs` + `StatKey.cs` compile; `StatKey` covers all current `CityStats` public fields.
-- `ColumnarStatsStore` ring buffers hold up to 256 ticks; `FlushToSeries()` appends net value on `EndTick`.
-- `CityStatsFacade` wired in Inspector alongside `CityStats`; `BeginTick`/`EndTick` bracket present in `SimulationManager.ProcessSimulationTick` (`SimulationManager.cs:61`); tick execution order (steps 1-5) unchanged.
-- `CityStats` public fields forward to facade via property wrappers; `ICityStats` signature (`ICityStats.cs:9`) preserved verbatim.
-- `MetricsRecorder.BuildPayload` replaced by `_facade.SnapshotForBridge(tick)`; `CityMetricsInsertPayload` shape unchanged; Postgres row unchanged.
-- EditMode test: one tick → `facade.GetSeries(StatKey.Population, 1)` length == 1; scalar matches `CityStats.population`.
-- `npm run unity:compile-check` clean.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/citystats-overhaul-exploration.md` §Design Expansion §Architecture §Subsystem Impact — ground truth.
-- `ia/specs/simulation-system.md §Tick execution order` (lines 11–26) — step order constraint.
-- `ia/specs/managers-reference.md §Helper Services` (lines 45–60) — `MetricsRecorder` + `CityMetricsInsertPayload` contract.
-- Invariants: #3, #4, #6.
-- `Assets/Scripts/Managers/UnitManagers/ICityStats.cs:9` — interface signature to preserve verbatim.
-- `Assets/Scripts/Managers/GameManagers/CityStats.cs` — shim target.
-- `Assets/Scripts/Managers/GameManagers/SimulationManager.cs:61` (`ProcessSimulationTick`), `:85` (`finally` block) — bracket insertion points.
-- `Assets/Scripts/Managers/GameManagers/MetricsRecorder.cs:43` (`RecordAfterSimulationTick`), `:66` (`BuildPayload`) — swap target.
-- New files: `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs` (new), `Assets/Scripts/Managers/GameManagers/StatKey.cs` (new), `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new), `Assets/Scripts/Managers/GameManagers/CityStatsFacade.cs` (new).
-
----
-
-#### Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
+### Stage 1 — Facade + Store Infra (additive, no consumer migration) / Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
 
 **Status:** In Progress (tasks filed: TECH-303, TECH-304)
 
@@ -75,21 +42,18 @@
 - `IStatsReadModel.cs`: `GetScalar(StatKey)`, `GetSeries(StatKey, int windowTicks)`, `EnumerateRows(string dimension, Predicate<object> filter)` compile.
 - `StatKey.cs`: one entry per current `CityStats` public field + `RegionPopulation` / `CountryPopulation` stubs.
 - `ColumnarStatsStore.cs`: `Publish(StatKey, float)`, `Set(StatKey, float)`, `GetScalar(StatKey)`, `GetSeries(StatKey, int)`, `FlushToSeries()` compile; default capacity 256; plain C# class, no MonoBehaviour dependency.
-
-**Phases:**
-
-- [ ] Phase 1 — Define contract types + store implementation.
+- Phase 1 — Define contract types + store implementation.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.1.1 | 1 | **TECH-303** | Draft | Add `IStatsReadModel.cs`: scalar `GetScalar(StatKey) → float`, series `GetSeries(StatKey, int windowTicks) → float[]`, row enumeration `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. Add `StatKey.cs` enum: one entry per current `CityStats` public field (population, money, happiness, forestCoverage, unemployment, etc.) + stubs `RegionPopulation`, `CountryPopulation`. No runtime wiring. |
-| T1.1.2 | 1 | **TECH-304** | Draft | Add `ColumnarStatsStore.cs` (plain C# class, no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey` (capacity settable via `int RingCapacity`, default 256); `Publish(StatKey, float delta)` accumulates running value; `Set(StatKey, float value)` overwrites; `FlushToSeries()` writes net running value to ring and resets accumulator; `GetScalar(StatKey) → float` returns running value; `GetSeries(StatKey, int windowTicks) → float[]` returns last N ring entries. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T1.1 | **TECH-303** | Draft | Add `IStatsReadModel.cs`: scalar `GetScalar(StatKey) → float`, series `GetSeries(StatKey, int windowTicks) → float[]`, row enumeration `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. Add `StatKey.cs` enum: one entry per current `CityStats` public field (population, money, happiness, forestCoverage, unemployment, etc.) + stubs `RegionPopulation`, `CountryPopulation`. No runtime wiring. |
+| T1.2 | **TECH-304** | Draft | Add `ColumnarStatsStore.cs` (plain C# class, no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey` (capacity settable via `int RingCapacity`, default 256); `Publish(StatKey, float delta)` accumulates running value; `Set(StatKey, float value)` overwrites; `FlushToSeries()` writes net running value to ring and resets accumulator; `GetScalar(StatKey) → float` returns running value; `GetSeries(StatKey, int windowTicks) → float[]` returns last N ring entries. |
 
 ---
 
-#### Stage 1.2 — CityStatsFacade MonoBehaviour + tick bracket
+### Stage 2 — Facade + Store Infra (additive, no consumer migration) / CityStatsFacade MonoBehaviour + tick bracket
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -100,21 +64,18 @@
 - `CityStatsFacade : MonoBehaviour, IStatsReadModel` compiles; `[SerializeField]`-wired in scene Inspector alongside existing `CityStats`.
 - `SimulationManager.ProcessSimulationTick` calls `_facade.BeginTick()` before step 1 and `_facade.EndTick()` inside existing `finally` block (`SimulationManager.cs:85`); steps 1-5 order unchanged (per `sim §Tick execution order`).
 - `Action OnTickEnd` event fires on each `EndTick`; zero consumers yet (wired in Stage 2.1).
-
-**Phases:**
-
-- [ ] Phase 1 — Add CityStatsFacade + wire tick bracket in SimulationManager.
+- Phase 1 — Add CityStatsFacade + wire tick bracket in SimulationManager.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.2.1 | 1 | _pending_ | _pending_ | Add `CityStatsFacade.cs` : `MonoBehaviour`, `IStatsReadModel`; owns `ColumnarStatsStore _store` (composition, instantiated in `Awake`); exposes `BeginTick()` (resets per-tick accumulator), `Publish(StatKey, float delta)`, `Set(StatKey, float)`, `EndTick()` (calls `_store.FlushToSeries()` + fires `public event Action OnTickEnd`); delegates `GetScalar`/`GetSeries`/`EnumerateRows` to `_store`. `[SerializeField]` Inspector wire — no singleton (invariant #4). |
-| T1.2.2 | 1 | _pending_ | _pending_ | Add `[SerializeField] private CityStatsFacade _facade` to `SimulationManager.cs`; call `_facade?.BeginTick()` before step 1 inside `try` body (`SimulationManager.cs:63`) and `_facade?.EndTick()` in the existing `finally` block (`:85`). Null-guard throughout. Tick execution order (steps 1-5 per `sim §Tick execution order`) unchanged — bracket wraps, does not reorder. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T2.1 | _pending_ | _pending_ | Add `CityStatsFacade.cs` : `MonoBehaviour`, `IStatsReadModel`; owns `ColumnarStatsStore _store` (composition, instantiated in `Awake`); exposes `BeginTick()` (resets per-tick accumulator), `Publish(StatKey, float delta)`, `Set(StatKey, float)`, `EndTick()` (calls `_store.FlushToSeries()` + fires `public event Action OnTickEnd`); delegates `GetScalar`/`GetSeries`/`EnumerateRows` to `_store`. `[SerializeField]` Inspector wire — no singleton (invariant #4). |
+| T2.2 | _pending_ | _pending_ | Add `[SerializeField] private CityStatsFacade _facade` to `SimulationManager.cs`; call `_facade?.BeginTick()` before step 1 inside `try` body (`SimulationManager.cs:63`) and `_facade?.EndTick()` in the existing `finally` block (`:85`). Null-guard throughout. Tick execution order (steps 1-5 per `sim §Tick execution order`) unchanged — bracket wraps, does not reorder. |
 
 ---
 
-#### Stage 1.3 — CityStats shim dual-write + MetricsRecorder swap + EditMode test
+### Stage 3 — Facade + Store Infra (additive, no consumer migration) / CityStats shim dual-write + MetricsRecorder swap + EditMode test
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -126,51 +87,21 @@
 - `MetricsRecorder.BuildPayload` removed; `_facade.SnapshotForBridge(tick)` returns same `CityMetricsInsertPayload`; Postgres row schema unchanged.
 - EditMode test passes: one tick → facade series length 1; scalar matches legacy field value.
 - `npm run unity:compile-check` clean.
-
-**Phases:**
-
-- [ ] Phase 1 — CityStats property wrappers + validation helper.
-- [ ] Phase 2 — MetricsRecorder SnapshotForBridge + EditMode test.
+- Phase 1 — CityStats property wrappers + validation helper.
+- Phase 2 — MetricsRecorder SnapshotForBridge + EditMode test.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.3.1 | 1 | _pending_ | _pending_ | Convert `CityStats.cs` public fields to properties: backing field `_xValue`; getter returns `_xValue`; setter calls `_facade?.Set(StatKey.X, value)` then `_xValue = value`. Add `[SerializeField] private CityStatsFacade _facade`. Preserve `ICityStats` signature (`ICityStats.cs:9`) verbatim — no method or property name changes. Cover all public fields (population, money, happiness, etc.). |
-| T1.3.2 | 1 | _pending_ | _pending_ | Add `[ContextMenu("Verify Shim Wiring")]` debug helper on `CityStats` asserting `_facade != null && _facade.enabled`. Fire `Debug.LogWarning` in `Awake` if `_facade` null — Inspector wire only; no `FindObjectOfType` (invariant #3). |
-| T1.3.3 | 2 | _pending_ | _pending_ | Add `SnapshotForBridge(int tickIndex) → CityMetricsInsertPayload` on `CityStatsFacade`: copies `GetScalar(StatKey.X)` for each payload field matching `MetricsRecorder.BuildPayload` output shape (`MetricsRecorder.cs:66–92` — population, money, happiness, game_date, demand, employment, forest01, happiness01). Replace `MetricsRecorder.BuildPayload(tick)` call (`MetricsRecorder.cs:54`) with `_facade.SnapshotForBridge(tick)`; add `[SerializeField] private CityStatsFacade _facade` to `MetricsRecorder`; null guard → early return matching existing null-cityStats guard. |
-| T1.3.4 | 2 | _pending_ | _pending_ | Add EditMode test `CityStatsFacadeShimTest`: create `CityStatsFacade` + `CityStats` in test context; call `_facade.BeginTick()`; set `cityStats.population = 1000` (triggers shim setter `→ _facade.Set(StatKey.Population, 1000)`); call `_facade.EndTick()`; assert `_facade.GetSeries(StatKey.Population, 1)[0] == 1000f` and `_facade.GetScalar(StatKey.Population) == 1000f`. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T3.1 | _pending_ | _pending_ | Convert `CityStats.cs` public fields to properties: backing field `_xValue`; getter returns `_xValue`; setter calls `_facade?.Set(StatKey.X, value)` then `_xValue = value`. Add `[SerializeField] private CityStatsFacade _facade`. Preserve `ICityStats` signature (`ICityStats.cs:9`) verbatim — no method or property name changes. Cover all public fields (population, money, happiness, etc.). |
+| T3.2 | _pending_ | _pending_ | Add `[ContextMenu("Verify Shim Wiring")]` debug helper on `CityStats` asserting `_facade != null && _facade.enabled`. Fire `Debug.LogWarning` in `Awake` if `_facade` null — Inspector wire only; no `FindObjectOfType` (invariant #3). |
+| T3.3 | _pending_ | _pending_ | Add `SnapshotForBridge(int tickIndex) → CityMetricsInsertPayload` on `CityStatsFacade`: copies `GetScalar(StatKey.X)` for each payload field matching `MetricsRecorder.BuildPayload` output shape (`MetricsRecorder.cs:66–92` — population, money, happiness, game_date, demand, employment, forest01, happiness01). Replace `MetricsRecorder.BuildPayload(tick)` call (`MetricsRecorder.cs:54`) with `_facade.SnapshotForBridge(tick)`; add `[SerializeField] private CityStatsFacade _facade` to `MetricsRecorder`; null guard → early return matching existing null-cityStats guard. |
+| T3.4 | _pending_ | _pending_ | Add EditMode test `CityStatsFacadeShimTest`: create `CityStatsFacade` + `CityStats` in test context; call `_facade.BeginTick()`; set `cityStats.population = 1000` (triggers shim setter `→ _facade.Set(StatKey.Population, 1000)`); call `_facade.EndTick()`; assert `_facade.GetSeries(StatKey.Population, 1)[0] == 1000f` and `_facade.GetScalar(StatKey.Population) == 1000f`. |
 
 ---
 
-### Step 2 — Consumer Migration
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Backlog state (Step 2):** 0 filed
-
-**Objectives:** All active consumers switch from direct `CityStats` field reads / `StatisticsManager.StatisticTrend` reads to facade pull-through. HUD drops per-frame polling. Producer managers dual-write via facade. `StatisticsManager` is deprecated and deleted.
-
-**Exit criteria:**
-
-- `CityStatsUIController.Update` no longer calls `UpdateStatisticsDisplay`; per-tick `OnFacadeEndTick` subscription active; HUD labels correct at first paint and in paused state.
-- All Zone/Road/Economy/Employment/Forest/Water/Demand manager `cityStats.*` write sites have parallel `_facade.Set(...)` calls.
-- No compile-time reference to `StatisticTrend` or `StatisticsManager` remains; both classes deleted.
-- EditMode test for `StatisticsManager` migration confirms facade series returns equivalent data.
-- `npm run unity:compile-check` clean.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- Step 1 outputs: `CityStatsFacade.cs`, `IStatsReadModel.cs`, `StatKey.cs` — facade API for consumers and producers.
-- `Assets/Scripts/Controllers/GameControllers/CityStatsUIController.cs:55` (`Update`), `:176` (`UpdateStatisticsDisplay`).
-- `Assets/Scripts/Managers/GameManagers/StatisticsManager.cs:8` (`StatisticTrend`), `:69` (`StatisticsManager`) — deletion target.
-- Producer managers: `EconomyManager.cs`, `EmploymentManager.cs`, `DemandManager.cs`, `ZoneManager.cs`, `RoadManager.cs`, `ForestManager.cs`, `WaterManager.cs` — grep `cityStats\.` in each to locate write sites before editing.
-- Invariants: #3 (no `FindObjectOfType` in `Update` — `_facade` Inspector-wired only), #4.
-
----
-
-#### Stage 2.1 — CityStatsUIController per-tick subscription
+### Stage 4 — Consumer Migration / CityStatsUIController per-tick subscription
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -183,21 +114,18 @@
 - Labels populated on first `OnEnable` regardless of pause state.
 - `UpdateStatisticsDisplay` reads via `_facade.GetScalar(StatKey.X)` not direct `cityStats.*` fields.
 - Invariant #3: `_facade` cached via Inspector wire in `Awake`; no `FindObjectOfType` in hot path.
-
-**Phases:**
-
-- [ ] Phase 1 — Subscribe to OnTickEnd + initial paint fix.
+- Phase 1 — Subscribe to OnTickEnd + initial paint fix.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T2.1.1 | 1 | _pending_ | _pending_ | In `CityStatsUIController.cs`: add `[SerializeField] private CityStatsFacade _facade`; in `OnEnable` subscribe `_facade.OnTickEnd += OnFacadeEndTick`; in `OnDisable` unsubscribe; add `void OnFacadeEndTick() => UpdateStatisticsDisplay()`; remove `UpdateStatisticsDisplay()` call from `Update()` (`:58`). Wire via Inspector (invariant #4, not `FindObjectOfType`). |
-| T2.1.2 | 1 | _pending_ | _pending_ | Handle initial paint: at end of `OnEnable`, after subscribing, call `UpdateStatisticsDisplay()` once (covers `simulateGrowth == false` / paused edge case — no `EndTick` fires until unpaused). In `UpdateStatisticsDisplay` (`:176`), replace direct `cityStats.*` reads with `_facade.GetScalar(StatKey.Population)`, `GetScalar(StatKey.Money)`, `GetScalar(StatKey.Happiness)`, `GetScalar(StatKey.Unemployment)` etc. Remove `cityStats` field ref from this controller. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T4.1 | _pending_ | _pending_ | In `CityStatsUIController.cs`: add `[SerializeField] private CityStatsFacade _facade`; in `OnEnable` subscribe `_facade.OnTickEnd += OnFacadeEndTick`; in `OnDisable` unsubscribe; add `void OnFacadeEndTick() => UpdateStatisticsDisplay()`; remove `UpdateStatisticsDisplay()` call from `Update()` (`:58`). Wire via Inspector (invariant #4, not `FindObjectOfType`). |
+| T4.2 | _pending_ | _pending_ | Handle initial paint: at end of `OnEnable`, after subscribing, call `UpdateStatisticsDisplay()` once (covers `simulateGrowth == false` / paused edge case — no `EndTick` fires until unpaused). In `UpdateStatisticsDisplay` (`:176`), replace direct `cityStats.*` reads with `_facade.GetScalar(StatKey.Population)`, `GetScalar(StatKey.Money)`, `GetScalar(StatKey.Happiness)`, `GetScalar(StatKey.Unemployment)` etc. Remove `cityStats` field ref from this controller. |
 
 ---
 
-#### Stage 2.2 — Producer managers publish via facade
+### Stage 5 — Consumer Migration / Producer managers publish via facade
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -208,24 +136,21 @@
 - `EconomyManager`, `EmploymentManager`, `DemandManager`: `[SerializeField] CityStatsFacade _facade` wired; `_facade.Set(StatKey.X, value)` called at each `cityStats.*` write site.
 - `ZoneManager`, `RoadManager`, `ForestManager`, `WaterManager`: same pattern.
 - `npm run unity:compile-check` clean after all managers updated.
-
-**Phases:**
-
-- [ ] Phase 1 — Economy + Employment + Demand managers.
-- [ ] Phase 2 — Zone + Road + Forest + Water managers.
+- Phase 1 — Economy + Employment + Demand managers.
+- Phase 2 — Zone + Road + Forest + Water managers.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T2.2.1 | 1 | _pending_ | _pending_ | `EconomyManager.cs`: grep `cityStats\.` write sites; add `[SerializeField] private CityStatsFacade _facade`; at each write site add `_facade?.Set(StatKey.Money, cityStats.money)` immediately after the existing write. `EmploymentManager.cs`: same → `StatKey.Unemployment`, `StatKey.Jobs`. |
-| T2.2.2 | 1 | _pending_ | _pending_ | `DemandManager.cs`: grep `cityStats\.` write sites (residential, commercial, industrial demand fields); add `_facade?.Set(StatKey.DemandR/C/I, value)` at each site. Confirm `StatKey` enum covers demand fields; add missing entries to `StatKey.cs` if gap found. |
-| T2.2.3 | 2 | _pending_ | _pending_ | `ZoneManager.cs` + `RoadManager.cs`: grep `cityStats\.` write sites in each; add `[SerializeField] private CityStatsFacade _facade`; call `_facade?.Set(StatKey.X, value)` at each site. Identify any ZoneManager-specific stats (zonedResidential etc.) and add corresponding `StatKey` stubs if missing. |
-| T2.2.4 | 2 | _pending_ | _pending_ | `ForestManager.cs` + `WaterManager.cs`: same pattern; `StatKey.ForestCoverage` + `StatKey.WaterCoverage`; confirm `GetForestCoveragePercentage()` source value (`MetricsRecorder.cs:81`) matches the value being set — use same computation site for the `_facade.Set` call. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T5.1 | _pending_ | _pending_ | `EconomyManager.cs`: grep `cityStats\.` write sites; add `[SerializeField] private CityStatsFacade _facade`; at each write site add `_facade?.Set(StatKey.Money, cityStats.money)` immediately after the existing write. `EmploymentManager.cs`: same → `StatKey.Unemployment`, `StatKey.Jobs`. |
+| T5.2 | _pending_ | _pending_ | `DemandManager.cs`: grep `cityStats\.` write sites (residential, commercial, industrial demand fields); add `_facade?.Set(StatKey.DemandR/C/I, value)` at each site. Confirm `StatKey` enum covers demand fields; add missing entries to `StatKey.cs` if gap found. |
+| T5.3 | _pending_ | _pending_ | `ZoneManager.cs` + `RoadManager.cs`: grep `cityStats\.` write sites in each; add `[SerializeField] private CityStatsFacade _facade`; call `_facade?.Set(StatKey.X, value)` at each site. Identify any ZoneManager-specific stats (zonedResidential etc.) and add corresponding `StatKey` stubs if missing. |
+| T5.4 | _pending_ | _pending_ | `ForestManager.cs` + `WaterManager.cs`: same pattern; `StatKey.ForestCoverage` + `StatKey.WaterCoverage`; confirm `GetForestCoveragePercentage()` source value (`MetricsRecorder.cs:81`) matches the value being set — use same computation site for the `_facade.Set` call. |
 
 ---
 
-#### Stage 2.3 — StatisticsManager migration + deletion
+### Stage 6 — Consumer Migration / StatisticsManager migration + deletion
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -237,55 +162,21 @@
 - `StatisticsManager.cs` (and `.meta`) deleted.
 - `npm run unity:compile-check` clean.
 - EditMode test: `facade.GetSeries(StatKey.Population, 2)` returns data after two ticks.
-
-**Phases:**
-
-- [ ] Phase 1 — Migrate StatisticTrend consumers to facade; mark obsolete.
-- [ ] Phase 2 — Delete StatisticsManager + StatisticTrend + compile-check + EditMode test.
+- Phase 1 — Migrate StatisticTrend consumers to facade; mark obsolete.
+- Phase 2 — Delete StatisticsManager + StatisticTrend + compile-check + EditMode test.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T2.3.1 | 1 | _pending_ | _pending_ | Grep all `populationTrend`, `unemploymentTrend`, `jobsTrend`, `residentialDemandTrend`, `commercialDemandTrend`, `industrialDemandTrend`, `incomeTrend`, `happinessTrend` consumers; for each replace `xTrend.values` / `xTrend.currentValue` reads with `_facade.GetSeries(StatKey.X, windowTicks: 30)` / `_facade.GetScalar(StatKey.X)`; wire `_facade` ref where not yet present. |
-| T2.3.2 | 1 | _pending_ | _pending_ | Stop `StatisticsManager.UpdateStatistics()` (or equivalent update loop) from writing to `StatisticTrend` objects: guard body with early `return`. Add `[Obsolete("Migrated to CityStatsFacade — pending deletion")]` to `StatisticsManager` and `StatisticTrend` classes. Do NOT delete yet. |
-| T2.3.3 | 2 | _pending_ | _pending_ | Delete `Assets/Scripts/Managers/GameManagers/StatisticsManager.cs` (+ `.meta`); grep `StatisticsManager\|StatisticTrend` to confirm zero remaining references; remove `StatisticsManager` component from any scene Inspector references; run `npm run unity:compile-check`. |
-| T2.3.4 | 2 | _pending_ | _pending_ | Add EditMode test `StatisticsManagerMigrationTest`: fire two ticks; assert `facade.GetSeries(StatKey.Population, 2)` length == 2 and values > 0; assert `facade.GetSeries(StatKey.DemandR, 2)` non-zero (confirms demand manager publishing). Verifies facade fully replaces `StatisticTrend` ring buffer. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T6.1 | _pending_ | _pending_ | Grep all `populationTrend`, `unemploymentTrend`, `jobsTrend`, `residentialDemandTrend`, `commercialDemandTrend`, `industrialDemandTrend`, `incomeTrend`, `happinessTrend` consumers; for each replace `xTrend.values` / `xTrend.currentValue` reads with `_facade.GetSeries(StatKey.X, windowTicks: 30)` / `_facade.GetScalar(StatKey.X)`; wire `_facade` ref where not yet present. |
+| T6.2 | _pending_ | _pending_ | Stop `StatisticsManager.UpdateStatistics()` (or equivalent update loop) from writing to `StatisticTrend` objects: guard body with early `return`. Add `[Obsolete("Migrated to CityStatsFacade — pending deletion")]` to `StatisticsManager` and `StatisticTrend` classes. Do NOT delete yet. |
+| T6.3 | _pending_ | _pending_ | Delete `Assets/Scripts/Managers/GameManagers/StatisticsManager.cs` (+ `.meta`); grep `StatisticsManager\ | StatisticTrend` to confirm zero remaining references; remove `StatisticsManager` component from any scene Inspector references; run `npm run unity:compile-check`. |
+| T6.4 | _pending_ | _pending_ | Add EditMode test `StatisticsManagerMigrationTest`: fire two ticks; assert `facade.GetSeries(StatKey.Population, 2)` length == 2 and values > 0; assert `facade.GetSeries(StatKey.DemandR, 2)` non-zero (confirms demand manager publishing). Verifies facade fully replaces `StatisticTrend` ring buffer. |
 
 ---
 
-### Step 3 — Multi-scale Rollup + Web Stats Surface
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Backlog state (Step 3):** 0 filed
-
-**Objectives:** Add `RegionStatsFacade` + `CountryStatsFacade` populated via rollup on **Scale switch** save-leaving hook; add `web/app/stats` route rendering city metrics from `city_metrics_history` using existing `PlanChartClient` + `DataTable` components; add glossary rows for all new canonical terms.
-
-**Exit criteria:**
-
-- `RegionStatsFacade` + `CountryStatsFacade` compile; `Rollup(IEnumerable<CityStatsFacade>)` aggregates population (sum), happiness (average), money (sum) correctly.
-- Rollup wired in **Scale switch** save-leaving hook per `multi-scale-master-plan.md` Step 3; dormant facades hold frozen snapshots.
-- PlayMode smoke: switch to region scale → `regionFacade.GetScalar(StatKey.RegionPopulation)` > 0; switch back → `cityFacade` still live.
-- `web/app/stats/page.tsx` renders line chart (population + happiness + money, 30 ticks) + sortable table (city_metrics_history, newest-first). ISR `revalidate = 60`. `npm run validate:web` clean.
-- Glossary rows added: **StatsFacade**, **ColumnarStatsStore**, **StatKey**, **IStatsReadModel**; **City metrics history** updated. `npm run validate:all` clean.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- Step 1 + Step 2 outputs: `CityStatsFacade.cs`, `ColumnarStatsStore.cs`, `IStatsReadModel.cs`, `StatKey.cs`.
-- `ia/projects/multi-scale-master-plan.md` Step 3 save-leaving section — **Scale switch** hook point for rollup wiring.
-- Glossary: **Scale switch**, **Dormant scale**, **Active scale**, **Scale-switch event bubble-up / constraint push-down**.
-- `ia/specs/managers-reference.md §Helper Services` (lines 45–60) — table to update with new facade rows.
-- `web/app/dashboard/page.tsx` — ISR + data-fetch pattern to replicate.
-- `web/lib/db/client.ts` — existing Postgres client.
-- `web/components/PlanChartClient.tsx`, `web/components/DataTable.tsx`, `web/components/StatBar.tsx` — reuse without modification.
-- New files: `Assets/Scripts/Managers/GameManagers/RegionStatsFacade.cs` (new), `Assets/Scripts/Managers/GameManagers/CountryStatsFacade.cs` (new), `web/app/stats/page.tsx` (new), `web/lib/db/statsQueries.ts` (new).
-- Invariants: #4 (no singletons — region/country facades Inspector-wired), #3.
-
----
-
-#### Stage 3.1 — RegionStatsFacade + CountryStatsFacade rollup
+### Stage 7 — Multi-scale Rollup + Web Stats Surface / RegionStatsFacade + CountryStatsFacade rollup
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -297,24 +188,21 @@
 - Rollup wired in Scale switch save-leaving hook (per `multi-scale-master-plan.md` Step 3); dormant snapshot frozen until re-entry.
 - `StatKey` extended with live region/country entries (`RegionPopulation`, `RegionHappiness`, `RegionMoney`, `CountryPopulation`, `CountryHappiness`, `CountryMoney`) replacing stubs from Stage 1.1.
 - PlayMode smoke: scale switch → `regionFacade.GetScalar(StatKey.RegionPopulation)` > 0.
-
-**Phases:**
-
-- [ ] Phase 1 — Scaffold RegionStatsFacade + CountryStatsFacade + StatKey live entries.
-- [ ] Phase 2 — Rollup wiring in Scale switch hook + PlayMode smoke.
+- Phase 1 — Scaffold RegionStatsFacade + CountryStatsFacade + StatKey live entries.
+- Phase 2 — Rollup wiring in Scale switch hook + PlayMode smoke.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T3.1.1 | 1 | _pending_ | _pending_ | Add `RegionStatsFacade.cs` : `MonoBehaviour, IStatsReadModel`; composition `ColumnarStatsStore _store` (capacity default 64 — dormant scales tick rarely); `Rollup(IEnumerable<CityStatsFacade> cities)` aggregates: `Set(StatKey.RegionPopulation, cities.Sum(c => c.GetScalar(StatKey.Population)))`, `Set(StatKey.RegionHappiness, cities.Average(...))`, `Set(StatKey.RegionMoney, cities.Sum(...))`; no `BeginTick`/`EndTick`. `[SerializeField]` Inspector wire. |
-| T3.1.2 | 1 | _pending_ | _pending_ | Add `CountryStatsFacade.cs` symmetrically (aggregates `RegionStatsFacade` children). Extend `StatKey.cs`: replace `RegionPopulation`/`CountryPopulation` stubs with real entries + add `RegionHappiness`, `RegionMoney`, `CountryHappiness`, `CountryMoney`. |
-| T3.1.3 | 2 | _pending_ | _pending_ | Wire `regionFacade.Rollup(activeCityFacades)` in the **Scale switch** save-leaving step; read `multi-scale-master-plan.md` Step 3 save-leaving section before editing to confirm exact hook method and call site. Dormant facade holds frozen snapshot — do NOT call `Rollup` again until scale re-entry. Wire `CountryStatsFacade.Rollup(regionFacades)` symmetrically. |
-| T3.1.4 | 2 | _pending_ | _pending_ | Add PlayMode smoke test: switch from city → region scale; assert `regionFacade.GetScalar(StatKey.RegionPopulation) > 0`; switch back to city; assert `cityFacade.GetScalar(StatKey.Population) > 0` (city facade still live). Mirrors scale-switch test pattern in `multi-scale-master-plan.md`. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T7.1 | _pending_ | _pending_ | Add `RegionStatsFacade.cs` : `MonoBehaviour, IStatsReadModel`; composition `ColumnarStatsStore _store` (capacity default 64 — dormant scales tick rarely); `Rollup(IEnumerable<CityStatsFacade> cities)` aggregates: `Set(StatKey.RegionPopulation, cities.Sum(c => c.GetScalar(StatKey.Population)))`, `Set(StatKey.RegionHappiness, cities.Average(...))`, `Set(StatKey.RegionMoney, cities.Sum(...))`; no `BeginTick`/`EndTick`. `[SerializeField]` Inspector wire. |
+| T7.2 | _pending_ | _pending_ | Add `CountryStatsFacade.cs` symmetrically (aggregates `RegionStatsFacade` children). Extend `StatKey.cs`: replace `RegionPopulation`/`CountryPopulation` stubs with real entries + add `RegionHappiness`, `RegionMoney`, `CountryHappiness`, `CountryMoney`. |
+| T7.3 | _pending_ | _pending_ | Wire `regionFacade.Rollup(activeCityFacades)` in the **Scale switch** save-leaving step; read `multi-scale-master-plan.md` Step 3 save-leaving section before editing to confirm exact hook method and call site. Dormant facade holds frozen snapshot — do NOT call `Rollup` again until scale re-entry. Wire `CountryStatsFacade.Rollup(regionFacades)` symmetrically. |
+| T7.4 | _pending_ | _pending_ | Add PlayMode smoke test: switch from city → region scale; assert `regionFacade.GetScalar(StatKey.RegionPopulation) > 0`; switch back to city; assert `cityFacade.GetScalar(StatKey.Population) > 0` (city facade still live). Mirrors scale-switch test pattern in `multi-scale-master-plan.md`. |
 
 ---
 
-#### Stage 3.2 — web/app/stats route
+### Stage 8 — Multi-scale Rollup + Web Stats Surface / web/app/stats route
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -327,24 +215,21 @@
 - Sortable table: all `city_metrics_history` columns (tick index, date, population, money, happiness, demand_r/c/i, employment) newest-first via `DataTable`.
 - `web/lib/db/statsQueries.ts` queries compile; typed return matches `CityMetricsInsertPayload` columns.
 - `npm run validate:web` clean.
-
-**Phases:**
-
-- [ ] Phase 1 — Route scaffold + Postgres query helpers.
-- [ ] Phase 2 — Line chart + sortable table UI components.
+- Phase 1 — Route scaffold + Postgres query helpers.
+- Phase 2 — Line chart + sortable table UI components.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T3.2.1 | 1 | _pending_ | _pending_ | Add `web/app/stats/page.tsx` (new, Server Component): `export const revalidate = 60`; call `getLatestCityMetrics(100)` + `getCityMetricsSeries('population', 30)` from `statsQueries.ts`; pass arrays as props to client components. No UI yet — confirms data shape and `npm run validate:web` build succeeds. Follow ISR pattern from `web/app/dashboard/page.tsx`. |
-| T3.2.2 | 1 | _pending_ | _pending_ | Add `web/lib/db/statsQueries.ts` (new): `getLatestCityMetrics(limit: number): Promise<CityMetricsRow[]>` (SELECT * FROM city_metrics_history ORDER BY simulation_tick_index DESC LIMIT $1) + `getCityMetricsSeries(metric: string, ticks: number): Promise<{tick: number, value: number}[]>`; use `web/lib/db/client.ts` client; define `CityMetricsRow` type matching `CityMetricsInsertPayload` columns. |
-| T3.2.3 | 2 | _pending_ | _pending_ | Wire time-series chart in `web/app/stats/page.tsx`: pass `getCityMetricsSeries` data to `PlanChartClient` (`web/components/PlanChartClient.tsx` reused as-is); render three series — population, happiness, money — over last 30 ticks. Follow `PlanChartClient` prop contract from existing dashboard usage. |
-| T3.2.4 | 2 | _pending_ | _pending_ | Wire sortable table: pass `getLatestCityMetrics(100)` rows to `DataTable` (`web/components/DataTable.tsx` reused as-is); columns: tick index, date, population, money, happiness, demand_r/c/i, employment; default sort descending by tick index. Follow `DataTable` prop contract from existing dashboard usage. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T8.1 | _pending_ | _pending_ | Add `web/app/stats/page.tsx` (new, Server Component): `export const revalidate = 60`; call `getLatestCityMetrics(100)` + `getCityMetricsSeries('population', 30)` from `statsQueries.ts`; pass arrays as props to client components. No UI yet — confirms data shape and `npm run validate:web` build succeeds. Follow ISR pattern from `web/app/dashboard/page.tsx`. |
+| T8.2 | _pending_ | _pending_ | Add `web/lib/db/statsQueries.ts` (new): `getLatestCityMetrics(limit: number): Promise<CityMetricsRow[]>` (SELECT * FROM city_metrics_history ORDER BY simulation_tick_index DESC LIMIT $1) + `getCityMetricsSeries(metric: string, ticks: number): Promise<{tick: number, value: number}[]>`; use `web/lib/db/client.ts` client; define `CityMetricsRow` type matching `CityMetricsInsertPayload` columns. |
+| T8.3 | _pending_ | _pending_ | Wire time-series chart in `web/app/stats/page.tsx`: pass `getCityMetricsSeries` data to `PlanChartClient` (`web/components/PlanChartClient.tsx` reused as-is); render three series — population, happiness, money — over last 30 ticks. Follow `PlanChartClient` prop contract from existing dashboard usage. |
+| T8.4 | _pending_ | _pending_ | Wire sortable table: pass `getLatestCityMetrics(100)` rows to `DataTable` (`web/components/DataTable.tsx` reused as-is); columns: tick index, date, population, money, happiness, demand_r/c/i, employment; default sort descending by tick index. Follow `DataTable` prop contract from existing dashboard usage. |
 
 ---
 
-#### Stage 3.3 — Glossary + spec updates
+### Stage 9 — Multi-scale Rollup + Web Stats Surface / Glossary + spec updates
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -356,20 +241,17 @@
 - **City metrics history** glossary entry updated to note `StatsFacade.SnapshotForBridge()` as data source.
 - `ia/specs/managers-reference.md §Helper Services` table includes `CityStatsFacade`, `RegionStatsFacade`, `CountryStatsFacade` rows.
 - `npm run validate:all` clean.
-
-**Phases:**
-
-- [ ] Phase 1 — Add new glossary rows.
-- [ ] Phase 2 — Cross-link existing entries + managers-reference update + validate:all.
+- Phase 1 — Add new glossary rows.
+- Phase 2 — Cross-link existing entries + managers-reference update + validate:all.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T3.3.1 | 1 | _pending_ | _pending_ | Add glossary row **StatsFacade**: "Typed read-model facade (`CityStatsFacade` / `RegionStatsFacade` / `CountryStatsFacade`) implementing `IStatsReadModel`; backed by `ColumnarStatsStore`; `[SerializeField]` Inspector-wired; exposes `BeginTick`/`Publish`/`Set`/`EndTick` + `GetScalar`/`GetSeries`/`SnapshotForBridge`." Category: City systems. Spec ref: `mgrs §Helper Services`. |
-| T3.3.2 | 1 | _pending_ | _pending_ | Add glossary rows: **ColumnarStatsStore** ("Plain C# ring-buffer store keyed by `StatKey`; capacity 256 city / 64 dormant scale; `FlushToSeries()` on `EndTick`."), **StatKey** ("Enum of canonical metric identifiers shared across facade, store, and consumers."), **IStatsReadModel** ("Pull contract for facade consumers: `GetScalar`, `GetSeries`, `EnumerateRows`."); update **City metrics history** entry: append "Data sourced via `CityStatsFacade.SnapshotForBridge(tick)` since citystats-overhaul." |
-| T3.3.3 | 2 | _pending_ | _pending_ | Cross-link in existing glossary: append to **Simulation tick** definition "Fires `CityStatsFacade.EndTick` on each tick (since citystats-overhaul)."; append to **Scale switch** definition "Triggers `RegionStatsFacade.Rollup(activeCities)` in save-leaving step (since citystats-overhaul).". Add `CityStatsFacade`, `RegionStatsFacade`, `CountryStatsFacade` rows to `ia/specs/managers-reference.md §Helper Services` table with role descriptions. |
-| T3.3.4 | 2 | _pending_ | _pending_ | Run `npm run validate:all`; confirm zero errors on frontmatter + link checks. Run `npm run validate:web` to confirm web build still clean after Stage 3.2 additions. Report exit codes. |
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T9.1 | _pending_ | _pending_ | Add glossary row **StatsFacade**: "Typed read-model facade (`CityStatsFacade` / `RegionStatsFacade` / `CountryStatsFacade`) implementing `IStatsReadModel`; backed by `ColumnarStatsStore`; `[SerializeField]` Inspector-wired; exposes `BeginTick`/`Publish`/`Set`/`EndTick` + `GetScalar`/`GetSeries`/`SnapshotForBridge`." Category: City systems. Spec ref: `mgrs §Helper Services`. |
+| T9.2 | _pending_ | _pending_ | Add glossary rows: **ColumnarStatsStore** ("Plain C# ring-buffer store keyed by `StatKey`; capacity 256 city / 64 dormant scale; `FlushToSeries()` on `EndTick`."), **StatKey** ("Enum of canonical metric identifiers shared across facade, store, and consumers."), **IStatsReadModel** ("Pull contract for facade consumers: `GetScalar`, `GetSeries`, `EnumerateRows`."); update **City metrics history** entry: append "Data sourced via `CityStatsFacade.SnapshotForBridge(tick)` since citystats-overhaul." |
+| T9.3 | _pending_ | _pending_ | Cross-link in existing glossary: append to **Simulation tick** definition "Fires `CityStatsFacade.EndTick` on each tick (since citystats-overhaul)."; append to **Scale switch** definition "Triggers `RegionStatsFacade.Rollup(activeCities)` in save-leaving step (since citystats-overhaul).". Add `CityStatsFacade`, `RegionStatsFacade`, `CountryStatsFacade` rows to `ia/specs/managers-reference.md §Helper Services` table with role descriptions. |
+| T9.4 | _pending_ | _pending_ | Run `npm run validate:all`; confirm zero errors on frontmatter + link checks. Run `npm run validate:web` to confirm web build still clean after Stage 3.2 additions. Report exit codes. |
 
 ---
 

@@ -149,3 +149,44 @@ task_key: "{{T_KEY}}"
 -->
 
 1. …
+
+---
+
+<!--
+  Plan-Apply pair sections — populated by pair-head Opus stages downstream. Sonnet pair-tail
+  appliers read tuples verbatim from these sections. Contract: `ia/rules/plan-apply-pair-contract.md`.
+  Each section heading is mandatory (anchor target) even when empty; pair-head writes
+  `{operation, target_path, target_anchor, payload}` tuples below the heading. Do NOT delete
+  these sections from new specs even if a pair stage is skipped — leave the placeholder so
+  later anchor lookups succeed.
+-->
+
+## §Project-New Plan
+
+<!-- Pair-head: `project-new-plan` Opus stage. Pair-tail: `project-new-apply` Sonnet. -->
+
+_pending — populated by `/project-new` planner pass. Tuples drive id reservation + yaml + spec stub materialization._
+
+## §Audit
+
+<!-- Pair-head: `opus-audit` Opus stage (post-verify). Pair-tail: `closeout-apply` consumes via `§Closeout Plan`. -->
+
+_pending — populated by `/audit` after `/verify-loop` passes. One paragraph: what shipped, what worked, what to watch._
+
+## §Code Review
+
+<!-- Pair-head: `opus-code-review` Opus stage. Pair-tail: `code-fix-apply` Sonnet (only when critical). -->
+
+_pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / deferred) | critical (writes `§Code Fix Plan` below)._
+
+## §Code Fix Plan
+
+<!-- Pair-head: `opus-code-review` writes here only when verdict = critical. Pair-tail: `code-fix-apply` Sonnet. -->
+
+_pending — populated by `/code-review` only when fixes needed. Sonnet `code-fix-apply` reads tuples + applies + re-enters `/verify-loop`._
+
+## §Closeout Plan
+
+<!-- Pair-head: `opus-audit` Opus stage. Pair-tail: `closeout-apply` Sonnet. -->
+
+_pending — populated by `/audit`. Structured migration anchors: glossary rows, rule sections, doc paragraphs, BACKLOG archive op, id purge list._

@@ -13,7 +13,7 @@
       "name": "Templates + rules + glossary + plan-apply contract"
     },
     "M2": {
-      "status": "pending",
+      "status": "done",
       "name": "Master-plan in-place migration"
     },
     "M3": {
@@ -45,7 +45,7 @@
     "M2": [
       {
         "path": "ia/projects/backlog-yaml-mcp-alignment-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/blip-master-plan.md",
@@ -53,63 +53,63 @@
       },
       {
         "path": "ia/projects/city-sim-depth-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/citystats-overhaul-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/distribution-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/full-game-mvp-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/landmarks-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/lifecycle-refactor-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/multi-scale-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/music-player-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/skill-training-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/sprite-gen-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/ui-polish-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/utilities-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/web-platform-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/zone-s-economy-master-plan.md",
-        "status": "pending"
+        "status": "done"
       }
     ],
     "M3": {

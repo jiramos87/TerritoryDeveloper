@@ -1,0 +1,25 @@
+id: TECH-448
+type: tech (IA infrastructure / lifecycle tooling)
+title: Write plan-apply-pair-contract rule (Stage 1.2 Phase 3)
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ""
+files:
+  - ia/rules/plan-apply-pair-contract.md
+notes: |
+  Authored new `ia/rules/plan-apply-pair-contract.md`. Defines canonical `§Plan` tuple shape (`{operation, target_path, target_anchor, payload}` + 9-value operation enum), enumerates 5 pair seams (plan-review→plan-fix-apply, stage-file-plan→stage-file-apply, project-new-plan→project-new-apply, code-review→code-fix-apply, audit→closeout-apply), validation gate (per-seam validator + return-to-Opus on non-zero), escalation rule (5 ambiguity triggers; Sonnet never guesses), idempotency requirement (re-running applied plan = exit 0 + zero diff). Cross-references project-hierarchy + orchestrator-vs-spec + project-spec-template + master-plan-template.
+acceptance: |
+  New file exists; tuple shape defined; 5 pair seams enumerated; validation gate + escalation + idempotency clauses present; IA-only validators green.
+depends_on:
+  - TECH-446
+  - TECH-447
+depends_on_raw: TECH-446 + TECH-447 (sibling rules referenced; hierarchy + status flip rules must exist first).
+related:
+  - TECH-444
+  - TECH-445
+  - TECH-449
+created: 2026-04-19
+closed: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.2.5
