@@ -2,7 +2,7 @@ id: TECH-421
 type: tech / service logic
 title: "`SetEnvelopePct` auto-normalize + batch commit (Stage 1.3 Phase 2)"
 priority: medium
-status: done
+status: closed
 section: Medium Priority
 files:
   - Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs

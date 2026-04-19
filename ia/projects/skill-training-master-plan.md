@@ -146,7 +146,7 @@
 
 #### Stage 2.1 — Core Authoring + Filing Skills (6 skills)
 
-**Status:** Draft (4 of 4 filed: TECH-430, TECH-431, TECH-432, TECH-433)
+**Status:** In Progress — TECH-433 (4 of 4 filed: TECH-430, TECH-431, TECH-432, TECH-433)
 
 **Objectives:** Wire the 6 authoring-and-filing lifecycle skills (`design-explore`, `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`, `project-new`) with Phase-N-tail stanzas.
 
@@ -165,10 +165,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.1.1 | Wire authoring-trio Phase-N-tail | 1 | **TECH-430** | Draft | Edit `ia/skills/design-explore/SKILL.md`, `master-plan-new/SKILL.md`, `master-plan-extend/SKILL.md`: append Phase-N-tail stanza verbatim from `skill-train/SKILL.md §Emitter stanza template`; inject `## Changelog` section if absent; place stanza at existing handoff Phase N position. Verify `schema_version` date-stamp on all 3. |
-| T2.1.2 | Wire filing-trio Phase-N-tail | 1 | **TECH-431** | Draft | Edit `ia/skills/stage-decompose/SKILL.md`, `stage-file/SKILL.md`, `project-new/SKILL.md`: same procedure as T2.1.1. Stanza at final handoff phase; §Changelog injected if absent; schema_version present on all 3. |
-| T2.1.3 | Cross-read stanza consistency | 2 | **TECH-432** | Draft | Cross-read all 6 wired SKILL.md files; verify stanza text matches canonical template character-for-character (no paraphrase); `schema_version` stamps identical across all 6; `## Changelog` sections present. Document any deviation found in the relevant skill's §Changelog as `source: wiring-review`. |
-| T2.1.4 | validate:all post Stage 2.1 | 2 | **TECH-433** | Draft | Run `npm run validate:all` from repo root; confirm exit 0. Surface any frontmatter/index failures introduced by skill edits; fix inline before closing stage. |
+| T2.1.1 | Wire authoring-trio Phase-N-tail | 1 | **TECH-430** | Done (archived) | Edit `ia/skills/design-explore/SKILL.md`, `master-plan-new/SKILL.md`, `master-plan-extend/SKILL.md`: append Phase-N-tail stanza verbatim from `skill-train/SKILL.md §Emitter stanza template`; inject `## Changelog` section if absent; place stanza at existing handoff Phase N position. Verify `schema_version` date-stamp on all 3. |
+| T2.1.2 | Wire filing-trio Phase-N-tail | 1 | **TECH-431** | Done (archived) | Edit `ia/skills/stage-decompose/SKILL.md`, `stage-file/SKILL.md`, `project-new/SKILL.md`: same procedure as T2.1.1. Stanza at final handoff phase; §Changelog injected if absent; schema_version present on all 3. |
+| T2.1.3 | Cross-read stanza consistency | 2 | **TECH-432** | Done (archived) | Cross-read all 6 wired SKILL.md files; verify stanza text matches canonical template character-for-character (no paraphrase); `schema_version` stamps identical across all 6; `## Changelog` sections present. Document any deviation found in the relevant skill's §Changelog as `source: wiring-review`. |
+| T2.1.4 | validate:all post Stage 2.1 | 2 | **TECH-433** | In Progress | Run `npm run validate:all` from repo root; confirm exit 0. Surface any frontmatter/index failures introduced by skill edits; fix inline before closing stage. |
 
 ---
 

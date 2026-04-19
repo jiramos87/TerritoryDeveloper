@@ -338,3 +338,46 @@ test("envelope — invalid_input (mutually exclusive) → { ok:false, error:{ co
     assert.equal(envelope.error.code, "invalid_input");
   }
 });
+
+// ---------------------------------------------------------------------------
+// TECH-429: all-fail bulk path → { ok: false, error: { code: "invalid_input" } }
+// ---------------------------------------------------------------------------
+
+test(
+  "bulk terms — all-fail → { ok: false, error: { code: 'invalid_input' } } with details.errors",
+  { skip: !fs.existsSync(bulkGlossaryPath) },
+  async () => {
+    const entries = parseGlossary(bulkGlossaryPath);
+    const envelope = await wrapTool(async () => {
+      const results: Record<string, Record<string, unknown>> = {};
+      const errors: Record<string, { code: string; message: string }> = {};
+      for (const rawBulk of ["__xyznotfound1__", "__xyznotfound2__"]) {
+        const outcome = lookupOneTerm(rawBulk.trim(), entries, bulkRepoRoot);
+        if (outcome.kind === "hit") {
+          results[rawBulk] = outcome.payload;
+        } else {
+          errors[rawBulk] = outcome.error;
+        }
+      }
+      const succeeded = Object.keys(results).length;
+      const failed = Object.keys(errors).length;
+      if (succeeded === 0 && failed > 0) {
+        const failureTerms = Object.keys(errors).join(", ");
+        throw {
+          code: "invalid_input" as const,
+          message: `All ${failed} term(s) not found: ${failureTerms}.`,
+          hint: "Use glossary_discover to browse available terms.",
+          details: { errors },
+        };
+      }
+      return { ok: true as const, payload: { results, errors }, meta: { partial: { succeeded, failed } } };
+    })({});
+    assert.equal(envelope.ok, false, "all-fail bulk must return ok: false");
+    if (!envelope.ok) {
+      assert.equal(envelope.error.code, "invalid_input");
+      assert.ok(envelope.error.hint, "hint present");
+      const d = envelope.error.details as { errors?: Record<string, unknown> };
+      assert.ok(d?.errors, "details.errors present");
+    }
+  },
+);

@@ -12,6 +12,15 @@
     "  - Acceptance: `BlipLutPool.cs` present; `BlipCatalog._lutPool` field-init; `BlipVoiceState.lfoPhase0/lfoPhase1` present + blittable + default 0.0; invariant #4 held; `unity:compile-check` green; existing golden + NoAlloc tests green.",
     "",
     "- [x] **TECH-405** — **MCP** — wrap Unity analysis tools (Stage 2.2 T2.2.8) (2026-04-18)",
+    "- [x] **TECH-430** — Wire authoring-trio Phase-N-tail stanza (Stage 2.1 T2.1.1) (2026-04-18)",
+    "  - Type: documentation",
+    "  - Files: `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/master-plan-extend/SKILL.md`",
+    "  - Spec: (removed after closure)",
+    "  - Notes: Append Phase-N-tail emitter stanza verbatim from `ia/skills/skill-train/SKILL.md §Emitter stanza template` to 3 authoring skills. Stanza placed at existing final handoff phase (Phase 9 — Persist on `design-explore`; Phase 9 — Handoff on `master-plan-new`; Phase 8 — Handoff on `master-plan-extend`). `## Changelog` section injected on `design-explore` + `master-plan-new` (already present on `master-plan-extend`). `{SKILL_NAME}` substituted at paste time; `schema_version: 2026-04-18` pinned; `run_date: {YYYY-MM-DD}` left as runtime placeholder. Decision Log persisted to `ia_project_spec_journal`.",
+    "  - Acceptance: 3 SKILL.md files wired verbatim; `schema_version` present; §Changelog present; stanza at final handoff phase; `validate:all` (pre-existing TECH-440/441 failure unrelated).",
+    "  - Depends on: **TECH-393** (archived — canonical §Emitter stanza template section)",
+    "  - Related: TECH-431, TECH-432, TECH-433",
+    "",
     "  - Type: mcp / infrastructure",
     "  - Files: `tools/mcp-ia-server/src/tools/findobjectoftype-scan.ts`, `tools/mcp-ia-server/src/tools/unity-callers-of.ts`, `tools/mcp-ia-server/src/tools/unity-subscribers-of.ts`, `tools/mcp-ia-server/src/tools/csharp-class-summary.ts`",
     "  - Spec: (removed after closure)",
@@ -2123,6 +2132,12 @@
           "lines": [
             ""
           ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-427",
+          "checklist_line": "- [x] **TECH-427** — **MCP** — structured `rule_content` payload + markdown side-channel (Stage 2.3 T2.3.2) (2026-04-18)",
+          "trailing_blanks": 1
         },
         {
           "type": "issue",

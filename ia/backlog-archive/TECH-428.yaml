@@ -2,7 +2,7 @@ id: TECH-428
 type: mcp / infrastructure
 title: "**MCP** — partial-result batch shape for `spec_sections` (Stage 2.3 T2.3.3)"
 priority: medium
-status: open
+status: closed
 section: IA infrastructure
 spec: ia/projects/TECH-428-spec-sections-partial-batch.md
 files:
@@ -21,10 +21,10 @@ related:
   - TECH-429
 created: 2026-04-18
 raw_markdown: |
-  - [ ] **TECH-428** — **MCP** — partial-result batch shape for `spec_sections` (Stage 2.3 T2.3.3)
+  - [x] **TECH-428** — **MCP** — partial-result batch shape for `spec_sections` (Stage 2.3 T2.3.3)
     - Type: mcp / infrastructure
     - Files: `tools/mcp-ia-server/src/tools/spec-sections.ts`
-    - Spec: `ia/projects/TECH-428-spec-sections-partial-batch.md`
+    - Spec: (removed after closure)
     - Notes: Response → `{ results, errors, meta.partial }`; one bad key does not fail batch; `ok: true` when ≥1 succeeds.
     - Acceptance: mixed / all-good / all-bad cases covered; `meta.partial` propagates; unit tests green; `validate:all` green.
     - Depends on: TECH-388, TECH-398, TECH-426

@@ -264,6 +264,47 @@ Single concise message (caveman) naming:
 - Non-scope list outcome: scope-boundary doc referenced in header, OR **recommend stub** if exploration carries explicit post-MVP items but no companion doc exists yet (propose path `docs/{SLUG}-post-mvp-extensions.md` — NOT this skill's job to create; user runs a separate task).
 - Next step: `claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"` (or named first stage) to file its pending tasks as BACKLOG rows + project-spec stubs.
 
+**Step 1 — Friction-condition check**
+
+Evaluate:
+
+```
+friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
+```
+
+Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
+
+**Step 2 — Construct `skill_self_report` JSON**
+
+Build JSON per §Schema. Set `skill: master-plan-new`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
+
+**Step 3 — Append §Changelog entry**
+
+Append to `## Changelog` section of `ia/skills/master-plan-new/SKILL.md`:
+
+```markdown
+### {YYYY-MM-DD} — self-report
+
+**source:** self-report
+
+**schema_version:** 2026-04-18
+
+```json
+{
+  "skill": "master-plan-new",
+  "run_date": "{YYYY-MM-DD}",
+  "schema_version": "2026-04-18",
+  "friction_types": [],
+  "guardrail_hits": [],
+  "phase_deviations": [],
+  "missing_inputs": [],
+  "severity": "low"
+}
+```
+
+---
+```
+
 ---
 
 ## Tool recipe (territory-ia) — Phase 2 only
@@ -316,3 +357,15 @@ Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec
 After persist: recommend first stage to file.
 
 `claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"` — all steps are already fully decomposed; file stages in step order as each parent step closes.
+
+---
+
+## Changelog
+
+### 2026-04-18 — wiring-review
+
+**source:** wiring-review
+
+**deviation:** `## Next step` section appeared AFTER `## Changelog` (lines 357–361 post-stanza). Changelog must be the terminal section so self-report appenders land at file tail. Moved `## Next step` to before `## Changelog`.
+
+---

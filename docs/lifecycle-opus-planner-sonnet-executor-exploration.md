@@ -406,7 +406,7 @@ Output (new 2-level under Stage-as-parent):
 
 (Legacy old `Step 1 + Stage 1.1` merged — "Stage" now names what was the Step+Stage pair. Task ids renumbered `T{stage}.{n}`, Issue ids preserved verbatim.)
 
-**Edge case — open in-flight task mid-migration.** `TECH-102` above is `In Progress` (spec in `ia/projects/TECH-102.md`, branch active). M3 transform updates frontmatter `parent_stage: "1"` (was `parent_step: 1, parent_stage: "1.1", parent_phase: 2`). Spec body content untouched. Active worker resumes after M8; new chain picks up at current `§Implementation` state.
+**Edge case — open in-flight task mid-migration.** `TECH-102` above is a hypothetical `In Progress` task (archived in `ia/backlog-archive/TECH-102.yaml`; spec no longer exists). M3 transform updates frontmatter `parent_stage: "1"` (was `parent_step: 1, parent_stage: "1.1", parent_phase: 2`). Spec body content untouched. Active worker resumes after M8; new chain picks up at current `§Implementation` state.
 
 **Edge case — crash during M2.** Script writes migration state `M2.progress: {done: [blip, citystats-overhaul], current: zone-s-economy, pending: [...]}`. On resume, re-opens `zone-s-economy-master-plan.md` from snapshot tarball (not current partial file), re-runs transform. Idempotency guaranteed — transform reads only snapshot + emits to current.
 

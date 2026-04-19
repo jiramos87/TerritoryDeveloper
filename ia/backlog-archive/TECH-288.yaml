@@ -2,7 +2,7 @@ id: TECH-288
 type: audio / DSP + IA
 title: LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2)
 priority: medium
-status: completed
+status: closed
 section: Stage 5.3 — LFOs + routing matrix + param smoothing
 spec: ia/projects/TECH-288.md
 files:

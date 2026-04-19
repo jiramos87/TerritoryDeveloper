@@ -2,7 +2,7 @@ id: TECH-423
 type: tech / save migration
 title: "`MigrateLoadedSaveData` v3→v4 branch (Stage 1.3 Phase 3)"
 priority: medium
-status: done
+status: closed
 section: Medium Priority
 files:
   - Assets/Scripts/Managers/GameManagers/GameSaveManager.cs

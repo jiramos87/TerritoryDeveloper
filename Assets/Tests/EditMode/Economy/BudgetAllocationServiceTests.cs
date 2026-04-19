@@ -42,9 +42,17 @@ namespace Territory.Tests.EditMode.Economy
             economy.cityStats = cityStats;
             // gameNotificationManager intentionally null — NPEs on notificationPanel in headless EditMode.
 
-            // 3. TreasuryFloorClampService — Awake finds EconomyManager via FindObjectOfType.
+            // 3. TreasuryFloorClampService — Awake attempts FindObjectOfType<EconomyManager>.
+            //    AddComponent timing in batch EditMode is non-deterministic; explicitly back-wire
+            //    clamp.economy below (same reason we back-wire economy.treasuryFloorClamp in step 4).
             clampGO = new GameObject("TestTreasuryFloorClamp");
             clamp = clampGO.AddComponent<TreasuryFloorClampService>();
+
+            // 3a. Back-wire economy into TreasuryFloorClampService (private [SerializeField]).
+            FieldInfo clampEconomyField = typeof(TreasuryFloorClampService)
+                .GetField("economy", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(clampEconomyField, "Reflection: economy not found on TreasuryFloorClampService");
+            clampEconomyField.SetValue(clamp, economy);
 
             // 4. Back-wire clamp into EconomyManager (private [SerializeField]; Awake ran before clamp existed).
             FieldInfo clampField = typeof(EconomyManager)
@@ -56,6 +64,21 @@ namespace Territory.Tests.EditMode.Economy
             //    ZoneSubTypeRegistry absent → LogError (expected; not used by TryDraw or MonthlyReset).
             budgetGO = new GameObject("TestBudgetAllocation");
             budget = budgetGO.AddComponent<BudgetAllocationService>();
+
+            // 6. Back-wire treasuryFloor into BudgetAllocationService via reflection.
+            //    FindObjectOfType in Awake is non-deterministic in EditMode batch runner
+            //    when components are added programmatically; explicit wiring guarantees
+            //    the clamp reference is the instance we created above.
+            FieldInfo treasuryFloorField = typeof(BudgetAllocationService)
+                .GetField("treasuryFloor", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(treasuryFloorField, "Reflection: treasuryFloor not found on BudgetAllocationService");
+            treasuryFloorField.SetValue(budget, clamp);
+
+            // Also back-wire economy into BudgetAllocationService for symmetry.
+            FieldInfo budgetEconomyField = typeof(BudgetAllocationService)
+                .GetField("economy", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(budgetEconomyField, "Reflection: economy not found on BudgetAllocationService");
+            budgetEconomyField.SetValue(budget, economy);
 
             // Cache private backing-field refs (set per-test via SeedBudget).
             _envelopePctField = typeof(BudgetAllocationService)

@@ -217,9 +217,9 @@
 
 #### Stage 2.3 — Alias Removal + Structured Prose + Batch Shape
 
-**Status:** Draft
+**Status:** Final (2026-04-18)
 
-**Backlog state (Stage 2.3):** 4 filed — TECH-426 / TECH-427 / TECH-428 / TECH-429 (all Draft)
+**Backlog state (Stage 2.3):** 4 filed, all Done (archived) — TECH-426 / TECH-427 / TECH-428 / TECH-429
 
 **Objectives:** Hard-remove all legacy param aliases from `spec_section`, `spec_sections`, `project_spec_journal_*`; convert `rule_content` to structured payload + `markdown` side-channel; implement partial-result batch schema for `spec_sections` and `glossary_lookup (terms)`.
 
@@ -232,17 +232,17 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Alias removal + structured rule_content.
-- [ ] Phase 2 — Partial-result batch shape.
+- [x] Phase 1 — Alias removal + structured rule_content.
+- [x] Phase 2 — Partial-result batch shape.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.3.1 | Drop spec_section aliases | 1 | **TECH-426** | Draft | Remove alias params from `spec-section.ts` Zod schema: `key`/`doc`/`document_key` → reject with `invalid_input` (hint: "Use 'spec'"); `section_heading`/`section_id`/`heading` → reject (hint: "Use 'section'"); `maxChars` → reject (hint: "Use 'max_chars'"). Same cleanup for `spec-sections.ts` and `project-spec-journal.ts` journal-search params. |
-| T2.3.2 | Structured rule_content | 1 | **TECH-427** | Draft | Convert `rule-content.ts` response to `{ rule_key, title, sections: [{id, heading, body}], markdown?: string }` — parse headings from rule markdown; `markdown` side-channel = raw file text. Ensures `rule_section` tool (T2.2.2) has a structured base to slice. |
-| T2.3.3 | Batch partial-result — spec_sections | 2 | **TECH-428** | Draft | Refactor `spec-sections.ts` to return `{ results: {[spec_key]: {sections: [...]}}, errors: {[spec_key]: {code, message}}, meta: {partial: {succeeded, failed}} }`. One bad input key → `errors[key]`, rest still succeed; envelope `ok: true` when ≥1 succeeds. |
-| T2.3.4 | Batch partial-result — glossary_lookup | 2 | **TECH-429** | Draft | Wire partial-result shape for `glossary_lookup({ terms: [...] })` (handler extended in Stage 1.1) through the Stage 2.2 envelope wrapper; ensure `meta.partial` propagates to `EnvelopeMeta`; single-`term` path still returns unwrapped `GlossaryEntry` in `payload`. |
+| T2.3.1 | Drop spec_section aliases | 1 | **TECH-426** | Done (archived) | Remove alias params from `spec-section.ts` Zod schema: `key`/`doc`/`document_key` → reject with `invalid_input` (hint: "Use 'spec'"); `section_heading`/`section_id`/`heading` → reject (hint: "Use 'section'"); `maxChars` → reject (hint: "Use 'max_chars'"). Same cleanup for `spec-sections.ts` and `project-spec-journal.ts` journal-search params. |
+| T2.3.2 | Structured rule_content | 1 | **TECH-427** | Done (archived) | Convert `rule-content.ts` response to `{ rule_key, title, sections: [{id, heading, body}], markdown?: string }` — parse headings from rule markdown; `markdown` side-channel = raw file text. Ensures `rule_section` tool (T2.2.2) has a structured base to slice. |
+| T2.3.3 | Batch partial-result — spec_sections | 2 | **TECH-428** | Done (archived) | Refactor `spec-sections.ts` to return `{ results: {[spec_key]: {sections: [...]}}, errors: {[spec_key]: {code, message}}, meta: {partial: {succeeded, failed}} }`. One bad input key → `errors[key]`, rest still succeed; envelope `ok: true` when ≥1 succeeds. |
+| T2.3.4 | Batch partial-result — glossary_lookup | 2 | **TECH-429** | Done (archived) | Wire partial-result shape for `glossary_lookup({ terms: [...] })` (handler extended in Stage 1.1) through the Stage 2.2 envelope wrapper; ensure `meta.partial` propagates to `EnvelopeMeta`; single-`term` path still returns unwrapped `GlossaryEntry` in `payload`. |
 
 ---
 

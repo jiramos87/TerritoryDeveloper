@@ -22,53 +22,62 @@ const FUZZY_STRONG_THRESHOLD = 0.3;
 
 const stringOrNumber = z.union([z.string(), z.number()]);
 
-/** Raw MCP arguments (including mistaken names some models send). */
+/** Raw MCP arguments (canonical params only since Stage 2.3). */
 export type SpecSectionRawArgs = {
   spec?: string;
-  /** Alias for `spec` (e.g. models send `key: "geo"`). */
+  /** Rejected alias — kept in type for runtime rejection in normalizeSpecSectionInput. */
   key?: string;
   document_key?: string;
   doc?: string;
   section?: string | number;
-  /** Alias for `section`. */
+  /** Rejected aliases — kept in type for runtime rejection. */
   section_heading?: string | number;
   section_id?: string | number;
   heading?: string | number;
   max_chars?: number;
+  /** Rejected alias — kept in type for runtime rejection. */
   maxChars?: number;
 };
 
 /**
- * Maps alternate parameter names and numeric section ids to canonical `spec` + `section` strings.
- * Throws `{ code: "invalid_input", message, hint }` (caught by `wrapTool`) if args are missing.
+ * Validates and returns canonical `spec` + `section` + `max_chars`.
+ * Throws `{ code: "invalid_input" }` (caught by `wrapTool`) on missing or alias params.
  */
 export function normalizeSpecSectionInput(
   args: SpecSectionRawArgs | undefined,
 ): { spec: string; section: string; max_chars: number } {
   const a = args ?? {};
+
+  // Reject legacy aliases with canonical-name hints (Stage 2.3 TECH-426).
+  if (a.key !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'key'. Canonical: 'spec'." };
+  if (a.document_key !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'document_key'. Canonical: 'spec'." };
+  if (a.doc !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'doc'. Canonical: 'spec'." };
+  if (a.section_heading !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'section_heading'. Canonical: 'section'." };
+  if (a.section_id !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'section_id'. Canonical: 'section'." };
+  if (a.heading !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'heading'. Canonical: 'section'." };
+  if (a.maxChars !== undefined)
+    throw { code: "invalid_input" as const, message: "Unknown param 'maxChars'. Canonical: 'max_chars'." };
+
   const toStr = (v: unknown): string =>
     v === undefined || v === null ? "" : String(v).trim();
 
-  const spec = toStr(
-    a.spec ?? a.key ?? a.document_key ?? a.doc,
-  );
-  const section = toStr(
-    a.section ?? a.section_heading ?? a.section_id ?? a.heading,
-  );
-
-  const maxRaw = a.max_chars ?? a.maxChars;
+  const spec = toStr(a.spec);
+  const section = toStr(a.section);
   const max_chars =
-    typeof maxRaw === "number" && Number.isFinite(maxRaw)
-      ? maxRaw
+    typeof a.max_chars === "number" && Number.isFinite(a.max_chars)
+      ? a.max_chars
       : DEFAULT_MAX_CHARS;
 
   if (!spec || !section) {
     throw {
       code: "invalid_input" as const,
-      message:
-        "Provide `spec` (document key or alias, e.g. geo) and `section` (e.g. \"14\" or \"14.5\"). " +
-        "Aliases accepted: `key`/`document_key`/`doc` for spec; `section_heading`/`section_id`/`heading` for section. " +
-        "Numeric `section` values are coerced to strings.",
+      message: "Provide `spec` (document key, e.g. geo) and `section` (e.g. \"14\" or \"14.5\").",
       hint: "Both `spec` and `section` are required.",
     };
   }
@@ -81,31 +90,29 @@ const inputShape = {
     .string()
     .optional()
     .describe(
-      "Document key, alias, or filename (e.g. 'geo', 'isometric-geography-system'). Prefer this over `key`.",
+      "Document key or filename (e.g. 'geo', 'isometric-geography-system'). Required.",
     ),
   key: z
     .string()
     .optional()
-    .describe(
-      "Alias for `spec` when the model sends `key` instead (same meaning).",
-    ),
-  document_key: z.string().optional().describe("Alias for `spec`."),
-  doc: z.string().optional().describe("Alias for `spec`."),
+    .describe("Rejected alias — use 'spec' instead. Returns invalid_input error."),
+  document_key: z.string().optional().describe("Rejected alias — use 'spec' instead. Returns invalid_input error."),
+  doc: z.string().optional().describe("Rejected alias — use 'spec' instead. Returns invalid_input error."),
   section: stringOrNumber
     .optional()
     .describe(
-      "Section ID (e.g. '13.4'), title substring, or fuzzy heading text. Numbers are coerced to strings.",
+      "Section ID (e.g. '13.4'), title substring, or fuzzy heading text. Required. Numbers coerced to strings.",
     ),
   section_heading: stringOrNumber
     .optional()
-    .describe("Alias for `section` (same meaning)."),
-  section_id: stringOrNumber.optional().describe("Alias for `section`."),
-  heading: stringOrNumber.optional().describe("Alias for `section`."),
+    .describe("Rejected alias — use 'section' instead. Returns invalid_input error."),
+  section_id: stringOrNumber.optional().describe("Rejected alias — use 'section' instead. Returns invalid_input error."),
+  heading: stringOrNumber.optional().describe("Rejected alias — use 'section' instead. Returns invalid_input error."),
   max_chars: z
     .number()
     .optional()
     .describe("Maximum characters to return. Default: 3000. Truncates at the end."),
-  maxChars: z.number().optional().describe("Alias for `max_chars`."),
+  maxChars: z.number().optional().describe("Rejected alias — use 'max_chars' instead. Returns invalid_input error."),
 };
 
 function jsonResult(payload: unknown) {
@@ -265,7 +272,7 @@ export function registerSpecSection(
     "spec_section",
     {
       description:
-        "Retrieve one section from a spec, rule, or root doc. Required: document in `spec` (or alias `key`/`doc`) and target in `section` (or alias `section_heading`). Use spec_outline first; supports doc aliases (geo, roads) and fuzzy heading matches on typos.",
+        "Retrieve one section from a spec, rule, or root doc. Required: `spec` (document key, e.g. 'geo') and `section` (heading id or title). Use spec_outline first; supports doc keys (geo, roads) and fuzzy heading matches on typos.",
       inputSchema: inputShape,
     },
     async (args) =>

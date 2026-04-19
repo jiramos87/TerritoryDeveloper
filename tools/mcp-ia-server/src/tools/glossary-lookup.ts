@@ -309,8 +309,7 @@ export function registerGlossaryLookup(
             const entries = parseGlossary(entry.filePath);
             const repoRoot = resolveRepoRoot();
 
-            // Bulk path — fan out + aggregate partial-result shape.
-            // Returns pre-shaped envelope so wrapTool passes it through unchanged.
+            // Bulk path — fan out + aggregate partial-result shape (Stage 2.3 TECH-429).
             if (bulkRequested) {
               const results: Record<string, Record<string, unknown>> = {};
               const errors: Record<string, { code: string; message: string }> = {};
@@ -325,6 +324,18 @@ export function registerGlossaryLookup(
               }
               const succeeded = Object.keys(results).length;
               const failed = Object.keys(errors).length;
+
+              // All-fail: throw so wrapTool yields { ok: false, error: { code: "invalid_input" } }.
+              if (succeeded === 0 && failed > 0) {
+                const failureTerms = Object.keys(errors).join(", ");
+                throw {
+                  code: "invalid_input" as const,
+                  message: `All ${failed} term(s) not found: ${failureTerms}.`,
+                  hint: "Use glossary_discover to browse available terms.",
+                  details: { errors },
+                };
+              }
+
               // Pre-shaped envelope — wrapTool detects `ok` key and passes through.
               return {
                 ok: true as const,

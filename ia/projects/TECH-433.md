@@ -9,7 +9,7 @@ task_key: "T2.1.4"
 # TECH-433 — validate:all post Stage 2.1
 
 > **Issue:** [TECH-433](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** In Progress
 > **Created:** 2026-04-18
 > **Last updated:** 2026-04-18
 
@@ -48,6 +48,7 @@ After TECH-430 / TECH-431 / TECH-432, 6 SKILL.md files carry stanza + §Changelo
 - Validator: `npm run validate:all` — chains `validate:dead-project-specs`, `test:ia`, `validate:fixtures`, `generate:ia-indexes --check`, `validate:frontmatter`.
 - Audit targets: 6 skills wired + this Stage's 4 project specs (TECH-430, TECH-431, TECH-432, TECH-433 — see `BACKLOG.md`).
 - Fix surfaces: `ia/skills/*/SKILL.md` frontmatter, `ia/indexes/*.json`, cross-ref paths.
+- Sibling specs: [`TECH-430.md`](TECH-430.md), [`TECH-431.md`](TECH-431.md), [`TECH-432.md`](TECH-432.md). Parent plan: [`skill-training-master-plan.md`](skill-training-master-plan.md).
 
 ### 4.3 Implementation investigation notes
 
@@ -80,20 +81,33 @@ Single validator run → exit 0 → stage green-bar → ready for `project-stage
 
 ### Phase 2 — Fix regression if any
 
-- [ ] Identify failing chain step.
-- [ ] Patch inline (regenerate indexes, fix cross-ref, fix frontmatter).
-- [ ] Re-run until exit 0.
+- [ ] Identify failing chain step from stdout (never guess).
+- [ ] Patch inline per failure type:
+  - `generate:ia-indexes --check` red → `npm run generate:ia-indexes` then commit regenerated `ia/indexes/*.json`.
+  - `validate:frontmatter` red → fix SKILL.md front-block shape (key order, required fields).
+  - `validate:dead-project-specs` red → repair broken cross-ref or stale id reference.
+  - `test:ia` / `validate:fixtures` red → patch fixture + rerun.
+- [ ] Re-run `npm run validate:all` until exit 0. Do NOT `--skip` any chain step.
+
+### Phase 3 — Stage-close readiness
+
+- [ ] Confirm TECH-430 / TECH-431 / TECH-432 rows marked Done in `ia/projects/skill-training-master-plan.md` Stage 2.1 table.
+- [ ] Hand off to `project-stage-close` skill (ticks Stage 2.1 row; does NOT close umbrella).
 
 ## 7b. Test Contracts
 
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
-| Stage 2.1 green bar | Node | `npm run validate:all` | Exit 0 required |
+| Stage 2.1 green bar | Node | `npm run validate:all` | Exit 0 required from repo root |
+| No chain step skipped | Process | stdout inspection | All 5 chain steps must report pass |
+| Stage-close ready | Doc | `skill-training-master-plan.md` Stage 2.1 | T2.1.1 / T2.1.2 / T2.1.3 rows = Done before running `project-stage-close` |
 
 ## 8. Acceptance Criteria
 
 - [ ] `npm run validate:all` exits 0 from repo root.
-- [ ] Any regression surfaced by Stage 2.1 wiring fixed inline.
+- [ ] Any regression surfaced by Stage 2.1 wiring fixed inline (no `--skip`).
+- [ ] Failing step identified from stdout (never guessed from context).
+- [ ] Stage 2.1 sibling tasks (TECH-430 / TECH-431 / TECH-432) Done in master plan.
 - [ ] Stage 2.1 ready for `project-stage-close`.
 
 ## 9. Issues Found During Development

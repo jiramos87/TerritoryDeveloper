@@ -2,7 +2,7 @@ id: TECH-424
 type: tech / save wiring
 title: "Save/load round-trip wiring for `BudgetAllocationService` (Stage 1.3 Phase 3)"
 priority: medium
-status: archived
+status: closed
 section: Medium Priority
 closed: 2026-04-18
 spec: (removed after closure)

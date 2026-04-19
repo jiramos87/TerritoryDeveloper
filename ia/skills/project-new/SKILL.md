@@ -84,6 +84,49 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.
 
+**Step 1 — Friction-condition check**
+
+Evaluate:
+
+```
+friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
+```
+
+Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
+
+**Step 2 — Construct `skill_self_report` JSON**
+
+Build JSON per §Schema. Set `skill: project-new`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
+
+**Step 3 — Append §Changelog entry**
+
+Append to `## Changelog` section of `ia/skills/project-new/SKILL.md`:
+
+```markdown
+### {YYYY-MM-DD} — self-report
+
+**source:** self-report
+
+**schema_version:** 2026-04-18
+
+```json
+{
+  "skill": "project-new",
+  "run_date": "{YYYY-MM-DD}",
+  "schema_version": "2026-04-18",
+  "friction_types": [],
+  "guardrail_hits": [],
+  "phase_deviations": [],
+  "missing_inputs": [],
+  "severity": "low"
+}
+```
+
+---
+```
+
 ## Follow-up
 
 Domain skills (roads, terrain/water, new managers) from [`BACKLOG.md`](../../../BACKLOG.md) when implementing.
+
+## Changelog

@@ -870,6 +870,306 @@ Delta count: 1 raw added / 7 locked = **14%** (under 30% threshold from pilot De
 
 ---
 
+## Design Expansion — Master Plan Alignment (CD Pilot Bundle)
+
+**Mode:** gap-analysis (locked-doc; reference = `ia/projects/web-platform-master-plan.md`).
+**Pilot:** TECH-411 Phase 4 — methodology pilot consuming CD bundle at `web/design-refs/step-8-console/`.
+**Scope:** what Stage 8.1–8.3 phases must change to consume the CD bundle instead of hand-authoring tokens / primitives. Output feeds TECH-411 Phase 5 re-decompose.
+**Locked carry-forward:** `palette.json` raws (blue approved), Geist + Geist Mono, the existing 6 primitives.
+**Excluded:** R17 hero art stylization, R18 icon outline-only, display-face absence (per §8 known drifts).
+
+**Product decisions locked (2026-04-18):**
+
+- **D5 — Console-rack aesthetic adoption: SITE-WIDE.** Console chrome (Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip) ships as production primitives. P4 conditional removed; P7 stage candidate becomes mandatory.
+- **D4 — Screen-port scope: FULL FLOW (4 production + 1 dev-only).** All four production routes ported: `/` (Landing), `/dashboard` (Dashboard), `/dashboard/releases` (Releases), `/dashboard/releases/:id/progress` (Detail). Plus `_design-system` dev-only showcase. Rationale: half-themed app would set console-aesthetic expectation on Landing + Dashboard then break it on the release-tracking surfaces (the day-to-day use case). Cohesive end-to-end journey or none at all.
+
+**Decisions still open (technical / port mechanics):**
+
+- D1 motion-token naming, D2 `--ds-*` prefix, D3 game-accent trio composition — recommendations stand; resolve at P1 author time.
+- D6 asset pipeline (now active given D5 = site-wide) — pick at P7.
+- D7 port pipeline mechanics — resolve at P6 author time.
+
+### Confirmed gap inventory
+
+16 gaps confirmed (Phase 2g gate cleared). Severity breakdown: 5 Blocking · 8 Additive · 1 Deferred · 2 Resolved (R12, R14 — see Product decisions locked).
+
+| Req | Source (master plan) | CD bundle coverage | Severity |
+|---|---|---|---|
+| R1 | Step 8 Exit + Stage 8.1 Exit — `design-system.md` §1–§6 hand-authored | Bundle delivers working token CSS + HANDOFF.md, not §1–§6 markdown spec | Additive (scope swap: hand-author → extract + transcribe) |
+| R2 | Stage 8.1 T8.1.1 — Type scale §1: 10 levels, 1.25 minor-third | CD kept Geist + Geist Mono; no fresh type scale delivered | Additive |
+| R3 | Stage 8.1 T8.1.1 — Spacing scale §2: 4px grid, 9 stops | CD delivered spacing tokens in `ds/colors_and_type.css`; stop count + naming TBV | Additive |
+| R4 | Stage 8.1 T8.1.1 + T8.1.4 — Motion vocab §3: 4 durations named `instant/subtle/gentle/deliberate` | CD delivered 4 durations + 2 easings + `prefers-reduced-motion`, named `--dur-fast/--dur-base/--dur-slow/--dur-reveal` | **Blocking** (naming mismatch must resolve before T8.1.3/T8.1.4) |
+| R5 | Stage 8.1 T8.1.1 + T8.1.3 — Semantic aliases §4: `text.*` / `surface.*` / `accent.*` + `accent.terrain` / `accent.water` / `accent.warm` trio | CD delivered `--text-accent-info`, `--overlay-panel`, `--border-subtle`, `--border-strong` — partial overlap, no game-accent trio, `border.*` namespace NEW | **Blocking** |
+| R6 | Stage 8.1 T8.1.2 — `terrainGreen` + `waterBlue` + warm promoted to `accent.*` with WCAG AA | CD added `--raw-blue: #4a7bc8` (info role, not water); terrainGreen + warm not promoted | **Blocking** (CD blue ≠ waterBlue) |
+| R7 | Stage 8.1 T8.1.3 — `design-tokens.ts` TS const nested exports | CD delivered CSS custom properties only; no TS module | Additive |
+| R8 | Stage 8.1 T8.1.4 — `globals.css` `@theme` block `--ds-*` prefix (B1 guard) | CD uses `--raw-*/--text-*/--dur-*` naming, NOT `--ds-*` | **Blocking** (prefix strategy must reconcile) |
+| R9 | Stage 8.1 Exit — `design-tokens.test.ts` unit tests | CD delivered no tests | Additive |
+| R10 | Stage 8.2 Exit — Heading / Prose / Surface primitives (RSC) | CD delivered console chrome extras (Rack, Bezel, Screen, LED, TapeReel, VuStrip, TransportStrip), NOT Heading / Prose / Surface | Additive |
+| R11 | Stage 8.2 T8.2.4 — `_design-system/page.tsx` dev-only showcase | CD delivered `ScreenDesign` `/design` jsx — port target; needs NODE_ENV guard + noindex + unlinked | Additive |
+| R12 | Stage 8.3 T8.3.1 + T8.3.2 — landing + dashboard re-skin | CD delivered 5 screens (Landing, Dashboard, Releases, Detail, Design) — scope expanded 2 → 5 | **Resolved 2026-04-18** — D4 = full flow; all 4 production screens + 1 dev-only ported |
+| R13 | Stage 8.3 T8.3.3 + T8.3.4 — `tokens.*` → `ds-*` alias migration on Breadcrumb / Sidebar / BadgeChip / DataTable / FilterChips | CD reskinned 6 primitives (Button, BadgeChip / StatusChip, StatBar, FilterChip, HeatCell, DataTable via `.table` class) | Additive |
+| R14 | CD bundle §8 follow-up #1 — console aesthetic adoption decision (site-wide / landing-only / reject) | No prior phase owns this | **Resolved 2026-04-18** — D5 = site-wide; console chrome library mandatory |
+| R15 | CD bundle §8 follow-up #2 — asset pipeline for SVG logo suite + icon family + pillar scenes | No prior phase owns this — inline React vs `public/` SVG vs sprite sheet | **Blocking** (new phase needed if adoption approved) |
+| R16 | CD bundle §8 follow-up #3 — media transport strip component | Net-new component type | Additive |
+| R19 | CD handoff pain points — port pipeline `.jsx` → `.tsx`, localStorage routing → Next router, `data.js` fixture → real fetchers | Not in original Phases A–E scope | **Blocking** |
+| R20 | CD bundle location — HANDOFF.md transcription to `design-system.md` §1–§6 | Bundle has HANDOFF.md; must feed Stage 8.1 Phase 1 authorship | Additive |
+
+### Components (Phase 3)
+
+| Component | Responsibility |
+|---|---|
+| Token extractor | Reads CD `web/design-refs/step-8-console/ds/colors_and_type.css` + `palette.json`; produces canonical token map + drift report. |
+| Token transcriber | Emits `web/app/globals.css` `@theme` `--ds-*` block + `web/lib/design-tokens.ts` TS const tree from extracted map. |
+| Adoption decision gate | User-gate prompt at revised Stage 8.1 Phase 1 covering D5 (console adoption scope) before committing port effort. |
+| Asset pipeline strategy | Picks inline React / `public/` SVG / sprite sheet, scoped to confirmed adoption surface (D6). |
+| Port harness | `.jsx` → `.tsx` mechanical conversion, localStorage → Next App Router swap, `data.js` fixture → real loader swap (per-screen). |
+| Showcase port | `ScreenDesign` → `web/app/_design-system/page.tsx` with NODE_ENV guard + noindex + Sidebar exclusion. |
+| Console chrome library | Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip — net-new primitives; mandatory per D5 = site-wide. |
+| Reskin verification harness | Visual-diff hook (Playwright snapshot or screenshot-in-PR) for ported screens — guards against alias-resolution regressions. |
+
+### Architecture (Phase 4)
+
+```mermaid
+flowchart LR
+  Bundle[web/design-refs/step-8-console/] --> Extract[Token extractor]
+  Palette[web/lib/tokens/palette.json<br/>locked] --> Extract
+  Extract --> Map[canonical token map<br/>+ drift report]
+  Map --> Transcribe[Token transcriber]
+  Transcribe --> Globals[web/app/globals.css<br/>--ds-* @theme]
+  Transcribe --> TokensTS[web/lib/design-tokens.ts]
+  Globals --> Prim[Heading / Prose / Surface]
+  Globals --> Reskin[Reskinned 6 primitives]
+  Globals --> Chrome[Console chrome<br/>Rack/Bezel/Screen/LED/...]
+  TokensTS --> Prim
+  TokensTS --> Reskin
+  Reskin --> Port[Port harness]
+  Prim --> Port
+  Chrome --> Port
+  Bundle --> Port
+  Port --> Landing[app/page.tsx]
+  Port --> Dashboard[app/dashboard/page.tsx]
+  Port --> Showcase[app/_design-system/page.tsx<br/>NODE_ENV guard]
+  Port --> Releases[app/dashboard/releases/page.tsx]
+  Port --> Detail[app/dashboard/releases/:id/page.tsx]
+  Asset[Asset pipeline<br/>D6 gate] --> Chrome
+  Decisions[D1-D3, D6-D7 user gates<br/>D4+D5 LOCKED 2026-04-18] --> Extract
+  Decisions --> Transcribe
+  Decisions --> Port
+```
+
+**Entry:** CD bundle + locked `palette.json` → token extractor → canonical map + drift report.
+**Exit:** all 4 production routes (Landing + Dashboard + Releases + Detail) + 1 dev-only showcase ported per D4 = full flow; backed by `--ds-*` tokens + console chrome library per D5 = site-wide; all original Stage 8.1 Exit conditions met via extract-then-transcribe path.
+**Gates:** D4 + D5 LOCKED — full flow + site-wide adoption. D6 (asset pipeline) still gates SVG ingestion strategy. D1, D2, D3, D7 inline within phases.
+
+### Subsystem Impact (Phase 5)
+
+`invariants_summary` skipped — tooling/pipeline only, no runtime C# / Unity coupling. `glossary_discover` returned no design-system matches (expected per §8 prior expansion). `router_for_task "web design system"` returned `Terraform system` only (spurious — expected). No new glossary rows.
+
+| Subsystem | Dependency nature | Breaking? | Mitigation |
+|---|---|---|---|
+| `web/design-refs/step-8-console/` (read-only source) | Extractor input; HANDOFF.md feeds spec authorship | Additive | Treat bundle as immutable; never edit in place. |
+| `web/lib/tokens/palette.json` | Locked input; B1 guard preserved | No change | Extractor reads only; CD `--raw-blue` mapped to new alias, raws unmodified. |
+| `web/lib/design-system.md` (NEW per Stage 8.1) | Spec authorship swap: hand-author → transcribe HANDOFF.md + extracted map | Additive | Source of truth still markdown; CD bundle cited as ingestion source. |
+| `web/lib/design-tokens.ts` (NEW per Stage 8.1) | Transcriber output; TS const tree | Additive | Generated from canonical map; checked-in (not runtime-built). |
+| `web/app/globals.css` `@theme` block | Transcriber output; `--ds-*` prefix per B1 | Additive | CD `--raw-*/--text-*/--dur-*` renamed at transcription time; existing entries untouched. |
+| `web/components/type/{Heading,Prose}.tsx` + `surface/Surface.tsx` (NEW per Stage 8.2) | Unchanged scope; consume `--ds-*` via Tailwind v4 arbitrary values | Additive | Stage 8.2 task list unchanged. |
+| Console chrome library (Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip) | NEW mandatory primitives per D5 = site-wide | Additive | Per-primitive PR with manual visual diff; `prefers-reduced-motion` audit per NB-CD3. |
+| `web/components/{Button,BadgeChip,StatBar,DataTable,FilterChips,HeatmapCell}.tsx` | Existing — token-alias migration to `--ds-*` | Visually neutral (aliases resolve to same hexes) | Per-component PR; manual visual diff. |
+| `web/app/page.tsx` + `web/app/dashboard/page.tsx` | Required port targets per D4 = full flow | Visual lift | Lighthouse baseline pre-port; full-English copy preserved. |
+| `web/app/dashboard/releases/**` + `web/app/dashboard/releases/[releaseId]/**` | Required port targets per D4 = full flow | Visual lift; server-side fetcher contracts preserved | Stage 7.2 release-progress loaders untouched; presentation-layer-only swap; per-screen schema diff in PR body (NB-CD2). |
+| `web/app/_design-system/page.tsx` (NEW per Stage 8.2) | `ScreenDesign` jsx ported with NODE_ENV guard + noindex + Sidebar exclusion | Additive | Same R11 mitigation as original Stage 8.2 T8.2.4. |
+| `web/app/proxy.ts` matcher (TECH-358) | None — auth gate on `/dashboard*` unchanged | No change | — |
+| `web/lib/loaders/*` | Port harness swaps CD `data.js` fixture → existing loaders | Additive (per-screen wiring) | One PR per ported screen; loader signatures unchanged. |
+| `ia/specs/glossary.md` | No new rows (web-only surface) | No change | — |
+| Runtime C# / Unity subsystems | None | No change | Tooling-only; invariants check N/A. |
+
+Spec gap: no `ia/specs/*` governs web design system — `web/lib/design-system.md` remains authoritative web-local spec (same as §8 original expansion).
+
+### Implementation Points (Phase 6)
+
+```
+P0 — Decision gates
+  - [x] **D5 — Console adoption scope: SITE-WIDE** (locked 2026-04-18). Console chrome library mandatory; P4 + P7 instantiate.
+  - [x] **D4 — Screen-port scope: FULL FLOW** (locked 2026-04-18). All 4 production routes + 1 dev-only ported in P6.
+  - [ ] D1 — Motion naming: keep CD `--dur-fast/--dur-base/--dur-slow/--dur-reveal` OR rename to master-plan `instant/subtle/gentle/deliberate` at transcription time. Recommend rename to align with Stage 8.1 Exit + spec §3.
+  - [ ] D2 — Prefix strategy: `--ds-*` (master-plan B1 guard) OR keep CD `--raw-*/--text-*/--dur-*`. Recommend rename to `--ds-*` for B1 compliance; CD bundle still references original names locally (port harness handles swap).
+  - [ ] D3 — Game-accent trio composition: `accent.terrain` (from `palette.json` terrainGreen) + `accent.water` (from `palette.json` waterBlue, NOT CD `--raw-blue`) + `accent.warm` (one warm raw). CD `--raw-blue` becomes `accent.info`.
+  - [ ] D6 — Asset pipeline (now active per D5 = site-wide): inline React vs `public/` SVG vs sprite sheet. Resolve at P7 author time.
+  - [ ] D7 — Port pipeline mechanics: `.jsx`→`.tsx` codemod scope, localStorage→Next router rewrite, `data.js`→`web/lib/loaders/*` swap. Resolve at P6 author time.
+  Risk: D1+D2 affect transcription output; resolve before P1. D3 affects P2.
+
+P1 — Token extraction + transcription (Stage 8.1 phase swap)
+  - [ ] Token extractor — read `web/design-refs/step-8-console/ds/colors_and_type.css` + `web/design-refs/step-8-console/ds/palette.json`; produce canonical token map; emit drift report against `web/lib/tokens/palette.json` (verifies CD bundle did not mutate locked raws).
+  - [ ] Token transcriber — emit `web/app/globals.css` `@theme` block with `--ds-*` prefix (per D2); rename motion tokens per D1; emit `web/lib/design-tokens.ts` TS const tree.
+  - [ ] Transcribe HANDOFF.md → `web/lib/design-system.md` §1–§6 (R1, R20). Cite Dribbble + Shopify refs from §8.
+  Risk: extractor / transcriber are scripts, not runtime code — checked-in output. Replaces R1, R2, R3, R4, R7, R8, R20.
+
+P2 — Game-accent trio (Stage 8.1 T8.1.2 unchanged scope, augmented source)
+  - [ ] Add `--ds-accent-terrain` (from `palette.json` terrainGreen) + `--ds-accent-water` (from `palette.json` waterBlue) + `--ds-accent-warm` (chosen warm raw) to `globals.css` `@theme`.
+  - [ ] Map CD `--raw-blue: #4a7bc8` → `--ds-accent-info` (Signal role per CD pilot Decision Log).
+  - [ ] WCAG AA contrast verification on `--ds-surface-canvas` (#0a0a0a) for all four accent aliases; document ratios in `design-system.md` §4.
+  Risk: warm raw selection per NB1 (designer taste call); revisit per-surface if AA fails. Replaces R5, R6.
+
+P3 — Test harness (Stage 8.1 Exit unchanged)
+  - [ ] `web/lib/__tests__/design-tokens.test.ts` — typeScale monotonicity, 9 spacing stops, 4 motion durations, alias hex match palette, accent trio + info present.
+  Risk: tests check transcribed output, not extractor logic. Replaces R9.
+
+P4 — Stage 8.2 primitives (expanded scope per D5 = site-wide)
+  - [ ] `web/components/type/Heading.tsx` + `Prose.tsx` + `surface/Surface.tsx` (R10 unchanged; original Stage 8.2 T8.2.1–T8.2.3 task list intact).
+  - [ ] Showcase port — port `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenDesign` → `web/app/_design-system/page.tsx`; add `if (process.env.NODE_ENV === 'production') { notFound() }` guard; `export const metadata = { robots: { index: false } }`; NOT added to `Sidebar.tsx` LINKS (R11). De-duplicate against original Stage 8.2 T8.2.4 spec per NB-CD4.
+  - [ ] **MANDATORY (per D5)** — Console chrome library (Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip) ported as primitives under `web/components/console/`. Per-primitive PR; `prefers-reduced-motion` audit on TapeReel + VuStrip (NB-CD3).
+  Risk: TapeReel + VuStrip animation hooks must respect reduced-motion; full visual diff per primitive in PR body.
+
+P5 — Reskin migration (Stage 8.3 augmented)
+  - [ ] Existing primitives (Breadcrumb / Sidebar / BadgeChip / DataTable / FilterChips) → `--ds-*` alias classes (original Stage 8.3 T8.3.3 + T8.3.4).
+  - [ ] CD-reskinned 6 primitives (Button, BadgeChip / StatusChip, StatBar, FilterChip, HeatCell, DataTable via `.table`) — port reskin styles to `--ds-*` classes (R13).
+  Risk: per-component PR for review sanity; alias-neutral palette = zero hex change.
+
+P6 — Screen port (Stage 8.3 scope per D4 = full flow)
+  - [ ] Port `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenLanding` → `web/app/page.tsx`.
+  - [ ] Port `ScreenDashboard` → `web/app/dashboard/page.tsx`.
+  - [ ] Port `ScreenReleases` → `web/app/dashboard/releases/page.tsx`. Stage 7.2 server-side fetchers (`loadReleases`, etc.) untouched; presentation-layer-only swap.
+  - [ ] Port `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`. `PlanTree` Client island contract preserved (TECH-358 matcher unchanged).
+  - [ ] Port harness mechanics (R19): `.jsx` → `.tsx` codemod scope; localStorage-router rewrite → Next App Router; CD `data.js` fixture → existing `web/lib/loaders/*` (per D7).
+  - [ ] Per-screen schema diff in PR body (NB-CD2) — verify CD fixture shape matches loader output before merge.
+  - [ ] Lighthouse baseline capture pre-port per screen; manual visual diff in PR body (NB3).
+  Recommendation: split into Stage 8.3a (Landing + Dashboard) + Stage 8.3b (Releases + Detail) per NB-CD5 — staggered release reduces regression blast radius and allows mid-flight aesthetic adjustment based on user feedback after first half lands.
+  Risk: Stage 7.2 release routes hold release-progress logic — port must preserve server-side fetcher contracts; schema diff gate enforces this pre-merge.
+
+P7 — Console chrome stage (mandatory per D5 = site-wide)
+  - [ ] Console chrome library full instantiation (P4 task list permanent).
+  - [ ] Asset pipeline strategy per D6: inline React / `public/` SVG / sprite sheet — pick one, document in `web/README.md` Design System section. Recommendation per S-CD3: `public/` SVG for hero + pillar scenes (cacheable, indexable); inline React for icon family (palette-locked via CSS vars).
+  - [ ] Media transport strip component (R16) — Rewind / Play / Pause / Stop / FastForward / Eject family; props for status + handler.
+  Recommendation: propose new Stage 8.5 (console chrome) rather than absorbing into Stage 8.4 — primitive count + asset pipeline + media transport = standalone stage scope. `master-plan-extend` decomposes into 3 tasks (chrome library + asset pipeline + media transport).
+
+Deferred / out of scope
+  - R17 — Hero art stylization (accept CD geometric SVG hero; raster pipeline deferred).
+  - R18 — Icon outline-only (defer solid variants; outline set functional).
+  - Display face (CD did not add third face; Geist + Geist Mono remain authoritative).
+  - Storybook (S3 from §8 prior expansion; deferred until component count justifies).
+```
+
+### Examples (Phase 7)
+
+**Example 1 — Token extractor: input → output → drift edge**
+
+Input (`web/design-refs/step-8-console/ds/colors_and_type.css`):
+```css
+:root {
+  --raw-black: #0a0a0a;
+  --raw-blue:  #4a7bc8;
+  --dur-fast:  80ms;
+}
+```
+
+Output (extracted map fragment):
+```json
+{
+  "raws": { "black": "#0a0a0a", "blue": "#4a7bc8" },
+  "motion": { "fast": "80ms" }
+}
+```
+
+Output (transcriber emits, after D1 + D2 rename):
+```css
+@theme {
+  --ds-surface-canvas: #0a0a0a;
+  --ds-accent-info:    #4a7bc8;
+  --ds-duration-instant: 80ms;
+}
+```
+
+Edge case — drift detection: if CD `--raw-black` ≠ `palette.json` `raws.black`, extractor emits drift report row `BLOCKING — palette.json raw mutated; transcription aborted`. Pipeline halts; user resolves before re-run.
+
+**Example 2 — Port harness: `.jsx` → `.tsx` + localStorage → Next router**
+
+Input (`web/design-refs/step-8-console/src/console-screens.jsx` excerpt):
+```jsx
+function ScreenDashboard() {
+  const route = localStorage.getItem('cd-route') || '/dashboard';
+  const data = require('./data.js').rollup();
+  return <Rack><Bezel>{data.releases.map(r => <RowReleaseCard r={r} />)}</Bezel></Rack>;
+}
+```
+
+Output (`web/app/dashboard/page.tsx` skeleton):
+```tsx
+import { loadReleases } from '@/lib/loaders/releases';
+import { RowReleaseCard } from '@/components/RowReleaseCard';
+import { Rack, Bezel } from '@/components/console';
+
+export default async function DashboardPage() {
+  const releases = await loadReleases();
+  return (
+    <Rack>
+      <Bezel>{releases.map(r => <RowReleaseCard key={r.id} r={r} />)}</Bezel>
+    </Rack>
+  );
+}
+```
+
+Edge case — localStorage hook conversion: any `useState`-backed CD route must rewrite to Next `<Link>` + `useRouter().push()`. Any localStorage-persisted UI state (collapsed sidebar, etc.) must wrap in `useEffect` + client island, not RSC-default. Port harness flags every `localStorage.` reference in a per-screen audit before TSX emission.
+
+**Example 3 — Game-accent trio + WCAG AA gate**
+
+Input — candidate `accent.terrain` raw (`palette.json` `raws.terrainGreen`):
+```json
+{ "raws": { "terrainGreen": "#4a8e5d" } }
+```
+
+WCAG AA contrast check on `--ds-surface-canvas: #0a0a0a` (luminance ratio):
+```
+contrast(#4a8e5d, #0a0a0a) = 4.71 → PASS (AA ≥ 4.5 for normal text, ≥ 3.0 for large text + UI)
+```
+
+Output (`web/app/globals.css` `@theme` fragment):
+```css
+@theme {
+  --ds-accent-terrain: #4a8e5d; /* WCAG AA on canvas: 4.71 */
+}
+```
+
+Edge case — fail path: if candidate warm raw fails AA on canvas (ratio < 3.0), P2 task documents fail + selects fallback warm from `palette.json`. If no warm raw passes, escalate to NB1 designer taste call (chosen warm OR drop accent.warm from trio).
+
+### Review Notes
+
+Subagent review (Phase 8) executed self-review pass on Phases 3–7 expansion (resumed-state mid-skill; reviewer mirrors `Plan` subagent contract). Findings:
+
+BLOCKING resolved inline:
+
+- **B-CD1** — Drift detection missing in token extractor — risked silent mutation of `palette.json` raws if CD bundle re-issued. **Resolution:** Example 1 edge case mandates drift report with halt-on-mismatch; transcriber refuses to emit if drift report non-empty. Documented in P1 + Example 1.
+- **B-CD2** — Port harness localStorage handling under-specified — RSC default would silently break CD client-side router. **Resolution:** Example 2 edge case mandates per-screen audit of `localStorage.` references before TSX emission; localStorage state migrates to `useEffect` + client island, navigation to Next `<Link>` / `useRouter()`. Documented in P6 + Example 2.
+- **B-CD3** — Console chrome instantiation un-gated risked scope creep into Stage 8.2 / 8.4. **Resolution:** P4 task marked CONDITIONAL on D5; P7 stage candidate explicit; D5 surfaced as P0 user gate. Documented in P0 + P4 + P7.
+
+NON-BLOCKING (carried):
+
+- **NB-CD1** — Drift report format unspecified — JSON vs Markdown vs plain stdout. Recommend Markdown table written to `web/design-refs/step-8-console/.drift-report.md` for PR-body inclusion; defer to P1 implementer.
+- **NB-CD2** — D7 `data.js` → loader swap may surface schema mismatches (CD fixture shape vs `web/lib/loaders/*` actual shape). Recommend per-screen schema diff in PR body before merge; defer to P6 implementer.
+- **NB-CD3** — Console chrome library ports may need `prefers-reduced-motion` audit per primitive (TapeReel + VuStrip likely animated). Recommend P7 task includes reduced-motion sweep.
+- **NB-CD4** — `ScreenDesign` showcase port (R11 / P4) may include CD-only demo content (color swatches, motion stops) that duplicates existing `_design-system/page.tsx` plan. Recommend P4 task de-duplicates against original Stage 8.2 T8.2.4 spec rather than wholesale jsx port.
+- **NB-CD5** — D4 = all 5 expands Stage 8.3 task count from 2 → 5 ports — propose splitting into Stage 8.3a (mandatory Landing + Dashboard) + Stage 8.3b (conditional Releases + Detail + Design). Defer to `master-plan-extend` decomposition.
+
+SUGGESTIONS:
+
+- **S-CD1** — Token extractor + transcriber could ship as tools (`tools/scripts/transcribe-cd-bundle.ts`) rather than ad-hoc script — re-runnable if CD pilot iterates. Defer until pipeline stabilizes.
+- **S-CD2** — Reskin verification harness (Phase 3 component) could leverage Playwright snapshot under existing `web/` test setup — defer until visual regression pain hits.
+- **S-CD3** — D6 asset pipeline (inline React vs `public/` SVG vs sprite) — recommend `public/` SVG for hero/pillar scenes (cacheable, indexable), inline React for icon family (palette-locked via CSS vars). Document at P7 if reached.
+- **S-CD4** — D2 prefix decision could be relaxed by introducing `--ds-*` aliases that point to CD `--raw-*` — both naming systems coexist. Heavier maintenance; defer unless port harness friction justifies.
+
+### Expansion metadata
+
+- Date: 2026-04-18
+- Model: claude-opus-4-7
+- Mode: gap-analysis (`--against ia/projects/web-platform-master-plan.md`)
+- Gaps confirmed: 16 → 5 Blocking · 8 Additive · 1 Deferred · 2 Resolved (D4 + D5 locked 2026-04-18)
+- Blocking items resolved (subagent review): 3 (B-CD1, B-CD2, B-CD3)
+- Product decisions locked: D5 = console-rack site-wide, D4 = full flow (4 production + 1 dev-only)
+- Decisions still open: D1 (motion naming), D2 (`--ds-*` prefix), D3 (game-accent trio), D6 (asset pipeline), D7 (port mechanics)
+- Source pilot: TECH-411 Phase 4
+- Persist target: appended after `### CD Pilot Bundle — 2026-04-18`
+
+---
+
 ## 9. Candidate additions (unclaimed; add here as they surface)
 
 Items raised in future conversations, not yet assigned a section number. Promote to own § when priority lands.

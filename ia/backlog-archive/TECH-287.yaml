@@ -2,7 +2,7 @@ id: TECH-287
 type: audio / DSP
 title: "`SmoothOnePole` helper + LFO per-sample advance (Stage 5.3 Phase 2)"
 priority: medium
-status: completed
+status: closed
 section: Stage 5.3 — LFOs + routing matrix + param smoothing
 spec: ia/projects/TECH-287.md
 files:

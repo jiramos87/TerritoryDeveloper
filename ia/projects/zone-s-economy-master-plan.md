@@ -39,9 +39,9 @@
 
 ### Step 1 — Foundation: enum extension + floor-clamp treasury + envelope budget + save schema
 
-**Status:** In Progress — Stage 1.3 (TECH-418..424 Done (archived); TECH-425 In Review)
+**Status:** Final
 
-**Backlog state (Step 1):** 19 filed (Stage 1.1 — TECH-278..283 Done (archived); Stage 1.2 — TECH-379..383 Done (archived); Stage 1.3 — TECH-418..424 Done (archived); TECH-425 In Review)
+**Backlog state (Step 1):** 19 filed (Stage 1.1 — TECH-278..283 Done (archived); Stage 1.2 — TECH-379..383 Done (archived); Stage 1.3 — TECH-418..425 Done (archived))
 
 **Objectives:** Land the structural primitives Zone S depends on. Extend `ZoneType` enum + add `ZoneSubTypeRegistry` SO catalogue. Introduce `TreasuryFloorClampService` so balance NEVER goes negative across ALL spend call sites (systemic, not opt-in). Stand up `BudgetAllocationService` with 7-envelope + global cap + `TryDraw` that checks BOTH envelope remaining AND treasury floor before deducting. Bump save schema v3→v4 with default-equal envelope migration. Nothing player-visible yet; foundations only.
 
@@ -137,7 +137,7 @@
 
 #### Stage 1.3 — `BudgetAllocationService` + save-schema v3→v4 migration
 
-**Status:** In Progress — Phase 3 (TECH-418..424 Done (archived); TECH-425 In Review)
+**Status:** Final
 
 **Objectives:** Land the envelope allocator (Q3 locked decision) + save-schema bump so fresh games persist state + legacy v3 saves migrate cleanly with default-equal envelope. `TryDraw` enforces Q4 block-before-deduct by checking BOTH envelope remaining AND `TreasuryFloorClampService.CanAfford` before mutation. This stage completes Step 1 — all structural primitives ready for Step 2 consumers.
 
@@ -155,9 +155,9 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `IBudgetAllocator` + `BudgetAllocationService` skeleton.
-- [ ] Phase 2 — `TryDraw` logic + monthly reset + envelope normalization.
-- [ ] Phase 3 — Save schema v3→v4 bump + migration + round-trip + tests + glossary.
+- [x] Phase 1 — `IBudgetAllocator` + `BudgetAllocationService` skeleton.
+- [x] Phase 2 — `TryDraw` logic + monthly reset + envelope normalization.
+- [x] Phase 3 — Save schema v3→v4 bump + migration + round-trip + tests + glossary.
 
 **Tasks:**
 
@@ -170,7 +170,7 @@
 | T1.3.5 | Save-schema v3→v4 bump | 3 | **TECH-422** | Done (archived) | Bump `GameSaveData.CurrentSchemaVersion` from 3 to 4 in `GameSaveManager.cs`. Add `[Serializable] public class BudgetAllocationData { public float[] envelopePct; public int globalMonthlyCap; public int[] currentMonthRemaining; public static BudgetAllocationData Default(int cap); }`. Add `public BudgetAllocationData budgetAllocation` + `public List<StateServiceZoneData> stateServiceZones` fields on `GameSaveData`. Add `[Serializable] public class StateServiceZoneData { public int cellX, cellY; public int subTypeId; public int densityTier; }`. |
 | T1.3.6 | `MigrateLoadedSaveData` v3→v4 branch | 3 | **TECH-423** | Done (archived) | Null-coalesce branch in `MigrateLoadedSaveData` seeds `stateServiceZones` (empty list) + `budgetAllocation` (`BudgetAllocationData.Default(DEFAULT_S_CAP)`) before final `schemaVersion = CurrentSchemaVersion` line. Cap constant `DEFAULT_S_CAP = 10_000` on `GameSaveManager` (save-lifecycle owner). Idempotent on already-v4 data (non-null → skip). Integrity asserts appended (null post-migration → `InvalidOperationException`). `Default(cap)` envelope sums 1.0 ±1e-6. Decision Log persisted to `ia_project_spec_journal`. |
 | T1.3.7 | Save/load round-trip wiring | 3 | **TECH-424** | Done (archived) | Wire `BudgetAllocationService.CaptureSaveData()` + `RestoreFromSaveData(BudgetAllocationData)` methods. `GameSaveManager.SaveGame` calls capture; `GameSaveManager.LoadGame` calls restore post-migration. Verify envelope + remaining + cap survive save → load → verify identity. No S zones restored yet (placement lands in Step 2). |
-| T1.3.8 | EditMode tests + glossary + MCP reindex | 3 | **TECH-425** | In Review | `BudgetAllocationServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TryDraw` blocks when envelope exhausted, (b) `TryDraw` blocks when treasury empty (envelope fat), (c) `TryDraw` succeeds when both OK + both decrement, (d) `MonthlyReset` restores `currentMonthRemaining` to `cap × pct`, (e) `SetEnvelopePct` normalizes sum to 1.0 within 1e-6, (f) legacy v3 save loads into v4 with equal envelope + empty S list. Add `BudgetAllocationService` + `IBudgetAllocator` glossary rows. Run `npm run validate:all`. |
+| T1.3.8 | EditMode tests + glossary + MCP reindex | 3 | **TECH-425** | Done (archived) | `BudgetAllocationServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TryDraw` blocks when envelope exhausted, (b) `TryDraw` blocks when treasury empty (envelope fat), (c) `TryDraw` succeeds when both OK + both decrement, (d) `MonthlyReset` restores `currentMonthRemaining` to `cap × pct`, (e) `SetEnvelopePct` normalizes sum to 1.0 within 1e-6, (f) legacy v3 save loads into v4 with equal envelope + empty S list. Add `BudgetAllocationService` + `IBudgetAllocator` glossary rows. Run `npm run validate:all`. |
 
 ---
 

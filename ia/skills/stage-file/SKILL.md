@@ -210,6 +210,47 @@ After all tasks filed:
 2. **Run `npm run validate:all`** — chains validate:dead-project-specs + test:ia + validate:fixtures + generate:ia-indexes --check.
 3. **Offer next step** — if ≥2 tasks were filed in this stage: `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (chains all tasks kickoff → implement → verify-loop → closeout; batched Path B at stage end). Single-task stage or standalone: `claude-personal "/ship {first_issue_id}"`.
 
+**Step 1 — Friction-condition check**
+
+Evaluate:
+
+```
+friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
+```
+
+Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
+
+**Step 2 — Construct `skill_self_report` JSON**
+
+Build JSON per §Schema. Set `skill: stage-file`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
+
+**Step 3 — Append §Changelog entry**
+
+Append to `## Changelog` section of `ia/skills/stage-file/SKILL.md`:
+
+```markdown
+### {YYYY-MM-DD} — self-report
+
+**source:** self-report
+
+**schema_version:** 2026-04-18
+
+```json
+{
+  "skill": "stage-file",
+  "run_date": "{YYYY-MM-DD}",
+  "schema_version": "2026-04-18",
+  "friction_types": [],
+  "guardrail_hits": [],
+  "phase_deviations": [],
+  "missing_inputs": [],
+  "severity": "low"
+}
+```
+
+---
+```
+
 ## Hard boundaries
 
 **File mode:**
@@ -227,3 +268,5 @@ After all tasks filed:
 - Do NOT merge tasks across different phases — phase boundaries are preserved.
 - Do NOT merge tasks with divergent domains even if adjacent — same-domain grouping only.
 - Do NOT split tasks in compress mode — flag splits as warnings; user handles splits manually via master plan edit + re-run.
+
+## Changelog

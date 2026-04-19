@@ -1,7 +1,7 @@
 /**
- * Tests for spec_section argument normalization (LLM-mistyped parameter names).
- * Phase 1 (TECH-398): normalizeSpecSectionInput now throws { code: "invalid_input" } instead of
- * returning { error: string } when args are missing.
+ * Tests for spec_section argument normalization (Stage 2.3 TECH-426: alias rejection).
+ * Aliases `key`/`doc`/`document_key`/`section_heading`/`section_id`/`heading`/`maxChars` now
+ * reject with { code: "invalid_input" } and a canonical-name hint.
  */
 
 import assert from "node:assert/strict";
@@ -27,22 +27,9 @@ describe("normalizeSpecSectionInput", () => {
     assert.equal(r.max_chars, 3000);
   });
 
-  it("maps key and section_heading to spec and section", () => {
-    const r = normalizeSpecSectionInput({
-      key: "geo",
-      section_heading: 14,
-    });
-    assert.equal(r.spec, "geo");
-    assert.equal(r.section, "14");
-  });
-
-  it("maps doc and heading aliases", () => {
-    const r = normalizeSpecSectionInput({
-      doc: "roads-system",
-      heading: "validation",
-    });
-    assert.equal(r.spec, "roads-system");
-    assert.equal(r.section, "validation");
+  it("respects max_chars canonical param", () => {
+    const r = normalizeSpecSectionInput({ spec: "g", section: "1", max_chars: 500 });
+    assert.equal(r.max_chars, 500);
   });
 
   it("throws invalid_input when spec missing", () => {
@@ -77,13 +64,89 @@ describe("normalizeSpecSectionInput", () => {
     );
   });
 
-  it("respects maxChars alias", () => {
-    const r = normalizeSpecSectionInput({
-      spec: "g",
-      section: "1",
-      maxChars: 100,
-    });
-    assert.equal(r.max_chars, 100);
+  // Alias rejection tests (Stage 2.3 TECH-426)
+  it("rejects alias 'key' with canonical hint 'spec'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ key: "geo", section: "1" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /key/);
+        assert.match(e.message ?? "", /spec/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'document_key' with canonical hint 'spec'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ document_key: "geo", section: "1" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /document_key/);
+        assert.match(e.message ?? "", /spec/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'doc' with canonical hint 'spec'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ doc: "roads-system", section: "1" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /doc/);
+        assert.match(e.message ?? "", /spec/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'section_heading' with canonical hint 'section'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ spec: "geo", section_heading: "intro" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /section_heading/);
+        assert.match(e.message ?? "", /section/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'section_id' with canonical hint 'section'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ spec: "geo", section_id: "14" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /section_id/);
+        assert.match(e.message ?? "", /section/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'heading' with canonical hint 'section'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ spec: "geo", heading: "validation" }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /heading/);
+        assert.match(e.message ?? "", /section/);
+        return true;
+      },
+    );
+  });
+
+  it("rejects alias 'maxChars' with canonical hint 'max_chars'", () => {
+    assert.throws(
+      () => normalizeSpecSectionInput({ spec: "geo", section: "1", maxChars: 100 }),
+      (e: { code?: string; message?: string }) => {
+        assert.equal(e.code, "invalid_input");
+        assert.match(e.message ?? "", /maxChars/);
+        assert.match(e.message ?? "", /max_chars/);
+        return true;
+      },
+    );
   });
 });
 

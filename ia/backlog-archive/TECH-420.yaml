@@ -2,7 +2,7 @@ id: TECH-420
 type: tech / service logic
 title: "`TryDraw` + `MonthlyReset` logic on `BudgetAllocationService` (Stage 1.3 Phase 2)"
 priority: medium
-status: done
+status: closed
 section: Medium Priority
 spec: (removed after closure)
 closed: 2026-04-18

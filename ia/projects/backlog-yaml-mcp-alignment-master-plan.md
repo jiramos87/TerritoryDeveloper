@@ -470,7 +470,7 @@
 
 #### Stage 4.2 — `backlog_list` filter extensions + catalog docs
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress
 
 **Objectives:** Extend `backlog_list` with three locator-field filters (`parent_plan`, `stage`, `task_key`). Lowercase substring compare per N3 (matches existing filter pattern). Document the three new tools (`master_plan_locate`, `master_plan_next_pending`, `backlog_list`-extended) in `docs/mcp-ia-server.md` + update `CLAUDE.md` §2 MCP-first ordering (additive only).
 
@@ -490,10 +490,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T4.2.1 | Extend `backlog_list` inputs | 1 | _pending_ | _pending_ | In `tools/mcp-ia-server/src/tools/backlog-list.ts`, add optional input fields `parent_plan?`, `stage?`, `task_key?`. Apply filters after existing `section`/`priority`/`type`/`status`/`scope` filters (in-memory, lowercase substring compare per N3). Preserve id-desc ordering. Update tool descriptor. |
-| T4.2.2 | Test `backlog_list` locator filters | 1 | _pending_ | _pending_ | Extend `tools/mcp-ia-server/tests/tools/backlog-list.test.ts` fixture set to cover schema-v2 records across ≥2 plans + ≥2 stages. Assert: each new filter alone, multi-filter intersection with existing priority/type filters, empty result, scope switch. |
-| T4.2.3 | Document new tools in `docs/mcp-ia-server.md` | 2 | _pending_ | _pending_ | Add catalog entries for `master_plan_locate` (from Stage 4.1), `master_plan_next_pending` (from Stage 4.1), `parent_plan_validate` (from Step 3 Stage 3.3). Append filter-extension note to existing `backlog_list` entry (3 new filters). Preserve catalog ordering + existing entries. |
-| T4.2.4 | Update `CLAUDE.md` §2 MCP-first ordering | 2 | _pending_ | _pending_ | Edit `CLAUDE.md` §2 "MCP first" — append: `master_plan_locate` for issue→plan reverse lookup; `master_plan_next_pending` for `/ship` next-task; note `parent_plan_validate` runs in advisory mode during `validate:all`. Additive edits only — do not rewrite existing ordering. |
+| T4.2.1 | Extend `backlog_list` inputs | 1 | **TECH-438** | Draft | In `tools/mcp-ia-server/src/tools/backlog-list.ts`, add optional input fields `parent_plan?`, `stage?`, `task_key?`. Apply filters after existing `section`/`priority`/`type`/`status`/`scope` filters (in-memory, lowercase substring compare per N3). Preserve id-desc ordering. Update tool descriptor. |
+| T4.2.2 | Test `backlog_list` locator filters | 1 | **TECH-439** | Draft | Extend `tools/mcp-ia-server/tests/tools/backlog-list.test.ts` fixture set to cover schema-v2 records across ≥2 plans + ≥2 stages. Assert: each new filter alone, multi-filter intersection with existing priority/type filters, empty result, scope switch. |
+| T4.2.3 | Document new tools in `docs/mcp-ia-server.md` | 2 | **TECH-440** | Draft | Add catalog entries for `master_plan_locate` (from Stage 4.1), `master_plan_next_pending` (from Stage 4.1), `parent_plan_validate` (from Step 3 Stage 3.3). Append filter-extension note to existing `backlog_list` entry (3 new filters). Preserve catalog ordering + existing entries. |
+| T4.2.4 | Update `CLAUDE.md` §2 MCP-first ordering | 2 | **TECH-441** | Draft | Edit `CLAUDE.md` §2 "MCP first" — append: `master_plan_locate` for issue→plan reverse lookup; `master_plan_next_pending` for `/ship` next-task; note `parent_plan_validate` runs in advisory mode during `validate:all`. Additive edits only — do not rewrite existing ordering. |
 
 ---
 

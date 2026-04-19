@@ -19,15 +19,15 @@ const stringOrNumber = z.union([z.string(), z.number()]);
 
 const requestItemSchema = z.object({
   spec: z.string().optional(),
-  key: z.string().optional(),
-  document_key: z.string().optional(),
-  doc: z.string().optional(),
+  key: z.string().optional().describe("Rejected alias — use 'spec'. Returns invalid_input error."),
+  document_key: z.string().optional().describe("Rejected alias — use 'spec'. Returns invalid_input error."),
+  doc: z.string().optional().describe("Rejected alias — use 'spec'. Returns invalid_input error."),
   section: stringOrNumber.optional(),
-  section_heading: stringOrNumber.optional(),
-  section_id: stringOrNumber.optional(),
-  heading: stringOrNumber.optional(),
+  section_heading: stringOrNumber.optional().describe("Rejected alias — use 'section'. Returns invalid_input error."),
+  section_id: stringOrNumber.optional().describe("Rejected alias — use 'section'. Returns invalid_input error."),
+  heading: stringOrNumber.optional().describe("Rejected alias — use 'section'. Returns invalid_input error."),
   max_chars: z.number().optional(),
-  maxChars: z.number().optional(),
+  maxChars: z.number().optional().describe("Rejected alias — use 'max_chars'. Returns invalid_input error."),
 });
 
 const inputShape = {
@@ -70,12 +70,11 @@ export function registerSpecSections(
     "spec_sections",
     {
       description:
-        "Batch variant of `spec_section`: fetch multiple reference spec / rule / root slices in one call. Each element uses the same `spec`/`section` aliases as `spec_section`. Results are keyed by `spec::section`.",
+        "Batch variant of `spec_section`: fetch multiple spec / rule / root slices in one call. Returns partial-result shape `{ results, errors, meta.partial }` — one bad key does not fail the whole batch. Each element requires `spec` and `section` (canonical names only). Results keyed by `spec::section`.",
       inputSchema: inputShape,
     },
     async (args) =>
       runWithToolTiming("spec_sections", async () => {
-        // Outer wrapTool catches top-level throws (invalid_input when sections empty).
         const envelope = await wrapTool(
           async (input: { sections?: unknown[]; max_requests?: number }) => {
             const list = Array.isArray(input.sections) ? input.sections : [];
@@ -94,21 +93,13 @@ export function registerSpecSections(
               };
             }
 
+            // Partial-result batch shape (Stage 2.3 TECH-428): separate results / errors maps.
             const results: Record<string, Record<string, unknown>> = {};
-            const batch_warnings: Record<string, unknown>[] = [];
+            const errors: Record<string, { code: string; message: string }> = {};
 
             const slice = list.slice(0, cap);
-            if (list.length > cap) {
-              batch_warnings.push({
-                error: "batch_truncated",
-                message: `Only first ${cap} requests processed; pass max_requests up to 50 or split the batch.`,
-                omitted_count: list.length - cap,
-              });
-            }
 
             for (let i = 0; i < slice.length; i++) {
-              // normalizeSpecSectionInput throws { code: "invalid_input" } on bad args —
-              // catch per-item so a single bad entry doesn't abort the batch.
               let spec: string;
               let section: string;
               let max_chars: number;
@@ -118,52 +109,43 @@ export function registerSpecSections(
                 );
                 ({ spec, section, max_chars } = normalized);
               } catch (e) {
-                const key = `__invalid__::${i}`;
+                const errKey = `__invalid__::${i}`;
                 const err = e as { code?: string; message?: string };
-                results[key] = {
-                  ok: false,
-                  error: { code: err.code ?? "invalid_input", message: err.message ?? String(e) },
-                };
+                errors[errKey] = { code: err.code ?? "invalid_input", message: err.message ?? String(e) };
                 continue;
               }
-              const rk = resultKey(spec, section);
-              // runSpecSectionExtract throws { code: "spec_not_found" | "section_not_found" } —
-              // catch per-item so one missing section doesn't abort the batch (Stage 2.3 territory
-              // for per-result envelope; for Stage 2.2 wrap outer call only per spec §7 Phase 2).
+              const rk = results[resultKey(spec, section)] !== undefined || errors[resultKey(spec, section)] !== undefined
+                ? `${resultKey(spec, section)}::__${i}`
+                : resultKey(spec, section);
               try {
-                const payload = runSpecSectionExtract(
-                  registry,
-                  spec,
-                  section,
-                  max_chars,
-                );
-                if (results[rk] !== undefined) {
-                  results[`${rk}::__${i}`] = payload as Record<string, unknown>;
-                } else {
-                  results[rk] = payload as Record<string, unknown>;
-                }
-              } catch (e) {
-                const err = e as { code?: string; message?: string; details?: unknown };
-                const errEntry: Record<string, unknown> = {
-                  ok: false,
-                  error: {
-                    code: err.code ?? "internal_error",
-                    message: err.message ?? String(e),
-                    ...(err.details !== undefined ? { details: err.details } : {}),
-                  },
+                const inner = runSpecSectionExtract(registry, spec, section, max_chars) as unknown as {
+                  ok: boolean;
+                  payload: Record<string, unknown>;
                 };
-                if (results[rk] !== undefined) {
-                  results[`${rk}::__${i}`] = errEntry;
-                } else {
-                  results[rk] = errEntry;
-                }
+                results[rk] = inner.payload;
+              } catch (e) {
+                const err = e as { code?: string; message?: string };
+                errors[rk] = { code: err.code ?? "internal_error", message: err.message ?? String(e) };
               }
             }
 
+            const succeeded = Object.keys(results).length;
+            const failed = Object.keys(errors).length;
+
+            if (succeeded === 0 && failed > 0) {
+              throw {
+                code: "invalid_input" as const,
+                message: `All ${failed} request(s) failed.`,
+                hint: `Failed keys: ${Object.keys(errors).join(", ")}`,
+                details: { errors },
+              };
+            }
+
+            // Pre-shaped envelope — wrapTool passes it through unchanged.
             return {
-              count: slice.length,
-              results,
-              ...(batch_warnings.length ? { batch_warnings } : {}),
+              ok: true as const,
+              payload: { results, errors },
+              meta: { partial: { succeeded, failed } },
             };
           },
         )(args as { sections?: unknown[]; max_requests?: number });

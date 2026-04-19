@@ -195,6 +195,47 @@ Single concise caveman message:
 - Deferred decomposition section updated.
 - Next step: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1"` when Step {STEP_ID-1} closes.
 
+**Step 1 — Friction-condition check**
+
+Evaluate:
+
+```
+friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
+```
+
+Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
+
+**Step 2 — Construct `skill_self_report` JSON**
+
+Build JSON per §Schema. Set `skill: stage-decompose`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
+
+**Step 3 — Append §Changelog entry**
+
+Append to `## Changelog` section of `ia/skills/stage-decompose/SKILL.md`:
+
+```markdown
+### {YYYY-MM-DD} — self-report
+
+**source:** self-report
+
+**schema_version:** 2026-04-18
+
+```json
+{
+  "skill": "stage-decompose",
+  "run_date": "{YYYY-MM-DD}",
+  "schema_version": "2026-04-18",
+  "friction_types": [],
+  "guardrail_hits": [],
+  "phase_deviations": [],
+  "missing_inputs": [],
+  "severity": "low"
+}
+```
+
+---
+```
+
 ---
 
 ## Tool recipe (territory-ia) — Phase 1 only
@@ -246,3 +287,5 @@ Only the target STEP_ID is decomposed; all other deferred steps remain as skelet
 ## Next step
 
 After persist: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1"` — but ONLY after Step {STEP_ID-1} reaches `Final`. Do NOT stage-file against a step whose predecessor is still open.
+
+## Changelog

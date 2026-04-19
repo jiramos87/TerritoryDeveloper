@@ -2,7 +2,7 @@ id: TECH-419
 type: tech / scene wiring
 title: "Wire `BudgetAllocationService` on `EconomyManager` GO (Stage 1.3 Phase 1)"
 priority: medium
-status: completed
+status: closed
 section: Medium Priority
 spec: ia/projects/TECH-419-wire-budget-allocation-service.md
 files:

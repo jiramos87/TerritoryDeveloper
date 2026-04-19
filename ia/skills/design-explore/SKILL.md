@@ -211,6 +211,47 @@ Sections to write (in order):
 
 Never overwrite the original **Problem**, **Approaches surveyed**, **Recommendation**, or **Open questions** sections.
 
+**Step 1 — Friction-condition check**
+
+Evaluate:
+
+```
+friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
+```
+
+Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
+
+**Step 2 — Construct `skill_self_report` JSON**
+
+Build JSON per §Schema. Set `skill: design-explore`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
+
+**Step 3 — Append §Changelog entry**
+
+Append to `## Changelog` section of `ia/skills/design-explore/SKILL.md`:
+
+```markdown
+### {YYYY-MM-DD} — self-report
+
+**source:** self-report
+
+**schema_version:** 2026-04-18
+
+```json
+{
+  "skill": "design-explore",
+  "run_date": "{YYYY-MM-DD}",
+  "schema_version": "2026-04-18",
+  "friction_types": [],
+  "guardrail_hits": [],
+  "phase_deviations": [],
+  "missing_inputs": [],
+  "severity": "low"
+}
+```
+
+---
+```
+
 ---
 
 ## Gap-analysis mode
@@ -288,3 +329,7 @@ After persist: if expansion validates, propose one of:
 
 - **Standard mode** — `claude-personal "/master-plan-new {DOC_PATH}"` (multi-stage) or `claude-personal "/project-new ..."` (single issue)
 - **Gap-analysis mode** — `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"` to absorb the filled gaps into the existing plan
+
+---
+
+## Changelog

@@ -2,6 +2,15 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-432** — Cross-read stanza consistency across 6 wired skills (Stage 2.1 T2.1.3) (2026-04-18)
+  - Type: documentation
+  - Files: `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/master-plan-extend/SKILL.md`, `ia/skills/stage-decompose/SKILL.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`
+  - Spec: (removed after closure)
+  - Notes: Byte-for-byte audit of Phase-N-tail stanza across 6 wired SKILL.md (output of TECH-430 + TECH-431). Verified verbatim template match, identical `schema_version: 2026-04-18`, `## Changelog` present on all 6. One deviation fixed: `master-plan-new` had `## Next step` after `## Changelog` — moved before, logged `source: wiring-review` §Changelog entry. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 6 SKILL.md files stanza byte-match canonical; `schema_version` identical; §Changelog present; `source: wiring-review` entry logged on corrected file.
+  - Depends on: **TECH-430** (archived), **TECH-431** (archived)
+  - Related: TECH-430, TECH-431, TECH-433
+
 - [x] **TECH-286** — `BlipLutPool` stub + `BlipVoiceState` LFO phase fields (Stage 5.3 Phase 1) (2026-04-18)
   - Type: audio / infrastructure
   - Files: `Assets/Scripts/Audio/Blip/BlipLutPool.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
@@ -10,6 +19,15 @@
   - Acceptance: `BlipLutPool.cs` present; `BlipCatalog._lutPool` field-init; `BlipVoiceState.lfoPhase0/lfoPhase1` present + blittable + default 0.0; invariant #4 held; `unity:compile-check` green; existing golden + NoAlloc tests green.
 
 - [x] **TECH-405** — **MCP** — wrap Unity analysis tools (Stage 2.2 T2.2.8) (2026-04-18)
+- [x] **TECH-430** — Wire authoring-trio Phase-N-tail stanza (Stage 2.1 T2.1.1) (2026-04-18)
+  - Type: documentation
+  - Files: `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/master-plan-extend/SKILL.md`
+  - Spec: (removed after closure)
+  - Notes: Append Phase-N-tail emitter stanza verbatim from `ia/skills/skill-train/SKILL.md §Emitter stanza template` to 3 authoring skills. Stanza placed at existing final handoff phase (Phase 9 — Persist on `design-explore`; Phase 9 — Handoff on `master-plan-new`; Phase 8 — Handoff on `master-plan-extend`). `## Changelog` section injected on `design-explore` + `master-plan-new` (already present on `master-plan-extend`). `{SKILL_NAME}` substituted at paste time; `schema_version: 2026-04-18` pinned; `run_date: {YYYY-MM-DD}` left as runtime placeholder. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 3 SKILL.md files wired verbatim; `schema_version` present; §Changelog present; stanza at final handoff phase; `validate:all` (pre-existing TECH-440/441 failure unrelated).
+  - Depends on: **TECH-393** (archived — canonical §Emitter stanza template section)
+  - Related: TECH-431, TECH-432, TECH-433
+
   - Type: mcp / infrastructure
   - Files: `tools/mcp-ia-server/src/tools/findobjectoftype-scan.ts`, `tools/mcp-ia-server/src/tools/unity-callers-of.ts`, `tools/mcp-ia-server/src/tools/unity-subscribers-of.ts`, `tools/mcp-ia-server/src/tools/csharp-class-summary.ts`
   - Spec: (removed after closure)
@@ -2173,6 +2191,15 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-427** — **MCP** — structured `rule_content` payload + markdown side-channel (Stage 2.3 T2.3.2) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/rule-content.ts`
+  - Spec: (removed after closure)
+  - Notes: Response shape → `{ rule_key, title, sections: [{id, heading, body}], markdown? }`; parse headings; `markdown` side-channel = raw text; base for `rule_section` slice.
+  - Acceptance: structured sections + markdown both present; `rule_section` aligns w/ sections[].body; unit tests green; `validate:all` green.
+  - Depends on: TECH-388, TECH-399
+  - Related: TECH-426, TECH-428, TECH-429
 
 - [x] **TECH-422** — Save-schema v3→v4 bump + `BudgetAllocationData` + `StateServiceZoneData` (Stage 1.3 Phase 3) (2026-04-18)
   - Type: tech / save schema

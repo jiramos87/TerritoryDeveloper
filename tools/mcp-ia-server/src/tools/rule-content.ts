@@ -14,6 +14,7 @@ import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool, type EnvelopeMeta } from "../envelope.js";
 import {
   buildExtractMatch,
+  extractLines,
   extractSection,
   flattenHeadingTree,
   parseDocument,
@@ -71,10 +72,6 @@ const ruleContentInputShape = {
     .describe(
       "Key or filename (e.g. 'invariants', 'coding-conventions', 'roads').",
     ),
-  max_chars: z
-    .number()
-    .optional()
-    .describe("Maximum characters to return. Default: 3000."),
 };
 
 /**
@@ -88,7 +85,7 @@ export function registerRuleContent(
     "rule_content",
     {
       description:
-        "Retrieve the full Markdown body of a Cursor rule (.mdc), without YAML frontmatter.",
+        "Retrieve a Cursor rule (.mdc) as structured sections `{ rule_key, title, sections: [{id, heading, body}], markdown }`. Use `rule_section` to fetch a single section by heading id.",
       inputSchema: ruleContentInputShape,
     },
     async (args) =>
@@ -96,7 +93,6 @@ export function registerRuleContent(
         const envelope = await wrapTool(
           async (input: typeof args) => {
             const ruleKey = input?.rule ?? "";
-            const maxChars = input?.max_chars ?? DEFAULT_MAX_CHARS;
 
             const entry = findRuleEntry(registry, ruleKey);
             if (!entry) {
@@ -111,28 +107,26 @@ export function registerRuleContent(
             const raw = fs.readFileSync(entry.filePath, "utf8");
             const { data, content } = matter(raw);
             const d = data as Record<string, unknown>;
-            const description =
+            const title =
               typeof d.description === "string"
                 ? d.description
                 : entry.description;
-            const alwaysApply =
-              typeof d.alwaysApply === "boolean" ? d.alwaysApply : false;
-            const globs = formatRuleGlobs(d.globs);
-            const body = content.trimStart();
-            const { text, truncated, totalChars } = truncateContent(
-              body,
-              maxChars,
-            );
+            const markdown = content.trimStart();
+
+            // Parse headings into structured sections (Stage 2.3 TECH-427).
+            const doc = parseDocument(entry.filePath);
+            const allHeadings = flattenHeadingTree(doc.headings);
+            const sections = allHeadings.map((h) => ({
+              id: h.sectionId,
+              heading: h.title,
+              body: extractLines(entry.filePath, h.lineStart, h.lineEnd),
+            }));
 
             return {
-              key: entry.key,
-              fileName: entry.fileName,
-              description,
-              alwaysApply,
-              globs,
-              content: text,
-              truncated,
-              totalChars,
+              rule_key: entry.key,
+              title,
+              sections,
+              markdown,
             };
           },
         )(args);

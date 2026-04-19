@@ -1,0 +1,41 @@
+id: TECH-439
+type: mcp tooling / tests
+title: "Test `backlog_list` locator filters (Stage 4.2 Phase 1)"
+priority: medium
+status: open
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-439.md
+files:
+  - tools/mcp-ia-server/tests/tools/backlog-list.test.ts
+  - tools/scripts/test-fixtures/
+notes: |
+  Extend `tools/mcp-ia-server/tests/tools/backlog-list.test.ts` fixture set to cover schema-v2 records across ≥2 parent plans + ≥2 stages. Assert each new filter alone (`parent_plan`, `stage`, `task_key`); multi-filter intersection combined with pre-existing `priority` / `type` filters; empty-result case; scope switch (open vs archive) w/ new filters. Preserve id-desc ordering in each assertion. Lowercase substring compare must match mixed-case inputs.
+acceptance: |
+  New test cases cover all three new filters alone + combined + empty + scope switch; existing tests unchanged and green; `validate:all` green.
+depends_on:
+  - TECH-438
+depends_on_raw: "TECH-438 (filter impl must land first)"
+related:
+  - TECH-438
+created: 2026-04-18
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T4.2.2
+step: 4
+stage: "4.2"
+phase: 1
+router_domain: Backlog / issues
+surfaces:
+  - tools/mcp-ia-server/tests/tools/backlog-list.test.ts
+  - tools/mcp-ia-server/src/tools/backlog-list.ts
+  - tools/scripts/test-fixtures/
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-439** — Test `backlog_list` locator filters (Stage 4.2 Phase 1)
+    - Type: mcp tooling / tests
+    - Files: `tools/mcp-ia-server/tests/tools/backlog-list.test.ts`, `tools/scripts/test-fixtures/`
+    - Spec: `ia/projects/TECH-439.md`
+    - Notes: Fixture set ≥2 plans + ≥2 stages. Each filter alone + combined w/ priority/type + empty + scope switch. id-desc preserved.
+    - Acceptance: all new cases green; `validate:all` green.
+    - Depends on: **TECH-438**
+    - Related: TECH-438
