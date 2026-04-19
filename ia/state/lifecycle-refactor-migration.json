@@ -9,7 +9,7 @@
       "name": "Branch + freeze + initial migration JSON"
     },
     "M1": {
-      "status": "pending",
+      "status": "done",
       "name": "Templates + rules + glossary + plan-apply contract"
     },
     "M2": {
@@ -49,7 +49,7 @@
       },
       {
         "path": "ia/projects/blip-master-plan.md",
-        "status": "pending"
+        "status": "done"
       },
       {
         "path": "ia/projects/city-sim-depth-master-plan.md",
