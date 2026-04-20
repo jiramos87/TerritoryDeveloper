@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-19T05:23:37.236Z",
+  "last_generated": "2026-04-20T18:41:44.203Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -344,6 +344,16 @@
         }
       ]
     },
+    "BondLedgerService": {
+      "related": [
+        "BudgetAllocationService",
+        "Building",
+        "Cell",
+        "Demand (R / C / I)",
+        "Desirability"
+      ],
+      "cited_in": []
+    },
     "Bridge lip": {
       "related": [
         "Cell",
@@ -413,11 +423,11 @@
     },
     "BudgetAllocationService": {
       "related": [
+        "BondLedgerService",
         "Building",
         "Cell",
         "Demand (R / C / I)",
-        "Desirability",
-        "envelope (budget sense)"
+        "Desirability"
       ],
       "cited_in": []
     },
@@ -1798,11 +1808,11 @@
     },
     "Forest (coverage)": {
       "related": [
+        "BondLedgerService",
         "BudgetAllocationService",
         "Building",
         "Cell",
-        "Demand (R / C / I)",
-        "Desirability"
+        "Demand (R / C / I)"
       ],
       "cited_in": []
     },
@@ -2410,13 +2420,23 @@
         }
       ]
     },
-    "IBudgetAllocator": {
+    "IBondLedger": {
       "related": [
+        "BondLedgerService",
         "BudgetAllocationService",
         "Building",
         "Cell",
-        "Demand (R / C / I)",
-        "Desirability"
+        "Demand (R / C / I)"
+      ],
+      "cited_in": []
+    },
+    "IBudgetAllocator": {
+      "related": [
+        "BondLedgerService",
+        "BudgetAllocationService",
+        "Building",
+        "Cell",
+        "Demand (R / C / I)"
       ],
       "cited_in": []
     },
@@ -2435,6 +2455,16 @@
           "section_title": "10. Editor agent diagnostics (machine-readable exports)"
         }
       ]
+    },
+    "IMaintenanceContributor": {
+      "related": [
+        "BondLedgerService",
+        "BudgetAllocationService",
+        "Building",
+        "Cell",
+        "Demand (R / C / I)"
+      ],
+      "cited_in": []
     },
     "Infrastructure prefabs": {
       "related": [
@@ -4984,11 +5014,11 @@
     },
     "TreasuryFloorClampService": {
       "related": [
+        "BondLedgerService",
         "BudgetAllocationService",
         "Building",
         "Cell",
-        "Demand (R / C / I)",
-        "Desirability"
+        "Demand (R / C / I)"
       ],
       "cited_in": []
     },
