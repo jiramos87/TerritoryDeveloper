@@ -42,6 +42,8 @@ const unityBridgeCommandInputShape = {
       "economy_balance_snapshot",
       "prefab_manifest",
       "sorting_order_debug",
+      "export_cell_chunk",
+      "export_sorting_debug",
       // ── MUTATION (Edit Mode only) — TECH-412 ─────────────────────────────
       // Component lifecycle
       "attach_component",
@@ -120,7 +122,7 @@ const unityBridgeCommandInputShape = {
     .string()
     .optional()
     .describe(
-      'export_agent_context: Moore neighborhood center as "x,y" (e.g. "3,0"); omit to use selected Cell or (0,0). debug_context_bundle: required "x,y" seed for export + scan.',
+      'export_agent_context / export_sorting_debug: Moore neighborhood center as "x,y" (e.g. "3,0"); omit to use selected Cell or (0,0). debug_context_bundle: required "x,y" seed for export + scan.',
     ),
   include_screenshot: z
     .boolean()
@@ -140,6 +142,33 @@ const unityBridgeCommandInputShape = {
     .describe(
       "debug_context_bundle only: when false, skip Moore neighborhood anomaly rules (bundle.anomaly_scan_skipped true). Default true.",
     ),
+  // ── export_cell_chunk params ─────────────────────────────────────────────
+  origin_x: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe("export_cell_chunk: origin X (defaults to 0)."),
+  origin_y: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe("export_cell_chunk: origin Y (defaults to 0)."),
+  chunk_width: z
+    .number()
+    .int()
+    .min(1)
+    .max(128)
+    .default(8)
+    .describe("export_cell_chunk: chunk width (defaults to 8)."),
+  chunk_height: z
+    .number()
+    .int()
+    .min(1)
+    .max(128)
+    .default(8)
+    .describe("export_cell_chunk: chunk height (defaults to 8)."),
   agent_id: z
     .string()
     .optional()
@@ -479,6 +508,23 @@ function buildRequestEnvelope(
   if (input.kind === "sorting_order_debug") {
     const trimmed = input.seed_cell?.trim();
     return { ...base, params: { seed_cell: trimmed ?? "" } };
+  }
+  if (input.kind === "export_cell_chunk") {
+    return {
+      ...base,
+      params: {
+        origin_x: input.origin_x ?? 0,
+        origin_y: input.origin_y ?? 0,
+        chunk_width: input.chunk_width ?? 8,
+        chunk_height: input.chunk_height ?? 8,
+      },
+    };
+  }
+  if (input.kind === "export_sorting_debug") {
+    const trimmed = input.seed_cell?.trim();
+    const params: Record<string, unknown> =
+      trimmed && trimmed.length > 0 ? { seed_cell: trimmed } : {};
+    return { ...base, params };
   }
   // ── Mutation kinds (TECH-412) ─────────────────────────────────────────────
   if (input.kind === "attach_component") {

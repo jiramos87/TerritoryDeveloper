@@ -415,6 +415,90 @@ describe("new bridge kinds (economy, prefab, sorting)", () => {
   });
 });
 
+describe("export_cell_chunk and export_sorting_debug kinds", () => {
+  it("accepts export_cell_chunk with default params", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_cell_chunk",
+      timeout_ms: 5000,
+    });
+    assert.equal(r.success, true);
+    if (r.success) {
+      assert.equal(r.data.kind, "export_cell_chunk");
+      assert.equal(r.data.origin_x, 0);
+      assert.equal(r.data.origin_y, 0);
+      assert.equal(r.data.chunk_width, 8);
+      assert.equal(r.data.chunk_height, 8);
+    }
+  });
+
+  it("accepts export_cell_chunk with custom bounds", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_cell_chunk",
+      timeout_ms: 5000,
+      origin_x: 5,
+      origin_y: 10,
+      chunk_width: 4,
+      chunk_height: 4,
+    });
+    assert.equal(r.success, true);
+    if (r.success) {
+      assert.equal(r.data.origin_x, 5);
+      assert.equal(r.data.origin_y, 10);
+      assert.equal(r.data.chunk_width, 4);
+      assert.equal(r.data.chunk_height, 4);
+    }
+  });
+
+  it("rejects export_cell_chunk with chunk_width above 128", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_cell_chunk",
+      timeout_ms: 5000,
+      chunk_width: 200,
+    });
+    assert.equal(r.success, false);
+  });
+
+  it("accepts export_sorting_debug with seed_cell", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_sorting_debug",
+      timeout_ms: 5000,
+      seed_cell: "3,7",
+    });
+    assert.equal(r.success, true);
+    if (r.success) {
+      assert.equal(r.data.kind, "export_sorting_debug");
+      assert.equal(r.data.seed_cell, "3,7");
+    }
+  });
+
+  it("accepts export_sorting_debug without seed_cell (uses defaults)", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_sorting_debug",
+      timeout_ms: 5000,
+    });
+    assert.equal(r.success, true);
+    if (r.success) assert.equal(r.data.kind, "export_sorting_debug");
+  });
+
+  it("export_cell_chunk returns db_unconfigured when pool is null", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "export_cell_chunk", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.equal(r.error, "db_unconfigured");
+  });
+
+  it("export_sorting_debug returns db_unconfigured when pool is null", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "export_sorting_debug", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.equal(r.error, "db_unconfigured");
+  });
+});
+
 describe("runUnityBridgeGet", () => {
   it("returns db_unconfigured when pool is null", async () => {
     const r = await runUnityBridgeGet(
