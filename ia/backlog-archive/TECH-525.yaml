@@ -1,0 +1,35 @@
+id: "TECH-525"
+type: "TECH"
+title: ".mcp.json split config"
+priority: "high"
+status: closed
+closed: "2026-04-20"
+section: Done (archived)
+spec: ""
+files: []
+notes: |
+  Add territory-ia-bridge entry to .mcp.json pointing to index-bridge.ts; add
+  "MCP_SPLIT_SERVERS": "0" to existing territory-ia env block (alongside existing
+  DEBUG_MCP_COMPUTE). Document MCP_SPLIT_SERVERS=1 flag semantics in
+  docs/mcp-ia-server.md (new §Server split architecture section). Activates B1 dual-server
+  surface for opt-in consumption.
+acceptance: |
+  - [ ] .mcp.json carries territory-ia-bridge server entry pointing to index-bridge.ts.
+  - [ ] territory-ia env block carries MCP_SPLIT_SERVERS=0 default.
+  - [ ] docs/mcp-ia-server.md gains §Server split architecture section documenting flag.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-524", "TECH-526", "TECH-527"]
+created: "2026-04-20"
+raw_markdown: |
+  - [x] **TECH-525** — .mcp.json split config (2026-04-20)
+    - Type: tech (MCP server / B1 server split)
+    - Files: `.mcp.json`, `tools/mcp-ia-server/bin/launch.mjs`, `docs/mcp-ia-server.md`
+    - Spec: (removed after closure)
+    - Notes: Add `territory-ia-bridge` entry to `.mcp.json` alongside `territory-ia`; both point to shared `launch.mjs`; bridge entry selects `index-bridge.ts` via new `MCP_ENTRY` env var. `territory-ia` env block gains `MCP_SPLIT_SERVERS=0` default (alongside `DEBUG_MCP_COMPUTE=1`). `launch.mjs` honors `MCP_ENTRY` from env with allow-list `{index,index-ia,index-bridge}`; invalid values fall back to `index`. Docs §Server split architecture covers flag semantics, entry selection, tool buckets, Stage 1.3 flip timeline.
+    - Acceptance: `.mcp.json` carries both server entries; `MCP_SPLIT_SERVERS=0` default; docs §Server split architecture present; `npm run validate:all` green.
+    - Depends on: none
+    - Related: TECH-524, TECH-526, TECH-527
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.2.2"

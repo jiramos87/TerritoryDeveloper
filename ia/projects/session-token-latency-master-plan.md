@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-20
 >
-> **Status:** In Progress — Step 1 / Stage 1.2
+> **Status:** In Progress — Step 1 / Stage 1.3
 >
 > **Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.
 >
@@ -39,9 +39,9 @@
 
 ### Step 1 — Token-economy baseline + MCP surface pruning
 
-**Status:** In Progress — Stage 1.2
+**Status:** In Progress — Stage 1.3
 
-**Backlog state (Step 1):** 8 filed (TECH-510, TECH-511, TECH-512, TECH-513, TECH-524, TECH-525, TECH-526, TECH-527)
+**Backlog state (Step 1):** 8 filed / 8 closed in Stages 1.1–1.2 (TECH-510, TECH-511, TECH-512, TECH-513, TECH-524, TECH-525, TECH-526, TECH-527 — all archived); Stage 1.3 pending.
 
 **Objectives:** Establish a durable telemetry baseline (aggregate p50/p95/p99 for session input tokens + cache metrics + hook latency) that gates all subsequent Steps. Ship the three independent surface-pruning items from Theme B that do not require the T10.2 stable-block: B1 MCP server split (IA-core vs Unity-bridge), B3 per-agent tool-allowlist narrowing, and B7-extended session-level harness. Close with a single post-Stage-1.3 telemetry sweep providing per-theme attribution.
 
@@ -384,7 +384,7 @@
 
 #### Stage 1.2 — MCP server split (B1)
 
-**Status:** Draft
+**Status:** Final
 
 **Objectives:** Extract Unity-bridge + compute tools from the single `territory-ia` MCP server into a dedicated `territory-ia-bridge` server behind a feature flag. IA-authoring sessions load the lean core; verify/implement stages opt-in to the bridge. Flag default off in this Stage; flip default in Stage 1.3 post-sweep.
 
@@ -405,10 +405,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Extract IA-core + bridge servers | 1 | **TECH-524** | Draft | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
-| T1.2.2 | .mcp.json split config | 1 | **TECH-525** | Draft | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
-| T1.2.3 | Integration test fixture | 2 | **TECH-526** | Draft | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
-| T1.2.4 | Flag-flip timeline doc | 2 | **TECH-527** | Draft | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
+| T1.2.1 | Extract IA-core + bridge servers | 1 | **TECH-524** | Done | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
+| T1.2.2 | .mcp.json split config | 1 | **TECH-525** | Done | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
+| T1.2.3 | Integration test fixture | 2 | **TECH-526** | Done | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
+| T1.2.4 | Flag-flip timeline doc | 2 | **TECH-527** | Done | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
 
 ### §Stage File Plan
 

@@ -1604,7 +1604,43 @@
 
 ---
 
-## Completed (moved from BACKLOG.md, 2026-04-15)
+## Completed (moved from BACKLOG.md, 2026-04-20)
+
+- [x] **TECH-524** — Extract IA-core + bridge servers (2026-04-20)
+  - Type: tech (MCP server / B1 server split)
+  - Files: `tools/mcp-ia-server/src/index-ia.ts` (new), `tools/mcp-ia-server/src/index-bridge.ts` (new), `tools/mcp-ia-server/src/server-registrations.ts` (new), `tools/mcp-ia-server/src/index.ts`
+  - Spec: (removed after closure)
+  - Notes: Split `territory-ia` MCP server into IA-core + bridge dual-server shape behind `MCP_SPLIT_SERVERS` flag. `index.ts` retains backward-compat default (registers both buckets when flag=0); standalone entries `index-ia.ts` (≥22 IA-core tools) + `index-bridge.ts` (12 bridge + compute tool registrations) load the respective bucket alone. Shared registration helpers in `server-registrations.ts`. Foundation for B1 server split — TECH-525 wires .mcp.json, TECH-526 adds CI gate, TECH-527 papers trail. Stage 1.3 T1.3.6 flips default 0→1 after sweep.
+  - Acceptance: ≥22 IA-core tools registered via `registerIaCoreTools`; 12 bridge + compute tools via `registerBridgeTools`; `index.ts` backward-compat default preserved; `MCP_SPLIT_SERVERS=1` loads IA-core standalone; `npm run validate:all` green.
+  - Depends on: none
+  - Related: TECH-525, TECH-526, TECH-527
+
+- [x] **TECH-525** — .mcp.json split config (2026-04-20)
+  - Type: tech (MCP server / B1 server split)
+  - Files: `.mcp.json`, `tools/mcp-ia-server/bin/launch.mjs`, `docs/mcp-ia-server.md`
+  - Spec: (removed after closure)
+  - Notes: Add `territory-ia-bridge` entry to `.mcp.json` alongside `territory-ia`; both point to shared `launch.mjs`; bridge entry selects `index-bridge.ts` via new `MCP_ENTRY` env var. `territory-ia` env block gains `MCP_SPLIT_SERVERS=0` default (alongside `DEBUG_MCP_COMPUTE=1`). `launch.mjs` honors `MCP_ENTRY` from env with allow-list `{index,index-ia,index-bridge}`; invalid values fall back to `index`. Docs §Server split architecture covers flag semantics, entry selection, tool buckets, Stage 1.3 flip timeline.
+  - Acceptance: `.mcp.json` carries both server entries; `MCP_SPLIT_SERVERS=0` default; docs §Server split architecture present; `npm run validate:all` green.
+  - Depends on: none
+  - Related: TECH-524, TECH-526, TECH-527
+
+- [x] **TECH-526** — Server-split integration test fixture (2026-04-20)
+  - Type: tech (MCP server / B1 server split)
+  - Files: `tools/mcp-ia-server/tests/server-split.test.ts` (new), `package.json`
+  - Spec: (removed after closure)
+  - Notes: Author `tools/mcp-ia-server/tests/server-split.test.ts`: 4 ACs asserting B1 server-split semantics via `registerTool()` call capture on a real `McpServer` instance (no stdio spawn). AC1 — IA-core excludes all 12 bridge + compute tool names. AC2 — Bridge bucket includes all 12. AC3 — Buckets disjoint. AC4 — IA-core ≥22 tools. Added `npm run test:mcp-split` script (root `package.json`) for CI gate. Locks B1 split correctness behind repeatable assertion; future drift fails loud.
+  - Acceptance: Test file present with 4 ACs; `npm run test:mcp-split` green; `npm run validate:all` green.
+  - Depends on: none
+  - Related: TECH-524, TECH-525, TECH-527
+
+- [x] **TECH-527** — Flag-flip timeline doc (2026-04-20)
+  - Type: tech (MCP server / B1 server split)
+  - Files: `ia/projects/session-token-latency-master-plan.md`, `docs/session-token-latency-audit-exploration.md`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 header in master plan gains `MCP_SPLIT_SERVERS` flag-flip timeline blockquote: flag authored Stage 1.2 default=0; Stage 1.3 T1.3.6 flips 0→1 after T1.3.5 post-stage sweep confirms per-theme attribution correctness per NB-6. Exploration §Open questions Q2 gains nested "B1 primary decision" resolution: chose two-server split over `defer_loading` per-tool; F7 remains safety-valve tracking only. Closes Stage 1.2 paper trail.
+  - Acceptance: Stage 1.3 header carries flag-flip timeline; exploration §Open questions B1 closed with resolution pointer; `npm run validate:all` green.
+  - Depends on: none
+  - Related: TECH-524, TECH-525, TECH-526
 
 - [x] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2) (2026-04-15)
   - Type: feature wiring / audio integration

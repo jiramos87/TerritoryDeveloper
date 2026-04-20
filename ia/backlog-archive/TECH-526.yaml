@@ -1,0 +1,36 @@
+id: "TECH-526"
+type: "TECH"
+title: "Integration test fixture"
+priority: "high"
+status: closed
+closed: "2026-04-20"
+section: Done (archived)
+spec: ""
+files: []
+notes: |
+  Author tools/mcp-ia-server/tests/server-split.test.ts: assert MCP_SPLIT_SERVERS=1 +
+  design-explore-style dispatch → tools/list response excludes unity_bridge_command;
+  assert spec-implementer-style dispatch with bridge server prefix declared → bridge
+  tools present. Add npm run test:mcp-split script to package.json. Locks B1 split
+  semantics behind a CI gate.
+acceptance: |
+  - [ ] tools/mcp-ia-server/tests/server-split.test.ts exists.
+  - [ ] Test asserts MCP_SPLIT_SERVERS=1 + IA-core dispatch hides 14 bridge tools.
+  - [ ] Test asserts bridge-prefix dispatch exposes 14 bridge tools.
+  - [ ] package.json scripts carry test:mcp-split entry.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-524", "TECH-525", "TECH-527"]
+created: "2026-04-20"
+raw_markdown: |
+  - [x] **TECH-526** — Server-split integration test fixture (2026-04-20)
+    - Type: tech (MCP server / B1 server split)
+    - Files: `tools/mcp-ia-server/tests/server-split.test.ts` (new), `package.json`
+    - Spec: (removed after closure)
+    - Notes: Author `tools/mcp-ia-server/tests/server-split.test.ts`: 4 ACs asserting B1 server-split semantics via `registerTool()` call capture on a real `McpServer` instance (no stdio spawn). AC1 — IA-core excludes all 12 bridge + compute tool names. AC2 — Bridge bucket includes all 12. AC3 — Buckets disjoint. AC4 — IA-core ≥22 tools. Added `npm run test:mcp-split` script (root `package.json`) for CI gate. Locks B1 split correctness behind repeatable assertion; future drift fails loud.
+    - Acceptance: Test file present with 4 ACs; `npm run test:mcp-split` green; `npm run validate:all` green.
+    - Depends on: none
+    - Related: TECH-524, TECH-525, TECH-527
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.2.3"

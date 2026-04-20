@@ -1,0 +1,33 @@
+id: "TECH-527"
+type: "TECH"
+title: "Flag-flip timeline doc"
+priority: "medium"
+status: closed
+closed: "2026-04-20"
+section: Done (archived)
+spec: ""
+files: []
+notes: |
+  Document MCP_SPLIT_SERVERS flag-flip timeline in Stage 1.3 header (flip from 0 to 1
+  after post-stage sweep confirms correctness per NB-6 resolution). Update
+  docs/session-token-latency-audit-exploration.md §Open questions to mark B1 primary
+  decision closed. Closes Stage 1.2 paper trail.
+acceptance: |
+  - [ ] Stage 1.3 header in master plan carries MCP_SPLIT_SERVERS flip timeline note.
+  - [ ] docs/session-token-latency-audit-exploration.md §Open questions B1 entry marked Closed.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-524", "TECH-525", "TECH-526"]
+created: "2026-04-20"
+raw_markdown: |
+  - [x] **TECH-527** — Flag-flip timeline doc (2026-04-20)
+    - Type: tech (MCP server / B1 server split)
+    - Files: `ia/projects/session-token-latency-master-plan.md`, `docs/session-token-latency-audit-exploration.md`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.3 header in master plan gains `MCP_SPLIT_SERVERS` flag-flip timeline blockquote: flag authored Stage 1.2 default=0; Stage 1.3 T1.3.6 flips 0→1 after T1.3.5 post-stage sweep confirms per-theme attribution correctness per NB-6. Exploration §Open questions Q2 gains nested "B1 primary decision" resolution: chose two-server split over `defer_loading` per-tool; F7 remains safety-valve tracking only. Closes Stage 1.2 paper trail.
+    - Acceptance: Stage 1.3 header carries flag-flip timeline; exploration §Open questions B1 closed with resolution pointer; `npm run validate:all` green.
+    - Depends on: none
+    - Related: TECH-524, TECH-525, TECH-526
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.2.4"
