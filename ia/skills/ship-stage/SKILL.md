@@ -1,5 +1,5 @@
 ---
-purpose: "Two-pass chain: Pass 1 = per-Task implement + unity:compile-check fast-fail gate; Pass 2 = Stage-end bulk verify-loop (full Path A+B cumulative delta) + code-review (Stage diff) + audit + closeout. Approach B stateful chain subagent."
+purpose: "Two-pass chain: Pass 1 = per-Task implement + unity:compile-check fast-fail gate; Pass 2 = Stage-end bulk verify-loop (full Path A+B cumulative delta) + code-review (Stage diff) + audit + closeout. Step 1.6 resume gate skips Pass 1 when feat(id)/fix(id) commits already on branch. Approach B stateful chain subagent."
 audience: agent
 loaded_by: skill:ship-stage
 slices_via: backlog_issue, router_for_task, spec_section, spec_sections, glossary_discover, glossary_lookup, invariants_summary
@@ -9,6 +9,8 @@ description: >
   two-pass chain. Pass 1 (per-Task): implement + unity:compile-check fast-fail gate +
   atomic Task-level commit. Pass 2 (Stage-end bulk): verify-loop full Path A+B on
   cumulative delta + code-review Stage diff (shared amortized context) + audit + closeout.
+  Step 1.6 resume: git scan for feat(id)/fix(id) skips finished Tasks; all satisfied → Pass 2 only.
+  Opt-out --no-resume; --per-task-verify forces no resume.
   --per-task-verify flag preserves pre-TECH-519 N× per-Task verify-loop + code-review shape.
   MCP context loaded once via domain-context-load subskill; cached payload passed
   to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED.
@@ -18,6 +20,7 @@ phases:
   - "Parse stage"
   - "Context load"
   - "Plan-author readiness gate"
+  - "Resume gate"
   - "Pass 1 per-Task"
   - "Pass 2 Stage-end"
   - "Chain digest"
@@ -40,7 +43,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 |-----------|--------|-------|
 | `MASTER_PLAN_PATH` | User prompt | Repo-relative path to `*-master-plan.md` (e.g. `ia/projects/citystats-overhaul-master-plan.md`). |
 | `STAGE_ID` | User prompt | Stage identifier as it appears in the master plan header (e.g. `Stage 1.1`). |
-| `--per-task-verify` | Optional flag | **Rollback / legacy flag.** When set: Pass 2 verify-loop + code-review are SKIPPED; Pass 1 is promoted to full `verify-loop --skip-path-b` + `code-review` per Task (pre-TECH-519 shape). Audit + closeout remain Stage-scoped N=1 regardless. Use as safety valve for Stages too large for bulk Pass 2 review (e.g. N≥5, wide surface). |
+| `--per-task-verify` | Optional flag | **Rollback / legacy flag.** When set: Pass 2 verify-loop + code-review are SKIPPED; Pass 1 is promoted to full `verify-loop --skip-path-b` + `code-review` per Task (pre-TECH-519 shape). Audit + closeout remain Stage-scoped N=1 regardless. Use as safety valve for Stages too large for bulk Pass 2 review (e.g. N≥5, wide surface). **Also disables Step 1.6 resume skip** (unsafe — every Task needs fresh Pass 1 verify semantics). |
+| `--no-resume` | Optional flag | When set: **disable Step 1.6** — every pending Task runs full Pass 1 (legacy behavior). Use for squash-only histories, forensic replay, or when Pass 1 commits used non-canonical messages. |
 
 **Dispatch-shape agnostic:** identical behavior whether this skill is invoked as a Task-dispatched subagent (fresh context) or inline by an orchestrator (inherited context). Do not introduce subagent-only assumptions.
 
@@ -125,7 +129,55 @@ Then user runs `/author` (+ `/plan-review` when needed) and re-invokes `/ship-st
 
 ---
 
+## Step 1.6 — Resume gate (partial Pass 1 / jump to Pass 2)
+
+**Problem:** Re-invoking `/ship-stage` after Pass 1 commits landed but Pass 2 never ran MUST NOT re-dispatch `spec-implementer` for those Tasks. Partial Pass 1 (some Tasks committed, next not) MUST continue from the first Task without a Pass 1 anchor.
+
+**Disable resume (legacy path):** If user prompt contains `--no-resume` → set `RESUME_DISABLED=1` and **skip this step** (treat every pending Task as Pass 1 required). **If `--per-task-verify` is set → set `RESUME_DISABLED=1`** — resume skip is unsafe when Pass 2 verify is offloaded to per-Task loops.
+
+**When `RESUME_DISABLED=0`:**
+
+1. Let `PENDING_ORDERED` = issue ids from Step 0 pending rows (**table order**).
+
+2. **Scan git (bounded):** `git log --first-parent -400 --format='%H %ct %s' HEAD` (repo root). If history shorter than 400, scan full reachable ancestry on first-parent chain.
+
+3. **Pass 1 commit present:** For each `ISSUE_ID` in `PENDING_ORDERED`, `pass1_present(id)` = true iff **any** scanned subject line matches **exact** prefix (case-sensitive on id):
+   - `feat({ISSUE_ID}):` OR `fix({ISSUE_ID}):`  
+   Canonical ship-stage commit is `feat({ISSUE_ID}):` (Step 2.3); `fix({ISSUE_ID}):` allowed for hotfix follow-ups. **No** bare substring match on body — avoids false positives.
+
+4. **Emit (always):**
+
+   ```
+   SHIP_STAGE resume: Pass 1 commit scan — satisfied: [{ids or none}] ; missing: [{ids or none}]
+   ```
+
+5. **Resolve `FIRST_TASK_COMMIT_PARENT` for Step 3.1** (used whenever ≥1 `pass1_present` is true after this run's classification — including full Pass 1 that adds new commits, recompute after Pass 1 ends; see Step 2 closing note):
+   - Collect all commits from the scan whose subject matches `^(feat|fix)\(({ISSUE_ID})\):` for **any** `ISSUE_ID` in `PENDING_ORDERED`.
+   - Let `OLDEST` = commit with **minimum** `%ct` among that set (tie-break: lexicographically smallest `%H`).
+   - `FIRST_TASK_COMMIT_PARENT = OLDEST^` (first parent). If set is empty but all `pass1_present` true → **STOPPED — resume anchor missing** (inconsistent git vs table; human repair). If set empty and some missing → anchor filled after first new Pass 1 commit in this invocation (Step 2).
+
+6. **Branch:**
+   - **All `pass1_present` true** → **Skip Step 2 entirely.** Emit:
+
+     ```
+     SHIP_STAGE resume: all pending Tasks have Pass 1 commits on HEAD — entering Pass 2
+     ```
+
+     Jump to **Step 3**. Carry `FIRST_TASK_COMMIT_PARENT` from §5.
+
+   - **Some true, some false** → **Partial Pass 1.** Enter Step 2 loop; for each Task, if `pass1_present(ISSUE_ID)` → **skip Steps 2.1–2.3** (and skip 2.4 — `--per-task-verify` already forced `RESUME_DISABLED`). Still run Step 2.5 journal with `pass1_resume_skipped: true`. Still run Step 2.6.
+
+   - **All false** → **Full Pass 1** (unchanged). `FIRST_TASK_COMMIT_PARENT` assigned after first Task commit (parent of first new feat/fix line for this stage).
+
+7. **Dirty worktree:** If `git status --porcelain` is non-empty, emit **warning** in resume summary — do not auto-stop; human owns merge/rebase state.
+
+**Pass 2 sub-step granularity:** Step 3 remains **atomic** (3.1→3.5 in one invocation). If the operator manually ran verify-loop only, re-running Step 3.1 is redundant but correct; finer sub-step resume stays deferred to disk journal work ([TECH-493](../../projects/TECH-493.md) / Open Questions).
+
+---
+
 ## Step 2 — Pass 1: per-Task loop (sequential, fail-fast)
+
+**Entry:** If Step 1.6 jumped to Pass 2 (all `pass1_present`) → **do not enter Step 2**; Step 3 already next.
 
 For each pending task row in order (index `i`, total `N`):
 
@@ -133,6 +185,8 @@ For each pending task row in order (index `i`, total `N`):
 CURRENT_TASK = task_rows[i]
 ISSUE_ID = CURRENT_TASK.issue_id
 ```
+
+**Resume skip:** If Step 1.6 marked `pass1_present(ISSUE_ID)` → skip **Step 2.1 Implement**, **2.2 Compile gate**, **2.3 Commit**, **2.4** (n/a unless `--per-task-verify` with resume disabled). Jump to **Step 2.5** with `pass1_resume_skipped: true` in journal entry, then **2.6**.
 
 ### Step 2.1 — Implement
 
@@ -197,17 +251,22 @@ After successful Step 2.2 (or Step 2.4 when flag set), append to `CHAIN_JOURNAL`
 {
   "task_id": "{ISSUE_ID}",
   "pass1_compile_gate": "passed",
+  "pass1_resume_skipped": false,
   "lessons": [],
   "decisions": [],
   "verify_iterations": 0
 }
 ```
 
+Set `pass1_resume_skipped: true` when Step 1.6 skipped Pass 1 for this Task (commit already on branch).
+
 Lessons + decisions updated from closeout digest in Step 3.5 below.
 
 ### Step 2.6 — Re-read master plan
 
 Re-read `{MASTER_PLAN_PATH}` to confirm task row status after commit. Continue to next task.
+
+**After Step 2 loop completes (any mix of fresh + resume-skipped Tasks):** Recompute `FIRST_TASK_COMMIT_PARENT` if not already fixed: among all commits on `git log --first-parent -400` matching `^(feat|fix)\(({ISSUE_ID})\):` for any `ISSUE_ID` in `PENDING_ORDERED`, take **oldest** by `%ct` → parent = Step 3.1 anchor. Ensures partial resume + new Task commits share one cumulative diff base.
 
 ---
 
@@ -219,7 +278,7 @@ Re-read `{MASTER_PLAN_PATH}` to confirm task row status after commit. Continue t
 
 Run `verify-loop` (full Path A+B, no `--skip-path-b`) on cumulative Stage delta:
 
-**Cumulative delta anchor:** `git diff {FIRST_TASK_COMMIT_PARENT}..HEAD` — where `{FIRST_TASK_COMMIT_PARENT}` = the commit SHA immediately before the first Pass 1 Task commit. **EXCLUDE Stage closeout commits** (closeout runs after Pass 2; closeout commits not yet on HEAD at this point — so the anchor is naturally correct).
+**Cumulative delta anchor:** `git diff {FIRST_TASK_COMMIT_PARENT}..HEAD` — where `{FIRST_TASK_COMMIT_PARENT}` = the commit SHA immediately **before** the **oldest** Pass 1 Task commit for this Stage's pending ids (see Step 1.6 §5 and Step 2 closing recomputation). Equivalently: first parent of the earliest `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` commit among `PENDING_ORDERED` on the first-parent chain. **EXCLUDE Stage closeout commits** (closeout runs after Pass 2; closeout commits not yet on HEAD at this point — so the anchor is naturally correct).
 
 > Mission: Run full verify-loop (Path A + Path B) on cumulative stage delta. Issue context: last closed {ISSUE_ID} (for backlog context). Changed areas = all files touched across all Pass 1 Task commits. End with JSON Verification block where `verdict` is `pass`, `fail`, or `escalated`.
 
@@ -340,12 +399,14 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
 - **Pass 2 code-review critical twice:** `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest + human review required (structural issue).
 - **Parser error:** `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + expected-vs-found column diff.
+- **Resume anchor missing:** `SHIP_STAGE {STAGE_ID}: STOPPED — resume: pass1_present for all pending ids but no matching feat(id)/fix(id) commits on scan` + human repair (squash without id in subject → use `--no-resume` or amend message).
 
 ---
 
 ## Hard boundaries
 
 - Sequential task dispatch only — tasks share files + invariants; no parallel.
+- **Resume (Step 1.6)** is default-on when `--no-resume` absent and `--per-task-verify` absent. Do NOT re-implement Tasks that already have `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` on the scanned first-parent chain.
 - Stop on first Pass 1 gate failure (compile or implement); do NOT continue to next task.
 - Do NOT rollback committed Pass 1 Tasks on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — commits already landed; emit digest + human directive only.
 - `STAGE_CODE_REVIEW_CRITICAL` re-entry cap = 1 — second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`; do NOT re-enter a third time.
@@ -366,17 +427,31 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 | `{STAGE_ID}` | Stage identifier matching master plan header (e.g. `Stage 1.1`) |
 | `{ISSUE_ID}` | Active task BACKLOG id (BUG-/FEAT-/TECH-/ART-/AUDIO-) |
 | `{CHAIN_CONTEXT}` | `domain-context-load` payload `{glossary_anchors, router_domains, spec_sections, invariants}` |
-| `{CHAIN_JOURNAL}` | In-process accumulator list of `{task_id, lessons[], decisions[], verify_iterations}` |
+| `{CHAIN_JOURNAL}` | In-process accumulator list of `{task_id, pass1_resume_skipped?, lessons[], decisions[], verify_iterations}` |
+| `{FIRST_TASK_COMMIT_PARENT}` | SHA = `OLDEST_PASS1_COMMIT^` for pending ids (Step 1.6 / Step 2 tail); feeds Step 3.1 `git diff` anchor |
 
 ---
 
 ## Open Questions
 
 - Crash-survivable `{CHAIN_JOURNAL}` (disk-persisted + resume on re-invocation) — tracked by [TECH-493](../../projects/TECH-493.md). Implementation deferred to that issue's implementer; this skill currently treats `{CHAIN_JOURNAL}` as in-process only.
+- **Pass 2 sub-step resume** (verify-loop done, audit not) — not implemented; Step 3 re-runs 3.1–3.5 as a unit. Low cost for tooling stages; revisit if bridge-heavy Stages need mid-Pass-2 resume.
 
 ---
 
 ## Changelog
+
+### 2026-04-20 — Step 1.6 resume gate (partial Pass 1 + jump to Pass 2)
+
+**Status:** applied
+
+**Symptom:** Re-running `/ship-stage` after Pass 1 atomic commits but before Pass 2 re-dispatched `spec-implementer` for every Task still marked non-Done in the master plan table.
+
+**Fix:** Step 1.6 scans `git log --first-parent -400` for `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` per pending Task; skips Pass 1 for satisfied ids; skips entire Step 2 when all satisfied; resolves `FIRST_TASK_COMMIT_PARENT` for cumulative Stage diff. Opt-out: `--no-resume`; forced off when `--per-task-verify` set.
+
+**Rollout row:** (session follow-up — ship-stage resume)
+
+---
 
 ### 2026-04-20 — Revert F6 fold in ship-stage; fold moved to /stage-file (F6 re-fold)
 
