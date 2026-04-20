@@ -22,6 +22,7 @@
     "validate:geography-init-report": "node tools/scripts/validate-geography-init.mjs",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
     "test:ia": "npm --prefix tools/mcp-ia-server test",
+    "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
     "db:setup-local": "bash tools/scripts/setup-territory-ia-postgres.sh",
     "db:seed:glossary": "npm --prefix tools/postgres-ia run seed:glossary",
