@@ -52,6 +52,7 @@ import {
   registerPathfindingCostPreview,
 } from "./tools/compute/index.js";
 import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
+import { registerUnityBridgeExportSugarTools } from "./tools/unity-bridge-export-sugar.js";
 import { registerUnityBridgeLease } from "./tools/unity-bridge-lease.js";
 import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
 import { registerCityMetricsQuery } from "./tools/city-metrics-query.js";
@@ -98,7 +99,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
 /**
  * Register Unity-bridge + compute tool surfaces on the given MCP server.
  *
- * Bridge + compute bucket: unity-bridge-command, unity-bridge-lease,
+ * Bridge + compute bucket: unity-bridge-command, unity_export_cell_chunk,
+ * unity_export_sorting_debug, unity-bridge-lease,
  * unity-callers-of, unity-subscribers-of, findobjectoftype-scan,
  * city-metrics-query, plus 6 compute helpers (isometric-world-to-grid,
  * growth-ring-classify, grid-distance, pathfinding-cost-preview,
@@ -112,6 +114,7 @@ export function registerBridgeTools(server: McpServer): void {
   registerGeographyInitParamsValidate(server);
   registerDesirabilityTopCells(server);
   registerUnityBridgeCommand(server);
+  registerUnityBridgeExportSugarTools(server);
   registerUnityBridgeLease(server);
   registerFindObjectOfTypeScan(server);
   registerCityMetricsQuery(server);

@@ -45,6 +45,8 @@ function captureToolNames(register: (server: McpServer) => void): Set<string> {
 
 const BRIDGE_TOOL_NAMES = [
   "unity_bridge_command",
+  "unity_export_cell_chunk",
+  "unity_export_sorting_debug",
   "unity_bridge_lease",
   "unity_callers_of",
   "unity_subscribers_of",

@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-20T18:41:44.092Z",
+  "last_generated": "2026-04-20T20:55:46.968Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -1595,13 +1595,13 @@
           "section_id": "11",
           "title": "11. Unity Test Framework — Edit Mode compute parity",
           "depth": 2,
-          "line_start": 186
+          "line_start": 188
         },
         {
           "section_id": "decision-log",
           "title": "Decision Log",
           "depth": 2,
-          "line_start": 203
+          "line_start": 205
         }
       ]
     },
