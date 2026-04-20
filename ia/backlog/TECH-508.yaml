@@ -1,0 +1,23 @@
+id: "TECH-508"
+type: "TECH"
+title: "D2 cache-invalidation cascade note + D3 20-block single-block guardrail"
+priority: "low"
+status: open
+section: "Stage 10 — Prompt-Caching Optimization Layer"
+spec: "ia/projects/TECH-508.md"
+files: []
+notes: |
+  Edit `docs/mcp-ia-server.md`: add §Cache invalidation impact section — any `tools/mcp-ia-server/` edit cascades down to cached Stage bundles per F5; PR author must flag tool-registration edits in PR description + expect Stage-boundary re-warm. Edit `ia/skills/subagent-progress-emit/SKILL.md` (or author new `ia/rules/subagent-caching-guardrails.md` — author's call): add D3 single-block rule — NEVER emit multi-block stable prefix; `@`-concatenation at skill-preamble author time is the ONLY supported assembly mode; multi-`@`-load with separate `cache_control` per block is forbidden (risks falling outside F6 20-block lookback as conversation grows). Cross-link both notes from `docs/prompt-caching-mechanics.md` §6 + §7.
+acceptance: |
+  - [ ] `docs/mcp-ia-server.md` carries §Cache invalidation impact section with PR-flag requirement.
+  - [ ] D3 single-block rule documented in `subagent-progress-emit` SKILL OR dedicated `subagent-caching-guardrails.md` rule.
+  - [ ] `docs/prompt-caching-mechanics.md` §6 + §7 cross-link both D2 + D3 notes.
+  - [ ] `npm run validate:all` green.
+depends_on: ["TECH-503", "TECH-504"]
+depends_on_raw: "TECH-503, TECH-504"
+related: []
+created: "2026-04-19"
+raw_markdown: |
+  D2 cache-invalidation cascade note + D3 20-block single-block guardrail — Add cache invalidation impact section to mcp-ia-server.md + D3 single-block rule.
+parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
+task_key: "T10.7"

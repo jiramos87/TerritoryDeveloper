@@ -32,7 +32,9 @@ Follow `ia/skills/master-plan-new/SKILL.md` end-to-end. Phase sequence (gated):
 
 # Tool recipe (Phase 2 only)
 
-Run in order. **Greenfield** plans (new subsystem, no existing code paths modified) skip `router_for_task` / `spec_sections` / `invariants_summary` — no prior surface to route to. **Brownfield** plans run full recipe. Tooling/pipeline-only plans (no runtime C#) skip `invariants_summary` regardless.
+**Primary:** `mcp__territory-ia__orchestrator_snapshot({ slug })` (composite bundle — pending registration; loads exploration doc + glossary anchors + invariants slice in one call). Brownfield only; greenfield skips.
+
+**Bash fallback (MCP unavailable or tool not yet registered):** Run in order. **Greenfield** plans skip `router_for_task` / `spec_sections` / `invariants_summary`. **Brownfield** plans run full sequence. Tooling-only plans skip `invariants_summary` regardless.
 
 1. **`mcp__territory-ia__glossary_discover`** — `keywords` JSON array: English tokens from Chosen Approach + Subsystem Impact + Architecture component names. Greenfield + brownfield.
 2. **`mcp__territory-ia__glossary_lookup`** — high-confidence terms from discover. Hold canonical names for use when authoring prose in Phases 3–5. Greenfield + brownfield.

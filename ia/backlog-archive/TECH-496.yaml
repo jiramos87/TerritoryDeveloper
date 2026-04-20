@@ -1,0 +1,26 @@
+id: "TECH-496"
+type: TECH
+title: "YAML-first parser + manifest cache (B8)"
+priority: medium
+status: closed
+section: "Theme B MCP Surface Remainder — Performance + cache layer"
+spec: ""
+files: []
+notes: |
+  Audit `tools/mcp-ia-server/src/parser/backlog-parser.ts` — confirm `ia/backlog/{id}.yaml` checked BEFORE `BACKLOG.md` fallback for every id lookup; rewrite any ordering violation. Add manifest cache keyed by `ia/backlog/` dir mtime; `{id → yaml-path}` map invalidates on mtime change. Target: cumulative savings on highest-frequency `backlog_issue` tool.
+acceptance: |
+  - [ ] Verify `ia/backlog/` + `ia/backlog-archive/` yaml paths checked before `BACKLOG.md` fallback in every id lookup path.
+  - [ ] Add manifest cache: read dir mtime at first call per session; build `{id → yaml-path}` map; invalidate + re-scan on mtime change.
+  - [ ] Unit tests — mixed-state (yaml + archived yaml + BACKLOG-only); cache hit/miss; archived-yaml resolution.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-495
+  - TECH-497
+  - TECH-498
+  - TECH-499
+  - TECH-500
+  - TECH-501
+created: "2026-04-19"
+raw_markdown: |
+  YAML-first parser + manifest cache (B8) — Audit `tools/mcp-ia-server/src/parser/backlog-parser.ts` — confirm `ia/backlog/{id}.yaml` checked BEFORE `BACKLOG.md` fallback for every id lookup.

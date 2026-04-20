@@ -14,7 +14,8 @@ import {
 import { fuzzyFind, normalizeGlossaryQuery } from "../parser/fuzzy.js";
 import { rankGlossaryDiscover } from "../parser/glossary-discover-rank.js";
 import { runWithToolTiming } from "../instrumentation.js";
-import { wrapTool } from "../envelope.js";
+import { wrapTool, type ToolEnvelope } from "../envelope.js";
+import { getGraphFreshness, spawnGraphRegen } from "./glossary-freshness.js";
 
 const DEFAULT_MAX_RESULTS = 10;
 const HARD_CAP_MAX_RESULTS = 25;
@@ -139,6 +140,13 @@ const inputShape = {
     .describe(
       `Max matches to return (default ${DEFAULT_MAX_RESULTS}, hard cap ${HARD_CAP_MAX_RESULTS}). Alias: maxResults.`,
     ),
+  refresh_graph: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "When true, spawns a detached `npm run build:glossary-graph` child process to regenerate the glossary graph index. Tool returns immediately without waiting for the child to finish.",
+    ),
 };
 
 /**
@@ -159,7 +167,15 @@ export function registerGlossaryDiscover(
     },
     async (args) =>
       runWithToolTiming("glossary_discover", async () => {
-        const envelope = await wrapTool(async (input: Record<string, unknown>) => {
+        // Trigger detached regen before acquiring freshness snapshot (cache bust happens inside).
+        const argsRec = args as Record<string, unknown>;
+        if (argsRec?.refresh_graph === true) {
+          spawnGraphRegen();
+        }
+
+        const freshness = await getGraphFreshness();
+
+        const envelope = await wrapTool(async (input: Record<string, unknown>): Promise<ToolEnvelope<Record<string, unknown>>> => {
           const a = input;
           const normalized = normalizeDiscoverArgs({
             query: typeof a.query === "string" ? a.query : undefined,
@@ -206,13 +222,17 @@ export function registerGlossaryDiscover(
                 : [];
             const suggestions = fuzzyRows.map((r) => r.item.term);
             return {
-              matches: [] as unknown[],
-              query_normalized: queryText,
-              hint_next_tools: HINT_NEXT_TOOLS,
-              message:
-                "No glossary rows matched these keywords in term/definition/spec/category. " +
-                "Try different words, router_for_task, or spec_outline.",
-              suggestions,
+              ok: true as const,
+              payload: {
+                matches: [] as unknown[],
+                query_normalized: queryText,
+                hint_next_tools: HINT_NEXT_TOOLS,
+                message:
+                  "No glossary rows matched these keywords in term/definition/spec/category. " +
+                  "Try different words, router_for_task, or spec_outline.",
+                suggestions,
+              },
+              meta: { ...freshness },
             };
           }
 
@@ -234,11 +254,15 @@ export function registerGlossaryDiscover(
           });
 
           return {
-            matches,
-            query_normalized: queryText,
-            hint_next_tools: HINT_NEXT_TOOLS,
+            ok: true as const,
+            payload: {
+              matches,
+              query_normalized: queryText,
+              hint_next_tools: HINT_NEXT_TOOLS,
+            },
+            meta: { ...freshness },
           };
-        })(args as Record<string, unknown>);
+        })(argsRec);
 
         return jsonResult(envelope);
       }),

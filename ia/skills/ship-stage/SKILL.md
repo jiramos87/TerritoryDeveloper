@@ -1,21 +1,23 @@
 ---
-purpose: "Chain kickoff → implement → verify-loop → closeout across every non-Done filed task row of one Stage X.Y in a master plan, end-to-end and autonomously. Approach B stateful chain subagent."
+purpose: "Two-pass chain: Pass 1 = per-Task implement + unity:compile-check fast-fail gate; Pass 2 = Stage-end bulk verify-loop (full Path A+B cumulative delta) + code-review (Stage diff) + audit + closeout. Approach B stateful chain subagent."
 audience: agent
 loaded_by: skill:ship-stage
 slices_via: backlog_issue, router_for_task, spec_section, spec_sections, glossary_discover, glossary_lookup, invariants_summary
 name: ship-stage
 description: >
-  Opus orchestrator. Drives every non-Done filed task row of one Stage X.Y through
-  spec-kickoff → spec-implementer → verify-loop (--skip-path-b) → closeout,
-  then runs one batched Path B at stage end and emits a chain-level stage digest.
+  Opus orchestrator. Drives every non-Done filed task row of one Stage X.Y through a
+  two-pass chain. Pass 1 (per-Task): implement + unity:compile-check fast-fail gate +
+  atomic Task-level commit. Pass 2 (Stage-end bulk): verify-loop full Path A+B on
+  cumulative delta + code-review Stage diff (shared amortized context) + audit + closeout.
+  --per-task-verify flag preserves pre-TECH-519 N× per-Task verify-loop + code-review shape.
   MCP context loaded once via domain-context-load subskill; cached payload passed
   to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED.
   Triggers: "/ship-stage", "ship stage", "chain stage tasks", "ship all stage tasks".
 phases:
   - "Parse stage"
   - "Context load"
-  - "Task loop"
-  - "Batched Path B"
+  - "Pass 1 per-Task"
+  - "Pass 2 Stage-end"
   - "Chain digest"
   - "Next-stage resolver"
 ---
@@ -36,6 +38,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 |-----------|--------|-------|
 | `MASTER_PLAN_PATH` | User prompt | Repo-relative path to `*-master-plan.md` (e.g. `ia/projects/citystats-overhaul-master-plan.md`). |
 | `STAGE_ID` | User prompt | Stage identifier as it appears in the master plan header (e.g. `Stage 1.1`). |
+| `--per-task-verify` | Optional flag | **Rollback / legacy flag.** When set: Pass 2 verify-loop + code-review are SKIPPED; Pass 1 is promoted to full `verify-loop --skip-path-b` + `code-review` per Task (pre-TECH-519 shape). Audit + closeout remain Stage-scoped N=1 regardless. Use as safety valve for Stages too large for bulk Pass 2 review (e.g. N≥5, wide surface). |
 
 **Dispatch-shape agnostic:** identical behavior whether this skill is invoked as a Task-dispatched subagent (fresh context) or inline by an orchestrator (inherited context). Do not introduce subagent-only assumptions.
 
@@ -95,7 +98,7 @@ Store returned payload `{glossary_anchors, router_domains, spec_sections, invari
 
 ---
 
-## Step 2 — Task loop (sequential, fail-fast)
+## Step 2 — Pass 1: per-Task loop (sequential, fail-fast)
 
 For each pending task row in order (index `i`, total `N`):
 
@@ -104,85 +107,138 @@ CURRENT_TASK = task_rows[i]
 ISSUE_ID = CURRENT_TASK.issue_id
 ```
 
-### Step 2.1 — Kickoff
-
-Dispatch `spec-kickoff` subagent (Opus):
-
-> Mission: Run `project-spec-kickoff` on `ia/projects/{ISSUE_ID}*.md`. Resolve filename via Glob. Pre-loaded context: {CHAIN_CONTEXT} — skip MCP glossary/router/invariants calls where context already covers. End with `KICKOFF_DONE`.
-
-**Gate:** subagent output must contain `KICKOFF_DONE`. Failure → stop, emit:
-
-```
-SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — kickoff: {reason}
-```
-
-Then emit chain digest (Step 4) for tasks already closed + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
-
-### Step 2.2 — Implement
+### Step 2.1 — Implement
 
 Dispatch `spec-implementer` subagent (Sonnet):
 
-> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §7 Implementation Plan end-to-end, task by task. Pre-loaded context: {CHAIN_CONTEXT}. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
+> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §7 Implementation Plan end-to-end, phase by phase. Pre-loaded context: {CHAIN_CONTEXT}. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
 
-**Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → stop, same STOPPED digest pattern.
+**Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → stop, emit STOPPED line + partial chain digest.
 
-### Step 2.3 — Verify-loop (--skip-path-b)
+### Step 2.2 — Compile gate
+
+Run `npm run unity:compile-check` (Path: repo root, ~15 s). Non-zero exit = compile failure.
+
+**On failure:** emit:
+
+```
+STOPPED at {ISSUE_ID} — compile_gate: {reason}
+```
+
+Then emit partial chain digest (Step 4 shape with `tasks_stopped_at: "{ISSUE_ID}"`) listing:
+- `tasks_completed`: issue ids of Tasks that passed Pass 1 before this Task.
+- `uncommitted_tail`: this Task (implement done; commit NOT made — stop before commit on compile failure).
+- `unstarted`: remaining Task ids after this Task.
+
+Halt chain. `Next: claude-personal "/ship {ISSUE_ID}"` after user fixes compile error.
+
+**On success:** continue.
+
+### Step 2.3 — Atomic Task-level commit
+
+Commit all changes for this Task as a single atomic commit. Message format:
+
+```
+feat({ISSUE_ID}): {short description from spec §1}
+
+Pass 1 compile gate: passed
+```
+
+This commit is the bisection anchor for the Task.
+
+### Step 2.4 — Per-Task verify-loop + code-review (--per-task-verify flag only)
+
+**SKIP this step UNLESS `--per-task-verify` flag is set.** When flag set, run the legacy per-Task shape:
 
 Dispatch `verify-loop` subagent (Sonnet) with `--skip-path-b` flag:
 
-> Mission: Run verify-loop for {ISSUE_ID} with `--skip-path-b`. Path A compile gate runs; Path B skipped (batched at stage end). JSON verdict `path_b: skipped_batched`. End with JSON Verification block where `verdict` is `pass`, `fail`, or `escalated`.
+> Mission: Run verify-loop for {ISSUE_ID} with `--skip-path-b`. Path A compile gate runs; Path B skipped. JSON verdict `path_b: skipped_batched`. End with JSON Verification block where `verdict` is `pass`, `fail`, or `escalated`.
 
-**Gate:** `verdict` must be `"pass"`. `"fail"` or `"escalated"` → stop, emit STOPPED digest.
+**Gate:** `verdict` must be `"pass"`. Failure → stop, emit STOPPED digest.
 
-### Step 2.4 — Closeout
+Then dispatch `opus-code-reviewer` subagent (Opus):
 
-Dispatch `closeout` subagent (Opus):
+> Mission: Run opus-code-review for {ISSUE_ID}. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan; return `{verdict: "critical"}`.
 
-> Mission: Run `project-spec-close` on verified issue {ISSUE_ID}. Migrate lessons → delete spec → archive BACKLOG row → purge id. No confirmation gate — execute all ops. Return full `project_spec_closeout_digest` JSON payload (including `lessons_migrated[]` and `decisions[]`) so chain journal can aggregate.
+Verdict `critical` → emit STOPPED digest (code-review gate); verdict `PASS` / `minor` → continue.
 
-**Gate:** closeout digest JSON `spec_deleted.ok` must be `true` + `validate_dead_specs_post.exit_code` == 0. Failure → STOPPED digest.
+### Step 2.5 — Journal accumulation (Pass 1 entry)
 
-### Step 2.5 — Journal accumulation
-
-After successful closeout, append to `CHAIN_JOURNAL`:
+After successful Step 2.2 (or Step 2.4 when flag set), append to `CHAIN_JOURNAL`:
 
 ```json
 {
   "task_id": "{ISSUE_ID}",
-  "lessons": ["..."],
-  "decisions": ["..."],
+  "pass1_compile_gate": "passed",
+  "lessons": [],
+  "decisions": [],
   "verify_iterations": 0
 }
 ```
 
-Source of truth (ordering-safe — spec file is already deleted by Step 2.4):
-
-- `lessons[]` ← closeout digest `lessons_migrated[]` (post-migration canonical form, not the pre-delete spec §10 text).
-- `decisions[]` ← closeout digest `decisions[]`.
-- `verify_iterations` ← verify-loop JSON verdict `fix_iterations` field from Step 2.3.
-
-Do NOT re-read `ia/projects/{ISSUE_ID}.md` — closeout has already deleted it.
+Lessons + decisions updated from closeout digest in Step 3.5 below.
 
 ### Step 2.6 — Re-read master plan
 
-After closeout, re-read `{MASTER_PLAN_PATH}` to get latest task status (closeout flips the row). Continue to next task.
+Re-read `{MASTER_PLAN_PATH}` to confirm task row status after commit. Continue to next task.
 
 ---
 
-## Step 3 — Batched Path B verify (stage end)
+## Step 3 — Pass 2: Stage-end bulk (runs ONCE after all Tasks pass Pass 1)
 
-After all tasks closed successfully:
+**SKIP Pass 2 verify-loop + code-review when `--per-task-verify` flag is set.** Jump directly to Step 3.4 (audit).
 
-Run `verify-loop` subagent (Sonnet) **without** `--skip-path-b` (normal mode) on cumulative delta:
+### Step 3.1 — Verify-loop on cumulative Stage delta
 
-> Mission: Run full verify-loop (Path A + Path B) on cumulative stage delta. Issue context: last closed {ISSUE_ID} (for backlog context). Changed areas = all files touched across the stage.
+Run `verify-loop` (full Path A+B, no `--skip-path-b`) on cumulative Stage delta:
 
-**STAGE_VERIFY_FAIL handling:** if batched Path B fails:
-- All tasks already closed + archived — no rollback.
-- Emit `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` field + `escalation` object mirroring the inner verify-loop `gap_reason` taxonomy (see `ia/skills/verify-loop/SKILL.md` § Step 7, `docs/agent-led-verification-policy.md` § Escalation taxonomy).
-- `gap_reason` REQUIRED — pick `bridge_kind_missing` over `human_judgment_required` whenever a missing `unity_bridge_command` kind could close the loop; cite `missing_kind` + `tooling_issue_id` (TECH-412 landed the initial 20 mutation kinds — file a new TECH for genuinely missing successors).
-- Directive wording MUST include the concrete gap — e.g. "STAGE_VERIFY_FAIL: `bridge_kind_missing` — `some_missing_kind` — tracked in TECH-###. Human: one-shot Editor action to unblock while kind lands; do NOT reopen tasks."
+**Cumulative delta anchor:** `git diff {FIRST_TASK_COMMIT_PARENT}..HEAD` — where `{FIRST_TASK_COMMIT_PARENT}` = the commit SHA immediately before the first Pass 1 Task commit. **EXCLUDE Stage closeout commits** (closeout runs after Pass 2; closeout commits not yet on HEAD at this point — so the anchor is naturally correct).
+
+> Mission: Run full verify-loop (Path A + Path B) on cumulative stage delta. Issue context: last closed {ISSUE_ID} (for backlog context). Changed areas = all files touched across all Pass 1 Task commits. End with JSON Verification block where `verdict` is `pass`, `fail`, or `escalated`.
+
+**Gate:** `verdict` must be `"pass"`.
+
+**STAGE_VERIFY_FAIL handling:** if Pass 2 verify-loop fails:
+- All Tasks committed in Pass 1 — no rollback.
+- Emit `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` field + `escalation` object mirroring inner verify-loop `gap_reason` taxonomy (see `ia/skills/verify-loop/SKILL.md` § Step 7, `docs/agent-led-verification-policy.md` § Escalation taxonomy).
+- `gap_reason` REQUIRED — pick `bridge_kind_missing` over `human_judgment_required` whenever a missing `unity_bridge_command` kind could close the loop.
 - No automatic retry.
+
+### Step 3.2 — Code-review on Stage-level diff
+
+Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
+
+> Mission: Run opus-code-review on Stage-level diff (cumulative delta: same anchor as Step 3.1). STAGE_MCP_BUNDLE: {CHAIN_CONTEXT} — shared spec/invariant/glossary context cached from Phase 1 (do NOT re-query domain-context-load). All N §Plan Author sections from `{MASTER_PLAN_PATH}` are the acceptance reference. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan tuples targeting the appropriate spec files.
+
+**Verdict PASS / minor:** continue to Step 3.4.
+
+**Verdict critical (first time):**
+1. Run `code-fix-apply` Sonnet on `§Code Fix Plan` tuples.
+2. Re-enter Step 3.1 verify-loop (one re-entry — cap = 1).
+3. Run Step 3.2 code-review again.
+4. Second critical verdict → exit `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest. Halt. Human review required.
+
+### Step 3.3 — (Reserved)
+
+No additional step between code-review and audit.
+
+### Step 3.4 — Audit
+
+Dispatch `opus-auditor` subagent (Opus) — Stage-scoped (unchanged):
+
+> Mission: Run opus-audit Stage 1×N for Stage {STAGE_ID}. Issue ids: {all Task ids in Stage}. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. Return audit report.
+
+### Step 3.5 — Closeout
+
+Dispatch `stage-closeout-planner` → `stage-closeout-applier` pair (Opus → Sonnet) — Stage-scoped (unchanged):
+
+> Mission: Run Stage-scoped closeout for Stage {STAGE_ID} in {MASTER_PLAN_PATH}. All Task rows. Migrate lessons → delete specs → archive BACKLOG rows. No confirmation gate. Return full `project_spec_closeout_digest` JSON payload (including `lessons_migrated[]` and `decisions[]` per task) so chain journal can aggregate.
+
+**Gate:** closeout digest JSON `validate_dead_specs_post.exit_code` == 0. Failure → STOPPED digest.
+
+After closeout, update `CHAIN_JOURNAL` entries with lessons + decisions from closeout digest.
+
+---
 
 ---
 
@@ -251,8 +307,10 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ## Exit lines
 
 - **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff.
-- **Mid-chain failure:** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — {gate}: {reason}` + partial chain digest (tasks already closed) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
-- **Stage verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
+- **Pass 1 compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest (tasks-completed + uncommitted tail + unstarted list) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
+- **Pass 1 implement failure (--per-task-verify only):** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
+- **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
+- **Pass 2 code-review critical twice:** `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest + human review required (structural issue).
 - **Parser error:** `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + expected-vs-found column diff.
 
 ---
@@ -260,9 +318,12 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ## Hard boundaries
 
 - Sequential task dispatch only — tasks share files + invariants; no parallel.
-- Stop on first per-task gate failure; do NOT continue to next task.
-- Do NOT rollback closed tasks on STAGE_VERIFY_FAIL — destructive ops already committed; emit digest + human directive only.
-- Per-spec `project-stage-close` fires inside each inner `spec-implementer` normally — do NOT inhibit it. Chain-level stage digest is a NEW separate scope.
+- Stop on first Pass 1 gate failure (compile or implement); do NOT continue to next task.
+- Do NOT rollback committed Pass 1 Tasks on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — commits already landed; emit digest + human directive only.
+- `STAGE_CODE_REVIEW_CRITICAL` re-entry cap = 1 — second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`; do NOT re-enter a third time.
+- Pass 2 cumulative delta anchor: first Task-commit parent → Stage-end HEAD, EXCLUDING closeout commits.
+- Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE after Pass 2 completes — do NOT call per Task; do NOT inhibit.
+- Chain-level stage digest is a NEW scope distinct from stage-closeout-apply's per-task digest aggregation.
 - `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.
 
@@ -287,6 +348,29 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ---
 
 ## Changelog
+
+### 2026-04-19 — Subagent bailed "no Task tool in nested context" — premature 50.7k token burn
+
+**Status:** fixed (agent body patched)
+
+**Symptom:**
+`/ship-stage ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md Stage 17` launched as subagent, bailed after 3 tool uses + 50.7k tokens + 37s, reporting "Subagent blocked — no Task tool in nested context". Re-dispatch with explicit "inline execution" instruction succeeded (100+ tool uses). Stage 8 production run (F9 entry below) had already proven inline execution works. Inconsistent behavior = misread of `tools:` frontmatter intent.
+
+**Root cause:**
+`.claude/agents/ship-stage.md` `tools:` frontmatter intentionally omits `Agent`/`Task` (subagent cannot nest-dispatch). Skill body Steps 2.1–2.4 phrase work as "Dispatch `spec-kickoff` subagent" / "Dispatch `spec-implementer`" etc. Subagent read "Dispatch X" literally, found no Task tool, bailed. SKILL.md §40 "Dispatch-shape agnostic" directive not reinforced in agent body.
+
+Secondary drift: agent body + skill Steps 2.1/2.4 + Hard boundaries still referenced retired surfaces `spec-kickoff` + per-spec `project-stage-close` (M6 collapse folded both into `/author` Stage 1×N + Stage-scoped `/closeout` pair).
+
+**Fix:**
+Added explicit "Execution model (CRITICAL)" section to `.claude/agents/ship-stage.md` stating: subagent runs ALL phase work inline using native tools; "Dispatch X subagent" phrasing in SKILL.md is shorthand for "execute the work that subagent would do"; do NOT bail on missing Task tool. Updated retired-surface refs (`spec-kickoff` → `/author`; `project-stage-close` → Stage-scoped `/closeout`). Added hard boundary: "Do NOT bail with 'no Task tool in nested context'."
+
+Deeper rewrite of skill Steps 2.1–2.4 + Step 3 to canonical rev-3 lifecycle surfaces (author → plan-review → per-task implement/verify/code-review → audit → closeout) deferred — current shorthand-with-translation-directive unblocks the immediate 50.7k token regression.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
 
 ### 2026-04-19 — Self-referential dry-run scope diverged from T8.1 intent (F7 finding)
 

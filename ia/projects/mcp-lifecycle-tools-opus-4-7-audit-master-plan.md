@@ -1,10 +1,14 @@
 # MCP Lifecycle Tools — Opus 4.7 Audit — Master Plan (IA Infrastructure)
 
-> **Status:** In Progress — Step 2 / Stage 2.2
+> **Last updated:** 2026-04-19
+>
+> **Status:** In Progress — Stage 10
 >
 > **Scope:** Reshape `territory-ia` MCP surface (32 tools) from 4.6-era sequential-call design to 4.7-era composite-bundle + structured-envelope architecture. Phased: quick wins → breaking envelope cut → composite bundles → mutation/authorship surface → bridge/journal lifecycle. Out of scope: backlog-yaml mutations (sibling master plan), Sonnet skill extractions (TECH-302), bridge transport rewrite, web dashboard tooling, computational-family batching.
 >
-> **Exploration source:** `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` (§Design Expansion — ground truth for all phases).
+> **Exploration source:**
+> - `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` (§Design Expansion — ground truth for Stages 1–16).
+> - `docs/session-token-latency-audit-exploration.md` (§Design Expansion — Post-M8 Authoring Shape, Pass 2) — extension source for Stage 17 (Theme B MCP surface remainder: B4 / B5 / B6 / B8 / B9).
 >
 > **Locked decisions (do not reopen in this plan):**
 > - Approach B selected — phased sequencing (P1 quick wins → P2 envelope → P3 composites → P4 mutations → P5 bridge/journal → P6 graph).
@@ -19,6 +23,7 @@
 >
 > **Read first if landing cold:**
 > - `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` — full audit + design expansion + examples + review notes.
+> - `docs/session-token-latency-audit-exploration.md` — Theme B cross-plan coordination (Pass 2 Stage 17 source).
 > - `docs/mcp-ia-server.md` — current MCP tool catalog (pre-reshape).
 > - `tools/mcp-ia-server/src/tools/` — 22 existing handler files.
 > - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — doc semantics + phase/task cardinality (≥2 tasks per phase).
@@ -255,7 +260,7 @@
 
 ### Stage 9 — Composite Bundles + Graph Freshness / Graph Freshness + Skill Recipe Sweep
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done
 
 **Objectives:** Wire real freshness metadata into `glossary_lookup` / `glossary_discover` responses; add `refresh_graph` non-blocking regen trigger. Sweep lifecycle skill bodies and agent docs to call composite bundle tools first, with bash fallback for MCP-unavailable path.
 
@@ -272,10 +277,290 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T9.1 | Graph freshness handler | _pending_ | _pending_ | Extend `glossary-lookup.ts` + `glossary-discover.ts`: read `fs.stat("tools/mcp-ia-server/data/glossary-graph-index.json").mtime`; compute `graph_stale = mtime < Date.now() - (GLOSSARY_GRAPH_STALE_DAYS * 86400000)` (env default 14); attach to `EnvelopeMeta`. `refresh_graph?: boolean` input: if `true`, spawn `npm run build:glossary-graph` as detached child process (`child_process.spawn(..., { detached: true, stdio: "ignore" }).unref()`), return immediately. |
-| T9.2 | Freshness tests | _pending_ | _pending_ | Tests: mock `fs.stat` mtime = now - 15d → `graph_stale: true`; mtime = now - 1d → `graph_stale: false`; `GLOSSARY_GRAPH_STALE_DAYS=1` env override → stale threshold respected; `refresh_graph: true` → child process spawned without blocking (spy on `child_process.spawn`); `graph_generated_at` ISO format valid. |
-| T9.3 | Skill recipe sweep | _pending_ | _pending_ | Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/release-rollout/SKILL.md`, `ia/skills/closeout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(issue_id, stage)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable. |
-| T9.4 | Agent + docs catalog update | _pending_ | _pending_ | Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T2.4.2); update `docs/mcp-ia-server.md` MCP catalog: add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. |
+| T9.1 | Graph freshness handler | **TECH-514** | Done (archived) | Extend `glossary-lookup.ts` + `glossary-discover.ts`: read `fs.stat("tools/mcp-ia-server/data/glossary-graph-index.json").mtime`; compute `graph_stale = mtime < Date.now() - (GLOSSARY_GRAPH_STALE_DAYS * 86400000)` (env default 14); attach to `EnvelopeMeta`. `refresh_graph?: boolean` input: if `true`, spawn `npm run build:glossary-graph` as detached child process (`child_process.spawn(..., { detached: true, stdio: "ignore" }).unref()`), return immediately. |
+| T9.2 | Freshness tests | **TECH-515** | Done (archived) | Tests: mock `fs.stat` mtime = now - 15d → `graph_stale: true`; mtime = now - 1d → `graph_stale: false`; `GLOSSARY_GRAPH_STALE_DAYS=1` env override → stale threshold respected; `refresh_graph: true` → child process spawned without blocking (spy on `child_process.spawn`); `graph_generated_at` ISO format valid. |
+| T9.3 | Skill recipe sweep | **TECH-516** | Done (archived) | Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/plan-author/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/stage-closeout-plan/SKILL.md`, `ia/skills/stage-closeout-apply/SKILL.md`, `ia/skills/release-rollout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(master_plan_path, stage_id)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable. |
+| T9.4 | Agent + docs catalog update | **TECH-517** | Done (archived) | Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T9.3); update `docs/mcp-ia-server.md` MCP catalog: add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. Gates Stage 17 T17.3 (TECH-497 README drift lint). |
+
+#### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- operation: file_task
+  task_key: T9.1
+  reserved_id: TECH-514
+  title: "Graph freshness handler"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Extend `tools/mcp-ia-server/src/tools/glossary-lookup.ts` + `glossary-discover.ts` — read `fs.stat("tools/mcp-ia-server/data/glossary-graph-index.json").mtime`; compute `graph_stale = mtime < Date.now() - (GLOSSARY_GRAPH_STALE_DAYS * 86400000)` (env default 14); attach to `EnvelopeMeta`. `refresh_graph?: boolean` input — `true` spawns `npm run build:glossary-graph` detached child via `child_process.spawn(..., { detached: true, stdio: "ignore" }).unref()`; response returns immediately without waiting.
+  depends_on: []
+  related:
+    - TECH-515
+    - TECH-516
+    - TECH-517
+  stub_body:
+    summary: |
+      Wire real freshness metadata into `glossary_lookup` + `glossary_discover` responses. `meta.graph_generated_at` + `meta.graph_stale` computed from graph-index mtime vs `GLOSSARY_GRAPH_STALE_DAYS` env (default 14). `refresh_graph: true` input spawns non-blocking regen child process.
+    goals: |
+      - `meta.graph_generated_at` ISO string from `glossary-graph-index.json` mtime on every `glossary_lookup` + `glossary_discover` response.
+      - `meta.graph_stale` boolean — true when mtime older than `GLOSSARY_GRAPH_STALE_DAYS` days (default 14, env-overridable).
+      - `refresh_graph?: boolean` input — `true` spawns detached `npm run build:glossary-graph` via `child_process.spawn(...).unref()`; tool returns without waiting.
+      - `EnvelopeMeta` typings updated to carry the two new fields (Stage 3 foundation already exports `graph_generated_at?` / `graph_stale?`).
+    systems_map: |
+      - `tools/mcp-ia-server/src/tools/glossary-lookup.ts` (freshness + refresh_graph wiring)
+      - `tools/mcp-ia-server/src/tools/glossary-discover.ts` (freshness wiring)
+      - `tools/mcp-ia-server/data/glossary-graph-index.json` (mtime source)
+      - `tools/mcp-ia-server/src/envelope.ts` (`EnvelopeMeta` — fields already reserved)
+      - `GLOSSARY_GRAPH_STALE_DAYS` env var (default 14)
+    impl_plan_sketch: |
+      Phase 1 — Author `fs.stat` helper returning `{ mtime, stale }`; wire into both tool handlers inside `wrapTool` body; plumb `graph_generated_at` + `graph_stale` through `EnvelopeMeta`. Add `refresh_graph` Zod field (default false); when true, spawn detached regen child, return immediately. Confirm `tools/mcp-ia-server/package.json` has `build:glossary-graph` script (exists from prior stages).
+
+- operation: file_task
+  task_key: T9.2
+  reserved_id: TECH-515
+  title: "Freshness tests"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Unit tests in `tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts` + `glossary-discover.test.ts`: mock `fs.stat` mtime = now - 15d → `graph_stale: true`; mtime = now - 1d → `graph_stale: false`; `GLOSSARY_GRAPH_STALE_DAYS=1` env override → stale threshold respected; `refresh_graph: true` spawns child without blocking (spy on `child_process.spawn`); `graph_generated_at` ISO format valid.
+  depends_on:
+    - TECH-514
+  related:
+    - TECH-516
+    - TECH-517
+  stub_body:
+    summary: |
+      Behavioral + env-override tests for T9.1 freshness handler. Covers stale/fresh thresholds, env override, detached-spawn non-blocking semantics, ISO format validity.
+    goals: |
+      - Mock mtime = now - 15d → `graph_stale: true`; mtime = now - 1d → `graph_stale: false`.
+      - `GLOSSARY_GRAPH_STALE_DAYS=1` env override respected (mtime = now - 2d → stale).
+      - `refresh_graph: true` → `child_process.spawn` spy called once with detached + unref; tool response returns before child exits.
+      - `graph_generated_at` parses as valid ISO 8601.
+    systems_map: |
+      - `tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts`
+      - `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`
+      - Vitest spies on `fs.stat` + `child_process.spawn`
+      - `GLOSSARY_GRAPH_STALE_DAYS` env var scope
+    impl_plan_sketch: |
+      Phase 1 — Add test file or extend existing; stub `fs.promises.stat` with fixed `mtime` Date values; assert `meta.graph_stale` branches. Add env-override test block (set/restore env). Spy on `child_process.spawn` for refresh_graph path; assert no blocking await. Confirm `validate:all` green.
+
+- operation: file_task
+  task_key: T9.3
+  reserved_id: TECH-516
+  title: "Skill recipe sweep"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/plan-author/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/stage-closeout-plan/SKILL.md`, `ia/skills/stage-closeout-apply/SKILL.md`, `ia/skills/release-rollout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(issue_id, stage)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable path. Composite-first pattern.
+  depends_on: []
+  related:
+    - TECH-514
+    - TECH-515
+    - TECH-517
+  stub_body:
+    summary: |
+      Sweep lifecycle skill bodies to call composite bundle tools (`issue_context_bundle` / `lifecycle_stage_context`) as first MCP call instead of 3–8 bare-tool opening sequence. Adds bash-fallback note per skill for MCP-unavailable path.
+    goals: |
+      - Replace opening 3–8 call sequence with one composite call in every listed skill body.
+      - Preserve existing tool ordering in a "fallback (MCP unavailable)" sub-section.
+      - Reference canonical param names only — no legacy aliases (Stage 5 already dropped; this is enforcement).
+      - Update any skill referencing retired sequential patterns (design-explore, master-plan-new, stage-file pair, plan-author, project-spec-implement, stage-closeout pair, release-rollout).
+    systems_map: |
+      - `ia/skills/design-explore/SKILL.md`
+      - `ia/skills/master-plan-new/SKILL.md`
+      - `ia/skills/stage-file-plan/SKILL.md` + `ia/skills/stage-file-apply/SKILL.md`
+      - `ia/skills/plan-author/SKILL.md`
+      - `ia/skills/project-spec-implement/SKILL.md`
+      - `ia/skills/stage-closeout-plan/SKILL.md` + `ia/skills/stage-closeout-apply/SKILL.md`
+      - `ia/skills/release-rollout/SKILL.md`
+    impl_plan_sketch: |
+      Phase 1 — Grep each skill body for bare-tool opening sequences; replace with `lifecycle_stage_context` / `issue_context_bundle` first-call block; move old sequence under `### Bash fallback (MCP unavailable)` heading. Preserve caveman preamble + phases frontmatter. Run `npm run validate:frontmatter` + `validate:all` green.
+
+- operation: file_task
+  task_key: T9.4
+  reserved_id: TECH-517
+  title: "Agent + docs catalog update"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T9.3); update `docs/mcp-ia-server.md` MCP catalog — add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. **Gates Stage 17 T17.3 (TECH-497 README drift lint)** — lint must not land until catalog rewrite merges.
+  depends_on: []
+  related:
+    - TECH-497
+    - TECH-514
+    - TECH-515
+    - TECH-516
+  stub_body:
+    summary: |
+      Sweep subagent bodies + rewrite `docs/mcp-ia-server.md` catalog to reflect Stages 1–8 surface changes. Adds composite-tool + `rule_section` entries; marks bulk-terms + freshness metadata on glossary; marks alias-drop migration on spec tools. Gates Stage 17 T17.3 README drift lint.
+    goals: |
+      - `.claude/agents/*.md` — grep + replace old sequential recipes w/ composite first-call (same surface set as T9.3).
+      - `docs/mcp-ia-server.md` — add catalog entries for `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section`.
+      - Mark `glossary_lookup` with bulk-`terms` partial-result shape + freshness metadata fields.
+      - Mark `spec_section` / `spec_sections` alias-drop migration note (canonical params only).
+      - Confirm Stage 17 T17.3 unblocks post-merge.
+    systems_map: |
+      - `.claude/agents/*.md` (all subagent bodies w/ legacy recipes)
+      - `docs/mcp-ia-server.md` (tool catalog)
+      - Stage 17 T17.3 gate (TECH-497 README drift lint unblocks after this lands)
+    impl_plan_sketch: |
+      Phase 1 — Grep `.claude/agents/*.md` for legacy sequential recipes (same regex as T9.3); rewrite to composite-first. Rewrite `docs/mcp-ia-server.md` tool catalog — add 4 new tool entries + 2 migration notes + 1 bulk-shape annotation. Cross-check `registerTool(` count in `src/index.ts` matches README row count (advisory — T17.3 CI lint formalizes post-merge). Confirm `validate:all` green.
+```
+
+#### §Plan Fix
+
+<!-- plan-review output — do not hand-edit; apply via plan-fix-apply -->
+
+```yaml
+- operation: replace_line
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "| T9.3 | Skill recipe sweep | **TECH-516** | Draft | Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/release-rollout/SKILL.md`, `ia/skills/closeout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(issue_id, stage)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable. |"
+  payload: |
+    | T9.3 | Skill recipe sweep | **TECH-516** | Draft | Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/plan-author/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/stage-closeout-plan/SKILL.md`, `ia/skills/stage-closeout-apply/SKILL.md`, `ia/skills/release-rollout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(master_plan_path, stage_id)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable. |
+  rationale: |
+    Retired-surface drift in Stage 9 T9.3 Intent cell. Cell listed 4 retired skill paths (`ia/skills/stage-file/SKILL.md`, `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/closeout/SKILL.md`) — all folded or split under M6 collapse (CLAUDE.md §3 + ia/rules/agent-lifecycle.md). Replace with canonical 9-skill live set from TECH-516 §Acceptance (`stage-file-plan`, `stage-file-apply`, `plan-author`, `project-spec-implement`, `stage-closeout-plan`, `stage-closeout-apply` etc.). Also fix arg signature `lifecycle_stage_context(issue_id, stage)` → canonical `(master_plan_path, stage_id)` per TECH-516 skill-map table + TECH-517 catalog entry.
+
+- operation: replace_line
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "| T9.4 | Agent + docs catalog update | **TECH-517** | Draft | Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T2.4.2); update `docs/mcp-ia-server.md` MCP catalog: add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. |"
+  payload: |
+    | T9.4 | Agent + docs catalog update | **TECH-517** | Draft | Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T9.3); update `docs/mcp-ia-server.md` MCP catalog: add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. Gates Stage 17 T17.3 (TECH-497 README drift lint). |
+  rationale: |
+    Stale task-ref `T2.4.2` in Stage 9 T9.4 Intent cell points at pre-M6 step/stage decomposition numbering (no longer exists in current flat T9.x scheme). Sibling Stage 9 task T9.3 owns the same grep pattern. Replace T2.4.2 → T9.3. Also surface the T17.3 gate annotation (already in stub_body notes) into the Intent cell for lifecycle visibility.
+
+- operation: replace_block
+  target_path: ia/backlog-archive/TECH-517.yaml
+  target_anchor: "- Risk: subagent body grep pattern drift — earlier stage <!-- WARN: stale task-ref T2.4.2 — verify against ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md (pre-Step/Stage collapse legacy format) --> used `grep -rn \"router_for_task\\|spec_section\\|glossary_lookup\\|invariants_summary\" .claude/agents/`. Mitigation: re-run same grep pre-sweep; archive match list in `ia/projects/TECH-517-subagent-grep-snapshot.txt` (optional) for audit."
+  payload: |
+    - Risk: subagent body grep pattern drift — sibling Stage 9 task T9.3 (TECH-516) runs the same grep (`grep -rn "router_for_task\|spec_section\|glossary_lookup\|invariants_summary" .claude/agents/`) against skill bodies. Mitigation: re-run identical grep pre-sweep against live agent surface; archive match list in `ia/projects/TECH-517-subagent-grep-snapshot.txt` (optional) for audit.
+  rationale: |
+    Plan-author flagged stale T2.4.2 ref in TECH-517 §Audit Notes via HTML WARN comment. T2.4.2 = pre-collapse decomposition numbering; current master-plan uses flat T9.x. Rewrite sentence to cite sibling T9.3 (TECH-516), drop WARN comment.
+```
+
+#### §Stage Closeout Plan
+
+> stage-closeout-plan — 4 Tasks (0 shared migration ops + 16 per-Task ops + 1 stage-level status flip = 17 tuples total). Spawn `stage-closeout-apply ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md 9`.
+
+```yaml
+# Shared migration ops — none (no new glossary rows, no shared rule edits, no shared doc edits across Tasks).
+
+# Per-Task ops — TECH-514 (T9.1 Graph freshness handler)
+- operation: archive_record
+  target_path: ia/backlog/TECH-514.yaml
+  target_anchor: "id: \"TECH-514\""
+  payload:
+    status: closed
+    completed: "2026-04-19"
+    dest: ia/backlog-archive/TECH-514.yaml
+
+- operation: delete_file
+  target_path: ia/backlog-archive/TECH-514.yaml
+  target_anchor: "file:TECH-514.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "task_key:T9.1"
+  payload: |
+    | T9.1 | Graph freshness handler | **TECH-514** | Done (archived) | Extend `glossary-lookup.ts` + `glossary-discover.ts`: read `fs.stat("tools/mcp-ia-server/data/glossary-graph-index.json").mtime`; compute `graph_stale = mtime < Date.now() - (GLOSSARY_GRAPH_STALE_DAYS * 86400000)` (env default 14); attach to `EnvelopeMeta`. `refresh_graph?: boolean` input: if `true`, spawn `npm run build:glossary-graph` as detached child process (`child_process.spawn(..., { detached: true, stdio: "ignore" }).unref()`), return immediately. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-514.yaml
+  target_anchor: "TECH-514"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-515 (T9.2 Freshness tests)
+- operation: archive_record
+  target_path: ia/backlog/TECH-515.yaml
+  target_anchor: "id: \"TECH-515\""
+  payload:
+    status: closed
+    completed: "2026-04-19"
+    dest: ia/backlog-archive/TECH-515.yaml
+
+- operation: delete_file
+  target_path: ia/backlog-archive/TECH-515.yaml
+  target_anchor: "file:TECH-515.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "task_key:T9.2"
+  payload: |
+    | T9.2 | Freshness tests | **TECH-515** | Done (archived) | Tests: mock `fs.stat` mtime = now - 15d → `graph_stale: true`; mtime = now - 1d → `graph_stale: false`; `GLOSSARY_GRAPH_STALE_DAYS=1` env override → stale threshold respected; `refresh_graph: true` → child process spawned without blocking (spy on `child_process.spawn`); `graph_generated_at` ISO format valid. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-515.yaml
+  target_anchor: "TECH-515"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-516 (T9.3 Skill recipe sweep)
+- operation: archive_record
+  target_path: ia/backlog/TECH-516.yaml
+  target_anchor: "id: \"TECH-516\""
+  payload:
+    status: closed
+    completed: "2026-04-19"
+    dest: ia/backlog-archive/TECH-516.yaml
+
+- operation: delete_file
+  target_path: ia/backlog-archive/TECH-516.yaml
+  target_anchor: "file:TECH-516.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "task_key:T9.3"
+  payload: |
+    | T9.3 | Skill recipe sweep | **TECH-516** | Done (archived) | Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/plan-author/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/stage-closeout-plan/SKILL.md`, `ia/skills/stage-closeout-apply/SKILL.md`, `ia/skills/release-rollout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(master_plan_path, stage_id)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-516.yaml
+  target_anchor: "TECH-516"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-517 (T9.4 Agent + docs catalog update)
+- operation: archive_record
+  target_path: ia/backlog/TECH-517.yaml
+  target_anchor: "id: \"TECH-517\""
+  payload:
+    status: closed
+    completed: "2026-04-19"
+    dest: ia/backlog-archive/TECH-517.yaml
+
+- operation: delete_file
+  target_path: ia/backlog-archive/TECH-517.yaml
+  target_anchor: "file:TECH-517.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "task_key:T9.4"
+  payload: |
+    | T9.4 | Agent + docs catalog update | **TECH-517** | Done (archived) | Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T9.3); update `docs/mcp-ia-server.md` MCP catalog: add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. Gates Stage 17 T17.3 (TECH-497 README drift lint). |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-517.yaml
+  target_anchor: "TECH-517"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Stage-level status flip (once all 4 tasks archived)
+- operation: replace_section
+  target_path: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+  target_anchor: "stage_status:9"
+  payload: |
+    **Status:** Done
+```
 
 ---
 
@@ -467,6 +752,295 @@
 | T16.2 | Dry-run for IA authorship tools | _pending_ | _pending_ | Wire dry-run path into `glossary_row_create`, `glossary_row_update`, `spec_section_append`, `rule_create` (Stage 4.2 tools). Each computes proposed new file content, generates diff, returns without writing or spawning index regen. Multi-file ops (e.g. glossary row insert + graph-index regen) return `diff: string` for primary file only + `affected_paths: [primary, index]` listing both; index regen explicitly marked as side-effect in response `meta.side_effects: ["glossary_index_regen"]`. |
 | T16.3 | Dry-run for master-plan authoring + mutation_batch | _pending_ | _pending_ | Wire dry-run path into `master_plan_create`, `master_plan_step_append`, `stage_decompose_apply` (Stage 5.1 tools) — each computes serialized output, diffs against current file (empty string for `master_plan_create` new file), returns without writing. Extend `mutation_batch` (Stage 5.2) to propagate `dry_run: true` into each nested op's args; aggregate per-op diffs into `payload.diffs: { [op_index]: { diff, affected_paths, would_write: true } }`; skip `snapshotFiles` + `restoreSnapshots` entirely when dry-run. |
 | T16.4 | Dry-run tests + release prep | _pending_ | _pending_ | Snapshot tests in `tools/mcp-ia-server/tests/mutation/dry-run.test.ts`: fixture input → stable diff string per tool (one `ok: true` fixture per mutation + authorship tool). Behavioral tests: dry-run never writes (compare SHA-256 of affected files before + after call); `dry_run: true` + unauthorized `caller_agent` → still `unauthorized_caller` (auth gate runs before dry-run branch); dry-run via `mutation_batch` returns aggregated `payload.diffs` map. Bump `tools/mcp-ia-server/package.json` to `1.1.0`; `CHANGELOG.md` entry `v1.1.0 — Master-plan authoring (create/step_append/stage_decompose_apply) + mutation_batch (all_or_nothing/best_effort) + dry_run across all mutation/authorship tools`. |
+
+---
+
+### Stage 17 — Theme B MCP Surface Remainder (session-token-latency audit extension) / Parse Cache + Progressive Disclosure + Doc Drift + YAML-First + Descriptor Lint
+
+**Status:** Done (2026-04-19)
+
+**Source:** [`docs/session-token-latency-audit-exploration.md`](../../docs/session-token-latency-audit-exploration.md) §Design Expansion — Post-M8 Authoring Shape (Pass 2). Folds 5 independent Theme B items (B4 / B5 / B6 / B8 / B9) into this MCP plan per source doc's Pass 2 directive (Theme B MCP-surface work belongs to MCP-plan authority chain; sibling exploration ships standalone NEW orchestrator for Themes A / C / D-rest / E-rest / F).
+
+**Depends on:**
+- Stage 9 T9.4 (Draft) — `docs/mcp-ia-server.md` catalog rewrite must land BEFORE B6 doc-drift lint (T17.3) to avoid lint-fails-during-rewrite churn. T17.3 gated on T9.4 Done; remaining T17.* tasks independent.
+- Session-token-latency NEW orchestrator Stage 1 (external dependency) — B1 server-split decision durable before B4 dist-build target chosen; dist output directory name coordinates with server-split output naming.
+
+**Objectives:** Land the MCP-surface-angle remainder from the external 2026-04-19 token-economy + latency audit. B4 adds an on-disk parse cache + switches `.mcp.json` from `tsx`-on-source to compiled `dist/` entry (cold-start 1500 ms → ~200 ms). B5 flips `spec_outline` default to `depth=1` + `list_rules` default to `alwaysApply: true`-only, with opt-in `expand=true` for full payload (1–2k tokens saved per call, breaking change gated by envelope v1.0.0 precedent). B6 adds `validate:mcp-readme` CI lint comparing `registerTool(` count in `src/index.ts` to README table row count. B8 audits `tools/mcp-ia-server/src/parser/backlog-parser.ts` yaml-first call order + adds mtime-keyed manifest cache. B9 adds `validate:mcp-descriptor-prose` lint enforcing `.describe()` ≤120 chars per param. All independent of Stages 1–16 except T17.3's sequencing note on T9.4.
+
+**Exit:**
+
+- `tools/mcp-ia-server/.cache/parse-cache.json` populated on first parse; subsequent parses read from cache when source mtime unchanged (miss → reparse + rewrite).
+- `.mcp.json` `args` points to compiled `tools/mcp-ia-server/dist/index.js` (with fallback `tsx` in a dev-env flag path, e.g. `MCP_SOURCE_MODE=1`).
+- `spec_outline({ spec: "geo" })` default returns depth=1 heading tree; `spec_outline({ spec: "geo", expand: true })` returns full tree.
+- `list_rules({})` default returns only `alwaysApply: true` rules; `list_rules({ expand: true })` returns all rules.
+- `npm run validate:mcp-readme` exits 0 when `registerTool(` count == README tool-table row count; exits non-zero (descriptive diff) otherwise. Integrated into `validate:all`.
+- `tools/mcp-ia-server/src/parser/backlog-parser.ts` checks `ia/backlog/{id}.yaml` BEFORE falling back to `BACKLOG.md`; manifest cache invalidates on dir mtime change.
+- `npm run validate:mcp-descriptor-prose` exits 0 when every `.describe()` call in `src/tools/*.ts` passes a string ≤120 chars; exits non-zero listing offenders. Integrated into `validate:all`.
+- `tools/mcp-ia-server/CHANGELOG.md` entry `v1.2.0 — Theme B audit remainder: parse cache + dist build, progressive-disclosure defaults, README drift CI, yaml-first parser cache, descriptor-prose ≤120-char lint`.
+- Phase 1 — Performance + cache layer (B4 parse cache + dist; B8 yaml-first manifest cache).
+- Phase 2 — Surface-shape + CI gates (B5 progressive disclosure; B6 README drift lint; B9 descriptor-prose lint; v1.2.0 release prep).
+
+**Art:** None.
+
+**Relevant surfaces (load when stage opens):**
+
+- `docs/session-token-latency-audit-exploration.md` §Problem + §Approaches surveyed + §Design Expansion Post-M8 Pass 2 — canonical source for Theme B MCP-surface items.
+- `docs/ai-mechanics-audit-2026-04-19.md` — original external audit (B4 = M5, B5 = M6, B6 = M7, B8 = m5, B9 = m6).
+- `docs/mcp-ia-server.md` — tool catalog (B6 lint target; T9.4 rewrites this first).
+- `tools/mcp-ia-server/src/index.ts` — `registerTool(` call site (B6 drift counter).
+- `tools/mcp-ia-server/src/tools/spec-outline.ts` + `tools/mcp-ia-server/src/tools/list-rules.ts` — B5 targets (progressive disclosure defaults).
+- `tools/mcp-ia-server/src/tools/*.ts` — B9 lint target (every `.describe()` call site).
+- `tools/mcp-ia-server/src/parser/backlog-parser.ts` — B8 yaml-first call order audit.
+- `tools/mcp-ia-server/src/parser/markdown-parser.ts` — B4 parse cache integration point.
+- `.mcp.json` — B4 dist switch target (currently `tools/mcp-ia-server/node_modules/.bin/tsx` on `src/index.ts`; DEBUG_MCP_COMPUTE=1 already shipped via Theme-0-round-1 TECH issue).
+- `tools/mcp-ia-server/package.json` + `tools/mcp-ia-server/dist/` — B4 dist target (dir already exists; build script wiring).
+- `tools/mcp-ia-server/CHANGELOG.md` — v1.2.0 release entry.
+- Prior stage handoff: Stage 16 (Dry-run Preview, Draft) — dry-run semantics carry over to any new mutations, but Stage 17 tools are read-only + tooling, so no dry-run coupling.
+
+**Phases:**
+
+- [ ] Phase 1 — Performance + cache layer (parse cache + dist switch; yaml-first manifest cache).
+- [ ] Phase 2 — Surface-shape + CI gates (progressive disclosure defaults; README drift lint; descriptor-prose lint; release prep).
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T17.1 | Parse cache + dist build (B4) | 1 | **TECH-495** | Done (archived) | Author `tools/mcp-ia-server/src/parser/parse-cache.ts` — mtime-keyed JSON cache at `tools/mcp-ia-server/.cache/parse-cache.json`; `readCached(path, mtime)` returns parsed AST on hit, `null` on miss; `writeCached(path, mtime, ast)` persists. Wire into `markdown-parser.ts` `parseDocument()` — cache lookup first, parse on miss, write-through on success. Add `tools/mcp-ia-server/package.json` `"build": "tsc -p tsconfig.build.json"` producing `dist/index.js`; flip `.mcp.json` `args` to `["tools/mcp-ia-server/dist/index.js"]` (preserve `REPO_ROOT` + `DEBUG_MCP_COMPUTE` env). Dev-env fallback: `MCP_SOURCE_MODE=1` env flag swaps args back to `tsx` on source — documented in `CLAUDE.md §2` or server README. Gitignore `.cache/` dir. |
+| T17.2 | YAML-first parser + manifest cache (B8) | 1 | **TECH-496** | Done (archived) | Audit `tools/mcp-ia-server/src/parser/backlog-parser.ts` resolution order — confirm `ia/backlog/{id}.yaml` is checked BEFORE `BACKLOG.md` fallback for every id lookup; rewrite any ordering violation. Add manifest cache: read `ia/backlog/` dir mtime at first call per session; cache `{id → yaml-path}` map keyed by mtime; invalidate + re-scan on mtime change. Target: cumulative savings on highest-frequency MCP tool (`backlog_issue`). Unit tests: yaml-first ordering on mixed-state (yaml + archived yaml + BACKLOG-only); manifest cache hit + miss paths; archived-yaml resolution. |
+| T17.3 | README drift CI (B6) | 2 | **TECH-497** | Done (archived) | Author `tools/scripts/validate-mcp-readme.mjs` — parse `tools/mcp-ia-server/README.md` tool-table row count; grep `registerTool\(` count in `tools/mcp-ia-server/src/index.ts`; exit non-zero with descriptive diff (missing rows / extra rows) when counts differ. Add `"validate:mcp-readme": "node tools/scripts/validate-mcp-readme.mjs"` to root `package.json` scripts; compose into `validate:all`. **Depends on Stage 9 T9.4 Done** — do not land until catalog rewrite merges, otherwise lint churns against a stale README. Confirm T9.4 complete at `/stage-file` time. |
+| T17.4 | Progressive disclosure — spec_outline + list_rules (B5) | 2 | **TECH-498** | Done (archived) | Extend `tools/mcp-ia-server/src/tools/spec-outline.ts` Zod schema with `expand?: boolean` (default `false`); when `false`, filter returned heading tree to depth 1 only; when `true`, return full tree (current behavior). Extend `tools/mcp-ia-server/src/tools/list-rules.ts` input shape with `expand?: boolean` (default `false`); when `false`, filter output rules to those with `alwaysApply: true` in frontmatter; when `true`, return all rules. Update descriptors (B9 budget ≤120 chars). Breaking change — document in CHANGELOG entry + migration note: callers wanting full payload pass `expand: true`. Unit tests: default depth=1 / alwaysApply-only; `expand: true` full payload; unknown spec → existing `spec_not_found` unchanged. |
+| T17.5 | Descriptor-prose lint (B9) | 2 | **TECH-499** | Done (archived) | Author `tools/scripts/validate-mcp-descriptor-prose.mjs` — AST-walk (or regex) every `.describe("...")` call in `tools/mcp-ia-server/src/tools/*.ts`; exit non-zero when any description string > 120 chars, listing file + line + length + offending prose. Add `"validate:mcp-descriptor-prose"` to root `package.json` scripts; compose into `validate:all`. Pre-lint pass: shorten known offenders (`unity_bridge_command` param descriptions currently 300+ chars per source-doc B9 note). Unit fixture: synthetic `.ts` file with one ≤120-char description + one 150-char description → lint emits 1 error. |
+| T17.6 | Descriptor-prose remediation sweep | 2 | **TECH-500** | Done (archived) | Paired with T17.5 lint: grep `.describe(` across `tools/mcp-ia-server/src/tools/*.ts`; identify every param descriptor >120 chars; trim while preserving param semantics (prefer abbreviation + hint-next-tools pointer over verbose prose); `unity-bridge-command.ts` is the top offender — rewrite its 300+ char param descriptions into ≤120-char primary + structured secondary rendered in tool output rather than descriptor. Run T17.5 lint post-sweep; validate:all green. |
+| T17.7 | Release prep v1.2.0 | 2 | **TECH-501** | Done (archived) | Bump `tools/mcp-ia-server/package.json` `version` to `1.2.0`. Append `CHANGELOG.md` entry `v1.2.0 — Theme B audit remainder: parse cache (mtime-keyed) + dist build (.mcp.json switched from tsx to dist); yaml-first parser + manifest cache; progressive-disclosure defaults on spec_outline + list_rules (breaking — callers want full payload pass expand:true); validate:mcp-readme CI lint; validate:mcp-descriptor-prose CI lint ≤120-char per param`. Migration table: `spec_outline` → pass `expand: true` for full tree; `list_rules` → pass `expand: true` for all rules. Advisory tag: `mcp-pre-theme-b-remainder-v1.1.x` pre-commit for rollback target. |
+
+#### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- operation: file_task
+  task_key: T17.1
+  reserved_id: TECH-495
+  title: "Parse cache + dist build (B4)"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Author `tools/mcp-ia-server/src/parser/parse-cache.ts` — mtime-keyed JSON cache at `tools/mcp-ia-server/.cache/parse-cache.json`. Wire into `markdown-parser.ts` `parseDocument()`. Add `"build": "tsc -p tsconfig.build.json"` to `tools/mcp-ia-server/package.json`; flip `.mcp.json` `args` to compiled `dist/index.js` with `MCP_SOURCE_MODE=1` dev fallback. Gitignore `.cache/`. Target: cold-start 1500 ms → ~200 ms.
+  depends_on: []
+  related:
+    - TECH-496
+    - TECH-497
+    - TECH-498
+    - TECH-499
+    - TECH-500
+    - TECH-501
+  stub_body:
+    summary: |
+      Parse cache + dist build switch. On-disk mtime-keyed JSON cache for `parseDocument()` hits; `.mcp.json` flips from `tsx`-on-source to compiled `dist/index.js`. Cold-start win ~1300 ms per session.
+    goals: |
+      - mtime-keyed cache at `tools/mcp-ia-server/.cache/parse-cache.json`; hit returns parsed AST, miss reparses + write-through.
+      - `tools/mcp-ia-server/package.json` `build` script producing `dist/index.js` via `tsconfig.build.json`.
+      - `.mcp.json` `args` → compiled dist entry; `MCP_SOURCE_MODE=1` env fallback swaps back to `tsx` on source for dev.
+      - Gitignore `.cache/`; preserve existing `REPO_ROOT` + `DEBUG_MCP_COMPUTE` env passthrough.
+    systems_map: |
+      - `tools/mcp-ia-server/src/parser/parse-cache.ts` (new)
+      - `tools/mcp-ia-server/src/parser/markdown-parser.ts` (integration point)
+      - `tools/mcp-ia-server/package.json` (build script)
+      - `tools/mcp-ia-server/tsconfig.build.json` (new or existing)
+      - `.mcp.json` (args flip + env flag docs)
+      - `.gitignore` (add `.cache/`)
+    impl_plan_sketch: |
+      Phase 1 — Author `parse-cache.ts` with `readCached(path, mtime)` / `writeCached(path, mtime, ast)`. Wire into `markdown-parser.ts`. Add `build` script + `tsconfig.build.json`. Flip `.mcp.json`. Doc `MCP_SOURCE_MODE=1` fallback in CLAUDE.md §2 or server README. Gitignore `.cache/`. Unit test cache hit/miss + mtime invalidation.
+
+- operation: file_task
+  task_key: T17.2
+  reserved_id: TECH-496
+  title: "YAML-first parser + manifest cache (B8)"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Audit `tools/mcp-ia-server/src/parser/backlog-parser.ts` — confirm `ia/backlog/{id}.yaml` checked BEFORE `BACKLOG.md` fallback for every id lookup; rewrite any ordering violation. Add manifest cache keyed by `ia/backlog/` dir mtime; `{id → yaml-path}` map invalidates on mtime change. Target: cumulative savings on highest-frequency `backlog_issue` tool.
+  depends_on: []
+  related:
+    - TECH-495
+    - TECH-497
+    - TECH-498
+    - TECH-499
+    - TECH-500
+    - TECH-501
+  stub_body:
+    summary: |
+      YAML-first `backlog_issue` resolution + mtime-keyed manifest cache. Confirms yaml checked before `BACKLOG.md` fallback; caches `{id → path}` map per session. Highest-ROI cache since `backlog_issue` is top-frequency MCP call.
+    goals: |
+      - Verify `ia/backlog/` + `ia/backlog-archive/` yaml paths checked before `BACKLOG.md` fallback in every id lookup path.
+      - Add manifest cache: read dir mtime at first call per session; build `{id → yaml-path}` map; invalidate + re-scan on mtime change.
+      - Unit tests — mixed-state (yaml + archived yaml + BACKLOG-only); cache hit/miss; archived-yaml resolution.
+    systems_map: |
+      - `tools/mcp-ia-server/src/parser/backlog-parser.ts` (audit + rewrite)
+      - `ia/backlog/` + `ia/backlog-archive/` (sources)
+      - `BACKLOG.md` + `BACKLOG-ARCHIVE.md` (fallback)
+      - `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts` (unit tests)
+    impl_plan_sketch: |
+      Phase 1 — Grep `backlog-parser.ts` for all id-resolution sites; confirm yaml-first order; add manifest cache helper (mtime-keyed Map); wire lookups through cache; unit tests for hit/miss/invalidation + mixed-state resolution.
+
+- operation: file_task
+  task_key: T17.3
+  reserved_id: TECH-497
+  title: "README drift CI (B6)"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Author `tools/scripts/validate-mcp-readme.mjs` — parse `tools/mcp-ia-server/README.md` tool-table row count; grep `registerTool\(` count in `src/index.ts`; exit non-zero w/ descriptive diff when counts differ. Add `validate:mcp-readme` script; compose into `validate:all`. **Soft-depends on Stage 9 T9.4** (`docs/mcp-ia-server.md` catalog rewrite) — T9.4 not yet filed; do not land T17.3 until T9.4 Done to avoid lint churn on stale README.
+  depends_on: []
+  related:
+    - TECH-495
+    - TECH-496
+    - TECH-498
+    - TECH-499
+    - TECH-500
+    - TECH-501
+  stub_body:
+    summary: |
+      CI lint comparing `registerTool(` call count in `src/index.ts` to README tool-table row count. Catches README drift (tool registered w/o doc row, or doc row w/o registration) before merge.
+    goals: |
+      - `tools/scripts/validate-mcp-readme.mjs` — parses README tool table, counts `registerTool(` hits; diff → exit non-zero w/ list.
+      - `validate:mcp-readme` root npm script; composed into `validate:all`.
+      - Gated on Stage 9 T9.4 Done — confirm at implementation time; block until catalog rewrite lands.
+    systems_map: |
+      - `tools/scripts/validate-mcp-readme.mjs` (new)
+      - `tools/mcp-ia-server/README.md` (parse target — tool table)
+      - `tools/mcp-ia-server/src/index.ts` (grep target — `registerTool(`)
+      - `package.json` (root script + `validate:all` composition)
+    impl_plan_sketch: |
+      Phase 1 — Confirm T9.4 Done. Author validator mjs; regex `registerTool\(`; parse README markdown table rows; descriptive diff on mismatch. Wire npm script + `validate:all` composition. Run green post-landing.
+
+- operation: file_task
+  task_key: T17.4
+  reserved_id: TECH-498
+  title: "Progressive disclosure — spec_outline + list_rules (B5)"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Extend `spec-outline.ts` + `list-rules.ts` Zod with `expand?: boolean` (default `false`). Default responses: `spec_outline` depth=1 heading tree; `list_rules` only `alwaysApply: true` rules. Opt-in `expand: true` returns full payload. Breaking change — 1–2k tokens saved per call. Document migration in CHANGELOG (T17.7).
+  depends_on: []
+  related:
+    - TECH-495
+    - TECH-496
+    - TECH-497
+    - TECH-499
+    - TECH-500
+    - TECH-501
+  stub_body:
+    summary: |
+      Progressive-disclosure defaults on `spec_outline` + `list_rules`. Default responses trim to depth=1 / `alwaysApply: true` only; callers pass `expand: true` for full payload. Saves 1–2k tokens per call.
+    goals: |
+      - `spec_outline` — add `expand?: boolean` default `false`; filter heading tree to depth 1; `expand: true` → full tree (current behavior).
+      - `list_rules` — add `expand?: boolean` default `false`; filter to `alwaysApply: true` rules; `expand: true` → all rules.
+      - Descriptor prose ≤120 chars (T17.5 budget).
+      - Breaking change documented in CHANGELOG + migration note (T17.7).
+    systems_map: |
+      - `tools/mcp-ia-server/src/tools/spec-outline.ts`
+      - `tools/mcp-ia-server/src/tools/list-rules.ts`
+      - Rule frontmatter `alwaysApply` field (existing)
+      - `tools/mcp-ia-server/tests/tools/spec-outline.test.ts` + `list-rules.test.ts`
+      - `tools/mcp-ia-server/CHANGELOG.md` (migration note under T17.7)
+    impl_plan_sketch: |
+      Phase 1 — Extend Zod schemas; add filter branch keyed on `expand`; preserve existing `ok: false` paths; unit tests for default + expand behaviors; confirm `spec_not_found` unchanged.
+
+- operation: file_task
+  task_key: T17.5
+  reserved_id: TECH-499
+  title: "Descriptor-prose lint (B9)"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Author `tools/scripts/validate-mcp-descriptor-prose.mjs` — AST-walk or regex every `.describe("...")` call in `src/tools/*.ts`; exit non-zero listing file + line + length when string >120 chars. Add `validate:mcp-descriptor-prose` npm script; compose into `validate:all`. Pairs w/ T17.6 remediation sweep.
+  depends_on: []
+  related:
+    - TECH-495
+    - TECH-496
+    - TECH-497
+    - TECH-498
+    - TECH-500
+    - TECH-501
+  stub_body:
+    summary: |
+      CI lint enforcing `.describe()` param descriptors ≤120 chars. Keeps tool schemas scannable; blocks verbose-descriptor regression (per source-doc B9 finding — `unity_bridge_command` currently 300+ chars).
+    goals: |
+      - `tools/scripts/validate-mcp-descriptor-prose.mjs` — AST-walk or regex `.describe("...")`; >120 chars → exit non-zero w/ file:line:length:prose.
+      - `validate:mcp-descriptor-prose` npm script; composed into `validate:all`.
+      - Unit fixture — synthetic `.ts` with ≤120-char + 150-char `.describe` → lint emits 1 error.
+    systems_map: |
+      - `tools/scripts/validate-mcp-descriptor-prose.mjs` (new)
+      - `tools/mcp-ia-server/src/tools/*.ts` (scan target)
+      - `package.json` (root script + `validate:all` composition)
+      - `tools/mcp-ia-server/tests/scripts/validate-descriptor-prose.test.ts` (fixture test)
+    impl_plan_sketch: |
+      Phase 1 — Author validator mjs; regex `\.describe\(\s*"([^"]*)"\s*\)`; length check + offender report. Wire npm script + `validate:all`. Fixture test. Run post-T17.6 sweep green.
+
+- operation: file_task
+  task_key: T17.6
+  reserved_id: TECH-500
+  title: "Descriptor-prose remediation sweep"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Paired w/ T17.5 lint. Grep `.describe(` across `src/tools/*.ts`; trim every param descriptor >120 chars while preserving semantics. Top offender: `unity-bridge-command.ts` (300+ char param descriptions per source-doc B9). Prefer abbreviation + hint-next-tools pointer over verbose prose. Run T17.5 lint post-sweep; `validate:all` green.
+  depends_on:
+    - TECH-499
+  related:
+    - TECH-495
+    - TECH-496
+    - TECH-497
+    - TECH-498
+    - TECH-501
+  stub_body:
+    summary: |
+      Remediation sweep shortening every `.describe()` descriptor >120 chars in `src/tools/*.ts`. Lands alongside T17.5 lint. Primary target: `unity-bridge-command.ts` (300+ char params).
+    goals: |
+      - Trim every `.describe()` >120 chars across `src/tools/*.ts`.
+      - Preserve param semantics — abbreviation + structured secondary (rendered in tool output) over verbose prose.
+      - Rewrite `unity-bridge-command.ts` ≥4 param descriptors to ≤120-char primary.
+      - T17.5 lint green post-sweep; `validate:all` green.
+    systems_map: |
+      - `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (primary offender)
+      - `tools/mcp-ia-server/src/tools/*.ts` (scan + trim all)
+      - `tools/scripts/validate-mcp-descriptor-prose.mjs` (lint gate from T17.5)
+    impl_plan_sketch: |
+      Phase 1 — Run T17.5 lint in advisory mode to list every offender. Trim each; verify tool behavior unchanged (snapshot tests). Shift verbose guidance into tool output prose instead of schema descriptor where needed. Re-run lint → zero offenders. `validate:all` green.
+
+- operation: file_task
+  task_key: T17.7
+  reserved_id: TECH-501
+  title: "Release prep v1.2.0"
+  priority: low
+  issue_type: TECH
+  notes: |
+    Bump `tools/mcp-ia-server/package.json` to `1.2.0`. Append CHANGELOG entry covering parse cache + dist build + yaml-first parser + progressive-disclosure defaults + 2 CI lints. Migration table — `spec_outline` + `list_rules` callers pass `expand: true` for full payload. Advisory tag `mcp-pre-theme-b-remainder-v1.1.x` pre-commit for rollback target.
+  depends_on:
+    - TECH-495
+    - TECH-496
+    - TECH-497
+    - TECH-498
+    - TECH-499
+    - TECH-500
+  related: []
+  stub_body:
+    summary: |
+      v1.2.0 release prep. Version bump + CHANGELOG entry covering Theme B MCP-surface remainder (parse cache + dist + yaml-first + progressive disclosure + 2 CI lints). Migration table for breaking `expand` default flip.
+    goals: |
+      - `tools/mcp-ia-server/package.json` version → `1.2.0`.
+      - CHANGELOG entry — concise scope summary + migration table (`expand: true` opt-in for full payload on `spec_outline` + `list_rules`).
+      - Advisory pre-commit tag `mcp-pre-theme-b-remainder-v1.1.x` for rollback.
+      - `validate:all` green post-bump.
+    systems_map: |
+      - `tools/mcp-ia-server/package.json`
+      - `tools/mcp-ia-server/CHANGELOG.md`
+      - Git tag `mcp-pre-theme-b-remainder-v1.1.x` (advisory; human-applied)
+    impl_plan_sketch: |
+      Phase 1 — Bump version + append CHANGELOG entry (scope + migration + rollback pointer). Run `validate:all`. Advise human to tag pre-commit before merge.
+```
 
 ---
 

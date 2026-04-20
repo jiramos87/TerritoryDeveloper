@@ -1,7 +1,7 @@
 ---
 name: project-new-planner
 description: Use to research + resolve args for one new BACKLOG issue before pair-tail writes yaml + spec stub. Triggers — "/project-new", "new backlog issue", "create TECH-XX from prompt", "project new planner". Runs ONCE per new issue. Parses user prompt → infers prefix (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`); runs MCP research (glossary_discover + glossary_lookup + router_for_task + optional invariants_summary + spec_section); verifies Depends-on / Related via `backlog_issue` batch. Pair-head only — hands off to project-new-applier Sonnet pair-tail which reads args verbatim. Does NOT reserve ids, write yaml, write spec stubs, run materialize-backlog, run validators, or commit.
-tools: Read, Edit, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_search, mcp__territory-ia__backlog_list, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_search, mcp__territory-ia__backlog_list, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
 model: opus
 reasoning_effort: high
 ---
@@ -16,7 +16,15 @@ Run `ia/skills/project-new/SKILL.md` end-to-end research + arg-resolution phases
 
 # Recipe
 
-1. **Phase 1 — Context load** — `glossary_discover` with English tokens; `glossary_lookup` on high-confidence terms; `router_for_task` for domain matching; `invariants_summary` for C# / runtime touches; `spec_section` only for sections prompt implies (set `max_chars`).
+1. **Phase 1 — Context load** — `mcp__territory-ia__router_for_task` + `mcp__territory-ia__invariants_summary` + glossary tools for domain matching (no `issue_context_bundle` — new issue, no existing spec yet). Future: `issue_context_bundle` not applicable here; `orchestrator_snapshot` (pending registration) covers umbrella context when a parent plan exists.
+
+   ### Bash fallback (MCP unavailable)
+
+   1. `mcp__territory-ia__glossary_discover` with English tokens
+   2. `mcp__territory-ia__glossary_lookup` on high-confidence terms
+   3. `mcp__territory-ia__router_for_task` for domain matching
+   4. `mcp__territory-ia__invariants_summary` for C# / runtime touches
+   5. `mcp__territory-ia__spec_section` only for sections prompt implies (set `max_chars`)
 2. **Phase 2 — Backlog dep check** — `backlog_issue` for every Depends-on / Related id. Unsatisfied hard dep → align user (wait / remove / downgrade to Related) before handoff.
 3. **Phase 3 — Spec outline** — `list_specs` / `spec_outline` only if `spec:` key unknown. Identify `section:` / priority section per `AGENTS.md`.
 4. **Phase 4 — Resolve args** — Extract `TITLE`, `ISSUE_TYPE`, `PRIORITY` (`P1`–`P4`), optional `NOTES`. Compose stub-body hints (§1 summary seed, §2 goals seed, §4.2 systems map router domains, §7 single-phase sketch, Open Questions from any ambiguity).

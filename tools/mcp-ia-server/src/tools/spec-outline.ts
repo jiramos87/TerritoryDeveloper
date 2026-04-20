@@ -16,7 +16,27 @@ const specOutlineInputShape = {
     .describe(
       "Key or filename of the document (e.g. 'glossary', 'geo', 'roads-system', 'invariants').",
     ),
+  expand: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, return full heading tree (all depths). When false/omitted, depth-1 only.",
+    ),
 };
+
+interface HeadingNode {
+  depth?: number;
+  level?: number;
+  [key: string]: unknown;
+}
+
+function filterDepth1(headings: unknown): unknown {
+  if (!Array.isArray(headings)) return headings;
+  return headings.filter((h: HeadingNode) => {
+    const d = h.depth ?? h.level;
+    return typeof d !== "number" || d <= 1;
+  });
+}
 
 function jsonResult(payload: unknown) {
   return {
@@ -45,28 +65,33 @@ export function registerSpecOutline(
     },
     async (args) =>
       runWithToolTiming("spec_outline", async () => {
-        const envelope = await wrapTool(async (input: { spec?: string }) => {
-          const spec = input?.spec ?? "";
-          const entry = findEntryForSpecDoc(registry, spec);
+        const envelope = await wrapTool(
+          async (input: { spec?: string; expand?: boolean }) => {
+            const spec = input?.spec ?? "";
+            const expand = input?.expand === true;
+            const entry = findEntryForSpecDoc(registry, spec);
 
-          if (!entry) {
-            const available_keys = registry.map((e) => e.key).sort();
-            throw {
-              code: "spec_not_found" as const,
-              message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
-              details: { available_keys },
+            if (!entry) {
+              const available_keys = registry.map((e) => e.key).sort();
+              throw {
+                code: "spec_not_found" as const,
+                message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
+                details: { available_keys },
+              };
+            }
+
+            const doc = parseDocument(entry.filePath);
+            const outline = expand ? doc.headings : filterDepth1(doc.headings);
+            return {
+              key: entry.key,
+              fileName: entry.fileName,
+              description: entry.description,
+              frontmatter: doc.frontmatter,
+              outline,
+              expanded: expand,
             };
-          }
-
-          const doc = parseDocument(entry.filePath);
-          return {
-            key: entry.key,
-            fileName: entry.fileName,
-            description: entry.description,
-            frontmatter: doc.frontmatter,
-            outline: doc.headings,
-          };
-        })(args ?? {});
+          },
+        )(args ?? {});
 
         return jsonResult(envelope);
       }),

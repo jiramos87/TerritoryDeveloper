@@ -12,6 +12,15 @@ description: >
   orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that).
   Triggers: "/stage-decompose {path} Step 2", "decompose step 2", "expand step skeleton",
   "materialize deferred step", "decompose before stage-file", "expand Step N in master plan".
+phases:
+  - "Load + validate"
+  - "MCP context"
+  - "Stage decomposition"
+  - "Cardinality gate"
+  - "Sizing-gate evaluation"
+  - "Persist"
+  - "Progress regen"
+  - "Handoff"
 ---
 
 # Stage decompose — expand skeleton step in existing master plan
@@ -59,7 +68,7 @@ Hold in working memory:
 - **Relevant surfaces** — code paths / spec refs cited in the step block (may be brief in skeletons).
 - **Art** — if declared; else `None`.
 - **Stage hints** — from `## Deferred decomposition` section for this step (e.g. "Candidate stages: …"). These are inputs, not constraints — override if implementation logic demands different ordering.
-- **Prior step Exit** — scan `### Step {STEP_ID - 1}` Exit criteria + any `project-stage-close` rollup rows. Captures what exists on disk when this step opens; feeds "Relevant surfaces" for new stages.
+- **Prior step Exit** — scan `### Step {STEP_ID - 1}` Exit criteria + any Stage-scoped `/closeout` pair (`stage-closeout-apply`) rollup rows. Captures what exists on disk when this step opens; feeds "Relevant surfaces" for new stages.
 
 ### Phase 1 — MCP context (Tool recipe)
 
@@ -127,6 +136,45 @@ Subskill returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks,
 - `verdict = proceed` → continue to Phase 4.
 
 Covers task sizing: single-file/function/struct tasks → `single_file_tasks`; >3 unrelated subsystems → `oversized_tasks`.
+
+### Phase 3.5 — Sizing-gate evaluation
+
+Run `ia/rules/stage-sizing-gate.md` heuristics on the Stage task cluster produced in Phase 2,
+AFTER Phase 3 cardinality gate PASS. Evaluate all 6 heuristics (H1–H6) in order:
+
+1. **H1 Subsystem cohesion** — count distinct top-level subsystems in task `files:` union.
+2. **H2 Verify-path overlap** — classify each task as Path A or Path B; check Path B cluster size.
+3. **H3 Diff LOC budget** — estimate cumulative LOC / file count from `files:` union.
+4. **H4 DAG linearity** — inspect `depends_on:` edges within Stage; flag fan-out ≥2.
+5. **H5 Invariant-hotspot density** — flag shared invariant (#1–#13) touches across tasks.
+6. **H6 Compile-break probability** — flag same `*.cs` file mutated by multiple tasks.
+
+Each heuristic returns PASS / WARN / FAIL. Emit verdict block:
+
+```
+SIZING GATE — Stage {X.Y}
+  H1 cohesion:      {PASS|WARN|FAIL} — {rationale}
+  H2 verify-path:   {PASS|WARN|FAIL} — {rationale}
+  H3 LOC budget:    {PASS|WARN|FAIL} — {rationale}
+  H4 DAG linearity: {PASS|WARN|FAIL} — {rationale}
+  H5 invariant:     {PASS|WARN|FAIL} — {rationale}
+  H6 compile-break: {PASS|WARN|FAIL} — {rationale}
+Outcome: {PASS | WARN-gate | FAIL}
+```
+
+**Gate outcomes:**
+
+- **PASS** (all PASS or ≤1 WARN) → continue to Phase 4.
+- **WARN-gate** (≥2 WARN, no FAIL) → emit warning block; ask planner to confirm or split.
+  Proceed only on user confirmation.
+- **FAIL** (any FAIL) → invoke fail-recurse protocol per `ia/rules/stage-sizing-gate.md` §3:
+  emit split recommendation (X.Y.A / X.Y.B); run sizing gate on each proposed sub-stage.
+  On second consecutive FAIL: user-gate prompt per §3.2 — do NOT auto-split a third time.
+  DO NOT proceed to Phase 4 until gate PASS (or user-accepted waiver).
+
+**Note:** gate evaluates NEW Stage drafts only. Already-filed Stages are grandfathered (§3.3).
+
+---
 
 ### Phase 4 — Persist (in-place edit)
 

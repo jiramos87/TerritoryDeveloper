@@ -20,10 +20,10 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from expansion block (literal `## Design Expansion` or semantic equivalents per Phase 0 table).
 
-**Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file`](../stage-file/SKILL.md).
-`design-explore` → `master-plan-new` → `stage-file` → `project-new` → `project-spec-kickoff` → `project-spec-implement` → `project-stage-close` (non-final) → `project-spec-close` (umbrella).
+**Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file-plan`](../stage-file-plan/SKILL.md).
+`design-explore` → `master-plan-new` → `stage-file-plan` + `stage-file-apply` → `project-new` → `project-spec-implement` → `/closeout` (Stage-scoped).
 
-**Related:** [`design-explore`](../design-explore/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`project-new`](../project-new/SKILL.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`design-explore`](../design-explore/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`project-new`](../project-new/SKILL.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/skills/README.md`](../README.md).
 
 **Shape refs:** [`blip-master-plan.md`](../../projects/blip-master-plan.md) (Step-1-heavy, Steps 2–3 skeletons) · [`multi-scale-master-plan.md`](../../projects/multi-scale-master-plan.md) (mixed state).
 
@@ -213,12 +213,12 @@ Also covers Phase 5 task sizing: single-file/function/struct tasks → `single_f
 
 ### Phase 7 — Tracking legend
 
-Insert the standard tracking legend once under `## Steps` (copy verbatim from an existing master plan, e.g. `blip-master-plan.md` line 22). Do not paraphrase — downstream skills (`stage-file`, `/kickoff`, `/implement`, `/closeout`, `project-stage-close`) flip markers based on exact enum values.
+Insert the standard tracking legend once under `## Steps` (copy verbatim from an existing master plan, e.g. `blip-master-plan.md` line 22). Do not paraphrase — downstream skills (`stage-file-plan`, `stage-file-apply`, `/author`, `/implement`, `/closeout`) flip markers based on exact enum values.
 
 ```markdown
 ## Steps
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-plan` + `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `stage-file-apply` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` → `In Review`; `/implement` → `In Progress`; `/closeout` (Stage-scoped) → `Done (archived)` + phase box when last task of phase closes + stage `Final` + step rollup; `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
 ```
 
 ### Phase 8 — Persist
@@ -234,11 +234,11 @@ No `## Deferred decomposition` section — all steps are fully decomposed at aut
 
 **Do:**
 
-- Open one stage at a time. Next stage opens only after current stage's `project-stage-close` runs.
-- Run `claude-personal "/stage-file {this-doc} Stage {N}.{M}"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
+- Open one stage at a time. Next stage opens only after current stage's `/closeout` (Stage-scoped pair) runs.
+- Run `claude-personal "/stage-file {this-doc} Stage {N}.{M}"` (routes to `stage-file-plan` + `stage-file-apply` pair) to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc + scope-boundary doc.
-- Keep this orchestrator synced with umbrella issue (if one exists) — per `project-spec-close` / `closeout` skill umbrella-sync rule.
+- Keep this orchestrator synced with umbrella issue (if one exists) — per Stage-scoped `/closeout` (pair) umbrella-sync rule.
 
 **Do not:**
 
@@ -268,17 +268,26 @@ Single concise message (caveman) naming:
 
 ## Tool recipe (territory-ia) — Phase 2 only
 
-Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
+**Composite-first call (MCP available):**
 
-- `keywords`: English tokens from Chosen Approach + Subsystem Impact + Architecture block component names.
-- `brownfield_flag`: `true` for greenfield (new subsystem, no existing code paths modified) — skips `router_for_task` / `spec_sections` / `invariants_summary`. `false` for brownfield (full recipe).
-- `tooling_only_flag`: `true` for tooling/pipeline-only plans (skips `invariants_summary` regardless of brownfield flag).
+1. Call `mcp__territory-ia__orchestrator_snapshot({ slug: "{SLUG}" })` — first MCP call; returns existing orchestrator state, step/stage/task inventory, and locked decisions. Use snapshot to check for existing plan conflicts and surface prior decisions for Phases 3–5.
+2. Proceed to `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)) as before. Inputs:
+   - `keywords`: English tokens from Chosen Approach + Subsystem Impact + Architecture block component names.
+   - `brownfield_flag`: `true` for greenfield — skips `router_for_task` / `spec_sections` / `invariants_summary`. `false` for brownfield.
+   - `tooling_only_flag`: `true` for tooling/pipeline-only plans.
+   Use returned `glossary_anchors` for canonical names in Phases 3–5; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for header "Read first" + per-stage guardrails.
+3. Run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
+4. **Surface-path pre-check (Phase 2 sub-step):** run `surface-path-precheck` subskill on paths from Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`. Skip → ghost line numbers downstream.
 
-Use returned `glossary_anchors` for canonical names in Phases 3–5; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for header "Read first" + per-stage guardrails.
+### Bash fallback (MCP unavailable)
 
-Also run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
-
-**Surface-path pre-check (Phase 2 sub-step — greenfield + brownfield):** run `surface-path-precheck` subskill on paths from Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`. Skip → ghost line numbers downstream.
+1. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
+   - `keywords`: English tokens from Chosen Approach + Subsystem Impact + Architecture block component names.
+   - `brownfield_flag`: `true` for greenfield (new subsystem, no existing code paths modified) — skips `router_for_task` / `spec_sections` / `invariants_summary`. `false` for brownfield (full recipe).
+   - `tooling_only_flag`: `true` for tooling/pipeline-only plans (skips `invariants_summary` regardless of brownfield flag).
+   Use returned `glossary_anchors` for canonical names in Phases 3–5; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for header "Read first" + per-stage guardrails.
+2. Run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
+3. **Surface-path pre-check (Phase 2 sub-step — greenfield + brownfield):** run `surface-path-precheck` subskill on paths from Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`. Skip → ghost line numbers downstream.
 
 ---
 

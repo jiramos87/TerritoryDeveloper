@@ -1,0 +1,23 @@
+id: "TECH-505"
+type: "TECH"
+title: "F3 bulk stagger + F5 tool-allowlist uniformity + B2 retire R11 §Findings gate"
+priority: "high"
+status: closed
+section: "Stage 10 — Prompt-Caching Optimization Layer"
+spec: ""
+files: []
+notes: |
+  Edit `ia/skills/plan-author/SKILL.md` + `ia/skills/opus-audit/SKILL.md` Phase 0 guardrail — sequential dispatch for Stage-scoped bulk N→1 (no concurrent Opus fan-out; rev 4 A2 + amendment 2). Audit pair-seam agent bodies (`plan-reviewer`, `plan-applier` [T10.5 unified] OR legacy appliers if T10.5 not yet landed, `stage-file-planner`, `stage-file-applier`, `opus-code-reviewer`, `stage-closeout-planner`): enforce identical `tools:` frontmatter (F5). Author `tools/scripts/validate-agent-tools-uniformity.ts` wired to `validate:all`. **B2 retire R11 (commit-ordering critical):** same commit lands plan-author §Findings inline output + opus-audit Phase 0 drops "assert non-empty §Findings" gate. Never split — prevents mid-flight ordering breakage (amendment 3).
+acceptance: |
+  - [ ] `plan-author` + `opus-audit` Phase 0 carry F3 sequential-dispatch guardrail text.
+  - [ ] `validate-agent-tools-uniformity.ts` present + wired; `validate:all` green.
+  - [ ] Single commit lands plan-author §Findings inline + opus-audit gate drop (git log verifies atomic pair).
+  - [ ] `plan-author` Phase N output contract documents per-Task §Findings inline sub-section.
+depends_on: ["TECH-503"]
+depends_on_raw: "TECH-503"
+related: ["TECH-504"]
+created: "2026-04-19"
+raw_markdown: |
+  F3 bulk stagger + F5 tool-allowlist uniformity + B2 retire R11 §Findings gate — Edit plan-author + opus-audit Phase 0 guardrail; enforce tools uniformity; retire R11 gate atomically.
+parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
+task_key: "T10.4"

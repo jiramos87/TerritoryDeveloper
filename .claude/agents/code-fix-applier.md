@@ -1,7 +1,7 @@
 ---
 name: code-fix-applier
 description: Use to apply §Code Fix Plan tuples when opus-code-reviewer (Opus pair-head) emitted critical verdict + wrote tuple list to ia/projects/{ISSUE_ID}.md. Triggers — "/code-fix-apply {ISSUE_ID}" (tail half), "apply code fix", "pair-tail code fix", "apply §Code Fix Plan". Reads tuples verbatim; resolves every target_anchor to single match before applying; executes tuples in declared order (one atomic edit per tuple); re-enters /verify-loop (seam #4 gate). Retry bound = 1 (2 total attempts). Second verify fail → escalates to Opus pair-head with structured return shape. Pair-tail. Does NOT re-review diff, author new tuples, reorder tuples, interpret ambiguous anchors, or commit.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__unity_compile, mcp__territory-ia__invariant_preflight
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__unity_compile, mcp__territory-ia__invariant_preflight
 model: sonnet
 ---
 

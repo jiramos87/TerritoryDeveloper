@@ -1,0 +1,27 @@
+id: "TECH-498"
+type: TECH
+title: "Progressive disclosure — spec_outline + list_rules (B5)"
+priority: medium
+status: closed
+section: "Theme B MCP Surface Remainder — Surface-shape + CI gates"
+spec: ""
+files: []
+notes: |
+  Extend `spec-outline.ts` + `list-rules.ts` Zod with `expand?: boolean` (default `false`). Default responses: `spec_outline` depth=1 heading tree; `list_rules` only `alwaysApply: true` rules. Opt-in `expand: true` returns full payload. Breaking change — 1–2k tokens saved per call. Document migration in CHANGELOG (T17.7).
+acceptance: |
+  - [ ] `spec_outline` — add `expand?: boolean` default `false`; filter heading tree to depth 1; `expand: true` → full tree (current behavior).
+  - [ ] `list_rules` — add `expand?: boolean` default `false`; filter to `alwaysApply: true` rules; `expand: true` → all rules.
+  - [ ] Descriptor prose ≤120 chars (T17.5 budget).
+  - [ ] Breaking change documented in CHANGELOG + migration note (T17.7).
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-495
+  - TECH-496
+  - TECH-497
+  - TECH-499
+  - TECH-500
+  - TECH-501
+created: "2026-04-19"
+raw_markdown: |
+  Progressive disclosure — spec_outline + list_rules (B5) — Extend `spec-outline.ts` + `list-rules.ts` Zod with `expand?: boolean` (default `false`).

@@ -92,14 +92,16 @@ All tasks `_pending_` + unfiled (no TECH ids reserved yet). Precondition: Stage 
 
 Source: `docs/lifecycle-refactor-stage-8-dry-run-findings.md` fix table. 12 findings (F1–F12, F8 retracted). 11 fix rows.
 
-### High priority (post-M8 immediate pickup)
+### High priority (post-M8 immediate pickup) — ✅ DONE (commit `1c448e4`, 2026-04-19)
 
-| Row | Target skill | Fix summary |
-|---|---|---|
-| Row 1 | `ia/skills/plan-author/SKILL.md` Phase 4 | Load retired-surface tombstones + template-section allowlist + cross-ref task-id resolver |
-| Row 2 | `ia/skills/stage-file-apply/` + `project-new-apply/` tails + subagent bodies | Hard rule: N≥2 filed → suggest `/ship-stage`, never `/ship` |
-| Row 3 | `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 | Auto-chain boundary decision (F1): chain all the way OR stop at stage-file-apply |
-| Row 7 | `release-rollout-skill-bug-log` helper | Dual-write F1..F12 findings to per-skill Changelog + tracker aggregator |
+| Row | Target skill | Fix summary | Status |
+|---|---|---|---|
+| Row 1 | `ia/skills/plan-author/SKILL.md` Phase 4 | Load retired-surface tombstones + template-section allowlist + cross-ref task-id resolver | ✅ done — `1c448e4` |
+| Row 2 | `ia/skills/stage-file-apply/` + `project-new-apply/` tails + subagent bodies | Hard rule: N≥2 filed → suggest `/ship-stage`, never `/ship` | ✅ done — `1c448e4` |
+| Row 3 | `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 | Auto-chain boundary decision (F1): chain all the way OR stop at stage-file-apply (Option B — stop at applier tail) | ✅ done — `1c448e4` |
+| Row 7 | `release-rollout-skill-bug-log` helper | Dual-write F1..F12 findings to per-skill Changelog + tracker aggregator (`ia/projects/lifecycle-refactor-rollout-tracker.md`) | ✅ done — `1c448e4` |
+
+**Verification:** `npm run validate:all` exit 0 + `/verify-loop --tooling-only` verdict pass.
 
 ### Deferred (read-only this pass)
 

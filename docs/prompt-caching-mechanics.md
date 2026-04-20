@@ -139,10 +139,17 @@ Both tiers use **option (a) single concatenated block** to eliminate F6 risk.
 
 | Source | Bytes | Approx tokens (×0.25) | F2 status (Opus 4.7 floor = 4,096) |
 |--------|-------|------------------------|------------------------------------|
-| Rules only (invariants + terminology-consistency + mcp-ia-default + agent-output-caveman + agent-lifecycle + project-hierarchy + orchestrator-vs-spec) | 20,768 | ~5,192 | ✅ clears ×1.27 |
+| Rules only (invariants + terminology-consistency + mcp-ia-default + agent-output-caveman + agent-lifecycle + project-hierarchy + orchestrator-vs-spec) | 23,629 | ~5,907 | ✅ clears ×1.44 |
+| Rules + glossary preamble slice (header + authorship note; Tier 1 measured baseline) | 25,717 | ~6,429 | ✅ clears ×1.57 |
 | Rules + full glossary | 80,116 | ~20,029 | ✅ clears ×5.0 |
 | Glossary-discover anchors only | ~2,000–8,000 | ~500–2,000 | ❌ silent no-cache |
 | Full per-Stage bundle (rules + glossary subset + Stage spec_sections) | variable | target ≥ 6,000 | sizing gate enforces |
+
+**Tier 1 measured baseline (TECH-503):** 8 agent bodies (plan-reviewer, plan-fix-applier, stage-file-planner, stage-file-applier, opus-code-reviewer, stage-closeout-planner, plan-author, opus-auditor) measured at **7,185–7,834 tok** post-emission (validator confirmed, 2026-04-19). Clearance ×1.75–×7.65 over respective F2 floors.
+
+**Validator command:** `npm run validate:cache-block-sizing` — parses `.claude/agents/*.md` for `cache_control` declarations; estimates block token count (bytes × 0.25); fails exit 1 if below F2 floor. Wired into `npm run validate:all` chain.
+
+**Authoring rule for future agent bodies:** any new agent that declares a `cache_control` block MUST pass `npm run validate:cache-block-sizing`. Silent no-cache (block below F2 floor) blocks CI — never ships. Non-emitting agents (no `cache_control` declared) are skipped — opt-in surface per F3 stagger economics.
 
 **Authoring rule:** skill preamble `@`-concatenation MUST include rules-only minimum (Tier 1). Tier 2 bundle author (domain-context-load Phase N) MUST assert token estimate ≥ F2 before emitting `cache_control`.
 

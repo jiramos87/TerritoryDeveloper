@@ -1,0 +1,25 @@
+id: "TECH-516"
+type: TECH
+title: "Skill recipe sweep"
+priority: medium
+status: closed
+completed: "2026-04-19"
+section: "Graph Freshness + Skill Recipe Sweep"
+spec: "ia/projects/TECH-516.md"
+files: []
+notes: |
+  Update `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/plan-author/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/stage-closeout-plan/SKILL.md`, `ia/skills/stage-closeout-apply/SKILL.md`, `ia/skills/release-rollout/SKILL.md` — replace 3–8 call opening sequence with `lifecycle_stage_context(issue_id, stage)` or `issue_context_bundle(issue_id)` as first call; add bash-fallback note for MCP-unavailable path. Composite-first pattern.
+acceptance: |
+  - [ ] Replace opening 3–8 call sequence with one composite call in every listed skill body.
+  - [ ] Preserve existing tool ordering in a "fallback (MCP unavailable)" sub-section.
+  - [ ] Reference canonical param names only — no legacy aliases (Stage 5 already dropped; this is enforcement).
+  - [ ] Update any skill referencing retired sequential patterns (design-explore, master-plan-new, stage-file pair, plan-author, project-spec-implement, stage-closeout pair, release-rollout).
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-514
+  - TECH-515
+  - TECH-517
+created: "2026-04-19"
+raw_markdown: |
+  Skill recipe sweep — Replace 3–8 call opening sequences with composite bundle first call across lifecycle skill bodies.

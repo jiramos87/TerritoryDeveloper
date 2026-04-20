@@ -4,6 +4,7 @@
 
 import fs from "node:fs";
 import matter from "gray-matter";
+import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { runWithToolTiming } from "../instrumentation.js";
@@ -31,10 +32,19 @@ export function registerListRules(
     {
       description:
         "List all Cursor rule files (.mdc) with descriptions and frontmatter metadata.",
+      inputSchema: {
+        expand: z
+          .boolean()
+          .optional()
+          .describe(
+            "When true, return all rules. When false/omitted, only alwaysApply=true rules.",
+          ),
+      },
     },
-    async () =>
+    async (args) =>
       runWithToolTiming("list_rules", async () => {
-        const envelope = await wrapTool(async () => {
+        const envelope = await wrapTool(async (input: { expand?: boolean }) => {
+          const expand = input?.expand === true;
           const rules = registry.filter((e) => e.category === "rule");
           const rows = rules.map((e) => {
             const raw = fs.readFileSync(e.filePath, "utf8");
@@ -51,8 +61,9 @@ export function registerListRules(
               globs,
             };
           });
-          return { rules: rows };
-        })(undefined);
+          const filtered = expand ? rows : rows.filter((r) => r.alwaysApply);
+          return { rules: filtered, expanded: expand };
+        })(args ?? {});
         return {
           content: [
             {

@@ -49,6 +49,15 @@ Pre-condition: every Task row in target Stage has Status = `Done` (post-verify) 
 
 ## Phase 1 — Load Stage + Task closeout context
 
+**Composite-first call (MCP available):**
+
+1. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path: "{MASTER_PLAN_PATH}", stage_id: "{STAGE_ID}" })` — first MCP call; returns stage header + Task spec bodies + glossary anchors + invariants + pair-contract slice in one bundle. Use as primary payload.
+2. Supplement with per-Task §Audit / §Lessons Learned sections read from `ia/projects/{ISSUE_ID}.md` if not fully covered in bundle.
+3. Load relevant rule bodies via `list_rules` + `rule_content` when any §Audit paragraph cites a rule section for migration (e.g. invariant rewrite, pair-contract seam update).
+4. Emit in-memory payload `{stage_header, task_closeouts[], invariants, glossary_candidates, rule_targets}`.
+
+### Bash fallback (MCP unavailable)
+
 1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` block: Objectives, Exit criteria, Tasks table. Collect every Task row `{task_key, name, issue_id}` with Status = `Done`.
 2. For each Task: read `ia/projects/{ISSUE_ID}.md` sections — §Audit (paragraph), §7 Implementation Plan (completed phases + deliverables), §9 Issues Found, §10 Lessons Learned, Verification block snippet (when present), §Plan Author §Acceptance (checkbox state).
 3. Load invariants subset via `invariants_summary` (domain keywords from Stage Objectives).
@@ -174,9 +183,10 @@ Does NOT run the applier. `/closeout` Stage-scoped dispatcher (rewired in T7.14)
 
 ## Cross-references
 
-- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — seam #4, §Plan tuple shape, §Escalation rule, §Idempotency requirement.
+- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — seam #4, §Plan tuple shape, §Escalation rule, §Idempotency requirement, §Tier 2 bundle reuse.
 - [`ia/skills/stage-closeout-apply/SKILL.md`](../stage-closeout-apply/SKILL.md) — Sonnet pair-tail (T7.14).
 - [`ia/skills/opus-audit/SKILL.md`](../opus-audit/SKILL.md) — upstream source of per-Task §Audit paragraphs.
+- [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — Tier 2 per-Stage ephemeral bundle; call once at Stage-start; reuse `cache_block` across all closeout tuple authoring.
 - [`ia/templates/master-plan-template.md`](../../templates/master-plan-template.md) — §Stage Closeout Plan section stub.
 - Glossary: `ia/specs/glossary.md` — canonical-term source of truth.
 

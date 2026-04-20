@@ -1,6 +1,6 @@
 {
   "name": "@territory/mcp-ia-server",
-  "version": "0.6.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "MCP server exposing Territory Developer IA docs (specs, rules, root markdown).",
@@ -11,6 +11,7 @@
     "verify": "npm run build --prefix ../compute-lib && tsx scripts/verify-mcp.ts",
     "validate:fixtures": "tsx scripts/validate-fixtures.ts",
     "generate:ia-indexes": "tsx scripts/generate-ia-indexes.ts",
+    "build:glossary-graph": "tsx scripts/generate-ia-indexes.ts",
     "bridge-playmode-smoke": "tsx scripts/bridge-playmode-smoke.ts",
     "test": "node --import tsx --test tests/*.test.ts tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
     "test:watch": "node --import tsx --test --watch tests/*.test.ts tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",

@@ -24,9 +24,9 @@ No MCP from skill body beyond the Tool recipe below.
 
 **Lifecycle:** AFTER an umbrella `ia/projects/{umbrella-slug}-master-plan.md` is authored AND the sibling tracker `ia/projects/{umbrella-slug}-rollout-tracker.md` is seeded (by `release-rollout-enumerate`). BEFORE per-row `/design-explore` / `/master-plan-new` / `/master-plan-extend` / `/stage-decompose` / `/stage-file`. Drives rollout until every row reaches column (f) `✓`.
 
-`design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file` → `project-new` → `project-spec-kickoff` → `project-spec-implement` → `project-stage-close` (non-final) → `project-spec-close` (umbrella). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
+`design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file-plan` + `stage-file-apply` → `project-new` → `project-spec-implement` → `/closeout` (Stage-scoped). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
 
-**Related:** [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/skills/README.md`](../README.md).
 
 **Shape ref:** [`ia/projects/full-game-mvp-rollout-tracker.md`](../../projects/full-game-mvp-rollout-tracker.md) (canonical tracker shape — 11 rows + disagreements + skill iteration log).
 
@@ -152,7 +152,15 @@ Parallel-work rule: NEVER emit two sibling rows at same Tier with both targeting
 
 ## Tool recipe (territory-ia) — Phase 2 only
 
-Run in order:
+**Composite-first call (MCP available):**
+
+1. Call `mcp__territory-ia__orchestrator_snapshot({ slug: "{umbrella-slug}" })` — first MCP call; returns umbrella orchestrator state, stage/task inventory, and rollout tracker row. Use snapshot to resolve current row state + target column without separate reads.
+2. **`list_specs`** — enumerate existing specs for align-gate reference.
+3. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from ROW_SLUG scope (domain entities from umbrella bucket row + child orchestrator Objectives); `brownfield_flag = false`; `tooling_only_flag = false`. Use returned `glossary_anchors` (flag missing rows as column (g) gate signal), `router_domains`, `spec_sections`, `invariants` for Phase 3–5 context.
+4. **`backlog_search`** — `ROW_SLUG` as search term. Capture open BACKLOG ids tied to this row.
+5. **`backlog_issue`** — only if specific id needs full context.
+
+### Bash fallback (MCP unavailable)
 
 1. **`list_specs`** — enumerate existing specs for align-gate reference.
 2. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from ROW_SLUG scope (domain entities from umbrella bucket row + child orchestrator Objectives); `brownfield_flag = false`; `tooling_only_flag = false`. Use returned `glossary_anchors` (flag missing rows as column (g) gate signal), `router_domains`, `spec_sections`, `invariants` for Phase 3–5 context.

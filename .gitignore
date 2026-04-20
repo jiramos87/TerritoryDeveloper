@@ -59,6 +59,7 @@ node_modules/
 # MCP IA server build artifacts
 tools/mcp-ia-server/dist/
 tools/mcp-ia-server/coverage/
+tools/mcp-ia-server/.cache/
 
 # Local env (never commit secrets)
 .env
@@ -83,3 +84,7 @@ web/playwright-report/
 # Agent audit blobs — session-token-latency Theme 0
 Bury_*.json
 mono_crash.*
+
+# Agent telemetry — raw captures excluded, summaries tracked
+.claude/telemetry/*.jsonl
+!.claude/telemetry/*-summary.json

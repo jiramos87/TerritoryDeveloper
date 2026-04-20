@@ -14,6 +14,7 @@ description: >
   no Sonnet tail. Triggers: "/author {MASTER_PLAN_PATH} {STAGE_ID}",
   "plan author", "stage bulk spec enrich", "author stage task specs".
 phases:
+  - "Sequential-dispatch guardrail"
   - "Load Stage context"
   - "Token-split guardrail"
   - "Bulk author §Plan Author"
@@ -33,6 +34,14 @@ Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-c
 
 ---
 
+## Phase 0 — Sequential-dispatch guardrail (F3)
+
+> **Guardrail:** Stage-scoped bulk N→1 dispatches Tasks sequentially. Never spawn concurrent Opus invocations (rev 4 A2 + amendment 2). One Task authored → next Task authored — no parallel fan-out.
+
+Applies even when sub-passes are active (Phase 2 token-split path). Each sub-pass is a sequential slice; sub-passes themselves are sequential.
+
+---
+
 ## Inputs
 
 | Param | Source | Notes |
@@ -45,11 +54,20 @@ Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-c
 
 ## Phase 1 — Load Stage context
 
+**Composite-first call (MCP available):**
+
+1. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path: "{MASTER_PLAN_PATH}", stage_id: "{STAGE_ID}" })` — first MCP call; returns stage header + Task spec bodies + glossary anchors + invariants + pair-contract slice in one bundle. Use this as the primary Stage context payload.
+2. Proceed to authoring from bundle contents. Supplement with `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)) only when bundle is missing domain-specific routing for a touched subsystem (inputs: keywords = union of Task titles + Intent tokens). Returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope — shared across all N Task authorings.
+
+### Bash fallback (MCP unavailable)
+
 1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` block: Objectives, Exit criteria, Tasks table. Collect every Task row whose Status ∈ {Draft, In Review} with a filed `{ISSUE_ID}`.
 2. For each Task: read `ia/projects/{ISSUE_ID}.md` — §1 Summary, §2 Goals, §4 Current State, §5 Proposed Design, §7 Implementation Plan stub, §8 Acceptance.
-3. Call [`domain-context-load`](../domain-context-load/SKILL.md) once (inputs: keywords = union of Task titles + Intent tokens). Returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope — shared across all N Task authorings.
+3. Call [`domain-context-load`](../domain-context-load/SKILL.md) once (inputs: keywords = union of Task titles + Intent tokens). Returned payload `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}` kept in Stage scope — shared across all N Task authorings. `cache_block` is the Tier 2 per-Stage ephemeral bundle; reuse without re-fetch per `ia/rules/plan-apply-pair-contract.md` §Tier 2 bundle reuse.
 4. Load `ia/rules/plan-apply-pair-contract.md` via `rule_content` (for seam references in Acceptance).
 5. Load `ia/specs/glossary.md` canonical-term table via `glossary_discover` — used for canonical-term fold in Phase 4.
+
+---
 
 **Output:** bulk input payload `{stage_header, task_specs[], mcp_bundle, glossary_table}`.
 
@@ -108,6 +126,10 @@ For each Task spec in the bulk input, write one `§Plan Author` section containi
 
 - [ ] …
 - [ ] …
+
+### §Findings
+
+<!-- Per-Task audit notes surfaced during author pass — risks flagged, glossary gaps, unresolved cross-refs. Populated inline at author time; consumed by opus-audit without asserting non-empty gate. Leave blank if no findings. -->
 ```
 
 **Placement:** `§Plan Author` section goes **between §10 Lessons Learned** and **§Open Questions** in the target spec. Anchor: insert after last line of `## 10. Lessons Learned` block, before `## Open Questions`.

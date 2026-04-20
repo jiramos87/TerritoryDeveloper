@@ -1,0 +1,23 @@
+id: "TECH-504"
+type: "TECH"
+title: "Tier 2 per-Stage ephemeral bundle + domain-context-load Phase N"
+priority: "high"
+status: closed
+section: "Stage 10 — Prompt-Caching Optimization Layer"
+spec: ""
+files: []
+notes: |
+  Edit `ia/skills/domain-context-load/SKILL.md`: add Phase N (final concat) assembling glossary subset + spec_sections + invariants_summary from MCP aggregator into single content block; emit with `cache_control: {"type":"ephemeral","ttl":"1h"}`; Phase N asserts token estimate ≥ F2 floor before emit (runtime safety net complementing T10.2 CI gate); document in skill §Overview. Update `ia/skills/stage-file-plan/SKILL.md` to invoke `domain-context-load` exactly once per Stage (shared Tier 2 bundle reused across all Tasks). Update `ia/rules/plan-apply-pair-contract.md` to cite Tier 2 bundle reuse contract. Verify validator accepts new Phase N.
+acceptance: |
+  - [ ] `domain-context-load` SKILL carries Phase N with `cache_control` emit + runtime token-floor assert.
+  - [ ] `stage-file-plan` SKILL invokes `domain-context-load` exactly once per Stage (per-Task calls removed).
+  - [ ] `ia/rules/plan-apply-pair-contract.md` cites Tier 2 bundle reuse contract.
+  - [ ] `npm run validate:all` green.
+depends_on: ["TECH-503"]
+depends_on_raw: "TECH-503"
+related: []
+created: "2026-04-19"
+raw_markdown: |
+  Tier 2 per-Stage ephemeral bundle + domain-context-load Phase N — Edit domain-context-load SKILL to add Phase N concat with cache_control emit.
+parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
+task_key: "T10.3"

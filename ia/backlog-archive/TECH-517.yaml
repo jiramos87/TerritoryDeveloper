@@ -1,0 +1,27 @@
+id: "TECH-517"
+type: TECH
+title: "Agent + docs catalog update"
+priority: medium
+status: closed
+completed: "2026-04-19"
+section: "Graph Freshness + Skill Recipe Sweep"
+spec: "ia/projects/TECH-517.md"
+files: []
+notes: |
+  Update `.claude/agents/*.md` subagent bodies referencing old sequential recipe (same grep pattern as T9.3); update `docs/mcp-ia-server.md` MCP catalog — add `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section` tool entries; mark `glossary_lookup` bulk-terms + freshness metadata; mark `spec_section` alias-drop migration. **Gates Stage 17 T17.3 (TECH-497 README drift lint)** — lint must not land until catalog rewrite merges.
+acceptance: |
+  - [ ] `.claude/agents/*.md` — grep + replace old sequential recipes w/ composite first-call (same surface set as T9.3).
+  - [ ] `docs/mcp-ia-server.md` — add catalog entries for `issue_context_bundle`, `lifecycle_stage_context`, `orchestrator_snapshot`, `rule_section`.
+  - [ ] Mark `glossary_lookup` with bulk-`terms` partial-result shape + freshness metadata fields.
+  - [ ] Mark `spec_section` / `spec_sections` alias-drop migration note (canonical params only).
+  - [ ] Confirm Stage 17 T17.3 unblocks post-merge.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-497
+  - TECH-514
+  - TECH-515
+  - TECH-516
+created: "2026-04-19"
+raw_markdown: |
+  Agent + docs catalog update — Sweep subagent bodies + rewrite docs/mcp-ia-server.md catalog to reflect Stages 1–8 surface changes.

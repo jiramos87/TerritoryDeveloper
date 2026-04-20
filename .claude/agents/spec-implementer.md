@@ -1,6 +1,6 @@
 ---
 name: spec-implementer
-description: Use to execute the Implementation Plan in `ia/projects/{ISSUE_ID}*.md` after the spec has been kicked off and is ready to ship. Triggers — "implement TECH-XX", "execute project spec", "follow Implementation Plan", "ship spec phases", "implement BUG-XX". Runs phases in order with minimal diffs, calls territory-ia MCP slices for context, edits code + IA in place, emits a structured per-phase report. Does NOT review the spec — that is the `spec-kickoff` subagent. Does NOT close the issue — that is the `closeout` subagent.
+description: Use to execute the Implementation Plan in `ia/projects/{ISSUE_ID}*.md` after the spec has been authored (`plan-author` Stage 1×N) and is ready to ship. Triggers — "implement TECH-XX", "execute project spec", "follow Implementation Plan", "ship spec phases", "implement BUG-XX". Runs phases in order with minimal diffs, calls territory-ia MCP slices for context, edits code + IA in place, emits a structured per-phase report. Does NOT author the spec — that is the `plan-author` subagent (`/author`). Does NOT close the Stage — that is the Stage-scoped closeout pair (`stage-closeout-planner` → `stage-closeout-applier`, `/closeout`).
 tools: Read, Edit, Write, Bash, Grep, Glob, NotebookEdit, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_search, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__unity_compile, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__project_spec_journal_search, mcp__territory-ia__project_spec_journal_get, mcp__territory-ia__project_spec_journal_persist, mcp__territory-ia__project_spec_journal_update
 model: sonnet
 ---
@@ -19,12 +19,20 @@ Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Phase loop:
 
 1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §9 Issues Found, §10 Lessons Learned. Start at first unticked phase.
 1b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for ISSUE_ID in task table. Flip `In Review → In Progress` (or `Draft → In Progress` if kickoff skipped) in Status column. Update top-of-file `> **Status:**` pointer. No match → log one line; continue.
-2. **MCP context per phase** — `mcp__territory-ia__backlog_issue` + `router_for_task` + targeted `spec_section` / `spec_sections`. Never load whole `ia/specs/*.md` when slices suffice. Call `invariants_summary` once when runtime C# / subsystem changes involved.
+2. **MCP context per phase** — `mcp__territory-ia__issue_context_bundle({ issue_id })` (composite bundle — pending registration; replaces sequential `backlog_issue` → `router_for_task` → `glossary_discover` → `spec_section` → `invariants_summary` chain). Never load whole `ia/specs/*.md` when slices suffice.
+
+   ### Bash fallback (MCP unavailable or tool not yet registered)
+
+   1. `mcp__territory-ia__backlog_issue {ISSUE_ID}`
+   2. `mcp__territory-ia__router_for_task` with spec keywords
+   3. `mcp__territory-ia__glossary_discover` union terms
+   4. `mcp__territory-ia__spec_section` per target section
+   5. `mcp__territory-ia__invariants_summary` (once, when runtime C# / subsystem changes involved)
 3. **Implement** — smallest correct edit. `Edit` for existing files, `Write` only for new files. Stay in phase scope; no adjacent refactors unless phase requires.
 4. **Verify** — after each phase, run relevant `npm run validate:*` / `npm run unity:compile-check` per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause; no bypass.
 5. **Tick phase checklist** in spec.
 
-Multi-stage spec → invoke `project-stage-close` skill inline at end of each non-final stage. Umbrella `project-spec-close` only at final stage (closeout subagent's territory, not this one's).
+Multi-stage spec → Stage-scoped closeout fires ONCE per Stage via `/closeout` pair (`stage-closeout-planner` → `stage-closeout-applier`) — not this agent's territory. This agent implements phases within a Task; closeout / Stage rollup / umbrella close all delegated to the Stage-scoped pair invoked separately.
 
 # Verification policy (canonical)
 

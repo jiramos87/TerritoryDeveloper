@@ -34,7 +34,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Composes:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Step 2) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (Steps 4a/4b) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Step 5) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 6).
 
-**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`project-stage-close`](../project-stage-close/SKILL.md) · [`project-spec-close`](../project-spec-close/SKILL.md).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · Stage-scoped closeout pair: [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) → [`stage-closeout-apply`](../stage-closeout-apply/SKILL.md) (absorbs retired `project-stage-close` + `project-spec-close` per M6 collapse).
 
 ---
 
@@ -55,6 +55,30 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 | `MAX_ITERATIONS` | Default 2 | Fix→verify cycles before escalation |
 | `--skip-path-b` | Flag (default off) | When set: Path A compile gate runs; Path B (IDE bridge hybrid, Step 4b) is skipped; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain for batched stage-boundary Path B. NOT surfaced on `/verify` (single-pass, no batching consumer). |
 | `--tooling-only` | Flag (default off) | When set: Decision matrix bypassed; Steps 0, 1, 3, 4a, 4b, 5, 6 all skipped up-front; only Step 2 (Node CI-parity) + Step 7 (Verification block) run. JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use ONLY when current git diff is pure tooling surface (MCP TypeScript under `tools/mcp-ia-server/`, web Next.js under `web/`, skills / agents / commands markdown under `ia/skills/` + `.claude/`, docs under `docs/` + `ia/rules/` + `ia/specs/`, scripts under `tools/scripts/`) — never when `Assets/**`, `Packages/**`, or `ProjectSettings/**` are dirty. Precondition guard: skill asserts no Unity-surface paths in `git status` before bypass; fails loud if asserted. Designed for lifecycle-refactor work (orchestrator: `ia/projects/lifecycle-refactor-master-plan.md`) and similar tooling-only umbrellas. |
+
+---
+
+## Stage-scoped input mode
+
+When invoked as **Pass 2 of `/ship-stage`** (called once at Stage end, not per Task), the following contract governs the verify-loop run:
+
+**Cumulative delta anchor:**
+- `git diff {FIRST_TASK_COMMIT_PARENT}..HEAD` — where `{FIRST_TASK_COMMIT_PARENT}` is the commit SHA immediately before the first Pass 1 Task commit in the Stage.
+- **EXCLUDE Stage closeout commits** — closeout runs AFTER Pass 2; at the time Pass 2 fires, no closeout commits exist yet on HEAD. The anchor is therefore naturally correct; do NOT adjust for closeout.
+- Caller (`ship-stage` Step 3.1) passes the anchor SHA as context. If absent, derive via `git log --oneline` and the known Task commit messages.
+
+**Single boot contract:**
+- Path A (`unity:testmode-batch --quit-editor-first`): runs ONCE for the Stage, not per Task. One `--quit-editor-first` Editor boot + test run covers all N Tasks' cumulative delta.
+- Path B (IDE bridge `enter_play_mode` + `debug_context_bundle`): runs ONCE. One `enter_play_mode` → one or more `debug_context_bundle` calls → one `exit_play_mode`.
+
+**Input fields when called from `/ship-stage` Pass 2:**
+- `ISSUE_ID`: last Task id in the Stage (used for `backlog_issue` context lookup; the Stage-level diff is the actual review surface).
+- `CHANGED_AREAS`: all file paths touched across all Pass 1 Task commits (derived from `git diff --name-only` against anchor).
+- `--skip-path-b`: NOT set (Pass 2 runs full Path A+B by default).
+
+**Verification block `path_b` value:** `"ran"` (full Path B executed) — not `"skipped_batched"`.
+
+**Failure handling:** on `verdict: "fail"` or `"escalated"`, caller (`ship-stage` Step 3.1) emits `STAGE_VERIFY_FAIL`; no automatic retry; human review required.
 
 ---
 

@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (29)
+## Tools (41)
 
 | Tool | Description |
 |------|-------------|
@@ -80,6 +80,18 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`invariant_preflight`** | Composite context tool: given `issue_id`, bundles invariants + router matches + relevant spec sections in one call. Infers domains from issue **Files**; fetches up to 6 spec sections (800 chars each). |
 | **`findobjectoftype_scan`** | Static regex scan of C# files for `FindObjectOfType` / `FindObjectsOfType` in `Update` / `LateUpdate` / `FixedUpdate` methods. Optional `path` (default `Assets/Scripts/`). Returns `violation_count` + `violations[]` (`file`, `line`, `method`, `snippet`). |
 | **`city_metrics_query`** | Read recent rows from **`city_metrics_history`** (Unity **`MetricsRecorder`** per-tick snapshots). Optional **`scenario_id`**, **`last_n_rows`** (1–500). Returns **`db_unconfigured`**, **`table_missing`**, or **`rows`**. |
+| **`backlog_list`** | Structured list of backlog yaml records. Optional filters (`status`, `type`, `priority`, `section`). Read-only. |
+| **`backlog_record_validate`** | Validate a backlog yaml record (in-memory) against the canonical schema before materialization. Returns `{ ok, errors }`. |
+| **`reserve_backlog_ids`** | Reserve monotonic ids for one or more prefixes via the on-disk counter (`ia/state/id-counter.json`) under `flock`. Used before writing new yaml. |
+| **`rule_section`** | Return a single Cursor rule (`.mdc`) heading section. Companion to **`rule_content`** for progressive disclosure. |
+| **`parent_plan_validate`** | Validate `parent_plan` locator fields on one or more backlog yaml records (schema v2). Used by `validate:parent-plan-locator`. |
+| **`plan_apply_validate`** | Validate a Plan-Apply tuple payload against the pair contract before the Sonnet pair-tail applies it. |
+| **`master_plan_locate`** | Reverse-lookup: reads yaml `parent_plan` + `task_key` → returns `{ plan, step, stage, phase, task_key, row_line, row_raw }` for the matching master-plan row. |
+| **`master_plan_next_pending`** | Given a master plan path, return the next non-Done task row (honors Done / archived / pending states). |
+| **`csharp_class_summary`** | Summarize a C# class file: public surface, `[SerializeField]` refs, manager references, method signatures. Static regex + shape heuristics. |
+| **`unity_callers_of`** | Static callers scan for a given C# method name across `Assets/Scripts/`. |
+| **`unity_subscribers_of`** | Static subscribers scan for a given C# event name across `Assets/Scripts/`. |
+| **`unity_bridge_lease`** | Acquire / release the Unity bridge single-agent lease (companion to `unity_bridge_command`). Coordinates concurrent agents on one Unity instance. |
 
 **Examples (conceptual):**
 

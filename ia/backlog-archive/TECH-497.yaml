@@ -1,0 +1,26 @@
+id: "TECH-497"
+type: TECH
+title: "README drift CI (B6)"
+priority: medium
+status: closed
+section: "Theme B MCP Surface Remainder — Surface-shape + CI gates"
+spec: ""
+files: []
+notes: |
+  Author `tools/scripts/validate-mcp-readme.mjs` — parse `tools/mcp-ia-server/README.md` tool-table row count; grep `registerTool\(` count in `src/index.ts`; exit non-zero w/ descriptive diff when counts differ. Add `validate:mcp-readme` script; compose into `validate:all`. **Soft-depends on Stage 9 T9.4** (`docs/mcp-ia-server.md` catalog rewrite) — T9.4 not yet filed; do not land T17.3 until T9.4 Done to avoid lint churn on stale README.
+acceptance: |
+  - [ ] `tools/scripts/validate-mcp-readme.mjs` — parses README tool table, counts `registerTool(` hits; diff → exit non-zero w/ list.
+  - [ ] `validate:mcp-readme` root npm script; composed into `validate:all`.
+  - [ ] Gated on Stage 9 T9.4 Done — confirm at implementation time; block until catalog rewrite lands.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-495
+  - TECH-496
+  - TECH-498
+  - TECH-499
+  - TECH-500
+  - TECH-501
+created: "2026-04-19"
+raw_markdown: |
+  README drift CI (B6) — Author `tools/scripts/validate-mcp-readme.mjs` — parse `tools/mcp-ia-server/README.md` tool-table row count; grep `registerTool\(` count in `src/index.ts`.

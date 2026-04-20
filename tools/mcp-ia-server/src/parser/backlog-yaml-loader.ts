@@ -19,6 +19,72 @@ const BACKLOG_DIR = "ia/backlog";
 const ARCHIVE_DIR = "ia/backlog-archive";
 
 // ---------------------------------------------------------------------------
+// Manifest cache (TECH-496 / B8) — dir-mtime-keyed id→path map.
+// ---------------------------------------------------------------------------
+
+interface ManifestCache {
+  // Concatenated mtimeMs of both dirs (open + archive). Changes on any
+  // add/rename/remove within either dir (POSIX mtime semantics).
+  dirMtimeKey: string;
+  map: Map<string, string>;
+}
+
+let manifestCache: ManifestCache | null = null;
+
+function dirMtimeOrZero(absDir: string): number {
+  try {
+    return fs.statSync(absDir).mtimeMs;
+  } catch {
+    return 0;
+  }
+}
+
+function computeDirMtimeKey(repoRoot: string): string {
+  const open = dirMtimeOrZero(path.join(repoRoot, BACKLOG_DIR));
+  const archive = dirMtimeOrZero(path.join(repoRoot, ARCHIVE_DIR));
+  return `${open}|${archive}`;
+}
+
+/**
+ * Build (or rebuild) the `{id → yaml-path}` map by scanning both backlog dirs.
+ * Only called on cache miss / invalidation — top-frequency `backlog_issue`
+ * calls return from the cache after the first scan per session.
+ */
+function buildManifestMap(repoRoot: string): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const dir of [BACKLOG_DIR, ARCHIVE_DIR]) {
+    const abs = path.join(repoRoot, dir);
+    if (!fs.existsSync(abs)) continue;
+    for (const f of fs.readdirSync(abs)) {
+      if (!f.endsWith(".yaml")) continue;
+      const id = f.slice(0, -".yaml".length);
+      // Open dir wins if id appears in both (shouldn't happen normally).
+      if (!map.has(id)) {
+        map.set(id, path.join(abs, f));
+      }
+    }
+  }
+  return map;
+}
+
+function getManifestMap(repoRoot: string): Map<string, string> {
+  const key = computeDirMtimeKey(repoRoot);
+  if (manifestCache && manifestCache.dirMtimeKey === key) {
+    return manifestCache.map;
+  }
+  const map = buildManifestMap(repoRoot);
+  manifestCache = { dirMtimeKey: key, map };
+  return map;
+}
+
+/**
+ * Reset the manifest cache (tests only).
+ */
+export function resetManifestCache(): void {
+  manifestCache = null;
+}
+
+// ---------------------------------------------------------------------------
 // Minimal YAML parser (our schema only)
 // ---------------------------------------------------------------------------
 
@@ -223,14 +289,16 @@ export function loadYamlIssue(
   repoRoot: string,
   issueId: string,
 ): ParsedBacklogIssue | null {
-  for (const dir of [BACKLOG_DIR, ARCHIVE_DIR]) {
-    const p = path.join(repoRoot, dir, `${issueId}.yaml`);
-    if (fs.existsSync(p)) {
-      const rec = parseYamlRecord(fs.readFileSync(p, "utf8"));
-      return yamlToIssue(rec, p);
-    }
+  // Manifest cache lookup (TECH-496 / B8) — avoids per-call fs.existsSync hops.
+  const map = getManifestMap(repoRoot);
+  const p = map.get(issueId);
+  if (!p) return null;
+  try {
+    const rec = parseYamlRecord(fs.readFileSync(p, "utf8"));
+    return yamlToIssue(rec, p);
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /**
@@ -239,10 +307,14 @@ export function loadYamlIssue(
 export function yamlBacklogExists(repoRoot: string): boolean {
   const openDir = path.join(repoRoot, BACKLOG_DIR);
   const archiveDir = path.join(repoRoot, ARCHIVE_DIR);
-  if (!fs.existsSync(openDir) || !fs.existsSync(archiveDir)) return false;
-  // Require at least one yaml file in either dir
-  const hasOpen = fs.readdirSync(openDir).some((f) => f.endsWith(".yaml"));
-  const hasArchive = fs.readdirSync(archiveDir).some((f) => f.endsWith(".yaml"));
+  const openExists = fs.existsSync(openDir);
+  const archiveExists = fs.existsSync(archiveDir);
+  if (!openExists && !archiveExists) return false;
+  const hasOpen =
+    openExists && fs.readdirSync(openDir).some((f) => f.endsWith(".yaml"));
+  const hasArchive =
+    archiveExists &&
+    fs.readdirSync(archiveDir).some((f) => f.endsWith(".yaml"));
   return hasOpen || hasArchive;
 }
 

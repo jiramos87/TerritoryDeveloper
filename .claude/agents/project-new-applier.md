@@ -1,7 +1,7 @@
 ---
 name: project-new-applier
 description: Use to materialize one new BACKLOG issue after project-new-planner (Opus pair-head) resolved args. Triggers — "/project-new" (tail half), "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}", "apply project new", "pair-tail project new", "materialize single issue". Reads `/project-new` command args verbatim (no §Project-New Plan tuple list — args-only pair per `ia/skills/project-new-apply/SKILL.md`). Runs `reserve-id.sh`; writes `ia/backlog/{id}.yaml`; writes `ia/projects/{id}.md` stub from template; runs `materialize-backlog.sh` + `validate:dead-project-specs` once. Hands off to `plan-author` at N=1 for spec-body authoring. Idempotent on re-run. Does NOT bulk-file (that is stage-file-applier), enrich spec body beyond stub (that is plan-author), implement (that is spec-implementer), or commit.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_record_validate
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_record_validate, mcp__territory-ia__master_plan_locate
 model: sonnet
 ---
 

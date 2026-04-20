@@ -2,6 +2,15 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-518** — Stage sizing gate — bulk verify/review feasibility heuristic in stage-decompose + stage-file-planner (2026-04-20)
+  - Type: tech (IA infrastructure / lifecycle tooling)
+  - Files: `ia/rules/stage-sizing-gate.md`, `ia/skills/stage-decompose/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/rules/agent-lifecycle.md`
+  - Spec: (removed after closure)
+  - Notes: New rule `ia/rules/stage-sizing-gate.md` w/ 6 heuristics (subsystem cohesion, verify-path overlap, LOC budget ~800/25 files soft, DAG linearity, invariant-hotspot density, compile-break probability) + fail-recurse protocol (split X.A/X.B + reauthor; 1-recurse bound before user-gate). stage-decompose Phase N sizing-gate hook; stage-file-plan Phase 0 halt-on-FAIL routing to /stage-decompose; agent-lifecycle Hard-rules single-line cross-ref. 3 dry-run outcomes logged in §6 Decision Log (mcp-lifecycle-tools Stage 6 + Stage 10; lifecycle-refactor Stage 10 T10.5–T10.8) — all PASS (≤1 WARN each on H1 or H5). Gate is LLM-prompt heuristic, not CI check. Thresholds calibrated for doc/IA Stages; C# runtime Stage stress-test deferred to TECH-519.
+  - Acceptance: rule doc + 3 skill/rule patches land; 2-3 dry-run outcomes logged in §6; `npm run validate:all` green.
+  - Depends on: none
+  - Related: TECH-519
+
 - [x] **TECH-471** — Opus-audit (Stage-scoped bulk) + code-review + code-fix-apply skills (Stage 7 T7.4) (2026-04-19)
   - Type: tech (IA infrastructure / lifecycle tooling)
   - Files: `ia/skills/opus-audit/SKILL.md`, `ia/skills/opus-code-review/SKILL.md`, `ia/skills/code-fix-apply/SKILL.md`

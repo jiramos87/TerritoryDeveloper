@@ -23,7 +23,7 @@ phases:
 
 No MCP calls from skill body. Follow **Tool recipe** below before editing BACKLOG or creating spec — thin context via `AGENTS.md` step 3 + `mcp-ia-default.md`.
 
-**vs kickoff:** kickoff starts from existing spec. This skill creates backlog row + spec stub from user prompt. After stub → [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → [`project-spec-close`](../project-spec-close/SKILL.md).
+**vs author:** this skill creates backlog row + spec stub from user prompt. After stub → [`plan-author`](../plan-author/SKILL.md) (N=1 fills §Plan Author) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → `verify-loop` → `opus-code-review` → `opus-audit` → Stage-scoped `/closeout` (`stage-closeout-plan` → `stage-closeout-apply` pair). Per canonical rev-3 flow in [`ia/rules/agent-lifecycle.md`](../../rules/agent-lifecycle.md).
 
 **Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) · [`BACKLOG.md`](../../../BACKLOG.md) · [`ia/skills/README.md`](../README.md).
 
@@ -93,7 +93,7 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 4. **Backlog record** — Author the yaml body (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Before writing to disk, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})` and fix any reported schema errors. **MCP unavailable fallback:** skip the validate call; `validate:all` at end catches schema drift. Write the validated yaml to `ia/backlog/{ISSUE_ID}.yaml`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
-7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.
+7. **Next** — Offer [`plan-author`](../plan-author/SKILL.md) at N=1 (`/author` command) to fill §Plan Author sections before `/implement`.
 
 ## Follow-up
 

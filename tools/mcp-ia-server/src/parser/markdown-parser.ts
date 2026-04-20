@@ -6,6 +6,13 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import type { HeadingNode, ParsedDocument } from "./types.js";
+import {
+  readCached,
+  writeCached,
+  flushParseCache,
+  resolveRepoRoot,
+  resetParseCacheState,
+} from "./parse-cache.js";
 
 const documentParseCache = new Map<string, ParsedDocument>();
 
@@ -14,6 +21,7 @@ const documentParseCache = new Map<string, ParsedDocument>();
  */
 export function clearDocumentParseCache(): void {
   documentParseCache.clear();
+  resetParseCacheState();
 }
 
 const HEADING_LINE = /^\s{0,3}(#{1,6})\s+(.+?)\s*$/;
@@ -180,8 +188,29 @@ export function parseDocument(filePath: string): ParsedDocument {
   const key = path.resolve(filePath);
   const hit = documentParseCache.get(key);
   if (hit) return hit;
+
+  // On-disk mtime-keyed cache layer (TECH-495 / B4).
+  let mtimeMs = 0;
+  try {
+    mtimeMs = fs.statSync(key).mtimeMs;
+  } catch {
+    mtimeMs = 0;
+  }
+  const repoRoot = resolveRepoRoot();
+  if (mtimeMs > 0) {
+    const cached = readCached(repoRoot, key, mtimeMs);
+    if (cached) {
+      documentParseCache.set(key, cached);
+      return cached;
+    }
+  }
+
   const doc = parseDocumentUncached(key);
   documentParseCache.set(key, doc);
+  if (mtimeMs > 0) {
+    writeCached(repoRoot, key, mtimeMs, doc);
+    flushParseCache(repoRoot);
+  }
   return doc;
 }
 

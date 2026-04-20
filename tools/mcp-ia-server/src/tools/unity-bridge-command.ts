@@ -221,7 +221,7 @@ const unityBridgeCommandInputShape = {
   scene_path: z
     .string()
     .optional()
-    .describe("save_scene / open_scene: asset path to scene (e.g. 'Assets/Scenes/MainScene.unity'). Omit for active scene in save_scene."),
+    .describe("save_scene / open_scene: scene asset path (e.g. 'Assets/Scenes/MainScene.unity'). Omit = active scene."),
   scene_mode: z
     .enum(["single", "additive"])
     .optional()
@@ -265,7 +265,7 @@ const unityBridgeCommandInputShape = {
   menu_path: z
     .string()
     .optional()
-    .describe("execute_menu_item: Unity Editor menu path (e.g. 'Assets/Refresh'). Returns error menu_not_found if path does not resolve."),
+    .describe("execute_menu_item: Unity Editor menu path (e.g. 'Assets/Refresh'). Unresolved path → menu_not_found."),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */

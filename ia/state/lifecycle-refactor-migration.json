@@ -192,6 +192,14 @@
         "restart_note": "Working-tree MCP process serves post-collapse schema from current files; user-level `territory-ia` respawn deferred to next Claude Code session boot (standard `.mcp.json` reload path). Schema liveness confirmed by in-session tool calls.",
         "verified_at": "2026-04-19T00:00:00.000Z"
       }
+    },
+    "M9": {
+      "name": "Q9 baseline + prompt-caching precondition",
+      "waiver": {
+        "timestamp": "2026-04-19",
+        "quote": "I wish to ship the stage without the precondition gate. I trust the optimization proposal.",
+        "effect": "Stage 10 T10.1 opens unconditionally; P1 savings validation deferred to post-hoc T10.8."
+      }
     }
   },
   "files": {

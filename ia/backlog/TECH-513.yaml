@@ -1,0 +1,29 @@
+id: "TECH-513"
+type: TECH
+title: "Gate validation + provenance"
+priority: high
+status: open
+section: "Stage 1.1 — Baseline measurement (gating)"
+spec: "ia/projects/TECH-513.md"
+files: []
+notes: |
+  Validate baseline-summary.json schema via `npm run validate:telemetry-schema`; assert all 6
+  metric keys present. Append measurement provenance (session count, date range, model, seam
+  mix) to docs/session-token-latency-audit-exploration.md §Provenance. Confirm validate:all
+  green. Stage 1.2 entry conditional on this task Done.
+acceptance: |
+  - [ ] validate:telemetry-schema passes against baseline-summary.json.
+  - [ ] All 6 metric keys asserted present (total_input_tokens, cache_read_tokens,
+    cache_write_tokens, mcp_cold_start_ms, hook_fork_count, hook_fork_total_ms).
+  - [ ] docs/session-token-latency-audit-exploration.md §Provenance appended with session count,
+    date range, model, seam mix.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-510
+  - TECH-511
+  - TECH-512
+created: "2026-04-19"
+raw_markdown: |
+  Gate validation + provenance — Validate baseline-summary.json schema; append provenance to exploration doc; confirm validate:all green.

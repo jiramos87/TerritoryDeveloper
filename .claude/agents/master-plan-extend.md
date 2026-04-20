@@ -31,7 +31,9 @@ Follow `ia/skills/master-plan-extend/SKILL.md` end-to-end. Phase sequence (gated
 
 # Tool recipe (Phase 2 only)
 
-Run in order. Same branching as `master-plan-new` Phase 2.
+**Primary:** `mcp__territory-ia__orchestrator_snapshot({ slug })` (composite bundle — pending registration; loads orchestrator + rollout tracker + exploration doc + glossary anchors in one call). Brownfield only; greenfield skips.
+
+**Bash fallback (MCP unavailable or tool not yet registered):** Same branching as `master-plan-new` Phase 2.
 
 1. **`mcp__territory-ia__glossary_discover`** — `keywords` JSON array: English tokens from source-doc Chosen Approach + Subsystem Impact + Architecture component names. Greenfield + brownfield.
 2. **`mcp__territory-ia__glossary_lookup`** — high-confidence terms from discover. Hold canonical names for prose in Phases 4–5. Greenfield + brownfield.

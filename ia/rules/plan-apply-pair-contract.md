@@ -42,6 +42,24 @@ Some Opus Stage-scoped stages have no Sonnet pair-tail — one Opus bulk call wr
 | `plan-author` | `§Plan Author` section (4 sub-sections) per Task spec | Bulk authoring across N Task specs of a Stage in one Opus pass | Non-pair. Absorbs retired `spec-enrich` canonical-term fold. Fires after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. |
 | `opus-audit` | `§Audit` paragraph per Task spec | Bulk post-verify audit across N Task specs of a Stage in one Opus pass | Non-pair. Feeds `stage-closeout-plan` (seam #4 head) at Stage end. |
 
+## Tier 2 bundle reuse
+
+One `cache_block` is assembled per Stage by `domain-context-load` Phase N and stored in the shared context block. All pair-heads and Stage-scoped Opus stages operating within that Stage MUST reuse the `cache_block` from shared context — they do NOT call `domain-context-load` again.
+
+| Surface | Invoke once per Stage | Reuse `cache_block` |
+|---------|-----------------------|---------------------|
+| `stage-file-plan` Phase 0 | Yes — Stage-start | All Tasks in Phase 3/4 |
+| `plan-author` Phase 0 | Yes — Stage-start | All N specs authored in bulk |
+| `opus-audit` Phase 0 | Yes — Stage-start | All N audit paragraphs |
+| `stage-closeout-plan` Phase 0 | Yes — Stage-start | All closeout tuples |
+
+`cache_block` shape: `{content: string, cache_control: {"type":"ephemeral","ttl":"1h"}, token_estimate: number}`.
+
+`content` = concatenation of `glossary_anchors` + `spec_sections` + `invariants` from MCP output.
+`token_estimate` = `Math.ceil(content.length / 4)`. Advisory only — T10.2 CI gate is hard-fail authority.
+
+**Hard rule:** do NOT call `domain-context-load` more than once per Stage invocation. Per-Task calls waste MCP round-trips and duplicate cache pressure. Single Stage-start call covers all Tasks.
+
 ## Seam #2 — `§Stage File Plan` tuple shape (extended)
 
 Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape. The `stage-file-apply` pair-tail reads these fields directly; the generic `operation` / `target_path` / `target_anchor` / `payload` keys are NOT used for seam #2.

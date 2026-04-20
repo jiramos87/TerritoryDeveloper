@@ -6,6 +6,12 @@ model: opus
 reasoning_effort: high
 ---
 
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
+
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
@@ -17,7 +23,13 @@ Run `ia/skills/plan-review/SKILL.md` end-to-end for target Stage. Read master-pl
 # Recipe
 
 1. **Parse args** — 1st arg = `MASTER_PLAN_PATH`; 2nd arg = `STAGE_ID`.
-2. **Phase 1 — Load Stage context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row Status ≠ `Done`: read `ia/projects/{ISSUE_ID}.md` §1 / §2 / §7 / §8. Call `invariants_summary` (domain = skill / tooling / ia), `glossary_discover` + `glossary_lookup` for domain terms, `spec_sections` on pair-contract / project-hierarchy / orchestrator-vs-spec.
+2. **Phase 1 — Load Stage context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row Status ≠ `Done`: read `ia/projects/{ISSUE_ID}.md` §1 / §2 / §7 / §8. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path, stage_id })` (composite bundle — pending registration; replaces sequential `invariants_summary` → `glossary_discover` → `glossary_lookup` → `spec_sections` chain).
+
+   ### Bash fallback (MCP unavailable or tool not yet registered)
+
+   1. `mcp__territory-ia__invariants_summary` (domain = skill / tooling / ia)
+   2. `mcp__territory-ia__glossary_discover` + `mcp__territory-ia__glossary_lookup` for domain terms
+   3. `mcp__territory-ia__spec_sections` on pair-contract / project-hierarchy / orchestrator-vs-spec
 3. **Phase 2 — Drift scan** — Run check matrix (8 checks per skill Phase 2). Record every finding as candidate tuple.
 4. **Phase 3 — Write §Plan Fix tuples** — Zero drift → write `### §Plan Fix — PASS (no drift)` sentinel. Drift found → resolve every `target_anchor` to single match (contract §Escalation rule) + write `### §Plan Fix` tuple list. One tuple = one atomic edit.
 5. **Phase 4 — Hand-off** — PASS → `plan-review: PASS — Stage {STAGE_ID} aligned. Downstream continue.` Fix → `plan-review: {N} tuples written to §Plan Fix. Spawn plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}.`

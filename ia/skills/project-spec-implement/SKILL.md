@@ -23,7 +23,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 No MCP calls from skill body. Follow **Tool recipe** below — context as slices, not whole specs.
 
-**Related:** [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) (review before code) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all`, `verify:local`) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Play Mode logs/screenshots) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (fix→verify with `debug_context_bundle`) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (batchmode/bridge after Load pipeline work) · [`project-spec-close`](../project-spec-close/SKILL.md) (closeout/IA persist/delete/archive/id purge). Verification: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
+**Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all`, `verify:local`) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Play Mode logs/screenshots) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (fix→verify with `debug_context_bundle`) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (batchmode/bridge after Load pipeline work) · Stage-scoped `/closeout` (closeout/IA persist/delete/archive/id purge). Verification: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
 ## When to use
 
@@ -53,6 +53,20 @@ Update the project spec **Decision Log** / **Issues Found** when you discover ga
 Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
 
 ## Tool recipe (territory-ia)
+
+**Composite-first call (MCP available):**
+
+1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
+2. Call `mcp__territory-ia__issue_context_bundle({ issue_id: "{ISSUE_ID}" })` — first MCP call; returns `{ issue, depends_chain, routed_specs, invariant_guardrails, recent_journal }` in one bundle. Replaces steps 2+2b+3 below. Check `depends_chain` for hard-dep unsatisfied; use `routed_specs` for domain context; use `invariant_guardrails` for impl guardrails.
+3. **Orchestrator sync** — from bundle `issue.spec` + `issue.notes`: `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table. If row found: flip `In Review → In Progress` (or `Draft → In Progress` if kickoff was skipped). Update top-of-file `> **Status:**` pointer to reflect active task. No orchestrator found → log one-line note; continue.
+4. **Task intent** — State which checkboxes in scope; list files/classes from plan + bundle `issue.files`.
+5. **Domain routing** — Use `routed_specs` from bundle. If additional ad-hoc lookup needed: `router_for_task` once, then cache; do NOT repeat per task.
+6. **`spec_section`** — Only sections the task needs; set `max_chars`. Use bundle `routed_specs` first. No full `ia/specs/*.md` unless `spec_outline` forces it.
+7. **Implement** — Minimal diff. Obey invariants/guardrails from bundle `invariant_guardrails`: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no GridManager bloat.
+8. **Optional deep guardrails** — `list_rules` / `rule_content` if bundle `invariant_guardrails` insufficient.
+9. **Task exit** — Re-read §8 Acceptance + §7b Test Contracts. Run AGENTS.md Pre-commit Checklist. If §7b lists bridge checks + session has territory-ia + Postgres + Unity on REPO_ROOT → optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). If task touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON → run [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all` / `verify:local`). When spec/user calls for agent-led test mode → optionally [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) after validate:all/compile gates. Record surprises in §9 Issues Found.
+
+### Bash fallback (MCP unavailable)
 
 Run in order (once per Stage, not per task).
 

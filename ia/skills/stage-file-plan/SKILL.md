@@ -28,7 +28,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Opus pair-head (seam #2). Loads shared Stage context once; reads orchestrator Stage block; gates cardinality; batch-verifies Depends-on ids; emits `§Stage File Plan` tuple list under Stage block in master plan. Pair-tail [`stage-file-apply`](../stage-file-apply/SKILL.md) materializes tuples without re-querying MCP.
 
-Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #2, §Escalation rule.
+Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #2, §Escalation rule, §Tier 2 bundle reuse.
 Sibling pair-tail: [`stage-file-apply/SKILL.md`](../stage-file-apply/SKILL.md).
 Mode-routing: [`stage-file/SKILL.md`](../stage-file/SKILL.md) — File mode routes here; Compress mode routes to [`stage-compress`](../stage-compress/SKILL.md).
 
@@ -46,6 +46,19 @@ Mode-routing: [`stage-file/SKILL.md`](../stage-file/SKILL.md) — File mode rout
 
 ## Phase 0 — Load shared Stage MCP bundle
 
+**Composite-first call (MCP available):**
+
+1. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path: "{ORCHESTRATOR_SPEC}", stage_id: "{STAGE_ID}" })` — first MCP call; returns stage header + Task spec bodies + glossary anchors + invariants + pair-contract slice in one bundle. Store as **shared context block** seed.
+2. Proceed to `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)) for any domain enrichment not covered by the bundle:
+   - `keywords` = English tokens extracted from Stage Objectives + Exit criteria text (translate if non-English).
+   - `brownfield_flag = false` for stages touching existing subsystems.
+   - `tooling_only_flag = true` for doc/IA-only stages (no runtime C#).
+   - `context_label` = `"stage-file-plan Stage {STAGE_ID}"`.
+
+Store returned payload as **shared context block**: `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}`. Used in Phase 4 `stub_body` authoring for all Tasks. **Call exactly once** — do NOT re-run per Task. `cache_block` is the Tier 2 per-Stage ephemeral bundle (see `ia/rules/plan-apply-pair-contract.md` §Tier 2 bundle reuse); all Tasks within the Stage reuse it without re-fetching.
+
+### Bash fallback (MCP unavailable)
+
 Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)):
 
 - `keywords` = English tokens extracted from Stage Objectives + Exit criteria text (translate if non-English).
@@ -53,7 +66,7 @@ Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](.
 - `tooling_only_flag = true` for doc/IA-only stages (no runtime C#).
 - `context_label` = `"stage-file-plan Stage {STAGE_ID}"`.
 
-Store returned payload as **shared context block**: `{glossary_anchors, router_domains, spec_sections, invariants}`. Used in Phase 4 `stub_body` authoring for all Tasks. **Call exactly once** — do NOT re-run per Task.
+Store returned payload as **shared context block**: `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}`. Used in Phase 4 `stub_body` authoring for all Tasks. **Call exactly once** — do NOT re-run per Task. `cache_block` is the Tier 2 per-Stage ephemeral bundle; reuse across all Tasks of this Stage.
 
 ---
 
@@ -67,7 +80,22 @@ Store returned payload as **shared context block**: `{glossary_anchors, router_d
 3. Collect all `_pending_` Task rows into `pending_tasks[]` (ordered by task-table row order).
 4. Run `cardinality-gate-check` subskill ([`ia/skills/cardinality-gate-check/SKILL.md`](../cardinality-gate-check/SKILL.md)): pass phase → tasks map for `pending_tasks`.
    - `verdict = pause` → surface violations to user (product/designer phrasing per `agent-human-polling.md`); wait for confirmation before continuing.
-   - `verdict = proceed` → continue.
+   - `verdict = proceed` → continue to sizing-gate check below.
+5. **Sizing-gate check** — After cardinality gate PASS, evaluate `ia/rules/stage-sizing-gate.md`
+   heuristics H1–H6 on the `pending_tasks` cluster. This gate checks bulk-verify + bulk-code-review
+   feasibility of the task cluster (distinct from the task-count cardinality gate):
+   - **PASS** (all H1–H6 PASS or ≤1 WARN) → continue to Phase 2.
+   - **WARN-gate** (≥2 WARN, no FAIL) → emit warning block; ask user to confirm or split.
+     Do NOT proceed to Phase 2 without user confirmation.
+   - **FAIL** (any heuristic FAIL) → **HALT**. Do NOT write any yaml files. Emit:
+     ```
+     SIZING GATE FAIL — Stage {X.Y}
+     Failed heuristics: {H-ids with rationale citing stage-sizing-gate.md}
+     Action: re-route to /stage-decompose to split Stage {X.Y} → {X.Y.A} / {X.Y.B}.
+     No yaml written. Halt.
+     ```
+     Route back: `claude-personal "/stage-decompose {ORCHESTRATOR_SPEC} Stage {X.Y}"`. Stop here.
+   - **Waiver present** (sizing-gate-waiver comment in Stage block) → skip evaluation; proceed.
 
 ---
 

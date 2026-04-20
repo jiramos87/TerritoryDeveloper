@@ -20,9 +20,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 No MCP calls from skill body. Follow **Tool recipe** below (Phase 5 only) — all other phases derive from the exploration doc itself.
 
 **Position in lifecycle:** fires _before_ master plan creation or `project-new`.  
-`design-explore` → master plan (`ia/projects/{slug}-master-plan.md`) → `stage-file` → `project-new` → `project-spec-kickoff` → `project-spec-implement`.
+`design-explore` → master plan (`ia/projects/{slug}-master-plan.md`) → `stage-file-plan` + `stage-file-apply` → `project-new` → `project-spec-implement`.
 
-**Related:** [`project-new`](../project-new/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`project-new`](../project-new/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`ia/skills/README.md`](../README.md).
 
 ---
 
@@ -268,7 +268,14 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 
 ## Tool recipe (territory-ia) — Phase 5 only
 
-Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from selected approach components + Phase 3 interface names; `brownfield_flag = false` for designs touching existing subsystems; `tooling_only_flag = true` for tooling/pipeline-only designs. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` for Phase 5 subsystem impact table.
+**Composite-first call (MCP available):**
+
+1. Call `mcp__territory-ia__glossary_discover({ query: "{approach domain keywords}", keywords: ["{component_name_1}", "{component_name_2}", ...] })` — first MCP call; no issue id yet at design-explore time. Returns glossary anchors + related terms for Phase 5 subsystem impact.
+2. Proceed to `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)) with returned anchors as seed. Inputs: `keywords` = English tokens from selected approach components + Phase 3 interface names; `brownfield_flag = false` for designs touching existing subsystems; `tooling_only_flag = true` for tooling/pipeline-only designs. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` for Phase 5 subsystem impact table.
+
+### Bash fallback (MCP unavailable)
+
+1. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from selected approach components + Phase 3 interface names; `brownfield_flag = false` for designs touching existing subsystems; `tooling_only_flag = true` for tooling/pipeline-only designs. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` for Phase 5 subsystem impact table.
 
 ---
 

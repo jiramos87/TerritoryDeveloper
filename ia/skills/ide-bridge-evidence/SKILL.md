@@ -18,7 +18,7 @@ Optional, dev-machine-only `unity_bridge_command` / `unity_bridge_get` (glossary
 
 **Policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — `timeout_ms: 40000` initial; on timeout → `npm run unity:ensure-editor` → retry 60 s. Ceiling: 120 s (`UNITY_BRIDGE_TIMEOUT_MS_MAX`).
 
-**Related:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (run before first bridge call) · [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) (§7b rows) · [`project-spec-implement`](../project-spec-implement/SKILL.md) (phase verification) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (before/after `debug_context_bundle`) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Node checks). **Normative:** [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), unity-development-context §10.
+**Related:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (run before first bridge call) · [`plan-author`](../plan-author/SKILL.md) (§7b rows — retired `project-spec-kickoff` folded here per M6 collapse) · [`project-spec-implement`](../project-spec-implement/SKILL.md) (phase verification) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (before/after `debug_context_bundle`) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Node checks). **Normative:** [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), unity-development-context §10.
 
 ## Prerequisites
 

@@ -219,7 +219,9 @@ const TASK_ROW_RE = /^\|\s*(T[\d.]+)\s*\|[^|]+\|[^|]+\|\s*\*\*((?:TECH|FEAT|BUG|
 
 function buildPlanIndex() {
   const plansDir = path.join(REPO_ROOT, "ia/projects");
-  const files = fs.readdirSync(plansDir).filter((f) => f.includes("master-plan") && f.endsWith(".md"));
+  const files = fs.existsSync(plansDir)
+    ? fs.readdirSync(plansDir).filter((f) => f.includes("master-plan") && f.endsWith(".md"))
+    : [];
 
   /** @type {Map<string, { plan_path: string, task_key: string }>} */
   const index = new Map();

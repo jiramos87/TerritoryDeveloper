@@ -58,6 +58,18 @@ Pre-conditions:
 
 ---
 
+## Phase 0.5 — Shared Stage context (composite-first, MCP available)
+
+Before reading tuples, if any validation gate or anchor re-check requires Stage context:
+
+Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path: "{MASTER_PLAN_PATH}", stage_id: "{STAGE_ID}" })` — single call; returns stage header + Task spec bodies + glossary anchors + invariants. Use to verify tuple intent alignment only. **Do NOT re-query per-tuple.** Pair-tail applies tuples verbatim — planner is authoritative.
+
+### Bash fallback (MCP unavailable)
+
+Read `MASTER_PLAN_PATH` Stage block directly for context re-check. Tuples still applied verbatim from `§Stage Closeout Plan`.
+
+---
+
 ## Phase 1 — Read `§Stage Closeout Plan`
 
 1. Open `MASTER_PLAN_PATH`. Locate `#### Stage {STAGE_ID}` block.

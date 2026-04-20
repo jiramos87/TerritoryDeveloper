@@ -13,6 +13,7 @@ import { findEntryByKey, resolveRepoRoot } from "../config.js";
 import { fuzzyFind, normalizeGlossaryQuery } from "../parser/fuzzy.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool } from "../envelope.js";
+import { getGraphFreshness, spawnGraphRegen } from "./glossary-freshness.js";
 
 const FUZZY_STRONG_THRESHOLD = 0.3;
 
@@ -158,13 +159,20 @@ const inputShape = {
     .string()
     .optional()
     .describe(
-      "English glossary term to look up (e.g. 'wet run', 'HeightMap', 'hight map'). Translate from the user’s language when needed. Case-insensitive; bracket text like [x,y] is ignored for matching. Mutually exclusive with `terms`.",
+      "English glossary term to look up (e.g. ‘wet run’, ‘HeightMap’, ‘hight map’). Translate from the user’s language when needed. Case-insensitive; bracket text like [x,y] is ignored for matching. Mutually exclusive with `terms`.",
     ),
   terms: z
     .array(z.string())
     .optional()
     .describe(
       "Bulk variant: array of English glossary terms. Returns partial-result shape `{ results, errors, meta.partial }` — found terms under `results`, not-found under `errors`, counts under `meta.partial`. Empty array `[]` returns empty results without error. Mutually exclusive with `term`.",
+    ),
+  refresh_graph: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "When true, spawns a detached `npm run build:glossary-graph` child process to regenerate the glossary graph index. Tool returns immediately without waiting for the child to finish.",
     ),
 };
 
@@ -282,6 +290,13 @@ export function registerGlossaryLookup(
     },
     async (args) =>
       runWithToolTiming("glossary_lookup", async () => {
+        // Trigger detached regen before acquiring freshness snapshot (cache bust happens inside).
+        if (args?.refresh_graph) {
+          spawnGraphRegen();
+        }
+
+        const freshness = await getGraphFreshness();
+
         const envelope = await wrapTool(
           async (input: typeof args) => {
             const singleTerm = input?.term;
@@ -340,15 +355,22 @@ export function registerGlossaryLookup(
               return {
                 ok: true as const,
                 payload: { results, errors },
-                meta: { partial: { succeeded, failed } },
+                meta: {
+                  partial: { succeeded, failed },
+                  ...freshness,
+                },
               };
             }
 
-            // Single-term path — hit returns payload (auto-wrapped by wrapTool).
+            // Single-term path — hit returns pre-shaped envelope to carry freshness meta.
             const rawTerm = (singleTerm ?? "").trim();
             const outcome = lookupOneTerm(rawTerm, entries, repoRoot);
             if (outcome.kind === "hit") {
-              return outcome.payload;
+              return {
+                ok: true as const,
+                payload: outcome.payload,
+                meta: { ...freshness },
+              };
             }
 
             // Miss on single path → throw so wrapTool yields { ok:false, error }.

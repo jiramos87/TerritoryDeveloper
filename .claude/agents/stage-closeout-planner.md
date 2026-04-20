@@ -6,6 +6,12 @@ model: opus
 reasoning_effort: high
 ---
 
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
+
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
@@ -17,7 +23,12 @@ Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read m
 # Recipe
 
 1. **Parse args** — 1st arg = `MASTER_PLAN_PATH`; 2nd arg = `STAGE_ID`.
-2. **Phase 1 — Load Stage + Task closeout context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row with Status = `Done`: read `ia/projects/{ISSUE_ID}.md` §Audit + §7 Implementation Plan + §9 Issues Found + §10 Lessons Learned + Verification block + §Plan Author §Acceptance. Call `invariants_summary` (domain keywords from Stage Objectives) + `glossary_discover` / `glossary_lookup` for every canonical term touched. Call `list_rules` + `rule_content` when any §Audit cites a rule section.
+2. **Phase 1 — Load Stage + Task closeout context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row with Status = `Done`: read `ia/projects/{ISSUE_ID}.md` §Audit + §7 Implementation Plan + §9 Issues Found + §10 Lessons Learned + Verification block + §Plan Author §Acceptance. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path, stage_id })` (composite bundle — pending registration; replaces sequential `invariants_summary` → `glossary_discover` → `glossary_lookup` chain). Call `list_rules` + `rule_content` when any §Audit cites a rule section.
+
+   ### Bash fallback (MCP unavailable or tool not yet registered)
+
+   1. `mcp__territory-ia__invariants_summary` (domain keywords from Stage Objectives)
+   2. `mcp__territory-ia__glossary_discover` + `mcp__territory-ia__glossary_lookup` for every canonical term touched
 3. **Phase 2 — Dedupe shared migration ops** — Aggregate across N Task closeouts. Bucket ops: **shared** (glossary rows, rule section edits, doc paragraph edits, CLAUDE.md / AGENTS.md edits when ≥2 Tasks cite same target anchor) vs **per-Task** (archive_record, delete_file, replace_section status flip, id_purge grep-resolved across durable docs, digest_emit via `stage_closeout_digest` MCP tool).
 4. **Phase 3 — Resolve anchors** — Every tuple resolves to exact line/heading/row-id. Zero or >1 match → return escalation shape per pair-contract §Escalation rule.
 5. **Phase 4 — Write §Stage Closeout Plan tuples** — Write `#### §Stage Closeout Plan` section under Stage block (after `#### §Plan Fix`, before next Stage). Shared tuples first, then per-Task tuples grouped by Task. One tuple per atomic edit. Tuples execute in declared order — applier never re-orders.

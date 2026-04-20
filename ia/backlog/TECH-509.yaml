@@ -1,0 +1,24 @@
+id: "TECH-509"
+type: "TECH"
+title: "P1 savings-band validation replay + user sign-off + M9 migration flip"
+priority: "high"
+status: open
+section: "Stage 10 — Prompt-Caching Optimization Layer"
+spec: "ia/projects/TECH-509.md"
+files: []
+notes: |
+  Select ≥ 3 post-merge Stages measured in Stage 9 T9.4 Q9 baseline (TECH-492 telemetry). Replay each under Tier 1 + Tier 2 cache enabled; capture actual cache-hit-rate + write-count + read-count + token-delta per Stage. Compute actual savings % vs R5 predicted band (−10% at 2 reads / +23% at 3 reads / +50% at 5 reads / +57% at 6 reads). Assert actual within ±5% of predicted band at measured read count; delta > ±5% → investigate + patch (likely F2 sizing gate regression or F5 cascade violation) + re-replay. Present validation report to user; wait for explicit sign-off ("LGTM" / "ship cache layer"); flip migration JSON M9 `done` + stamp sign-off timestamp. Run final `npm run validate:all` + `npm run verify:local` on main post-Stage-10.
+acceptance: |
+  - [ ] ≥ 3 Stages replayed under cache-enabled config; per-Stage telemetry captured (hit-rate + write/read counts + token-delta).
+  - [ ] Actual savings % computed + compared against R5 band at measured read count; within-±5% assertion documented in validation report.
+  - [ ] User sign-off recorded verbatim in migration JSON M9.signoff field with timestamp.
+  - [ ] Migration JSON M9 `done: true` + `signoff_timestamp` stamped.
+  - [ ] `npm run validate:all` + `npm run verify:local` green on main post-Stage-10.
+depends_on: ["TECH-502", "TECH-503", "TECH-504", "TECH-505", "TECH-506", "TECH-507", "TECH-508", "TECH-492"]
+depends_on_raw: "TECH-502, TECH-503, TECH-504, TECH-505, TECH-506, TECH-507, TECH-508, TECH-492"
+related: []
+created: "2026-04-19"
+raw_markdown: |
+  P1 savings-band validation replay + user sign-off + M9 migration flip — Replay ≥3 Stages under cache config; validate savings vs R5 band; get user sign-off; flip M9 done.
+parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
+task_key: "T10.8"

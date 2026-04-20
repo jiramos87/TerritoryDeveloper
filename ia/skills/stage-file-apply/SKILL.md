@@ -45,6 +45,18 @@ Sibling pair-head: [`stage-file-plan/SKILL.md`](../stage-file-plan/SKILL.md).
 
 ---
 
+## Phase 0.5 — Shared Stage context (composite-first, MCP available)
+
+Before reading tuples, if any validation gate or escalation requires Stage context re-check:
+
+Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path: "{ORCHESTRATOR_SPEC}", stage_id: "{STAGE_ID}" })` — single call; returns stage header + Task spec bodies + glossary anchors + invariants. Use to verify tuple intent alignment only. **Do NOT re-query per-tuple.** Pair-tail reads tuple payloads verbatim — planner is authoritative.
+
+### Bash fallback (MCP unavailable)
+
+Read `ORCHESTRATOR_SPEC` Stage block directly for context re-check. Tuples still applied verbatim from `§Stage File Plan`.
+
+---
+
 ## Phase 1 — Read `§Stage File Plan`
 
 1. Open `ORCHESTRATOR_SPEC`. Locate `#### Stage {STAGE_ID}` block.

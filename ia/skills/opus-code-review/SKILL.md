@@ -40,6 +40,32 @@ Sibling pair-tail: [`code-fix-apply/SKILL.md`](../code-fix-apply/SKILL.md).
 
 ---
 
+## Stage-diff input mode
+
+When invoked as **Pass 2 of `/ship-stage`** (Stage-end bulk code-review, not per-Task), the following contract governs the review:
+
+**Review surface — Stage-level diff:**
+- Same cumulative delta anchor as Pass 2 verify-loop: `git diff {FIRST_TASK_COMMIT_PARENT}..HEAD`, EXCLUDING closeout commits (which don't exist yet at Pass 2 time).
+- Caller (`ship-stage` Step 3.2) provides this diff or the anchor SHA; do NOT recompute per-Task diffs.
+
+**Acceptance reference:**
+- All N `§Plan Author` sections from `{MASTER_PLAN_PATH}` for the Stage's Tasks serve as the combined acceptance criteria reference. Read all N spec files (or the master plan Stage block) to assemble the full acceptance surface.
+
+**Shared context amortization:**
+- `STAGE_MCP_BUNDLE` is REQUIRED in Stage-diff mode — the `domain-context-load` payload cached by `ship-stage` Phase 1. Do NOT re-run `domain-context-load`; do NOT re-query `glossary_discover`, `router_for_task`, or `invariants_summary`.
+- Single `domain-context-load` payload covers all N Tasks. Context overhead = O(1) per Stage, not O(N).
+
+**Re-entry cap:**
+- On `critical` verdict: `ship-stage` Step 3.2 runs `code-fix-apply`, then re-enters verify-loop (Step 3.1) + code-review (Step 3.2) ONCE.
+- On second `critical` verdict → caller emits `STAGE_CODE_REVIEW_CRITICAL_TWICE`; halt; do NOT re-enter a third time.
+
+**Input fields when called from `/ship-stage` Pass 2:**
+- `ISSUE_ID`: not applicable per-Task (set to Stage id or last Task id for context). Review surface = Stage diff, not per-Task.
+- `STAGE_MCP_BUNDLE`: required (pre-loaded).
+- `REVIEW_MODE`: `"stage_diff"` (set by caller to activate this section's contract).
+
+---
+
 ## Phase 1 — Load diff + context
 
 1. Run `git diff main...HEAD -- $(find ia/skills ia/rules ia/templates ia/projects -name '*.md') $(find Assets/Scripts -name '*.cs' 2>/dev/null)` to capture implementation delta for `ISSUE_ID` work. If diff is empty, use staged + recent commit diff.

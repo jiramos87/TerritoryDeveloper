@@ -327,7 +327,7 @@ h2.plan-title {
     </div>
     <div class="overall-right">
       <div class="overall-pct">0%</div>
-      <div class="overall-count">0 / 0 tasks</div>
+      <div class="overall-count">0 / 44 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
@@ -421,6 +421,14 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Music Player</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Session Token + Latency Remediation</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
         <span class="mini-pct">0%</span>
       </div>
@@ -784,7 +792,7 @@ h2.plan-title {
       <h2 class="plan-title">Lifecycle Refactor — Opus Planner / Sonnet Executor + Hierarchy Collapse — Master Plan (Umbrella)</h2>
       <a class="plan-doc-link" href="../ia/projects/lifecycle-refactor-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Stage 8</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 10</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -946,6 +954,50 @@ h2.plan-title {
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">1 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrator in flight:**</li><li>- `ia/projects/blip-master-plan.md` — Blip (procedural SFX). Shares `Assets/Audio/BlipMixer.mixer` asset. Music Stage 1.1 mixer edit must land between Blip stages, not during — confirm Blip boundary state before authoring mixer param additions. `SfxVolume` param + `BlipSfxVolumeDb` PlayerPrefs key stay Blip-owned — Music does not re-declare.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Session Token + Latency Remediation — Master Plan (MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/session-token-latency-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:9%" title="4 Draft"></div><div class="seg seg-pending" style="width:91%" title="40 Pending"></div></div>
+    <span class="seg-count">0 / 44</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 40 Pending</span><span class="chip chip-total">📋 44 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Token-economy baseline + MCP…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Baseline measurement (gating)</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Author `tools/scripts/agent-telemetry/baseline-collect.sh` (new dir): reads `DEBUG_MCP_COMPUTE` stderr + PostToolUse hook stdout; appends JSONL to `.claude/telemetry/{session-id}.jsonl` with fields `t">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Baseline collect script</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Telemetry tooling: author baseline-collect.sh + schema validator script.">☐ Telemetry tooling: author baseline-collect.sh…</span><span class="phase-pill phase-pending" title="Phase 2 — Collection run: execute ≥10 sessions; aggregate + commit baseline-summary.json.">☐ Collection run: execute ≥10 sessions; aggrega…</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
+    <ul><li>**Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.</li><li>- Approach B two-pass: this orchestrator covers Themes A/C/D/E/F + Stage 1 B1+B3+B7 bundle; Theme B MCP-surface remainder via `/master-plan-extend` against MCP plan.</li><li>- `ia/projects/lifecycle-refactor-master-plan.md` — Stage 10 T10.2 + T10.4 = pre-conditions for Step 2.</li><li>- `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — Theme B MCP-surface extension lands here; B1 server-split decision (Stage 1.2) must precede that extension's B4 dist-build task.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
   </details>
 </div>
 

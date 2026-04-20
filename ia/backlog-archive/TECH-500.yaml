@@ -1,0 +1,27 @@
+id: "TECH-500"
+type: TECH
+title: "Descriptor-prose remediation sweep"
+priority: medium
+status: closed
+section: "Theme B MCP Surface Remainder — Surface-shape + CI gates"
+spec: ""
+files: []
+notes: |
+  Paired w/ T17.5 lint. Grep `.describe(` across `src/tools/*.ts`; trim every param descriptor >120 chars while preserving semantics. Top offender: `unity-bridge-command.ts` (300+ char param descriptions per source-doc B9). Prefer abbreviation + hint-next-tools pointer over verbose prose. Run T17.5 lint post-sweep; `validate:all` green.
+acceptance: |
+  - [ ] Trim every `.describe()` >120 chars across `src/tools/*.ts`.
+  - [ ] Preserve param semantics — abbreviation + structured secondary (rendered in tool output) over verbose prose.
+  - [ ] Rewrite `unity-bridge-command.ts` ≥4 param descriptors to ≤120-char primary.
+  - [ ] T17.5 lint green post-sweep; `validate:all` green.
+depends_on:
+  - TECH-499
+depends_on_raw: "TECH-499"
+related:
+  - TECH-495
+  - TECH-496
+  - TECH-497
+  - TECH-498
+  - TECH-501
+created: "2026-04-19"
+raw_markdown: |
+  Descriptor-prose remediation sweep — Paired w/ T17.5 lint. Grep `.describe(` across `src/tools/*.ts`; trim every param descriptor >120 chars.

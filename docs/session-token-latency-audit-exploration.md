@@ -278,6 +278,13 @@ Sources cited by audit (retained for `/design-explore` Phase 1 evidence):
 - [Best Practices for Claude Code](https://code.claude.com/docs/en/best-practices)
 - [Claude API Prompt Caching docs](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
 
+## Tooling Lessons
+
+Lessons harvested from Stage 1.1 baseline-telemetry tooling (TECH-510, TECH-511):
+
+- **macOS BSD `date` lacks `%3N`** — epoch-ms capture in shell scripts must use a portability fallback chain (`python3 -c 'time.time()*1000'` → `perl Time::HiRes` → `s * 1000`). Raw `date -u +%s%3N` emits literal `N` on BSD and compounding `000` suffix on GNU — both wrong. Any future shell-based ms-timestamp capture under `tools/scripts/` inherits this fallback.
+- **Prefer Node `readline` streaming over `readFileSync` for JSONL validators** — streams keep heap flat on large captures (>100k rows) and give natural file:line diagnostics on JSON.parse failures. Default choice for any future `tools/scripts/validate-*.mjs` consuming line-delimited data.
+
 ## Design Expansion
 
 ### Chosen Approach
@@ -485,3 +492,307 @@ Future `Bury_*.json` drops from Unity editor auto-ignored; `ls` in fresh session
 - **Ship order:** B7 → D1 → E1 → E2 → D3
 - **Blocking items resolved:** 2 (BL-1 D1 FREEZE-safe delete, BL-2 D3 `jq` primary + sed fallback)
 - **Interview questions used:** 4 of 5 (Q5 skipped — remaining open Qs out of Theme 0 scope)
+
+---
+
+## Design Expansion — Post-M8 Authoring Shape
+
+> **Context:** second `/design-explore` pass against this exploration, scoped to the **post-M8 / post-Theme-0 round-1 remainder** — what to author after lifecycle-refactor M8 ships + after the 5 Theme-0 standalone issues (B7 / D1 / E1 / E2 / D3) close. Distinct from the first Design Expansion above, which only covered the FREEZE-window quick-wins subset. Interview answers (4) lock the bundle + cardinality + baseline policy + milestone shape.
+
+### Chosen Approach
+
+**Two-pass authoring with bundled Stage 1.** Two orchestrators authored in sequence:
+
+1. **NEW orchestrator** `ia/projects/session-token-latency-master-plan.md` — covers Themes A (ambient collapse), C (dispatch flattening), D (hook hygiene remainder), E (repo hygiene remainder), F (larger bets), AND a single bundled **Stage 1 = B1 + B3 + B7-baseline-harness**. Theme B's three independent items (B1 server-split, B3 per-agent allowlist audit, B7 baseline-telemetry harness establishing the pre-Theme-0-r2 measurement floor) collapse into one Stage 1 milestone with breadth-first cross-cutting work + per-theme commit boundaries + one post-stage telemetry sweep.
+2. **EXTENSION via `/master-plan-extend`** against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — Theme B's MCP-surface remainder (B4 parse cache + dist build, B5 progressive disclosure defaults, B6 doc drift CI, B8 yaml-first parser audit, B9 descriptor-prose lint) folded into the existing MCP plan as a new Stage block (Stage 17 or next available). Rationale: MCP surface is the MCP plan's domain — extending the existing orchestrator preserves single-source-of-truth for MCP descriptor work + leverages locked decisions already in that plan (envelope unification, alias drop, composite bundles).
+
+Selected per Phase 0.5 interview:
+
+- **Q1** authoring shape → option (a) two-pass: separate new orchestrator + `/master-plan-extend` for Theme B MCP-surface fold.
+- **Q2** Stage 1 bundle → B1 + B3 + B7 (server split + allowlist audit + baseline harness as one milestone, breadth-first).
+- **Q3** baseline measurement → blocking baseline at Stage 0 / Stage 1 entry: aggregate p50/p95/p99 token + latency, 1–2 day spike, **no per-theme attribution at Stage 0** (per-theme attribution deferred to post-stage sweep).
+- **Q4** milestone shape → single Stage 1 (not three sub-stages), breadth-first across B1/B3/B7, per-theme commit boundaries inside the Stage, **one** post-stage telemetry sweep (not three).
+
+Approaches rejected: single big-bang umbrella (loses MCP-plan locking), six sibling orchestrators (over-fragments authority chain), defer-everything-to-post-Theme-B (leaves 20–30k tokens/session on table indefinitely).
+
+### Phase 1 Comparison Matrix
+
+| Approach | Constraint fit | Effort | Output control | Maintainability | Dependencies / risk |
+|---|---|---|---|---|---|
+| **Bundle B1+B3+B7 — single Stage 1, two-pass authoring** *(selected)* | high — respects orchestrator-vs-spec boundary (MCP work in MCP plan); B1 + B3 + B7 are genuinely independent so bundling has no false-coupling cost; baseline-first answers Q3 | medium — ~1 week Stage 1 + extension authoring overhead | high — one Stage scope, per-theme commit boundaries, one telemetry sweep at end | high — `master-plan-extend` is locked-in mechanism for adding MCP work; no new umbrella to maintain | low — B1 server split well-scoped; B3 agent-frontmatter audit zero-runtime; B7 harness reuses cost telemetry already in MCP DEBUG_MCP path |
+| B1-only Stage 1 | medium — biggest-leverage item alone | low (~3–4 d) | high | high | medium — ships savings fast but leaves B3 + B7 ungrouped; later Stages need re-justification |
+| B3-only Stage 1 | low — B3 is 2 h work, undersized for Stage 1 milestone | very low (~half day) | high | medium — wastes Stage 1 slot on small win | low |
+| B7-only Stage 1 | medium — baseline-first matches Q3 but skips B1's largest leverage | low (~1–2 d) | high | high | low — pure observability; no behavior change |
+| Theme 0 round-2 superset Stage 1 (B6 + B9 + C3 + E3 + B1 + B3 + B7) | low — over-fills Stage 1; B6/B9/C3/E3 are sub-2h drop-ins inappropriate for milestone bundling | high (~2 weeks) | low — heterogeneous scope blurs commit boundaries | low — too many surfaces edited concurrently | medium — B6 still gated on MCP T9.4 sequencing |
+
+Winner = bundle B1+B3+B7 single Stage 1 (Q2 + Q4 lock).
+
+### Architecture
+
+```mermaid
+graph TD
+    subgraph "Pass 1 — NEW orchestrator (ia/projects/session-token-latency-master-plan.md)"
+        S0[Stage 0: baseline harness scaffold<br>aggregate p50/p95/p99 token + latency<br>1-2 d, no per-theme attribution]
+        S1[Stage 1: BUNDLED B1 + B3 + B7-extended<br>breadth-first, per-theme commits<br>one post-stage telemetry sweep]
+        S2[Stage 2+: Theme A ambient collapse<br>post-T10.2 dependency]
+        S3[Stage N: Theme C dispatch flattening<br>post-T10.2 + T10.4 dependency]
+        S4[Stage N+1: Theme D remainder D2 + D4<br>independent]
+        S5[Stage N+2: Theme E remainder E3<br>independent]
+        S6[Stage N+3: Theme F larger bets<br>F2/F3/F4/F5/F6/F7]
+    end
+
+    subgraph "Pass 2 — EXTEND mcp-lifecycle plan via /master-plan-extend"
+        EXT[Stage 17 MCP surface fold<br>B4 parse cache + dist<br>B5 progressive disclosure<br>B6 doc drift CI post T9.4<br>B8 yaml-first audit<br>B9 descriptor-prose lint]
+    end
+
+    explore[docs/session-token-latency-audit-exploration.md<br>this Design Expansion]
+    explore --> mp_new[/master-plan-new this doc/]
+    explore --> mp_ext[/master-plan-extend mcp-lifecycle-master-plan this doc/]
+    mp_new --> S0
+    S0 --> S1
+    S1 --> sweep[post-Stage 1 telemetry sweep<br>per-theme attribution emerges here]
+    sweep --> S2
+    S2 --> S3 --> S4 --> S5 --> S6
+    mp_ext --> EXT
+    EXT -.coordinates with.-> S1
+```
+
+**Entry points:**
+
+- Pass 1: `claude-personal "/master-plan-new docs/session-token-latency-audit-exploration.md"` — seeds new orchestrator covering A / C / D-rest / E-rest / F themes + Stage 1 bundle.
+- Pass 2: `claude-personal "/master-plan-extend ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md docs/session-token-latency-audit-exploration.md"` — appends Theme B MCP-surface Stage to existing MCP plan.
+
+**Exit points:**
+
+- Pass 1 exit: full decomposition of every Step at author time per `master-plan-new` cardinality gate (≥2 Tasks per Stage); BACKLOG row creation deferred to per-Stage `/stage-file`.
+- Pass 2 exit: append-only — never rewrites existing MCP-plan Stages 1–16; new Stage authored fully decomposed.
+
+**Cross-orchestrator coordination:** Stage 1 (Pass 1) AND Pass 2 Stage may both touch `tools/mcp-ia-server/` source. Coordination = explicit `depends_on:` link in Pass 2 Stage frontmatter pointing to Pass 1 Stage 1 (B1 server-split decision must land before Pass 2 B4 dist build, so build target is known).
+
+### Subsystem Impact
+
+| Subsystem / surface | Touched files (Stage 1 bundle) | Runtime C# | Specs touched | Invariants flagged | Breaking vs additive | Mitigation |
+|---|---|---|---|---|---|---|
+| MCP server packaging (B1) | `.mcp.json`, `tools/mcp-ia-server/src/index.ts` (split into `index-ia.ts` + `index-bridge.ts`), new `tools/mcp-ia-server/src/server-bridge.ts`, possibly new `package.json` server entries | no | none (descriptors are runtime config; not under `ia/specs/`) | none — invariants 1–13 are runtime C# / IA-authoring; MCP packaging untouched | additive (new bridge server entry + opt-in flag); existing single-server path retained behind feature flag during migration | feature flag `MCP_SPLIT_SERVERS=1` default off Stage 1; flip default in follow-up Stage after stability window |
+| Subagent frontmatter (B3) | `.claude/agents/verifier.md`, `.claude/agents/spec-implementer.md`, `.claude/agents/stage-decompose.md`, `.claude/agents/project-new-*.md`, `.claude/agents/design-explore.md`, `.claude/agents/test-mode-loop.md` (7 agents disjoint from lifecycle-refactor T10.4 set) | no | none | none — frontmatter `tools:` allowlist is harness config | additive — narrowing tools never breaks an agent that only used a subset; revert-safe via `tools:` removal | per-agent dry-run dispatch test; CI lint comparing pre/post tool set per agent |
+| Telemetry harness (B7-extended) | `tools/scripts/agent-telemetry/` (NEW dir), `.claude/settings.json` PostToolUse hook entry, `.mcp.json` env extends `DEBUG_MCP_COMPUTE=1` already shipped per Theme-0-r1 | no | none | none — observability layer | purely additive | hook writes to `.claude/telemetry/{session-id}.jsonl` gitignored; no existing surface modified |
+| MCP surface descriptors (Pass 2 B4/B5/B6/B8/B9) — out of Pass 1 scope but cross-coordinates | `tools/mcp-ia-server/src/tools/*.ts` (descriptor `.describe()` strings), `tools/mcp-ia-server/dist/` (NEW build target), `docs/mcp-ia-server.md` (CI lint target) | no | `docs/mcp-ia-server.md` regenerated by lint | none | mostly additive; B5 progressive-disclosure defaults are **breaking** for callers expecting full payload (mitigated by opt-in `expand=true` param) | breaking change documented in MCP plan CHANGELOG entry; caller sweep in same PR per MCP plan locked decision (envelope-cut precedent) |
+
+**Invariants reviewed via tool-recipe analog:** none of the 13 invariants apply (all 13 cover runtime C# / `HeightMap` / roads / water / GridManager / project-spec authoring; nothing in this bundle touches those). `invariants_summary` skipped per design-explore tool-recipe rule (tooling/pipeline only).
+
+**Glossary discover signal:** dry — closest matches (`Stage`, `Gate`, `Ship-stage dispatcher`) are lifecycle terms already used correctly in the doc; no new domain terms introduced.
+
+**Router signal:** dry — `router_for_task` rejected `subagent body authoring caveman preamble cache` (no row in Cursor agent-router table for IA-meta domains). Confirms this work is below the spec-routed surface.
+
+### Implementation Points
+
+**Pass 1 — NEW orchestrator authoring (post-M8, post-Theme-0-round-1 close):**
+
+- [ ] confirm M8 sign-off + FREEZE lifted (`ia/state/lifecycle-refactor-migration.json` M8 = done)
+- [ ] confirm Theme-0-round-1 closed (B7 / D1 / E1 / E2 / D3 all `Done (archived)`)
+- [ ] run `claude-personal "/master-plan-new docs/session-token-latency-audit-exploration.md"`
+- [ ] verify `master-plan-new` produces fully-decomposed Steps for Themes A, C, D-remainder, E-remainder, F + Stage 0 baseline + Stage 1 bundle
+- [ ] confirm Stage 1 task table contains exactly 3 task rows (one each for B1 / B3 / B7-extended) plus 1 sweep task — total 4 — meets `≥2 per Stage` cardinality
+- [ ] no BACKLOG rows created (per `master-plan-new` contract)
+
+**Stage 0 — baseline harness (1–2 d, blocking):**
+
+- [ ] author `tools/scripts/agent-telemetry/baseline-collect.sh` capturing per-session: total input tokens, cache-read tokens, cache-write tokens, MCP cold-start ms, hook fork count + ms
+- [ ] aggregate to `.claude/telemetry/baseline.jsonl` over ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file`)
+- [ ] compute p50 / p95 / p99 per metric; commit `.claude/telemetry/baseline-summary.json` (gitignored aggregates; summary committed)
+- [ ] no per-theme attribution at Stage 0 — single aggregate floor only (per Q3)
+- [ ] gate Stage 1 entry on baseline persisted
+
+**Stage 1 — bundle B1 + B3 + B7-extended (breadth-first, per-theme commits):**
+
+- [ ] **B1 server split:** author `tools/mcp-ia-server/src/server-ia.ts` + `tools/mcp-ia-server/src/server-bridge.ts`; behind `MCP_SPLIT_SERVERS=1` flag; existing `index.ts` retained as default; commit boundary 1
+- [ ] **B3 allowlist audit:** per-agent `tools:` frontmatter narrowing for `verifier`, `spec-implementer`, `stage-decompose`, `project-new-planner`, `project-new-applier`, `design-explore`, `test-mode-loop`; CI lint added; commit boundary 2
+- [ ] **B7-extended harness:** PostToolUse hook writing per-tool token + ms to `.claude/telemetry/{session-id}.jsonl`; reuses Stage-0 schema; commit boundary 3
+- [ ] **Post-Stage telemetry sweep (one only, per Q4):** re-run baseline collection over ≥10 sessions; produce `baseline-summary-post-stage1.json`; diff vs Stage-0 baseline; **per-theme attribution emerges here** (compare sessions with B1 server split on/off, with B3 narrowed allowlist on/off); commit sweep report; commit boundary 4
+
+**Pass 2 — `/master-plan-extend` against MCP plan (after Pass 1 Stage 1 sweep lands):**
+
+- [ ] confirm Pass 1 Stage 1 sweep complete + B1 server-split decision durable
+- [ ] run `claude-personal "/master-plan-extend ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md docs/session-token-latency-audit-exploration.md"`
+- [ ] new Stage authored covering B4 (parse cache + dist) + B5 (progressive disclosure defaults) + B6 (doc drift CI — sequencing ok since MCP plan T9.4 either landed or is upcoming) + B8 (yaml-first parser audit) + B9 (descriptor-prose ≤120-char lint)
+- [ ] new Stage declares `depends_on: [Pass-1 Stage 1 task ids]` for B4 dist build
+- [ ] never rewrite MCP plan Stages 1–16 (per `master-plan-extend` append-only contract)
+
+**Deferred / out of scope (this round, this expansion block):**
+
+- Theme A authoring (ambient collapse) — folded into NEW orchestrator at Stage ≥2; not part of Stage 1 bundle
+- Theme C authoring (dispatch flattening) — folded into NEW orchestrator at later Stage; depends on T10.2 + T10.4
+- Theme D2 / D4, Theme E3 — folded into NEW orchestrator at later Stages
+- Theme F1 (already superseded by T10.3)
+- Per-theme attribution AT Stage 0 (deferred to post-Stage-1 sweep per Q3)
+- Per-theme telemetry sweeps inside Stage 1 (per Q4 = one sweep only)
+
+### Examples
+
+**B1 server-split — `.mcp.json` + `package.json` shape:**
+
+Before (Theme-0-r1 state, post-B7 baseline DEBUG flag):
+
+```json
+{
+  "mcpServers": {
+    "territory-ia": {
+      "command": "npx",
+      "args": ["-y", "tsx", "tools/mcp-ia-server/src/index.ts"],
+      "env": { "DEBUG_MCP_COMPUTE": "1" }
+    }
+  }
+}
+```
+
+After Stage 1 B1 (split, flag default off):
+
+```json
+{
+  "mcpServers": {
+    "territory-ia": {
+      "command": "npx",
+      "args": ["-y", "tsx", "tools/mcp-ia-server/src/index.ts"],
+      "env": { "DEBUG_MCP_COMPUTE": "1", "MCP_SPLIT_SERVERS": "0" }
+    },
+    "territory-ia-bridge": {
+      "command": "npx",
+      "args": ["-y", "tsx", "tools/mcp-ia-server/src/index-bridge.ts"],
+      "env": { "DEBUG_MCP_COMPUTE": "1" },
+      "loadCondition": "lifecycle_stage in [verify, implement]"
+    }
+  }
+}
+```
+
+Edge case — caller agent that needs BOTH servers in IA-authoring session (e.g. verify-loop calls `unity_bridge_command` mid-flow): handled via per-agent `tools:` frontmatter listing both server prefixes; subagent inheritance picks up bridge server only when the agent declares it. Test fixture: `spec-implementer` dispatch with `MCP_SPLIT_SERVERS=1` + bridge prefix in `tools:` → exit 0; `design-explore` dispatch without bridge prefix + `MCP_SPLIT_SERVERS=1` → bridge tools absent from `tools/list` → expected.
+
+**B3 per-agent allowlist — `verifier.md` frontmatter before/after:**
+
+Before (no allowlist; full inheritance):
+
+```yaml
+---
+name: verifier
+description: Single-pass verification subagent — Path A + Path B + bridge preflight + dashboards.
+model: sonnet
+---
+```
+
+After Stage 1 B3 (narrowed):
+
+```yaml
+---
+name: verifier
+description: Single-pass verification subagent — Path A + Path B + bridge preflight + dashboards.
+model: sonnet
+tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - mcp__territory-ia__backlog_issue
+  - mcp__territory-ia__spec_section
+  - mcp__territory-ia__invariants_summary
+  - mcp__territory-ia__unity_bridge_command
+  - mcp__territory-ia__bridge_environment_preflight
+---
+```
+
+Rationale — verifier needs read + bridge + invariants but NOT mutators (`reserve_backlog_ids`, `backlog_record_validate`, `project_spec_journal_*`). Edge case — verifier needing a tool not in allowlist mid-run: hard fail with clear error; user adds tool to frontmatter (preferred over wildcard).
+
+**B7-extended baseline harness — `.claude/telemetry/` JSONL line shape:**
+
+Per-tool-call line (PostToolUse hook output):
+
+```json
+{
+  "ts": "2026-04-20T14:23:11.482Z",
+  "session_id": "01HXYZ...",
+  "tool": "mcp__territory-ia__spec_section",
+  "duration_ms": 187,
+  "input_tokens_estimate": 1240,
+  "output_tokens_estimate": 2890,
+  "cache_read_tokens": 0,
+  "cache_write_tokens": 1240,
+  "agent": "spec-implementer",
+  "lifecycle_stage": "implement"
+}
+```
+
+Aggregate (`baseline-summary-post-stage1.json`):
+
+```json
+{
+  "baseline_ref": "baseline-summary.json",
+  "samples": 14,
+  "metrics": {
+    "total_input_tokens": { "p50": 187432, "p95": 312890, "p99": 401223, "delta_vs_baseline_pct": -18.4 },
+    "mcp_cold_start_ms": { "p50": 198, "p95": 412, "p99": 587, "delta_vs_baseline_pct": -86.2 },
+    "hook_fork_total_ms": { "p50": 312, "p95": 891, "p99": 1402, "delta_vs_baseline_pct": -42.1 }
+  },
+  "per_theme_attribution": {
+    "B1_server_split": { "input_token_saving_pct": 11.2, "confidence": "medium" },
+    "B3_allowlist_narrowing": { "input_token_saving_pct": 4.8, "confidence": "medium" },
+    "B7_harness_overhead": { "input_token_saving_pct": -0.3, "confidence": "high" }
+  }
+}
+```
+
+Edge case — per-theme attribution requires sessions with each theme on/off independently; if only post-everything sessions exist, attribution falls back to "aggregate only, attribution unavailable" rather than spurious causality.
+
+**`/master-plan-extend` Pass 2 invocation shape:**
+
+Resolved command (no placeholders):
+
+```
+claude-personal "/master-plan-extend ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md docs/session-token-latency-audit-exploration.md"
+```
+
+Pre-condition met: this Design Expansion block (and the existing one above) are both `## Design Expansion` semantic equivalents — `/master-plan-extend` Phase 0 will detect and proceed.
+
+Edge case — `/master-plan-extend` rewriting existing MCP-plan Stage by accident: forbidden per append-only contract; new Stage authored at next available index (Stage 17 if 16 currently exists). Verify by reading MCP plan Stages count before invocation.
+
+### Review Notes
+
+Inline self-review performed (no nested `Plan` subagent available at this dispatch depth — design-explore subagent cannot spawn another Agent-tool subagent). Adversarial pass against own draft using same template structure.
+
+**BLOCKING — resolved inline before persist:**
+
+- **BL-3 (Stage 1 cardinality)** — initial draft had 3 task rows (B1 / B3 / B7) but `master-plan-new` cardinality gate is ≥2 per Stage which is satisfied. However the post-Stage telemetry sweep was floating; resolution = sweep is its own task row (4th), pinning Stage 1 at 4 tasks total + clarifying commit boundary count = 4.
+- **BL-4 (Pass 2 sequencing risk vs MCP plan T9.4)** — B6 (doc drift CI) requires `docs/mcp-ia-server.md` rewrite first, owned by MCP plan Stage 9 T9.4. Pass 2 might fire before T9.4 lands. Resolution = Pass 2 Stage declares `depends_on: [MCP-plan T9.4 task id]` for the B6 sub-task only; B4 / B5 / B8 / B9 ship independently. Documented in Implementation Points.
+- **BL-5 (Stage 0 baseline blocking nature)** — Q3 says "blocking baseline" but Stage 1 work could begin in parallel with measurement. Resolution = Stage 0 strictly blocks Stage 1 entry per Q3 literal reading; ≥10 representative sessions captured before Stage 1 task table flips Draft → In Progress.
+
+**NON-BLOCKING (carried forward; address during `/master-plan-new` planning + Stage 1 author):**
+
+- **NB-6 (B1 server-split rollout strategy)** — flag-default-off first Stage, flag-flip second Stage. Author should explicitly enumerate the flip Stage in NEW orchestrator (Stage 1.5 or Stage 2 prefix) to prevent indefinite flag persistence.
+- **NB-7 (B3 allowlist drift prevention)** — once narrowed, future agents need a CI lint preventing accidental wildcard re-introduction. Worth filing as a sub-task within B3.
+- **NB-8 (B7 telemetry overhead must be measured)** — the harness itself adds tokens. Per-theme attribution should explicitly show B7 overhead row to keep the measurement honest.
+- **NB-9 (per-theme attribution methodology)** — sweep needs sessions with isolated factors (B1 on / off, B3 on / off independently). If natural session diversity insufficient, plan synthetic A/B sessions.
+- **NB-10 (sweep timing)** — single post-Stage sweep per Q4. If B1 / B3 / B7 land in tight commit succession, sweep window may be too short to gather ≥10 sessions. Author should pad sweep window to ≥3 working days post last commit boundary.
+- **NB-11 (Pass 2 Stage numbering)** — MCP plan currently has Stages 1–16 declared; `/master-plan-extend` should auto-detect next index. Verify before invocation.
+- **NB-12 (Stage 0 telemetry summary commit policy)** — `.claude/telemetry/*.jsonl` raw lines gitignored; aggregate summaries committed for diffability across sweeps. Confirm `.gitignore` updated as part of Stage 0.
+
+**SUGGESTIONS:**
+
+- **S1** — name the new orchestrator `session-token-latency-master-plan.md` (matches doc slug); ensures `master-plan-new` slug-derivation succeeds.
+- **S2** — title Stage 0 explicitly "Stage 0 — Baseline measurement (gating)" so cardinality validator does not reject 1-task baseline Stage; single-task Stage acceptable when explicitly gating per project-hierarchy carve-out (verify in author phase).
+- **S3** — annotate Stage 1 task table with explicit `commit_boundary: N` notes per task so `/ship-stage` chain dispatcher honors per-theme commits.
+- **S4** — when authoring Pass 2 Stage, reuse the MCP plan's locked-decisions block format for any sub-decisions emerging during B4 dist build (e.g. dist target dir, Node version pin).
+- **S5** — file Theme A first-task as the natural Stage-2 leadoff in the NEW orchestrator (post-Stage 1 sweep produces real per-theme savings → most-leverage A1/A2 next).
+
+### Expansion metadata
+
+- **Date:** 2026-04-19
+- **Model:** Opus 4.7
+- **Approach selected:** two-pass authoring — NEW orchestrator (Themes A / C / D-rest / E-rest / F + Stage 1 bundle B1+B3+B7) + `/master-plan-extend` against `mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` for Theme B MCP-surface remainder (B4 / B5 / B6 / B8 / B9)
+- **Stage 1 bundle:** B1 (server split) + B3 (per-agent allowlist) + B7-extended (baseline harness) — single Stage, breadth-first, per-theme commit boundaries, one post-stage telemetry sweep
+- **Baseline policy (Q3):** blocking Stage 0; aggregate p50/p95/p99 only; no per-theme attribution at Stage 0 (emerges from post-Stage-1 sweep)
+- **Subsystems impacted:** 4 (MCP server packaging, subagent frontmatter, telemetry harness, MCP surface descriptors via Pass 2)
+- **Invariants flagged:** 0 (no runtime C# / IA-authoring touch; `invariants_summary` skipped per tool recipe)
+- **Blocking items resolved:** 3 (BL-3 Stage 1 cardinality + sweep task, BL-4 Pass 2 vs MCP T9.4 sequencing, BL-5 Stage 0 strict blocking)
+- **Non-blocking carried:** 7 (NB-6 through NB-12)
+- **Suggestions carried:** 5 (S1–S5)
+- **Interview questions used:** 4 of 5 (Q5 skipped — covered by accumulated answers)
+- **Subagent review:** inline self-review (no nested Agent-tool dispatch available at this depth)
+

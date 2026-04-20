@@ -1,0 +1,28 @@
+id: "TECH-511"
+type: TECH
+title: "Telemetry schema validator"
+priority: high
+status: closed
+completed: "2026-04-19"
+section: "Stage 1.1 — Baseline measurement (gating)"
+spec: "ia/projects/TECH-511.md"
+files: []
+notes: |
+  Author `npm run validate:telemetry-schema` in package.json scripts. Reads any
+  .claude/telemetry/*.jsonl sample; asserts all 8 required fields present + typed correctly;
+  exits non-zero on schema mismatch. Wire into validate:all composition in root package.json.
+  Gates T1.1.4 provenance step.
+acceptance: |
+  - [ ] validate:telemetry-schema script added to package.json.
+  - [ ] Script iterates .claude/telemetry/*.jsonl, asserts each line parses + carries 8 typed fields.
+  - [ ] Wired into validate:all chain.
+  - [ ] Non-zero exit on missing field / type mismatch; zero exit on empty dir (graceful).
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-510
+  - TECH-512
+  - TECH-513
+created: "2026-04-19"
+raw_markdown: |
+  Telemetry schema validator — Author npm run validate:telemetry-schema; asserts 8-field shape; wired into validate:all.
