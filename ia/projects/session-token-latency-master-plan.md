@@ -584,6 +584,9 @@
 
 **Objectives:** Narrow `tools:` frontmatter for the 7 non-pair-seam subagents (B3), wire the PostToolUse session-level telemetry harness (B7-extended), then run the single post-Stage-1 telemetry sweep producing per-theme attribution. Flip `MCP_SPLIT_SERVERS` default to `1` after sweep validates correctness.
 
+> **`MCP_SPLIT_SERVERS` flag-flip timeline (TECH-527):** flag authored + wired in Stage 1.2 (TECH-524 + TECH-525), default `0` through all of Stage 1.2 (backward compat — both buckets on single `territory-ia` server). Stage 1.3 Task T1.3.6 flips default `0` → `1` in `.mcp.json` ONLY AFTER T1.3.5 post-stage sweep confirms per-theme attribution correctness per NB-6 resolution (see `docs/session-token-latency-audit-exploration.md` §Examples §B7-extended). Flip gate: sweep produces `baseline-summary-post-stage1.json` with B1 split attribution row showing expected IA-core-only session token reduction. Do NOT flip the default earlier — telemetry sweep depends on A/B (`0` vs `1`) comparison data during Stage 1.3.
+
+
 **Exit:**
 
 - `verifier.md`, `spec-implementer.md`, `stage-decompose.md`, `project-new-planner.md`, `project-new-applier.md`, `design-explore.md`, `test-mode-loop.md` each carry `tools:` frontmatter listing only required tools (no wildcard).
