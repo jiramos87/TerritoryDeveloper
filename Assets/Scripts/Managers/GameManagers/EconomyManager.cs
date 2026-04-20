@@ -132,58 +132,61 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Charge street + utility upkeep for current month (after taxes).
+    /// Iterate maintenance contributors sorted by <see cref="IMaintenanceContributor.GetContributorId"/>
+    /// (ordinal). Sub-type contributors (id >= 0) draw from <see cref="BudgetAllocationService.TryDraw"/>;
+    /// general-pool contributors (id == -1) spend through <see cref="TreasuryFloorClampService.TrySpend"/>
+    /// via <see cref="SpendMoney"/>.
     /// </summary>
     private void ProcessMonthlyMaintenance()
     {
-        int streetCost = ComputeMonthlyStreetMaintenanceCost();
-        int utilityCost = ComputeMonthlyUtilityMaintenanceCost();
-        int total = streetCost + utilityCost;
-        if (total <= 0)
-            return;
+        var snapshot = GetMaintenanceContributorsSnapshot();
+        if (snapshot.Count == 0) return;
 
-        if (!SpendMoney(total, "Monthly maintenance", notifyInsufficientFunds: false))
+        snapshot.Sort((a, b) => string.Compare(a.GetContributorId(), b.GetContributorId(), System.StringComparison.Ordinal));
+
+        int totalPaid = 0;
+        int totalUnpaid = 0;
+
+        foreach (var contributor in snapshot)
         {
-            if (gameNotificationManager != null)
+            int cost = contributor.GetMonthlyMaintenance();
+            if (cost <= 0) continue;
+
+            int subType = contributor.GetSubTypeId();
+            if (subType >= 0)
             {
-                gameNotificationManager.PostError(
-                    "Maintenance Unpaid\n" +
-                    $"Upkeep of ${total} could not be paid (streets: ${streetCost}, power plants: ${utilityCost}). Balance: ${GetCurrentMoney()}."
-                );
+                if (budgetAllocation != null && budgetAllocation.TryDraw(subType, cost))
+                    totalPaid += cost;
+                else
+                    totalUnpaid += cost;
             }
-            return;
+            else
+            {
+                if (SpendMoney(cost, "Monthly maintenance", notifyInsufficientFunds: false))
+                    totalPaid += cost;
+                else
+                    totalUnpaid += cost;
+            }
         }
 
         if (gameNotificationManager != null)
         {
-            int roads = cityStats.roadCount;
-            int plants = cityStats.GetRegisteredPowerPlantCount();
-            gameNotificationManager.PostInfo(
-                "Monthly Maintenance\n" +
-                $"Paid ${total} for upkeep.\n" +
-                $"Streets ({roads} cells): ${streetCost}, Power plants ({plants}): ${utilityCost}"
-            );
+            if (totalUnpaid > 0)
+            {
+                gameNotificationManager.PostError(
+                    "Maintenance Unpaid\n" +
+                    $"Upkeep of ${totalUnpaid} could not be paid. Balance: ${GetCurrentMoney()}."
+                );
+            }
+
+            if (totalPaid > 0)
+            {
+                gameNotificationManager.PostInfo(
+                    "Monthly Maintenance\n" +
+                    $"Paid ${totalPaid} for upkeep this month."
+                );
+            }
         }
-    }
-
-    /// <summary>
-    /// Compute monthly street upkeep from road cell count (interstate + ordinary roads).
-    /// </summary>
-    private int ComputeMonthlyStreetMaintenanceCost()
-    {
-        if (maintenanceCostPerRoadCell <= 0 || cityStats == null)
-            return 0;
-        return Mathf.Max(0, cityStats.roadCount) * maintenanceCostPerRoadCell;
-    }
-
-    /// <summary>
-    /// Compute monthly utility upkeep from registered power plants.
-    /// </summary>
-    private int ComputeMonthlyUtilityMaintenanceCost()
-    {
-        if (maintenanceCostPerPowerPlant <= 0 || cityStats == null)
-            return 0;
-        return Mathf.Max(0, cityStats.GetRegisteredPowerPlantCount()) * maintenanceCostPerPowerPlant;
     }
 
     #region Maintenance Contributor Registry
@@ -709,11 +712,17 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Return projected monthly maintenance (streets + registered power plants) at current rates.
+    /// Return projected monthly maintenance from all registered contributors.
     /// </summary>
     public int GetProjectedMonthlyMaintenance()
     {
-        return ComputeMonthlyStreetMaintenanceCost() + ComputeMonthlyUtilityMaintenanceCost();
+        int total = 0;
+        foreach (var c in maintenanceContributors)
+        {
+            int cost = c.GetMonthlyMaintenance();
+            if (cost > 0) total += cost;
+        }
+        return total;
     }
 
     /// <summary>
