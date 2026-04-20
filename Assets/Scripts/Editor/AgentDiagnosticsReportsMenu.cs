@@ -49,23 +49,40 @@ public static class AgentDiagnosticsReportsMenu
     [MenuItem(MenuRoot + "Export Sorting Debug (Markdown)", priority = 11)]
     public static void ExportSortingDebug()
     {
+        AgentBridgeSortingDebugOutcome outcome = ExportSortingDebugForAgentBridge();
+        if (outcome.Success)
+            Debug.Log("[AgentDiagnostics] Sorting debug stored in Postgres (editor_export_sorting_debug).");
+        else
+            Debug.LogError($"[AgentDiagnostics] Export Sorting Debug failed: {outcome.ErrorMessage}");
+    }
+
+    /// <summary>
+    /// Parameterized sorting debug export for IDE agent bridge. Builds Markdown via
+    /// <see cref="BuildSortingDebugMarkdownString(int?, int?)"/> and persists to Postgres.
+    /// </summary>
+    public static AgentBridgeSortingDebugOutcome ExportSortingDebugForAgentBridge(
+        int? overrideSeedX = null,
+        int? overrideSeedY = null)
+    {
         try
         {
             string stamp = UtcTimestampForFilename();
             string baseName = $"sorting-debug-{stamp}";
-            string md = BuildSortingDebugMarkdownString();
+            string md = BuildSortingDebugMarkdownString(overrideSeedX, overrideSeedY);
             bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
                 EditorPostgresExportRegistrar.KindSortingDebug,
                 md,
                 true,
                 baseName,
                 out _);
-            if (dbOk)
-                Debug.Log("[AgentDiagnostics] Sorting debug stored in Postgres (editor_export_sorting_debug).");
+            if (!dbOk)
+                return AgentBridgeSortingDebugOutcome.Fail("Postgres persist failed for sorting debug export. Configure DATABASE_URL and migrations.");
+
+            return AgentBridgeSortingDebugOutcome.Ok();
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[AgentDiagnostics] Export Sorting Debug failed: {ex.Message}");
+            return AgentBridgeSortingDebugOutcome.Fail(ex.Message);
         }
     }
 
@@ -547,6 +564,26 @@ public readonly struct AgentBridgeAgentContextOutcome
 
     public static AgentBridgeAgentContextOutcome Fail(string message) =>
         new(false, message ?? "Unknown error.", false, "none", "");
+}
+
+/// <summary>
+/// Outcome of <see cref="AgentDiagnosticsReportsMenu.ExportSortingDebugForAgentBridge"/> → IDE agent bridge.
+/// </summary>
+public readonly struct AgentBridgeSortingDebugOutcome
+{
+    public bool Success { get; }
+    public string ErrorMessage { get; }
+
+    AgentBridgeSortingDebugOutcome(bool success, string error)
+    {
+        Success = success;
+        ErrorMessage = error ?? "";
+    }
+
+    public static AgentBridgeSortingDebugOutcome Ok() => new(true, "");
+
+    public static AgentBridgeSortingDebugOutcome Fail(string message) =>
+        new(false, message ?? "Unknown error.");
 }
 
 [Serializable]

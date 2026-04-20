@@ -31,23 +31,45 @@ public static class InterchangeJsonReportsMenu
             return;
         }
 
+        AgentBridgeCellChunkOutcome outcome = ExportCellChunkForAgentBridge(0, 0, DefaultChunkW, DefaultChunkH);
+        if (outcome.Success)
+            Debug.Log("[Interchange] CityCell chunk stored in Postgres (editor_export_terrain_cell_chunk).");
+        else
+            Debug.LogError($"[Interchange] Export CityCell Chunk failed: {outcome.ErrorMessage}");
+    }
+
+    /// <summary>
+    /// Parameterized cell chunk export for IDE agent bridge. Builds JSON via
+    /// <see cref="BuildCellChunkInterchangeJsonString"/> and persists to Postgres.
+    /// </summary>
+    public static AgentBridgeCellChunkOutcome ExportCellChunkForAgentBridge(
+        int originX = 0,
+        int originY = 0,
+        int chunkWidth = DefaultChunkW,
+        int chunkHeight = DefaultChunkH)
+    {
         try
         {
+            if (chunkWidth <= 0) chunkWidth = DefaultChunkW;
+            if (chunkHeight <= 0) chunkHeight = DefaultChunkH;
+
             string stamp = UtcTimestampForFilename();
             string baseName = $"cell-chunk-interchange-{stamp}";
-            string json = BuildCellChunkInterchangeJsonString(0, 0, DefaultChunkW, DefaultChunkH);
+            string json = BuildCellChunkInterchangeJsonString(originX, originY, chunkWidth, chunkHeight);
             bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
                 EditorPostgresExportRegistrar.KindTerrainCellChunk,
                 json,
                 false,
                 baseName,
                 out _);
-            if (dbOk)
-                Debug.Log("[Interchange] CityCell chunk stored in Postgres (editor_export_terrain_cell_chunk).");
+            if (!dbOk)
+                return AgentBridgeCellChunkOutcome.Fail("Postgres persist failed for cell chunk export. Configure DATABASE_URL and migrations.");
+
+            return AgentBridgeCellChunkOutcome.Ok();
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[Interchange] Export CityCell Chunk failed: {ex.Message}");
+            return AgentBridgeCellChunkOutcome.Fail(ex.Message);
         }
     }
 
@@ -248,4 +270,24 @@ class WaterBodyCountEntryDto
 {
     public int body_id;
     public int cell_count;
+}
+
+/// <summary>
+/// Outcome of <see cref="InterchangeJsonReportsMenu.ExportCellChunkForAgentBridge"/> → IDE agent bridge.
+/// </summary>
+public readonly struct AgentBridgeCellChunkOutcome
+{
+    public bool Success { get; }
+    public string ErrorMessage { get; }
+
+    AgentBridgeCellChunkOutcome(bool success, string error)
+    {
+        Success = success;
+        ErrorMessage = error ?? "";
+    }
+
+    public static AgentBridgeCellChunkOutcome Ok() => new(true, "");
+
+    public static AgentBridgeCellChunkOutcome Fail(string message) =>
+        new(false, message ?? "Unknown error.");
 }

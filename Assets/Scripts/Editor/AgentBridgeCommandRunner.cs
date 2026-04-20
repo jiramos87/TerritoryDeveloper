@@ -618,33 +618,15 @@ public static partial class AgentBridgeCommandRunner
         int w = p.chunk_width > 0 ? p.chunk_width : InterchangeJsonReportsMenu.DefaultChunkWidth;
         int h = p.chunk_height > 0 ? p.chunk_height : InterchangeJsonReportsMenu.DefaultChunkHeight;
 
-        string json;
-        try
-        {
-            json = InterchangeJsonReportsMenu.BuildCellChunkInterchangeJsonString(x0, y0, w, h);
-        }
-        catch (Exception ex)
-        {
-            TryFinalizeFailed(repoRoot, commandId, ex.Message);
-            return;
-        }
-
-        string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-        string baseName = $"cell-chunk-interchange-{stamp}";
-        bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
-            EditorPostgresExportRegistrar.KindTerrainCellChunk,
-            json,
-            false,
-            baseName,
-            out _);
+        AgentBridgeCellChunkOutcome outcome = InterchangeJsonReportsMenu.ExportCellChunkForAgentBridge(x0, y0, w, h);
 
         string responseJson = BuildObservabilityResponseJson(
             commandId,
-            ok: dbOk,
+            ok: outcome.Success,
             storage: "postgres",
             postgresOnly: true,
             artifactPaths: Array.Empty<string>(),
-            error: dbOk ? string.Empty : "export_cell_chunk: Postgres persist failed.",
+            error: outcome.Success ? string.Empty : outcome.ErrorMessage,
             logLines: Array.Empty<AgentBridgeLogLineDto>());
         CompleteOrFail(repoRoot, commandId, responseJson);
     }
@@ -669,33 +651,15 @@ public static partial class AgentBridgeCommandRunner
             }
         }
 
-        string md;
-        try
-        {
-            md = AgentDiagnosticsReportsMenu.BuildSortingDebugMarkdownString(seedX, seedY);
-        }
-        catch (Exception ex)
-        {
-            TryFinalizeFailed(repoRoot, commandId, ex.Message);
-            return;
-        }
-
-        string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-        string baseName = $"sorting-debug-{stamp}";
-        bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
-            EditorPostgresExportRegistrar.KindSortingDebug,
-            md,
-            true,
-            baseName,
-            out _);
+        AgentBridgeSortingDebugOutcome outcome = AgentDiagnosticsReportsMenu.ExportSortingDebugForAgentBridge(seedX, seedY);
 
         string responseJson = BuildObservabilityResponseJson(
             commandId,
-            ok: dbOk,
+            ok: outcome.Success,
             storage: "postgres",
             postgresOnly: true,
             artifactPaths: Array.Empty<string>(),
-            error: dbOk ? string.Empty : "export_sorting_debug: Postgres persist failed.",
+            error: outcome.Success ? string.Empty : outcome.ErrorMessage,
             logLines: Array.Empty<AgentBridgeLogLineDto>());
         CompleteOrFail(repoRoot, commandId, responseJson);
     }
