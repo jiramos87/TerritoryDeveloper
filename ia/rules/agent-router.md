@@ -23,6 +23,7 @@ Read only task-relevant specs. Use table to navigate.
 | Save / load | `ia/specs/persistence-system.md` + geography §7.4, §11.5 | Load pipeline, visual restore |
 | Manager responsibilities | `ia/specs/managers-reference.md` | Responsibilities, dependencies |
 | Zones, buildings, RCI | `ia/specs/managers-reference.md` — **Zones & Buildings** | Zone lifecycle, pivot, density, undeveloped light zoning |
+| Zone S, economy, budget envelope, bonds, treasury floor, state-service zoning, maintenance registry | `ia/specs/economy-system.md` | Overview, Zone S + sub-type registry, budget envelope, treasury clamp, bond ledger, maintenance contributors, save v3→v4 |
 | Demand, desirability | `ia/specs/managers-reference.md` — **Demand (R/C/I)** | DemandManager, CityStats, growth pressure |
 | Forests, regional map, utilities | `ia/specs/managers-reference.md` — **World features** | ForestManager, RegionalMapManager, resource buildings |
 | In-game notifications | `ia/specs/managers-reference.md` — **Game notifications** | GameNotificationManager singleton |
