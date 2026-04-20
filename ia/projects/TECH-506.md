@@ -86,19 +86,19 @@ Unified literal-applier reads any **Plan-Apply pair** tuple shape `{operation, t
 
 ### Phase 1 — Author unified skill + agent
 
-- [ ] Author `ia/skills/plan-applier/SKILL.md` with dispatch table.
-- [ ] Author `.claude/agents/plan-applier.md`.
+- [x] Author `ia/skills/plan-applier/SKILL.md` with dispatch table.
+- [x] Author `.claude/agents/plan-applier.md`.
 
 ### Phase 2 — Retire legacy appliers
 
-- [ ] Move `plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply` skills to `_retired/` with tombstones.
-- [ ] Move `plan-fix-applier`, `code-fix-applier`, `stage-closeout-applier` agents to `_retired/` with tombstones.
+- [x] Move `plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply` skills to `_retired/` with tombstones.
+- [x] Move `plan-fix-applier`, `code-fix-applier`, `stage-closeout-applier` agents to `_retired/` with tombstones.
 
 ### Phase 3 — Update commands + contract
 
-- [ ] Edit `/plan-review`, `/code-review`, `/closeout` dispatchers.
-- [ ] Edit `ia/rules/plan-apply-pair-contract.md`.
-- [ ] `npm run validate:all` green.
+- [x] Edit `/plan-review`, `/code-review`, `/closeout` dispatchers.
+- [x] Edit `ia/rules/plan-apply-pair-contract.md`.
+- [ ] `npm run validate:all` green (pre-commit validators: agent-tools-uniformity, cache-block-sizing, agent-tools, mcp-readme; full `validate:all` blocked on `validate:telemetry-schema` in this workspace).
 
 ## 7b. Test Contracts
 
@@ -108,12 +108,12 @@ Unified literal-applier reads any **Plan-Apply pair** tuple shape `{operation, t
 
 ## 8. Acceptance Criteria
 
-- [ ] `ia/skills/plan-applier/SKILL.md` present with dispatch table + escalation contract.
-- [ ] `.claude/agents/plan-applier.md` present (Sonnet, caveman, uniform tools frontmatter).
-- [ ] 3 retired skills + 3 retired agents moved to `_retired/` with tombstone headers.
-- [ ] `/plan-review`, `/code-review`, `/closeout` command dispatcher files point to `plan-applier`.
-- [ ] `ia/rules/plan-apply-pair-contract.md` references unified applier.
-- [ ] `npm run validate:all` green.
+- [x] `ia/skills/plan-applier/SKILL.md` present with dispatch table + escalation contract.
+- [x] `.claude/agents/plan-applier.md` present (Sonnet, caveman, uniform tools frontmatter).
+- [x] 3 retired skills + 3 retired agents moved to `_retired/` with tombstone headers.
+- [x] `/plan-review`, `/code-review`, `/closeout` command dispatcher files point to `plan-applier`.
+- [x] `ia/rules/plan-apply-pair-contract.md` references unified applier.
+- [ ] `npm run validate:all` green (see Phase 3 note).
 
 ## 9. Issues Found During Development
 
