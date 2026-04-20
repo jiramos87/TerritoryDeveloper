@@ -5,17 +5,20 @@ loaded_by: ondemand
 slices_via: none
 parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
 task_key: "T10.6"
+phases:
+  - "Phase 1 — Skill edits"
+  - "Phase 2 — Audit + validate"
 ---
 # TECH-507 — R1 SSE cache-commit event gate + C4 progress-emit marker extension
 
 > **Issue:** [TECH-507](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-19
-> **Last updated:** 2026-04-19
+> **Last updated:** 2026-04-20
 
 ## 1. Summary
 
-Edit `ia/skills/subagent-progress-emit/SKILL.md` to add §SSE cache-commit gate (R1) and extend `⟦PROGRESS⟧` marker with optional `cache:` + `tokens:` suffix (C4). Forbid ms-latency heuristics. Document Q17 upstream-pending note. Audit 15 lifecycle skills for backwards-compat.
+Edit `ia/skills/subagent-progress-emit/SKILL.md` to add §SSE cache-commit gate (R1) and extend `⟦PROGRESS⟧` marker with optional `cache:` + `tokens:` suffix (C4). Forbid ms-latency heuristics. Document Q17 upstream-pending note in §Caveats. Audit 15 lifecycle skills' `phases:` frontmatter for backwards compatibility.
 
 ## 2. Goals and Non-Goals
 
@@ -41,7 +44,7 @@ Edit `ia/skills/subagent-progress-emit/SKILL.md` to add §SSE cache-commit gate 
 
 ### 4.1 Domain behavior
 
-`⟦PROGRESS⟧` marker has fixed shape. No cache telemetry. ms-latency heuristics undocumented but not forbidden.
+`⟦PROGRESS⟧` stderr marker has fixed shape. No cache telemetry. ms-latency heuristics undocumented but not forbidden.
 
 ### 4.2 Systems map
 
@@ -108,15 +111,43 @@ SSE cache-commit gate documented in skill. `⟦PROGRESS⟧` marker optionally ca
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/lifecycle-refactor-master-plan.md Stage 10`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: Optional SSE suffix changes log parsers that key on exact `⟦PROGRESS⟧` prefix — Mitigation: document suffix as optional; default line unchanged (zero regression).
+- Risk: Q17 upstream (Anthropic) — SSE `usage` fields may differ by model; Mitigation: conservative fallbacks (`content_block_delta`) documented in R1 section.
+- Ambiguity: Which lifecycle skills count as "15" — Resolution: use same list as `ia/skills/README.md` lifecycle set (or `AGENTS.md` table); audit is checklist, not code.
+- Invariant touch: none (tooling / docs only).
 
 ### §Examples
 
+| Scenario | `⟦PROGRESS⟧` line | Interpretation |
+|----------|-------------------|----------------|
+| Default (no usage) | `⟦PROGRESS⟧ subagent-progress-emit 2/5 — Load Stage context` | Unchanged from today |
+| Usage available | `⟦PROGRESS⟧ plan-author 1/1 — Bulk author §Plan Author cache:written tokens:4096` | Optional `cache:` + `tokens:` suffix |
+| Miss / n/a | `… cache:miss tokens:0` | Documented enum in SKILL |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| default_marker_unchanged | `subagent-progress-emit` SKILL default emit | No required `cache:` token when usage absent | manual |
+| sse_gate_doc_present | SKILL §SSE cache-commit gate | R1 signals + `content_block_delta` fallback documented | manual |
+| ms_latency_forbidden | SKILL §Caveats + body | No ms-based cache-commit heuristic | grep + manual |
+| q17_caveat | §Caveats | Q17 upstream-pending note present | manual |
+| lifecycle_phases_audit | 15 lifecycle SKILL.md files | `phases:` frontmatter still valid YAML list; no forced break | manual |
+| validate_all_green | repo root | `npm run validate:all` exit 0 | node |
+
 ### §Acceptance
+
+- [ ] `subagent-progress-emit` SKILL documents §SSE cache-commit gate (R1) + forbids ms-latency heuristics.
+- [ ] §Caveats includes Q17 upstream note.
+- [ ] `⟦PROGRESS⟧` spec documents optional `cache:{written|hit|miss|n/a} tokens:{N}` suffix; default emit unchanged.
+- [ ] 15 lifecycle skills audited; no forced schema break.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- Optional: cross-link `docs/prompt-caching-mechanics.md` from new §SSE section if not already linked from skill Overview (implementer choice).
 
 ## Open Questions (resolve before / during implementation)
 
@@ -134,4 +165,4 @@ _pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / 
 
 ## §Code Fix Plan
 
-_pending — populated by `/code-review` only when fixes needed. Sonnet `code-fix-apply` reads tuples + applies + re-enters `/verify-loop`._
+_pending — populated by `/code-review` only when fixes needed. Sonnet `plan-applier` reads tuples + applies + re-enters `/verify-loop`._

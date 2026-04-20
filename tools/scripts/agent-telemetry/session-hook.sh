@@ -62,12 +62,17 @@ fi
 # Last-resort session id
 [ -z "${SESSION_ID}" ] && SESSION_ID="unknown-session"
 
-# Epoch ms (GNU date + BSD date compat)
-if TS="$(date +%s%3N 2>/dev/null)" && [ "${TS}" != "$(date +%s)3N" ]; then
-  :
-else
-  TS="$(( $(date +%s) * 1000 ))"
+# Epoch ms UTC — match baseline-collect.sh: BSD/macOS date lacks real %3N and
+# can emit a literal trailing "N", which breaks JSON numbers. Also avoid the
+# old guard that compared two separate `date +%s` calls (second-boundary race
+# could keep malformed TS).
+TS="$(date -u +%s%3N 2>/dev/null)"
+if [[ -z "$TS" || "$TS" == *N* ]]; then
+  TS="$(python3 -c 'import time; print(int(time.time()*1000))' 2>/dev/null \
+    || perl -MTime::HiRes=time -e 'printf("%d\n", time()*1000)' 2>/dev/null \
+    || echo $(( $(date -u +%s) * 1000 )))"
 fi
+TS="${TS//[^0-9]/}"
 
 OUT_FILE="${TELEMETRY_DIR}/${SESSION_ID}.jsonl"
 

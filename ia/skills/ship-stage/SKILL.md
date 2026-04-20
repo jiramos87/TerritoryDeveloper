@@ -9,8 +9,10 @@ description: >
   two-pass chain. Pass 1 (per-Task): implement + unity:compile-check fast-fail gate +
   atomic Task-level commit. Pass 2 (Stage-end bulk): verify-loop full Path A+B on
   cumulative delta + code-review Stage diff (shared amortized context) + audit + closeout.
-  Step 1.6 resume: git scan for feat(id)/fix(id) skips finished Tasks; all satisfied → Pass 2 only.
-  Opt-out --no-resume; --per-task-verify forces no resume.
+  Closeout (stage-closeout-planner → plan-applier Mode stage-closeout) is mandatory whenever
+  upstream Pass 2 gates pass — do not emit SHIP_STAGE PASSED or defer /closeout to a follow-up
+  session when verify + code-review + audit succeed. Step 1.6 resume: git scan for feat(id)/fix(id)
+  skips finished Tasks; all satisfied → Pass 2 only. Opt-out --no-resume; --per-task-verify forces no resume.
   --per-task-verify flag preserves pre-TECH-519 N× per-Task verify-loop + code-review shape.
   MCP context loaded once via domain-context-load subskill; cached payload passed
   to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED.
@@ -18,6 +20,7 @@ description: >
 model: inherit
 phases:
   - "Parse stage"
+  - "Stage tail detect (PASS2_ONLY)"
   - "Context load"
   - "Plan-author readiness gate"
   - "Resume gate"
@@ -34,6 +37,17 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Related:** [`ship.md`](../../../.claude/commands/ship.md) (single-task) · [`verify-loop`](../verify-loop/SKILL.md) (`--skip-path-b` flag) · [`domain-context-load`](../domain-context-load/SKILL.md) (MCP cache subskill) · [`project-stage-close`](../project-stage-close/SKILL.md) (per-spec stage close — fires inside each inner spec-implementer unchanged) · [`project-spec-close`](../project-spec-close/SKILL.md) (umbrella close, per task).
 
 **Verification policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
+
+## Normative — closeout is part of `PASSED`
+
+When Pass 2 upstream gates succeed for this Stage (**verify-loop** `verdict: pass` when Step 3.1 runs; **code-review** not critical; **audit** completes), the chain **must** run **Step 3.5 Closeout** in the **same** `/ship-stage` invocation. Do **not**:
+
+- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify (or audit) only.
+- Tell the operator to run standalone `/closeout` later unless a gate **failed** or human escalation applies.
+
+`SHIP_STAGE {STAGE_ID}: PASSED` is valid **only** after `plan-applier` Mode **stage-closeout** completes successfully (per Step 3.5 gate). If closeout fails validators or tuple application → `STOPPED at closeout` (see Exit lines), not PASSED.
+
+**Tooling-only / `--tooling-only` verify-loop:** still run Step 3.5 — archive/delete tuples apply to ia/backlog + `ia/projects/{ISSUE_ID}.md` the same way; no exemption from closeout on green path.
 
 ---
 
@@ -66,8 +80,18 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 4. Locate task table: find a Markdown table with header row containing columns `Issue` and `Status` (case-insensitive, any column order). Regex: `/\|\s*Issue\s*\|/i` on the header row.
 5. **Schema drift guard:** only `Issue` + `Status` are required columns. Canonical master-plan schema is the 6-column superset `Task | Name | Phase | Issue | Status | Intent` — all other columns are advisory. If `Issue` OR `Status` column not found within the stage block → emit `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + diff showing required columns `[Issue, Status]` (canonical superset `[Task, Name, Phase, Issue, Status, Intent]`) vs found column headers. Stop.
 6. Extract rows: for each data row, parse `Issue` column (must match `/\*\*?(TECH|BUG|FEAT|ART|AUDIO)-\d+\*\*?/` or bare id) and `Status` column.
-7. Filter: keep rows where `Status` is NOT `Done` / `archived` / `skipped` (case-insensitive). These are the **pending tasks**.
-8. If zero pending tasks → emit `SHIP_STAGE {STAGE_ID}: all tasks already Done. No work needed.` + next-stage resolver (Step 5).
+7. Filter: keep rows where `Status` is NOT `Done` / `archived` / `skipped` (case-insensitive). These are the **pending implementation tasks** (drive Pass 1 — same as “pending tasks” below).
+8. Collect **`STAGE_FILED_IDS`**: every issue id appearing in a row whose Issue column is not `_pending_` (table order, de-dupe by first occurrence). Used for Pass 2 scope + resume anchor when Pass 1 is empty.
+9. **Stage tail signal (machine, not Task rows):** **`STAGE_TAIL_INCOMPLETE`** iff `STAGE_FILED_IDS` is non-empty **and** at least one id has an **open backlog record** `ia/backlog/{ISSUE_ID}.yaml` on disk. Matches `validate:master-plan-status` **R6** when task rows are all Done-like but closeout never archived yaml. Optional corroboration: `ia/projects/{ISSUE_ID}.md` still exists — expect true until closeout deletes specs.
+10. **Branch (replaces naive idle-only exit):**
+    - If **pending implementation tasks** non-empty → continue chain (Pass 1 may run).
+    - **Else** if **`STAGE_TAIL_INCOMPLETE`** → set **`PASS2_ONLY=1`**. Emit:
+      ```
+      SHIP_STAGE tail: Stage tail incomplete — open backlog: {ISSUE_IDs} — resuming Pass 2 (verify-loop → code-review → audit → closeout)
+      ```
+      Do **not** emit idle exit. Continue **Step 1** → **Step 1.5** (readiness uses **`STAGE_FILED_IDS`**) → **Step 1.6** `PASS2_ONLY` branch → **Step 3** (skip Step 2 entirely). This fixes “all table rows Done but Pass 2 never ran” without manual `/closeout` guesswork.
+    - **Else** (pending empty **and** tail complete) → emit `SHIP_STAGE {STAGE_ID}: all tasks already Done. No work needed.` + next-stage resolver (Step 5).
+11. **Idempotence:** **`PASS2_ONLY`** re-entry is **Stage-level idempotent**: Pass 1 skipped; Pass 2 steps may re-run; `verify-loop` / `plan-applier` Mode stage-closeout should tolerate repeat when work already landed (validators gate). Distinct from **Task-level** idempotence (feat/fix commits). Future: disk **chain journal** may record substeps ([TECH-493](../../projects/TECH-493.md)); until then, **open backlog yaml** is the durable tail incomplete signal.
 
 **Parser fixtures (verify at authoring, not runtime):**
 
@@ -108,13 +132,21 @@ Store returned payload `{glossary_anchors, router_domains, spec_sections, invari
 
 `/ship-stage` does NOT run `/author` or `/plan-review` internally — both fold into `/stage-file` dispatcher (F6 re-fold 2026-04-20). Specs arriving at `/ship-stage` must already carry populated `## §Plan Author` from `/stage-file` chain tail.
 
-**Idempotent readiness check:** for each pending issue id from Step 0, read `ia/projects/{ISSUE_ID}*.md` and locate `## §Plan Author`. Treat a spec as **populated** when ALL of these hold:
+**Readiness id list** (which specs to check):
+
+| Situation | Ids to check |
+|-----------|----------------|
+| Pending implementation tasks non-empty | Issue ids from those rows only (legacy behavior). |
+| **`PASS2_ONLY=1`** | All **`STAGE_FILED_IDS`** (specs usually still on disk until closeout). |
+| Idle exit at Step 0 | Do not reach this gate. |
+
+**Idempotent readiness check:** for each id in the readiness id list, read `ia/projects/{ISSUE_ID}*.md` and locate `## §Plan Author`. Treat a spec as **populated** when ALL of these hold:
 
 1. `## §Plan Author` heading exists.
 2. No line inside the block (until next `## ` heading at same/higher level) matches `_pending` case-insensitively.
 3. All four sub-headings (`### §Audit Notes`, `### §Examples`, `### §Test Blueprint`, `### §Acceptance`) exist with non-whitespace body content.
 
-**If ALL specs populated:** continue to Step 2 (Pass 1).
+**If ALL specs populated:** continue to Step 2 (Pass 1) **or** Step 1.6 / 3 when **`PASS2_ONLY`**.
 
 **If ANY spec still `_pending_` or missing sub-headings:** stop chain. Emit:
 
@@ -133,11 +165,33 @@ Then user runs `/author` (+ `/plan-review` when needed) and re-invokes `/ship-st
 
 **Problem:** Re-invoking `/ship-stage` after Pass 1 commits landed but Pass 2 never ran MUST NOT re-dispatch `spec-implementer` for those Tasks. Partial Pass 1 (some Tasks committed, next not) MUST continue from the first Task without a Pass 1 anchor.
 
-**Disable resume (legacy path):** If user prompt contains `--no-resume` → set `RESUME_DISABLED=1` and **skip this step** (treat every pending Task as Pass 1 required). **If `--per-task-verify` is set → set `RESUME_DISABLED=1`** — resume skip is unsafe when Pass 2 verify is offloaded to per-Task loops.
+**Disable resume (legacy path):** If user prompt contains `--no-resume` → set `RESUME_DISABLED=1` and **skip § B below** (treat every pending Task as Pass 1 required). **If `--per-task-verify` is set → set `RESUME_DISABLED=1`** — resume skip is unsafe when Pass 2 verify is offloaded to per-Task loops.
 
-**When `RESUME_DISABLED=0`:**
+**Exception — `PASS2_ONLY`:** When Step 0 set **`PASS2_ONLY=1`**, **always run § A** first, even if `RESUME_DISABLED=1`. There is no Pass 1 work to expand; `--no-resume` does not apply. If `--per-task-verify` is set with **`PASS2_ONLY`**, emit warning: **Stage tail completion requires bulk Step 3–3.5** — ignore `--per-task-verify` for Step 3 onward (closeout must run).
 
-1. Let `PENDING_ORDERED` = issue ids from Step 0 pending rows (**table order**).
+### § A — `PASS2_ONLY` (Stage tail incomplete, open backlog yaml)
+
+Run **only when** Step 0 set **`PASS2_ONLY=1`** (all table rows Done-like, pending implementation empty, **`STAGE_TAIL_INCOMPLETE`**).
+
+1. Let **`SCAN_IDS` = `STAGE_FILED_IDS`** (not `PENDING_ORDERED`, which is empty).
+2. **Scan git (bounded):** same as § B §2.
+3. For each id in **`SCAN_IDS`**, compute `pass1_present(id)` (same prefix rule as § B §3).
+4. **Emit:**
+   ```
+   SHIP_STAGE resume: PASS2_ONLY — Pass 1 commit scan — satisfied: [{ids}] ; missing: [{ids or none}]
+   ```
+5. **Resolve `FIRST_TASK_COMMIT_PARENT`** using **`SCAN_IDS`** in place of `PENDING_ORDERED` in § B §5.
+6. **Branch:**
+   - **Any** `pass1_present` false → `SHIP_STAGE {STAGE_ID}: STOPPED — PASS2_ONLY: missing feat({ISSUE_ID}): / fix({ISSUE_ID}): on scan — repair git subjects or table`.
+   - **All** true → emit `SHIP_STAGE resume: PASS2_ONLY — entering Pass 2` → **jump Step 3** (skip Step 2). **Stop Step 1.6** (do not run § B).
+
+### § B — Standard resume (`RESUME_DISABLED=0` and not `PASS2_ONLY`)
+
+**When `RESUME_DISABLED=1` and not `PASS2_ONLY`:** skip § A and § B → go directly to **Step 2** (full Pass 1 for every pending row).
+
+**When `RESUME_DISABLED=0` and not `PASS2_ONLY`:**
+
+1. Let `PENDING_ORDERED` = issue ids from Step 0 pending implementation rows (**table order**).
 
 2. **Scan git (bounded):** `git log --first-parent -400 --format='%H %ct %s' HEAD` (repo root). If history shorter than 400, scan full reachable ancestry on first-parent chain.
 
@@ -272,7 +326,9 @@ Re-read `{MASTER_PLAN_PATH}` to confirm task row status after commit. Continue t
 
 ## Step 3 — Pass 2: Stage-end bulk (runs ONCE after all Tasks pass Pass 1)
 
-**SKIP Pass 2 verify-loop + code-review when `--per-task-verify` flag is set.** Jump directly to Step 3.4 (audit).
+**Order is fixed when each step applies:** 3.1 (verify) → 3.2 (code-review, unless skipped) → 3.4 (audit) → **3.5 (closeout)**. **Step 3.5 is not optional** after successful upstream steps — see **Normative — closeout is part of `PASSED`** above.
+
+**SKIP Pass 2 verify-loop + code-review when `--per-task-verify` flag is set.** Jump directly to Step 3.4 (audit). **Still run Step 3.5 closeout** after Step 3.4 when audit completes.
 
 ### Step 3.1 — Verify-loop on cumulative Stage delta
 
@@ -314,13 +370,15 @@ Dispatch `opus-auditor` subagent (Opus) — Stage-scoped (unchanged):
 
 > Mission: Run opus-audit Stage 1×N for Stage {STAGE_ID}. Issue ids: {all Task ids in Stage}. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. Return audit report.
 
-### Step 3.5 — Closeout
+### Step 3.5 — Closeout (mandatory on green path)
 
-Dispatch `stage-closeout-planner` → `stage-closeout-applier` pair (Opus → Sonnet) — Stage-scoped (unchanged):
+Dispatch `stage-closeout-planner` → `plan-applier` Mode **stage-closeout** (Opus pair-head → Sonnet pair-tail) — Stage-scoped:
 
-> Mission: Run Stage-scoped closeout for Stage {STAGE_ID} in {MASTER_PLAN_PATH}. All Task rows. Migrate lessons → delete specs → archive BACKLOG rows. No confirmation gate. Return full `project_spec_closeout_digest` JSON payload (including `lessons_migrated[]` and `decisions[]` per task) so chain journal can aggregate.
+> Mission: Run Stage-scoped closeout for Stage {STAGE_ID} in {MASTER_PLAN_PATH}. All Task rows. Migrate lessons → delete specs → archive BACKLOG rows. Return full `project_spec_closeout_digest` JSON payload (including `lessons_migrated[]` and `decisions[]` per task) so chain journal can aggregate.
 
-**Gate:** closeout digest JSON `validate_dead_specs_post.exit_code` == 0. Failure → STOPPED digest.
+**Mandatory:** Execute whenever Step 3.1 (when not skipped) + Step 3.2/3.3 + Step 3.4 succeeded — **do not** end the chain with PASSED without this step. Destructive-op confirmation follows [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) / [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (human checkpoint if the pair-head requires it).
+
+**Gate:** closeout digest JSON `validate_dead_specs_post.exit_code` == 0 (and per-mode validators per `plan-applier`). Failure → `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — {reason}` + partial digest — **not** PASSED.
 
 After closeout, update `CHAIN_JOURNAL` entries with lessons + decisions from closeout digest.
 
@@ -392,12 +450,13 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 
 ## Exit lines
 
-- **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff.
+- **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff — **only** after **Step 3.5 closeout** completed successfully (validators green). Never PASSED immediately after Step 3.1 / 3.4 alone.
 - **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"`.
 - **Pass 1 compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest (tasks-completed + uncommitted tail + unstarted list) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 1 implement failure (--per-task-verify only):** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
 - **Pass 2 code-review critical twice:** `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest + human review required (structural issue).
+- **Pass 2 closeout failure:** `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — {reason}` + chain digest + `Next:` repair tuples or re-run `plan-applier` Mode stage-closeout after fix — do **not** emit PASSED.
 - **Parser error:** `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + expected-vs-found column diff.
 - **Resume anchor missing:** `SHIP_STAGE {STAGE_ID}: STOPPED — resume: pass1_present for all pending ids but no matching feat(id)/fix(id) commits on scan` + human repair (squash without id in subject → use `--no-resume` or amend message).
 
@@ -411,10 +470,11 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - Do NOT rollback committed Pass 1 Tasks on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — commits already landed; emit digest + human directive only.
 - `STAGE_CODE_REVIEW_CRITICAL` re-entry cap = 1 — second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`; do NOT re-enter a third time.
 - Pass 2 cumulative delta anchor: first Task-commit parent → Stage-end HEAD, EXCLUDING closeout commits.
-- Stage-scoped closeout (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) fires ONCE after Pass 2 completes — do NOT call per Task; do NOT inhibit.
+- Stage-scoped closeout (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) fires ONCE after Pass 2 audit (and skipped steps as applicable) when upstream gates pass — do NOT call per Task; do NOT skip; do NOT emit PASSED without it; do NOT defer to “run `/closeout` later” on green path.
 - Chain-level stage digest is a NEW scope distinct from plan-applier Mode stage-closeout per-task digest aggregation.
 - `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
 - `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Step 1.5 is a readiness gate only; non-populated `§Plan Author` → STOPPED + handoff. Do NOT dispatch `plan-author` or `plan-reviewer` from this skill.
+- **Stage tail (`PASS2_ONLY`):** open `ia/backlog/{ISSUE_ID}.yaml` for any Stage filed id while table rows are Done ⇒ **not** idle exit; run Pass 2 through closeout. Aligns with `validate:master-plan-status` **R6**.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.
 
 ---
@@ -440,6 +500,28 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ---
 
 ## Changelog
+
+### 2026-04-20 — Stage tail detect (`PASS2_ONLY`) + R6 alignment
+
+**Status:** applied
+
+**Symptom:** All task rows `Done` in master-plan table but Pass 2 (verify → audit → closeout) never ran; `/ship-stage` took idle exit; backlog yaml still open.
+
+**Fix:** Step 0 **`STAGE_TAIL_INCOMPLETE`** (open `ia/backlog/{id}.yaml` for filed ids) + **`PASS2_ONLY`** branch → Step 1.6 § A → Pass 2 only. Validator **`validate:master-plan-status` R6** flags same drift. Glossary **Stage tail (open / incomplete)**. [`stage-file`](../stage-file/SKILL.md) No-op notes R6 before downstream filing.
+
+---
+
+### 2026-04-20 — Closeout mandatory on green Pass 2 path
+
+**Status:** applied
+
+**Symptom:** Operators or agents treated Stage closeout as optional after verify/audit passed, emitting PASSED or hand-waving to “run `/closeout` later.”
+
+**Fix:** Added **Normative — closeout is part of `PASSED`**, tightened Step 3 / Step 3.5, Exit lines, and Hard boundaries: `SHIP_STAGE … PASSED` only after successful `plan-applier` Mode stage-closeout; new exit `STOPPED at closeout`. Tooling-only stages still close out in-band.
+
+**Rollout row:** (session — ship-stage closeout normative)
+
+---
 
 ### 2026-04-20 — Step 1.6 resume gate (partial Pass 1 + jump to Pass 2)
 

@@ -16,11 +16,13 @@ Drive every non-Done filed task row of `{STAGE_ID}` in `{MASTER_PLAN_PATH}` thro
 
 **Phase 1.5 (readiness gate):** read each pending spec and verify `## §Plan Author` is populated (no `_pending_` markers; all four sub-sections present). Non-populated → `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff. Gate is idempotent — safe to re-enter after partial-failure recovery. `/ship-stage` does NOT dispatch `plan-author` or `plan-reviewer` — both live in `/stage-file` dispatcher.
 
-**Step 1.6 (resume gate):** After §Plan Author gate, unless `--no-resume` or `--per-task-verify`: `git log --first-parent -400` scan for `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` per pending Task. Emit `SHIP_STAGE resume: … satisfied / missing`. All satisfied → skip Pass 1 → Pass 2 only. Partial → skip implement/compile/commit only for satisfied ids. Resolves `FIRST_TASK_COMMIT_PARENT` for cumulative diff anchor.
+**Step 0 tail:** If all table rows Done but open `ia/backlog/{ISSUE_ID}.yaml` remains (**Stage tail incomplete**, `validate:master-plan-status` **R6**), set **`PASS2_ONLY`** — skip idle exit; run Pass 2 through closeout (Step 1.6 § A).
+
+**Step 1.6 (resume gate):** After §Plan Author gate, unless `--no-resume` or `--per-task-verify`: `git log --first-parent -400` scan for `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` per pending Task. Emit `SHIP_STAGE resume: … satisfied / missing`. All satisfied → skip Pass 1 → Pass 2 only. Partial → skip implement/compile/commit only for satisfied ids. **`PASS2_ONLY`** uses `STAGE_FILED_IDS` for the scan. Resolves `FIRST_TASK_COMMIT_PARENT` for cumulative diff anchor.
 
 **Pass 1 (per-Task loop):** implement → `unity:compile-check` fast-fail gate → atomic Task-level commit (skipped per-Task when Step 1.6 marked satisfied). Stop on first compile failure; emit partial chain digest.
 
-**Pass 2 (Stage-end bulk, runs ONCE after all Tasks pass Pass 1):** verify-loop (full Path A+B on cumulative delta) → code-review (Stage-level diff; shared context) → optional code-fix-apply (STAGE_CODE_REVIEW_CRITICAL, re-entry cap = 1) → audit → closeout. Then emit a chain-level stage digest.
+**Pass 2 (Stage-end bulk, runs ONCE after all Tasks pass Pass 1):** verify-loop (full Path A+B on cumulative delta) → code-review (Stage-level diff; shared context) → optional code-fix-apply (STAGE_CODE_REVIEW_CRITICAL, re-entry cap = 1) → audit → **closeout** (`stage-closeout-planner` → `plan-applier` Mode stage-closeout). **Do not emit `PASSED` until closeout succeeds** — see `ia/skills/ship-stage/SKILL.md` **Normative — closeout is part of `PASSED`**. Then emit a chain-level stage digest.
 
 **`--per-task-verify` flag (legacy rollback):** when set, skip Pass 2 verify-loop + code-review; promote Pass 1 per-Task to full `verify-loop --skip-path-b` + `code-review` per Task (pre-TECH-519 shape). Audit + closeout remain Stage-scoped (unchanged). **Also disables Step 1.6 resume** (unsafe).
 
@@ -52,7 +54,7 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence:
 3. **Phase 1.5 — §Plan Author readiness gate** — SKILL Step 1.5. For each pending spec verify `## §Plan Author` populated (no `_pending_` markers; four sub-sections present). Non-populated → `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff. Do NOT dispatch `plan-author` or `plan-reviewer` — both live in `/stage-file`.
 4. **Phase 1.6 — Resume gate** — SKILL Step 1.6. Git scan `feat(id):` / `fix(id):`; skip Pass 1 for satisfied Tasks; jump to Pass 2 when all satisfied. Skip entire phase if `--no-resume` or `--per-task-verify`.
 5. **Phase 2 — Pass 1 per-Task loop** — for each pending task (skip implement/commit when resume satisfied): implement → `unity:compile-check` fast-fail gate → atomic Task-level commit. If `--per-task-verify` set, ALSO run `verify-loop --skip-path-b` + `code-review` per Task. Stop on first gate failure; emit partial chain digest (tasks completed + uncommitted tail + unstarted list).
-6. **Phase 3 — Pass 2 Stage-end bulk** — runs ONCE after all Tasks pass Pass 1 (SKIP when `--per-task-verify` flag set). Full `verify-loop` (Path A+B on cumulative delta) → code-review (Stage-level diff) → if `STAGE_CODE_REVIEW_CRITICAL`: run `code-fix-apply` Sonnet, re-enter Pass 2 verify-loop once; second critical → exit `STAGE_CODE_REVIEW_CRITICAL_TWICE` → audit → closeout.
+6. **Phase 3 — Pass 2 Stage-end bulk** — runs ONCE after all Tasks pass Pass 1. If **`--per-task-verify`**: skip batched verify-loop + Stage code-review (already ran per Task in Phase 2); still run **audit → closeout**. If default: full `verify-loop` (Path A+B on cumulative delta) → code-review (Stage-level diff) → if `STAGE_CODE_REVIEW_CRITICAL`: run `code-fix-apply` Sonnet, re-enter Pass 2 verify-loop once; second critical → exit `STAGE_CODE_REVIEW_CRITICAL_TWICE` → audit → closeout. **Closeout always last gate before PASSED.**
 7. **Phase 4 — Chain digest** — JSON header + caveman summary, `chain:` block with `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}`.
 8. **Phase 5 — Next-stage resolver** — re-read master plan; emit `Next:` for one of 4 cases (filed / pending / skeleton / umbrella-done).
 
@@ -66,7 +68,7 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence:
 
 # Exit lines
 
-- `SHIP_STAGE {STAGE_ID}: PASSED` — readiness gate + all Tasks Pass 1 + Pass 2 complete; next-stage handoff emitted.
+- `SHIP_STAGE {STAGE_ID}: PASSED` — readiness gate + all Tasks Pass 1 + Pass 2 complete **including successful Stage closeout** (validators green); next-stage handoff emitted. **Invalid** if emitted right after verify/audit without closeout.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` — Phase 1.5 readiness gate failed; `Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"` then re-invoke `/ship-stage`.
 - `STOPPED at {ISSUE_ID} — compile_gate: {reason}` — Pass 1 compile-gate failure; partial chain digest emitted (tasks-completed array + uncommitted tail + unstarted list); `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` — all Tasks closed; Pass 2 verify-loop failed; no rollback; human review required.
@@ -78,7 +80,7 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence:
 - Sequential dispatch only — no parallel task execution.
 - `domain-context-load` fires ONCE per chain (Phase 1), never per task.
 - `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Phase 1.5 is a readiness gate only; non-populated `§Plan Author` → STOPPED + `/author` handoff.
-- **Pass 2 (code-review → audit → closeout) is MANDATORY. Never skip or defer it.** This applies even when resuming a partially-done stage (some tasks already Done), even when the stage was previously In Progress, and even when the caller's prompt does not explicitly mention it. Pass 2 runs once all non-Done tasks have passed Pass 1 (including **resume** path where Pass 1 commits already on branch — Step 1.6 jumps straight to Pass 2).
+- **Pass 2 (code-review → audit → closeout) is MANDATORY. Never skip or defer it — and `PASSED` is forbidden until closeout completes successfully.** Do not defer standalone `/closeout` when upstream gates pass. This applies even when resuming a partially-done stage (some tasks already Done), even when the stage was previously In Progress, and even when the caller's prompt does not explicitly mention it. Pass 2 runs once all non-Done tasks have passed Pass 1 (including **resume** path where Pass 1 commits already on branch — Step 1.6 jumps straight to Pass 2).
 - **Step 1.6 resume** is default when `--no-resume` and `--per-task-verify` absent — do not re-implement Tasks that already have `feat(id):` / `fix(id):` on the scanned first-parent chain.
 - Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE at stage end — do NOT inhibit, do NOT call per task. **Closeout = status flips + yaml archive + spec deletion. It is NOT a git commit. The no-auto-commit rule (do not run `git commit` without explicit user request) does NOT exempt or defer the closeout phase — they are entirely different operations.**
 - **Commit proposal:** after closeout completes (and ONLY after closeout), emit a single `git commit` suggestion with the staged diff summary. Do NOT propose or run any commit before closeout. Never run `git commit` automatically — present the suggestion for user approval.
@@ -97,4 +99,4 @@ Phase 2 Pass 1 per-Task: single-line gate result (IMPLEMENT_DONE / compile_gate 
 Phase 3 Pass 2: single-line per gate (verify verdict / code-review verdict / code-fix status / audit ok / closeout ok).
 Phase 4: chain-level stage digest (JSON header + caveman summary).
 Phase 5: `Next:` handoff line.
-Final: `SHIP_STAGE {STAGE_ID}: PASSED` | `STOPPED — prerequisite: §Plan Author not populated for ...` | `STOPPED at {ISSUE_ID} — compile_gate: {reason}` | `STAGE_VERIFY_FAIL` | `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
+Final: `SHIP_STAGE {STAGE_ID}: PASSED` | `STOPPED — prerequisite: §Plan Author not populated for ...` | `STOPPED at {ISSUE_ID} — compile_gate: {reason}` | `STAGE_VERIFY_FAIL` | `STAGE_CODE_REVIEW_CRITICAL_TWICE` | `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — {reason}`.

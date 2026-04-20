@@ -1,0 +1,26 @@
+id: "TECH-559"
+type: TECH
+title: "Runner params DTO + dispatch"
+priority: medium
+status: open
+section: "Unity IDE Agent Bridge"
+spec: "ia/projects/TECH-559.md"
+files:
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs
+notes: |
+  Extend **AgentBridgeCommandRunner** + shared DTOs to deserialize **params** for
+  **export_cell_chunk** (origin_x, origin_y, width, height), **export_sorting_debug** /
+  **export_agent_context** optional **seed_cell**. Route to menu statics without new
+  **gridArray** reads (**invariant #5**).
+acceptance:
+  - "BridgeCommand / DTO path parses params for export_cell_chunk (origin, width, height)"
+  - "export_sorting_debug + export_agent_context accept optional seed_cell param"
+  - "Runner switch-dispatch routes parameterized requests to menu statics"
+  - "No new gridArray / cellArray reads — invariant #5 respected"
+depends_on: []
+depends_on_raw: ""
+related: []
+created: "2026-04-20"
+raw_markdown: |
+  Runner params DTO + dispatch — Extend AgentBridgeCommandRunner + shared DTOs to deserialize params for export kinds.

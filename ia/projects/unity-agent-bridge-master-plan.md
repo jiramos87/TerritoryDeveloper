@@ -467,7 +467,7 @@
 
 #### Stage 1.3 — Cursor skill + narrative alignment
 
-**Status:** In Progress
+**Status:** Final
 
 **Objectives:** Ship **`.claude/skills/debug-sorting-order`** (Cursor-only). Patch **`ia/skills/ide-bridge-evidence`** only if Step 1 changes evidence DTOs. Align **Close Dev Loop** / staging supersession text with exploration §7.1 / §10-B.
 
@@ -487,12 +487,23 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.3.1 | debug-sorting-order SKILL body | 1 | **TECH-587** | Done | Author **`.claude/skills/debug-sorting-order/SKILL.md`**: triggers, prerequisites (**`DATABASE_URL`**, Unity on **`REPO_ROOT`**), recipe calling **`unity_export_sorting_debug`** + **`unity_export_cell_chunk`**, **`spec_section`** **`geo`** §7, comparison checklist (**BUG-28**-style). |
-| T1.3.2 | Symlink + skill index | 1 | **TECH-588** | Done | If required by repo convention, symlink **`ia/skills/...`** → **`.claude/skills/...`**; add row to **`ia/skills/README.md`** only if this repo lists Cursor-packaged skills (minimal). |
-| T1.3.3 | ide-bridge-evidence diff | 2 | **TECH-589** | Done | Read **`ia/skills/ide-bridge-evidence/SKILL.md`**; update tool names / bundle fields if Step 1 changed responses; otherwise add single-line “no bridge DTO change” exit note in task report. |
-| T1.3.4 | Glossary / router spot-check | 2 | **TECH-590** | Done | Verify **`glossary_lookup`** “IDE agent bridge” + **`router_for_task`** domains still accurate; no new glossary row unless new public term introduced (terminology rule). |
-| T1.3.5 | Close Dev Loop doc alignment | 3 | **TECH-591** | Done | Update **`docs/agent-led-verification-policy.md`** or **`docs/mcp-ia-server.md`** short subsection: **`close-dev-loop`** + **`debug_context_bundle`** vs sugar tools — supersession of registry staging (per analysis). |
-| T1.3.6 | Optional backlog spec pointer | 3 | **TECH-592** | Done | If **`ia/backlog/TECH-552.yaml`** (or successor) tracks bridge program, add **`spec:`** → this orchestrator path + **`npm run materialize-backlog.sh`** — only if issue record exists; do not invent issue id in orchestrator body. |
+| T1.3.1 | debug-sorting-order SKILL body | 1 | **TECH-587** | Done (archived) | Author **`.claude/skills/debug-sorting-order/SKILL.md`**: triggers, prerequisites (**`DATABASE_URL`**, Unity on **`REPO_ROOT`**), recipe calling **`unity_export_sorting_debug`** + **`unity_export_cell_chunk`**, **`spec_section`** **`geo`** §7, comparison checklist (**BUG-28**-style). |
+| T1.3.2 | Symlink + skill index | 1 | **TECH-588** | Done (archived) | If required by repo convention, symlink **`ia/skills/...`** → **`.claude/skills/...`**; add row to **`ia/skills/README.md`** only if this repo lists Cursor-packaged skills (minimal). |
+| T1.3.3 | ide-bridge-evidence diff | 2 | **TECH-589** | Done (archived) | Read **`ia/skills/ide-bridge-evidence/SKILL.md`**; update tool names / bundle fields if Step 1 changed responses; otherwise add single-line “no bridge DTO change” exit note in task report. |
+| T1.3.4 | Glossary / router spot-check | 2 | **TECH-590** | Done (archived) | Verify **`glossary_lookup`** “IDE agent bridge” + **`router_for_task`** domains still accurate; no new glossary row unless new public term introduced (terminology rule). |
+| T1.3.5 | Close Dev Loop doc alignment | 3 | **TECH-591** | Done (archived) | Update **`docs/agent-led-verification-policy.md`** or **`docs/mcp-ia-server.md`** short subsection: **`close-dev-loop`** + **`debug_context_bundle`** vs sugar tools — supersession of registry staging (per analysis). |
+| T1.3.6 | Optional backlog spec pointer | 3 | **TECH-592** | Done (archived) | If **`ia/backlog/TECH-552.yaml`** (or successor) tracks bridge program, add **`spec:`** → this orchestrator path + **`npm run materialize-backlog.sh`** — only if issue record exists; do not invent issue id in orchestrator body. |
+
+#### §Stage Closeout Plan
+
+> stage-closeout-plan — 6 Tasks (applied inline 2026-04-20). `plan-applier` Mode stage-closeout executed: archive backlog yaml **TECH-587**…**TECH-592** → `ia/backlog-archive/`; delete per-Task project specs for those ids; flip task rows → `Done (archived)`; Stage 1.3 **Status** → `Final`. No glossary/rule/doc shared migrations; no durable-doc id purge. `digest_emit` skipped (MCP optional).
+
+```yaml
+# Applied — record only; pair-tail executed out-of-band in Cursor session
+closed_issue_ids: ["TECH-587","TECH-588","TECH-589","TECH-590","TECH-591","TECH-592"]
+completed_iso: "2026-04-20"
+validators: ["materialize-backlog.sh", "npm run validate:all"]
+```
 
 ### §Stage File Plan
 

@@ -43,14 +43,14 @@ Dispatch Agent with `subagent_type: "ship-stage"`:
 > 3. Phase 1.5 — §Plan Author readiness gate (`ia/skills/ship-stage/SKILL.md` Step 1.5): for each pending spec verify `## §Plan Author` populated. Non-populated → `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff; no Pass 1.
 > 4. Phase 1.6 — Resume gate (SKILL Step 1.6): `git log --first-parent -400` for `feat(TECH-xxx):` / `fix(TECH-xxx):` per pending Task; skip Pass 1 for satisfied ids; all satisfied → skip Pass 1 → Pass 2 only. Disabled by `--no-resume` or `--per-task-verify`.
 > 5. Phase 2 — Pass 1 per-Task loop: implement (`spec-implementer` work inline) → `unity:compile-check` → atomic commit (resume skips satisfied tasks) (unless `--per-task-verify`, which also runs per-Task verify-loop + code-review in Pass 1).
-> 6. Phase 3 — Pass 2 Stage-end (once after all Pass 1 tasks): full `verify-loop` (Path A+B) on cumulative delta → Stage-level code-review → audit → closeout.
+> 6. Phase 3 — Pass 2 Stage-end (once after all Pass 1 tasks): full `verify-loop` (Path A+B) on cumulative delta → Stage-level code-review → audit → **closeout** (`stage-closeout-planner` → `plan-applier` Mode stage-closeout). **Closeout is mandatory** when upstream Pass 2 gates pass — do not emit `PASSED` or defer `/closeout` after successful verify + review + audit (see `ia/skills/ship-stage/SKILL.md` **Normative — closeout is part of `PASSED`**).
 > 7. Phase 4 — Chain-level stage digest (JSON header + caveman summary + `chain:` block).
 > 8. Phase 5 — Next-stage resolver (4 cases: filed / pending / skeleton / umbrella-done).
 >
 > ## Exit
 >
 > End with one of:
-> - `SHIP_STAGE {STAGE_ID}: PASSED`
+> - `SHIP_STAGE {STAGE_ID}: PASSED` (**only** after Step 3.5 closeout + validators succeed — not after verify/audit alone)
 > - `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — {gate}: {reason}`
 > - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for …` (+ `/author` Next line)
 > - `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL`

@@ -62,6 +62,8 @@ Scan the target Stage's task table in `ORCHESTRATOR_SPEC` **before any other act
 
 `In Review`, `In Progress`, and `Done` tasks: **skip in all modes**. Never touch active or closed work.
 
+**Upstream Stage tail (infra signal):** Before treating a **No-op** as “nothing to do”, agent MAY run `npm run validate:master-plan-status` (or `-- --plan {ORCHESTRATOR_SPEC}`). If output includes **`[R6]`** on an **earlier** Stage in the same plan (task rows Done-like but open backlog yaml), that Stage’s **ship-stage Pass 2 tail** did not finish — hand off `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} {that Stage}"` or `"/closeout …"` before filing a **downstream** Stage. **R6** is the same signal Step 0 **`STAGE_TAIL_INCOMPLETE`** uses in [`ship-stage`](../ship-stage/SKILL.md).
+
 ---
 
 ## Step 2 — Route
@@ -90,3 +92,9 @@ Scan the target Stage's task table in `ORCHESTRATOR_SPEC` **before any other act
 ---
 
 ## Changelog
+
+### 2026-04-20 — No-op: upstream R6 / Stage tail note
+
+**Status:** applied
+
+**Fix:** No-op branch documents optional `validate:master-plan-status` scan for **[R6]** before filing downstream Stage — same **Stage tail incomplete** signal as ship-stage **`PASS2_ONLY`**.

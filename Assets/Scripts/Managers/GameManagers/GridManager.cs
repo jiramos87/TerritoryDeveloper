@@ -845,6 +845,10 @@ public class GridManager : MonoBehaviour, IGridManager
         {
             HandleForestPlacement(gridPosition, selectedForest);
         }
+        else if (IsStateServicePlacementMode())
+        {
+            HandleStateServicePlacement(gridPosition);
+        }
         else if (isInZoningMode())
         {
             zoneManager.HandleZoning(mouseGridPosition);
@@ -872,11 +876,39 @@ public class GridManager : MonoBehaviour, IGridManager
         }
     }
 
+    private bool IsStateServicePlacementMode()
+    {
+        return ZoneManager.IsStateServiceZoneType(uiManager.GetSelectedZoneType());
+    }
+
+    /// <summary>
+    /// Single-click Zone S placement routed through <see cref="Territory.Economy.ZoneSService"/>.
+    /// Invalid sub-type id (not yet picked) reopens picker.
+    /// </summary>
+    private void HandleStateServicePlacement(Vector2 gridPosition)
+    {
+        if (!Input.GetMouseButtonDown(0)) return;
+
+        int subTypeId = uiManager.CurrentSubTypeId;
+        if (subTypeId < 0)
+        {
+            uiManager.OpenSubTypePicker();
+            return;
+        }
+
+        var service = uiManager.ZoneSService;
+        if (service == null) return;
+
+        service.PlaceStateServiceZone((int)gridPosition.x, (int)gridPosition.y, subTypeId);
+    }
+
     private bool isInZoningMode()
     {
-        return uiManager.GetSelectedZoneType() != Zone.ZoneType.Grass &&
-          uiManager.GetSelectedZoneType() != Zone.ZoneType.Road &&
-          uiManager.GetSelectedZoneType() != Zone.ZoneType.None;
+        Zone.ZoneType sel = uiManager.GetSelectedZoneType();
+        if (ZoneManager.IsStateServiceZoneType(sel)) return false;
+        return sel != Zone.ZoneType.Grass &&
+          sel != Zone.ZoneType.Road &&
+          sel != Zone.ZoneType.None;
     }
 
     void HandleBuildingPlacement(Vector3 gridPosition, IBuilding selectedBuilding)

@@ -5,17 +5,21 @@ loaded_by: ondemand
 slices_via: none
 parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
 task_key: "T10.7"
+phases:
+  - "Phase 1 — D2 cascade note"
+  - "Phase 2 — D3 single-block guardrail"
+  - "Phase 3 — Cross-links + validate"
 ---
 # TECH-508 — D2 cache-invalidation cascade note + D3 20-block single-block guardrail
 
 > **Issue:** [TECH-508](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-19
-> **Last updated:** 2026-04-19
+> **Last updated:** 2026-04-20
 
 ## 1. Summary
 
-Edit `docs/mcp-ia-server.md` to add §Cache invalidation impact section (D2). Document D3 single-block rule (NEVER emit multi-block stable prefix) in `subagent-progress-emit` SKILL or new `ia/rules/subagent-caching-guardrails.md`. Cross-link both notes from `docs/prompt-caching-mechanics.md` §6 + §7.
+Edit `docs/mcp-ia-server.md` to add §Cache invalidation impact section (D2): any `tools/mcp-ia-server/` change invalidates cached Stage bundles. Document D3 single-block rule (NEVER emit multi-block stable prefix) in `subagent-progress-emit` SKILL or new `ia/rules/subagent-caching-guardrails.md`. Cross-link both notes from `docs/prompt-caching-mechanics.md` §6 + §7.
 
 ## 2. Goals and Non-Goals
 
@@ -111,15 +115,39 @@ D2: Any `tools/mcp-ia-server/` edit = cache-invalidating event; PR author must f
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/lifecycle-refactor-master-plan.md Stage 10`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: D2 + D3 split across two files — reader misses cross-link. Mitigation: `prompt-caching-mechanics.md` §6 + §7 must link both; D3 placement (SKILL vs rule) decided in §6 Decision Log.
+- Risk: `docs/mcp-ia-server.md` long — new section must not duplicate full tool catalog. Mitigation: §Cache invalidation impact = short PR-author checklist + pointer to **territory-ia** MCP package.
+- Invariant touch: none (docs only).
 
 ### §Examples
 
+| Change type | PR description flag (example) | Expected reviewer action |
+|-------------|-------------------------------|---------------------------|
+| `tools/mcp-ia-server/src/**` tool registration | `Cache: invalidates Tier 2 Stage bundles (F5)` | Expect Stage-boundary re-warm in smoke |
+| Doc-only typo in `docs/mcp-ia-server.md` | `Docs only — no tool code` | No cache invalidation claim |
+| D3 violation (hypothetical) | Multi-block stable prefix with separate `cache_control` | Reject in review per D3 rule |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| d2_section_present | `docs/mcp-ia-server.md` | §Cache invalidation impact + PR-flag language | manual |
+| d3_rule_present | `subagent-progress-emit` SKILL or `ia/rules/subagent-caching-guardrails.md` | Single-block assembly; no multi-`@` with per-block `cache_control` | manual |
+| mechanics_cross_links | `docs/prompt-caching-mechanics.md` §6, §7 | Links to D2 + D3 anchors | manual |
+| validate_all_green | repo root | `npm run validate:all` exit 0 | node |
+
 ### §Acceptance
+
+- [ ] `docs/mcp-ia-server.md` documents cache-invalidation cascade for MCP server/tool edits + PR-flag expectation.
+- [ ] D3 single-block rule documented in SKILL or `subagent-caching-guardrails.md`.
+- [ ] `docs/prompt-caching-mechanics.md` §6 + §7 cross-link D2 and D3.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- None.
 
 ## Open Questions (resolve before / during implementation)
 
@@ -137,4 +165,4 @@ _pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / 
 
 ## §Code Fix Plan
 
-_pending — populated by `/code-review` only when fixes needed. Sonnet `code-fix-apply` reads tuples + applies + re-enters `/verify-loop`._
+_pending — populated by `/code-review` only when fixes needed. Sonnet `plan-applier` reads tuples + applies + re-enters `/verify-loop`._

@@ -1,0 +1,29 @@
+id: "TECH-592"
+type: "TECH"
+title: "Optional backlog spec pointer"
+priority: "medium"
+status: closed
+section: "Unity IDE agent bridge — Stage 1.3"
+spec: "ia/projects/TECH-592.md"
+files: []
+notes: |
+  If TECH-552 (or successor) yaml tracks bridge program, set spec to this orchestrator; run materialize-backlog.sh.
+  Skip if issue absent or out of scope.
+acceptance: |
+  - [ ] Confirm whether TECH-552.yaml (or listed successor) is active bridge tracker.
+  - [ ] If yes, spec field points to ia/projects/unity-agent-bridge-master-plan.md and backlog materialized.
+  - [ ] If no, skip documented — no invented ids in orchestrator body.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-587"
+  - "TECH-588"
+  - "TECH-589"
+  - "TECH-590"
+  - "TECH-591"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Optional backlog spec pointer — Align TECH-552 or successor with orchestrator path when applicable.
+parent_plan: "ia/projects/unity-agent-bridge-master-plan.md"
+task_key: "T1.3.6"

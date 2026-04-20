@@ -1,0 +1,23 @@
+id: "TECH-560"
+type: TECH
+title: "MCP Zod alignment for new params"
+priority: medium
+status: open
+section: "Unity IDE Agent Bridge"
+spec: "ia/projects/TECH-560.md"
+files:
+  - tools/mcp-ia-server/src/
+notes: |
+  Update **tools/mcp-ia-server** **unity_bridge_command** / job **request** Zod schemas
+  so enqueued rows match Unity DTO param shapes. Add fixture or unit test
+  for param round-trip.
+acceptance:
+  - "Zod request schema accepts params matching Unity DTO structs"
+  - "Fixture or unit test validates param round-trip (enqueue → dequeue shape match)"
+  - "Existing non-parameterized kinds still pass Zod validation"
+depends_on: []
+depends_on_raw: ""
+related: []
+created: "2026-04-20"
+raw_markdown: |
+  MCP Zod alignment for new params — Update Zod schemas to match Unity DTO param shapes.

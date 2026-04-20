@@ -1,0 +1,29 @@
+id: "TECH-589"
+type: "TECH"
+title: "ide-bridge-evidence diff"
+priority: "medium"
+status: closed
+section: "Unity IDE agent bridge — Stage 1.3"
+spec: "ia/projects/TECH-589.md"
+files: []
+notes: |
+  Diff ia/skills/ide-bridge-evidence/SKILL.md against Step 1 bridge DTO changes; update tool names or
+  bundle fields if needed; else one-line no-change note in findings.
+acceptance: |
+  - [ ] ide-bridge-evidence SKILL read end-to-end against MCP + §10.
+  - [ ] If export kinds or response DTOs changed, skill prose and examples updated.
+  - [ ] If no delta, explicit no DTO change note captured for audit trail.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-587"
+  - "TECH-588"
+  - "TECH-590"
+  - "TECH-591"
+  - "TECH-592"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  ide-bridge-evidence diff — Align ide-bridge-evidence with shipped bridge responses.
+parent_plan: "ia/projects/unity-agent-bridge-master-plan.md"
+task_key: "T1.3.3"

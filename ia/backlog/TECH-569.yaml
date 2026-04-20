@@ -1,0 +1,25 @@
+id: "TECH-569"
+type: TECH
+title: "`MiniMapController` S palette"
+priority: medium
+status: open
+section: "Zone S economy — Stage 8 bond UI + stats"
+spec: "ia/projects/TECH-569.md"
+files:
+  - Assets/Scripts/
+notes: |
+  One **Zone S** color for all six **StateService** zone types + zoning variants; **N5** — no per-sub-type tint in MVP. R/C/I unchanged.
+acceptance:
+  - "MiniMapController maps all StateService ZoneType values to one S color"
+  - "RCI palette unchanged; no per-sub-type S tint"
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-565"
+  - "TECH-566"
+  - "TECH-567"
+  - "TECH-568"
+  - "TECH-570"
+created: "2026-04-20"
+raw_markdown: |
+  MiniMapController S palette — single tint for Zone S enum values.

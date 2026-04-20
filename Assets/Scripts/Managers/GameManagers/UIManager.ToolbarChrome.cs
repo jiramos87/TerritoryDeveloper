@@ -108,6 +108,9 @@ namespace Territory.UI
             if (IsIndustrialZoning(selectedZoneType))
                 return "IndustrialZoningSelectorButton";
 
+            if (IsStateServiceZoning(selectedZoneType))
+                return "StateServiceZoningSelectorButton";
+
             return null;
         }
 
@@ -130,6 +133,13 @@ namespace Territory.UI
             return z == Zone.ZoneType.IndustrialLightZoning ||
                    z == Zone.ZoneType.IndustrialMediumZoning ||
                    z == Zone.ZoneType.IndustrialHeavyZoning;
+        }
+
+        private static bool IsStateServiceZoning(Zone.ZoneType z)
+        {
+            return z == Zone.ZoneType.StateServiceLightZoning ||
+                   z == Zone.ZoneType.StateServiceMediumZoning ||
+                   z == Zone.ZoneType.StateServiceHeavyZoning;
         }
     }
 }

@@ -1,0 +1,31 @@
+id: "TECH-587"
+type: "TECH"
+title: "debug-sorting-order SKILL body"
+priority: "medium"
+status: closed
+section: "Unity IDE agent bridge — Stage 1.3"
+spec: "ia/projects/TECH-587.md"
+files: []
+notes: |
+  Author .claude/skills/debug-sorting-order/SKILL.md. Triggers, DATABASE_URL + Unity on REPO_ROOT,
+  unity_export_sorting_debug + unity_export_cell_chunk, spec_section geo §7, BUG-28-style comparison checklist.
+  Touches .claude/skills/ only.
+acceptance: |
+  - [ ] SKILL.md lists triggers and prerequisites (DATABASE_URL, Unity Editor, REPO_ROOT).
+  - [ ] Recipe covers unity_export_sorting_debug and unity_export_cell_chunk plus spec_section geo §7.
+  - [ ] Checklist matches close-dev-loop style (BUG-28 reference pattern) for before/after comparison.
+  - [ ] No ia/skills clone; Cursor path under .claude/skills per orchestrator header.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-588"
+  - "TECH-589"
+  - "TECH-590"
+  - "TECH-591"
+  - "TECH-592"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  debug-sorting-order SKILL body — Author .claude/skills/debug-sorting-order/SKILL.md.
+parent_plan: "ia/projects/unity-agent-bridge-master-plan.md"
+task_key: "T1.3.1"

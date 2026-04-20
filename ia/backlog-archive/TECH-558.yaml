@@ -2,7 +2,7 @@ id: "TECH-558"
 type: "TECH"
 title: "Overspend-blocked notification wiring"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-558.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-556"
   - "TECH-557"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-558** — Overspend-blocked notification wiring — HUD feedback when envelope draw blocked.

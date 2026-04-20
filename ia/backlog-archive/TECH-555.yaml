@@ -2,7 +2,7 @@ id: "TECH-555"
 type: "TECH"
 title: "Sub-type picker modal UI"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-555.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-557"
   - "TECH-558"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-555** — Sub-type picker modal UI — PopupStack modal for seven Zone S sub-types.

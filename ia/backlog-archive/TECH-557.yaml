@@ -2,7 +2,7 @@ id: "TECH-557"
 type: "TECH"
 title: "Budget panel UI with sliders"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-557.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-556"
   - "TECH-558"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-557** — Budget panel UI with sliders — Envelope editor HUD for Zone S budget allocator.

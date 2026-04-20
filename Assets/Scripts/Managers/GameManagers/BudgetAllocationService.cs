@@ -102,7 +102,32 @@ namespace Territory.Economy
         }
 
         /// <inheritdoc/>
-        public int GetMonthlyEnvelope(int subTypeId) => 0;
+        public int GetMonthlyEnvelope(int subTypeId)
+        {
+            if (subTypeId < 0 || subTypeId > 6) return 0;
+            return (int)(globalMonthlyCap * envelopePct[subTypeId]);
+        }
+
+        /// <summary>Remaining envelope for <paramref name="subTypeId"/> this month.</summary>
+        public int GetRemaining(int subTypeId)
+        {
+            if (subTypeId < 0 || subTypeId > 6) return 0;
+            return currentMonthRemaining[subTypeId];
+        }
+
+        /// <summary>Current envelope percentage for <paramref name="subTypeId"/>.</summary>
+        public float GetEnvelopePct(int subTypeId)
+        {
+            if (subTypeId < 0 || subTypeId > 6) return 0f;
+            return envelopePct[subTypeId];
+        }
+
+        /// <summary>Global monthly cap for all Zone S envelopes combined.</summary>
+        public int GlobalMonthlyCap
+        {
+            get => globalMonthlyCap;
+            set => globalMonthlyCap = Mathf.Max(0, value);
+        }
 
         /// <inheritdoc/>
         public void SetEnvelopePct(int subTypeId, float pct)

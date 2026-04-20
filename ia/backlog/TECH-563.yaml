@@ -1,0 +1,25 @@
+id: "TECH-563"
+type: TECH
+title: "Play Mode + grid gate errors"
+priority: medium
+status: open
+section: "Unity IDE Agent Bridge"
+spec: "ia/projects/TECH-563.md"
+files:
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - Assets/Scripts/Managers/GameManagers/GridManager.cs
+notes: |
+  Before Play-only exports, verify **GridManager.isInitialized** + **TerrainManager**
+  readiness. Return **failed** + human-readable **error** field when preconditions
+  unmet. Align with analysis §8.3 risk table.
+acceptance:
+  - "Play-only export kinds check GridManager.isInitialized before execution"
+  - "TerrainManager readiness verified where documented needs exist"
+  - "Failed response includes structured error field (human-readable string)"
+  - "No new gridArray / cellArray reads — invariant #5 respected"
+depends_on: []
+depends_on_raw: ""
+related: []
+created: "2026-04-20"
+raw_markdown: |
+  Play Mode + grid gate errors — Add precondition gates for Play-only bridge exports.

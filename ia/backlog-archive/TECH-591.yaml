@@ -1,0 +1,29 @@
+id: "TECH-591"
+type: "TECH"
+title: "Close Dev Loop doc alignment"
+priority: "medium"
+status: closed
+section: "Unity IDE agent bridge — Stage 1.3"
+spec: "ia/projects/TECH-591.md"
+files: []
+notes: |
+  Short subsection in docs/agent-led-verification-policy.md or docs/mcp-ia-server.md: close-dev-loop vs
+  debug_context_bundle vs unity_export_* sugar; registry staging supersession narrative.
+acceptance: |
+  - [ ] Subsection links close-dev-loop to bridge evidence paths without contradiction.
+  - [ ] debug_context_bundle vs sugar tools relationship explicit.
+  - [ ] npm run validate:all green after doc edits.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-587"
+  - "TECH-588"
+  - "TECH-589"
+  - "TECH-590"
+  - "TECH-592"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Close Dev Loop doc alignment — Durable docs for close-dev-loop vs bridge exports.
+parent_plan: "ia/projects/unity-agent-bridge-master-plan.md"
+task_key: "T1.3.5"

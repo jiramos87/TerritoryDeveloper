@@ -135,6 +135,18 @@ public partial class UIManager
         }
     }
 
+    /// <summary>
+    /// Zone S toolbar button — enters S placement mode and opens sub-type picker.
+    /// </summary>
+    public void OnStateServiceZoningButtonClicked()
+    {
+        ClearCurrentTool();
+        selectedZoneType = Zone.ZoneType.StateServiceLightZoning;
+        currentSubTypeId = -1;
+        OpenSubTypePicker();
+        RequestToolbarChromeRefresh();
+    }
+
     public void OnTwoWayRoadButtonClicked()
     {
         ClearCurrentTool();
@@ -212,6 +224,7 @@ public partial class UIManager
             prefab = null
         };
         selectedZoneType = Zone.ZoneType.Grass;
+        currentSubTypeId = -1;
         ghostPreviewPrefab = null;
         ghostPreviewSize = 1;
         cursorManager.SetDefaultCursor();

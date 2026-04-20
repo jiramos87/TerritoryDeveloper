@@ -937,6 +937,10 @@ Tuple list (one per Task). Sonnet pair-tail (`stage-file-apply`) reads verbatim 
     - `npm run validate:all` + `npm run verify:local` green on main post-Stage-10.
   - stub_body_sections: §1, §2.1, §4.2, §7, §Open Questions.
 
+#### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs (TECH-506, TECH-507, TECH-508, TECH-509) aligned after `phases:` frontmatter merge. No pending tuples. Downstream pipeline continue.
+
 ---
 
 ## Orchestration guardrails

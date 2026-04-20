@@ -1,0 +1,26 @@
+id: "TECH-580"
+type: "TECH"
+title: "MEMORY.md index validation"
+priority: "medium"
+status: open
+section: "Step 2 — Stage 2.1 (A1 + A4)"
+spec: "ia/projects/TECH-580.md"
+files: []
+notes: |
+  Enforce MEMORY index size caps (≤200 lines per file per harness); validate pointer targets exist; re-check `docs/agent-lifecycle.md` front matter after A1. `npm run validate:all` green.
+acceptance: |
+  - [ ] Both MEMORY.md files ≤200 lines; all links resolve.
+  - [ ] `docs/agent-lifecycle.md` Status + last-updated front matter still correct post-A1.
+  - [ ] `npm run validate:all` green.
+depends_on:
+  - "TECH-503"
+depends_on_raw: "TECH-503"
+related:
+  - "TECH-577"
+  - "TECH-578"
+  - "TECH-579"
+created: "2026-04-20"
+raw_markdown: |
+  MEMORY.md index validation — Line caps, link integrity, doc metadata after A1.
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T2.1.4"

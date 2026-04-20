@@ -10,6 +10,8 @@
  *   R4 — Step Status == Final when ALL stages under step are Final. (advisory only — Step bodies
  *        may lack machine-readable stage lists; emits warning not error)
  *   R5 — Plan top Status == Final when ALL steps are Final. (checked via step parse)
+ *   R6 — Task table rows all Done-like but any filed id still has open ia/backlog/{id}.yaml
+ *        (Pass 2 tail — verify-loop → code-review → audit → stage closeout — not finished).
  *
  * Limitations:
  *   - Parsing is best-effort Markdown heuristic (no AST).
@@ -57,6 +59,28 @@ function isFiled(id) {
   );
 }
 
+/** Open backlog record (not yet archived on closeout). */
+function isOpen(id) {
+  return fs.existsSync(path.join(BACKLOG_DIR, `${id}.yaml`));
+}
+
+/**
+ * Task-row Status column looks terminal-Done for ship-stage (not In Progress / Review / Draft).
+ * @param {string} raw
+ */
+function statusLooksDoneLike(raw) {
+  const t = raw.toLowerCase().replace(/\*/g, "").trim();
+  if (t.includes("_pending_")) return false;
+  if (t.includes("in progress") || t.includes("in review")) return false;
+  if (/\bdraft\b/.test(t) && !t.includes("done")) return false;
+  return (
+    /\bdone\b/.test(t) ||
+    t.includes("archived") ||
+    t === "skipped" ||
+    t.includes("skipped")
+  );
+}
+
 const ISSUE_ID_RE = /\b(TECH|FEAT|BUG|ART|AUDIO)-\d+[a-z]?\b/g;
 
 /** Extract all issue ids from a string (excludes _pending_). */
@@ -80,6 +104,8 @@ function normaliseStatus(raw) {
   if (s.startsWith("final")) return "Final";
   if (s.startsWith("done")) return "Final"; // stage "Done" = Final
   if (s.startsWith("in progress")) return "InProgress";
+  // CamelCase / single-token (synthetic parser step, some authoring tools)
+  if (s === "inprogress") return "InProgress";
   if (s.startsWith("in review")) return "InReview";
   if (s.startsWith("planned")) return "Planned";
   if (s.startsWith("skeleton")) return "Skeleton";
@@ -207,6 +233,7 @@ function parsePlan(filePath) {
         heading: stripped,
         rawStatus: "Unknown",
         taskIds: [],
+        taskRows: [],
         pendingCount: 0,
       };
       inTaskTable = false;
@@ -249,6 +276,11 @@ function parsePlan(filePath) {
             currentStage.taskIds.push(id);
           }
         }
+        currentStage.taskRows.push({
+          ids,
+          statusRaw: statusCol,
+          hasPendingPlaceholder: issueCol.includes("_pending_"),
+        });
         // Count pending — check Issue or Status column
         if (issueCol.includes("_pending_") || statusCol.includes("_pending_")) {
           currentStage.pendingCount += 1;
@@ -309,6 +341,27 @@ function checkPlan(plan, drifts) {
           message: `All tasks archived but Status = "${stage.rawStatus}" (expected Final)`,
           rule: "R3",
         });
+      }
+
+      // R6 — table rows all Done-like but backlog still open (Pass 2 tail not landed)
+      if (stage.taskRows && stage.taskRows.length > 0) {
+        const anyPendingPlaceholder = stage.taskRows.some((r) => r.hasPendingPlaceholder);
+        const filedRows = stage.taskRows.filter((r) => r.ids.length > 0);
+        if (!anyPendingPlaceholder && filedRows.length > 0) {
+          const allDoneLike = filedRows.every((r) => statusLooksDoneLike(r.statusRaw));
+          if (allDoneLike) {
+            const unionIds = [...new Set(filedRows.flatMap((r) => r.ids))];
+            const openIds = unionIds.filter((id) => isOpen(id));
+            if (openIds.length > 0) {
+              drifts.push({
+                plan: planName,
+                location: stage.heading,
+                message: `Task rows look Done but backlog record(s) still open (${openIds.join(", ")}). Stage tail incomplete — re-run \`/ship-stage\` (Pass 2 resume) or Stage-scoped \`/closeout\`.`,
+                rule: "R6",
+              });
+            }
+          }
+        }
       }
 
       // R2 — tasks filed (any open or archived) but stage still Draft/Planned
@@ -431,7 +484,7 @@ function main() {
     }
   }
   console.error(
-    "\nFix: run Phase 2 of TECH-397 to patch drifting plan headers, or run `stage-file`/`project-stage-close` lifecycle skills."
+    "\nFix: run Phase 2 of TECH-397 to patch drifting plan headers; for [R6] finish `/ship-stage` Pass 2 or `/closeout`; use `stage-file`/`project-stage-close` for other lifecycle drift."
   );
 
   // R4 is always advisory (step-level rollup hint) — never causes exit 1.

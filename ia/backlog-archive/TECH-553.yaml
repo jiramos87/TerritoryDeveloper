@@ -2,7 +2,7 @@ id: "TECH-553"
 type: "TECH"
 title: "S zoning button in `UIManager.ToolbarChrome`"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-553.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-557"
   - "TECH-558"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-553** — S zoning button in `UIManager.ToolbarChrome` — Fourth toolbar zoning control for Zone S.

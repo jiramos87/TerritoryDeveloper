@@ -2,7 +2,7 @@ id: "TECH-556"
 type: "TECH"
 title: "Picker cancel UX (N3)"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-556.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-557"
   - "TECH-558"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-556** — Picker cancel UX (N3) — Cancel paths per zone-s-economy exploration N3.

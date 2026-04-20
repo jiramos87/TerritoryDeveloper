@@ -2,7 +2,7 @@ id: "TECH-554"
 type: "TECH"
 title: "Placement-mode routing through `ZoneSService`"
 priority: "medium"
-status: open
+status: closed
 section: "Step 3 — Zone S economy / Stage 7 UI"
 spec: "ia/projects/TECH-554.md"
 files: []
@@ -22,5 +22,6 @@ related:
   - "TECH-557"
   - "TECH-558"
 created: "2026-04-20"
+completed: "2026-04-20"
 raw_markdown: |
   **TECH-554** — Placement-mode routing through `ZoneSService` — Route S placement through ZoneSService with sub-type id.

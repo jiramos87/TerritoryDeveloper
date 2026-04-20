@@ -1,0 +1,28 @@
+id: "TECH-590"
+type: "TECH"
+title: "Glossary / router spot-check"
+priority: "medium"
+status: closed
+section: "Unity IDE agent bridge — Stage 1.3"
+spec: "ia/projects/TECH-590.md"
+files: []
+notes: |
+  Verify glossary_lookup IDE agent bridge + router_for_task domains; add glossary row only if new public term; terminology-consistency rule.
+acceptance: |
+  - [ ] glossary_lookup and router_for_task coherent for bridge workflow (record in spec).
+  - [ ] New glossary row only if truly new domain term; otherwise narrative confirmation.
+  - [ ] No issue ids added to durable specs.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-587"
+  - "TECH-588"
+  - "TECH-589"
+  - "TECH-591"
+  - "TECH-592"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Glossary / router spot-check — MCP routing and glossary anchors for bridge vocabulary.
+parent_plan: "ia/projects/unity-agent-bridge-master-plan.md"
+task_key: "T1.3.4"

@@ -72,8 +72,10 @@ namespace Territory.Economy
 
             if (budgetAllocation == null || !budgetAllocation.TryDraw(subTypeId, entry.baseCost))
             {
-                GameNotificationManager.Instance?.PostError(
-                    $"Insufficient {entry.displayName} envelope this month.");
+                GameNotificationManager.Instance?.PostNotification(
+                    $"{entry.displayName} envelope exhausted",
+                    GameNotificationManager.NotificationType.Error,
+                    3f);
                 return false;
             }
 
