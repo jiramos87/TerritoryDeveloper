@@ -52,6 +52,7 @@ MEMORY.md                                 → project-level architectural memory
 | [`persistence-system.md`](ia/specs/persistence-system.md) | Save/load pipeline, visual restore |
 | [`water-terrain-system.md`](ia/specs/water-terrain-system.md) | Height model, water bodies, cliffs, shores, cascades |
 | [`managers-reference.md`](ia/specs/managers-reference.md) | Managers + helper services: responsibilities, deps |
+| [`economy-system.md`](ia/specs/economy-system.md) | Zone S channel, budget envelope, treasury floor, bonds, maintenance registry, save v4 economy fields |
 | [`glossary.md`](ia/specs/glossary.md) | Domain term definitions (English only) |
 | [`unity-development-context.md`](ia/specs/unity-development-context.md) | Unity patterns: MonoBehaviour lifecycle, Inspector / `SerializeField`, `FindObjectOfType`, Script Execution Order |
 | [`audio-blip.md`](ia/specs/audio-blip.md) | Blip procedural SFX subsystem: DSP kernel, authoring, runtime architecture, fixtures, invariants |
