@@ -1,0 +1,8 @@
+---
+description: "Opus orchestrator. Drives every non-Done filed task row of one Stage X.Y through a two-pass chain. Pass 1 (per-Task): implement + unity:compile-check fast-fail gate + atomic Task-level commit. Pass 2 (Stage-end bulk): verify-loop full Path A+B on cumulative delta + code-review Stage diff (shared amortized context) + audit + closeout. --per-task-verify flag preserves pre-TECH-519 N× per-Task verify-loop + code-review shape. MCP context loaded once via domain-context-load subskill; cached payload passed to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED. Triggers: \"/ship-stage\", \"ship stage\", \"chain stage tasks\", \"ship all stage tasks\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ship-stage/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "ship-stage"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

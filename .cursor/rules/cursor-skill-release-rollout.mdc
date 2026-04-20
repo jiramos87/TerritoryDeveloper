@@ -1,0 +1,8 @@
+---
+description: "Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a repeatable rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to step (f) ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file`. Owns the tracker doc (`ia/projects/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT close issues (= `/closeout`). Does NOT execute Tier A→E rollout body directly — dispatches to per-row subagents in fresh context. Triggers: \"/release-rollout {row-slug}\", \"rollout next row\", \"drive child plan to task-filed\", \"release rollout track\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/release-rollout/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "release-rollout"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

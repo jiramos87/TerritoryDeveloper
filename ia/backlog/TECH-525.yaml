@@ -1,0 +1,27 @@
+id: "TECH-525"
+type: "TECH"
+title: ".mcp.json split config"
+priority: "high"
+status: open
+section: "Step 1 — Token-economy baseline + MCP surface pruning / Stage 1.2 — MCP server split (B1)"
+spec: "ia/projects/TECH-525.md"
+files: []
+notes: |
+  Add territory-ia-bridge entry to .mcp.json pointing to index-bridge.ts; add
+  "MCP_SPLIT_SERVERS": "0" to existing territory-ia env block (alongside existing
+  DEBUG_MCP_COMPUTE). Document MCP_SPLIT_SERVERS=1 flag semantics in
+  docs/mcp-ia-server.md (new §Server split architecture section). Activates B1 dual-server
+  surface for opt-in consumption.
+acceptance: |
+  - [ ] .mcp.json carries territory-ia-bridge server entry pointing to index-bridge.ts.
+  - [ ] territory-ia env block carries MCP_SPLIT_SERVERS=0 default.
+  - [ ] docs/mcp-ia-server.md gains §Server split architecture section documenting flag.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-524", "TECH-526", "TECH-527"]
+created: "2026-04-20"
+raw_markdown: |
+  .mcp.json split config — Wire dual-server config in .mcp.json; register territory-ia-bridge alongside existing territory-ia entry; document flag semantics in docs/mcp-ia-server.md.
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.2.2"

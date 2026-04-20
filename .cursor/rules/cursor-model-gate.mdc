@@ -1,0 +1,34 @@
+---
+description: "Model selection guardrail for lifecycle skills that rely on planner/reviewer quality."
+alwaysApply: true
+---
+
+# Cursor Model Gate
+
+Before running a lifecycle skill, enforce this check:
+
+1. State current model family in first response for that skill run.
+2. If skill is planner/reviewer heavy and model is not Max/Opus-class, warn explicitly.
+3. Ask for confirmation before continuing in degraded mode.
+
+## Skills that should prefer Max/Opus
+
+- `plan-author`
+- `opus-audit`
+- `opus-code-review`
+- `plan-review`
+- `master-plan-new`
+- `ship-stage`
+- `release-rollout`
+
+## Skills that are usually fine on Sonnet/Composer2
+
+- Apply/tail skills (`*-apply`, `code-fix-apply`, `plan-fix-apply`)
+- Build/verify runners (`project-implementation-validation`, `verify-loop`, `bridge-environment-preflight`)
+- Mechanical trackers (`release-rollout-track`)
+
+## Required warning text pattern
+
+Use this shape when degraded:
+
+`Model gate: this skill is optimized for Max/Opus quality. Current model may reduce planning/review fidelity. Continue in degraded mode?`

@@ -1,0 +1,123 @@
+---
+description: "Cursor-specific adapters for lifecycle skills with pair seams, mutation calls, or long chains."
+alwaysApply: true
+---
+
+# Cursor Lifecycle Adapters
+
+Use this file as the compatibility layer between Cursor and Claude Code lifecycle semantics.
+Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
+
+## stage-file-plan
+
+- caller_agent: `stage-file` (when invoking gated mutation tools).
+- pair seam: planner-only. Produce tuples and stop.
+- handoff artifact: write tuples in target `ia/projects/*master-plan*.md` section expected by apply step.
+- recommended model: Max/Opus preferred.
+- caveat: Cursor has no forced model handoff; ask for explicit user confirmation before apply.
+
+## stage-file-apply
+
+- caller_agent: `stage-file`.
+- reserve-id: yes, before new ids run `bash tools/scripts/reserve-id.sh TECH <count>` (or FEAT/BUG/ART/AUDIO).
+- pair seam: consumes planner tuples only; do not re-plan.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: never hand-edit `ia/state/id-counter.json`.
+
+## project-new
+
+- caller_agent: `project-new` for `backlog_record_upsert`.
+- reserve-id: yes, use `reserve-id.sh`.
+- pair seam: planner pass (summary + payload) then apply pass.
+- recommended model: Max/Opus preferred for planning clarity.
+
+## project-new-apply
+
+- caller_agent: `project-new`.
+- reserve-id: yes.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: create exactly one issue/spec pair and stop.
+
+## plan-review
+
+- pair seam: review verdict + fix tuples only.
+- recommended model: Max/Opus preferred.
+- caveat: classify findings by severity before any changes.
+
+## plan-fix-apply
+
+- pair seam: apply tuples only.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: no scope creep beyond fix tuples.
+
+## opus-code-review
+
+- pair seam: review output only (`PASS` / `minor` / `critical`) and optional fix tuples.
+- recommended model: Max/Opus preferred.
+- caveat: keep evidence anchored to spec + invariants.
+
+## code-fix-apply
+
+- pair seam: apply only tuple set from review.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: after apply, rerun verification sequence.
+
+## stage-closeout-plan
+
+- caller_agent: `closeout`.
+- pair seam: planner emits one stage-scoped closeout tuple batch.
+- recommended model: Max/Opus preferred.
+- caveat: include explicit destructive-op confirmation checkpoint before delete/archive actions.
+
+## stage-closeout-apply
+
+- caller_agent: `closeout` (for `backlog_record_upsert`, glossary/rule/spec mutation tools when needed).
+- reserve-id: no.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: run non-destructive migrations first, destructive ops only after confirmation.
+
+## plan-author
+
+- mode: bulk Stage 1xN authoring (single pass across all tasks in stage).
+- recommended model: Max/Opus strongly preferred.
+- caveat: if model budget insufficient, split by phase and keep one pass per phase.
+
+## opus-audit
+
+- mode: bulk Stage 1xN synthesis of `§Audit`.
+- recommended model: Max/Opus strongly preferred.
+- caveat: if context becomes large, run per task and merge at stage end.
+
+## master-plan-new
+
+- caller_agent: `master-plan-new` when invoking `glossary_row_create` / `rule_create`.
+- reserve-id: optional, only if skill route creates issue records (normally no).
+- recommended model: Max/Opus preferred.
+- caveat: output must be fully decomposed steps (no skeleton placeholders).
+
+## ship-stage
+
+- caller_agent: `ship-stage` for mutation calls.
+- chain strategy: execute in fixed order `author -> implement -> verify-loop -> code-review -> audit -> closeout`.
+- checkpoint rule: stop after each sub-skill and summarize status before continuing.
+- recommended model: Max/Opus for planner/review steps; Sonnet/Composer2 acceptable for apply steps.
+- caveat: for long stages, split by task and open fresh session between tasks.
+
+## release-rollout
+
+- caller_agent: `release-rollout` (and `release-rollout-track` for tracker flips).
+- chain strategy: one rollout row per session by default.
+- checkpoint rule: after each column flip, persist ticket and stop if unresolved dependency appears.
+- recommended model: Max/Opus preferred.
+
+## release-rollout-track
+
+- caller_agent: `release-rollout-track`.
+- recommended model: Sonnet/Composer2 acceptable.
+- caveat: mechanical update only; no scope decisions.
+
+## skill-train
+
+- mode: retrospective only, never auto-apply patches.
+- recommended model: Max/Opus preferred.
+- caveat: write proposal artifact, require explicit human approval before any skill changes.

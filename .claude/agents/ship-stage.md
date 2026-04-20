@@ -68,11 +68,13 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence:
 
 - Sequential dispatch only — no parallel task execution.
 - `domain-context-load` fires ONCE per chain (Phase 1), never per task.
-- Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE at stage end — do NOT inhibit, do NOT call per task.
+- **Pass 2 (code-review → audit → closeout) is MANDATORY. Never skip or defer it.** This applies even when resuming a partially-done stage (some tasks already Done), even when the stage was previously In Progress, and even when the caller's prompt does not explicitly mention it. Pass 2 runs once all non-Done tasks have passed Pass 1.
+- Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE at stage end — do NOT inhibit, do NOT call per task. **Closeout = status flips + yaml archive + spec deletion. It is NOT a git commit. The no-auto-commit rule (do not run `git commit` without explicit user request) does NOT exempt or defer the closeout phase — they are entirely different operations.**
+- **Commit proposal:** after closeout completes (and ONLY after closeout), emit a single `git commit` suggestion with the staged diff summary. Do NOT propose or run any commit before closeout. Never run `git commit` automatically — present the suggestion for user approval.
 - Chain-level stage digest is a NEW scope distinct from stage-closeout-apply's per-task digest aggregation.
 - Do NOT rollback closed tasks on STAGE_VERIFY_FAIL.
 - `STAGE_CODE_REVIEW_CRITICAL` re-entry cap = 1 — second critical verdict → exit `STAGE_CODE_REVIEW_CRITICAL_TWICE`; do NOT re-enter again.
-- Pass 2 cumulative delta diff anchor = first Task-commit parent → Stage-end HEAD, EXCLUDING Stage closeout commits (closeout runs AFTER Pass 2).
+- Pass 2 cumulative delta diff anchor = first Task-commit parent → Stage-end HEAD, EXCLUDING Stage closeout commits (closeout runs AFTER Pass 2 verify-loop + code-review).
 - Do NOT touch `BACKLOG.md` row state, archive, or spec deletion directly — delegate entirely to `stage-closeout-apply` work (executed inline, per Execution model directive).
 - Do NOT bail with "no Task tool in nested context" — execute inline per Execution model directive above.
 

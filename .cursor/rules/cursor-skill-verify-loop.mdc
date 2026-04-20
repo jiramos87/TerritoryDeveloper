@@ -1,0 +1,8 @@
+---
+description: "Use after substantive implementation (per task or per stage / spec close-out) when one canonical closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all → compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation, agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill is the one place that wires them together. Triggers: \"/verify-loop\", \"closed-loop verification\", \"post-task verification\", \"integrated verification\", \"fix-verify iteration\", \"run the full verify chain\", \"agent-led verification end-to-end\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/verify-loop/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

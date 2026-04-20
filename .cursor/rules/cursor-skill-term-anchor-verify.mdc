@@ -1,0 +1,8 @@
+---
+description: "Sonnet subskill. Given a list of English domain terms, calls `glossary_lookup` + `router_for_task` + `spec_section` for each; returns per-term `{anchored: bool, missing: [glossary|router|spec]}`. Codifies the Alignment gate (column g) check from `release-rollout` Phase 3 + `release-rollout-track` Phase 1. Centralizes the pass/fail classifier so all callers agree on the same anchor contract. Triggers: \"term anchor verify\", \"alignment gate check\", \"verify glossary anchor\", \"term-anchor-verify subskill\", \"column g anchor check\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/term-anchor-verify/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

@@ -1,0 +1,8 @@
+---
+description: "Defines canonical stderr progress-marker shape and the `phases:` frontmatter convention. @-loaded once by every `.claude/agents/*.md` common preamble so the emission contract is uniform across the surface. Non-lifecycle one-shot skills (glossary patchers, view regenerators) are exempt from both the frontmatter convention and the emission contract. Never introduces MCP round-trips or log-file polling."
+alwaysApply: false
+---
+Read and follow: @ia/skills/subagent-progress-emit/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

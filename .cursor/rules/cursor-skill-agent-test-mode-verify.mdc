@@ -1,0 +1,8 @@
+---
+description: "Run after project-spec-implement (or standalone) when agent-led test mode verification is required: gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge hybrid with .queued-test-scenario-id), bounded iterate with validate:all / compile gates, structured handoff for human normal-game QA. Triggers: \"agent test mode loop\", \"verify in test mode without opening Unity\", \"batchmode scenario check\", \"post-implement Play Mode suite\". Design trace: projects/TECH-31a3-agent-test-mode-verify-skill.md (TECH-31 stage 31a3)."
+alwaysApply: false
+---
+Read and follow: @ia/skills/agent-test-mode-verify/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

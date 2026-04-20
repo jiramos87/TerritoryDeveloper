@@ -1,0 +1,8 @@
+---
+description: "Use AFTER a downstream subagent returns success from `/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, or `/stage-file` to flip the corresponding tracker cell `— → ◐` or `◐ → ✓`, append the completion ticket (SHA / doc path / issue id), and add a Change log row. Read-only verification pass via MCP (`glossary_lookup`, `router_for_task`, `spec_section`) for column (g) align gate. Does NOT decide cell targets (umbrella skill owns). Does NOT dispatch subagents (= umbrella skill). Triggers: \"track cell flip\", \"update tracker after stage-file\", \"release-rollout-track {row-slug} {col} {ticket}\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/release-rollout-track/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "release-rollout-track"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

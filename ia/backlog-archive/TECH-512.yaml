@@ -2,7 +2,8 @@ id: "TECH-512"
 type: TECH
 title: "Baseline collection run"
 priority: high
-status: open
+status: closed
+completed: "2026-04-20"
 section: "Stage 1.1 — Baseline measurement (gating)"
 spec: "ia/projects/TECH-512.md"
 files: []

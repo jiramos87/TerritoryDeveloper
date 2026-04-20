@@ -62,8 +62,11 @@ function parseTaskTable(lines: string[]): TaskRow[] {
   const tasks: TaskRow[] = [];
   let headerParsed = false;
   let colMap: Record<string, number> | null = null;
+  let inFence = false;
 
   for (const line of lines) {
+    if (line.trim().startsWith('```')) { inFence = !inFence; continue; }
+    if (inFence) continue;
     const cells = parseTableRow(line);
     if (!cells) continue;
     if (isSeparatorRow(cells)) continue;
@@ -133,12 +136,21 @@ function extractSiblingWarnings(lines: string[]): string[] {
   return warnings;
 }
 
+/** Strip " — Master Plan..." suffix from h1 heading for display use. */
+export function cleanPlanTitle(raw: string): string {
+  const parts = raw.split(' — ');
+  if (parts.length > 1 && /\bmaster[\s-]*plan\b/i.test(parts[parts.length - 1])) {
+    return parts.slice(0, -1).join(' — ').trim();
+  }
+  return raw.trim();
+}
+
 export function parseMasterPlan(markdown: string, filename = ''): PlanData {
   const lines = markdown.split('\n');
 
   let title = filename;
   for (const line of lines) {
-    if (line.startsWith('# ')) { title = line.slice(2).trim(); break; }
+    if (line.startsWith('# ')) { title = cleanPlanTitle(line.slice(2).trim()); break; }
   }
 
   let overallStatus = '';
@@ -174,7 +186,7 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
       continue;
     }
 
-    const stageMatch = line.match(/^###\s+Stage\s+([0-9.]+)\s+—\s+(.+)/);
+    const stageMatch = line.match(/^#{3,4}\s+Stage\s+([0-9.]+)\s+—\s+(.+)/);
     if (stageMatch) {
       if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stages.push(currentStage); }
       stageLines = [];

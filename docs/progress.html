@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">0%</div>
-      <div class="overall-count">0 / 44 tasks</div>
+      <div class="overall-pct">3%</div>
+      <div class="overall-count">2 / 48 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:0%"></div>
+      <div class="overall-seg-fill" style="width:3%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -429,8 +429,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Session Token + Latency Remediation</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
-        <span class="mini-pct">0%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:3%"></div></div>
+        <span class="mini-pct">3%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -836,7 +836,7 @@ h2.plan-title {
       <h2 class="plan-title">MCP Lifecycle Tools — Opus 4.7 Audit — Master Plan (IA Infrastructure)</h2>
       <a class="plan-doc-link" href="../ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.2</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 10</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -867,6 +867,10 @@ h2.plan-title {
   </div>
 
   
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">1 orchestrators in flight</span></summary>
+    <ul><li>stage-closeout-plan — 4 Tasks (0 shared migration ops + 16 per-Task ops + 1 stage-level status flip = 17 tuples total). Spawn `stage-closeout-apply ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md 9`.</li></ul>
+  </details>
 </div>
 
 <div class="plan-card">
@@ -966,18 +970,18 @@ h2.plan-title {
     </div>
     <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">3%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 14%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-draft" style="width:9%" title="4 Draft"></div><div class="seg seg-pending" style="width:91%" title="40 Pending"></div></div>
-    <span class="seg-count">0 / 44</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:4%" title="2 Done"></div><div class="seg seg-draft" style="width:4%" title="2 Draft"></div><div class="seg seg-pending" style="width:92%" title="44 Pending"></div></div>
+    <span class="seg-count">2 / 48</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 40 Pending</span><span class="chip chip-total">📋 44 Total</span>
+    <span class="chip chip-done">✅ 2 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 44 Pending</span><span class="chip chip-total">📋 48 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -986,7 +990,7 @@ h2.plan-title {
     <span class="ctx-arrow">›</span>
     <span class="ctx-stage">Stage 1.1 · Baseline measurement (gating)</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Author `tools/scripts/agent-telemetry/baseline-collect.sh` (new dir): reads `DEBUG_MCP_COMPUTE` stderr + PostToolUse hook stdout; appends JSONL to `.claude/telemetry/{session-id}.jsonl` with fields `t">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Baseline collect script</span></span>
+    <span class="ctx-task" title="Execute ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file` lifecycle seams) with `baseline-collect.sh` active. Aggregate raw JSONL to `tools/scripts/agent-telemetry/baseline-summ">🎯 <span class="task-id">T1.1.3</span> <span class="task-name">Baseline collection run</span></span>
   </div>
 
   <div class="phase-row">

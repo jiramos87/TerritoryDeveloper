@@ -1,10 +1,12 @@
 # Session Token + Latency Remediation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.1
+> **Last updated:** 2026-04-20
+>
+> **Status:** In Progress — Step 1 / Stage 1.2
 >
 > **Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.
 >
-> **Exploration source:** `docs/session-token-latency-audit-exploration.md` (`## Design Expansion — Post-M8 Authoring Shape` = ground truth; first `## Design Expansion` governs standalone Theme-0-r1 issues only).
+> **Exploration source:** `docs/session-token-latency-audit-exploration.md` (`## Design Expansion — Post-M8 Authoring Shape` = ground truth; first `## Design Expansion` governs standalone Theme-0-r1 issues only); `docs/session-token-latency-post-mvp-extensions.md` (§4 Stage 3.3 + §5 pre-authored specs = extension source for Step 5).
 >
 > **Locked decisions (do not reopen in this plan):**
 > - Approach B two-pass: this orchestrator covers Themes A/C/D/E/F + Stage 1 B1+B3+B7 bundle; Theme B MCP-surface remainder via `/master-plan-extend` against MCP plan.
@@ -13,11 +15,13 @@
 > - Post-Stage 1.3 = one telemetry sweep only (Q4 lock).
 > - A1/A2/C1/C2 must run **after** lifecycle-refactor Stage 10 T10.2 + T10.4 land.
 > - F1 superseded by lifecycle-refactor Stage 10 T10.3 (runtime cacheable bundle); diffability angle demoted to Open Q in exploration doc.
+> - Step 5 (D5 context pack) extension: PreCompact hook shell-only (no `claude -p` subprocess); pack gitignored (session-ephemeral); size cap 300 lines; freshness gate 24 h fixed; model-backed synthesis (`/pack-context`) explicitly out of scope. Semantic placement = Stage 3.3, filed as Step 5 per skill append-only contract — human reviewer may relocate post-apply.
 >
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
 >
 > **Read first if landing cold:**
 > - `docs/session-token-latency-audit-exploration.md` — full design + architecture + examples. `## Design Expansion — Post-M8 Authoring Shape` is ground truth.
+> - `docs/session-token-latency-post-mvp-extensions.md` — Stage 3.3 (D5) synthesized context pack extension source; §4 Stage block + §5 pre-authored §Plan Author content for Step 5.
 > - `docs/ai-mechanics-audit-2026-04-19.md` — source audit; item ids (B1–B9, C1–C3, D1–D4, E1–E3, F1–F7) traceable here.
 > - `ia/projects/lifecycle-refactor-master-plan.md` — Stage 10 T10.2 + T10.4 = pre-conditions for Step 2.
 > - `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — Theme B MCP-surface extension lands here; B1 server-split decision (Stage 1.2) must precede that extension's B4 dist-build task.
@@ -35,9 +39,9 @@
 
 ### Step 1 — Token-economy baseline + MCP surface pruning
 
-**Status:** In Progress — Stage 1.1
+**Status:** In Progress — Stage 1.2
 
-**Backlog state (Step 1):** 4 filed (TECH-510, TECH-511, TECH-512, TECH-513)
+**Backlog state (Step 1):** 8 filed (TECH-510, TECH-511, TECH-512, TECH-513, TECH-524, TECH-525, TECH-526, TECH-527)
 
 **Objectives:** Establish a durable telemetry baseline (aggregate p50/p95/p99 for session input tokens + cache metrics + hook latency) that gates all subsequent Steps. Ship the three independent surface-pruning items from Theme B that do not require the T10.2 stable-block: B1 MCP server split (IA-core vs Unity-bridge), B3 per-agent tool-allowlist narrowing, and B7-extended session-level harness. Close with a single post-Stage-1.3 telemetry sweep providing per-theme attribution.
 
@@ -68,7 +72,7 @@
 
 #### Stage 1.1 — Baseline measurement (gating)
 
-**Status:** In Progress
+**Status:** Final
 
 **Objectives:** Author telemetry collection tooling and run ≥10 representative sessions to produce the aggregate baseline floor that gates Stage 1.2 entry. No per-theme attribution at this stage — single aggregate only.
 
@@ -81,8 +85,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Telemetry tooling: author baseline-collect.sh + schema validator script.
-- [ ] Phase 2 — Collection run: execute ≥10 sessions; aggregate + commit baseline-summary.json.
+- [x] Phase 1 — Telemetry tooling: author baseline-collect.sh + schema validator script.
+- [x] Phase 2 — Collection run: execute ≥10 sessions; aggregate + commit baseline-summary.json.
 
 **Tasks:**
 
@@ -90,8 +94,8 @@
 |---|---|---|---|---|---|
 | T1.1.1 | Baseline collect script | 1 | **TECH-510** | Done | Author `tools/scripts/agent-telemetry/baseline-collect.sh` (new dir): reads `DEBUG_MCP_COMPUTE` stderr + PostToolUse hook stdout; appends JSONL to `.claude/telemetry/{session-id}.jsonl` with fields `ts`, `session_id`, `total_input_tokens`, `cache_read_tokens`, `cache_write_tokens`, `mcp_cold_start_ms`, `hook_fork_count`, `hook_fork_total_ms`. Update `.gitignore`: `.claude/telemetry/*.jsonl` excluded, `*-summary.json` tracked. |
 | T1.1.2 | Telemetry schema validator | 1 | **TECH-511** | Done | Author `npm run validate:telemetry-schema` in `package.json` `scripts`: reads any `.claude/telemetry/*.jsonl` sample; asserts all 8 required fields present + typed correctly; exits non-zero on schema mismatch. Wire into `validate:all` composition in root `package.json`. |
-| T1.1.3 | Baseline collection run | 2 | **TECH-512** | Draft | Execute ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file` lifecycle seams) with `baseline-collect.sh` active. Aggregate raw JSONL to `tools/scripts/agent-telemetry/baseline-summary.json` (p50/p95/p99 per metric); commit. No per-theme attribution — single aggregate floor only. |
-| T1.1.4 | Gate validation + provenance | 2 | **TECH-513** | Draft | Validate `baseline-summary.json` schema via `npm run validate:telemetry-schema`; assert all 6 metric keys present. Append measurement provenance (session count, date range, model, seam mix) to `docs/session-token-latency-audit-exploration.md` §Provenance. Confirm `npm run validate:all` green. Stage 1.2 entry conditional on this task Done. |
+| T1.1.3 | Baseline collection run | 2 | **TECH-512** | Done | Execute ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file` lifecycle seams) with `baseline-collect.sh` active. Aggregate raw JSONL to `tools/scripts/agent-telemetry/baseline-summary.json` (p50/p95/p99 per metric); commit. No per-theme attribution — single aggregate floor only. |
+| T1.1.4 | Gate validation + provenance | 2 | **TECH-513** | Done | Validate `baseline-summary.json` schema via `npm run validate:telemetry-schema`; assert all 6 metric keys present. Append measurement provenance (session count, date range, model, seam mix) to `docs/session-token-latency-audit-exploration.md` §Provenance. Confirm `npm run validate:all` green. Stage 1.2 entry conditional on this task Done. |
 
 ### §Stage File Plan
 
@@ -380,7 +384,7 @@
 
 #### Stage 1.2 — MCP server split (B1)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
 
 **Objectives:** Extract Unity-bridge + compute tools from the single `territory-ia` MCP server into a dedicated `territory-ia-bridge` server behind a feature flag. IA-authoring sessions load the lean core; verify/implement stages opt-in to the bridge. Flag default off in this Stage; flip default in Stage 1.3 post-sweep.
 
@@ -401,10 +405,176 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Extract IA-core + bridge servers | 1 | _pending_ | _pending_ | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
-| T1.2.2 | .mcp.json split config | 1 | _pending_ | _pending_ | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
-| T1.2.3 | Integration test fixture | 2 | _pending_ | _pending_ | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
-| T1.2.4 | Flag-flip timeline doc | 2 | _pending_ | _pending_ | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
+| T1.2.1 | Extract IA-core + bridge servers | 1 | **TECH-524** | Draft | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
+| T1.2.2 | .mcp.json split config | 1 | **TECH-525** | Draft | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
+| T1.2.3 | Integration test fixture | 2 | **TECH-526** | Draft | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
+| T1.2.4 | Flag-flip timeline doc | 2 | **TECH-527** | Draft | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: ""
+  task_key: "T1.2.1"
+  title: "Extract IA-core + bridge servers"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    In tools/mcp-ia-server/src/: author index-ia.ts registering all IA-authoring tools
+    (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize
+    surfaces); author index-bridge.ts registering Unity-bridge + compute tools (14 tools:
+    unity_bridge_command, unity_bridge_get, unity_bridge_lease, unity_compile,
+    unity_callers_of, unity_subscribers_of, findobjectoftype_scan, city_metrics_query,
+    desirability_top_cells, geography_init_params_validate, grid_distance,
+    growth_ring_classify, isometric_world_to_grid, pathfinding_cost_preview). Original
+    index.ts retained as backward-compat default importing both. Add MCP_SPLIT_SERVERS env
+    check to index.ts: when =1, index-ia.ts standalone path loads. Foundation for B1
+    server split — T1.2.2/T1.2.3/T1.2.4 consume.
+  depends_on: []
+  related:
+    - "T1.2.2"
+    - "T1.2.3"
+    - "T1.2.4"
+  stub_body:
+    summary: |
+      Extract single territory-ia MCP server into IA-core + bridge dual-server shape behind
+      MCP_SPLIT_SERVERS feature flag. IA-authoring sessions load lean core; verify/implement
+      stages opt-in to bridge. Flag default off in this Stage; flip in Stage 1.3 post-sweep.
+    goals: |
+      - New file tools/mcp-ia-server/src/index-ia.ts registers ≥22 IA-authoring tools.
+      - New file tools/mcp-ia-server/src/index-bridge.ts registers 14 Unity-bridge + compute tools.
+      - index.ts retains backward-compat default; importing both server modules.
+      - MCP_SPLIT_SERVERS env check selects standalone path when =1.
+    systems_map: |
+      New: tools/mcp-ia-server/src/index-ia.ts.
+      New: tools/mcp-ia-server/src/index-bridge.ts.
+      Touches: tools/mcp-ia-server/src/index.ts (env-check + dual-import).
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 1 — Server extraction.
+      1. Inventory current index.ts tool registrations (≥36 total).
+      2. Bucket tools: IA-authoring (backlog/router/glossary/spec/rules/invariants/journal/reserve/materialize) vs Unity-bridge + compute (14).
+      3. Author index-ia.ts: import shared registration helpers + register IA-authoring tools.
+      4. Author index-bridge.ts: register the 14 bridge tools.
+      5. Edit index.ts: add MCP_SPLIT_SERVERS env check; default path imports both; =1 path loads index-ia.ts only.
+      6. Run npm run validate:all.
+```
+
+```yaml
+- reserved_id: ""
+  task_key: "T1.2.2"
+  title: ".mcp.json split config"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Add territory-ia-bridge entry to .mcp.json pointing to index-bridge.ts; add
+    "MCP_SPLIT_SERVERS": "0" to existing territory-ia env block (alongside existing
+    DEBUG_MCP_COMPUTE). Document MCP_SPLIT_SERVERS=1 flag semantics in
+    docs/mcp-ia-server.md (new §Server split architecture section). Activates B1 dual-server
+    surface for opt-in consumption.
+  depends_on: []
+  related:
+    - "T1.2.1"
+    - "T1.2.3"
+    - "T1.2.4"
+  stub_body:
+    summary: |
+      Wire dual-server config in .mcp.json: register territory-ia-bridge alongside existing
+      territory-ia entry; default flag off. Document flag semantics + flip timeline in
+      docs/mcp-ia-server.md.
+    goals: |
+      - .mcp.json carries territory-ia-bridge server entry pointing to index-bridge.ts.
+      - territory-ia env block carries MCP_SPLIT_SERVERS=0 default.
+      - docs/mcp-ia-server.md gains §Server split architecture section documenting flag.
+      - npm run validate:all green.
+    systems_map: |
+      Touches: .mcp.json (root).
+      Touches: docs/mcp-ia-server.md (new §Server split architecture section).
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 1 — Config + docs.
+      1. Edit .mcp.json: add territory-ia-bridge server block (mirrors territory-ia shape, command targets index-bridge.ts).
+      2. Edit territory-ia env block: add "MCP_SPLIT_SERVERS": "0" alongside DEBUG_MCP_COMPUTE.
+      3. Author docs/mcp-ia-server.md §Server split architecture: rationale + flag semantics + flip timeline pointer (Stage 1.3 sweep).
+      4. Run npm run validate:all.
+```
+
+```yaml
+- reserved_id: ""
+  task_key: "T1.2.3"
+  title: "Integration test fixture"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Author tools/mcp-ia-server/tests/server-split.test.ts: assert MCP_SPLIT_SERVERS=1 +
+    design-explore-style dispatch → tools/list response excludes unity_bridge_command;
+    assert spec-implementer-style dispatch with bridge server prefix declared → bridge
+    tools present. Add npm run test:mcp-split script to package.json. Locks B1 split
+    semantics behind a CI gate.
+  depends_on: []
+  related:
+    - "T1.2.1"
+    - "T1.2.2"
+    - "T1.2.4"
+  stub_body:
+    summary: |
+      Ship integration test asserting B1 server-split semantics. Two dispatches: lean
+      IA-core path excludes bridge tools; bridge-prefix path exposes them. Wired via
+      npm run test:mcp-split.
+    goals: |
+      - New file tools/mcp-ia-server/tests/server-split.test.ts.
+      - Test asserts MCP_SPLIT_SERVERS=1 + IA-core dispatch hides 14 bridge tools.
+      - Test asserts bridge-prefix dispatch exposes 14 bridge tools.
+      - package.json scripts gain test:mcp-split entry.
+    systems_map: |
+      New: tools/mcp-ia-server/tests/server-split.test.ts.
+      Touches: package.json (scripts.test:mcp-split).
+      Reads: tools/mcp-ia-server/src/index-ia.ts + index-bridge.ts (T1.2.1 output).
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 2 — Integration test.
+      1. Author server-split.test.ts: spawn server with MCP_SPLIT_SERVERS=1; query tools/list; assert bridge tools absent.
+      2. Add bridge-prefix branch: query tools/list with bridge config; assert 14 bridge tools present.
+      3. Add test:mcp-split script to package.json.
+      4. Run npm run test:mcp-split locally; confirm green.
+      5. Run npm run validate:all.
+```
+
+```yaml
+- reserved_id: ""
+  task_key: "T1.2.4"
+  title: "Flag-flip timeline doc"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Document MCP_SPLIT_SERVERS flag-flip timeline in Stage 1.3 header (flip from 0 to 1
+    after post-stage sweep confirms correctness per NB-6 resolution). Update
+    docs/session-token-latency-audit-exploration.md §Open questions to mark B1 primary
+    decision closed. Closes Stage 1.2 paper trail.
+  depends_on: []
+  related:
+    - "T1.2.1"
+    - "T1.2.2"
+    - "T1.2.3"
+  stub_body:
+    summary: |
+      Doc-only task: cross-reference flag-flip timeline in Stage 1.3 header + close NB-6
+      open question on B1 in exploration doc. No code touched.
+    goals: |
+      - Stage 1.3 header in master plan carries MCP_SPLIT_SERVERS flip timeline note.
+      - docs/session-token-latency-audit-exploration.md §Open questions B1 entry marked Closed.
+      - npm run validate:all green.
+    systems_map: |
+      Touches: ia/projects/session-token-latency-master-plan.md (Stage 1.3 header).
+      Touches: docs/session-token-latency-audit-exploration.md (§Open questions).
+      No code / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 2 — Doc closeout.
+      1. Edit Stage 1.3 header: add inline note pointing to MCP_SPLIT_SERVERS flip step (T1.3.6).
+      2. Edit exploration §Open questions: flip B1 row to Closed with resolution pointer (Stage 1.2 + Stage 1.3 sweep).
+      3. Run npm run validate:all.
+```
 
 ---
 
@@ -784,6 +954,281 @@
 | T4.3.2 | skill_for_task integration test | 1 | _pending_ | _pending_ | Author `tools/mcp-ia-server/tests/skill-for-task.test.ts`: assert `skill_for_task(["implement", "spec"], "implement")` returns path containing `project-spec-implement`; assert `skill_for_task(["stage", "file"], "stage-file")` returns path containing `stage-file-plan`. Add `npm run test:skill-for-task`. `npm run validate:all`. |
 | T4.3.3 | F3 tracking issue | 2 | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F3 harness-level caveman enforcement (PreCompletion hook)`: notes that `output-style: caveman` frontmatter in skill files requires `PreCompletion` hook support from Claude Code harness; links to `docs/session-token-latency-audit-exploration.md` §F3; blocked until Anthropic harness team confirms `PreCompletion` semantics. Zero code change. Link filed issue from exploration doc §Open questions Q3. |
 | T4.3.4 | F7 tracking issue | 2 | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F7 defer_loading: true MCP rollout`: monitors Claude Code release notes for `defer_loading: true` per-tool support; links to exploration §F7 + audit source; antidote to B1 two-server split when harness supports per-tool deferred loading. Zero code change until harness confirms. Link filed issue from exploration §Open questions. |
+
+---
+
+### Step 5 — Synthesized context pack (D5)
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Backlog state (Step 5):** 0 filed
+
+**Objectives:** Extend compact-survival from Stage 3.1's last-3-tools signal into a full synthesized context pack written on PreCompact event and re-injected on SessionStart. Agents resuming after `/compact` recover active focus + surfaces + recent decisions + open questions from `.claude/context-pack.md` without re-reading source files. Hook stays shell-only (no `claude -p` subprocess) to keep compact path fast (<200 ms) and deterministic. Semantic placement = Stage 3.3 of Step 3; filed here as Step 5 per skill append-only contract — human reviewer may relocate block post-apply.
+
+**Pre-conditions:** Step 3 Stage 3.1 T3.1.2 (`.claude/runtime-state.json` skeleton) + T3.1.3 (`compact-summary.sh` Stop/PostCompact hook) must be Done before Step 5 Stage 5.1 starts. Stage 4.1 T4.1.1 (`.claude/tool-usage.jsonl`) = soft dependency — optional `Recent memoized calls` section omitted silently if absent.
+
+**Exit criteria:**
+
+- `tools/scripts/claude-hooks/context-pack.sh` (new) executable; emits `.claude/context-pack.md` per §2 schema of extensions doc (Active focus + Relevant surfaces + Recent decisions + Open questions + Last tool outputs + Loaded context sources).
+- `.claude/settings.json` hooks array gains PreCompact entry invoking `context-pack.sh`.
+- `.claude/context-pack.md` session-ephemeral, gitignored.
+- Size cap 300 lines enforced via awk at block boundaries (Recent decisions drop first, then Open questions; Relevant surfaces never truncated).
+- `tools/scripts/claude-hooks/session-start-prewarm.sh` extended to cat pack content after deterministic block + `---` separator, gated by file existence + 24 h freshness.
+- Stale pack (>24 h) → stderr warning, no stdout emission. Missing pack → silent.
+- Manual re-orientation integration test passes: session → 2 Read + 2 Edit → `/compact` → resume → agent cites active task + stage + ≥2 relevant surfaces with zero Read calls on source files before first answer.
+- `docs/agent-led-verification-policy.md` §Session continuity extended with pack re-injection contract (schema, freshness gate, truncation policy).
+- `npm run validate:all` green.
+
+**Art:** None.
+
+**Relevant surfaces (load when step opens):**
+- `docs/session-token-latency-post-mvp-extensions.md` §1–§4 (extension rationale + schema + Stage header) + §5 (pre-authored §Audit Notes / §Examples / §Test Blueprint / §Acceptance per task).
+- `docs/session-token-latency-audit-exploration.md` §D4 — compact-survival origin row.
+- `tools/scripts/claude-hooks/session-start-prewarm.sh` (exists) — re-injection extension target.
+- `tools/scripts/claude-hooks/compact-summary.sh` (new, Stage 3.1 T3.1.3) — sibling Stop/PostCompact hook; `context-pack.sh` is PreCompact counterpart.
+- `tools/scripts/claude-hooks/context-pack.sh` (new) — primary deliverable.
+- `.claude/runtime-state.json` (new, Stage 3.1 T3.1.2) — primary digest input.
+- `.claude/settings.json` (exists) — PreCompact hook entry addition.
+- `.claude/telemetry/{session-id}.jsonl` (exists post-Stage 1) — secondary digest input.
+- `.claude/tool-usage.jsonl` (new, Stage 4.1 T4.1.1, soft dep) — optional tertiary input.
+- `ia/projects/session-token-latency-master-plan.md` (this file) — Stage block regex parser target.
+- `docs/agent-led-verification-policy.md` (exists) — §Session continuity re-injection contract destination.
+- `.gitignore` (exists) — ephemeral marker addition.
+- Prior step outputs: Step 4 (`runtime-state.json` full schema + `tool-usage.jsonl` from Stage 4.1) + Step 3 (compact-summary.sh sibling hook + §Session continuity doc sub-section from T3.1.4).
+
+---
+
+#### Stage 5.1 — PreCompact digest + SessionStart re-injection
+
+**Status:** Draft (tasks filed — TECH-520, TECH-521, TECH-522, TECH-523)
+
+**Pre-conditions:** Stage 3.1 T3.1.2 + T3.1.3 Done. Stage 4.1 T4.1.1 optional (soft).
+
+**Objectives:** Author `context-pack.sh` on PreCompact event writing `.claude/context-pack.md` per schema; wire into `.claude/settings.json`; extend `session-start-prewarm.sh` to re-inject pack content after deterministic block (volatile suffix zone — preserves Stage 3.1 D2 cacheable prefix); enforce 300-line cap + 24 h freshness gate. Land manual re-orientation integration test evidence + docs update.
+
+**Exit:**
+
+- `tools/scripts/claude-hooks/context-pack.sh` exists, executable, shebang `#!/usr/bin/env bash`, `set -uo pipefail` (no `-e` — graceful partial failure). Reads `.claude/runtime-state.json` + active plan Stage block + telemetry jsonl; emits schema per extensions doc §2.
+- `.claude/settings.json` hooks array contains PreCompact entry running `context-pack.sh`.
+- Size cap 300 lines enforced via awk block-boundary truncation; Relevant surfaces never truncated; truncation marker `_[...truncated N oldest decisions]_` emitted when cap triggers.
+- `session-start-prewarm.sh` cats pack content after deterministic block + `---` separator, gated on `-f .claude/context-pack.md` AND pack `ts` header <24 h old.
+- Deterministic prefix byte-stable across runs (verified by diff of two runs with different pack content).
+- `.claude/context-pack.md` added to `.gitignore`.
+- Manual re-orientation test passes per `docs/agent-led-verification-policy.md` §Session continuity protocol; evidence linked (screenshot + tool-call log) in task Verification block.
+- `docs/agent-led-verification-policy.md` §Session continuity extended with ≥3-line "Context pack re-injection" paragraph covering schema, freshness gate, truncation policy.
+- `npm run validate:all` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Digest script authoring (schema + runtime-state + telemetry + size cap).
+- [ ] Phase 2 — Re-injection + integration test + docs.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T5.1.1 | PreCompact digest script — schema + runtime-state | 1 | **TECH-520** | Draft | Author `tools/scripts/claude-hooks/context-pack.sh`: on PreCompact event reads `.claude/runtime-state.json` → extracts `active_task_id`, `active_stage`, `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; parses active master plan Stage block via same narrow regex `/ship-stage` Phase 0 uses (Stage name + Exit criteria first 5 bullets + Relevant surfaces first 20 lines); emits `.claude/context-pack.md` per extensions doc §2 schema (Active focus + Relevant surfaces + Loaded context sources sections). Add PreCompact hook entry to `.claude/settings.json` hooks array. Add `.claude/context-pack.md` to `.gitignore`. All `jq` calls guarded with `\|\| echo "unknown"`; exit 0 on partial failure; `# Context pack — SCHEMA MISMATCH` marker on malformed runtime-state.json. No `claude -p` subprocess. |
+| T5.1.2 | Digest script — telemetry + tool-usage + size cap | 1 | **TECH-521** | Draft | Extend `context-pack.sh`: append `Last tool outputs (pointers only)` section from `.claude/telemetry/{session-id}.jsonl` (last 10 rows via `tail -10 \| jq -c '{name, exit, ts}'`); if `.claude/tool-usage.jsonl` exists (Stage 4.1 T4.1.1), append `Recent memoized calls` section with top 10 `{tool_name, args_hash_short, result_hash_short, ts}`. Enforce 300-line cap via awk truncation at Recent decisions / Open questions block boundaries (blank-line delimited, not mid-line): drop oldest Recent decisions block first, then oldest Open questions. Emit `_[...truncated N oldest decisions]_` marker when truncation fires. Relevant surfaces never truncated. Soft-guard missing files with `[ -f ... ]` checks. |
+| T5.1.3 | SessionStart re-injection + deterministic preamble compat | 2 | **TECH-522** | Draft | Extend `tools/scripts/claude-hooks/session-start-prewarm.sh` (Stage 3.1 T3.1.1): after deterministic preamble block + `---` separator, if `-f .claude/context-pack.md` AND pack `ts` header <24 h old, then `cat .claude/context-pack.md`. Stale pack (>24 h) → stderr warning `stale context pack ({age_hours} h old); regenerate via /pack-context`, no stdout emission. Missing pack → silent, no stdout or stderr. Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback). Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix cacheability — verify via diff of two runs. Document re-injection contract in `docs/agent-led-verification-policy.md` §Session continuity (extend sub-section first added by Stage 3.1 T3.1.4). |
+| T5.1.4 | Re-orientation integration test + validate:all | 2 | **TECH-523** | Draft | Manual integration test per protocol in extensions doc §5 T3.3.4 §Examples: start session on filed task → 2 Read + 2 Edit on 4 distinct source files → `/compact` → inspect `.claude/context-pack.md` (Active focus populated; Relevant surfaces lists all 4 files; ≥1 Recent decision; Last tool outputs lists last 4 actions); resume session (new terminal) → verify SessionStart preamble includes pack content; ask agent "what are you working on?" → confirm model cites active task + stage + ≥2 relevant surfaces with **zero** Read calls on source files before first answer. Screenshot + tool-call log evidence linked in task Verification block. `docs/agent-led-verification-policy.md` §Session continuity updated with full re-injection contract (≥3-line paragraph). `npm run validate:all` green. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: "TECH-520"
+  task_key: "T5.1.1"
+  title: "PreCompact digest script — schema + runtime-state"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Author tools/scripts/claude-hooks/context-pack.sh. On PreCompact event reads
+    .claude/runtime-state.json (active_task_id, active_stage, queued_test_scenario_id,
+    last_verify_exit_code, last_bridge_preflight_exit_code); parses active master plan
+    Stage block via narrow regex; emits .claude/context-pack.md per extensions doc §2
+    schema (Active focus + Relevant surfaces + Loaded context sources). Wire PreCompact
+    hook entry into .claude/settings.json. Gitignore pack. No claude -p subprocess.
+    Graceful partial failure: jq calls guarded with `|| echo "unknown"`, exit 0,
+    SCHEMA MISMATCH marker on malformed runtime-state.json.
+  depends_on: []
+  related:
+    - "T5.1.2"
+    - "T5.1.3"
+    - "T5.1.4"
+  stub_body:
+    summary: |
+      PreCompact hook script emits .claude/context-pack.md digesting runtime-state + active
+      Stage block. Core deliverable of Stage 5.1 Phase 1. Shell-only, <200 ms, deterministic.
+      Sibling to Stage 3.1 compact-summary.sh (Stop/PostCompact counterpart).
+    goals: |
+      - tools/scripts/claude-hooks/context-pack.sh executable, shebang bash, set -uo pipefail.
+      - Reads .claude/runtime-state.json + active Stage block via same narrow regex /ship-stage Phase 0 uses.
+      - Emits §2-schema sections: Active focus, Relevant surfaces, Loaded context sources.
+      - PreCompact hook entry wired in .claude/settings.json.
+      - Pack gitignored (session-ephemeral).
+      - Graceful partial failure: exit 0 on malformed inputs; SCHEMA MISMATCH marker present.
+    systems_map: |
+      New: tools/scripts/claude-hooks/context-pack.sh.
+      Touches: .claude/settings.json (hooks array), .gitignore.
+      Reads: .claude/runtime-state.json (Stage 3.1 T3.1.2), active master plan Stage block,
+      ia/projects/session-token-latency-master-plan.md.
+      Writes: .claude/context-pack.md (gitignored).
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 1 — Digest script + hook wire.
+      1. Draft context-pack.sh skeleton (shebang, set -uo pipefail, schema header emit).
+      2. Parse runtime-state.json via jq; extract 5 keys; fallback to "unknown" per key.
+      3. Regex-extract active Stage block from master plan (Stage header + Exit criteria first 5 + Relevant surfaces first 20 lines).
+      4. Emit §2 schema sections to .claude/context-pack.md.
+      5. Add PreCompact hook entry to .claude/settings.json.
+      6. Add .claude/context-pack.md to .gitignore.
+      7. Smoke-test: synthetic runtime-state.json + malformed variant both exit 0.
+      8. npm run validate:all.
+```
+
+```yaml
+- reserved_id: "TECH-521"
+  task_key: "T5.1.2"
+  title: "Digest script — telemetry + tool-usage + size cap"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Extend context-pack.sh with telemetry tail (last 10 rows of
+    .claude/telemetry/{session-id}.jsonl → Last tool outputs section) and optional
+    tool-usage block (Stage 4.1 T4.1.1 soft dep → Recent memoized calls, top 10).
+    Enforce 300-line size cap via awk truncation at Recent decisions / Open questions
+    block boundaries (blank-line delimited); drop oldest Recent decisions first, then
+    oldest Open questions; Relevant surfaces never truncated. Emit truncation marker
+    `_[...truncated N oldest decisions]_`. Soft-guard missing files via `[ -f ... ]`.
+  depends_on: []
+  related:
+    - "T5.1.1"
+    - "T5.1.3"
+    - "T5.1.4"
+  stub_body:
+    summary: |
+      Second half of Phase 1 digest authoring. Adds telemetry + memoization sections and
+      enforces 300-line cap with block-boundary truncation. Keeps Relevant surfaces
+      untouched (hard invariant — cited surfaces must always survive).
+    goals: |
+      - Last tool outputs section populated from .claude/telemetry/{session-id}.jsonl tail -10.
+      - Recent memoized calls section populated from .claude/tool-usage.jsonl if present; omitted silently if absent.
+      - 300-line cap enforced via awk at blank-line block boundaries (no mid-line cuts).
+      - Drop order: oldest Recent decisions → oldest Open questions.
+      - Relevant surfaces block never truncated.
+      - Truncation marker emitted when cap fires.
+    systems_map: |
+      Touches: tools/scripts/claude-hooks/context-pack.sh (extends T5.1.1 deliverable).
+      Reads: .claude/telemetry/{session-id}.jsonl (Stage 1 output), .claude/tool-usage.jsonl (Stage 4.1 soft dep).
+      Writes: .claude/context-pack.md.
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 1 — Telemetry + cap.
+      1. Append Last tool outputs section via tail -10 + jq -c pipe.
+      2. Guard tool-usage.jsonl with [ -f ... ]; if present, jq top-10 {tool_name, args_hash_short, result_hash_short, ts}.
+      3. Author awk block-boundary truncation pass: count lines; if >300, drop oldest Recent decisions block, recount, repeat with Open questions.
+      4. Emit `_[...truncated N oldest decisions]_` marker on drop.
+      5. Smoke-test: oversized synthetic pack → truncation fires; Relevant surfaces intact.
+      6. npm run validate:all.
+```
+
+```yaml
+- reserved_id: "TECH-522"
+  task_key: "T5.1.3"
+  title: "SessionStart re-injection + deterministic preamble compat"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Extend tools/scripts/claude-hooks/session-start-prewarm.sh (Stage 3.1 T3.1.1 output):
+    after deterministic preamble block + `---` separator, if
+    -f .claude/context-pack.md AND pack ts header <24 h old, cat pack content.
+    Stale pack (>24 h) → stderr warning, no stdout. Missing pack → silent.
+    Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback).
+    Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix
+    cacheability — verify via diff of two runs. Extend
+    docs/agent-led-verification-policy.md §Session continuity sub-section first added
+    by Stage 3.1 T3.1.4.
+  depends_on: []
+  related:
+    - "T5.1.1"
+    - "T5.1.2"
+    - "T5.1.4"
+  stub_body:
+    summary: |
+      Phase 2 re-injection half. Extends session-start-prewarm.sh to cat pack content in
+      volatile suffix zone, preserving Stage 3.1 D2 cacheable deterministic prefix.
+      Implements 24 h freshness gate + graceful absence.
+    goals: |
+      - session-start-prewarm.sh cats .claude/context-pack.md after deterministic block + `---` separator.
+      - Existence gate (-f) + 24 h freshness gate on pack ts header.
+      - Stale pack → stderr warning, no stdout.
+      - Missing pack → silent (no stderr, no stdout).
+      - BSD + GNU date parsing both supported.
+      - Deterministic prefix byte-stable across runs (diff-verified).
+      - §Session continuity doc sub-section extended with re-injection contract.
+    systems_map: |
+      Touches: tools/scripts/claude-hooks/session-start-prewarm.sh (Stage 3.1 T3.1.1 output).
+      Touches: docs/agent-led-verification-policy.md §Session continuity.
+      Reads: .claude/context-pack.md.
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 2 — Re-injection.
+      1. Append conditional block to session-start-prewarm.sh: `-f` + ts-age check.
+      2. Portable age-compute: try `date -jf` (BSD) first, fallback `date -d` (GNU).
+      3. 24 h gate → cat; stale → stderr warning line, no stdout.
+      4. Verify deterministic prefix byte-stable: run twice with different pack content; diff preamble up to `---` separator (must be identical).
+      5. Extend docs/agent-led-verification-policy.md §Session continuity with re-injection contract.
+      6. npm run validate:all.
+```
+
+```yaml
+- reserved_id: "TECH-523"
+  task_key: "T5.1.4"
+  title: "Re-orientation integration test + validate:all"
+  priority: "high"
+  issue_type: "TECH"
+  notes: |
+    Manual integration test per extensions doc §5 T3.3.4 §Examples protocol.
+    Start session on filed task → 2 Read + 2 Edit on 4 distinct source files →
+    /compact → inspect .claude/context-pack.md (Active focus populated; 4 Relevant
+    surfaces listed; ≥1 Recent decision; Last tool outputs has 4 actions) → resume
+    session (new terminal) → verify SessionStart preamble includes pack content →
+    ask "what are you working on?" → confirm model cites active task + stage +
+    ≥2 relevant surfaces with zero Read calls before first answer. Screenshot +
+    tool-call log linked in Verification block. Extend
+    docs/agent-led-verification-policy.md §Session continuity with full re-injection
+    contract (≥3-line paragraph). npm run validate:all green.
+  depends_on: []
+  related:
+    - "T5.1.1"
+    - "T5.1.2"
+    - "T5.1.3"
+  stub_body:
+    summary: |
+      Final gating task for Stage 5.1. Validates end-to-end re-orientation UX via manual
+      test protocol. Evidence-linked Verification. Docs extended. validate:all green
+      unblocks Stage 5.1 closeout.
+    goals: |
+      - Manual integration test executed per extensions §5 protocol; evidence captured.
+      - Pack file content verified: Active focus, Relevant surfaces (all 4 files),
+        ≥1 Recent decision, Last tool outputs (4 actions).
+      - Resumed session's SessionStart preamble includes pack content.
+      - Agent cites active task + stage + ≥2 relevant surfaces with zero pre-answer Reads.
+      - docs/agent-led-verification-policy.md §Session continuity has ≥3-line re-injection paragraph.
+      - npm run validate:all green.
+    systems_map: |
+      Touches: docs/agent-led-verification-policy.md §Session continuity.
+      Reads: .claude/context-pack.md, session preamble stdout.
+      No Unity / C# / runtime surface touched.
+    impl_plan_sketch: |
+      Phase 2 — Integration test + docs.
+      1. Run test protocol: 2 Read + 2 Edit → /compact → inspect pack → resume → query agent.
+      2. Capture screenshot + tool-call log; attach to Verification block.
+      3. Extend §Session continuity sub-section with ≥3-line re-injection contract paragraph.
+      4. npm run validate:all green.
+      5. Stage 5.1 closeout unblocked.
+```
 
 ---
 

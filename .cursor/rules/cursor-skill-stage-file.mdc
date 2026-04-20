@@ -1,0 +1,8 @@
+---
+description: "Dispatcher shim. Inspects target Stage task-status counts; routes File mode to stage-file-plan (Opus pair-head) + stage-file-apply (Sonnet pair-tail); routes Compress mode to stage-compress. Preserves skill name so /stage-file command and ship-stage chain continue to work without rewiring (see T7.8 / TECH-475 for full command rewire). Original monolithic body archived at ia/skills/_retired/stage-file-monolith/SKILL.md. Triggers: \"/stage-file {orchestrator-path} Stage 1.2\", \"file stage tasks\", \"bulk create stage issues\", \"create backlog rows for Stage X.Y\", \"bootstrap issues for pending stage tasks\", \"compress stage tasks\", \"merge draft tasks\". Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second."
+alwaysApply: false
+---
+Read and follow: @ia/skills/stage-file/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "stage-file"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

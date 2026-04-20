@@ -1,0 +1,8 @@
+---
+description: "Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work needs a multi-step plan rather than a single BACKLOG issue. Produces `ia/projects/{slug}-master-plan.md` — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL steps fully decomposed into stages → phases → tasks (no skeleton/lazy materialization), tasks seeded as `_pending_` for later `stage-file`. Applies `stage-decompose` Phase 2 rules to every step. Triggers: \"/master-plan-new {path}\", \"turn expanded design into master plan\", \"create orchestrator from exploration\", \"author master plan from design expansion\", \"new multi-step plan from docs/{slug}.md\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/master-plan-new/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "master-plan-new"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

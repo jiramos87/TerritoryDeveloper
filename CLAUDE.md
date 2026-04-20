@@ -12,7 +12,7 @@ Unity 2D isometric city builder with a Markdown-backed Information Architecture 
 
 ## 2. MCP first
 
-Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files. Suggested order: `backlog_issue` (when you have a `BUG-/FEAT-/TECH-/ART-/AUDIO-` id) → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Issue-creation flow: `reserve_backlog_ids` (reserve id before writing yaml) → `backlog_record_validate` (validate yaml before materialize). Structured list queries: `backlog_list`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. The MCP server caches the schema in memory at session start; restart Claude Code (or use the matching CLI script via tsx) after editing tool descriptors. If MCP is unavailable, fall back to `ia/rules/agent-router.md` + targeted file reads.
+Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files **for IA / backlog / spec / glossary questions**. For web/ or tooling code bugs, read CLAUDE.md §6 + the file(s) directly before spawning `Explore` — MCP is not the right surface there. Suggested order: `backlog_issue` (when you have a `BUG-/FEAT-/TECH-/ART-/AUDIO-` id) → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Issue-creation flow: `reserve_backlog_ids` (reserve id before writing yaml) → `backlog_record_validate` (validate yaml before materialize). Structured list queries: `backlog_list`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. The MCP server caches the schema in memory at session start; restart Claude Code (or use the matching CLI script via tsx) after editing tool descriptors. If MCP is unavailable, fall back to `ia/rules/agent-router.md` + targeted file reads.
 
 ## 3. Key files
 
@@ -68,6 +68,8 @@ Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
 Auth gate for `/dashboard*` inherits from `web/proxy.ts` matcher (TECH-358).
 
 **Live dashboard freshness:** `/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate) on Vercel. Push to deployed branch → visible within ~5 min without redeploy. Run `npm run deploy:web` only when instant refresh or code change required.
+
+**Dashboard diagnostic recipe:** When dashboard display diverges from master-plan markdown (wrong stage status, ghost tasks, off counts): (1) read `web/lib/plan-loader.ts` (data source + env gate) + `web/lib/plan-parser.ts` (parse + `deriveHierarchyStatus`); (2) run `cd web && npm run plan-parser:verify` to dump per-plan/per-stage `{status, done/total}` straight from the parser; (3) check the URL for `?status=` / `?plan=` filters (`filterPlans` in `web/app/dashboard/page.tsx` drops tasks per-status before render); (4) regression test adversarial markdown under `web/lib/__tests__/plan-parser.test.ts`. Do NOT spawn `Explore` for this — the files above are the whole surface.
 
 **Caveman-exception boundary:** full English applies only to user-facing rendered text under `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, identifiers, comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
 

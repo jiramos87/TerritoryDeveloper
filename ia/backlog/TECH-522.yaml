@@ -1,0 +1,35 @@
+id: "TECH-522"
+type: "TECH"
+title: "SessionStart re-injection + deterministic preamble compat"
+priority: "high"
+status: open
+section: "Step 5 — Synthesized context pack (D5)"
+spec: "ia/projects/TECH-522.md"
+files: []
+notes: |
+  Extend tools/scripts/claude-hooks/session-start-prewarm.sh (Stage 3.1 T3.1.1 output):
+  after deterministic preamble block + `---` separator, if
+  -f .claude/context-pack.md AND pack ts header <24 h old, cat pack content.
+  Stale pack (>24 h) → stderr warning, no stdout. Missing pack → silent.
+  Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback).
+  Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix
+  cacheability — verify via diff of two runs. Extend
+  docs/agent-led-verification-policy.md §Session continuity sub-section first added
+  by Stage 3.1 T3.1.4.
+acceptance: |
+  - [ ] session-start-prewarm.sh cats .claude/context-pack.md after deterministic block + `---` separator.
+  - [ ] Existence gate (-f) + 24 h freshness gate on pack ts header.
+  - [ ] Stale pack → stderr warning, no stdout.
+  - [ ] Missing pack → silent (no stderr, no stdout).
+  - [ ] BSD + GNU date parsing both supported.
+  - [ ] Deterministic prefix byte-stable across runs (diff-verified).
+  - [ ] §Session continuity doc sub-section extended with re-injection contract.
+  - [ ] npm run validate:all green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-520", "TECH-521", "TECH-523"]
+created: "2026-04-20"
+raw_markdown: |
+  SessionStart re-injection + deterministic preamble compat — Extend session-start-prewarm.sh to cat pack in volatile suffix; 24 h freshness gate; BSD+GNU date compat.
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T5.1.3"

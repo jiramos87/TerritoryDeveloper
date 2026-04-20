@@ -1,0 +1,8 @@
+---
+description: "Sonnet subskill. Given a phase→tasks map from a stage being authored or filed, returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}` and a pause-or-proceed signal. Centralizes the cardinality rule from `ia/rules/project-hierarchy.md` (≥2 tasks/phase, ≤6 soft) so all master-plan authoring + stage-file skills agree on the same gate. Triggers: \"cardinality gate\", \"check phase task counts\", \"cardinality-gate-check subskill\", \"phase cardinality validation\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/cardinality-gate-check/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

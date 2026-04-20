@@ -1,0 +1,77 @@
+---
+description: "Global router that maps user intents to ia/skills SKILL.md playbooks."
+alwaysApply: true
+---
+
+# Cursor Skill Router (Territory Developer)
+
+When user request matches any trigger below:
+
+1. Load the referenced skill file.
+2. Follow all phases in order.
+3. Keep scope minimal to that skill unless user asks broader work.
+
+If a skill has Cursor-specific caveats, read `.cursor/rules/cursor-lifecycle-adapters.mdc`.
+
+## Skill Index
+
+| Trigger phrases (examples) | Skill path | Adapter section |
+| --- | --- | --- |
+| implement project spec, execute project spec, ship spec phases | `ia/skills/project-spec-implement/SKILL.md` | `project-spec-implement` |
+| verify, verify-loop, run validation block | `ia/skills/verify-loop/SKILL.md` | `verify-loop` |
+| verify in test mode, scenario batch loop, /testmode | `ia/skills/agent-test-mode-verify/SKILL.md` | `agent-test-mode-verify` |
+| bridge preflight, postgres ready for bridge | `ia/skills/bridge-environment-preflight/SKILL.md` | `bridge-environment-preflight` |
+| get play mode evidence, bridge screenshot, get unity logs | `ia/skills/ide-bridge-evidence/SKILL.md` | `ide-bridge-evidence` |
+| close dev loop, before/after debug context | `ia/skills/close-dev-loop/SKILL.md` | `close-dev-loop` |
+| design explore, expand discovery doc | `ia/skills/design-explore/SKILL.md` | `design-explore` |
+| create master plan from exploration | `ia/skills/master-plan-new/SKILL.md` | `master-plan-new` |
+| extend orchestrator, append new steps | `ia/skills/master-plan-extend/SKILL.md` | `master-plan-extend` |
+| decompose step, expand skeleton step | `ia/skills/stage-decompose/SKILL.md` | `stage-decompose` |
+| stage-file, file pending tasks | `ia/skills/stage-file/SKILL.md` | `stage-file` |
+| create one project issue/spec | `ia/skills/project-new/SKILL.md` | `project-new` |
+| author stage plan sections | `ia/skills/plan-author/SKILL.md` | `plan-author` |
+| plan review, plan fix apply | `ia/skills/plan-review/SKILL.md` | `plan-review` |
+| code review against spec/invariants | `ia/skills/opus-code-review/SKILL.md` | `opus-code-review` |
+| apply code fix tuples | `ia/skills/code-fix-apply/SKILL.md` | `code-fix-apply` |
+| audit stage tasks | `ia/skills/opus-audit/SKILL.md` | `opus-audit` |
+| closeout stage, archive completed specs | `ia/skills/stage-closeout-plan/SKILL.md` | `stage-closeout-plan` |
+| apply closeout plan tuples | `ia/skills/stage-closeout-apply/SKILL.md` | `stage-closeout-apply` |
+| chain ship stage | `ia/skills/ship-stage/SKILL.md` | `ship-stage` |
+| rollout bucket row | `ia/skills/release-rollout/SKILL.md` | `release-rollout` |
+| enumerate rollout tracker | `ia/skills/release-rollout-enumerate/SKILL.md` | `release-rollout-enumerate` |
+| track rollout cell flip | `ia/skills/release-rollout-track/SKILL.md` | `release-rollout-track` |
+| log rollout skill bug | `ia/skills/release-rollout-skill-bug-log/SKILL.md` | `release-rollout-skill-bug-log` |
+| regenerate progress docs | `ia/skills/progress-regen/SKILL.md` | `progress-regen` |
+| compress stage plan | `ia/skills/stage-compress/SKILL.md` | `stage-compress` |
+| check cardinality gates | `ia/skills/cardinality-gate-check/SKILL.md` | `cardinality-gate-check` |
+| load domain context slices | `ia/skills/domain-context-load/SKILL.md` | `domain-context-load` |
+| precheck surface paths | `ia/skills/surface-path-precheck/SKILL.md` | `surface-path-precheck` |
+| verify term anchors | `ia/skills/term-anchor-verify/SKILL.md` | `term-anchor-verify` |
+| rollout row state helper | `ia/skills/rollout-row-state/SKILL.md` | `rollout-row-state` |
+| validate implementation chain | `ia/skills/project-implementation-validation/SKILL.md` | `project-implementation-validation` |
+| kickoff/review project spec | `ia/skills/project-spec-kickoff/SKILL.md` | `project-spec-kickoff` |
+| train skill via changelog retrospective | `ia/skills/skill-train/SKILL.md` | `skill-train` |
+| add HUD row with theme tokens | `ia/skills/ui-hud-row-theme/SKILL.md` | `ui-hud-row-theme` |
+| emit subagent progress markers | `ia/skills/subagent-progress-emit/SKILL.md` | `subagent-progress-emit` |
+| stage file plan tuple authoring | `ia/skills/stage-file-plan/SKILL.md` | `stage-file-plan` |
+| stage file apply tuple execution | `ia/skills/stage-file-apply/SKILL.md` | `stage-file-apply` |
+| plan fix tuple apply | `ia/skills/plan-fix-apply/SKILL.md` | `plan-fix-apply` |
+| project new apply tuples | `ia/skills/project-new-apply/SKILL.md` | `project-new-apply` |
+
+## Caveman Output Default
+
+Apply caveman style in prose outputs by default:
+
+- Short, direct phrases.
+- Drop filler/hedging.
+- Keep code/comments/structured payloads in normal technical English.
+
+Authoritative rule body: `ia/rules/agent-output-caveman.md`.
+
+## Host-Level Don'ts (Cursor does not auto-block these)
+
+- Never run `git push --force` or any force push to protected branches.
+- Never run `git reset --hard` or destructive checkout discard.
+- Never run destructive deletes like `rm -rf ia/`, `rm -rf .claude/`, or root/home paths.
+- Never hand-edit `ia/state/id-counter.json` directly; use `bash tools/scripts/reserve-id.sh`.
+- Never bypass invariant safeguards documented in `ia/rules/invariants.md`.

@@ -1,0 +1,22 @@
+---
+description: "Quick mapping of MCP mutation tools to accepted caller_agent values."
+alwaysApply: true
+---
+
+# MCP Caller-Agent Cheatsheet
+
+Source of truth: `tools/mcp-ia-server/src/auth/caller-allowlist.ts`.
+
+When invoking mutation/authorship tools, always pass `caller_agent`.
+
+| MCP tool | Allowed `caller_agent` values |
+| --- | --- |
+| `orchestrator_task_update` | `stage-file`, `closeout`, `ship-stage`, `release-rollout-track` |
+| `rollout_tracker_flip` | `release-rollout-track`, `release-rollout` |
+| `backlog_record_upsert` | `closeout`, `stage-file`, `project-new`, `ship-stage` |
+| `glossary_row_create` | `spec-kickoff`, `master-plan-new`, `project-new`, `closeout` |
+| `glossary_row_update` | `spec-kickoff`, `master-plan-new`, `project-new`, `closeout` |
+| `spec_section_append` | `spec-kickoff`, `closeout` |
+| `rule_create` | `master-plan-new`, `closeout` |
+
+If tool not listed in allowlist map, caller gate is bypassed (read-only path).

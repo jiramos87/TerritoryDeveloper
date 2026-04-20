@@ -1,0 +1,8 @@
+---
+description: "Sonnet subskill. Given a list of file/directory paths extracted from an Architecture or Component-map block, Globs each path and returns a structured result with `exists` flag and `(new)` marker for non-existent paths. Centralizes the Glob-then-classify loop shared by master-plan-new, master-plan-extend, and stage-decompose so ghost line numbers cannot propagate downstream. Triggers: \"surface path precheck\", \"glob architecture paths\", \"surface-path-precheck subskill\", \"check path existence from architecture block\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/surface-path-precheck/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

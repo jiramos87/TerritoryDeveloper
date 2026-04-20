@@ -92,13 +92,15 @@ export default async function DashboardPage({
   const plans = filterPlans(allPlans, multi)
 
   // Chip value sets from UNFILTERED allPlans
-  const planSlugs   = Array.from(new Set(allPlans.map((p) => toSlug(p.title))))
+  const planOptions = Array.from(
+    new Map(allPlans.map((p) => [toSlug(p.title), p.title])).entries()
+  ).map(([slug, title]) => ({ slug, title }))
   const statusValues = Array.from(
     new Set(allPlans.flatMap((p) => p.allTasks.map((t) => t.status)))
   )
 
-  const planChips: Chip[] = planSlugs.map((slug) => ({
-    label:  slug,
+  const planChips: Chip[] = planOptions.map(({ slug, title }) => ({
+    label:  title,
     active: multi.plan.includes(slug),
     href:   chipHref('plan', slug),
   }))
@@ -137,7 +139,10 @@ export default async function DashboardPage({
         <p className="text-text-muted text-sm">No plans match the current filters.</p>
       ) : (
         plans.map((plan) => {
-          const { completedCount, totalCount, statBarLabel, chartData, stageCounts } = computePlanMetrics(plan)
+          // Filtered metrics drive the task table visibility.
+          // Unfiltered metrics drive progress bars — filter must not distort completion counts.
+          const unfilteredPlan = allPlans.find(p => p.title === plan.title) ?? plan
+          const { completedCount, totalCount, statBarLabel, chartData, stageCounts } = computePlanMetrics(unfilteredPlan)
           return (
           <section key={plan.title} className="space-y-6">
             {/* Plan heading */}

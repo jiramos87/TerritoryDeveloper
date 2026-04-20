@@ -1,0 +1,8 @@
+---
+description: "Use when an umbrella master-plan needs its rollout tracker seeded from the bucket table. Creates `ia/projects/{umbrella-slug}-rollout-tracker.md` with one row per bucket + sibling. Pre-fills cells (a)–(g) based on repo reality at baseline SHA (exploration-doc presence, child master-plan presence, Stage count, BACKLOG row count). Surfaces disagreements between parent docs + repo state to a Disagreements appendix. Does NOT decide scope (umbrella owns). Does NOT create child master-plans (= `/master-plan-new`). Triggers: \"enumerate rollout\", \"seed tracker\", \"release-rollout-enumerate {umbrella}\", \"bootstrap tracker from master plan\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/release-rollout-enumerate/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

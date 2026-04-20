@@ -1,0 +1,8 @@
+---
+description: "Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec paths, MCP package tests, JSON fixtures, IA index drift. Root: npm run validate:all (includes compute-lib build + steps 1–4). Full local chain (Unity/Postgres when applicable): npm run verify:local (alias: verify:post-implementation). Triggers: \"post-implementation validation\", \"run npm checks after backlog work\", \"validate fixtures\", \"IA tools parity\", \"MCP tests\", \"generate:ia-indexes --check\", \"validate:all\", \"verify:local\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/project-implementation-validation/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

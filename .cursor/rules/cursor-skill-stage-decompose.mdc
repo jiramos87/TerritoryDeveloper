@@ -1,0 +1,8 @@
+---
+description: "Expand one skeleton step (Steps 2+ in an existing master plan) into stages → phases → tasks. Source material: step's Exit criteria + Deferred decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections. Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed step into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that). Triggers: \"/stage-decompose {path} Step 2\", \"decompose step 2\", \"expand step skeleton\", \"materialize deferred step\", \"decompose before stage-file\", \"expand Step N in master plan\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/stage-decompose/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

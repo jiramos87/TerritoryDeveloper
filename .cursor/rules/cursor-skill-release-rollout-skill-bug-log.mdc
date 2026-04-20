@@ -1,0 +1,8 @@
+---
+description: "Use when a lifecycle skill (`design-explore`, `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`) misbehaves during rollout — misses a guardrail, misroutes a Phase, fails a pre-condition check, produces invalid output shape. Dual-writes the bug + fix to the per-skill `## Changelog` section (authoritative source) + appends an aggregator row to the tracker's Skill Iteration Log table (rollup, cross-referenced). Does NOT fix the skill (= hand-edit by user or targeted patch via a fresh subagent). Triggers: \"log skill bug\", \"release-rollout-skill-bug-log\", \"skill iteration log entry\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/release-rollout-skill-bug-log/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

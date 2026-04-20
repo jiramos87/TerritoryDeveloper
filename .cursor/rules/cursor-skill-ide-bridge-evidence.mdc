@@ -1,0 +1,8 @@
+---
+description: "Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia unity_bridge_command for issue acceptance or debugging. Requires Postgres agent_bridge_job (migration 0008), DATABASE_URL, and Unity Editor on REPO_ROOT with AgentBridgeCommandRunner. Triggers: \"bridge screenshot\", \"get unity logs from MCP\", \"capture_screenshot include_ui\", \"enter_play_mode\", \"exit_play_mode\", \"get_play_mode_status\", \"get_compilation_status\", \"unity_compile\", \"debug_context_bundle\", \"IDE agent bridge evidence\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ide-bridge-evidence/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

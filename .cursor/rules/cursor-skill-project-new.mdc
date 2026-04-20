@@ -1,0 +1,8 @@
+---
+description: "Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id, row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers: \"/project-new\", \"new backlog issue\", \"create TECH-xx from prompt\", \"bootstrap project spec\", \"add issue to backlog from description\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/project-new/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "project-new"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
