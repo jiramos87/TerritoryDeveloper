@@ -1,0 +1,23 @@
+id: "TECH-546"
+type: "TECH"
+title: "Scene wiring + prefab attach"
+priority: "high"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-546.md"
+files: []
+notes: |
+  Attach `ZoneSService` to Economy / GameManagers GO in main scene prefab; fill Inspector refs; verify fallbacks when refs cleared.
+acceptance: |
+  - [ ] `ZoneSService` attached to appropriate GameObject in main scene / prefab.
+  - [ ] All five serialized references populated in Inspector.
+  - [ ] `FindObjectOfType` fallbacks verified when Inspector refs cleared.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-545", "TECH-547", "TECH-548", "TECH-549", "TECH-550", "TECH-551"]
+created: "2026-04-20"
+raw_markdown: |
+  Scene wiring + prefab attach — Wire ZoneSService into shipped scene with Inspector refs and fallback safety.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.1.1"

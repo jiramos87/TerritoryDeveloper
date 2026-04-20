@@ -1,0 +1,24 @@
+id: "TECH-545"
+type: "TECH"
+title: "`ZoneSService` skeleton class"
+priority: "high"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-545.md"
+files: []
+notes: |
+  New `ZoneSService` MonoBehaviour with serialized refs to budget, treasury clamp, registry, zone manager, grid.
+  `FindObjectOfType` fallbacks in `Awake`. Public method stubs only — behavior lands in TECH-547.
+acceptance: |
+  - [ ] `ZoneSService.cs` exists under `Assets/Scripts/Managers/GameManagers/`.
+  - [ ] Serialized refs + `Awake` fallbacks per guardrail #1.
+  - [ ] Public placement API declared as stubs (empty / default) until TECH-547.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-546", "TECH-547", "TECH-548", "TECH-549", "TECH-550", "TECH-551"]
+created: "2026-04-20"
+raw_markdown: |
+  `ZoneSService` skeleton class — MonoBehaviour shell with manager refs and stub API for Zone S placement pipeline.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.1"

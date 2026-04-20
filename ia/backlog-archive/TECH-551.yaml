@@ -1,0 +1,23 @@
+id: "TECH-551"
+type: "TECH"
+title: "Integration tests — Examples 1 + 2"
+priority: "medium"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-551.md"
+files: []
+notes: |
+  `ZoneSServicePlacementTests` EditMode (or PlayMode if scene required). Assert envelope + treasury + placement per Stage Exit; glossary `ZoneSService`; validate:all.
+acceptance: |
+  - [ ] Example 1: successful placement decrements envelope and treasury; zone + `subTypeId` correct.
+  - [ ] Example 2: insufficient envelope leaves balances and grid cell unchanged.
+  - [ ] Glossary row `ZoneSService` + index regen per policy; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-545", "TECH-546", "TECH-547", "TECH-548", "TECH-549", "TECH-550"]
+created: "2026-04-20"
+raw_markdown: |
+  Integration tests — Examples 1 + 2 — ZoneSService placement + glossary + validators.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.6"

@@ -1,0 +1,24 @@
+id: "TECH-547"
+type: "TECH"
+title: "`PlaceStateServiceZone` flow"
+priority: "high"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-547.md"
+files: []
+notes: |
+  Implement placement: registry lookup, `GridManager.GetCell`, `budgetAllocation.TryDraw`, `ZoneManager.PlaceZone` with `subTypeId` param.
+  Example 1–2 semantics: block before deduct when draw fails; extend `PlaceZone` signature for sidecar write.
+acceptance: |
+  - [ ] `PlaceStateServiceZone` implements registry lookup, cell fetch via `GridManager`, envelope draw, and zone placement.
+  - [ ] Failed `TryDraw` emits notification and does not mutate treasury (Q4).
+  - [ ] `ZoneManager.PlaceZone` extended so `Zone.subTypeId` is set for state-service placement.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-545", "TECH-546", "TECH-548", "TECH-549", "TECH-550", "TECH-551"]
+created: "2026-04-20"
+raw_markdown: |
+  `PlaceStateServiceZone` flow — Envelope draw then place; invariant #5 cell access; PlaceZone signature extension.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.2"

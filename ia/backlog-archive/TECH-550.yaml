@@ -1,0 +1,23 @@
+id: "TECH-550"
+type: "TECH"
+title: "`AutoZoningManager` S no-op guard"
+priority: "medium"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-550.md"
+files: []
+notes: |
+  Early-return / continue when candidate type is state-service zone; comment cites exploration §Q2; RCI behavior unchanged.
+acceptance: |
+  - [ ] `AutoZoningManager` skips AUTO placement for `IsStateServiceZone` candidates.
+  - [ ] Comment references `docs/zone-s-economy-exploration.md` §Q2 (manual-only MVP).
+  - [ ] R/C/I AUTO zoning unchanged.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-545", "TECH-546", "TECH-547", "TECH-548", "TECH-549", "TECH-551"]
+created: "2026-04-20"
+raw_markdown: |
+  `AutoZoningManager` S no-op guard — Zone S manual-only; AUTO skips state-service types.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.5"

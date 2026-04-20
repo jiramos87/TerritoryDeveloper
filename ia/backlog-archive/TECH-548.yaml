@@ -1,0 +1,23 @@
+id: "TECH-548"
+type: "TECH"
+title: "`StateServiceMaintenanceContributor` component"
+priority: "medium"
+status: closed
+completed: "2026-04-20"
+section: "Zone S economy — Stage 6 (ZoneSService pipeline)"
+spec: "ia/projects/TECH-548.md"
+files: []
+notes: |
+  MonoBehaviour on S buildings implementing `IMaintenanceContributor`; register in `Start`, unregister in `OnDestroy`; id scheme `s-{subTypeId}-{instanceId}`.
+acceptance: |
+  - [ ] New component implements `IMaintenanceContributor` with upkeep from `ZoneSubTypeRegistry`.
+  - [ ] `GetContributorId` uses stable `s-{subTypeId}-{instanceId}` pattern.
+  - [ ] Register on `Start`, unregister on `OnDestroy` via `EconomyManager`.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-545", "TECH-546", "TECH-547", "TECH-549", "TECH-550", "TECH-551"]
+created: "2026-04-20"
+raw_markdown: |
+  `StateServiceMaintenanceContributor` component — Per-S-building maintenance contributor for registry iteration.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T6.3"
