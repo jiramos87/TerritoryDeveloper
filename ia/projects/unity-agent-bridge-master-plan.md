@@ -1,6 +1,6 @@
 # Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** In Progress — Step 1 / Stage 1.2
 >
 > **Scope:** Tiered hardening + transport + optional depth on top of shipped **Postgres** **`agent_bridge_job`** + **`unity_bridge_command`** / **`unity_bridge_get`** + **`AgentBridgeCommandRunner`** (`docs/unity-ide-agent-bridge-analysis.md` **Design Expansion**). **Out of program:** headless CI, `-batchmode` / Test Framework as delivery goals, file-only queue replacing **`agent_bridge_job`**, rewrite of **`ia/specs/unity-development-context.md`** §10 JSON contracts. Optional deferrals → recommend companion `docs/unity-agent-bridge-post-mvp-extensions.md` (not authored by this pass).
 >
@@ -34,9 +34,9 @@
 
 ### Step 1 — Hardening: parameterized exports + MCP sugar + skills
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.2
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 6 filed (TECH-559–TECH-564, Stage 1.1)
 
 **Objectives:** Align **`AgentBridgeCommandRunner`** + **`[MenuItem]`** exports with bounded **`params`** (cell chunk bounds, sorting seeds, optional agent-context seeds) per **`unity-development-context`** §10. Add thin **`unity_export_*`** MCP wrappers where token cost warrants. Ship **`.claude/skills/debug-sorting-order`** recipe (bridge + **`spec_section`** **`geo`** §7). Confirm **Close Dev Loop** / registry supersession narrative in durable docs.
 
@@ -67,7 +67,7 @@
 
 #### Stage 1.1 — Parameterized Editor bridge + menu dispatch
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Extend **`AgentBridgeCommandRunner`** + menu exports so MCP **`request.params`** drives bounded export parameters without duplicating export bodies. Harden **`failed`** status when Play Mode / grid preconditions fail (**invariant #5** on any new cell reads).
 
@@ -79,20 +79,209 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Runner **`params`** parsing + switch dispatch for chunk / sorting / agent context.
-- [ ] Phase 2 — Menu static methods / wrappers accept bounded parameters aligned with §10.
-- [ ] Phase 3 — Preconditions: **`get_play_mode_status`** / grid init gating + **`failed`** JSON contract.
+- [x] Phase 1 — Runner **`params`** parsing + switch dispatch for chunk / sorting / agent context.
+- [x] Phase 2 — Menu static methods / wrappers accept bounded parameters aligned with §10.
+- [x] Phase 3 — Preconditions: **`get_play_mode_status`** / grid init gating + **`failed`** JSON contract.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Runner params DTO + dispatch | 1 | _pending_ | _pending_ | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
-| T1.1.2 | MCP Zod alignment for new params | 1 | _pending_ | _pending_ | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
-| T1.1.3 | Menu parameterized entry points | 2 | _pending_ | _pending_ | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
-| T1.1.4 | Menu regression pass | 2 | _pending_ | _pending_ | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
-| T1.1.5 | Play Mode + grid gate errors | 3 | _pending_ | _pending_ | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
-| T1.1.6 | Bridge response contract tests | 3 | _pending_ | _pending_ | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
+| T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Done | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
+| T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Done | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
+| T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Done | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
+| T1.1.4 | Menu regression pass | 2 | **TECH-562** | Done | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
+| T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Done | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
+| T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Done | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: ""
+  title: "Runner params DTO + dispatch"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Extend AgentBridgeCommandRunner + shared DTOs to deserialize params for
+    export_cell_chunk (origin_x, origin_y, width, height), export_sorting_debug /
+    export_agent_context optional seed_cell. Route to menu statics without new
+    gridArray reads (invariant #5). Touches Assets/Scripts/Editor/AgentBridgeCommandRunner.cs,
+    AgentBridgeCommandRunner.Mutations.cs.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Extend AgentBridgeCommandRunner dispatch to deserialize request.params
+      for export_cell_chunk, export_sorting_debug, export_agent_context kinds.
+      New DTO structs carry bounded parameters per unity-development-context §10.
+    goals: |
+      1. BridgeCommand / DTO path parses params for export_cell_chunk (origin, width, height).
+      2. export_sorting_debug + export_agent_context accept optional seed_cell param.
+      3. Runner switch-dispatch routes parameterized requests to menu statics.
+      4. No new gridArray / cellArray reads — invariant #5 respected.
+    systems_map: |
+      - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs — dispatch extension
+      - Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs — mutation helpers
+      - ia/specs/unity-development-context.md §10 — Reports + bridge artifacts
+    impl_plan_sketch: |
+      ### Phase 1 — DTO + dispatch
+      - [ ] Define param structs (ExportCellChunkParams, ExportSortingDebugParams, ExportAgentContextParams)
+      - [ ] Extend BridgeCommand deserialization to populate params from request JSON
+      - [ ] Route parameterized requests through runner switch to menu statics
+
+- reserved_id: ""
+  title: "MCP Zod alignment for new params"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Update tools/mcp-ia-server unity_bridge_command / job request Zod schemas
+    so enqueued rows match Unity DTO param shapes. Add fixture or unit test
+    for param round-trip. Touches tools/mcp-ia-server/src/.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Align MCP unity_bridge_command Zod request schema with new Unity DTO
+      param shapes (export_cell_chunk, export_sorting_debug, export_agent_context).
+      Add fixture or unit test proving param round-trip fidelity.
+    goals: |
+      1. Zod request schema accepts params matching Unity DTO structs.
+      2. Fixture or unit test validates param round-trip (enqueue → dequeue shape match).
+      3. Existing non-parameterized kinds still pass Zod validation.
+    systems_map: |
+      - tools/mcp-ia-server/src/ — registerTool, Zod schemas
+      - tools/mcp-ia-server/tests/ — test surface
+      - ia/specs/unity-development-context.md §10 — artifact table
+    impl_plan_sketch: |
+      ### Phase 1 — Zod schema + tests
+      - [ ] Extend unity_bridge_command request Zod with optional params sub-object
+      - [ ] Add fixture covering each new kind + param shape
+      - [ ] Confirm existing non-parameterized kinds pass unchanged
+
+- reserved_id: ""
+  title: "Menu parameterized entry points"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Refactor AgentDiagnosticsReportsMenu + InterchangeJsonReportsMenu so bridge
+    calls Export* methods with explicit parameter structs. Preserve existing
+    MenuItem behavior via defaults. Touches Assets/Scripts/Editor/ menu classes.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Refactor AgentDiagnosticsReportsMenu and InterchangeJsonReportsMenu so
+      bridge runner calls Export* methods with explicit parameter structs.
+      Existing MenuItem paths remain as zero-param defaults.
+    goals: |
+      1. Export methods accept parameter structs (chunk bounds, seed_cell).
+      2. MenuItem wrappers call same methods with default (null/empty) params.
+      3. Bridge runner routes parameterized requests through these entry points.
+    systems_map: |
+      - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs — sorting + agent context exports
+      - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs — cell chunk + world snapshot exports
+      - ia/specs/unity-development-context.md §10 — artifact table
+    impl_plan_sketch: |
+      ### Phase 1 — Parameterized entry points
+      - [ ] Add parameter-accepting overloads to Export methods
+      - [ ] Wire MenuItem wrappers to overloads with default params
+      - [ ] Confirm bridge runner dispatch reaches parameterized path
+
+- reserved_id: ""
+  title: "Menu regression pass"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Manual or automated check: Territory Developer → Reports still runs for
+    all §10 items. No duplicate file writes. TryPersistReport paths unchanged
+    for registry exports. Verification-focused task.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Verify all Territory Developer → Reports menu items still work after
+      parameterized refactor. No duplicate file writes. TryPersistReport
+      paths unchanged for Postgres registry exports.
+    goals: |
+      1. Every MenuItem under Reports menu produces expected output.
+      2. No duplicate file writes from bridge vs menu paths.
+      3. TryPersistReport paths + Postgres registry export unchanged.
+    systems_map: |
+      - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs — Reports menu
+      - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs — Reports menu
+      - Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs — registry
+    impl_plan_sketch: |
+      ### Phase 1 — Regression verification
+      - [ ] Enumerate all Reports menu items; confirm each invocation succeeds
+      - [ ] Check file output paths for duplicates
+      - [ ] Verify Postgres registry export rows match pre-refactor baseline
+
+- reserved_id: ""
+  title: "Play Mode + grid gate errors"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Before Play-only exports, verify GridManager.isInitialized + TerrainManager
+    readiness. Return failed + human-readable error field when preconditions
+    unmet. Align with analysis §8.3 risk table. Touches AgentBridgeCommandRunner
+    precondition path.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Add precondition gates in bridge export path: GridManager.isInitialized
+      and TerrainManager readiness checks before Play-only exports. Return
+      failed status + human-readable error string when preconditions not met.
+    goals: |
+      1. Play-only export kinds check GridManager.isInitialized before execution.
+      2. TerrainManager readiness verified where documented needs exist.
+      3. Failed response includes structured error field (human-readable string).
+      4. No new gridArray / cellArray reads — invariant #5 respected.
+    systems_map: |
+      - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs — precondition gate
+      - Assets/Scripts/Managers/GameManagers/GridManager.cs — isInitialized check
+      - docs/unity-ide-agent-bridge-analysis.md §8.3 — risk table
+    impl_plan_sketch: |
+      ### Phase 1 — Precondition gates
+      - [ ] Add isInitialized / TerrainManager readiness check before Play-only dispatch
+      - [ ] Return failed + error JSON on precondition failure
+      - [ ] Align error strings with analysis §8.3 risk categories
+
+- reserved_id: ""
+  title: "Bridge response contract tests"
+  priority: "medium"
+  issue_type: "TECH"
+  notes: |
+    Add EditMode or MCP-side tests asserting completed / failed shapes for
+    export_cell_chunk + sorting debug when grid absent. Snapshot keys only,
+    not full JSON bodies. Touches Assets/Tests/EditMode/ or tools/mcp-ia-server/tests/.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Add EditMode or MCP-side tests asserting completed / failed response
+      shapes for export_cell_chunk + export_sorting_debug when grid absent.
+      Snapshot keys only — not full JSON body comparison.
+    goals: |
+      1. Test asserts completed response shape has expected top-level keys.
+      2. Test asserts failed response shape has error field when grid uninitialized.
+      3. Key-only snapshots (no full body) for stability across content changes.
+    systems_map: |
+      - Assets/Tests/EditMode/ — Unity EditMode test surface
+      - tools/mcp-ia-server/tests/ — MCP-side test surface
+      - ia/specs/unity-development-context.md §10 — artifact table
+    impl_plan_sketch: |
+      ### Phase 1 — Contract tests
+      - [ ] Add EditMode test: enqueue export_cell_chunk → assert completed keys
+      - [ ] Add EditMode test: export when grid absent → assert failed + error key
+      - [ ] Add MCP-side test if tooling coverage needed
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all 6 Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 
