@@ -499,6 +499,77 @@ describe("export_cell_chunk and export_sorting_debug kinds", () => {
   });
 });
 
+describe("bridge response contract — shape assertions", () => {
+  it("error response for export_cell_chunk has ok:false and non-empty error string", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "export_cell_chunk", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(typeof r.ok, "boolean");
+    assert.equal(r.ok, false);
+    assert.ok("error" in r);
+    if (!r.ok) {
+      assert.equal(typeof r.error, "string");
+      assert.ok(r.error.length > 0, "error string must be non-empty");
+    }
+  });
+
+  it("error response for export_sorting_debug has ok:false and non-empty error string", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "export_sorting_debug", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(typeof r.ok, "boolean");
+    assert.equal(r.ok, false);
+    assert.ok("error" in r);
+    if (!r.ok) {
+      assert.equal(typeof r.error, "string");
+      assert.ok(r.error.length > 0, "error string must be non-empty");
+    }
+  });
+
+  it("completed response shape has ok:true and payload when pool succeeds", async () => {
+    const completedResponse = {
+      schema_version: 1,
+      artifact: "unity_agent_bridge_response",
+      command_id: "test-cmd",
+      ok: true,
+      completed_at_utc: "2026-04-20T00:00:00Z",
+      storage: "postgres",
+      postgres_only: true,
+      error: "",
+      artifact_paths: [],
+      log_lines: [],
+    };
+    const pool = mockPool({
+      insert: () => ({ rows: [], rowCount: 1 }) as QueryResult,
+      selectSequence: [
+        {
+          status: "completed",
+          response: completedResponse as unknown as UnityBridgeResponsePayload,
+          error: null,
+          kind: "export_cell_chunk",
+        },
+      ],
+    });
+    const r = await runUnityBridgeCommand(
+      { kind: "export_cell_chunk", timeout_ms: 3000 },
+      { pool },
+    );
+    assert.equal(r.ok, true);
+    if (r.ok) {
+      assert.ok("response" in r, "completed result must have response key");
+      assert.ok("command_id" in r, "completed result must have command_id key");
+      assert.equal(typeof r.command_id, "string");
+      const resp = r.response;
+      assert.ok(resp != null, "response must not be null");
+      assert.equal(typeof resp.ok, "boolean");
+      assert.ok("storage" in resp, "response must have storage key");
+      assert.ok("error" in resp, "response must have error key");
+    }
+  });
+});
+
 describe("runUnityBridgeGet", () => {
   it("returns db_unconfigured when pool is null", async () => {
     const r = await runUnityBridgeGet(
