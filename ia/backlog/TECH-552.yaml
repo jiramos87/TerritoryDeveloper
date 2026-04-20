@@ -4,6 +4,7 @@ title: "**Unity Agent Bridge** program — file-based command queue + MCP tools 
 priority: medium
 status: open
 section: IA evolution lane
+spec: "ia/projects/unity-agent-bridge-master-plan.md"
 files:
   - tools/mcp-ia-server/src/
   - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs

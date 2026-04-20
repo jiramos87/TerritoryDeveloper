@@ -30,6 +30,12 @@ If **Path B** was not run, state **why** (e.g. no Editor, preflight non-zero) �
 
 **Skills:** [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md), [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md), [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md).
 
+## Close Dev Loop vs bridge export sugar
+
+- **`close-dev-loop`** ([`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md)) — full before/after loop using **`debug_context_bundle`** in Play Mode (Moore export + optional Game view screenshot + console + **`anomaly_count`**). Use for visual/terrain regressions and acceptance-style evidence when the rich bundle is worth the token and Play Mode cost.
+- **`unity_export_cell_chunk`** / **`unity_export_sorting_debug`** ([`docs/mcp-ia-server.md`](mcp-ia-server.md) — **Bridge export sugar tools**) — thin MCP wrappers around **`export_cell_chunk`** / **`export_sorting_debug`** only: same **`agent_bridge_job`** queue and JSON response as **`unity_bridge_command`**, less call boilerplate. Use for bounded **Editor** JSON exports (e.g. sorting math checks with **`spec_section`** **geo** §7 via [`ia/skills/debug-sorting-order/SKILL.md`](../ia/skills/debug-sorting-order/SKILL.md)).
+- **Registry staging** — older one-shot CLI (`npm run db:bridge-agent-context`, etc.) still hits the same bridge path; it does not replace **`debug_context_bundle`** for layered evidence. Prefer the skills above instead of duplicating policy text in chat.
+
 ## Multi-agent concurrency (Play Mode lease)
 
 When multiple agent sessions share one Unity Editor and Postgres instance, use **`unity_bridge_lease`** (migration `0010_agent_bridge_lease.sql`) to serialize Play Mode access:
