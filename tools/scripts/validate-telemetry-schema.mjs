@@ -18,7 +18,7 @@
  * Exit 1: any schema violation or parse error.
  */
 
-import { createReadStream, existsSync, readdirSync } from "fs";
+import { createReadStream, existsSync, readdirSync, readFileSync } from "fs";
 import { createInterface } from "readline";
 import { join } from "path";
 
@@ -161,8 +161,53 @@ function processFile(filePath) {
 // Main
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// baseline-summary.json gate (TECH-513) — asserts all 6 metric keys present
+// with p50/p95/p99 sub-fields. Only runs when the file exists; absence is ok
+// (pre-Stage-1.1 state). Presence + malformed shape → fail.
+// ---------------------------------------------------------------------------
+
+const REQUIRED_SUMMARY_METRICS = [
+  "total_input_tokens",
+  "cache_read_tokens",
+  "cache_write_tokens",
+  "mcp_cold_start_ms",
+  "hook_fork_count",
+  "hook_fork_total_ms",
+];
+const REQUIRED_PERCENTILES = ["p50", "p95", "p99"];
+
+function validateBaselineSummary(path) {
+  if (!existsSync(path)) return { ok: true, skipped: true, errors: [] };
+  let obj;
+  try {
+    obj = JSON.parse(readFileSync(path, "utf8"));
+  } catch (e) {
+    return { ok: false, skipped: false, errors: [`${path} — JSON parse error: ${e.message}`] };
+  }
+  const errors = [];
+  if (!obj.metrics || typeof obj.metrics !== "object") {
+    errors.push(`${path} — missing top-level "metrics" object`);
+    return { ok: false, skipped: false, errors };
+  }
+  for (const m of REQUIRED_SUMMARY_METRICS) {
+    const entry = obj.metrics[m];
+    if (!entry || typeof entry !== "object") {
+      errors.push(`${path} — metrics.${m} missing or not an object`);
+      continue;
+    }
+    for (const p of REQUIRED_PERCENTILES) {
+      if (typeof entry[p] !== "number" || !Number.isFinite(entry[p])) {
+        errors.push(`${path} — metrics.${m}.${p} missing or not a finite number`);
+      }
+    }
+  }
+  return { ok: errors.length === 0, skipped: false, errors };
+}
+
 async function main() {
   const telemetryDir = ".claude/telemetry";
+  const baselineSummaryPath = "tools/scripts/agent-telemetry/baseline-summary.json";
 
   if (!existsSync(telemetryDir)) {
     console.log("telemetry-schema: dir absent — ok (empty)");
@@ -188,6 +233,11 @@ async function main() {
     allErrors.push(...errors);
   }
 
+  // Baseline-summary gate runs regardless of whether raw JSONL errors exist —
+  // both errors list combines for single non-zero exit.
+  const baselineResult = validateBaselineSummary(baselineSummaryPath);
+  allErrors.push(...baselineResult.errors);
+
   if (allErrors.length > 0) {
     for (const err of allErrors) {
       console.error(err);
@@ -195,8 +245,12 @@ async function main() {
     process.exit(1);
   }
 
+  const baselineTag = baselineResult.skipped
+    ? "baseline-summary absent (ok)"
+    : `baseline-summary ${REQUIRED_SUMMARY_METRICS.length} metrics × ${REQUIRED_PERCENTILES.length} percentiles — ok`;
+
   console.log(
-    `telemetry-schema: ${allFiles.length} file${allFiles.length === 1 ? "" : "s"}, ${totalRows} row${totalRows === 1 ? "" : "s"} — ok`
+    `telemetry-schema: ${allFiles.length} file${allFiles.length === 1 ? "" : "s"}, ${totalRows} row${totalRows === 1 ? "" : "s"} — ok; ${baselineTag}`
   );
   process.exit(0);
 }

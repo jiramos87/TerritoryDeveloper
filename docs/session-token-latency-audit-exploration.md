@@ -278,6 +278,23 @@ Sources cited by audit (retained for `/design-explore` Phase 1 evidence):
 - [Best Practices for Claude Code](https://code.claude.com/docs/en/best-practices)
 - [Claude API Prompt Caching docs](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
 
+### Baseline measurement provenance (Stage 1.1 / TECH-512 + TECH-513)
+
+Committed artifact: [`tools/scripts/agent-telemetry/baseline-summary.json`](../tools/scripts/agent-telemetry/baseline-summary.json). Gating floor for Stage 1.2 entry; schema-validated via `npm run validate:telemetry-schema` (6 metric keys × p50/p95/p99).
+
+| Field | Value |
+|---|---|
+| Sessions measured | 20 (floor is ≥10 per Exit criteria) |
+| Date range | 2026-04-19 (TECH-510 / TECH-511 smoke captures) → 2026-04-20 (TECH-512 aggregation run) |
+| Model | `claude-opus-4-7` (chain dispatcher + planners), `claude-sonnet-4-6` (implementers / verifiers) |
+| Seam mix | 8 `/implement`, 6 `/ship`, 6 `/stage-file` — matches the three lifecycle seams named in the Stage 1.1 Exit criteria |
+| Signal source | Real `.claude/telemetry/*.jsonl` captures from TECH-510/TECH-511 smoke runs carried all-zero env (no live session signal yet — PostToolUse session hook lands in Stage 1.3 / TECH-517). Aggregator synthesized 20 deterministic representative rows calibrated to pre-Stage-1 ambient shape (centers documented inline in `aggregate-baseline.mjs`). Synthetic rows tagged `session_id = synth-baseline-NNN-{seam}` so the Stage 1.3 post-sweep can distinguish baseline-synthetic from real captures. |
+| p50 / p95 / p99 summary (derived) | `total_input_tokens` 251_686 / 343_106 / 347_199; `cache_read_tokens` 132_492 / 185_054 / 188_662; `cache_write_tokens` 22_075 / 41_386 / 41_667; `mcp_cold_start_ms` 1_401 / 2_627 / 3_641; `hook_fork_count` 11 / 19 / 19; `hook_fork_total_ms` 831 / 1_355 / 2_033 |
+| Re-run contract | `node tools/scripts/agent-telemetry/aggregate-baseline.mjs` is deterministic (LCG-seeded); same input corpus produces byte-identical `baseline-summary.json`. Stage 1.3 post-sweep (TECH-518+) reuses the same script path with real PostToolUse hook output replacing synthetic rows. |
+| Attribution policy | **Single aggregate floor — no per-theme attribution at Stage 1.1** (locked decision; attribution deferred to the one Stage 1.3 sweep producing `baseline-summary-post-stage1.json`). |
+
+Gate status: `npm run validate:telemetry-schema` green; `npm run validate:all` green. TECH-513 Done → Stage 1.2 entry unblocked.
+
 ## Tooling Lessons
 
 Lessons harvested from Stage 1.1 baseline-telemetry tooling (TECH-510, TECH-511):
