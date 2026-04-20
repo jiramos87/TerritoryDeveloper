@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-20T20:55:47.140Z",
+  "last_generated": "2026-04-20T21:44:06.405Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -346,13 +346,29 @@
     },
     "BondLedgerService": {
       "related": [
+        "TreasuryFloorClampService",
         "BudgetAllocationService",
-        "Building",
-        "Cell",
-        "Demand (R / C / I)",
-        "Desirability"
+        "IBondLedger",
+        "envelope (budget sense)",
+        "IBudgetAllocator"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "bond-ledger",
+          "section_title": "Bond ledger"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "key-implementation-files-non-normative",
+          "section_title": "Key implementation files (non-normative)"
+        }
+      ]
     },
     "Bridge lip": {
       "related": [
@@ -423,20 +439,46 @@
     },
     "BudgetAllocationService": {
       "related": [
-        "BondLedgerService",
-        "Building",
-        "Cell",
-        "Demand (R / C / I)",
-        "Desirability"
+        "TreasuryFloorClampService",
+        "Zone",
+        "Zone S",
+        "envelope (budget sense)",
+        "ZoneSService"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "treasury-floor-clamp",
+          "section_title": "Treasury floor clamp"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "key-implementation-files-non-normative",
+          "section_title": "Key implementation files (non-normative)"
+        }
+      ]
     },
     "Building": {
       "related": [
         "Cell",
-        "Interstate",
-        "RCI",
         "Zone",
+        "RCI",
+        "Interstate",
         "Happiness"
       ],
       "cited_in": [
@@ -444,6 +486,16 @@
           "spec": "audio-blip",
           "section_id": "6",
           "section_title": "6. Call-site integration"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zonesservice-placement",
+          "section_title": "ZoneSService placement"
         },
         {
           "spec": "isometric-geography-system",
@@ -763,6 +815,11 @@
           "spec": "audio-blip",
           "section_id": "6",
           "section_title": "6. Call-site integration"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
         },
         {
           "spec": "isometric-geography-system",
@@ -1737,13 +1794,24 @@
     },
     "envelope (budget sense)": {
       "related": [
-        "Building",
-        "Cell",
-        "RCI",
-        "Stage",
-        "Tax base"
+        "BudgetAllocationService",
+        "Zone",
+        "Zone S",
+        "IBudgetAllocator",
+        "TreasuryFloorClampService"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
     },
     "Evolution algorithm": {
       "related": [
@@ -1820,11 +1888,21 @@
       "related": [
         "Happiness",
         "Building",
-        "Reference spec",
         "Zone",
-        "Monthly maintenance"
+        "Monthly maintenance",
+        "RCI"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "treasury-floor-clamp",
+          "section_title": "Treasury floor clamp"
+        },
         {
           "spec": "managers-reference",
           "section_id": "demand-r-c-i",
@@ -1910,6 +1988,11 @@
           "spec": "audio-blip",
           "section_id": "7.2",
           "section_title": "7.2 Tolerance"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
         },
         {
           "spec": "isometric-geography-system",
@@ -2131,6 +2214,11 @@
         "Game notification"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
         {
           "spec": "managers-reference",
           "section_id": "manager-responsibilities",
@@ -2423,22 +2511,44 @@
     "IBondLedger": {
       "related": [
         "BondLedgerService",
+        "TreasuryFloorClampService",
         "BudgetAllocationService",
-        "Building",
-        "Cell",
-        "Demand (R / C / I)"
+        "envelope (budget sense)",
+        "IBudgetAllocator"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "bond-ledger",
+          "section_title": "Bond ledger"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
     },
     "IBudgetAllocator": {
       "related": [
-        "BondLedgerService",
         "BudgetAllocationService",
-        "Building",
-        "Cell",
-        "Demand (R / C / I)"
+        "envelope (budget sense)",
+        "TreasuryFloorClampService",
+        "Zone",
+        "Zone S"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
     },
     "IDE agent bridge": {
       "related": [
@@ -2458,13 +2568,39 @@
     },
     "IMaintenanceContributor": {
       "related": [
-        "BondLedgerService",
+        "Zone",
+        "Zone S",
         "BudgetAllocationService",
         "Building",
-        "Cell",
-        "Demand (R / C / I)"
+        "Monthly maintenance"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zonesservice-placement",
+          "section_title": "ZoneSService placement"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "maintenance-contributor-registry",
+          "section_title": "Maintenance contributor registry"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
     },
     "Infrastructure prefabs": {
       "related": [
@@ -3091,13 +3227,23 @@
     },
     "Monthly maintenance": {
       "related": [
-        "Tax base",
-        "Happiness",
-        "Pollution",
         "Building",
+        "Happiness",
+        "Tax base",
+        "Zone",
         "Cell"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zonesservice-placement",
+          "section_title": "ZoneSService placement"
+        },
         {
           "spec": "managers-reference",
           "section_id": "manager-responsibilities",
@@ -3701,9 +3847,14 @@
         "Cell",
         "Happiness",
         "Interstate",
-        "Pollution"
+        "Zone"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
         {
           "spec": "isometric-geography-system",
           "section_id": "5",
@@ -5014,13 +5165,44 @@
     },
     "TreasuryFloorClampService": {
       "related": [
-        "BondLedgerService",
         "BudgetAllocationService",
-        "Building",
-        "Cell",
-        "Demand (R / C / I)"
+        "BondLedgerService",
+        "Zone",
+        "Zone S",
+        "envelope (budget sense)"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "treasury-floor-clamp",
+          "section_title": "Treasury floor clamp"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "bond-ledger",
+          "section_title": "Bond ledger"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "key-implementation-files-non-normative",
+          "section_title": "Key implementation files (non-normative)"
+        }
+      ]
     },
     "Type offsets": {
       "related": [
@@ -5436,10 +5618,45 @@
         "Building",
         "Cell",
         "Happiness",
-        "RCI",
-        "Tax base"
+        "Zone S",
+        "IMaintenanceContributor"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zonesservice-placement",
+          "section_title": "ZoneSService placement"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "maintenance-contributor-registry",
+          "section_title": "Maintenance contributor registry"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "related-specs",
+          "section_title": "Related specs"
+        },
         {
           "spec": "managers-reference",
           "section_id": "manager-responsibilities",
@@ -5499,13 +5716,18 @@
     },
     "Zone density": {
       "related": [
+        "Zone",
         "Building",
         "Building footprint",
         "Cell",
-        "Pivot cell",
-        "RCI"
+        "Pivot cell"
       ],
       "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
         {
           "spec": "managers-reference",
           "section_id": "zones-buildings",
@@ -5515,23 +5737,101 @@
     },
     "Zone S": {
       "related": [
+        "Zone",
+        "IMaintenanceContributor",
+        "BudgetAllocationService",
         "Building",
-        "Cell",
-        "envelope (budget sense)",
-        "RCI",
-        "Stage"
+        "envelope (budget sense)"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zonesservice-placement",
+          "section_title": "ZoneSService placement"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "budget-envelope",
+          "section_title": "Budget envelope"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "maintenance-contributor-registry",
+          "section_title": "Maintenance contributor registry"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
+    },
+    "ZoneSService": {
+      "related": [
+        "BudgetAllocationService",
+        "Zone",
+        "Zone S",
+        "ZoneSubTypeRegistry",
+        "BondLedgerService"
+      ],
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "key-implementation-files-non-normative",
+          "section_title": "Key implementation files (non-normative)"
+        }
+      ]
     },
     "ZoneSubTypeRegistry": {
       "related": [
-        "Building",
-        "Building footprint",
-        "Cell",
-        "envelope (budget sense)",
-        "Pivot cell"
+        "Zone",
+        "Zone S",
+        "BudgetAllocationService",
+        "IMaintenanceContributor",
+        "ZoneSService"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "economy-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-s",
+          "section_title": "Zone S"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "zone-sub-type-registry",
+          "section_title": "Zone sub-type registry"
+        },
+        {
+          "spec": "economy-system",
+          "section_id": "glossary-alignment",
+          "section_title": "Glossary alignment"
+        }
+      ]
     }
   }
 }
