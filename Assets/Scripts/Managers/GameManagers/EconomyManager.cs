@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Territory.Audio;
 using Territory.Zones;
@@ -29,12 +30,24 @@ public class EconomyManager : MonoBehaviour
     /// Composition helper on same GO — consumed by this manager once Phase 2 wires call sites.
     /// </summary>
     [SerializeField] private BudgetAllocationService budgetAllocation;
+    /// <summary>
+    /// Single-bond-per-scale-tier ledger. Composition helper on same GO.
+    /// Tick-integrated in Stage 4 (TECH-531) for monthly repayment processing.
+    /// </summary>
+    [SerializeField] private BondLedgerService bondLedger;
 
     [Header("Monthly maintenance")]
     [Tooltip("Upkeep charged per road cell (ZoneType.Road) on the first day of each month, after tax collection.")]
     public int maintenanceCostPerRoadCell = 8;
     [Tooltip("Upkeep charged per registered power plant on the first day of each month, after tax collection.")]
     public int maintenanceCostPerPowerPlant = 350;
+
+    /// <summary>
+    /// Ordered registry of maintenance contributors. Iterated deterministically by
+    /// <see cref="IMaintenanceContributor.GetContributorId"/> (ordinal sort) in
+    /// <see cref="ProcessMonthlyMaintenance"/>. Cleared on scene load / save restore.
+    /// </summary>
+    private readonly List<IMaintenanceContributor> maintenanceContributors = new List<IMaintenanceContributor>();
 
     [Header("Tax Rates")]
     public int residentialIncomeTax = 10;
@@ -55,6 +68,10 @@ public class EconomyManager : MonoBehaviour
             budgetAllocation = FindObjectOfType<BudgetAllocationService>();
         if (budgetAllocation == null)
             Debug.LogWarning("EconomyManager: BudgetAllocationService not found. Attach it to the EconomyManager GameObject in the scene.");
+        if (bondLedger == null)
+            bondLedger = FindObjectOfType<BondLedgerService>();
+        if (bondLedger == null)
+            Debug.LogWarning("EconomyManager: BondLedgerService not found. Attach it to the EconomyManager GameObject in the scene.");
     }
 
     void Start()
@@ -89,6 +106,7 @@ public class EconomyManager : MonoBehaviour
 
         ApplyMonthlyTaxCollection();
         ProcessMonthlyMaintenance();
+        if (bondLedger != null) bondLedger.ProcessAllMonthlyRepayments();
         if (budgetAllocation != null) budgetAllocation.MonthlyReset();
     }
 
@@ -167,6 +185,50 @@ public class EconomyManager : MonoBehaviour
             return 0;
         return Mathf.Max(0, cityStats.GetRegisteredPowerPlantCount()) * maintenanceCostPerPowerPlant;
     }
+
+    #region Maintenance Contributor Registry
+
+    /// <summary>
+    /// Register a maintenance contributor. Duplicates (by reference) are silently ignored.
+    /// </summary>
+    public void RegisterMaintenanceContributor(IMaintenanceContributor contributor)
+    {
+        if (contributor == null) return;
+        if (!maintenanceContributors.Contains(contributor))
+            maintenanceContributors.Add(contributor);
+    }
+
+    /// <summary>
+    /// Unregister a maintenance contributor. No-op if not found.
+    /// </summary>
+    public void UnregisterMaintenanceContributor(IMaintenanceContributor contributor)
+    {
+        if (contributor == null) return;
+        maintenanceContributors.Remove(contributor);
+    }
+
+    /// <summary>
+    /// Clear all registered contributors. Called on scene load / save restore
+    /// before adapters re-register from their own lifecycle hooks.
+    /// </summary>
+    public void ClearMaintenanceContributors()
+    {
+        maintenanceContributors.Clear();
+    }
+
+    /// <summary>Current contributor count. Exposed for tests.</summary>
+    public int MaintenanceContributorCount => maintenanceContributors.Count;
+
+    /// <summary>
+    /// Snapshot of registered contributors for sorted iteration.
+    /// Returns a copy to avoid re-entrancy during spend.
+    /// </summary>
+    public List<IMaintenanceContributor> GetMaintenanceContributorsSnapshot()
+    {
+        return new List<IMaintenanceContributor>(maintenanceContributors);
+    }
+
+    #endregion
 
     #region Money Management Methods
     /// <summary>
