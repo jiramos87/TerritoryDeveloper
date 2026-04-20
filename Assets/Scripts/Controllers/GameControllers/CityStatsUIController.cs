@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Territory.Economy;
@@ -15,6 +16,7 @@ public class CityStatsUIController : MonoBehaviour
     [Header("Game System References")]
     [SerializeField] private CityStats cityStats;
     [SerializeField] private EconomyManager economyManager;
+    [SerializeField] private ZoneSubTypeRegistry zoneSubTypeRegistry;
 
     // Auto-find system references if not manually assigned
     void Awake()
@@ -24,7 +26,8 @@ public class CityStatsUIController : MonoBehaviour
             cityStats = FindObjectOfType<CityStats>();
         if (economyManager == null)
             economyManager = FindObjectOfType<EconomyManager>();
-
+        if (zoneSubTypeRegistry == null)
+            zoneSubTypeRegistry = FindObjectOfType<ZoneSubTypeRegistry>();
     }
 
     // UI Element references
@@ -33,6 +36,7 @@ public class CityStatsUIController : MonoBehaviour
     private Label treasuryLabel;
     private Label unemploymentLabel;
     private Label envelopeCapLabel;
+    private Label envelopeRemainingLabel;
     private Label bondDebtLabel;
     private Label bondMonthlyLabel;
     private VisualElement statsContainer;
@@ -84,6 +88,14 @@ public class CityStatsUIController : MonoBehaviour
         treasuryLabel = CreateStatLabel("Treasury", "$0");
         unemploymentLabel = CreateStatLabel("Unemployment", "0%");
         envelopeCapLabel = CreateStatLabel("S envelope cap", "$0");
+        envelopeRemainingLabel = new Label("S envelope remaining (monthly):\n—");
+        envelopeRemainingLabel.name = "envelope-remaining-label";
+        envelopeRemainingLabel.style.fontSize = 14;
+        envelopeRemainingLabel.style.color = Color.white;
+        envelopeRemainingLabel.style.marginBottom = 5;
+        envelopeRemainingLabel.style.paddingLeft = 10;
+        envelopeRemainingLabel.style.paddingRight = 10;
+        envelopeRemainingLabel.style.whiteSpace = WhiteSpace.Normal;
         bondDebtLabel = CreateStatLabel("Bond debt (approx.)", "$0");
         bondMonthlyLabel = CreateStatLabel("Bond repayment / mo", "$0");
 
@@ -98,6 +110,7 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.Add(treasuryLabel);
         statsContainer.Add(unemploymentLabel);
         statsContainer.Add(envelopeCapLabel);
+        statsContainer.Add(envelopeRemainingLabel);
         statsContainer.Add(bondDebtLabel);
         statsContainer.Add(bondMonthlyLabel);
 
@@ -127,7 +140,7 @@ public class CityStatsUIController : MonoBehaviour
         container.style.position = Position.Absolute;
         container.style.top = 20;
         container.style.left = 20;
-        container.style.width = 250;
+        container.style.width = 300;
         container.style.backgroundColor = new Color(0, 0, 0, 0.8f);
         container.style.borderTopWidth = 2;
         container.style.borderBottomWidth = 2;
@@ -211,6 +224,32 @@ public class CityStatsUIController : MonoBehaviour
 
             if (envelopeCapLabel != null)
                 envelopeCapLabel.text = $"S envelope cap: ${cityStats.totalEnvelopeCap:N0}";
+            if (envelopeRemainingLabel != null)
+            {
+                int[] rem = cityStats.envelopeRemainingPerSubType;
+                if (rem == null || rem.Length == 0)
+                {
+                    envelopeRemainingLabel.text = "S envelope remaining (monthly):\n—";
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("S envelope remaining (monthly):");
+                    int n = Mathf.Min(7, rem.Length);
+                    for (int i = 0; i < n; i++)
+                    {
+                        string name = $"Subtype {i}";
+                        if (zoneSubTypeRegistry != null)
+                        {
+                            var ent = zoneSubTypeRegistry.GetById(i);
+                            if (ent != null && !string.IsNullOrEmpty(ent.displayName))
+                                name = ent.displayName;
+                        }
+                        sb.AppendLine($"  • {name}: ${rem[i]:N0}");
+                    }
+                    envelopeRemainingLabel.text = sb.ToString().TrimEnd();
+                }
+            }
             if (bondDebtLabel != null)
                 bondDebtLabel.text = $"Bond debt (approx.): ${cityStats.activeBondDebt:N0}";
             if (bondMonthlyLabel != null)
