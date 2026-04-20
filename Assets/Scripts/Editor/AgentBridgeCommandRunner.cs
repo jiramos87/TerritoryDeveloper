@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using Territory.Core;
+using Territory.Terrain;
 using UnityEditor;
 using UnityEngine;
 
@@ -612,6 +613,21 @@ public static partial class AgentBridgeCommandRunner
             return;
         }
 
+        if (!EditorApplication.isPlaying)
+        {
+            TryFinalizeFailed(repoRoot, commandId,
+                "export_cell_chunk requires Play Mode with an initialized grid. Use enter_play_mode first.");
+            return;
+        }
+
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        if (grid == null || !grid.isInitialized)
+        {
+            TryFinalizeFailed(repoRoot, commandId,
+                "Grid not initialized — wait for play_mode_ready after enter_play_mode before calling export_cell_chunk.");
+            return;
+        }
+
         AgentBridgeParamsPayloadDto p = env.bridge_params ?? new AgentBridgeParamsPayloadDto();
         int x0 = p.origin_x;
         int y0 = p.origin_y;
@@ -636,6 +652,29 @@ public static partial class AgentBridgeCommandRunner
         if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
         {
             TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        if (!EditorApplication.isPlaying)
+        {
+            TryFinalizeFailed(repoRoot, commandId,
+                "export_sorting_debug requires Play Mode with an initialized grid. Use enter_play_mode first.");
+            return;
+        }
+
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        if (grid == null || !grid.isInitialized)
+        {
+            TryFinalizeFailed(repoRoot, commandId,
+                "Grid not initialized — wait for play_mode_ready after enter_play_mode before calling export_sorting_debug.");
+            return;
+        }
+
+        TerrainManager terrain = grid.terrainManager;
+        if (terrain == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId,
+                "TerrainManager not available — GridManager.terrainManager is null; cannot produce sorting debug export.");
             return;
         }
 
