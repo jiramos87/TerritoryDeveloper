@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-20
 >
-> **Status:** In Progress — Step 3 / Stage 7
+> **Status:** In Progress — Step 3 (Stage 9 Done)
 >
 > **Scope:** Zone S (state-owned 4th zone channel, 7 sub-types) + economy depth — per-sub-type envelope budget allocator, floor-clamped treasury (hard cap, no negative balance), single-bond-per-scale-tier ledger, extended monthly-maintenance contract via `IMaintenanceContributor` registry, save schema bump. Bucket 3 of full-game MVP umbrella (`ia/projects/full-game-mvp-master-plan.md`).
 >
@@ -676,7 +676,7 @@
 
 ### Stage 7 — UI surfaces + CityStats integration + economy-system reference spec / Toolbar + sub-type picker + budget panel
 
-**Status:** In Progress
+**Status:** Final
 
 **Objectives:** Player can click S button, pick a sub-type, place a building, tune envelope sliders. End-to-end flow with visible feedback on envelope draws + overspend blocks.
 
@@ -695,12 +695,12 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T7.1 | S zoning button in `UIManager.ToolbarChrome` | **TECH-553** | Draft | Add 4th button to zoning cluster in `UIManager.ToolbarChrome.cs` alongside R/C/I. Icon: placeholder "S" glyph. Click handler sets `ZoneManager.activeZoneType = ZoneType.StateServiceLightZoning` + opens sub-type picker (next task). Toolbar layout respects existing theme spacing. |
-| T7.2 | Placement-mode routing through `ZoneSService` | **TECH-554** | Draft | When S placement active + user clicks on grid cell, route through `ZoneSService.PlaceStateServiceZone(cell, currentSubTypeId)` instead of direct `ZoneManager.PlaceZone`. `currentSubTypeId` carried in transient placement state (set by picker). Guard: if `currentSubTypeId < 0`, reopen picker. |
-| T7.3 | Sub-type picker modal UI | **TECH-555** | Draft | New `SubTypePickerModal.cs` under `Assets/Scripts/Managers/GameManagers/UI/` (or existing UI dir). Uses `UIManager.PopupStack` to present 7 buttons (icon + displayName + baseCost) sourced from `ZoneSubTypeRegistry`. Click commits `currentSubTypeId` + closes modal + signals placement mode ready. |
-| T7.4 | Picker cancel UX (N3) | **TECH-556** | Draft | ESC key or outside-click dismisses picker with no cost + no placement + `currentSubTypeId = -1` + exits placement mode. Documented in `SubTypePickerModal` XML docs referencing Review Note N3. |
-| T7.5 | Budget panel UI with sliders | **TECH-557** | Draft | New `BudgetPanel.cs` + Unity UI prefab. 7 horizontal sliders (one per sub-type, labeled from `ZoneSubTypeRegistry`), 1 global cap slider, 7 remaining-this-month readouts. Open via HUD button (add to `UIManager.Hud`). Slider commit calls `budgetAllocation.SetEnvelopePct(i, pct)` which auto-normalizes; UI re-reads values post-normalize so sliders reflect actual stored state. |
-| T7.6 | Overspend-blocked notification wiring | **TECH-558** | Draft | Hook `GameNotificationManager` event raised by `BudgetAllocationService.TryDraw` failure. Display a transient HUD badge: "{sub-type} envelope exhausted" for 3s. Matches Example 2 user-facing feedback. |
+| T7.1 | S zoning button in `UIManager.ToolbarChrome` | **TECH-553** | Done (archived) | Add 4th button to zoning cluster in `UIManager.ToolbarChrome.cs` alongside R/C/I. Icon: placeholder "S" glyph. Click handler sets `ZoneManager.activeZoneType = ZoneType.StateServiceLightZoning` + opens sub-type picker (next task). Toolbar layout respects existing theme spacing. |
+| T7.2 | Placement-mode routing through `ZoneSService` | **TECH-554** | Done (archived) | When S placement active + user clicks on grid cell, route through `ZoneSService.PlaceStateServiceZone(cell, currentSubTypeId)` instead of direct `ZoneManager.PlaceZone`. `currentSubTypeId` carried in transient placement state (set by picker). Guard: if `currentSubTypeId < 0`, reopen picker. |
+| T7.3 | Sub-type picker modal UI | **TECH-555** | Done (archived) | New `SubTypePickerModal.cs` under `Assets/Scripts/Managers/GameManagers/UI/` (or existing UI dir). Uses `UIManager.PopupStack` to present 7 buttons (icon + displayName + baseCost) sourced from `ZoneSubTypeRegistry`. Click commits `currentSubTypeId` + closes modal + signals placement mode ready. |
+| T7.4 | Picker cancel UX (N3) | **TECH-556** | Done (archived) | ESC key or outside-click dismisses picker with no cost + no placement + `currentSubTypeId = -1` + exits placement mode. Documented in `SubTypePickerModal` XML docs referencing Review Note N3. |
+| T7.5 | Budget panel UI with sliders | **TECH-557** | Done (archived) | New `BudgetPanel.cs` + Unity UI prefab. 7 horizontal sliders (one per sub-type, labeled from `ZoneSubTypeRegistry`), 1 global cap slider, 7 remaining-this-month readouts. Open via HUD button (add to `UIManager.Hud`). Slider commit calls `budgetAllocation.SetEnvelopePct(i, pct)` which auto-normalizes; UI re-reads values post-normalize so sliders reflect actual stored state. |
+| T7.6 | Overspend-blocked notification wiring | **TECH-558** | Done (archived) | Hook `GameNotificationManager` event raised by `BudgetAllocationService.TryDraw` failure. Display a transient HUD badge: "{sub-type} envelope exhausted" for 3s. Matches Example 2 user-facing feedback. |
 
 ### §Stage File Plan
 
@@ -829,7 +829,7 @@
 
 ### Stage 8 — UI surfaces + CityStats integration + economy-system reference spec / Bond dialog + `CityStats` + `MiniMap` palette
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress
 
 **Objectives:** Land bond issuance UI + read-model integration. Player can issue a bond, see debt aggregated in CityStats + HUD, see S cells distinct from RCI on the mini-map.
 
@@ -848,16 +848,153 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T8.1 | Bond issuance modal UI | _pending_ | _pending_ | New `BondIssuanceModal.cs` + Unity UI prefab via `UIManager.PopupStack`. Fields: principal `InputField` (int, min 100), term radio (12/24/48), live preview Text computing `(principal × 1.12) / termMonths`. Issue button calls `bondLedger.TryIssueBond(scaleTier: city, principal, termMonths)`. Disabled if `bondLedger.GetActiveBond(city) != null`. |
-| T8.2 | Bond-active HUD flag + entry point | _pending_ | _pending_ | HUD badge showing "Active bond: {remainingMonths} mo, {monthlyRepayment}/mo" when active bond exists (city tier MVP). Click opens bond detail view (reuses `BondIssuanceModal` in read-only mode, showing current bond + disabled issue button). Arrears state shows red badge. |
-| T8.3 | `CityStats` envelope + bond fields | _pending_ | _pending_ | Add fields to `CityStats.cs`: `int totalEnvelopeCap`, `int[] envelopeRemaining` (len 7), `int activeBondDebt`, `int monthlyBondRepayment`. Populate each tick from `budgetAllocation` + `bondLedger`. `CityStatsUIController` displays new fields in stats panel (label + value). |
-| T8.4 | HUD income-minus-maintenance hint update | _pending_ | _pending_ | Update HUD projected-income-minus-maintenance readout in `UIManager.Hud` (or the existing formula site) to subtract `cityStats.totalEnvelopeCap` from the projected monthly surplus. Label text updated to "Est. monthly surplus (after S envelope + bond repayment)". |
-| T8.5 | `MiniMapController` S palette | _pending_ | _pending_ | Extend color lookup in `MiniMapController.cs`: new case for each of 6 new `ZoneType` values returning a single S color (e.g. purple). N5 locks: no per-sub-type color split in MVP. RCI colors unchanged. |
-| T8.6 | Integration test — Example 3 end-to-end | _pending_ | _pending_ | `BondIssuanceIntegrationTests` under `Assets/Tests/EditMode/Economy/` (or PlayMode). Reproduces Example 3: treasury=1200, `TryIssueBond(city, 5000, 24)` → returns true, treasury=6200, registry has entry with `monthlyRepayment=233`. Month tick triggers `ProcessMonthlyRepayment` → treasury=5967, `monthsRemaining=23`. Save/load round-trip preserves bond state. |
+| T8.1 | Bond issuance modal UI | **TECH-565** | Draft | New `BondIssuanceModal.cs` + Unity UI prefab via `UIManager.PopupStack`. Fields: principal `InputField` (int, min 100), term radio (12/24/48), live preview Text computing `(principal × 1.12) / termMonths`. Issue button calls `bondLedger.TryIssueBond(scaleTier: city, principal, termMonths)`. Disabled if `bondLedger.GetActiveBond(city) != null`. |
+| T8.2 | Bond-active HUD flag + entry point | **TECH-566** | Draft | HUD badge showing "Active bond: {remainingMonths} mo, {monthlyRepayment}/mo" when active bond exists (city tier MVP). Click opens bond detail view (reuses `BondIssuanceModal` in read-only mode, showing current bond + disabled issue button). Arrears state shows red badge. |
+| T8.3 | `CityStats` envelope + bond fields | **TECH-567** | Draft | Add fields to `CityStats.cs`: `int totalEnvelopeCap`, `int[] envelopeRemaining` (len 7), `int activeBondDebt`, `int monthlyBondRepayment`. Populate each tick from `budgetAllocation` + `bondLedger`. `CityStatsUIController` displays new fields in stats panel (label + value). |
+| T8.4 | HUD income-minus-maintenance hint update | **TECH-568** | Draft | Update HUD projected-income-minus-maintenance readout in `UIManager.Hud` (or the existing formula site) to subtract `cityStats.totalEnvelopeCap` from the projected monthly surplus. Label text updated to "Est. monthly surplus (after S envelope + bond repayment)". |
+| T8.5 | `MiniMapController` S palette | **TECH-569** | Draft | Extend color lookup in `MiniMapController.cs`: new case for each of 6 new `ZoneType` values returning a single S color (e.g. purple). N5 locks: no per-sub-type color split in MVP. RCI colors unchanged. |
+| T8.6 | Integration test — Example 3 end-to-end | **TECH-570** | Draft | `BondIssuanceIntegrationTests` under `Assets/Tests/EditMode/Economy/` (or PlayMode). Reproduces Example 3: treasury=1200, `TryIssueBond(city, 5000, 24)` → returns true, treasury=6200, registry has entry with `monthlyRepayment=233`. Month tick triggers `ProcessMonthlyRepayment` → treasury=5967, `monthsRemaining=23`. Save/load round-trip preserves bond state. |
+
+<!-- sizing-gate-waiver: H1/H6 — bond modal + HUD + CityStats + MiniMap + test span multiple UI files; incremental MVP surfaces; accepted 2026-04-20 -->
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- operation: file_task
+  reserved_id: "TECH-565"
+  issue_type: TECH
+  title: "Bond issuance modal UI"
+  priority: "medium"
+  notes: |
+    New **BondIssuanceModal** on `UIManager.PopupStack`. Principal **InputField**, term radios 12/24/48, live **monthlyRepayment** preview. Issue calls `BondLedgerService.TryIssueBond` at city scale tier; disabled when active bond on tier. Touches HUD/budget entry path from Stage 7.
+  depends_on: []
+  related: ["TECH-566", "TECH-567", "TECH-568", "TECH-569", "TECH-570"]
+  stub_body:
+    summary: |
+      Player-facing bond issuance flow: enter principal + term, preview repayment, issue via **IBondLedger**; block duplicate tier bond per locked ledger rules.
+    goals: |
+      - Modal prefab + `BondIssuanceModal.cs` wired to `UIManager.PopupStack`.
+      - Preview text matches `(principal × (1 + fixedRate)) / termMonths` with ledger default rate.
+      - Issue button invokes `TryIssueBond(cityTier, principal, termMonths)`; guard when `GetActiveBond(cityTier) != null`.
+    systems_map: |
+      - `UIManager.PopupStack`, `BondLedgerService` / `IBondLedger`, `EconomyManager` (tier read)
+      - `docs/zone-s-economy-exploration.md` Example 3
+    impl_plan_sketch: |
+      Phase 1 — Modal layout + stack push + ledger refs. Phase 2 — Validation + preview + issue wiring + disabled states.
+
+- operation: file_task
+  reserved_id: "TECH-566"
+  issue_type: TECH
+  title: "Bond-active HUD flag + entry point"
+  priority: "medium"
+  notes: |
+    HUD strip badge when city-tier bond active: remaining months + monthly repayment; click opens bond modal read-only. **Arrears** → red styling. Entry from HUD or budget panel per Stage 8 Exit.
+  depends_on: []
+  related: ["TECH-565", "TECH-567", "TECH-568", "TECH-569", "TECH-570"]
+  stub_body:
+    summary: |
+      Persistent HUD indicator for active bond; drill-down reuses issuance modal in read-only mode with issue disabled.
+    goals: |
+      - Badge text: active bond summary + arrears flag when ledger marks arrears.
+      - Click opens `BondIssuanceModal` read-only path (no issue) showing current **BondData**.
+      - Wire HUD / budget entry points without breaking Stage 7 layout.
+    systems_map: |
+      - `UIManager.Hud`, `BondLedgerService`, `BondIssuanceModal`
+    impl_plan_sketch: |
+      Phase 1 — Badge presenter + ledger subscription or poll. Phase 2 — Modal dual mode (issue vs detail) + arrears color.
+
+- operation: file_task
+  reserved_id: "TECH-567"
+  issue_type: TECH
+  title: "`CityStats` envelope + bond fields"
+  priority: "medium"
+  notes: |
+    Extend **CityStats** read model: envelope cap, per-sub-type remaining array, bond debt + monthly repayment aggregates. **CityStatsUIController** renders new rows in stats panel.
+  depends_on: []
+  related: ["TECH-565", "TECH-566", "TECH-568", "TECH-569", "TECH-570"]
+  stub_body:
+    summary: |
+      Surface allocator + ledger state on city read model for stats UI and downstream HUD hint.
+    goals: |
+      - Add `totalEnvelopeCap`, `envelopeRemaining[7]`, `activeBondDebt`, `monthlyBondRepayment` to `CityStats`.
+      - Populate from `BudgetAllocationService` + `BondLedgerService` on economy tick.
+      - Stats panel labels + values for each field.
+    systems_map: |
+      - `CityStats.cs`, `CityStatsUIController`, `BudgetAllocationService`, `BondLedgerService`
+    impl_plan_sketch: |
+      Phase 1 — Fields + tick population. Phase 2 — UI controller wiring + formatting.
+
+- operation: file_task
+  reserved_id: "TECH-568"
+  issue_type: TECH
+  title: "HUD income-minus-maintenance hint update"
+  priority: "medium"
+  notes: |
+    Subtract **`totalEnvelopeCap`** from projected monthly surplus line in HUD readout; label copy matches exploration §Subsystem Impact (after S envelope + bond repayment wording).
+  depends_on: []
+  related: ["TECH-565", "TECH-566", "TECH-567", "TECH-569", "TECH-570"]
+  stub_body:
+    summary: |
+      Align projected surplus hint with envelope budget ceiling so player sees post-S envelope picture.
+    goals: |
+      - Locate existing projected income-minus-maintenance HUD formula site.
+      - Incorporate `cityStats.totalEnvelopeCap` (and bond repayment already in model if separate).
+      - Update label to Stage 8 Exit string.
+    systems_map: |
+      - `UIManager.Hud` (or dedicated HUD presenter), `CityStats`
+    impl_plan_sketch: |
+      Phase 1 — Trace current formula. Phase 2 — Subtract cap + verify copy.
+
+- operation: file_task
+  reserved_id: "TECH-569"
+  issue_type: TECH
+  title: "`MiniMapController` S palette"
+  priority: "medium"
+  notes: |
+    One **Zone S** color for all six **StateService** zone types + zoning variants; **N5** — no per-sub-type tint in MVP. R/C/I unchanged.
+  depends_on: []
+  related: ["TECH-565", "TECH-566", "TECH-567", "TECH-568", "TECH-570"]
+  stub_body:
+    summary: |
+      Mini-map distinguishes **Zone S** cells from R/C/I using single shared tint per exploration N5.
+    goals: |
+      - Extend `MiniMapController` color lookup for `StateService*` **ZoneType** values.
+      - Single purple (or chosen theme token) for all S; no per-sub-type split.
+    systems_map: |
+      - `MiniMapController.cs`, `Zone.ZoneType`, `UiTheme` if applicable
+    impl_plan_sketch: |
+      Phase 1 — Map enum cases to S color. Phase 2 — Visual sanity vs R/C/I.
+
+- operation: file_task
+  reserved_id: "TECH-570"
+  issue_type: TECH
+  title: "Integration test — Example 3 end-to-end"
+  priority: "medium"
+  notes: |
+    **BondIssuanceIntegrationTests**: treasury 1200 → issue 5000 @ 24 mo → **TryIssueBond** true; treasury 6200; **monthlyRepayment** 233; month tick repayment; save/load round-trip on bond registry.
+  depends_on: []
+  related: ["TECH-565", "TECH-566", "TECH-567", "TECH-568", "TECH-569"]
+  stub_body:
+    summary: |
+      Automate exploration Example 3 bond flow + persistence check for Stage 8 exit gate.
+    goals: |
+      - EditMode (or PlayMode) test harness with economy + ledger test doubles or scene.
+      - Assert issue + repayment math + registry state; assert save/load preserves bond fields.
+    systems_map: |
+      - `Assets/Tests/EditMode/Economy/`, `BondLedgerService`, `GameSaveManager` / save data path
+    impl_plan_sketch: |
+      Phase 1 — Harness + issue assertions. Phase 2 — Tick repayment + save round-trip.
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ### Stage 9 — UI surfaces + CityStats integration + economy-system reference spec / `economy-system.md` reference spec + closeout alignment
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done
 
 **Objectives:** Author the new `ia/specs/economy-system.md` reference spec (invariant #12 — covers permanent domain). Glossary rows authored in Steps 1/2 get proper authoritative spec cross-refs. Run full validation + confirm umbrella rollout tracker row ready to advance to column (f) "≥1 task filed" on first `/stage-file` call. Final stage — nothing player-visible added, but spec + docs + alignment land.
 
@@ -876,11 +1013,150 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T9.1 | Author `ia/specs/economy-system.md` | _pending_ | _pending_ | New reference spec under `ia/specs/economy-system.md`. Sections per stage Exit list. Follows existing spec authoring conventions (frontmatter, ToC, glossary cross-refs). Cross-references `persistence-system.md` (save) + `managers-reference.md` (Zones). Caveman prose per `ia/rules/agent-output-caveman.md` §authoring. |
-| T9.2 | Repoint glossary rows to new spec | _pending_ | _pending_ | Update 10 glossary rows added in Steps 1/2 (`Zone S`, `BudgetAllocationService`, `BondLedgerService`, `TreasuryFloorClampService`, `ZoneSService`, `IMaintenanceContributor`, `ZoneSubTypeRegistry`, `IBudgetAllocator`, `IBondLedger`, `envelope (budget)`) — replace exploration-doc placeholder links with `ia/specs/economy-system.md#{anchor}` links. Preserves cross-link integrity. |
-| T9.3 | Router-table row for economy domain | _pending_ | _pending_ | Update `ia/rules/agent-router.md` routing table: add row(s) mapping task-domain keywords ("zone s", "economy", "budget", "bond", "maintenance") to `economy-system.md` sections. Ensures MCP `router_for_task` dispatches correctly in future agent sessions. |
-| T9.4 | Index regen + `validate:all` | _pending_ | _pending_ | Run `npm run mcp-ia-index` to regenerate `tools/mcp-ia-server/data/spec-index.json` + `glossary-index.json` + `glossary-graph-index.json`. Run `npm run validate:all`; fix any frontmatter / dead-link issues. Confirm MCP tests pass (`tools/mcp-ia-server/tests`). |
-| T9.5 | Umbrella rollout-tracker alignment check | _pending_ | _pending_ | Read `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row. Verify columns (a)–(e) marked complete (design-explore → master-plan → stage-file → project-spec-kickoff → glossary rows landed). Verify column (g) align gate closed (spec + router + glossary all pointing to `economy-system.md`). Do NOT tick column (f) — that's `/stage-file` authoring, not this closeout stage. Document state in closeout notes. |
+| T9.1 | Author `ia/specs/economy-system.md` | **TECH-593** | Done | New reference spec under `ia/specs/economy-system.md`. Sections per stage Exit list. Follows existing spec authoring conventions (frontmatter, ToC, glossary cross-refs). Cross-references `persistence-system.md` (save) + `managers-reference.md` (Zones). Caveman prose per `ia/rules/agent-output-caveman.md` §authoring. |
+| T9.2 | Repoint glossary rows to new spec | **TECH-594** | Done | Update 10 glossary rows added in Steps 1/2 (`Zone S`, `BudgetAllocationService`, `BondLedgerService`, `TreasuryFloorClampService`, `ZoneSService`, `IMaintenanceContributor`, `ZoneSubTypeRegistry`, `IBudgetAllocator`, `IBondLedger`, `envelope (budget)`) — replace exploration-doc placeholder links with `ia/specs/economy-system.md#{anchor}` links. Preserves cross-link integrity. |
+| T9.3 | Router-table row for economy domain | **TECH-595** | Done | Update `ia/rules/agent-router.md` routing table: add row(s) mapping task-domain keywords ("zone s", "economy", "budget", "bond", "maintenance") to `economy-system.md` sections. Ensures MCP `router_for_task` dispatches correctly in future agent sessions. |
+| T9.4 | Index regen + `validate:all` | **TECH-596** | Done | Run `npm run mcp-ia-index` to regenerate `tools/mcp-ia-server/data/spec-index.json` + `glossary-index.json` + `glossary-graph-index.json`. Run `npm run validate:all`; fix any frontmatter / dead-link issues. Confirm MCP tests pass (`tools/mcp-ia-server/tests`). |
+| T9.5 | Umbrella rollout-tracker alignment check | **TECH-597** | Done | Read `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row. Verify columns (a)–(e) marked complete (design-explore → master-plan → stage-file → project-spec-kickoff → glossary rows landed). Verify column (g) align gate closed (spec + router + glossary all pointing to `economy-system.md`). Do NOT tick column (f) — that's `/stage-file` authoring, not this closeout stage. Document state in closeout notes. |
+
+<!-- sizing-gate-waiver: Stage 9 IA-only (spec + glossary + router + index + tracker); multi-subsystem doc touch expected; accepted -->
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- operation: file_task
+  reserved_id: ""
+  issue_type: TECH
+  title: "Author `ia/specs/economy-system.md`"
+  priority: medium
+  notes: |
+    New **reference spec** under `ia/specs/economy-system.md` per Stage 9 Exit: Zone S, **BudgetAllocationService** / **IBudgetAllocator**, **TreasuryFloorClampService**, **BondLedgerService** / **IBondLedger**, **IMaintenanceContributor**, save v3→v4, glossary-style cross-refs to **persistence-system** + **managers-reference**. Caveman authoring per `agent-output-caveman.md`.
+  depends_on: []
+  related:
+    - "TECH-594"
+    - "TECH-595"
+    - "TECH-596"
+    - "TECH-597"
+  stub_body:
+    summary: |
+      Land authoritative **economy-system** reference spec: Zone S enums, sub-type registry, placement pipeline, budget envelope semantics, treasury floor, bond ledger contracts, maintenance contributors, save migration notes — aligns glossary rows from prior stages.
+    goals: |
+      - `ia/specs/economy-system.md` exists with Overview + sections listed in Stage 9 Exit (Zone S, budget, bonds, maintenance, save).
+      - Cross-refs to **persistence-system**, **managers-reference**, **isometric-geography** where relevant; no orphan anchors.
+      - Frontmatter + ToC match existing `ia/specs/` conventions.
+    systems_map: |
+      - `ia/specs/economy-system.md` (new), `ia/specs/glossary.md`, `ia/specs/persistence-system.md`, `ia/specs/managers-reference.md`
+    impl_plan_sketch: |
+      Phase 1 — Outline sections from Stage Exit checklist. Phase 2 — Fill domain text + cross-refs + validate links locally.
+
+- operation: file_task
+  reserved_id: ""
+  issue_type: TECH
+  title: "Repoint glossary rows to new spec"
+  priority: medium
+  notes: |
+    Update 10 glossary rows (**Zone S**, **BudgetAllocationService**, **BondLedgerService**, **TreasuryFloorClampService**, **ZoneSService**, **IMaintenanceContributor**, **ZoneSubTypeRegistry**, **IBudgetAllocator**, **IBondLedger**, **envelope (budget)**): replace exploration-doc placeholders with `ia/specs/economy-system.md#{anchor}` links; preserve table integrity.
+  depends_on:
+    - "TECH-593"
+  related:
+    - "TECH-593"
+    - "TECH-595"
+    - "TECH-596"
+    - "TECH-597"
+  stub_body:
+    summary: |
+      Point economy-related glossary rows at **economy-system** spec sections so MCP + humans resolve authoritative definitions.
+    goals: |
+      - Each listed row links to correct `economy-system.md` anchor; no stale exploration-only URLs.
+      - Glossary table formatting unchanged; `npm run validate:all` glossary-index path green after edits.
+    systems_map: |
+      - `ia/specs/glossary.md`, `ia/specs/economy-system.md`
+    impl_plan_sketch: |
+      Phase 1 — Map row → section anchor. Phase 2 — Edit glossary + spot-check `glossary-index` / dead links.
+
+- operation: file_task
+  reserved_id: ""
+  issue_type: TECH
+  title: "Router-table row for economy domain"
+  priority: medium
+  notes: |
+    Extend `ia/rules/agent-router.md` Task → Spec routing: keywords (zone s, economy, budget, bond, maintenance) → `economy-system.md` section slices. Keeps **router_for_task** + agent-router table aligned.
+  depends_on:
+    - "TECH-593"
+  related:
+    - "TECH-593"
+    - "TECH-594"
+    - "TECH-596"
+    - "TECH-597"
+  stub_body:
+    summary: |
+      Add router rows so IA routing sends economy/Zone S work to **economy-system** spec slices (MCP + human agent-router).
+    goals: |
+      - New table row(s) with keywords + target spec sections.
+      - No duplicate or conflicting routes vs existing geography/zones rows.
+    systems_map: |
+      - `ia/rules/agent-router.md`, `ia/specs/economy-system.md`
+    impl_plan_sketch: |
+      Phase 1 — Keyword list from Stage Objectives. Phase 2 — Insert rows + verify `router_for_task` doc alignment.
+
+- operation: file_task
+  reserved_id: ""
+  issue_type: TECH
+  title: "Index regen + `validate:all`"
+  priority: medium
+  notes: |
+    Run `npm run mcp-ia-index` (regen `spec-index.json`, glossary indexes). Run `npm run validate:all`; fix frontmatter/dead-link issues; confirm `tools/mcp-ia-server/tests` pass.
+  depends_on:
+    - "TECH-593"
+    - "TECH-594"
+    - "TECH-595"
+  related:
+    - "TECH-593"
+    - "TECH-594"
+    - "TECH-595"
+    - "TECH-597"
+  stub_body:
+    summary: |
+      Regenerate MCP IA indexes after spec + glossary + router land; full repo validation green.
+    goals: |
+      - `tools/mcp-ia-server/data/spec-index.json` + glossary indexes updated.
+      - `validate:all` exit 0; MCP package tests pass.
+    systems_map: |
+      - `tools/mcp-ia-server/`, `package.json` scripts, `ia/specs/`
+    impl_plan_sketch: |
+      Phase 1 — `npm run mcp-ia-index`. Phase 2 — `validate:all` + fix any IA drift.
+
+- operation: file_task
+  reserved_id: ""
+  issue_type: TECH
+  title: "Umbrella rollout-tracker alignment check"
+  priority: medium
+  notes: |
+    Verify `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row: columns (a)–(e) complete; column (g) align gate closed. Document findings in spec closeout notes; do not tick column (f) here.
+  depends_on:
+    - "TECH-596"
+  related:
+    - "TECH-593"
+    - "TECH-594"
+    - "TECH-595"
+    - "TECH-596"
+  stub_body:
+    summary: |
+      Close-the-loop check vs umbrella rollout tracker: Bucket 3 alignment before program calls column (f) done elsewhere.
+    goals: |
+      - Tracker row state documented; mismatches filed or noted for umbrella owner.
+      - Explicit note that column (f) tick is out of scope for this task.
+    systems_map: |
+      - `ia/projects/full-game-mvp-rollout-tracker.md`, `ia/projects/zone-s-economy-master-plan.md`
+    impl_plan_sketch: |
+      Phase 1 — Read tracker + compare to repo. Phase 2 — Write findings into Task spec §Verification / Decision Log as needed.
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 
