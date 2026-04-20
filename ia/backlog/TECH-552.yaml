@@ -1,0 +1,32 @@
+id: TECH-552
+type: tooling / agent enablement
+title: "**Unity Agent Bridge** program — file-based command queue + MCP tools for agent-triggered exports"
+priority: medium
+status: open
+section: IA evolution lane
+files:
+  - tools/mcp-ia-server/src/
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - .claude/skills/
+  - docs/mcp-ia-server.md
+  - ia/skills/ide-bridge-evidence/SKILL.md
+notes: |
+  Phase 1 (file-based command queue + `unity_bridge_command` / `unity_bridge_get`) already shipped per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §8.1. Program tracks analysis doc §10 tiers B (hardening — parameterized exports, sugar tools, Cursor skills), C (HTTP transport, log streaming, screenshot automation), D (deterministic replay, visual diff). Explicitly excludes **batchmode** / headless CI per analysis doc §4.1 + §11.
+acceptance: |
+  Master plan authored at `ia/projects/unity-agent-bridge-master-plan.md` with ≥3 Steps landing on green-bar boundaries; at minimum Step 1 = analysis §10-B hardening; each stage has 2–6 tasks per phase (cardinality gate); all analysis doc §10 items mapped into a step OR explicitly deferred to post-MVP extensions doc.
+depends_on: []
+depends_on_raw: "none hard. Soft: existing `unity_bridge_command` MCP tool contract (do not break); `ia/specs/unity-development-context.md` §10 Reports contract alignment."
+related:
+  - TECH-83
+  - TECH-78
+  - TECH-251
+created: 2026-04-20
+raw_markdown: |
+  - [ ] **TECH-552** — **Unity Agent Bridge** program — file-based command queue + MCP tools for agent-triggered exports
+    - Type: tooling / agent enablement
+    - Files: `tools/mcp-ia-server/src/` (existing `unity_bridge_command` / `unity_bridge_get` + sugar wrappers); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (existing; extended); `.claude/skills/` (new Cursor skills per analysis doc §6); `docs/mcp-ia-server.md` (tool docs); `ia/skills/ide-bridge-evidence/SKILL.md` (evidence contract)
+    - Spec: `ia/projects/unity-agent-bridge-master-plan.md`
+    - Notes: Phase 1 (file-based command queue + `unity_bridge_command` / `unity_bridge_get`) already shipped per analysis doc §8.1. Program tracks analysis doc §10 tiers B (hardening — parameterized exports, sugar tools, Cursor skills), C (HTTP transport, log streaming, screenshot automation), D (deterministic replay, visual diff). Explicitly excludes `-batchmode` / headless CI per analysis doc §4.1 + §11.
+    - Acceptance: master plan authored at `ia/projects/unity-agent-bridge-master-plan.md` with ≥3 Steps landing on green-bar boundaries; at minimum Step 1 = analysis §10-B hardening; each stage has 2–6 tasks per phase (cardinality gate); all analysis doc §10 items mapped into a step OR explicitly deferred to post-MVP extensions doc.
+    - Depends on: none hard. Soft: existing `unity_bridge_command` MCP tool contract (do not break); `ia/specs/unity-development-context.md` §10 Reports contract alignment.
+    - Related: TECH-83 (consumer — sim params uses bridge); TECH-78 (sibling agent tooling); TECH-251 (Opus 4.7 touches `ide-bridge-evidence`).

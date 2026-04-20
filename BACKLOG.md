@@ -6,7 +6,7 @@
 >
 > **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
-> **Active programs:** **§ Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) · **§ IA evolution lane** TECH-77–TECH-83 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)) · **§ UI-as-code program** open FEAT-51 · **§ Economic depth lane** FEAT-52 → FEAT-53 → FEAT-09 (economy, services, districts; monthly maintenance, tax→demand feedback, happiness + pollution shipped) · **§ Gameplay & simulation lane** player-facing AUTO / density.
+> **Active programs:** **§ Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) · **§ IA evolution lane** TECH-77–TECH-83 + TECH-552 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md); bridge program [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md)) · **§ UI-as-code program** open FEAT-51 · **§ Economic depth lane** FEAT-52 → FEAT-53 → FEAT-09 (economy, services, districts; monthly maintenance, tax→demand feedback, happiness + pollution shipped) · **§ Gameplay & simulation lane** player-facing AUTO / density.
 
 ---
 
@@ -202,7 +202,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## IA evolution lane
 
-Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
+Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **TECH-552** (Unity Agent Bridge program — MCP + Editor queue hardening / transport / depth tiers per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §10). **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
 
 - [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)
   - Type: tooling / agent enablement
@@ -259,6 +259,15 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Notes: MCP tools to read (`sim_params_read`), modify (`sim_params_write`), and evaluate (`sim_experiment`) simulation parameters at runtime. Agents can A/B test parameter changes (growth budget, demand rates, ring fractions) by running N ticks and measuring outcomes. State snapshot/restore for experiment isolation. Results persisted in Postgres.
   - Acceptance: parameter catalog complete; write→read roundtrip works; experiment runs N ticks and returns metric comparison; game state restored after experiment
   - Depends on: none (soft: TECH-82 Phase 1 for richer metric collection)
+
+- [ ] **TECH-552** — **Unity Agent Bridge** program — file-based command queue + MCP tools for agent-triggered exports
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (existing `unity_bridge_command` / `unity_bridge_get` + sugar wrappers); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (existing; extended); `.claude/skills/` (new Cursor skills per analysis doc §6); `docs/mcp-ia-server.md` (tool docs); `ia/skills/ide-bridge-evidence/SKILL.md` (evidence contract)
+  - Spec: `ia/projects/unity-agent-bridge-master-plan.md`
+  - Notes: Phase 1 (file-based command queue + `unity_bridge_command` / `unity_bridge_get`) already shipped per analysis doc §8.1. Program tracks analysis doc §10 tiers B (hardening — parameterized exports, sugar tools, Cursor skills), C (HTTP transport, log streaming, screenshot automation), D (deterministic replay, visual diff). Explicitly excludes `-batchmode` / headless CI per analysis doc §4.1 + §11.
+  - Acceptance: master plan authored at `ia/projects/unity-agent-bridge-master-plan.md` with ≥3 Steps landing on green-bar boundaries; at minimum Step 1 = analysis §10-B hardening; each stage has 2–6 tasks per phase (cardinality gate); all analysis doc §10 items mapped into a step OR explicitly deferred to post-MVP extensions doc.
+  - Depends on: none hard. Soft: existing `unity_bridge_command` MCP tool contract (do not break); `ia/specs/unity-development-context.md` §10 Reports contract alignment.
+  - Related: TECH-83 (consumer — sim params uses bridge); TECH-78 (sibling agent tooling); TECH-251 (Opus 4.7 touches `ide-bridge-evidence`).
 
 - [ ] **TECH-322** — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)
   - Type: tech (IA infrastructure / lifecycle tooling)
@@ -837,7 +846,7 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Spec: `ia/projects/TECH-05.md`
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
-*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
+*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** + **TECH-552** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
 
 ## Low Priority
 
