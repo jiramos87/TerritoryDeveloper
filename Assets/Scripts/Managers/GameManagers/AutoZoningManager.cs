@@ -323,6 +323,9 @@ public class AutoZoningManager : MonoBehaviour
         if (ring == UrbanRing.Inner)
             candidates.RemoveAll(z => z == Zone.ZoneType.IndustrialLightZoning);
 
+        // Zone S is manual-only in MVP — see docs/zone-s-economy-exploration.md §Q2
+        candidates.RemoveAll(z => ZoneManager.IsStateServiceZoneType(z));
+
         if (candidates.Count == 0)
             return Zone.ZoneType.ResidentialLightZoning;
 
@@ -343,6 +346,9 @@ public class AutoZoningManager : MonoBehaviour
 
         if (segment.ring == UrbanRing.Inner)
             candidates.RemoveAll(z => z == Zone.ZoneType.IndustrialLightZoning);
+
+        // Zone S is manual-only in MVP — see docs/zone-s-economy-exploration.md §Q2
+        candidates.RemoveAll(z => ZoneManager.IsStateServiceZoneType(z));
 
         if (candidates.Count == 0)
             return Zone.ZoneType.ResidentialLightZoning;

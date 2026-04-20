@@ -767,6 +767,44 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     }
 
     /// <summary>
+    /// Place a state-service zone at grid position. Caller owns affordability
+    /// (via <see cref="Territory.Economy.BudgetAllocationService.TryDraw"/>).
+    /// Sets <see cref="Zone.SubTypeId"/> on the created zone component.
+    /// No <see cref="ZoneAttributes"/> lookup — S zone costs live in
+    /// <see cref="ZoneSubTypeRegistry"/>, not the ZoneManager attribute table.
+    /// </summary>
+    /// <param name="cellX">Grid X coordinate.</param>
+    /// <param name="cellY">Grid Y coordinate.</param>
+    /// <param name="zoneType">State-service zone type enum value.</param>
+    /// <param name="subTypeId">Sub-type id indexing ZoneSubTypeRegistry.</param>
+    /// <returns>True if zone placed; false if cell is null or out of bounds.</returns>
+    public bool PlaceStateServiceZoneAt(int cellX, int cellY, Zone.ZoneType zoneType, int subTypeId)
+    {
+        CityCell cell = gridManager.GetCell(cellX, cellY);
+        if (cell == null) return false;
+
+        cell.zoneType = zoneType;
+
+        Zone existingZone = cell.gameObject.GetComponentInChildren<Zone>();
+        if (existingZone != null)
+        {
+            existingZone.zoneType = zoneType;
+            existingZone.SubTypeId = subTypeId;
+        }
+        else
+        {
+            Zone zone = cell.gameObject.AddComponent<Zone>();
+            zone.zoneType = zoneType;
+            zone.SubTypeId = subTypeId;
+        }
+
+        Vector2 gridPos = new Vector2(cellX, cellY);
+        addZonedTileToList(gridPos, zoneType);
+        cityStats.AddZoneBuildingCount(zoneType);
+        return true;
+    }
+
+    /// <summary>
     /// Restore zoning overlay tile from save. Uses SetZoningTileSortingOrder so renders correctly (below roads + buildings). Use instead of PlaceZoneBuildingTile for zoning types.
     /// </summary>
     public void RestoreZoneTile(GameObject prefab, GameObject gridCell, Zone.ZoneType zoneType)
@@ -801,6 +839,21 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             || zoneType == Zone.ZoneType.CommercialMediumZoning || zoneType == Zone.ZoneType.CommercialHeavyZoning
             || zoneType == Zone.ZoneType.IndustrialLightZoning || zoneType == Zone.ZoneType.IndustrialMediumZoning
             || zoneType == Zone.ZoneType.IndustrialHeavyZoning;
+    }
+
+    /// <summary>
+    /// True if zone type is any of the 6 state-service (Zone S) enum values.
+    /// Static helper avoids adding <see cref="Territory.Economy.EconomyManager"/> dependency to
+    /// <see cref="ZoneManager"/>.
+    /// </summary>
+    public static bool IsStateServiceZoneType(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.StateServiceLightBuilding
+            || zoneType == Zone.ZoneType.StateServiceMediumBuilding
+            || zoneType == Zone.ZoneType.StateServiceHeavyBuilding
+            || zoneType == Zone.ZoneType.StateServiceLightZoning
+            || zoneType == Zone.ZoneType.StateServiceMediumZoning
+            || zoneType == Zone.ZoneType.StateServiceHeavyZoning;
     }
 
     #endregion
@@ -855,6 +908,10 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <param name="zoningType">Zoning type to place building for (e.g. ResidentialLightZoning).</param>
     public void PlaceZonedBuildings(Zone.ZoneType zoningType)
     {
+        // Zone S is manual-only in MVP — see docs/zone-s-economy-exploration.md §Q2
+        if (IsStateServiceZoneType(zoningType))
+            return;
+
         if (availableZoneSections.Count == 0)
         {
             return;

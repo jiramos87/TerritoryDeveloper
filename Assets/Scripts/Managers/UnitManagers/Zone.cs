@@ -85,6 +85,9 @@ public class Zone : MonoBehaviour
             case ZoneType.IndustrialMediumBuilding:
             case ZoneType.IndustrialHeavyBuilding:
             case ZoneType.Building:
+            case ZoneType.StateServiceLightBuilding:
+            case ZoneType.StateServiceMediumBuilding:
+            case ZoneType.StateServiceHeavyBuilding:
                 zoneCategory = ZoneCategory.Building;
                 break;
 
@@ -97,6 +100,9 @@ public class Zone : MonoBehaviour
             case ZoneType.IndustrialLightZoning:
             case ZoneType.IndustrialMediumZoning:
             case ZoneType.IndustrialHeavyZoning:
+            case ZoneType.StateServiceLightZoning:
+            case ZoneType.StateServiceMediumZoning:
+            case ZoneType.StateServiceHeavyZoning:
                 zoneCategory = ZoneCategory.Zoning;
                 break;
 
