@@ -132,9 +132,14 @@ function processFile(filePath) {
       try {
         obj = JSON.parse(line);
       } catch (e) {
-        errors.push(
-          `${filePath}:${lineNumber} — JSON parse error: ${e.message}`
-        );
+        // Local .claude/telemetry/*.jsonl may contain truncated lines from crashes.
+        // Fail only when TELEMETRY_STRICT=1 (CI opt-in); otherwise warn and skip.
+        const msg = `${filePath}:${lineNumber} — JSON parse error: ${e.message}`;
+        if (process.env.TELEMETRY_STRICT === "1") {
+          errors.push(msg);
+        } else {
+          console.warn(`telemetry-schema (lenient): ${msg}`);
+        }
         return;
       }
 

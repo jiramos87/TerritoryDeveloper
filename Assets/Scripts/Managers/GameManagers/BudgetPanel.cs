@@ -37,8 +37,41 @@ namespace Territory.Economy
                 registry = FindObjectOfType<ZoneSubTypeRegistry>();
             if (uiManager == null)
                 uiManager = FindObjectOfType<UIManager>();
+            EnsureRuntimePanelRootIfNeeded();
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+        }
+
+        /// <summary>
+        /// When no prefab assigns <see cref="panelRoot"/>, build a centered panel under the main Canvas
+        /// so HUD / code-only setups still open the budget UI.
+        /// </summary>
+        private void EnsureRuntimePanelRootIfNeeded()
+        {
+            if (panelRoot != null)
+                return;
+            Canvas c = FindObjectOfType<Canvas>();
+            if (c == null)
+                return;
+            GameObject root = new GameObject("BudgetPanelRoot");
+            // Parent under this component (runtime bootstrap places BudgetPanel under Canvas).
+            root.transform.SetParent(transform, false);
+            root.transform.SetAsLastSibling();
+            RectTransform rt = root.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(520, 640);
+            rt.anchoredPosition = Vector2.zero;
+            var img = root.AddComponent<Image>();
+            img.color = new Color(0.08f, 0.08f, 0.1f, 0.96f);
+            var v = root.AddComponent<VerticalLayoutGroup>();
+            v.spacing = 6;
+            v.padding = new RectOffset(12, 12, 12, 12);
+            v.childAlignment = TextAnchor.UpperCenter;
+            v.childControlWidth = true;
+            v.childControlHeight = false;
+            v.childForceExpandWidth = true;
+            panelRoot = root;
         }
 
         /// <summary>Open budget panel; refresh from allocator state.</summary>

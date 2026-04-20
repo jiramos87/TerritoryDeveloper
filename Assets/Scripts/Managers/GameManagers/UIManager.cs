@@ -173,6 +173,7 @@ public partial class UIManager : MonoBehaviour
     private GameObject welcomeBriefingRoot;
     private Coroutine loadMenuFadeRoutine;
     private BondLedgerService bondLedgerHud;
+    private bool economyHudRuntimeWired;
     #endregion
 
     /// <summary>CanvasGroup popup fade duration; clamped for safety.</summary>
@@ -208,6 +209,7 @@ public partial class UIManager : MonoBehaviour
         if (bondLedgerHud == null)
             bondLedgerHud = FindObjectOfType<BondLedgerService>();
 
+        EnsureEconomyHudRuntimeWiring();
         EnsureConstructionCostTextExists();
         if (bondHudBadgeButton != null)
         {
@@ -269,6 +271,106 @@ public partial class UIManager : MonoBehaviour
         if (bond == null) return;
         bondIssuanceModal.ShowReadOnly(this, bond);
         RegisterPopupOpened(PopupType.BondIssuance);
+    }
+
+    /// <summary>
+    /// Instantiate bond modal, budget panel, and HUD surplus/bond widgets when scene has no Inspector wiring.
+    /// UI parents under the first <see cref="Canvas"/> so layout stacks above world space.
+    /// </summary>
+    private void EnsureEconomyHudRuntimeWiring()
+    {
+        if (economyHudRuntimeWired)
+            return;
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+            return;
+
+        if (bondIssuanceModal == null)
+        {
+            GameObject go = new GameObject("BondIssuanceModal");
+            go.transform.SetParent(canvas.transform, false);
+            go.transform.SetAsLastSibling();
+            RectTransform brt = go.AddComponent<RectTransform>();
+            brt.anchorMin = Vector2.zero;
+            brt.anchorMax = Vector2.one;
+            brt.offsetMin = Vector2.zero;
+            brt.offsetMax = Vector2.zero;
+            bondIssuanceModal = go.AddComponent<BondIssuanceModal>();
+        }
+
+        if (budgetPanel == null)
+        {
+            GameObject go = new GameObject("BudgetPanel");
+            go.transform.SetParent(canvas.transform, false);
+            go.transform.SetAsLastSibling();
+            RectTransform prt = go.AddComponent<RectTransform>();
+            prt.anchorMin = Vector2.zero;
+            prt.anchorMax = Vector2.one;
+            prt.offsetMin = Vector2.zero;
+            prt.offsetMax = Vector2.zero;
+            budgetPanel = go.AddComponent<BudgetPanel>();
+        }
+
+        if (hudEstimatedSurplusHintText == null)
+        {
+            GameObject hintGo = new GameObject("HudEstimatedSurplusHint");
+            hintGo.transform.SetParent(canvas.transform, false);
+            RectTransform hrt = hintGo.AddComponent<RectTransform>();
+            hrt.anchorMin = new Vector2(0.5f, 1f);
+            hrt.anchorMax = new Vector2(0.5f, 1f);
+            hrt.pivot = new Vector2(0.5f, 1f);
+            hrt.anchoredPosition = new Vector2(0f, -96f);
+            hrt.sizeDelta = new Vector2(900f, 26f);
+            Text ht = hintGo.AddComponent<Text>();
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (font != null) ht.font = font;
+            else if (moneyText != null) ht.font = moneyText.font;
+            ht.fontSize = 14;
+            ht.color = new Color(0.85f, 0.92f, 1f);
+            ht.alignment = TextAnchor.MiddleCenter;
+            ht.horizontalOverflow = HorizontalWrapMode.Wrap;
+            ht.verticalOverflow = VerticalWrapMode.Truncate;
+            ht.raycastTarget = false;
+            hudEstimatedSurplusHintText = ht;
+        }
+
+        if (bondHudBadgeButton == null)
+        {
+            GameObject badgeGo = new GameObject("BondHudBadge");
+            badgeGo.transform.SetParent(canvas.transform, false);
+            RectTransform art = badgeGo.AddComponent<RectTransform>();
+            art.anchorMin = new Vector2(1f, 1f);
+            art.anchorMax = new Vector2(1f, 1f);
+            art.pivot = new Vector2(1f, 1f);
+            art.anchoredPosition = new Vector2(-12f, -12f);
+            art.sizeDelta = new Vector2(300f, 34f);
+            var bg = badgeGo.AddComponent<Image>();
+            bg.color = new Color(0.12f, 0.16f, 0.22f, 0.92f);
+            bg.raycastTarget = true;
+            bondHudBadgeButton = badgeGo.AddComponent<Button>();
+            bondHudBadgeButton.targetGraphic = bg;
+
+            GameObject txtGo = new GameObject("Text");
+            txtGo.transform.SetParent(badgeGo.transform, false);
+            Text bt = txtGo.AddComponent<Text>();
+            Font bfont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (bfont != null) bt.font = bfont;
+            else if (moneyText != null) bt.font = moneyText.font;
+            bt.fontSize = 13;
+            bt.color = Color.white;
+            bt.alignment = TextAnchor.MiddleCenter;
+            bt.raycastTarget = false;
+            bt.text = "";
+            RectTransform trt = txtGo.GetComponent<RectTransform>();
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.sizeDelta = Vector2.zero;
+
+            badgeGo.SetActive(false);
+        }
+
+        economyHudRuntimeWired = true;
     }
 
     /// <summary>
