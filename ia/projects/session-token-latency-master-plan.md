@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-20
 >
-> **Status:** In Progress — Step 1 / Stage 1.3
+> **Status:** In Progress — Step 2 / Stage 2.2
 >
 > **Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.
 >
@@ -847,9 +847,9 @@
 
 ### Step 2 — Authority chain collapse (Themes A + C)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 2.2
 
-**Backlog state (Step 2):** 0 filed
+**Backlog state (Step 2):** 4 filed (TECH-577..580) — Stage 2.1 shipped (Pass 1 commits on branch); Stage 2.2 not yet filed
 
 **Objectives:** Eliminate authority-chain violations across the always-loaded ambient surface (CLAUDE.md / AGENTS.md / `docs/agent-lifecycle.md` duplication — A1), caveman preamble restatements across ~40 surfaces (A2), oversized MEMORY.md entries (A4), and slash-command triple-statement dispatch (C1/C2). Lands the "single source of truth per topic" design principle across the full doc triangle. Seed lint (C3) ships in this Step as the CI gate enforcing future compliance.
 
@@ -885,7 +885,7 @@
 
 #### Stage 2.1 — Lifecycle taxonomy authority chain (A1 + A4)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Pre-condition:** lifecycle-refactor Stage 10 T10.2 Done (`ia/skills/_preamble/stable-block.md` exists).
 
@@ -902,17 +902,120 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Doc-triangle authority chain collapse (A1).
-- [ ] Phase 2 — MEMORY.md hygiene (A4).
+- [x] Phase 1 — Doc-triangle authority chain collapse (A1).
+- [x] Phase 2 — MEMORY.md hygiene (A4).
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.1.1 | Collapse rule + CLAUDE.md §3 | 1 | _pending_ | _pending_ | Shrink `ia/rules/agent-lifecycle.md` to ≤12 lines: retain header + one-sentence purpose + `Full canonical doc: docs/agent-lifecycle.md` pointer + `## Ordered flow` stub linking there. Collapse `CLAUDE.md` §3 Key files: remove lifecycle taxonomy prose (≤20 lines remain); add `docs/agent-lifecycle.md` row to key-files table as sole lifecycle authority. Run `npm run validate:all`. |
-| T2.1.2 | Collapse AGENTS.md §3 | 1 | _pending_ | _pending_ | Shrink `AGENTS.md` §3 lifecycle section: replace full taxonomy table with ≤8-line block: "Full lifecycle flow: `docs/agent-lifecycle.md`. Surface map table: `ia/rules/agent-lifecycle.md` §Surface map." Remove restated step/stage/phase/task definitions. Verify no other AGENTS.md section duplicates CLAUDE.md key-files inventory. `npm run validate:all`. |
-| T2.1.3 | MEMORY.md oversized-entry promotion | 2 | _pending_ | _pending_ | Identify all MEMORY.md entries (both root `MEMORY.md` and `~/.claude-personal/projects/.../memory/MEMORY.md`) exceeding 10 lines. For each: write `{slug}.md` to `.claude/memory/` (repo-scoped entries) or `~/.claude-personal/projects/.../memory/` (user entries) with full content. Replace MEMORY.md inline content with pointer line `- [{Title}]({slug}.md) — {one-line hook}`. |
-| T2.1.4 | MEMORY.md index validation | 2 | _pending_ | _pending_ | Confirm both MEMORY.md files ≤200 lines (harness truncation threshold). Validate all pointer links resolve to existing files. Check `docs/agent-lifecycle.md` still has correct `Status:` + last-updated front matter after A1 edits. `npm run validate:all` green. |
+| T2.1.1 | Collapse rule + CLAUDE.md §3 | 1 | **TECH-577** | Done | Shrink `ia/rules/agent-lifecycle.md` to ≤12 lines: retain header + one-sentence purpose + `Full canonical doc: docs/agent-lifecycle.md` pointer + `## Ordered flow` stub linking there. Collapse `CLAUDE.md` §3 Key files: remove lifecycle taxonomy prose (≤20 lines remain); add `docs/agent-lifecycle.md` row to key-files table as sole lifecycle authority. Run `npm run validate:all`. |
+| T2.1.2 | Collapse AGENTS.md §3 | 1 | **TECH-578** | Done | Shrink `AGENTS.md` §3 lifecycle section: replace full taxonomy table with ≤8-line block: "Full lifecycle flow: `docs/agent-lifecycle.md`. Surface map table: `ia/rules/agent-lifecycle.md` §Surface map." Remove restated step/stage/phase/task definitions. Verify no other AGENTS.md section duplicates CLAUDE.md key-files inventory. `npm run validate:all`. |
+| T2.1.3 | MEMORY.md oversized-entry promotion | 2 | **TECH-579** | Done | Identify all MEMORY.md entries (both root `MEMORY.md` and `~/.claude-personal/projects/.../memory/MEMORY.md`) exceeding 10 lines. For each: write `{slug}.md` to `.claude/memory/` (repo-scoped entries) or `~/.claude-personal/projects/.../memory/` (user entries) with full content. Replace MEMORY.md inline content with pointer line `- [{Title}]({slug}.md) — {one-line hook}`. |
+| T2.1.4 | MEMORY.md index validation | 2 | **TECH-580** | Done | Confirm both MEMORY.md files ≤200 lines (harness truncation threshold). Validate all pointer links resolve to existing files. Check `docs/agent-lifecycle.md` still has correct `Status:` + last-updated front matter after A1 edits. `npm run validate:all` green. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: ""
+  title: "Collapse rule + CLAUDE.md §3"
+  priority: "medium"
+  notes: |
+    Shrink `ia/rules/agent-lifecycle.md` to pointer stub (≤12 lines). Collapse `CLAUDE.md` §3 Key files: drop lifecycle taxonomy prose; cite `docs/agent-lifecycle.md` as sole authority. Gate: `npm run validate:all`.
+  depends_on:
+    - "TECH-503"
+  related: []
+  stub_body:
+    summary: |
+      A1 doc-triangle: rule stub + CLAUDE key-files table point at `docs/agent-lifecycle.md` only; remove duplicate lifecycle taxonomy from always-loaded surfaces.
+    goals: |
+      - `ia/rules/agent-lifecycle.md` ≤12 lines with pointer to `docs/agent-lifecycle.md` + ordered-flow stub.
+      - `CLAUDE.md` §3 Key files ≤20 lines; lifecycle row references canonical doc only.
+      - `npm run validate:all` green.
+    systems_map: |
+      Touches: `ia/rules/agent-lifecycle.md`, `CLAUDE.md` §3, `docs/agent-lifecycle.md` (read-only confirm authority marker).
+      Ref: `docs/session-token-latency-audit-exploration.md` Theme A; master plan Step 2 Stage 2.1 exit bullets.
+    impl_plan_sketch: |
+      Phase 1 — Rule + CLAUDE collapse.
+      1. Edit `ia/rules/agent-lifecycle.md` to header + one-line purpose + pointer + `## Ordered flow` stub linking canonical doc.
+      2. Trim `CLAUDE.md` §3: remove restated taxonomy; ensure key-files table includes `docs/agent-lifecycle.md` as lifecycle authority.
+      3. `npm run validate:all`.
+
+- reserved_id: ""
+  title: "Collapse AGENTS.md §3"
+  priority: "medium"
+  notes: |
+    Replace AGENTS.md §3 full taxonomy with ≤8-line cross-ref block to `docs/agent-lifecycle.md` + `ia/rules/agent-lifecycle.md` §Surface map. Verify no duplicate key-files inventory vs CLAUDE. `npm run validate:all`.
+  depends_on:
+    - "TECH-503"
+  related: []
+  stub_body:
+    summary: |
+      A1: AGENTS.md lifecycle section becomes short cross-reference; no restated step/stage/phase/task definitions.
+    goals: |
+      - `AGENTS.md` §3 ≤8 lines; points to canonical doc + surface map stub.
+      - No section duplicates CLAUDE key-files list inappropriately.
+      - `npm run validate:all` green.
+    systems_map: |
+      Touches: `AGENTS.md` §3, `docs/agent-lifecycle.md`, `ia/rules/agent-lifecycle.md` (surface map anchor).
+    impl_plan_sketch: |
+      Phase 1 — AGENTS collapse.
+      1. Replace §3 body with cross-ref block per Stage 2.1 Intent.
+      2. Grep AGENTS for accidental CLAUDE inventory duplication; fix.
+      3. `npm run validate:all`.
+
+- reserved_id: ""
+  title: "MEMORY.md oversized-entry promotion"
+  priority: "medium"
+  notes: |
+    Find MEMORY.md entries >10 lines (repo root + optional user path). Promote each to `.claude/memory/{slug}.md` or user memory dir; replace inline body with one-line pointer. Doc-only; no runtime C#.
+  depends_on:
+    - "TECH-503"
+  related: []
+  stub_body:
+    summary: |
+      A4: split oversized MEMORY bullets into slug files; keep MEMORY.md as short index with links + hooks.
+    goals: |
+      - Every >10-line entry promoted to dedicated file; MEMORY.md lines replaced with pointer rows.
+      - `.claude/memory/` populated for repo-scoped content per Intent.
+      - Paths outside repo documented if user-local-only (optional scope note in spec).
+    systems_map: |
+      Touches: root `MEMORY.md`, `.claude/memory/`, `~/.claude-personal/.../memory/MEMORY.md` (if present on dev machine).
+    impl_plan_sketch: |
+      Phase 2 — Promotion sweep.
+      1. Enumerate entries; measure line counts.
+      2. For each oversized: write `{slug}.md`; replace with `- [Title](slug.md) — hook` line.
+      3. Commit repo-scoped files; document user-dir handling in §7 if needed.
+
+- reserved_id: ""
+  title: "MEMORY.md index validation"
+  priority: "medium"
+  notes: |
+    Enforce MEMORY index size caps (≤200 lines per file per harness); validate pointer targets exist; re-check `docs/agent-lifecycle.md` front matter after A1. `npm run validate:all` green.
+  depends_on:
+    - "TECH-503"
+  related: []
+  stub_body:
+    summary: |
+      Close A4: index hygiene + link integrity + doc metadata consistency after lifecycle edits.
+    goals: |
+      - Both MEMORY.md files ≤200 lines; all links resolve.
+      - `docs/agent-lifecycle.md` Status + last-updated front matter still correct post-A1.
+      - `npm run validate:all` green.
+    systems_map: |
+      Touches: `MEMORY.md` (root), user memory path if applicable, `docs/agent-lifecycle.md` metadata.
+    impl_plan_sketch: |
+      Phase 2 — Validation pass.
+      1. Line-count + link check on MEMORY indices.
+      2. Verify `docs/agent-lifecycle.md` header fields.
+      3. `npm run validate:all`.
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 
@@ -1192,9 +1295,9 @@
 
 ### Step 5 — Synthesized context pack (D5)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 5.1
 
-**Backlog state (Step 5):** 0 filed
+**Backlog state (Step 5):** 4 filed (TECH-520..TECH-523 — Stage 5.1)
 
 **Objectives:** Extend compact-survival from Stage 3.1's last-3-tools signal into a full synthesized context pack written on PreCompact event and re-injected on SessionStart. Agents resuming after `/compact` recover active focus + surfaces + recent decisions + open questions from `.claude/context-pack.md` without re-reading source files. Hook stays shell-only (no `claude -p` subprocess) to keep compact path fast (<200 ms) and deterministic. Semantic placement = Stage 3.3 of Step 3; filed here as Step 5 per skill append-only contract — human reviewer may relocate block post-apply.
 
@@ -1233,7 +1336,7 @@
 
 #### Stage 5.1 — PreCompact digest + SessionStart re-injection
 
-**Status:** Draft (tasks filed — TECH-520, TECH-521, TECH-522, TECH-523)
+**Status:** In Progress — Stage 5.1 (TECH-520, TECH-521, TECH-522, TECH-523)
 
 **Pre-conditions:** Stage 3.1 T3.1.2 + T3.1.3 Done. Stage 4.1 T4.1.1 optional (soft).
 
