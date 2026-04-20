@@ -1,0 +1,26 @@
+id: "TECH-554"
+type: "TECH"
+title: "Placement-mode routing through `ZoneSService`"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-554.md"
+files: []
+notes: |
+  S placement clicks must use `ZoneSService.PlaceStateServiceZone(cell, subTypeId)` not raw `PlaceZone`. Transient `currentSubTypeId` from picker; guard reopen if -1.
+acceptance: |
+  - [ ] Placement state carries `currentSubTypeId` set by picker.
+  - [ ] Grid click with id < 0 reopens picker; valid id calls `PlaceStateServiceZone`.
+  - [ ] R/C/I placement unchanged.
+  - [ ] `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-553"
+  - "TECH-555"
+  - "TECH-556"
+  - "TECH-557"
+  - "TECH-558"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-554** — Placement-mode routing through `ZoneSService` — Route S placement through ZoneSService with sub-type id.

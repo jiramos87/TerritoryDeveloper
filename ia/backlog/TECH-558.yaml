@@ -1,0 +1,26 @@
+id: "TECH-558"
+type: "TECH"
+title: "Overspend-blocked notification wiring"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-558.md"
+files: []
+notes: |
+  Surface `TryDraw` failure via **GameNotificationManager**; transient HUD badge ~3s; aligns Example 2 feedback.
+acceptance: |
+  - [ ] TryDraw failure surfaces player-visible notification with sub-type name.
+  - [ ] Transient HUD badge ~3s; styling consistent with existing notifications.
+  - [ ] Matches Example 2 user-facing overspend feedback from exploration doc.
+  - [ ] `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-553"
+  - "TECH-554"
+  - "TECH-555"
+  - "TECH-556"
+  - "TECH-557"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-558** — Overspend-blocked notification wiring — HUD feedback when envelope draw blocked.

@@ -1,0 +1,26 @@
+id: "TECH-555"
+type: "TECH"
+title: "Sub-type picker modal UI"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-555.md"
+files: []
+notes: |
+  New **SubTypePickerModal** on `UIManager.PopupStack`; 7 buttons from `ZoneSubTypeRegistry`; commit id + close + resume placement.
+acceptance: |
+  - [ ] `SubTypePickerModal` presents 7 entries (icon, displayName, baseCost) from registry.
+  - [ ] Selection commits sub-type id, closes modal, signals placement ready.
+  - [ ] Modal uses `UIManager.PopupStack` pattern consistent with existing popups.
+  - [ ] `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-553"
+  - "TECH-554"
+  - "TECH-556"
+  - "TECH-557"
+  - "TECH-558"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-555** — Sub-type picker modal UI — PopupStack modal for seven Zone S sub-types.

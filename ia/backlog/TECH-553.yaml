@@ -1,0 +1,26 @@
+id: "TECH-553"
+type: "TECH"
+title: "S zoning button in `UIManager.ToolbarChrome`"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-553.md"
+files: []
+notes: |
+  Fourth toolbar zoning control for **Zone S**; enters placement + opens sub-type picker. Touches `UIManager.ToolbarChrome`, theme spacing, `ZoneManager.activeZoneType`.
+acceptance: |
+  - [ ] S button visible in zoning cluster with placeholder glyph; theme spacing matches R/C/I.
+  - [ ] Click sets `ZoneManager.activeZoneType = ZoneType.StateServiceLightZoning` and triggers sub-type picker entry (coordinated with TECH-555).
+  - [ ] R/C/I toolbar behavior unchanged.
+  - [ ] `npm run unity:compile-check` green after C# touch.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-554"
+  - "TECH-555"
+  - "TECH-556"
+  - "TECH-557"
+  - "TECH-558"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-553** — S zoning button in `UIManager.ToolbarChrome` — Fourth toolbar zoning control for Zone S.

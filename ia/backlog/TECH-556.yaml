@@ -1,0 +1,26 @@
+id: "TECH-556"
+type: "TECH"
+title: "Picker cancel UX (N3)"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-556.md"
+files: []
+notes: |
+  ESC + outside-click dismiss picker without spend; `currentSubTypeId = -1`; exit placement per Review Note N3.
+acceptance: |
+  - [ ] ESC dismisses picker, sets id -1, exits S placement; no charge.
+  - [ ] Outside-click matches ESC behavior.
+  - [ ] XML docs on `SubTypePickerModal` cite exploration Review Note N3.
+  - [ ] `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-553"
+  - "TECH-554"
+  - "TECH-555"
+  - "TECH-557"
+  - "TECH-558"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-556** — Picker cancel UX (N3) — Cancel paths per zone-s-economy exploration N3.

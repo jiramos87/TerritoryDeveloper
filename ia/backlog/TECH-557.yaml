@@ -1,0 +1,26 @@
+id: "TECH-557"
+type: "TECH"
+title: "Budget panel UI with sliders"
+priority: "medium"
+status: open
+section: "Step 3 — Zone S economy / Stage 7 UI"
+spec: "ia/projects/TECH-557.md"
+files: []
+notes: |
+  **BudgetPanel** + prefab: 7 envelope sliders, global cap, remaining readouts; HUD open; commits via `budgetAllocation.SetEnvelopePct`; UI refresh post-normalize.
+acceptance: |
+  - [ ] HUD control opens Budget panel prefab.
+  - [ ] Seven envelope sliders + global cap + remaining-this-month readouts wired to allocator.
+  - [ ] Commit calls `SetEnvelopePct`; UI re-reads normalized state.
+  - [ ] `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-553"
+  - "TECH-554"
+  - "TECH-555"
+  - "TECH-556"
+  - "TECH-558"
+created: "2026-04-20"
+raw_markdown: |
+  **TECH-557** — Budget panel UI with sliders — Envelope editor HUD for Zone S budget allocator.

@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">20%</div>
-      <div class="overall-count">14 / 48 tasks</div>
+      <div class="overall-pct">13%</div>
+      <div class="overall-count">14 / 86 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:20%"></div>
+      <div class="overall-seg-fill" style="width:13%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -453,6 +453,14 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">UI Polish</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Unity IDE Agent Bridge</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
         <span class="mini-pct">0%</span>
       </div>
@@ -1137,6 +1145,50 @@ h2.plan-title {
   <div class="plan-header">
     <span class="plan-icon">📋</span>
     <div class="plan-title-group">
+      <h2 class="plan-title">Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)</h2>
+      <a class="plan-doc-link" href="../ia/projects/unity-agent-bridge-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="38 Pending"></div></div>
+    <span class="seg-count">0 / 38</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-pending">⏳ 38 Pending</span><span class="chip chip-total">📋 38 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Hardening: parameterized exp…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Parameterized Editor bridge …</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agen">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Runner params DTO + dispatch</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Runner **`params`** parsing + switch dispatch for chunk / sorting / agent context.">☐ Runner **`params`** parsing + switch dispatch…</span><span class="phase-pill phase-pending" title="Phase 2 — Menu static methods / wrappers accept bounded parameters aligned with §10.">☐ Menu static methods / wrappers accept bounded…</span><span class="phase-pill phase-pending" title="Phase 3 — Preconditions: **`get_play_mode_status`** / grid init gating + **`failed`** JSON contract.">☐ Preconditions: **`get_play_mode_status`** / g…</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">0 orchestrators in flight</span></summary>
+    <ul><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-plan` + `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `stage-file-apply` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` → `In Review`; `/implement` → `In Progress`; `/closeout` (Stage-scoped) → `Done (archived)` + phase box when last task of phase closes + stage `Final` + step rollup; `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
       <h2 class="plan-title">Utilities — Master Plan (Bucket 4-a MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/utilities-master-plan.md">📄 plan doc</a>
     </div>
@@ -1228,7 +1280,7 @@ h2.plan-title {
       <h2 class="plan-title">Zone S + Economy — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/zone-s-economy-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 6</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 3 / Stage 7 (pending file)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
