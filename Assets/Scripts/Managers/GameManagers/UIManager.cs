@@ -22,7 +22,10 @@ public enum PopupType
     Details,
     BuildingSelector,
     StatsPanel,
-    TaxPanel
+    TaxPanel,
+    SubTypePicker,
+    BudgetPanel,
+    BondIssuance
 }
 
 /// <summary>
@@ -51,13 +54,20 @@ public partial class UIManager : MonoBehaviour
 
     [Header("Mini-map")]
     [SerializeField] private MiniMapController miniMapController;
+
+    [Header("Zone S")]
+    [SerializeField] private ZoneSService zoneSService;
+    [SerializeField] private SubTypePickerModal subTypePickerModal;
+    [SerializeField] private BudgetPanel budgetPanel;
+    [SerializeField] private BondIssuanceModal bondIssuanceModal;
     #endregion
 
     #region State
     private GameObject ghostPreviewPrefab;
     private int ghostPreviewSize = 1;
 
-
+    /// <summary>Transient sub-type id for Zone S placement; -1 = must pick.</summary>
+    private int currentSubTypeId = -1;
 
     public bool bulldozeMode;
     public bool detailsMode;
@@ -108,6 +118,12 @@ public partial class UIManager : MonoBehaviour
     [Tooltip("Offset from mouse position (pixels). Default: 24 right, -24 down.")]
     public Vector2 constructionCostOffset = new Vector2(24, -24);
 
+    [Header("HUD — economy hints (optional)")]
+    [Tooltip("When set, shows estimated monthly surplus after envelope cap + bond repayment.")]
+    [SerializeField] private Text hudEstimatedSurplusHintText;
+    [Tooltip("When set, shows active bond summary; click opens read-only bond modal.")]
+    [SerializeField] private Button bondHudBadgeButton;
+
     [Header("Debug (optional)")]
     [SerializeField] private GameDebugInfoBuilder gameDebugInfoBuilder;
     [Tooltip("If set, use full debug text (coordinates + cell + placement). Otherwise only coordinates.")]
@@ -156,6 +172,7 @@ public partial class UIManager : MonoBehaviour
 
     private GameObject welcomeBriefingRoot;
     private Coroutine loadMenuFadeRoutine;
+    private BondLedgerService bondLedgerHud;
     #endregion
 
     /// <summary>CanvasGroup popup fade duration; clamped for safety.</summary>
@@ -184,10 +201,74 @@ public partial class UIManager : MonoBehaviour
 
         saveFolderPath = Application.persistentDataPath;
 
+        if (zoneSService == null)
+            zoneSService = FindObjectOfType<ZoneSService>();
+        if (bondIssuanceModal == null)
+            bondIssuanceModal = FindObjectOfType<BondIssuanceModal>();
+        if (bondLedgerHud == null)
+            bondLedgerHud = FindObjectOfType<BondLedgerService>();
+
         EnsureConstructionCostTextExists();
+        if (bondHudBadgeButton != null)
+        {
+            bondHudBadgeButton.onClick.RemoveAllListeners();
+            bondHudBadgeButton.onClick.AddListener(OpenBondDetailModal);
+        }
         ApplyHudUiThemeIfConfigured();
         RequestToolbarChromeRefresh();
         TryShowWelcomeBriefingAfterStart();
+    }
+
+    /// <summary>Current Zone S sub-type id; -1 = not picked yet.</summary>
+    public int CurrentSubTypeId => currentSubTypeId;
+
+    /// <summary>Set by <see cref="SubTypePickerModal"/> on selection.</summary>
+    public void SetCurrentSubTypeId(int id) { currentSubTypeId = id; }
+
+    /// <summary>Zone S placement service reference for <see cref="GridManager"/> routing.</summary>
+    public ZoneSService ZoneSService => zoneSService;
+
+    /// <summary>Open the sub-type picker modal for Zone S placement.</summary>
+    public void OpenSubTypePicker()
+    {
+        if (subTypePickerModal != null)
+        {
+            subTypePickerModal.Show(this);
+            RegisterPopupOpened(PopupType.SubTypePicker);
+        }
+    }
+
+    /// <summary>Open budget panel from HUD.</summary>
+    public void OpenBudgetPanel()
+    {
+        if (budgetPanel != null)
+        {
+            budgetPanel.Show();
+            RegisterPopupOpened(PopupType.BudgetPanel);
+        }
+    }
+
+    /// <summary>Open bond issuance modal (stacked popup).</summary>
+    public void OpenBondIssuanceModal()
+    {
+        if (bondIssuanceModal != null)
+        {
+            bondIssuanceModal.ShowIssue(this);
+            RegisterPopupOpened(PopupType.BondIssuance);
+        }
+    }
+
+    /// <summary>Open read-only bond detail for active bond on city tier.</summary>
+    public void OpenBondDetailModal()
+    {
+        if (bondIssuanceModal == null || economyManager == null) return;
+        var ledger = FindObjectOfType<BondLedgerService>();
+        if (ledger == null) return;
+        int tier = economyManager.GetCityScaleTier();
+        BondData bond = ledger.GetActiveBond(tier);
+        if (bond == null) return;
+        bondIssuanceModal.ShowReadOnly(this, bond);
+        RegisterPopupOpened(PopupType.BondIssuance);
     }
 
     /// <summary>

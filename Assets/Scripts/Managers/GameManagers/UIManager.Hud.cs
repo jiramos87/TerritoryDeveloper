@@ -25,7 +25,7 @@ public partial class UIManager
         if (cityNameText != null && cityStats != null)
             cityNameText.text = cityStats.cityName;
         populationText.text = cityStats.population.ToString();
-        int delta = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
+        int delta = economyManager != null ? economyManager.GetHudEstimatedMonthlySurplus() : 0;
         string deltaStr = delta >= 0 ? $"(+${delta:N0})" : $"(-${Mathf.Abs(delta):N0})";
         if (hudUiTheme != null)
         {
@@ -79,6 +79,30 @@ public partial class UIManager
         }
 
         UpdateDemandBarFills(demandManager);
+
+        if (hudEstimatedSurplusHintText != null && economyManager != null)
+        {
+            int s = economyManager.GetHudEstimatedMonthlySurplus();
+            hudEstimatedSurplusHintText.text =
+                $"Est. monthly surplus (after S envelope + bond repayment): {(s >= 0 ? "+" : "")}${s:N0}";
+        }
+
+        if (bondHudBadgeButton != null)
+        {
+            BondData bond = bondLedgerHud != null && economyManager != null
+                ? bondLedgerHud.GetActiveBond(economyManager.GetCityScaleTier())
+                : null;
+            bondHudBadgeButton.gameObject.SetActive(bond != null);
+            if (bond != null)
+            {
+                var badgeTxt = bondHudBadgeButton.GetComponentInChildren<Text>();
+                if (badgeTxt != null)
+                {
+                    badgeTxt.text = $"Active bond: {bond.monthsRemaining} mo, ${bond.monthlyRepayment:N0}/mo";
+                    badgeTxt.color = bond.arrears ? new Color(1f, 0.35f, 0.35f) : Color.white;
+                }
+            }
+        }
 
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();

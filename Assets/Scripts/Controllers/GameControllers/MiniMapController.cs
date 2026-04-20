@@ -66,6 +66,8 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     private static readonly Color ColorForestDense = new Color(0.15f, 0.4f, 0.15f);
     private static readonly Color ColorCentroid = new Color(1f, 0f, 1f); // Magenta marker
     private static readonly Color ColorRingBoundary = new Color(0.6f, 0.9f, 1f); // Light cyan
+    /// <summary>Zone S (StateService) — single tint for all sub-types (N5 MVP).</summary>
+    private static readonly Color ColorStateService = new Color(0.55f, 0.25f, 0.75f);
     #endregion
 
     #region State
@@ -315,6 +317,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         // 3. Zones (if active) — buildings and zoning
         if ((activeLayers & MiniMapLayer.Zones) != 0)
         {
+            if (IsStateServiceBuilding(zt) || IsStateServiceZoning(zt)) return ColorStateService;
             if (IsBuilding(zt)) return ColorBuilding;
             if (IsResidentialZoning(zt)) return ColorResidential;
             if (IsCommercialZoning(zt)) return ColorCommercial;
@@ -395,6 +398,18 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
                zt == Zone.ZoneType.ResidentialLightBuilding || zt == Zone.ZoneType.ResidentialMediumBuilding || zt == Zone.ZoneType.ResidentialHeavyBuilding ||
                zt == Zone.ZoneType.CommercialLightBuilding || zt == Zone.ZoneType.CommercialMediumBuilding || zt == Zone.ZoneType.CommercialHeavyBuilding ||
                zt == Zone.ZoneType.IndustrialLightBuilding || zt == Zone.ZoneType.IndustrialMediumBuilding || zt == Zone.ZoneType.IndustrialHeavyBuilding;
+    }
+
+    private static bool IsStateServiceBuilding(Zone.ZoneType zt)
+    {
+        return zt == Zone.ZoneType.StateServiceLightBuilding || zt == Zone.ZoneType.StateServiceMediumBuilding ||
+               zt == Zone.ZoneType.StateServiceHeavyBuilding;
+    }
+
+    private static bool IsStateServiceZoning(Zone.ZoneType zt)
+    {
+        return zt == Zone.ZoneType.StateServiceLightZoning || zt == Zone.ZoneType.StateServiceMediumZoning ||
+               zt == Zone.ZoneType.StateServiceHeavyZoning;
     }
 
     private static bool IsResidentialZoning(Zone.ZoneType zt)

@@ -712,6 +712,25 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
+    /// HUD surplus hint: projected tax − maintenance − Zone S envelope cap − active bond repayment.
+    /// Uses <see cref="CityStats"/> read-model fields populated by <see cref="CityStats.RefreshEconomyReadModel"/>.
+    /// </summary>
+    public int GetHudEstimatedMonthlySurplus()
+    {
+        int baseDelta = GetMonthlyIncomeDelta();
+        if (cityStats == null) return baseDelta;
+        return baseDelta - cityStats.totalEnvelopeCap - cityStats.monthlyBondRepayment;
+    }
+
+    /// <summary>
+    /// City scale tier for <see cref="IBondLedger"/> (single-city MVP → 0).
+    /// </summary>
+    public int GetCityScaleTier()
+    {
+        return 0;
+    }
+
+    /// <summary>
     /// Return projected monthly maintenance from all registered contributors.
     /// </summary>
     public int GetProjectedMonthlyMaintenance()

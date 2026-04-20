@@ -32,6 +32,9 @@ public class CityStatsUIController : MonoBehaviour
     private Label happinessLabel;
     private Label treasuryLabel;
     private Label unemploymentLabel;
+    private Label envelopeCapLabel;
+    private Label bondDebtLabel;
+    private Label bondMonthlyLabel;
     private VisualElement statsContainer;
     private Button toggleStatsButton;
 
@@ -80,6 +83,9 @@ public class CityStatsUIController : MonoBehaviour
         happinessLabel = CreateStatLabel("Happiness", "0%");
         treasuryLabel = CreateStatLabel("Treasury", "$0");
         unemploymentLabel = CreateStatLabel("Unemployment", "0%");
+        envelopeCapLabel = CreateStatLabel("S envelope cap", "$0");
+        bondDebtLabel = CreateStatLabel("Bond debt (approx.)", "$0");
+        bondMonthlyLabel = CreateStatLabel("Bond repayment / mo", "$0");
 
         // Create toggle button
         toggleStatsButton = new Button(ToggleStatsVisibility);
@@ -91,6 +97,9 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.Add(happinessLabel);
         statsContainer.Add(treasuryLabel);
         statsContainer.Add(unemploymentLabel);
+        statsContainer.Add(envelopeCapLabel);
+        statsContainer.Add(bondDebtLabel);
+        statsContainer.Add(bondMonthlyLabel);
 
         root.Add(statsContainer);
         root.Add(toggleStatsButton);
@@ -199,6 +208,13 @@ public class CityStatsUIController : MonoBehaviour
             float unemploymentRate = GetUnemploymentRate();
             unemploymentLabel.text = $"Unemployment: {unemploymentRate:F1}%";
             unemploymentLabel.style.color = GetUnemploymentColor(unemploymentRate);
+
+            if (envelopeCapLabel != null)
+                envelopeCapLabel.text = $"S envelope cap: ${cityStats.totalEnvelopeCap:N0}";
+            if (bondDebtLabel != null)
+                bondDebtLabel.text = $"Bond debt (approx.): ${cityStats.activeBondDebt:N0}";
+            if (bondMonthlyLabel != null)
+                bondMonthlyLabel.text = $"Bond repayment / mo: ${cityStats.monthlyBondRepayment:N0}";
         }
         catch (System.Exception)
         {
@@ -219,8 +235,7 @@ public class CityStatsUIController : MonoBehaviour
         // Option 3: If you calculate from residential buildings
         // return cityStats.CalculatePopulation();
 
-        // Placeholder - replace with your actual implementation
-        return 0;
+        return cityStats.population;
     }
 
     /// <summary>Current city happiness score from <see cref="CityStats"/>.</summary>

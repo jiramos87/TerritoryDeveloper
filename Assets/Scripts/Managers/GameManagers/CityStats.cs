@@ -82,7 +82,20 @@ public class CityStats : MonoBehaviour, ICityStats
     [Header("Simulation")]
     public bool simulateGrowth = false;
     public List<CommuneData> communes = new List<CommuneData>();
+
+    [Header("Economy read-model (envelope + bonds)")]
+    /// <summary>Global monthly envelope cap from <see cref="BudgetAllocationService.GlobalMonthlyCap"/>.</summary>
+    public int totalEnvelopeCap;
+    /// <summary>Remaining draw per Zone S sub-type (length 7).</summary>
+    public int[] envelopeRemainingPerSubType = new int[7];
+    /// <summary>Approximate remaining bond liability (sum of monthlyRepayment × monthsRemaining).</summary>
+    public int activeBondDebt;
+    /// <summary>Sum of monthly repayments across active bonds.</summary>
+    public int monthlyBondRepayment;
     #endregion
+
+    private BudgetAllocationService budgetAllocationService;
+    private BondLedgerService bondLedgerService;
 
     #region Population and Demographics
     void Start()
@@ -112,6 +125,43 @@ public class CityStats : MonoBehaviour, ICityStats
             _economyManager = FindObjectOfType<EconomyManager>();
         if (_statisticsManager == null)
             _statisticsManager = FindObjectOfType<StatisticsManager>();
+        if (budgetAllocationService == null)
+            budgetAllocationService = FindObjectOfType<BudgetAllocationService>();
+        if (bondLedgerService == null)
+            bondLedgerService = FindObjectOfType<BondLedgerService>();
+    }
+
+    /// <summary>
+    /// Refresh derived envelope + bond fields for HUD + stats panel. Call from daily tick.
+    /// </summary>
+    public void RefreshEconomyReadModel()
+    {
+        if (envelopeRemainingPerSubType == null || envelopeRemainingPerSubType.Length != 7)
+            envelopeRemainingPerSubType = new int[7];
+
+        if (budgetAllocationService != null)
+        {
+            totalEnvelopeCap = budgetAllocationService.GlobalMonthlyCap;
+            for (int i = 0; i < 7; i++)
+                envelopeRemainingPerSubType[i] = budgetAllocationService.GetRemaining(i);
+        }
+
+        activeBondDebt = 0;
+        monthlyBondRepayment = 0;
+        if (bondLedgerService != null)
+        {
+            var bonds = bondLedgerService.GetAllActiveBonds();
+            if (bonds != null)
+            {
+                foreach (var kv in bonds)
+                {
+                    BondData b = kv.Value;
+                    if (b == null) continue;
+                    activeBondDebt += b.monthlyRepayment * b.monthsRemaining;
+                    monthlyBondRepayment += b.monthlyRepayment;
+                }
+            }
+        }
     }
 
     /// <summary>Add (or subtract if negative) amount to city population.</summary>
@@ -718,6 +768,8 @@ public class CityStats : MonoBehaviour, ICityStats
 
         // Demand uses same-tick happiness targets and tax rates (see EmploymentManager.RefreshRCIDemandAfterDailyStats)
         if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
+
+        RefreshEconomyReadModel();
     }
 
     /// <summary>

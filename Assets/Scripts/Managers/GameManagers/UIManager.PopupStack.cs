@@ -52,6 +52,18 @@ public partial class UIManager
                 if (dataPopupController != null)
                     dataPopupController.CloseTaxes();
                 break;
+            case PopupType.SubTypePicker:
+                if (subTypePickerModal != null)
+                    subTypePickerModal.Hide(cancelled: true);
+                break;
+            case PopupType.BudgetPanel:
+                if (budgetPanel != null)
+                    budgetPanel.Hide();
+                break;
+            case PopupType.BondIssuance:
+                if (bondIssuanceModal != null)
+                    bondIssuanceModal.Hide();
+                break;
         }
     }
 
