@@ -1,3 +1,8 @@
+---
+status: active
+last_updated: 2026-04-20
+---
+
 # Agent lifecycle — canonical flow
 
 Single canonical map for the `.claude/agents/` + `.claude/commands/` + `ia/skills/` surface. Names one entry point per lifecycle seam, defines the handoff each seam owes the next, and points at the authoritative rule / policy for every decision.
