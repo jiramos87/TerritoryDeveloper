@@ -19,6 +19,9 @@ public static class InterchangeJsonReportsMenu
     const int DefaultChunkW = 8;
     const int DefaultChunkH = 8;
 
+    internal const int DefaultChunkWidth = DefaultChunkW;
+    internal const int DefaultChunkHeight = DefaultChunkH;
+
     [MenuItem(MenuRoot + "Export CityCell Chunk (Interchange)", priority = 20)]
     public static void ExportCellChunkInterchange()
     {
@@ -77,7 +80,7 @@ public static class InterchangeJsonReportsMenu
         }
     }
 
-    static string BuildCellChunkInterchangeJsonString(int x0, int y0, int w, int h)
+    internal static string BuildCellChunkInterchangeJsonString(int x0, int y0, int w, int h)
     {
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
         TerrainManager terrain = grid != null ? grid.terrainManager : UnityEngine.Object.FindObjectOfType<TerrainManager>();

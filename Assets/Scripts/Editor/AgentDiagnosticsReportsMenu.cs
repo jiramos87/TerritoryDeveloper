@@ -131,7 +131,12 @@ public static class AgentDiagnosticsReportsMenu
         return JsonUtility.ToJson(report, true);
     }
 
-    static string BuildSortingDebugMarkdownString()
+    static string BuildSortingDebugMarkdownString() => BuildSortingDebugMarkdownString(null, null);
+
+    /// <summary>
+    /// Bridge-callable overload: explicit seed overrides Selection-based resolve when both non-null.
+    /// </summary>
+    internal static string BuildSortingDebugMarkdownString(int? overrideSeedX, int? overrideSeedY)
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Sorting debug export");
@@ -169,7 +174,15 @@ public static class AgentDiagnosticsReportsMenu
             return sb.ToString();
         }
 
-        if (!TryResolveSeedCell(grid, out int seedX, out int seedY))
+        int seedX, seedY;
+        if (overrideSeedX.HasValue && overrideSeedY.HasValue &&
+            overrideSeedX.Value >= 0 && overrideSeedY.Value >= 0 &&
+            overrideSeedX.Value < grid.width && overrideSeedY.Value < grid.height)
+        {
+            seedX = overrideSeedX.Value;
+            seedY = overrideSeedY.Value;
+        }
+        else if (!TryResolveSeedCell(grid, out seedX, out seedY))
         {
             sb.AppendLine("## Seed cell");
             sb.AppendLine();

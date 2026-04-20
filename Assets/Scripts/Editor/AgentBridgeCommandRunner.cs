@@ -163,6 +163,12 @@ public static partial class AgentBridgeCommandRunner
             case "sorting_order_debug": // OBSERVATION — do not modify
                 RunSortingOrderDebug(repoRoot, commandId, dq.request_json);
                 break;
+            case "export_cell_chunk":
+                RunExportCellChunk(repoRoot, commandId, dq.request_json);
+                break;
+            case "export_sorting_debug":
+                RunExportSortingDebug(repoRoot, commandId, dq.request_json);
+                break;
             default:
                 // Try mutation kinds (Phases 1-3)
                 if (!TryDispatchMutationKind(dq.kind, repoRoot, commandId, dq.request_json))
@@ -170,7 +176,7 @@ public static partial class AgentBridgeCommandRunner
                     TryFinalizeFailed(
                         repoRoot,
                         commandId,
-                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
+                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
                 }
                 break;
         }
@@ -595,6 +601,102 @@ public static partial class AgentBridgeCommandRunner
             seedY,
             writeBridgeArtifactFile: true);
         string responseJson = BuildAgentContextResponseJson(commandId, outcome);
+        CompleteOrFail(repoRoot, commandId, responseJson);
+    }
+
+    static void RunExportCellChunk(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        AgentBridgeParamsPayloadDto p = env.bridge_params ?? new AgentBridgeParamsPayloadDto();
+        int x0 = p.origin_x;
+        int y0 = p.origin_y;
+        int w = p.chunk_width > 0 ? p.chunk_width : InterchangeJsonReportsMenu.DefaultChunkWidth;
+        int h = p.chunk_height > 0 ? p.chunk_height : InterchangeJsonReportsMenu.DefaultChunkHeight;
+
+        string json;
+        try
+        {
+            json = InterchangeJsonReportsMenu.BuildCellChunkInterchangeJsonString(x0, y0, w, h);
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, ex.Message);
+            return;
+        }
+
+        string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        string baseName = $"cell-chunk-interchange-{stamp}";
+        bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+            EditorPostgresExportRegistrar.KindTerrainCellChunk,
+            json,
+            false,
+            baseName,
+            out _);
+
+        string responseJson = BuildObservabilityResponseJson(
+            commandId,
+            ok: dbOk,
+            storage: "postgres",
+            postgresOnly: true,
+            artifactPaths: Array.Empty<string>(),
+            error: dbOk ? string.Empty : "export_cell_chunk: Postgres persist failed.",
+            logLines: Array.Empty<AgentBridgeLogLineDto>());
+        CompleteOrFail(repoRoot, commandId, responseJson);
+    }
+
+    static void RunExportSortingDebug(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        AgentBridgeParamsPayloadDto p = env.bridge_params ?? new AgentBridgeParamsPayloadDto();
+        int? seedX = null;
+        int? seedY = null;
+        if (!string.IsNullOrWhiteSpace(p.seed_cell))
+        {
+            if (TryParseSeedCellString(p.seed_cell, out int sx, out int sy))
+            {
+                seedX = sx;
+                seedY = sy;
+            }
+        }
+
+        string md;
+        try
+        {
+            md = AgentDiagnosticsReportsMenu.BuildSortingDebugMarkdownString(seedX, seedY);
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, ex.Message);
+            return;
+        }
+
+        string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        string baseName = $"sorting-debug-{stamp}";
+        bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+            EditorPostgresExportRegistrar.KindSortingDebug,
+            md,
+            true,
+            baseName,
+            out _);
+
+        string responseJson = BuildObservabilityResponseJson(
+            commandId,
+            ok: dbOk,
+            storage: "postgres",
+            postgresOnly: true,
+            artifactPaths: Array.Empty<string>(),
+            error: dbOk ? string.Empty : "export_sorting_debug: Postgres persist failed.",
+            logLines: Array.Empty<AgentBridgeLogLineDto>());
         CompleteOrFail(repoRoot, commandId, responseJson);
     }
 
@@ -1388,8 +1490,17 @@ class AgentBridgeParamsPayloadDto
     public string camera;
     public string filename_stem;
     public bool include_ui;
-    /// <summary><c>export_agent_context</c> only: optional <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
+    /// <summary><c>export_agent_context</c> / <c>export_sorting_debug</c>: optional <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
     public string seed_cell;
+
+    /// <summary><c>export_cell_chunk</c>: origin X coordinate (defaults to 0).</summary>
+    public int origin_x;
+    /// <summary><c>export_cell_chunk</c>: origin Y coordinate (defaults to 0).</summary>
+    public int origin_y;
+    /// <summary><c>export_cell_chunk</c>: chunk width (defaults to 8 when 0 or negative).</summary>
+    public int chunk_width;
+    /// <summary><c>export_cell_chunk</c>: chunk height (defaults to 8 when 0 or negative).</summary>
+    public int chunk_height;
 
     /// <summary><c>debug_context_bundle</c>: JSON omits key → runner defaults <c>true</c>.</summary>
     public bool include_screenshot;
