@@ -1,6 +1,6 @@
 ---
 name: stage-closeout-planner
-description: Use to bulk-author §Stage Closeout Plan tuple list under Stage block in master plan when all Task rows reach Done post-verify. Triggers — "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan", "bulk close stage", "stage end closeout". Runs ONCE per Stage — replaces per-Task closeout-apply. Writes unified tuple list (shared migration ops deduped + N per-Task archive/delete/status-flip/id-purge/digest ops). Pair-head only — hands off to stage-closeout-apply Sonnet pair-tail. Does NOT edit spec files, archive yaml, delete specs, flip status, regenerate BACKLOG, or run validators.
+description: Use to bulk-author §Stage Closeout Plan tuple list under Stage block in master plan when all Task rows reach Done post-verify. Triggers — "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan", "bulk close stage", "stage end closeout". Runs ONCE per Stage — replaces per-Task closeout-apply. Writes unified tuple list (shared migration ops deduped + N per-Task archive/delete/status-flip/id-purge/digest ops). Pair-head only — hands off to plan-applier Sonnet pair-tail Mode stage-closeout. Does NOT edit spec files, archive yaml, delete specs, flip status, regenerate BACKLOG, or run validators.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
 model: opus
 reasoning_effort: high
@@ -18,7 +18,7 @@ Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering 
 
 # Mission
 
-Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read master-plan Stage block + all Task §Audit paragraphs (from `opus-audit`) + all Task §Implementation / §Findings / §Verification + invariants + glossary. Write unified `§Stage Closeout Plan` tuple list under Stage block (shared migration ops deduped across Tasks + N per-Task archive/delete/status-flip/id-purge/digest ops). Idempotent on re-run. Hand off to `stage-closeout-apply` Sonnet pair-tail. Does NOT mutate target files — plan only.
+Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read master-plan Stage block + all Task §Audit paragraphs (from `opus-audit`) + all Task §Implementation / §Findings / §Verification + invariants + glossary. Write unified `§Stage Closeout Plan` tuple list under Stage block (shared migration ops deduped across Tasks + N per-Task archive/delete/status-flip/id-purge/digest ops). Idempotent on re-run. Hand off to **`plan-applier`** Sonnet pair-tail Mode stage-closeout. Does NOT mutate target files — plan only.
 
 # Recipe
 
@@ -32,7 +32,7 @@ Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read m
 3. **Phase 2 — Dedupe shared migration ops** — Aggregate across N Task closeouts. Bucket ops: **shared** (glossary rows, rule section edits, doc paragraph edits, CLAUDE.md / AGENTS.md edits when ≥2 Tasks cite same target anchor) vs **per-Task** (archive_record, delete_file, replace_section status flip, id_purge grep-resolved across durable docs, digest_emit via `stage_closeout_digest` MCP tool).
 4. **Phase 3 — Resolve anchors** — Every tuple resolves to exact line/heading/row-id. Zero or >1 match → return escalation shape per pair-contract §Escalation rule.
 5. **Phase 4 — Write §Stage Closeout Plan tuples** — Write `#### §Stage Closeout Plan` section under Stage block (after `#### §Plan Fix`, before next Stage). Shared tuples first, then per-Task tuples grouped by Task. One tuple per atomic edit. Tuples execute in declared order — applier never re-orders.
-6. **Phase 5 — Hand-off** — Emit caveman summary: Stage {STAGE_ID} — N Tasks, {M_shared} shared + {M_task} per-Task = {M_total} tuples. Next: `/closeout {MASTER_PLAN_PATH} {STAGE_ID}` dispatches `stage-closeout-apply` Sonnet pair-tail.
+6. **Phase 5 — Hand-off** — Emit caveman summary: Stage {STAGE_ID} — N Tasks, {M_shared} shared + {M_task} per-Task = {M_total} tuples. Next: `/closeout {MASTER_PLAN_PATH} {STAGE_ID}` dispatches `plan-applier` Mode stage-closeout Sonnet pair-tail.
 
 # Hard boundaries
 

@@ -34,13 +34,12 @@ const ALLOWED_SLICES_VIA = new Set(["spec_section", "glossary_lookup", "none"]);
 // exempt (may omit `phases:` entirely or declare `phases: []`).
 const LIFECYCLE_SKILLS = new Set([
   "plan-review",
-  "plan-fix-apply",
+  "plan-applier",
   "stage-file-plan",
   "stage-file-apply",
   "project-new-apply",
   "opus-audit",
   "opus-code-review",
-  "code-fix-apply",
   "project-spec-implement",
   "verify-loop",
   "ship-stage",
@@ -49,7 +48,6 @@ const LIFECYCLE_SKILLS = new Set([
   "stage-compress",
   "plan-author",
   "stage-closeout-plan",
-  "stage-closeout-apply",
 ]);
 // `loaded_by` accepts: always | router | ondemand | skill:{name}
 function isLoadedByValid(value) {

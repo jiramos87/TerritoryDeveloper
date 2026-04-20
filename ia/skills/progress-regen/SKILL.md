@@ -8,7 +8,7 @@ description: >
   Bash wrapper subskill. Runs `npm run progress` from repo root and logs the exit code.
   Non-blocking contract: caller continues regardless of exit code. No LLM model needed — pure
   shell. Invoked as an inline subskill by master-plan-new, master-plan-extend, stage-decompose,
-  stage-file, and stage-closeout-apply (retired project-spec-close + project-stage-close folded
+  stage-file, and plan-applier Mode stage-closeout (retired project-spec-close + project-stage-close folded
   into Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously
   appeared inline. Triggers: "regen progress", "regenerate progress dashboard",
   "npm run progress wrapper", "progress-regen subskill".
@@ -59,4 +59,4 @@ Replace any inline `npm run progress` block with:
 ## Callers
 
 `master-plan-new` Phase 8b · `master-plan-extend` Phase 7b · `stage-decompose` Phase 5 ·
-`stage-file` Post-loop step 1b · `stage-closeout-apply` (Stage-scoped closeout pair — absorbs retired `project-spec-close` step 9b + `project-stage-close` step 7b per M6 collapse).
+`stage-file` Post-loop step 1b · `plan-applier` Mode stage-closeout (Stage-scoped closeout pair — absorbs retired `project-spec-close` step 9b + `project-stage-close` step 7b per M6 collapse).

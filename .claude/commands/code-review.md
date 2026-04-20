@@ -1,11 +1,11 @@
 ---
-description: Per-Task post-verify code review — dispatches `opus-code-reviewer` (seam #4 pair-head) to scan implementation diff against spec + invariants + glossary. 3 verdict branches — PASS (mini §Code Review report, no tail) / minor (suggestions, no tail) / critical (writes §Code Fix Plan tuples + auto-dispatches `code-fix-applier` Sonnet pair-tail). Fires per-Task between `/verify-loop` tail and Stage-scoped `/audit`.
+description: Per-Task post-verify code review — dispatches `opus-code-reviewer` (seam #4 pair-head) to scan implementation diff against spec + invariants + glossary. 3 verdict branches — PASS (mini §Code Review report, no tail) / minor (suggestions, no tail) / critical (writes §Code Fix Plan tuples + auto-dispatches `plan-applier` Mode code-fix). Fires per-Task between `/verify-loop` tail and Stage-scoped `/audit`.
 argument-hint: "{ISSUE_ID}"
 ---
 
-# /code-review — dispatch seam #4 per-Task pair-head (opus-code-reviewer → code-fix-applier on critical)
+# /code-review — dispatch seam #4 per-Task pair-head (opus-code-reviewer → plan-applier Mode code-fix on critical)
 
-Use `opus-code-reviewer` subagent (`.claude/agents/opus-code-reviewer.md`) to review implementation diff for `{ISSUE_ID}` against spec + invariants + glossary. Runs per-Task after `/implement` + `/verify-loop` reach Green. Three verdict branches — PASS / minor → write `## §Code Review` mini-report, no tail; critical → write `## §Code Fix Plan` tuple list + auto-dispatch `code-fix-applier` Sonnet pair-tail (applies fix tuples + re-enters verify-loop; 1-retry bound).
+Use `opus-code-reviewer` subagent (`.claude/agents/opus-code-reviewer.md`) to review implementation diff for `{ISSUE_ID}` against spec + invariants + glossary. Runs per-Task after `/implement` + `/verify-loop` reach Green. Three verdict branches — PASS / minor → write `## §Code Review` mini-report, no tail; critical → write `## §Code Fix Plan` tuple list + auto-dispatch **`plan-applier`** Sonnet pair-tail Mode code-fix (applies fix tuples + re-enters verify-loop; 1-retry bound).
 
 ## Argument parsing
 
@@ -23,7 +23,7 @@ Forward via Agent tool with `subagent_type: "opus-code-reviewer"`:
 >
 > ## Hard boundaries
 >
-> - Do NOT mutate source code (C# / TS / skill bodies / commands / agents) — only spec `§Code Review` + `§Code Fix Plan` writes. Source fixes happen in pair-tail `code-fix-applier`.
+> - Do NOT mutate source code (C# / TS / skill bodies / commands / agents) — only spec `§Code Review` + `§Code Fix Plan` writes. Source fixes happen in pair-tail **`plan-applier`** Mode code-fix.
 > - Do NOT re-run `/verify-loop` — pair-tail re-enters on critical verdict.
 > - Do NOT run validators — pair-tail runs gate.
 > - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
@@ -32,15 +32,15 @@ Forward via Agent tool with `subagent_type: "opus-code-reviewer"`:
 
 Reviewer returns `{verdict: "PASS"|"minor"|"critical", issue_id}`. PASS / minor → skip Step 2 + emit summary. Critical → proceed to Step 2.
 
-## Step 2 — Dispatch `code-fix-applier` (Sonnet pair-tail) — conditional
+## Step 2 — Dispatch `plan-applier` (Sonnet pair-tail, Mode code-fix) — conditional
 
-On critical verdict: forward via Agent tool with `subagent_type: "code-fix-applier"`:
+On critical verdict: forward via Agent tool with `subagent_type: "plan-applier"`:
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `ia/skills/code-fix-apply/SKILL.md` end-to-end for `{ISSUE_ID}`. Read `## §Code Fix Plan` tuples verbatim from `ia/projects/{ISSUE_ID}.md`. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Re-enter `/verify-loop` (seam #4 gate = `npm run verify:local` for C# edits OR `npm run validate:all` for tooling-only). 1-retry bound on verify fail (2 total attempts). Second fail → escalate to Opus pair-head. Idempotent.
+> Run `ia/skills/plan-applier/SKILL.md` — **Mode: code-fix** for `{ISSUE_ID}`. Read `## §Code Fix Plan` tuples verbatim from `ia/projects/{ISSUE_ID}.md`. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Re-enter `/verify-loop` (seam #4 gate = `npm run verify:local` for C# edits OR `npm run validate:all` for tooling-only). 1-retry bound on verify fail (2 total attempts). Second fail → escalate to Opus pair-head. Idempotent.
 >
 > ## Hard boundaries
 >

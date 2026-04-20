@@ -13,7 +13,7 @@ description: >
   rule section edits, doc paragraph edits, plus N BACKLOG archive ops, N
   id purges, N spec deletes, N master-plan status flips, N digest emissions).
   Resolves every anchor to exact line/heading/row-id before handing to
-  `stage-closeout-apply` Sonnet pair-tail. Idempotent on re-run.
+  `plan-applier` Mode stage-closeout Sonnet pair-tail. Idempotent on re-run.
   Triggers: "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan",
   "bulk close stage", "stage end closeout".
 model: inherit
@@ -31,7 +31,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Opus pair-head for Stage closeout seam (seam #4 in [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md)). Runs **once per Stage** when every Task row in target Stage reaches `Done` and `/verify-loop` passed. Replaces the retired per-Task `closeout-apply` / `project-stage-close` dual path — one unified tuple list covers all closeout ops (shared + per-Task) in one Opus pass.
 
-Sibling pair-tail: [`stage-closeout-apply/SKILL.md`](../stage-closeout-apply/SKILL.md) (authored in T7.14).
+Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode **stage-closeout** (authored T7.14; unified TECH-506).
 
 Does **NOT** edit spec files, archive yaml, delete specs, flip status, regenerate BACKLOG, or run validators. All mutation happens in pair-tail.
 
@@ -114,7 +114,7 @@ Write `## §Stage Closeout Plan` section under Stage `STAGE_ID` block in `MASTER
 ```markdown
 #### §Stage Closeout Plan
 
-> stage-closeout-plan — {N} Tasks ({M_shared} shared migration ops + {M_task} per-Task ops = {M_total} tuples total). Spawn `stage-closeout-apply {MASTER_PLAN_PATH} {STAGE_ID}`.
+> stage-closeout-plan — {N} Tasks ({M_shared} shared migration ops + {M_task} per-Task ops = {M_total} tuples total). Spawn `plan-applier` Mode stage-closeout `{MASTER_PLAN_PATH} {STAGE_ID}`.
 
 ```yaml
 # Shared migration ops (apply once)
@@ -175,7 +175,7 @@ Emit structured summary:
 stage-closeout-plan: Stage {STAGE_ID} — {N} Tasks, {M_shared} shared + {M_task} per-Task = {M_total} tuples written to §Stage Closeout Plan.
   Shared ops: {list of surfaces touched — glossary / rules / docs}.
   Per-Task ops: {ISSUE_ID list, {N} archive + {N} delete + {N} status flip + {n_purge} id purges + {N} digest}.
-  Next: /closeout {MASTER_PLAN_PATH} {STAGE_ID}  →  dispatches stage-closeout-apply Sonnet pair-tail.
+  Next: /closeout {MASTER_PLAN_PATH} {STAGE_ID}  →  dispatches plan-applier Mode stage-closeout Sonnet pair-tail.
 ```
 
 Does NOT run the applier. `/closeout` Stage-scoped dispatcher (rewired in T7.14) chains head → tail.
@@ -185,7 +185,7 @@ Does NOT run the applier. `/closeout` Stage-scoped dispatcher (rewired in T7.14)
 ## Cross-references
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — seam #4, §Plan tuple shape, §Escalation rule, §Idempotency requirement, §Tier 2 bundle reuse.
-- [`ia/skills/stage-closeout-apply/SKILL.md`](../stage-closeout-apply/SKILL.md) — Sonnet pair-tail (T7.14).
+- [`ia/skills/plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Sonnet pair-tail Mode stage-closeout (T7.14; unified TECH-506).
 - [`ia/skills/opus-audit/SKILL.md`](../opus-audit/SKILL.md) — upstream source of per-Task §Audit paragraphs.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — Tier 2 per-Stage ephemeral bundle; call once at Stage-start; reuse `cache_block` across all closeout tuple authoring.
 - [`ia/templates/master-plan-template.md`](../../templates/master-plan-template.md) — §Stage Closeout Plan section stub.

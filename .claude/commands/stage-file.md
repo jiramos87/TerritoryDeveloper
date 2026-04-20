@@ -1,11 +1,11 @@
 ---
-description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs + §Plan Author populated + plan-review PASS. Dispatches `stage-file-planner` (Opus pair-head) → `stage-file-applier` (Sonnet pair-tail) → `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-fix-applier` on critical, re-entry cap=1) → STOP. Chain tail per F6 re-fold (2026-04-20). Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
+description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs + §Plan Author populated + plan-review PASS. Dispatches `stage-file-planner` (Opus pair-head) → `stage-file-applier` (Sonnet pair-tail) → `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP. Chain tail per F6 re-fold (2026-04-20). Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
 argument-hint: "{master-plan-path} Stage {X.Y}"
 ---
 
 # /stage-file — dispatch seam #2 chain (planner → applier → author → review → STOP)
 
-Use `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-reviewer` (→ `plan-fix-applier` on critical) to bulk-file + author + review all `_pending_` tasks of `$ARGUMENTS` in ONE command. Chain STOPS at plan-review PASS (or cap=1 critical-twice). **Next:** `/ship-stage` (N≥2 — runs implement + verify + code-review + audit + closeout) OR `/ship` (N=1).
+Use `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical) to bulk-file + author + review all `_pending_` tasks of `$ARGUMENTS` in ONE command. Chain STOPS at plan-review PASS (or cap=1 critical-twice). **Next:** `/ship-stage` (N≥2 — runs implement + verify + code-review + audit + closeout) OR `/ship` (N=1).
 
 ## Argument parsing
 
@@ -88,7 +88,7 @@ Forward via Agent tool with `subagent_type: "plan-reviewer"`:
 >
 > ## Hard boundaries
 >
-> - Do NOT mutate Task specs directly — critical → emit tuples + hand off to `plan-fix-applier`.
+> - Do NOT mutate Task specs directly — critical → emit tuples + hand off to `plan-applier` Mode plan-fix.
 > - Do NOT edit master-plan task table.
 > - Do NOT run validators.
 > - Do NOT commit.
@@ -96,15 +96,15 @@ Forward via Agent tool with `subagent_type: "plan-reviewer"`:
 Branching:
 
 - **PASS** → continue to Step 5 (STOP).
-- **critical** (tuples written) → dispatch `plan-fix-applier` (Sonnet pair-tail) to apply tuples verbatim; re-dispatch `plan-reviewer`. Re-entry cap = 1. Second critical → abort chain with `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE` + handoff `/plan-review {MASTER_PLAN_PATH} {STAGE_ID}` for human review.
+- **critical** (tuples written) → dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail) to apply tuples verbatim; re-dispatch `plan-reviewer`. Re-entry cap = 1. Second critical → abort chain with `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE` + handoff `/plan-review {MASTER_PLAN_PATH} {STAGE_ID}` for human review.
 
-### Step 4a — Dispatch `plan-fix-applier` (Sonnet pair-tail; only on critical)
+### Step 4a — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical)
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `ia/skills/plan-fix-apply/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read `§Plan Fix` tuples verbatim. Apply in declared order. Run `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` gate after all edits. Idempotent.
+> Run `ia/skills/plan-applier/SKILL.md` — Mode plan-fix on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read `§Plan Fix` tuples verbatim. Apply in declared order. Run `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` gate after all edits. Idempotent.
 >
 > ## Hard boundaries
 >

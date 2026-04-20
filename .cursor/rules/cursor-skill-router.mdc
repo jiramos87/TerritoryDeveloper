@@ -30,12 +30,11 @@ If a skill has Cursor-specific caveats, read `.cursor/rules/cursor-lifecycle-ada
 | stage-file, file pending tasks | `ia/skills/stage-file/SKILL.md` | `stage-file` |
 | create one project issue/spec | `ia/skills/project-new/SKILL.md` | `project-new` |
 | author stage plan sections | `ia/skills/plan-author/SKILL.md` | `plan-author` |
-| plan review, plan fix apply | `ia/skills/plan-review/SKILL.md` | `plan-review` |
+| plan review | `ia/skills/plan-review/SKILL.md` | `plan-review` |
 | code review against spec/invariants | `ia/skills/opus-code-review/SKILL.md` | `opus-code-review` |
-| apply code fix tuples | `ia/skills/code-fix-apply/SKILL.md` | `code-fix-apply` |
+| plan applier, apply plan fix, apply code fix, apply closeout tuples | `ia/skills/plan-applier/SKILL.md` | `plan-applier` |
 | audit stage tasks | `ia/skills/opus-audit/SKILL.md` | `opus-audit` |
 | closeout stage, archive completed specs | `ia/skills/stage-closeout-plan/SKILL.md` | `stage-closeout-plan` |
-| apply closeout plan tuples | `ia/skills/stage-closeout-apply/SKILL.md` | `stage-closeout-apply` |
 | chain ship stage | `ia/skills/ship-stage/SKILL.md` | `ship-stage` |
 | rollout bucket row | `ia/skills/release-rollout/SKILL.md` | `release-rollout` |
 | enumerate rollout tracker | `ia/skills/release-rollout-enumerate/SKILL.md` | `release-rollout-enumerate` |
@@ -55,7 +54,6 @@ If a skill has Cursor-specific caveats, read `.cursor/rules/cursor-lifecycle-ada
 | emit subagent progress markers | `ia/skills/subagent-progress-emit/SKILL.md` | `subagent-progress-emit` |
 | stage file plan tuple authoring | `ia/skills/stage-file-plan/SKILL.md` | `stage-file-plan` |
 | stage file apply tuple execution | `ia/skills/stage-file-apply/SKILL.md` | `stage-file-apply` |
-| plan fix tuple apply | `ia/skills/plan-fix-apply/SKILL.md` | `plan-fix-apply` |
 | project new apply tuples | `ia/skills/project-new-apply/SKILL.md` | `project-new-apply` |
 
 ## Caveman Output Default

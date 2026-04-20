@@ -1,8 +1,0 @@
----
-description: "Sonnet pair-tail skill (seam #4). Reads §Code Fix Plan tuples written by `opus-code-review` (Opus pair-head) in ia/projects/{id}.md; applies each tuple verbatim in declared order; re-enters /verify-loop; on verify fail — retries once (1-retry bound, 2 total attempts); second fail → escalates to Opus pair-head with structured return shape. Never reorders, merges, or interprets tuples. Triggers: \"apply code fix\", \"/code-fix-apply {ISSUE_ID}\", \"code fix apply\", \"pair-tail code fix\", \"apply §Code Fix Plan\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/code-fix-apply/SKILL.md
-
-When this skill invokes MCP tools, follow its Tool recipe order exactly.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

@@ -24,7 +24,7 @@ phases:
 
 No MCP calls from skill body. Follow **Tool recipe** below before editing BACKLOG or creating spec — thin context via `AGENTS.md` step 3 + `mcp-ia-default.md`.
 
-**vs author:** this skill creates backlog row + spec stub from user prompt. After stub → [`plan-author`](../plan-author/SKILL.md) (N=1 fills §Plan Author) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → `verify-loop` → `opus-code-review` → `opus-audit` → Stage-scoped `/closeout` (`stage-closeout-plan` → `stage-closeout-apply` pair). Per canonical rev-3 flow in [`ia/rules/agent-lifecycle.md`](../../rules/agent-lifecycle.md).
+**vs author:** this skill creates backlog row + spec stub from user prompt. After stub → [`plan-author`](../plan-author/SKILL.md) (N=1 fills §Plan Author) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → `verify-loop` → `opus-code-review` → `opus-audit` → Stage-scoped `/closeout` (`stage-closeout-plan` → `plan-applier` Mode stage-closeout). Per canonical rev-3 flow in [`ia/rules/agent-lifecycle.md`](../../rules/agent-lifecycle.md).
 
 **Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) · [`BACKLOG.md`](../../../BACKLOG.md) · [`ia/skills/README.md`](../README.md).
 

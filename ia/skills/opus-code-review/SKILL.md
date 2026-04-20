@@ -10,7 +10,7 @@ description: >
   subset + glossary bundle (Stage-level if called inside chain).
   Three verdict branches: (a) PASS → mini-report, no tail;
   (b) minor → suggest fix-in-place or deferred issue, no tail;
-  (c) critical → writes §Code Fix Plan tuples → triggers code-fix-apply.
+  (c) critical → writes §Code Fix Plan tuples → triggers `plan-applier` Mode code-fix.
   Triggers: "/code-review {ISSUE_ID}", "opus code review", "code review task",
   "post-verify code review".
 model: inherit
@@ -25,10 +25,10 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Opus pair-head per-Task. Runs after `implement` + `verify-loop` complete for the Task. Reads the implementation diff against the spec + invariants + glossary; emits one of three verdicts. Critical verdict triggers sibling pair-tail `code-fix-apply`.
+**Role:** Opus pair-head per-Task. Runs after `implement` + `verify-loop` complete for the Task. Reads the implementation diff against the spec + invariants + glossary; emits one of three verdicts. Critical verdict triggers sibling pair-tail **`plan-applier`** Mode code-fix.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #4, §Escalation rule.
-Sibling pair-tail: [`code-fix-apply/SKILL.md`](../code-fix-apply/SKILL.md).
+Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode **code-fix**.
 
 ---
 
@@ -57,7 +57,7 @@ When invoked as **Pass 2 of `/ship-stage`** (Stage-end bulk code-review, not per
 - Single `domain-context-load` payload covers all N Tasks. Context overhead = O(1) per Stage, not O(N).
 
 **Re-entry cap:**
-- On `critical` verdict: `ship-stage` Step 3.2 runs `code-fix-apply`, then re-enters verify-loop (Step 3.1) + code-review (Step 3.2) ONCE.
+- On `critical` verdict: `ship-stage` Step 3.2 runs `plan-applier` Mode code-fix, then re-enters verify-loop (Step 3.1) + code-review (Step 3.2) ONCE.
 - On second `critical` verdict → caller emits `STAGE_CODE_REVIEW_CRITICAL_TWICE`; halt; do NOT re-enter a third time.
 
 **Input fields when called from `/ship-stage` Pass 2:**
@@ -162,7 +162,7 @@ Write into spec:
   payload: |
     ## §Code Fix Plan
 
-    > opus-code-review — {N} critical findings. Spawn `code-fix-apply {ISSUE_ID}`.
+    > opus-code-review — {N} critical findings. Spawn `plan-applier` Mode code-fix `{ISSUE_ID}`.
 
     ```yaml
     - operation: {op}
@@ -193,7 +193,7 @@ Include `§Code Review` mini-report as separate write (same pass):
     - {finding 1}: {description}
     - {finding 2}: ...
 
-    §Code Fix Plan written. Spawning code-fix-apply.
+    §Code Fix Plan written. Spawning plan-applier Mode code-fix.
 ```
 
 ---
@@ -206,17 +206,17 @@ Include `§Code Review` mini-report as separate write (same pass):
 
 ```
 opus-code-review: CRITICAL — {N} findings. §Code Fix Plan written to ia/projects/{ISSUE_ID}.md.
-Spawn: code-fix-apply {ISSUE_ID}.
+Spawn: plan-applier Mode code-fix {ISSUE_ID}.
 ```
 
-Caller routes to `code-fix-apply {ISSUE_ID}`.
+Caller routes to `plan-applier` Mode code-fix `{ISSUE_ID}`.
 
 ---
 
 ## Cross-references
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #4, §Escalation rule.
-- [`ia/skills/code-fix-apply/SKILL.md`](../code-fix-apply/SKILL.md) — Sonnet pair-tail.
+- [`ia/skills/plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Sonnet pair-tail Mode code-fix.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - [`ia/skills/opus-audit/SKILL.md`](../opus-audit/SKILL.md) — Stage-scoped bulk audit that runs after all per-Task code-reviews pass.
 - Glossary term **Opus code review** (`ia/specs/glossary.md`).

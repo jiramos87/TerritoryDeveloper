@@ -1,7 +1,7 @@
 /**
  * MCP tool: stage_closeout_digest — structured extract from `ia/projects/{ISSUE_ID}[-{description}].md`.
  *
- * Per-Task digest emitter invoked N times by `stage-closeout-apply` Sonnet pair-tail (one
+ * Per-Task digest emitter invoked N times by `plan-applier` Mode stage-closeout Sonnet pair-tail (one
  * call per Task of the closing Stage). Applier aggregates N per-Task digests into one
  * Stage-level closeout summary emitted at end of Stage.
  *
@@ -55,7 +55,7 @@ export function registerStageCloseoutDigest(server: McpServer): void {
     "stage_closeout_digest",
     {
       description:
-        "Parse one temporary project spec under `ia/projects/` for **stage-closeout-apply** (Sonnet pair-tail, seam #4). Returns H2 sections (Summary, Lessons Learned, Decision Log, §Audit, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Called N times per closing Stage (one per Task); applier aggregates into one Stage-level digest. Filenames may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md`. Does not edit files or author normative spec prose. Requires exactly one of `issue_id` or `spec_path`.",
+        "Parse one temporary project spec under `ia/projects/` for **plan-applier** Mode stage-closeout (Sonnet pair-tail, seam #4). Returns H2 sections (Summary, Lessons Learned, Decision Log, §Audit, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Called N times per closing Stage (one per Task); applier aggregates into one Stage-level digest. Filenames may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md`. Does not edit files or author normative spec prose. Requires exactly one of `issue_id` or `spec_path`.",
       inputSchema: inputShape,
     },
     async (args) =>

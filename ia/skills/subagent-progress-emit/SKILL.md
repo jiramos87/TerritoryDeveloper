@@ -57,7 +57,7 @@ Per-skill emission boilerplate is zero — the `@`-loaded common preamble handle
 
 **Lifecycle skills** (MUST carry `phases:` + emit markers):
 
-- Pair-head / pair-tail: `plan-review`, `plan-fix-apply`, `stage-file-plan`, `stage-file-apply`, `project-new-apply`, `opus-audit`, `opus-code-review`, `code-fix-apply`, `stage-closeout-plan`, `stage-closeout-apply`.
+- Pair-head / pair-tail: `plan-review`, `plan-applier`, `stage-file-plan`, `stage-file-apply`, `project-new-apply`, `opus-audit`, `opus-code-review`, `stage-closeout-plan`.
 - Non-pair bulk: `plan-author`.
 - Existing executors: `project-spec-implement`, `verify-loop`, `ship-stage`, `stage-file`, `project-new`, `stage-compress`.
 

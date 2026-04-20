@@ -1,11 +1,11 @@
 ---
-description: Drift-scan a Stage's §Plan Author sections + master-plan Stage block. Dispatches `plan-reviewer` (Opus pair-head seam #1) → `plan-fix-applier` (Sonnet pair-tail) if drift found. PASS verdict → no applier dispatched. Fires once per Stage between `/author` and per-Task `/implement` loop.
+description: Drift-scan a Stage's §Plan Author sections + master-plan Stage block. Dispatches `plan-reviewer` (Opus pair-head seam #1) → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage between `/author` and per-Task `/implement` loop.
 argument-hint: "{master-plan-path} Stage {X.Y}"
 ---
 
-# /plan-review — dispatch seam #1 pair (plan-review → plan-fix-apply)
+# /plan-review — dispatch seam #1 pair (plan-review → plan-applier Mode plan-fix)
 
-Use `plan-reviewer` subagent (`.claude/agents/plan-reviewer.md`) to scan Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}` for drift between `§Plan Author` sections (authored by `/author`), master-plan Stage block, Task spec §Objective / §Background / §Implementation Plan, invariants, and glossary. On drift → writes `§Plan Fix` tuple list + auto-dispatches `plan-fix-applier` (Sonnet pair-tail) to apply tuples + run `validate:master-plan-status` + `validate:backlog-yaml` gate.
+Use `plan-reviewer` subagent (`.claude/agents/plan-reviewer.md`) to scan Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}` for drift between `§Plan Author` sections (authored by `/author`), master-plan Stage block, Task spec §Objective / §Background / §Implementation Plan, invariants, and glossary. On drift → writes `§Plan Fix` tuple list + auto-dispatches **`plan-applier`** (Sonnet pair-tail, Mode plan-fix) to apply tuples + run `validate:master-plan-status` + `validate:backlog-yaml` gate.
 
 ## Argument parsing
 
@@ -31,15 +31,15 @@ Forward via Agent tool with `subagent_type: "plan-reviewer"`:
 
 Planner returns `{verdict: "PASS"|"fix"}`. PASS → skip Step 2 + emit summary. Fix → proceed to Step 2.
 
-## Step 2 — Dispatch `plan-fix-applier` (Sonnet pair-tail) — conditional
+## Step 2 — Dispatch `plan-applier` (Sonnet pair-tail, Mode plan-fix) — conditional
 
-On fix verdict: forward via Agent tool with `subagent_type: "plan-fix-applier"`:
+On fix verdict: forward via Agent tool with `subagent_type: "plan-applier"`:
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `ia/skills/plan-fix-apply/SKILL.md` end-to-end. Read `§Plan Fix` tuples verbatim from Stage block. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Run `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` gate (seam #1 scope). 1-retry bound on validate fail. Second fail → escalate to Opus pair-head. Idempotent.
+> Run `ia/skills/plan-applier/SKILL.md` — **Mode: plan-fix**. Read `§Plan Fix` tuples verbatim from Stage block. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Run `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` gate (seam #1 scope). 1-retry bound on validate fail. Second fail → escalate to Opus pair-head. Idempotent.
 >
 > ## Hard boundaries
 >

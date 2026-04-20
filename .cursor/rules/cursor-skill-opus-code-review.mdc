@@ -1,5 +1,5 @@
 ---
-description: "Opus pair-head skill. Runs per-Task after implement + verify-loop completes. Reads implementation diff vs ia/projects/{id}.md §Implementation Plan + invariants subset + glossary bundle (Stage-level if called inside chain). Three verdict branches: (a) PASS → mini-report, no tail; (b) minor → suggest fix-in-place or deferred issue, no tail; (c) critical → writes §Code Fix Plan tuples → triggers code-fix-apply. Triggers: \"/code-review {ISSUE_ID}\", \"opus code review\", \"code review task\", \"post-verify code review\"."
+description: "Opus pair-head skill. Runs per-Task after implement + verify-loop completes. Reads implementation diff vs ia/projects/{id}.md §Implementation Plan + invariants subset + glossary bundle (Stage-level if called inside chain). Three verdict branches: (a) PASS → mini-report, no tail; (b) minor → suggest fix-in-place or deferred issue, no tail; (c) critical → writes §Code Fix Plan tuples → triggers `plan-applier` Mode code-fix. Triggers: \"/code-review {ISSUE_ID}\", \"opus code review\", \"code review task\", \"post-verify code review\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/opus-code-review/SKILL.md

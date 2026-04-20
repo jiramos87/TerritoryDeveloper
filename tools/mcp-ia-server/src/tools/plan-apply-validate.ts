@@ -18,8 +18,8 @@
  *   - heading present, N > 0 tuples   → { ok: true,  found: true,  tuple_count: N }
  *   - read / parse error              → { ok: false, found: false, tuple_count: 0, error }
  *
- * Called by Sonnet pair-tail appliers (plan-fix-apply, stage-file-apply,
- * code-fix-apply, stage-closeout-apply) before reading tuples — skip apply
+ * Called by Sonnet pair-tail appliers (plan-applier, stage-file-apply)
+ * before reading tuples — skip apply
  * when `ok: false`; return control to Opus.
  *
  * NOTE: After editing this descriptor, restart Claude Code (or run
@@ -236,8 +236,8 @@ export function registerPlanApplyValidate(server: McpServer): void {
         "Given { section_header, target_path }, locates the `## {section_header}` " +
         "heading and counts tuple-shaped lines beneath it (lines starting with `-` " +
         "or `{`, or containing `operation:`). Returns { ok, found, tuple_count, " +
-        "error? }. Called by Sonnet pair-tail appliers (plan-fix-apply, " +
-        "stage-file-apply, code-fix-apply, stage-closeout-apply) before reading " +
+        "error? }. Called by Sonnet pair-tail appliers (plan-applier, " +
+        "stage-file-apply) before reading " +
         "tuples — skip apply when ok=false; return control to Opus. " +
         "Non-throwing: fs/read errors surface in `error` field with ok=false. " +
         "Schema-cache restart required after adding this tool (N4): restart " +

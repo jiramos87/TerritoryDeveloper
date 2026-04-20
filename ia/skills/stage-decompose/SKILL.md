@@ -69,7 +69,7 @@ Hold in working memory:
 - **Relevant surfaces** — code paths / spec refs cited in the step block (may be brief in skeletons).
 - **Art** — if declared; else `None`.
 - **Stage hints** — from `## Deferred decomposition` section for this step (e.g. "Candidate stages: …"). These are inputs, not constraints — override if implementation logic demands different ordering.
-- **Prior step Exit** — scan `### Step {STEP_ID - 1}` Exit criteria + any Stage-scoped `/closeout` pair (`stage-closeout-apply`) rollup rows. Captures what exists on disk when this step opens; feeds "Relevant surfaces" for new stages.
+- **Prior step Exit** — scan `### Step {STEP_ID - 1}` Exit criteria + any Stage-scoped `/closeout` pair (`plan-applier` Mode stage-closeout) rollup rows. Captures what exists on disk when this step opens; feeds "Relevant surfaces" for new stages.
 
 ### Phase 1 — MCP context (Tool recipe)
 

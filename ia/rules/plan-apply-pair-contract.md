@@ -28,10 +28,10 @@ Tuples execute in declared order. Sonnet pair-tail does NOT reorder, merge, or i
 
 | # | Pair-head (Opus) | §Plan section | Pair-tail (Sonnet) | Scope |
 |---|------------------|---------------|--------------------|-------|
-| 1 | `plan-review` | `§Plan Fix` (under Stage block in master plan) | `plan-fix-apply` | Stage planning seam — review all Tasks of a Stage + master-plan header + invariants; emit fix tuples. |
+| 1 | `plan-review` | `§Plan Fix` (under Stage block in master plan) | `plan-applier` (Mode **plan-fix**) | Stage planning seam — review all Tasks of a Stage + master-plan header + invariants; emit fix tuples. Retired alias: ~~`plan-fix-apply`~~ (TECH-506). |
 | 2 | `stage-file-plan` | `§Stage File Plan` (under Stage block in master plan) | `stage-file-apply` | Stage materialization seam — reserve ids + author backlog yaml + project-spec stubs for all Tasks of one Stage. |
-| 3 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `code-fix-apply` | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. |
-| 4 | `stage-closeout-plan` | `§Stage Closeout Plan` (under Stage block in master plan) | `stage-closeout-apply` | Stage closeout seam — shared migration tuples + N BACKLOG archive ops + N spec deletes + N status flips; Stage-scoped, fires once per Stage (not per Task). Rolls up Stage Status → Final via R5. |
+| 3 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `plan-applier` (Mode **code-fix**) | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. Retired alias: ~~`code-fix-apply`~~ (TECH-506). |
+| 4 | `stage-closeout-plan` | `§Stage Closeout Plan` (under Stage block in master plan) | `plan-applier` (Mode **stage-closeout**) | Stage closeout seam — shared migration tuples + N BACKLOG archive ops + N spec deletes + N status flips; Stage-scoped, fires once per Stage (not per Task). Rolls up Stage Status → Final via R5. Retired alias: ~~`stage-closeout-apply`~~ (TECH-506). |
 
 ## Stage-scoped non-pair stages
 
@@ -84,7 +84,7 @@ After applying all tuples, Sonnet pair-tail MUST run the validator appropriate t
 |------|-----------|
 | 1, 2 | `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` |
 | 3 | `npm run verify:local` (or stage-appropriate Path A) |
-| 4 | `npm run validate:all` |
+| 4 | `bash tools/scripts/materialize-backlog.sh` + `npm run validate:all` (see [`plan-applier/SKILL.md`](../skills/plan-applier/SKILL.md) Mode stage-closeout) |
 
 On non-zero exit: pair-tail STOPS, returns control to Opus pair-head with `{exit_code, stderr, failing_tuple_index}`. Opus revises the `§Plan`; Sonnet re-applies from scratch (idempotency clause guarantees safety).
 

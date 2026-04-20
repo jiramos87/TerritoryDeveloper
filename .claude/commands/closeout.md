@@ -1,11 +1,11 @@
 ---
-description: Close a Stage end-to-end — Stage-scoped bulk closeout (NOT per-Task). Dispatches `stage-closeout-planner` Opus pair-head then `stage-closeout-applier` Sonnet pair-tail. Fires once per Stage when all Task rows reach Done post-verify.
+description: Close a Stage end-to-end — Stage-scoped bulk closeout (NOT per-Task). Dispatches `stage-closeout-planner` Opus pair-head then `plan-applier` Sonnet pair-tail Mode stage-closeout. Fires once per Stage when all Task rows reach Done post-verify.
 argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} (e.g. ia/projects/lifecycle-refactor-master-plan.md 7.2)"
 ---
 
 # /closeout — dispatch Stage-scoped closeout pair (seam #4)
 
-Use `stage-closeout-planner` subagent (`.claude/agents/stage-closeout-planner.md`) → `stage-closeout-applier` subagent (`.claude/agents/stage-closeout-applier.md`) for bulk closeout on `$ARGUMENTS`. All ops run without human confirmation. Replaces retired per-Task `/closeout {ISSUE_ID}` flow (T7.14 / TECH-481 — lifecycle-refactor seam #4 collapse).
+Use `stage-closeout-planner` subagent (`.claude/agents/stage-closeout-planner.md`) → **`plan-applier`** subagent (`.claude/agents/plan-applier.md`, Mode stage-closeout) for bulk closeout on `$ARGUMENTS`. All ops run without human confirmation. Replaces retired per-Task `/closeout {ISSUE_ID}` flow (T7.14 / TECH-481 — lifecycle-refactor seam #4 collapse).
 
 ## Argument parsing
 
@@ -24,7 +24,7 @@ Resolve and print for the human developer:
    CLOSEOUT Stage {STAGE_ID} — {Stage Title}
      master plan   : {Plan Name} ({MASTER_PLAN_PATH})
      tasks to close: {N} ({comma-separated ISSUE_IDs})
-     seam          : #4 (stage-closeout-plan → stage-closeout-apply)
+     seam          : #4 (stage-closeout-plan → plan-applier Mode stage-closeout)
    ```
 
 ## Step 1 — Dispatch `stage-closeout-planner` (Opus pair-head)
@@ -35,7 +35,7 @@ Forward to planner subagent via Agent tool with `subagent_type: "stage-closeout-
 >
 > ## Mission
 >
-> Run `stage-closeout-plan` skill (`ia/skills/stage-closeout-plan/SKILL.md`) end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read master-plan Stage block + all Task §Audit / §Implementation / §Findings / §Verification / §Lessons Learned + invariants + glossary. Write unified `§Stage Closeout Plan` tuple list (shared migration ops deduped + N per-Task archive / delete / status-flip / id-purge / digest_emit ops). Hand off to `stage-closeout-apply` Sonnet pair-tail. Does NOT mutate target files — plan only.
+> Run `stage-closeout-plan` skill (`ia/skills/stage-closeout-plan/SKILL.md`) end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read master-plan Stage block + all Task §Audit / §Implementation / §Findings / §Verification / §Lessons Learned + invariants + glossary. Write unified `§Stage Closeout Plan` tuple list (shared migration ops deduped + N per-Task archive / delete / status-flip / id-purge / digest_emit ops). Hand off to **`plan-applier`** Sonnet pair-tail Mode stage-closeout. Does NOT mutate target files — plan only.
 >
 > ## Hard boundaries
 >
@@ -47,15 +47,15 @@ Forward to planner subagent via Agent tool with `subagent_type: "stage-closeout-
 
 Planner must return success + `§Stage Closeout Plan` written before Step 2. Escalation shape → abort chain, surface to user.
 
-## Step 2 — Dispatch `stage-closeout-applier` (Sonnet pair-tail)
+## Step 2 — Dispatch `plan-applier` (Sonnet pair-tail, Mode stage-closeout)
 
-Forward to applier subagent via Agent tool with `subagent_type: "stage-closeout-applier"`:
+Forward to applier subagent via Agent tool with `subagent_type: "plan-applier"`:
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `stage-closeout-apply` skill (`ia/skills/stage-closeout-apply/SKILL.md`) end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read `§Stage Closeout Plan` tuples verbatim; apply shared migration ops once + per-Task ops in loop (archive yaml + delete spec + flip task-row Status + id purge + digest_emit); run `materialize-backlog.sh` + `npm run validate:all` once at end; aggregate N per-Task digests into one Stage-level digest emitted to stdout; flip Stage header Status → Final + roll up to Step / Plan-level Final per R5. Idempotent on re-run.
+> Run `ia/skills/plan-applier/SKILL.md` — **Mode: stage-closeout** on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read `§Stage Closeout Plan` tuples verbatim; apply shared migration ops once + per-Task ops in loop (archive yaml + delete spec + flip task-row Status + id purge + digest_emit); run `materialize-backlog.sh` + `npm run validate:all` once at end; aggregate N per-Task digests into one Stage-level digest emitted to stdout; flip Stage header Status → Final + roll up to Step / Plan-level Final per R5. Idempotent on re-run.
 >
 > ## Hard boundaries
 >

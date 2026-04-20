@@ -31,7 +31,7 @@ Run `ia/skills/plan-review/SKILL.md` end-to-end for target Stage. Read master-pl
    3. `mcp__territory-ia__spec_sections` on pair-contract / project-hierarchy / orchestrator-vs-spec
 3. **Phase 2 — Drift scan** — Run check matrix (8 checks per skill Phase 2). Record every finding as candidate tuple.
 4. **Phase 3 — Write §Plan Fix tuples** — Zero drift → write `### §Plan Fix — PASS (no drift)` sentinel. Drift found → resolve every `target_anchor` to single match (contract §Escalation rule) + write `### §Plan Fix` tuple list. One tuple = one atomic edit.
-5. **Phase 4 — Hand-off** — PASS → `plan-review: PASS — Stage {STAGE_ID} aligned. Downstream continue.` Fix → `plan-review: {N} tuples written to §Plan Fix. Spawn plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}.`
+5. **Phase 4 — Hand-off** — PASS → `plan-review: PASS — Stage {STAGE_ID} aligned. Downstream continue.` Fix → `plan-review: {N} tuples written to §Plan Fix. Spawn plan-applier Mode plan-fix {MASTER_PLAN_PATH} {STAGE_ID}.`
 
 # Hard boundaries
 
@@ -44,4 +44,4 @@ Run `ia/skills/plan-review/SKILL.md` end-to-end for target Stage. Read master-pl
 
 # Output
 
-Single caveman message: Stage {STAGE_ID} — verdict (PASS | N tuples). Drift types + Task ids with findings. Next: PASS → proceed to `/author`; Fix → `/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}`.
+Single caveman message: Stage {STAGE_ID} — verdict (PASS | N tuples). Drift types + Task ids with findings. Next: PASS → proceed to `/author`; Fix → `plan-applier` Mode plan-fix `{MASTER_PLAN_PATH} {STAGE_ID}`.

@@ -1,5 +1,5 @@
 ---
-description: "Opus pair-head skill. Runs once per Stage before first Task kickoff. Reads all filed Task specs under the Stage + master-plan Stage header + invariants subset + glossary snippets; emits structured §Plan Fix tuples per ia/rules/plan-apply-pair-contract.md or writes PASS sentinel. Triggers: \"plan review\", \"/plan-review {MASTER_PLAN_PATH} {STAGE_ID}\", \"stage plan review\", \"pre-stage drift scan\"."
+description: "Sonnet pair-head skill (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output; reserve Opus budget for authoring + code review). Runs once per Stage before first Task kickoff. Reads all filed Task specs under the Stage + master-plan Stage header + invariants subset + glossary snippets; emits structured §Plan Fix tuples per ia/rules/plan-apply-pair-contract.md or writes PASS sentinel. Triggers: \"plan review\", \"/plan-review {MASTER_PLAN_PATH} {STAGE_ID}\", \"stage plan review\", \"pre-stage drift scan\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/plan-review/SKILL.md

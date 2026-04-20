@@ -1,8 +1,0 @@
----
-description: "Sonnet pair-tail skill. Reads §Plan Fix tuples written by `plan-review` (Opus pair-head) under a master-plan Stage block; applies each tuple verbatim in declared order; runs validate:master-plan-status + validate:backlog-yaml after all edits; escalates immediately on any anchor ambiguity; idempotent re-runs. Triggers: \"apply plan fix\", \"/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}\", \"plan fix apply\", \"pair-tail plan fix\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/plan-fix-apply/SKILL.md
-
-When this skill invokes MCP tools, follow its Tool recipe order exactly.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

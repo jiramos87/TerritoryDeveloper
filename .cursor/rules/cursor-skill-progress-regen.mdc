@@ -1,5 +1,5 @@
 ---
-description: "Bash wrapper subskill. Runs `npm run progress` from repo root and logs the exit code. Non-blocking contract: caller continues regardless of exit code. No LLM model needed — pure shell. Invoked as an inline subskill by master-plan-new, master-plan-extend, stage-decompose, stage-file, and stage-closeout-apply (retired project-spec-close + project-stage-close folded into Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously appeared inline. Triggers: \"regen progress\", \"regenerate progress dashboard\", \"npm run progress wrapper\", \"progress-regen subskill\"."
+description: "Bash wrapper subskill. Runs `npm run progress` from repo root and logs the exit code. Non-blocking contract: caller continues regardless of exit code. No LLM model needed — pure shell. Invoked as an inline subskill by master-plan-new, master-plan-extend, stage-decompose, stage-file, and plan-applier Mode stage-closeout (retired project-spec-close + project-stage-close folded into Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously appeared inline. Triggers: \"regen progress\", \"regenerate progress dashboard\", \"npm run progress wrapper\", \"progress-regen subskill\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/progress-regen/SKILL.md

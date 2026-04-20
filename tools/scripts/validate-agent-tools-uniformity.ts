@@ -9,8 +9,7 @@
  * Pair-seam agents (per lifecycle-refactor-master-plan Stage 10 T10.4 §4.2):
  *   Pair-heads (Opus):  plan-reviewer, stage-file-planner, opus-code-reviewer,
  *                       stage-closeout-planner, project-new-planner
- *   Pair-tails (Sonnet): plan-fix-applier, stage-file-applier, code-fix-applier,
- *                        stage-closeout-applier, project-new-applier
+ *   Pair-tails (Sonnet): plan-applier, stage-file-applier, project-new-applier
  *
  * Canonical baseline (MUST be present in every agent of the role group):
  *   head: Read, Edit, Write, Bash, Grep, Glob,
@@ -51,10 +50,8 @@ const HEAD_AGENTS = new Set([
 ]);
 
 const TAIL_AGENTS = new Set([
-  "plan-fix-applier",
+  "plan-applier",
   "stage-file-applier",
-  "code-fix-applier",
-  "stage-closeout-applier",
   "project-new-applier",
 ]);
 

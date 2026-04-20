@@ -23,7 +23,7 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 - pair seam: consumes planner tuples only; do not re-plan.
 - recommended model: Sonnet/Composer2 acceptable.
 - caveat: never hand-edit `ia/state/id-counter.json`.
-- chain tail (F6 re-fold 2026-04-20): applier completion triggers `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-fix-applier` on critical, re-entry cap=1) → STOP with `/ship-stage` handoff. Applier itself stays args-only pair-tail.
+- chain tail (F6 re-fold 2026-04-20): applier completion triggers `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP with `/ship-stage` handoff. Applier itself stays args-only pair-tail.
 
 ## project-new
 
@@ -45,11 +45,11 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 - recommended model: Sonnet/Composer2 acceptable (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output; reserve Opus budget for authoring + code review).
 - caveat: classify findings by severity before any changes.
 
-## plan-fix-apply
+## plan-applier
 
-- pair seam: apply tuples only.
+- pair seam: apply tuples only (Modes: plan-fix, code-fix, stage-closeout — TECH-506 unified skill).
 - recommended model: Sonnet/Composer2 acceptable.
-- caveat: no scope creep beyond fix tuples.
+- caveat: no scope creep beyond fix tuples; run validator **for active mode only**.
 
 ## opus-code-review
 
@@ -57,25 +57,12 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 - recommended model: Max/Opus preferred.
 - caveat: keep evidence anchored to spec + invariants.
 
-## code-fix-apply
-
-- pair seam: apply only tuple set from review.
-- recommended model: Sonnet/Composer2 acceptable.
-- caveat: after apply, rerun verification sequence.
-
 ## stage-closeout-plan
 
 - caller_agent: `closeout`.
 - pair seam: planner emits one stage-scoped closeout tuple batch.
 - recommended model: Max/Opus preferred.
 - caveat: include explicit destructive-op confirmation checkpoint before delete/archive actions.
-
-## stage-closeout-apply
-
-- caller_agent: `closeout` (for `backlog_record_upsert`, glossary/rule/spec mutation tools when needed).
-- reserve-id: no.
-- recommended model: Sonnet/Composer2 acceptable.
-- caveat: run non-destructive migrations first, destructive ops only after confirmation.
 
 ## plan-author
 
@@ -103,9 +90,9 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 
 ## ship-stage
 
-- prerequisites (typical multi-task Stage, F6 re-fold 2026-04-20): `/stage-file` → `/ship-stage`. `/stage-file` chain tail owns `plan-author` + `plan-review` (→ `plan-fix-apply` on critical) — `/ship-stage` only runs §Plan Author readiness gate + per-Task implement + Pass 2 verify/code-review/audit/closeout. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery.
+- prerequisites (typical multi-task Stage, F6 re-fold 2026-04-20): `/stage-file` → `/ship-stage`. `/stage-file` chain tail owns `plan-author` + `plan-review` (→ `plan-applier` Mode plan-fix on critical) — `/ship-stage` only runs §Plan Author readiness gate + per-Task implement + Pass 2 verify/code-review/audit/closeout. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery.
 - caller_agent: `ship-stage` for mutation calls.
-- chain strategy (align with `ia/skills/ship-stage/SKILL.md`): **Phase 1.5** — §Plan Author readiness gate (read-only). Any Task missing §Plan Author → `STOPPED — prerequisite: §Plan Author not populated` + standalone `/author` handoff (recovery path; `/stage-file` should have populated). **Pass 1** — for each non-Done task in table order: `spec-implementer` → `npm run unity:compile-check` → atomic per-task commit. **Pass 2** (after all Pass 1 tasks): `verify-loop` on cumulative delta → Stage-level `opus-code-reviewer` → `opus-audit` → `stage-closeout-planner` → `stage-closeout-applier`. (Task-local seams inside `spec-implementer` follow that skill; this bullet is the chain dispatcher shape only.)
+- chain strategy (align with `ia/skills/ship-stage/SKILL.md`): **Phase 1.5** — §Plan Author readiness gate (read-only). Any Task missing §Plan Author → `STOPPED — prerequisite: §Plan Author not populated` + standalone `/author` handoff (recovery path; `/stage-file` should have populated). **Pass 1** — for each non-Done task in table order: `spec-implementer` → `npm run unity:compile-check` → atomic per-task commit. **Pass 2** (after all Pass 1 tasks): `verify-loop` on cumulative delta → Stage-level `opus-code-reviewer` → `opus-audit` → `stage-closeout-planner` → **`plan-applier` Mode stage-closeout**. (Task-local seams inside `spec-implementer` follow that skill; this bullet is the chain dispatcher shape only.)
 - `--per-task-verify`: legacy escape — promotes full `verify-loop` + `opus-code-reviewer` **per task** in Pass 1; Pass 2 skips batched verify + stage code-review (audit + closeout unchanged). Prefer when Stage has many tasks or very wide surface.
 - checkpoint rule: stop after each sub-skill and summarize status before continuing.
 - recommended model: Max/Opus for planner/review steps; Sonnet/Composer2 acceptable for apply steps.

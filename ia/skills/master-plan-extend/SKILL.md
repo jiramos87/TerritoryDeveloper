@@ -22,7 +22,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from the source doc's expansion / extensions block.
 
 **Lifecycle:** AFTER [`master-plan-new`](../master-plan-new/SKILL.md) has authored the orchestrator AND `{SOURCE_DOC}` exists with expansion (or equivalent extensions list). BEFORE [`stage-file`](../stage-file/SKILL.md) of the new stages.
-`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `plan-author` (Stage 1×N) → `plan-review` → per-Task `project-spec-implement` → `verify-loop` → `opus-code-review` → `opus-audit` (Stage 1×N) → Stage-scoped `/closeout` (`stage-closeout-plan` → `stage-closeout-apply` pair). Per canonical rev-3 flow in [`ia/rules/agent-lifecycle.md`](../../rules/agent-lifecycle.md).
+`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `plan-author` (Stage 1×N) → `plan-review` → per-Task `project-spec-implement` → `verify-loop` → `opus-code-review` → `opus-audit` (Stage 1×N) → Stage-scoped `/closeout` (`stage-closeout-plan` → `plan-applier` Mode stage-closeout). Per canonical rev-3 flow in [`ia/rules/agent-lifecycle.md`](../../rules/agent-lifecycle.md).
 
 **Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/skills/README.md`](../README.md).
 

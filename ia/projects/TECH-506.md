@@ -5,17 +5,21 @@ loaded_by: ondemand
 slices_via: none
 parent_plan: "ia/projects/lifecycle-refactor-master-plan.md"
 task_key: "T10.5"
+phases:
+  - "Phase 1 — Author unified skill + agent"
+  - "Phase 2 — Retire legacy appliers"
+  - "Phase 3 — Update commands + contract"
 ---
 # TECH-506 — B4 unified plan-applier consolidation (retire 3 per-pair appliers)
 
 > **Issue:** [TECH-506](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-19
-> **Last updated:** 2026-04-19
+> **Last updated:** 2026-04-20
 
 ## 1. Summary
 
-Author `ia/skills/plan-applier/SKILL.md` as a unified Sonnet literal-applier reading any `§*Fix Plan` / `§Stage Closeout Plan` tuple shape. Retire 3 legacy per-pair applier skills (`plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply`) and their agents. Update all pair-head skills + commands to dispatch `plan-applier`. Resolves legacy Open Q11.
+Author `ia/skills/plan-applier/SKILL.md` as unified Sonnet literal-applier reading any `§*Fix Plan` / `§Stage Closeout Plan` tuple shape (`{operation, target_path, target_anchor, payload}`). Retire three legacy per-pair applier skills (`plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply`) and their agents. Update pair-head skills + slash commands to dispatch `plan-applier`. Resolves legacy Open Q11.
 
 ## 2. Goals and Non-Goals
 
@@ -43,7 +47,7 @@ Author `ia/skills/plan-applier/SKILL.md` as a unified Sonnet literal-applier rea
 
 ### 4.1 Domain behavior
 
-3 separate Sonnet appliers: `plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply`. Divergent logic; maintenance overhead. Open Q11 unresolved.
+Three separate Sonnet appliers: `plan-fix-apply`, `code-fix-apply`, `stage-closeout-apply`. Divergent logic; maintenance overhead. Open Q11 unresolved.
 
 ### 4.2 Systems map
 
@@ -61,7 +65,7 @@ Dispatch table keyed on operation type: fs_edit, glossary_row, backlog_archive, 
 
 ### 5.1 Target behavior (product)
 
-Unified literal-applier reads any tuple shape with `{operation, target_path, target_anchor, payload}`. Dispatches per operation type. Single escalation contract. Resolves Open Q11.
+Unified literal-applier reads any **Plan-Apply pair** tuple shape `{operation, target_path, target_anchor, payload}`. Dispatches per operation type. Single escalation contract. Resolves Open Q11.
 
 ### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 
@@ -122,15 +126,45 @@ Unified literal-applier reads any tuple shape with `{operation, target_path, tar
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/lifecycle-refactor-master-plan.md Stage 10`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: `.claude/skills/*` symlinks + `ia/skills/_retired/` moves — broken symlink or duplicate skill name breaks host discovery. Mitigation: move then `validate:all`; grep for stale `plan-fix-apply` / `code-fix-apply` / `stage-closeout-apply` path refs.
+- Risk: `cursor-skill-*` rules + `AGENTS.md` still cite legacy applier names. Mitigation: sweep `ia/rules/`, `.cursor/rules/`, `CLAUDE.md` in same PR as command dispatchers.
+- Ambiguity: operation-type enum vs future tuple kinds — Resolution: single dispatch table in `plan-applier` SKILL; new operation = new row + validator note in **Plan-Apply pair** contract.
+- Invariant touch: none (tooling / IA only).
 
 ### §Examples
 
+| Tuple source section | `operation` (example) | Expected handling | Notes |
+|---------------------|-------------------------|-------------------|-------|
+| `§Plan Fix` under master-plan Stage block | `replace_section` | FS edit at `target_anchor` | Same shape as legacy `plan-fix-apply` |
+| `§Code Fix Plan` in Task spec | `replace_section` / multi-op | FS edit + optional follow-up | Verbatim order preserved |
+| `§Stage Closeout Plan` under master-plan Stage | `archive_record`, `delete_file`, `id_purge` | BACKLOG yaml + spec delete + digest | Same shape as legacy `stage-closeout-apply` |
+| Malformed tuple (missing `target_anchor`) | — | Escalate to Opus; no silent skip | Bounded 1 retry on transient I/O only |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| plan_applier_skill_present | `ia/skills/plan-applier/SKILL.md` | Dispatch table + escalation + idempotent re-run contract | manual + `npm run validate:all` |
+| retired_skill_tombstones | paths under `ia/skills/_retired/{plan-fix-apply,code-fix-apply,stage-closeout-apply}/` | Tombstone header points to `plan-applier` | manual |
+| retired_agent_tombstones | `.claude/agents/_retired/*applier*.md` | Tombstone + no live agent basename collision | manual |
+| command_dispatchers_point_to_plan_applier | `.claude/commands/plan-review.md`, `code-review.md`, `closeout.md` | Subagent `plan-applier` (not legacy applier) | grep + manual |
+| pair_contract_updated | `ia/rules/plan-apply-pair-contract.md` | Unified `plan-applier` documented | manual |
+| validate_all_green | repo root | `npm run validate:all` exit 0 | node |
+
 ### §Acceptance
+
+- [ ] `ia/skills/plan-applier/SKILL.md` documents tuple shape, dispatch table, Opus escalation on anchor miss, 1-retry rule for transient failures.
+- [ ] `.claude/agents/plan-applier.md` exists; `tools:` frontmatter matches F5 uniformity from T10.4.
+- [ ] Three skills + three agents in `_retired/` with tombstone headers; no duplicate live basenames.
+- [ ] `/plan-review`, `/code-review`, `/closeout` dispatchers reference `plan-applier`.
+- [ ] `ia/rules/plan-apply-pair-contract.md` names unified applier as pair-tail for applicable seams.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- Glossary **Plan-Apply pair** row still lists legacy pair-tail skill names — forward implementation uses `plan-applier`; glossary row update belongs to closeout migration (do not edit glossary in this task).
 
 ## Open Questions (resolve before / during implementation)
 
@@ -148,4 +182,4 @@ _pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / 
 
 ## §Code Fix Plan
 
-_pending — populated by `/code-review` only when fixes needed. Sonnet `code-fix-apply` reads tuples + applies + re-enters `/verify-loop`._
+_pending — populated by `/code-review` only when fixes needed. Sonnet `plan-applier` reads tuples + applies + re-enters `/verify-loop`._

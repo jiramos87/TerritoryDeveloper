@@ -23,7 +23,7 @@ Before running a lifecycle skill, enforce this check:
 
 ## Skills that are usually fine on Sonnet/Composer2
 
-- Apply/tail skills (`*-apply`, `code-fix-apply`, `plan-fix-apply`)
+- Apply/tail skills (`*-apply`, `plan-applier`)
 - Build/verify runners (`project-implementation-validation`, `verify-loop`, `bridge-environment-preflight`)
 - Mechanical trackers (`release-rollout-track`)
 

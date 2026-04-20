@@ -240,7 +240,7 @@ Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
 **Verdict PASS / minor:** continue to Step 3.4.
 
 **Verdict critical (first time):**
-1. Run `code-fix-apply` Sonnet on `§Code Fix Plan` tuples.
+1. Run `plan-applier` Mode code-fix Sonnet on `§Code Fix Plan` tuples.
 2. Re-enter Step 3.1 verify-loop (one re-entry — cap = 1).
 3. Run Step 3.2 code-review again.
 4. Second critical verdict → exit `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest. Halt. Human review required.
@@ -350,8 +350,8 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - Do NOT rollback committed Pass 1 Tasks on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — commits already landed; emit digest + human directive only.
 - `STAGE_CODE_REVIEW_CRITICAL` re-entry cap = 1 — second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`; do NOT re-enter a third time.
 - Pass 2 cumulative delta anchor: first Task-commit parent → Stage-end HEAD, EXCLUDING closeout commits.
-- Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE after Pass 2 completes — do NOT call per Task; do NOT inhibit.
-- Chain-level stage digest is a NEW scope distinct from stage-closeout-apply's per-task digest aggregation.
+- Stage-scoped closeout (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) fires ONCE after Pass 2 completes — do NOT call per Task; do NOT inhibit.
+- Chain-level stage digest is a NEW scope distinct from plan-applier Mode stage-closeout per-task digest aggregation.
 - `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
 - `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Step 1.5 is a readiness gate only; non-populated `§Plan Author` → STOPPED + handoff. Do NOT dispatch `plan-author` or `plan-reviewer` from this skill.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.

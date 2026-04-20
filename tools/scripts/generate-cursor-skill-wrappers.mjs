@@ -12,7 +12,7 @@ const callerAgentMap = new Map([
   ["stage-file", "stage-file"],
   ["project-new", "project-new"],
   ["stage-closeout-plan", "closeout"],
-  ["stage-closeout-apply", "closeout"],
+  ["plan-applier", "closeout"],
   ["ship-stage", "ship-stage"],
   ["release-rollout", "release-rollout"],
   ["release-rollout-track", "release-rollout-track"],

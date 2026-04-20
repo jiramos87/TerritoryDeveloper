@@ -1,5 +1,5 @@
 ---
-description: "Stage-scoped chain after `/stage-file` (F6 re-fold 2026-04-20 — plan-author + plan-review moved into `/stage-file` tail). Phase 1.5 §Plan Author readiness gate (idempotent — STOPPED + `/author` handoff when missing); Pass 1 implement + compile + commit per Task; Pass 2 verify-loop Path A+B + code-review + audit + closeout. Triggers: /ship-stage, ship stage tasks."
+description: "Opus orchestrator. Drives every non-Done filed task row of one Stage X.Y through a two-pass chain. Pass 1 (per-Task): implement + unity:compile-check fast-fail gate + atomic Task-level commit. Pass 2 (Stage-end bulk): verify-loop full Path A+B on cumulative delta + code-review Stage diff (shared amortized context) + audit + closeout. --per-task-verify flag preserves pre-TECH-519 N× per-Task verify-loop + code-review shape. MCP context loaded once via domain-context-load subskill; cached payload passed to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED. Triggers: \"/ship-stage\", \"ship stage\", \"chain stage tasks\", \"ship all stage tasks\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/ship-stage/SKILL.md

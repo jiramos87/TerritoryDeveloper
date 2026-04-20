@@ -28,7 +28,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Role:** Sonnet pair-head (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output). Runs **once per Stage** before any Task kickoff begins. Reads the Stage header + all filed Task specs + invariants; checks alignment against master-plan intent; outputs either a **PASS sentinel** or a structured **§Plan Fix tuple list** under the target Stage block.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #1, §Escalation rule.
-Sibling pair-tail: [`plan-fix-apply/SKILL.md`](../plan-fix-apply/SKILL.md).
+Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode **plan-fix**.
 
 ---
 
@@ -84,7 +84,7 @@ Zero drift found. Write sentinel under Stage block in master plan:
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 ```
 
-Exit. Do NOT spawn `plan-fix-apply`.
+Exit. Do NOT spawn `plan-applier`.
 
 ### Fix branch
 
@@ -93,7 +93,7 @@ One or more candidates found. Resolve each to a single anchor before writing (in
 ```markdown
 ### §Plan Fix
 
-> plan-review — {N} tuples. Spawn `plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}`.
+> plan-review — {N} tuples. Spawn `plan-applier` Mode plan-fix `{MASTER_PLAN_PATH} {STAGE_ID}`.
 
 ```yaml
 - operation: replace_section
@@ -124,18 +124,18 @@ Rules:
 
 **PASS branch:** emit summary `plan-review: PASS — Stage {STAGE_ID} aligned. Downstream continue.` Return control to caller.
 
-**Fix branch:** emit summary `plan-review: {N} tuples written to §Plan Fix. Spawn plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}.`
+**Fix branch:** emit summary `plan-review: {N} tuples written to §Plan Fix. Spawn plan-applier Mode plan-fix {MASTER_PLAN_PATH} {STAGE_ID}.`
 
 Caller (agent or `/plan-review` dispatcher) reads §Plan Fix result and routes:
 - PASS → proceed to stage Task kickoff.
-- Fix tuples present → invoke `plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}`.
+- Fix tuples present → invoke `plan-applier` Mode plan-fix `{MASTER_PLAN_PATH} {STAGE_ID}`.
 
 ---
 
 ## Cross-references
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #1, §Escalation rule, §Idempotency requirement.
-- [`ia/skills/plan-fix-apply/SKILL.md`](../plan-fix-apply/SKILL.md) — Sonnet pair-tail.
+- [`ia/skills/plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Sonnet pair-tail Mode plan-fix.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - Glossary term **plan review** (`ia/specs/glossary.md`).
 - [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) — Stage/Task lifecycle.

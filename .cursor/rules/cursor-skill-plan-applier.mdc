@@ -1,0 +1,8 @@
+---
+description: "Unified Sonnet literal-applier replacing retired plan-fix-apply, code-fix-apply, stage-closeout-apply. Dispatch by invocation mode: (1) §Plan Fix under master-plan Stage — validate:master-plan-status + validate:backlog-yaml; (2) §Code Fix Plan in Task spec — verify:local or validate:all + 1-retry bound; (3) §Stage Closeout Plan — materialize-backlog + validate:all + R5 rollup. Triggers: \"/plan-fix-apply\", \"/code-fix-apply\", \"/closeout\" tail halves, \"plan-applier\", \"apply §Plan tuples\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/plan-applier/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "closeout"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
