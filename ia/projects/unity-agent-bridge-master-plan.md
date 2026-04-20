@@ -1,6 +1,6 @@
 # Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)
 
-> **Status:** In Progress — Step 1 / Stage 1.2
+> **Status:** In Progress — Step 1 / Stage 1.3
 >
 > **Scope:** Tiered hardening + transport + optional depth on top of shipped **Postgres** **`agent_bridge_job`** + **`unity_bridge_command`** / **`unity_bridge_get`** + **`AgentBridgeCommandRunner`** (`docs/unity-ide-agent-bridge-analysis.md` **Design Expansion**). **Out of program:** headless CI, `-batchmode` / Test Framework as delivery goals, file-only queue replacing **`agent_bridge_job`**, rewrite of **`ia/specs/unity-development-context.md`** §10 JSON contracts. Optional deferrals → recommend companion `docs/unity-agent-bridge-post-mvp-extensions.md` (not authored by this pass).
 >
@@ -34,9 +34,9 @@
 
 ### Step 1 — Hardening: parameterized exports + MCP sugar + skills
 
-**Status:** In Progress — Stage 1.2
+**Status:** In Progress — Stage 1.3
 
-**Backlog state (Step 1):** 6 filed (TECH-559–TECH-564, Stage 1.1)
+**Backlog state (Step 1):** 12 filed (TECH-559–TECH-564 Stage 1.1; TECH-571–TECH-576 Stage 1.2)
 
 **Objectives:** Align **`AgentBridgeCommandRunner`** + **`[MenuItem]`** exports with bounded **`params`** (cell chunk bounds, sorting seeds, optional agent-context seeds) per **`unity-development-context`** §10. Add thin **`unity_export_*`** MCP wrappers where token cost warrants. Ship **`.claude/skills/debug-sorting-order`** recipe (bridge + **`spec_section`** **`geo`** §7). Confirm **Close Dev Loop** / registry supersession narrative in durable docs.
 
@@ -287,7 +287,7 @@
 
 #### Stage 1.2 — MCP sugar tools + catalog
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Register thin **`unity_export_*`** tools that wrap **`unity_bridge_command`** + poll **`unity_bridge_get`** for common flows. Keep surface small to avoid tool sprawl (analysis **Phase A** risk).
 
@@ -299,20 +299,169 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Register sugar tools + shared enqueue/poll helper.
-- [ ] Phase 2 — Documentation + cross-links to **`unity-development-context`** §10.
-- [ ] Phase 3 — Tests + **`validate:all`** gate.
+- [x] Phase 1 — Register sugar tools + shared enqueue/poll helper.
+- [x] Phase 2 — Documentation + cross-links to **`unity-development-context`** §10.
+- [x] Phase 3 — Tests + **`validate:all`** gate.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Sugar tool registration | 1 | _pending_ | _pending_ | Add **`unity_export_cell_chunk`** + **`unity_export_sorting_debug`** (names per glossary / existing patterns) in **`tools/mcp-ia-server/src/**`; thin wrappers — call **`unity_bridge_command`**, poll **`unity_bridge_get`** by **`command_id`**, return parsed body / path refs. |
-| T1.2.2 | Shared poll helper + limits | 1 | _pending_ | _pending_ | Extract shared TypeScript helper: timeout aligned with agent-led verification policy (40 s initial / escalation documented in tool description); surface **`BRIDGE_TIMEOUT`** env if already used elsewhere. |
-| T1.2.3 | mcp-ia-server.md catalog update | 2 | _pending_ | _pending_ | Document sugar tools, params, and when to prefer raw **`unity_bridge_command`**; link **`agent_bridge_job`** migration + dequeue scripts. |
-| T1.2.4 | §10 cross-link from spec | 2 | _pending_ | _pending_ | Add short pointer in **`ia/specs/unity-development-context.md`** §10 “See also” to MCP catalog section for sugar tools (minimal edit — no contract rewrite). |
-| T1.2.5 | MCP integration tests | 3 | _pending_ | _pending_ | Extend **`tools/mcp-ia-server`** tests: mock or stub bridge responses if needed; assert Zod + tool handler paths for sugar tools. |
-| T1.2.6 | validate:all + index | 3 | _pending_ | _pending_ | Run **`npm run validate:all`**; update **`generate:ia-indexes`** if tool catalog indexed; fix any **`registerTool`** descriptor drift. |
+| T1.2.1 | Sugar tool registration | 1 | **TECH-571** | Done (archived) | Add **`unity_export_cell_chunk`** + **`unity_export_sorting_debug`** (names per glossary / existing patterns) in **`tools/mcp-ia-server/src/**`; thin wrappers — call **`unity_bridge_command`**, poll **`unity_bridge_get`** by **`command_id`**, return parsed body / path refs. |
+| T1.2.2 | Shared poll helper + limits | 1 | **TECH-572** | Done (archived) | Extract shared TypeScript helper: timeout aligned with agent-led verification policy (40 s initial / escalation documented in tool description); surface **`BRIDGE_TIMEOUT`** env if already used elsewhere. |
+| T1.2.3 | mcp-ia-server.md catalog update | 2 | **TECH-573** | Done (archived) | Document sugar tools, params, and when to prefer raw **`unity_bridge_command`**; link **`agent_bridge_job`** migration + dequeue scripts. |
+| T1.2.4 | §10 cross-link from spec | 2 | **TECH-574** | Done (archived) | Add short pointer in **`ia/specs/unity-development-context.md`** §10 “See also” to MCP catalog section for sugar tools (minimal edit — no contract rewrite). |
+| T1.2.5 | MCP integration tests | 3 | **TECH-575** | Done (archived) | Extend **`tools/mcp-ia-server`** tests: mock or stub bridge responses if needed; assert Zod + tool handler paths for sugar tools. |
+| T1.2.6 | validate:all + index | 3 | **TECH-576** | Done (archived) | Run **`npm run validate:all`**; update **`generate:ia-indexes`** if tool catalog indexed; fix any **`registerTool`** descriptor drift. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: ""
+  title: "Sugar tool registration"
+  priority: "medium"
+  notes: |
+    Add unity_export_cell_chunk + unity_export_sorting_debug in tools/mcp-ia-server/src/.
+    Thin wrappers: unity_bridge_command enqueue, unity_bridge_get poll by command_id, return parsed body / path refs.
+    Align names with glossary + existing registerTool patterns.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Register two MCP sugar tools that wrap unity_bridge_command + unity_bridge_get for cell chunk and sorting debug exports.
+      Handlers return parsed JSON body and artifact path refs agents need without raw poll loops every call.
+    goals: |
+      1. unity_export_cell_chunk + unity_export_sorting_debug registered with Zod params matching bridge request shapes.
+      2. Each tool enqueues bridge job, polls get until completed/failed/timeout, returns structured result.
+      3. Tool descriptions document when to prefer raw unity_bridge_command.
+    systems_map: |
+      - tools/mcp-ia-server/src/ — registerTool, handlers, Zod
+      - docs/agent-led-verification-policy.md — bridge timeout guidance (40 s initial)
+      - docs/mcp-ia-server.md — catalog surface (updated in sibling task)
+      - ia/specs/unity-development-context.md §10 — bridge kinds + params
+    impl_plan_sketch: |
+      ### Phase 1 — Sugar tool handlers
+      - [ ] Add registerTool entries + Zod for both tools
+      - [ ] Implement enqueue + poll loop using shared helper (T1.2.2) or inline first pass per plan
+      - [ ] Unit-test handler shape with mocked bridge responses
+
+- reserved_id: ""
+  title: "Shared poll helper + limits"
+  priority: "medium"
+  notes: |
+    Extract shared TypeScript helper for unity_bridge_get polling: timeout aligned with agent-led verification policy (40 s initial, escalation in tool docs).
+    Surface BRIDGE_TIMEOUT env if repo already uses it for MCP bridge tools.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Centralize poll/backoff + timeout caps for sugar tools and any future bridge wrappers so behavior matches verification policy.
+    goals: |
+      1. Single helper used by sugar tools for poll loop + deadline.
+      2. Default timeout 40 s; document escalation path in tool description.
+      3. Optional BRIDGE_TIMEOUT env override wired if pattern exists elsewhere in mcp-ia-server.
+    systems_map: |
+      - tools/mcp-ia-server/src/ — shared bridge poll utility
+      - docs/agent-led-verification-policy.md — canonical timeout semantics
+    impl_plan_sketch: |
+      ### Phase 1 — Poll helper
+      - [ ] Add poll_until_terminal(command_id, options) helper
+      - [ ] Wire sugar tools to helper; add tests for timeout + completed paths
+
+- reserved_id: ""
+  title: "mcp-ia-server.md catalog update"
+  priority: "medium"
+  notes: |
+    Document sugar tools, params, prefer-raw-bridge guidance; link agent_bridge_job migration + dequeue scripts.
+    Keep catalog aligned with registerTool descriptors.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Extend docs/mcp-ia-server.md with sugar tool entries, parameter tables, and operational links (Postgres queue, scripts).
+    goals: |
+      1. Catalog lists unity_export_cell_chunk + unity_export_sorting_debug with params + return shape summary.
+      2. When to use raw unity_bridge_command vs sugar tools is explicit.
+      3. Cross-links to migration 0008 / dequeue helpers where documented.
+    systems_map: |
+      - docs/mcp-ia-server.md — MCP catalog
+      - tools/mcp-ia-server/ — tool names + kinds
+    impl_plan_sketch: |
+      ### Phase 1 — Doc patch
+      - [ ] Add subsection for sugar tools + kind table updates
+      - [ ] Link unity-development-context §10 from catalog
+
+- reserved_id: ""
+  title: "§10 cross-link from spec"
+  priority: "medium"
+  notes: |
+    Minimal pointer in ia/specs/unity-development-context.md §10 See also → MCP catalog sugar tools section.
+    No contract rewrite.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Add short See also cross-link from unity-development-context §10 to MCP catalog so agents discover sugar wrappers from spec.
+    goals: |
+      1. One See also line or bullet pointing at docs/mcp-ia-server.md sugar section.
+      2. No change to JSON contracts or bridge DTO prose beyond pointer.
+    systems_map: |
+      - ia/specs/unity-development-context.md §10
+      - docs/mcp-ia-server.md
+    impl_plan_sketch: |
+      ### Phase 1 — Spec pointer
+      - [ ] Insert See also cross-link under §10
+
+- reserved_id: ""
+  title: "MCP integration tests"
+  priority: "medium"
+  notes: |
+    Extend tools/mcp-ia-server tests: mock/stub bridge responses; assert Zod + tool handler paths for sugar tools.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Add or extend integration tests so sugar tools validate input via Zod and exercise handler paths with stubbed unity_bridge_get progression.
+    goals: |
+      1. Tests cover happy path completed + failed + timeout stub paths.
+      2. Zod rejects invalid params before enqueue.
+      3. No live Postgres/Unity required in CI for these tests.
+    systems_map: |
+      - tools/mcp-ia-server/tests/
+      - tools/mcp-ia-server/src/
+    impl_plan_sketch: |
+      ### Phase 1 — Test coverage
+      - [ ] Add fixtures/mocks for bridge command + get polling
+      - [ ] Assert tool output shape for each sugar tool
+
+- reserved_id: ""
+  title: "validate:all + index"
+  priority: "medium"
+  notes: |
+    Run npm run validate:all; update generate:ia-indexes if tool catalog indexed; fix registerTool descriptor drift vs indexes.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      Close Stage with repo-wide validators green and IA indexes consistent with new tools.
+    goals: |
+      1. npm run validate:all exits 0 after all prior tasks land.
+      2. generate:ia-indexes --check passes; update sources if MCP tools appear in index rules.
+      3. No stale registerTool / doc cross-ref failures.
+    systems_map: |
+      - package.json scripts — validate:all chain
+      - tools/mcp-ia-server — tool registration
+    impl_plan_sketch: |
+      ### Phase 1 — Validator gate
+      - [ ] Run validate:all; fix any failures
+      - [ ] Patch index generation inputs if required
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all 6 Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 

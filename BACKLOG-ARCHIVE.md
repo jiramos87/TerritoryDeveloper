@@ -2,6 +2,61 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+
+- [x] **TECH-576** — validate:all + index (unity-agent-bridge Stage 1.2 T1.2.6) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: (validators only — repo root npm scripts)
+  - Spec: (removed after closure)
+  - Notes: Stage-end **npm run validate:all** + **generate:ia-indexes --check** gate after TECH-571–575 landed; no code edits beyond prior tasks.
+  - Acceptance: **validate:all** exit 0; index check green.
+  - Depends on: TECH-571, TECH-572, TECH-573, TECH-574, TECH-575
+  - Related: none
+
+- [x] **TECH-575** — MCP integration tests for export sugar (unity-agent-bridge Stage 1.2 T1.2.5) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: `tools/mcp-ia-server/tests/tools/unity-bridge-export-sugar.test.ts`
+  - Spec: (removed after closure)
+  - Notes: Mock-pool tests for **resolveExportSugarTimeoutMs**, Zod schemas, **pollUnityBridgeJobUntilTerminal**, **enqueueUnityBridgeJob** export kinds.
+  - Acceptance: **test:ia** / package tests cover Zod reject, completed, failed, timeout paths.
+  - Depends on: TECH-571, TECH-572
+  - Related: TECH-576
+
+- [x] **TECH-574** — unity-development-context §10 See also cross-link (Stage 1.2 T1.2.4) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: `ia/specs/unity-development-context.md`
+  - Spec: (removed after closure)
+  - Notes: Short **See also** pointer to **docs/mcp-ia-server.md** Bridge export sugar section.
+  - Acceptance: §10 links sugar tools without contract table rewrite.
+  - Depends on: TECH-573
+  - Related: none
+
+- [x] **TECH-573** — mcp-ia-server.md catalog for sugar tools (Stage 1.2 T1.2.3) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: `docs/mcp-ia-server.md`
+  - Spec: (removed after closure)
+  - Notes: Tool table rows + **Bridge export sugar tools** subsection; **agent_bridge_job** **0008** cross-links.
+  - Acceptance: sugar vs raw **unity_bridge_command** guidance documented.
+  - Depends on: TECH-571
+  - Related: TECH-574
+
+- [x] **TECH-572** — Shared poll helper + BRIDGE_TIMEOUT_MS (Stage 1.2 T1.2.2) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`
+  - Spec: (removed after closure)
+  - Notes: **resolveExportSugarTimeoutMs**, **pollUnityBridgeJobUntilTerminal**, **enqueueUnityBridgeJob** shared by sugar tools and **unity_bridge_command**.
+  - Acceptance: 40 s default sugar deadline; env override; policy-aligned errors on timeout.
+  - Depends on: none
+  - Related: TECH-571
+
+- [x] **TECH-571** — Sugar tool registration (**unity_export_***) (Stage 1.2 T1.2.1) (2026-04-20)
+  - Type: tech (Unity IDE Agent Bridge program)
+  - Files: `tools/mcp-ia-server/src/tools/unity-bridge-export-sugar.ts`, `tools/mcp-ia-server/src/server-registrations.ts`
+  - Spec: (removed after closure)
+  - Notes: **registerUnityBridgeExportSugarTools** — **unity_export_cell_chunk** + **unity_export_sorting_debug** enqueue + poll until terminal.
+  - Acceptance: both tools registered; descriptions prefer raw bridge when needed.
+  - Depends on: none
+  - Related: TECH-572, TECH-573, TECH-575
+
 - [x] **TECH-518** — Stage sizing gate — bulk verify/review feasibility heuristic in stage-decompose + stage-file-planner (2026-04-20)
   - Type: tech (IA infrastructure / lifecycle tooling)
   - Files: `ia/rules/stage-sizing-gate.md`, `ia/skills/stage-decompose/SKILL.md`, `ia/skills/stage-file-plan/SKILL.md`, `ia/rules/agent-lifecycle.md`
