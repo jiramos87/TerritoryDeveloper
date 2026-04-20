@@ -140,6 +140,16 @@ Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for
 
 **MCP `pg` client:** `tools/mcp-ia-server` depends on **`pg`** and registers **`project_spec_journal_*`**, **`unity_bridge_command`**, **`unity_bridge_get`**, and **`city_metrics_query`** against the shared IA DB URL (returns **`db_unconfigured`** when **`resolveIaDatabaseUrl()`** is null — e.g. **CI** without **`DATABASE_URL`**).
 
+## Server split architecture (TECH-524 / B1)
+
+**Two-server shape.** `territory-ia` (IA-core) + `territory-ia-bridge` (Unity-bridge + compute) registered side-by-side in `.mcp.json`. IA-authoring sessions (design-explore, master-plan-new, stage-file-plan, author, audit, code-review) consume IA-core alone; verify-loop + spec-implementer + test-mode seams opt-in to bridge. Goal: shrink per-session tool manifest + token footprint for authoring-heavy loops.
+
+**`MCP_SPLIT_SERVERS` flag.** Env var on the `territory-ia` server entry. Default `"0"` — single-server mode, `index.ts` registers both buckets (backward compat). Set `"1"` — standalone mode, IA-core only; bridge tools hidden from that server's `tools/list`. Flip timeline: default stays `0` through Stage 1.2; Stage 1.3 post-sweep (T1.3.6) flips default to `1` after per-theme attribution confirms correctness per NB-6 resolution (see `ia/projects/session-token-latency-master-plan.md`).
+
+**Entry selection.** `tools/mcp-ia-server/bin/launch.mjs` reads `MCP_ENTRY`: `"index"` (default, backward-compat combined), `"index-ia"` (IA-core standalone), `"index-bridge"` (bridge + compute standalone). `.mcp.json` `territory-ia-bridge` entry sets `MCP_ENTRY=index-bridge`. Invalid values fall back to `"index"`.
+
+**Tool buckets.** IA-core (≥22 tools): specs, rules, glossary, backlog, router, invariants, journal, reserve, materialize, plan-apply, csharp-class-summary, master-plan helpers. Bridge (12 registrations — `unity_bridge_command`, `unity_bridge_lease`, `unity_callers_of`, `unity_subscribers_of`, `findobjectoftype_scan`, `city_metrics_query`, plus 6 compute: `isometric_world_to_grid`, `growth_ring_classify`, `grid_distance`, `pathfinding_cost_preview`, `geography_init_params_validate`, `desirability_top_cells`). Shared register helpers: `tools/mcp-ia-server/src/server-registrations.ts`.
+
 ## Future work (tracked in BACKLOG)
 
 **Normative** spec slice tools remain **file-backed**. **Full-text** search over the **reference spec** corpus and primary **DB-backed** **`spec_section`** are **open** [`BACKLOG.md`](../BACKLOG.md) work (**TECH-18** and related rows). The **IA project spec journal** (**glossary**) is a separate **optional** **Postgres** surface for **project spec** history only.
