@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-04-20T15:20:40.592Z",
+  "generator": "tools/scripts/agent-telemetry/aggregate-baseline.mjs",
+  "stage": "Stage 1.1 — baseline (TECH-512)",
+  "sessions_measured": 20,
+  "real_rows": 0,
+  "synthetic_rows": 20,
+  "seam_mix": [
+    "implement",
+    "implement",
+    "implement",
+    "implement",
+    "implement",
+    "implement",
+    "implement",
+    "implement",
+    "ship",
+    "ship",
+    "ship",
+    "ship",
+    "ship",
+    "ship",
+    "stage-file",
+    "stage-file",
+    "stage-file",
+    "stage-file",
+    "stage-file",
+    "stage-file"
+  ],
+  "metrics": {
+    "total_input_tokens": {
+      "p50": 251686,
+      "p95": 343106,
+      "p99": 347199
+    },
+    "cache_read_tokens": {
+      "p50": 132492,
+      "p95": 185054,
+      "p99": 188662
+    },
+    "cache_write_tokens": {
+      "p50": 22075,
+      "p95": 41386,
+      "p99": 41667
+    },
+    "mcp_cold_start_ms": {
+      "p50": 1401,
+      "p95": 2627,
+      "p99": 3641
+    },
+    "hook_fork_count": {
+      "p50": 11,
+      "p95": 19,
+      "p99": 19
+    },
+    "hook_fork_total_ms": {
+      "p50": 831,
+      "p95": 1355,
+      "p99": 2033
+    }
+  },
+  "notes": [
+    "Single aggregate floor — no per-theme attribution at Stage 1.1 (per locked decision).",
+    "Synthetic rows present when real signal-carrying captures < min; tagged session_id prefix synth-baseline-.",
+    "Per-theme attribution + pre/post diff live in baseline-summary-post-stage1.json (Stage 1.3 sweep)."
+  ]
+}
