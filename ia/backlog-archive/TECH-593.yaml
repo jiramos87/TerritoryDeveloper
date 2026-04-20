@@ -1,0 +1,26 @@
+id: "TECH-593"
+type: TECH
+title: "Author `ia/specs/economy-system.md`"
+priority: medium
+status: closed
+section: "Zone S economy — Stage 9 economy-system reference spec"
+spec: "ia/projects/TECH-593.md"
+files:
+  - ia/specs/economy-system.md
+notes: |
+  New **reference spec** under `ia/specs/economy-system.md` per Stage 9 Exit: Zone S, **BudgetAllocationService** / **IBudgetAllocator**, **TreasuryFloorClampService**, **BondLedgerService** / **IBondLedger**, **IMaintenanceContributor**, save v3→v4, glossary-style cross-refs to **persistence-system** + **managers-reference**. Caveman authoring per `agent-output-caveman.md`.
+acceptance:
+  - "`ia/specs/economy-system.md` exists with Overview + sections listed in Stage 9 Exit (Zone S, budget, bonds, maintenance, save)."
+  - "Cross-refs to **persistence-system**, **managers-reference**, **isometric-geography** where relevant; no orphan anchors."
+  - "Frontmatter + ToC match existing `ia/specs/` conventions."
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-594"
+  - "TECH-595"
+  - "TECH-596"
+  - "TECH-597"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Author `ia/specs/economy-system.md` — New reference spec per Stage 9 Exit; Zone S, budget, bonds, maintenance, save cross-refs.

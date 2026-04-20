@@ -1697,6 +1697,16 @@
   - Depends on: none
   - Related: TECH-524, TECH-525, TECH-526
 
+- [x] **TECH-593** — Author `ia/specs/economy-system.md` (Zone S economy Stage 9) (2026-04-20)
+
+- [x] **TECH-594** — Repoint glossary rows to `economy-system.md` (2026-04-20)
+
+- [x] **TECH-595** — Router-table row for economy domain (2026-04-20)
+
+- [x] **TECH-596** — Index regen + validate:all (2026-04-20)
+
+- [x] **TECH-597** — Umbrella rollout-tracker alignment check (2026-04-20)
+
 - [x] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2) (2026-04-15)
   - Type: feature wiring / audio integration
   - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`

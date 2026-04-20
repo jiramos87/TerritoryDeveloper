@@ -1,0 +1,26 @@
+id: "TECH-597"
+type: TECH
+title: "Umbrella rollout-tracker alignment check"
+priority: medium
+status: closed
+section: "Zone S economy — Stage 9 economy-system reference spec"
+spec: "ia/projects/TECH-597.md"
+files:
+  - ia/projects/full-game-mvp-rollout-tracker.md
+notes: |
+  Verify `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row: columns (a)–(e) complete; column (g) align gate closed. Document findings in spec closeout notes; do not tick column (f) here.
+acceptance:
+  - "Tracker row state documented; mismatches filed or noted for umbrella owner."
+  - "Explicit note that column (f) tick is out of scope for this task."
+depends_on:
+  - "TECH-596"
+depends_on_raw: "TECH-596 (index + validate gate)"
+related:
+  - "TECH-593"
+  - "TECH-594"
+  - "TECH-595"
+  - "TECH-596"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Umbrella rollout-tracker alignment check — Bucket 3 columns (a)–(e) + (g); no column (f).

@@ -1,0 +1,26 @@
+id: "TECH-594"
+type: TECH
+title: "Repoint glossary rows to new spec"
+priority: medium
+status: closed
+section: "Zone S economy — Stage 9 economy-system reference spec"
+spec: "ia/projects/TECH-594.md"
+files:
+  - ia/specs/glossary.md
+notes: |
+  Update 10 glossary rows (**Zone S**, **BudgetAllocationService**, **BondLedgerService**, **TreasuryFloorClampService**, **ZoneSService**, **IMaintenanceContributor**, **ZoneSubTypeRegistry**, **IBudgetAllocator**, **IBondLedger**, **envelope (budget)**): replace exploration-doc placeholders with `ia/specs/economy-system.md#{anchor}` links; preserve table integrity.
+acceptance:
+  - "Each listed row links to correct `economy-system.md` anchor; no stale exploration-only URLs."
+  - "Glossary table formatting unchanged; `npm run validate:all` glossary-index path green after edits."
+depends_on:
+  - "TECH-593"
+depends_on_raw: "TECH-593 (economy-system spec must exist)"
+related:
+  - "TECH-593"
+  - "TECH-595"
+  - "TECH-596"
+  - "TECH-597"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Repoint glossary rows to new spec — 10 rows to economy-system.md anchors.

@@ -1,0 +1,28 @@
+id: "TECH-596"
+type: TECH
+title: "Index regen + `validate:all`"
+priority: medium
+status: closed
+section: "Zone S economy — Stage 9 economy-system reference spec"
+spec: "ia/projects/TECH-596.md"
+files:
+  - tools/mcp-ia-server/data/
+notes: |
+  Run `npm run mcp-ia-index` (regen `spec-index.json`, glossary indexes). Run `npm run validate:all`; fix frontmatter/dead-link issues; confirm `tools/mcp-ia-server/tests` pass.
+acceptance:
+  - "`tools/mcp-ia-server/data/spec-index.json` + glossary indexes updated."
+  - "`validate:all` exit 0; MCP package tests pass."
+depends_on:
+  - "TECH-593"
+  - "TECH-594"
+  - "TECH-595"
+depends_on_raw: "TECH-593, TECH-594, TECH-595"
+related:
+  - "TECH-593"
+  - "TECH-594"
+  - "TECH-595"
+  - "TECH-597"
+created: "2026-04-20"
+completed: "2026-04-20"
+raw_markdown: |
+  Index regen + validate:all — mcp-ia-index then full repo validation.
