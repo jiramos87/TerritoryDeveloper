@@ -11,6 +11,7 @@ description: >
   human normal-game QA. Triggers: "agent test mode loop", "verify in test mode without opening Unity",
   "batchmode scenario check", "post-implement Play Mode suite". Design trace: projects/TECH-31a3-agent-test-mode-verify-skill.md
   (TECH-31 stage 31a3).
+model: inherit
 ---
 
 # Agent test-mode verification loop

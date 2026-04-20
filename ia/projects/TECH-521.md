@@ -118,15 +118,51 @@ Phase 1 — Telemetry + cap.
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/session-token-latency-master-plan.md Stage 5.1`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: awk truncation cuts mid-line or mid-YAML → corrupts pack consumers. Mitigation: block-boundary detection on blank-line delimiters only; never split non-blank runs; unit-test with synthetic oversized fixture.
+- Risk: Relevant surfaces block accidentally dropped on drop-order regression. Mitigation: hard-gate awk pass — explicit allowlist skip for `## Relevant surfaces` block until all Recent decisions + Open questions blocks exhausted; if still over cap after exhausting, emit overflow warning + stop (do NOT truncate Relevant surfaces).
+- Risk: telemetry tail `-10` on an empty or missing jsonl produces malformed pack section. Mitigation: `[ -f ... ]` guard + `wc -l` check → emit `(no telemetry)` placeholder instead of empty section.
+- Risk: `tool-usage.jsonl` soft-dep (Stage 4.1 T4.1.1) lands late; premature reference breaks. Mitigation: soft-guard with `[ -f ... ]` — section omitted silently when absent, no stderr.
+- Ambiguity: does truncation marker count toward 300-line cap? Resolution: marker emitted AFTER line count; not subject to cap re-check.
 
 ### §Examples
 
+| Input | Expected output | Notes |
+|-------|-----------------|-------|
+| Pack 250 lines pre-cap, 0 decisions dropped | No truncation marker; pack emitted as-is | Under cap |
+| Pack 380 lines with 5 Recent decisions blocks | Drop oldest 2 decisions → 305 lines → drop 1 more → 298 lines; `_[...truncated 3 oldest decisions]_` marker | Drop-order rule |
+| Pack 420 lines, 1 decision + 6 Open questions | Drop the 1 decision → still 405 → drop 4 oldest questions → 298; marker `_[...truncated 1 oldest decisions]_` then pass repeats for questions | Multi-pass |
+| Empty `.claude/telemetry/{session}.jsonl` | `Last tool outputs` section emitted with `(no telemetry)` placeholder | Empty-file guard |
+| Missing `.claude/tool-usage.jsonl` | `Recent memoized calls` section omitted entirely; no stderr | Soft-dep absent |
+| Oversized pack, Relevant surfaces = 250 lines | All decisions + questions dropped; Relevant surfaces intact; overflow warning on stderr; pack over cap but correct | Hard invariant |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| telemetry_tail_populated | fixture jsonl with 15 rows | Last tool outputs section has 10 rows, each `{name, exit, ts}` | manual shell |
+| telemetry_missing_file | no jsonl | `(no telemetry)` placeholder, no stderr | manual shell |
+| tool_usage_present | fixture tool-usage.jsonl | Recent memoized calls section top-10 entries | manual shell |
+| tool_usage_absent | no tool-usage.jsonl | section omitted silently | manual shell |
+| truncation_decisions_only | synthetic 380-line pack | 3 oldest decisions dropped; marker present; ≤300 lines | manual shell |
+| truncation_decisions_then_questions | 420-line pack, 1 decision + 6 questions | decisions dropped first, then questions; composite marker | manual shell |
+| relevant_surfaces_protected | 500-line pack, 250 in Relevant surfaces | decisions + questions emptied; Relevant surfaces intact; stderr overflow warning | manual shell |
+| validate_all | post-implementation | `npm run validate:all` green | node |
+
 ### §Acceptance
+
+- [ ] `Last tool outputs` section present; sourced from `.claude/telemetry/{session-id}.jsonl` tail -10.
+- [ ] `Recent memoized calls` section present iff `.claude/tool-usage.jsonl` exists; silent when absent.
+- [ ] awk block-boundary truncation fires at >300 lines; drops oldest Recent decisions first, then oldest Open questions.
+- [ ] `Relevant surfaces` block NEVER truncated — verified via protected-fixture test.
+- [ ] Truncation marker `_[...truncated N oldest decisions]_` emitted on drop.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+_none — extends TECH-520 script; same shell-only trust boundary; no new surfaces._
+
 
 ## Open Questions (resolve before / during implementation)
 

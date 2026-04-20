@@ -11,6 +11,7 @@ description: >
   examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration",
   "design review [doc]", "turn this exploration into a design", "compare and select approach",
   "take this exploration doc to a master plan".
+model: inherit
 ---
 
 # Design exploration — expand, review, persist

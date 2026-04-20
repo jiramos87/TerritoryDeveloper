@@ -10,6 +10,7 @@ description: >
   and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
   "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec",
   "add issue to backlog from description".
+model: inherit
 phases:
   - "Context load"
   - "Backlog dep check"

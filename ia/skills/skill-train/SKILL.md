@@ -12,6 +12,7 @@ description: >
   sequence / Guardrails / Seed prompt sections, writes proposal file, appends pointer entry.
   Triggers: "skill-train", "train skill", "retrospect skill", "skill friction analysis",
   "skill improvement proposal".
+model: inherit
 ---
 
 # skill-train — retrospective consumer

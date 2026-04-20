@@ -15,6 +15,7 @@ description: >
   R11 non-empty gate retired per B2 amendment 3).
   Triggers: "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit", "opus audit bulk",
   "run opus audit Stage".
+model: inherit
 phases:
   - "Sequential-dispatch guardrail + Stage preflight"
   - "Load Stage MCP bundle"

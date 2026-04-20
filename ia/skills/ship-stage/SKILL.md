@@ -13,9 +13,11 @@ description: >
   MCP context loaded once via domain-context-load subskill; cached payload passed
   to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED.
   Triggers: "/ship-stage", "ship stage", "chain stage tasks", "ship all stage tasks".
+model: inherit
 phases:
   - "Parse stage"
   - "Context load"
+  - "Plan-author readiness gate"
   - "Pass 1 per-Task"
   - "Pass 2 Stage-end"
   - "Chain digest"
@@ -95,6 +97,31 @@ Flip to `true` (skips `invariants_summary` — runtime-C# invariants irrelevant 
 Otherwise keep `false` (most runtime stages touch Unity C# and need invariants). Manual override via explicit prompt param still wins.
 
 Store returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to each per-task inner dispatch so kickoff / implementer / verify-loop don't re-query.
+
+---
+
+## Step 1.5 — §Plan Author readiness gate (prerequisite)
+
+`/ship-stage` does NOT run `/author` or `/plan-review` internally — both fold into `/stage-file` dispatcher (F6 re-fold 2026-04-20). Specs arriving at `/ship-stage` must already carry populated `## §Plan Author` from `/stage-file` chain tail.
+
+**Idempotent readiness check:** for each pending issue id from Step 0, read `ia/projects/{ISSUE_ID}*.md` and locate `## §Plan Author`. Treat a spec as **populated** when ALL of these hold:
+
+1. `## §Plan Author` heading exists.
+2. No line inside the block (until next `## ` heading at same/higher level) matches `_pending` case-insensitively.
+3. All four sub-headings (`### §Audit Notes`, `### §Examples`, `### §Test Blueprint`, `### §Acceptance`) exist with non-whitespace body content.
+
+**If ALL specs populated:** continue to Step 2 (Pass 1).
+
+**If ANY spec still `_pending_` or missing sub-headings:** stop chain. Emit:
+
+```
+SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}
+Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"
+```
+
+Then user runs `/author` (+ `/plan-review` when needed) and re-invokes `/ship-stage`. Gate is idempotent — safe to re-enter after partial-failure recovery.
+
+**Rationale:** `/stage-file` chain (stage-file-planner → stage-file-applier → plan-author → plan-reviewer → plan-fix-applier) ships specs pre-authored + pre-reviewed. `/ship-stage` only verifies readiness — does NOT re-dispatch those subagents. If chain crashed mid-flight between `/stage-file` subagents, re-run `/stage-file` (idempotent) or stand-alone `/author` + `/plan-review` to close the gap; then resume `/ship-stage`.
 
 ---
 
@@ -307,6 +334,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ## Exit lines
 
 - **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff.
+- **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"`.
 - **Pass 1 compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest (tasks-completed + uncommitted tail + unstarted list) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 1 implement failure (--per-task-verify only):** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
@@ -325,6 +353,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - Stage-scoped closeout (`stage-closeout-plan` → `stage-closeout-apply` pair) fires ONCE after Pass 2 completes — do NOT call per Task; do NOT inhibit.
 - Chain-level stage digest is a NEW scope distinct from stage-closeout-apply's per-task digest aggregation.
 - `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
+- `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Step 1.5 is a readiness gate only; non-populated `§Plan Author` → STOPPED + handoff. Do NOT dispatch `plan-author` or `plan-reviewer` from this skill.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.
 
 ---
@@ -348,6 +377,30 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ---
 
 ## Changelog
+
+### 2026-04-20 — Revert F6 fold in ship-stage; fold moved to /stage-file (F6 re-fold)
+
+**Status:** applied
+
+**Symptom:** F6 fold mis-placed `/author` + `/plan-review` inside `/ship-stage` chain. User intent: collapse Stage-entry friction ("3 commands across 2 CLI sessions") into ONE `/stage-file` command, not shift work into `/ship-stage`. Re-fold target: `/stage-file` dispatcher (stage-file-planner → stage-file-applier → plan-author → plan-reviewer → plan-fix-applier → STOP → handoff to `/ship-stage`).
+
+**Fix:** Reverted Step 1.5 back to readiness gate (prerequisite §Plan Author populated check). Deleted Step 1.7 (plan-review pair dispatch). Removed exit lines `STOPPED at plan-author — {reason}` and `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE`. Restored exit line `STOPPED — prerequisite: §Plan Author not populated`. Removed `plan-author` + `plan-review` from phases array. Added hard boundary explicitly forbidding plan-author / plan-reviewer dispatch from this skill. Ship-stage stays self-contained for implement/verify/code-review/audit/closeout; author + plan-review live in `/stage-file`.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-20 — Plan-author readiness gate (reinstated after F6 re-fold)
+
+**Status:** applied
+
+**Symptom:** After `/stage-file`, specs retain `_pending_` §Plan Author stubs; `/ship-stage` jumped to implement with no structured stop; docs disagreed on whether ship-stage runs `/author`.
+
+**Fix:** Step 1.5 readiness gate emits `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff when any Task spec still `_pending_`. Initial F6 fold (same day) replaced this gate with an active plan-author dispatch; F6 re-fold (same day, see entry above) reverted that change and moved plan-author + plan-review into `/stage-file` dispatcher instead. Gate is now the canonical shape — safe to re-enter on partial-failure recovery.
+
+---
 
 ### 2026-04-19 — Subagent bailed "no Task tool in nested context" — premature 50.7k token burn
 

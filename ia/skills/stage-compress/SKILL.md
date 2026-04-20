@@ -13,6 +13,7 @@ description: >
   Triggers: "stage-compress", "/stage-compress {ORCHESTRATOR_SPEC} {STAGE_ID}",
   "compress stage", "merge draft tasks", "consolidate stage tasks".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
+model: inherit
 phases:
   - "Load tool recipe"
   - "Scope audit"

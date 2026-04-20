@@ -14,6 +14,7 @@ description: >
   Triggers: "stage-file-plan", "/stage-file-plan {ORCHESTRATOR_SPEC} {STAGE_ID}",
   "file stage plan", "stage plan planner", "emit stage file tuples".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
+model: inherit
 phases:
   - "Load shared Stage MCP bundle"
   - "Read Stage block + cardinality gate"

@@ -7,6 +7,11 @@ slices_via: none
 
 # Cursor + Composer 2 — 4-Day Plan (Claude Code Gap)
 
+> Legacy note: this plan was time-boxed to a specific gap window.  
+> Canonical ongoing runbook now lives at `docs/cursor-skill-harness.md`.
+>
+> Keep this file for historical execution context and retrospective reference.
+
 > **Window:** ~2026-04-20 → 2026-04-24 (4 days without Claude Code; Cursor Pro $20 + Composer 2 + Auto mode + autocomplete available).
 >
 > **Branch state at gap start:** FREEZE lifted today via remaining Claude Code usage. `feature/lifecycle-collapse-cognitive-split` merges back to parent `feature/master-plans-1` before gap begins. Cursor work lands on `feature/master-plans-1` directly. Normal dev branch hygiene resumes.

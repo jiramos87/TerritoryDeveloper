@@ -121,15 +121,52 @@ Phase 2 — Integration test + docs.
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/session-token-latency-master-plan.md Stage 5.1`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: manual protocol reproducibility — results vary by tester attention, session length, hook timing. Mitigation: extensions doc §5 T3.3.4 protocol is exact step list; evidence capture (screenshot + tool-call log) enforced via Verification block gate.
+- Risk: gating task runs before TECH-520/521/522 are Done → premature test against incomplete pipeline. Mitigation: dispatch order enforced via `/ship-stage` Pass 1 sequential; TECH-523 filed last in Stage Tasks table.
+- Risk: "zero Read calls before first answer" gate too strict — agent may legitimately need to verify. Resolution: clarify in protocol — zero Read on source files listed in Active focus / Relevant surfaces; MCP / glossary lookups are fine (pack cites them as loaded context sources).
+- Risk: evidence (screenshot / tool-call log) lost across session compaction. Mitigation: capture artifacts into repo-tracked location (e.g. commit attachment or reference a fixed URL), link in Verification block at capture time, not retroactively.
+- Ambiguity: acceptance says "≥2 relevant surfaces" — what counts. Resolution: surface = file path OR `ia/projects/{id}.md` spec reference; MCP tool output does not count.
 
 ### §Examples
 
+| Input | Expected output | Notes |
+|-------|-----------------|-------|
+| Test run on TECH-520 as active task, 2 Read + 2 Edit | Pack shows TECH-520 in Active focus, 4 files in Relevant surfaces | Happy-path setup |
+| Post-compact pack inspection | Active focus + Relevant surfaces + ≥1 Recent decision + Last tool outputs (4 rows) all present | Pack content gate |
+| Resume in new terminal | SessionStart preamble stdout includes pack content after `---` | Re-injection wire |
+| Agent queried "what are you working on?" | Response cites TECH-520 + Stage 5.1 + ≥2 of the 4 surfaces; tool-call log shows zero Read before first text reply | UX gate |
+| Agent response uses MCP `spec_section` lookup pre-answer | Still counts as PASS — MCP lookups orthogonal to Read gate | Gate clarification |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| session_on_filed_task | start Claude on TECH-520 | runtime-state active_task_id = TECH-520 | manual |
+| tool_interaction_bootstrap | 2 Read + 2 Edit on 4 distinct files | telemetry jsonl has 4 rows; tool-usage (if wired) has entries | manual |
+| precompact_pack_write | `/compact` trigger | `.claude/context-pack.md` exists post-compact | manual |
+| pack_content_shape | inspect pack | Active focus populated; Relevant surfaces lists 4 files; ≥1 Recent decision; Last tool outputs = 4 rows | manual |
+| resume_preamble_inject | new terminal session | SessionStart stdout includes pack content | manual |
+| agent_orientation_no_reads | ask "what are you working on?" | response cites task + stage + ≥2 surfaces; zero Read before first reply | manual + tool-call log |
+| evidence_attached | Verification block | screenshot URL + tool-call log URL present | grep |
+| docs_re_injection_paragraph | `docs/agent-led-verification-policy.md` §Session continuity | paragraph ≥3 lines on re-injection contract | grep |
+| validate_all | post-implementation | `npm run validate:all` green | node |
+
 ### §Acceptance
+
+- [ ] Manual integration test executed per extensions doc §5 T3.3.4 protocol; evidence captured (screenshot + tool-call log).
+- [ ] Pack content verified: Active focus + Relevant surfaces (all 4 files) + ≥1 Recent decision + Last tool outputs (4 rows).
+- [ ] Resumed session SessionStart preamble includes pack content.
+- [ ] Agent cites active task + Stage 5.1 + ≥2 relevant surfaces with zero pre-answer Reads on source files (MCP/glossary lookups exempt).
+- [ ] Evidence URLs linked in Verification block at capture time.
+- [ ] `docs/agent-led-verification-policy.md` §Session continuity extended with re-injection contract ≥3 lines.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+_none — gating integration test; depends on TECH-520/521/522 merged Done first (enforced by `/ship-stage` Pass 1 sequential dispatch)._
+
 
 ## Open Questions (resolve before / during implementation)
 

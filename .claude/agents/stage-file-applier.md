@@ -32,7 +32,7 @@ Run `ia/skills/stage-file-apply/SKILL.md` end-to-end for target Stage. Read `§S
    e. Log `applied tuple {N}: filed {reserved_id}`.
 5. **Phase 4 — Post-loop: materialize + validate** — Run `bash tools/scripts/materialize-backlog.sh` once. Run `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml` once. Non-zero → escalate with full stderr + `failing_tuple_index`.
 6. **Phase 5 — Update task table + status flips** — In one atomic Edit pass on `ORCHESTRATOR_SPEC`: replace each `_pending_` Issue cell with `**{reserved_id}**`, each `_pending_` Status cell with `Draft`.
-7. **Phase 6 — Return** — Emit handoff. **N≥2 (multi-task stage)** → `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`. **N=1 (single-task stage)** → `Next: claude-personal "/ship {ISSUE_ID}"`. Hard rule: NEVER suggest `/ship` for N≥2 (chain dispatcher = `/ship-stage`); NEVER suggest `/author` standalone as next step (folded into ship chain). Anchor: `feedback_stage_file_next_step.md` user memory.
+7. **Phase 6 — Return to `/stage-file` dispatcher** — Emit handoff for `/stage-file` chain tail. Applier DOES NOT emit a user-facing next-step (dispatcher owns it). Hard rule (F6 re-fold 2026-04-20): `/stage-file` chain continues to plan-author (Step 3) → plan-review (Step 4) → STOP (Step 5) at command level. Applier returns only `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} ids={reserved_id_list} validators=ok` + hands control back to `/stage-file`. Final next-step handoff emitted post plan-review PASS: **N≥2** → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; **N=1** → `/ship {ISSUE_ID}`. Anchor: `feedback_stage_file_next_step.md` user memory.
 
 # Hard boundaries
 
@@ -57,4 +57,4 @@ MCP allowlist trimmed to 3 essentials (`backlog_issue` for Depends-on display on
 
 # Output
 
-Single caveman block. **N≥2 (multi-task stage)**: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} ids={reserved_id_list} validators=ok next=claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`. **N=1 (single-task stage)**: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED=1 ids={reserved_id} validators=ok next=claude-personal "/ship {ISSUE_ID}"`. Hard rule: NEVER `/ship` for N≥2 (use `/ship-stage`); NEVER `/author` standalone (folded into ship chain). On escalation: JSON `{escalation: true, ...}` payload.
+Single caveman block returned to `/stage-file` dispatcher (not user). Shape: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} ids={reserved_id_list} validators=ok next=stage-file-chain-continue`. Hard rule (F6 re-fold 2026-04-20): applier DOES NOT emit user-facing `/ship-stage` or `/ship` handoff. `/stage-file` dispatcher owns post-chain handoff (emitted after plan-review PASS at Step 5): N≥2 → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; N=1 → `/ship {ISSUE_ID}`. On escalation: JSON `{escalation: true, ...}` payload.

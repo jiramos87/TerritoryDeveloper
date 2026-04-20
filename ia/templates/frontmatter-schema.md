@@ -43,6 +43,8 @@ Source / rationale: `docs/parent-plan-locator-fields-exploration.md`. Sibling te
 
 Cursor expects `description` + `alwaysApply` on `ia/rules/*.md`; `name` + `description` on `ia/skills/{name}/SKILL.md`. Those stay; 4 IA fields add alongside. YAML order irrelevant. Validator checks IA fields presence only — never strips/rewrites Cursor fields.
 
+Optional **`model: inherit`** on `ia/skills/{name}/SKILL.md`: Cursor subagent hint — delegate with the same model as the parent Agent ([Cursor subagents](https://cursor.com/docs/agent/subagents)). Does **not** override `.claude/agents/*.md` `model:` (Claude Code). Place after the `description:` block; before `phases:` when lifecycle skills declare phases.
+
 ## Quick decision table
 
 | File family | Typical `loaded_by` | Typical `slices_via` | Typical `audience` | Notes |

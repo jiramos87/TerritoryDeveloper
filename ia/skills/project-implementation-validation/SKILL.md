@@ -10,6 +10,7 @@ description: >
   Full local chain (Unity/Postgres when applicable): npm run verify:local (alias: verify:post-implementation).
   Triggers: "post-implementation validation", "run npm checks after backlog work", "validate fixtures", "IA tools parity",
   "MCP tests", "generate:ia-indexes --check", "validate:all", "verify:local".
+model: inherit
 ---
 
 # Project implementation validation (post-implementation checks)

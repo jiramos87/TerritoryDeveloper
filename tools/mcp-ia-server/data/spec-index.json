@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-19T05:23:37.131Z",
+  "last_generated": "2026-04-20T18:41:44.092Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -383,37 +383,37 @@
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 198
+          "line_start": 201
         },
         {
           "section_id": "audio",
           "title": "Audio",
           "depth": 2,
-          "line_start": 209
+          "line_start": 212
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 226
+          "line_start": 229
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 240
+          "line_start": 243
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 279
+          "line_start": 282
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 306
+          "line_start": 309
         }
       ]
     },

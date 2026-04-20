@@ -12,6 +12,7 @@ description: >
   into Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously
   appeared inline. Triggers: "regen progress", "regenerate progress dashboard",
   "npm run progress wrapper", "progress-regen subskill".
+model: inherit
 ---
 
 # Progress regen — Bash wrapper subskill

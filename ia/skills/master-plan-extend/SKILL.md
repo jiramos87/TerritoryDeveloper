@@ -12,6 +12,7 @@ description: >
   → tasks) at author time — no skeletons. Applies `stage-decompose` Phase 2 rules per new step. Triggers:
   "/master-plan-extend {plan} {source}", "extend master plan from exploration", "add new steps to
   orchestrator", "append from extensions doc", "pull deferred step into master plan".
+model: inherit
 ---
 
 # Master plan — extend orchestrator with new steps from exploration / extensions doc

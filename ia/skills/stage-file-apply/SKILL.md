@@ -15,6 +15,7 @@ description: >
   Triggers: "stage-file-apply", "/stage-file-apply {ORCHESTRATOR_SPEC} {STAGE_ID}",
   "apply stage file plan", "pair-tail stage file", "materialize stage tuples".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
+model: inherit
 phases:
   - "Read §Stage File Plan"
   - "Resolve anchors"
@@ -184,9 +185,9 @@ After Phase 4 exits 0:
 
 ---
 
-## Phase 6 — Return
+## Phase 6 — Return to `/stage-file` dispatcher
 
-Emit final report:
+Emit applier report (to dispatcher, NOT user-facing next-step):
 
 ```
 stage-file-apply done. STAGE_ID={STAGE_ID} FILED={N} SKIPPED={K}
@@ -194,12 +195,12 @@ Filed: {ISSUE_ID_1} — {title_1}
        {ISSUE_ID_2} — {title_2}
        ...
 Validators: exit 0.
-Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"
+next=stage-file-chain-continue
 ```
 
-Single-task stage (N=1): suggest `claude-personal "/ship {ISSUE_ID}"` instead.
+Applier DOES NOT emit user-facing `/ship-stage` or `/ship` handoff. Control returns to `/stage-file` dispatcher (Step 3 plan-author → Step 4 plan-review → Step 5 STOP). Dispatcher emits final next-step handoff AFTER plan-review PASS.
 
-**Hard rule (T8 Row 2 / dry-run findings):** N≥2 → ALWAYS `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; NEVER `/ship {ISSUE_ID}` for multi-task stages (chain dispatcher = `/ship-stage`). N=1 → ALWAYS `/ship {ISSUE_ID}`. NEVER `/author` standalone — folded into ship chain. Anchor: `feedback_stage_file_next_step.md` user memory.
+**Hard rule (F6 re-fold 2026-04-20):** `/stage-file` chain tail = planner → applier → plan-author → plan-review (→ plan-fix-apply on critical, cap=1) → STOP. Applier hands control back to dispatcher; final next-step emitted post plan-review PASS. **N≥2** → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}` (runs implement + verify + code-review + audit + closeout — plan-author + plan-review already done upstream in `/stage-file`). **N=1** → `/ship {ISSUE_ID}` (single-task path — ship-stage is multi-task only). NEVER `/ship {ISSUE_ID}` for multi-task Stages. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery only. Anchor: `feedback_stage_file_next_step.md` user memory; `.claude/commands/stage-file.md` Step 3–Step 5.
 
 ---
 
@@ -249,6 +250,28 @@ Re-running fully-applied state = exit 0 + zero diff.
 
 ## Changelog
 
+### 2026-04-20 — F6 re-fold: plan-author + plan-review fold into `/stage-file` chain tail
+
+**Status:** applied
+
+**Symptom:** F6 fold initially placed plan-author + plan-review inside `/ship-stage` (Phase 1.5 + Phase 1.7). User directive: F6 friction ("3 commands across 2 CLI sessions") collapses Stage-entry into ONE `/stage-file` command, not shift work into `/ship-stage`. Required: `stage-file-planner → stage-file-applier → plan-author → plan-reviewer → plan-fix-applier → STOP → handoff /ship-stage`.
+
+**Fix:** `/stage-file` dispatcher (`.claude/commands/stage-file.md`) chain expanded: Step 1 planner → Step 2 applier → Step 3 plan-author (bulk Stage 1×N) → Step 4 plan-reviewer (→ plan-fix-applier on critical, re-entry cap=1) → Step 5 STOP. Applier Phase 6 returns control to dispatcher (no user-facing next-step). Dispatcher emits post-plan-review-PASS handoff: N≥2 → `/ship-stage`; N=1 → `/ship`. Supersedes prior 2026-04-20 entry (which routed applier directly to `/ship-stage` assuming ship-stage owned plan-author).
+
+**Rollout row:** f6-re-fold
+
+---
+
+### 2026-04-20 — [Superseded] Handoff: `/author` before `/ship-stage`
+
+**Status:** superseded by F6 re-fold entry above.
+
+**Symptom:** Handoff jumped to `/ship-stage` while §Plan Author still `_pending_`; docs claimed ship-stage ran plan-author.
+
+**Fix (superseded):** Applier Next line: `/author` then `/ship-stage` (N≥2); `/author --task` then `/ship` (N=1). Superseded because F6 re-fold moved `/author` + `/plan-review` INTO `/stage-file` chain — applier no longer emits user-facing handoff (dispatcher owns it).
+
+---
+
 ### 2026-04-19 — Auto-chain boundary locked at applier tail (F1 dry-run finding)
 
 **Status:** applied (uncommitted on `feature/master-plans-1` — Row 3 Option B)
@@ -260,7 +283,7 @@ M8 dry-run (Stage 8 lifecycle-refactor) — `/stage-file` auto-chained through `
 Pre-fix `/stage-file` dispatcher invoked `plan-author` after applier tail but did NOT continue to `plan-review`. Two competing auto-chain semantics (here vs `/ship-stage`) created divergent behaviour.
 
 **Fix:**
-`/stage-file` STOPS at applier tail. Does NOT auto-chain `/author`. Applier handoff suggests `/ship-stage {plan} Stage {ID}` (N≥2) or `/ship {ID}` (N=1) — chain dispatcher owns author → implement → verify-loop → code-review → audit → closeout. Documented in `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 + `.claude/commands/stage-file.md` Step 3.
+`/stage-file` STOPS at applier tail. Does NOT auto-chain `/author`. Applier handoff: `/author` then `/ship-stage` (N≥2) or `/author --task` then `/ship` (N=1). `/ship-stage` gates §Plan Author (Step 1.5); does not run plan-author. Documented in `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 + `.claude/commands/stage-file.md` Step 3.
 
 **Rollout row:** m8-retrospective
 
@@ -287,18 +310,18 @@ Phase 6 + Output line N-conditional handoff: N≥2 → `/ship-stage {ORCHESTRATO
 
 ---
 
-### 2026-04-19 — Stage-entry friction: 3 commands across 2 CLI sessions (F6 dry-run finding)
+### 2026-04-20 — [Superseded] Stage-entry friction fold: /ship-stage absorbs /author + /plan-review (F6 initial fix)
 
-**Status:** pending (deferred — Fix #6 scope discussion required)
+**Status:** superseded by F6 re-fold entry above (same day).
 
 **Symptom:**
-M8 dry-run user typed: (1) `/stage-file ... Stage 8` (auto-chain to /author); (2) fresh CLI `claude-personal "/plan-review ... Stage 8"`; (3) corrected `claude-personal "/ship-stage ... 8"`. Three commands across 2 CLI sessions for Stage entry.
+M8 dry-run user typed: (1) `/stage-file ... Stage 8` (stops at applier tail); (2) fresh CLI `/author ... Stage 8`; (3) fresh CLI `/plan-review ... Stage 8`; (4) `/ship-stage ... Stage 8`. Four commands across multiple CLI sessions for Stage entry.
 
 **Root cause:**
-No single Stage-entry surface. `/stage-file` ends at filing; `/plan-review` separate; `/ship-stage` runs per-Task chain after entry.
+No single Stage-entry surface. `/stage-file` ends at filing; `/author` + `/plan-review` separate; `/ship-stage` ran per-Task chain after entry.
 
-**Fix:**
-pending — candidate `/stage-start {plan} {stage}` orchestrator OR `/ship-stage` front-end extension covering `stage-file → author → plan-review` before per-Task chain. Keeps human gates at author PASS + plan-review PASS. Scope discussion first.
+**Initial fix (superseded):**
+`/ship-stage` chain extended with Phase 1.5 plan-author + Phase 1.7 plan-review. User rejected: F6 friction collapses Stage-entry into ONE `/stage-file` command, not shift work into `/ship-stage`. See F6 re-fold entry (same day) — fold moved to `/stage-file` chain tail (planner → applier → plan-author → plan-reviewer → plan-fix-applier → STOP → `/ship-stage` handoff). `/ship-stage` Phase 1.5 is readiness gate only.
 
 **Rollout row:** m8-retrospective
 

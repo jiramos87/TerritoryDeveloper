@@ -12,6 +12,7 @@ description: >
   structured return shape. Never reorders, merges, or interprets tuples.
   Triggers: "apply code fix", "/code-fix-apply {ISSUE_ID}", "code fix apply",
   "pair-tail code fix", "apply §Code Fix Plan".
+model: inherit
 phases:
   - "Read §Code Fix Plan"
   - "Apply tuples"

@@ -120,15 +120,55 @@ Phase 2 — Re-injection.
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/session-token-latency-master-plan.md Stage 5.1`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: placement of re-injection before `---` separator breaks Stage 3.1 D2 deterministic-prefix cacheability → Tier 1 cache invalidation → regresses Stage 3.1 savings. Mitigation: strict append-after-separator; diff-verify preamble up to `---` byte-stable across two runs with distinct pack content.
+- Risk: cross-platform `date` parsing drift — macOS BSD `date -jf` vs GNU `date -d` have incompatible signatures. Mitigation: BSD-first try with `2>/dev/null` swallow, GNU fallback on non-zero; both paths covered in smoke-test.
+- Risk: stale pack silently injected → misleads agent orientation. Mitigation: 24 h freshness gate enforced BEFORE cat; stale → stderr warning only, zero stdout (cannot pollute preamble).
+- Risk: pack `ts` header missing or malformed → age computation fails → indeterminate behavior. Mitigation: fallback to treating missing/unparseable `ts` as stale (>24 h equivalent); stderr warning `unparseable pack ts; treating as stale`.
+- Ambiguity: what if pack content exceeds context window after injection? Resolution: out of scope — cap enforced upstream (TECH-521); prewarm script only cats verbatim.
 
 ### §Examples
 
+| Input | Expected output | Notes |
+|-------|-----------------|-------|
+| Fresh pack (ts 2 h old) | Preamble = deterministic block + `---` + pack content; no stderr | Happy path |
+| Stale pack (ts 30 h old) | Preamble = deterministic block only; stderr warning `stale context pack (30 h old); regenerate via /pack-context` | Freshness gate |
+| Missing pack file | Preamble = deterministic block only; no stderr, no stdout re: pack | Silent-absence rule |
+| Pack with malformed `ts: not-a-date` | Treated as stale; stderr `unparseable pack ts; treating as stale` | Fallback |
+| Two runs with different pack content | Byte-diff of preamble up to `---` = empty | Cacheability invariant |
+| macOS BSD date environment | BSD `date -jf` parses `ts`; age correct | Platform compat |
+| GNU date environment (Linux CI) | BSD fails → GNU `date -d` succeeds; age correct | Platform fallback |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| inject_fresh_pack | pack ts = now-2h | stdout contains pack content after `---` | manual shell |
+| inject_stale_pack | pack ts = now-30h | stderr stale warning; stdout has no pack | manual shell |
+| inject_missing_pack | no pack file | no stdout for pack; no stderr | manual shell |
+| inject_malformed_ts | pack with `ts: broken` | treated-as-stale branch; stderr warn | manual shell |
+| deterministic_prefix_stable | two runs, distinct packs | diff preamble up to `---` = empty | manual shell |
+| bsd_date_parse | macOS env | age computed via `date -jf` | manual shell |
+| gnu_date_fallback | Linux env (BSD path disabled) | age computed via `date -d` | manual shell |
+| docs_session_continuity | post-edit | `docs/agent-led-verification-policy.md` §Session continuity contains re-injection paragraph ≥3 lines | grep |
+| validate_all | post-implementation | `npm run validate:all` green | node |
+
 ### §Acceptance
+
+- [ ] `session-start-prewarm.sh` appends conditional cat block AFTER deterministic preamble + `---` separator.
+- [ ] `-f .claude/context-pack.md` existence gate + 24 h freshness gate on `ts` header.
+- [ ] Stale pack → stderr warning, zero stdout contribution.
+- [ ] Missing pack → silent (no stderr, no stdout).
+- [ ] BSD `date -jf` + GNU `date -d` both supported via try/fallback.
+- [ ] Diff-verify deterministic prefix up to `---` byte-stable across 2 runs with distinct pack content.
+- [ ] `docs/agent-led-verification-policy.md` §Session continuity extended with re-injection contract paragraph ≥3 lines.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+_none — extends Stage 3.1 T3.1.1 prewarm script; volatile-suffix placement preserves D2 cacheable prefix invariant._
+
 
 ## Open Questions (resolve before / during implementation)
 

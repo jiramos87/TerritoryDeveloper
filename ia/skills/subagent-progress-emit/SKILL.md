@@ -11,6 +11,7 @@ description: >
   skills (glossary patchers, view regenerators) are exempt from both the
   frontmatter convention and the emission contract. Never introduces MCP
   round-trips or log-file polling.
+model: inherit
 phases: []
 ---
 

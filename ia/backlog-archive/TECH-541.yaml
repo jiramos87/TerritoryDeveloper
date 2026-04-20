@@ -1,0 +1,30 @@
+id: "TECH-541"
+type: "TECH"
+title: "Refactor `ProcessMonthlyMaintenance` to iterate registry"
+priority: "high"
+status: closed
+section: "Step 2 — Economy services / Stage 5 — IMaintenanceContributor registry + deterministic iteration"
+spec: "ia/projects/TECH-541.md"
+files:
+  - "Assets/Scripts/Managers/GameManagers/EconomyManager.cs"
+notes: |
+  Replace road/power line item with sorted registry iteration. Sub-type path uses `budgetAllocation.TryDraw`; general pool uses treasury clamp.
+  Depends on registry API from T5.1 (`TECH-533` chain prerequisite).
+acceptance: |
+  - [ ] Contributors snapshot sorted by `GetContributorId()` before spending.
+  - [ ] `GetSubTypeId() >= 0` uses `budgetAllocation.TryDraw` with decay hook on failure; else `treasuryFloorClamp.TrySpend`.
+  - [ ] Legacy `roadCount × rate + powerPlantCount × rate` removed after adapters land (T5.3–T5.4).
+depends_on:
+  - "TECH-533"
+depends_on_raw: "TECH-533"
+related:
+  - "TECH-540"
+  - "TECH-542"
+  - "TECH-543"
+  - "TECH-544"
+created: "2026-04-20"
+raw_markdown: |
+  Refactor `ProcessMonthlyMaintenance` to iterate registry — Replace road/power line item with sorted registry iteration.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T5.2"
+completed: "2026-04-20"

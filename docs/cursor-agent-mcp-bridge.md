@@ -1,5 +1,10 @@
 # Cursor agent — MCP bridge quick guide
 
+> Legacy note: this document is historical.  
+> Canonical operational runbook lives at `docs/cursor-skill-harness.md` (Bridge quick runbook + lifecycle adapters).
+>
+> Keep this file for traceability of the original gap-phase guide.
+
 **Audience:** Cursor Composer agent working in `territory-developer` repo during Claude Code gap.
 **Purpose:** Closed-loop Unity bridge testing via `territory-ia` MCP tools. Read-only / query / compile / bridge command surface only.
 **Not purpose:** Editing the MCP server (`tools/mcp-ia-server/**`). Off-limits during gap — collision risk with pending MCP audit Stages 6–16.
@@ -8,23 +13,11 @@
 
 ## 1. Connect to MCP server
 
-Config already committed at `.cursor/mcp.json` (mirrors Claude Code's `.mcp.json`):
+`.cursor/mcp.json` is kept in lockstep with repo-root `.mcp.json`: `node tools/mcp-ia-server/bin/launch.mjs` (compiled `dist/` by default; set `MCP_SOURCE_MODE=1` in env if you need `tsx` live reload). Two server entries — `territory-ia` (default `MCP_SPLIT_SERVERS=0`, full tool set) and `territory-ia-bridge` (`MCP_ENTRY=index-bridge`, bridge + compute bucket only). Copy the root file when in doubt.
 
-```json
-{
-  "mcpServers": {
-    "territory-ia": {
-      "command": "tools/mcp-ia-server/node_modules/.bin/tsx",
-      "args": ["tools/mcp-ia-server/src/index.ts"],
-      "env": { "REPO_ROOT": ".", "DEBUG_MCP_COMPUTE": "1" }
-    }
-  }
-}
-```
+Cursor auto-loads per-project MCP config on workspace open. Approve each server on first prompt (one-time). If `dist/` is absent (normal for fresh clones — it is gitignored), `launch.mjs` falls back to `tsx` automatically; run `cd tools/mcp-ia-server && npm ci && npm run build` when you want the faster compiled cold start.
 
-Cursor auto-loads per-project MCP config on workspace open. Approve the `territory-ia` server on first prompt (one-time). If `command` resolves fail, run `cd tools/mcp-ia-server && npm install` to restore the `tsx` binary at `node_modules/.bin/tsx`.
-
-Tools surface inside Cursor as `territory-ia:{tool_name}` (Cursor namespacing). Example: `territory-ia:unity_bridge_command`, `territory-ia:backlog_issue`. This guide references them as `mcp__territory-ia__{name}` (Claude Code namespacing) — same tool, different display prefix.
+Tools surface inside Cursor as `{server}:{tool_name}`. Examples: `territory-ia:backlog_issue`, `territory-ia-bridge:unity_bridge_command`. This guide references them as `mcp__territory-ia__{name}` (Claude Code namespacing) — same tool, different display prefix.
 
 Smoke-test after connect: ask Composer to call `territory-ia:list_rules` — returns the rules index. Non-empty list = MCP live.
 

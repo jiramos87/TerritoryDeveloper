@@ -1,0 +1,31 @@
+id: "TECH-538"
+type: "TECH"
+title: "Post-stage sweep run"
+priority: "high"
+status: closed
+section: "ia/backlog"
+spec: "ia/projects/TECH-538.md"
+files:
+  - "tools/scripts/agent-telemetry/baseline-summary-post-stage1.json"
+notes: |
+  After B1 + B3 + B7 commit boundaries land: run ≥10 representative sessions (pad
+  to ≥3 working days per NB-10). Produce tools/scripts/agent-telemetry/baseline-summary-post-stage1.json
+  (p50/p95/p99 per metric, same schema as baseline-summary.json). If natural session
+  diversity insufficient for per-theme attribution, synthesize A/B sessions (B1 on/off,
+  B3 on/off independently) per NB-9.
+acceptance: |
+  - baseline-summary-post-stage1.json committed with p50/p95/p99 per metric.
+  - Schema matches baseline-summary.json exactly (TECH-511 validator green).
+  - Per-theme attribution separation feasible (B1 vs B3 vs B7 distinguishable).
+  - npm run validate:telemetry-schema + validate:all green.
+depends_on:
+  - "TECH-534"
+  - "TECH-536"
+  - "TECH-537"
+depends_on_raw: "TECH-534, TECH-536, TECH-537"
+related:
+  - "TECH-537"
+  - "TECH-539"
+created: "2026-04-20"
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.3.5"

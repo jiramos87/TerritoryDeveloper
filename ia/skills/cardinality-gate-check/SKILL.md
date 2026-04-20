@@ -11,6 +11,7 @@ description: >
   (≥2 tasks/phase, ≤6 soft) so all master-plan authoring + stage-file skills agree on the same
   gate. Triggers: "cardinality gate", "check phase task counts", "cardinality-gate-check subskill",
   "phase cardinality validation".
+model: inherit
 ---
 
 # Cardinality gate check — Sonnet subskill

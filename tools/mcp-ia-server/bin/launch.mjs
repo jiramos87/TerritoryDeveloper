@@ -2,13 +2,15 @@
 /**
  * MCP server launcher (TECH-495 / B4).
  *
- * Default: exec compiled `dist/index.js` (~200 ms cold-start).
- * Dev fallback: `MCP_SOURCE_MODE=1` → exec `tsx src/index.ts` (live reload).
+ * Default: exec compiled `dist/{entry}.js` (~200 ms cold-start).
+ * If `dist/` missing (gitignored) → same as dev: `tsx src/{entry}.ts` + stderr hint to run `npm run build`.
+ * Dev override: `MCP_SOURCE_MODE=1` → always `tsx` (live reload).
  *
  * Keeps `.mcp.json` → a single `node tools/mcp-ia-server/bin/launch.mjs`
  * entry while preserving dev ergonomics for contributors editing source.
  */
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,15 +24,24 @@ const sourceMode = process.env.MCP_SOURCE_MODE === "1";
 const entryRaw = process.env.MCP_ENTRY ?? "index";
 const entry = ["index", "index-ia", "index-bridge"].includes(entryRaw) ? entryRaw : "index";
 
+const distJs = path.join(serverRoot, "dist", `${entry}.js`);
+// dist/ is gitignored; fresh clones / IDE MCP need a path without a prior `npm run build`.
+const useSource = sourceMode || !fs.existsSync(distJs);
+
 let command;
 let args;
 
-if (sourceMode) {
+if (useSource) {
+  if (!sourceMode && !fs.existsSync(distJs)) {
+    console.error(
+      `[mcp-launcher] ${distJs} missing — using tsx (run: cd tools/mcp-ia-server && npm run build for faster cold start)`,
+    );
+  }
   command = path.join(serverRoot, "node_modules", ".bin", "tsx");
   args = [path.join(serverRoot, "src", `${entry}.ts`)];
 } else {
   command = process.execPath;
-  args = [path.join(serverRoot, "dist", `${entry}.js`)];
+  args = [distJs];
 }
 
 const child = spawn(command, args, {

@@ -10,6 +10,7 @@ description: >
   Offloads row-state classification from Opus release-rollout Phase 1. No reasoning —
   deterministic predicate over column glyphs. Triggers: called internally by release-rollout
   Phase 1.
+model: inherit
 ---
 
 # Rollout row state (row-state classifier)

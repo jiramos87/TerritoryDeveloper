@@ -12,6 +12,7 @@ description: >
   `stage-file`. Applies `stage-decompose` Phase 2 rules to every step. Triggers: "/master-plan-new {path}",
   "turn expanded design into master plan", "create orchestrator from exploration", "author master plan
   from design expansion", "new multi-step plan from docs/{slug}.md".
+model: inherit
 ---
 
 # Master plan — author orchestrator doc from expanded exploration

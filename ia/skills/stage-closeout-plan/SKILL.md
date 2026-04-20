@@ -16,6 +16,7 @@ description: >
   `stage-closeout-apply` Sonnet pair-tail. Idempotent on re-run.
   Triggers: "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan",
   "bulk close stage", "stage end closeout".
+model: inherit
 phases:
   - "Load Stage + Task closeout context"
   - "Dedupe shared migration ops"

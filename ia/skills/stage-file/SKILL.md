@@ -15,6 +15,7 @@ description: >
   "bulk create stage issues", "create backlog rows for Stage X.Y",
   "bootstrap issues for pending stage tasks", "compress stage tasks", "merge draft tasks".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
+model: inherit
 phases:
   - "Mode detection"
   - "Route"

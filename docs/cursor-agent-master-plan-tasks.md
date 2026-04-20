@@ -1,5 +1,10 @@
 # Cursor agent — master-plan tasks quick guide
 
+> Legacy note: this document is historical.  
+> Canonical operational runbook lives at `docs/cursor-skill-harness.md` (Master-plan task execution rules + tiered rule harness).
+>
+> Keep this file for traceability of the original gap-phase guide.
+
 **Audience:** Cursor Composer agent working tasks in `territory-developer` during Claude Code gap.
 **Purpose:** Pick a task from a master plan, implement it, verify via MCP bridge, commit. No lifecycle slash commands (Cursor does not have `/stage-file`, `/ship`, `/closeout`, etc.).
 **Companion:** `docs/cursor-agent-mcp-bridge.md` (bridge + verify surface).

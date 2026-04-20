@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-04-20T18:30:00Z",
+  "generator": "tools/scripts/agent-telemetry/aggregate-baseline.mjs",
+  "stage": "Stage 1.3 — post-stage sweep (TECH-538 — STUB)",
+  "sessions_measured": 0,
+  "real_rows": 0,
+  "synthetic_rows": 0,
+  "seam_mix": [],
+  "metrics": {
+    "total_input_tokens": { "p50": 0, "p95": 0, "p99": 0 },
+    "cache_read_tokens": { "p50": 0, "p95": 0, "p99": 0 },
+    "cache_write_tokens": { "p50": 0, "p95": 0, "p99": 0 },
+    "mcp_cold_start_ms": { "p50": 0, "p95": 0, "p99": 0 },
+    "hook_fork_count": { "p50": 0, "p95": 0, "p99": 0 },
+    "hook_fork_total_ms": { "p50": 0, "p95": 0, "p99": 0 }
+  },
+  "notes": [
+    "STUB — placeholder artifact. Real post-stage sweep requires ≥10 representative human-driven lifecycle sessions (per NB-10) after B1/B3/B7 boundaries land.",
+    "Stubbed via /ship-stage Stage 1.3 at user direction (self-modification hazard dismissed; sweep data cannot be synthesized by the same agent running the sweep).",
+    "When real sweep runs: replace this file via `tools/scripts/agent-telemetry/aggregate-baseline.mjs` over real session JSONL + per-tool-call rows from TECH-536 session-hook.sh.",
+    "Schema matches baseline-summary.json (TECH-511 validator shape). All metric values intentionally 0 for stub parity with validator.",
+    "TECH-539 per-theme attribution diff: will compare this file vs baseline-summary.json once real data lands."
+  ]
+}

@@ -11,6 +11,7 @@ description: >
   escalates immediately on any anchor ambiguity; idempotent re-runs.
   Triggers: "apply plan fix", "/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}",
   "plan fix apply", "pair-tail plan fix".
+model: inherit
 phases:
   - "Read §Plan Fix"
   - "Resolve anchors"

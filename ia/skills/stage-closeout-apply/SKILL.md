@@ -23,6 +23,7 @@ description: >
   Triggers: "stage-closeout-apply", "/closeout {MASTER_PLAN_PATH} {STAGE_ID}",
   "apply stage closeout plan", "pair-tail stage closeout", "bulk close stage apply".
   Argument order (explicit): MASTER_PLAN_PATH first, STAGE_ID second.
+model: inherit
 phases:
   - "Read §Stage Closeout Plan"
   - "Apply shared migration ops"

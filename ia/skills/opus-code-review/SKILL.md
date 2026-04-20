@@ -13,6 +13,7 @@ description: >
   (c) critical → writes §Code Fix Plan tuples → triggers code-fix-apply.
   Triggers: "/code-review {ISSUE_ID}", "opus code review", "code review task",
   "post-verify code review".
+model: inherit
 phases:
   - "Load diff + context"
   - "Verdict branch"

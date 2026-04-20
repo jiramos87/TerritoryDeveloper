@@ -5,6 +5,7 @@ loaded_by: skill:ui-hud-row-theme
 slices_via: none
 name: ui-hud-row-theme
 description: Add or adjust a HUD/menu row using UiTheme and the UI design system. Use when touching MainMenu strip, shared colors, or font sizes for new uGUI rows.
+model: inherit
 ---
 
 # UI row + theme

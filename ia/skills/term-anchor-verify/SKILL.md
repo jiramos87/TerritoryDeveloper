@@ -12,6 +12,7 @@ description: >
   classifier so all callers agree on the same anchor contract. Triggers: "term anchor verify",
   "alignment gate check", "verify glossary anchor", "term-anchor-verify subskill",
   "column g anchor check".
+model: inherit
 ---
 
 # Term anchor verify — Alignment gate subskill

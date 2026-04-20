@@ -12,6 +12,7 @@ description: >
   column (g) align gate. Does NOT decide cell targets (umbrella skill owns). Does NOT dispatch
   subagents (= umbrella skill). Triggers: "track cell flip", "update tracker after stage-file",
   "release-rollout-track {row-slug} {col} {ticket}".
+model: inherit
 ---
 
 # Release rollout — track (cell updater)

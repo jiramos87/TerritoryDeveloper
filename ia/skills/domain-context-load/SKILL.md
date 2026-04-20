@@ -16,6 +16,7 @@ description: >
   recipe across lifecycle skills; single place to tune keyword strategy or add new MCP steps.
   Triggers: "domain context load", "run MCP context recipe", "glossary router invariants load",
   "domain-context-load subskill", "shared MCP recipe".
+model: inherit
 ---
 
 # Domain context load — shared MCP recipe subskill

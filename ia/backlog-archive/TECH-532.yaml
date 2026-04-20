@@ -1,0 +1,26 @@
+id: "TECH-532"
+type: "TECH"
+title: "Save/load round-trip wiring"
+priority: "medium"
+status: closed
+section: "Step 2 — Economy services: bond ledger + maintenance registry + Zone S placement / Stage 4 — `BondLedgerService` + save-schema bond registry"
+spec: "ia/projects/TECH-532.md"
+files: []
+notes: |
+  Bind bond ledger runtime state to save capture and restore paths.
+  Ensure all bond fields persist, including arrears and remaining months.
+  Keep migration-safe load order with post-migration restore call.
+acceptance: |
+  - [ ] Add `CaptureSaveData` and `RestoreFromSaveData` methods to `BondLedgerService`.
+  - [ ] Call capture during `GameSaveManager.SaveGame`.
+  - [ ] Call restore during `GameSaveManager.LoadGame` after migration.
+  - [ ] Verify field identity for principal, repayment, remaining term, date, and arrears.
+depends_on: []
+depends_on_raw: ""
+related: ["TECH-528", "TECH-529", "TECH-530", "TECH-531", "TECH-533"]
+created: "2026-04-20"
+raw_markdown: |
+  Save/load round-trip wiring — Bind bond ledger runtime state to save capture and restore paths.
+parent_plan: "ia/projects/zone-s-economy-master-plan.md"
+task_key: "T4.5"
+completed: "2026-04-20"

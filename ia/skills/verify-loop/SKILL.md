@@ -14,6 +14,7 @@ description: >
   is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
   "post-task verification", "integrated verification", "fix-verify iteration", "run the full
   verify chain", "agent-led verification end-to-end".
+model: inherit
 phases:
   - "Bridge preflight"
   - "Compile gate"

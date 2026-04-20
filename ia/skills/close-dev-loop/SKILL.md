@@ -10,6 +10,7 @@ description: >
   get_console_logs), diff anomaly counts, structured verdict. Requires Postgres agent_bridge_job (0008),
   DATABASE_URL, Unity Editor on REPO_ROOT, shipped IDE agent bridge kinds. Triggers: "close dev loop",
   "verify fix in play mode", "agent-driven QA", "closed-loop verification".
+model: inherit
 ---
 
 # Close Dev Loop — fix → verify → report (IDE agent bridge)

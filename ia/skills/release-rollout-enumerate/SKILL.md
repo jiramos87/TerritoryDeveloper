@@ -12,6 +12,7 @@ description: >
   Disagreements appendix. Does NOT decide scope (umbrella owns). Does NOT create child master-plans (=
   `/master-plan-new`). Triggers: "enumerate rollout", "seed tracker", "release-rollout-enumerate
   {umbrella}", "bootstrap tracker from master plan".
+model: inherit
 ---
 
 # Release rollout — enumerate (seed tracker)

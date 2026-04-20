@@ -1,11 +1,11 @@
 ---
-description: Stage-scoped chain shipper — chains spec-kickoff → spec-implementer → verify-loop → closeout across every non-Done filed task row of one Stage X.Y in a master plan. Args: {MASTER_PLAN_PATH} {STAGE_ID} (e.g. "ia/projects/citystats-overhaul-master-plan.md Stage 1.1").
+description: Stage-scoped chain shipper — Pass 1 implement/compile + Pass 2 verify-loop + code-review + audit + closeout. Gates on §Plan Author readiness (specs must arrive pre-authored + pre-reviewed from `/stage-file` chain). Args: {MASTER_PLAN_PATH} {STAGE_ID}.
 argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} (e.g. ia/projects/citystats-overhaul-master-plan.md Stage 1.1)"
 ---
 
 # /ship-stage — stage-scoped chain dispatcher
 
-Chain kickoff → implement → verify-loop → closeout across every non-Done filed task row of `$ARGUMENTS`.
+Chain **per-Task implement+compile → Pass 2 verify-loop → code-review → audit → closeout** across every non-Done filed task row of `$ARGUMENTS`. Prerequisite: `/stage-file` chain already populated `§Plan Author` + passed `/plan-review` (else readiness gate stops with handoff).
 
 Follow `caveman:caveman` for all your own output and all dispatched subagents. Standard exceptions: code, commits, security/auth, verbatim tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
@@ -40,16 +40,18 @@ Dispatch Agent with `subagent_type: "ship-stage"`:
 >
 > 1. Phase 0 — Parse stage task table (narrow regex; fail loud on schema mismatch).
 > 2. Phase 1 — Context load via `domain-context-load` subskill (once per chain).
-> 3. Phase 2 — Task loop: for each non-Done task: kickoff → implement → verify-loop (`--skip-path-b`) → closeout. Stop on first gate failure.
-> 4. Phase 3 — Batched Path B verify on cumulative stage delta.
-> 5. Phase 4 — Chain-level stage digest (JSON header + caveman summary + `chain:` block).
-> 6. Phase 5 — Next-stage resolver (4 cases: filed / pending / skeleton / umbrella-done).
+> 3. Phase 1.5 — §Plan Author readiness gate (`ia/skills/ship-stage/SKILL.md` Step 1.5): for each pending spec verify `## §Plan Author` populated. Non-populated → `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff; no Pass 1.
+> 4. Phase 2 — Pass 1 per-Task loop: implement (`spec-implementer` work inline) → `unity:compile-check` → atomic commit (unless `--per-task-verify`, which also runs per-Task verify-loop + code-review in Pass 1).
+> 5. Phase 3 — Pass 2 Stage-end (once after all Pass 1 tasks): full `verify-loop` (Path A+B) on cumulative delta → Stage-level code-review → audit → closeout.
+> 6. Phase 4 — Chain-level stage digest (JSON header + caveman summary + `chain:` block).
+> 7. Phase 5 — Next-stage resolver (4 cases: filed / pending / skeleton / umbrella-done).
 >
 > ## Exit
 >
 > End with one of:
 > - `SHIP_STAGE {STAGE_ID}: PASSED`
 > - `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — {gate}: {reason}`
+> - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for …` (+ `/author` Next line)
 > - `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL`
 > - `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch`
 

@@ -8,6 +8,7 @@ description: >
   Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
   after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project spec",
   "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
+model: inherit
 phases:
   - "Parse target"
   - "Pull backlog issue"

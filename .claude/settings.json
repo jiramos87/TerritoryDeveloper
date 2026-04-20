@@ -65,6 +65,15 @@
             "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/cs-edit-reminder.sh"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/agent-telemetry/session-hook.sh"
+          }
+        ]
       }
     ]
   }

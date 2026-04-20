@@ -1,16 +1,19 @@
 ---
-purpose: "Opus pair-head: reviews all Task specs of a Stage before first Task kickoff; emits §Plan Fix tuples or PASS sentinel under Stage block in master plan."
+purpose: "Sonnet pair-head: reviews all Task specs of a Stage before first Task kickoff; emits §Plan Fix tuples or PASS sentinel under Stage block in master plan."
 audience: agent
 loaded_by: skill:plan-review
 slices_via: none
 name: plan-review
 description: >
-  Opus pair-head skill. Runs once per Stage before first Task kickoff.
+  Sonnet pair-head skill (model downgrade 2026-04-20 — drift scan is
+  mechanical against plan-author output; reserve Opus budget for authoring +
+  code review). Runs once per Stage before first Task kickoff.
   Reads all filed Task specs under the Stage + master-plan Stage header +
   invariants subset + glossary snippets; emits structured §Plan Fix tuples
   per ia/rules/plan-apply-pair-contract.md or writes PASS sentinel.
   Triggers: "plan review", "/plan-review {MASTER_PLAN_PATH} {STAGE_ID}",
   "stage plan review", "pre-stage drift scan".
+model: inherit
 phases:
   - "Load Stage context"
   - "Drift scan"
@@ -18,11 +21,11 @@ phases:
   - "Hand-off"
 ---
 
-# Plan-review skill (Opus pair-head)
+# Plan-review skill (Sonnet pair-head)
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Opus pair-head. Runs **once per Stage** before any Task kickoff begins. Reads the Stage header + all filed Task specs + invariants; checks alignment against master-plan intent; outputs either a **PASS sentinel** or a structured **§Plan Fix tuple list** under the target Stage block.
+**Role:** Sonnet pair-head (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output). Runs **once per Stage** before any Task kickoff begins. Reads the Stage header + all filed Task specs + invariants; checks alignment against master-plan intent; outputs either a **PASS sentinel** or a structured **§Plan Fix tuple list** under the target Stage block.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #1, §Escalation rule.
 Sibling pair-tail: [`plan-fix-apply/SKILL.md`](../plan-fix-apply/SKILL.md).
@@ -85,7 +88,7 @@ Exit. Do NOT spawn `plan-fix-apply`.
 
 ### Fix branch
 
-One or more candidates found. Resolve each to a single anchor before writing (invariant: Opus MUST resolve `target_anchor` to a single match — see pair-contract §Escalation rule). Then write §Plan Fix under Stage block:
+One or more candidates found. Resolve each to a single anchor before writing (invariant: pair-head MUST resolve `target_anchor` to a single match — see pair-contract §Escalation rule). Then write §Plan Fix under Stage block:
 
 ```markdown
 ### §Plan Fix
@@ -140,6 +143,20 @@ Caller (agent or `/plan-review` dispatcher) reads §Plan Fix result and routes:
 ---
 
 ## Changelog
+
+### 2026-04-20 — Model downgrade Opus → Sonnet + F6 re-fold into /stage-file dispatcher
+
+**Status:** applied
+
+**Symptom:**
+Two orthogonal changes landed same day. (1) Drift scan is mechanical against plan-author output — rule-book lookups (retired-term scan, section-name match, cross-ref id resolve), not synthesis. Opus budget overkill (F5 dry-run finding — 30% of Stage-entry token total). (2) Stage-entry friction: 3 commands across 2 CLI sessions (`/stage-file` → `/author` → `/plan-review`) per F6 dry-run finding.
+
+**Fix:**
+(1) Frontmatter `model: opus` → `model: sonnet`. Role heading + body text flipped to Sonnet pair-head. Supersedes pending F5 Sonnet-downgrade candidate entry below. Pair-contract escalation rule now reads "pair-head MUST resolve target_anchor" (model-agnostic). (2) `plan-review` now dispatched from `/stage-file` chain tail (Step 4 in `.claude/commands/stage-file.md`) AFTER `stage-file-applier` + `plan-author` (bulk Stage 1×N) complete. Re-entry cap = 1 on critical — second critical → abort with `STAGE_PLAN_REVIEW_CRITICAL_TWICE`. Standalone `/plan-review` + subagent remain valid for ad-hoc drift scan / recovery.
+
+**Rollout row:** f6-re-fold
+
+---
 
 ### 2026-04-19 — Refactor-in-flight sampling bias logged (F4 dry-run finding)
 

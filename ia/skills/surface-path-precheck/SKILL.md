@@ -11,6 +11,7 @@ description: >
   master-plan-new, master-plan-extend, and stage-decompose so ghost line numbers cannot
   propagate downstream. Triggers: "surface path precheck", "glob architecture paths",
   "surface-path-precheck subskill", "check path existence from architecture block".
+model: inherit
 ---
 
 # Surface path pre-check — Sonnet subskill

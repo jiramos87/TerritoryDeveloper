@@ -127,15 +127,51 @@ Phase 1 — Digest script + hook wire.
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/session-token-latency-master-plan.md Stage 5.1`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: PreCompact hook latency exceeds 200 ms budget → stalls `/compact` UX. Mitigation: shell-only (no `claude -p`), single jq pass per key, bounded regex read (first 5 exit bullets + 20 relevant-surface lines), no loops over master-plan file.
+- Risk: malformed `.claude/runtime-state.json` (partial write mid-session, schema drift) crashes hook → blocks compact. Mitigation: `set -uo pipefail` (NOT `-e`) + every `jq` call guarded with `|| echo "unknown"` + emit `# Context pack — SCHEMA MISMATCH` marker + `exit 0`.
+- Risk: Stage-block regex drift between `context-pack.sh` and `/ship-stage` Phase 0 → inconsistent orientation. Mitigation: extract shared grep/sed snippet into comment block citing ship-stage Phase 0 source line; smoke-test both against same master-plan fixture.
+- Risk: `.claude/context-pack.md` accidentally committed → pollutes history + leaks session-local state. Mitigation: `.gitignore` entry added in same commit as script; `git check-ignore` smoke-test.
+- Ambiguity: which master plan is "active" when multiple orchestrators open. Resolution: read `active_task_id` from runtime-state → resolve `parent_plan` from `ia/projects/{id}.md` front-matter (already present in Stage 3.1 T3.1.2 schema).
 
 ### §Examples
 
+| Input | Expected output | Notes |
+|-------|-----------------|-------|
+| Well-formed `runtime-state.json` with all 5 keys populated | `.claude/context-pack.md` with Active focus / Relevant surfaces / Loaded context sources sections populated from state + Stage block | Happy path |
+| `runtime-state.json` missing `queued_test_scenario_id` key | Pack emitted; that field renders as `unknown` | Per-key jq fallback |
+| Malformed JSON (truncated mid-object) | `exit 0`; pack contains `# Context pack — SCHEMA MISMATCH` marker; no partial pack from prior run mixed in | Graceful degradation |
+| `active_task_id: null` (no active task) | Pack emitted; Active focus section says `no active task`; Relevant surfaces empty list | Idle-session case |
+| Master plan has no matching `#### Stage X.Y` header | Pack emitted; Stage block section says `stage not located: {stage_id}` | Regex miss — non-fatal |
+| Hook triggered with `.claude/` absent (fresh clone) | `exit 0`; no pack written; stderr silent | Pre-Stage-3.1 compat |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| context_pack_happy_path | fixture `runtime-state.json` + master plan copy | pack file exists; contains all 3 schema sections; `active_task_id` value present | manual shell |
+| context_pack_malformed_state | truncated JSON fixture | exit code 0; `SCHEMA MISMATCH` marker in pack; no jq error on stdout | manual shell |
+| context_pack_missing_keys | JSON with only 2 of 5 keys | exit 0; 3 missing keys render as `unknown` | manual shell |
+| context_pack_stage_regex | master-plan fixture with known Stage X.Y | Relevant surfaces section lists first 20 lines of Stage block verbatim | manual shell |
+| context_pack_gitignore | fresh write of pack | `git check-ignore .claude/context-pack.md` exits 0 | manual shell |
+| context_pack_settings_wire | `.claude/settings.json` post-edit | `jq '.hooks.PreCompact'` returns entry referencing `context-pack.sh` | manual shell |
+| validate_all | post-implementation | `npm run validate:all` green | node |
+
 ### §Acceptance
+
+- [ ] `context-pack.sh` executable + shebang `#!/usr/bin/env bash` + `set -uo pipefail` (NOT `-e`).
+- [ ] All 5 runtime-state keys extracted with `jq ... // "unknown"` fallback per key.
+- [ ] Stage block regex matches `/ship-stage` Phase 0 pattern (Stage header + exit criteria first 5 + relevant surfaces first 20).
+- [ ] `.claude/settings.json` PreCompact hook entry references `tools/scripts/claude-hooks/context-pack.sh`.
+- [ ] `.claude/context-pack.md` line present in `.gitignore`.
+- [ ] Malformed `runtime-state.json` → exit 0 + `SCHEMA MISMATCH` marker.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+_none — tooling-only scope; shell-only path; no Unity / C# surface touched._
+
 
 ## Open Questions (resolve before / during implementation)
 

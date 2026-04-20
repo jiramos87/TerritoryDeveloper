@@ -138,6 +138,14 @@ function processFile(filePath) {
         return;
       }
 
+      // TECH-536 — per-tool-call rows (kind: "tool-call") carry a distinct
+      // schema than the TECH-510 per-session aggregate; skip validation for
+      // the aggregate-schema gate. Per-tool-call row shape is owned by
+      // tools/scripts/agent-telemetry/session-hook.sh.
+      if (obj && typeof obj === "object" && obj.kind === "tool-call") {
+        return;
+      }
+
       rowCount++;
       const { missing, typeMismatch } = validateRow(obj);
       if (missing.length > 0) {

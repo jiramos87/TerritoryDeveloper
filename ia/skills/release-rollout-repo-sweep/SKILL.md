@@ -10,6 +10,7 @@ description: >
   classification from Opus release-rollout-enumerate Phase 1. No reasoning — pure
   predicate-per-column classification. Triggers: called internally by release-rollout-enumerate
   Phase 1 (one invocation per tracker row).
+model: inherit
 ---
 
 # Release rollout — repo sweep (per-row Glob/Grep classifier)

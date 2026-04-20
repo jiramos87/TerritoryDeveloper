@@ -615,4 +615,120 @@ The sorting order debugging scenario illustrates the ultimate vision: an agent t
 
 ---
 
+## Design Expansion
+
+### Chosen Approach
+
+**Tiered post-MVP program (analysis §10-B → §10-C → §10-D)** on top of **already-shipped Phase 1** (§8.1 / §10-A): **Postgres `agent_bridge_job` + `unity_bridge_command` / `unity_bridge_get` + `AgentBridgeCommandRunner`** — not a greenfield file-queue MVP. Matches §3.8 matrix: **file/DB bridge first** (done), **HTTP** when latency hurts, **streaming/screenshots** later; **`-batchmode` / headless CI** stay **out of program scope** (§4.1, §11).
+
+**Criteria fit (Phase 1 compare, held from §3.8):** Constraint fit — high (reuses `[MenuItem]` exports, §10 Reports contract). Effort — incremental by tier. Output control — JSON/Markdown/artifact paths per existing Editor export registry. Maintainability — one command surface; transport swaps (poll → HTTP) without duplicating export bodies. Dependencies — `DATABASE_URL`, migrations **0008**, Unity on `REPO_ROOT`.
+
+**Phase 0.5 interview synthesis (no blocking unknowns):** Doc already locks **developer-machine + Editor open**, **glossary-aligned** names, **no CI mandate**. Remaining work is **hardening sugar + skills (B)**, **HTTP + logs + screenshots (C)**, **optional depth (D)** — not a second choice between HTTP vs file for “Phase 1”.
+
+### Architecture
+
+```mermaid
+flowchart LR
+  subgraph IDE["IDE / MCP"]
+    MCP["territory-ia tools"]
+  end
+  subgraph Data["Persistence"]
+    PG[("Postgres agent_bridge_job + editor_export_*")]
+  end
+  subgraph Unity["Unity Editor"]
+    Runner["AgentBridgeCommandRunner"]
+    Menus["Existing Reports MenuItem exports"]
+  end
+  MCP -->|"enqueue job"| PG
+  Runner -->|"dequeue / complete"| PG
+  Runner --> Menus
+  Menus -->|"TryPersistReport + artifacts"| PG
+```
+
+**Entry:** MCP `unity_bridge_command` / sugar wrappers → `agent_bridge_job` row. **Exit:** `unity_bridge_get` by `command_id`, or response DTO paths + `document jsonb` per **Editor export registry**; bridge mirror paths under `tools/reports/` where §10 documents (e.g. agent-context-bridge-*.json, bridge-screenshots).
+
+### Subsystem Impact
+
+| Subsystem | Dependency | Invariant risk | Change type | Mitigation |
+|-----------|------------|----------------|-------------|------------|
+| `tools/mcp-ia-server` | Register / validate tools; Zod | — | Additive | Follow existing `registerTool` tests |
+| `AgentBridgeCommandRunner` + Editor menus | Dispatch only; no new grid reads | **#5** if new code used `gridArray` off-`GridManager` | Additive | Keep `GetCell`-only reads per §10 |
+| Postgres `agent_bridge_job` | Queue contract | — | Additive / migrate if new kinds | Migration file + kind enum docs |
+| `.claude/skills/*` (e.g. `debug-sorting-order`) | Cursor-only orchestration | — | New files | Not in `ia/skills/` per analysis §6 |
+| `docs/mcp-ia-server.md` | Tool catalog | — | Doc edit | Cross-link kinds + params |
+| `ia/skills/ide-bridge-evidence/SKILL.md` | Evidence contract | — | Update if bundle shapes change | Keep aligned with `debug_context_bundle` |
+
+**Runtime simulation / `GridManager`:** Bridge work stays **Editor**-scoped unless a command intentionally touches play data — then existing **#5** applies.
+
+### Implementation Points
+
+**Phase A — Hardening (analysis §10-B)**
+
+- [ ] Parameterized exports: cell chunk bounds, sorting seed, etc., aligned with existing menu behavior
+- [ ] Sugar MCP tools (`unity_export_*`) where token cost warrants
+- [ ] `.claude/skills/debug-sorting-order/SKILL.md` — end-to-end recipe (spec slice + bridge calls)
+- [ ] Confirm **Close Dev Loop** / staging narrative vs registry (doc already: supersession)
+- **Risk:** tool sprawl — keep sugar thin wrappers only
+
+**Phase B — HTTP + observability (analysis §10-C)**
+
+- [ ] Localhost HTTP bridge (same JSON command envelope as §4.3)
+- [ ] Log forwarding path (`Application.logMessageReceived` → bridge response or stream)
+- [ ] Screenshot / health-check automation behind documented `kind`s
+- **Risk:** main-thread marshaling — queue work on `EditorApplication.update` like current runner
+
+**Phase C — Optional depth (analysis §10-D)**
+
+- [ ] Richer streaming / comparison helpers (Editor session; no CI)
+- [ ] Deterministic replay + visual diff — defer or bucket as post-MVP extensions if scope explodes
+- **Risk:** scope creep — gate behind explicit Step in master plan
+
+**Deferred / out of scope**
+
+- `-batchmode` / Test Framework / headless CI as **program** goals (background only)
+- Replacing Postgres queue with **file-only** transport (charter: keep `agent_bridge_job`)
+- Redefining §10 Reports JSON contracts — **reuse** only
+
+### Examples
+
+**Input (command envelope, conceptual):**
+
+```json
+{
+  "schema_version": 1,
+  "command_id": "cmd-example",
+  "command": "export_cell_chunk",
+  "params": { "origin_x": 5, "origin_y": 7, "width": 8, "height": 8 },
+  "requested_at_utc": "2026-04-20T12:00:00Z"
+}
+```
+
+**Output (completed response stub):**
+
+```json
+{
+  "schema_version": 1,
+  "command_id": "cmd-example",
+  "status": "completed",
+  "result": { "export_kind": "terrain_cell_chunk", "db_persisted": true },
+  "completed_at_utc": "2026-04-20T12:00:01Z"
+}
+```
+
+**Edge case:** Play Mode export when grid not initialized → **failed** status + clear error string in response; agent calls `get_play_mode_status` first (per §8.3 risks).
+
+### Review Notes
+
+- **NON-BLOCKING:** Run a full `Plan` subagent pass on this expansion before `/master-plan-new` if Opus-level scrutiny wanted; this session used MCP slices + self-review only.
+- **SUGGESTION:** After `ia/projects/unity-agent-bridge-master-plan.md` exists, add `spec:` to `ia/backlog/TECH-552.yaml` and re-materialize backlog.
+
+### Expansion metadata
+
+- Date: 2026-04-20
+- Model: agent session (Composer-class host)
+- Approach selected: Tiered §10-B / §10-C / §10-D post-§10-A (Phase 1 shipped)
+- Blocking items resolved: 0 (none raised)
+
+---
+
 *Analysis prepared 2026-04-06. Uses domain vocabulary from `ia/specs/glossary.md` and architecture from `ARCHITECTURE.md`. MCP tool names follow `snake_case` per project convention.*

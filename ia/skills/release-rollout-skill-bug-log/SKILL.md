@@ -12,6 +12,7 @@ description: >
   Iteration Log table (rollup, cross-referenced). Does NOT fix the skill (= hand-edit by user or
   targeted patch via a fresh subagent). Triggers: "log skill bug", "release-rollout-skill-bug-log",
   "skill iteration log entry".
+model: inherit
 ---
 
 # Release rollout — skill bug log (dual-write)

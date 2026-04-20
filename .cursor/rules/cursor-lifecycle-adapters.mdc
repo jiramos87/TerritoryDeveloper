@@ -23,6 +23,7 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 - pair seam: consumes planner tuples only; do not re-plan.
 - recommended model: Sonnet/Composer2 acceptable.
 - caveat: never hand-edit `ia/state/id-counter.json`.
+- chain tail (F6 re-fold 2026-04-20): applier completion triggers `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-fix-applier` on critical, re-entry cap=1) → STOP with `/ship-stage` handoff. Applier itself stays args-only pair-tail.
 
 ## project-new
 
@@ -41,7 +42,7 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 ## plan-review
 
 - pair seam: review verdict + fix tuples only.
-- recommended model: Max/Opus preferred.
+- recommended model: Sonnet/Composer2 acceptable (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output; reserve Opus budget for authoring + code review).
 - caveat: classify findings by severity before any changes.
 
 ## plan-fix-apply
@@ -95,13 +96,21 @@ Do not rewrite `ia/skills/*/SKILL.md`; adapt execution strategy here.
 - recommended model: Max/Opus preferred.
 - caveat: output must be fully decomposed steps (no skeleton placeholders).
 
+## validate:all / verify-loop (repo-wide master plans)
+
+- `npm run validate:all` includes `validate:master-plan-status`, which validates **all** `ia/projects/*master-plan*.md` files, not only the orchestrator tied to the current `/ship-stage` or task.
+- On failure during `/verify-loop` or post-stage verification: run `npm run validate:master-plan-status` alone, read output for **which** plan and row failed, fix or ticket that plan separately. Do not assume the active stage caused the drift.
+
 ## ship-stage
 
+- prerequisites (typical multi-task Stage, F6 re-fold 2026-04-20): `/stage-file` → `/ship-stage`. `/stage-file` chain tail owns `plan-author` + `plan-review` (→ `plan-fix-apply` on critical) — `/ship-stage` only runs §Plan Author readiness gate + per-Task implement + Pass 2 verify/code-review/audit/closeout. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery.
 - caller_agent: `ship-stage` for mutation calls.
-- chain strategy: execute in fixed order `author -> implement -> verify-loop -> code-review -> audit -> closeout`.
+- chain strategy (align with `ia/skills/ship-stage/SKILL.md`): **Phase 1.5** — §Plan Author readiness gate (read-only). Any Task missing §Plan Author → `STOPPED — prerequisite: §Plan Author not populated` + standalone `/author` handoff (recovery path; `/stage-file` should have populated). **Pass 1** — for each non-Done task in table order: `spec-implementer` → `npm run unity:compile-check` → atomic per-task commit. **Pass 2** (after all Pass 1 tasks): `verify-loop` on cumulative delta → Stage-level `opus-code-reviewer` → `opus-audit` → `stage-closeout-planner` → `stage-closeout-applier`. (Task-local seams inside `spec-implementer` follow that skill; this bullet is the chain dispatcher shape only.)
+- `--per-task-verify`: legacy escape — promotes full `verify-loop` + `opus-code-reviewer` **per task** in Pass 1; Pass 2 skips batched verify + stage code-review (audit + closeout unchanged). Prefer when Stage has many tasks or very wide surface.
 - checkpoint rule: stop after each sub-skill and summarize status before continuing.
 - recommended model: Max/Opus for planner/review steps; Sonnet/Composer2 acceptable for apply steps.
-- caveat: for long stages, split by task and open fresh session between tasks.
+- caveat: for long stages, split by task and open fresh session between tasks, or use `--per-task-verify`.
+- caveat (Cursor): host may emit “suggested commit” text without an actual git commit — verify `git status` and commit before PR.
 
 ## release-rollout
 

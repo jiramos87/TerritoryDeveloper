@@ -12,6 +12,7 @@ description: >
   orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that).
   Triggers: "/stage-decompose {path} Step 2", "decompose step 2", "expand step skeleton",
   "materialize deferred step", "decompose before stage-file", "expand Step N in master plan".
+model: inherit
 phases:
   - "Load + validate"
   - "MCP context"

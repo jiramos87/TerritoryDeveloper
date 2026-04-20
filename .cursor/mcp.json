@@ -1,11 +1,21 @@
 {
   "mcpServers": {
     "territory-ia": {
-      "command": "tools/mcp-ia-server/node_modules/.bin/tsx",
-      "args": ["tools/mcp-ia-server/src/index.ts"],
+      "command": "node",
+      "args": ["tools/mcp-ia-server/bin/launch.mjs"],
       "env": {
         "REPO_ROOT": ".",
-        "DEBUG_MCP_COMPUTE": "1"
+        "DEBUG_MCP_COMPUTE": "1",
+        "MCP_SPLIT_SERVERS": "0"
+      }
+    },
+    "territory-ia-bridge": {
+      "command": "node",
+      "args": ["tools/mcp-ia-server/bin/launch.mjs"],
+      "env": {
+        "REPO_ROOT": ".",
+        "DEBUG_MCP_COMPUTE": "1",
+        "MCP_ENTRY": "index-bridge"
       }
     }
   }

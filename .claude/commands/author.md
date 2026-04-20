@@ -17,7 +17,7 @@ Forward via Agent tool with `subagent_type: "plan-author"`:
 >
 > Run `ia/skills/plan-author/SKILL.md` end-to-end for `$ARGUMENTS`. Default invocation: Stage-scoped bulk pass across ALL N Task specs of target Stage (1st arg = `MASTER_PLAN_PATH`; 2nd arg = `STAGE_ID`). Escape hatch: `--task {ISSUE_ID}` = single-spec re-author, bulk pass of N=1.
 >
-> Auto-invoked inside `/stage-file` post `stage-file-apply` (multi-task path) and inside `/project-new` at N=1 (single-task path). Manual invocation: re-author a previously filed spec (`--task` flag) or re-run a Stage after `plan-review` finds drift.
+> Auto-invoked inside `/stage-file` chain tail (F6 re-fold 2026-04-20 — bulk Stage 1×N after stage-file-applier, before plan-reviewer). Manual invocation: `--task {ISSUE_ID}` re-author (single-issue path after `/project-new`), re-run after `plan-review` finds drift, or standalone recovery.
 >
 > ## Phase loop
 >

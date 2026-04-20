@@ -1,9 +1,8 @@
 ---
 name: plan-reviewer
-description: Use to run bulk drift scan across all filed Task specs of a Stage before first Task kickoff. Triggers — "/plan-review {MASTER_PLAN_PATH} {STAGE_ID}", "stage plan review", "pre-stage drift scan", "plan review". Runs ONCE per Stage. Reads Stage header + all Task specs + invariants + glossary; writes PASS sentinel or §Plan Fix tuple list under Stage block per plan-apply-pair-contract. Pair-head only — hands off to plan-fix-applier Sonnet pair-tail on fix branch. Does NOT mutate Task specs directly, edit master-plan task table, run validators, or commit.
+description: Use to run bulk drift scan across all filed Task specs of a Stage before first Task kickoff. Triggers — "/plan-review {MASTER_PLAN_PATH} {STAGE_ID}", "stage plan review", "pre-stage drift scan", "plan review". Runs ONCE per Stage. Reads Stage header + all Task specs + invariants + glossary; writes PASS sentinel or §Plan Fix tuple list under Stage block per plan-apply-pair-contract. Pair-head only — hands off to plan-fix-applier Sonnet pair-tail on fix branch. Does NOT mutate Task specs directly, edit master-plan task table, run validators, or commit. Model: Sonnet (downgraded from Opus 2026-04-20 — drift scan is mechanical against plan-author output).
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
-model: opus
-reasoning_effort: high
+model: sonnet
 ---
 
 ## Stable prefix (Tier 1 cache)

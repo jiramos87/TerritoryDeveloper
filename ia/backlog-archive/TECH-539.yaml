@@ -1,0 +1,29 @@
+id: "TECH-539"
+type: "TECH"
+title: "Per-theme attribution + flag flip"
+priority: "high"
+status: closed
+section: "ia/backlog"
+spec: "ia/projects/TECH-539.md"
+files:
+  - ".mcp.json"
+  - "tools/scripts/agent-telemetry/sweep-report-post-stage1.md"
+notes: |
+  Diff baseline-summary-post-stage1.json vs baseline-summary.json; compute
+  per-theme attribution rows (B1 server-split, B3 allowlist narrowing, B7 harness
+  overhead) per exploration §Examples §B7-extended aggregate shape. Commit sweep
+  report. Flip MCP_SPLIT_SERVERS default from 0 to 1 in .mcp.json. Confirm
+  npm run validate:all green.
+acceptance: |
+  - Sweep report committed with per-theme rows for B1, B3, B7.
+  - MCP_SPLIT_SERVERS default flipped 0 → 1 in .mcp.json.
+  - B1 split attribution row shows expected IA-core session token reduction.
+  - npm run validate:all green.
+depends_on:
+  - "TECH-538"
+depends_on_raw: "TECH-538"
+related:
+  - "TECH-538"
+created: "2026-04-20"
+parent_plan: "ia/projects/session-token-latency-master-plan.md"
+task_key: "T1.3.6"

@@ -10,6 +10,7 @@ description: >
   DATABASE_URL, and Unity Editor on REPO_ROOT with AgentBridgeCommandRunner. Triggers: "bridge screenshot",
   "get unity logs from MCP", "capture_screenshot include_ui", "enter_play_mode", "exit_play_mode",
   "get_play_mode_status", "get_compilation_status", "unity_compile", "debug_context_bundle", "IDE agent bridge evidence".
+model: inherit
 ---
 
 # IDE agent bridge — Play Mode evidence (logs + screenshots)

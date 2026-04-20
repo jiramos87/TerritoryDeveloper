@@ -14,6 +14,7 @@ description: >
   issues (= `/closeout`). Does NOT execute Tier A→E rollout body directly — dispatches to per-row
   subagents in fresh context. Triggers: "/release-rollout {row-slug}", "rollout next row",
   "drive child plan to task-filed", "release rollout track".
+model: inherit
 ---
 
 # Release rollout — umbrella orchestration skill

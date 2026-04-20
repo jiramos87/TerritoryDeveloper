@@ -13,6 +13,7 @@ description: >
   Triggers: "project-new-apply", "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}",
   "apply project new", "pair-tail project new", "materialize single issue".
   Argument order (explicit): TITLE first, ISSUE_TYPE second, PRIORITY third, NOTES optional.
+model: inherit
 phases:
   - "Parse args + validate prefix"
   - "Reserve id"
@@ -137,10 +138,11 @@ Idempotency: overwrite if file exists.
    project-new-apply done. ISSUE_ID={ISSUE_ID}
    Filed: {ISSUE_ID} — {TITLE}
    Validators: exit 0.
-   Next: claude-personal "/ship {ISSUE_ID}"
+   Next: claude-personal "/author --task {ISSUE_ID}"
+   Then: claude-personal "/ship {ISSUE_ID}"
    ```
 
-   Hard rule: single-issue path always suggests `/ship {ISSUE_ID}` (chain dispatcher = author → implement → verify-loop → code-review → audit → closeout). NEVER suggest `/author --task` standalone — folded into ship chain. Anchor: `feedback_stage_file_next_step.md` user memory.
+   Hard rule: `/author --task` **before** `/ship` (populate §Plan Author); `/ship` does not run plan-author — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `feedback_stage_file_next_step.md` user memory.
 
 ---
 
@@ -163,7 +165,7 @@ Sonnet pair-tail NEVER guesses. Immediate escalation triggers:
 - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — plan-author (TECH-478) writes spec body.
 - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
 - Do NOT edit `BACKLOG.md` directly — materialize-backlog.sh regenerates it.
-- Do NOT chain to plan-author — command dispatcher does that in T7.8 / TECH-475.
+- Do NOT auto-invoke plan-author — applier stops at tail; handoff points user to `/author --task` then `/ship`.
 - Do NOT read `§Project-New Plan` tuples — this skill has no pair-head; reads args verbatim.
 - Do NOT update any orchestrator task table — single-issue path has no master-plan row.
 
@@ -183,6 +185,16 @@ Re-running fully-applied state = exit 0 + zero diff.
 
 ## Changelog
 
+### 2026-04-20 — Handoff: `/author --task` before `/ship`
+
+**Status:** applied
+
+**Symptom:** Docs claimed `/ship` folded plan-author; `ship-stage` SKILL does not run `/author`.
+
+**Fix:** Phase 5 handoff: `/author --task` then `/ship`. Same readiness idea as `ship-stage` Step 1.5 (single-issue path).
+
+---
+
 ### 2026-04-19 — N=1 hard rule for /ship suggestion (F2 dry-run finding sibling)
 
 **Status:** applied (uncommitted on `feature/master-plans-1` — Row 2)
@@ -191,10 +203,9 @@ Re-running fully-applied state = exit 0 + zero diff.
 M8 dry-run flagged sibling problem in `stage-file-apply`: post-filing handoff suggested wrong dispatcher. Single-issue path needed equivalent rule lock.
 
 **Root cause:**
-Pre-fix Phase 5 emitted `/author --task {ISSUE_ID}` standalone. Now folded into `/ship` chain dispatcher (author → implement → verify-loop → code-review → audit → closeout).
+Pre-fix Phase 5 emitted `/author --task {ISSUE_ID}` standalone. Later docs incorrectly claimed `/ship` absorbed author.
 
-**Fix:**
-Phase 5 hand-off: `Next: claude-personal "/ship {ISSUE_ID}"`. Hard rule: single-issue path always `/ship` chain; NEVER `/author --task` standalone. Subagent body `.claude/agents/project-new-applier.md` aligned same.
+**Fix (2026-04-20):** Hand-off: `/author --task` then `/ship`. `/ship` does not run plan-author.
 
 **Rollout row:** m8-retrospective
 

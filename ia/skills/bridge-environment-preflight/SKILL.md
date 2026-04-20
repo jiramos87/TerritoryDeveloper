@@ -9,6 +9,7 @@ description: >
   Run npm run db:bridge-preflight; interpret exit codes; bounded repair (one attempt per failure class).
   Triggers: "bridge preflight", "postgres ready for bridge", "dev environment check", "agent_bridge_job check",
   "before unity_bridge_command".
+model: inherit
 ---
 
 # Bridge environment preflight — Postgres + IDE agent bridge readiness

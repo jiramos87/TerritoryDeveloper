@@ -13,6 +13,7 @@ description: >
   Opus round. Canonical-term fold absorbs retired spec-enrich. Non-pair —
   no Sonnet tail. Triggers: "/author {MASTER_PLAN_PATH} {STAGE_ID}",
   "plan author", "stage bulk spec enrich", "author stage task specs".
+model: inherit
 phases:
   - "Sequential-dispatch guardrail"
   - "Load Stage context"
@@ -262,6 +263,20 @@ Does NOT flip Task Status — `plan-review` (multi-task) or `/implement` (single
 - Glossary: `ia/specs/glossary.md` — canonical-term fold source of truth.
 
 ## Changelog
+
+### 2026-04-20 — F6 re-fold into /stage-file dispatcher
+
+**Status:** applied
+
+**Symptom:**
+Stage-entry friction logged in lifecycle-refactor T8 dry-run (F6 finding): 3 commands across 2 CLI sessions (`/stage-file` → `/author` → `/plan-review`). User directive: collapse into ONE `/stage-file` invocation.
+
+**Fix:**
+`plan-author` now dispatched from `/stage-file` chain tail (Step 3 in `.claude/commands/stage-file.md`) AFTER `stage-file-applier` writes N stubs + BEFORE `plan-reviewer` drift scan. Idempotent: re-entry on populated `§Plan Author` = no-op skip. Standalone `/author` + `--task {ISSUE_ID}` re-author surface remain valid for single-issue path (post `/project-new`) and Stage recovery. Ordering constraint satisfied — `plan-author` requires stubs on disk (stage-file-applier Step 2 output), cannot fold higher into `stage-file-planner`. Chain terminates at plan-review PASS (STOP); handoff to `/ship-stage` (N≥2) or `/ship` (N=1). `/ship-stage` Phase 1.5 now a READINESS GATE only (no active plan-author dispatch) — STOPPED + `/author` handoff on partial-failure recovery.
+
+**Rollout row:** f6-re-fold
+
+---
 
 ### 2026-04-19 — Phase 4 canonical-term fold expanded (retired-surface tombstone scan + template-section allowlist + cross-ref task-id resolver)
 
