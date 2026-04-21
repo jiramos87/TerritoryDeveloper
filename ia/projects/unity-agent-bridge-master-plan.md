@@ -34,9 +34,9 @@
 
 ### Step 1 — Hardening: parameterized exports + MCP sugar + skills
 
-**Status:** Final
+**Status:** In Progress — Stage 1.1 (Pass 2 tail)
 
-**Backlog state (Step 1):** 18 filed (TECH-559–TECH-564 Stage 1.1; TECH-571–TECH-576 Stage 1.2; TECH-587–TECH-592 Stage 1.3)
+**Backlog state (Step 1):** 18 filed — Stage 1.1 TECH-559..564 still open in backlog until Stage-scoped `/closeout`; TECH-571–TECH-576 (Stage 1.2) + TECH-587–TECH-592 (Stage 1.3) archived
 
 **Objectives:** Align **`AgentBridgeCommandRunner`** + **`[MenuItem]`** exports with bounded **`params`** (cell chunk bounds, sorting seeds, optional agent-context seeds) per **`unity-development-context`** §10. Add thin **`unity_export_*`** MCP wrappers where token cost warrants. Ship **`.claude/skills/debug-sorting-order`** recipe (bridge + **`spec_section`** **`geo`** §7). Confirm **Close Dev Loop** / registry supersession narrative in durable docs.
 
@@ -67,7 +67,7 @@
 
 #### Stage 1.1 — Parameterized Editor bridge + menu dispatch
 
-**Status:** Final
+**Status:** In Progress — Pass 2 tail (TECH-559..564 open in backlog until `/closeout`)
 
 **Objectives:** Extend **`AgentBridgeCommandRunner`** + menu exports so MCP **`request.params`** drives bounded export parameters without duplicating export bodies. Harden **`failed`** status when Play Mode / grid preconditions fail (**invariant #5** on any new cell reads).
 
@@ -87,12 +87,12 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Done | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
-| T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Done | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
-| T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Done | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
-| T1.1.4 | Menu regression pass | 2 | **TECH-562** | Done | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
-| T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Done | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
-| T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Done | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
+| T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Pass 2 pending | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
+| T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Pass 2 pending | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
+| T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Pass 2 pending | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
+| T1.1.4 | Menu regression pass | 2 | **TECH-562** | Pass 2 pending | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
+| T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Pass 2 pending | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
+| T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Pass 2 pending | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
 
 ### §Stage File Plan
 
