@@ -33,3 +33,35 @@ Drop one-line directive near top of body, above task instructions:
 ## Human-polling surfaces — refined voice
 
 When the skill / subagent pauses to poll the human (approach select, ambiguity gate, disagreement prompt, scope confirmation, `AskUserQuestion` call), caveman terseness applies but question + option text must use product/domain wording — not IA/tooling jargon. Ids, paths, cell coords, skeleton-step numbers move to a trailing `Context:` line, never inside the question stem. Full rule + good/bad examples: [`ia/rules/agent-human-polling.md`](agent-human-polling.md) — fetch via `rule_content agent-human-polling` when authoring any user-gate step.
+
+## Soft-lint
+
+Opt-in caveman drift detector. Runs `tools/scripts/caveman-lint.sh` against in-scope authoring surfaces.
+
+### What it checks
+
+Three indicator categories:
+
+- **Sentence length** — lines with > 12 words trigger a hit.
+- **Articles** — standalone `the`, `a`, `an` in non-code prose.
+- **Hedging verbs** — `should`, `might`, `could`, `would` in prose.
+
+Fenced code blocks (` ``` ` delimiters) always skipped — no false positives from code examples.
+
+### Enabling
+
+```bash
+export SKILL_TRAIN_LINT=1
+```
+
+Set before starting a Claude Code session. Hook wired in `.claude/settings.json` fires on Write/Edit/MultiEdit tool calls while var is set.
+
+### Reading output
+
+Each hit: `{file}:{line}:{indicator}` — e.g. `ia/skills/foo/SKILL.md:42:article(the)`.
+
+Footer always present: `N indicators found in M files (warn-only).`
+
+### Rationale
+
+Warn-only — exits 0 on any finding count; never blocks tool execution. Surfaces drift signal for human review, not enforcement.
