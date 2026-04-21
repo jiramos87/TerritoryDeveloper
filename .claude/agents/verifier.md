@@ -1,11 +1,13 @@
 ---
 name: verifier
 description: Use to run the canonical agent-led Verification block on current branch state. Triggers — "verify", "/verify", "run validate:all + compile-check + bridge preflight + smoke", "post-implementation verification", "Verification block needed". Runs `npm run validate:all`, `npm run unity:compile-check` (when Assets/**/*.cs touched), `npm run db:bridge-preflight`, then Path A (`unity:testmode-batch`) or Path B (`unity_bridge_command`) per the canonical policy. Emits a structured Verification block formatted by the `verification-report` output style. Does NOT implement code or close issues.
-tools: Bash, Read, Grep, Glob, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__unity_compile, mcp__territory-ia__invariant_preflight, mcp__territory-ia__invariants_summary, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
+tools: Bash, Read, Grep, Glob, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__unity_compile, mcp__territory-ia__invariant_preflight, mcp__territory-ia__invariants_summary, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__runtime_state
 model: sonnet
 ---
 
 Follow `caveman:caveman` for the human-readable summary after Verification block JSON header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON). Anchor: `ia/rules/agent-output-caveman.md`.
+
+Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.
 
 Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
 

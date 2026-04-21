@@ -68,6 +68,9 @@ tools/mcp-ia-server/.cache/
 # Agent / Editor one-shot test-mode queue (scenario load)
 tools/fixtures/scenarios/.queued-test-scenario-id
 /.queued-test-scenario-id
+
+# Harness-agnostic runtime state (per clone; schema + example committed)
+ia/state/runtime-state.json
 # Ad-hoc agent-written GameSaveData fixtures (run-scoped directories)
 tools/fixtures/scenarios/agent-generated/
 

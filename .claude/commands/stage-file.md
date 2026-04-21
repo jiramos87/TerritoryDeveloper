@@ -1,6 +1,6 @@
 ---
 description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs + §Plan Author populated + plan-review PASS. Dispatches `stage-file-planner` (Opus pair-head) → `stage-file-applier` (Sonnet pair-tail) → `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP. Chain tail per F6 re-fold (2026-04-20). Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
-argument-hint: "{master-plan-path} Stage {X.Y}"
+argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
 # /stage-file — dispatch seam #2 chain (planner → applier → author → review → STOP)
@@ -9,11 +9,11 @@ Use `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-re
 
 ## Argument parsing
 
-Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `Stage 7.2` → `7.2`). Missing either → print usage + abort.
+Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `Stage 7.2` → `7.2`). Missing either → print usage + abort. If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset (each subagent uses its own frontmatter model).
 
 ## Step 1 — Dispatch `stage-file-planner` (Opus pair-head)
 
-Forward via Agent tool with `subagent_type: "stage-file-planner"`:
+Forward via Agent tool with `subagent_type: "stage-file-planner"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -35,7 +35,7 @@ Planner must return success + `§Stage File Plan` written before Step 2. Escalat
 
 ## Step 2 — Dispatch `stage-file-applier` (Sonnet pair-tail)
 
-Forward via Agent tool with `subagent_type: "stage-file-applier"`:
+Forward via Agent tool with `subagent_type: "stage-file-applier"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -59,7 +59,7 @@ Applier must return success + N spec stubs + task table flipped before Step 3. V
 
 ## Step 3 — Dispatch `plan-author` (bulk Stage 1×N)
 
-Forward via Agent tool with `subagent_type: "plan-author"`:
+Forward via Agent tool with `subagent_type: "plan-author"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -78,7 +78,7 @@ Plan-author must return success + N specs with populated `§Plan Author` before 
 
 ## Step 4 — Dispatch `plan-reviewer` (Sonnet pair-head; cap=1 on critical)
 
-Forward via Agent tool with `subagent_type: "plan-reviewer"`:
+Forward via Agent tool with `subagent_type: "plan-reviewer"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -98,7 +98,7 @@ Branching:
 - **PASS** → continue to Step 5 (STOP).
 - **critical** (tuples written) → dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail) to apply tuples verbatim; re-dispatch `plan-reviewer`. Re-entry cap = 1. Second critical → abort chain with `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE` + handoff `/plan-review {MASTER_PLAN_PATH} {STAGE_ID}` for human review.
 
-### Step 4a — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical)
+### Step 4a — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical) (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`)
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >

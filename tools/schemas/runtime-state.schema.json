@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://territory-developer.local/schemas/runtime-state.schema.json",
+  "title": "Territory runtime state (per clone / worktree)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "last_verify_exit_code",
+    "last_bridge_preflight_exit_code",
+    "queued_test_scenario_id",
+    "updated_at"
+  ],
+  "properties": {
+    "last_verify_exit_code": {
+      "type": "integer",
+      "description": "Last npm run verify:local exit code; -1 = unknown / never run"
+    },
+    "last_bridge_preflight_exit_code": {
+      "type": "integer",
+      "description": "Last db:bridge-preflight exit code; -1 = unknown / never run"
+    },
+    "queued_test_scenario_id": {
+      "type": ["string", "null"],
+      "description": "Queued test-mode scenario id for Path B / Editor; null if none"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp; set on every write"
+    }
+  }
+}

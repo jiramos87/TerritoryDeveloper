@@ -1,6 +1,6 @@
 ---
 description: Stage-scoped chain shipper — Pass 1 implement/compile + Pass 2 verify-loop + code-review + audit + closeout. Gates on §Plan Author readiness (specs must arrive pre-authored + pre-reviewed from `/stage-file` chain). Args: {MASTER_PLAN_PATH} {STAGE_ID}.
-argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--per-task-verify] [--no-resume]"
+argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--per-task-verify] [--no-resume] [--force-model {model}]"
 ---
 
 # /ship-stage — stage-scoped chain dispatcher
@@ -14,7 +14,8 @@ Follow `caveman:caveman` for all your own output and all dispatched subagents. S
 Parse `$ARGUMENTS` as `{MASTER_PLAN_PATH} {STAGE_ID}`:
 
 - `MASTER_PLAN_PATH` = first token (path to master plan, e.g. `ia/projects/citystats-overhaul-master-plan.md`).
-- `STAGE_ID` = remainder (e.g. `Stage 1.1`).
+- `STAGE_ID` = remainder (excluding any flags).
+- If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset (ship-stage subagent uses its frontmatter model).
 
 Verify `{MASTER_PLAN_PATH}` exists (Glob). Extract plan display name from filename. Print context banner:
 
@@ -28,7 +29,7 @@ SHIP-STAGE {STAGE_ID} — {plan display name}
 
 ## Stage 1 — Chain dispatch (`ship-stage`)
 
-Dispatch Agent with `subagent_type: "ship-stage"`:
+Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > ## Mission
 >

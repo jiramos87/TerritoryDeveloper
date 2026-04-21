@@ -1,11 +1,15 @@
 ---
 description: Execute a project spec's Implementation Plan phase by phase. Dispatches the `spec-implementer` subagent against `ia/projects/{ID}*.md` in isolated context.
-argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
+argument-hint: "{ISSUE_ID} [--force-model {model}] (e.g. TECH-11)"
 ---
 
 # /implement — dispatch `spec-implementer` subagent
 
 Use `spec-implementer` subagent (`.claude/agents/spec-implementer.md`) to execute Implementation Plan for `$ARGUMENTS`.
+
+## Argument parsing
+
+If `--force-model {model}` present in `$ARGUMENTS`: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset.
 
 ## Step 0 — Context banner (before dispatch)
 
@@ -23,7 +27,7 @@ Before dispatching the subagent, resolve and print for the human developer:
 
 ## Subagent prompt (forward verbatim)
 
-Forward via Agent tool with `subagent_type: "spec-implementer"`:
+Forward via Agent tool with `subagent_type: "spec-implementer"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 >

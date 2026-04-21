@@ -12,7 +12,7 @@
  *   2. Bridge bucket (spec-implementer-style dispatch) INCLUDES `unity_bridge_command`
  *      + the 6 compute tools.
  *   3. Buckets are disjoint: intersection is empty.
- *   4. IA-core bucket has ≥22 registrations (exit criterion from master plan).
+ *   4. IA-core bucket has ≥23 registrations (exit criterion from master plan).
  */
 
 import test from "node:test";
@@ -71,6 +71,10 @@ test("AC1 — IA-core dispatch excludes all bridge + compute tools", () => {
       `IA-core bucket must not register bridge tool ${bridgeName}`,
     );
   }
+  assert.ok(
+    iaCoreNames.has("runtime_state"),
+    "IA-core bucket must register runtime_state",
+  );
 });
 
 test("AC2 — Bridge dispatch includes all bridge + compute tools", () => {
@@ -81,6 +85,10 @@ test("AC2 — Bridge dispatch includes all bridge + compute tools", () => {
       `Bridge bucket must register ${bridgeName}`,
     );
   }
+  assert.ok(
+    !bridgeNames.has("runtime_state"),
+    "Bridge bucket must not register runtime_state",
+  );
 });
 
 test("AC3 — Buckets are disjoint (no tool registered in both)", () => {
@@ -97,13 +105,13 @@ test("AC3 — Buckets are disjoint (no tool registered in both)", () => {
   );
 });
 
-test("AC4 — IA-core bucket registers ≥22 tools (exit criterion)", () => {
+test("AC4 — IA-core bucket registers ≥23 tools (exit criterion)", () => {
   const registry = buildRegistry();
   const iaCoreNames = captureToolNames((server) =>
     registerIaCoreTools(server, registry),
   );
   assert.ok(
-    iaCoreNames.size >= 22,
-    `IA-core bucket must register ≥22 tools; found ${iaCoreNames.size}`,
+    iaCoreNames.size >= 23,
+    `IA-core bucket must register ≥23 tools; found ${iaCoreNames.size}`,
   );
 });

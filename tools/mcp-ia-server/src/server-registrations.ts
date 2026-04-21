@@ -41,6 +41,7 @@ import { registerCsharpClassSummary } from "./tools/csharp-class-summary.js";
 import { registerMasterPlanLocate } from "./tools/master-plan-locate.js";
 import { registerMasterPlanNextPending } from "./tools/master-plan-next-pending.js";
 import { registerPlanApplyValidate } from "./tools/plan-apply-validate.js";
+import { registerRuntimeState } from "./tools/runtime-state.js";
 
 // Bridge + compute tools
 import {
@@ -62,12 +63,13 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
 /**
  * Register IA-authoring tool surfaces on the given MCP server.
  *
- * ≥22 tools: list-specs, spec-outline, spec-section, spec-sections, glossary
+ * ≥23 tools: list-specs, spec-outline, spec-section, spec-sections, glossary
  * lookup/discover, router-for-task, invariants-summary, list-rules,
  * rule-content/section, backlog-issue/list/search/record-validate,
  * parent-plan-validate, reserve-backlog-ids, stage-closeout-digest,
  * project-spec-journal (2), invariant-preflight, csharp-class-summary,
- * master-plan-locate, master-plan-next-pending, plan-apply-validate.
+ * master-plan-locate, master-plan-next-pending, plan-apply-validate,
+ * runtime_state.
  */
 export function registerIaCoreTools(server: McpServer, registry: Registry): void {
   registerListSpecs(server, registry);
@@ -94,6 +96,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerMasterPlanLocate(server);
   registerMasterPlanNextPending(server);
   registerPlanApplyValidate(server);
+  registerRuntimeState(server);
 }
 
 /**

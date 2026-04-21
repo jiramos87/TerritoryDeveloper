@@ -1,0 +1,12 @@
+---
+description: "Operational runtime state — last verify:local, bridge-preflight, queued test scenario (MCP runtime_state or ia/state/runtime-state.json)."
+globs:
+  - "**/verify*"
+  - "**/testmode*"
+  - "**/bridge*"
+alwaysApply: false
+---
+
+# Runtime state (Cursor)
+
+Start: **`mcp__territory-ia__runtime_state`** (`action: read`). Fallback: read **`ia/state/runtime-state.json`** when present. Active task/stage: **`.cursor/active-session.json`** (optional), not the shared runtime-state file.

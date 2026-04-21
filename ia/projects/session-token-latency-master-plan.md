@@ -1135,8 +1135,8 @@
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
 | T3.1.1 | Session-start deterministic preamble | 1 | _pending_ | _pending_ | Refactor `tools/scripts/claude-hooks/session-start-prewarm.sh`: move `branch=$(git branch ...)` + dirty-count line to emit via `>&2` (stderr); add fixed stdout block: `echo "[territory-developer] MCP: territory-ia v$(…) | Ruleset: invariants+lifecycle+caveman | Freeze: $(cat ia/state/lifecycle-refactor-migration.json | jq -r '.status')"`. Volatile suffix no longer destabilises cached prefix. |
-| T3.1.2 | Runtime-state.json skeleton (F4 prep) | 1 | _pending_ | _pending_ | Author `.claude/runtime-state.json` schema stub (prep for Stage 4.1 F4): fields `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id`, `active_task_id`, `active_stage`. Emit top-level keys from SessionStart preamble block (read `.claude/runtime-state.json` if exists; populate preamble deterministic block with `active_task_id` + `active_stage` values). Update `.gitignore`: track `runtime-state.json` (shared state, not ephemeral). |
-| T3.1.3 | Compact-survival hook | 2 | _pending_ | _pending_ | Author `tools/scripts/claude-hooks/compact-summary.sh`: on Stop/PostCompact event reads `.claude/runtime-state.json` + last 3 entries from `.claude/telemetry/{session-id}.jsonl`; writes `.claude/last-compact-summary.md` (`active_task_id`, `active_stage`, `last_3_tools`, `ts`). Add Stop hook entry to `.claude/settings.json` hooks array. Add `.claude/last-compact-summary.md` to `.gitignore`. |
+| T3.1.2 | Runtime-state.json skeleton (F4 prep) | 1 | _pending_ | _pending_ | Committed schema `tools/schemas/runtime-state.schema.json` + `ia/state/runtime-state.example.json`; live `ia/state/runtime-state.json` **gitignored** (per clone). Fields: `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id`, `updated_at`. `active_task_id` / `active_stage` live only in `.claude/active-session.json` or `.cursor/active-session.json` — not in shared runtime-state file. Ship MCP `runtime_state` (read + write under flock). SessionStart reads `ia/state/runtime-state.json` + optional active-session for preamble. |
+| T3.1.3 | Compact-survival hook | 2 | _pending_ | _pending_ | Author `tools/scripts/claude-hooks/compact-summary.sh`: on Stop/PostCompact event reads `ia/state/runtime-state.json` + last 3 entries from `.claude/telemetry/{session-id}.jsonl`; writes `.claude/last-compact-summary.md` (`active_task_id`, `active_stage`, `last_3_tools`, `ts`). Add Stop hook entry to `.claude/settings.json` hooks array. Add `.claude/last-compact-summary.md` to `.gitignore`. |
 | T3.1.4 | Compact re-orientation test | 2 | _pending_ | _pending_ | Manual test: run session → compact → resume; verify `.claude/last-compact-summary.md` present + readable; confirm SessionStart preamble emits `active_task_id` from it. Confirm `npm run validate:all` green. Document compact-survival UX in `docs/agent-led-verification-policy.md` §Session continuity (new 3-line sub-section). |
 
 ---
@@ -1181,7 +1181,7 @@
 
 - `.claude/tool-usage.jsonl` (session-ephemeral, gitignored): PostToolUse hook appends `{tool_name, args_hash, result_hash, ts}` per call.
 - Subagent dispatch reads `.claude/tool-usage.jsonl` for current session; skips re-call when args_hash matches within Stage window.
-- `.claude/runtime-state.json`: flat-file markers (`last-verify-exit-code`, `last-bridge-preflight-exit-code`, `.queued-test-scenario-id`) fully migrated; hooks write via `jq` append.
+- `ia/state/runtime-state.json`: flat-file markers (`last-verify-exit-code`, `last-bridge-preflight-exit-code`, `.queued-test-scenario-id`) fully migrated; hooks write via `jq` append.
 - New MCP tool `cache_breakpoint_recommend(stage_id)` registered in `tools/mcp-ia-server/src/index-ia.ts`; returns 4 anchors (Tier 1 prefix end, Tier 2 bundle end, spec end, last executor-mutable block).
 - New MCP tool `skill_for_task(keywords, lifecycle_stage)` registered; returns matching `ia/skills/*/SKILL.md` path + URL + first-phase body.
 - Tracking issues filed for F3 (harness caveman hook) + F7 (`defer_loading: true`); linked from exploration doc.
@@ -1197,7 +1197,7 @@
 - `tools/mcp-ia-server/src/index.ts` (exists) — F5/F6 interim registration target if split not yet flipped
 - `ia/skills/README.md` (exists) — F6 index source
 - `docs/agent-lifecycle.md` — lifecycle_stage enum for F6 (pre-refactor `ia/rules/agent-lifecycle.md` retired)
-- Prior step outputs: `.claude/runtime-state.json` skeleton (Stage 3.1 T3.1.2), `.claude/tool-usage.jsonl` schema (extends T1.1.1 telemetry)
+- Prior step outputs: `ia/state/runtime-state.json` skeleton (Stage 3.1 T3.1.2), `.claude/tool-usage.jsonl` schema (extends T1.1.1 telemetry)
 
 ---
 
@@ -1205,14 +1205,14 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Objectives:** Wire PostToolUse hook writing `{tool_name, args_hash, result_hash, ts}` to `.claude/tool-usage.jsonl` (F2). Enable subagent dispatch to read that file and skip re-calls within Stage window. Fully migrate scattered flat-file state markers to the unified `.claude/runtime-state.json` schema (F4, building on Stage 3.1 skeleton).
+**Objectives:** Wire PostToolUse hook writing `{tool_name, args_hash, result_hash, ts}` to `.claude/tool-usage.jsonl` (F2). Enable subagent dispatch to read that file and skip re-calls within Stage window. Fully migrate scattered flat-file state markers to the unified `ia/state/runtime-state.json` schema (F4, building on Stage 3.1 skeleton).
 
 **Exit:**
 
 - `.claude/tool-usage.jsonl` written per tool call via PostToolUse hook; fields: `tool_name`, `args_hash` (sha256 of serialized args), `result_hash` (sha256 of result), `ts`, `session_id`.
 - `.claude/tool-usage.jsonl` gitignored (session-ephemeral).
 - `spec-implementer.md` + `design-explore.md` preambles: read `.claude/tool-usage.jsonl` for session; skip `glossary_discover` / `router_for_task` re-call when args_hash matches within Stage window.
-- `.claude/runtime-state.json`: `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id` fields populated by hooks; old flat-file markers (`.claude/last-verify-exit-code`, etc.) deleted.
+- `ia/state/runtime-state.json`: `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id` fields populated by hooks; old flat-file markers (`.claude/last-verify-exit-code`, etc.) deleted.
 - `verify-loop` + `bridge-environment-preflight` skills write exit codes to `runtime-state.json` via `jq` (reuses D3 `jq` dep from Theme-0-r1 D3 issue).
 - `npm run validate:all` green.
 
@@ -1225,10 +1225,11 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T4.1.1 | Tool-usage PostToolUse hook | 1 | _pending_ | _pending_ | Extend `.claude/settings.json` PostToolUse hook (or add second hook entry): run `tools/scripts/agent-telemetry/tool-usage-hook.sh`. Author that script: reads tool name + args + result from hook env; computes `args_hash = sha256(tool_name + sorted_args_json)`, `result_hash = sha256(result_json)`; appends JSON line to `.claude/tool-usage.jsonl`. Add `.claude/tool-usage.jsonl` to `.gitignore`. |
+| T4.1.1 | Tool-usage PostToolUse hook | 1 | _pending_ | _pending_ | **scope: claude-code-only** — Extend `.claude/settings.json` PostToolUse hook (or add second hook entry): run `tools/scripts/agent-telemetry/tool-usage-hook.sh`. Author that script: reads tool name + args + result from hook env; computes `args_hash = sha256(tool_name + sorted_args_json)`, `result_hash = sha256(result_json)`; appends JSON line to `.claude/tool-usage.jsonl`. Add `.claude/tool-usage.jsonl` to `.gitignore`. |
 | T4.1.2 | Subagent memoization read path | 1 | _pending_ | _pending_ | In `spec-implementer.md` + `design-explore.md` preamble: add "Session-window memoization check" block: before `glossary_discover` / `router_for_task` calls, compute args_hash; check `.claude/tool-usage.jsonl` for matching `{tool_name, args_hash}` within same `session_id`; if found, use cached `result_hash` lookup from a companion `.claude/tool-usage-cache.json` (key: args_hash → result). Skip live MCP call. Author `tools/scripts/agent-telemetry/cache-lookup.sh {tool_name} {args_hash}` returning result or exit 1 on miss. |
-| T4.1.3 | Unified runtime-state migration | 2 | _pending_ | _pending_ | Extend `.claude/runtime-state.json` schema (from Stage 3.1 T3.1.2 skeleton): add `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id` fields. Update `ia/skills/verify-loop/SKILL.md` Step 7 to write `last_verify_exit_code` via `jq '. + {"last_verify_exit_code": $code}' .claude/runtime-state.json` instead of flat file. Same for `bridge-environment-preflight` writing `last_bridge_preflight_exit_code`. Update `agent-test-mode-verify` skill reading `.queued-test-scenario-id` to read from `runtime-state.json`. |
-| T4.1.4 | Flat-file marker cleanup | 2 | _pending_ | _pending_ | After migration verified: delete old flat-file markers (`.claude/last-verify-exit-code`, `.claude/last-bridge-preflight-exit-code`, `.claude/queued-test-scenario-id` if they exist). Update SessionStart preamble (Stage 3.1 T3.1.1 stdout block) to emit `last_verify_exit_code` from `runtime-state.json`. `npm run validate:all` green. |
+| T4.1.3 | Unified runtime-state migration | 2 | _pending_ | _pending_ | All write paths → `ia/state/runtime-state.json`. MCP `runtime_state` write path (patch + lockfile). Skills (`verify-loop`, `bridge-environment-preflight`, `agent-test-mode-verify`) write via MCP where available; `tools/scripts/runtime-state-write.sh` + `jq` fallback documented. |
+| T4.1.4 | Flat-file marker cleanup | 2 | _pending_ | _pending_ | After migration verified: delete old flat-file markers (`.claude/last-verify-exit-code`, `.claude/last-bridge-preflight-exit-code`, root `/.queued-test-scenario-id` if present). Exit criteria: no references to legacy marker paths remain (grep check). SessionStart preamble reads `last_verify_exit_code` from `ia/state/runtime-state.json`. `npm run validate:all` green. |
+| T4.1.5 | Harness-agnostic surfacing (F4b) | 2 | _pending_ | _pending_ | `ia/rules/runtime-state.md`, `AGENTS.md` / `CLAUDE.md` / `ia/rules/invariants.md` pointers, `.cursor/rules/runtime-state.mdc`, subagent self-read lines + glossary `runtime-state`; `validate:runtime-state` in `validate:all`; MCP catalog parity with `runtime_state` registration. |
 
 ---
 
@@ -1301,7 +1302,7 @@
 
 **Objectives:** Extend compact-survival from Stage 3.1's last-3-tools signal into a full synthesized context pack written on PreCompact event and re-injected on SessionStart. Agents resuming after `/compact` recover active focus + surfaces + recent decisions + open questions from `.claude/context-pack.md` without re-reading source files. Hook stays shell-only (no `claude -p` subprocess) to keep compact path fast (<200 ms) and deterministic. Semantic placement = Stage 3.3 of Step 3; filed here as Step 5 per skill append-only contract — human reviewer may relocate block post-apply.
 
-**Pre-conditions:** Step 3 Stage 3.1 T3.1.2 (`.claude/runtime-state.json` skeleton) + T3.1.3 (`compact-summary.sh` Stop/PostCompact hook) must be Done before Step 5 Stage 5.1 starts. Stage 4.1 T4.1.1 (`.claude/tool-usage.jsonl`) = soft dependency — optional `Recent memoized calls` section omitted silently if absent.
+**Pre-conditions:** Step 3 Stage 3.1 T3.1.2 (`ia/state/runtime-state.json` skeleton) + T3.1.3 (`compact-summary.sh` Stop/PostCompact hook) must be Done before Step 5 Stage 5.1 starts. Stage 4.1 T4.1.1 (`.claude/tool-usage.jsonl`) = soft dependency — optional `Recent memoized calls` section omitted silently if absent.
 
 **Exit criteria:**
 
@@ -1323,7 +1324,7 @@
 - `tools/scripts/claude-hooks/session-start-prewarm.sh` (exists) — re-injection extension target.
 - `tools/scripts/claude-hooks/compact-summary.sh` (new, Stage 3.1 T3.1.3) — sibling Stop/PostCompact hook; `context-pack.sh` is PreCompact counterpart.
 - `tools/scripts/claude-hooks/context-pack.sh` (new) — primary deliverable.
-- `.claude/runtime-state.json` (new, Stage 3.1 T3.1.2) — primary digest input.
+- `ia/state/runtime-state.json` (new, Stage 3.1 T3.1.2) — primary digest input.
 - `.claude/settings.json` (exists) — PreCompact hook entry addition.
 - `.claude/telemetry/{session-id}.jsonl` (exists post-Stage 1) — secondary digest input.
 - `.claude/tool-usage.jsonl` (new, Stage 4.1 T4.1.1, soft dep) — optional tertiary input.
@@ -1344,7 +1345,7 @@
 
 **Exit:**
 
-- `tools/scripts/claude-hooks/context-pack.sh` exists, executable, shebang `#!/usr/bin/env bash`, `set -uo pipefail` (no `-e` — graceful partial failure). Reads `.claude/runtime-state.json` + active plan Stage block + telemetry jsonl; emits schema per extensions doc §2.
+- `tools/scripts/claude-hooks/context-pack.sh` exists, executable, shebang `#!/usr/bin/env bash`, `set -uo pipefail` (no `-e` — graceful partial failure). Reads `ia/state/runtime-state.json` + active plan Stage block + telemetry jsonl; emits schema per extensions doc §2.
 - `.claude/settings.json` hooks array contains PreCompact entry running `context-pack.sh`.
 - Size cap 300 lines enforced via awk block-boundary truncation; Relevant surfaces never truncated; truncation marker `_[...truncated N oldest decisions]_` emitted when cap triggers.
 - `session-start-prewarm.sh` cats pack content after deterministic block + `---` separator, gated on `-f .claude/context-pack.md` AND pack `ts` header <24 h old.
@@ -1363,7 +1364,7 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T5.1.1 | PreCompact digest script — schema + runtime-state | 1 | **TECH-520** | Draft | Author `tools/scripts/claude-hooks/context-pack.sh`: on PreCompact event reads `.claude/runtime-state.json` → extracts `active_task_id`, `active_stage`, `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; parses active master plan Stage block via same narrow regex `/ship-stage` Phase 0 uses (Stage name + Exit criteria first 5 bullets + Relevant surfaces first 20 lines); emits `.claude/context-pack.md` per extensions doc §2 schema (Active focus + Relevant surfaces + Loaded context sources sections). Add PreCompact hook entry to `.claude/settings.json` hooks array. Add `.claude/context-pack.md` to `.gitignore`. All `jq` calls guarded with `\|\| echo "unknown"`; exit 0 on partial failure; `# Context pack — SCHEMA MISMATCH` marker on malformed runtime-state.json. No `claude -p` subprocess. |
+| T5.1.1 | PreCompact digest script — schema + runtime-state | 1 | **TECH-520** | Draft | Author `tools/scripts/claude-hooks/context-pack.sh`: on PreCompact event reads `ia/state/runtime-state.json` for `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; reads `.claude/active-session.json` or `.cursor/active-session.json` for `active_task_id`, `active_stage`; parses active master plan Stage block via same narrow regex `/ship-stage` Phase 0 uses (Stage name + Exit criteria first 5 bullets + Relevant surfaces first 20 lines); emits `.claude/context-pack.md` per extensions doc §2 schema (Active focus + Relevant surfaces + Loaded context sources sections). Add PreCompact hook entry to `.claude/settings.json` hooks array. Add `.claude/context-pack.md` to `.gitignore`. All `jq` calls guarded with `\|\| echo "unknown"`; exit 0 on partial failure; `# Context pack — SCHEMA MISMATCH` marker on malformed inputs. No `claude -p` subprocess. |
 | T5.1.2 | Digest script — telemetry + tool-usage + size cap | 1 | **TECH-521** | Draft | Extend `context-pack.sh`: append `Last tool outputs (pointers only)` section from `.claude/telemetry/{session-id}.jsonl` (last 10 rows via `tail -10 \| jq -c '{name, exit, ts}'`); if `.claude/tool-usage.jsonl` exists (Stage 4.1 T4.1.1), append `Recent memoized calls` section with top 10 `{tool_name, args_hash_short, result_hash_short, ts}`. Enforce 300-line cap via awk truncation at Recent decisions / Open questions block boundaries (blank-line delimited, not mid-line): drop oldest Recent decisions block first, then oldest Open questions. Emit `_[...truncated N oldest decisions]_` marker when truncation fires. Relevant surfaces never truncated. Soft-guard missing files with `[ -f ... ]` checks. |
 | T5.1.3 | SessionStart re-injection + deterministic preamble compat | 2 | **TECH-522** | Draft | Extend `tools/scripts/claude-hooks/session-start-prewarm.sh` (Stage 3.1 T3.1.1): after deterministic preamble block + `---` separator, if `-f .claude/context-pack.md` AND pack `ts` header <24 h old, then `cat .claude/context-pack.md`. Stale pack (>24 h) → stderr warning `stale context pack ({age_hours} h old); regenerate via /pack-context`, no stdout emission. Missing pack → silent, no stdout or stderr. Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback). Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix cacheability — verify via diff of two runs. Document re-injection contract in `docs/agent-led-verification-policy.md` §Session continuity (extend sub-section first added by Stage 3.1 T3.1.4). |
 | T5.1.4 | Re-orientation integration test + validate:all | 2 | **TECH-523** | Draft | Manual integration test per protocol in extensions doc §5 T3.3.4 §Examples: start session on filed task → 2 Read + 2 Edit on 4 distinct source files → `/compact` → inspect `.claude/context-pack.md` (Active focus populated; Relevant surfaces lists all 4 files; ≥1 Recent decision; Last tool outputs lists last 4 actions); resume session (new terminal) → verify SessionStart preamble includes pack content; ask agent "what are you working on?" → confirm model cites active task + stage + ≥2 relevant surfaces with **zero** Read calls on source files before first answer. Screenshot + tool-call log evidence linked in task Verification block. `docs/agent-led-verification-policy.md` §Session continuity updated with full re-injection contract (≥3-line paragraph). `npm run validate:all` green. |
@@ -1380,7 +1381,7 @@
   issue_type: "TECH"
   notes: |
     Author tools/scripts/claude-hooks/context-pack.sh. On PreCompact event reads
-    .claude/runtime-state.json (active_task_id, active_stage, queued_test_scenario_id,
+    ia/state/runtime-state.json (active_task_id, active_stage, queued_test_scenario_id,
     last_verify_exit_code, last_bridge_preflight_exit_code); parses active master plan
     Stage block via narrow regex; emits .claude/context-pack.md per extensions doc §2
     schema (Active focus + Relevant surfaces + Loaded context sources). Wire PreCompact
@@ -1399,7 +1400,7 @@
       Sibling to Stage 3.1 compact-summary.sh (Stop/PostCompact counterpart).
     goals: |
       - tools/scripts/claude-hooks/context-pack.sh executable, shebang bash, set -uo pipefail.
-      - Reads .claude/runtime-state.json + active Stage block via same narrow regex /ship-stage Phase 0 uses.
+      - Reads ia/state/runtime-state.json + active Stage block via same narrow regex /ship-stage Phase 0 uses.
       - Emits §2-schema sections: Active focus, Relevant surfaces, Loaded context sources.
       - PreCompact hook entry wired in .claude/settings.json.
       - Pack gitignored (session-ephemeral).
@@ -1407,7 +1408,7 @@
     systems_map: |
       New: tools/scripts/claude-hooks/context-pack.sh.
       Touches: .claude/settings.json (hooks array), .gitignore.
-      Reads: .claude/runtime-state.json (Stage 3.1 T3.1.2), active master plan Stage block,
+      Reads: ia/state/runtime-state.json (Stage 3.1 T3.1.2), active master plan Stage block,
       ia/projects/session-token-latency-master-plan.md.
       Writes: .claude/context-pack.md (gitignored).
       No Unity / C# / runtime surface touched.

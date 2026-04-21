@@ -7,12 +7,14 @@ name: agent-test-mode-verify
 description: >
   Run after project-spec-implement (or standalone) when agent-led test mode verification is required:
   gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge hybrid
-  with .queued-test-scenario-id), bounded iterate with validate:all / compile gates, structured handoff for
+  with runtime_state / queue file), bounded iterate with validate:all / compile gates, structured handoff for
   human normal-game QA. Triggers: "agent test mode loop", "verify in test mode without opening Unity",
   "batchmode scenario check", "post-implement Play Mode suite". Design trace: projects/TECH-31a3-agent-test-mode-verify-skill.md
   (TECH-31 stage 31a3).
 model: inherit
 ---
+
+Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.
 
 # Agent test-mode verification loop
 
@@ -75,7 +77,7 @@ npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat
 
 Use when batch CLI unavailable or need `debug_context_bundle`/screenshots in open Editor.
 
-1. Write scenario id (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored). Queue file is id-only — path-based loads use `-testScenarioPath`.
+1. Write scenario id (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored) for Unity consumption. Prefer `mcp__territory-ia__runtime_state` `action: write`, `patch: { "queued_test_scenario_id": "<id>" }` for harness-visible state. Queue file is id-only — path-based loads use `-testScenarioPath`.
 2. `npm run db:bridge-preflight` — exit codes per `bridge-environment-preflight` (0 proceed; 1 no URL; 2 server; 3 migrate; 4 SQL error).
 3. `unity_bridge_command` `enter_play_mode`, `timeout_ms: 40000` → poll `get_play_mode_status` until ready.
 4. `unity_bridge_command` `debug_context_bundle`, `timeout_ms: 40000`, `seed_cell: "x,y"`. Optionally `get_console_logs`, `capture_screenshot` (`include_ui: true`) per `ide-bridge-evidence`.

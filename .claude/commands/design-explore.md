@@ -1,17 +1,17 @@
 ---
 description: Expand an exploration doc into a reviewed, persisted design (pre-master-plan). Dispatches the `design-explore` subagent against `{DOC_PATH}` in isolated context.
-argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC]  (e.g. docs/foo.md C  OR  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
+argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}]  (e.g. docs/foo.md C  OR  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
 ---
 
 # /design-explore — dispatch `design-explore` subagent
 
 Use `design-explore` subagent (`.claude/agents/design-explore.md`) to run `ia/skills/design-explore/SKILL.md` end-to-end on `$ARGUMENTS`.
 
-`$ARGUMENTS` = `{DOC_PATH} [APPROACH_HINT] [--against {REFERENCE_DOC}]`. First token = path to exploration `.md`. Optional second token = approach id (e.g. `C`) to skip Phase 2 gate. Optional `--against {REFERENCE_DOC}` = path to an umbrella orchestrator or master plan — activates **gap-analysis mode** when `DOC_PATH` is a locked design with no Approaches list (detects alignment gaps, persists them as `## Design Expansion — {context}`, feeds `/master-plan-extend`).
+`$ARGUMENTS` = `{DOC_PATH} [APPROACH_HINT] [--against {REFERENCE_DOC}] [--force-model {model}]`. First token = path to exploration `.md`. Optional second token = approach id (e.g. `C`) to skip Phase 2 gate. Optional `--against {REFERENCE_DOC}` = path to an umbrella orchestrator or master plan — activates **gap-analysis mode** when `DOC_PATH` is a locked design with no Approaches list. Optional `--force-model {model}` (valid: `sonnet`, `opus`, `haiku`): store as `FORCE_MODEL` and pass to the Agent dispatch + embed as `FORCE_MODEL_OVERRIDE` in the subagent prompt so Phase 8's Plan subagent inherits it. Absent or invalid → `FORCE_MODEL` unset.
 
 ## Subagent prompt (forward verbatim)
 
-Forward via Agent tool with `subagent_type: "design-explore"`:
+Forward via Agent tool with `subagent_type: "design-explore"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -61,6 +61,10 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 > 3. `mcp__territory-ia__router_for_task` — 1–3 domains from component responsibilities.
 > 4. `mcp__territory-ia__spec_sections` — implied subsystem sections; set `max_chars`. No full spec reads.
 > 5. `mcp__territory-ia__invariants_summary` — if runtime C# / Unity touched.
+>
+> ## Model override (Phase 8 propagation)
+>
+> If `FORCE_MODEL_OVERRIDE={model}` is present in these inputs, pass `model: "{model}"` to the `Agent` tool call in Phase 8 (subagent review). Absent → Phase 8 Agent call uses no model override (subagent frontmatter wins).
 >
 > ## Hard boundaries
 >

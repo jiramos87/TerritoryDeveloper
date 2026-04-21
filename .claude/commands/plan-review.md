@@ -1,6 +1,6 @@
 ---
 description: Drift-scan a Stage's §Plan Author sections + master-plan Stage block. Dispatches `plan-reviewer` (Opus pair-head seam #1) → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage between `/author` and per-Task `/implement` loop.
-argument-hint: "{master-plan-path} Stage {X.Y}"
+argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
 # /plan-review — dispatch seam #1 pair (plan-review → plan-applier Mode plan-fix)
@@ -9,11 +9,11 @@ Use `plan-reviewer` subagent (`.claude/agents/plan-reviewer.md`) to scan Stage `
 
 ## Argument parsing
 
-Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}`. Second token = `{STAGE_ID}` (e.g. `7.2`). Missing either → print usage + abort.
+Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}`. Second token = `{STAGE_ID}` (e.g. `7.2`). Missing either → print usage + abort. If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset.
 
 ## Step 1 — Dispatch `plan-reviewer` (Opus pair-head)
 
-Forward via Agent tool with `subagent_type: "plan-reviewer"`:
+Forward via Agent tool with `subagent_type: "plan-reviewer"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -33,7 +33,7 @@ Planner returns `{verdict: "PASS"|"fix"}`. PASS → skip Step 2 + emit summary. 
 
 ## Step 2 — Dispatch `plan-applier` (Sonnet pair-tail, Mode plan-fix) — conditional
 
-On fix verdict: forward via Agent tool with `subagent_type: "plan-applier"`:
+On fix verdict: forward via Agent tool with `subagent_type: "plan-applier"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >

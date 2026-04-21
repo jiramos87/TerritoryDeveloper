@@ -30,6 +30,8 @@ Canonicalized at [`docs/agent-led-verification-policy.md`](docs/agent-led-verifi
 docs/information-architecture-overview.md → IA philosophy, layers, lifecycle, extension guide
 docs/agent-led-verification-policy.md     → canonical Verification policy
 docs/mcp-ia-server.md                     → territory-ia MCP tool catalog + recipes
+ia/state/runtime-state.json               → last verify / bridge / queued test scenario (gitignored; read via `runtime_state` MCP or file)
+.claude/active-session.json / .cursor/active-session.json → optional active_task_id / active_stage (gitignored; per harness; not in shared runtime-state file)
 ia/rules/                                 → guardrails (always-loaded; light)
 ia/skills/                                → workflow recipes (orchestration, not facts)
 ia/specs/                                 → deep reference (read on demand per task)

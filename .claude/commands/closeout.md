@@ -1,6 +1,6 @@
 ---
 description: Close a Stage end-to-end — Stage-scoped bulk closeout (NOT per-Task). Dispatches `stage-closeout-planner` Opus pair-head then `plan-applier` Sonnet pair-tail Mode stage-closeout. Fires once per Stage when all Task rows reach Done post-verify.
-argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} (e.g. ia/projects/lifecycle-refactor-master-plan.md 7.2)"
+argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--force-model {model}] (e.g. ia/projects/lifecycle-refactor-master-plan.md 7.2)"
 ---
 
 # /closeout — dispatch Stage-scoped closeout pair (seam #4)
@@ -9,7 +9,7 @@ Use `stage-closeout-planner` subagent (`.claude/agents/stage-closeout-planner.md
 
 ## Argument parsing
 
-Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `7.2` or `Stage 7.2`). Missing either → print usage + abort.
+Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `7.2` or `Stage 7.2`). Missing either → print usage + abort. If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset.
 
 Any other flag (e.g. legacy `--refactor`) → reject with message: `/closeout is Stage-scoped post-T7.14. Legacy per-Task flag {flag} not supported — use Stage-scoped invocation.`
 
@@ -29,7 +29,7 @@ Resolve and print for the human developer:
 
 ## Step 1 — Dispatch `stage-closeout-planner` (Opus pair-head)
 
-Forward to planner subagent via Agent tool with `subagent_type: "stage-closeout-planner"`:
+Forward to planner subagent via Agent tool with `subagent_type: "stage-closeout-planner"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -49,7 +49,7 @@ Planner must return success + `§Stage Closeout Plan` written before Step 2. Esc
 
 ## Step 2 — Dispatch `plan-applier` (Sonnet pair-tail, Mode stage-closeout)
 
-Forward to applier subagent via Agent tool with `subagent_type: "plan-applier"`:
+Forward to applier subagent via Agent tool with `subagent_type: "plan-applier"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >

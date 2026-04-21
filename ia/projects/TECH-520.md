@@ -24,7 +24,7 @@ Sibling to Stage 3.1 compact-summary.sh (Stop/PostCompact counterpart).
 ### 2.1 Goals
 
 1. `tools/scripts/claude-hooks/context-pack.sh` executable, shebang bash, `set -uo pipefail`.
-2. Reads `.claude/runtime-state.json` + active Stage block via same narrow regex `/ship-stage` Phase 0 uses.
+2. Reads `ia/state/runtime-state.json` + optional `.claude/active-session.json` / `.cursor/active-session.json` + active Stage block via same narrow regex `/ship-stage` Phase 0 uses.
 3. Emits §2-schema sections: Active focus, Relevant surfaces, Loaded context sources.
 4. PreCompact hook entry wired in `.claude/settings.json`.
 5. Pack gitignored (session-ephemeral).
@@ -41,7 +41,7 @@ Sibling to Stage 3.1 compact-summary.sh (Stop/PostCompact counterpart).
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
 | 1 | Developer | On `/compact`, context-pack.sh runs and writes `.claude/context-pack.md` with active task + stage + relevant surfaces | Pack file exists post-compact; Active focus and Relevant surfaces sections populated |
-| 2 | Developer | Malformed `.claude/runtime-state.json` does not crash hook | exit 0; SCHEMA MISMATCH marker present in pack |
+| 2 | Developer | Malformed `ia/state/runtime-state.json` does not crash hook | exit 0; SCHEMA MISMATCH marker present in pack |
 
 ## 4. Current State
 
@@ -53,7 +53,7 @@ No PreCompact digest script exists. After `/compact`, all active-task context is
 
 New: `tools/scripts/claude-hooks/context-pack.sh`.
 Touches: `.claude/settings.json` (hooks array), `.gitignore`.
-Reads: `.claude/runtime-state.json` (Stage 3.1 T3.1.2), active master plan Stage block,
+Reads: `ia/state/runtime-state.json` (Stage 3.1 T3.1.2), active master plan Stage block,
 `ia/projects/session-token-latency-master-plan.md`.
 Writes: `.claude/context-pack.md` (gitignored).
 No Unity / C# / runtime surface touched.
@@ -66,13 +66,13 @@ Stage block regex: same narrow pattern used by `/ship-stage` Phase 0 — matches
 
 ### 5.1 Target behavior (product)
 
-On PreCompact event: script reads `.claude/runtime-state.json`, extracts 5 keys (`active_task_id`, `active_stage`, `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`), parses active Stage block, writes `.claude/context-pack.md` per extensions doc §2 schema.
+On PreCompact event: script reads `ia/state/runtime-state.json` for `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; reads `.claude/active-session.json` or `.cursor/active-session.json` for `active_task_id`, `active_stage`; parses active Stage block; writes `.claude/context-pack.md` per extensions doc §2 schema.
 
 ### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 
 Phase 1 — Digest script + hook wire.
 1. Draft `context-pack.sh` skeleton (shebang, `set -uo pipefail`, schema header emit).
-2. Parse `runtime-state.json` via jq; extract 5 keys; fallback to "unknown" per key.
+2. Parse `ia/state/runtime-state.json` via jq (3 keys) + optional `.claude/active-session.json` / `.cursor/active-session.json` (2 keys); fallback to "unknown" per key.
 3. Regex-extract active Stage block from master plan (Stage header + Exit criteria first 5 + Relevant surfaces first 20 lines).
 4. Emit §2 schema sections to `.claude/context-pack.md`.
 5. Add PreCompact hook entry to `.claude/settings.json`.
@@ -109,7 +109,7 @@ Phase 1 — Digest script + hook wire.
 ## 8. Acceptance Criteria
 
 - [ ] `tools/scripts/claude-hooks/context-pack.sh` exists, executable, shebang bash, `set -uo pipefail`.
-- [ ] Reads `.claude/runtime-state.json` + active Stage block; emits §2-schema sections.
+- [ ] Reads `ia/state/runtime-state.json` + active Stage block; emits §2-schema sections.
 - [ ] PreCompact hook entry wired in `.claude/settings.json`.
 - [ ] Pack gitignored (`.claude/context-pack.md` in `.gitignore`).
 - [ ] Graceful partial failure: exit 0 on malformed inputs; SCHEMA MISMATCH marker present.
@@ -130,7 +130,7 @@ Phase 1 — Digest script + hook wire.
 ### §Audit Notes
 
 - Risk: PreCompact hook latency exceeds 200 ms budget → stalls `/compact` UX. Mitigation: shell-only (no `claude -p`), single jq pass per key, bounded regex read (first 5 exit bullets + 20 relevant-surface lines), no loops over master-plan file.
-- Risk: malformed `.claude/runtime-state.json` (partial write mid-session, schema drift) crashes hook → blocks compact. Mitigation: `set -uo pipefail` (NOT `-e`) + every `jq` call guarded with `|| echo "unknown"` + emit `# Context pack — SCHEMA MISMATCH` marker + `exit 0`.
+- Risk: malformed `ia/state/runtime-state.json` (partial write mid-session, schema drift) crashes hook → blocks compact. Mitigation: `set -uo pipefail` (NOT `-e`) + every `jq` call guarded with `|| echo "unknown"` + emit `# Context pack — SCHEMA MISMATCH` marker + `exit 0`.
 - Risk: Stage-block regex drift between `context-pack.sh` and `/ship-stage` Phase 0 → inconsistent orientation. Mitigation: extract shared grep/sed snippet into comment block citing ship-stage Phase 0 source line; smoke-test both against same master-plan fixture.
 - Risk: `.claude/context-pack.md` accidentally committed → pollutes history + leaks session-local state. Mitigation: `.gitignore` entry added in same commit as script; `git check-ignore` smoke-test.
 - Ambiguity: which master plan is "active" when multiple orchestrators open. Resolution: read `active_task_id` from runtime-state → resolve `parent_plan` from `ia/projects/{id}.md` front-matter (already present in Stage 3.1 T3.1.2 schema).

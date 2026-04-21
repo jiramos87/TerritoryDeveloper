@@ -160,7 +160,7 @@ Exit code reference: [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.
 
 Use when batch CLI unavailable or need `debug_context_bundle`/screenshots.
 
-1. Write `{SCENARIO_ID}` (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored). Path-based loads use `-testScenarioPath` instead.
+1. Write `{SCENARIO_ID}` (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored) for Unity `TestModeCommandLineBootstrap`. Prefer `mcp__territory-ia__runtime_state` `action: write`, `patch: { "queued_test_scenario_id": "{SCENARIO_ID}" }` so harnesses see the queue without relying on flat files alone. Path-based loads use `-testScenarioPath` instead.
 2. Step 0 must be green (Postgres + `agent_bridge_job`).
 3. `unity_bridge_command` `kind: enter_play_mode`, `timeout_ms: 40000` → poll `get_play_mode_status` until `play_mode_ready` + `ready: true` + grid dims when `has_grid_dimensions`.
 4. `unity_bridge_command` `kind: debug_context_bundle`, `timeout_ms: 40000`, `seed_cell: "x,y"` per `{SEED_CELLS}` — store `response.bundle` (`anomaly_count`, `anomalies`, `cell_export`, screenshot, console).
@@ -222,6 +222,10 @@ Emit single Verification block per [`docs/agent-led-verification-policy.md`](../
 ```
 
 `path_b` values: `"ran"` (Path B executed), `"skipped_batched"` (`--skip-path-b` flag set by chain caller — batched at stage end), `"skipped_not_required"` (decision matrix skipped, not batched).
+
+**Runtime state:** After Step 3 when `npm run verify:local` runs, persist its exit code — prefer `mcp__territory-ia__runtime_state` with `action: write`, `patch: { "last_verify_exit_code": <exit> }`. Fallback (no MCP): `REPO_ROOT=$(pwd) bash tools/scripts/runtime-state-write.sh` with a one-line temp JSON file containing the patch object (uses `ia/state/.runtime-state.lock`).
+
+After Step 0 records bridge preflight, persist — prefer `runtime_state` `patch: { "last_bridge_preflight_exit_code": <exit> }`; same bash fallback as above.
 
 `escalation` present only when `verdict == "escalated"`. `gap_reason` enum — MUST be one of:
 

@@ -1,7 +1,7 @@
 ---
 name: stage-closeout-planner
 description: Use to bulk-author §Stage Closeout Plan tuple list under Stage block in master plan when all Task rows reach Done post-verify. Triggers — "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan", "bulk close stage", "stage end closeout". Runs ONCE per Stage — replaces per-Task closeout-apply. Writes unified tuple list (shared migration ops deduped + N per-Task archive/delete/status-flip/id-purge/digest ops). Pair-head only — hands off to plan-applier Sonnet pair-tail Mode stage-closeout. Does NOT edit spec files, archive yaml, delete specs, flip status, regenerate BACKLOG, or run validators.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__runtime_state
 model: opus
 reasoning_effort: high
 ---
@@ -13,6 +13,8 @@ reasoning_effort: high
 @ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.
 
 Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
 

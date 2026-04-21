@@ -10,10 +10,10 @@
 #   - branch:        current git branch (or detached HEAD info)
 #   - tree:          dirty file count from `git status --porcelain`
 #   - verify:local:  exit code of the most recent `npm run verify:local`,
-#                    read from .claude/last-verify-exit-code if present.
+#                    read from ia/state/runtime-state.json if present.
 #                    Falls back to "unknown".
 #   - bridge:        last db:bridge-preflight exit, read from
-#                    .claude/last-bridge-preflight-exit-code if present.
+#                    ia/state/runtime-state.json if present.
 #                    Falls back to "not run".
 #
 # Failure mode: this hook is advisory. It must never block a session start.
@@ -29,17 +29,22 @@ branch="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEA
 dirty_count="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 [ -z "$dirty_count" ] && dirty_count="?"
 
-verify_marker="$REPO_ROOT/.claude/last-verify-exit-code"
-if [ -f "$verify_marker" ]; then
-  last_verify="$(tr -d '\n[:space:]' < "$verify_marker")"
+rs_json="$REPO_ROOT/ia/state/runtime-state.json"
+if [ -f "$rs_json" ] && command -v jq >/dev/null 2>&1; then
+  lv="$(jq -r '.last_verify_exit_code // empty' "$rs_json" 2>/dev/null)"
+  if [ -z "$lv" ] || [ "$lv" = "null" ] || [ "$lv" = "-1" ]; then
+    last_verify="unknown"
+  else
+    last_verify="$lv"
+  fi
+  lb="$(jq -r '.last_bridge_preflight_exit_code // empty' "$rs_json" 2>/dev/null)"
+  if [ -z "$lb" ] || [ "$lb" = "null" ] || [ "$lb" = "-1" ]; then
+    last_bridge="not run"
+  else
+    last_bridge="$lb"
+  fi
 else
   last_verify="unknown"
-fi
-
-bridge_marker="$REPO_ROOT/.claude/last-bridge-preflight-exit-code"
-if [ -f "$bridge_marker" ]; then
-  last_bridge="$(tr -d '\n[:space:]' < "$bridge_marker")"
-else
   last_bridge="not run"
 fi
 

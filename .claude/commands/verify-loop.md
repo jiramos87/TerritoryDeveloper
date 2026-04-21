@@ -1,6 +1,6 @@
 ---
 description: Run the full integrated closed-loop verification on current branch — bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → extended JSON Verification block + caveman summary. Dispatches the `verify-loop` subagent. Distinct from `/verify` (lightweight single-pass `verifier`, no fix iteration).
-argument-hint: "[ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N] [--tooling-only]"
+argument-hint: "[ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N] [--tooling-only] [--force-model {model}]"
 ---
 
 # /verify-loop — dispatch `verify-loop` subagent
@@ -25,7 +25,7 @@ If `$ARGUMENTS` contains a leading ISSUE_ID (`BUG-` / `FEAT-` / `TECH-` / `ART-`
 
 ## Subagent prompt (forward verbatim)
 
-Forward via Agent tool with `subagent_type: "verify-loop"`:
+Forward via Agent tool with `subagent_type: "verify-loop"` (when `--force-model {model}` present in `$ARGUMENTS`: extract `{model}` (valid: `sonnet`, `opus`, `haiku`) and pass `model: "{model}"`):
 
 > Follow `caveman:caveman` for the markdown summary after the JSON Verification block header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON, exempt from caveman), MCP `unity_bridge_command` payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -45,6 +45,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"`:
 > - `SCENARIO_ID` — kebab-case id under `tools/fixtures/scenarios/`; default `reference-flat-32x32`.
 > - `SEED_CELLS` — 1–3 `"x,y"` for Path B `debug_context_bundle`; infer from spec §7b if omitted.
 > - `MAX_ITERATIONS` — default 2.
+> - `FORCE_MODEL` — optional model override. When present as `--force-model {model}` in `$ARGUMENTS` (valid: `sonnet`, `opus`, `haiku`): already applied via Agent tool `model:` param at dispatch time; included here for documentation only.
 > - `TOOLING_ONLY` — flag (default false). When present as `--tooling-only` in `$ARGUMENTS`: apply skill §"Pre-matrix mode gate" — assert no `Assets|Packages|ProjectSettings` dirty paths, bypass Decision matrix, run Step 2 + Step 7 only. Use only for pure tooling surface refactors (MCP TypeScript / web Next.js / skills-agents-commands markdown / docs / scripts). Never on mixed diffs.
 >
 > ## Execution sequence (IF `--tooling-only` → pre-matrix bypass; ELSE decision matrix gates each step)
@@ -56,7 +57,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"`:
 > 3. **Step 2 — Node CI-parity** — `npm run validate:all`. Stop on first failure.
 > 4. **Step 3 — Full local chain** (pre-PR / pre-stage-close only) — `npm run verify:local` (alias `verify:post-implementation`). Skip during per-phase iteration (too slow).
 > 5. **Step 4a — Path A test-mode batch** — `npm run unity:testmode-batch -- --quit-editor-first --scenario-id {SCENARIO_ID}`.
-> 6. **Step 4b — Path B IDE bridge hybrid** — queue `.queued-test-scenario-id` → `enter_play_mode` (`timeout_ms: 40000`) → `debug_context_bundle` per `{SEED_CELLS}` → `exit_play_mode`.
+> 6. **Step 4b — Path B IDE bridge hybrid** — queue scenario (`tools/fixtures/scenarios/.queued-test-scenario-id` + `runtime_state` `queued_test_scenario_id`) → `enter_play_mode` (`timeout_ms: 40000`) → `debug_context_bundle` per `{SEED_CELLS}` → `exit_play_mode`.
 > 7. **Step 5 — Bridge evidence** (optional) — `capture_screenshot include_ui: true`, `get_console_logs`, `export_agent_context` per spec §7b / §8 ask.
 > 8. **Step 6 — Fix iteration** (bounded `MAX_ITERATIONS`) — minimal code edit → Step 1 → Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas. Cap exhausted → escalate.
 > 9. **Step 7 — Verification block + handoff** — emit single block (JSON header + caveman summary).

@@ -27,6 +27,7 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 | MCP server code / tool registration | `tools/mcp-ia-server/src/index.ts` + MCP `list_*` schemas. The `.md` catalog (`docs/mcp-ia-server.md`) can lag — treat as human overview only. |
 | Ephemeral project state (active blockers, sprint decisions) | `MEMORY.md` (root — on-demand only) |
 | Backlog / issues | `mcp__territory-ia__backlog_issue` (by id) |
+| Last verify:local, bridge-preflight, queued scenario | `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json` if present). Active task / stage (when written): per-harness active-session JSON in `.claude/` / `.cursor/`. |
 
 ## 4. Claude-native surface
 

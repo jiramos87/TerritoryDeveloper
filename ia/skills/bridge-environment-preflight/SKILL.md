@@ -54,6 +54,10 @@ Not required: Unity Editor (bridge commands check separately).
 
 Script imports `resolveIaDatabaseUrl` — same two-layer resolution as territory-ia MCP: `DATABASE_URL` env wins, else `config/postgres-dev.json` when not in CI. Unity Editor may use EditorPrefs or repo-root `.env.local` — NOT read by this script. Preflight passes but bridge times out → likely URL mismatch between MCP and Unity. See [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md).
 
+## Persist exit code (runtime state)
+
+After a successful `npm run db:bridge-preflight` (or any terminal exit you report), prefer **`mcp__territory-ia__runtime_state`** with `action: write`, `patch: { "last_bridge_preflight_exit_code": <exit_code> }`. Fallback (no MCP): `REPO_ROOT=$(pwd) bash tools/scripts/runtime-state-write.sh` with a temp JSON file `{"last_bridge_preflight_exit_code":N}` (uses `ia/state/.runtime-state.lock`).
+
 ## Seed prompt
 
 ```markdown

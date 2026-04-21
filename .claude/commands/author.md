@@ -1,15 +1,19 @@
 ---
 description: Bulk-author §Plan Author section (4 sub-sections) across all N Task specs of one Stage in a single Opus pass. Dispatches the `plan-author` subagent. Stage-scoped bulk non-pair — absorbs retired spec-enrich canonical-term fold.
-argument-hint: "{master-plan-path} Stage {X.Y}   |   --task {ISSUE_ID}"
+argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]   |   --task {ISSUE_ID} [--force-model {model}]"
 ---
 
 # /author — dispatch `plan-author` subagent
 
 Use `plan-author` subagent (`.claude/agents/plan-author.md`) to bulk-author `§Plan Author` sections for `$ARGUMENTS`.
 
+## Argument parsing
+
+Split `$ARGUMENTS`. If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset.
+
 ## Subagent prompt (forward verbatim)
 
-Forward via Agent tool with `subagent_type: "plan-author"`:
+Forward via Agent tool with `subagent_type: "plan-author"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >

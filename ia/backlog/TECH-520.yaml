@@ -8,8 +8,9 @@ spec: "ia/projects/TECH-520.md"
 files: []
 notes: |
   Author tools/scripts/claude-hooks/context-pack.sh. On PreCompact event reads
-  .claude/runtime-state.json (active_task_id, active_stage, queued_test_scenario_id,
-  last_verify_exit_code, last_bridge_preflight_exit_code); parses active master plan
+  ia/state/runtime-state.json (queued_test_scenario_id, last_verify_exit_code,
+  last_bridge_preflight_exit_code) plus .claude/active-session.json or .cursor/active-session.json
+  (active_task_id, active_stage); parses active master plan
   Stage block via narrow regex; emits .claude/context-pack.md per extensions doc §2
   schema (Active focus + Relevant surfaces + Loaded context sources). Wire PreCompact
   hook entry into .claude/settings.json. Gitignore pack. No claude -p subprocess.
@@ -17,7 +18,7 @@ notes: |
   SCHEMA MISMATCH marker on malformed runtime-state.json.
 acceptance: |
   - [ ] tools/scripts/claude-hooks/context-pack.sh exists, executable, shebang bash, set -uo pipefail.
-  - [ ] Reads .claude/runtime-state.json + active Stage block; emits §2-schema sections.
+  - [ ] Reads ia/state/runtime-state.json + active-session JSON + active Stage block; emits §2-schema sections.
   - [ ] PreCompact hook entry wired in .claude/settings.json.
   - [ ] Pack gitignored (.claude/context-pack.md in .gitignore).
   - [ ] Graceful partial failure: exit 0 on malformed inputs; SCHEMA MISMATCH marker present.

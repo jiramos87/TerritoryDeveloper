@@ -1,6 +1,6 @@
 ---
 description: Stage-scoped bulk `§Audit` author — dispatches `opus-auditor` subagent to synthesize N `§Audit` paragraphs across all Tasks of one Stage in a single Opus pass. Fires ONCE per Stage after verify-loop + code-review complete (all Task §Findings non-empty). Feeds `stage-closeout-planner` downstream. Phase 0 R11 gate blocks if any Task §Findings empty.
-argument-hint: "{master-plan-path} Stage {X.Y}"
+argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
 # /audit — dispatch `opus-auditor` subagent (Stage-scoped bulk)
@@ -9,11 +9,11 @@ Use `opus-auditor` subagent (`.claude/agents/opus-auditor.md`) to bulk-author `�
 
 ## Argument parsing
 
-Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `7.2` or `Stage 7.2`). Missing either → print usage + abort.
+Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `7.2` or `Stage 7.2`). Missing either → print usage + abort. If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset.
 
 ## Subagent prompt (forward verbatim)
 
-Forward via Agent tool with `subagent_type: "opus-auditor"`:
+Forward via Agent tool with `subagent_type: "opus-auditor"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
