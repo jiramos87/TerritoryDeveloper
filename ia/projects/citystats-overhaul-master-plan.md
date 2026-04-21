@@ -1,6 +1,6 @@
 # CityStats Overhaul — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.1
+> **Status:** In Progress — Step 1 / Stage 2
 >
 > **Scope:** Replace the `CityStats` god-class with a typed read-model facade (`CityStatsFacade`) backed by a columnar ring-buffer store (`ColumnarStatsStore`), migrate all consumers to the facade, add region/country scale rollup facades, and surface city metrics in a new `web/app/stats` route. Overlays, per-cell drill-down, history persistence in save files, and region/country Postgres tables are out of scope (see Deferred section of `docs/citystats-overhaul-exploration.md`).
 >
@@ -33,7 +33,7 @@
 
 ### Stage 1 — Facade + Store Infra (additive, no consumer migration) / Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
 
-**Status:** In Progress (tasks filed: TECH-303, TECH-304)
+**Status:** Final (TECH-303, TECH-304 archived 2026-04-21)
 
 **Objectives:** Define the typed contract and ring-buffer store before any MonoBehaviour is touched. No Unity scene changes.
 
@@ -48,8 +48,12 @@
 
 | Task | Issue | Status | Intent |
 | --- | --- | --- | --- |
-| T1.1 | **TECH-303** | Draft | Add `IStatsReadModel.cs`: scalar `GetScalar(StatKey) → float`, series `GetSeries(StatKey, int windowTicks) → float[]`, row enumeration `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. Add `StatKey.cs` enum: one entry per current `CityStats` public field (population, money, happiness, forestCoverage, unemployment, etc.) + stubs `RegionPopulation`, `CountryPopulation`. No runtime wiring. |
-| T1.2 | **TECH-304** | Draft | Add `ColumnarStatsStore.cs` (plain C# class, no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey` (capacity settable via `int RingCapacity`, default 256); `Publish(StatKey, float delta)` accumulates running value; `Set(StatKey, float value)` overwrites; `FlushToSeries()` writes net running value to ring and resets accumulator; `GetScalar(StatKey) → float` returns running value; `GetSeries(StatKey, int windowTicks) → float[]` returns last N ring entries. |
+| T1.1 | **TECH-303** | Done (archived) | Add `IStatsReadModel.cs`: scalar `GetScalar(StatKey) → float`, series `GetSeries(StatKey, int windowTicks) → float[]`, row enumeration `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. Add `StatKey.cs` enum: one entry per current `CityStats` public field (population, money, happiness, forestCoverage, unemployment, etc.) + stubs `RegionPopulation`, `CountryPopulation`. No runtime wiring. |
+| T1.2 | **TECH-304** | Done (archived) | Add `ColumnarStatsStore.cs` (plain C# class, no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey` (capacity settable via `int RingCapacity`, default 256); `Publish(StatKey, float delta)` accumulates running value; `Set(StatKey, float value)` overwrites; `FlushToSeries()` writes net running value to ring and resets accumulator; `GetScalar(StatKey) → float` returns running value; `GetSeries(StatKey, int windowTicks) → float[]` returns last N ring entries. |
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — TECH-303 + TECH-304 §Plan Author aligned w/ Stage 1 block, Exit criteria, invariants #3/#4/#6. Spec frontmatter `parent_plan` + `task_key` mirror orchestrator T1.1 / T1.2. No fix tuples. Downstream: `/ship-stage ia/projects/citystats-overhaul-master-plan.md 1`.
 
 ---
 

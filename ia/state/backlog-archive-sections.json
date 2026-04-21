@@ -1666,17 +1666,29 @@
     {
       "header": "## Completed (moved from BACKLOG.md, 2026-04-20)",
       "items": [
-        {
-          "type": "prose",
-          "lines": [
-            ""
-          ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-524",
-          "trailing_blanks": 1
-        },
+    {
+      "type": "prose",
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "type": "issue",
+      "id": "TECH-304",
+      "checklist_line": "- [x] **TECH-304** \u2014 Add `ColumnarStatsStore` \u2014 ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)",
+      "trailing_blanks": 1
+    },
+    {
+      "type": "issue",
+      "id": "TECH-303",
+      "checklist_line": "- [x] **TECH-303** \u2014 Add `IStatsReadModel` + `StatKey` \u2014 typed read-model contract (Stage 1.1 T1.1.1) (2026-04-21)",
+      "trailing_blanks": 1
+    },
+    {
+      "type": "issue",
+      "id": "TECH-524",
+      "trailing_blanks": 1
+    },
         {
           "type": "issue",
           "id": "TECH-525",

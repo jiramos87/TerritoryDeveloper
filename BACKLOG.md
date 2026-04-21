@@ -435,25 +435,9 @@ Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-
 
 ## CityStats overhaul program
 
-Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D — execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. Stage 1.1 opened 2026-04-17 — 2 tasks filed below (TECH-303..TECH-304: `IStatsReadModel` + `StatKey` typed contract + `ColumnarStatsStore` ring-buffer store).
+Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D — execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. **Stage 1.1 (Core types) closed 2026-04-21** — TECH-303, TECH-304 archived. Next: `/stage-file ia/projects/citystats-overhaul-master-plan.md` Stage 2 (CityStatsFacade + tick bracket; tasks still `_pending_`).
 
-### Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
-
-- [ ] **TECH-303** — Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1)
-  - Type: infrastructure / read-model types
-  - Files: `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs` (new), `Assets/Scripts/Managers/GameManagers/StatKey.cs` (new); references `Assets/Scripts/Managers/UnitManagers/ICityStats.cs`, `Assets/Scripts/Managers/GameManagers/CityStats.cs`
-  - Spec: `ia/projects/TECH-303.md`
-  - Notes: Define typed pull contract + metric id enum before any MonoBehaviour work. `IStatsReadModel.cs` declares `GetScalar(StatKey) → float`, `GetSeries(StatKey, int windowTicks) → float[]`, `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. `StatKey.cs` enum covers every current `CityStats` public field + stubs `RegionPopulation` / `CountryPopulation`. No runtime wiring. Tier D execution gate — filing now for IA alignment per full-game-mvp Bucket 8.
-  - Acceptance: Both files compile; `StatKey` enum entry per current `CityStats` public field + Region/Country stubs; no runtime references yet; `npm run unity:compile-check` clean; `npm run validate:all` clean.
-  - Depends on: none
-
-- [ ] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)
-  - Type: infrastructure / read-model store
-  - Files: `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new); references `Assets/Scripts/Managers/GameManagers/StatKey.cs`, `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs`
-  - Spec: `ia/projects/TECH-304.md`
-  - Notes: Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256. `Publish(StatKey, float delta)` accumulates, `Set(StatKey, float)` overwrites, `FlushToSeries()` writes running value to ring + resets accumulator, `GetScalar` / `GetSeries` readers. Composed into `CityStatsFacade` (Stage 1.2) + region/country facades (Stage 3.1). Invariants #4 #6 respected.
-  - Acceptance: `ColumnarStatsStore.cs` compiles; ring capacity default 256; methods match Stage 1.1 Exit; no Unity dependency; `npm run unity:compile-check` clean; `npm run validate:all` clean.
-  - Depends on: TECH-303 (StatKey enum)
+### Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore) — **closed**
 
 ## City-Sim Depth program
 

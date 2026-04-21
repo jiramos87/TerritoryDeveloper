@@ -2,9 +2,9 @@ id: TECH-304
 type: infrastructure / read-model store
 title: "Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)"
 priority: medium
-status: open
+status: closed
 section: Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
-spec: ia/projects/TECH-304.md
+spec: ""
 files:
   - Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs
   - Assets/Scripts/Managers/GameManagers/StatKey.cs
@@ -19,6 +19,7 @@ depends_on_raw: TECH-303 (StatKey enum)
 related:
   - TECH-303
 created: 2026-04-17
+closed: "2026-04-21"
 raw_markdown: |
   - [ ] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)
     - Type: infrastructure / read-model store
@@ -27,3 +28,5 @@ raw_markdown: |
     - Notes: Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256. `Publish(StatKey, float delta)` accumulates, `Set(StatKey, float)` overwrites, `FlushToSeries()` writes running value to ring + resets accumulator, `GetScalar` / `GetSeries` readers. Composed into `CityStatsFacade` (Stage 1.2) + region/country facades (Stage 3.1). Invariants #4 #6 respected.
     - Acceptance: `ColumnarStatsStore.cs` compiles; ring capacity default 256; methods match Stage 1.1 Exit; no Unity dependency; `npm run unity:compile-check` clean; `npm run validate:all` clean.
     - Depends on: TECH-303 (StatKey enum)
+parent_plan: "ia/projects/citystats-overhaul-master-plan.md"
+task_key: "T1.2"

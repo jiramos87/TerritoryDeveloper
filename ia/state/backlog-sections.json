@@ -463,23 +463,11 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D \u2014 execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. Stage 1.1 opened 2026-04-17 \u2014 2 tasks filed below (TECH-303..TECH-304: `IStatsReadModel` + `StatKey` typed contract + `ColumnarStatsStore` ring-buffer store).",
+            "Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D \u2014 execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. **Stage 1.1 (Core types) closed 2026-04-21** \u2014 TECH-303, TECH-304 archived. Next: `/stage-file ia/projects/citystats-overhaul-master-plan.md` Stage 2 (CityStatsFacade + tick bracket; tasks still `_pending_`).",
             "",
-            "### Stage 1.1 \u2014 Core types (IStatsReadModel, StatKey, ColumnarStatsStore)",
+            "### Stage 1.1 \u2014 Core types (IStatsReadModel, StatKey, ColumnarStatsStore) \u2014 **closed**",
             ""
           ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-303",
-          "checklist_line": "- [ ] **TECH-303** \u2014 Add `IStatsReadModel` + `StatKey` \u2014 typed read-model contract (Stage 1.1 T1.1.1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-304",
-          "checklist_line": "- [ ] **TECH-304** \u2014 Add `ColumnarStatsStore` \u2014 ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2)",
-          "trailing_blanks": 1
         }
       ]
     },

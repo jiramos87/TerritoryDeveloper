@@ -2,9 +2,9 @@ id: TECH-303
 type: infrastructure / read-model types
 title: "Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1)"
 priority: medium
-status: open
+status: closed
 section: Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
-spec: ia/projects/TECH-303.md
+spec: ""
 files:
   - Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs
   - Assets/Scripts/Managers/GameManagers/StatKey.cs
@@ -18,6 +18,7 @@ depends_on: []
 depends_on_raw: none
 related: []
 created: 2026-04-17
+closed: "2026-04-21"
 raw_markdown: |
   - [ ] **TECH-303** — Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1)
     - Type: infrastructure / read-model types
@@ -26,3 +27,5 @@ raw_markdown: |
     - Notes: Define typed pull contract + metric id enum before any MonoBehaviour work. `IStatsReadModel.cs` declares `GetScalar(StatKey) → float`, `GetSeries(StatKey, int windowTicks) → float[]`, `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. `StatKey.cs` enum covers every current `CityStats` public field + stubs `RegionPopulation` / `CountryPopulation`. No runtime wiring. Tier D execution gate — filing now for IA alignment per full-game-mvp Bucket 8.
     - Acceptance: Both files compile; `StatKey` enum entry per current `CityStats` public field + Region/Country stubs; no runtime references yet; `npm run unity:compile-check` clean; `npm run validate:all` clean.
     - Depends on: none
+parent_plan: "ia/projects/citystats-overhaul-master-plan.md"
+task_key: "T1.1"

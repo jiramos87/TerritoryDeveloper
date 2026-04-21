@@ -1661,6 +1661,22 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-20)
 
+- [x] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)
+  - Type: infrastructure / read-model store
+  - Files: `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new); references `Assets/Scripts/Managers/GameManagers/StatKey.cs`, `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs`
+  - Spec: `ia/projects/TECH-304.md`
+  - Notes: Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256. `Publish(StatKey, float delta)` accumulates, `Set(StatKey, float)` overwrites, `FlushToSeries()` writes running value to ring + resets accumulator, `GetScalar` / `GetSeries` readers. Composed into `CityStatsFacade` (Stage 1.2) + region/country facades (Stage 3.1). Invariants #4 #6 respected.
+  - Acceptance: `ColumnarStatsStore.cs` compiles; ring capacity default 256; methods match Stage 1.1 Exit; no Unity dependency; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+  - Depends on: TECH-303 (StatKey enum)
+
+- [x] **TECH-303** — Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1) (2026-04-21)
+  - Type: infrastructure / read-model types
+  - Files: `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs` (new), `Assets/Scripts/Managers/GameManagers/StatKey.cs` (new); references `Assets/Scripts/Managers/UnitManagers/ICityStats.cs`, `Assets/Scripts/Managers/GameManagers/CityStats.cs`
+  - Spec: `ia/projects/TECH-303.md`
+  - Notes: Define typed pull contract + metric id enum before any MonoBehaviour work. `IStatsReadModel.cs` declares `GetScalar(StatKey) → float`, `GetSeries(StatKey, int windowTicks) → float[]`, `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. `StatKey.cs` enum covers every current `CityStats` public field + stubs `RegionPopulation` / `CountryPopulation`. No runtime wiring. Tier D execution gate — filing now for IA alignment per full-game-mvp Bucket 8.
+  - Acceptance: Both files compile; `StatKey` enum entry per current `CityStats` public field + Region/Country stubs; no runtime references yet; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+  - Depends on: none
+
 - [x] **TECH-524** — Extract IA-core + bridge servers (2026-04-20)
   - Type: tech (MCP server / B1 server split)
   - Files: `tools/mcp-ia-server/src/index-ia.ts` (new), `tools/mcp-ia-server/src/index-bridge.ts` (new), `tools/mcp-ia-server/src/server-registrations.ts` (new), `tools/mcp-ia-server/src/index.ts`
