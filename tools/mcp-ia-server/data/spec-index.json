@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-20T21:44:06.276Z",
+  "last_generated": "2026-04-21T18:15:40.264Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -491,13 +491,13 @@
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 283
+          "line_start": 285
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 310
+          "line_start": 312
         }
       ]
     },

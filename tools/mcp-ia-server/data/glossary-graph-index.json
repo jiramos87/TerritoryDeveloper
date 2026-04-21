@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-20T21:44:06.405Z",
+  "last_generated": "2026-04-21T18:15:40.679Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -4440,6 +4440,16 @@
       ],
       "cited_in": []
     },
+    "runtime-state": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
     "Save data": {
       "related": [
         "Cell",
@@ -4987,6 +4997,16 @@
           "section_title": "4.6 PlanProgressCard"
         }
       ]
+    },
+    "Stage tail (open / incomplete)": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "Chain-level stage digest",
+        "City metrics history"
+      ],
+      "cited_in": []
     },
     "Street (ordinary road)": {
       "related": [
