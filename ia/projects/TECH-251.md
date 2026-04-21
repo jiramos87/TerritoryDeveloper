@@ -69,7 +69,7 @@ Surfaces touched:
 - `ia/skills/master-plan-new/SKILL.md` — prompt retune
 - `ia/skills/stage-decompose/SKILL.md` — prompt retune
 - `ia/skills/project-spec-implement/SKILL.md` — prompt retune + 4.7 opt-in flag
-- `ia/skills/project-spec-kickoff/SKILL.md` — prompt retune candidate
+- `ia/skills/plan-author/SKILL.md` — prompt retune candidate (replaces retired `project-spec-kickoff` per M6 collapse)
 - `ia/skills/verify-loop/SKILL.md` — `/ultrareview` terminal step
 - `ia/skills/close-dev-loop/SKILL.md` — prompt retune candidate
 - `ia/skills/ide-bridge-evidence/SKILL.md` — 2576px vision evidence

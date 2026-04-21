@@ -106,29 +106,22 @@
 
 ---
 
-### Stage 4 — Phase-N-tail Wiring (13 Lifecycle Skills) / Spec Lifecycle + Rollout-Family Skills (7 skills)
+### Stage 4 — Phase-N-tail Wiring (spec-lifecycle + rollout-family)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Obsoleted by M6 collapse (2026-04-21)
 
-**Objectives:** Wire the 4 spec-lifecycle skills (`project-spec-kickoff`, `project-spec-implement`, `project-stage-close`, `project-spec-close`) and 3 rollout-family skills (`release-rollout`, `release-rollout-enumerate`, `release-rollout-track`) with identical Phase-N-tail stanzas.
+> **Scope-obsolete note.** Of the 7 skills originally in this Stage, the 4 spec-lifecycle targets (`project-spec-kickoff`, `project-stage-close`, `project-spec-close`) are **retired** (tombstones under `ia/skills/_retired/`; replacement Stage 1×N + Stage-scoped closeout pair already carry Phase-N-tail via Stages 2.1 + 2.2 wiring). The remaining live work is Phase-N-tail wiring for the 3 rollout-family skills (`release-rollout`, `release-rollout-enumerate`, `release-rollout-track`) — re-scope into a follow-up Stage if still desired. No tasks filed here. Preserved for audit trail.
 
-**Exit:**
+**Original objectives (superseded):** Wire the 4 spec-lifecycle skills (`project-spec-kickoff`, `project-spec-implement`, `project-stage-close`, `project-spec-close`) and 3 rollout-family skills with identical Phase-N-tail stanzas.
 
-- All 7 SKILL.md files carry Phase-N-tail stanza + `## Changelog` section.
-- All 13 skills total (Stages 2.1 + 2.2) confirmed consistent via final validation pass.
-- `release-rollout-skill-bug-log/SKILL.md` untouched.
-- `npm run validate:all` exits 0.
-- Phase 1 — Spec lifecycle + rollout-family wiring.
-- Phase 2 — Full 13-skill validation + AGENTS.md wiring-complete entry.
+**Tasks (cancelled):**
 
-**Tasks:**
-
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T4.1 | Wire spec-lifecycle Phase-N-tail | _pending_ | _pending_ | Edit `ia/skills/project-spec-kickoff/SKILL.md`, `project-spec-implement/SKILL.md`, `project-stage-close/SKILL.md`, `project-spec-close/SKILL.md`: append Phase-N-tail stanza verbatim; inject §Changelog if absent. `project-spec-implement` + `project-spec-close` carry caveman preambles — preserve unchanged. |
-| T4.2 | Wire rollout-family Phase-N-tail | _pending_ | _pending_ | Edit `ia/skills/release-rollout/SKILL.md`, `release-rollout-enumerate/SKILL.md`, `release-rollout-track/SKILL.md`: append Phase-N-tail stanza verbatim; inject §Changelog if absent. Do NOT touch `release-rollout-skill-bug-log/SKILL.md` — sibling producer with separate `source: user-logged` channel; modifying it would break dual-producer alignment. |
-| T4.3 | Full 13-skill consistency + validate | _pending_ | _pending_ | Cross-read all 13 SKILL.md files; verify stanza text matches template on every file; `schema_version` stamps all match; `## Changelog` present on all 13. Run `npm run validate:all`; exit 0 required before closing stage. |
-| T4.4 | AGENTS.md wiring-complete entry | _pending_ | _pending_ | Append wiring-complete entry to `AGENTS.md` skill-train section: list the 13 wired skills with their SKILL.md paths; date-stamp; note `release-rollout-skill-bug-log` is sibling producer (not wired, unchanged). Signals to future readers that `skill-train` consumer is ready to aggregate. |
+| Task | Name | Status | Reason |
+| --- | --- | --- | --- |
+| T4.1 | Wire spec-lifecycle Phase-N-tail | Cancelled (obsolete) | 3 of 4 targets retired; surviving `project-spec-implement` wiring folded into Stage 2.1 / 2.2. |
+| T4.2 | Wire rollout-family Phase-N-tail | Cancelled (re-scope) | Re-file as standalone Stage if still needed; no spec-lifecycle dependency remains. |
+| T4.3 | Full 13-skill consistency + validate | Cancelled (N/A) | 13-skill count presupposed the 4 retired spec-lifecycle skills. |
+| T4.4 | AGENTS.md wiring-complete entry | Cancelled (N/A) | Predicated on T4.1–T4.3. |
 
 ---
 

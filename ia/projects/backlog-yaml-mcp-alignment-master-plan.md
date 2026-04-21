@@ -372,28 +372,27 @@
 | T12.3 | Patch `project-new` body — single-issue v2 seed | _pending_ | _pending_ | Edit `ia/skills/project-new/SKILL.md` — require `parent_plan` + `task_key` inputs when caller passes plan context; allow both empty for single-issue outside-plan flows. Document derivation rules + fallback. Bash fallback kept for MCP-unavailable case. |
 | T12.4 | Update `project-new` input interview | _pending_ | _pending_ | Edit `ia/skills/project-new/SKILL.md` interview step — add `parent_plan?` + `task_key?` to the structured-input block; skill prompts when missing + plan context detected via `--plan` arg. Document in slash-command dispatcher (`.claude/commands/project-new.md`) if input schema exposed there. |
 
-### Stage 13 — Skill patches + plan consumers / Read skills (kickoff / implement / closeout)
+### Stage 13 — Skill patches + plan consumers / Read skills (author / implement)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (tasks _pending_ — not yet filed; T13.1 + T13.3 cancelled by M6 collapse)
 
-**Objectives:** Teach the read skills to consume `surfaces` / `mcp_slices` / `skill_hints` from yaml before round-tripping `router_for_task` / `spec_section`; enforce the append-only `surfaces` guardrail in kickoff; swap plan-row-flip grep for `master_plan_locate` in close skill. All optional — fallbacks (router / grep) kept for MCP-unavailable + field-absent cases.
+**Objectives:** Teach the surviving live read skills to consume `surfaces` / `mcp_slices` / `skill_hints` from yaml before round-tripping `router_for_task` / `spec_section`. Append-only `surfaces` guardrail fires inside `plan-author` (absorbs the retired `project-spec-kickoff` surface-reading path per M6 collapse). Plan-row-flip is now owned by the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode stage-closeout), already MCP-driven; no separate patch needed. All optional — fallbacks (router / grep) kept for MCP-unavailable + field-absent cases.
 
 **Exit:**
 
-- `ia/skills/project-spec-kickoff/SKILL.md` — reads `surfaces` / `mcp_slices` / `skill_hints` first; append-only guardrail on `surfaces` in §4 / §5.2 regions (never reorder / rewrite / drop). Guardrail documented + enforced via validator warning.
+- `ia/skills/plan-author/SKILL.md` — reads `surfaces` / `mcp_slices` / `skill_hints` FIRST during Stage-bulk §Plan Author authoring; append-only guardrail on `surfaces` in §4 / §5.2 regions (never reorder / rewrite / drop). Guardrail documented + enforced via validator warning.
 - `ia/skills/project-spec-implement/SKILL.md` — `skill_hints` consumed as routing hint (advisory, not mandate); doc notes hint NOT enforced on drift (N5 policy).
-- `ia/skills/project-spec-close/SKILL.md` — plan row flip step uses `master_plan_locate` first; bash grep fallback kept with "if MCP unavailable" note.
 - `parent_plan_validate` gains a `surfaces`-guardrail check — warns on reorder / rename / drop relative to last-seen state (tracked via content hash in yaml + new optional field `surfaces_hash` OR just warns on any diff vs plan's Relevant-surfaces block).
-- Phase 1 — kickoff + implement patches.
-- Phase 2 — close skill + surfaces-guardrail validator extension.
+- Phase 1 — plan-author + implement patches.
+- Phase 2 — surfaces-guardrail validator extension + fixtures.
 
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T13.1 | Patch kickoff — read surfaces / mcp_slices / skill_hints | _pending_ | _pending_ | Edit `ia/skills/project-spec-kickoff/SKILL.md` spec-section-load step — read yaml `surfaces` / `mcp_slices` / `skill_hints` FIRST; only round-trip `router_for_task` when `router_domain` or `mcp_slices` absent. Document append-only rule for `surfaces` edits (§4 / §5.2 regions only). |
+| T13.1 | ~~Patch kickoff~~ | Cancelled (obsolete) | Cancelled | Retired surface `project-spec-kickoff`. Functionality absorbed into `plan-author` Stage-bulk authoring — surface-reading patch should attach to `plan-author/SKILL.md` spec-section-load step instead. File as replacement task if still desired. |
 | T13.2 | Patch implementer — skill_hints as advisory | _pending_ | _pending_ | Edit `ia/skills/project-spec-implement/SKILL.md` routing step — consume `skill_hints` from yaml as advisory suggestion; document fallback to `router_for_task` when empty; explicitly non-binding per N5 (hint, not mandate). |
-| T13.3 | Patch close skill — MCP plan-row flip | _pending_ | _pending_ | Edit `ia/skills/project-spec-close/SKILL.md` plan-row-flip step — call `master_plan_locate {issue_id}` first to get `row_line` + `plan`; edit the plan at that line; bash-grep fallback kept in the "if MCP unavailable" clause. Preserves user-memory `feedback_closeout_master_plan.md` intent. |
+| T13.3 | ~~Patch close skill — MCP plan-row flip~~ | Cancelled (obsolete) | Cancelled | Retired surface `project-spec-close`. Plan-row-flip now owned by `plan-applier` Mode stage-closeout (Stage-scoped `/closeout` pair), already calls `master_plan_locate` — patch not needed. |
 | T13.4 | Surfaces-guardrail validator check | _pending_ | _pending_ | Extend `tools/mcp-ia-server/src/parser/parent-plan-validator.ts` (from T3.3.1) with a `surfaces` append-only check — warn when yaml `surfaces` list reorders / drops / renames entries relative to the last-written order (computed by storing a `surfaces_hash` in yaml OR diff-parsing the yaml history — pick during implementation). Warning, not error. |
 | T13.5 | Fixture test for surfaces guardrail | _pending_ | _pending_ | Add fixtures under `tools/scripts/test-fixtures/surfaces-guardrail/` — `append-ok/`, `reorder-warn/`, `drop-warn/`, `rename-warn/`. Extend `parent-plan-validate.test.ts` to assert warning outputs per fixture. Matches exploration Example 4. |
 
@@ -407,7 +406,7 @@
 
 - `/ship` dispatcher (`.claude/commands/ship.md` or equivalent) — next-task-lookup step calls `master_plan_next_pending {plan, stage?}` first; plan-scan fallback kept.
 - `ia/skills/release-rollout-enumerate/SKILL.md` — per-row data pull reads yaml `parent_plan` + `task_key` + `stage` directly via `backlog_list parent_plan=`; inference fallback noted.
-- Rehearsal fixture proves one full `/project-new → /kickoff → /implement → /closeout` cycle on schema-v2 yaml with MCP happy path + no scan fallbacks triggered.
+- Rehearsal fixture proves one full `/project-new → /author → /implement → /closeout` cycle on schema-v2 yaml with MCP happy path + no scan fallbacks triggered (post-M6 flow; `/kickoff` retired, replaced by `/author` (`plan-author` Stage 1×N)).
 - User-memory file `feedback_ship_next_task_lookup.md` references updated (if applicable) — or note added in skill that MCP path supersedes the memory's scan guidance.
 - Phase 1 — `/ship` dispatcher wiring.
 - Phase 2 — `release-rollout-enumerate` + end-to-end rehearsal.
@@ -419,7 +418,7 @@
 | T14.1 | Verify `/ship` dispatcher surface | _pending_ | _pending_ | Glob for `/ship` dispatcher path — likely `.claude/commands/ship.md` OR a `/ship`-named skill under `ia/skills/`. Read + document the canonical surface in the spec. Do NOT guess; `stage-file` kicked this off via user-memory hint but dispatcher wiring may live in a different surface. |
 | T14.2 | Wire `master_plan_next_pending` into `/ship` | _pending_ | _pending_ | Patch the dispatcher from T5.3.1 — next-task-lookup step calls `master_plan_next_pending {plan, stage?}` first; scan fallback kept with "if MCP unavailable" clause. Caveman body prose. |
 | T14.3 | Wire `release-rollout-enumerate` to yaml direct | _pending_ | _pending_ | Edit `ia/skills/release-rollout-enumerate/SKILL.md` per-row-enumeration step — read `parent_plan` + `task_key` + `stage` directly from yaml via `backlog_list parent_plan=` (extended filter from Stage 4.2); inference-from-plan-scan fallback kept as "if yaml missing fields" clause. |
-| T14.4 | End-to-end rehearsal fixture + note | _pending_ | _pending_ | Document in `docs/parent-plan-locator-fields-exploration.md` (append section) OR in this master plan's Acceptance section: one full `/project-new → /kickoff → /implement → /closeout` cycle on fixture yaml with all MCP happy-path calls succeeding + zero fallback triggers. Rehearsal = manual; documentation = written evidence, not automated test. |
+| T14.4 | End-to-end rehearsal fixture + note | _pending_ | _pending_ | Document in `docs/parent-plan-locator-fields-exploration.md` (append section) OR in this master plan's Acceptance section: one full `/project-new → /author → /implement → /closeout` cycle on fixture yaml with all MCP happy-path calls succeeding + zero fallback triggers (post-M6 flow). Rehearsal = manual; documentation = written evidence, not automated test. |
 
 ---
 
