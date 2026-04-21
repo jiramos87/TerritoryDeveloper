@@ -160,6 +160,19 @@ export default async function DashboardPage() {
 
 When `ia/projects/` contains no `*master-plan*.md` files, `loadAllPlans()` returns `[]`. This diverges intentionally from the CLI (`tools/progress-tracker/index.mjs` exits non-zero on empty); RSC callers should render an empty state rather than error.
 
+### Diagnostics — dashboard display diverges from master-plan markdown
+
+Recipe for wrong stage status / ghost tasks / off counts. Read linearly; do NOT spawn `Explore` — the files below are the whole surface.
+
+1. **Data source + env gate:** read `web/lib/plan-loader.ts` (data source) + `web/lib/plan-parser.ts` (parse + `deriveHierarchyStatus`).
+2. **Parser dump:** run `cd web && npm run plan-parser:verify` to dump per-plan / per-stage `{status, done/total}` straight from the parser.
+3. **URL filters:** check the URL for `?status=` / `?plan=` filters — `filterPlans` in `web/app/dashboard/page.tsx` drops tasks per-status before render.
+4. **Regression tests:** adversarial markdown lives under `web/lib/__tests__/plan-parser.test.ts` — add a failing case before fixing.
+
+### Live dashboard freshness
+
+`/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate). Push to deployed branch → visible within ~5 min without redeploy. Manual `npm run deploy:web` only when instant refresh or code change required.
+
 ## Portal
 
 App-infra surface — Neon DB provider wired at Step 5 (TECH-252 / TECH-254). Architecture-only tier: no migrations, no live queries, no auth flow yet.
