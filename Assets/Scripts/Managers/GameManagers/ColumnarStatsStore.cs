@@ -42,6 +42,14 @@ namespace Territory.Economy
             _running[(int)key] = value;
         }
 
+        /// <summary>
+        /// Clears running accumulators without writing to the ring (tick-start / recovery; see <c>CityStatsFacade.BeginTick</c>).
+        /// </summary>
+        public void ResetAccumulators()
+        {
+            Array.Clear(_running, 0, _keyCount);
+        }
+
         /// <summary>Current running value (pre-flush) for <paramref name="key"/>.</summary>
         public float GetScalar(StatKey key)
         {
