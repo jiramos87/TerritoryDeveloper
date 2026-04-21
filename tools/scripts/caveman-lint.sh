@@ -2,6 +2,7 @@
 # caveman-lint.sh — warn-only soft-lint for caveman authoring surfaces.
 # Detects article/hedging/sentence-length drift in prose sections of
 # skill/agent/command/project-spec files. Exits 0 always.
+# smoke-test: PASS 2026-04-21
 #
 # Input: reads stdin when piped; falls back to `git diff HEAD` when stdin is TTY.
 # Scope: ia/skills/*/SKILL.md  .claude/agents/*.md  .claude/commands/*.md  ia/projects/*.md
