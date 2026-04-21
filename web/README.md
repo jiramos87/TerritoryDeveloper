@@ -538,6 +538,14 @@ This downloads Chromium + system deps (~200 MB). Reason it is opt-in and NOT wir
 
 `npm run validate:e2e` at repo root composes `npm --prefix web run test:e2e:ci`. Does NOT run as part of `validate:all` (Chromium opt-in boundary).
 
+## Next.js quirks (version-specific gotchas)
+
+- `usePathname()` from `next/navigation` returns non-nullable `string` in Next 16 (was `string | null` in 13/14) — remove null guards.
+- App Router RSC forbids `ssr: false` inside `next/dynamic()`. Wrap in a thin `'use client'` component; import the wrapper from RSC.
+- `serverExternalPackages` accepts npm package names only — workspace-relative files outside `node_modules/` need `outputFileTracingIncludes` route→glob mapping instead.
+- **Project convention**: proxy file is `web/proxy.ts` + `export function proxy` (not `middleware.ts`) — dev server fails "Cannot find the middleware module" if named the old way.
+- Proxy-based lazy neon export: `new Proxy({} as NeonQueryFunction, { get, apply })` wrapping `getSql()` defers `DATABASE_URL` read until first invocation — safe through `next build` with no env set.
+
 ## Links
 
 - Repo root `CLAUDE.md` §Web — workspace pointer + dev commands + caveman boundary

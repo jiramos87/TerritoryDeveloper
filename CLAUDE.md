@@ -3,6 +3,7 @@
 @ia/rules/invariants.md
 @ia/rules/terminology-consistency.md
 @ia/rules/agent-output-caveman.md
+@ia/rules/agent-principles.md
 
 ## 1. What this repo is
 
@@ -22,7 +23,7 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 | Web backend logic / Next.js App Router | `ia/rules/web-backend-logic.md` |
 | Verification block format | `docs/agent-led-verification-policy.md` |
 | MCP server code / tool registration | `tools/mcp-ia-server/src/index.ts` + MCP `list_*` schemas. The `.md` catalog (`docs/mcp-ia-server.md`) can lag — treat as human overview only. |
-| Architecture-decision context | `MEMORY.md` (root) |
+| Ephemeral project state (active blockers, sprint decisions) | `MEMORY.md` (root — on-demand only) |
 | Backlog / issues | `mcp__territory-ia__backlog_issue` (by id) |
 
 ## 4. Claude-native surface

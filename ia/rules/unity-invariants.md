@@ -31,6 +31,16 @@ alwaysApply: false
 - IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
 - IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
 
+# Bridge + tooling patterns
+
+- `git mv` a `.cs` file: also `git mv` the adjacent `.meta` separately — preserves GUID, keeps prefab/scene refs intact.
+- `Bridge get_compilation_status`: reliable compile gate when Unity Editor holds project lock and batchmode is blocked.
+- `AgentBridgeCommandRunner.Mutations.cs` pattern: bridge kind expansions go in sibling partial class — isolates mutation dispatch, keeps diff reviewable. Reuse for future bridge additions.
+- `JsonUtility.FromJson` + `value_kind` string + flat `string value` = polymorphic DTOs without Newtonsoft. DTOs must be `[Serializable]` + public fields; interpret at runtime in the switch.
+- `AppDomain.CurrentDomain.GetAssemblies()` resolves component type names across Territory + third-party assemblies. Return `type_ambiguous:<name>;candidates=<csv>` on multi-hit, not silent first-match.
+- `GameNotificationManager` omits from EditMode fixtures — `Awake` NPEs on null `notificationPanel`. Assert return value + state unchanged instead of queue-count delta.
+- Manager-init race: gate consumer's tick block (not whole `Update`) on producer's `IsInitialized` — keeps UI responsive during load while blocking sim-state reads.
+
 # How loaded
 
 Not `@`-imported. Fetched on-demand:
