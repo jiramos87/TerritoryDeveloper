@@ -22,6 +22,8 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 | Web workspace (`web/`) | `web/README.md` — dev commands, routes, dashboard diagnostic recipe, caveman-exception boundary |
 | Web backend logic / Next.js App Router | `ia/rules/web-backend-logic.md` |
 | Verification block format | `docs/agent-led-verification-policy.md` |
+| Branch author self-review (review prose shape) | `ia/rules/agent-code-review-self.md` |
+| Claude Code Task tool + paste-ready handoffs | `docs/agent-lifecycle.md` §10 |
 | MCP server code / tool registration | `tools/mcp-ia-server/src/index.ts` + MCP `list_*` schemas. The `.md` catalog (`docs/mcp-ia-server.md`) can lag — treat as human overview only. |
 | Ephemeral project state (active blockers, sprint decisions) | `MEMORY.md` (root — on-demand only) |
 | Backlog / issues | `mcp__territory-ia__backlog_issue` (by id) |

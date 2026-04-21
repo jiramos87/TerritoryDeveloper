@@ -21,7 +21,7 @@ In-branch work (`feature/lifecycle-collapse-cognitive-split`) added `--tooling-o
 2. Template (`ia/templates/project-spec-template.md`) + verify-loop skill (`ia/skills/verify-loop/SKILL.md`) + backlog parser (`tools/mcp-ia-server/src/parser/*.ts`) are three hottest files through Stages 5–7; adding frontmatter mid-refactor = merge churn.
 3. Post-refactor landing is clean additive — Stage/Task schema settled, template rewritten, parser stable.
 
-Memory anchor: `~/.claude-personal/projects/.../memory/feedback_refactor_tooling_only_verify.md` (rule + why + how-to-apply).
+Repo anchor: `ia/skills/verify-loop/SKILL.md` (`--tooling-only`) + `ia/projects/lifecycle-refactor-master-plan.md` (orchestrator guardrails).
 
 ## Design Expansion — verify_mode spec frontmatter
 

@@ -23,7 +23,7 @@ phases:
 
 # Opus-code-review skill (per-Task pair-head)
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Self-review on your own branch** (compact English, IA scan order) — [`agent-code-review-self.md`](../../rules/agent-code-review-self.md).
 
 **Role:** Opus pair-head per-Task. Runs after `implement` + `verify-loop` complete for the Task. Reads the implementation diff against the spec + invariants + glossary; emits one of three verdicts. Critical verdict triggers sibling pair-tail **`plan-applier`** Mode code-fix.
 

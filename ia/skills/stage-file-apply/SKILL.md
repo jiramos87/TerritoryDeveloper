@@ -200,7 +200,7 @@ next=stage-file-chain-continue
 
 Applier DOES NOT emit user-facing `/ship-stage` or `/ship` handoff. Control returns to `/stage-file` dispatcher (Step 3 plan-author → Step 4 plan-review → Step 5 STOP). Dispatcher emits final next-step handoff AFTER plan-review PASS.
 
-**Hard rule (F6 re-fold 2026-04-20):** `/stage-file` chain tail = planner → applier → plan-author → plan-review (→ plan-applier Mode plan-fix on critical, cap=1) → STOP. Applier hands control back to dispatcher; final next-step emitted post plan-review PASS. **N≥2** → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}` (runs implement + verify + code-review + audit + closeout — plan-author + plan-review already done upstream in `/stage-file`). **N=1** → `/ship {ISSUE_ID}` (single-task path — ship-stage is multi-task only). NEVER `/ship {ISSUE_ID}` for multi-task Stages. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery only. Anchor: `feedback_stage_file_next_step.md` user memory; `.claude/commands/stage-file.md` Step 3–Step 5.
+**Hard rule (F6 re-fold 2026-04-20):** `/stage-file` chain tail = planner → applier → plan-author → plan-review (→ plan-applier Mode plan-fix on critical, cap=1) → STOP. Applier hands control back to dispatcher; final next-step emitted post plan-review PASS. **N≥2** → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}` (runs implement + verify + code-review + audit + closeout — plan-author + plan-review already done upstream in `/stage-file`). **N=1** → `/ship {ISSUE_ID}` (single-task path — ship-stage is multi-task only). NEVER `/ship {ISSUE_ID}` for multi-task Stages. Standalone `/author` + `/plan-review` remain valid for ad-hoc / recovery only. Anchor: `docs/agent-lifecycle.md` (post-`/stage-file` handoff) + `.claude/commands/stage-file.md` Step 3–Step 5.
 
 ---
 
@@ -299,7 +299,7 @@ Pre-fix `/stage-file` dispatcher invoked `plan-author` after applier tail but di
 M8 dry-run sessions emitted `/ship TECH-485` after filing 4 tasks in Stage 8. Multi-task Stage requires `/ship-stage {plan} {STAGE_ID}`. Wrong suggestion = user has to catch every multi-task Stage; silent miss = single-issue flow runs on Stage-scope work → per-Task Path B thrash + duplicate closeout attempts.
 
 **Root cause:**
-Subagent exit hand-off prose did not branch on filed-task count. User-memory `feedback_stage_file_next_step.md` flagged the rule; implementation lagged in skill body + applier subagent prose.
+Subagent exit hand-off prose did not branch on filed-task count. Post-filing handoff rule (`docs/agent-lifecycle.md`) flagged the gap; implementation lagged in skill body + applier subagent prose.
 
 **Fix:**
 Phase 6 + Output line N-conditional handoff: N≥2 → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; N=1 → `/ship {ISSUE_ID}`. Hard rule paragraph added: NEVER `/ship` for N≥2, NEVER `/author` standalone. Subagent body `.claude/agents/stage-file-applier.md` aligned same.

@@ -168,7 +168,7 @@ $ echo $?
 
 ### §Test Blueprint
 
-`npm run validate:all` coverage (tooling-only per MEMORY `feedback_refactor_tooling_only_verify`):
+`npm run validate:all` coverage (tooling-only per `ia/skills/verify-loop/SKILL.md` `--tooling-only` + `ia/projects/lifecycle-refactor-master-plan.md`):
 - Chain now includes `validate:telemetry-schema` as terminal step.
 - `validate:frontmatter` — TECH-511 spec frontmatter intact.
 - `validate:dead-project-specs` — TECH-511 yaml + row filed; passes.

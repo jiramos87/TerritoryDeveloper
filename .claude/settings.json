@@ -1,6 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "enabledMcpjsonServers": ["territory-ia"],
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "vercel@claude-plugins-official": false
+  },
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": [

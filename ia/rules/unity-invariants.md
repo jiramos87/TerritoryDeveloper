@@ -33,6 +33,7 @@ alwaysApply: false
 
 # Bridge + tooling patterns
 
+- **Edit-mode bridge first:** before treating a Unity Editor change as human-only, try **`unity_bridge_command`** mutation kinds declared in [`AgentBridgeCommandRunner.Mutations.cs`](../../Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs) (e.g. `create_gameobject`, `delete_gameobject`, `find_gameobject`, `set_gameobject_parent`, `set_gameobject_active`, `set_transform`, `attach_component`, `remove_component`, `assign_serialized_field`, `instantiate_prefab`, `apply_prefab_overrides`, `save_scene`, `open_scene`, `new_scene`, `create_scriptable_object`, `modify_scriptable_object`, `refresh_asset_database`, `move_asset`, `delete_asset`, `execute_menu_item`). Escalate only when the needed kind is absent — see verification policy `gap_reason: bridge_kind_missing`.
 - `git mv` a `.cs` file: also `git mv` the adjacent `.meta` separately — preserves GUID, keeps prefab/scene refs intact.
 - `Bridge get_compilation_status`: reliable compile gate when Unity Editor holds project lock and batchmode is blocked.
 - `AgentBridgeCommandRunner.Mutations.cs` pattern: bridge kind expansions go in sibling partial class — isolates mutation dispatch, keeps diff reviewable. Reuse for future bridge additions.

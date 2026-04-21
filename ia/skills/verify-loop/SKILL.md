@@ -311,7 +311,7 @@ Emit Verification block per docs/agent-led-verification-policy.md (JSON header +
 M8 dry-run verify surfaced 10× `BlipGoldenFixtureTests` + 3× `TreasuryFloorClampServiceTests` failures during lifecycle-refactor Stage 8 ship. Agent correctly attributed Blip failures → `ia/projects/blip-master-plan.md`; Zone-S failures → `ia/projects/zone-s-economy-master-plan.md`; escalated per T8.4 bounded-fix rule instead of attempting remediation.
 
 **Root cause:**
-Positive signal — issue-attribution discipline (anchor `feedback_issue_attribution_verify.md` user memory) held under load. Bounded-fix escalation rule fired correctly.
+Positive signal — issue-attribution discipline (`ia/rules/agent-tooling-hints.md` — verify id open in `BACKLOG.md` before naming owner) held under load. Bounded-fix escalation rule fired correctly.
 
 **Fix:**
 none required.

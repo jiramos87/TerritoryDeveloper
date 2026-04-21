@@ -302,7 +302,7 @@ Sibling file `ia/skills/stage-file/train-proposal-2026-04-18.md`:
 +- IF MASTER_PLAN_PATH missing → STOP. Stage name alone ambiguous.
 ```
 
-**Rationale:** three self-reports in six weeks cite same ambiguity; matches user-memory pattern `feedback_stage_file_path_arg.md`.
+**Rationale:** three self-reports in six weeks cite same ambiguity; matches `/stage-file` path+stage argument contract (`.claude/commands/stage-file.md`).
 
 **Applied:** pending
 ```

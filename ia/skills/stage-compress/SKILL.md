@@ -66,6 +66,8 @@ For each `Draft` task in the target Stage, evaluate against the sizing heuristic
 
 Group adjacent same-phase "too small" tasks sharing a domain into **candidate merge groups**. Cross-phase merge = hard boundary violation (never allowed).
 
+**Compress shortcut:** When every task in a merge group is ≤1 file and none have left `Draft` for implementation (none kicked off), merging **N → 1** after user confirmation is the expected outcome for that group.
+
 ---
 
 ## Step 3 — Propose merge plan

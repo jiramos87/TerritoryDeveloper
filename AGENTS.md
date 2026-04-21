@@ -120,6 +120,7 @@ New/changed concepts → update glossary **and** relevant spec section. No termi
 
 **Adding issues.**
 
+- Before filing a follow-up **TECH-** (or same-scope) issue: grep `BACKLOG.md` open sections for matching scope — avoid duplicates.
 - **Id (per prefix):** run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Never scan BACKLOG.md or BACKLOG-ARCHIVE.md for max id; never hand-edit the counter. No reuse — archived records keep ids for traceability.
 - Write `ia/backlog/{ISSUE_ID}.yaml` with: id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown.
 - Run `bash tools/scripts/materialize-backlog.sh` after yaml write to regenerate BACKLOG.md.

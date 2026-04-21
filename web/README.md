@@ -9,6 +9,10 @@ Next.js 14+ App Router workspace inside the Territory Developer monorepo. Serves
 - **Hosting:** Vercel free tier. Build root `web/`. Deploy on push to `main`. Production URL: `https://web-nine-wheat-35.vercel.app`.
 - **MCP server** (`territory-ia`): stdio dev-only — NOT consumed by this web app.
 
+## Claude Code — Vercel plugin
+
+Repo `.claude/settings.json` disables **vercel@claude-plugins-official** so Claude Code sessions do not inject the full Vercel marketplace skill list (large context cost). **Caveman** remains enabled in the same block. Re-enable locally, deploy commands, official links, and a skill-topic index: [`web/docs/claude-vercel-plugin.md`](docs/claude-vercel-plugin.md).
+
 ## Stack
 
 | Layer | Tool |

@@ -29,7 +29,7 @@ Read docs/lifecycle-refactor-stage-8-dry-run-findings.md end-to-end. Execute the
   Row 2 — Hard rule: N≥2 filed tasks → /ship-stage (never /ship).
     - Patch ia/skills/stage-file-apply/SKILL.md + ia/skills/project-new-apply/SKILL.md tail suggestions.
     - Patch subagent bodies stage-file-applier, project-new-applier.
-    - Cross-reference feedback_stage_file_next_step.md already in user memory (rule already exists, implementation lags).
+    - Cross-reference `docs/agent-lifecycle.md` post-filing handoffs (rule already exists, implementation lags).
     - Success = stage-file-apply final output on multi-task stage suggests exactly `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}`.
 
   Row 3 — Auto-chain boundary decision (F1 resolution).
@@ -90,8 +90,8 @@ Both sessions suggested `/ship TECH-485` (single-issue). Stage 8 has 4 filed tas
 
 User-memory entries already flag this class:
 
-- `feedback_stage_file_next_step.md` — after `/stage-file` or `/project-new`, suggest `/ship`, never `/kickoff`.
-- `feedback_ship_next_task_lookup.md` — after `/ship`, find next task via master-plan scan, not numeric adjacency.
+- `docs/agent-lifecycle.md` — after `/stage-file` or `/project-new`, suggest `/ship-stage` or `/ship`, never `/kickoff` alone.
+- `.claude/commands/ship.md` (Next-handoff resolver) — after `/ship`, find next task via master-plan scan, not numeric adjacency.
 
 Gap: neither memory hard-rules the **N≥2 → `/ship-stage`** branch. Subagent exit hand-offs don't check filed-task count on the owning Stage before emitting suggestion.
 
@@ -208,7 +208,7 @@ Verify surfaced 10× `BlipGoldenFixtureTests` + 3× `TreasuryFloorClampServiceTe
 - Attributed Zone-S failures → `ia/projects/zone-s-economy-master-plan.md`.
 - Escalated per T8.4 bounded-fix rule instead of attempting remediation.
 
-Matches user-memory `feedback_issue_attribution_verify.md`. No action.
+Matches `ia/rules/agent-tooling-hints.md` (failure ownership / open BACKLOG check). No action.
 
 ### F11 — Migration-JSON polling via ad-hoc `python3 -c` is awkward
 
@@ -274,4 +274,4 @@ Confirmed Stage 9 exists at `ia/projects/lifecycle-refactor-master-plan.md:493` 
 - `ia/skills/plan-author/SKILL.md` §Phase 4 — canonical-term fold (F3 target).
 - `ia/skills/plan-review/SKILL.md` — Sonnet-downgrade candidate (F5).
 - `docs/lifecycle-opus-planner-sonnet-executor-exploration.md` §Motivating observations #2 — original plan-review rationale.
-- User-memory: `feedback_stage_file_next_step.md`, `feedback_ship_next_task_lookup.md` — prior signal on F2.
+- Prior signal on F2: `docs/agent-lifecycle.md` (post-filing handoffs) + `.claude/commands/ship.md` next-handoff resolver.

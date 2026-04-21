@@ -1,6 +1,6 @@
 ---
 status: active
-last_updated: 2026-04-20
+last_updated: 2026-04-21
 ---
 
 # Agent lifecycle — canonical flow
@@ -36,10 +36,12 @@ exploration         orchestration         /stage-file chain                     
 Single-task path (standalone issue, no master plan, N=1):
 
 ```
-/project-new ──→ /author (N=1) ──→ /implement ──→ /verify-loop ──→ /code-review ──→ /audit (N=1) ──→ /closeout (N=1)
-   (project-new-planner
-    → project-new-applier pair)
+/project-new ──→ /author --task ──→ /ship {ISSUE_ID}
+   (project-new-planner       (plan-author        (readiness → /implement → /verify-loop →
+    → project-new-applier)     Stage 1×1)          /code-review (fix loop cap=1) → /audit N=1)
 ```
+
+`/ship` chains the per-Task seams implement + verify + code-review + audit in one invocation for one issue id — a single-task analogue of `/ship-stage`. Closeout is NOT part of `/ship` (retired per-Task `closeout` agent; `/closeout` is Stage-scoped only post-T7.14). Standalone single-issue specs remain open until a later Stage close batches them, or are archived manually.
 
 Stage-end batching: `/author`, `/audit`, `/closeout` all fire ONCE per Stage (bulk Stage 1×N — single Opus pass over shared MCP bundle). Per-Task seams = `/implement`, `/verify-loop`, `/code-review`. No `spec-enrich`, no `spec-kickoff`, no `project-stage-close`, no per-Task `project-spec-close` — all absorbed into the Stage-scoped bulk pair shape (T7.11 — `/author`; T7.12 — `subagent-progress-emit`; T7.13 — `stage-closeout-plan`; T7.14 — `stage-closeout-apply`). Tombstones live under `ia/skills/_retired/` + `.claude/agents/_retired/` + `.claude/commands/_retired/`. Post-F6 re-fold (2026-04-20): `/stage-file` now ALSO runs `plan-author` + `plan-reviewer` (→ `plan-fix-applier` on critical, re-entry cap=1) as final internal phases after the applier tail — 3-command stage entry (`/stage-file` + `/author` + `/plan-review`) collapses to 1 command (`/stage-file`). `/author` + `/plan-review` remain valid as standalone surfaces for recovery + ad-hoc fixes.
 
@@ -78,6 +80,7 @@ Stage-scoped chain driver (handoff from `/stage-file` after `plan-author` + `pla
 | 10 | Audit (Stage 1×N) | `/audit {PATH} {STAGE}` | `opus-auditor.md` | `opus-audit/` | Opus | N `§Audit` paragraphs (consistent voice; R11 §Findings gate enforced) | `/closeout {PATH} {STAGE}` |
 | 11 | Close stage (pair seam #4 tail, Stage 1×N) | `/closeout {PATH} {STAGE}` | `stage-closeout-planner.md` → `stage-closeout-applier.md` | `stage-closeout-plan/` → `stage-closeout-apply/` | Opus → Sonnet | Shared migration ops deduped + N per-Task archive / delete / status-flip / id-purge / digest_emit ops; Stage header → Final; rolled up to Step / Plan per R3–R5 | next Stage (R2) or plan-level Final (R5) |
 | C | Stage-scoped chain ship | `/ship-stage {PATH} {STAGE}` | `ship-stage.md` | `ship-stage/` | Opus | Phase 1.5 §Plan Author readiness gate + Pass 1 `/implement` + compile gate per Task + Pass 2 Stage-end verify-loop (full Path A+B) + `/code-review` + `/audit` + `/closeout`; chain-level stage digest (`ia/skills/ship-stage/SKILL.md`) | next filed Stage or plan-level Final |
+| C1 | Single-Task chain ship | `/ship {ISSUE_ID}` | *(no dedicated agent — dispatches canonical per-Task subagents)* `spec-implementer.md` → `verify-loop.md` → `opus-code-reviewer.md` (→ `plan-applier.md` Mode code-fix on critical, cap=1) → `opus-auditor.md` (N=1 degenerate) | *(no dedicated skill — composes)* `project-spec-implement/` → `verify-loop/` → `opus-code-review/` (→ `plan-applier/` Mode code-fix) → `opus-audit/` (N=1) | Opus orchestrator | Stage 1 §Plan Author readiness gate + `/implement` + full `/verify-loop` (A+B) + `/code-review` + `/audit` for one `ISSUE_ID`; PASSED summary + next-handoff resolver (`/ship-stage` / `/ship` / `/stage-decompose`). No closeout — spec archived later by owning Stage's `/ship-stage` Step 3.5 or `/closeout`. | Standalone issue: terminal (commit + later Stage close); master-plan-owned: same next-handoff resolver as `/ship-stage` |
 | U | Rollout umbrella | `/release-rollout {UMBRELLA_SPEC} {ROW_SLUG}` | `release-rollout.md` | `release-rollout/` (+ `-enumerate`, `-track`, `-skill-bug-log` helpers) | Opus | Tracker cell flipped + ticket + Change log row + next-row recommendation | Dispatches into seams 1 / 2 / 2a / 2b / 3 per target cell |
 | R | Retrospective (skill training) | `/skill-train {SKILL_NAME}` | `skill-train.md` | `skill-train/` | Opus | `ia/skills/{SKILL_NAME}/train-proposal-{YYYY-MM-DD}.md` — unified-diff patch proposal | — (retrospective only — no auto-apply) |
 | P | Progress emit (preamble) | *(none)* | *(all agents, `@`-load)* | `subagent-progress-emit/` | — | `⟦PROGRESS⟧ {skill} {phase_i}/{phase_N} — {phase_name}` stderr lines | Host harness consumes for real-time progress UI |
@@ -138,6 +141,7 @@ Orchestrator exists, new exploration / extensions doc adds Steps?     → /maste
 Orchestrator exists, a skeleton Step needs decomposition?             → /stage-decompose
 Orchestrator exists, a stage is ready to materialize?                 → /stage-file
 Stage filed (N≥2) + plan-author + plan-review complete, ship Stage?   → /ship-stage   (readiness gate + implement + verify + code-review + audit + closeout)
+Single task (N=1) authored, drive end-to-end for one ISSUE_ID?        → /ship {ISSUE_ID}   (readiness gate + implement + verify + code-review + audit; no closeout)
 Stage filed ad-hoc (N=1) or recovery authoring?                       → /author --task {ISSUE_ID} (standalone)
 Authored spec needs drift scan standalone?                            → /plan-review (standalone recovery; chained inside /stage-file by default)
 Spec fully authored, ready to ship code?                              → /implement
@@ -221,3 +225,11 @@ Subagent authoring conventions (Opus vs Sonnet, `reasoning_effort`, caveman dire
 - [`CLAUDE.md`](../CLAUDE.md) — Claude Code host surface (hooks, slash commands, subagents, memory).
 - [`AGENTS.md`](../AGENTS.md) — agent workflow + backlog / issue process.
 - [`ia/skills/README.md`](../ia/skills/README.md) — skill index + conventions.
+
+---
+
+## 10. Claude Code host — Task tool + paste-ready handoffs
+
+**Task updates (Agent tool + Claude Code Tasks):** when a dispatched subagent returns success, the **next** tool call should flip the owning task to **completed** (`TaskUpdate` / equivalent) **before** the user-facing summary. Long pipelines with multiple subagent returns should repeat at each success boundary so context compaction cannot leave work done but the task stuck `in_progress`.
+
+**Handoff lines:** do not emit a “next command” with unresolved placeholders (`{slug}`, `{ISSUE_ID}`, `{path}`, …). Resolve args from the master plan / `BACKLOG.md` / tracker, then emit one paste-ready line. This repo’s slash-command examples often wrap as `claude-personal "/…"` for terminal launch — adjust the launcher prefix to match the developer’s install.

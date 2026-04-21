@@ -155,7 +155,7 @@ After tracker seeded → user resolves disagreements (if any) → `claude-person
 Phase 4 handoff + §Next step emitted bare `/release-rollout {UMBRELLA_SPEC} {row-slug}` template. User pasted → shell failure + placeholder still present.
 
 **Root cause:**
-Authored before the `feedback_exact_command_handoff.md` convention (placeholder resolution + `claude-personal "..."` wrap) was saved.
+Authored before `docs/agent-lifecycle.md` §10 handoff conventions (placeholder resolution + `claude-personal "..."` wrap) were centralized.
 
 **Fix:**
 Phase 4 handoff + §Next step wrapped as `claude-personal "/..."` with explicit "resolve before emit" reminder pointing at tracker's implementation-order matrix.

@@ -142,7 +142,7 @@ Idempotency: overwrite if file exists.
    Then: claude-personal "/ship {ISSUE_ID}"
    ```
 
-   Hard rule: `/author --task` **before** `/ship` (populate §Plan Author); `/ship` does not run plan-author — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `feedback_stage_file_next_step.md` user memory.
+   Hard rule: `/author --task` **before** `/ship` (populate §Plan Author); `/ship` does not run plan-author — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
 
 ---
 

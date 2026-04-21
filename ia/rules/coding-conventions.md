@@ -52,6 +52,11 @@ void Awake() {
 
 Anti-patterns: `AGENTS.md`.
 
+## Static helpers / patch-data types (new types)
+
+- Before adding a new static helper class or patch-data struct: grep the proposed type name in its namespace — duplicate names fail compile (CS0101).
+- If a bare noun collides, suffix `-Stepper`, `-Builder`, or `-Service`.
+
 ## Reference files
 
 - Docs model: `EconomyManager.cs` (XML + regions + headers).

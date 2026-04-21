@@ -162,7 +162,7 @@ bash tools/scripts/agent-telemetry/baseline-collect.sh
 
 ### §Test Blueprint
 
-`npm run validate:all` coverage (tooling-only fast-path per MEMORY `feedback_refactor_tooling_only_verify`):
+`npm run validate:all` coverage (tooling-only fast-path per `ia/skills/verify-loop/SKILL.md` `--tooling-only` + `ia/projects/lifecycle-refactor-master-plan.md`):
 - `validate:frontmatter` — no spec frontmatter touched; passes untouched.
 - `validate:dead-project-specs` — TECH-510 yaml + row exist; passes.
 - `validate:backlog` — BACKLOG row references TECH-510 correctly.

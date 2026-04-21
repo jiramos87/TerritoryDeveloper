@@ -240,7 +240,7 @@ After all tuples applied, run the seam #4 validation gate per contract:
 npm run verify:local
 ```
 
-For tooling-only Tasks (no C# changes): use `npm run validate:all` instead (per `feedback_refactor_tooling_only_verify` memory).
+For tooling-only Tasks (no C# changes): use `npm run validate:all` instead (see `ia/skills/verify-loop/SKILL.md` `--tooling-only` + orchestrator guardrails in `ia/projects/lifecycle-refactor-master-plan.md` when that plan applies).
 
 On clean exit (exit 0): proceed to Phase 5 (success).
 

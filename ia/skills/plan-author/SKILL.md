@@ -43,6 +43,12 @@ Applies even when sub-passes are active (Phase 2 token-split path). Each sub-pas
 
 ---
 
+## Guardrail — spec path accuracy
+
+Before citing `Assets/Scripts/...` paths in §Plan Author output: confirm the symbol still lives there — audit specs often cite stale filenames. Preflight example: `grep -rn "class {T}" Assets/Scripts/`.
+
+---
+
 ## Inputs
 
 | Param | Source | Notes |

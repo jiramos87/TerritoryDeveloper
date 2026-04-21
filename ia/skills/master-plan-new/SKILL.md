@@ -197,7 +197,7 @@ Per stage, author the block shape:
 **Task sizing heuristic:** Each task = one coherent subsystem slice a Sonnet spec-implementer can execute in 3–5 phases with ≤2 `spec_section` context reloads. Use this guide when deciding to merge or split:
 
 - **Correct scope:** 2–5 files forming one algorithm layer — e.g., full AHDSR state machine + envelope math together; oscillator bank across all waveforms; one-pole filter + render loop. Tasks at this size keep `spec_section` reloads to ≤2 and produce meaningful per-phase deltas.
-- **Too small (merge):** single file, single function, single constant, single struct with no logic. Merge with an adjacent same-domain task in the same phase. Rationale: each BACKLOG task generates 5 orchestration steps (project-new → kickoff → implement → verify-loop → closeout); single-function tasks multiply that overhead without reducing risk.
+- **Too small (merge):** single file, single function, single constant, single struct with no logic. Merge with an adjacent same-domain task in the same phase. Rationale: each BACKLOG task generates 4 per-Task orchestration steps inside `/ship` (implement → verify-loop → code-review → audit) plus the upstream `/stage-file` filing + `/author`; single-function tasks multiply that overhead without reducing risk.
 - **Too large (split):** touches >3 unrelated subsystems or needs >6 phases to implement. Split at the seam between subsystem layers — the natural coupling boundary is the right split point.
 
 Apply this check in Phase 6 (cardinality gate) alongside the ≥2 / ≤6 count rule.

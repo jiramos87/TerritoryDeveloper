@@ -78,8 +78,8 @@ async function main(): Promise<void> {
     await client.callTool({ name: "list_specs", arguments: {} }),
   ) as Array<{ key: string; category: string }>;
   console.log("list_specs count:", all.length);
-  if (all.length !== 24) {
-    throw new Error(`Expected 24 IA documents, got ${all.length}`);
+  if (all.length !== 25) {
+    throw new Error(`Expected 25 IA documents, got ${all.length}`);
   }
 
   const rules = parseJsonFromToolResult(
@@ -88,7 +88,7 @@ async function main(): Promise<void> {
       arguments: { category: "rule" },
     }),
   ) as Array<{ category: string }>;
-  if (rules.length !== 12 || rules.some((r) => r.category !== "rule")) {
+  if (rules.length !== 13 || rules.some((r) => r.category !== "rule")) {
     throw new Error("list_specs category=rule filter failed");
   }
 

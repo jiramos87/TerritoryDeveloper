@@ -190,7 +190,7 @@ Skip recipe entirely if `OPERATION = status`.
 - Do NOT touch other rows' cells when advancing one row.
 - Do NOT commit — user decides when to commit tracker updates.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
-- IF emitting next-row recommendation → wrap as `claude-personal "/release-rollout {UMBRELLA_SPEC} {next-row}"` with ALL placeholders resolved. Auto-memory: `feedback_exact_command_handoff.md`.
+- IF emitting next-row recommendation → wrap as `claude-personal "/release-rollout {UMBRELLA_SPEC} {next-row}"` with ALL placeholders resolved. See `docs/agent-lifecycle.md` §10.
 
 ---
 
@@ -241,7 +241,7 @@ Phase 4 dispatch table + §Next step emitted bare slash commands (e.g. `/release
 Skill authored assuming cold-agent ingest of `/` slash-commands. Actual handoff target = fresh terminal session launched via `claude-personal "..."`. Convention missed at authoring time.
 
 **Fix:**
-Phase 4 table + Phase 4 handoff shape + §Next step + Guardrails all updated to require `claude-personal "/..."` wrap with fully-resolved args. Added Guardrail line citing `feedback_exact_command_handoff.md` auto-memory.
+Phase 4 table + Phase 4 handoff shape + §Next step + Guardrails all updated to require `claude-personal "/..."` wrap with fully-resolved args. Guardrail aligns with `docs/agent-lifecycle.md` §10.
 
 **Rollout row:** all rows (skill-level fix, not row-specific)
 

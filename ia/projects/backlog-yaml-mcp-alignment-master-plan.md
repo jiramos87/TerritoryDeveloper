@@ -400,14 +400,14 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Objectives:** Swap scan-driven next-task + rollout-enumerate paths for direct MCP / yaml reads. `/ship` next-task uses `master_plan_next_pending`. `release-rollout-enumerate` reads yaml `parent_plan` + `task_key` directly instead of inferring from plan scans. Fallbacks kept; user-memory entries (`feedback_ship_next_task_lookup.md`) honored end-to-end.
+**Objectives:** Swap scan-driven next-task + rollout-enumerate paths for direct MCP / yaml reads. `/ship` next-task uses `master_plan_next_pending`. `release-rollout-enumerate` reads yaml `parent_plan` + `task_key` directly instead of inferring from plan scans. Fallbacks kept; next-task behavior stays aligned with `.claude/commands/ship.md` (Next-handoff resolver — master-plan scan, no BACKLOG numeric adjacency).
 
 **Exit:**
 
 - `/ship` dispatcher (`.claude/commands/ship.md` or equivalent) — next-task-lookup step calls `master_plan_next_pending {plan, stage?}` first; plan-scan fallback kept.
 - `ia/skills/release-rollout-enumerate/SKILL.md` — per-row data pull reads yaml `parent_plan` + `task_key` + `stage` directly via `backlog_list parent_plan=`; inference fallback noted.
 - Rehearsal fixture proves one full `/project-new → /author → /implement → /closeout` cycle on schema-v2 yaml with MCP happy path + no scan fallbacks triggered (post-M6 flow; `/kickoff` retired, replaced by `/author` (`plan-author` Stage 1×N)).
-- User-memory file `feedback_ship_next_task_lookup.md` references updated (if applicable) — or note added in skill that MCP path supersedes the memory's scan guidance.
+- Canonical next-task behavior documented in `.claude/commands/ship.md` — or note added in skill that MCP path supersedes scan guidance where applicable.
 - Phase 1 — `/ship` dispatcher wiring.
 - Phase 2 — `release-rollout-enumerate` + end-to-end rehearsal.
 

@@ -22,8 +22,8 @@ Issue specs (`ia/projects/{ISSUE_ID}*.md`), yaml records (`ia/backlog/{id}.yaml`
 
 Consequences for the agentic dev loop:
 
-1. **`/ship` next-task lookup** — scans master plan every invocation (see user memory `feedback_ship_next_task_lookup.md` — "find next task in owning master plan").
-2. **`/closeout` plan-row flip** — greps for issue id in master plans to flip status column (see `feedback_closeout_master_plan.md`).
+1. **`/ship` next-task lookup** — scans master plan every invocation (see `.claude/commands/ship.md` §Next-handoff resolver).
+2. **`/closeout` plan-row flip** — greps for issue id in master plans to flip status column (see `ia/rules/agent-principles.md` — after `/closeout`, flip master plan task row before re-validating).
 3. **Drift risk** — rename a stage or renumber phases and every yaml `title` suffix rots silently; no validator catches it.
 4. **Kickoff / implement context load** — agents round-trip `router_for_task` + `backlog_issue` + scan plan to discover relevant surfaces; could be pre-materialized.
 5. **Rollout tracker helpers** — `release-rollout-enumerate` already infers (plan, stage) tuples; would be a direct yaml read with schema support.
@@ -111,7 +111,7 @@ No yaml schema change, no spec frontmatter change. Just add a regenerated `ia/st
 
 **Approach B — full schema extension + MCP reverse-lookup tools + validator.**
 
-Rationale: the repeat cost of scan-based lookups in `/ship`, `/closeout`, and `release-rollout-enumerate` compounds per issue; the three memory entries (`feedback_ship_next_task_lookup.md`, `feedback_closeout_master_plan.md`, `feedback_stage_file_path_arg.md`) all point at coordinate ambiguity. B is the only approach that closes the loop end-to-end (structured filters + reverse lookup + CI validator). Approach A is a valid MVP if scope needs trimming — can be delivered as Step 1 of B, with MCP tools + validator as Steps 2–3.
+Rationale: the repeat cost of scan-based lookups in `/ship`, `/closeout`, and `release-rollout-enumerate` compounds per issue; coordinate ambiguity shows up in master-plan path args, next-task resolution, and closeout row sync. B is the only approach that closes the loop end-to-end (structured filters + reverse lookup + CI validator). Approach A is a valid MVP if scope needs trimming — can be delivered as Step 1 of B, with MCP tools + validator as Steps 2–3.
 
 ## Open questions
 
