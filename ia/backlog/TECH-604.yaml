@@ -1,0 +1,27 @@
+id: TECH-604
+type: tooling / skill dogfood
+title: "Verify >=1 real design-explore run since Phase-N-tail wiring landed; trigger short invocation if none; document readiness in skill-train/SKILL.md §Changelog"
+priority: medium
+status: open
+section: Stage 6 — Dogfood Cycle (Phase E) / First Retrospective + Meta-Dogfood
+spec: ia/projects/TECH-604.md
+files:
+  - ia/skills/design-explore/SKILL.md
+  - ia/skills/skill-train/SKILL.md
+notes: |
+  Read design-explore/SKILL.md §Changelog for any source: self-report entry added after
+  Stage 3 wiring (TECH-430). If absent, trigger short design-explore invocation on any
+  existing stub doc to accumulate signal. Append dogfood-readiness note to
+  skill-train/SKILL.md §Changelog (source: dogfood-result or source: readiness-note).
+acceptance: |
+  - [ ] design-explore/SKILL.md §Changelog checked for source: self-report entry post-Stage-3.
+  - [ ] If none: short design-explore invocation triggered; §Changelog entry created.
+  - [ ] skill-train/SKILL.md §Changelog carries readiness note documenting outcome.
+depends_on: []
+related:
+  - TECH-605
+created: 2026-04-21
+raw_markdown: |
+  Verify >=1 real design-explore run since Phase-N-tail wiring landed; trigger short invocation if none; document readiness in skill-train/SKILL.md §Changelog
+parent_plan: ia/projects/skill-training-master-plan.md
+task_key: T6.1

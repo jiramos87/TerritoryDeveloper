@@ -1,0 +1,29 @@
+id: TECH-603
+type: infrastructure / simulation tick bracket
+title: "Wire `SimulationManager` tick bracket — `BeginTick` before step 1, `EndTick` in `finally` (Stage 2 T2.2)"
+priority: medium
+status: closed
+completed: "2026-04-21"
+section: Stage 2 — CityStatsFacade + tick bracket
+spec: ia/projects/TECH-603.md
+files:
+  - Assets/Scripts/Managers/GameManagers/SimulationManager.cs
+notes: |
+  `SimulationManager.ProcessSimulationTick`: null-safe `_facade?.BeginTick()` at start of `try` before simulation steps; `_facade?.EndTick()` in existing `finally` before metrics. Bracket flag skips `EndTick` when tick body skipped. Order of steps 1–5 unchanged per `simulation-system` tick contract. Depends on `CityStatsFacade` from **TECH-602**.
+acceptance: |
+  - [x] `[SerializeField] private CityStatsFacade _facade` on `SimulationManager`; null-safe calls.
+  - [x] `_facade?.BeginTick()` before step 1 inside `try`; `_facade?.EndTick()` in `finally` when bracket active.
+  - [x] Steps 1–5 order unchanged (`ia/specs/simulation-system.md` §Tick execution order).
+  - [x] `npm run unity:compile-check` clean.
+depends_on:
+  - TECH-303
+  - TECH-304
+  - TECH-602
+depends_on_raw: TECH-303, TECH-304 (Stage 1); TECH-602 (CityStatsFacade type)
+related:
+  - TECH-602
+created: 2026-04-21
+raw_markdown: |
+  Wire `SimulationManager` tick bracket — `BeginTick` before step 1, `EndTick` in `finally` (Stage 2 T2.2)
+parent_plan: ia/projects/citystats-overhaul-master-plan.md
+task_key: T2.2

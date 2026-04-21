@@ -1,0 +1,29 @@
+id: TECH-602
+type: infrastructure / citystats facade
+title: "Add `CityStatsFacade.cs` — MonoBehaviour implementing `IStatsReadModel`; owns `ColumnarStatsStore`; `BeginTick` / `Publish` / `Set` / `EndTick` + `OnTickEnd`; delegates readers to store (Stage 2 T2.1)"
+priority: medium
+status: closed
+completed: "2026-04-21"
+section: Stage 2 — CityStatsFacade + tick bracket
+spec: ia/projects/TECH-602.md
+files:
+  - Assets/Scripts/Managers/GameManagers/CityStatsFacade.cs
+  - Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs
+notes: |
+  New `GameManagers` MonoBehaviour wired in scene next to legacy `CityStats`. Composes `ColumnarStatsStore` from Stage 1 (`TECH-303`/`TECH-304`). No consumers of `OnTickEnd` yet (Stage 4). Invariant #4: Inspector `[SerializeField]` only, no singleton. Invariant #6: not on `GridManager`.
+acceptance: |
+  - [x] `CityStatsFacade` compiles as `MonoBehaviour` + `IStatsReadModel`; composes `ColumnarStatsStore` in `Awake` (default capacity 256).
+  - [x] `BeginTick` / `Publish` / `Set` / `EndTick` + `GetScalar` / `GetSeries` / `EnumerateRows` match Stage 2 Exit; `OnTickEnd` fires after flush each tick.
+  - [x] Inspector wire only; no singleton; no `FindObjectOfType` hot path (invariant #3).
+  - [x] `npm run unity:compile-check` clean.
+depends_on:
+  - TECH-303
+  - TECH-304
+depends_on_raw: TECH-303, TECH-304 (Stage 1 contract + store)
+related:
+  - TECH-603
+created: 2026-04-21
+raw_markdown: |
+  Add `CityStatsFacade.cs` — MonoBehaviour implementing `IStatsReadModel`; owns `ColumnarStatsStore`; `BeginTick` / `Publish` / `Set` / `EndTick` + `OnTickEnd`; delegates readers to store (Stage 2 T2.1)
+parent_plan: ia/projects/citystats-overhaul-master-plan.md
+task_key: T2.1

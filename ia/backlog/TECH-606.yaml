@@ -1,0 +1,28 @@
+id: TECH-606
+type: tooling / skill dogfood
+title: "If T6.2 outcome weak or partial: identify gap, edit skill-train/SKILL.md Phase 2 or 3, re-run /skill-train design-explore, verify stronger signal, append source: iteration §Changelog entry; if strong: append source: dogfood-result confirming first-run success"
+priority: medium
+status: open
+section: Stage 6 — Dogfood Cycle (Phase E) / First Retrospective + Meta-Dogfood
+spec: ia/projects/TECH-606.md
+files:
+  - ia/skills/skill-train/SKILL.md
+  - ia/skills/design-explore/SKILL.md
+notes: |
+  Conditional on T6.2 classification. Weak/partial -> diagnose gap (threshold? aggregation?
+  diff granularity?); edit skill-train/SKILL.md Phase 2 or 3 body; re-run; judge again.
+  Strong -> skip edits; append confirmation entry only. All changes appended to
+  skill-train/SKILL.md §Changelog as source: iteration or source: dogfood-result.
+acceptance: |
+  - [ ] T6.2 outcome read from design-explore/SKILL.md §Changelog.
+  - [ ] If strong: source: dogfood-result confirmation appended to skill-train/SKILL.md §Changelog.
+  - [ ] If weak/partial: skill-train/SKILL.md Phase 2 or 3 edited; /skill-train design-explore re-run; signal upgraded; source: iteration entries appended per cycle.
+depends_on: []
+related:
+  - TECH-605
+  - TECH-607
+created: 2026-04-21
+raw_markdown: |
+  If T6.2 outcome weak or partial: identify gap, edit skill-train/SKILL.md Phase 2 or 3, re-run /skill-train design-explore, verify stronger signal, append source: iteration §Changelog entry; if strong: append source: dogfood-result confirming first-run success
+parent_plan: ia/projects/skill-training-master-plan.md
+task_key: T6.3
