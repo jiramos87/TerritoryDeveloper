@@ -166,6 +166,10 @@
 | T4.3 | Concurrency test `materialize-concurrent.sh` | **TECH-356** | Draft | Author `tools/scripts/test/materialize-concurrent.sh` — spawn N=8 parallel `materialize-backlog.sh` invocations; after all complete, diff BACKLOG.md + BACKLOG-ARCHIVE.md against a serial baseline regen; fail on any diff. Mirrors `tools/scripts/test/reserve-id-concurrent.sh` structure. |
 | T4.4 | Wire concurrency test into validate chain | **TECH-357** | Draft | Add `validate:materialize-concurrent` script to root `package.json`; chain into `validate:all` OR a new `validate:concurrency` sub-chain (match existing convention). Document in `ARCHITECTURE.md` Local verification table if listed there. |
 
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 4 script-hardening Task specs (TECH-355..357) aligned w/ Stage block + §Plan Author + backlog yaml `parent_plan` / `task_key`. No fix tuples. Downstream: `/ship-stage` Pass 1 per task.
+
 ### Stage 5 — MEDIUM / LOW band (IP6–IP9) / Validator extensions (IP8)
 
 **Status:** Draft — tasks `_pending_`.
@@ -346,6 +350,10 @@
 | T11.2 | Test `backlog_list` locator filters | **TECH-439** | Draft | Extend `tools/mcp-ia-server/tests/tools/backlog-list.test.ts` fixture set to cover schema-v2 records across ≥2 plans + ≥2 stages. Assert: each new filter alone, multi-filter intersection with existing priority/type filters, empty result, scope switch. |
 | T11.3 | Document new tools in `docs/mcp-ia-server.md` | **TECH-440** | Draft | Add catalog entries for `master_plan_locate` (from Stage 4.1), `master_plan_next_pending` (from Stage 4.1), `parent_plan_validate` (from Step 3 Stage 3.3). Append filter-extension note to existing `backlog_list` entry (3 new filters). Preserve catalog ordering + existing entries. |
 | T11.4 | Update `CLAUDE.md` §2 MCP-first ordering | **TECH-441** | Draft | Edit `CLAUDE.md` §2 "MCP first" — append: `master_plan_locate` for issue→plan reverse lookup; `master_plan_next_pending` for `/ship` next-task; note `parent_plan_validate` runs in advisory mode during `validate:all`. Additive edits only — do not rewrite existing ordering. |
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 11 Task specs (TECH-438..441) aligned w/ Stage block + §Plan Author + backlog yaml locator fields. Orchestrator table uses T11.x labels; yaml carries T4.2.x `task_key` — specs mirror yaml for MCP. No fix tuples. Downstream: `/ship-stage` Pass 1 per task.
 
 ---
 

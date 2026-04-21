@@ -42,8 +42,11 @@ npm run build        # production build; exits 0 on success
 Or from repo root using workspace composition:
 
 ```bash
-npm run validate:web   # lint + typecheck + build
+npm run validate:web        # lint + typecheck + unit tests — no `next build` (local validation only)
+npm run validate:web:build  # same + production `next build` (optional pre-push / CI parity)
 ```
+
+Deploy stays **Vercel on push to `main`** or **`npm run deploy:web`** / **`npm run deploy:web:preview`** — `validate:web` does not run deploy or `vercel`.
 
 ## Scripts
 
@@ -54,8 +57,11 @@ npm run validate:web   # lint + typecheck + build
 | `start` | `next start` | Serve production build locally |
 | `lint` | `eslint` | Lint all files |
 | `typecheck` | `tsc --noEmit` | TypeScript strict check (no emit) |
+| `test` | `vitest run` | Unit tests |
 
-Root-level alias: `npm run validate:web` runs lint + typecheck + build via `npm --prefix web` composition.
+Root-level: `npm run validate:web` runs lint + typecheck + test via `npm --prefix web` (no `next build`). Use `npm run validate:web:build` when you need a full production build locally.
+
+Repo-wide `npm run validate:all` calls `validate:web:conditional` (`tools/scripts/validate-web-conditional.sh`): full `validate:web` when **unstaged or staged** files under `web/` exist (not branch vs `main` — avoids false triggers when multiple agents share a branch). Also when CI or `VALIDATE_WEB_FULL=1`. Otherwise `npm run progress` only (master plans → `docs/progress.html`). To always run web checks locally: `npm run validate:web` or `VALIDATE_WEB_FULL=1 npm run validate:all`.
 
 ## Routes
 
@@ -474,7 +480,7 @@ Vercel project linked via dashboard. Build root: `web/`. Framework preset: Next.
 
 > **Note:** Vercel URL to be embedded here after first production deploy.
 
-CI: `npm run validate:all` at repo root includes `validate:web` (lint + typecheck + build). Push to `main` triggers Vercel production deploy.
+CI: `npm run validate:all` at repo root runs `validate:web:conditional` — on typical CI (`CI=true`) that means full `validate:web` (lint + typecheck + unit tests — no local `next build`). Local runs skip full web validation unless something under `web/` is unstaged or staged (or you set `VALIDATE_WEB_FULL=1`). Production build + deploy: **push to `main`** (Vercel) or **`npm run deploy:web`**. Run **`npm run validate:web:build`** when you need `next build` before push.
 
 ## E2E Testing (Playwright)
 

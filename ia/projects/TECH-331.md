@@ -3,13 +3,15 @@ purpose: "TECH-331 — Utility enums (UtilityKind / ScaleTag / PoolStatus)."
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/utilities-master-plan.md"
+task_key: "T1.1.1"
 ---
 # TECH-331 — Utility enums (UtilityKind / ScaleTag / PoolStatus)
 
 > **Issue:** [TECH-331](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -94,6 +96,40 @@ Plain C# enums, default int backing. XML doc per value.
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: enum member names diverge from `utilities-master-plan.md` Exit wording (`Water` / `Power` / `Sewage`, `City` / `Region` / `Country`, `Healthy` / `Warning` / `Deficit`). Mitigation: copy names verbatim from orchestrator Stage 1 Exit bullets before commit.
+- Risk: default backing int leaks into save or UI — out of scope here but future DTO may serialize ints. Mitigation: document in XML that values are ordinal for display only until Stage 12 save work.
+- Ambiguity: folder `Assets/Scripts/Data/Utilities/` may not exist in repo yet. Resolution: create folder in same commit as first enum file.
+- Invariant touch: no new singletons, no `FindObjectOfType` — enums only; matches Stage 1.1 scope.
+
+### §Examples
+
+| Case | Expected | Notes |
+|------|----------|-------|
+| `UtilityKind.Water` | Third member of `UtilityKind` after Power/Sewage per plan | XML doc cites potable supply pool |
+| Default `PoolStatus` | First enum constant `Healthy` | Matches `PoolState` default in TECH-332 |
+| Grep for `UtilityKind` consumers | Zero outside `Assets/Scripts/Data/Utilities/` until Stage 1.2 | Compile-check may still see tests later |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| compile_utilities_enums | repo after new `.cs` files | `npm run unity:compile-check` exit 0 | unity |
+| validate_ia | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] Three enum files under `Assets/Scripts/Data/Utilities/` with exact member sets from §7.
+- [ ] XML `///` on every enum value.
+- [ ] `npm run unity:compile-check` and `npm run validate:all` green.
+
+### §Findings
+
+- Candidate glossary rows for **UtilityKind** / **ScaleTag** / **PoolStatus** deferred to later utilities stages; Stage 1.1 explicitly excludes glossary in spec Non-Goals.
 
 ## Open Questions
 

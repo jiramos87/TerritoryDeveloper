@@ -3,13 +3,15 @@ purpose: "TECH-334 — Utilities assembly + compile-check green."
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/utilities-master-plan.md"
+task_key: "T1.1.4"
 ---
 # TECH-334 — Utilities assembly + compile-check green
 
 > **Issue:** [TECH-334](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -106,6 +108,40 @@ Implementer picks Path A vs B after inspecting siblings; Decision Log records ch
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: new `Utilities.asmdef` breaks circular refs with `Managers` or `Tests`. Mitigation: mirror sibling `Data/*` asmdef reference lists; run compile-check after each reference tweak.
+- Risk: `autoReferenced` false hides types from Editor scripts. Mitigation: match repo convention from inspection; prefer explicit references listed in Exit criteria.
+- Ambiguity: smoke `using` in Managers file — must revert before commit if policy forbids temp edits. Resolution: use dedicated test assembly file or revert hunk in same PR.
+- Invariant touch: no change to global singleton patterns — assembly wiring only.
+
+### §Examples
+
+| Path chosen | Artifact | Notes |
+|-------------|----------|-------|
+| Path A | `Assets/Scripts/Data/Utilities/Utilities.asmdef` | References `UnityEngine` + parent data deps per siblings |
+| Path B | Comment in one `.cs` | “No asmdef — inherits parent assembly” |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| compile_check | post-wiring | `npm run unity:compile-check` exit 0 | unity |
+| managers_resolve | optional smoke reference | Types resolve from Managers asm | unity |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] Decision Log records Path A or B with one-line rationale from repo inspection.
+- [ ] If Path A: asmdef on disk with correct `references` / `includePlatforms`.
+- [ ] `npm run unity:compile-check` and `npm run validate:all` green.
+
+### §Findings
+
+- Stage 1.2 `UtilityPoolService` assembly must reference Utilities if split — verify in follow-on task if compile fails.
 
 ## Open Questions
 

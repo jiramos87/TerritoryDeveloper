@@ -3,13 +3,15 @@ purpose: "TECH-313 — glossary rows for UiTheme token ring, studio-rack token, 
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/ui-polish-master-plan.md"
+task_key: "T1.1.5"
 ---
 # TECH-313 — Glossary rows (UiTheme token ring / Studio-rack token / Motion token)
 
 > **Issue:** [TECH-313](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -58,6 +60,39 @@ Domain: **Documentation / glossary**. `ia/specs/glossary.md` lists canonical dom
 - [ ] No duplicate term rows.
 - [ ] `npm run test:ia` green.
 - [ ] `npm run validate:all` green.
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: duplicate glossary rows if term already exists under UI section. Mitigation: `grep` `ia/specs/glossary.md` for `UiTheme token ring` / `Studio-rack token` / `Motion token` before add.
+- Risk: wrong category bucket breaks alphabetization or IA index. Mitigation: place next to existing UI/theme rows; follow table format in file.
+- Ambiguity: spec reference line must point to post-TECH-312 anchors. Resolution: land TECH-312 before TECH-313 if strict ordering required; otherwise cite section headings that TECH-312 will add.
+- Invariant touch: glossary English definitions; caveman elsewhere per rules.
+
+### §Examples
+
+| Term | Definition must cite |
+|------|---------------------|
+| UiTheme token ring | `ui-design-system.md` §1 extended catalog |
+| Motion token | §1.5 motion catalog |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| test_ia | glossary edited | `npm run test:ia` exit 0 | node |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] Three rows with exact canonical term spellings from §1 Summary.
+- [ ] Each row has definition + spec pointer.
+- [ ] No duplicate terms; `test:ia` + `validate:all` green.
+
+### §Findings
+
+- If TECH-312 renames a heading, update glossary spec refs in same PR chain.
 
 ## Open Questions
 

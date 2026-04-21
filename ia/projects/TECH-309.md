@@ -3,13 +3,15 @@ purpose: "TECH-309 — StudioRackBlock schema extension of UiTheme token ring."
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/ui-polish-master-plan.md"
+task_key: "T1.1.1"
 ---
 # TECH-309 — StudioRackBlock schema (UiTheme extension)
 
 > **Issue:** [TECH-309](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -54,6 +56,42 @@ Domain: **UI changes** (router: `ia/specs/ui-design-system.md` §Foundations, co
 - [ ] Existing `UiTheme` fields untouched (diff shows only additions).
 - [ ] `npm run unity:compile-check` green.
 - [ ] `npm run validate:all` green.
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: nested class placement inside `UiTheme` vs file-level sibling changes `SerializeReference` / default ctor behavior in Unity. Mitigation: follow existing `UiTheme` nested patterns in file; test asset round-trip in TECH-311.
+- Risk: `Gradient` and `Color[]` null defaults break consumers that forget null checks. Mitigation: `studioRack = new StudioRackBlock()` with in-field defaults where Unity allows; document non-null expectation in XML.
+- Ambiguity: `float[3]` for `shadowDepthStops` may not serialize like `Vector3` in older Unity. Resolution: use explicit `[Serializable]` array as spec states; verify in Inspector on DefaultUiTheme.
+- Invariant touch: additive-only edit — grep diff for accidental renames of existing `UiTheme` fields.
+
+### §Examples
+
+| Field | Type | Consumer (later) |
+|-------|------|------------------|
+| `ledHues` | `Color[]` | LED row primitives Step 2+ |
+| `vuGradientStops` | `Gradient` | VU meter Step 3 |
+| `sparklePalette` | `Color[]` | SparkleBurst Step 4 |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| compile_ui_theme | edited `UiTheme.cs` | `npm run unity:compile-check` exit 0 | unity |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+| dead_spec_paths | repo | `npm run validate:dead-project-specs` exit 0 | node |
+
+### §Acceptance
+
+- [ ] `StudioRackBlock` defines all 10 fields with types from master-plan Intent.
+- [ ] `public StudioRackBlock studioRack` on `UiTheme`.
+- [ ] No removals/renames of pre-existing `UiTheme` members.
+- [ ] Compile + validate gates green.
+
+### §Findings
+
+- Normative naming for tokens lands in TECH-312 + TECH-313; this task is schema-only.
 
 ## Open Questions
 

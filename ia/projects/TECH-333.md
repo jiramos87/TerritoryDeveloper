@@ -3,13 +3,15 @@ purpose: "TECH-333 — IUtilityContributor + IUtilityConsumer interfaces."
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/utilities-master-plan.md"
+task_key: "T1.1.3"
 ---
 # TECH-333 — IUtilityContributor + IUtilityConsumer interfaces
 
 > **Issue:** [TECH-333](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -104,6 +106,39 @@ Read-only (getters only). No setters — rate changes happen on the implementati
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: implementers add setters “for convenience” — breaks read-only contract for registry snapshots. Mitigation: code review + XML states getters only.
+- Risk: `ProductionRate` / `ConsumptionRate` units undefined (per second vs per tick). Mitigation: XML cites “summed per tick in `TickPools`” per orchestrator; numeric contract finalized in Stage 1.2 doc.
+- Ambiguity: same type implements both interfaces. Resolution: allowed; registry lists stay separate.
+- Invariant touch: interfaces live in Data assembly; no MonoBehaviour.
+
+### §Examples
+
+| Implementer (future) | `Kind` | `Rate` | Notes |
+|----------------------|--------|--------|-------|
+| Stub test double | `UtilityKind.Power` | `100f` | EditMode fakes in Stage 1.2 |
+| `InfrastructureContributor` (Step 2) | Building def driven | Tier multiplier | Out of scope here |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| compile_interfaces | TECH-331 present | `npm run unity:compile-check` exit 0 | unity |
+| validate_ia | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] `IUtilityContributor.cs` and `IUtilityConsumer.cs` with three read-only members each.
+- [ ] XML on every property.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- **Landmarks** `RegisterWithMultiplier` wrapper is Stage 1.3 — do not add to interfaces in this task.
 
 ## Open Questions
 

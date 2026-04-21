@@ -55,6 +55,7 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 <!-- project-stage-close + project-spec-close retired per T7.14 / M6 collapse — folded into Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode stage-closeout). Tombstones: `_retired/project-stage-close/SKILL.md`, `_retired/project-spec-close/SKILL.md`. -->
 
 | [`ui-hud-row-theme/`](ui-hud-row-theme/SKILL.md) | Add/adjust HUD/menu rows via UiTheme | Adding or adjusting a HUD or menu UI row | `UiTheme` + `ui-design-system.md` accessible in scene | UI row implementation in scene/prefab | none |
+| [`unfold/`](unfold/SKILL.md) | Meta-tool. Linearize a composite slash-command invocation into one self-contained decision-tree plan (explicit `on_success` / `on_failure` edges, literal arg substitution, runtime-only values as `${placeholder}`). Read-only — NO execution, NO source edits, NO commits. | Preview a risky composite run; diff skill behavior across edits; hand fresh agent a plan without the skill runtime | `TARGET_COMMAND` + args; reads `.claude/commands/*.md` → `.claude/agents/*.md` → `ia/skills/*/SKILL.md` | `ia/plans/{cmd-slug}-{arg-slug}-unfold.md` | none |
 
 **Planned / follow-up domain skills** (roads, terrain/water, new **MonoBehaviour** managers): see [`BACKLOG.md`](../../BACKLOG.md). **Spec pipeline program:** **glossary** **territory-ia spec-pipeline program**; charter [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md).
 

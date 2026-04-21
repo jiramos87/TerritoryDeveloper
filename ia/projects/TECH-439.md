@@ -11,7 +11,7 @@ task_key: "T4.2.2"
 > **Issue:** [TECH-439](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -103,6 +103,41 @@ Implementer decides exact fixture file layout. Prefer re-using existing fixture 
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: fixtures stale vs current `ParsedBacklogIssue` schema — tests pass on fake data only. Mitigation: include at least one fixture mirroring production yaml shape from `ia/backlog/*.yaml`.
+- Risk: scope switch (`open` vs `archive`) untested with new filters. Mitigation: explicit test row in §Test Blueprint for `scope` + locator intersection.
+- Ambiguity: “≥2 plans + ≥2 stages” — use distinct `parent_plan` paths + distinct `task_key` prefixes. Resolution: author fixtures w/ TECH-xxx style ids.
+- Invariant touch: no mutation of live backlog files during test; use temp dirs or embedded JSON fixtures per existing test harness.
+
+### §Examples
+
+| Fixture slice | Assert |
+|---------------|--------|
+| `planA` + `planB` records | `parent_plan` filter returns correct partition |
+| Mixed-case `Stage` string | Lowercase normalization matches |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| filter_parent_plan_alone | fixtures | ids ⊆ expected | node |
+| filter_intersection | parent_plan + priority | empty + non-empty cases | node |
+| scope_switch_archive | `scope: archive` | archived rows w/ locator | node |
+| validate_all | repo | green | node |
+
+### §Acceptance
+
+- [ ] Extended `backlog-list.test.ts` covers each new filter + intersection + empty + scope.
+- [ ] Ordering assertions for id-desc preserved.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- Depends on TECH-438 landing first — rebase order if CI fails.
 
 ## Open Questions (resolve before / during implementation)
 

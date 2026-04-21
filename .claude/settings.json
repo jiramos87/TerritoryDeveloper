@@ -16,7 +16,8 @@
       "Write",
       "MultiEdit",
       "NotebookEdit",
-      "mcp__territory-ia__*"
+      "mcp__territory-ia__*",
+      "Agent"
     ],
     "deny": [
       "Bash(git push --force*)",

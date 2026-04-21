@@ -61,6 +61,10 @@
 | T1.3 | Contributor/consumer interfaces | **TECH-333** | Draft | Add `IUtilityContributor.cs` + `IUtilityConsumer.cs` under `Assets/Scripts/Data/Utilities/`. Read-only properties; implementations land in Step 2. |
 | T1.4 | Assembly + compile check | **TECH-334** | Draft | Add `Utilities.asmdef` under `Assets/Scripts/Data/Utilities/` (if repo uses asmdefs) OR ensure types live in main asm; run `npm run unity:compile-check` green. |
 
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 1 Task specs (TECH-331..334) aligned w/ Stage block + §Plan Author + backlog yaml `parent_plan` / `task_key` mirror. No fix tuples. Downstream: `/ship-stage` Pass 1 per task.
+
 ### Stage 2 — Pool core + contributor registry / UtilityPoolService (per-scale)
 
 **Objectives:** Implement the per-scale service: tick `ComputeNet()`, `UpdateEma()` (5-tick window), threshold state machine w/ hysteresis, `PoolStatusChanged` event. Parent pointer for rollup; does NOT yet consume contributors (Step 2 wires real producers) — use an internal `Sum(IEnumerable<IUtilityContributor>)` + `Sum(IEnumerable<IUtilityConsumer>)` so tests inject fakes.

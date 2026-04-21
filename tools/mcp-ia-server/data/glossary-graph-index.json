@@ -1,9 +1,9 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-21T18:15:40.679Z",
+  "last_generated": "2026-04-21T19:04:12.981Z",
   "graph": {
-    "**A* search**": {
+    "A* search": {
       "related": [
         "Diagonal step expansion",
         "Interstate",
@@ -16,9 +16,9 @@
       "related": [
         "Cell",
         "Child-scale entity",
+        "City / Region / Country cell",
         "Dormant scale",
-        "Evolution algorithm",
-        "Evolution parameters"
+        "Evolution algorithm"
       ],
       "cited_in": [
         {
@@ -36,10 +36,10 @@
     "Agent test mode batch": {
       "related": [
         "Cell",
+        "Geography initialization",
         "geography_init_params",
         "IDE agent bridge",
-        "Alignment gate",
-        "Chain-level stage digest"
+        "Save data"
       ],
       "cited_in": [
         {
@@ -52,20 +52,20 @@
     "Alignment gate": {
       "related": [
         "Agent test mode batch",
+        "Backlog record",
+        "Backlog view",
         "Cell",
-        "Chain-level stage digest",
-        "City metrics history",
-        "Gate"
+        "Chain-level stage digest"
       ],
       "cited_in": []
     },
     "AUTO systems": {
       "related": [
-        "Interstate",
-        "Road stroke",
         "Urban centroid",
         "Cell",
-        "Geography initialization"
+        "Geography initialization",
+        "Interstate",
+        "Reference spec"
       ],
       "cited_in": [
         {
@@ -119,10 +119,10 @@
     "baseHeight (terraform)": {
       "related": [
         "Bridge lip",
-        "Cardinal neighbor",
         "Cell",
         "Cliff",
-        "Cut-through"
+        "Cut-through",
+        "Deck span"
       ],
       "cited_in": []
     },
@@ -376,7 +376,7 @@
         "Interstate",
         "Map border",
         "Wet run",
-        "Cardinal neighbor"
+        "Chebyshev distance"
       ],
       "cited_in": [
         {
@@ -401,8 +401,8 @@
         "Cell",
         "Junction",
         "Cascade",
-        "Bay",
-        "Cliff"
+        "Cliff",
+        "Bay"
       ],
       "cited_in": [
         {
@@ -442,8 +442,8 @@
         "TreasuryFloorClampService",
         "Zone",
         "Zone S",
-        "envelope (budget sense)",
-        "ZoneSService"
+        "ZoneSService",
+        "BondLedgerService"
       ],
       "cited_in": [
         {
@@ -640,7 +640,7 @@
         "Cell",
         "Pivot cell",
         "RCI",
-        "Save data"
+        "Undeveloped light zoning"
       ],
       "cited_in": [
         {
@@ -710,9 +710,9 @@
       "related": [
         "Cell",
         "Cliff",
+        "River",
         "HeightMap",
-        "Junction",
-        "River"
+        "Junction"
       ],
       "cited_in": [
         {
@@ -1167,9 +1167,9 @@
       "related": [
         "Cell",
         "HeightMap",
+        "Open water",
         "Rim",
-        "Water map",
-        "Bay"
+        "River"
       ],
       "cited_in": [
         {
@@ -1198,9 +1198,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "City metrics history",
-        "Gate"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -1234,13 +1234,13 @@
       "related": [
         "Active scale",
         "Cell",
+        "City / Region / Country cell",
         "Dormant scale",
-        "Evolution algorithm",
-        "Evolution parameters"
+        "Evolution algorithm"
       ],
       "cited_in": []
     },
-    "City cell / Region cell / Country cell": {
+    "City / Region / Country cell": {
       "related": [
         "Active scale",
         "Cell",
@@ -1253,10 +1253,10 @@
     "City metrics history": {
       "related": [
         "Cell",
+        "Save data",
         "Agent test mode batch",
         "Alignment gate",
-        "Chain-level stage digest",
-        "Cut-through"
+        "Backlog record"
       ],
       "cited_in": [
         {
@@ -1448,7 +1448,7 @@
         "Cell",
         "Cliff",
         "Gate",
-        "Map border"
+        "Rim"
       ],
       "cited_in": [
         {
@@ -1485,11 +1485,11 @@
     },
     "Connurbation": {
       "related": [
+        "AUTO systems",
         "Cell",
         "Desirability",
         "Geography authoring",
-        "Geography initialization",
-        "Moore-adjacent excavation fill"
+        "Geography initialization"
       ],
       "cited_in": []
     },
@@ -1662,8 +1662,8 @@
         "Cell",
         "River",
         "Cliff",
-        "Rim",
-        "Shore refresh"
+        "Shore refresh",
+        "Cascade"
       ],
       "cited_in": [
         {
@@ -1696,10 +1696,10 @@
     "DEPTH_MULTIPLIER": {
       "related": [
         "HEIGHT_MULTIPLIER",
-        "Cell",
         "Building",
-        "Interstate",
-        "Sorting formula"
+        "Cell",
+        "Sorting formula",
+        "Type offsets"
       ],
       "cited_in": [
         {
@@ -1727,10 +1727,10 @@
     "Desirability": {
       "related": [
         "Cell",
-        "Interstate",
         "Geography initialization",
-        "Happiness",
-        "HeightMap"
+        "Interstate",
+        "River",
+        "Building"
       ],
       "cited_in": [
         {
@@ -1753,7 +1753,7 @@
     "Diagonal step expansion": {
       "related": [
         "Interstate",
-        "**A* search**",
+        "A* search",
         "Cascade",
         "Cell",
         "Cut-through"
@@ -1787,18 +1787,18 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Evolution algorithm",
-        "Evolution parameters"
+        "City / Region / Country cell",
+        "Evolution algorithm"
       ],
       "cited_in": []
     },
     "envelope (budget sense)": {
       "related": [
         "BudgetAllocationService",
-        "Zone",
-        "Zone S",
         "IBudgetAllocator",
-        "TreasuryFloorClampService"
+        "TreasuryFloorClampService",
+        "Zone",
+        "Zone S"
       ],
       "cited_in": [
         {
@@ -1818,8 +1818,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution parameters"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -1828,8 +1828,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -1838,8 +1838,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -1848,8 +1848,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -2088,11 +2088,11 @@
     },
     "Geography authoring": {
       "related": [
+        "AUTO systems",
         "Cell",
         "Connurbation",
         "Desirability",
-        "Geography initialization",
-        "Moore-adjacent excavation fill"
+        "Geography initialization"
       ],
       "cited_in": []
     },
@@ -2102,7 +2102,7 @@
         "Desirability",
         "HeightMap",
         "Agent test mode batch",
-        "Building"
+        "AUTO systems"
       ],
       "cited_in": [
         {
@@ -2131,9 +2131,9 @@
       "related": [
         "Agent test mode batch",
         "Cell",
+        "Geography initialization",
         "IDE agent bridge",
-        "Alignment gate",
-        "Chain-level stage digest"
+        "Save data"
       ],
       "cited_in": [
         {
@@ -2209,9 +2209,9 @@
       "related": [
         "Building",
         "Cell",
-        "RCI",
         "Zone",
-        "Game notification"
+        "Game notification",
+        "RCI"
       ],
       "cited_in": [
         {
@@ -2324,10 +2324,10 @@
     "HEIGHT_MULTIPLIER": {
       "related": [
         "DEPTH_MULTIPLIER",
-        "Cell",
         "Building",
-        "Interstate",
-        "Sorting formula"
+        "Cell",
+        "Sorting formula",
+        "Type offsets"
       ],
       "cited_in": [
         {
@@ -2554,9 +2554,9 @@
       "related": [
         "Agent test mode batch",
         "Cell",
+        "Geography initialization",
         "geography_init_params",
-        "Alignment gate",
-        "Chain-level stage digest"
+        "Save data"
       ],
       "cited_in": [
         {
@@ -2631,8 +2631,8 @@
     "Interstate": {
       "related": [
         "Cell",
-        "Cut-through",
         "Map border",
+        "Cut-through",
         "Road validation pipeline",
         "Building"
       ],
@@ -2878,15 +2878,15 @@
       "related": [
         "baseHeight (terraform)",
         "Bridge lip",
-        "Cardinal neighbor",
         "Cell",
-        "Cliff"
+        "Cliff",
+        "Cut-through"
       ],
       "cited_in": []
     },
     "Interstate cost model": {
       "related": [
-        "**A* search**",
+        "A* search",
         "Diagonal step expansion",
         "Interstate",
         "Pathfinding cost model"
@@ -2896,10 +2896,10 @@
     "Junction": {
       "related": [
         "Cell",
-        "HeightMap",
         "Cliff",
+        "HeightMap",
         "Interstate",
-        "Cascade"
+        "River"
       ],
       "cited_in": [
         {
@@ -3228,9 +3228,9 @@
     "Monthly maintenance": {
       "related": [
         "Building",
-        "Happiness",
         "Tax base",
         "Zone",
+        "Happiness",
         "Cell"
       ],
       "cited_in": [
@@ -3289,11 +3289,11 @@
     },
     "Moore-adjacent excavation fill": {
       "related": [
+        "AUTO systems",
         "Cell",
         "Connurbation",
         "Desirability",
-        "Geography authoring",
-        "Geography initialization"
+        "Geography authoring"
       ],
       "cited_in": []
     },
@@ -3302,18 +3302,18 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
     "Multipolar urban growth": {
       "related": [
+        "AUTO systems",
         "Cell",
         "Connurbation",
         "Desirability",
-        "Geography authoring",
-        "Geography initialization"
+        "Geography authoring"
       ],
       "cited_in": []
     },
@@ -3420,11 +3420,11 @@
     },
     "Orchestrator document": {
       "related": [
-        "Agent test mode batch",
-        "Alignment gate",
         "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Gate",
+        "Project spec",
+        "Save data",
+        "skill-train"
       ],
       "cited_in": []
     },
@@ -3454,45 +3454,23 @@
         }
       ]
     },
-    "Parent country id": {
+    "Parent region / country id": {
       "related": [
-        "Parent region id",
         "Active scale",
         "Cell",
-        "CellData",
-        "Child-scale entity"
+        "Child-scale entity",
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
-      "cited_in": [
-        {
-          "spec": "persistence-system",
-          "section_id": "save",
-          "section_title": "Save"
-        }
-      ]
-    },
-    "Parent region id": {
-      "related": [
-        "Parent country id",
-        "Active scale",
-        "Cell",
-        "CellData",
-        "Child-scale entity"
-      ],
-      "cited_in": [
-        {
-          "spec": "persistence-system",
-          "section_id": "save",
-          "section_title": "Save"
-        }
-      ]
+      "cited_in": []
     },
     "Parent-scale stub": {
       "related": [
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -3501,8 +3479,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -3575,7 +3553,7 @@
     },
     "Pathfinding cost model": {
       "related": [
-        "**A* search**",
+        "A* search",
         "Diagonal step expansion",
         "Interstate",
         "Interstate cost model"
@@ -3586,19 +3564,19 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
     "Phase": {
       "related": [
-        "Cell",
         "Interstate",
-        "Building",
+        "Cell",
+        "Gate",
         "Road validation pipeline",
-        "Gate"
+        "Building"
       ],
       "cited_in": [
         {
@@ -3697,9 +3675,9 @@
       "related": [
         "baseHeight (terraform)",
         "Bridge lip",
-        "Cardinal neighbor",
         "Cell",
-        "Cliff"
+        "Cliff",
+        "Cut-through"
       ],
       "cited_in": []
     },
@@ -3707,9 +3685,9 @@
       "related": [
         "Building",
         "Cell",
-        "Save data",
         "Zone",
-        "Building footprint"
+        "Building footprint",
+        "RCI"
       ],
       "cited_in": [
         {
@@ -3764,18 +3742,18 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
     "Pollution": {
       "related": [
         "Happiness",
+        "Building",
         "Cell",
         "Monthly maintenance",
-        "RCI",
-        "Building"
+        "RCI"
       ],
       "cited_in": [
         {
@@ -3805,8 +3783,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -3814,19 +3792,19 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
     "Project spec": {
       "related": [
-        "Reference spec",
-        "Agent test mode batch",
-        "Alignment gate",
         "Cell",
-        "Chain-level stage digest"
+        "Gate",
+        "Orchestrator document",
+        "Reference spec",
+        "Save data"
       ],
       "cited_in": [
         {
@@ -3846,8 +3824,8 @@
         "Building",
         "Cell",
         "Happiness",
-        "Interstate",
-        "Zone"
+        "Zone",
+        "Interstate"
       ],
       "cited_in": [
         {
@@ -3942,8 +3920,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -3953,7 +3931,7 @@
         "Gate",
         "Happiness",
         "Interstate",
-        "Cell"
+        "AUTO systems"
       ],
       "cited_in": [
         {
@@ -4033,8 +4011,8 @@
     "Rim": {
       "related": [
         "Cell",
-        "Gate",
         "Cliff",
+        "Gate",
         "Bay",
         "HeightMap"
       ],
@@ -4271,18 +4249,18 @@
       "related": [
         "baseHeight (terraform)",
         "Bridge lip",
-        "Cardinal neighbor",
         "Cell",
-        "Cliff"
+        "Cliff",
+        "Cut-through"
       ],
       "cited_in": []
     },
     "Road reservation": {
       "related": [
-        "Cardinal neighbor",
         "Zone",
         "baseHeight (terraform)",
         "Bridge lip",
+        "Cardinal neighbor",
         "Cell"
       ],
       "cited_in": [
@@ -4298,8 +4276,8 @@
         "Interstate",
         "Cell",
         "Map border",
-        "Gate",
-        "Road validation pipeline"
+        "Road validation pipeline",
+        "Wet run"
       ],
       "cited_in": [
         {
@@ -4424,23 +4402,13 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
     "Rollout tracker": {
-      "related": [
-        "Agent test mode batch",
-        "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
-      ],
-      "cited_in": []
-    },
-    "runtime-state": {
       "related": [
         "Agent test mode batch",
         "Alignment gate",
@@ -4450,13 +4418,23 @@
       ],
       "cited_in": []
     },
+    "runtime-state": {
+      "related": [
+        "Stage",
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view"
+      ],
+      "cited_in": []
+    },
     "Save data": {
       "related": [
         "Cell",
         "Building",
-        "Pivot cell",
-        "Zone",
-        "Agent test mode batch"
+        "Agent test mode batch",
+        "CellData",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -4491,8 +4469,8 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
@@ -4501,7 +4479,7 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "City cell / Region cell / Country cell",
+        "City / Region / Country cell",
         "Dormant scale"
       ],
       "cited_in": []
@@ -4512,7 +4490,7 @@
         "Cut-through",
         "Interstate",
         "Bridge lip",
-        "Cardinal neighbor"
+        "Cliff"
       ],
       "cited_in": [
         {
@@ -4536,9 +4514,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -4546,9 +4524,9 @@
       "related": [
         "Cell",
         "HeightMap",
-        "Gate",
-        "Rim",
-        "River"
+        "River",
+        "Cliff",
+        "Gate"
       ],
       "cited_in": [
         {
@@ -4572,9 +4550,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -4665,18 +4643,18 @@
         "Active scale",
         "Cell",
         "Child-scale entity",
-        "Dormant scale",
-        "Evolution algorithm"
+        "City / Region / Country cell",
+        "Dormant scale"
       ],
       "cited_in": []
     },
     "Simulation tick": {
       "related": [
-        "Agent test mode batch",
-        "Alignment gate",
         "AUTO systems",
-        "Backlog record",
-        "Backlog view"
+        "Growth budget",
+        "Monthly maintenance",
+        "Tax base",
+        "Tick execution order"
       ],
       "cited_in": [
         {
@@ -4690,9 +4668,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -4718,11 +4696,11 @@
     },
     "skill-train": {
       "related": [
-        "Agent test mode batch",
-        "Alignment gate",
-        "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Cell",
+        "Gate",
+        "Orchestrator document",
+        "Project spec",
+        "Save data"
       ],
       "cited_in": []
     },
@@ -4783,19 +4761,19 @@
       "related": [
         "Bay",
         "Building",
-        "Cell",
         "Cliff",
-        "DEPTH_MULTIPLIER"
+        "DEPTH_MULTIPLIER",
+        "HEIGHT_MULTIPLIER"
       ],
       "cited_in": []
     },
     "Sorting formula": {
       "related": [
-        "Cell",
-        "Interstate",
-        "Bay",
         "Building",
-        "Cliff"
+        "Cell",
+        "Cliff",
+        "Interstate",
+        "Open water"
       ],
       "cited_in": [
         {
@@ -4937,8 +4915,8 @@
         "Phase",
         "Cell",
         "Blip LFO",
-        "Param smoothing",
-        "Bake-to-clip"
+        "Gate",
+        "Param smoothing"
       ],
       "cited_in": [
         {
@@ -5002,19 +4980,19 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "Chain-level stage digest",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
     "Street (ordinary road)": {
       "related": [
-        "Cardinal neighbor",
         "Cell",
         "Interstate",
         "Map border",
-        "Road stroke"
+        "Road stroke",
+        "Road validation pipeline"
       ],
       "cited_in": [
         {
@@ -5036,11 +5014,11 @@
     },
     "Street or interstate": {
       "related": [
-        "Cardinal neighbor",
         "Cell",
         "Gate",
         "Interstate",
-        "Map border"
+        "Map border",
+        "Phase"
       ],
       "cited_in": [
         {
@@ -5052,11 +5030,11 @@
     },
     "Surface height (S)": {
       "related": [
+        "Brink",
+        "Cascade",
         "Cell",
-        "Open water",
-        "River",
-        "Water body",
-        "Brink"
+        "Cliff",
+        "Corner promotion"
       ],
       "cited_in": []
     },
@@ -5064,8 +5042,8 @@
       "related": [
         "Cell",
         "Gate",
-        "Rim",
         "Cliff",
+        "Rim",
         "Bay"
       ],
       "cited_in": [
@@ -5226,11 +5204,11 @@
     },
     "Type offsets": {
       "related": [
-        "Cell",
-        "Interstate",
         "Building",
-        "Sorting formula",
-        "Bay"
+        "Cell",
+        "DEPTH_MULTIPLIER",
+        "HEIGHT_MULTIPLIER",
+        "Interstate"
       ],
       "cited_in": [
         {
@@ -5326,23 +5304,29 @@
       "related": [
         "Urban centroid",
         "AUTO systems",
-        "Cell",
-        "Connurbation",
-        "Desirability"
+        "Gate",
+        "Growth budget",
+        "Monthly maintenance"
       ],
       "cited_in": []
     },
     "Urban pole (working name)": {
-      "related": [],
+      "related": [
+        "AUTO systems",
+        "Cell",
+        "Connurbation",
+        "Desirability",
+        "Geography authoring"
+      ],
       "cited_in": []
     },
     "Urbanization proposal": {
       "related": [
         "RCI",
-        "AUTO systems",
-        "Growth budget",
-        "Monthly maintenance",
-        "Simulation tick"
+        "Gate",
+        "Phase",
+        "Stage",
+        "Urban centroid"
       ],
       "cited_in": [
         {
@@ -5405,11 +5389,11 @@
     },
     "Visual restore": {
       "related": [
-        "Cell",
         "Building",
-        "CellData",
-        "Happiness",
-        "HeightMap"
+        "Cell",
+        "Save data",
+        "Zone",
+        "Building footprint"
       ],
       "cited_in": [
         {
@@ -5474,9 +5458,9 @@
       "related": [
         "Cell",
         "HeightMap",
-        "Interstate",
         "River",
-        "Cliff"
+        "Cliff",
+        "Interstate"
       ],
       "cited_in": [
         {
@@ -5528,11 +5512,11 @@
     },
     "Water map data": {
       "related": [
+        "Building",
         "Cell",
         "CellData",
         "HeightMap",
-        "Visual restore",
-        "Water map"
+        "Legacy save"
       ],
       "cited_in": []
     },
@@ -5554,21 +5538,21 @@
     },
     "Water volume budget": {
       "related": [
+        "AUTO systems",
         "Cell",
         "Connurbation",
         "Desirability",
-        "Geography authoring",
-        "Geography initialization"
+        "Geography authoring"
       ],
       "cited_in": []
     },
     "Water-shore (land)": {
       "related": [
-        "Brink",
-        "Cascade",
         "Cell",
         "Cliff",
-        "Corner promotion"
+        "Gate",
+        "Open water",
+        "Surface-height gate"
       ],
       "cited_in": []
     },
@@ -5576,9 +5560,9 @@
       "related": [
         "baseHeight (terraform)",
         "Bridge lip",
-        "Cardinal neighbor",
         "Cell",
-        "Cliff"
+        "Cliff",
+        "Cut-through"
       ],
       "cited_in": []
     },
@@ -5586,8 +5570,8 @@
       "related": [
         "Interstate",
         "Cell",
-        "Cut-through",
         "Cliff",
+        "Cut-through",
         "Map border"
       ],
       "cited_in": [
@@ -5761,7 +5745,7 @@
         "IMaintenanceContributor",
         "BudgetAllocationService",
         "Building",
-        "envelope (budget sense)"
+        "TreasuryFloorClampService"
       ],
       "cited_in": [
         {

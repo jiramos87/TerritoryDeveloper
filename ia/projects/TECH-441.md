@@ -11,7 +11,7 @@ task_key: "T4.2.4"
 > **Issue:** [TECH-441](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -93,6 +93,39 @@ Implementer owns exact insertion point (likely at tail of §2 MCP-first list). A
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: rewriting `CLAUDE.md` §2 voids `@`-import line budget or Cursor validate. Mitigation: **append-only** bullets per Stage Exit; run `npm run validate:claude-imports` if touched.
+- Risk: stale tool ordering confuses MCP-first recipe. Mitigation: place `master_plan_locate` near `backlog_issue` flow description; do not reorder existing bullets wholesale.
+- Ambiguity: `master_plan_next_pending` vs `/ship` — clarify suggested next-task flow without claiming automation.
+- Invariant touch: `CLAUDE.md` is Claude-delta file; keep additions English + concise.
+
+### §Examples
+
+| Addition | Wording intent |
+|----------|----------------|
+| Reverse lookup | “After `backlog_issue`, use `master_plan_locate` when parent plan unknown” |
+| Advisory | “`parent_plan_validate` runs advisory during `validate:all`” |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| validate_claude_imports | edited CLAUDE.md | `npm run validate:claude-imports` exit 0 | node |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] §2 gains additive mentions: `master_plan_locate`, `master_plan_next_pending`, `parent_plan_validate` advisory note.
+- [ ] No full rewrite of §2 ordering.
+- [ ] Validators green.
+
+### §Findings
+
+- Cross-link **TECH-440** catalog entries so humans can jump docs ↔ CLAUDE.
 
 ## Open Questions (resolve before / during implementation)
 

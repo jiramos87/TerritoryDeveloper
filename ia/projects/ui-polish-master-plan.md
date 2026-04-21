@@ -57,6 +57,10 @@
 | T1.4 | ui-design-system spec §1 + §1.5 | **TECH-312** | Draft | Extend `ia/specs/ui-design-system.md` §1 (palette / spacing) with studio-rack token names + role. Extend §1.5 (motion) with motion token catalog. Every field in `StudioRackBlock` + `MotionBlock` cited normatively. Link from §2 to anchor primitives-to-tokens mapping. |
 | T1.5 | Glossary rows | **TECH-313** | Draft | Add rows to `ia/specs/glossary.md`: `UiTheme token ring` (defn: extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). |
 
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 1 Task specs (TECH-309..313) aligned w/ Stage block + §Plan Author + backlog yaml locator mirror. No fix tuples. Downstream: `/ship-stage` Pass 1 per task.
+
 ### Stage 2 — Token ring extension / OnValidate repaint broadcast + tests
 
 **Status:** Draft (tasks _pending_ — not yet filed)

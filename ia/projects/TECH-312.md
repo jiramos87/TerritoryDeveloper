@@ -3,13 +3,15 @@ purpose: "TECH-312 — ui-design-system §1 + §1.5 normative studio-rack + moti
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/ui-polish-master-plan.md"
+task_key: "T1.1.4"
 ---
 # TECH-312 — ui-design-system spec §1 + §1.5 (studio-rack + motion token catalog)
 
 > **Issue:** [TECH-312](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -58,6 +60,41 @@ Domain: **UI changes** (router). `ia/specs/ui-design-system.md` is the authorita
 - [ ] §2 anchor link present.
 - [ ] `npm run test:ia` green (spec-index regenerate picks up new section ids).
 - [ ] `npm run validate:all` green.
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: spec table drift vs `UiTheme.cs` field renames — `test:ia` may not catch spelling mismatch. Mitigation: char-for-char compare token column to C# identifiers before merge.
+- Risk: §2 anchor link breaks if heading slug changes. Mitigation: use stable heading text from existing §2 structure; run link check if available.
+- Ambiguity: `ui-design-system §7.1` vs §1 extensions — orchestrator says §1 + §1.5; keep motion catalog under §1.5 per spec summary.
+- Invariant touch: terminology-consistency — new prose uses same tokens as TECH-313 will define in glossary.
+
+### §Examples
+
+| Token name in spec | Must match C# |
+|--------------------|---------------|
+| `oscilloscopeGlowColor` | `StudioRackBlock.oscilloscopeGlowColor` |
+| `needleRelease` | `MotionBlock.needleRelease` |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| test_ia | edited spec | `npm run test:ia` exit 0 | node |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+| dead_specs | repo | `npm run validate:dead-project-specs` exit 0 | node |
+
+### §Acceptance
+
+- [ ] §1 subsection lists all 10 `StudioRackBlock` fields with roles.
+- [ ] §1.5 lists all six `MotionBlock` entries with semantic + duration/easing intent.
+- [ ] §2 link to catalog present.
+- [ ] `test:ia` + `validate:all` green.
+
+### §Findings
+
+- **Primitives** catalog in §2 extension is explicitly out of scope — do not expand §2 beyond anchor link in this task.
 
 ## Open Questions
 

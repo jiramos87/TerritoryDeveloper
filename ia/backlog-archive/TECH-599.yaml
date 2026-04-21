@@ -1,0 +1,23 @@
+id: "TECH-599"
+type: "TECH"
+title: "Add warn-only hook to .claude/settings.json hooks array: guard on SKILL_TRAIN_LINT=1 env var; call tools/scripts/caveman-lint.sh; hook exit code forced 0 (warn-only posture). Wire as PreToolUse on Write/Edit tool calls, matching patterns of existing hooks in settings.json."
+priority: "medium"
+status: closed
+completed: "2026-04-21"
+section: "Caveman Soft-Lint (Phase D) / Lint Script + Hook + Docs"
+spec: "ia/projects/TECH-599.md"
+files: []
+notes: |
+  Edit .claude/settings.json PreToolUse array. Add new hook entry with matcher "Edit|Write|MultiEdit"
+  (mirrors cs-edit-reminder.sh pattern). Guard: check SKILL_TRAIN_LINT env var before invoking
+  script; if unset skip silently. Hook must exit 0 regardless of lint findings.
+acceptance: |
+  - [ ] Add PreToolUse hook entry to .claude/settings.json with matcher "Edit|Write|MultiEdit".
+  - [ ] Guard invocation on SKILL_TRAIN_LINT=1 env var check inside hook command or wrapper.
+  - [ ] Confirm hook exit code is 0 (warn-only); existing PreToolUse entries unaffected.
+  - [ ] Verify settings.json remains valid JSON after edit (npm run validate:all).
+depends_on: []
+related: []
+created: "2026-04-21"
+raw_markdown: |
+  Add warn-only hook to .claude/settings.json — Edit .claude/settings.json PreToolUse array. Add new hook entry with matcher "Edit|Write|MultiEdit".

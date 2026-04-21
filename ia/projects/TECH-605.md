@@ -105,15 +105,37 @@ Phase 1 — Retrospective run:
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/skill-training-master-plan.md Stage 6`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: `skill-train` Phase 3 diff synthesis targets SKILL.md Phase sequence / Guardrails / Seed prompt sections only — if `design-explore/SKILL.md` has no Guardrails or Seed prompt section, proposal may be sparse. Mitigation: check `design-explore/SKILL.md` structure before judging signal weak; sparse proposal from minimal source is expected, not a Phase 2 aggregation failure.
+- Ambiguity: classification rubric (`strong`/`weak`/`partial`) is subjective. Resolution: strong = ≥1 actionable unified-diff hunk targeting a specific Phase bullet or Guardrail line; weak = proposal writes only general summary prose with no line-level diff; partial = mixed (some hunks actionable, others vague).
+- Risk: proposal file path is date-stamped `train-proposal-{DATE}.md` — if invoked late in the day in a different timezone from CI, date may mismatch. Resolution: use local machine date; note path explicitly in §Changelog entry.
+- Risk: user §2.2 non-goal says "applying proposal patches without user review" — implementer must not auto-apply even if hunks look clean. User gate is a locked decision from Stage 1.
 
 ### §Examples
 
+| Scenario | proposal friction-count | severity | Classification | §Changelog entry shape |
+|----------|------------------------|----------|----------------|------------------------|
+| Strong signal | ≥2 recurring `phase_deviations` → concrete Phase N bullet rewrite | `medium` or `high` | `strong` | `source: dogfood-result, outcome: strong, proposal: ia/skills/design-explore/train-proposal-{DATE}.md` |
+| Weak signal | 0 recurring (single occurrences only, threshold not met) | `low` | `weak` | `source: dogfood-result, outcome: weak — threshold not met; T6.3 iteration required` |
+| Partial signal | 1 actionable hunk + 1 vague prose summary | `medium` | `partial` | `source: dogfood-result, outcome: partial — 1 actionable hunk; T6.3 may refine Phase 3` |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| proposal_file_written | `/skill-train design-explore` invocation | `ia/skills/design-explore/train-proposal-{DATE}.md` exists; non-empty | manual |
+| friction_count_captured | proposal file contents | `friction_types[]` field present; count ≥ 0 (0 valid for clean run) | manual |
+| dogfood_result_changelog_entry | `design-explore/SKILL.md §Changelog` tail | Entry with `source: dogfood-result` + outcome classification appended | manual |
+| validate_all_clean | repo state after §Changelog append | `npm run validate:all` exits 0 | node |
+
 ### §Acceptance
+
+- [ ] `/skill-train design-explore` executed; `ia/skills/design-explore/train-proposal-{DATE}.md` written.
+- [ ] Proposal read; `friction_types[]` count + `severity` field captured.
+- [ ] Signal quality classified as `strong`, `weak`, or `partial` per rubric (actionable diff hunk = strong criterion).
+- [ ] `source: dogfood-result` §Changelog entry appended to `design-explore/SKILL.md` with classification and proposal path.
+- [ ] `npm run validate:all` exits 0 after §Changelog append.
 
 ## Open Questions (resolve before / during implementation)
 

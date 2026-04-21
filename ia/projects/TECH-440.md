@@ -11,7 +11,7 @@ task_key: "T4.2.3"
 > **Issue:** [TECH-440](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -98,6 +98,39 @@ Implementer reads existing entries, mirrors style (heading level, input-table / 
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: `docs/mcp-ia-server.md` catalog order enforced by validator — inserting entries wrong place fails CI. Mitigation: read file TOC / existing tool order before edit.
+- Risk: tool names drift (`master_plan_locate` vs code `registerTool` name). Mitigation: copy names from `tools/mcp-ia-server/src` registrations.
+- Ambiguity: **parent_plan_validate** advisory mode wording — Stage Exit asks to note advisory behavior. Resolution: one sentence in catalog per tool.
+- Invariant touch: English catalog prose for humans; keep param tables accurate.
+
+### §Examples
+
+| Catalog entry | Must include |
+|---------------|--------------|
+| `master_plan_locate` | inputs, output shape, caller use case |
+| `backlog_list` extension | bullet listing 3 new optional params |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| doc_link_check | optional | `npm run validate:all` if doc checks exist | node |
+| manual_review | PR diff | no duplicate tool headings | human |
+
+### §Acceptance
+
+- [ ] Catalog entries for `master_plan_locate`, `master_plan_next_pending`, `parent_plan_validate`.
+- [ ] `backlog_list` section notes new filters.
+- [ ] Ordering preserved; `validate:all` green.
+
+### §Findings
+
+- If `docs/mcp-ia-server.md` lags code, prefer aligning to code in same PR as TECH-438.
 
 ## Open Questions (resolve before / during implementation)
 

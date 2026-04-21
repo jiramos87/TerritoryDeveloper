@@ -115,15 +115,43 @@ Phase 2 — Close iteration loop:
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/skill-training-master-plan.md Stage 6`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: T6.3 reads T6.2 outcome from `design-explore/SKILL.md §Changelog` — if T6.2 did not append a `source: dogfood-result` entry, T6.3 has no input. Mitigation: gate T6.3 start on that entry's presence; block and surface error if missing rather than guessing classification.
+- Ambiguity: §7 references "T4.1.2 outcome" — this is a stale task-key ref (pre-M6 numbering). Actual dependency is T6.2 (current plan numbering). Resolved in §Acceptance below; stale ref left in §7 as-authored (plan-review or implementer should fix).
+- Risk: max 2 iteration cap with re-runs of `/skill-train design-explore` each time — each Opus invocation consumes significant tokens. Mitigation: implementer must read the §Changelog gap diagnosis carefully before each edit; iterate on the narrowest plausible change first (threshold value before Phase 3 prose edits).
+- Risk: edits to `skill-train/SKILL.md` Phase 2 or 3 during iteration could break stanza schema expected by other 12 wired skills. Mitigation: after each edit, run `npm run validate:all`; do not merge schema-breaking changes.
 
 ### §Examples
 
+| T6.2 classification | Gap diagnosed | Edit made | Re-run outcome | §Changelog entry |
+|---------------------|--------------|-----------|----------------|-----------------|
+| `strong` | N/A — no iteration needed | None | N/A | `source: dogfood-result, outcome: strong — no iteration needed; T6.3 skipped` |
+| `weak` — threshold too tight | friction_types[] has 1-occurrence entries only; default threshold 2 filters all out | Lower `--threshold` default from 2 to 1 in Phase 2, or run with `--threshold 1` | partial or strong | `source: iteration, change: threshold 2→1, re-run outcome: partial` |
+| `partial` — Phase 3 diff too coarse | Hunks target whole Phase block not individual bullets | Tighten Phase 3 diff synthesis to line-level targeting | strong | `source: iteration, change: Phase 3 diff granularity, re-run outcome: strong` |
+| `weak` — max iterations reached | Still weak after 2 cycles | Document final state; escalate to user | N/A | `source: iteration, cycle: 2, outcome: still-weak — user review required` |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| t62_outcome_read | `design-explore/SKILL.md §Changelog` tail | `source: dogfood-result` entry found; classification extracted | manual |
+| iteration_entry_appended_if_changed | `skill-train/SKILL.md §Changelog` after edit | `source: iteration` entry present for each edit cycle | manual |
+| strong_confirmation_appended_if_strong | `skill-train/SKILL.md §Changelog` when T6.2=strong | `source: dogfood-result` confirmation entry present; no skill edits made | manual |
+| validate_all_after_edit | repo state after each `skill-train/SKILL.md` Phase edit | `npm run validate:all` exits 0 | node |
+| max_iterations_bounded | iteration count | ≤2 re-runs before user escalation | manual |
+
 ### §Acceptance
+
+- [ ] T6.2 outcome read from `design-explore/SKILL.md §Changelog` (last `source: dogfood-result` entry).
+- [ ] If strong: `source: dogfood-result` confirmation appended to `skill-train/SKILL.md §Changelog`; no Phase edits made.
+- [ ] If weak/partial: gap diagnosed; `skill-train/SKILL.md` Phase 2 or 3 edited; `/skill-train design-explore` re-run; `source: iteration` §Changelog entry appended per cycle.
+- [ ] Max 2 iteration cycles enforced; if still weak after 2 cycles, final state documented and user notified.
+- [ ] `npm run validate:all` exits 0 after any `skill-train/SKILL.md` edits.
+
+### §Findings
+
+- Stale task-key ref in §7: "T4.1.2 outcome" should read "T6.2 outcome" (pre-M6 numbering artifact). Does not block implementation but implementer should correct inline.
 
 ## Open Questions (resolve before / during implementation)
 

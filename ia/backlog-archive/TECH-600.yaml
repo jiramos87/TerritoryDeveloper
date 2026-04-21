@@ -1,0 +1,24 @@
+id: "TECH-600"
+type: "TECH"
+title: "Add ## Soft-lint section to ia/rules/agent-output-caveman-authoring.md: what script checks (indicator list), how to enable (export SKILL_TRAIN_LINT=1), how to read output (file:line refs), warn-only rationale, known false-positive-free surfaces (fenced blocks already skipped)."
+priority: "medium"
+status: closed
+completed: "2026-04-21"
+section: "Caveman Soft-Lint (Phase D) / Lint Script + Hook + Docs"
+spec: "ia/projects/TECH-600.md"
+files: []
+notes: |
+  Edit ia/rules/agent-output-caveman-authoring.md. Append new ## Soft-lint section at end of file.
+  Cover: indicator list (long sentences, articles, hedging verbs), enable command, output format,
+  warn-only rationale, fenced-block skip note. Caveman prose throughout.
+acceptance: |
+  - [ ] Document 4 indicator categories checked by caveman-lint.sh (sentence length, articles, hedging verbs).
+  - [ ] Provide enable instruction: `export SKILL_TRAIN_LINT=1` before running Claude Code session.
+  - [ ] Explain output format (file:line:indicator) and footer summary.
+  - [ ] State warn-only rationale — blocks nothing; signals drift for human review.
+  - [ ] Note fenced-block skip as false-positive mitigation.
+depends_on: []
+related: []
+created: "2026-04-21"
+raw_markdown: |
+  Add ## Soft-lint section to ia/rules/agent-output-caveman-authoring.md — Edit ia/rules/agent-output-caveman-authoring.md. Append new ## Soft-lint section at end of file.

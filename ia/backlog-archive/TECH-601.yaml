@@ -1,0 +1,25 @@
+id: "TECH-601"
+type: "TECH"
+title: "Run bash tools/scripts/caveman-lint.sh against current repo diff (at least 1 skill SKILL.md modified from Step 2). Verify exit 0; verify summary line present; spot-check that no fenced-block lines appear in output. Run npm run validate:all; exit 0. Note smoke-test result in script header comment."
+priority: "medium"
+status: closed
+completed: "2026-04-21"
+section: "Caveman Soft-Lint (Phase D) / Lint Script + Hook + Docs"
+spec: "ia/projects/TECH-601.md"
+files: []
+notes: |
+  Verification task. Runs caveman-lint.sh against a real diff (Stage 3 skill edits qualify).
+  Confirms exit 0, summary footer present, fenced-block lines absent from output.
+  Runs npm run validate:all; confirms exit 0. Records smoke-test outcome in script header comment.
+acceptance: |
+  - [ ] Execute bash tools/scripts/caveman-lint.sh with a git diff containing ≥1 wired SKILL.md.
+  - [ ] Assert exit code 0.
+  - [ ] Assert footer line "N indicators found in M files (warn-only)" present in output.
+  - [ ] Spot-check output — confirm no lines sourced from inside fenced code blocks.
+  - [ ] Run npm run validate:all; assert exit 0.
+  - [ ] Append smoke-test result note to script header comment in caveman-lint.sh.
+depends_on: []
+related: []
+created: "2026-04-21"
+raw_markdown: |
+  Smoke-test caveman-lint.sh — Verification task. Runs caveman-lint.sh against a real diff (Stage 3 skill edits qualify).

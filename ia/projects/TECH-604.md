@@ -102,15 +102,35 @@ Phase 1 — Readiness check:
 
 ## §Plan Author
 
-_pending — populated by `/author ia/projects/skill-training-master-plan.md Stage 6`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
-
 ### §Audit Notes
+
+- Risk: `design-explore/SKILL.md §Changelog` may be empty post-Stage-3 wiring (TECH-430) if no real invocation occurred — stanza fires only on friction; clean runs leave §Changelog untouched. Mitigation: spec explicitly allows triggering a short invocation on any existing stub doc under `docs/` to force signal accumulation; implementer must not skip this step.
+- Ambiguity: "existing stub doc" is underspecified — `docs/skill-training-exploration.md` is the natural candidate (already used as ground truth for this plan). Resolution: use `docs/skill-training-exploration.md` unless already fully explored; fall back to any other `docs/*.md` exploration doc.
+- Risk: appending readiness note to `skill-train/SKILL.md §Changelog` without a `schema_version` field would produce a malformed entry inconsistent with stanza schema. Mitigation: readiness notes use `source: dogfood-readiness` (plain prose entry, not a `skill_self_report` JSON block) — implementer must not inject a bare JSON block here.
+- Invariant touch: TECH-430 cross-ref in §4.1 is filed in `ia/backlog-archive/` (archived). Verified resolvable — no rewrite needed.
 
 ### §Examples
 
+| Scenario | `design-explore/SKILL.md §Changelog` state | Action taken | Readiness note content |
+|----------|--------------------------------------------|--------------|------------------------|
+| Signal present | ≥1 `source: self-report` entry dated after TECH-430 merge | No invocation triggered | `dogfood-readiness: signal found — N entries post-wiring; proceeding to T6.2` |
+| Signal absent | No `source: self-report` entries post-wiring | Invoke `/design-explore docs/skill-training-exploration.md` | `dogfood-readiness: no prior signal; triggered design-explore on docs/skill-training-exploration.md; entry created {DATE}` |
+| Invocation clean run | Stanza fires but friction_types[] empty | Entry still written (clean-run record) | `dogfood-readiness: invocation produced clean-run entry; proceeding to T6.2` |
+
 ### §Test Blueprint
 
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| changelog_self_report_present | `design-explore/SKILL.md §Changelog` contents; TECH-430 merge date | ≥1 `source: self-report` entry present with date ≥ TECH-430 date, OR invocation triggered that produces one | manual |
+| readiness_note_written | `skill-train/SKILL.md §Changelog` tail | Entry with `source: dogfood-readiness` (or equivalent) appended; no malformed JSON block | manual |
+| validate_all_clean | repo state after readiness note write | `npm run validate:all` exits 0 | node |
+
 ### §Acceptance
+
+- [ ] `design-explore/SKILL.md §Changelog` scanned for `source: self-report` entries dated after TECH-430 wiring.
+- [ ] If absent: `/design-explore` invoked on `docs/skill-training-exploration.md` (or equivalent); §Changelog entry confirmed created.
+- [ ] Readiness note appended to `skill-train/SKILL.md §Changelog` documenting outcome (signal-found or invocation-triggered).
+- [ ] `npm run validate:all` exits 0 after readiness note write.
 
 ## Open Questions (resolve before / during implementation)
 

@@ -11,7 +11,7 @@ task_key: "T4.2.1"
 > **Issue:** [TECH-438](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -105,6 +105,40 @@ Implementer owns exact filter-chain insertion point inside `backlog-list.ts`. Ma
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: substring filter on `parent_plan` matches unintended records (partial path collision). Mitigation: document “substring” semantics in tool descriptor; tests cover multi-match + empty.
+- Risk: `stage` filter collides w/ backlog `section` field naming — clarify input is orchestrator **Stage** id string (e.g. `4.1`), not yaml `section`. Mitigation: descriptor + examples.
+- Risk: filter order drift — must stay “after existing filters” per `backlog-yaml-mcp-alignment-master-plan` Stage block Exit. Mitigation: unit test asserts call order or snapshot filter pipeline.
+- Invariant touch: MCP tool schema + descriptor must stay synced; run `validate:all` for mcp-ia-server tests.
+
+### §Examples
+
+| Input | Records returned |
+|-------|-------------------|
+| `parent_plan: "backlog-yaml"` | Any issue whose parent_plan path contains substring |
+| `task_key: "T4.2"` | Rows w/ matching task_key substring |
+| Combined + `priority: high` | Intersection of predicates |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| backlog_list_filters | fixture yaml set | each filter + intersection | node (mcp tests) |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] Optional inputs on `backlog_list` tool + TypeScript types.
+- [ ] Lowercase substring compare; applied after existing filters; id-desc preserved.
+- [ ] Descriptor updated; `validate:all` green.
+
+### §Findings
+
+- **TECH-439** owns fixture breadth; keep filter logic minimal here.
 
 ## Open Questions (resolve before / during implementation)
 

@@ -3,13 +3,15 @@ purpose: "TECH-311 — DefaultUiTheme.asset Inspector defaults for studio-rack +
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/ui-polish-master-plan.md"
+task_key: "T1.1.3"
 ---
 # TECH-311 — DefaultUiTheme.asset defaults (studio-rack + motion)
 
 > **Issue:** [TECH-311](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -55,6 +57,40 @@ Domain: **UI changes** — `Assets/UI/Theme/DefaultUiTheme.asset` is the sole au
 - [ ] LED hue triad verified (green / amber / red anchors).
 - [ ] Motion durations match values above.
 - [ ] `npm run validate:all` green.
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: YAML `.asset` merge conflicts when two authors edit same foldout. Mitigation: single serial commit; prefer local Unity save over hand-merge of binary-ish YAML without Editor verify.
+- Risk: `Gradient` stops not committed as expected (Unity version drift). Mitigation: open asset in Editor post-pull; re-save if Inspector shows empty gradient.
+- Ambiguity: exploration doc path `docs/ui-polish-exploration.md` vs `ui-polish-exploration` — use repo path that exists. Resolution: glob before citing in commit message.
+- Invariant touch: user-facing palette strings in spec remain English per web exception; asset is data only.
+
+### §Examples
+
+| Token | Expected visual intent |
+|-------|------------------------|
+| LED hues | Green / amber / red triad |
+| VU gradient | Green → amber → red |
+| `moneyTick` curve | Ease-out, not linear identity |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| asset_diff | `DefaultUiTheme.asset` saved | Git diff shows populated `studioRack` + `motion` | manual |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] Every new `studioRack` + `motion` field has non-default Inspector authorship committed.
+- [ ] Durations for `moneyTick`, `needleAttack`, `needleRelease` match §2.1.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- TECH-312 must cite the same field names when normative prose lands — sync if any rename during Editor work.
 
 ## Open Questions
 

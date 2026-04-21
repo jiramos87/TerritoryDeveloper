@@ -3,13 +3,15 @@ purpose: "TECH-355 — Flock-guard `materialize-backlog.sh` + self-documenting h
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/backlog-yaml-mcp-alignment-master-plan.md"
+task_key: "T2.1.1"
 ---
 # TECH-355 — Flock-guard `materialize-backlog.sh` + self-documenting header
 
 > **Issue:** [TECH-355](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -108,6 +110,40 @@ Implementer owns exact flock syntax (fd-based `exec 200>` vs subshell `flock -x`
 ## 10. Lessons Learned
 
 - …
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: `flock` missing on developer Mac (Homebrew coreutils) — script should still fail loud if `flock` absent, or document dependency. Mitigation: match `reserve-id.sh` pattern; CI runs Linux where `flock` exists.
+- Risk: lock file path typo (`materialize-backlog.lock` vs legacy `.backlog.lock` prose in old docs). Mitigation: invariant #13 name wins; header comment states canonical path.
+- Risk: nested flock if script called from script — avoid double-lock deadlock. Mitigation: single entrypoint wraps node once only.
+- Invariant touch: **#13** lockfile-per-domain — align comment with `ia/rules/invariants.md`.
+
+### §Examples
+
+| Caller | Behavior |
+|--------|----------|
+| Serial `materialize-backlog.sh` | Brief flock acquire; no starvation |
+| 8 parallel callers (TECH-356) | Serialized regen; identical output to serial baseline |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| single_writer_smoke | clean tree | `bash tools/scripts/materialize-backlog.sh`; no spurious BACKLOG diff | manual |
+| validate_all | post-edit | `npm run validate:all` exit 0 | node |
+| concurrent_deferred | — | Full N=8 harness in TECH-356 | deferred |
+
+### §Acceptance
+
+- [ ] `flock ia/state/.materialize-backlog.lock` wraps node invocation.
+- [ ] Lock auto-created; header documents path + rationale + `reserve-id.sh` pointer.
+- [ ] `npm run validate:all` green.
+
+### §Findings
+
+- Orchestrator Open Questions mention patching stale `.backlog.lock` prose — optional doc fix in TECH-357 or here if cheap.
 
 ## Open Questions (resolve before / during implementation)
 

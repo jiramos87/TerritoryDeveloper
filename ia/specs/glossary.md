@@ -6,320 +6,321 @@ slices_via: glossary_lookup
 ---
 # Glossary — Territory Developer
 
-> Quick-reference for **domain concepts** (game logic + system behavior). Class names, methods, and backlog ID rules live in technical specs and `BACKLOG.md` — see `ia/specs/managers-reference.md`, `roads-system.md`, etc.
-> Canonical detail is always in the linked spec — defer to the spec when they differ.
+> Domain concepts. Canonical detail lives in the linked spec — spec wins on conflict. Class names, methods, and backlog ID rules live in technical specs and `BACKLOG.md`.
 
-> **Spec abbreviations:** geo = `isometric-geography-system.md`, roads = `roads-system.md`,
-> water = `water-terrain-system.md`, sim = `simulation-system.md`, persist = `persistence-system.md`,
-> mgrs = `managers-reference.md` — **§Zones**, **§Demand**, **§World**, **§Notifications**; **geo §14.5** = road stroke, lip, grass, Chebyshev, etc.; **sim §Rings** = centroid + growth rings; ui = `ui-design-system.md`; unity-dev = `unity-development-context.md`; `ARCHITECTURE.md` = layer map and init order (no § numbers).
+## Abbreviations
 
-## Index (quick skim)
+Specs (relative to `ia/specs/`): geo=`isometric-geography-system.md`, roads=`roads-system.md`, water=`water-terrain-system.md`, sim=`simulation-system.md`, persist=`persistence-system.md`, mgrs=`managers-reference.md`, ui=`ui-design-system.md`, udev=`unity-development-context.md`, arch=`ARCHITECTURE.md`, audio=`audio-blip.md`, econ=`economy-system.md`.
 
-| Block | Keywords (search this doc for…) |
-|-------|----------------------------------|
-| **Grid** | Cell, HeightMap, sorting, tile/world, Moore, cardinal, grass |
-| **Height** | range, sea level, Δh, generation |
-| **Terrain** | slopes, cliffs, shore, rim, bay, suppression, cut-through |
-| **Water** | body, map, open vs shore, S/V, junction, Pass A/B, brink, cascade |
-| **Rivers** | H_bed, bank, width, spacing, Chebyshev |
-| **World gen** | geography init |
-| **Roads** | validation, stroke, street/interstate, bridge, wet run, terraform |
-| **Pathfinding** | A*, costs, diagonal steps |
-| **Zones** | RCI, density, pivot, footprint, undeveloped light |
-| **Simulation** | tick, AUTO, budget, centroid, rings |
-| **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification, monthly maintenance |
-| **Persistence** | save, CellData, water map data, visual restore, load order |
-| **Audio** | Bake-to-clip, Blip bootstrap, Blip cooldown, Blip LFO, Blip LUT pool, Blip mixer group, Blip patch, Blip patch flat, Blip variant, Param smoothing, Patch flatten, patch hash, scene-load suppression |
-| **Prefabs** | land/water slopes, sorting formula, type offsets |
-| **Documentation** | reference spec, project spec, orchestrator document, project hierarchy, rollout tracker, rollout lifecycle, alignment gate, skill iteration log, per-skill changelog, ship-stage dispatcher, chain-level stage digest, stage tail (open / incomplete), interchange JSON, geography_init_params, scenario_descriptor_v1, City metrics history, Agent test mode batch, IDE agent bridge |
-| **Multi-scale simulation** | simulation scale, active scale, dormant scale, child-scale entity, evolution algorithm, evolution parameters, evolution-invariant, evolution-mutable, parity budget, reconstruction, procedural scale generation, scale switch, multi-scale save tree, city/region/country cell, parent-scale stub, event bubble-up, constraint push-down, player-authored dormant control |
-| **Planned (non-authoritative)** | backlog-backed future terms — [§ Planned terminology](#planned-domain-terms) |
+Rules: pa=`ia/rules/plan-apply-pair-contract.md`, ph=`ia/rules/project-hierarchy.md`, ovs=`ia/rules/orchestrator-vs-spec.md`, inv=`ia/rules/invariants.md`, rs=`ia/rules/runtime-state.md`.
+
+Skills: rr=`ia/skills/release-rollout/SKILL.md`, ss=`ia/skills/ship-stage/SKILL.md`, rrsbl=`ia/skills/release-rollout-skill-bug-log/SKILL.md`, rre=`ia/skills/release-rollout-enumerate/SKILL.md`, mpe=`ia/skills/master-plan-extend/SKILL.md`.
+
+Projects: ms=`ia/projects/multi-scale-master-plan.md`, ms-post=`ia/projects/multi-scale-post-mvp-expansion.md`, train=`ia/projects/skill-training-master-plan.md`, lifecycle=`ia/projects/lifecycle-refactor-master-plan.md`.
+
+Docs: schemas=`docs/schemas/README.md`, mcp=`docs/mcp-ia-server.md`, lifecycle-doc=`docs/agent-lifecycle.md`, pg-interchange=`docs/postgres-interchange-patterns.md`, pg-setup=`docs/postgres-ia-dev-setup.md`, avpolicy=`docs/agent-led-verification-policy.md`, planned-ideas=`docs/planned-domain-ideas.md`.
+
+Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §MetricsRecorder; geo §14.5 = road stroke + lip + grass + Chebyshev; sim §Rings = centroid + growth rings; persist §Save / §Load pipeline / §Visual restore details.
 
 ## Grid & Coordinates
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Cell** | Smallest addressable geographic unit on the map — one isometric tile of land, water, or development. `MonoBehaviour` on each grid tile `GameObject`; holds `height`, `terrainSlopeType`, `cellType`, water body id, zone, and building reference. | geo §1, §2, §11.2 |
-| **HeightMap** | The terrain elevation field over the whole map; defines hills, basins, and where water sits. `int[,]` in `[MIN_HEIGHT, MAX_HEIGHT]`; must stay in sync with `Cell.height` on every write. | geo §2 |
-| **Sorting order** | What draws in front of what on screen so hills, water, roads, and buildings stack believably. Integer `sortingOrder` from depth, height, and per-type offsets (formula in spec). | geo §7 |
-| **Tile dimensions** | How wide and tall one map cell is in world space for the diamond isometric layout. `tileWidth` = 1.0, `tileHeight` = 0.5 world units. | geo §1.1 |
-| **Direction convention** | How compass directions map to grid steps and on-screen tilt. N/S/E/W use fixed `(Δx, Δy)`; `+x` reads as North (up-right), `+y` as West (up-left). | geo §1.2 |
-| **Height offset** | Vertical lift of the whole cell in world space so higher terrain reads above lower terrain. `(h - 1) * 0.25` added to world Y per height level above base. | geo §1.1 |
-| **World ↔ Grid conversion** | Turning mouse/world positions into cell indices and back for picking and placement. Diamond projection and inverse use `tileWidth` / `tileHeight` / `heightOffset` and `round` for inverse. **territory-ia** **`isometric_world_to_grid`** covers the **planar** inverse only — not height-aware picking. | geo §1.1, §1.3 |
-| **Moore neighborhood** | The eight tiles touching a cell (cardinals + diagonals); used for slopes, shores, and many adjacency rules. Same as Moore-adjacent cells in geography and water specs. | geo §2.4.1 |
-| **Cardinal neighbor** | The four tiles sharing an edge (N/S/E/W steps only) — not diagonals. Height difference limits, water–water cascades, and many road rules use cardinals only. | geo §2.3, §5.6.2 |
-| **Grass cell** | Default developable land — empty of **street**/**interstate** cells, typically open for zoning, forests, and placement tools. Manual pathfinding treats grass plus **street**/**interstate** cells as walkable; AUTO adds undeveloped light zoning per mode. | geo §14.5, geo §13.9 |
+| Cell | Smallest addressable map unit — one isometric tile of land, water, or development. MonoBehaviour per grid tile; holds height, terrainSlopeType, cellType, water body id, zone, building ref. | geo §1, §2, §11.2 |
+| HeightMap | Terrain elevation field across the map. `int[,]` in `[MIN_HEIGHT, MAX_HEIGHT]`; kept in sync with `Cell.height` on every write. | geo §2 |
+| Sorting order | Integer `sortingOrder` from depth + height + per-type offsets; determines front-to-back draw stacking. | geo §7 |
+| Tile dimensions | `tileWidth = 1.0`, `tileHeight = 0.5` world units (diamond isometric). | geo §1.1 |
+| Direction convention | N/S/E/W use fixed `(Δx, Δy)`; `+x` = North (up-right), `+y` = West (up-left). | geo §1.2 |
+| Height offset | `(h - 1) * 0.25` added to world Y per height level above base. | geo §1.1 |
+| World ↔ Grid conversion | Diamond projection + inverse using `tileWidth` / `tileHeight` / `heightOffset` + `round`. territory-ia `isometric_world_to_grid` covers planar inverse only (not height-aware). | geo §1.1, §1.3 |
+| Moore neighborhood | Eight tiles touching a cell (cardinals + diagonals). | geo §2.4.1 |
+| Cardinal neighbor | Four tiles sharing an edge (N/S/E/W steps). Height constraints, water cascades, and many road rules use cardinals only. | geo §2.3, §5.6.2 |
+| Grass cell | Default developable land — no street/interstate. Manual pathfinding treats grass + street/interstate as walkable; AUTO adds undeveloped-light per mode. | geo §14.5, §13.9 |
 
 ## Height System
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Height range** | How low and high land can be in the simulation. `MIN_HEIGHT`–`MAX_HEIGHT` (0–5); higher steps cliffs and sorting, not infinite scale. | geo §2.1 |
-| **Sea level** | The baseline height band where open sea and low water bodies live. `SEA_LEVEL = 0`; registered bodies still use per-body surface height `S`. | geo §2.1 |
-| **Height constraint** | Rule that neighbors cannot jump more than one step except where designed (e.g. lake bowls). Cardinal `\|Δh\| ≤ 1` for “normal” land; larger drops use cliffs and special cases. | geo §2.3 |
-| **Height generation** | How the initial landform is created before play. 40×40 designer template; larger maps extend with blended Perlin noise; lakes and rivers stamp afterward. | geo §2.2 |
+| Height range | `MIN_HEIGHT`–`MAX_HEIGHT` = 0–5; caps cliffs and sorting. | geo §2.1 |
+| Sea level | `SEA_LEVEL = 0` baseline; registered bodies use per-body surface height `S`. | geo §2.1 |
+| Height constraint | Cardinal `\|Δh\| ≤ 1` for normal land; larger drops use cliffs and special cases (e.g. lake bowls). | geo §2.3 |
+| Height generation | 40×40 designer template; larger maps extend with blended Perlin noise; lakes and rivers stamp afterward. | geo §2.2 |
 
 ## Terrain & Slopes
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Slope type** | Which way the ground tilts on a cell — flat, ramp, diagonal wedge, or concave corner. `TerrainSlopeType` enum from 8-neighbor height compares (land vs water-shore rules differ). | geo §3–§4 |
-| **Slope categories** | Grouping of slope outcomes: flat plateau, cardinal ramp, diagonal wedge, corner-up valley. Drives grass vs ramp prefabs and which tiles allow roads. | geo §3.3 |
-| **Cliff** | A vertical drop between two cells — reads as a rock wall along the **drop boundary** (the lower cell’s side of the step). S/E-facing stacked meshes when `\|Δh\| ≥ 1` on cardinals; N/W faces not rendered (camera). Not the same as **map border** (play-area boundary). | geo §5.7 |
-| **Shore band** | The ring of dry land hugging water where special shore art applies and heights are clamped to the water surface. Moore neighbors of water with `height ≤ min(S)` among adjacent water. | geo §2.4.1 |
-| **Surface-height gate** | Whether a land tile is allowed to use water-shore visuals vs normal land + cliffs. Tests `h ≤ V + MAX` with `V = max(MIN_HEIGHT, S − 1)`; rim above cap uses ordinary terrain. | geo §4.2 |
-| **Rim** | Higher dry ground just above the shore band — looks like normal hills toward water, not a beach ramp. Uses slopes + cliff stacks; fails the shore-art gate. | geo §14.1 |
-| **Bay** | An inner-corner shore pattern where water wraps around land (a cove or notch). Chosen from neighbor water patterns (perpendicular cardinals, rectangle outer corner, etc.). | geo §5.9 |
-| **Cliff face visibility** | Which cliff meshes the player actually sees. Only **south** and **east** cliff stacks instantiated; `Cell.cliffFaces` may still record N/W for systems like hydrology. | geo §5.7 |
-| **Cliff suppression** | Hiding a cliff mesh when a shore ramp already shows the transition. One-step suppression toward water/water-shore on eligible shore cells; rim keeps a segment; `\|Δh\| ≥ 2` still stacks. Toward **off-grid** void on **S**/**E**, **water-shore** primary cells skip duplicate brown **cliff** (same face-ownership rule). | geo §5.6.1, §5.7 |
-| **Cut-through corridor** | A trench carved through high terrain so a path can run flat — reads as a notch in a hill. Terraform flattens to `baseHeight`; cliffs on sides where neighbors stay higher. | geo §5.10 |
+| Slope type | `TerrainSlopeType` enum — flat, ramp, diagonal wedge, concave corner — from 8-neighbor height compares (land vs water-shore rules differ). | geo §3–§4 |
+| Slope categories | Flat plateau, cardinal ramp, diagonal wedge, corner-up valley. Drives grass vs ramp prefabs and road eligibility. | geo §3.3 |
+| Cliff | Vertical drop between two cells, read as rock wall on the drop boundary. S/E-facing stacked meshes when `\|Δh\| ≥ 1` on cardinals; N/W not rendered (camera). | geo §5.7 |
+| Shore band | Dry-land ring hugging water with shore art; heights clamped to water surface. Moore neighbors of water with `height ≤ min(S)`. | geo §2.4.1 |
+| Surface-height gate | Land-cell gate for water-shore art: `h ≤ V + MAX` with `V = max(MIN_HEIGHT, S − 1)`. Above cap = rim (ordinary terrain). | geo §4.2 |
+| Rim | Higher dry ground above the shore band — hills toward water, not a beach ramp. Fails the shore-art gate. | geo §14.1 |
+| Bay | Inner-corner shore pattern (cove / notch). Chosen from neighbor water patterns (perpendicular cardinals, rectangle outer corner). | geo §5.9 |
+| Cliff face visibility | Only S/E cliff stacks instantiated; `Cell.cliffFaces` may still record N/W for systems like hydrology. | geo §5.7 |
+| Cliff suppression | Hides cliff mesh where a shore ramp already shows the transition. One-step suppression toward water/water-shore; rim keeps a segment; `\|Δh\| ≥ 2` still stacks. Toward off-grid void on S/E, water-shore primary skips the duplicate brown cliff. | geo §5.6.1, §5.7 |
+| Cut-through corridor | Trench carved through high terrain for a flat path. Terraform flattens to `baseHeight`; cliffs on sides where neighbors stay higher. | geo §5.10 |
 
 ## Water
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Water body** | A connected region of water sharing one surface height and identity (lake, river reach, sea). `WaterBody`: id, `SurfaceHeight`, cells; drives rendering and shore affiliation. | geo §11.2 |
-| **Water map** | Which body id each cell belongs to, if any. `WaterMap`: `int[,]` ids + body list; `0` = dry; used for placement, save, and junction logic. | geo §11.2 |
-| **Open water** | A cell that is registered as water in `WaterMap` — the main water surface tile for a body. Contrasts with dry **water-shore** art on land; sorting uses surface height. | geo §11.2, water |
-| **Water-shore (land)** | A **dry** cell painted with shore transition prefabs toward water — beach/ramp art, not the water tile itself. Subject to surface-height gate and shore refresh; distinct from **rim** above the cap. | geo §11.2, §4.2, water |
-| **Surface height (S)** | The logical water level of a body — “how high” the water is for rules and sorting. Open water cells use `Cell.height = S` for visuals; bed may differ underneath. | geo §11.1 |
-| **Visual reference (V)** | Index used for shore-art eligibility vs land height: `V = max(MIN_HEIGHT, S − 1)`. The gate compares land `h` to `V + MAX`, not raw `S` alone. | geo §2.4.1, §4.2 |
-| **Water body kind** | Classification of a body — **lake**, **river**, or **sea** — controlling merge rules, junction exclusions, and carve behavior (e.g. river–river vs lake–lake contact). | geo §11.2, §12.3 |
-| **Depression-fill** | Lakes forming in natural lows on the terrain — water fills until it would spill out. Algorithm floods from minima to spill height; bodies merged and validated per lake rules. | geo §11.3 |
-| **Spill height** | The overflow elevation that caps a depression fill — like the rim of a basin. Sets max surface during depression-fill before accept/reject and merging. | geo §11.3 |
-| **Junction** | Where two water surfaces at different heights meet on an edge — creates drops, merges, and special shore topology. Cardinal contact with `S_high > S_low` (subject to lake exclusion rules). | geo §11.8 |
-| **Pass A (bed alignment)** | Normalizing underwater terrain when high water meets low water so beds line up before placement. Lowers upper-side bed toward lower neighbors; sweeps until stable; ids unchanged. | geo §11.7 |
-| **Pass B (junction merge)** | Reassigning cells so the lower surface “wins” at a multi-body contact. Moves dry/shore on lower plane to lower body; may absorb bank cells; contact-bed reassignment. | geo §11.7 |
-| **Brink** | Special dry land roles next to a river–river surface step — upper vs lower pool sides of a drop. **UpperBrink** / **LowerBrink** drive cascade shore passes and cliff stacks. | geo §11.8 |
-| **Lake exclusion** | Rule that lake–lake surface steps do not get water–water cascades or junction merge passes on that edge. Pass A/B skip; sea is not treated as lake for this rule. | geo §11.7 |
-| **Shore refresh** | Recomputing shore grass/ramp/cliff art after water changes. Updates Moore (and sometimes wider) rings around new water so land matches the new shoreline. | geo §11.6 |
-| **Cascade** | A waterfall between two water tiles at different surface heights — no dry shore between. Cardinal step; S/E cascade prefabs; segment count from `S_high − S_low`. | geo §5.6.2 |
-| **Corner promotion** | Raising inner corner river bed cells so the dry bank stays continuous around bends. Bed cells with two perpendicular neighbors at `H_bed + 1` promoted before water assignment. | geo §12.5 |
+| Water body | Connected region sharing one surface height + identity (lake, river reach, sea). `WaterBody`: id, `SurfaceHeight`, cells. | geo §11.2 |
+| Water map | Which body id each cell belongs to. `WaterMap`: `int[,]` ids + body list; `0` = dry. | geo §11.2 |
+| Open water | Cell registered as water in `WaterMap`. Sorting uses surface height. | geo §11.2, water |
+| Water-shore (land) | Dry cell painted with shore transition prefabs toward water. Subject to surface-height gate and shore refresh. | geo §11.2, §4.2, water |
+| Surface height (S) | Logical water level for a body. Open water cells use `Cell.height = S`; bed may differ underneath. | geo §11.1 |
+| Visual reference (V) | `V = max(MIN_HEIGHT, S − 1)`. Shore-art gate compares land `h` to `V + MAX`, not raw `S`. | geo §2.4.1, §4.2 |
+| Water body kind | lake / river / sea — controls merge rules, junction exclusions, carve behavior. | geo §11.2, §12.3 |
+| Depression-fill | Lakes forming in natural lows — floods from minima to spill height; merged and validated per lake rules. | geo §11.3 |
+| Spill height | Overflow elevation capping a depression fill. | geo §11.3 |
+| Junction | Cardinal contact with `S_high > S_low` (subject to lake exclusion). Creates drops, merges, special shore topology. | geo §11.8 |
+| Pass A (bed alignment) | Normalizes underwater bed when high water meets low water. Lowers upper-side bed toward lower neighbors; sweeps until stable; ids unchanged. | geo §11.7 |
+| Pass B (junction merge) | Reassigns cells so lower surface wins at a multi-body contact. Moves dry/shore on lower plane to lower body; may absorb bank cells. | geo §11.7 |
+| Brink | Dry-land role beside a river–river surface step. `UpperBrink` / `LowerBrink` drive cascade shore passes and cliff stacks. | geo §11.8 |
+| Lake exclusion | Lake–lake surface steps skip Pass A/B and cascades on that edge. Sea is not treated as lake for this rule. | geo §11.7 |
+| Shore refresh | Recomputes shore grass/ramp/cliff art after water changes. Updates Moore (and sometimes wider) rings. | geo §11.6 |
+| Cascade | Waterfall between two water tiles at different S (no dry shore between). Cardinal step; S/E cascade prefabs; segment count from `S_high − S_low`. | geo §5.6.2 |
+| Corner promotion | Raises inner-corner river bed cells so dry bank stays continuous on bends. Bed cells with two perpendicular neighbors at `H_bed + 1` promoted before water assignment. | geo §12.5 |
 
 ## Rivers
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **River** | A fixed water channel carved after lakes — flows across the map toward a border or sink. Static after init; cardinal path; `H_bed` non-increasing toward exit; banks and width rules in spec. | geo §12 |
-| **River bed (H_bed)** | The floor elevation of the river channel under the water surface — may vary within a segment but follows monotonic rules toward the exit. Distinct from **surface** `≈ H_bed + 1` and from dry **bank** cells. | geo §11.1, §12.4 |
-| **River bank** | The dry strip beside the channel — one step above the bed so the channel reads sunken. Symmetric rule `H_bank = H_bed + 1` when geometry allows. | geo §12.4 |
-| **River width** | How wide the wet channel and its shoulders are. Bed 1–3 cells; total with shores in `{3,4,5}`; width steps limited between segments. | geo §12.4 |
-| **Forced river** | A fallback when no natural river path qualifies — the generator still guarantees a channel. Carves a basin and places a river by constraint relaxation. | geo §12.4 |
-| **River spacing** | Keeping separate river corridors from overlapping or crowding entries. Prior corridors dilated (Chebyshev); same-border entries spaced apart. | geo §12.4 |
-| **Chebyshev distance** | Grid metric `max(|Δx|,|Δy|)` — “king moves” on an 8-way grid. Used to dilate river corridors and measure spacing between river entries without diagonal double-counting. | geo §12.4, geo §14.5 |
+| River | Fixed water channel carved after lakes — flows toward a border or sink. Static post-init; cardinal path; `H_bed` non-increasing toward exit. | geo §12 |
+| River bed (H_bed) | Floor elevation of the channel under the surface. Distinct from surface (`≈ H_bed + 1`) and from dry bank cells. | geo §11.1, §12.4 |
+| River bank | Dry strip beside the channel — `H_bank = H_bed + 1` when geometry allows, so channel reads sunken. | geo §12.4 |
+| River width | Bed 1–3 cells; total with shores in `{3,4,5}`; width steps limited between segments. | geo §12.4 |
+| Forced river | Fallback when no natural path qualifies — generator carves a basin and places a river via constraint relaxation. | geo §12.4 |
+| River spacing | Prior corridors dilated (Chebyshev); same-border entries spaced apart. | geo §12.4 |
+| Chebyshev distance | `max(\|Δx\|, \|Δy\|)` — king moves on an 8-way grid. Used for corridor dilation and entry spacing. | geo §12.4, §14.5 |
 
 ## World generation
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Geography initialization** | First-time map build on **New Game** — ordered pipeline from heightmap through water, rivers, interstate, forests, desirability, and sorting before play. `GeographyManager` orchestrates; order must stay consistent with save/load assumptions. Optional **Editor** diagnostic JSON **`geography_init_report`** (gitignored). | `ARCHITECTURE.md`, geo §12.1, mgrs, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) |
+| Geography initialization | First-time map build on New Game — ordered pipeline heightmap → water → rivers → interstate → forests → desirability → sorting. `GeographyManager` orchestrates; order must match save/load assumptions. Optional Editor diagnostic JSON `geography_init_report` (gitignored). | arch, geo §12.1, mgrs, mcp |
 
 ## Roads & Bridges
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Terraform plan** | The authoritative description of how terrain under a proposed road changes (or does not). `PathTerraformPlan`: per-cell actions, heights, `postTerraformSlopeType`; `Apply` / `Revert`. | geo §8 |
-| **Road validation pipeline** | The required gate before any **street** or **interstate** placement is committed — same checks for manual **street** draw, **interstate**, and AUTO **streets**. Preparation (`TryPrepareRoadPlacementPlan`, longest-prefix, optional locked deck-span) → Phase-1 heights → `Apply` → prefab resolve — not raw `ComputePathPlan` alone. | geo §13.1, roads |
-| **Road stroke** | The ordered path of cells for a road placement attempt — player drag or AUTO route — before filtering, truncation, and plan build. Same logical “stroke” drives preview and commit when valid. | geo §14.5, roads |
-| **Phase-1 validation** | Height and neighbor consistency check on a terraform plan **before** terrain writes are committed (`TryValidatePhase1Heights`). Fails fast if the plan would break `\|Δh\|` or edge rules. | geo §13.1 |
-| **Interstate** | Limited-access highway linking the city grid to the **map border** — long straight preference, full-path validation, **cut-through forbidden**. Distinct from ordinary streets and bridges. | geo §13.5, §13.6, mgrs |
-| **Interstate border** | The outward-facing face of an **interstate** where it meets the **map border** — the cell+side pair where an interstate exit leaves the playable grid and conceptually enters a **neighbor-city stub**. Recorded by `NeighborCityBinding` on road-build (exit cell + matched stub id). Distinct from generic **map border** (whole outer boundary) and from **cut-through** bans inside the grid. | geo §13.5 |
-| **Street (ordinary road)** | Player or AUTO **non-interstate** road: local network using the same validation family as manual draw (prefix, deck-span, terraform). Contrasts with border **interstate**. | geo §14.5, geo §13.1, mgrs |
-| **Street or interstate** | Umbrella when the same rule applies to **street (ordinary road)** and **interstate**: both must pass the **road validation pipeline** and commit via **`PathTerraformPlan`**. Prefer **street** or **interstate** alone when the distinction matters (e.g. **map border** endpoints, **cut-through** bans). | geo §13.1, roads |
-| **Map border** | The outer boundary of the playable grid (`x`/`y` min/max). **South**/**east** brown **cliff** stacks toward **off-grid** void use **`MIN_HEIGHT`** as the foot so the mesh fills to the terrain base; interstate endpoints and some water rules also reference the border. Do not use informal “map edge” for this — see [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) deprecated → canonical table. Not a generic **cell** edge or **Moore**/**cardinal neighbor** face unless that neighbor lies on the border. | geo §14.5, §5.7, §13.5 |
-| **Water-slope tile** | Coastal **land** cell using water-slope shore prefabs (`IsWaterSlopeCell`). Behaves like impassable or high-cost terrain for normal street routing; bridges use separate rules. | geo §5.8, §10, roads |
-| **Road cache invalidation** | After **any** change to road topology, cached road queries must be rebuilt so pathfinding and neighbors see the new network. Project invariant: call invalidate after modifications. | roads, `ia/rules/invariants.md` |
-| **Cut-through** | Flattening terrain along a **street**/**interstate** path when slopes are too steep to “ride.” `Flatten` to `baseHeight`; rejected when `maxHeight - baseHeight > 1` (**interstate** forbids entirely). | geo §8.3, §13.6 |
-| **baseHeight (terraform)** | Reference elevation a cut-through plan writes along the path so the road sits flat through high ground. Chosen from path context; too deep a cut vs surrounding max height fails validation. | geo §8.3, geo §14.5 |
-| **Scale-with-slopes** | Letting a road follow natural ramps when every step is gentle. No height writes; plan records `TerraformAction.None` and slope type per cell. | geo §8.2 |
-| **Deck span** | A bridge segment over water — straight, no corners on water, one deck height. Axis-aligned; uniform `waterBridgeDeckDisplayHeight` across the wet run. | geo §13.4 |
-| **Bridge lip** | Last firm **dry** land cell at the water’s edge where a deck span begins — the anchor for deck height and locked chord geometry. | geo §13.4, geo §14.5 |
-| **Wet run** | Contiguous **water and/or water-slope** cells along a stroke that a bridge crosses in one straight segment. Truncation rules keep wet runs intact for bridge / interstate validation (see **roads** spec). | geo §13.4, geo §14.5, roads |
-| **Locked chord** | A fixed straight line from dry bank through water to dry land used for manual bridge preview/commit. Cardinal chord from lip through wet to far dry at matching bridge height. | geo §13.4 |
-| **Longest valid prefix** | Truncating a stroke to the longest part that still passes all rules. Manual/AUTO use when tail would invalidate; silent when stroke starts on blocked slope (see roads spec). | geo §13.2, roads |
-| **Land slope eligibility** | Which ground tiles may carry a road stroke. **Flat** and **cardinal ramps** only; pure diagonals and corner-up land slopes disallowed for strokes and A* walkability. | geo §13.10, roads |
-| **Resolver rules** | Prefab choice invariants for topology and approach. Elbow degree, exit alignment, terraform-over-live-slope, hill avoidance, interstate straight preference, bridge approach orthogonality (A–F). | geo §13.7, roads |
-| **Road reservation** | Cells AUTO zoning must leave empty so future **street** alignment stays possible. Axial strips from `GetRoadExtensionCells` / `GetRoadAxialCorridorCells` excluded from auto-zone each tick. | geo §13.9, sim |
+| Terraform plan | Authoritative description of terrain changes under a proposed road. `PathTerraformPlan`: per-cell actions, heights, `postTerraformSlopeType`; `Apply` / `Revert`. | geo §8 |
+| Road validation pipeline | Required gate before any street/interstate commit. Preparation (`TryPrepareRoadPlacementPlan`, longest-prefix, optional locked deck-span) → Phase-1 heights → `Apply` → prefab resolve. | geo §13.1, roads |
+| Road stroke | Ordered path of cells for a placement attempt (player drag or AUTO route) before filtering, truncation, plan build. Same stroke drives preview and commit. | geo §14.5, roads |
+| Phase-1 validation | Height + neighbor consistency check on a terraform plan before terrain writes commit (`TryValidatePhase1Heights`). Fails fast on `\|Δh\|` or edge-rule breaks. | geo §13.1 |
+| Interstate | Limited-access highway linking the city grid to the map border. Long-straight preference, full-path validation, cut-through forbidden. | geo §13.5, §13.6, mgrs |
+| Interstate border | Outward-facing face of an interstate at the map border — cell+side pair where an exit leaves the grid into a neighbor-city stub. Recorded by `NeighborCityBinding` on road-build. | geo §13.5 |
+| Street (ordinary road) | Player or AUTO non-interstate road. Same validation family as manual draw (prefix, deck-span, terraform). | geo §14.5, §13.1, mgrs |
+| Street or interstate | Umbrella when the same rule applies to both. Both must pass the road validation pipeline and commit via `PathTerraformPlan`. Use specific term when distinction matters (border endpoints, cut-through bans). | geo §13.1, roads |
+| Map border | Outer boundary of the playable grid (`x`/`y` min/max). S/E brown cliff stacks toward off-grid void use `MIN_HEIGHT` as foot. Interstate endpoints and some water rules reference the border. | geo §14.5, §5.7, §13.5 |
+| Water-slope tile | Coastal land cell using water-slope shore prefabs (`IsWaterSlopeCell`). Treated as impassable/high-cost for normal street routing; bridges use separate rules. | geo §5.8, §10, roads |
+| Road cache invalidation | After any road topology change, cached road queries must be rebuilt. Project invariant: call invalidate after modifications. | roads, inv |
+| Cut-through | Flatten terrain along a street/interstate path when slopes are too steep. `Flatten` to `baseHeight`; rejected when `maxHeight - baseHeight > 1` (interstate forbids). | geo §8.3, §13.6 |
+| baseHeight (terraform) | Reference elevation a cut-through writes along the path so the road sits flat through high ground. | geo §8.3, §14.5 |
+| Scale-with-slopes | Road follows natural ramps when every step is gentle. No height writes; plan records `TerraformAction.None` + slope type per cell. | geo §8.2 |
+| Deck span | Straight bridge segment over water, no corners on water, one deck height. Axis-aligned; uniform `waterBridgeDeckDisplayHeight`. | geo §13.4 |
+| Bridge lip | Last firm dry-land cell at the water's edge where a deck span begins — anchor for deck height and locked chord. | geo §13.4, §14.5 |
+| Wet run | Contiguous water and/or water-slope cells along a stroke that a bridge crosses in one straight segment. Truncation rules keep wet runs intact. | geo §13.4, §14.5, roads |
+| Locked chord | Fixed straight line from dry bank through water to dry land for manual bridge preview/commit. Cardinal; matching bridge height. | geo §13.4 |
+| Longest valid prefix | Truncates a stroke to the longest part that still passes all rules. Silent when stroke starts on blocked slope. | geo §13.2, roads |
+| Land slope eligibility | Flat and cardinal ramps only carry strokes and A* walkability. Pure diagonals and corner-up slopes disallowed. | geo §13.10, roads |
+| Resolver rules | Prefab choice invariants: elbow degree, exit alignment, terraform-over-live-slope, hill avoidance, interstate straight preference, bridge approach orthogonality (A–F). | geo §13.7, roads |
+| Road reservation | Cells AUTO zoning must leave empty so future street alignment stays possible. Axial strips from `GetRoadExtensionCells` / `GetRoadAxialCorridorCells` excluded from auto-zone each tick. | geo §13.9, sim |
 
 ## Pathfinding
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Pathfinding cost model** | How the game scores candidate street routes — prefers flat, penalizes slopes and water-shore. A* costs: flat cheap, slopes expensive, water-slope very high, `\|Δh\|>1` impossible. | geo §10 |
-| **A* search** | Best-first shortest-path search on the road grid using the cost table in the geography spec; explores cheaper cells first until the goal is reached. Separate entry points for manual vs AUTO simulation walkability. | geo §10, roads |
-| **Interstate cost model** | Stronger penalties for kinks and detours on highway generation. Scales slope costs, adds turn/zigzag/away penalties and straight bonus (see table). | geo §10 |
-| **Diagonal step expansion** | Roads move in cardinal steps only, even if the sketch is diagonal. Planner splits diagonal moves into two orthogonal steps for prefab compatibility. | geo §8.4 |
+| Pathfinding cost model | A* costs: flat cheap, slopes expensive, water-slope very high, `\|Δh\| > 1` impossible. | geo §10 |
+| A* search | Best-first shortest-path on the road grid using the geo cost table. Separate entry points for manual vs AUTO simulation walkability. | geo §10, roads |
+| Interstate cost model | Stronger penalties for kinks and detours. Scales slope costs; adds turn/zigzag/away penalties and straight bonus. | geo §10 |
+| Diagonal step expansion | Roads move cardinal only. Planner splits diagonal moves into two orthogonal steps for prefab compat. | geo §8.4 |
 
 ## Zones & Buildings
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **RCI** | The three land-use families — housing, shops/offices, and factories — that drive demand and tax base. Residential / Commercial / Industrial; each has its own zone tiles and building sets. | mgrs §Zones |
-| **Zone** | A parcel designated for a type of development before a building appears. `Zone` component on cell: type, density tier, level, building ref; lifecycle in managers spec. | mgrs §Zones |
-| **Zone density** | How intense development is allowed on a zoned tile — light, medium, heavy. Selects building size/tier; **undeveloped light** interacts with AUTO roads (see below). | mgrs §Zones |
-| **Pivot cell** | The anchor tile of a multi-cell building for save, sort, and demolish. Other footprint cells point at the pivot’s building instance. | mgrs §Zones |
-| **Building footprint** | All grid cells covered by one building (1×1 or multi-cell). Sorting, save data, bulldoze, and growth operate on the footprint as a unit tied to the pivot. | mgrs §Zones |
-| **Undeveloped light zoning** | A zoned tile still empty of a building, at light density — treated as passable for AUTO **street** planning only. Walkability via `AutoSimulationRoadRules` + simulation pathfinder; medium/heavy and built tiles differ. | mgrs §Zones, geo §13.9 |
-| **Building** | The visible structure on a zoned or service tile — RCI houses/shops/factories or **utility** plants. Spawned by zone/growth/resource rules; may be 1×1 or multi-cell; level tracks growth stage. | mgrs §Zones, mgrs §World |
-| **Zone S** | 4th **zone** channel alongside **RCI**. State-owned **buildings** — 7 sub-types × 3 **zone density** tiers. Manual placement only in MVP; budget-gated via **envelope (budget sense)** allocator. | [`economy-system.md`](economy-system.md#zone-s) |
-| **ZoneSubTypeRegistry** | ScriptableObject cataloging 7 **Zone S** sub-types (police, fire, education, health, parks, public housing, public offices). Per-entry fields: id, displayName, prefab, baseCost, monthlyUpkeep, icon. | [`economy-system.md`](economy-system.md#zone-sub-type-registry) |
-| **ZoneSService** | MonoBehaviour helper orchestrating **Zone S** placement: **`ZoneSubTypeRegistry`** **baseCost** lookup, **`BudgetAllocationService.TryDraw`**, then **`ZoneManager`** placement with **subTypeId** on **`Zone`**. Grid access only via **`GridManager.GetCell`** (invariant #5). | [`economy-system.md`](economy-system.md#zonesservice-placement) |
+| RCI | Residential / Commercial / Industrial — three land-use families driving demand and tax base. | mgrs §Zones |
+| Zone | Parcel designated for a type of development before a building appears. `Zone` component: type, density tier, level, building ref. | mgrs §Zones |
+| Zone density | Light / medium / heavy — selects building size/tier. Undeveloped-light interacts with AUTO roads. | mgrs §Zones |
+| Pivot cell | Anchor tile of a multi-cell building for save, sort, demolish. Other footprint cells point at the pivot. | mgrs §Zones |
+| Building footprint | All grid cells covered by one building (1×1 or multi-cell). Sorting, save, bulldoze, growth operate on the footprint as a unit. | mgrs §Zones |
+| Undeveloped light zoning | Zoned but empty tile at light density — passable for AUTO street planning only. Walkability via `AutoSimulationRoadRules` + sim pathfinder; medium/heavy and built tiles differ. | mgrs §Zones, geo §13.9 |
+| Building | Visible structure on a zoned or service tile — RCI or utility. Spawned by zone/growth/resource rules; 1×1 or multi-cell; level tracks growth stage. | mgrs §Zones, §World |
+| Zone S | 4th zone channel alongside RCI — state-owned buildings, 7 sub-types × 3 density tiers. Manual placement only in MVP; budget-gated via envelope allocator. | [econ#zone-s](economy-system.md#zone-s) |
+| ZoneSubTypeRegistry | ScriptableObject cataloging 7 Zone S sub-types (police, fire, education, health, parks, public housing, public offices). Per-entry: id, displayName, prefab, baseCost, monthlyUpkeep, icon. | [econ#zone-sub-type-registry](economy-system.md#zone-sub-type-registry) |
+| ZoneSService | MonoBehaviour orchestrating Zone S placement: `ZoneSubTypeRegistry` baseCost → `BudgetAllocationService.TryDraw` → `ZoneManager` placement with subTypeId. Grid access only via `GridManager.GetCell` (inv #5). | [econ#zonesservice-placement](economy-system.md#zonesservice-placement) |
 
 ## Simulation & Growth
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Simulation tick** | One automatic city update — roads extend, zones spread, utilities plan when time advances. Driven by `TimeManager` → `SimulationManager.ProcessSimulationTick()`. | sim |
-| **AUTO systems** | The three autopilots that grow the city each tick — streets, zoning, utilities. `AutoRoadBuilder`, `AutoZoningManager`, `AutoResourcePlanner` in fixed order after centroid/budget. | sim |
-| **Tick execution order** | Strict sequence inside a tick so later systems see fresh data. Budget valid → centroid recompute → roads → zoning → resource planner (see simulation spec list). | sim |
-| **Growth budget** | Per-category cap on how much AUTO may spend or place each tick. Prevents runaway sprawl; total pool comes from `GrowthBudgetManager` using projected net monthly cash flow (**tax base** income minus **monthly maintenance**) when positive, otherwise treasury (`CityStats`). | sim, mgrs §Demand |
-| **Urban centroid** | A statistical “center of mass” of development used to bias growth rings. `UrbanCentroidService` computes centroid and ring metrics for road/zoning targeting. | sim, sim §Rings |
-| **Urban growth rings** | Distance bands from the urban centroid — AUTO uses them to weight where roads and zones expand (typically denser near core). Recalculated each tick before AUTO systems run. | sim §Rings |
-| **Urbanization proposal** | **OBSOLETE** — legacy expansion proposal UI and manager; **never re-enable** (see **invariants**). Not part of `UrbanCentroidService` / ring AUTO. | sim |
+| Simulation tick | One automatic city update — roads extend, zones spread, utilities plan. Driven by `TimeManager` → `SimulationManager.ProcessSimulationTick()`. | sim |
+| AUTO systems | Three autopilots growing the city each tick — streets, zoning, utilities. `AutoRoadBuilder`, `AutoZoningManager`, `AutoResourcePlanner` in fixed order after centroid/budget. | sim |
+| Tick execution order | Budget valid → centroid recompute → roads → zoning → resource planner. | sim |
+| Growth budget | Per-category cap on AUTO spend per tick. Pool from `GrowthBudgetManager` using projected net monthly cash flow (tax base − monthly maintenance) when positive, else treasury (`CityStats`). | sim, mgrs §Demand |
+| Urban centroid | Statistical center of mass of development, biases growth rings. `UrbanCentroidService` computes centroid + ring metrics. | sim, sim §Rings |
+| Urban growth rings | Distance bands from the centroid — AUTO weights where roads and zones expand (denser near core). Recalculated each tick before AUTO runs. | sim §Rings |
 
 ## City systems
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Demand (R / C / I)** | How much the city “wants” each zone type to grow this cycle — pressure from jobs, population, forests, **per-sector tax** pressure, and a **happiness**-target multiplier. Drives the demand bar and AUTO zoning targets. Refreshed each in-game day after **happiness** is updated. | mgrs §Demand |
-| **Tax base** | Economic capacity tied to zoned development and population that **tax rates** apply to — income flows through `EconomyManager` / `CityStats`, while rates feed back via the **highest** of the three **tax** rates into **happiness** (above a comfort band) and via **per-sector** scaling into each R/C/I **demand** channel. | mgrs §Demand |
-| **Monthly maintenance** | Recurring **city** expense on the first **simulation** calendar day of each month: **street** upkeep from `CityStats.roadCount` (road cells) and **utility building** upkeep from registered **power plant** count; collected after **tax base** income for that day. Debits use `EconomyManager.SpendMoney`; insufficient funds skip the charge with a **game notification**. HUD net **money** hint uses projected tax minus projected maintenance. | mgrs §Demand |
-| **envelope (budget sense)** | Per-sub-type monthly spending allowance for **Zone S**. Global S monthly cap split 7 ways via pct sliders (sum-locked to 100%). `TryDraw` blocks spend when remaining < amount even if **tax base** treasury has funds. | [`economy-system.md`](economy-system.md#budget-envelope) |
-| **TreasuryFloorClampService** | Helper service extracted from `EconomyManager` (invariant #6) that enforces a hard non-negative treasury floor. API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `CurrentBalance` property. `TrySpend` calls `CityStats.RemoveMoney` on success; on failure posts an insufficient-funds **game notification** via `GameNotificationManager` and leaves balance unchanged. The ONE authorised treasury-mutation site post TECH-382 audit. | [`economy-system.md`](economy-system.md#treasury-floor-clamp) |
-| **BudgetAllocationService** | Helper service extracted from `EconomyManager` (invariant #6) owning the per-**Zone S** sub-type monthly **envelope (budget sense)**. API: `TryDraw(int subTypeId, int amount) → bool`, `GetMonthlyEnvelope(int) → int`, `SetEnvelopePct(int, float)`, `SetEnvelopePctsBatch(float[7])`, `MonthlyReset()`. Composes `TreasuryFloorClampService` for the treasury-floor check and mutation. Save round-trip via `CaptureSaveData` / `RestoreFromSaveData` (schema v4). | [`economy-system.md`](economy-system.md#budget-envelope) |
-| **IBudgetAllocator** | Interface contract for `BudgetAllocationService` (Stage 1.3 Phase 1). Decouples call sites from the concrete impl — enables test stubs and future alternative allocators without touching consumers. Same API surface as `BudgetAllocationService`. | [`economy-system.md`](economy-system.md#budget-envelope) |
-| **BondLedgerService** | Helper service extracted from `EconomyManager` (invariant #6) implementing single-bond-per-scale-tier ledger. Proactive treasury injection — not remedial overdraft. API: `TryIssueBond(int scaleTier, int principal, int termMonths) → bool`, `GetActiveBond(int scaleTier) → BondData`, `ProcessMonthlyRepayment(int scaleTier)`, `ProcessAllMonthlyRepayments()`. Repayment routes through `TreasuryFloorClampService.TrySpend`; failure flags `arrears` (HUD only, no penalty). Save round-trip via `CaptureSaveData` / `RestoreFromSaveData` (schema v4, list serialization). | [`economy-system.md`](economy-system.md#bond-ledger) |
-| **IBondLedger** | Interface contract for `BondLedgerService` (Stage 4 Phase 1). Decouples call sites from concrete impl. Methods: `TryIssueBond`, `GetActiveBond`, `ProcessMonthlyRepayment`. | [`economy-system.md`](economy-system.md#bond-ledger) |
-| **IMaintenanceContributor** | Interface contract for monthly maintenance registry participants. Methods: `GetMonthlyMaintenance() → int`, `GetContributorId() → string` (deterministic sort key), `GetSubTypeId() → int` (-1 = general pool, 0..6 = Zone S sub-type envelope). `EconomyManager` iterates contributors sorted by `GetContributorId()` (ordinal) in `ProcessMonthlyMaintenance`. Built-in adapters: `RoadMaintenanceContributor` (`road-aggregate`), `PowerPlantMaintenanceContributor` (`power-aggregate`). | [`economy-system.md`](economy-system.md#maintenance-contributor-registry) |
-| **Desirability** | How attractive a tile is for growth based on nearby terrain (water, forest, etc.), computed after geography init. Biases AUTO roads/zoning toward nicer locations. | mgrs §Demand, `ARCHITECTURE.md` |
-| **Forest (coverage)** | Tree cover on land — **sparse**, **medium**, or **dense** — affecting demand and player forest tools. | mgrs §World |
-| **Regional map** | The broader region with **neighboring cities**; context for regional systems and UI. | mgrs §World |
-| **Utility building** | Non-RCI service structure (water, power, etc.), often multi-cell; placed manually or by AUTO resource planning. | mgrs §World |
-| **Happiness** | City-wide citizen satisfaction score, normalized 0–100. Recalculated each in-game **day** (and when **tax** rates change from the UI) from weighted factors: employment rate, **highest** of the three **tax** rates vs a comfort band, **service coverage**, **forest** bonus, development base, and **pollution** penalty. Converges smoothly toward a target (lerp). Feeds back into **demand (R / C / I)** via a multiplier derived from that **target** on the same day. | mgrs §Demand |
-| **Pollution** | City-wide environmental degradation score. Sources: **industrial** **buildings** (heavy > medium > light), polluting **utility buildings** (power plants — nuclear = medium, fossil = high). Sinks: **forest** coverage (trees absorb pollution), future parks. Base pollution may later be affected by geographic and climatic factors. Influences **happiness** as a negative factor. | mgrs §World |
-| **Game notification** | Player-facing message (money, errors, hints) shown as a toast or alert. Only the notification singleton may enqueue UI messages. | mgrs §Notifications |
+| Demand (R / C / I) | Per-zone growth pressure — jobs, population, forests, per-sector tax, happiness-target multiplier. Refreshed each in-game day after happiness. | mgrs §Demand |
+| Tax base | Economic capacity tied to zoned development and population. Income flows through `EconomyManager` / `CityStats`; highest of three tax rates feeds back into happiness (above comfort band) and per-sector scaling into R/C/I demand. | mgrs §Demand |
+| Monthly maintenance | Recurring city expense on the first sim calendar day of each month: street upkeep from `CityStats.roadCount` + utility upkeep from registered power-plant count. Collected after tax income. Debits via `EconomyManager.SpendMoney`; insufficient funds skip the charge with a game notification. HUD net-money hint uses projected tax − projected maintenance. | mgrs §Demand |
+| envelope (budget sense) | Per-sub-type monthly spending allowance for Zone S. Global S monthly cap split 7 ways via pct sliders (sum=100%). `TryDraw` blocks spend when remaining < amount even if treasury has funds. | [econ#budget-envelope](economy-system.md#budget-envelope) |
+| TreasuryFloorClampService | Helper extracted from `EconomyManager` (inv #6) enforcing a non-negative treasury floor. API: `CanAfford(int)`, `TrySpend(int, string)`, `CurrentBalance`. `TrySpend` calls `CityStats.RemoveMoney` on success; on failure posts insufficient-funds notification. Only authorised treasury-mutation site. | [econ#treasury-floor-clamp](economy-system.md#treasury-floor-clamp) |
+| BudgetAllocationService | Helper extracted from `EconomyManager` (inv #6) owning per-Zone-S-sub-type monthly envelope. API: `TryDraw`, `GetMonthlyEnvelope`, `SetEnvelopePct`, `SetEnvelopePctsBatch`, `MonthlyReset`. Composes `TreasuryFloorClampService`. Save round-trip via `CaptureSaveData` / `RestoreFromSaveData` (schema v4). | [econ#budget-envelope](economy-system.md#budget-envelope) |
+| IBudgetAllocator | Interface contract for `BudgetAllocationService`. Decouples call sites; enables test stubs. Same API as the impl. | [econ#budget-envelope](economy-system.md#budget-envelope) |
+| BondLedgerService | Helper extracted from `EconomyManager` (inv #6) implementing single-bond-per-scale-tier ledger. Proactive treasury injection. API: `TryIssueBond`, `GetActiveBond`, `ProcessMonthlyRepayment`, `ProcessAllMonthlyRepayments`. Repayment routes through `TreasuryFloorClampService.TrySpend`; failure flags `arrears` (HUD only). Save round-trip via schema v4. | [econ#bond-ledger](economy-system.md#bond-ledger) |
+| IBondLedger | Interface contract for `BondLedgerService`. Methods: `TryIssueBond`, `GetActiveBond`, `ProcessMonthlyRepayment`. | [econ#bond-ledger](economy-system.md#bond-ledger) |
+| IMaintenanceContributor | Contract for monthly-maintenance registry. Methods: `GetMonthlyMaintenance() → int`, `GetContributorId() → string` (deterministic sort key), `GetSubTypeId() → int` (−1 = general pool, 0..6 = Zone S sub-type). `EconomyManager` iterates sorted by contributorId (ordinal) in `ProcessMonthlyMaintenance`. Built-in adapters: `RoadMaintenanceContributor`, `PowerPlantMaintenanceContributor`. | [econ#maintenance-contributor-registry](economy-system.md#maintenance-contributor-registry) |
+| Desirability | Per-tile growth attractiveness from nearby terrain (water, forest, etc.), computed after geography init. Biases AUTO. | mgrs §Demand, arch |
+| Forest (coverage) | Tree cover — sparse / medium / dense — affecting demand and player forest tools. | mgrs §World |
+| Regional map | Broader region with neighboring cities; context for regional systems and UI. | mgrs §World |
+| Utility building | Non-RCI service structure (water, power, etc.), often multi-cell. Placed manually or by AUTO resource planning. | mgrs §World |
+| Happiness | City-wide satisfaction score 0–100. Recalculated each in-game day (and on tax-rate UI changes) from: employment, highest tax rate vs comfort band, service coverage, forest bonus, development base, pollution penalty. Converges smoothly toward target (lerp). Feeds demand via a target-derived multiplier. | mgrs §Demand |
+| Pollution | City-wide environmental degradation. Sources: industrial buildings (heavy > medium > light), polluting utilities (nuclear = medium, fossil = high). Sinks: forest coverage, future parks. Negative factor in happiness. | mgrs §World |
+| Game notification | Player-facing toast/alert (money, errors, hints). Only the notification singleton enqueues UI messages. | mgrs §Notifications |
 
 ## Persistence
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Save data** | The on-disk snapshot of the whole city state. `GameSaveData`: `List<CellData>` plus `WaterMapData` from `WaterMap.GetSerializableData()`. | persist §Save |
-| **CellData** | Serializable DTO mirroring runtime `Cell` fields for persistence — height, prefabs, `sortingOrder`, zone, water ids, building refs. Written and read by save/load; not a scene `MonoBehaviour`. | persist §Save, geo §11.2 |
-| **Water map data** | Serialized water bodies and per-cell ids for reload. `WaterMapData` nested in `WaterMap.cs`; v2 format with legacy fallback when absent. | persist §Save, geo §11.5 |
-| **Legacy save** | Older save file without `waterMapData` — load uses fallback path to reconstruct water from height/legacy flags; still supported. | persist §Load pipeline, persist §Visual restore details |
-| **Visual restore** | Reloading exactly what the player saw — no full regen of slopes/sort from scratch. Load applies saved prefabs and `sortingOrder`; building post-pass; geography spec §7.4 details. | persist §Visual restore details, geo §7.4 |
-| **Load pipeline order** | Mandatory restore sequence so references resolve. Heightmap → water map (or legacy) → grid cells → sync shore/body ids — do not reorder. | persist §Load pipeline |
+| Save data | On-disk snapshot of city state. `GameSaveData`: `List<CellData>` + `WaterMapData` from `WaterMap.GetSerializableData()`. | persist §Save |
+| CellData | Serializable DTO mirroring runtime `Cell` fields — height, prefabs, sortingOrder, zone, water ids, building refs. | persist §Save, geo §11.2 |
+| Water map data | Serialized water bodies and per-cell ids. `WaterMapData` nested in `WaterMap.cs`; v2 format with legacy fallback. | persist §Save, geo §11.5 |
+| Legacy save | Older save without `waterMapData` — load uses fallback path to reconstruct water from height/legacy flags. | persist §Load pipeline, §Visual restore details |
+| Visual restore | Reloads saved prefabs and `sortingOrder` without regenerating slopes/sort. Building post-pass; details in geo §7.4. | persist §Visual restore details, geo §7.4 |
+| Load pipeline order | Heightmap → water map (or legacy) → grid cells → sync shore/body ids. Do not reorder. | persist §Load pipeline |
 
 ## Audio
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Bake-to-clip** | On-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`; LRU-cached keyed by `(patchHash, variantIndex)` under 4 MB memory budget. | `ia/specs/audio-blip.md §5.1`, `§7` |
-| **Blip bootstrap** | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on `Awake`. Hosts Catalog / Player / MixerRouter / Cooldown child slots. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag (lands Step 2 / Stage 1.2). Prevents boot-race clicks during `MainMenu → Game.unity` transition. Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change. | `ia/specs/audio-blip.md §5.1`, `§5.2` |
-| **Blip cooldown** | Minimum ms between same-`BlipId` plays; per-patch `cooldownMs` enforced by `BlipCooldownRegistry` queried from `BlipEngine` before dispatch. | `ia/specs/audio-blip.md §5.5` |
-| **Blip LFO** | `BlipLfoKind` enum waveform oscillator (Off / Sine / Triangle / Square / SampleAndHold) per `BlipPatch`; runs at sample rate, scaled by depth, routed to pitch / gain / filter cutoff / pan via `BlipLfoRoute`; output smoothed by `SmoothOnePole` (τ ≈ 20 ms) before param application. | `ia/specs/audio-blip.md §4.1` |
-| **Blip LUT pool** | `BlipLutPool` plain-class `ArrayPool<float>` stub owned by `BlipCatalog`; reserved for wavetable LUT caching in future steps; no kernel wired at Stage 5.3. | `ia/specs/audio-blip.md §5.1` |
-| **Blip mixer group** | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param for global volume control. | `ia/specs/audio-blip.md §5.4` |
-| **Blip patch** | `BlipPatch` ScriptableObject holding all MVP scalar fields for one Blip sound: oscillators (0..3), AHDSR envelope, one-pole filter, jitter triplet, voice management, bake params. Authored in the Inspector; flattened to `BlipPatchFlat` for runtime DSP. | `ia/specs/audio-blip.md §4.1` |
-| **Blip patch flat** | `BlipPatchFlat` blittable struct; copy of `BlipPatch` scalars with no managed refs. Produced by `BlipPatchFlat.FromSO`. Used as the DSP input fed to `BlipBaker` and voice kernels. `mixerGroup` excluded (routed separately by `BlipMixerRouter`). | `ia/specs/audio-blip.md §2`, `§3.1` |
-| **Blip variant** | Per-patch randomized sound selection index `0..variantCount-1`; round-robin or jitter on `BlipEngine.Play` (fixed 0 when patch `deterministic == true`). | `ia/specs/audio-blip.md §4.1` |
-| **Param smoothing** | 1-pole IIR `SmoothOnePole(ref float z, float target, float coef)` at 50 Hz cutoff (τ ≈ 20 ms); applied per LFO route target in `BlipVoice.Render` to eliminate zipper noise on hard-step waveforms (Square / S&H); coef = 1 − exp(−2π × 50 / sampleRate). | `ia/specs/audio-blip.md §3.2` |
-| **Patch flatten** | `BlipPatch` SO → `BlipPatchFlat` blittable struct conversion on `BlipCatalog.Awake`; strips managed refs (e.g. `AudioMixerGroup`, `AnimationCurve`) for audio-thread safety. | `ia/specs/audio-blip.md §2`, `§4.1` |
-| **patch hash** | FNV-1a 32-bit content hash (`BlipPatchHash.Compute`) over the canonical scalar fields of a `BlipPatch` in frozen field order. Persisted as `[SerializeField] private int patchHash`; recomputed on `OnValidate` (author-time) and verified on `Awake`/`OnEnable` (runtime warn-only). Used as `BlipBaker` LRU cache key. | `ia/specs/audio-blip.md §4.3` |
+| Bake-to-clip | On-demand render of `BlipPatchFlat` → `AudioClip` via `BlipBaker.BakeOrGet`. LRU-cached by `(patchHash, variantIndex)` under 4 MB. | audio §5.1, §7 |
+| Blip bootstrap | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on Awake. Hosts Catalog / Player / MixerRouter / Cooldown. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag. Boot-time reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted. `BlipVolumeController` (on `OptionsPanel`) primes slider/toggle from PlayerPrefs on `OnEnable`. | audio §5.1, §5.2 |
+| Blip cooldown | Minimum ms between same-BlipId plays; per-patch `cooldownMs` enforced by `BlipCooldownRegistry` queried from `BlipEngine` before dispatch. | audio §5.5 |
+| Blip LFO | `BlipLfoKind` waveform oscillator (Off / Sine / Triangle / Square / SampleAndHold) per `BlipPatch`; sample-rate run, scaled by depth, routed via `BlipLfoRoute`; output smoothed by `SmoothOnePole` (τ ≈ 20 ms). | audio §4.1 |
+| Blip LUT pool | `BlipLutPool` plain-class `ArrayPool<float>` stub owned by `BlipCatalog`; reserved for wavetable LUT caching; no kernel wired yet. | audio §5.1 |
+| Blip mixer group | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param. | audio §5.4 |
+| Blip patch | `BlipPatch` ScriptableObject — oscillators (0..3), AHDSR envelope, one-pole filter, jitter triplet, voice management, bake params. Inspector-authored; flattened to `BlipPatchFlat` for runtime DSP. | audio §4.1 |
+| Blip patch flat | `BlipPatchFlat` blittable struct, no managed refs. Produced by `BlipPatchFlat.FromSO`. Input to `BlipBaker` and voice kernels. `mixerGroup` excluded (routed by `BlipMixerRouter`). | audio §2, §3.1 |
+| Blip variant | Per-patch randomized sound selection `0..variantCount-1`; round-robin or jitter on `BlipEngine.Play` (fixed 0 when `deterministic`). | audio §4.1 |
+| Param smoothing | 1-pole IIR `SmoothOnePole(ref float z, float target, float coef)` at 50 Hz cutoff (τ ≈ 20 ms); applied per LFO route target in `BlipVoice.Render` to kill zipper noise on Square / S&H. `coef = 1 − exp(−2π × 50 / sampleRate)`. | audio §3.2 |
+| Patch flatten | `BlipPatch` SO → `BlipPatchFlat` struct conversion on `BlipCatalog.Awake`; strips managed refs (`AudioMixerGroup`, `AnimationCurve`) for audio-thread safety. | audio §2, §4.1 |
+| patch hash | FNV-1a 32-bit content hash (`BlipPatchHash.Compute`) over canonical scalar fields in frozen order. `[SerializeField] private int patchHash`; recomputed on `OnValidate`; verified on `Awake`/`OnEnable` (warn-only). `BlipBaker` LRU key. | audio §4.3 |
 
 ## Prefabs & Visual Layer
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Land slope prefabs** | The twelve terrain ramp meshes for hills — four cardinals, four diagonals, four corner-ups. Named `*SlopePrefab` per facing; used by terrain builder. | geo §6.1 |
-| **Water slope prefabs** | Shore ramps where land meets water — same topology set as land but water-tinted. `*SlopeWaterPrefab` / `*UpslopeWaterPrefab` variants. | geo §6.2 |
-| **Slope variant naming** | How building sprites pick a ramp-compatible mesh. Pattern `{flatPrefab}_{slopeCode}Slope`; `GetSlopeVariant` resolves by constructed name. | geo §6.4 |
-| **Infrastructure prefabs** | Shared world props — sea tile, cliff wall pieces (S/E visible; N/W reserved), bay corners. Listed in prefab inventory table. | geo §6.3 |
-| **Sorting formula** | How a cell’s draw order is computed from position and height. `TERRAIN_BASE_ORDER + depthOrder + heightOrder + typeOffset` with `depthOrder = -(x+y)*DEPTH_MULTIPLIER`. | geo §7.1 |
-| **Sorting components** | The four additive pieces: **TERRAIN_BASE_ORDER** (base), **depthOrder** (isometric depth), **heightOrder** (elevation), **typeOffset** (layer kind: terrain, road, building, etc.). Together they enforce global draw order rules. | geo §7.1, §7.2 |
-| **DEPTH_MULTIPLIER** | How strongly “farther on the map” pushes sprites back. Set so depth beats max height contribution (100 vs 10×max height). | geo §7.1, §7.3 |
-| **HEIGHT_MULTIPLIER** | Per-level boost so taller tiles sort above neighbors at the same depth. Used inside `heightOrder`. | geo §7.1 |
-| **Type offsets** | Extra bias per object kind so **street**/**interstate** tiles sit above grass, buildings above roads, etc. Terrain 0, slopes +1, road +5, utility +8, building +10, effect +30. | geo §7.2 |
+| Land slope prefabs | Twelve terrain ramp meshes — 4 cardinals, 4 diagonals, 4 corner-ups. Named `*SlopePrefab` per facing. | geo §6.1 |
+| Water slope prefabs | Shore ramps at land↔water edges. `*SlopeWaterPrefab` / `*UpslopeWaterPrefab` variants. | geo §6.2 |
+| Slope variant naming | Pattern `{flatPrefab}_{slopeCode}Slope`; `GetSlopeVariant` resolves by constructed name. | geo §6.4 |
+| Infrastructure prefabs | Shared props — sea tile, cliff wall pieces (S/E visible, N/W reserved), bay corners. | geo §6.3 |
+| Sorting formula | `TERRAIN_BASE_ORDER + depthOrder + heightOrder + typeOffset` with `depthOrder = -(x+y) * DEPTH_MULTIPLIER`. | geo §7.1 |
+| Sorting components | Four additive pieces: `TERRAIN_BASE_ORDER` (base), depthOrder (isometric depth), heightOrder (elevation), typeOffset (layer kind). | geo §7.1, §7.2 |
+| DEPTH_MULTIPLIER | Depth beats max-height contribution (100 vs 10 × max height). | geo §7.1, §7.3 |
+| HEIGHT_MULTIPLIER | Per-level boost inside `heightOrder` so taller tiles sort above neighbors at same depth. | geo §7.1 |
+| Type offsets | Terrain 0, slopes +1, road +5, utility +8, building +10, effect +30. | geo §7.2 |
 
 ## Documentation
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Backlog record** | Canonical per-issue YAML file under `ia/backlog/{ISSUE_ID}.yaml` (open) or `ia/backlog-archive/{ISSUE_ID}.yaml` (closed). Single source of truth for id, type, title, status, section, and spec path. Never hand-edited after reservation; mutated only by `reserve-id.sh`, `stage-file`, `project-new`, and the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`). | `AGENTS.md` §7, `tools/scripts/reserve-id.sh`, `tools/scripts/materialize-backlog.sh` |
-| **Backlog view** | Generated Markdown `BACKLOG.md` (open rows) and `BACKLOG-ARCHIVE.md` (closed rows) produced by `tools/scripts/materialize-backlog.sh` from **backlog records**. Never hand-edited; always regenerated after yaml writes. | `AGENTS.md` §7, `tools/scripts/materialize-backlog.sh` |
-| **Reference spec** | Permanent Markdown under `ia/specs/` defining domain behavior and vocabulary. Contrasts with **project spec** (temporary, issue-scoped). | [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md), `AGENTS.md` §4 |
-| **Project spec** | Temporary Markdown under `ia/projects/{ISSUE_ID}.md` for an active backlog item. Deleted after verified completion once normative content migrates to **reference specs** / **glossary** / `docs/`. | [PROJECT-SPEC-STRUCTURE.md](../projects/PROJECT-SPEC-STRUCTURE.md), `AGENTS.md` §4 |
-| **Interchange JSON (artifact)** | Tooling and config JSON distinct from player **Save data**. Payloads carry `artifact` id and optional `schema_version`. Not part of **Load pipeline**. | `ARCHITECTURE.md` §Interchange JSON, [`docs/schemas/README.md`](../../docs/schemas/README.md), persist |
-| **geography_init_params** | Interchange artifact for declarative **Geography initialization** (seed, map, water/rivers/forest). Not **Save data**. | persist, [`docs/schemas/README.md`](../../docs/schemas/README.md) |
-| **scenario_descriptor_v1** | Interchange artifact for assembling test-mode saves from structured intent (map, terrain, water, **road stroke** lists). Not **Save data**. | persist §Load pipeline, [`docs/schemas/README.md`](../../docs/schemas/README.md), [`tools/fixtures/scenarios/BUILDER.md`](../../tools/fixtures/scenarios/BUILDER.md) |
-| **City metrics history** | Optional Postgres time-series of per-**simulation tick** city aggregates (population, happiness, R/C/I demand, etc.). Not **Save data**. | mgrs §MetricsRecorder, [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) |
-| **Agent test mode batch** | Headless Unity Editor path for committed scenarios: loads a save, optionally runs **simulation tick**s and golden-path assertions. Requires project lock release. | unity-dev §10, [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md) |
-| **IDE agent bridge** | Postgres job queue letting IDE agents control the Unity Editor: console logs, screenshots, Play Mode, compilation status, debug context bundles. | unity-dev §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) |
-| **runtime-state** | Per-clone JSON at `ia/state/runtime-state.json` (gitignored) holding last `verify:local` exit, last `db:bridge-preflight` exit, and queued test-mode scenario id; read/write via MCP `runtime_state` or `tools/scripts/runtime-state-write.sh`. | [`ia/rules/runtime-state.md`](../rules/runtime-state.md), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) |
-| **Orchestrator document** | Permanent coordination Markdown under `ia/projects/` tracking a multi-step plan (e.g. master plan, step-level or stage-level orchestrators). NOT closeable via the Stage-scoped `/closeout` pair. Contrasts with **project spec** (temporary, issue-scoped). | [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md), [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
-| **Project hierarchy** | Two-level execution structure: **Stage** (shippable compilable increment authored as `### Stage N.M` block in master plan; carries Exit + Tasks subsections) > **Task** (atomic BACKLOG row + 1 `ia/projects/{ISSUE_ID}.md` spec). Stages authored at master-plan-new time; Tasks materialize lazily via `stage-file-apply`; specs ephemeral. Cardinality gate: ≥2 Tasks per Stage (hard), ≤6 (soft). | [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
-| **Stage** | Parent-of-Task execution unit. Shippable compilable increment (merged PRs); authored as `### Stage N.M` block in master plan w/ Exit + Tasks subsections. Status enum: `Draft → In Review → In Progress → Final`. Verified end-to-end by `/ship-stage` (Path A per task + batched Path B at stage end). | [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
-| **Phase** | Retired — use **Stage**. Pre-2026-04 4-level hierarchy (Step > Stage > Phase > Task) collapsed to 2-level (Stage > Task) per Stage 1.2 of `ia/projects/lifecycle-refactor-master-plan.md`. | [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
-| **Gate** | Retired — use Stage exit criteria. Pre-refactor Gate-row terminology folded into the Exit subsection of each `### Stage N.M` block. | [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
-| **Plan-Apply pair** | Lifecycle pattern where an Opus pair-head writes a structured `§Plan` payload (ordered list of `{operation, target_path, target_anchor, payload}` tuples) into a designated section; a Sonnet pair-tail reads + applies verbatim. 5 seams across the lifecycle: plan-review→plan-fix-apply, stage-file-plan→stage-file-apply, project-new-plan→project-new-apply, code-review→code-fix-apply, audit→closeout-apply. Idempotent re-runs; ambiguous anchors escalate to Opus. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **plan review** | Opus pair-head stage that reads all Tasks of a Stage together + master-plan header + invariants; emits fix tuples into `§Plan Fix` subsection of the Stage block. Pair seam #1; pair-tail = **plan-fix apply**. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **plan-fix apply** | Sonnet pair-tail that reads `§Plan Fix` tuples and applies edits to the master plan / spec stubs verbatim. Validation gate: `validate:master-plan-status` + `validate:backlog-yaml`. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **spec enrichment** | Sonnet stage that pulls glossary anchors + tightens spec terminology against `ia/specs/glossary.md`. Replaces the legacy `project-spec-kickoff` skill in the Plan-Apply pair lifecycle. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **Opus audit** | Opus pair-head stage post-verify that reads spec → impl diff → verify findings → outputs `§Audit` paragraph + `§Closeout Plan` tuple list into the project spec. Pair seam #5; pair-tail = **closeout apply**. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **Opus code review** | Opus pair-head stage that reads diff vs spec + invariants + glossary; emits PASS verdict, minor notes, or `§Code Fix Plan` tuple list. Pair seam #4; pair-tail = **code-fix apply**. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **code-fix apply** | Sonnet pair-tail that reads `§Code Fix Plan` tuples, applies fixes to source, and re-enters `/verify-loop`. Validation gate: `verify:local` (or stage-appropriate Path A). | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **closeout apply** | Sonnet pair-tail that reads `§Closeout Plan` tuples + migrates canonical knowledge to glossary / specs / rules / docs + archives BACKLOG row + deletes spec + persists journal. Validation gate: `validate:all`. Replaces the legacy `project-spec-close` skill. | [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) |
-| **Rollout tracker** | Sibling living doc `ia/projects/{umbrella-slug}-rollout-tracker.md` pairing with an umbrella **orchestrator document** that has ≥3 child master-plans / buckets. Tracks each child through the **rollout lifecycle** in a matrix row. Seeded once by `release-rollout-enumerate` helper; advanced row-by-row via `/release-rollout`. First shipped: [`full-game-mvp-rollout-tracker.md`](../projects/full-game-mvp-rollout-tracker.md). | [`ia/skills/release-rollout/SKILL.md`](../skills/release-rollout/SKILL.md), [`ia/skills/release-rollout-enumerate/SKILL.md`](../skills/release-rollout-enumerate/SKILL.md) |
-| **Rollout lifecycle** | 7-column matrix tracking each child master-plan's progress inside a **rollout tracker**: (a) enumerate → (b) explore → (c) plan → (d) stage-present → (e) stage-decomposed → (f) task-filed → (g) align. Target for handoff to the single-issue flow = column (f) ≥1 task filed. Cell glyphs: `✓` done / `◐` partial / `—` not started / `❓` ambiguous / `⚠️` disagreement w/ umbrella. | [`ia/skills/release-rollout/SKILL.md`](../skills/release-rollout/SKILL.md) |
-| **Alignment gate** | Column (g) of the **rollout lifecycle**. Requires per new domain entity: glossary row present + `ia/specs/*.md` section anchor present + MCP (`router_for_task` / `spec_section`) resolves. Gates only the (e) stage-decomposed → (f) task-filed handoff on new entity introduction; does NOT block (a)–(d) / (f) for pre-aligned rows. Failure → (g) marked `—` + skill-bug entry, never silent skip. | [`ia/skills/release-rollout/SKILL.md`](../skills/release-rollout/SKILL.md) |
-| **Skill Iteration Log** | Aggregator section `## Skill Iteration Log` inside a **rollout tracker**. One row per skill-bug encountered during rollout; cross-references per-skill `## Changelog` anchor via link. Dual-written by `release-rollout-skill-bug-log` helper together with the owning skill's own changelog entry. | [`ia/skills/release-rollout-skill-bug-log/SKILL.md`](../skills/release-rollout-skill-bug-log/SKILL.md) |
-| **Per-skill Changelog** | Tail section `## Changelog` inside `ia/skills/{name}/SKILL.md` tracking dated fix audits (`### YYYY-MM-DD — {summary}` → bullets with symptom / fix / location / status-applied `{commit}` or `pending`). Source of truth for skill bugs; the tracker's **Skill Iteration Log** is a cross-referenced rollup. | [`ia/skills/master-plan-extend/SKILL.md`](../skills/master-plan-extend/SKILL.md) (first shipped) |
-| **Ship-stage dispatcher** | Slash command `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` + `ship-stage` Opus chain orchestrator subagent + `ship-stage` skill. Chains `plan-author → spec-implementer → verify-loop (--skip-path-b)` per task + Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) at stage end, across every non-Done filed task row of one Stage X.Y. MCP context loaded once via `domain-context-load`; per-task Path A compile gate mandatory; one batched Path B at stage end on cumulative delta; emits a **chain-level stage digest** + next-stage handoff auto-resolved for all 4 cases. Sits between single-issue `/ship` and umbrella `/release-rollout` in the dispatch hierarchy. | [`ia/skills/ship-stage/SKILL.md`](../skills/ship-stage/SKILL.md), [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) |
-| **Chain-level stage digest** | Structured report emitted by the **ship-stage dispatcher** at chain end (after all tasks closed + batched Path B run). Format mirrors `closeout-digest` output style (fenced JSON header + caveman summary) and adds a `chain:` block with `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}`. Aggregates cross-task lessons + decisions across the full stage run via the Stage-scoped `/closeout` pair. `stage_verify` field records batched Path B outcome (`passed` / `failed` / `skipped`). | [`ia/skills/ship-stage/SKILL.md`](../skills/ship-stage/SKILL.md) |
-| **Stage tail (open / incomplete)** | After every task row in a Stage is Done-like in the master-plan table, **ship-stage** Pass 2 bulk (**verify-loop → code-review → opus-audit → stage closeout**) may still be pending. Machine signal: any filed id has **`ia/backlog/{ISSUE_ID}.yaml`** (open record). Same check as **`validate:master-plan-status` R6**. **`/ship-stage` re-entry** sets **`PASS2_ONLY`** — skips Pass 1, runs Pass 2 through closeout (**Stage-level idempotent** when validators green). Distinct from per-Task **pending implementation** rows. | [`ia/skills/ship-stage/SKILL.md`](../skills/ship-stage/SKILL.md), `tools/validate-master-plan-status.mjs` |
-| **skill self-report** | Structured JSON block emitted at Phase-N-tail of a lifecycle skill when friction conditions fire (`guardrail_hits > 0 OR phase_deviations > 0 OR missing_inputs > 0`). Schema: `{skill, run_date, schema_version, friction_types[], guardrail_hits[], phase_deviations[], missing_inputs[], severity}`. Appended to the target skill's **Per-skill Changelog** as `source: self-report`; consumed by **skill-train**. Clean runs stay silent. | [`ia/projects/skill-training-master-plan.md`](../projects/skill-training-master-plan.md) |
-| **skill training** | Retrospective Changelog-driven loop: lifecycle skills emit **skill self-report** entries; **skill-train** consumer aggregates recurring friction (≥2 occurrences) into a **patch proposal (skill)** file for user review. No auto-apply. | [`ia/projects/skill-training-master-plan.md`](../projects/skill-training-master-plan.md) |
-| **patch proposal (skill)** | Unified-diff proposal authored by **skill-train** against a target SKILL.md's Phase sequence / Guardrails / Seed prompt sections, stored as `ia/skills/{name}/train-proposal-{YYYY-MM-DD}.md`. Never auto-applied; user-gated review. Output artifact of **skill training**. | [`ia/projects/skill-training-master-plan.md`](../projects/skill-training-master-plan.md) |
-| **skill-train** | Opus consumer subagent + `/skill-train` slash command. On demand, reads target skill's **Per-skill Changelog** since last `source: train-proposed` entry, aggregates recurring friction, writes **patch proposal (skill)**. Input signal: **skill self-report** entries. Separate channel from `release-rollout-skill-bug-log` (user-logged bugs, not self-reported friction). | [`ia/projects/skill-training-master-plan.md`](../projects/skill-training-master-plan.md) |
+| Backlog record | Canonical per-issue YAML at `ia/backlog/{ISSUE_ID}.yaml` (open) or `ia/backlog-archive/{ISSUE_ID}.yaml` (closed). Single source for id, type, title, status, section, spec path. Never hand-edited; mutated only by `reserve-id.sh`, `stage-file`, `project-new`, and the stage-scoped `/closeout` pair. | [AGENTS §7](../../AGENTS.md), [reserve-id.sh](../../tools/scripts/reserve-id.sh), [materialize-backlog.sh](../../tools/scripts/materialize-backlog.sh) |
+| Backlog view | Generated Markdown `BACKLOG.md` (open) and `BACKLOG-ARCHIVE.md` (closed) produced by `materialize-backlog.sh`. Never hand-edited; regenerated after yaml writes. | [AGENTS §7](../../AGENTS.md) |
+| Reference spec | Permanent Markdown under `ia/specs/` defining domain behavior and vocabulary. | [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) |
+| Project spec | Temporary Markdown at `ia/projects/{ISSUE_ID}.md` for an active backlog item. Deleted after verified completion once content migrates to reference specs / glossary / `docs/`. | [PROJECT-SPEC-STRUCTURE.md](../projects/PROJECT-SPEC-STRUCTURE.md) |
+| Interchange JSON (artifact) | Tooling/config JSON distinct from player Save data. Payloads carry `artifact` id and optional `schema_version`. Not part of Load pipeline. | arch, schemas, persist |
+| geography_init_params | Interchange artifact for declarative Geography initialization (seed, map, water/rivers/forest). | persist, schemas |
+| scenario_descriptor_v1 | Interchange artifact for assembling test-mode saves from structured intent (map, terrain, water, road-stroke lists). | persist §Load pipeline, schemas, [BUILDER](../../tools/fixtures/scenarios/BUILDER.md) |
+| City metrics history | Optional Postgres time-series of per-tick city aggregates (population, happiness, R/C/I demand). | mgrs §MetricsRecorder, pg-setup |
+| Agent test mode batch | Headless Unity Editor path for committed scenarios: loads a save, optionally runs ticks + golden-path assertions. Requires project lock release. | udev §10, avpolicy |
+| IDE agent bridge | Postgres job queue letting IDE agents control the Unity Editor: console logs, screenshots, Play Mode, compilation, debug bundles. | udev §10, mcp |
+| runtime-state | Per-clone JSON at `ia/state/runtime-state.json` (gitignored) holding last `verify:local` exit, last `db:bridge-preflight` exit, queued test-mode scenario id. Read/write via MCP `runtime_state` or `tools/scripts/runtime-state-write.sh`. | rs, mcp |
+| Orchestrator document | Permanent coordination Markdown under `ia/projects/` tracking a multi-step plan (master plan, step- or stage-level orchestrators). Not closeable via stage-scoped `/closeout` pair. | ovs, ph |
+| Project hierarchy | Two-level execution structure: Stage > Task. Stages authored at master-plan-new; Tasks materialize lazily via `stage-file-apply`; specs ephemeral. Cardinality gate: ≥2 Tasks per Stage (hard), ≤6 (soft). | ph |
+| Stage | Parent-of-Task execution unit. Shippable compilable increment; authored as `### Stage N.M` block with Exit + Tasks subsections. Status: `Draft → In Review → In Progress → Final`. Verified by `/ship-stage` (Path A per task + batched Path B at stage end). | ph |
+| Plan-Apply pair | Lifecycle pattern where Opus pair-head writes a `§Plan` payload (ordered `{operation, target_path, target_anchor, payload}` tuples); Sonnet pair-tail reads + applies verbatim. Five seams: plan-review↔plan-fix-apply, stage-file-plan↔stage-file-apply, project-new-plan↔project-new-apply, code-review↔code-fix-apply, audit↔closeout-apply. Idempotent re-runs; ambiguous anchors escalate to Opus. | pa |
+| plan review | Opus pair-head that reads all Tasks of a Stage + master-plan header + invariants; emits fix tuples into `§Plan Fix` of the Stage block. Seam #1; tail = plan-fix apply. | pa |
+| plan-fix apply | Sonnet tail that reads `§Plan Fix` tuples and applies verbatim. Validation gate: `validate:master-plan-status` + `validate:backlog-yaml`. | pa |
+| spec enrichment | Sonnet stage pulling glossary anchors + tightening spec terminology against this file. | pa |
+| Opus audit | Opus pair-head post-verify that reads spec → impl diff → verify findings → outputs `§Audit` + `§Closeout Plan` tuples into project spec. Seam #5; tail = closeout apply. | pa |
+| Opus code review | Opus pair-head reading diff vs spec + invariants + glossary; emits PASS, minor notes, or `§Code Fix Plan` tuples. Seam #4; tail = code-fix apply. | pa |
+| code-fix apply | Sonnet tail reading `§Code Fix Plan` tuples, applying fixes to source, re-entering `/verify-loop`. Validation gate: `verify:local`. | pa |
+| closeout apply | Sonnet tail reading `§Closeout Plan` tuples + migrating canonical knowledge to glossary / specs / rules / docs + archiving BACKLOG row + deleting spec + persisting journal. Validation gate: `validate:all`. | pa |
+| Rollout tracker | Sibling living doc `ia/projects/{umbrella-slug}-rollout-tracker.md` pairing with an umbrella orchestrator that has ≥3 child master-plans / buckets. Tracks each child through the rollout lifecycle in a matrix row. Seeded once by release-rollout-enumerate; advanced row-by-row via `/release-rollout`. | rr, rre |
+| Rollout lifecycle | 7-column matrix per child master-plan: (a) enumerate → (b) explore → (c) plan → (d) stage-present → (e) stage-decomposed → (f) task-filed → (g) align. Handoff target to single-issue flow = column (f) ≥1 task filed. Cell glyphs: `✓` done / `◐` partial / `—` not started / `❓` ambiguous / `⚠️` disagreement w/ umbrella. | rr |
+| Alignment gate | Column (g) of rollout lifecycle. Per new domain entity requires: glossary row present + `ia/specs/*.md` section anchor + MCP (`router_for_task` / `spec_section`) resolves. Gates only (e) → (f) handoff on new-entity introduction; does not block (a)–(d) / (f) for pre-aligned rows. Failure → (g) marked `—` + skill-bug entry, never silent skip. | rr |
+| Skill Iteration Log | Aggregator section `## Skill Iteration Log` in a rollout tracker. One row per skill-bug; cross-references per-skill `## Changelog` anchor. Dual-written by release-rollout-skill-bug-log with the owning skill's changelog entry. | rrsbl |
+| Per-skill Changelog | Tail section `## Changelog` inside `ia/skills/{name}/SKILL.md` tracking dated fix audits (`### YYYY-MM-DD — {summary}` → bullets: symptom / fix / location / status-applied `{commit}` or `pending`). Source of truth for skill bugs. | mpe |
+| Ship-stage dispatcher | Slash command `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` + ship-stage Opus chain orchestrator + ship-stage skill. Chains `plan-author → spec-implementer → verify-loop (--skip-path-b)` per task + stage-scoped `/closeout` pair at stage end. MCP context loaded once via `domain-context-load`; per-task Path A compile gate; one batched Path B at stage end on cumulative delta. Emits chain-level stage digest + next-stage handoff. Between `/ship` and `/release-rollout` in dispatch hierarchy. | ss, lifecycle-doc |
+| Chain-level stage digest | Structured report emitted by ship-stage dispatcher at chain end (after all tasks closed + batched Path B). Fenced JSON header + caveman summary + `chain:` block `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}`. Aggregates cross-task lessons + decisions across the stage run. `stage_verify`: `passed` / `failed` / `skipped`. | ss |
+| Stage tail (open / incomplete) | After every task row in a Stage is Done-like, ship-stage Pass 2 bulk (verify-loop → code-review → opus-audit → stage closeout) may still be pending. Machine signal: any filed id has open `ia/backlog/{ISSUE_ID}.yaml`. Same check as `validate:master-plan-status` R6. `/ship-stage` re-entry sets `PASS2_ONLY` — skips Pass 1, runs Pass 2 through closeout. Stage-level idempotent when validators green. | ss, [validate-master-plan-status](../../tools/validate-master-plan-status.mjs) |
+| skill self-report | Structured JSON at Phase-N-tail of a lifecycle skill when friction fires (`guardrail_hits > 0 OR phase_deviations > 0 OR missing_inputs > 0`). Schema: `{skill, run_date, schema_version, friction_types[], guardrail_hits[], phase_deviations[], missing_inputs[], severity}`. Appended to target's Per-skill Changelog as `source: self-report`; consumed by skill-train. Clean runs stay silent. | train |
+| skill training | Retrospective Changelog-driven loop: lifecycle skills emit skill self-report entries; skill-train aggregates recurring friction (≥2 occurrences) into a patch proposal for user review. No auto-apply. | train |
+| patch proposal (skill) | Unified-diff proposal authored by skill-train against a target SKILL.md (Phase sequence / Guardrails / Seed prompt), stored as `ia/skills/{name}/train-proposal-{YYYY-MM-DD}.md`. Never auto-applied. | train |
+| skill-train | Opus consumer + `/skill-train` command. On demand, reads target skill's Per-skill Changelog since last `source: train-proposed` entry, aggregates recurring friction, writes patch proposal. Input: skill self-report entries. | train |
 
 ## Multi-scale simulation
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Simulation scale** | Named level of the simulation stack (`CITY`, `REGION`, `COUNTRY`). Enum + `ISimulationModel` contract. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Active scale** | The single scale currently running its full tick loop. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Dormant scale** | Any scale that is not active. Holds a snapshot + evolution parameters. Does not tick. Evolution is applied by its **parent-scale entity**, not by itself. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Child-scale entity** | Representation of a dormant child inside its parent. A region holds one entity per dormant city; a country holds one per dormant region. Carries a **pending evolution delta** layered over the child's last-materialized snapshot and a `last_active_at` calendar stamp. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Evolution algorithm** | Pure function `evolve(snapshot, Δt, params) → snapshot'` that fast-forwards a dormant scale at scale-switch time. Deterministic in MVP (no shaping-events channel). Scale-specific: city, region, country. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Evolution parameters** | Tunable inputs to an evolution algorithm for a given scale node: growth coefficients, policy multipliers, RNG seed, and (at region/country) player-authored parameters set from the parent scale's UI. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Evolution-invariant** | State the evolution algorithm must preserve verbatim. For the city: everything the player actively touched (main road backbone, landmarks, districts, player-assigned budgets, explicit zoning decisions). Evolution may additively create new main roads or density, but may not overwrite or remove a player-touched surface. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Evolution-mutable** | State the algorithm may rewrite: default-generated density, untouched cells, population mix, zoning not explicitly chosen. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Parity budget** | Maximum allowed divergence between an algorithmic projection and a live-sim re-run over the same interval. Measured empirically via playtest, not a single static threshold. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Reconstruction** | Materializing a playable live scale state from its snapshot + the parent entity's pending evolution delta up to "now". Happens at scale-switch time. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Procedural scale generation** | Creation of a never-visited scale node (city, region) from parent-scale parameters + deterministic seed. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Scale switch** | Player-driven transition from one active scale to another. Steps: (a) save leaving scale, (b) apply entering scale's pending evolution delta, (c) load entering scale into playable form. MVP UX: semantic zoom + procedural fog mask + per-scale `ScaleToolProvider` — master plan Step 3 + post-MVP §6.4. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md), [`multi-scale-post-mvp-expansion.md`](../projects/multi-scale-post-mvp-expansion.md) |
-| **Multi-scale save tree** | Relational save structure: main `game_save` table + per-scale tables (`city_nodes`, `region_nodes`, `country_nodes`), each with JSON column for cell data + typed foreign-key columns + `evolution_params jsonb` + `pending_delta jsonb` + `last_active_at`. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Neighbor-city stub** | Minimum conceptual representation of a neighbor city at an **interstate** exit on the **map border**. Schema-only `[Serializable]` value type (`NeighborCityStub` — `id` GUID string, `displayName`, `borderSide`). No behavior, no MonoBehaviour. Paired with `NeighborCityBinding` records that tie a stub to the grid exit cell. Part of the **Parent-scale stub** set for the city MVP. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **City cell / Region cell / Country cell** | Scale-specific refinements of the generic **Cell**. Same isometric primitive, sized and semantically typed per scale. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Parent-scale stub** | Minimum conceptual representation of a parent scale inside the city MVP: `region_id` + `country_id` references + at least one neighbor-city stub + interstate-border data semantics admitting a region-facing interpretation. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Parent region id** | GUID (string-serialized) on `GameSaveData` identifying the region that owns this city. Allocated at new-game init or at first legacy-save load via `MigrateLoadedSaveData`. Non-null after migration. Read surface: `GridManager.ParentRegionId` (read-only property, hydrated via `HydrateParentIds`). No runtime consumer in MVP. | `persist §Save` |
-| **Parent country id** | GUID (string-serialized) on `GameSaveData` identifying the country that owns this city. Same allocation rules as **parent region id**. | `persist §Save` |
-| **Scale-switch event bubble-up / constraint push-down** | Event and parameter transport across scales, applied at switch time (not continuously). MVP ships both as thin hooks. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
-| **Player-authored dormant control** | At region scale, player sets budget allocation per dormant child city. At country scale, player sets budget allocation per dormant region. Extended parameter surface is post-MVP. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| Simulation scale | Named level of the sim stack (`CITY`, `REGION`, `COUNTRY`). Enum + `ISimulationModel` contract. | ms |
+| Active scale | The single scale currently running its full tick loop. | ms |
+| Dormant scale | Any non-active scale. Holds a snapshot + evolution parameters. Does not tick. Evolution applied by its parent-scale entity, not by itself. | ms |
+| Child-scale entity | Representation of a dormant child inside its parent. Region holds one per dormant city; country holds one per dormant region. Carries a pending evolution delta layered over the child's last-materialized snapshot + `last_active_at` calendar stamp. | ms |
+| Evolution algorithm | Pure function `evolve(snapshot, Δt, params) → snapshot'` fast-forwarding a dormant scale at scale-switch time. Deterministic in MVP. Scale-specific: city, region, country. | ms |
+| Evolution parameters | Tunable inputs per scale node: growth coefficients, policy multipliers, RNG seed, and (at region/country) player-authored parameters from the parent scale's UI. | ms |
+| Evolution-invariant | State evolution must preserve verbatim. For the city: everything the player actively touched (main road backbone, landmarks, districts, player-assigned budgets, explicit zoning). Evolution may additively create new main roads or density but may not overwrite a player-touched surface. | ms |
+| Evolution-mutable | State the algorithm may rewrite: default-generated density, untouched cells, population mix, zoning not explicitly chosen. | ms |
+| Parity budget | Max allowed divergence between algorithmic projection and live-sim re-run over the same interval. Measured empirically via playtest. | ms |
+| Reconstruction | Materializing a playable live scale state from snapshot + parent entity's pending evolution delta up to "now". Happens at scale-switch time. | ms |
+| Procedural scale generation | Creation of a never-visited scale node (city, region) from parent-scale parameters + deterministic seed. | ms |
+| Scale switch | Player-driven transition from one active scale to another. Steps: (a) save leaving scale, (b) apply entering scale's pending evolution delta, (c) load entering scale into playable form. MVP UX: semantic zoom + procedural fog mask + per-scale `ScaleToolProvider`. | ms, ms-post |
+| Multi-scale save tree | Relational save: main `game_save` table + per-scale tables (`city_nodes`, `region_nodes`, `country_nodes`), each with JSON column for cell data + typed FK columns + `evolution_params jsonb` + `pending_delta jsonb` + `last_active_at`. | ms |
+| Neighbor-city stub | Minimum representation of a neighbor city at an interstate exit on the map border. Schema-only `[Serializable]` `NeighborCityStub` — `id` GUID, `displayName`, `borderSide`. No behavior. Paired with `NeighborCityBinding` records tying a stub to the grid exit cell. Part of the parent-scale stub set for the city MVP. | ms |
+| City / Region / Country cell | Scale-specific refinements of the generic Cell. Same isometric primitive, sized and semantically typed per scale. | ms |
+| Parent-scale stub | Minimum parent-scale representation inside the city MVP: `region_id` + `country_id` references + at least one neighbor-city stub + interstate-border data admitting a region-facing interpretation. | ms |
+| Parent region / country id | GUID (string-serialized) on `GameSaveData` identifying the region / country that owns this city. Allocated at new-game init or first legacy-save load via `MigrateLoadedSaveData`. Non-null after migration. Read surface: `GridManager.ParentRegionId` / `ParentCountryId` (read-only, hydrated via `HydrateParentIds`). No runtime consumer in MVP. | persist §Save |
+| Scale-switch event bubble-up / constraint push-down | Event and parameter transport across scales, applied at switch time (not continuously). MVP ships both as thin hooks. | ms |
+| Player-authored dormant control | At region scale, player sets budget allocation per dormant child city. At country scale, per dormant region. Extended surface is post-MVP. | ms |
+
+## Retired terms — do not use
+
+| Term | Replacement | Note |
+|------|-------------|------|
+| Urbanization proposal | Urban centroid / Urban growth rings AUTO | Invariants forbid re-enabling. |
+| Phase | Stage | 4-level hierarchy (Step > Stage > Phase > Task) collapsed to 2-level per `lifecycle`. |
+| Gate | Stage exit criteria | Folded into the Exit subsection of each `### Stage N.M` block. |
+
+## Do not confuse
+
+| A | B | Key difference |
+|---|---|----------------|
+| Cliff | Map border | Cliff = per-cell vertical drop; map border = outer grid boundary. |
+| Rim | Water-shore (land) | Rim fails the surface-height gate; water-shore passes it. |
+| Open water | Water-shore (land) | Open water = registered in `WaterMap` (id ≠ 0); water-shore = dry land with shore art. |
+| Lake | Sea | Sea is not treated as lake in exclusion rules. |
+| Interchange JSON | Save data | Interchange is tooling/config, not part of Load pipeline. |
+| Orchestrator document | Project spec | Orchestrator is permanent; project spec is temporary/issue-scoped. |
+| skill-train | release-rollout-skill-bug-log | skill-train = self-reported friction; skill-bug-log = user-logged bugs. |
 
 <a id="planned-domain-terms"></a>
 
 ## Planned terminology (backlog-backed, non-authoritative)
 
-> **Not canonical gameplay.** Rows here name **product directions** tracked as **open rows** in [`BACKLOG.md`](../../BACKLOG.md). They are **not** implemented rules until **reference specs** are updated. For current simulation and water behavior, use **Urban centroid**, **Urban growth rings**, **Surface height (S)**, etc. in the tables above. **If a reference spec is updated for a feature, the spec wins** over this section.
->
-> **Full narrative:** [`docs/planned-domain-ideas.md`](../../docs/planned-domain-ideas.md). **Completed** rows and historical ids live only in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md).
+> Not canonical gameplay. Rows name product directions tracked as open rows in [BACKLOG.md](../../BACKLOG.md). If a reference spec is updated for a feature, the spec wins over this section. Full narrative: [planned-domain-ideas.md](../../docs/planned-domain-ideas.md). Completed rows live in [BACKLOG-ARCHIVE.md](../../BACKLOG-ARCHIVE.md).
 
 | Term | Working definition (intent only) | Trace |
-|------|-----------------------------------|--------|
-| **Geography authoring** | In-game or Editor flow to design **territory** / **urban** area **maps** with a **parameter dashboard** (e.g. **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions). Intended to drive **geography initialization** and to reuse the same parameter model for **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO**-driven tools. | Open [`BACKLOG.md`](../../BACKLOG.md) (**gameplay / simulation** sections); [`docs/postgres-interchange-patterns.md`](../../docs/postgres-interchange-patterns.md) |
-| **Urban pole** (working name) | A growth anchor for **AUTO** systems — e.g. employment or **desirability** hotspot — used to weight nearby **cells** for **streets** and **zoning**. Distinct from **committed** **pathfinding**: **road** segments still follow **road preparation** and **geo** §10. | Open [`BACKLOG.md`](../../BACKLOG.md) |
-| **Multipolar urban growth** | Evolution from a single **urban centroid** to **multiple** **urban poles**, each with its own **urban growth rings** (or equivalent distance field), while preserving coherent regional patterns on one **map**; long-term **connurbation** between urban masses. | Open [`BACKLOG.md`](../../BACKLOG.md); coordinates **Urban growth rings** tuning rows there |
-| **Connurbation** | Planned concept: two or more distinct urban areas on the same **map** recognized as coexisting under shared regional rules (exact criteria TBD). | Open [`BACKLOG.md`](../../BACKLOG.md) |
-| **Water volume budget** | Planned **not** full 3D **fluid** simulation: a **water body** (or connected component) holds a **volume** constraint so expanding **basin** capacity can **lower** **surface height (S)** to conserve mass; conversely, constrained **basins** may raise **S**. **Rendering** updates **water** prefab height; optional directional **fill** **animation** for player feedback. | Open [`BACKLOG.md`](../../BACKLOG.md); related **water** / **terraform** rows there |
-| **Moore-adjacent excavation fill** | Planned **gameplay**: excavating a **dry** **cell** **Moore**-adjacent to **open water** allows that **depression** to **fill** from the adjacent **water body** (rules TBD). | Open [`BACKLOG.md`](../../BACKLOG.md) |
+|------|-----------------------------------|-------|
+| Geography authoring | In-game or Editor flow to design territory / urban maps with a parameter dashboard (map size, water / forest / height mix, sea / river / lake proportions). Drives geography initialization and reuses the same parameter model for player terraform, basin / elevation tools, water body placement in depressions, and AUTO-driven tools. | Open BACKLOG (gameplay/sim); pg-interchange |
+| Urban pole (working name) | A growth anchor for AUTO systems — e.g. employment or desirability hotspot — weighting nearby cells for streets and zoning. Distinct from committed pathfinding: road segments still follow road preparation and geo §10. | Open BACKLOG |
+| Multipolar urban growth | Evolution from single urban centroid to multiple urban poles, each with its own growth rings (or equivalent distance field), preserving coherent regional patterns on one map; long-term connurbation between urban masses. | Open BACKLOG |
+| Connurbation | Two or more distinct urban areas on the same map recognized as coexisting under shared regional rules (exact criteria TBD). | Open BACKLOG |
+| Water volume budget | Not full 3D fluid simulation: a water body holds a volume constraint so expanding basin capacity can lower `S` to conserve mass; constrained basins may raise `S`. Rendering updates water prefab height; optional directional fill animation. | Open BACKLOG |
+| Moore-adjacent excavation fill | Excavating a dry cell Moore-adjacent to open water allows that depression to fill from the adjacent water body (rules TBD). | Open BACKLOG |

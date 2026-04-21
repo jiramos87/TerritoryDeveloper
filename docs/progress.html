@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">17%</div>
-      <div class="overall-count">20 / 86 tasks</div>
+      <div class="overall-pct">21%</div>
+      <div class="overall-count">26 / 87 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:17%"></div>
+      <div class="overall-seg-fill" style="width:21%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -461,8 +461,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Unity IDE Agent Bridge</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:11%"></div></div>
-        <span class="mini-pct">11%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:22%"></div></div>
+        <span class="mini-pct">22%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -628,7 +628,7 @@ h2.plan-title {
       <h2 class="plan-title">CityStats Overhaul — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/citystats-overhaul-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 2 (TECH-602, TECH-603 filed — Draft)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -659,6 +659,10 @@ h2.plan-title {
   </div>
 
   
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
+    <ul><li>plan-review exit 0 — TECH-303 + TECH-304 §Plan Author aligned w/ Stage 1 block, Exit criteria, invariants #3/#4/#6. Spec frontmatter `parent_plan` + `task_key` mirror orchestrator T1.1 / T1.2. No fix tuples. Downstream: `/ship-stage ia/projects/citystats-overhaul-master-plan.md 1`.</li><li>plan-review exit 0 — TECH-602 + TECH-603 §Plan Author aligned w/ Stage 2 block, Exit criteria, invariants #3/#4/#6. Spec frontmatter `parent_plan` + `task_key` mirror orchestrator T2.1 / T2.2. No fix tuples. Downstream: `/ship-stage ia/projects/citystats-overhaul-master-plan.md Stage 2`.</li></ul>
+  </details>
 </div>
 
 <div class="plan-card">
@@ -833,7 +837,7 @@ h2.plan-title {
   
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
-    <ul><li>**Note — self-migration:** This orchestrator itself will be subject to Stage 2.1 transform. The `migrate-master-plans.ts` script must run this file last in the batch, after all other plans are validated. Self-migration is idempotent: the script reads snapshot, emits to current path.</li><li>- Related orchestrator: `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — composite MCP bundle proposal; Stage 3.1 builds on its `lifecycle_stage_context` pattern.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li><li>plan-review — 5 tuples. Spawn `plan-fix-apply ia/projects/lifecycle-refactor-master-plan.md 8`.</li></ul>
+    <ul><li>**Note — self-migration:** This orchestrator itself will be subject to Stage 2.1 transform. The `migrate-master-plans.ts` script must run this file last in the batch, after all other plans are validated. Self-migration is idempotent: the script reads snapshot, emits to current path.</li><li>- Related orchestrator: `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — composite MCP bundle proposal; Stage 3.1 builds on its `lifecycle_stage_context` pattern.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level step rollup + plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li><li>plan-review — 5 tuples. Spawn `plan-fix-apply ia/projects/lifecycle-refactor-master-plan.md 8`.</li></ul>
   </details>
 </div>
 
@@ -976,7 +980,7 @@ h2.plan-title {
       <h2 class="plan-title">Session Token + Latency Remediation — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/session-token-latency-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.1</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.2</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">20%</div>
       <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 2: 0%</div>
@@ -984,12 +988,12 @@ h2.plan-title {
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:29%" title="14 Done"></div><div class="seg seg-draft" style="width:17%" title="8 Draft"></div><div class="seg seg-pending" style="width:54%" title="26 Pending"></div></div>
-    <span class="seg-count">14 / 48</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:29%" title="14 Done"></div><div class="seg seg-draft" style="width:8%" title="4 Draft"></div><div class="seg seg-pending" style="width:63%" title="27 Pending"></div></div>
+    <span class="seg-count">14 / 49</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 14 Done</span><span class="chip chip-draft">📝 8 Draft</span><span class="chip chip-pending">⏳ 26 Pending</span><span class="chip chip-total">📋 48 Total</span>
+    <span class="chip chip-done">✅ 14 Done</span><span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 27 Pending</span><span class="chip chip-total">📋 49 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -1003,13 +1007,13 @@ h2.plan-title {
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Doc-triangle authority chain collapse (A1).">☐ Doc-triangle authority chain collapse (A1).</span><span class="phase-pill phase-pending" title="Phase 2 — MEMORY.md hygiene (A4).">☐ MEMORY.md hygiene (A4).</span>
+    <span class="phase-pill phase-done" title="Phase 1 — Doc-triangle authority chain collapse (A1).">✅ Doc-triangle authority chain collapse (A1).</span><span class="phase-pill phase-done" title="Phase 2 — MEMORY.md hygiene (A4).">✅ MEMORY.md hygiene (A4).</span>
   </div>
 
   
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
-    <ul><li>**Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.</li><li>- Approach B two-pass: this orchestrator covers Themes A/C/D/E/F + Stage 1 B1+B3+B7 bundle; Theme B MCP-surface remainder via `/master-plan-extend` against MCP plan.</li><li>- `ia/projects/lifecycle-refactor-master-plan.md` — Stage 10 T10.2 + T10.4 = pre-conditions for Step 2.</li><li>- `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — Theme B MCP-surface extension lands here; B1 server-split decision (Stage 1.2) must precede that extension's B4 dist-build task.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
+    <ul><li>**Scope:** Token-economy and latency remediation across MCP surface pruning (B1/B3/B7 bundle), ambient context collapse (Theme A), dispatch path flattening (Theme C), hook plane remainder (Theme D), repo hygiene remainder (Theme E), and rev-4 larger bets (Theme F). Theme-0-round-1 quick-wins (B7/D1/E1/E2/D3) ship as standalone `/project-new` issues — out of this orchestrator. Theme B MCP-surface remainder (B4/B5/B6/B8/B9) delegated to `/master-plan-extend` against `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — separate invocation, out of scope here.</li><li>- Approach B two-pass: this orchestrator covers Themes A/C/D/E/F + Stage 1 B1+B3+B7 bundle; Theme B MCP-surface remainder via `/master-plan-extend` against MCP plan.</li><li>- `ia/projects/lifecycle-refactor-master-plan.md` — Stage 10 T10.2 + T10.4 = pre-conditions for Step 2.</li><li>- `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — Theme B MCP-surface extension lands here; B1 server-split decision (Stage 1.2) must precede that extension's B4 dist-build task.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level step rollup + plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
   </details>
 </div>
 
@@ -1020,7 +1024,7 @@ h2.plan-title {
       <h2 class="plan-title">Skill Training — Master Plan (IA / Skill Lifecycle, tooling-only)</h2>
       <a class="plan-doc-link" href="../ia/projects/skill-training-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.1</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 3 (wiring) + Stage 6 (pending)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -1148,34 +1152,34 @@ h2.plan-title {
       <h2 class="plan-title">Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)</h2>
       <a class="plan-doc-link" href="../ia/projects/unity-agent-bridge-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.2</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">11%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 33%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">22%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 67%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:16%" title="6 Done"></div><div class="seg seg-draft" style="width:16%" title="6 Draft"></div><div class="seg seg-pending" style="width:68%" title="26 Pending"></div></div>
-    <span class="seg-count">6 / 38</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:32%" title="12 Done"></div><div class="seg seg-pending" style="width:68%" title="20 Pending"></div></div>
+    <span class="seg-count">12 / 38</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 6 Done</span><span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 26 Pending</span><span class="chip chip-total">📋 38 Total</span>
+    <span class="chip chip-done">✅ 12 Done</span><span class="chip chip-pending">⏳ 20 Pending</span><span class="chip chip-total">📋 38 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
     <span class="ctx-step">Step 1 · Hardening: parameterized exp…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.2 · MCP sugar tools + catalog</span>
+    <span class="ctx-stage">Stage 1.1 · Parameterized Editor bridge …</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Add **`unity_export_cell_chunk`** + **`unity_export_sorting_debug`** (names per glossary / existing patterns) in **`tools/mcp-ia-server/src/**`; thin wrappers — call **`unity_bridge_command`**, poll *">🎯 <span class="task-id">T1.2.1</span> <span class="task-name">Sugar tool registration</span></span>
+    <span class="ctx-task" title="Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agen">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Runner params DTO + dispatch</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Register sugar tools + shared enqueue/poll helper.">☐ Register sugar tools + shared enqueue/poll he…</span><span class="phase-pill phase-pending" title="Phase 2 — Documentation + cross-links to **`unity-development-context`** §10.">☐ Documentation + cross-links to **`unity-devel…</span><span class="phase-pill phase-pending" title="Phase 3 — Tests + **`validate:all`** gate.">☐ Tests + **`validate:all`** gate.</span><span class="phase-pill phase-pending" title="Add registerTool entries + Zod for both tools">☐ Add registerTool entries + Zod for both tools</span><span class="phase-pill phase-pending" title="Implement enqueue + poll loop using shared helper (T1.2.2) or inline first pass per plan">☐ Implement enqueue + poll loop using shared he…</span><span class="phase-pill phase-pending" title="Unit-test handler shape with mocked bridge responses">☐ Unit-test handler shape with mocked bridge re…</span><span class="phase-pill phase-pending" title="Add poll_until_terminal(command_id, options) helper">☐ Add poll_until_terminal(command_id, options) …</span><span class="phase-pill phase-pending" title="Wire sugar tools to helper; add tests for timeout + completed paths">☐ Wire sugar tools to helper; add tests for tim…</span><span class="phase-pill phase-pending" title="Add subsection for sugar tools + kind table updates">☐ Add subsection for sugar tools + kind table u…</span><span class="phase-pill phase-pending" title="Link unity-development-context §10 from catalog">☐ Link unity-development-context §10 from catalog</span><span class="phase-pill phase-pending" title="Insert See also cross-link under §10">☐ Insert See also cross-link under §10</span><span class="phase-pill phase-pending" title="Add fixtures/mocks for bridge command + get polling">☐ Add fixtures/mocks for bridge command + get p…</span><span class="phase-pill phase-pending" title="Assert tool output shape for each sugar tool">☐ Assert tool output shape for each sugar tool</span><span class="phase-pill phase-pending" title="Run validate:all; fix any failures">☐ Run validate:all; fix any failures</span><span class="phase-pill phase-pending" title="Patch index generation inputs if required">☐ Patch index generation inputs if required</span>
+    <span class="phase-pill phase-done" title="Phase 1 — Runner **`params`** parsing + switch dispatch for chunk / sorting / agent context.">✅ Runner **`params`** parsing + switch dispatch…</span><span class="phase-pill phase-done" title="Phase 2 — Menu static methods / wrappers accept bounded parameters aligned with §10.">✅ Menu static methods / wrappers accept bounded…</span><span class="phase-pill phase-done" title="Phase 3 — Preconditions: **`get_play_mode_status`** / grid init gating + **`failed`** JSON contract.">✅ Preconditions: **`get_play_mode_status`** / g…</span><span class="phase-pill phase-pending" title="Define param structs (ExportCellChunkParams, ExportSortingDebugParams, ExportAgentContextParams)">☐ Define param structs (ExportCellChunkParams, …</span><span class="phase-pill phase-pending" title="Extend BridgeCommand deserialization to populate params from request JSON">☐ Extend BridgeCommand deserialization to popul…</span><span class="phase-pill phase-pending" title="Route parameterized requests through runner switch to menu statics">☐ Route parameterized requests through runner s…</span><span class="phase-pill phase-pending" title="Extend unity_bridge_command request Zod with optional params sub-object">☐ Extend unity_bridge_command request Zod with …</span><span class="phase-pill phase-pending" title="Add fixture covering each new kind + param shape">☐ Add fixture covering each new kind + param shape</span><span class="phase-pill phase-pending" title="Confirm existing non-parameterized kinds pass unchanged">☐ Confirm existing non-parameterized kinds pass…</span><span class="phase-pill phase-pending" title="Add parameter-accepting overloads to Export methods">☐ Add parameter-accepting overloads to Export m…</span><span class="phase-pill phase-pending" title="Wire MenuItem wrappers to overloads with default params">☐ Wire MenuItem wrappers to overloads with defa…</span><span class="phase-pill phase-pending" title="Confirm bridge runner dispatch reaches parameterized path">☐ Confirm bridge runner dispatch reaches parame…</span><span class="phase-pill phase-pending" title="Enumerate all Reports menu items; confirm each invocation succeeds">☐ Enumerate all Reports menu items; confirm eac…</span><span class="phase-pill phase-pending" title="Check file output paths for duplicates">☐ Check file output paths for duplicates</span><span class="phase-pill phase-pending" title="Verify Postgres registry export rows match pre-refactor baseline">☐ Verify Postgres registry export rows match pr…</span><span class="phase-pill phase-pending" title="Add isInitialized / TerrainManager readiness check before Play-only dispatch">☐ Add isInitialized / TerrainManager readiness …</span><span class="phase-pill phase-pending" title="Return failed + error JSON on precondition failure">☐ Return failed + error JSON on precondition fa…</span><span class="phase-pill phase-pending" title="Align error strings with analysis §8.3 risk categories">☐ Align error strings with analysis §8.3 risk c…</span><span class="phase-pill phase-pending" title="Add EditMode test: enqueue export_cell_chunk → assert completed keys">☐ Add EditMode test: enqueue export_cell_chunk …</span><span class="phase-pill phase-pending" title="Add EditMode test: export when grid absent → assert failed + error key">☐ Add EditMode test: export when grid absent → …</span><span class="phase-pill phase-pending" title="Add MCP-side test if tooling coverage needed">☐ Add MCP-side test if tooling coverage needed</span>
   </div>
 
   
@@ -1280,7 +1284,7 @@ h2.plan-title {
       <h2 class="plan-title">Zone S + Economy — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/zone-s-economy-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 3 / Stage 8</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 3 (Stage 9 Done)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       

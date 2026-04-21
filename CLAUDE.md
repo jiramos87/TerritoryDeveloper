@@ -19,6 +19,7 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 |---|---|
 | Unity C# / `GridManager` / `HeightMap` / roads / water / cliffs | `ia/rules/unity-invariants.md` (MCP `rule_content unity-invariants`; `invariants_summary` auto-merges with universal) |
 | Lifecycle commands — `/stage-file`, `/ship-stage`, `/closeout`, `/plan-review`, `/author`, `/audit`, `/implement`, `/verify-loop` | `docs/agent-lifecycle.md` §1 (flow) + §2 (seam → surface matrix) |
+| Meta / preview composite-skill behavior — `/unfold {TARGET_COMMAND} {ARGS...}` | `ia/skills/unfold/SKILL.md` (+ `docs/agent-lifecycle.md` §2 Row M) — emits decision-tree plan under `ia/plans/`; read-only, NO execution |
 | Web workspace (`web/`) | `web/README.md` — dev commands, routes, dashboard diagnostic recipe, caveman-exception boundary |
 | Web backend logic / Next.js App Router | `ia/rules/web-backend-logic.md` |
 | Verification block format | `docs/agent-led-verification-policy.md` |

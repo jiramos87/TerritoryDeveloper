@@ -3,13 +3,15 @@ purpose: "TECH-310 — MotionBlock schema + curves on UiTheme."
 audience: both
 loaded_by: ondemand
 slices_via: none
+parent_plan: "ia/projects/ui-polish-master-plan.md"
+task_key: "T1.1.2"
 ---
 # TECH-310 — MotionBlock schema + curves (UiTheme extension)
 
 > **Issue:** [TECH-310](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-21
 
 ## 1. Summary
 
@@ -55,6 +57,40 @@ Domain: **UI changes** + **Manager responsibilities** (router match). `UiTheme.c
 - [ ] `UiTheme.motion` exposed.
 - [ ] Existing `UiTheme` fields untouched.
 - [ ] `npm run unity:compile-check` + `validate:all` green.
+
+## §Plan Author
+
+### §Audit Notes
+
+- Risk: `MotionEntry` as `struct` copies default `AnimationCurve` references oddly in Unity serialization. Mitigation: Unity serializes `AnimationCurve` as reference field inside struct — verify Inspector shows six curves after TECH-311.
+- Risk: `struct` vs `class` for `MotionEntry` — spec allows either; pick one and keep consistent across file. Mitigation: prefer `struct` per summary unless serialization issues appear.
+- Ambiguity: default `durationSeconds = 0` may cause divide-by-zero in future tweens. Mitigation: TECH-311 sets non-zero durations for required entries; primitives add guards.
+- Invariant touch: no runtime polling added to `UiTheme` — schema edit only.
+
+### §Examples
+
+| Entry | Role | Default duration (TECH-311) |
+|-------|------|----------------------------|
+| `moneyTick` | Currency counter tween | 0.28 s |
+| `needleAttack` | VU needle rise | 0.08 s |
+| `needleRelease` | VU needle fall | 0.40 s |
+
+### §Test Blueprint
+
+| test_name | inputs | expected | harness |
+|-----------|--------|----------|---------|
+| compile_motion_block | `UiTheme.cs` edited | `npm run unity:compile-check` exit 0 | unity |
+| validate_all | repo | `npm run validate:all` exit 0 | node |
+
+### §Acceptance
+
+- [ ] `MotionEntry` + `MotionBlock` defined; six named fields on `MotionBlock`.
+- [ ] `public MotionBlock motion` on `UiTheme`.
+- [ ] Existing fields untouched; compile + validate green.
+
+### §Findings
+
+- **Studio-rack** visual tokens are TECH-309; keep motion/studio blocks independent for parallel implement order.
 
 ## Open Questions
 
