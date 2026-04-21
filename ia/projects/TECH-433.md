@@ -23,7 +23,7 @@ Final green-bar check for Stage 2.1. Run `npm run validate:all` from repo root a
 
 1. `npm run validate:all` exits 0 after Stage 2.1 wiring + audit complete.
 2. Any regression introduced by 6 skill edits (frontmatter drift, stale ia-index, broken cross-ref) fixed inline.
-3. Stage 2.1 ready for `project-stage-close` skill.
+3. Stage 2.1 ready for the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`).
 
 ### 2.2 Non-Goals
 
@@ -35,7 +35,7 @@ Final green-bar check for Stage 2.1. Run `npm run validate:all` from repo root a
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Developer | As Stage 2.1 closer, I want a green `validate:all` bar before running `project-stage-close` so the stage closes on verified ground. | Validator exits 0; any surfaced regression fixed. |
+| 1 | Developer | As Stage 2.1 closer, I want a green `validate:all` bar before running the Stage-scoped `/closeout` pair so the stage closes on verified ground. | Validator exits 0; any surfaced regression fixed. |
 
 ## 4. Current State
 
@@ -58,7 +58,7 @@ Typical post-wiring regressions: ia-index out of sync (run `npm run generate:ia-
 
 ### 5.1 Target behavior
 
-Single validator run → exit 0 → stage green-bar → ready for `project-stage-close`.
+Single validator run → exit 0 → stage green-bar → ready for the Stage-scoped `/closeout` pair.
 
 ### 5.2 Architecture / implementation
 
@@ -92,7 +92,7 @@ Single validator run → exit 0 → stage green-bar → ready for `project-stage
 ### Phase 3 — Stage-close readiness
 
 - [ ] Confirm TECH-430 / TECH-431 / TECH-432 rows marked Done in `ia/projects/skill-training-master-plan.md` Stage 2.1 table.
-- [ ] Hand off to `project-stage-close` skill (ticks Stage 2.1 row; does NOT close umbrella).
+- [ ] Hand off to the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) (ticks Stage 2.1 row; does NOT close umbrella).
 
 ## 7b. Test Contracts
 
@@ -100,7 +100,7 @@ Single validator run → exit 0 → stage green-bar → ready for `project-stage
 |-------------------|------------|---------------------|-------|
 | Stage 2.1 green bar | Node | `npm run validate:all` | Exit 0 required from repo root |
 | No chain step skipped | Process | stdout inspection | All 5 chain steps must report pass |
-| Stage-close ready | Doc | `skill-training-master-plan.md` Stage 2.1 | T2.1.1 / T2.1.2 / T2.1.3 rows = Done before running `project-stage-close` |
+| Stage-close ready | Doc | `skill-training-master-plan.md` Stage 2.1 | T2.1.1 / T2.1.2 / T2.1.3 rows = Done before running the Stage-scoped `/closeout` pair |
 
 ## 8. Acceptance Criteria
 
@@ -108,7 +108,7 @@ Single validator run → exit 0 → stage green-bar → ready for `project-stage
 - [ ] Any regression surfaced by Stage 2.1 wiring fixed inline (no `--skip`).
 - [ ] Failing step identified from stdout (never guessed from context).
 - [ ] Stage 2.1 sibling tasks (TECH-430 / TECH-431 / TECH-432) Done in master plan.
-- [ ] Stage 2.1 ready for `project-stage-close`.
+- [ ] Stage 2.1 ready for the Stage-scoped `/closeout` pair.
 
 ## 9. Issues Found During Development
 

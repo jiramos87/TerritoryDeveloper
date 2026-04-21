@@ -2,82 +2,45 @@
 
 @ia/rules/invariants.md
 @ia/rules/terminology-consistency.md
-@ia/rules/mcp-ia-default.md
 @ia/rules/agent-output-caveman.md
-@ia/rules/agent-lifecycle.md
 
 ## 1. What this repo is
 
-Unity 2D isometric city builder with a Markdown-backed Information Architecture under `ia/{specs,rules,skills,projects,templates}` and a project-scoped MCP server (`territory-ia`, registered in `.mcp.json`). Workflow specifics: `AGENTS.md`. Runtime layers + dependency map: `ARCHITECTURE.md`. IA narrative: `docs/information-architecture-overview.md`.
+Unity 2D isometric city builder + Markdown IA (`ia/{specs,rules,skills,projects,templates}`) + project-scoped MCP server (`territory-ia`, `.mcp.json`). Cross-harness workflow: **`AGENTS.md`**. Runtime layers + dep map: `ARCHITECTURE.md`. This file = Claude Code deltas only; everything not Claude-specific lives in `AGENTS.md`.
 
 ## 2. MCP first
 
-Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files **for IA / backlog / spec / glossary questions**. For web/ or tooling code bugs, read CLAUDE.md §6 + the file(s) directly before spawning `Explore` — MCP is not the right surface there. Suggested order: `backlog_issue` (when you have a `BUG-/FEAT-/TECH-/ART-/AUDIO-` id) → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Issue-creation flow: `reserve_backlog_ids` (reserve id before writing yaml) → `backlog_record_validate` (validate yaml before materialize). Structured list queries: `backlog_list`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. The MCP server caches the schema in memory at session start; restart Claude Code (or use the matching CLI script via tsx) after editing tool descriptors. If MCP is unavailable, fall back to `ia/rules/agent-router.md` + targeted file reads.
+Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universal safety. Tool order, fallback, schema-cache caveat: see that file.
 
-## 3. Key files
+## 3. Task routing (trigger → read)
 
-| File | What it is |
+| Trigger | Read |
 |---|---|
-| `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
-| `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction. |
-| `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. |
-| `.claude/agents/*.md` | Native subagents. Seam → subagent map: [`docs/agent-lifecycle.md` §2](docs/agent-lifecycle.md#2-seam--surface-matrix). Retired bodies under `.claude/agents/_retired/`. |
-| `.claude/commands/*.md` | Slash command dispatchers → `.claude/agents/{name}.md`. Retired under `.claude/commands/_retired/`. |
-| `.claude/output-styles/*.md` | `verification-report`, `closeout-digest`. |
-| `ia/skills/*/SKILL.md` | Workflow recipes; index [`ia/skills/README.md`](ia/skills/README.md). Pair vs bulk skills: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). |
-| `docs/agent-lifecycle.md` | **Lifecycle authority** — flow, seam matrix, handoffs, decision tree. |
-| `ia/rules/{invariants,terminology-consistency,mcp-ia-default,agent-output-caveman}.md` | Always-loaded guardrails (imported above). |
-| `docs/agent-led-verification-policy.md` | Single canonical Verification policy. |
-| `ia/backlog/{id}.yaml` | Per-issue **backlog record** (open issues). Source of truth for MCP + mutator skills. Written via `project-new` / `stage-file` / closeout; read by `backlog-parser.ts`. |
-| `ia/backlog-archive/{id}.yaml` | Per-issue **backlog record** (closed issues). Moved from `ia/backlog/` on closeout. |
-| `ia/state/id-counter.json` | Monotonic per-prefix id counter (TECH, FEAT, BUG, ART, AUDIO). Written exclusively via `tools/scripts/reserve-id.sh` under `flock`. Never hand-edit. |
-| `BACKLOG.md`, `BACKLOG-ARCHIVE.md` | Generated **backlog view** — materialized by `bash tools/scripts/materialize-backlog.sh` from yaml records. Read-only for humans + dashboard; never edited directly by skills or agents. |
-| `ia/skills/skill-train/SKILL.md` | On-demand skill retrospective. Reads target skill's Per-skill Changelog; aggregates recurring friction (≥2 occurrences); proposes unified-diff patch against Phase sequence / Guardrails / Seed prompt sections. User-gated; never auto-applies. Sibling producer: `release-rollout-skill-bug-log` (user-logged channel). |
+| Unity C# / `GridManager` / `HeightMap` / roads / water / cliffs | `ia/rules/unity-invariants.md` (MCP `rule_content unity-invariants`; `invariants_summary` auto-merges with universal) |
+| Lifecycle commands — `/stage-file`, `/ship-stage`, `/closeout`, `/plan-review`, `/author`, `/audit`, `/implement`, `/verify-loop` | `docs/agent-lifecycle.md` §1 (flow) + §2 (seam → surface matrix) |
+| Web workspace (`web/`) | `web/README.md` — dev commands, routes, dashboard diagnostic recipe, caveman-exception boundary |
+| Web backend logic / Next.js App Router | `ia/rules/web-backend-logic.md` |
+| Verification block format | `docs/agent-led-verification-policy.md` |
+| MCP server code / tool registration | `tools/mcp-ia-server/src/index.ts` + MCP `list_*` schemas. The `.md` catalog (`docs/mcp-ia-server.md`) can lag — treat as human overview only. |
+| Architecture-decision context | `MEMORY.md` (root) |
+| Backlog / issues | `mcp__territory-ia__backlog_issue` (by id) |
 
-## 4. Hooks
+## 4. Claude-native surface
 
-Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`. Hook scripts require `jq` on PATH; missing → sed fallback with conservative-deny (escaped quotes → empty string → hook allows).
+- **Hooks.** `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash PreToolUse denylist — see force-loaded `invariants.md`. Do NOT strip `defaultMode: "acceptEdits"` or split the `mcp__territory-ia__*` wildcard.
+- **Subagents.** `.claude/agents/*.md`. Seam → subagent map: `docs/agent-lifecycle.md §2`. Retired: `.claude/agents/_retired/`.
+- **Slash commands.** `.claude/commands/*.md` dispatch to `.claude/agents/{name}.md`. Retired: `.claude/commands/_retired/`.
+- **Output styles.** `.claude/output-styles/*.md` — `verification-report`, `closeout-digest`.
+- **Skill preamble.** Shared Tier 1 cache block: `ia/skills/_preamble/stable-block.md`. Order fixed (F5 invalidation cascade). Subagent cache floors validated by `npm run validate:cache-block-sizing`.
+- **Project MEMORY.** `MEMORY.md` at repo root; on-demand only (not force-loaded). Promote entries to `.claude/memory/{slug}.md` once past ~10 lines.
 
 ## 5. Key commands
 
 | Command | When |
 |---|---|
-| `npm run validate:all` | After IA / MCP / fixture / index work. Same chain CI runs. |
-| `npm run unity:compile-check` | After C# edits. Loads `.env` / `.env.local`; **do not** skip because `$UNITY_EDITOR_PATH` is empty in the agent shell. |
-| `npm run verify:local` (alias `verify:post-implementation`) | Full local chain on a configured dev machine: `validate:all` + `unity:compile-check` + `db:migrate` + `db:bridge-preflight` + Editor save/quit + `db:bridge-playmode-smoke`. See `ARCHITECTURE.md` (**Local verification**). |
+| `npm run validate:all` | After IA / MCP / fixture / index / rules edits (same chain CI runs) |
+| `npm run unity:compile-check` | After C# edits. `$UNITY_EDITOR_PATH` loaded by the script itself — do NOT skip. |
+| `npm run verify:local` (alias `verify:post-implementation`) | Full local chain: `validate:all` + compile-check + `db:migrate` + `db:bridge-preflight` + Editor save/quit + `db:bridge-playmode-smoke`. See `ARCHITECTURE.md` (**Local verification**). |
+| `npm run validate:claude-imports` | Assert every `@`-import in this file exists + stays within line budget. Drift gate. |
 
-Other commands (`validate:frontmatter`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` and the relevant skill bodies (`agent-test-mode-verify`, `bridge-environment-preflight`).
-
-## 6. Web workspace (`web/`)
-
-Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
-
-| Command | Purpose |
-|---|---|
-| `cd web && npm run dev` | Start dev server (http://localhost:4000) |
-| `cd web && npm run build` | Production build |
-| `npm run validate:web` | Lint + typecheck + build via root composition |
-| `npm run deploy:web` | Deploy production to https://web-nine-wheat-35.vercel.app (auto-prunes newest 3). Manual only — closeout / stage-close no longer auto-deploy. |
-| `npm run deploy:web:preview` | Deploy preview (non-prod) to a unique Vercel URL. |
-
-| Route | Purpose | Auth | Render |
-|-------|---------|------|--------|
-| `/dashboard` | Master-plan progress dashboard | gated (bypass via `DASHBOARD_AUTH_SKIP=1`) | RSC |
-| `/dashboard/releases` | Release picker | gated (TECH-358 matcher) | RSC |
-| `/dashboard/releases/:releaseId/progress` | Release progress tree | gated (TECH-358 matcher) | RSC + `PlanTree` Client island |
-
-Auth gate for `/dashboard*` inherits from `web/proxy.ts` matcher (TECH-358).
-
-**Live dashboard freshness:** `/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate) on Vercel. Push to deployed branch → visible within ~5 min without redeploy. Run `npm run deploy:web` only when instant refresh or code change required.
-
-**Dashboard diagnostic recipe:** When dashboard display diverges from master-plan markdown (wrong stage status, ghost tasks, off counts): (1) read `web/lib/plan-loader.ts` (data source + env gate) + `web/lib/plan-parser.ts` (parse + `deriveHierarchyStatus`); (2) run `cd web && npm run plan-parser:verify` to dump per-plan/per-stage `{status, done/total}` straight from the parser; (3) check the URL for `?status=` / `?plan=` filters (`filterPlans` in `web/app/dashboard/page.tsx` drops tasks per-status before render); (4) regression test adversarial markdown under `web/lib/__tests__/plan-parser.test.ts`. Do NOT spawn `Explore` for this — the files above are the whole surface.
-
-**Caveman-exception boundary:** full English applies only to user-facing rendered text under `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, identifiers, comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
-
-Orchestrator: `ia/projects/web-platform-master-plan.md` (permanent — never closeable via `/closeout`).
-
-## 7. Where to find more
-
-- Workflow + lifecycle: `AGENTS.md`
-- IA stack overview: `docs/information-architecture-overview.md`
-- MCP tool catalog: `docs/mcp-ia-server.md`
+Further commands (`validate:frontmatter`, `validate:cache-block-sizing`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` + relevant skill bodies.

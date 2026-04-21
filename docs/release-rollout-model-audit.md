@@ -144,7 +144,7 @@ Patterns that appear in ≥ 3 skills today. Extracting these avoids drift and co
 
 ### 4.5 `progress-regen` (no-model Bash wrapper, invocable as skill)
 - **What it does:** runs `npm run progress` from repo root, logs exit code, does NOT block caller on non-zero.
-- **Reused by:** `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`, `project-spec-close`, `project-stage-close`, `release-rollout-track` (when cell flip closes a task).
+- **Reused by:** `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`, `plan-applier` Mode stage-closeout (absorbs retired per-Task `project-spec-close` + `project-stage-close`), `release-rollout-track` (when cell flip closes a task).
 - **Impact:** one shell wrapper, every caller follows the same non-blocking contract.
 
 ### 4.6 `release-rollout-repo-sweep` (Sonnet)

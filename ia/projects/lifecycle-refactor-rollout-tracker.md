@@ -8,7 +8,7 @@
 >
 > **Read first if landing cold:**
 > - [`docs/lifecycle-refactor-stage-8-dry-run-findings.md`](../../docs/lifecycle-refactor-stage-8-dry-run-findings.md) — full M8 findings doc (12 findings F1–F12, F8 retracted; Fix Table 11 rows).
-> - [`ia/rules/agent-lifecycle.md`](../rules/agent-lifecycle.md) — canonical lifecycle flow + surface map.
+> - [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) — canonical lifecycle flow + surface map.
 > - [`ia/skills/release-rollout-skill-bug-log/SKILL.md`](../skills/release-rollout-skill-bug-log/SKILL.md) — dual-write helper.
 >
 > **Hard rules:**

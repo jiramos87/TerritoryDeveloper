@@ -14,7 +14,7 @@
 > - Stabilization = per-bucket kickoff pass + ad-hoc `/project-new` for global interrupts (TECH-15, TECH-16). NOT a standalone master plan (revisit at `mvp-stabilization-umbrella.md` if bucket-scope pattern drifts).
 > - Canonical terminology: **country** (NOT "nation") per `multi-scale-master-plan.md` + glossary. `CountryCell` / `parent_country_id`. Bucket labels use **country** everywhere; exploration doc prose polished to match.
 >
-> **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = umbrella orchestrator, one level up from bucket orchestrators). `ia/rules/agent-lifecycle.md` (ordered flow per bucket).
+> **Hierarchy rules:** `ia/rules/project-hierarchy.md` (stage > task). `ia/rules/orchestrator-vs-spec.md` (this doc = umbrella orchestrator, one level up from bucket orchestrators). `docs/agent-lifecycle.md` (ordered flow per bucket).
 >
 > **Parallel-work rule:** NEVER run `/stage-file` or `/closeout` against two sibling bucket orchestrators concurrently on the same branch — glossary + MCP index regens must sequence. Umbrella coordinates tier lanes; each tier lane may have multiple buckets IN PROGRESS but only one filing / closing at a time.
 >
@@ -23,7 +23,7 @@
 > - [`docs/full-game-mvp-exploration.md`](../../docs/full-game-mvp-exploration.md) — full Design Expansion + architecture Mermaids + examples.
 > - [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md) — orchestrator permanence.
 > - [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) — step/stage/phase/task cardinality.
-> - [`ia/rules/agent-lifecycle.md`](../rules/agent-lifecycle.md) — per-bucket lifecycle surfaces.
+> - [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) — per-bucket lifecycle surfaces.
 > - MCP: `backlog_issue {id}` per referenced id; never full `BACKLOG.md` read.
 >
 > **Invariants:** `ia/rules/invariants.md` #1–#12 implicated across Buckets 1–8; Bucket 9 (web) + 10 (build pipeline) NOT implicated. Per-bucket risk table → exploration doc §Subsystem impact summary.
@@ -324,8 +324,8 @@ Bucket 10 exit criteria (free tier):
 
 Three layers:
 
-1. **Task level** — child orchestrator task tables. Lifecycle skills (`stage-file` / `/kickoff` / `/implement` / `/closeout`) flip status per `ia/rules/project-hierarchy.md`.
-2. **Step / Stage level** — child orchestrator step status enum (`Draft / In Review / In Progress / Final`). `project-stage-close` skill flips stage rollup.
+1. **Task level** — child orchestrator task tables. Lifecycle skills (`stage-file` / `/author` / `/implement` / `/closeout`) flip status per `ia/rules/project-hierarchy.md`.
+2. **Step / Stage level** — child orchestrator step status enum (`Draft / In Review / In Progress / Final`). The Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) flips stage rollup.
 3. **Bucket level** — umbrella §Bucket table above. Human updates row when child orchestrator step flips. Rollup convention: bucket Status = "In progress — Step X of N" where X = highest step currently In Progress, N = total steps planned.
 
 **Dashboard surface:** web `/dashboard` (ISR 5-min revalidate) fetches `ia/projects/*master-plan*.md` from GitHub raw → umbrella orchestrator visible within ~5 min of push without redeploy. No new infra needed. User updates umbrella bucket rows on same commit as child orchestrator step flip.

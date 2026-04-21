@@ -26,7 +26,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
 ### Stage 1 — DSP foundations + audio infra / Audio infrastructure + persistent bootstrap
 
@@ -682,13 +682,13 @@ Step 1 + Step 2 stages decomposed above w/ phases + tasks. Steps 4–7 carry sta
 - Violate invariant #4 — `BlipEngine` is a static facade (stateless dispatch); all state lives on MonoBehaviour hosts under `BlipBootstrap`. Not a singleton pattern.
 - File BACKLOG rows for future-step Blip FEAT ideas outside an open stage. Use `docs/blip-post-mvp-extensions.md` as the holding pen.
 - Give time estimates on steps / stages / phases / tasks.
-- Close this orchestrator via `/closeout` — orchestrators are permanent per `ia/rules/orchestrator-vs-spec.md`. Individual task specs close normally; stages close via `project-stage-close`; the umbrella orchestrator never deletes.
+- Close this orchestrator via `/closeout` — orchestrators are permanent per `ia/rules/orchestrator-vs-spec.md`. Individual task specs close normally; stages close via the `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`); the umbrella orchestrator never deletes.
 
 ---
 
 ## Decision Log
 
-> **Pattern:** append rows as stages close (via `project-stage-close`) or when orchestrator-level pivots surface in task kickoffs. Format: `{YYYY-MM-DD} — {short title}. {1–3 sentence rationale}. Source: {task id | stage id | kickoff | review}.`
+> **Pattern:** append rows as stages close (via the `/closeout` pair) or when orchestrator-level pivots surface in task authoring. Format: `{YYYY-MM-DD} — {short title}. {1–3 sentence rationale}. Source: {task id | stage id | author | review}.`
 
 - `2026-04-13 — MVP drops BlipMode enum.` Single implicit baked path for MVP. `BlipMode` enum re-lands post-MVP when `BlipLiveHost` + `OnAudioFilterRead` Live DSP path ships. Source: pre-implementation review of this orchestrator.
 - `2026-04-13 — BlipMixerRouter parallel to BlipCatalog.` `BlipPatchFlat` must stay blittable (no managed refs → no `AudioMixerGroup` in flat struct). `BlipMixerRouter` holds `BlipId → AudioMixerGroup` map built at `BlipCatalog.Awake` from authoring-only `BlipPatch.mixerGroup` ref. Source: pre-implementation review.
@@ -712,7 +712,7 @@ Step 1 + Step 2 stages decomposed above w/ phases + tasks. Steps 4–7 carry sta
 
 ## Lessons Learned
 
-> **Pattern:** append rows as stages close, migrate actionable ones to canonical IA (`ia/specs/`, `ia/rules/`, glossary) via `project-stage-close` or `/closeout`. Keep the lesson here if it's orchestrator-local (applies only inside Blip MVP); promote if it generalizes. Format: `{YYYY-MM-DD} — {short title}. {1–3 sentence summary}. {Action: where promoted, or "orchestrator-local"}.`
+> **Pattern:** append rows as stages close, migrate actionable ones to canonical IA (`ia/specs/`, `ia/rules/`, glossary) via the `/closeout` pair. Keep the lesson here if it's orchestrator-local (applies only inside Blip MVP); promote if it generalizes. Format: `{YYYY-MM-DD} — {short title}. {1–3 sentence summary}. {Action: where promoted, or "orchestrator-local"}.`
 
 - `2026-04-14 — Compress co-located tasks before filing.` When two pending tasks share the same implementation surface (same file, same loop), merge them into one TECH issue at stage-file time rather than filing both then closing one early. Avoids orphan issues + simplifies history. Action: orchestrator-local (Blip MVP).
 - `2026-04-14 — BlipVoiceState carries all per-voice mutable DSP state.` `phaseA..D`, `envLevel`, `envStage`, `filterZ1`, `rngState`, `samplesElapsed` all live in a single blittable struct passed by ref — no statics, no heap alloc inside `Render`. Pattern validated by Stage 1.3; reuse for any future voice-type addition (e.g. `BlipLiveHost` post-MVP). Action: promoted to `ia/specs/audio-blip.md` §3 DSP kernel (TECH-229).

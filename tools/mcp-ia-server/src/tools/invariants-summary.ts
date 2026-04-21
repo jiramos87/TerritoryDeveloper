@@ -1,5 +1,8 @@
 /**
- * MCP tool: invariants_summary — numbered invariants + bulleted guardrails from invariants.mdc.
+ * MCP tool: invariants_summary — numbered invariants + bulleted guardrails.
+ * Merges ia/rules/invariants.md (universal IA rules 12–13 + universal safety)
+ * with ia/rules/unity-invariants.md (Unity rules 1–11) so callers still see the
+ * full cardinal set (13 invariants + 10 guardrails).
  * Supports optional domain filter (substring match against subsystem_tags).
  * Returns structured { description, invariants, guardrails, markdown }.
  */
@@ -165,21 +168,38 @@ export function buildInvariantsPayload(
   domain?: string,
   sidecar?: InvariantsTagsSidecar,
 ): InvariantsPayload | null {
-  const entry = findEntryByKey(registry, "invariants");
-  if (!entry) return null;
+  const universalEntry = findEntryByKey(registry, "invariants");
+  if (!universalEntry) return null;
+  const unityEntry = findEntryByKey(registry, "unity-invariants");
 
   const tags = sidecar ?? loadInvariantsTagsSidecar();
 
-  const raw = fs.readFileSync(entry.filePath, "utf8");
-  const { data, content } = matter(raw);
+  // Order: Unity rules 1–11 first, then universal rules 12–13, so positional
+  // indexing (i+1) aligns with the sidecar's canonical numbering.
+  const unityParsed = unityEntry
+    ? parseInvariantsBody(
+        matter(fs.readFileSync(unityEntry.filePath, "utf8")).content,
+      )
+    : { invariants: [], guardrails: [] };
+
+  const universalRaw = fs.readFileSync(universalEntry.filePath, "utf8");
+  const { data, content: universalContent } = matter(universalRaw);
   const d = data as Record<string, unknown>;
   const description =
     typeof d.description === "string"
       ? d.description
       : "System invariants and guardrails";
 
-  const { invariants: invTitles, guardrails: grTitles } =
-    parseInvariantsBody(content);
+  const universalParsed = parseInvariantsBody(universalContent);
+
+  const invTitles = [
+    ...unityParsed.invariants,
+    ...universalParsed.invariants,
+  ];
+  const grTitles = [
+    ...unityParsed.guardrails,
+    ...universalParsed.guardrails,
+  ];
 
   const allInvariants: InvariantEntry[] = invTitles.map((title, i) => {
     const tag = tags.invariants.find((t) => t.number === i + 1);
@@ -250,7 +270,8 @@ export function registerInvariantsSummary(
             if (!payload) {
               throw {
                 code: "spec_not_found" as const,
-                message: "invariants.mdc is not registered.",
+                message:
+                  "ia/rules/invariants.md is not registered (universal rules file).",
               };
             }
             return payload;

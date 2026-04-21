@@ -39,8 +39,8 @@ The following lifecycle skills invoke `npm run progress` automatically so `docs/
 |-------|----------------|---------------------|
 | `master-plan-new` | After new orchestrator doc written | Phase 8b, before handoff |
 | `stage-file` | After orchestrator task table flipped `_pending_` → `Draft` | Post-loop step 1b, before validate:all |
-| `project-stage-close` | After stage status flipped to `Final` + sanity-check passes | Post-flip section, before handoff emit |
-| `project-spec-close` | After BACKLOG archive row written + spec file deleted | Post-archive section (step 9b) |
+| `plan-applier` Mode `stage-closeout` | After stage status flipped to `Final` + sanity-check passes | Post-flip section, before handoff emit |
+| `plan-applier` Mode `stage-closeout` | After BACKLOG archive row written + spec file deleted (per-task closeout inside the Stage pair) | Post-archive section |
 
 After any of these skills completes, a `git status` will show `docs/progress.html` modified (or no change if master-plan state was already up to date with a prior regen).
 

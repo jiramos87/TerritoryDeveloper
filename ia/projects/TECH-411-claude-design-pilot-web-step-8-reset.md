@@ -143,7 +143,7 @@ Manual CD invocation (no `/design-explore --visual` flag wiring). Bundle = whate
 
 ### Phase 7 — Ship Stage 8.1
 
-- [ ] Run `/ship-stage ia/projects/web-platform-master-plan.md 8.1` — drives all Stage 8.1 tasks through kickoff → implement → verify-loop → closeout.
+- [ ] Run `/ship-stage ia/projects/web-platform-master-plan.md 8.1` — drives all Stage 8.1 tasks through `/author` → implement → verify-loop → Stage-scoped `/closeout` pair.
 
 ### Phase 8 — Measure
 

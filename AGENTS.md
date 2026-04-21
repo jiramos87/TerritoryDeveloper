@@ -1,6 +1,8 @@
 # AI Agent Guide — Territory Developer
 
-> **TL;DR.** `territory-ia` MCP first (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section`). Ship via project-spec lifecycle (create → author → implement → verify → review → audit → close Stage-scoped). Emit **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) at completion. Hard guardrails: [`ia/rules/invariants.md`](ia/rules/invariants.md). Native host surface (Claude Code hooks, slash commands, subagents): [`CLAUDE.md`](CLAUDE.md).
+> **Harness boundary.** This file is the **cross-harness canonical** agent guide (Codex / OpenAI `AGENTS.md` spec + general agent baseline). Claude Code deltas (hooks, slash commands, subagents, `@` imports) live in [`CLAUDE.md`](CLAUDE.md). Cursor deltas (`.mdc` adapters, caller-agent cheatsheet, model gate) live under [`.cursor/rules/`](.cursor/rules). Keep workflow here; keep host-specific surface in the host file.
+
+> **TL;DR.** `territory-ia` MCP first (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section`). Ship via project-spec lifecycle (create → author → implement → verify → review → audit → close Stage-scoped). Emit **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) at completion. Hard guardrails: [`ia/rules/invariants.md`](ia/rules/invariants.md) (universal + IA) + [`ia/rules/unity-invariants.md`](ia/rules/unity-invariants.md) (Unity runtime; on-demand).
 
 ## 1. Before you start
 
@@ -12,7 +14,7 @@
 
 ## 2. Agent lifecycle
 
-Full lifecycle flow: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Surface map (thin stub + anchors): [`ia/rules/agent-lifecycle.md`](ia/rules/agent-lifecycle.md) — full seam → command → skill matrix in doc §2. Host inventory (hooks, agents, commands): [`CLAUDE.md`](CLAUDE.md) §3 only; not duplicated here.
+Full lifecycle flow: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md) (end-to-end flow + seam → surface matrix + decision tree). Host inventory (hooks, agents, commands): [`CLAUDE.md`](CLAUDE.md) §4 (Claude-native surface) + [`.cursor/rules/`](.cursor/rules) (Cursor adapters); not duplicated here.
 
 ### 2a. Skill-lifecycle retrospective (skill-train)
 
@@ -20,7 +22,7 @@ Full lifecycle flow: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Surfa
 
 ## 3. Verification policy (canonical)
 
-Canonicalized at [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md); surfaced as always-on rule [`ia/rules/agent-verification-directives.md`](ia/rules/agent-verification-directives.md). Policy doc carries **Verification block** format (Node/IA, Unity compile, Path A batch, Path B bridge), bridge timeout (40 s initial, escalation, 120 s ceiling), Path A project-lock release. Do NOT restate here, in skills, or rules.
+Canonicalized at [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md); rule anchor [`ia/rules/agent-verification-directives.md`](ia/rules/agent-verification-directives.md) (fetch on demand via MCP `rule_content agent-verification-directives`). Policy doc carries **Verification block** format (Node/IA, Unity compile, Path A batch, Path B bridge), bridge timeout (40 s initial, escalation, 120 s ceiling), Path A project-lock release. Do NOT restate here, in skills, or rules.
 
 ## 4. Documentation hierarchy
 
@@ -131,24 +133,14 @@ New/changed concepts → update glossary **and** relevant spec section. No termi
 
 ## 8. Web workspace (`web/`)
 
-Next.js 14+ App Router at `web/`. Full onboarding: [`web/README.md`](web/README.md).
-
-**Dev commands:**
-
-```bash
-cd web && npm run dev        # dev server at http://localhost:4000 (3000 reserved for lims tg-api-v2)
-cd web && npm run build      # production build
-npm run validate:web         # lint + typecheck + build (repo root)
-npm run validate:all         # includes validate:web
-```
-
-**Caveman-exception boundary:** full English for user-facing rendered text in `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, component identifiers, TypeScript comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
+Next.js 14+ App Router at `web/`. Full onboarding + dev commands + dashboard diagnostic recipe: [`web/README.md`](web/README.md).
 
 **Surface rules:**
-- `web/` is tooling / docs-only surface. Invariants `#1–#12` (Unity / runtime C#) are NOT implicated.
-- Vercel deploy: push to `main` triggers production deploy. `*.vercel.app` URL in `web/README.md` §Deploy once linked.
-- Orchestrator: `ia/projects/web-platform-master-plan.md` — permanent, never closeable via `/closeout`.
-- No `vercel.json` at MVP — dashboard-linked project uses Next.js framework preset auto-detect.
+- `web/` is tooling / docs-only surface. Unity runtime invariants (`ia/rules/unity-invariants.md` rules 1–11) are NOT implicated; universal IA invariants (`ia/rules/invariants.md` rules 12–13) still apply.
+- **Caveman-exception boundary:** full English for user-facing rendered text in `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, component identifiers, TypeScript comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
+- **Vercel deploy:** push to `main` triggers a production deploy (framework preset auto-detect; no `vercel.json`). Manual deploys also supported via `npm run deploy:web` (auto-prunes newest 3) and `npm run deploy:web:preview` (unique preview URL). Manual deploy is the path when the master-plan has been merged and you want an instant refresh ahead of the next push.
+- **Orchestrator:** `ia/projects/web-platform-master-plan.md` — permanent, never closeable via `/closeout`.
+- **Live dashboard freshness:** `/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate). Push to deployed branch → visible within ~5 min without redeploy.
 
 ## 9. Pre-commit checklist
 
@@ -164,4 +156,5 @@ npm run validate:all         # includes validate:web
 - [ ] Touched-domain wording matches `glossary.md` / linked specs
 - [ ] Changed links / `Spec:` lines for `ia/projects/*.md` → `npm run validate:dead-project-specs`
 - [ ] Changed `tools/mcp-ia-server`, `docs/schemas`, `ia/specs` bodies, or `glossary.md` → `npm run validate:all` (or `npm run verify:local` when Postgres + Unity bridge apply)
+- [ ] Changed `CLAUDE.md` `@` imports, `ia/rules/invariants.md`, or `ia/rules/unity-invariants.md` → `npm run validate:claude-imports` + `npm run validate:cache-block-sizing`
 - [ ] Substantive implementation → include **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md)

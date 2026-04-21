@@ -134,7 +134,7 @@ Don't squash across tasks. Don't bundle unrelated changes.
 
 ## 7. Do NOT do
 
-- **Do NOT edit `Status` column cells** in master-plan task tables. Status flips belong to `/kickoff`, `/implement`, `/closeout`, `project-stage-close` (Claude Code).
+- **Do NOT edit `Status` column cells** in master-plan task tables. Status flips belong to `/project-new`, `/implement`, Stage-scoped `/closeout` (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) — all Claude Code.
 - **Do NOT edit `Issue` column** to add `TECH-XXX`. Id reservation goes through `tools/scripts/reserve-id.sh` under `flock` + yaml file creation + BACKLOG materialize — Claude Code owns that chain.
 - **Do NOT delete `ia/projects/TECH-XXX.md`** specs. Closeout chain (`/closeout`) owns deletion + archive move + lessons migration.
 - **Do NOT write to `ia/state/id-counter.json`** directly. Invariant #13.

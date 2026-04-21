@@ -1,37 +1,30 @@
 ---
-purpose: "System invariants and guardrails — never violate"
+purpose: "Universal-safety invariants + IA tooling guardrails — force-loaded, never violate"
 audience: agent
 loaded_by: always
 slices_via: none
-description: System invariants and guardrails — never violate
+description: Universal-safety invariants + IA tooling guardrails (cross-domain; Unity rules split to unity-invariants.md)
 alwaysApply: true
 ---
 
 # System Invariants (NEVER violate)
 
-1. `HeightMap[x,y]` == `Cell.height` — always in sync; update both on every write
-2. After road modification → call `InvalidateRoadCache()`
-3. No `FindObjectOfType` in `Update` or per-frame loops — cache in `Awake`/`Start`
-4. No new singletons — use Inspector + `FindObjectOfType` pattern
-5. No direct `gridArray`/`cellArray` access outside `GridManager` — use `GetCell(x, y)`. Carve-out: helper services under `Assets/Scripts/Managers/GameManagers/*Service.cs` extracted from `GridManager` per invariant #6 (hold a `GridManager grid` composition reference) share the owning class's trust boundary and may touch `grid.cellArray` / `grid.gridArray` directly; document the rationale at the touch site.
-6. Do not add responsibilities to `GridManager` — extract to helper classes
-7. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of neighbor water cells
-8. Rivers: `H_bed` monotonically non-increasing toward exit
-9. Cliff visible faces: south + east only — N/W not instantiated
-10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
-11. `UrbanizationProposal`: NEVER re-enable — obsolete (see **glossary** **Urbanization proposal**)
 12. Specs under `ia/specs/` for permanent domains only; use `ia/projects/` for issue-specific specs
 13. Monotonic id source = `ia/state/id-counter.json` via `tools/scripts/reserve-id.sh`; never hand-edit the counter file or the `id:` field of an existing yaml record
 
 # Guardrails (IF → THEN)
 
-- IF adding a manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`
-- IF modifying roads → THEN call `InvalidateRoadCache()` after changes
-- IF placing a road → THEN use the preparation family, NOT `ComputePathPlan` alone
-- IF touching `GridManager` → THEN extract new logic to a helper class
-- IF creating a new manager → THEN MonoBehaviour scene component, never `new`
-- IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
-- IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
 - IF closing a project spec → THEN migrate lessons learned to canonical docs before deleting
 - IF creating a project spec → THEN use `ia/templates/project-spec-template.md`, name `{ISSUE_ID}.md` under `ia/projects/`
 - IF adding a `flock` guard on a mutation path → THEN dedicate a distinct lockfile per concurrency domain (id-counter → `.id-counter.lock`; closeout → `.closeout.lock`; materialize-backlog → `.materialize-backlog.lock`); read-only validators skip `flock` entirely
+
+# Universal safety (cross-harness)
+
+- **MCP first.** Prefer `mcp__territory-ia__*` tools over reading whole `ia/specs/*.md`. Order: `backlog_issue` → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Server caches schema at session start; restart Claude Code / MCP host after editing tool descriptors. Fallback when MCP unavailable: `ia/rules/agent-router.md` + targeted file reads.
+- **Unity invariants.** Rules 1–11 + Unity-specific IF→THEN live in `ia/rules/unity-invariants.md` (`loaded_by: on-demand`). Touching `Assets/Scripts/**/*.cs`, `GridManager`, `HeightMap`, roads, water, cliffs → fetch via `rule_content unity-invariants` or `invariants_summary` (merges both files). Not needed for web/ / docs/ / IA / MCP-server tasks.
+- **Hook denylist.** Bash PreToolUse hook blocks `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Scripts + rationale: `.claude/settings.json` + `tools/scripts/claude-hooks/`.
+- **No invented skill flags / tool names.** Fetch schemas via MCP `list_*` / skill SKILL.md body; do not guess from `docs/mcp-ia-server.md` alone (catalog can lag).
+
+# Numbering
+
+Rules numbered 12–13 to preserve cardinal continuity with Unity rules 1–11. Merged total across both files = 13 invariants + 10 guardrails. MCP `invariants_summary` returns the merged shape.

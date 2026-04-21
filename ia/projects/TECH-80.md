@@ -46,7 +46,7 @@ Enable agents to feed knowledge *back* into the IA system during implementation 
 
 ### 4.1 Domain behavior
 
-Knowledge flows one way: docs → agent. The reverse flow (agent → docs) only happens during project-spec-close, which migrates lessons from temporary project specs into durable IA. There is no mechanism for agents to flag gaps or propose additions during normal implementation work.
+Knowledge flows one way: docs → agent. The reverse flow (agent → docs) only happens during the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`), which migrates lessons from temporary project specs into durable IA. There is no mechanism for agents to flag gaps or propose additions during normal implementation work.
 
 ### 4.2 Systems map
 
@@ -95,7 +95,7 @@ ia_suggestion_resolve({ id: 42, action: "accepted", notes: "Added to glossary ro
 
 ### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 
-Implementation approach left to the implementing agent. Key considerations: table schema, suggestion deduplication (fuzzy match on content to avoid duplicates), integration with project-spec-close workflow (auto-suggest from Decision Log content).
+Implementation approach left to the implementing agent. Key considerations: table schema, suggestion deduplication (fuzzy match on content to avoid duplicates), integration with the Stage-scoped `/closeout` pair workflow (auto-suggest from Decision Log content).
 
 ## 6. Decision Log
 

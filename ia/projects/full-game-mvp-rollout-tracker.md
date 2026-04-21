@@ -9,7 +9,7 @@
 > **Read first if landing cold:**
 > - [`ia/projects/full-game-mvp-master-plan.md`](full-game-mvp-master-plan.md) — umbrella orchestrator. 10 buckets + 1 sibling. Source of truth for scope.
 > - [`docs/full-game-mvp-exploration.md`](../../docs/full-game-mvp-exploration.md) — full Design Expansion prose.
-> - [`ia/rules/agent-lifecycle.md`](../rules/agent-lifecycle.md) — per-bucket lifecycle surfaces.
+> - [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) — per-bucket lifecycle surfaces.
 > - [`ia/skills/release-rollout/SKILL.md`](../skills/release-rollout/SKILL.md) — umbrella rollout skill (authors / maintains this tracker).
 >
 > **Hard rules:**

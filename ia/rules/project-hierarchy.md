@@ -27,7 +27,7 @@ Two levels, loosely bound. All orchestrator docs + project specs use this shape.
 
 ## Learnings flow backward
 
-Task close → Stage `§Audit` migration anchors → glossary / reference spec / docs (per `closeout-apply`). Stage close → master-plan rollup + cross-Stage decision log entries via `project-stage-close` skill.
+Task close → Stage `§Audit` migration anchors → glossary / reference spec / docs (per `plan-applier` Mode stage-closeout). Stage close → master-plan rollup + cross-Stage decision log entries via the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode stage-closeout), which absorbs the retired per-Task `project-stage-close` + `project-spec-close` path (T7.14 / M6 collapse).
 
 ## Lazy materialization
 

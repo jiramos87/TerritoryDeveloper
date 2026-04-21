@@ -72,4 +72,4 @@ Authoritative rule body: `ia/rules/agent-output-caveman.md`.
 - Never run `git reset --hard` or destructive checkout discard.
 - Never run destructive deletes like `rm -rf ia/`, `rm -rf .claude/`, or root/home paths.
 - Never hand-edit `ia/state/id-counter.json` directly; use `bash tools/scripts/reserve-id.sh`.
-- Never bypass invariant safeguards documented in `ia/rules/invariants.md`.
+- Never bypass invariant safeguards documented in `ia/rules/invariants.md` (universal IA + safety) or `ia/rules/unity-invariants.md` (Unity C# runtime). MCP `invariants_summary` returns the merged set.

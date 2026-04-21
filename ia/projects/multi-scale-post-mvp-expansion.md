@@ -254,7 +254,7 @@ MVP ships a per-scale dashboard (active scale only) and a plain loading screen. 
 
 ### 7.1. Load-bearing gaps (deferred from MVP Step −1)
 
-1. **Cross-review gate between kickoff and implementer.** A third independent reader agent reviews a project spec before the implementer touches it. Candidate owner: new subagent `spec-reviewer` launched by `/kickoff` on completion.
+1. **Cross-review gate between author and implementer.** A third independent reader agent reviews a project spec before the implementer touches it. Candidate owner: new subagent `spec-reviewer` launched by `/author` on completion.
    - **Open question (Q-new-38):** reviewer reads project spec alone, or project spec + touched code paths + cited BACKLOG rows? Emits structured verdict (approve / request-changes / block) or free-form review? Verdict is gating for `spec-implementer` or advisory?
 2. **Per-phase risk / preflight checklist.** Declarative impact / reversibility / touched-dependencies checklist before each phase of the Implementation Plan.
 3. **Explicit per-phase budget.** Soft limit on steps / tokens / time per phase before prompting for human confirmation.

@@ -35,7 +35,7 @@
 > - `tools/mcp-ia-server/src/parser/types.ts` (or equivalent) — `ParsedBacklogIssue` shape.
 > - `tools/scripts/reserve-id.sh` + `tools/scripts/materialize-backlog.sh` + `tools/scripts/materialize-backlog.mjs` — ID + materialize flow.
 > - `tools/validate-backlog-yaml.mjs` — current validator scope.
-> - `ia/skills/stage-file/SKILL.md` + `ia/skills/project-new/SKILL.md` + `ia/skills/project-spec-close/SKILL.md` — skills that write/mutate yaml.
+> - `ia/skills/stage-file/SKILL.md` + `ia/skills/project-new/SKILL.md` + Stage-scoped `/closeout` pair (`ia/skills/stage-closeout-plan/SKILL.md` → `ia/skills/plan-applier/SKILL.md` Mode `stage-closeout`) — skills that write/mutate yaml.
 > - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — phase/task cardinality + permanent-orchestrator rule.
 >
 > **Invariants implicated:**
@@ -47,7 +47,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final`. Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft`; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final`. Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft`; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
 ---
 

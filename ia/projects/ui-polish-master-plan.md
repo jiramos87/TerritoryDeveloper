@@ -30,7 +30,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
 ### Stage 1 — Token ring extension / Token schema extension + default asset defaults
 
@@ -397,12 +397,12 @@
 
 **Do:**
 
-- Open one stage at a time. Next stage opens only after current stage's `project-stage-close` runs.
+- Open one stage at a time. Next stage opens only after current stage's `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) runs.
 - Run `claude-personal "/stage-file ia/projects/ui-polish-master-plan.md Stage {N}.{M}"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to `docs/ui-polish-exploration.md` + downstream plans (citystats-overhaul).
 - Respect ring order strictly — do NOT start Step 2 until Step 1 Final; do NOT start Step 3 until Step 2 Final; Step 4 may parallelize with Step 3 Stage 3.3 retrofit window (see Stage 4.2 note). Step 5 blocked on Steps 2+3+4 Final. Step 6 (handoff) can run after Step 4 Final — does not block on Step 5.
-- Keep this orchestrator synced with any umbrella issue (full-game-mvp tracker row) — per `project-spec-close` skill umbrella-sync rule.
+- Keep this orchestrator synced with any umbrella issue (full-game-mvp tracker row) — per `/closeout` umbrella-sync rule.
 
 **Do not:**
 

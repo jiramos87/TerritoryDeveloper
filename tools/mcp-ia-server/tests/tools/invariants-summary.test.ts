@@ -18,18 +18,27 @@ import { wrapTool } from "../../src/envelope.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
 const invariantsMdPath = path.join(repoRoot, "ia/rules/invariants.md");
+const unityInvariantsMdPath = path.join(
+  repoRoot,
+  "ia/rules/unity-invariants.md",
+);
 
-const registryAvailable = fs.existsSync(invariantsMdPath);
+const registryAvailable =
+  fs.existsSync(invariantsMdPath) && fs.existsSync(unityInvariantsMdPath);
 
 function parsedSourceCounts(): { invariants: number; guardrails: number } {
-  const body = fs.readFileSync(invariantsMdPath, "utf8");
-  // Strip frontmatter (gray-matter does this in prod; approximate here).
-  const stripped = body.replace(/^---[\s\S]*?---\s*/m, "");
-  const parsed = parseInvariantsBody(stripped);
-  return {
-    invariants: parsed.invariants.length,
-    guardrails: parsed.guardrails.length,
-  };
+  // Sum across both files — tool merges Unity + universal.
+  const paths = [unityInvariantsMdPath, invariantsMdPath];
+  let invariants = 0;
+  let guardrails = 0;
+  for (const p of paths) {
+    const body = fs.readFileSync(p, "utf8");
+    const stripped = body.replace(/^---[\s\S]*?---\s*/m, "");
+    const parsed = parseInvariantsBody(stripped);
+    invariants += parsed.invariants.length;
+    guardrails += parsed.guardrails.length;
+  }
+  return { invariants, guardrails };
 }
 
 test(

@@ -32,7 +32,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
 ### Stage 1 — Unity build pipeline + versioning manifest / BuildInfo SO + semver compare helper
 
@@ -208,11 +208,11 @@
 
 **Do:**
 
-- Open one stage at a time. Next stage opens only after current stage's `project-stage-close` runs.
+- Open one stage at a time. Next stage opens only after current stage's `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) runs.
 - Run `claude-personal "/stage-file ia/projects/distribution-master-plan.md Stage {N}.{M}"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to `docs/distribution-exploration.md` + umbrella `full-game-mvp-master-plan.md` Bucket 10 row.
-- Keep this orchestrator synced with umbrella — on Bucket 10 final-stage close, flip umbrella Bucket 10 row per `project-spec-close` umbrella-sync rule.
+- Keep this orchestrator synced with umbrella — on Bucket 10 final-stage close, flip umbrella Bucket 10 row per `/closeout` umbrella-sync rule.
 - When ToastService from Bucket 6 lands, revisit T2.3.2 wire-up per Review notes carry-over.
 
 **Do not:**

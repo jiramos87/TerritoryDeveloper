@@ -21,7 +21,7 @@ Build an MCP tool `suggest_skill_chain(task_description)` that reads all SKILL.m
 
 1. MCP tool `suggest_skill_chain` that accepts a task description and returns an ordered list of skills to execute
 2. Each suggested skill includes: trigger match explanation, ordered MCP tool recipe with issue-specific parameters pre-filled where possible
-3. Understands skill dependencies (e.g., project-spec-kickoff before project-spec-implement, close-dev-loop before project-spec-close)
+3. Understands skill dependencies (e.g., plan-author before project-spec-implement, close-dev-loop before the Stage-scoped `/closeout` pair)
 4. Parses SKILL.md frontmatter `description` field for trigger matching
 5. When given an `issue_id`, enriches the chain with data from `backlog_issue` (Files, Spec, Notes)
 
@@ -36,8 +36,8 @@ Build an MCP tool `suggest_skill_chain(task_description)` that reads all SKILL.m
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | AI agent | As an agent told "implement FEAT-43", I want to know which skills to use and in what order | `suggest_skill_chain("implement FEAT-43")` → [project-spec-kickoff, project-spec-implement, close-dev-loop] with FEAT-43-specific MCP calls |
-| 2 | AI agent | As an agent told "close out TECH-70 after verified work", I want the full closure workflow | Returns [project-spec-close] with closeout_digest + journal_persist + validate steps pre-populated |
+| 1 | AI agent | As an agent told "implement FEAT-43", I want to know which skills to use and in what order | `suggest_skill_chain("implement FEAT-43")` → [plan-author, project-spec-implement, close-dev-loop] with FEAT-43-specific MCP calls |
+| 2 | AI agent | As an agent told "close out Stage X.Y after verified work", I want the full closure workflow | Returns [stage-closeout-plan, plan-applier (Mode stage-closeout)] with closeout_digest + journal_persist + validate steps pre-populated |
 | 3 | AI agent | As an agent told "add a new HUD row for forest coverage", I want skill suggestions even for non-issue tasks | Returns [ui-hud-row-theme] with spec_section calls for ui-design-system §1, §3.0, §4.3, §5.2 |
 | 4 | Developer | As a developer, I want to ask "what skills exist for debugging?" and get a filtered list | `suggest_skill_chain("debug Play Mode issue")` → [ide-bridge-evidence, close-dev-loop] with descriptions |
 
@@ -65,8 +65,8 @@ suggest_skill_chain({ task: "implement the growth ring tuning feature FEAT-43" }
 → {
     chain: [
       {
-        skill: "project-spec-kickoff",
-        reason: "FEAT-43 has a project spec that should be reviewed before implementation",
+        skill: "plan-author",
+        reason: "FEAT-43 has a project spec that should be authored / enriched before implementation",
         recipe: [
           { tool: "backlog_issue", params: { issue_id: "FEAT-43" } },
           { tool: "invariants_summary", params: {} },
@@ -89,20 +89,21 @@ suggest_skill_chain({ task: "implement the growth ring tuning feature FEAT-43" }
         ]
       }
     ],
-    notes: "After implementation and verification, use project-spec-close to archive."
+    notes: "After implementation and verification, use the Stage-scoped /closeout pair (stage-closeout-plan → plan-applier Mode stage-closeout) to archive."
   }
 ```
 
 **Lifecycle model (skill dependency graph):**
 
 ```
-project-new → project-spec-kickoff → project-spec-implement
+project-new → plan-author → project-spec-implement
                                           ↓
                                     ide-bridge-evidence / close-dev-loop
                                           ↓
                                     project-implementation-validation
                                           ↓
-                                    project-spec-close
+                                    Stage-scoped /closeout pair
+                                    (stage-closeout-plan → plan-applier)
 ```
 
 `ui-hud-row-theme` is standalone (no lifecycle dependency).

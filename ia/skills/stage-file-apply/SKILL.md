@@ -283,7 +283,7 @@ M8 dry-run (Stage 8 lifecycle-refactor) — `/stage-file` auto-chained through `
 Pre-fix `/stage-file` dispatcher invoked `plan-author` after applier tail but did NOT continue to `plan-review`. Two competing auto-chain semantics (here vs `/ship-stage`) created divergent behaviour.
 
 **Fix:**
-`/stage-file` STOPS at applier tail. Does NOT auto-chain `/author`. Applier handoff: `/author` then `/ship-stage` (N≥2) or `/author --task` then `/ship` (N=1). `/ship-stage` gates §Plan Author (Step 1.5); does not run plan-author. Documented in `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 + `.claude/commands/stage-file.md` Step 3.
+`/stage-file` STOPS at applier tail. Does NOT auto-chain `/author`. Applier handoff: `/author` then `/ship-stage` (N≥2) or `/author --task` then `/ship` (N=1). `/ship-stage` gates §Plan Author (Step 1.5); does not run plan-author. Documented in `docs/agent-lifecycle.md` + `CLAUDE.md` §3 + `.claude/commands/stage-file.md` Step 3.
 
 **Rollout row:** m8-retrospective
 

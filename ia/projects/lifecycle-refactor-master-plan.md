@@ -28,7 +28,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level step rollup + plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
 
 ---
 
@@ -947,7 +947,7 @@ Tuple list (one per Task). Sonnet pair-tail (`stage-file-apply`) reads verbatim 
 
 **Do:**
 
-- Open one Stage at a time. Next Stage opens only after current Stage's `project-stage-close` runs.
+- Open one Stage at a time. Next Stage opens only after current Stage's `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) runs.
 - Run `claude-personal "/stage-file ia/projects/lifecycle-refactor-master-plan.md Stage 1.1"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update Stage / Step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Q1–Q5 are closed; changes require explicit re-decision + sync edit to exploration doc.
@@ -961,7 +961,7 @@ Tuple list (one per Task). Sonnet pair-tail (`stage-file-apply`) reads verbatim 
 - Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only Stage 4.2 Final triggers `Status: Final`; the file stays.
 - Skip the user gate at Stage 4.2 T4.2.1 — merge requires explicit human sign-off.
 - Run new `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, or `/stage-file` calls outside this orchestrator during the freeze window (M0–M8). The freeze is declared in `CLAUDE.md` by T1.1.1.
-- Merge partial stage state — every Stage must reach green-bar before `project-stage-close` runs.
+- Merge partial stage state — every Stage must reach green-bar before the `/closeout` pair runs.
 - Insert BACKLOG rows directly into this doc — only `stage-file-apply` materializes them.
 - Use `migrate-master-plans.ts` on any spec file other than orchestrator master plans — project specs (`ia/projects/{ISSUE_ID}.md`) are handled by T2.2.1 (separate targeted edit, not the batch transform script).
 - Open Stage 10 before M8 sign-off. Stage 10 is a post-merge optimization layer. Precondition gate (Q9 baseline ≥ 3 pair-head reads/Stage median) WAIVED by user 2026-04-19; T10.1 opens unconditionally but M8 merge + freeze lift must precede. Pre-Stage-10 work limited to reference doc + candidate-pool persistence (already landed 2026-04-19) — never runtime cache wiring during freeze window.

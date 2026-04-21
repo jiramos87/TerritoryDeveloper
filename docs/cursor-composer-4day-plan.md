@@ -22,7 +22,7 @@ slices_via: none
 > 2. `ia/projects/full-game-mvp-rollout-tracker.md` — per-bucket (a)–(g) lifecycle state.
 > 3. `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — 16 stages MCP reshape; Stages 1–5 Done, 6–16 pending (pure TypeScript surface, ideal Composer 2 fit).
 >
-> **Companion rules:** `ia/rules/agent-lifecycle.md` parallel-work rule. `docs/cursor-agents-skills-mcp-study.md` — Cursor vs Claude Code surface map.
+> **Companion rules:** `docs/agent-lifecycle.md` parallel-work rule. `docs/cursor-agents-skills-mcp-study.md` — Cursor vs Claude Code surface map.
 
 ---
 
@@ -68,7 +68,7 @@ Composer 2 = Cursor proprietary model, launched 2026-03-19. Trained for agentic 
 
 ### 3.1 Parallel-work rule (authority)
 
-`ia/rules/agent-lifecycle.md` + rollout tracker hard rule: NEVER run `/stage-file` or `/closeout` against two sibling child orchestrators concurrently on same branch. Cursor can't run those commands anyway, so rule reduces to: **one bucket actively implementing at a time per session**. Switch buckets between sessions, not within.
+`docs/agent-lifecycle.md` + rollout tracker hard rule: NEVER run `/stage-file` or `/closeout` against two sibling child orchestrators concurrently on same branch. Cursor can't run those commands anyway, so rule reduces to: **one bucket actively implementing at a time per session**. Switch buckets between sessions, not within.
 
 ### 3.2 Commit hygiene (normal branch flow)
 
@@ -395,7 +395,7 @@ Internal cross-refs:
 - `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — MCP reshape 16 stages, Stages 1-5 Done, 6-16 pending
 - `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` — MCP design expansion ground truth
 - `docs/cursor-agents-skills-mcp-study.md` — Cursor vs Claude Code surface study
-- `ia/rules/agent-lifecycle.md` — parallel-work rule (still enforced; Cursor can't trigger it anyway)
+- `docs/agent-lifecycle.md` — parallel-work rule (still enforced; Cursor can't trigger it anyway)
 - `ia/rules/invariants.md` — 13 invariants + guardrails
 
 ---

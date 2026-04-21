@@ -30,6 +30,7 @@ Read only task-relevant specs. Use table to navigate.
 | Slopes, sorting, geography | `ia/specs/isometric-geography-system.md` §1–§7 | Coordinates, heights, sorting formula |
 | UI changes | `ia/specs/ui-design-system.md` | Foundations, components |
 | Unity/MonoBehaviour/Inspector wiring, Script Execution Order, 2D renderer `sortingOrder`/layers (not isometric stacking), Editor Reports exports (Postgres registry + bridge) | `ia/specs/unity-development-context.md` | Full spec; defer Sorting order formula to geography §7; Editor agent diagnostics (menus, Postgres `editor_export_*`, `agent_bridge_job`) in §10 |
+| Unity C# invariants (GridManager, HeightMap, roads, water, cliffs, MonoBehaviour lifecycle) | `ia/rules/unity-invariants.md` | Rules 1–11 + IF→THEN guardrails; fetch via MCP `rule_content unity-invariants` or `invariants_summary` (merges with universal `invariants.md`) |
 | Coding standards | `ia/rules/coding-conventions.md` | XML docs, naming, prefabs |
 | XML doc style (C#) | `ia/rules/xml-doc-caveman.md` | Caveman Full style for `/// <summary>` / `<param>` / `<returns>` / `<exception>` / `<remarks>` |
 | Domain terms | `ia/specs/glossary.md` | Quick definitions |

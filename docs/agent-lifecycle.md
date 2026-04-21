@@ -204,10 +204,9 @@ Stage-scoped `/closeout` applier acquires `flock ia/state/.closeout.lock` before
 New seam proposal → update:
 
 1. This doc (§1 flow diagram + §2 matrix + §3 handoff row + §4 decision tree row).
-2. [`ia/rules/agent-lifecycle.md`](../ia/rules/agent-lifecycle.md) — thin always-loaded pointer.
-3. [`AGENTS.md`](../AGENTS.md) §2 — one-line row pointing at this doc.
-4. [`ia/skills/README.md`](../ia/skills/README.md) — skill index row if a new skill.
-5. [`docs/information-architecture-overview.md`](information-architecture-overview.md) §3 + §7 — if the change affects the Knowledge lifecycle or Skill system tables.
+2. [`AGENTS.md`](../AGENTS.md) §2 — one-line row pointing at this doc.
+3. [`ia/skills/README.md`](../ia/skills/README.md) — skill index row if a new skill.
+4. [`docs/information-architecture-overview.md`](information-architecture-overview.md) §3 + §7 — if the change affects the Knowledge lifecycle or Skill system tables.
 
 Subagent authoring conventions (Opus vs Sonnet, `reasoning_effort`, caveman directive, forwarded `caveman:caveman` preamble, pair contract alignment): [`CLAUDE.md`](../CLAUDE.md) §3 + [`ia/rules/plan-apply-pair-contract.md`](../ia/rules/plan-apply-pair-contract.md). Slash command dispatcher shape: mirror an existing `.claude/commands/*.md` (verbatim subagent prompt forwarded via Agent tool with `subagent_type`).
 
@@ -215,7 +214,6 @@ Subagent authoring conventions (Opus vs Sonnet, `reasoning_effort`, caveman dire
 
 ## 9. Crosslinks
 
-- [`ia/rules/agent-lifecycle.md`](../ia/rules/agent-lifecycle.md) — always-loaded anchor.
 - [`ia/rules/project-hierarchy.md`](../ia/rules/project-hierarchy.md) — step > stage > phase > task semantics.
 - [`ia/rules/orchestrator-vs-spec.md`](../ia/rules/orchestrator-vs-spec.md) — permanent vs temporary doc split.
 - [`ia/rules/plan-apply-pair-contract.md`](../ia/rules/plan-apply-pair-contract.md) — Plan-Apply pair tuple contract + escalation rule.

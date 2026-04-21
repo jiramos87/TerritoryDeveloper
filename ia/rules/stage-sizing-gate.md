@@ -115,7 +115,7 @@ are NOT subject to retroactive evaluation. Gate verdict = N/A for filed Stages.
 - `ia/rules/invariants.md` — system invariants #1–#13 referenced in H5 / H6 evaluation.
 - `ia/skills/stage-decompose/SKILL.md` — invokes sizing gate at Phase N (post task-sizing).
 - `ia/skills/stage-file-plan/SKILL.md` — Phase 0 references this gate; halts on FAIL.
-- `ia/rules/agent-lifecycle.md` — Hard-rules section cross-ref (single line).
+- `docs/agent-lifecycle.md` — Hard-rules section cross-ref (single line).
 - `ARCHITECTURE.md` — subsystem layer map used in H1 subsystem count.
 - `docs/stage-scoped-verify-review-findings.md` — motivating findings; thresholds derived from
   empirical Stage observations logged there.

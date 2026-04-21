@@ -11,11 +11,11 @@ model: opus
 
 @ia/rules/invariants.md
 @ia/rules/terminology-consistency.md
-@ia/rules/mcp-ia-default.md
 @ia/rules/agent-output-caveman.md
-@ia/rules/agent-lifecycle.md
 @ia/rules/project-hierarchy.md
 @ia/rules/orchestrator-vs-spec.md
+@ia/rules/unity-invariants.md
+@ia/rules/plan-apply-pair-contract.md
 
 # Mission
 

@@ -56,7 +56,7 @@ Prefer per-stage tables in **`projects/TECH-31*.md`**; record cross-stage items 
 
 ## Lessons Learned
 
-Capture during work in the [program tracker](../../projects/TECH-31-agent-scenario-generator-program.md); migrate to glossary/specs at **TECH-31** closeout per **project-spec-close** skill.
+Capture during work in the [program tracker](../../projects/TECH-31-agent-scenario-generator-program.md); migrate to glossary/specs at **TECH-31** closeout per the Stage-scoped **`/closeout`** pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`).
 
 ## Decision Log (high level)
 

@@ -58,15 +58,17 @@ Three principles:
                │ enforced by
 ┌──────────────▼──────────────────────────────────────────────────────┐
 │  ia/rules/*.md  (always-apply guardrails + router)                  │
-│  invariants, agent-router, terminology-consistency, mcp-ia-default  │
+│  invariants (universal + IA) + unity-invariants (Unity on-demand)   │
+│  + terminology-consistency + agent-output-caveman + agent-router    │
 │  ← invariants_summary, router_for_task, list_rules, rule_content    │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ orchestrated by
 ┌──────────────▼──────────────────────────────────────────────────────┐
 │  ia/skills/{name}/SKILL.md  (agent workflows)                       │
 │  Ordered MCP tool recipes for each lifecycle stage                  │
-│  project-new → kickoff → implement → validate → close-dev-loop →    │
-│  project-stage-close (multi-stage) → project-spec-close             │
+│  project-new → plan-author → project-spec-implement → verify-loop → │
+│  opus-code-review → opus-audit → Stage-scoped /closeout pair        │
+│  (stage-closeout-plan → plan-applier Mode stage-closeout)           │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ served by
 ┌──────────────▼──────────────────────────────────────────────────────┐
@@ -80,14 +82,14 @@ Three principles:
 
 **Data flows:**
 - **Down:** agents query MCP tools → tools read specs/glossary/rules/backlog from filesystem or Postgres
-- **Up:** on project-spec-close, lessons migrate from temporary project specs into permanent specs, glossary, rules, and docs
+- **Up:** on Stage-scoped `/closeout` (`plan-applier` Mode stage-closeout), lessons migrate from temporary project specs into permanent specs, glossary, rules, and docs (absorbs retired per-Task `project-spec-close` per T7.14 / M6 collapse)
 - **Lateral:** skills define the order in which agents call MCP tools for a given lifecycle stage
 
 ---
 
 ## 3. Knowledge lifecycle
 
-Every issue follows a lifecycle where knowledge is created, refined, used, and then migrated into durable IA. Canonical stage → surface matrix + handoff contract: [`docs/agent-lifecycle.md`](agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](../ia/rules/agent-lifecycle.md).
+Every issue follows a lifecycle where knowledge is created, refined, used, and then migrated into durable IA. Canonical stage → surface matrix + handoff contract: [`docs/agent-lifecycle.md`](agent-lifecycle.md) — fetch on demand (no force-loaded anchor).
 
 ```
 0. EXPLORE         /design-explore  (optional, for fuzzy multi-step work)
@@ -115,14 +117,13 @@ Every issue follows a lifecycle where knowledge is created, refined, used, and t
                    → Step 4a Path A batch / 4b Path B IDE bridge → Step 5 evidence → Step 6 fix iter (≤2)
                    → JSON Verification block + caveman summary per docs/agent-led-verification-policy.md
 
-6. STAGE CLOSE     project-stage-close skill  (multi-stage specs only, non-final stage)
-                   Tick §7 checklist, update Last updated, append §6 / §9 / §10, optional Postgres journal
-                   → handoff prompt for next stage's fresh agent; NO spec deletion, NO BACKLOG touch
-
-7. UMBRELLA CLOSE  /closeout
-                   project_spec_closeout_digest → persist lessons to glossary, specs, rules, docs
-                   → project_spec_journal_persist (Postgres) → delete spec → archive backlog row
-                   → purge closed issue id from durable surfaces
+6. STAGE CLOSE     Stage-scoped /closeout pair (stage-closeout-plan Opus pair-head
+                   → plan-applier Mode stage-closeout Sonnet pair-tail)
+                   Runs ONCE per Stage when every Task hits Done + /verify-loop passed.
+                   One unified tuple list covers shared migrations + N per-Task ops
+                   (archive yaml + delete spec + flip BACKLOG row + purge id refs).
+                   Absorbs retired per-Task project-stage-close + project-spec-close
+                   (T7.14 / M6 collapse). Emits chain-level Stage closeout digest.
 ```
 
 **Key invariants.** Orchestrator docs (`{slug}-master-plan.md`) are permanent and NEVER closeable via `/closeout` — see [`ia/rules/orchestrator-vs-spec.md`](../ia/rules/orchestrator-vs-spec.md). Temporary project specs are *always* deleted after umbrella closure; any knowledge worth keeping is migrated to permanent IA surfaces first. Every stage owes the next a concrete handoff artifact — missing artifact = next stage refuses to start (full contract: [`docs/agent-lifecycle.md`](agent-lifecycle.md) §3).
@@ -156,8 +157,8 @@ Task: "fix road rendering at border"
 | Mechanism | What it enforces | How |
 |-----------|-----------------|-----|
 | [terminology-consistency.md](../ia/rules/terminology-consistency.md) | Single vocabulary across code, specs, backlog, MCP | Always-apply rule |
-| [invariants.md](../ia/rules/invariants.md) | 12 hard invariants + guardrails | Always-apply rule; `invariants_summary` MCP tool |
-| [mcp-ia-default.md](../ia/rules/mcp-ia-default.md) | Agents use MCP tools before reading whole files | Always-apply rule |
+| [invariants.md](../ia/rules/invariants.md) | Universal IA + safety invariants (rules 12–13) + MCP-first directive + hook denylist | Always-apply rule; `invariants_summary` MCP tool (merges with unity-invariants) |
+| [unity-invariants.md](../ia/rules/unity-invariants.md) | Unity C# runtime invariants (rules 1–11) + IF→THEN guardrails | On-demand rule; fetched via `rule_content unity-invariants` or merged via `invariants_summary` |
 | `npm run validate:dead-project-specs` | No dangling links to deleted project specs | CI script |
 | `npm run test:ia` | MCP parsers and tools work correctly | CI test suite |
 | `npm run validate:fixtures` | JSON Schema fixtures valid | CI validation |
@@ -199,7 +200,7 @@ Skills under [ia/skills/](../ia/skills/) define ordered MCP tool recipes for eac
 | **Orchestrate** | [master-plan-new](../ia/skills/master-plan-new/SKILL.md) | *(skill only)* | glossary_discover → router_for_task → spec_sections → invariants_summary → list_specs |
 | **Bulk-file stage** | [stage-file](../ia/skills/stage-file/SKILL.md) | `/stage-file` | Shared context once → per-task `project-new` delegate |
 | **Create** issue | [project-new](../ia/skills/project-new/SKILL.md) | `/project-new` | glossary_discover → router_for_task → spec_section → backlog_issue |
-| **Refine** spec | [project-spec-kickoff](../ia/skills/project-spec-kickoff/SKILL.md) | `/kickoff` | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
+| **Refine** spec (Stage 1×N bulk) | [plan-author](../ia/skills/plan-author/SKILL.md) | `/author` | Shared `domain-context-load` once → bulk §Plan Author fill across N specs + canonical-term fold (absorbs retired `project-spec-kickoff` / `spec-kickoff`) |
 | **Implement** | [project-spec-implement](../ia/skills/project-spec-implement/SKILL.md) | `/implement` | Per-phase: router → spec_section → glossary → code → compile gate |
 | **Verify (closed-loop)** | [verify-loop](../ia/skills/verify-loop/SKILL.md) | `/verify-loop` | preflight → validate:all → compile gate → Path A/B → evidence → fix iter (≤2) |
 | **Verify (single-pass)** | *(composed)* | `/verify` | `validate:all` + compile gate + Path A OR Path B, read-only |
@@ -207,8 +208,7 @@ Skills under [ia/skills/](../ia/skills/) define ordered MCP tool recipes for eac
 | **Validate (Node + local bridge)** | [project-implementation-validation](../ia/skills/project-implementation-validation/SKILL.md) | *(composed by `/verify-loop`)* | `npm run validate:all` / `npm run verify:local` (alias `verify:post-implementation`) |
 | **Debug (Play Mode)** | [ide-bridge-evidence](../ia/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../ia/skills/close-dev-loop/SKILL.md) | *(composed by `/verify-loop`)* | `unity_bridge_command` (debug_context_bundle, compile gate, before/after diff) |
 | **Preflight (bridge)** | [bridge-environment-preflight](../ia/skills/bridge-environment-preflight/SKILL.md) | *(composed)* | Postgres + `agent_bridge_job` readiness check |
-| **Close stage** | [project-stage-close](../ia/skills/project-stage-close/SKILL.md) | *(skill only)* | Tick §7 → append §6 / §9 / §10 → journal_persist (optional) → handoff prompt |
-| **Close issue (umbrella)** | [project-spec-close](../ia/skills/project-spec-close/SKILL.md) | `/closeout` | closeout_digest → persist IA → journal_persist → delete spec → archive row |
+| **Close Stage (unified)** | [stage-closeout-plan](../ia/skills/stage-closeout-plan/SKILL.md) → [plan-applier](../ia/skills/plan-applier/SKILL.md) Mode stage-closeout | `/closeout {MASTER_PLAN_PATH} {STAGE_ID}` | Opus pair-head writes §Stage Closeout Plan tuples (shared migrations + N per-Task ops); Sonnet pair-tail applies all in one pass (absorbs retired `project-stage-close` + per-Task `project-spec-close` per T7.14 / M6 collapse) |
 | **UI row** | [ui-hud-row-theme](../ia/skills/ui-hud-row-theme/SKILL.md) | *(domain skill, not in main flow)* | spec_section (ui-design-system §1, §3.0, §4.3, §5.2) |
 
 Lifecycle canonical doc: [docs/agent-lifecycle.md](agent-lifecycle.md). Skill conventions + folder naming: [ia/skills/README.md](../ia/skills/README.md). Claude Code host surface (subagents + command dispatchers): [CLAUDE.md](../CLAUDE.md) §3.
@@ -299,9 +299,9 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 | [ia/specs/REFERENCE-SPEC-STRUCTURE.md](../ia/specs/REFERENCE-SPEC-STRUCTURE.md) | How to author and extend reference specs |
 | [ia/projects/PROJECT-SPEC-STRUCTURE.md](../ia/projects/PROJECT-SPEC-STRUCTURE.md) | How to author project specs; closure checklist |
 | [ia/rules/agent-router.md](../ia/rules/agent-router.md) | Task → spec routing tables |
-| [ia/rules/invariants.md](../ia/rules/invariants.md) | 12 system invariants + guardrails |
+| [ia/rules/invariants.md](../ia/rules/invariants.md) | Universal IA + safety invariants (rules 12–13) + MCP-first directive + hook denylist |
+| [ia/rules/unity-invariants.md](../ia/rules/unity-invariants.md) | Unity C# runtime invariants (rules 1–11); on-demand |
 | [ia/rules/terminology-consistency.md](../ia/rules/terminology-consistency.md) | Vocabulary consistency rule |
-| [ia/rules/mcp-ia-default.md](../ia/rules/mcp-ia-default.md) | MCP-first retrieval rule |
 | [ia/skills/README.md](../ia/skills/README.md) | Skill index and conventions |
 | [docs/mcp-ia-server.md](mcp-ia-server.md) | MCP tool catalog, recipes, operations |
 | [docs/mcp-markdown-ia-pattern.md](mcp-markdown-ia-pattern.md) | Reusable domain-agnostic IA+MCP pattern |

@@ -75,7 +75,7 @@ Surfaces touched:
 - `ia/skills/ide-bridge-evidence/SKILL.md` — 2576px vision evidence
 - `CLAUDE.md` §1 (model IDs), §3 (subagent table)
 - `docs/agent-led-verification-policy.md` — `/ultrareview` policy note
-- `ia/rules/agent-lifecycle.md` — lifecycle table refresh
+- `docs/agent-lifecycle.md` — lifecycle table refresh (pre-refactor surface `ia/rules/agent-lifecycle.md` retired; canonical authority now lives under `docs/`)
 
 ### 4.3 Implementation investigation notes (optional)
 
@@ -135,7 +135,7 @@ Opus 4.7 opt-in for `spec-implementer`:
 - [ ] `CLAUDE.md` §3 — correct verify-loop model family (Opus, not Sonnet per frontmatter)
 - [ ] `CLAUDE.md` §3 — subagent count "11 native subagents" (was "10"); ensure stage-decompose listed
 - [ ] `CLAUDE.md` §1 — refresh model family line to include 4.7
-- [ ] `ia/rules/agent-lifecycle.md` — verify lifecycle table matches reality
+- [ ] `docs/agent-lifecycle.md` — verify lifecycle table matches reality (pre-refactor surface `ia/rules/agent-lifecycle.md` retired)
 
 ### Phase 3 — `/ultrareview` wiring into `/verify-loop`
 
