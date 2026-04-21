@@ -10,6 +10,7 @@ namespace Territory.Simulation
 public class SimulationManager : MonoBehaviour
 {
     [SerializeField] private MetricsRecorder _metricsRecorder;
+    [SerializeField] private CityStatsFacade _facade;
 
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;
@@ -60,12 +61,16 @@ public class SimulationManager : MonoBehaviour
     /// <summary>Called by TimeManager once per in-game day. Runs all auto-growth systems in order when simulateGrowth true.</summary>
     public void ProcessSimulationTick()
     {
+        bool statsTickBracket = false;
         try
         {
             if (cityStats == null)
                 return;
             if (!cityStats.simulateGrowth)
                 return;
+
+            statsTickBracket = true;
+            _facade?.BeginTick();
 
             if (growthBudgetManager != null)
                 growthBudgetManager.EnsureBudgetValid();
@@ -84,6 +89,8 @@ public class SimulationManager : MonoBehaviour
         }
         finally
         {
+            if (statsTickBracket)
+                _facade?.EndTick();
             if (_metricsRecorder != null && cityStats != null)
                 _metricsRecorder.RecordAfterSimulationTick();
         }
