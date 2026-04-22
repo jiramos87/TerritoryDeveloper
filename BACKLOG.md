@@ -723,6 +723,47 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
 
 ### Stage 7.1 — Registry + pure shapers
 
+
+### Grid asset visual registry — Step 1 Stage 1.2 (hand-written DTOs, no Drizzle)
+
+Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/projects/grid-asset-visual-registry-master-plan.md). **SQL** in `db/migrations/` is authoritative; `web/types/api/catalog*.ts` hand DTOs per **architecture audit 2026-04-22**; depends on **TECH-612** (0011) / **TECH-615** (0012) migrations archived.
+
+- [ ] **TECH-626** — **Core catalog DTOs (0011)** (grid catalog Stage 1.2 T1.2.1)
+  - Type: tech
+  - Files: `web/types/api/`; `db/migrations/0011_catalog_core.sql`
+  - Spec: `ia/projects/TECH-626.md`
+  - Notes: Hand-written DTOs for 0011 core tables; no Drizzle per `docs/architecture-audit-handoff-2026-04-22.md` Row 2.
+  - Acceptance: see spec §8; `npm run validate:web` green
+  - Depends on: TECH-612
+  - Related: TECH-627, TECH-628, TECH-629
+
+- [ ] **TECH-627** — **Pool DTOs (0012)** (grid catalog Stage 1.2 T1.2.2)
+  - Type: tech
+  - Files: `web/types/api/`; `db/migrations/0012_catalog_spawn_pools.sql`
+  - Spec: `ia/projects/TECH-627.md`
+  - Notes: Pool + member DTOs; no Drizzle; **Depends on** **TECH-615**.
+  - Acceptance: see spec §8; `npm run validate:web` green
+  - Depends on: TECH-615
+  - Related: TECH-626, TECH-628, TECH-629
+
+- [ ] **TECH-628** — **API filter + lock + preview DTOs** (grid catalog Stage 1.2 T1.2.3)
+  - Type: tech
+  - Files: `web/types/api/`
+  - Spec: `ia/projects/TECH-628.md`
+  - Notes: List/preview/lock DTOs; no Drizzle; **Depends on** **TECH-612**.
+  - Acceptance: see spec §8
+  - Depends on: TECH-612
+  - Related: TECH-626, TECH-627, TECH-629
+
+- [ ] **TECH-629** — **DTO ↔ migration alignment** (grid catalog Stage 1.2 T1.2.4)
+  - Type: tech
+  - Files: `package.json`; `web/package.json`; `db/migrations/0011_catalog_core.sql`; `db/migrations/0012_catalog_spawn_pools.sql`
+  - Spec: `ia/projects/TECH-629.md`
+  - Notes: Keep DTOs aligned with SQL; no Drizzle / no `drizzle-kit`.
+  - Acceptance: see spec §8
+  - Depends on: none
+  - Related: TECH-626, TECH-627, TECH-628
+
 ## High Priority
 
 <!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->
