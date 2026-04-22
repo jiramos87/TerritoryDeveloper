@@ -18,5 +18,7 @@ When invoking mutation/authorship tools, always pass `caller_agent`.
 | `glossary_row_update` | `spec-kickoff`, `master-plan-new`, `project-new`, `closeout` |
 | `spec_section_append` | `spec-kickoff`, `closeout` |
 | `rule_create` | `master-plan-new`, `closeout` |
+| `catalog_upsert` | `closeout`, `stage-file`, `project-new`, `ship-stage` |
+| `catalog_pool_upsert` | `closeout`, `stage-file`, `project-new`, `ship-stage` |
 
 If tool not listed in allowlist map, caller gate is bypassed (read-only path).

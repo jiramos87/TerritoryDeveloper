@@ -44,6 +44,21 @@ test("unauthorized caller — throws POJO with unauthorized_caller code", () => 
 // AC3 — undefined caller_agent → unauthorized_caller with <missing> in message
 // ---------------------------------------------------------------------------
 
+test("catalog_upsert — ship-stage allowed; random caller rejected", () => {
+  assert.doesNotThrow(() => checkCaller("catalog_upsert", "ship-stage"));
+  assert.throws(
+    () => checkCaller("catalog_upsert", "verifier"),
+    (err: unknown) =>
+      err !== null &&
+      typeof err === "object" &&
+      (err as { code?: string }).code === "unauthorized_caller",
+  );
+});
+
+test("catalog_pool_upsert — stage-file allowed", () => {
+  assert.doesNotThrow(() => checkCaller("catalog_pool_upsert", "stage-file"));
+});
+
 test("undefined caller_agent — throws unauthorized_caller mentioning <missing>", () => {
   assert.throws(
     () => checkCaller("glossary_row_create", undefined),

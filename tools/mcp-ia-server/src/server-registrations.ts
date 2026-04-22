@@ -49,6 +49,14 @@ import { registerPlanDigestScanForPicks } from "./tools/plan-digest-scan-for-pic
 import { registerPlanDigestLint } from "./tools/plan-digest-lint.js";
 import { registerPlanDigestGateAuthorHelper } from "./tools/plan-digest-gate-author-helper.js";
 import { registerPlanDigestCompileStageDoc } from "./tools/plan-digest-compile-stage-doc.js";
+import { registerCatalogList } from "./tools/catalog-list.js";
+import { registerCatalogGet } from "./tools/catalog-get.js";
+import { registerCatalogUpsert } from "./tools/catalog-upsert.js";
+import {
+  registerCatalogPoolGet,
+  registerCatalogPoolList,
+  registerCatalogPoolUpsert,
+} from "./tools/catalog-pool-tools.js";
 
 // Bridge + compute tools
 import {
@@ -77,7 +85,8 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
  * project-spec-journal (2), invariant-preflight, csharp-class-summary,
  * master-plan-locate, master-plan-next-pending, plan-apply-validate,
  * runtime_state, plan-digest-verify-paths/resolve-anchor/render-literal/
- * scan-for-picks/lint/gate-author-helper/compile-stage-doc.
+ * scan-for-picks/lint/gate-author-helper/compile-stage-doc,
+ * catalog_list/get/upsert, catalog_pool_list/get/upsert.
  */
 export function registerIaCoreTools(server: McpServer, registry: Registry): void {
   registerListSpecs(server, registry);
@@ -112,6 +121,12 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerPlanDigestLint(server);
   registerPlanDigestGateAuthorHelper(server);
   registerPlanDigestCompileStageDoc(server);
+  registerCatalogList(server);
+  registerCatalogGet(server);
+  registerCatalogUpsert(server);
+  registerCatalogPoolList(server);
+  registerCatalogPoolGet(server);
+  registerCatalogPoolUpsert(server);
 }
 
 /**

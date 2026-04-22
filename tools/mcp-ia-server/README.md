@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (51)
+## Tools (57)
 
 | Tool | Description |
 |------|-------------|
@@ -79,6 +79,12 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`unity_export_cell_chunk`** | **Bridge export sugar:** **`export_cell_chunk`** in one call — **`enqueueUnityBridgeJob`** + **`pollUnityBridgeJobUntilTerminal`** (**`unity_bridge_get`**). Params: **`origin_x`**, **`origin_y`**, **`chunk_width`**, **`chunk_height`**, optional **`timeout_ms`** (else **`BRIDGE_TIMEOUT_MS`** or **40000** default), optional **`agent_id`**. Prefer **`unity_bridge_command`** for other kinds. |
 | **`unity_export_sorting_debug`** | **Bridge export sugar:** **`export_sorting_debug`** in one call (same poll pattern). Params: optional **`seed_cell`**, **`timeout_ms`**, **`agent_id`**. Prefer raw **`unity_bridge_command`** for **`sorting_order_debug`**, **`debug_context_bundle`**, mutations. |
 | **`backlog_search`** | Keyword search across open / archived backlog issues. `query` (required), `scope` (`open` \| `archive` \| `all`, default `open`), `max_results` (1–50, default 10). Returns ranked results with `issue_id`, `title`, `type`, `status`, `section`, `score`, truncated `notes`. |
+| **`catalog_get`** | Composite **`GET`**-style read for one **`catalog_asset`** by id: asset + economy + **`sprite_slots`** (join **`catalog_sprite`**). Returns **`db_unconfigured`** / **`invalid_input`** (bad id / not found). |
+| **`catalog_list`** | Keyset-paginated list of **`catalog_asset`** rows. Default **`published`** only (optional **`include_draft`**, **`status`**, **`category`**, **`limit`**, **`cursor`**). Mirrors HTTP list semantics. |
+| **`catalog_pool_get`** | One **`catalog_spawn_pool`** row + **`catalog_pool_member`** rows for that pool. |
+| **`catalog_pool_list`** | List **`catalog_spawn_pool`** rows; optional **`owner_category`** filter. |
+| **`catalog_pool_upsert`** | **`kind:spawn_pool`** upserts by **`slug`**; **`kind:pool_member`** upserts **`(pool_id, asset_id)`** weight. Requires **`caller_agent`** (allowlist: **`ship-stage`**, **`stage-file`**, **`project-new`**, **`closeout`**). |
+| **`catalog_upsert`** | **`mode:create`** inserts asset + economy + sprite binds; **`mode:patch`** optimistic-lock patch (**`updated_at`**). Requires **`caller_agent`** (same allowlist as **`catalog_pool_upsert`**). |
 | **`invariant_preflight`** | Composite context tool: given `issue_id`, bundles invariants + router matches + relevant spec sections in one call. Infers domains from issue **Files**; fetches up to 6 spec sections (800 chars each). |
 | **`findobjectoftype_scan`** | Static regex scan of C# files for `FindObjectOfType` / `FindObjectsOfType` in `Update` / `LateUpdate` / `FixedUpdate` methods. Optional `path` (default `Assets/Scripts/`). Returns `violation_count` + `violations[]` (`file`, `line`, `method`, `snippet`). |
 | **`city_metrics_query`** | Read recent rows from **`city_metrics_history`** (Unity **`MetricsRecorder`** per-tick snapshots). Optional **`scenario_id`**, **`last_n_rows`** (1–500). Returns **`db_unconfigured`**, **`table_missing`**, or **`rows`**. |

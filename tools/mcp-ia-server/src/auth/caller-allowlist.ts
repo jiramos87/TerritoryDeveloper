@@ -72,6 +72,19 @@ export const ALLOWLIST: Record<string, readonly string[]> = {
     "master-plan-new",
     "closeout",
   ],
+  // --- Grid catalog mutations (Stage 1.4) ---------------------------------
+  catalog_upsert: [
+    "closeout",
+    "stage-file",
+    "project-new",
+    "ship-stage",
+  ],
+  catalog_pool_upsert: [
+    "closeout",
+    "stage-file",
+    "project-new",
+    "ship-stage",
+  ],
 } as const;
 
 // ---------------------------------------------------------------------------
