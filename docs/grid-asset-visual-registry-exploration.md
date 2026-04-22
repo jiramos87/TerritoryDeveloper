@@ -303,7 +303,7 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
         │        └── MCP: catalog_list / catalog_get / catalog_upsert / catalog_pool_* (agent-safe, respects draft/published filter)
         │
         ├── Web admin UI (future, Shopify-style: list/show/create/edit/diff-preview)
-        └── Export step → Unity-consumable snapshot + sprite import hygiene (PPU, pivot)
+        └── Export step → Unity-consumable snapshot + sprite import hygiene (PPU, pivot) — default file `Assets/StreamingAssets/catalog/grid-asset-catalog-snapshot.json` (Stage 2.1 TECH-664 §7 / §Findings; `StreamingAssets` over `Resources` for raw JSON)
                     │
                     ▼
               Unity client

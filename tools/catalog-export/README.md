@@ -8,4 +8,6 @@ From repo root:
 DATABASE_URL=… npm run catalog:export
 ```
 
-Default: `published` rows only. Pass `--include-drafts` to the script via `npm run catalog:export -- --include-drafts`.
+Writes `Assets/StreamingAssets/catalog/grid-asset-catalog-snapshot.json` by default (override with `--out` or `--stdout`).
+
+Default filter: `published` only. `npm run catalog:export -- --include-drafts` for draft+published.
