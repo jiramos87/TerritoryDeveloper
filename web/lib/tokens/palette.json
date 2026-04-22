@@ -6,7 +6,9 @@
     "red": "#d63838",
     "amber": "#e8a33d",
     "grey-500": "#6a6a6a",
-    "green": "#3a9b4a"
+    "green": "#3a9b4a",
+    "terrainGreen": "#3a9b4a",
+    "waterBlue": "#38bdf8"
   },
   "semantic": {
     "bg-canvas": "{raw.black}",

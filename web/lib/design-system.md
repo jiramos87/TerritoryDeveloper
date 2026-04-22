@@ -96,11 +96,19 @@ Palette file: `web/lib/tokens/palette.json`. **Raw** keys are NYT-locked; **game
 | `accent.water` | Info, links, cool highlights | `raw.waterBlue` |
 | `accent.warm` | Warnings, progress, energy | `raw.amber` (warm family; NB1 designer confirmation in T22.2) |
 
-**WCAG:** Contrast ratios vs `surface.canvas` (`#0a0a0a`) for the three accent **foreground** uses and any **text-on-accent** pair are **measured and tabulated in §4.1** by **TECH-619** (Stage 22 T22.2). Until then, do not ship body-sized text in accent color on canvas without re-checking that table.
+**WCAG:** Contrast ratios vs `surface.canvas` (`#0a0a0a`) for the three accent **foreground** uses are in **§4.1** below.
 
-### §4.1 — Measured contrast (T22.2)
+### §4.1 — Measured contrast (T22.2 / TECH-619)
 
-_Populated in **TECH-619** — see contrast table in this section after that task ships._
+`surface.canvas` = `#0a0a0a` (`raw.black`). Method: **WCAG 2.1** relative luminance; contrast ratio = (L_lighter + 0.05) / (L_darker + 0.05).
+
+| Accent | `palette.json` key | Hex | Contrast vs canvas | ≥ 4.5:1 (AA body) | Notes |
+|--------|-------------------|-----|--------------------|-------------------|--------|
+| Terrain | `raw.terrainGreen` | `#3a9b4a` | **5.63:1** | Yes | **NB1** — same hue as `raw.green` (status “done”); kept unified for product coherence. |
+| Water | `raw.waterBlue` | `#38bdf8` | **9.24:1** | Yes | Chosen sky/water read; high contrast on dark. |
+| Warm | `raw.amber` | `#e8a33d` | **9.18:1** | Yes | Warm candidate per Stage Intent; existing NYT-locked family. **NB1** — if future UI needs a redder “alert warm,” re-open palette extension (separate task). |
+
+**Text-on-canvas (accent as foreground):** all three pass **AA** for **normal** text on `surface.canvas` when used as the primary text color. **Fill / chip** patterns that place **text on top of a saturated accent swatch** should use a paired dark fg (e.g. `text-status-*-fg` style rows in `palette.json`); that pairing is not re-listed here.
 
 ---
 
