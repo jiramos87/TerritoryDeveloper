@@ -1686,6 +1686,30 @@
         },
         {
           "type": "issue",
+          "id": "TECH-680",
+          "checklist_line": "- [x] **TECH-680** — web/README — Design System section (ds-* + primitives + dev showcase path) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-681",
+          "checklist_line": "- [x] **TECH-681** — CLAUDE.md — §6 row for `web/lib/design-system.md` + page-body English carve-out (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-682",
+          "checklist_line": "- [x] **TECH-682** — validate:web green — fix regressions from Stages 8.1–8.7 (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-683",
+          "checklist_line": "- [x] **TECH-683** — Lighthouse landing vs T27.7 baseline; optional Surface motion=none (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
           "id": "TECH-650",
           "checklist_line": "- [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)",
           "trailing_blanks": 1

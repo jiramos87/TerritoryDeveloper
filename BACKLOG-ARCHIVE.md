@@ -1665,6 +1665,14 @@
 
 - [x] **TECH-668** — Migrate BadgeChip, DataTable, FilterChips to ds-*; wrap wiki/devlog MDX in Prose; validate:web (2026-04-22)
 
+- [x] **TECH-680** — web/README — Design System section (ds-* + primitives + dev showcase path) (2026-04-22)
+
+- [x] **TECH-681** — CLAUDE.md — §6 row for `web/lib/design-system.md` + page-body English carve-out (2026-04-22)
+
+- [x] **TECH-682** — validate:web green — fix regressions from Stages 8.1–8.7 (2026-04-22)
+
+- [x] **TECH-683** — Lighthouse landing vs T27.7 baseline; optional Surface motion=none (2026-04-22)
+
 - [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)
 
 - [x] **TECH-651** — catalog_upsert + catalog_pool_* MCP tools (Stage 1.4 T1.4.2) (2026-04-22)

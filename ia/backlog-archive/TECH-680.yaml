@@ -1,0 +1,30 @@
+id: TECH-680
+type: TECH
+title: "web/README — Design System section (ds-* + primitives + dev showcase path)"
+priority: medium
+status: closed
+section: Web Platform / Stage 29 — Visual design layer (docs + validation)
+spec: 'closed: project spec removed on Stage 29 closeout'
+files:
+  - web/README.md
+  - web/lib/design-system.md
+  - web/app/(dev)/design-system/page.tsx
+  - web/app/globals.css
+notes: |
+  Doc-only. Add `## Design System` to web/README: cite `web/lib/design-system.md`, one line each for Heading, Prose, Surface;
+  note `web/app/(dev)/design-system/page.tsx` dev showcase; `ds-*` + globals.css (Tailwind v4), not `tailwind.config.ts`.
+acceptance: |
+  - [x] `web/README.md` contains `## Design System` with spec path + primitive one-liners + showcase route + `ds-*` note.
+  - [x] Wording references `web/lib/design-system.md` and `web/app/(dev)/design-system/page.tsx` accurately.
+  - [x] `npm run validate:web` exits 0 after edit (or defer to TECH-682 if split — single PR may bundle).
+depends_on: []
+related:
+  - TECH-681
+  - TECH-682
+  - TECH-683
+created: 2026-04-22
+completed: 2026-04-22
+raw_markdown: |
+  web/README — Design System section: cite `web/lib/design-system.md`, primitives, dev showcase, ds-* via globals
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T29.1

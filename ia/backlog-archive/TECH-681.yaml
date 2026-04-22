@@ -1,0 +1,29 @@
+id: TECH-681
+type: TECH
+title: "CLAUDE.md — §6 row for `web/lib/design-system.md` + page-body English carve-out"
+priority: medium
+status: closed
+section: Web Platform / Stage 29 — Visual design layer (docs + validation)
+spec: 'closed: project spec removed on Stage 29 closeout'
+files:
+  - CLAUDE.md
+  - web/lib/design-system.md
+  - web/lib/design-tokens.ts
+  - web/app/globals.css
+notes: |
+  IA line in root CLAUDE.md table: path `web/lib/design-system.md` + design-tokens + globals `ds-*` block;
+  restate that `web/app/**/page.tsx` user-facing copy stays full English (caveman exception by path).
+acceptance: |
+  - [x] `CLAUDE.md` §6 (or web workspace list) includes a row for `web/lib/design-system.md` with role + `design-tokens.ts` + `globals.css` `ds-*` link.
+  - [x] Carve-out line for `web/app/**/page.tsx` body strings (full English) present per `agent-output-caveman` exception.
+depends_on: []
+related:
+  - TECH-680
+  - TECH-682
+  - TECH-683
+created: 2026-04-22
+completed: 2026-04-22
+raw_markdown: |
+  CLAUDE.md §6 row for `web/lib/design-system.md` + design-tokens + globals; page-body English carve-out
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T29.2

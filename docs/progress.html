@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">16%</div>
-      <div class="overall-count">42 / 194 tasks</div>
+      <div class="overall-pct">26%</div>
+      <div class="overall-count">51 / 149 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:16%"></div>
+      <div class="overall-seg-fill" style="width:26%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -389,8 +389,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Grid asset visual registry</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:11%"></div></div>
-        <span class="mini-pct">11%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:36%"></div></div>
+        <span class="mini-pct">36%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -768,34 +768,34 @@ h2.plan-title {
       <h2 class="plan-title">Grid asset visual registry — Master Plan (Bucket 12 MVP spine)</h2>
       <a class="plan-doc-link" href="../ia/projects/grid-asset-visual-registry-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.4</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.3</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">11%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 76%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">36%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 71%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:15%" title="16 Done"></div><div class="seg seg-draft" style="width:5%" title="5 Draft"></div><div class="seg seg-pending" style="width:80%" title="86 Pending"></div></div>
-    <span class="seg-count">16 / 107</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:40%" title="25 Done"></div><div class="seg seg-pending" style="width:60%" title="37 Pending"></div></div>
+    <span class="seg-count">25 / 62</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 16 Done</span><span class="chip chip-draft">📝 5 Draft</span><span class="chip chip-pending">⏳ 86 Pending</span><span class="chip chip-total">📋 107 Total</span>
+    <span class="chip chip-done">✅ 25 Done</span><span class="chip chip-pending">⏳ 37 Pending</span><span class="chip chip-total">📋 62 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
     <span class="ctx-step">Step 1 · Postgres catalog + HTTP API …</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.4 · MCP `catalog_*` tools + allo…</span>
+    <span class="ctx-stage">Stage 1.3 · Next `/api/catalog/*` routes</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Thin wrappers over HTTP or shared DB layer; enforce **published** default for agents unless flag set.">🎯 <span class="task-id">T1.4.1</span> <span class="task-name">catalog_list + catalog_get</span></span>
+    <span class="ctx-task" title="`GET /api/catalog/assets` with `status=published` default; optional draft flag for admin; pagination if row count grows.">🎯 <span class="task-id">T1.3.1</span> <span class="task-name">GET list route + filters</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Tool implementations.">☐ Tool implementations.</span><span class="phase-pill phase-pending" title="Phase 2 — Tests + allowlist + docs index.">☐ Tests + allowlist + docs index.</span><span class="phase-pill phase-pending" title="Implement handlers calling shared data access.">☐ Implement handlers calling shared data access.</span><span class="phase-pill phase-pending" title="Wire `published` default + optional override flag; document in spec §8.">☐ Wire `published` default + optional override …</span><span class="phase-pill phase-pending" title="`npm test` in tools/mcp-ia-server">☐ `npm test` in tools/mcp-ia-server</span><span class="phase-pill phase-pending" title="Define tool schemas (zod or shared validator) matching DTOs.">☐ Define tool schemas (zod or shared validator)…</span><span class="phase-pill phase-pending" title="Implement DB writes with idempotence notes in spec.">☐ Implement DB writes with idempotence notes in…</span><span class="phase-pill phase-pending" title="Tests: reject invalid; accept minimal valid payload">☐ Tests: reject invalid; accept minimal valid p…</span><span class="phase-pill phase-pending" title="Add fixtures or mocks for catalog DB layer.">☐ Add fixtures or mocks for catalog DB layer.</span><span class="phase-pill phase-pending" title="One test file per tool group or single catalog suite; avoid flake.">☐ One test file per tool group or single catalo…</span><span class="phase-pill phase-pending" title="List each new tool name → allowlist array entry.">☐ List each new tool name → allowlist array entry.</span><span class="phase-pill phase-pending" title="`npm test` for allowlist + envelope reject paths">☐ `npm test` for allowlist + envelope reject paths</span><span class="phase-pill phase-pending" title="Add tool rows + parameters to catalog doc.">☐ Add tool rows + parameters to catalog doc.</span><span class="phase-pill phase-pending" title="Run `npm run validate:all` from repo root; fix failures.">☐ Run `npm run validate:all` from repo root; fi…</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Reads (list + get).">☐ Reads (list + get).</span><span class="phase-pill phase-pending" title="Phase 2 — Writes + preview-diff + retire.">☐ Writes + preview-diff + retire.</span>
   </div>
 
   
