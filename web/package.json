@@ -8,6 +8,7 @@
     "build": "next build",
     "build:search-index": "tsx lib/search/build-index.ts",
     "plan-parser:verify": "tsx lib/plan-parser-verify.ts",
+    "catalog:export": "tsx scripts/catalog-export-cli.ts",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

@@ -1,4 +1,4 @@
-import { getSql, sql } from "@/lib/db/client";
+import { getSql } from "@/lib/db/client";
 import {
   mapRowToAssetSprite,
   mapRowToCatalogAsset,
@@ -36,14 +36,14 @@ function sortSlots(a: CatalogAssetSpriteRow, b: CatalogAssetSpriteRow): number {
 export async function loadCatalogForExport(
   opts: LoadCatalogForExportOptions,
 ): Promise<LoadedCatalogForExport> {
-  const sql = getSql();
+  const sqlConn = getSql();
   const assetsRaw = opts.includeDrafts
-    ? await sql`
+    ? await sqlConn`
         select * from catalog_asset
         where status in ('draft', 'published')
         order by category asc, slug asc, id asc
       `
-    : await sql`
+    : await sqlConn`
         select * from catalog_asset
         where status = 'published'
         order by category asc, slug asc, id asc
@@ -58,19 +58,19 @@ export async function loadCatalogForExport(
 
   const assetIds = assets.map((a) => Number(a.id));
 
-  const bindRaw = await sql`
+  const bindRaw = await sqlConn`
     select asset_id, sprite_id, slot
     from catalog_asset_sprite
-    where asset_id in ${sql(assetIds)}
+    where asset_id in ${sqlConn(assetIds)}
     order by asset_id asc, slot asc
   `;
   const bindings = (bindRaw as unknown as never[]).map((r) =>
     mapRowToAssetSprite(r as never),
   );
 
-  const ecoRaw = await sql`
+  const ecoRaw = await sqlConn`
     select * from catalog_economy
-    where asset_id in ${sql(assetIds)}
+    where asset_id in ${sqlConn(assetIds)}
     order by asset_id asc
   `;
   const economy = (ecoRaw as unknown as never[]).map((r) =>
@@ -86,9 +86,9 @@ export async function loadCatalogForExport(
     return { assets, sprites: [], bindings, economy };
   }
 
-  const sprRaw = await sql`
+  const sprRaw = await sqlConn`
     select * from catalog_sprite
-    where id in ${sql(spriteIdNums)}
+    where id in ${sqlConn(spriteIdNums)}
     order by id asc
   `;
   const sprites = (sprRaw as unknown as never[]).map((r) =>
