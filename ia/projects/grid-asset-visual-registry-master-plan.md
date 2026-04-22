@@ -633,11 +633,27 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.2.1 | DTOs + parser | 1 | **TECH-669** | Done | `JsonUtility`-friendly DTOs or split files if needed; avoid Newtonsoft unless separate issue introduces it. |
-| T2.2.2 | Indexes by id and slug | 1 | **TECH-670** | Done | `Dictionary<int, CatalogAssetEntry>` + composite key `(category, slug)`; defensive duplicates log + skip. |
-| T2.2.3 | Missing sprite resolution | 1 | **TECH-671** | Done | Dev: loud placeholder material/sprite reference; Ship: mark row unavailable for UI queries. |
-| T2.2.4 | Boot load path | 2 | **TECH-672** | Done | `StreamingAssets`/`Resources` load; timing vs `ZoneSubTypeRegistry` init order documented; no singleton pattern. |
-| T2.2.5 | Hot-reload signal stub | 2 | **TECH-673** | Done | Editor/dev only: file watcher or bridge ping triggers reload + event; shipped players no-op. |
+| T2.2.1 | DTOs + parser | 1 | **TECH-669** | Done (archived) | `JsonUtility`-friendly DTOs or split files if needed; avoid Newtonsoft unless separate issue introduces it. |
+| T2.2.2 | Indexes by id and slug | 1 | **TECH-670** | Done (archived) | `Dictionary<int, CatalogAssetEntry>` + composite key `(category, slug)`; defensive duplicates log + skip. |
+| T2.2.3 | Missing sprite resolution | 1 | **TECH-671** | Done (archived) | Dev: loud placeholder material/sprite reference; Ship: mark row unavailable for UI queries. |
+| T2.2.4 | Boot load path | 2 | **TECH-672** | Done (archived) | `StreamingAssets`/`Resources` load; timing vs `ZoneSubTypeRegistry` init order documented; no singleton pattern. |
+| T2.2.5 | Hot-reload signal stub | 2 | **TECH-673** | Done (archived) | Editor/dev only: file watcher or bridge ping triggers reload + event; shipped players no-op. |
+
+#### §Stage Audit
+
+> Post-ship aggregate — task `ia/projects/TECH-669`–`TECH-673` specs removed at closeout; this block replaces per-spec **§Audit** (opus-audit / ship-stage Pass 2).
+
+- **TECH-669:** `GridAssetSnapshotRoot` + row DTOs match export keys (`web/lib/catalog/build-catalog-snapshot.ts`); `GridAssetCatalog.TryParseSnapshotJson` validates `schemaVersion >= 1` and normalizes null arrays; **EditMode** `GridAssetCatalogParseTests` + `min_snapshot.json` lock parse; no Newtonsoft; no `FindObjectOfType` on parse path.
+- **TECH-670:** `RebuildIndexes` fills `Dictionary<int, CatalogAssetRowDto>` and composite `(category,slug)` map; duplicate id or key → English `LogWarning` + first row wins; `TryGetAsset` / `TryGetAssetByCategorySlug` on `GridAssetCatalog`.
+- **TECH-671:** `TryResolveSpriteFromRow` — `Resources.Load` then dev placeholder (`UnityEditor` / `DEVELOPMENT_BUILD`) or release path logs + unusable; optional `[SerializeField]` dev placeholder sprite.
+- **TECH-672:** `GridAssetCatalog` `Awake` → private `LoadInternal` — `File.ReadAllText` under `Application.streamingAssetsPath` + default relative `catalog/grid-asset-catalog-snapshot.json`; `RebuildIndexes` then `OnCatalogReloaded` **UnityEvent**; XML summaries on public surface where authored.
+- **TECH-673:** `ReloadFromDisk` calls `LoadInternal`; `Assets/Scripts/Editor/GridAssetCatalogMenu.cs` **Territory Developer → Catalog** menu in Play Mode; no `FileSystemWatcher` in non-Editor (stub satisfied by menu path).
+
+**Verification (Stage):** `npm run validate:all` green; `npm run unity:compile-check` green (batchmode after editor fully quit; log under `tools/reports/unity-compile-check-*.log`).
+
+#### §Stage Closeout Plan
+
+> Stage 2.2 closeout applied 2026-04-22 (after compile gate) — **TECH-669**–**TECH-673** `status: closed` in `ia/backlog-archive/{id}.yaml` (source open rows removed); `ia/projects/TECH-669`–`TECH-673` deleted; table **Done (archived)**; `BACKLOG.md` / `BACKLOG-ARCHIVE.md` via `materialize-backlog.sh` + `validate:all` green; `docs/implementation/grid-asset-visual-registry-stage-2.2-plan.md` task index points at archive, not deleted specs; no glossary or MCP `catalog_*` change in this stage (Unity runtime only).
 
 ### §Stage File Plan
 

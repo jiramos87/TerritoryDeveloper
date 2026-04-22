@@ -1,8 +1,9 @@
 # Grid asset visual registry — Stage 2.2 plan digest (compiled)
 
 > **Source:** `ia/projects/grid-asset-visual-registry-master-plan.md` **Stage 2.2** — `GridAssetCatalog` runtime loader.  
-> **Filed issues:** **TECH-669**–**TECH-673** — see `BACKLOG.md`.  
-> **Generated:** 2026-04-22 — inline `/stage-file-main-session` chain (no MCP `plan_digest_compile_stage_doc` — hand-compiled).
+> **Filed issues:** **TECH-669**–**TECH-673** — closed rows in **`BACKLOG-ARCHIVE.md`**.  
+> **Generated:** 2026-04-22 — inline `/ship-stage-main-session` chain (no MCP `plan_digest_compile_stage_doc` — hand-compiled).  
+> **Closeout + audit:** see **`ia/projects/grid-asset-visual-registry-master-plan.md` Stage 2.2** — `#### §Stage Audit` and `#### §Stage Closeout Plan`.
 
 ## Stage exit (from master plan)
 
@@ -34,3 +35,18 @@
 ## Plan-review
 
 **PASS** — `§Plan Fix` under Stage 2.2 in master plan; no drift tuples at chain end.
+
+## §Stage Audit (durable)
+
+Same bullets as `ia/projects/grid-asset-visual-registry-master-plan.md` under Stage 2.2 **`#### §Stage Audit`** (post-closeout; task specs no longer on disk).
+
+## Closeout
+
+- Backlog: **TECH-669**–**TECH-673** in `ia/backlog-archive/`.
+- Specs: `ia/projects/TECH-669`–`TECH-673` **removed** at closeout.
+- Master plan: task table **Done (archived)**; Stage 2.2 **Status: Final**.
+
+## Verification (recorded 2026-04-22)
+
+- `npm run validate:all` — **PASS** (at closeout and after any doc-only follow-up).
+- `npm run unity:compile-check` — **PASS** (Unity Editor and workers fully quit; log `tools/reports/unity-compile-check-20260422-212822.log` or later sibling).
