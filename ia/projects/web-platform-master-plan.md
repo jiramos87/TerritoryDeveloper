@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-18
 >
-> **Status:** MVP Done 2026-04-17 — Steps 1–6 all Final (Step 5 portal stages 5.1 + 5.2 + 5.3 all Done 2026-04-17; Step 6 all three stages Done 2026-04-17). Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.
+> **Status:** MVP Done 2026-04-17 — Steps 1–4 + 6 Final. Step 5 Done 2026-04-17 but architecture outputs (Drizzle schema, `/api/auth/*` stubs, auth middleware + login page, `DASHBOARD_AUTH_SKIP` bypass) retired 2026-04-22 per architecture audit (`docs/architecture-audit-change-list-2026-04-22.md`); Postgres driver swapped from `@neondatabase/serverless` to `postgres`-js. Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions companion doc: `docs/web-platform-post-mvp-extensions.md` (seeded §1 rollout completion view + §§2–7 deferred stubs).
 >
@@ -13,8 +13,8 @@
 > **Locked decisions (do not reopen in this plan):**
 > - Stack: Next.js 14+ App Router, TypeScript, React Server Components, Tailwind CSS. MCP server (`territory-ia`) stays stdio dev-only; NOT consumed by web app.
 > - Repo layout: monorepo; Next.js app at `web/`; root `package.json` declares npm workspaces.
-> - Hosting: Vercel free tier. Build root `web/`. Deploy on push to `main`.
-> - Auth (W7): roll-own JWT + sessions. No third-party auth provider.
+> - Hosting: Vercel free tier. Build root `web/`. Vercel preview deploys optional; MVP critical path is localhost build (2026-04-22 audit — localhost-only MVP lock).
+> - Auth (W7): deferred entirely per 2026-04-22 audit — no `/api/auth/*` and no auth UI surface in MVP. If/when portal re-enters scope, roll-own JWT + sessions remains the locked preference (not re-decide); no third-party auth provider.
 > - Free-tier constraint: every service (Vercel, Postgres when selected, etc.) must be zero recurring cost until revenue exists.
 > - Design language: FUTBIN-style data density + NYT-style dark choropleth palette. Tokens exported as JSON so future Unity UI/UX plan reuses the same palette.
 > - Dashboard access: obscure-URL gate at MVP (Q14), auth gate once portal lands. `robots.txt` disallow + unlinked route.

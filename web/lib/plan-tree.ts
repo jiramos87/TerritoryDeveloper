@@ -7,7 +7,7 @@
  * Post lifecycle-refactor Stage 6: Step + Phase layers dropped.
  */
 
-import type { PlanData, PlanMetrics, TaskStatus } from './plan-loader-types';
+import type { PlanData, TaskStatus } from './plan-loader-types';
 import type { Status } from '@/components/BadgeChip';
 
 // Re-export Status so TreeNode.tsx imports from one place.
@@ -89,10 +89,9 @@ function sumCounts(children: TreeNodeData[]): { done: number; total: number } {
  * Post-refactor: returns `StageNode[]` with `TaskNode[]` children directly.
  * Phase grouping layer removed (lifecycle-refactor Stage 6).
  *
- * @param plan    Parsed plan produced by the plan-loader.
- * @param _metrics Pre-computed metrics (kept in signature for API symmetry).
+ * @param plan Parsed plan produced by the plan-loader.
  */
-export function buildPlanTree(plan: PlanData, _metrics: PlanMetrics): TreeNodeData[] {
+export function buildPlanTree(plan: PlanData): TreeNodeData[] {
   return plan.stages.map((stage) => {
     const taskNodes: TaskNode[] = stage.tasks.map((t) => {
       const s = mapTaskStatus(t.status);

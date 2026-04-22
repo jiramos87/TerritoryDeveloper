@@ -72,11 +72,9 @@ Canonical route-list for the `web/` workspace.
 | `/` + `/about` + `/install` + `/history` | Public static pages | none | MDX (static import) |
 | `/wiki/[...slug]` | Glossary-backed wiki | none | MDX dynamic |
 | `/devlog` + `/devlog/[slug]` | Devlog index + post | none | MDX dynamic |
-| `/dashboard` | Master-plan progress dashboard | gated (bypass via `DASHBOARD_AUTH_SKIP=1`) | RSC |
-| `/dashboard/releases` | Release picker | gated (TECH-358 matcher) | RSC |
-| `/dashboard/releases/:releaseId/progress` | Release progress tree | gated (TECH-358 matcher) | RSC + `PlanTree` Client island |
-
-Auth gate for `/dashboard*` inherits from proxy matcher widened in TECH-358.
+| `/dashboard` | Master-plan progress dashboard | none (MVP — open on localhost) | RSC |
+| `/dashboard/releases` | Release picker | none (MVP — open on localhost) | RSC |
+| `/dashboard/releases/:releaseId/progress` | Release progress tree | none (MVP — open on localhost) | RSC + `PlanTree` Client island |
 
 ## Content conventions (stub)
 
@@ -185,15 +183,9 @@ Recipe for wrong stage status / ghost tasks / off counts. Read linearly; do NOT 
 
 ## Portal
 
-App-infra surface — Neon DB provider wired at Step 5 (TECH-252 / TECH-254). Architecture-only tier: no migrations, no live queries, no auth flow yet.
+App-infra surface — Postgres wired at Step 5 via `web/lib/db/client.ts` (lazy singleton, postgres-js driver). Architecture-only tier: no migrations run from web, no auth flow. Authoritative migrations live under `db/migrations/*.sql` (pure SQL). See [`docs/db-boundaries.md`](../docs/db-boundaries.md) for the browser ↔ DB ↔ MCP boundary rule.
 
-### Database provider
-
-Postgres provider: **Neon free (Launch tier)** — pooled connections 100, storage 0.5 GB, region us-east-1 (matches Vercel default). Driver pin: `@neondatabase/serverless@^1.0.2` (HTTP/WebSocket, edge-safe, no native bindings).
-
-Full rationale + alternatives rejected: `ia/projects/web-platform-master-plan.md` §Orchestrator Decision Log (2026-04-16).
-
-### Connection pool pattern
+### Connection pattern
 
 Lazy singleton via `getSql()` — connection not opened at import time; opened on first call. `sql` tagged-template Proxy delegates to `getSql()` on first use.
 
@@ -202,52 +194,15 @@ import { sql } from '@/lib/db/client'
 
 // Lazy — no connection until this line executes:
 const rows = await sql`SELECT 1 AS ping`
-
-// Or explicit accessor (same pool):
-import { getSql } from '@/lib/db/client'
-const db = getSql()
-const rows = await db`SELECT 1 AS ping`
 ```
 
-Build-time safety: `next build` succeeds without `DATABASE_URL` set — client module imports cleanly; error thrown only on first query invocation at runtime.
+Build-time safety: `next build` succeeds without `DATABASE_URL` set — client module imports cleanly; error thrown only on first query at runtime.
 
 Source: `web/lib/db/client.ts`.
 
 ### DATABASE_URL env contract
 
-Required format: Neon pooled connection string (includes `?pgbouncer=true&connect_timeout=10` or equivalent pool params).
-
-| Vercel scope | Status | Action |
-|---|---|---|
-| Production | `[HUMAN ACTION]` | Set in Vercel dashboard → Project Settings → Environment Variables → Production |
-| Preview | `[HUMAN ACTION]` | Set for Preview scope in same panel |
-| Development | `[HUMAN ACTION]` | Set for Development scope or wire locally |
-
-Local contributors: create `web/.env.local` (not shipped — gitignored) with:
-
-```
-DATABASE_URL=<your-neon-pooled-connection-string>
-```
-
-`.env.example` not shipped at this tier — contributors source their own Neon free project.
-
-### Payment gateway (deferred)
-
-Architecture slot reserved. No provider chosen. Decision deferred to Q10 (no timeline). No code at this tier — Stage 5.2+ scope.
-
-### Migration tooling
-
-`npm run db:generate` (drizzle-kit) reads `web/lib/db/schema.ts` and writes SQL artifacts to `web/drizzle/`. Offline-safe — no live `DATABASE_URL` required; drizzle-kit generates from schema only.
-
-Output artifacts: timestamped `.sql` migration file + `meta/_journal.json` (diff state) + `meta/0000_snapshot.json` (typed schema snapshot).
-
-**Commit stance:** `web/drizzle/` is committed to the repo (NOT gitignored). Migration files = source-controlled DB state per drizzle convention; PR review needs SQL diffs visible.
-
-Step 5 architecture-only — no `db:migrate` script yet. Migration runner lands in post-Step-5 portal-launch work.
-
----
-
-**Step 5 boundary:** architecture-only — no migrations run, no live queries in production, no auth flow. Stage 5.2 files schema + migrations; Stage 5.3 files middleware + auth.
+Required format: any standard Postgres connection string (`postgresql://user:pass@host:5432/db`). Local contributors create `web/.env.local` (gitignored) with `DATABASE_URL=...`. No Vercel env wiring required at MVP (localhost-only critical path).
 
 ## Tokens
 
@@ -435,14 +390,6 @@ App-wide nav at `web/components/Sidebar.tsx`. Wired into `web/app/layout.tsx` in
 - **Desktop (≥md):** same `<nav>` element — responsive overrides `md:static md:translate-x-0` promote it out of fixed positioning. No `hidden md:flex` wrapper in `layout.tsx` — Sidebar owns its own responsive classes.
 - **Token consumption:** inline `style={{ backgroundColor: tokens.colors['bg-canvas'], color: tokens.colors['text-primary'] }}` via `@/lib/tokens` map. Keys like `bg-canvas` / `bg-panel` / `text-primary` / `text-muted` / `text-accent-warn` are JSON semantic aliases resolved at build, NOT Tailwind utility classes. No inline hex.
 
-## Local development auth bypass
-
-- Knob: `DASHBOARD_AUTH_SKIP=1` in `web/.env.local` (gitignored — local only).
-- Effect: `web/middleware.ts` short-circuits on env-var truthy → `/dashboard` reachable without a `portal_session` cookie → no cookie ritual each browser session.
-- Setup: copy `web/.env.local.example` → `web/.env.local`; set `DASHBOARD_AUTH_SKIP=1`.
-- Prod warning: **NEVER** set `DASHBOARD_AUTH_SKIP` on Vercel — prod must stay gated; env var absent on Vercel (`undefined`) → bypass never fires.
-- Surface: `web/middleware.ts` reads env var before cookie lookup.
-
 ## Backend logic / frontend render boundary
 
 Rule authority: [`ia/rules/web-backend-logic.md`](../ia/rules/web-backend-logic.md).
@@ -553,8 +500,7 @@ This downloads Chromium + system deps (~200 MB). Reason it is opt-in and NOT wir
 - `usePathname()` from `next/navigation` returns non-nullable `string` in Next 16 (was `string | null` in 13/14) — remove null guards.
 - App Router RSC forbids `ssr: false` inside `next/dynamic()`. Wrap in a thin `'use client'` component; import the wrapper from RSC.
 - `serverExternalPackages` accepts npm package names only — workspace-relative files outside `node_modules/` need `outputFileTracingIncludes` route→glob mapping instead.
-- **Project convention**: proxy file is `web/proxy.ts` + `export function proxy` (not `middleware.ts`) — dev server fails "Cannot find the middleware module" if named the old way.
-- Proxy-based lazy neon export: `new Proxy({} as NeonQueryFunction, { get, apply })` wrapping `getSql()` defers `DATABASE_URL` read until first invocation — safe through `next build` with no env set.
+- **DB client**: `new Proxy` wrapping `getSql()` (typed as postgres-js `Sql`) defers `DATABASE_URL` read until first `sql` use — safe through `next build` with no env set.
 
 ## Links
 

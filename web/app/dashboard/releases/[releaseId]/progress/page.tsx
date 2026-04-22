@@ -35,7 +35,7 @@ export default async function ProgressPage({
       <h1 className="text-2xl font-bold mb-8">{release.label} — Progress</h1>
       {plans.map((plan) => {
         const metrics = computePlanMetrics(plan);
-        const tree = buildPlanTree(plan, metrics);
+        const tree = buildPlanTree(plan);
         const defaultId = deriveDefaultExpandedStageId(plan, metrics);
         return (
           <section key={plan.filename} className="mb-10">

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildPlanTree } from '../plan-tree';
-import type { PlanData, PlanMetrics, Stage, TaskRow } from '../plan-loader-types';
+import type { PlanData, Stage, TaskRow } from '../plan-loader-types';
 
 // ---------------------------------------------------------------------------
 // Helpers (2-level Stage → Task)
@@ -38,16 +38,6 @@ function makePlan(stages: Stage[]): PlanData {
   };
 }
 
-function makeMetrics(): PlanMetrics {
-  return {
-    completedCount: 0,
-    totalCount: 0,
-    statBarLabel: '0 / 0 done',
-    chartData: [],
-    stageCounts: {},
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Case 1 — Stage-node counts sum across tasks
 // ---------------------------------------------------------------------------
@@ -60,7 +50,7 @@ describe('buildPlanTree — Case 1: stage-node counts', () => {
       makeTask({ id: 'T1.1.3', status: 'In Progress' }),
     ];
     const plan = makePlan([makeStage('1.1', tasks)]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     const stageNode = tree[0];
     expect(stageNode.kind).toBe('stage');
@@ -81,7 +71,7 @@ describe('buildPlanTree — Case 2: direct task children', () => {
       makeTask({ id: 'T3', status: 'Draft' }),
     ];
     const plan = makePlan([makeStage('1.1', tasks)]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     const stageNode = tree[0];
     expect(stageNode.children).toHaveLength(3);
@@ -91,7 +81,7 @@ describe('buildPlanTree — Case 2: direct task children', () => {
 
   it('empty stage produces stage node with no children and zero counts', () => {
     const plan = makePlan([makeStage('1.1', [])]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     const stageNode = tree[0];
     expect(stageNode.children).toHaveLength(0);
@@ -119,7 +109,7 @@ describe('buildPlanTree — Case 3: status derivation', () => {
     it(`maps TaskStatus "${taskStatus}" → "${expectedStatus}"`, () => {
       const task = makeTask({ id: 'T1', status: taskStatus });
       const plan = makePlan([makeStage('1.1', [task])]);
-      const tree = buildPlanTree(plan, makeMetrics());
+      const tree = buildPlanTree(plan);
 
       const stageNode = tree[0];
       const taskNode = stageNode.children[0];
@@ -140,7 +130,7 @@ describe('buildPlanTree — Case 4: all-done propagation', () => {
       makeTask({ id: 'T3', status: 'Done' }),
     ];
     const plan = makePlan([makeStage('1.1', tasks)]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     const stageNode = tree[0];
     expect(stageNode.status).toBe('done');
@@ -153,7 +143,7 @@ describe('buildPlanTree — Case 4: all-done propagation', () => {
       makeTask({ id: 'T2', status: 'In Progress' }),
     ];
     const plan = makePlan([makeStage('1.1', tasks)]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     expect(tree[0].status).toBe('in-progress');
   });
@@ -164,7 +154,7 @@ describe('buildPlanTree — Case 4: all-done propagation', () => {
       makeTask({ id: 'T2', status: '_pending_' }),
     ];
     const plan = makePlan([makeStage('1.1', tasks)]);
-    const tree = buildPlanTree(plan, makeMetrics());
+    const tree = buildPlanTree(plan);
 
     expect(tree[0].status).toBe('pending');
   });

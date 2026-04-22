@@ -1,19 +1,18 @@
 // Lazy singleton — avoids build-time connection + repeat init.
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import postgres, { type Sql } from 'postgres';
 
-let _sql: NeonQueryFunction<false, false> | null = null;
+let _sql: Sql | null = null;
 
-export function getSql(): NeonQueryFunction<false, false> {
+export function getSql(): Sql {
   if (_sql) return _sql;
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL not set — required for DB access.');
-  _sql = neon(url);
+  _sql = postgres(url);
   return _sql;
 }
 
 // Re-export as `sql` for tagged-template ergonomics at call sites.
-// Stage 5.2 drizzle adapter wraps this: drizzle(getSql(), { schema }).
-export const sql = new Proxy({} as NeonQueryFunction<false, false>, {
+export const sql = new Proxy({} as Sql, {
   get: (_t, prop) => Reflect.get(getSql() as object, prop),
   apply: (_t, _thisArg, args) => (getSql() as unknown as (...a: unknown[]) => unknown)(...args),
 });

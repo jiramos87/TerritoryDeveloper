@@ -547,3 +547,4 @@ When every checkbox is ticked and the Final gate is green:
 | Date | Delta | Author |
 |---|---|---|
 | 2026-04-22 | Initial implementation plan — sequential, pre-digested, composer-2-ready. 7 steps + Final gate. | architecture audit |
+| 2026-04-22 | Executed: all 7 steps landed; `web/package-lock.json` deleted (monorepo lockfile at repo root only); release-rollout matrix row (f) wording adjusted so `grep 'Agent .stage-file.[^-]'` stays empty (hyphenated planner/applier names); removed stale `web/.next/types/validator.ts` after route deletes. On this host: run `validate:web` under Node ≥20 from repo root; `next build` green under Node 20.18.1. | agent |
