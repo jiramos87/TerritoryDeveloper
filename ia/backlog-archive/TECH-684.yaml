@@ -1,10 +1,10 @@
 id: TECH-684
-type: TECH
+type: tech
 title: "Wire registry to catalog"
 priority: medium
-status: open
+status: closed
 section: "Grid asset visual registry — Stage 2.3 (Zone S consumer migration)"
-spec: ia/projects/TECH-684.md
+spec: 'closed: project spec removed on Stage 2.3 closeout'
 files: []
 notes: |
   `ZoneSubTypeRegistry` on same scene as `GridAssetCatalog`: add `[SerializeField] GridAssetCatalog catalog` + single `FindObjectOfType<GridAssetCatalog>()` fallback in `Awake` if unset.
@@ -21,6 +21,7 @@ related:
   - TECH-686
   - TECH-687
 created: 2026-04-22
+completed: "2026-04-22"
 raw_markdown: |
   Wire registry to catalog — SerializeField + Awake resolution for GridAssetCatalog
 parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md

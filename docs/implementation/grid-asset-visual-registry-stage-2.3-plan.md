@@ -2,7 +2,7 @@
 
 **Orchestrator:** `ia/projects/grid-asset-visual-registry-master-plan.md`  
 **Stage:** 2.3 — Zone S consumer migration  
-**Filed tasks:** [TECH-684](ia/projects/TECH-684.md) · [TECH-685](ia/projects/TECH-685.md) · [TECH-686](ia/projects/TECH-686.md) · [TECH-687](ia/projects/TECH-687.md)
+**Filed tasks (archived):** [TECH-684](../ia/backlog-archive/TECH-684.yaml) · [TECH-685](../ia/backlog-archive/TECH-685.yaml) · [TECH-686](../ia/backlog-archive/TECH-686.yaml) · [TECH-687](../ia/backlog-archive/TECH-687.yaml)
 
 ## Stage intent (from master plan)
 
@@ -10,12 +10,12 @@
 
 ## Task index (executable digest location)
 
-| Task | Spec | Short outcome |
-|------|------|----------------|
-| T2.3.1 | [TECH-684](ia/projects/TECH-684.md) | `[SerializeField]` + `FindObjectOfType<GridAssetCatalog>()` in `Awake`; `internal Catalog` getter |
-| T2.3.2 | [TECH-685](ia/projects/TECH-685.md) | `int[7]` `SubTypeIdToAssetId` + `TryGetAssetIdForSubType` (literals from seed) |
-| T2.3.3 | [TECH-686](ia/projects/TECH-686.md) | `SubTypePickerModal` + `BudgetAllocationService` + `ZoneSService` use catalog cents / façade |
-| T2.3.4 | [TECH-687](ia/projects/TECH-687.md) | `TextAsset` fragment + new EditMode test for seven ids |
+| Task | Archive | Short outcome |
+|------|---------|----------------|
+| T2.3.1 | [TECH-684](../ia/backlog-archive/TECH-684.yaml) | `[SerializeField]` + `FindObjectOfType<GridAssetCatalog>()` in `Awake`; `internal Catalog` getter |
+| T2.3.2 | [TECH-685](../ia/backlog-archive/TECH-685.yaml) | `int[7]` `SubTypeIdToAssetId` + `TryGetAssetIdForSubType` (literals from seed) |
+| T2.3.3 | [TECH-686](../ia/backlog-archive/TECH-686.yaml) | `SubTypePickerModal` + `ZoneSService` use catalog cents / façade |
+| T2.3.4 | [TECH-687](../ia/backlog-archive/TECH-687.yaml) | Snapshot fragment JSON + `ZoneSubTypeRegistryCatalogBackedTests` for seven ids |
 
 ## Implementation order (dependency)
 

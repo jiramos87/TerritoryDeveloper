@@ -1,10 +1,10 @@
 id: TECH-686
-type: TECH
+type: tech
 title: "Update callers"
 priority: medium
-status: open
+status: closed
 section: "Grid asset visual registry — Stage 2.3 (Zone S consumer migration)"
-spec: ia/projects/TECH-686.md
+spec: 'closed: project spec removed on Stage 2.3 closeout'
 files: []
 notes: |
   `UIManager` / `SubTypePickerModal` / `BudgetAllocationService` / `ZoneSService` switch to registry+asset_id path for display names, cent costs, icon/prefab resolution via catalog-backed data; preserve Zone S money envelope invariants; no new singletons.
@@ -20,6 +20,7 @@ related:
   - TECH-685
   - TECH-687
 created: 2026-04-22
+completed: "2026-04-22"
 raw_markdown: |
   Update callers — UI + services use catalog-backed Zone S data
 parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md

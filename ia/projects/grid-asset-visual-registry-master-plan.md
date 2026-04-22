@@ -1,6 +1,6 @@
 # Grid asset visual registry — Master Plan (Bucket 12 MVP spine)
 
-> **Status:** In Progress — Step 2 / Stage 2.3
+> **Status:** In Progress — Step 3 / Stage 3.1
 >
 > **Scope:** Postgres-backed **grid asset catalog** (identity, sprites, economy, spawn pools) as source of truth; **HTTP + MCP** for agents; **Unity boot snapshot** consumed by **`GridAssetCatalog`** (no new singleton — Inspector + `FindObjectOfType` per `unity-invariants` #4); **Zone S** first consumer via **`ZoneSubTypeRegistry`** convergence; **`PlacementValidator`** owns place-here legality; **`wire_asset_from_catalog`** bridge kind for design-system-safe Control Panel wiring; export + import hygiene + IA scene contract. **Out:** sprite-gen composition logic (Bucket 5), deep sim rules beyond catalog reads, `web/` dashboard product UI (Bucket 9 transport only — this plan adds `/api/catalog/*` on the existing Next app). Post-MVP extensions → recommend `docs/grid-asset-visual-registry-post-mvp-extensions.md` (not authored by this workflow).
 >
@@ -437,9 +437,9 @@
 
 ### Step 2 — Snapshot export + Unity `GridAssetCatalog` + Zone S consumer
 
-**Status:** In Progress — Stage 2.3
+**Status:** Final
 
-**Backlog state (Step 2):** Stage 2.1 closed (archived **TECH-662**–**TECH-666**)
+**Backlog state (Step 2):** Stage 2.1 closed (archived **TECH-662**–**TECH-666**); Stage 2.2 closed (archived **TECH-669**–**TECH-673**); Stage 2.3 closed (archived **TECH-684**–**TECH-687**)
 
 **Objectives:** Add **`tools/`** export that dumps **published** catalog to a **versioned snapshot file** Unity loads at boot. Implement **`GridAssetCatalog`** as scene **`MonoBehaviour`** (serialized refs + `FindObjectOfType` fallback) exposing queries by **`asset_id`** and **`(category, slug)`**. Migrate **`ZoneSubTypeRegistry`** read path to **`GridAssetCatalog`** for Zone S while preserving envelope/upkeep callers.
 
@@ -789,7 +789,7 @@
 
 #### Stage 2.3 — Zone S consumer migration
 
-**Status:** In Progress
+**Status:** Final
 
 **Objectives:** **`ZoneSubTypeRegistry`** reads **`GridAssetCatalog`** for costs, names, sprite paths; retain JSON fallback behind define only if needed for one-stage rollback (prefer single source).
 
@@ -800,17 +800,32 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Registry refactor.
-- [ ] Phase 2 — Call-site smoke + tests.
+- [x] Phase 1 — Registry refactor.
+- [x] Phase 2 — Call-site smoke + tests.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.3.1 | Wire registry to catalog | 1 | **TECH-684** | Draft | Inject `[SerializeField] GridAssetCatalog catalog` + fallback `FindObjectOfType` in `Awake` on `ZoneSubTypeRegistry` GameObject. |
-| T2.3.2 | Map subTypeId to asset_id | 1 | **TECH-685** | Draft | Stable mapping table (`0..6` → catalog PK) from seed; document migration from JSON-only era. |
-| T2.3.3 | Update callers | 2 | **TECH-686** | Draft | Adjust `UIManager` / modals to use registry APIs without breaking envelope logic. |
-| T2.3.4 | EditMode tests | 2 | **TECH-687** | Draft | Tests load snapshot fixture under `Assets/Tests/EditMode/...`; assert costs + display names. |
+| T2.3.1 | Wire registry to catalog | 1 | **TECH-684** | Done (archived) | Inject `[SerializeField] GridAssetCatalog catalog` + fallback `FindObjectOfType` in `Awake` on `ZoneSubTypeRegistry` GameObject. |
+| T2.3.2 | Map subTypeId to asset_id | 1 | **TECH-685** | Done (archived) | Stable mapping table (`0..6` → catalog PK) from seed; document migration from JSON-only era. |
+| T2.3.3 | Update callers | 2 | **TECH-686** | Done (archived) | Adjust `UIManager` / modals to use registry APIs without breaking envelope logic. |
+| T2.3.4 | EditMode tests | 2 | **TECH-687** | Done (archived) | Tests load snapshot fixture under `Assets/Tests/EditMode/...`; assert costs + display names. |
+
+#### §Stage Audit
+
+> Post-ship aggregate — task specs **TECH-684**–**TECH-687** removed at closeout.
+
+- **TECH-684:** `ZoneSubTypeRegistry` requires scene `GridAssetCatalog`; `Awake` resolves ref once; exposes internal `Catalog` getter.
+- **TECH-685:** Identity map 0..6 → catalog PKs per Zone S seed; `TryGetAssetIdForSubType`.
+- **TECH-686:** `GridAssetCatalog` indexes `catalog_economy` by `asset_id`; registry façade for picker labels + placement cost sim units (`base_cost_cents / 100`); `SubTypePickerModal` + `ZoneSService` updated.
+- **TECH-687:** Fragment JSON fixture + `ZoneSubTypeRegistryCatalogBackedTests` for seven ids.
+
+**Verification (Stage):** `npm run validate:all` green; `npm run unity:compile-check` green; `npm run unity:testmode-batch -- --quit-editor-first` exit 0; `npm run db:bridge-playmode-smoke` exit 0 (after `unity:ensure-editor`).
+
+#### §Stage Closeout Plan
+
+> **Applied 2026-04-22 (ship-stage-main-session):** archived **TECH-684**…**TECH-687** to `ia/backlog-archive/` (`status: closed`, `completed: "2026-04-22"`); removed temporary `ia/projects/TECH-684`…`TECH-687` specs; flipped Stage 2.3 task table to **Done (archived)** and Stage **Status** to **Final**; ran `materialize-backlog.sh` + `validate:all`.
 
 ### §Stage File Plan
 

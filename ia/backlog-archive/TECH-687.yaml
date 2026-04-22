@@ -1,10 +1,10 @@
 id: TECH-687
-type: TECH
+type: tech
 title: "EditMode tests"
 priority: medium
-status: open
+status: closed
 section: "Grid asset visual registry — Stage 2.3 (Zone S consumer migration)"
-spec: ia/projects/TECH-687.md
+spec: 'closed: project spec removed on Stage 2.3 closeout'
 files: []
 notes: |
   `Assets/Tests/EditMode/...` loads min snapshot or fixture `TextAsset` matching export shape; drives `GridAssetCatalog` + `ZoneSubTypeRegistry` in isolation or via test scene setup; asserts seven ids resolve expected display strings + cent costs. English assertion messages.
@@ -20,6 +20,7 @@ related:
   - TECH-685
   - TECH-686
 created: 2026-04-22
+completed: "2026-04-22"
 raw_markdown: |
   EditMode tests — seven ids costs + display names from catalog
 parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
