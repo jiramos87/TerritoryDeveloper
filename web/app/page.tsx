@@ -1,61 +1,12 @@
+// Stage 27 T27.2 — CD ScreenLanding port (see HomeLandingClient).
 import type { Metadata } from 'next';
-import Landing from '@/content/pages/landing.mdx';
-import { loadMdxPage } from '@/lib/mdx/loader';
-import { tokens } from '@/lib/tokens';
+import { HomeLandingClient } from '@/components/landing/HomeLanding.client';
 import { buildPageMetadata } from '@/lib/site/metadata';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('landing');
 }
 
-export default async function Home() {
-  const { frontmatter } = await loadMdxPage('landing');
-
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        backgroundColor: tokens.colors['bg-canvas'],
-        color: tokens.colors['text-primary'],
-        fontFamily: tokens.fontFamily.sans.join(', '),
-        padding: `${tokens.spacing[8]} ${tokens.spacing[4]}`,
-        maxWidth: '800px',
-        margin: '0 auto',
-      }}
-    >
-      <header
-        style={{
-          marginBottom: tokens.spacing[8],
-          borderBottom: `1px solid ${tokens.colors['bg-panel']}`,
-          paddingBottom: tokens.spacing[4],
-        }}
-      >
-        <h1
-          style={{
-            fontSize: tokens.fontSize['2xl'][0],
-            lineHeight: tokens.fontSize['2xl'][1],
-            fontFamily: tokens.fontFamily.mono.join(', '),
-            color: tokens.colors['text-primary'],
-            margin: 0,
-          }}
-        >
-          {frontmatter.title}
-        </h1>
-        <p
-          style={{
-            fontSize: tokens.fontSize.base[0],
-            lineHeight: tokens.fontSize.base[1],
-            color: tokens.colors['text-muted'],
-            marginTop: tokens.spacing[2],
-            marginBottom: 0,
-          }}
-        >
-          {frontmatter.description}
-        </p>
-      </header>
-      <article>
-        <Landing />
-      </article>
-    </main>
-  );
+export default function Home() {
+  return <HomeLandingClient />;
 }
