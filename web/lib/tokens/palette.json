@@ -8,7 +8,9 @@
     "grey-500": "#6a6a6a",
     "green": "#3a9b4a",
     "terrainGreen": "#3a9b4a",
-    "waterBlue": "#38bdf8"
+    "waterBlue": "#38bdf8",
+    "sunken": "#0f0f0f",
+    "inset": "#121212"
   },
   "semantic": {
     "bg-canvas": "{raw.black}",
