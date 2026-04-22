@@ -80,4 +80,19 @@ public class ZoneSubTypeRegistry : MonoBehaviour
             if (entry.id == id) return entry;
         return null;
     }
+
+    // TECH-685: subTypeId 0..6 -> catalog asset_id (matches db/migrations/0013_zone_s_seed.sql PKs).
+    private static readonly int[] SubTypeIdToAssetId = { 0, 1, 2, 3, 4, 5, 6 };
+
+    /// <summary>
+    /// Maps JSON-era subTypeId to grid catalog <c>asset_id</c> for Zone S seven rows; false when id outside 0..6.
+    /// Legacy <c>Resources/.../zone-sub-types</c> ordering matches these PKs.
+    /// </summary>
+    public bool TryGetAssetIdForSubType(int subTypeId, out int assetId)
+    {
+        assetId = 0;
+        if (subTypeId < 0 || subTypeId > 6) return false;
+        assetId = SubTypeIdToAssetId[subTypeId];
+        return true;
+    }
 }
