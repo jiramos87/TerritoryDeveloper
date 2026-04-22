@@ -764,6 +764,9 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
   - Depends on: none
   - Related: TECH-626, TECH-627, TECH-628
 
+
+### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
+
 ## High Priority
 
 <!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->

@@ -1,0 +1,30 @@
+id: TECH-630
+type: TECH
+title: "Author `tools/scripts/extract-cd-tokens.ts` — CD CSS + palette → canonical token map JSON"
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: "Web platform — Stage 24 (CD bundle pipeline)"
+spec: ia/projects/TECH-630.md
+files:
+  - tools/scripts/extract-cd-tokens.ts
+  - web/design-refs/step-8-console/ds/colors_and_type.css
+  - web/design-refs/step-8-console/ds/palette.json
+notes: |
+  Ingests read-only CD bundle; emits `{ raws, semantic, motion, typeScale, spacing }` map; stdout or `--out`;
+  `npx tsx` only; no deps beyond Node built-ins. JSDoc cites B-CD1 drift-on-mutation guard.
+acceptance: |
+  - [x] Script parses `:root` custom properties from CD CSS + optional `palette.json`; shape matches Stage 24 T24.1 Intent.
+  - [x] Emits JSON to stdout or `--out`; runnable via `npx tsx tools/scripts/extract-cd-tokens.ts`.
+  - [x] JSDoc references B-CD1; no non-built-in runtime deps in script path.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-631
+  - TECH-632
+  - TECH-633
+created: 2026-04-22
+raw_markdown: |
+  - [x] **TECH-630** — **extract-cd-tokens.ts** (web-platform Stage 24 T24.1)
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T24.1
