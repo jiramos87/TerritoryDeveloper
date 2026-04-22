@@ -20,6 +20,7 @@
     "validate:web:build": "npm run validate:web",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:backlog-yaml": "npx tsx tools/validate-backlog-yaml.ts",
+    "validate:catalog-dto": "node tools/scripts/catalog-dto-migration-check.mjs",
     "validate:parent-plan-locator": "node tools/validate-parent-plan-locator.mjs",
     "validate:frontmatter": "node tools/mcp-ia-server/scripts/check-frontmatter.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",

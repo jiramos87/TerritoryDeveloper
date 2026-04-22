@@ -42,8 +42,8 @@ npm run build        # production build; exits 0 on success
 Or from repo root using workspace composition:
 
 ```bash
-npm run validate:web        # lint + typecheck + unit tests — no `next build` (local validation only)
-npm run validate:web:build  # same + production `next build` (optional pre-push / CI parity)
+npm run validate:web        # lint + typecheck + unit tests + production `next build` (PostCSS / Tailwind errors surface here)
+npm run validate:web:build  # alias of `validate:web` (kept for scripts/docs that already referenced the name)
 ```
 
 Deploy stays **Vercel on push to `main`** or **`npm run deploy:web`** / **`npm run deploy:web:preview`** — `validate:web` does not run deploy or `vercel`.
@@ -59,9 +59,21 @@ Deploy stays **Vercel on push to `main`** or **`npm run deploy:web`** / **`npm r
 | `typecheck` | `tsc --noEmit` | TypeScript strict check (no emit) |
 | `test` | `vitest run` | Unit tests |
 
-Root-level: `npm run validate:web` runs lint + typecheck + test via `npm --prefix web` (no `next build`). Use `npm run validate:web:build` when you need a full production build locally.
+Root-level: `npm run validate:web` runs lint + typecheck + test + `next build` via `npm --prefix web`. Catches invalid Tailwind/PostCSS output (e.g. accidental arbitrary-class text in JSDoc that Tailwind scans).
 
 Repo-wide `npm run validate:all` calls `validate:web:conditional` (`tools/scripts/validate-web-conditional.sh`): full `validate:web` when **unstaged or staged** files under `web/` exist (not branch vs `main` — avoids false triggers when multiple agents share a branch). Also when CI or `VALIDATE_WEB_FULL=1`. Otherwise `npm run progress` only (master plans → `docs/progress.html`). To always run web checks locally: `npm run validate:web` or `VALIDATE_WEB_FULL=1 npm run validate:all`.
+
+### Catalog DTOs vs SQL migrations
+
+Grid **catalog** types are hand-written under `web/types/api/` (no Drizzle). Migrations `db/migrations/0011_catalog_core.sql` and `0012_catalog_spawn_pools.sql` are authoritative for column names.
+
+From repo root after editing DTOs or those SQL files:
+
+```bash
+npm run validate:catalog-dto
+```
+
+That script asserts each `CREATE TABLE` column name appears in the mapped DTO source file. Use together with `npm run validate:web` for typecheck coverage.
 
 ## Routes
 
@@ -75,6 +87,8 @@ Canonical route-list for the `web/` workspace.
 | `/dashboard` | Master-plan progress dashboard | none (MVP — open on localhost) | RSC |
 | `/dashboard/releases` | Release picker | none (MVP — open on localhost) | RSC |
 | `/dashboard/releases/:releaseId/progress` | Release progress tree | none (MVP — open on localhost) | RSC + `PlanTree` Client island |
+| `/design` | Component primitive review (internal) | none | RSC + fixtures |
+| `/design-system` | ds-* + Heading/Prose/Surface showcase (dev only — **404 in production**; not in nav) | none | RSC |
 
 ## Content conventions (stub)
 
@@ -427,7 +441,7 @@ Vercel project linked via dashboard. Build root: `web/`. Framework preset: Next.
 
 > **Note:** Vercel URL to be embedded here after first production deploy.
 
-CI: `npm run validate:all` at repo root runs `validate:web:conditional` — on typical CI (`CI=true`) that means full `validate:web` (lint + typecheck + unit tests — no local `next build`). Local runs skip full web validation unless something under `web/` is unstaged or staged (or you set `VALIDATE_WEB_FULL=1`). Production build + deploy: **push to `main`** (Vercel) or **`npm run deploy:web`**. Run **`npm run validate:web:build`** when you need `next build` before push.
+CI: `npm run validate:all` at repo root runs `validate:web:conditional` — on typical CI (`CI=true`) that means full `validate:web` (lint + typecheck + unit tests + `next build`). Local runs skip full web validation unless something under `web/` is unstaged or staged (or you set `VALIDATE_WEB_FULL=1`). Production build + deploy: **push to `main`** (Vercel) or **`npm run deploy:web`**.
 
 ## E2E Testing (Playwright)
 
