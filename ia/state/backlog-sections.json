@@ -794,6 +794,72 @@
             "### Stage 7.1 \u2014 Registry + pure shapers",
             ""
           ]
+        },
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "### Grid asset visual registry \u2014 Step 1 Stage 1.2 (hand-written DTOs, no Drizzle)",
+            "",
+            "Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/projects/grid-asset-visual-registry-master-plan.md). **SQL** in `db/migrations/` is authoritative; `web/types/api/catalog*.ts` hand DTOs per **architecture audit 2026-04-22**; depends on **TECH-612** (0011) / **TECH-615** (0012) migrations archived.",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-626",
+          "checklist_line": "- [ ] **TECH-626** \u2014 **Core catalog DTOs (0011)** (grid catalog Stage 1.2 T1.2.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-627",
+          "checklist_line": "- [ ] **TECH-627** \u2014 **Pool DTOs (0012)** (grid catalog Stage 1.2 T1.2.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-628",
+          "checklist_line": "- [ ] **TECH-628** \u2014 **API filter + lock + preview DTOs** (grid catalog Stage 1.2 T1.2.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-629",
+          "checklist_line": "- [ ] **TECH-629** \u2014 **DTO \u2194 migration alignment** (grid catalog Stage 1.2 T1.2.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "### Web platform \u2014 Stage 24 (CD bundle extraction + transcription pipeline)",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-630",
+          "checklist_line": "- [ ] **TECH-630** \u2014 **extract-cd-tokens.ts** (web-platform Stage 24 T24.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-631",
+          "checklist_line": "- [ ] **TECH-631** \u2014 **Drift report + tests** (web-platform Stage 24 T24.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-632",
+          "checklist_line": "- [ ] **TECH-632** \u2014 **transcribe-cd-tokens.ts** (web-platform Stage 24 T24.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-633",
+          "checklist_line": "- [ ] **TECH-633** \u2014 **design-system.md \u00a77 CD appendix** (web-platform Stage 24 T24.4)",
+          "trailing_blanks": 1
         }
       ]
     },

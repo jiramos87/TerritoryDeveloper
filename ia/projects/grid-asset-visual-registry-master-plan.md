@@ -1,13 +1,13 @@
 # Grid asset visual registry — Master Plan (Bucket 12 MVP spine)
 
-> **Status:** In Progress — Step 1 / Stage 1.2
+> **Status:** In Progress — Step 1 / Stage 1.3
 >
 > **Scope:** Postgres-backed **grid asset catalog** (identity, sprites, economy, spawn pools) as source of truth; **HTTP + MCP** for agents; **Unity boot snapshot** consumed by **`GridAssetCatalog`** (no new singleton — Inspector + `FindObjectOfType` per `unity-invariants` #4); **Zone S** first consumer via **`ZoneSubTypeRegistry`** convergence; **`PlacementValidator`** owns place-here legality; **`wire_asset_from_catalog`** bridge kind for design-system-safe Control Panel wiring; export + import hygiene + IA scene contract. **Out:** sprite-gen composition logic (Bucket 5), deep sim rules beyond catalog reads, `web/` dashboard product UI (Bucket 9 transport only — this plan adds `/api/catalog/*` on the existing Next app). Post-MVP extensions → recommend `docs/grid-asset-visual-registry-post-mvp-extensions.md` (not authored by this workflow).
 >
 > **Exploration source:** `docs/grid-asset-visual-registry-exploration.md` (§8 Design Expansion — Chosen approach D, Architecture diagram, Subsystem impact table, Implementation points 1–12, Examples, Review notes; §4 locked decisions; §10 code refs).
 >
 > **Locked decisions (do not reopen in this plan):**
-> - Catalog source of truth = **Postgres** (Drizzle in `web/`, migrations `db/migrations/`); Unity loads **boot-time snapshot**; Resources JSON is **derived**, not authoritative.
+> - Catalog source of truth = **Postgres**; **`db/migrations/*.sql` is authoritative**. **`web/`** has **no Drizzle** (removed 2026-04-22 per `docs/architecture-audit-handoff-2026-04-22.md` Row 2); route/API typing uses **hand-written DTOs** under **`web/types/api/catalog*.ts`**. Unity loads **boot-time snapshot**; Resources JSON is **derived**, not authoritative.
 > - **Sprite-first** authoring in DB rows; export step enforces **PPU / pivot** hygiene for allowlisted paths; **no collider** on baked world tiles under current **`GridManager`** hit-test contract.
 > - Money in DB/API = **integer cents**; saves store stable **`asset_id`** (numeric PK); **`replaced_by`** soft-remap on load.
 > - **Draft / published / retired** visibility; list defaults **published**; **`(category, slug)`** unique.
@@ -20,7 +20,8 @@
 > **Coordination:** **`ia/projects/ui-polish-master-plan.md`** owns widget/visual contracts; this plan owns **catalog + bridge recipes**. **`ia/projects/sprite-gen-master-plan.md`** feeds **`generator_archetype_id`** + paths. **`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`** / **`ia/projects/session-token-latency-master-plan.md`** = registration-only follow-ups when new MCP kinds ship.
 >
 > **Read first if landing cold:**
-> - `docs/grid-asset-visual-registry-exploration.md` — full design + §8 ground truth.
+> - `docs/grid-asset-visual-registry-exploration.md` — full design + §8 ground truth (amended 2026-04-22: **no Drizzle in `web/`**; DTOs in `web/types/api/`).
+> - `docs/architecture-audit-handoff-2026-04-22.md` — **Pick 7** (Drizzle drop) + `docs/db-boundaries.md` when present.
 > - `ia/specs/economy-system.md` §Zone sub-type registry (`lineStart` 28) + Zone S — **`ZoneSubTypeRegistry`** vocabulary.
 > - `ia/specs/ui-design-system.md` §1 Foundations + §2 Components — **`UiTheme`**, **`IlluminatedButton`**, Control Panel paths (appendix lands Step 4).
 > - `ia/specs/persistence-system.md` — Load pipeline order (`lineStart` 24) before mutating save fields.
@@ -37,16 +38,16 @@
 
 ### Step 1 — Postgres catalog + HTTP API + MCP tools
 
-**Status:** In Progress — Stage 1.2 (remaining Step 1 stages _pending_)
+**Status:** In Progress — Stage 1.3 (remaining Step 1 stages _pending_)
 
-**Backlog state (Step 1):** Stage 1.1 archived (6); Stage 1.2 not filed
+**Backlog state (Step 1):** Stage 1.1 archived (6); Stage 1.2 archived (**TECH-626**–**TECH-629**)
 
 **Objectives:** Land the **authoritative catalog** in Postgres with the seven logical tables from exploration §8.1 (core + economy + sprite bind + spawn pools). Expose **CRUD + preview-diff** over **`/api/catalog/*`** with **optimistic locking** and **draft/published** filters. Register thin **`catalog_*`** MCP tools and **`caller_agent`** allowlist hooks so agents mutate data without ad-hoc SQL (raw SQL tool remains escape hatch).
 
 **Exit criteria:**
 
 - `db/migrations/0011_catalog_core.sql` + `db/migrations/0012_catalog_spawn_pools.sql` applied; Zone S **seven rows** seeded via fixture SQL or repeatable seed script.
-- Drizzle modules under `web/drizzle/schema/catalog*.ts` match tables; `npm run validate:web` (or project typecheck) green for touched `web/` surfaces.
+- Hand-written **DTO modules** under `web/types/api/catalog*.ts` match migration columns; `npm run validate:web` (or project typecheck) green for touched `web/` surfaces.
 - Routes implemented: `GET /api/catalog/assets`, `GET /api/catalog/assets/:id`, `POST`, `PATCH` (409 on stale `updated_at`), `POST /api/catalog/assets/:id/retire`, `POST /api/catalog/preview-diff`.
 - `tools/mcp-ia-server/` registers **`catalog_list`**, **`catalog_get`**, **`catalog_upsert`**, pool helpers per §8.3; `tools/mcp-ia-server/src/auth/caller-allowlist.ts` updated for mutation classes (coordinate minimal registration-only tasks in mcp-lifecycle plan if required).
 - `npm run validate:all` green for IA/MCP edits.
@@ -59,7 +60,7 @@
 - `ia/specs/economy-system.md` §Zone sub-type registry (`Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` cited in glossary)
 - Router: economy + persistence domains; **`web/app/api/`** (new routes) — `web-backend-logic` rule on-demand for App Router patterns
 - New: `db/migrations/0011_catalog_core.sql`, `db/migrations/0012_catalog_spawn_pools.sql` (paths `(new)` until landed)
-- Existing: `db/migrations/0001_ia_tables.sql` … `0010_agent_bridge_lease.sql`, `web/drizzle/`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/auth/caller-allowlist.ts`
+- Existing: `db/migrations/0001_ia_tables.sql` … `0010_agent_bridge_lease.sql`, `web/lib/db/`, `web/types/api/` (catalog DTOs — Stage 1.2), `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/auth/caller-allowlist.ts`
 
 #### Stage 1.1 — Migrations + Zone S seed
 
@@ -130,8 +131,8 @@
   priority: medium
   notes: |
     Secondary indexes + FK `ON DELETE` policy for core catalog tables: `status` filters, join paths
-    (`asset_id`, `sprite_id`). Record soft-retire + GC behavior in spec §Implementation so Step 2 Drizzle
-    mirrors chosen policy.
+    (`asset_id`, `sprite_id`). Record soft-retire + GC behavior in spec §Implementation so Stage 1.2
+    DTOs + routes mirror chosen policy.
   depends_on: []
   related: []
   stub_body:
@@ -246,30 +247,140 @@
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 1.2 — Drizzle schema + shared types
+#### Stage 1.2 — Catalog DTOs + API types (no Drizzle)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
-**Objectives:** Mirror SQL in **`web/drizzle/schema/catalog*.ts`** with relations; export types consumed by Next route handlers.
+**Objectives:** Author **hand-written TypeScript DTOs** under **`web/types/api/catalog*.ts`** aligned to `0011` / `0012` (per architecture audit: **no** `drizzle-orm` in `web/`). Add shared list-filter + lock + preview-diff shapes for Stage 1.3 routes. Optional **zod** at route boundary per `docs/architecture-audit-change-list-2026-04-22.md`.
 
 **Exit:**
 
-- Drizzle schema builds; **`npm run validate:web`** (or `web` typecheck) passes.
-- No drift vs migrations (column names + types).
+- DTO modules typecheck; **`npm run validate:web`** (or `web` typecheck) passes.
+- No drift vs migrations (column names + nullability) — documented spot-check in §7 / Decision Log.
 
 **Phases:**
 
-- [ ] Phase 1 — Table defs + relations.
-- [ ] Phase 2 — Exported TS types + helper queries.
+- [x] Phase 1 — Core + pool row DTOs (0011 / 0012).
+- [x] Phase 2 — List/preview/lock DTOs + validation policy (script or doc).
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Drizzle mirror core tables | 1 | _pending_ | _pending_ | Author `catalog*.ts` for asset/sprite/bind/economy matching `0011`; relations for joins used in **`GET /api/catalog/assets/:id`**. |
-| T1.2.2 | Drizzle mirror pool tables | 1 | _pending_ | _pending_ | Pool + member tables matching `0012`; export insert helpers for membership tests. |
-| T1.2.3 | API DTO alignment | 2 | _pending_ | _pending_ | Shared types for list filters (`status`, `category`), optimistic-lock payload (`updated_at`), preview-diff result shape. |
-| T1.2.4 | Repo validation hook | 2 | _pending_ | _pending_ | Wire `package.json` script touch only if `validate:all` requires explicit drizzle check; else document manual **`drizzle-kit`** policy in §Implementation. |
+| T1.2.1 | Core catalog DTOs (0011) | 1 | **TECH-626** | Done (archived) | Hand-written types for `catalog_asset` / `catalog_sprite` / `catalog_asset_sprite` / `catalog_economy` matching `0011`; shapes for join used in **`GET /api/catalog/assets/:id`**. |
+| T1.2.2 | Pool DTOs (0012) | 1 | **TECH-627** | Done (archived) | Types for `catalog_spawn_pool` + `catalog_pool_member` matching `0012`; test helpers or documented insert pattern for pool membership. |
+| T1.2.3 | API filter + lock + preview DTOs | 2 | **TECH-628** | Done (archived) | Shared types for list filters (`status`, `category`), optimistic-lock payload (`updated_at`), preview-diff result shape. |
+| T1.2.4 | DTO ↔ migration alignment | 2 | **TECH-629** | Done (archived) | Wire **`package.json` script** or **doc checklist** so DTO fields stay aligned with `0011`/`0012` SQL (no `drizzle-kit`; SQL is authoritative). |
+
+#### §Stage Closeout Plan
+
+> Stage 1.2 closeout applied inline with ship-stage Pass 2 — **TECH-626**–**TECH-629** archived to `ia/backlog-archive/`, specs deleted, table flipped **Done (archived)**; no glossary/rule migrations.
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: "TECH-626"
+  title: "Core catalog DTOs (0011)"
+  priority: high
+  notes: |
+    Hand-written TS types in `web/types/api/catalog*.ts` for 0011 tables (`catalog_asset`, `catalog_sprite`,
+    `catalog_asset_sprite`, `catalog_economy`) matching `db/migrations/0011_catalog_core.sql`. No Drizzle.
+    Shapes for join used by planned `GET /api/catalog/assets/:id`. **Architecture audit 2026-04-22** path.
+  depends_on:
+    - TECH-612
+  related: []
+  stub_body:
+    summary: |
+      Type the four core catalog tables for Next handlers using explicit interfaces/types; column alignment to
+      0011 SQL; document FK relationships in JSDoc or narrow helper types (no ORM).
+    goals: |
+      1. DTO field names and nullability match 0011; no silent drift.
+      2. Join / composite type for get-by-id route documented for Stage 1.3.
+      3. `npm run validate:web` passes for touched `web/` files.
+    systems_map: |
+      - `web/types/api/` — `catalog*.ts`
+      - `db/migrations/0011_catalog_core.sql`
+      - `docs/architecture-audit-handoff-2026-04-22.md` Row 2
+    impl_plan_sketch: |
+      ### Phase 1 — Core DTOs
+      - [ ] Add exported types; barrel file if project uses one.
+      - [ ] Spot-check every `0011` column; Decision Log for intentional omissions.
+- reserved_id: "TECH-627"
+  title: "Pool DTOs (0012)"
+  priority: high
+  notes: |
+    Hand-written types for `catalog_spawn_pool` + `catalog_pool_member` per `0012_catalog_spawn_pools.sql`.
+    Test insert pattern or small helper. **Depends on** **TECH-615** (0012 DDL) archive.
+  depends_on:
+    - TECH-615
+  related: []
+  stub_body:
+    summary: |
+      Pool + member row types with `weight` and `catalog_asset` FK; enable typed tests without Drizzle.
+    goals: |
+      1. Types match 0012.
+      2. Documented test insert or factory for membership rows.
+      3. `validate:web` green.
+    systems_map: |
+      - `web/types/api/` — pool DTOs
+      - `db/migrations/0012_catalog_spawn_pools.sql`
+    impl_plan_sketch: |
+      ### Phase 1 — Pool DTOs
+      - [ ] Export pool + member interfaces; link to `catalog_asset` id type from TECH-626.
+      - [ ] Optional test helper; routes stay in 1.3.
+- reserved_id: "TECH-628"
+  title: "API filter + lock + preview DTOs"
+  priority: medium
+  notes: |
+    List filters, optimistic-lock bodies, preview-diff JSON types — shared under `web/types/api/`; Stage 1.3
+    imports. Aligns with **TECH-612**-era column semantics; no Drizzle inference.
+  depends_on:
+    - TECH-612
+  related: []
+  stub_body:
+    summary: |
+      Stabilize filter / body / response types for CRUD + 409 + preview-diff.
+    goals: |
+      1. Filter + status vocabulary match exploration.
+      2. Preview-diff type JSON-serializable.
+      3. No route files in this task.
+    systems_map: |
+      - `web/types/api/`
+    impl_plan_sketch: |
+      ### Phase 1 — API DTOs
+      - [ ] Add shared request/response + preview types.
+      - [ ] Glossary: cents + status enums.
+- reserved_id: "TECH-629"
+  title: "DTO ↔ migration alignment"
+  priority: medium
+  notes: |
+    Script or doc so `web/types/api/catalog*.ts` stays aligned with `0011`/`0012` SQL. No `drizzle-kit`.
+    May add root `package.json` script (e.g. `rg`/AST check) or manual checklist in spec §7 + `web/README.md`.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |
+      One owner process for DTO vs migration drift (CI or documented human gate).
+    goals: |
+      1. Clear validation story without reintroducing Drizzle.
+      2. No conflicting npm script names.
+    systems_map: |
+      - `package.json` (root)
+      - `web/package.json`
+      - `db/migrations/0011_catalog_core.sql`, `db/migrations/0012_catalog_spawn_pools.sql`
+    impl_plan_sketch: |
+      ### Phase 1 — Alignment policy
+      - [ ] Audit existing `validate:web` / `validate:all`; add script or doc gap-fill.
+      - [ ] If doc-only: §7 checklist + `web/README.md` link.
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
+
+> **Recheck 2026-04-22 (Stage 1.2):** `TECH-626`–`TECH-629` — §1/§2 vs task **Intent**; §7 phases; §8 acceptance; §Plan Digest; frontmatter `phases:`; DTO / no-Drizzle lock vs `docs/architecture-audit-handoff-2026-04-22.md`. Drift candidates: none.
 
 #### Stage 1.3 — Next `/api/catalog/*` routes
 
