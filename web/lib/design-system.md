@@ -171,6 +171,16 @@ The extensions doc records pilot approval of **`--raw-blue` / info role** and se
 - Red status chip: contrast flag in handoff — evaluate `#c02828` or dark foreground if AA-normal is required on small text.
 - Ultra density: row height may fall below WCAG 2.2 target size — document as power-user mode if policy requires 44px minimum.
 
+### D6 — Asset pipeline decision (S-CD3, Stage 26)
+
+| Category | Storage | Rationale |
+| --- | --- | --- |
+| Brand logos, hero art, pillar scenes | **`public/` static SVG** under `web/public/design/*.svg` | Vercel CDN cache + indexable URLs; theme binds via `style` + `--ds-*` (and fallbacks) so files stay palette-aligned when **inlined** in React/MDX. |
+| 13-glyph **TIcon** media family | **Inline React** in `web/components/console/icons/TIcon.tsx` | `currentColor` + app CSS; no separate HTTP fetch; matches App Router colocation. |
+| Sprite sheet (single raster/vector bundle) | **Rejected** for default path | No stock sprite pipeline in App Router; would add a build step. Revisit only if a bundler plugin becomes canonical. |
+
+**`web/public/design/` filename convention (Stage 26 Exit):** `logomark.svg`, `wordmark.svg`, `lettermark.svg`, `strapline-lockup.svg`, `hero-art.svg`, `pillar-planet.svg`, `pillar-signal.svg`, `pillar-mixer.svg`, `pillar-radar.svg`, `pillar-tape.svg`. Source traces: `web/design-refs/step-8-console/src/console-assets.jsx` (CD bundle, read-only).
+
 ### Asset manifest (abbrev.)
 
 The handoff §6 maps each bundle file to suggested Next.js destinations (`components/console/*`, `app/*` routes, `public/fonts`, etc.). Prototype-only HTML entries are reference-only.
