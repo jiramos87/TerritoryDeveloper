@@ -171,7 +171,7 @@ function parseArgs(argv: string[]) {
   let cdPalettePath = DEFAULT_CD_PALETTE;
   let lockedPalettePath = DEFAULT_LOCKED_PALETTE;
   let driftPath = DEFAULT_DRIFT_OUT;
-  let skipDrift = true;
+  let skipDrift = false;
 
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -185,17 +185,19 @@ function parseArgs(argv: string[]) {
       lockedPalettePath = path.resolve(REPO_ROOT, argv[++i]);
     } else if (a === '--drift-out' && argv[i + 1]) {
       driftPath = path.resolve(REPO_ROOT, argv[++i]);
-    } else if (a === '--with-drift') {
-      skipDrift = false;
+    } else if (a === '--no-drift') {
+      skipDrift = true;
     } else if (a === '--help' || a === '-h') {
       console.log(`Usage: npx tsx tools/scripts/extract-cd-tokens.ts [options]
 
   --out <file>          Write JSON map (default: stdout)
   --css <file>          CD colors_and_type.css (default: web/design-refs/.../colors_and_type.css)
   --cd-palette <file>   Optional CD palette.json (default: ds/palette.json if present)
-  --with-drift          Run drift pass: write .drift-report.md + exit 1 on mismatch
+  --no-drift            Skip drift report (JSON / extract-only)
   --drift-out <file>    Drift markdown path (default: web/design-refs/step-8-console/.drift-report.md)
   --locked-palette <f>  Locked palette for drift (default: web/lib/tokens/palette.json)
+
+Default: writes drift report + exits 1 when raws skew vs locked palette.
 `);
       process.exit(0);
     }
