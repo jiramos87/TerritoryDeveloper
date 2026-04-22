@@ -114,3 +114,47 @@ body {
   background-color: var(--color-bg-canvas);
   color: var(--color-text-primary);
 }
+
+/* Surface motion — Stage 23 (`docs/web-platform-post-mvp-extensions.md` Example 2 + duration tokens) */
+.ds-surface[data-motion="subtle"] {
+  transition:
+    opacity var(--ds-duration-subtle) ease-out,
+    transform var(--ds-duration-subtle) ease-out;
+  opacity: 0;
+  transform: translateY(4px);
+}
+.ds-surface[data-motion="subtle"][data-mounted="true"] {
+  opacity: 1;
+  transform: none;
+}
+.ds-surface[data-motion="gentle"] {
+  transition:
+    opacity var(--ds-duration-gentle) ease-out,
+    transform var(--ds-duration-gentle) ease-out;
+  opacity: 0;
+  transform: translateY(4px);
+}
+.ds-surface[data-motion="gentle"][data-mounted="true"] {
+  opacity: 1;
+  transform: none;
+}
+.ds-surface[data-motion="deliberate"] {
+  transition:
+    opacity var(--ds-duration-deliberate) ease-out,
+    transform var(--ds-duration-deliberate) ease-out;
+  opacity: 0;
+  transform: translateY(4px);
+}
+.ds-surface[data-motion="deliberate"][data-mounted="true"] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-surface[data-motion="subtle"],
+  .ds-surface[data-motion="gentle"],
+  .ds-surface[data-motion="deliberate"] {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
