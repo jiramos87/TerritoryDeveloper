@@ -1057,7 +1057,7 @@
 
 ### Stage 27 — Visual design layer / Full-flow screen port + port harness
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Port the full CD bundle screen flow per D4 lock (2026-04-18) — **all 4 production routes + 1 dev-only**: `ScreenLanding` → `/`, `ScreenDashboard` → `/dashboard`, `ScreenReleases` → `/dashboard/releases`, `ScreenDetail` → `/dashboard/releases/[releaseId]/progress`, `ScreenDesign` augmentation → `/design-system`. Stage 7.2 server-side fetcher contracts (`loadAllPlans`, `getReleasePlans`, `computePlanMetrics`, `buildPlanTree`, `deriveDefaultExpandedStepId`, `resolveRelease`) MUST be preserved — ports are presentation-layer only. Author the port harness as reusable `.jsx` → `.tsx` conversion notes + a localStorage-usage audit script so future CD bundle iterations can re-run the codemod mechanically. Per-screen schema diff gate (NB-CD2) enforces CD fixture shape vs loader output match before merge.
 
@@ -1079,13 +1079,182 @@
 
 | Task | Issue | Status | Intent |
 | --- | --- | --- | --- |
-| T27.1 | _pending_ | _pending_ | Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7. |
-| T27.2 | _pending_ | _pending_ | Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level="display">` on main title; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
-| T27.3 | _pending_ | _pending_ | Port CD `ScreenDashboard` → `web/app/dashboard/page.tsx`; summary bezels + heatmap + filters + step-tree per CD layout; wrap stat blocks in `<Surface tone="raised">` or `<Bezel>` per CD spec; replace raw `<h1>`/`<h2>` with `<Heading>`; preserve existing `PlanChart` + `FilterChips` + `DataTable` contracts; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green. |
-| T27.4 | _pending_ | _pending_ | Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx`; preserve Stage 7.2 server-side `resolveRelease` + registry calls; wrap in `<Rack>` + `<Bezel>` console chrome from Stage 8.4; replace CD `data.js` rollup call with existing registry read; per-screen schema diff documented in PR body; full-English user-facing labels unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
-| T27.5 | _pending_ | _pending_ | Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` flow verbatim; wrap in `<Rack>` + `<Bezel>`; `<PlanTree>` (TECH-352) Client island contract unchanged; reserved comment for `/rollout` sibling preserved (B1 guard); per-screen schema diff noted in PR body. |
-| T27.6 | _pending_ | _pending_ | Port CD `ScreenDesign` content augmentation into `web/app/(dev)/design-system/page.tsx` — absorb CD demo sections NOT already covered by Stage 8.2 T23.4 + Stage 8.4 T25.6 (color swatches matrix, motion stops demo, chrome wrap demo); de-duplicate against existing showcase content (NB-CD4); NODE_ENV guard + noindex preserved; unlinked from `Sidebar.tsx` (NB2). |
-| T27.7 | _pending_ | _pending_ | Capture Lighthouse baseline (LCP / CLS / TBT) on all 4 production routes (`localhost:4000/`, `/dashboard`, `/dashboard/releases`, `/dashboard/releases/full-game-mvp/progress`) BEFORE Phase 1 ports land (coordinate timing); after port, re-run Lighthouse; compare post-port scores against baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if regressed → flag in PR body + consider Surface motion downgrade on those routes; document schema diff (CD fixture shape vs loader output) per screen in PR body (NB-CD2); `npm run validate:web` green. |
+| T27.1 | **TECH-655** | Done | Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7. |
+| T27.2 | **TECH-656** | Done | Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level="display">` on main title; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
+| T27.3 | **TECH-657** | Done | Port CD `ScreenDashboard` → `web/app/dashboard/page.tsx`; summary bezels + heatmap + filters + step-tree per CD layout; wrap stat blocks in `<Surface tone="raised">` or `<Bezel>` per CD spec; replace raw `<h1>`/`<h2>` with `<Heading>`; preserve existing `PlanChart` + `FilterChips` + `DataTable` contracts; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green. |
+| T27.4 | **TECH-658** | Done | Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx`; preserve Stage 7.2 server-side `resolveRelease` + registry calls; wrap in `<Rack>` + `<Bezel>` console chrome from Stage 8.4; replace CD `data.js` rollup call with existing registry read; per-screen schema diff documented in PR body; full-English user-facing labels unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
+| T27.5 | **TECH-659** | Done | Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` flow verbatim; wrap in `<Rack>` + `<Bezel>`; `<PlanTree>` (TECH-352) Client island contract unchanged; reserved comment for `/rollout` sibling preserved (B1 guard); per-screen schema diff noted in PR body. |
+| T27.6 | **TECH-660** | Done | Port CD `ScreenDesign` content augmentation into `web/app/(dev)/design-system/page.tsx` — absorb CD demo sections NOT already covered by Stage 8.2 T23.4 + Stage 8.4 T25.6 (color swatches matrix, motion stops demo, chrome wrap demo); de-duplicate against existing showcase content (NB-CD4); NODE_ENV guard + noindex preserved; unlinked from `Sidebar.tsx` (NB2). |
+| T27.7 | **TECH-661** | Done | Capture Lighthouse baseline (LCP / CLS / TBT) on all 4 production routes (`localhost:4000/`, `/dashboard`, `/dashboard/releases`, `/dashboard/releases/full-game-mvp/progress`) BEFORE Phase 1 ports land (coordinate timing); after port, re-run Lighthouse; compare post-port scores against baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if regressed → flag in PR body + consider Surface motion downgrade on those routes; document schema diff (CD fixture shape vs loader output) per screen in PR body (NB-CD2); `npm run validate:web` green. |
+
+#### §Stage Closeout Plan
+
+> **Applied 2026-04-22 (ship-stage-main-session):** archived **TECH-655**…**TECH-661** to `ia/backlog-archive/`; removed temporary `ia/projects/TECH-655`…`TECH-661` specs; set Stage 27 table + Stage **Status** to **Final**; `materialize-backlog.sh` + `validate:all`.
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: ""
+  title: |-
+    Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7.
+  priority: medium
+  notes: |-
+    Audit script + design-system §7 port harness docs. tools/scripts + design-refs + web/lib.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.1: Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` refe…
+    goals: |-
+      1. Meet master-plan Intent for T27.1.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.1.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level="display">` on main title; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green.
+  priority: medium
+  notes: |-
+    Landing reskin from CD ScreenLanding. web/app/page.tsx + Rack/Bezel/Heading.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.2: Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level…
+    goals: |-
+      1. Meet master-plan Intent for T27.2.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.2.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Port CD `ScreenDashboard` → `web/app/dashboard/page.tsx`; summary bezels + heatmap + filters + step-tree per CD layout; wrap stat blocks in `<Surface tone="raised">` or `<Bezel>` per CD spec; replace raw `<h1>`/`<h2>` with `<Heading>`; preserve existing `PlanChart` + `FilterChips` + `DataTable` contracts; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green.
+  priority: medium
+  notes: |-
+    Dashboard reskin from CD ScreenDashboard. Preserve PlanChart, FilterChips, DataTable.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.3: Port CD `ScreenDashboard` → `web/app/dashboard/page.tsx`; summary bezels + heatmap + filters + step-tree per CD layout; …
+    goals: |-
+      1. Meet master-plan Intent for T27.3.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.3.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx`; preserve Stage 7.2 server-side `resolveRelease` + registry calls; wrap in `<Rack>` + `<Bezel>` console chrome from Stage 8.4; replace CD `data.js` rollup call with existing registry read; per-screen schema diff documented in PR body; full-English user-facing labels unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green.
+  priority: medium
+  notes: |-
+    Releases list port. Keep resolveRelease + registry; Rack/Bezel chrome.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.4: Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx…
+    goals: |-
+      1. Meet master-plan Intent for T27.4.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.4.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` flow verbatim; wrap in `<Rack>` + `<Bezel>`; `<PlanTree>` (TECH-352) Client island contract unchanged; reserved comment for `/rollout` sibling preserved (B1 guard); per-screen schema diff noted in PR body.
+  priority: medium
+  notes: |-
+    Release detail / progress port. Preserve loadAllPlans pipeline + PlanTree TECH-352 contract.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.5: Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` +…
+    goals: |-
+      1. Meet master-plan Intent for T27.5.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.5.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Port CD `ScreenDesign` content augmentation into `web/app/(dev)/design-system/page.tsx` — absorb CD demo sections NOT already covered by Stage 8.2 T23.4 + Stage 8.4 T25.6 (color swatches matrix, motion stops demo, chrome wrap demo); de-duplicate against existing showcase content (NB-CD4); NODE_ENV guard + noindex preserved; unlinked from `Sidebar.tsx` (NB2).
+  priority: medium
+  notes: |-
+    Design-system page augmentation from CD ScreenDesign. De-dupe NB-CD4; NODE_ENV guard.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.6: Port CD `ScreenDesign` content augmentation into `web/app/(dev)/design-system/page.tsx` — absorb CD demo sections NOT al…
+    goals: |-
+      1. Meet master-plan Intent for T27.6.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.6.
+      - [ ] validate:web.
+- reserved_id: ""
+  title: |-
+    Capture Lighthouse baseline (LCP / CLS / TBT) on all 4 production routes (`localhost:4000/`, `/dashboard`, `/dashboard/releases`, `/dashboard/releases/full-game-mvp/progress`) BEFORE Phase 1 ports land (coordinate timing); after port, re-run Lighthouse; compare post-port scores against baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if regressed → flag in PR body + consider Surface motion downgrade on those routes; document schema diff (CD fixture shape vs loader output) per screen in PR body (NB-CD2); `npm run validate:web` green.
+  priority: medium
+  notes: |-
+    Lighthouse baseline + post-port compare on 4 routes. NB-CD2 schema diff in PR.
+  depends_on: []
+  related: []
+  stub_body:
+    summary: |-
+      Stage 27 T27.7: Capture Lighthouse baseline (LCP / CLS / TBT) on all 4 production routes (`localhost:4000/`, `/dashboard`, `/dashboard/r…
+    goals: |-
+      1. Meet master-plan Intent for T27.7.
+      2. npm run validate:web green.
+      3. Preserve locked D4/D7 server contracts where applicable.
+    systems_map: |-
+      web/ App Router pages, design-refs bundle read-only, tools/scripts when task touches audit harness.
+    impl_plan_sketch: |-
+      ### Phase 1 — Implement
+      
+      - [ ] Execute per master-plan Intent T27.7.
+      - [ ] validate:web.
+```
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 
@@ -1214,6 +1383,159 @@
 - Phase 2 — E2E suite consolidation + final validate gate.
 
 **Tasks:** _pending_ — materialize via `/stage-decompose` when Step 9 opens.
+
+---
+
+### Stage 34 — Catalog composite authoring / Pools tree CRUD (supersedes Stage 32)
+
+**Status:** Draft (tasks _pending_ — not yet filed; Step 10 opens only when grid-asset-visual-registry Step 5 Stage 5.1 Final — pools self-ref tree + composite_type schemas shipped)
+
+**Objectives:** Ship the pools-tree admin surface at `/admin/catalog/pools` that supersedes the Stage-32 flat pool list. Consumes grid-asset-visual-registry Stage 5.1 `/api/catalog/pools` endpoints (tree read, create, move, retire) + MCP `catalog_pool_*` authoring tools (read-only). Renders the self-ref `parent_pool_id` hierarchy with parent picker, cycle-prevention validator, and member-weight inline edit.
+
+**Exit:**
+
+- `web/app/admin/catalog/pools/page.tsx` RSC: recursive pools tree view (root pools + nested children via `parent_pool_id`); collapsible `<Surface tone="raised">` nodes; member count + weight sum preview per node. Supersedes Stage 32 flat-list layout (L9).
+- `web/app/admin/catalog/pools/[id]/page.tsx` RSC + Client island: pool detail with parent picker (catalog-pool combobox, disallowing self + descendants via client-side cycle check), member list with inline `weight` edit + add/remove member flow (catalog-asset picker), retire action.
+- Create-pool modal at `/admin/catalog/pools/new`: form fields (name, parent picker, description, initial members[]); POST transactional; optimistic-lock via `updated_at` round-trip (L13).
+- Cycle-prevention validator: client-side precheck on parent picker (fetches full ancestors via `GET /api/catalog/pools/:id/ancestors`); server validates on PATCH and rejects with typed 422.
+- Sidebar `LINKS` entry updated: `{ href: '/admin/catalog/pools', label: 'Pools', Icon: TreePine }` under Admin group (Stage 38).
+- `npm run validate:web` green; Playwright route spec covers tree render + create child + move + cycle-reject + weight edit.
+- Phase 1 — Tree RSC + ancestor resolver + sidebar link.
+- Phase 2 — Detail RSC + parent picker + member editor + create modal.
+- Phase 3 — Cycle-prevention + retire + playwright coverage.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T34.1 | _pending_ | _pending_ | Author `web/app/admin/catalog/pools/page.tsx` RSC — fetch `GET /api/catalog/pools?shape=tree` (returns nested `children[]`); render via `<PoolNode>` recursive client component in `web/components/catalog/PoolNode.tsx` (collapsible `<Surface tone="raised">` header with name + member count + weight sum; children render recursively); `<Rack>` frame + `<Breadcrumb>` Dashboard › Admin › Catalog › Pools; auth gate via `web/proxy.ts` matcher (already widened in Stage 30). Add sidebar `LINKS` entry under Admin group. `npm run validate:web` green. |
+| T34.2 | _pending_ | _pending_ | Author `web/app/admin/catalog/pools/[id]/page.tsx` RSC — joined pool + members + parent_id view; members rendered in `<DataTable>` with inline `weight` edit Client island (PATCH `/api/catalog/pools/:id/members/:memberId` with `updated_at` round-trip; 409 surfaces conflict UI per L13); add/remove member flow via `<CatalogAssetPicker>` combobox modal; retire action modal (confirm + POST `/api/catalog/pools/:id/retire`). |
+| T34.3 | _pending_ | _pending_ | Author `web/app/admin/catalog/pools/new/page.tsx` Client island — create form: name, parent picker (`<CatalogPoolPicker>` combobox, fetches `GET /api/catalog/pools?shape=flat`), description, initial members[] (optional); POST transactional; redirect to detail on 201; surface field-level validation errors. |
+| T34.4 | _pending_ | _pending_ | Author `web/components/catalog/CatalogPoolPicker.tsx` Client combobox — async-search over `GET /api/catalog/pools?shape=flat&q=`; when used as parent picker, exclude self + descendants via client-side precheck (fetch `GET /api/catalog/pools/:id/ancestors` when editing; derive descendant set from cached tree when creating); render excluded items with tooltip "would create cycle". |
+| T34.5 | _pending_ | _pending_ | Author Playwright spec `web/tests/e2e/admin-catalog-pools.spec.ts` — covers: (a) tree renders root + children (b) create child pool under existing parent (c) move pool to new parent via edit (d) cycle-reject: picking self or descendant as parent surfaces tooltip + disables submit (e) inline weight edit round-trips + 409 conflict replay (f) retire flow. `npm run validate:web` + `npm run validate:e2e` green. |
+
+---
+
+### Stage 35 — Catalog composite authoring / Composite-type schema admin + panels CRUD
+
+**Status:** Draft (tasks _pending_ — not yet filed; opens only when Stage 34 Final + grid-asset-visual-registry Step 5 Stage 5.2 Final — panels + buttons tables shipped)
+
+**Objectives:** Ship (a) read-only composite-type listing at `/admin/catalog/types` (types are seeded via migration not via web UI at MVP; admin view is diagnostic only) and (b) full CRUD for panels at `/admin/catalog/panels` consuming `/api/catalog/panels` + `/api/catalog/composite-types`. Panel forms resolve the composite-type JSON schema dynamically via ajv and render per-type fields (L5).
+
+**Exit:**
+
+- `web/app/admin/catalog/types/page.tsx` RSC: list `catalog_composite_type` rows with `slug` + `props_schema` preview (collapsible JSON); read-only — no create/edit surface at MVP (seed-only).
+- `web/app/admin/catalog/panels/page.tsx` RSC: list view with `composite_type` filter, status filter; wraps rows in `<DataTable>`; `<Rack>` + `<Breadcrumb>` Dashboard › Admin › Catalog › Panels.
+- `web/app/admin/catalog/panels/[id]/page.tsx` RSC + Client island: joined panel + inline-buttons view; edit form rebuilds per-type props fields dynamically from `props_schema` (via `<DynamicFormFromSchema>` helper); PATCH with `updated_at` optimistic lock (L13).
+- `web/app/admin/catalog/panels/new/page.tsx` Client island: two-step form (1) pick `composite_type` (2) fill schema-driven fields + buttons[]; POST transactional (panel + inline buttons in one call — matches Stage 5.2 transactional endpoint).
+- `<DynamicFormFromSchema>` helper in `web/components/catalog/DynamicFormFromSchema.tsx`: consumes a JSON-schema object + initial values + onChange; renders primitives (string/number/boolean/enum/array-of-primitives); ajv-compiled client validator runs on submit; errors surface inline.
+- Sidebar `LINKS` entries added: `Panels`, `Types (diagnostic)` under Admin group.
+- `npm run validate:web` green; Playwright spec covers panel list + create (with schema-driven form) + edit + 409 conflict.
+- Phase 1 — Composite-type diagnostic list + `<DynamicFormFromSchema>` helper.
+- Phase 2 — Panels list + detail RSC + edit Client island.
+- Phase 3 — Panels create (two-step) + playwright coverage.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T35.1 | _pending_ | _pending_ | Author `web/components/catalog/DynamicFormFromSchema.tsx` Client helper — props: `{ schema: JSONSchema7, value: Record<string, unknown>, onChange: (v) => void, errors?: Record<string, string[]> }`; recursively render fields: `string` → `<input type=text>`, `number`/`integer` → `<input type=number>`, `boolean` → checkbox, `enum` → `<select>`, `array` of primitives → chip list, `object` → nested group; compile ajv validator on schema change (memoized); emit validation errors to parent on submit. Unit test table: 6 shape variants (flat string, enum, numeric range, boolean, array-of-string, nested object). |
+| T35.2 | _pending_ | _pending_ | Author `web/app/admin/catalog/types/page.tsx` RSC — fetch `GET /api/catalog/composite-types`; render `<DataTable>` with columns: `slug` (e.g. `button.fire`, `panel.weapon`), `kind` (button \| panel \| prefab), `updated_at`, collapsible `props_schema` preview (pretty-printed JSON via `<Surface tone="sunk">`); read-only — emit banner "Types are seeded via migration; contact ops to add a new type" (L5 per-type schema is infra-owned at MVP). Add sidebar link under Admin group. |
+| T35.3 | _pending_ | _pending_ | Author `web/app/admin/catalog/panels/page.tsx` RSC — list view; `<DataTable>` columns: `slug`, `composite_type`, `buttons_count`, `status`, `updated_at`; filter bar: `composite_type` dropdown (fetched from `/api/catalog/composite-types`), status filter (`published` default). `<Rack>` frame + `<Breadcrumb>`; sidebar link. |
+| T35.4 | _pending_ | _pending_ | Author `web/app/admin/catalog/panels/[id]/page.tsx` RSC + `[id]/edit/page.tsx` Client island — detail view lists joined panel + inline buttons (rendered via `<DataTable>` sub-section); edit form uses `<DynamicFormFromSchema>` bound to the resolved `composite_type.props_schema`; buttons[] editor is a repeatable sub-form (add / remove / reorder); PATCH with `updated_at`; 409 → conflict UI (keep local / reload server); preview-diff button calls `POST /api/catalog/panels/:id/preview-diff` before commit. |
+| T35.5 | _pending_ | _pending_ | Author `web/app/admin/catalog/panels/new/page.tsx` Client island — two-step form: (Step 1) pick `composite_type` from combobox → loads `props_schema` via `/api/catalog/composite-types/:slug`; (Step 2) render `<DynamicFormFromSchema>` + inline buttons[] repeatable sub-form; submit POST transactional (panel + buttons in one call — matches Stage 5.2 endpoint); redirect to detail on 201. |
+| T35.6 | _pending_ | _pending_ | Author Playwright spec `web/tests/e2e/admin-catalog-panels.spec.ts` — covers: (a) types diagnostic list renders with schema preview (b) panels list with type filter (c) create panel: step-1 pick type, step-2 schema-driven form + add 2 buttons, submit (d) edit panel: field-level validation errors surface from ajv (e) 409 conflict replay on edit. `npm run validate:web` + `npm run validate:e2e` green. |
+
+---
+
+### Stage 36 — Catalog composite authoring / Buttons + prefabs CRUD
+
+**Status:** Draft (tasks _pending_ — not yet filed; opens only when Stage 35 Final + grid-asset-visual-registry Step 5 Stage 5.3 Final — prefabs table shipped)
+
+**Objectives:** Ship standalone buttons management (for reusable buttons that aren't inline under a panel) at `/admin/catalog/buttons` and prefabs management at `/admin/catalog/prefabs`. Both surfaces reuse `<DynamicFormFromSchema>` (Stage 35 T35.1) for per-type field rendering. Prefabs bundle a panel-ref + button-refs + layout hints per Stage 5.3 schema.
+
+**Exit:**
+
+- `web/app/admin/catalog/buttons/page.tsx` RSC: list view with `composite_type` filter (`button.*` types only), status filter; `<DataTable>` rows; `<Rack>` + `<Breadcrumb>`.
+- `web/app/admin/catalog/buttons/[id]/page.tsx` RSC + edit Client island: schema-driven form via `<DynamicFormFromSchema>` bound to button's `composite_type.props_schema`; PATCH with `updated_at`; 409 conflict UI.
+- `web/app/admin/catalog/buttons/new/page.tsx` Client island: two-step form (pick button type → schema-driven fields); POST transactional; redirect to detail.
+- `web/app/admin/catalog/prefabs/page.tsx` RSC: list view with `composite_type` filter (`prefab.*` types only), status filter; `<DataTable>` rows.
+- `web/app/admin/catalog/prefabs/[id]/page.tsx` RSC + edit Client island: prefab detail shows referenced panel + referenced buttons[] + layout hints; edit form includes panel picker + button pickers (multi) + inline layout JSON editor; PATCH with `updated_at`.
+- `web/app/admin/catalog/prefabs/new/page.tsx` Client island: two-step form (pick prefab type → schema-driven fields + panel ref + button refs); POST.
+- Sidebar `LINKS` entries added: `Buttons`, `Prefabs` under Admin group.
+- `npm run validate:web` green; Playwright spec covers button + prefab CRUD happy paths + 409.
+- Phase 1 — Buttons list + detail + create.
+- Phase 2 — Prefabs list + detail + create (with panel/button ref pickers).
+- Phase 3 — Playwright coverage + cross-ref integrity checks.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T36.1 | _pending_ | _pending_ | Author `web/app/admin/catalog/buttons/page.tsx` RSC + `[id]/page.tsx` + `[id]/edit/page.tsx` Client island — list view with `composite_type` filter constrained to `button.*` slugs; detail + edit reuses `<DynamicFormFromSchema>` bound to button's `composite_type.props_schema`; PATCH with `updated_at` optimistic-lock; preview-diff panel. |
+| T36.2 | _pending_ | _pending_ | Author `web/app/admin/catalog/buttons/new/page.tsx` Client island — two-step form (Step 1 pick `button.*` type; Step 2 schema-driven fields via `<DynamicFormFromSchema>`); POST transactional; redirect to detail on 201. Add sidebar link under Admin group. |
+| T36.3 | _pending_ | _pending_ | Author `web/app/admin/catalog/prefabs/page.tsx` RSC + `[id]/page.tsx` + `[id]/edit/page.tsx` Client island — list view with `composite_type` filter constrained to `prefab.*` slugs; detail view resolves referenced `panel_id` + `button_ids[]` via joined fetch; edit form includes `<CatalogPanelPicker>` (combobox over `/api/catalog/panels`) + `<CatalogButtonPicker>` multi-select + inline layout hints JSON editor (monaco lite textarea with ajv validation against layout schema from composite type). PATCH with `updated_at`. |
+| T36.4 | _pending_ | _pending_ | Author `web/app/admin/catalog/prefabs/new/page.tsx` Client island — two-step form (Step 1 pick `prefab.*` type; Step 2 schema-driven fields + `<CatalogPanelPicker>` + `<CatalogButtonPicker>` multi + layout JSON); POST transactional; redirect to detail on 201. |
+| T36.5 | _pending_ | _pending_ | Author Playwright spec `web/tests/e2e/admin-catalog-buttons-prefabs.spec.ts` — covers: (a) buttons list + type filter (b) button create with schema-driven fields (c) prefab create with panel + button refs picked (d) prefab edit updates panel ref + layout JSON (e) 409 conflict replay on both surfaces. `npm run validate:web` + `npm run validate:e2e` green. |
+
+---
+
+### Stage 37 — Catalog composite authoring / Snapshot management (list changes · diff · publish)
+
+**Status:** Draft (tasks _pending_ — not yet filed; opens only when Stage 36 Final + grid-asset-visual-registry Step 6 Stage 6.3 Final — publish + diff + reload broadcast shipped)
+
+**Objectives:** Ship the snapshot-operations surface at `/admin/catalog/snapshot` that visualizes pending changes since last publish, renders a human-readable diff, and exposes the publish action (label + timestamp bump only per L1). Consumes `/api/catalog/snapshot/meta` + `/api/catalog/snapshot/diff` + `/api/catalog/snapshot/publish` endpoints.
+
+**Exit:**
+
+- `web/app/admin/catalog/snapshot/page.tsx` RSC: snapshot-meta header (current label, last-publish timestamp, pending-changes count); `<DataTable>` of pending changes (entity kind · entity id · mutation kind · changed_at · author); empty state "snapshot is clean — no pending changes" when no diff.
+- `web/app/admin/catalog/snapshot/diff/page.tsx` RSC: full diff view — per-entity before/after panels (JSON tree diff with added/removed/modified highlighting); download-as-JSON action for debugging.
+- Publish modal: confirm dialog with label input (user-facing release label, default `auto-YYYY-MM-DD-HHmm`); POST `/api/catalog/snapshot/publish` with `updated_at` optimistic-lock (L13); success toast + page refresh; 409 conflict UI if another publisher raced.
+- Reload-broadcast banner: when `/api/catalog/snapshot/meta` returns a newer `updated_at` than the RSC-rendered one (polled via Client-side SSE or 30s poll), banner appears "snapshot published by {author} — reload".
+- Sidebar `LINKS` entry added: `Snapshot` under Admin group.
+- `npm run validate:web` green; Playwright spec covers pending-changes list + diff view + publish happy path + 409 race.
+- Phase 1 — Snapshot-meta RSC + pending-changes table + sidebar link.
+- Phase 2 — Diff view RSC + JSON tree diff component.
+- Phase 3 — Publish modal + reload broadcast + playwright.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T37.1 | _pending_ | _pending_ | Author `web/app/admin/catalog/snapshot/page.tsx` RSC — fetch `GET /api/catalog/snapshot/meta` (current label, timestamps, pending-changes count) + `GET /api/catalog/snapshot/changes` (paginated list of pending mutations); `<DataTable>` rendering: entity kind (asset/pool/panel/button/prefab) · entity id/slug · mutation (create/update/retire) · changed_at · author; empty state "snapshot clean — no pending changes since {lastPublishLabel}"; `<Rack>` + `<Breadcrumb>` Dashboard › Admin › Catalog › Snapshot. Add sidebar link. |
+| T37.2 | _pending_ | _pending_ | Author `web/app/admin/catalog/snapshot/diff/page.tsx` RSC + `web/components/catalog/JsonTreeDiff.tsx` Client component — RSC fetches `GET /api/catalog/snapshot/diff` (returns before/after trees per entity); `<JsonTreeDiff>` renders collapsible per-entity panels with line-level added (green) / removed (red) / modified (yellow) highlighting; download-as-JSON action exports the raw diff. |
+| T37.3 | _pending_ | _pending_ | Author `web/components/catalog/PublishModal.tsx` Client component — confirm dialog with label input (placeholder `auto-2026-04-22-1530`; default filled on open); POST `/api/catalog/snapshot/publish` with `{ label, updated_at }` (L13 optimistic-lock); success toast + `router.refresh()`; 409 conflict → render conflict UI with "another publish raced ({otherAuthor} at {timestamp}) — reload before retrying". Wire into Stage 37 snapshot page header. |
+| T37.4 | _pending_ | _pending_ | Author `web/components/catalog/SnapshotReloadBanner.tsx` Client component — polls `GET /api/catalog/snapshot/meta` every 30s (or subscribes to SSE `/api/catalog/snapshot/events` if Stage 6.3 ships the reload-broadcast channel); when observed `updated_at` exceeds page-rendered `updated_at` → renders sticky banner "Snapshot published by {author} — reload". Mounted in the admin-catalog layout so it appears on every `/admin/catalog/*` route. |
+| T37.5 | _pending_ | _pending_ | Author Playwright spec `web/tests/e2e/admin-catalog-snapshot.spec.ts` — covers: (a) pending-changes list renders after a catalog edit in an earlier step (b) diff view highlights added/removed/modified (c) publish flow: confirm modal → success toast → meta refreshed with new label (d) 409 race: publisher B publishes while publisher A has stale `updated_at` → 409 surfaced in modal (e) reload banner appears in second tab after publish. `npm run validate:web` + `npm run validate:e2e` green. |
+
+---
+
+### Stage 38 — Catalog composite authoring / Docs + nav polish + E2E
+
+**Status:** Draft (tasks _pending_ — not yet filed; opens only when Stages 34..37 Final)
+
+**Objectives:** Document the admin composite-authoring surface, finalize the collapsible `Admin` sidebar group with all Step-10 routes, extend the Playwright suite to cover cross-stage flows (create pool → add panel → publish snapshot → observe reload), and run the full validate gate.
+
+**Exit:**
+
+- `web/README.md` has `## Catalog composite authoring` section: route list (pools / types / panels / buttons / prefabs / snapshot), auth expectations, consumer contract vs `/api/catalog/*`, callout to `docs/asset-snapshot-mvp-exploration.md` §9 for Postgres schema.
+- `CLAUDE.md §6` route table extended with all `/admin/catalog/**` rows from Stages 34..37 (pools tree, types diagnostic, panels, buttons, prefabs, snapshot).
+- Sidebar groups the full Step-10 admin routes under the collapsible `Admin` section alongside Stage-30..33 routes; ordering: Assets · Pools · Types · Panels · Buttons · Prefabs · Snapshot; group collapse state persists via `localStorage` (matching existing sidebar-group behavior).
+- Cross-stage Playwright spec: full happy-path flow (seed → create pool → create panel referencing pool → create button under panel → snapshot diff shows 3 changes → publish → reload banner fires in second tab).
+- `npm run validate:web` + `npm run validate:e2e` green on preview deploy.
+- Phase 1 — Docs + CLAUDE.md route table extension.
+- Phase 2 — Sidebar grouping + collapse persistence.
+- Phase 3 — Cross-stage e2e + final validate gate.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T38.1 | _pending_ | _pending_ | Update `web/README.md` — add `## Catalog composite authoring` section: route list with one-line intent per route (pools tree · types diagnostic · panels · buttons · prefabs · snapshot); auth expectations (matcher `/admin/:path*`); consumer contract summary vs `/api/catalog/*` + MCP `catalog_*` parity note; callout to `docs/asset-snapshot-mvp-exploration.md` §9 for Postgres schema + §7.5 locked decisions L1..L15. |
+| T38.2 | _pending_ | _pending_ | Update `CLAUDE.md §6` web workspace route table — add rows for `/admin/catalog/pools`, `/admin/catalog/types`, `/admin/catalog/panels`, `/admin/catalog/buttons`, `/admin/catalog/prefabs`, `/admin/catalog/snapshot`; each row cites the Stage that ships it (Stage 34..37). |
+| T38.3 | _pending_ | _pending_ | Refactor `web/components/Sidebar.tsx` — group `Admin` routes (from Stages 30..33 + 34..37) under a collapsible section header; ordering: Assets · Pools · Types · Panels · Buttons · Prefabs · Snapshot; group collapse state persists via `localStorage` key `sidebar.admin.collapsed` (matching existing group behavior); ensure Dashboard + Public routes untouched (regression guard). |
+| T38.4 | _pending_ | _pending_ | Author cross-stage Playwright spec `web/tests/e2e/admin-catalog-crossflow.spec.ts` — seeds a known-clean snapshot state then: (a) create child pool under a root (b) create panel referencing composite type `panel.weapon` + pool (c) add 2 inline buttons with `button.fire` type (d) open snapshot page → assert 3 pending changes surfaced (e) open diff → assert added entries (f) publish → assert success toast + new label (g) open second tab → assert reload banner fires within 30s. |
+| T38.5 | _pending_ | _pending_ | Run `npm run validate:web` + `npm run validate:e2e` from repo root against preview deploy; fix any regressions introduced in Stages 34..37; report final exit codes in PR body + archive task rows via `/closeout`. |
 
 ---
 

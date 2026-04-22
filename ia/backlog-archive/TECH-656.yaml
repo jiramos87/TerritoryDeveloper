@@ -1,0 +1,29 @@
+id: TECH-656
+type: tech
+title: Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level="display">` on main title; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green.
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: Web platform — Stage 27 (full-flow screen port + port harness)
+spec: ia/projects/TECH-656.md
+files: []
+notes: |
+  Landing reskin from CD ScreenLanding. web/app/page.tsx + Rack/Bezel/Heading.
+acceptance: |
+  - [ ] 1. Meet master-plan Intent for T27.2.
+  - [ ] 2. npm run validate:web green.
+  - [ ] 3. Preserve locked D4/D7 server contracts where applicable.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-655
+  - TECH-657
+  - TECH-658
+  - TECH-659
+  - TECH-660
+  - TECH-661
+created: 2026-04-22
+raw_markdown: |
+  Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level — Stage 27 T27.2
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T27.2

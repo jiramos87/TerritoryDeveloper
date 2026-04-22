@@ -1,0 +1,29 @@
+id: TECH-655
+type: tech
+title: "Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7."
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: Web platform — Stage 27 (full-flow screen port + port harness)
+spec: ia/projects/TECH-655.md
+files: []
+notes: |
+  Audit script + design-system §7 port harness docs. tools/scripts + design-refs + web/lib.
+acceptance: |
+  - [ ] 1. Meet master-plan Intent for T27.1.
+  - [ ] 2. npm run validate:web green.
+  - [ ] 3. Preserve locked D4/D7 server contracts where applicable.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-656
+  - TECH-657
+  - TECH-658
+  - TECH-659
+  - TECH-660
+  - TECH-661
+created: 2026-04-22
+raw_markdown: |
+  Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` refe — Stage 27 T27.1
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T27.1
