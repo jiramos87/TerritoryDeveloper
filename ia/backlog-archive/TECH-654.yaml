@@ -1,0 +1,29 @@
+id: TECH-654
+type: tooling
+title: "Doc touch + validate:all"
+priority: medium
+status: closed
+section: "Stage 1.4 — MCP catalog_* tools + allowlist"
+spec: ia/projects/TECH-654.md
+files:
+  - docs/mcp-ia-server.md
+notes: |
+  Update `docs/mcp-ia-server.md` catalog for new tool names. Run **`npm run validate:all`**
+  green; fix any CI doc/schema drift hooks.
+acceptance: |
+  - [ ] `docs/mcp-ia-server.md` lists new `catalog_*` tools with one-line contract.
+  - [ ] `npm run validate:all` exit 0 (includes MCP tests + IA when applicable).
+  - [ ] No stale tool names in `verify-mcp` or index scripts.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-650
+  - TECH-651
+  - TECH-652
+  - TECH-653
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  Doc touch + validate:all — human MCP catalog + full repo validate gate.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.4.5

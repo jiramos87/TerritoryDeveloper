@@ -1,0 +1,30 @@
+id: TECH-650
+type: tooling
+title: "catalog_list + catalog_get"
+priority: high
+status: closed
+section: "Stage 1.4 — MCP catalog_* tools + allowlist"
+spec: ia/projects/TECH-650.md
+files:
+  - tools/mcp-ia-server/src/index.ts
+notes: |
+  MCP tools `catalog_list` + `catalog_get` in tools/mcp-ia-server. Thin layer over
+  published catalog data; default **published** only for agents; optional admin/draft
+  flag. Align with web catalog routes + `web/lib/db` patterns from Stage 1.3.
+acceptance: |
+  - [ ] Register `catalog_list` (pagination / filters) + `catalog_get` (id) in MCP server.
+  - [ ] Shared validation + error mapping (404 semantics) with HTTP routes.
+  - [ ] Unit-level coverage in package tests (mock or fixture DB) for happy + guard paths.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-651
+  - TECH-652
+  - TECH-653
+  - TECH-654
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  catalog_list + catalog_get — MCP list/get thin wrappers; published default for agents.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.4.1

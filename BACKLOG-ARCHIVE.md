@@ -1661,6 +1661,16 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-20)
 
+- [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)
+
+- [x] **TECH-651** — catalog_upsert + catalog_pool_* MCP tools (Stage 1.4 T1.4.2) (2026-04-22)
+
+- [x] **TECH-652** — MCP catalog tool unit tests (Stage 1.4 T1.4.3) (2026-04-22)
+
+- [x] **TECH-653** — caller-allowlist for catalog mutations (Stage 1.4 T1.4.4) (2026-04-22)
+
+- [x] **TECH-654** — docs/mcp-ia-server.md + validate:all (Stage 1.4 T1.4.5) (2026-04-22)
+
 - [x] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)
   - Type: infrastructure / read-model store
   - Files: `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new); references `Assets/Scripts/Managers/GameManagers/StatKey.cs`, `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs`

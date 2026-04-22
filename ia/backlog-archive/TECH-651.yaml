@@ -1,0 +1,31 @@
+id: TECH-651
+type: tooling
+title: "catalog_upsert + pool tools"
+priority: high
+status: closed
+section: "Stage 1.4 — MCP catalog_* tools + allowlist"
+spec: ia/projects/TECH-651.md
+files:
+  - tools/mcp-ia-server/src/index.ts
+  - web/types/api/catalog-asset.ts
+notes: |
+  Implement `catalog_upsert` and minimal `catalog_pool_*` per grid exploration §8.3.
+  Server-side payload validation; match Stage 1.2 DTOs. Coordinate error shapes with
+  TECH-650 list/get.
+acceptance: |
+  - [ ] `catalog_upsert` tool with schema validate + transaction boundaries.
+  - [ ] `catalog_pool_*` minimal surface (list/get/create) as per master plan §8.3.
+  - [ ] Package tests for validation failures + one happy path.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-650
+  - TECH-652
+  - TECH-653
+  - TECH-654
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  catalog_upsert + pool tools — mutation MCP tools; validate payloads against DTOs.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.4.2

@@ -411,7 +411,7 @@
 
 #### Stage 1.4 — MCP `catalog_*` tools + allowlist
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Expose catalog operations as **typed MCP tools**; update **`caller-allowlist.ts`** for mutation classes per repo policy.
 
@@ -422,18 +422,18 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Tool implementations.
-- [ ] Phase 2 — Tests + allowlist + docs index.
+- [x] Phase 1 — Tool implementations.
+- [x] Phase 2 — Tests + allowlist + docs index.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.4.1 | catalog_list + catalog_get | 1 | _pending_ | _pending_ | Thin wrappers over HTTP or shared DB layer; enforce **published** default for agents unless flag set. |
-| T1.4.2 | catalog_upsert + pool tools | 1 | _pending_ | _pending_ | Implement **`catalog_upsert`** + minimal **`catalog_pool_*`** per §8.3; validate payloads server-side. |
-| T1.4.3 | MCP unit tests | 1 | _pending_ | _pending_ | Extend `tools/mcp-ia-server` tests with fixture DB or mocked fetch; cover dry-run flags if exposed here. |
-| T1.4.4 | caller-allowlist updates | 2 | _pending_ | _pending_ | Edit `caller-allowlist.ts` — classify create/update vs delete guarded; follow existing TECH-506 patterns. |
-| T1.4.5 | Doc touch + validate:all | 2 | _pending_ | _pending_ | Update human MCP catalog if CI requires; run **`npm run validate:all`** green. |
+| T1.4.1 | catalog_list + catalog_get | 1 | **TECH-650** | Done | Thin wrappers over HTTP or shared DB layer; enforce **published** default for agents unless flag set. |
+| T1.4.2 | catalog_upsert + pool tools | 1 | **TECH-651** | Done | Implement **`catalog_upsert`** + minimal **`catalog_pool_*`** per §8.3; validate payloads server-side. |
+| T1.4.3 | MCP unit tests | 1 | **TECH-652** | Done | Extend `tools/mcp-ia-server` tests with fixture DB or mocked fetch; cover dry-run flags if exposed here. |
+| T1.4.4 | caller-allowlist updates | 2 | **TECH-653** | Done | Edit `caller-allowlist.ts` — classify create/update vs delete guarded; follow existing TECH-506 patterns. |
+| T1.4.5 | Doc touch + validate:all | 2 | **TECH-654** | Done | Update human MCP catalog if CI requires; run **`npm run validate:all`** green. |
 
 ### Step 2 — Snapshot export + Unity `GridAssetCatalog` + Zone S consumer
 

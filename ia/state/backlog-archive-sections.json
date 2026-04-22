@@ -1666,29 +1666,59 @@
     {
       "header": "## Completed (moved from BACKLOG.md, 2026-04-20)",
       "items": [
-    {
-      "type": "prose",
-      "lines": [
-        ""
-      ]
-    },
-    {
-      "type": "issue",
-      "id": "TECH-304",
-      "checklist_line": "- [x] **TECH-304** \u2014 Add `ColumnarStatsStore` \u2014 ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)",
-      "trailing_blanks": 1
-    },
-    {
-      "type": "issue",
-      "id": "TECH-303",
-      "checklist_line": "- [x] **TECH-303** \u2014 Add `IStatsReadModel` + `StatKey` \u2014 typed read-model contract (Stage 1.1 T1.1.1) (2026-04-21)",
-      "trailing_blanks": 1
-    },
-    {
-      "type": "issue",
-      "id": "TECH-524",
-      "trailing_blanks": 1
-    },
+        {
+          "type": "prose",
+          "lines": [
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-650",
+          "checklist_line": "- [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-651",
+          "checklist_line": "- [x] **TECH-651** — catalog_upsert + catalog_pool_* MCP tools (Stage 1.4 T1.4.2) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-652",
+          "checklist_line": "- [x] **TECH-652** — MCP catalog tool unit tests (Stage 1.4 T1.4.3) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-653",
+          "checklist_line": "- [x] **TECH-653** — caller-allowlist for catalog mutations (Stage 1.4 T1.4.4) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-654",
+          "checklist_line": "- [x] **TECH-654** — docs/mcp-ia-server.md + validate:all (Stage 1.4 T1.4.5) (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-304",
+          "checklist_line": "- [x] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-303",
+          "checklist_line": "- [x] **TECH-303** — Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1) (2026-04-21)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-524",
+          "trailing_blanks": 1
+        },
         {
           "type": "issue",
           "id": "TECH-525",
