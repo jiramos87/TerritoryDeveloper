@@ -8,4 +8,6 @@ Hand-written DTOs in `web/lib/catalog/build-catalog-snapshot.ts` and `web/types/
 - `assets`, `sprites`, `bindings`, `economy` — arrays; row shapes match 0011/0012 migrations
 - `importHygiene` — sorted by `texturePath`; PPU and pivot for allowlisted `TextureImporter` policy (see `docs/grid-asset-visual-registry-exploration.md` §6)
 
-**Stable bytes:** the CLI runs `stableJsonStringify` (sorted object keys, 2-space indent, trailing newline) so the same DB state yields the same file bytes.
+**Stable bytes:** the CLI runs `stableJsonStringify` (sorted object keys, 2-space indent, trailing newline) so the same DB state yields the same file bytes (except `generatedAt`, which is rewritten each run).
+
+**CI drift (`npm run catalog:export:check`):** compares stable JSON of everything except `generatedAt` so scheduled exports do not spuriously fail checks.

@@ -1,3 +1,4 @@
+import { stableJsonStringify } from "@/lib/catalog/stable-json-stringify";
 import type { LoadedCatalogForExport } from "@/lib/catalog/load-catalog-for-export";
 import type { CatalogAssetRow } from "@/types/api/catalog-asset";
 import type { CatalogAssetSpriteRow } from "@/types/api/catalog-asset-sprite";
@@ -53,4 +54,13 @@ export function buildCatalogSnapshot(
     economy: loaded.economy,
     importHygiene: buildImportHygiene(loaded.sprites),
   };
+}
+
+/**
+ * Stable JSON for drift checks: omits `generatedAt` (changes every export) so
+ * `catalog:export --check` compares catalog content only.
+ */
+export function snapshotForDriftCheck(s: CatalogSnapshotFile): string {
+  const { generatedAt: _t, ...rest } = s;
+  return stableJsonStringify(rest);
 }

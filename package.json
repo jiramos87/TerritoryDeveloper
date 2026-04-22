@@ -22,6 +22,7 @@
     "validate:backlog-yaml": "npx tsx tools/validate-backlog-yaml.ts",
     "validate:catalog-dto": "node tools/scripts/catalog-dto-migration-check.mjs",
     "catalog:export": "npm --prefix web run catalog:export",
+    "catalog:export:check": "npm --prefix web run catalog:export:check",
     "validate:parent-plan-locator": "node tools/validate-parent-plan-locator.mjs",
     "validate:frontmatter": "node tools/mcp-ia-server/scripts/check-frontmatter.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
