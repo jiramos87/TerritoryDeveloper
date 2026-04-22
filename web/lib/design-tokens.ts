@@ -62,3 +62,82 @@ export const accent = {
   water: raw.waterBlue,
   warm: raw.amber,
 } as const;
+
+/* CD-BUNDLE-TS-START */
+export const cdBundle = {
+  "raws": {
+    "black": "#0a0a0a",
+    "panel": "#1a1a1a",
+    "text": "#e8e8e8",
+    "red": "#d63838",
+    "amber": "#e8a33d",
+    "grey-500": "#6a6a6a",
+    "green": "#3a9b4a",
+    "blue": "#4a7bc8"
+  },
+  "semantic": {
+    "--bg-canvas": "var(--raw-black)",
+    "--bg-panel": "var(--raw-panel)",
+    "--text-primary": "var(--raw-text)",
+    "--text-muted": "var(--raw-grey-500)",
+    "--text-accent-warn": "var(--raw-amber)",
+    "--text-accent-critical": "var(--raw-red)",
+    "--text-accent-info": "var(--raw-blue)",
+    "--bg-status-done": "var(--raw-green)",
+    "--text-status-done-fg": "var(--raw-black)",
+    "--bg-status-progress": "var(--raw-amber)",
+    "--text-status-progress-fg": "var(--raw-black)",
+    "--bg-status-pending": "var(--raw-grey-500)",
+    "--text-status-pending-fg": "var(--raw-text)",
+    "--bg-status-blocked": "var(--raw-red)",
+    "--text-status-blocked-fg": "var(--raw-text)",
+    "--border-subtle": "rgba(232, 232, 232, 0.12)",
+    "--border-strong": "rgba(232, 232, 232, 0.24)",
+    "--overlay-panel": "rgba(26, 26, 26, 0.80)",
+    "--focus-ring": "2px solid var(--text-accent-warn)",
+    "--focus-ring-offset": "2px"
+  },
+  "motion": {
+    "instant": "80ms",
+    "subtle": "160ms",
+    "gentle": "280ms",
+    "deliberate": "480ms",
+    "easeEnter": "cubic-bezier(0.2, 0.0, 0.0, 1.0)",
+    "easeExit": "cubic-bezier(0.4, 0.0, 1.0, 1.0)"
+  },
+  "typeScale": {
+    "--font-sans": "\"Geist\", system-ui, -apple-system, Segoe UI, sans-serif",
+    "--font-mono": "\"Geist Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+    "--text-xs": "0.75rem",
+    "--lh-xs": "1rem",
+    "--text-sm": "0.875rem",
+    "--lh-sm": "1.25rem",
+    "--text-base": "1rem",
+    "--lh-base": "1.5rem",
+    "--text-lg": "1.125rem",
+    "--lh-lg": "1.75rem",
+    "--text-xl": "1.25rem",
+    "--lh-xl": "1.75rem",
+    "--text-2xl": "1.5rem",
+    "--lh-2xl": "2rem"
+  },
+  "spacing": {
+    "--sp-0": "0",
+    "--sp-1": "0.25rem",
+    "--sp-2": "0.5rem",
+    "--sp-3": "0.75rem",
+    "--sp-4": "1rem",
+    "--sp-6": "1.5rem",
+    "--sp-8": "2rem",
+    "--sp-12": "3rem",
+    "--radius-none": "0",
+    "--radius-sm": "2px",
+    "--radius-md": "4px",
+    "--radius-lg": "8px",
+    "--radius-pill": "9999px",
+    "--shadow-0": "none",
+    "--shadow-1": "0 1px 0 rgba(0,0,0,0.4)",
+    "--shadow-2": "0 2px 4px rgba(0,0,0,0.5)"
+  }
+} as const;
+/* CD-BUNDLE-TS-END */

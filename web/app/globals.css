@@ -98,6 +98,76 @@
   --ds-accent-terrain: #3a9b4a;
   --ds-accent-water: #38bdf8;
   --ds-accent-warm: #e8a33d;
+  /* CD-BUNDLE-START */
+  --ds-raw-black: #0a0a0a;
+  --ds-raw-panel: #1a1a1a;
+  --ds-raw-text: #e8e8e8;
+  --ds-raw-red: #d63838;
+  --ds-raw-amber: #e8a33d;
+  --ds-raw-grey-500: #6a6a6a;
+  --ds-raw-green: #3a9b4a;
+  --ds-raw-blue: #4a7bc8;
+  --ds-bg-canvas: #0a0a0a;
+  --ds-bg-panel: #1a1a1a;
+  --ds-text-primary: #e8e8e8;
+  --ds-text-muted: #6a6a6a;
+  --ds-text-accent-warn: #e8a33d;
+  --ds-text-accent-critical: #d63838;
+  --ds-text-accent-info: #4a7bc8;
+  --ds-bg-status-done: #3a9b4a;
+  --ds-text-status-done-fg: #0a0a0a;
+  --ds-bg-status-progress: #e8a33d;
+  --ds-text-status-progress-fg: #0a0a0a;
+  --ds-bg-status-pending: #6a6a6a;
+  --ds-text-status-pending-fg: #e8e8e8;
+  --ds-bg-status-blocked: #d63838;
+  --ds-text-status-blocked-fg: #e8e8e8;
+  --ds-border-subtle: rgba(232, 232, 232, 0.12);
+  --ds-border-strong: rgba(232, 232, 232, 0.24);
+  --ds-overlay-panel: rgba(26, 26, 26, 0.80);
+  --ds-focus-ring: 2px solid #e8a33d;
+  --ds-focus-ring-offset: 2px;
+  --ds-cd-duration-instant: 80ms;
+  --ds-cd-duration-subtle: 160ms;
+  --ds-cd-duration-gentle: 280ms;
+  --ds-cd-duration-deliberate: 480ms;
+  --ds-cd-easeenter: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ds-cd-easeexit: cubic-bezier(0.4, 0.0, 1.0, 1.0);
+  --ds-cd-font-sans: "Geist", system-ui, -apple-system, Segoe UI, sans-serif;
+  --ds-cd-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ds-cd-text-xs: 0.75rem;
+  --ds-cd-lh-xs: 1rem;
+  --ds-cd-text-sm: 0.875rem;
+  --ds-cd-lh-sm: 1.25rem;
+  --ds-cd-text-base: 1rem;
+  --ds-cd-lh-base: 1.5rem;
+  --ds-cd-text-lg: 1.125rem;
+  --ds-cd-lh-lg: 1.75rem;
+  --ds-cd-text-xl: 1.25rem;
+  --ds-cd-lh-xl: 1.75rem;
+  --ds-cd-text-2xl: 1.5rem;
+  --ds-cd-lh-2xl: 2rem;
+  --ds-cd-sp-0: 0;
+  --ds-cd-sp-1: 0.25rem;
+  --ds-cd-sp-2: 0.5rem;
+  --ds-cd-sp-3: 0.75rem;
+  --ds-cd-sp-4: 1rem;
+  --ds-cd-sp-6: 1.5rem;
+  --ds-cd-sp-8: 2rem;
+  --ds-cd-sp-12: 3rem;
+  --ds-cd-radius-none: 0;
+  --ds-cd-radius-sm: 2px;
+  --ds-cd-radius-md: 4px;
+  --ds-cd-radius-lg: 8px;
+  --ds-cd-radius-pill: 9999px;
+  --ds-cd-shadow-0: none;
+  --ds-cd-shadow-1: 0 1px 0 rgba(0,0,0,0.4);
+  --ds-cd-shadow-2: 0 2px 4px rgba(0,0,0,0.5);
+  /* CD-BUNDLE-END */
+
+
+
+
 }
 
 @media (prefers-reduced-motion: reduce) {
