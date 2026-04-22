@@ -271,3 +271,24 @@ body {
     animation: none;
   }
 }
+
+@keyframes ds-console-tape-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ds-console-tape-reel[data-spinning='true'] {
+  /* Period aligned with CD `console.css` `.reel`; token family: long-loop mechanical motion */
+  animation: ds-console-tape-spin 3s linear infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-console-tape-reel[data-spinning='true'] {
+    animation: none;
+  }
+}

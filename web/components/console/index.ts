@@ -7,3 +7,4 @@ export {
   type RackProps,
 } from './Rack';
 export { Screen, type ScreenProps, type ScreenTone } from './Screen';
+export { TapeReel, type TapeReelProps, type TapeReelSize } from './TapeReel';
