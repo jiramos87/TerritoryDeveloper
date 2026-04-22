@@ -9,6 +9,13 @@ Next.js 14+ App Router workspace inside the Territory Developer monorepo. Serves
 - **Hosting:** Vercel free tier. Build root `web/`. Deploy on push to `main`. Production URL: `https://web-nine-wheat-35.vercel.app`.
 - **MCP server** (`territory-ia`): stdio dev-only — NOT consumed by this web app.
 
+## Design System
+
+- **Spec:** [`web/lib/design-system.md`](lib/design-system.md) — type scale, spacing, motion, semantic aliases, component bindings.
+- **Primitives:** `Heading` (level-bound RSC typography) · `Prose` (MDX / article vertical rhythm) · `Surface` (tone, padding, motion panel).
+- **Showcase (dev only, unlisted):** [`app/(dev)/design-system/page.tsx`](app/(dev)/design-system/page.tsx) — local reference for `ds-*` and console chrome; not linked from production marketing routes.
+- **Tokens:** use `ds-*` classes backed by `--ds-*` in [`app/globals.css`](app/globals.css) (Tailwind v4 `@theme` / CSS custom properties). Do not add new theme keys to a legacy `tailwind.config.ts` for these surfaces.
+
 ## Claude Code — Vercel plugin
 
 Repo `.claude/settings.json` disables **vercel@claude-plugins-official** so Claude Code sessions do not inject the full Vercel marketplace skill list (large context cost). **Caveman** remains enabled in the same block. Re-enable locally, deploy commands, official links, and a skill-topic index: [`web/docs/claude-vercel-plugin.md`](docs/claude-vercel-plugin.md).
