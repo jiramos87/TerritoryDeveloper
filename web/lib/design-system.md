@@ -196,6 +196,11 @@ The extensions doc records pilot approval of **`--raw-blue` / info role** and se
 | `pillar-radar.svg` | `PillarRadar` |
 | `pillar-tape.svg` | `PillarTape` |
 
+#### §7.2 — Port harness (Stage 27)
+
+- jsx→tsx: explicit props; client-only `localStorage` inside `useEffect` on islands.
+- data: replace CD fixture rollups with Next loaders per D7 lock.
+
 ### Asset manifest (abbrev.)
 
 The handoff §6 maps each bundle file to suggested Next.js destinations (`components/console/*`, `app/*` routes, `public/fonts`, etc.). Prototype-only HTML entries are reference-only.
