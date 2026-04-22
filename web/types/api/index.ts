@@ -8,4 +8,5 @@ export * from "./catalog-asset-by-id";
 export * from "./catalog-asset-sprite";
 export * from "./catalog-economy";
 export * from "./catalog-enums";
+export * from "./catalog-pool";
 export * from "./catalog-sprite";
