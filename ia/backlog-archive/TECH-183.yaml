@@ -2,7 +2,8 @@ id: TECH-183
 type: infrastructure / editor integration (Tier 2)
 title: "`promote --edit` round-trip (Stage 1.4 Phase 4)"
 priority: medium
-status: open
+status: closed
+completed: \"2026-04-22\"
 section: Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 spec: ia/projects/TECH-183-sprite-gen-promote-edit-round-trip.md
 files:

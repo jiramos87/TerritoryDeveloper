@@ -2,7 +2,8 @@ id: TECH-181
 type: infrastructure / editor integration
 title: Aseprite binary resolver (Stage 1.4 Phase 4)
 priority: medium
-status: open
+status: closed
+completed: \"2026-04-22\"
 section: Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 spec: ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md
 files:

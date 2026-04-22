@@ -1,0 +1,40 @@
+id: TECH-678
+type: infrastructure / Python
+title: RegistryClient + promote HTTP contract tests (responses)
+priority: high
+status: closed
+completed: \"2026-04-22\"
+section: Stage 5 — Layer 5 Curation + registry catalog integration
+spec: ia/projects/TECH-678-sprite-gen-registry-client-tests.md
+files:
+  - tools/sprite-gen/tests/test_registry_client.py
+notes: |
+  `responses` / pytest: 200 create; 409 identical skip; 409 drift PATCH; 422; connection refused; `push=False` path issues no HTTP.
+acceptance: |
+  - [ ] All branches per master plan covered
+  - [ ] `pytest tools/sprite-gen/tests/test_registry_client.py` green
+  - [ ] `npm run validate:all` green
+depends_on:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-643
+  - TECH-644
+  - TECH-645
+depends_on_raw: TECH-640..645 (archived) — grid registry HTTP contract live
+related:
+  - TECH-674
+  - TECH-675
+  - TECH-676
+  - TECH-677
+  - TECH-679
+  - TECH-179
+  - TECH-180
+  - TECH-181
+  - TECH-182
+  - TECH-183
+created: 2026-04-22
+raw_markdown: |
+  TECH-678 — RegistryClient + promote HTTP contract tests (responses)
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T5.10

@@ -2,7 +2,8 @@ id: TECH-179
 type: infrastructure / Unity import
 title: Unity `.meta` writer + `curate.promote` (Stage 1.4 Phase 3)
 priority: medium
-status: open
+status: closed
+completed: \"2026-04-22\"
 section: Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 spec: ia/projects/TECH-179-sprite-gen-unity-meta-writer.md
 files:

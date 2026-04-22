@@ -8,18 +8,23 @@ and promotes approved sprites to `Assets/Sprites/Generated/` with Unity `.meta` 
 ## Usage
 
 ```bash
-# Render a single archetype
-python -m sprite_gen render <archetype>
+# Render a single archetype (run from tools/sprite-gen; package root is `src`)
+python -m src render <archetype>
 
 # Render all specs in specs/
-python -m sprite_gen render --all
+python -m src render --all
 
-# Override terrain field (flat works end-to-end; other slope ids pending Stage 1.4)
-python -m sprite_gen render <archetype> --terrain flat
-python -m sprite_gen render --all --terrain flat
+# Co-emit layered .aseprite files
+python -m src render <archetype> --layered
+
+# Promote a variant to Assets/Sprites/Generated/ (optional catalog push unless --no-push)
+python -m src promote out/<name>_v01.png --as <slug>
+
+# Reject variants under out/
+python -m src reject <archetype_stem> --yes
 ```
 
-Exit codes: 0 = success, 1 = spec/render error, 2 = bad argument.
+Exit codes: 0 = success, 1 = spec/render/promote error, 2 = bad argument, 4 = Aseprite missing (`promote --edit`), 5 = catalog push failure.
 
 ## Dependencies
 

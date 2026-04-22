@@ -667,46 +667,6 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 
-- [ ] **TECH-179** — Unity `.meta` writer + `curate.promote` (Stage 1.4 Phase 3)
-  - Type: infrastructure / Unity import
-  - Files: `tools/sprite-gen/src/unity_meta.py`, `tools/sprite-gen/src/curate.py`
-  - Spec: `ia/projects/TECH-179-sprite-gen-unity-meta-writer.md`
-  - Notes: `write_meta(png_path, canvas_h)` emits Unity YAML w/ uuid4 guid, PPU=64, `spritePivot=(0.5, 16/canvas_h)`, filterMode=Point, textureCompression=None, spriteMode=Single. `curate.promote(src_png, dest_name)` copies to `Assets/Sprites/Generated/{dest_name}.png` + writes sibling `.meta`. Guards against Unity auto-import resetting PPU/pivot (sprite-gen master plan §Do not).
-  - Acceptance: promote lands PNG + valid `.meta` w/ correct PPU/pivot/filter/compression; `pytest tools/sprite-gen/tests/test_unity_meta.py` green; `npm run validate:all` green.
-  - Depends on: none
-
-- [ ] **TECH-180** — `promote` / `reject` CLI (Stage 1.4 Phase 3)
-  - Type: infrastructure / CLI
-  - Files: `tools/sprite-gen/src/cli.py`
-  - Spec: `ia/projects/TECH-180-sprite-gen-promote-reject-cli.md`
-  - Notes: `promote out/X.png --as name` → `curate.promote()`; `reject {archetype}` → glob + delete `out/{archetype}_*.png`. Integration test covers promote → reject round-trip: assert promoted file in `Assets/Sprites/Generated/`, `out/` clean after reject.
-  - Acceptance: `promote` + `reject` subcommands green; integration test passes; `npm run validate:all` green.
-  - Depends on: **TECH-179**
-
-- [ ] **TECH-181** — Aseprite binary resolver (Stage 1.4 Phase 4)
-  - Type: infrastructure / editor integration
-  - Files: `tools/sprite-gen/src/aseprite_bin.py`, `tools/sprite-gen/config.toml`, `tools/sprite-gen/src/cli.py`
-  - Spec: `ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md`
-  - Notes: `find_aseprite_bin() → Path` probes: `$ASEPRITE_BIN` → `config.toml [aseprite] bin` → platform defaults (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, Steam path fallback). `AsepriteBinNotFoundError` → CLI exit 4 w/ install hint. Unit test mocks env + filesystem; asserts probe order.
-  - Acceptance: resolver probes in correct order; missing binary → exit 4 w/ hint; `pytest tools/sprite-gen/tests/test_aseprite_bin.py` green; `npm run validate:all` green.
-  - Depends on: none
-
-- [ ] **TECH-182** — Layered `.aseprite` emission (Stage 1.4 Phase 4)
-  - Type: infrastructure / editor integration (Tier 2)
-  - Files: `tools/sprite-gen/src/aseprite_io.py`, `tools/sprite-gen/src/compose.py`, `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/requirements.txt`
-  - Spec: `ia/projects/TECH-182-sprite-gen-layered-aseprite-emit.md`
-  - Notes: `write_layered_aseprite(dest, layers, canvas_size)` via `py_aseprite` (pin in requirements) — named layers stacked `foundation` (only when non-flat), `east`, `south`, `top`; transparent alpha per layer. `compose.py` keeps per-face buffers on `layered=True`. `cli.py render --layered` co-emits `.aseprite` + flat PNG (non-Aseprite users unblocked).
-  - Acceptance: `render --layered` emits `.aseprite` + flat PNG; layers present + named correctly; `pytest tools/sprite-gen/tests/test_aseprite_io.py` green; `npm run validate:all` green.
-  - Depends on: **TECH-181**
-
-- [ ] **TECH-183** — `promote --edit` round-trip (Stage 1.4 Phase 4)
-  - Type: infrastructure / editor integration (Tier 2)
-  - Files: `tools/sprite-gen/src/curate.py`, `tools/sprite-gen/src/cli.py`
-  - Spec: `ia/projects/TECH-183-sprite-gen-promote-edit-round-trip.md`
-  - Notes: `promote(src, dest_name, edit=False)` — when `.aseprite + edit`, shell-out `{aseprite_bin} --batch {src} --save-as {tmp}.png` (subprocess, check returncode), run existing PNG promote pipeline, cleanup tmp. `cli.py promote --edit` flag. Integration test: render --layered → mutate one layer pixel → promote --edit → assert flattened PNG + `.meta` exist + mutated pixel present.
-  - Acceptance: round-trip lands flattened PNG + `.meta` w/ preserved edits; missing Aseprite → exit 4 per TECH-181; `pytest tools/sprite-gen/tests/test_promote_edit.py` green (skip when bin absent); `npm run validate:all` green.
-  - Depends on: **TECH-181**, **TECH-182**
-
 ## Web platform lane
 
 Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 — legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 — nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 — UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 — D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 — multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16). Stage 5.1 closed 2026-04-16 — Postgres provider + auth library selection. TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16 (Neon free + roll-own JWT + sessions + `web/lib/db/client.ts` lazy driver wiring + `web/README.md §Portal` contributor doc landed). Stage 5.2 opened 2026-04-16 — 4 tasks filed (drizzle schema + `db:generate` script + 4 stub auth route handlers; no migrations run, no real auth flow — architecture-only per orchestrator §Step 5). Stage 5.3 closed 2026-04-17 — Phase 0 (TECH-269), Phase 1 (TECH-265 + TECH-266), Phase 2 (TECH-267 + TECH-268) all archived; presence-only cookie check w/ `DASHBOARD_AUTH_SKIP=1` local-dev bypass, no signature verify — architecture-only per orchestrator §Step 5. Next.js 16 middleware → proxy rename absorbed during TECH-268 smoke (see `ia/projects/web-platform-master-plan.md` §Step 5 Status).

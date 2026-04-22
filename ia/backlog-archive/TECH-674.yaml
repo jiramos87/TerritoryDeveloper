@@ -1,0 +1,41 @@
+id: TECH-674
+type: infrastructure / Python
+title: RegistryClient scaffold (sprite-gen → tg-catalog-api)
+priority: high
+status: closed
+completed: \"2026-04-22\"
+section: Stage 5 — Layer 5 Curation + registry catalog integration
+spec: ia/projects/TECH-674-sprite-gen-registry-client-scaffold.md
+files:
+  - tools/sprite-gen/src/registry_client.py
+  - tools/sprite-gen/requirements.txt
+notes: |
+  HTTP client for `tg-catalog-api` JSON. `create_asset` / `patch_asset` / `get_asset_by_slug`. Exceptions: `RegistryClientError` → `ConnectionError` / `ConflictError` / `ValidationError`. Add `requests` to requirements. Gate: TECH-640..645 archived (grid registry live).
+acceptance: |
+  - [ ] `RegistryClient` with timeout + JSON for POST/PATCH/GET
+  - [ ] Exception types match master plan; no CLI wiring required in this task
+  - [ ] `pytest` + `npm run validate:all` green
+depends_on:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-643
+  - TECH-644
+  - TECH-645
+depends_on_raw: TECH-640..645 (archived) — grid registry HTTP contract live
+related:
+  - TECH-675
+  - TECH-676
+  - TECH-677
+  - TECH-678
+  - TECH-679
+  - TECH-179
+  - TECH-180
+  - TECH-181
+  - TECH-182
+  - TECH-183
+created: 2026-04-22
+raw_markdown: |
+  TECH-674 — RegistryClient scaffold (sprite-gen → tg-catalog-api)
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T5.6

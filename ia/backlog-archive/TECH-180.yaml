@@ -2,7 +2,8 @@ id: TECH-180
 type: infrastructure / CLI
 title: "`promote` / `reject` CLI (Stage 1.4 Phase 3)"
 priority: medium
-status: open
+status: closed
+completed: \"2026-04-22\"
 section: Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 spec: ia/projects/TECH-180-sprite-gen-promote-reject-cli.md
 files:

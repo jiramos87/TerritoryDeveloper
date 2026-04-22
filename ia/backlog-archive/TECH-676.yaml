@@ -1,0 +1,41 @@
+id: TECH-676
+type: infrastructure / Python
+title: Promote payload build + create/patch (409 drift)
+priority: high
+status: closed
+completed: \"2026-04-22\"
+section: Stage 5 — Layer 5 Curation + registry catalog integration
+spec: ia/projects/TECH-676-sprite-gen-promote-payload-push.md
+files:
+  - tools/sprite-gen/src/curate.py
+  - tools/sprite-gen/src/registry_client.py
+notes: |
+  After PNG + `.meta` write: `_build_catalog_payload` + `create_asset`. On 409: compare slug row — skip if identical, else `patch_asset` w/ `updated_at`; at most one retry. Other 4xx → surface exit 5 at CLI (later task can wire).
+acceptance: |
+  - [ ] Promote path calls registry when `push=True` and URL resolvable
+  - [ ] 409 idempotency and drift paths per master plan
+  - [ ] `pytest` for curate+mock client green
+depends_on:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-643
+  - TECH-644
+  - TECH-645
+depends_on_raw: TECH-640..645 (archived) — grid registry HTTP contract live
+related:
+  - TECH-674
+  - TECH-675
+  - TECH-677
+  - TECH-678
+  - TECH-679
+  - TECH-179
+  - TECH-180
+  - TECH-181
+  - TECH-182
+  - TECH-183
+created: 2026-04-22
+raw_markdown: |
+  TECH-676 — Promote payload build + create/patch (409 drift)
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T5.8

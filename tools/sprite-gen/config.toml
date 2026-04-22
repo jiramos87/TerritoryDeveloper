@@ -1,0 +1,5 @@
+# Optional local overrides for sprite-gen (TECH-675 / TECH-181).
+# [catalog]
+# url = "http://localhost:3000"
+# [aseprite]
+# bin = "/Applications/Aseprite.app/Contents/MacOS/aseprite"

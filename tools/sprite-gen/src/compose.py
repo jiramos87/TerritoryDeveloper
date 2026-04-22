@@ -193,3 +193,59 @@ def compose_sprite(spec: dict) -> Image.Image:
         fn(**kwargs)  # type: ignore[operator]
 
     return canvas
+
+
+def compose_layers(spec: dict) -> tuple[dict[str, Image.Image], tuple[int, int]]:
+    """Per-face RGBA layers for layered `.aseprite` export (TECH-182)."""
+    fx, fy = spec["footprint"]
+    composition = spec.get("composition", [])
+    slope_id: str = spec.get("terrain", "flat")
+
+    palette = load_palette(spec["palette"])
+
+    if composition:
+        stack_extra_h = max(
+            int(entry.get("h", 0)) + int(entry.get("offset_z", 0))
+            for entry in composition
+        )
+    else:
+        stack_extra_h = 0
+
+    if slope_id != "flat":
+        corners = get_corner_z(slope_id)
+        lip = max(corners.values()) + 2
+    else:
+        lip = 0
+
+    extra_h = max(stack_extra_h, lip)
+    w_px, h_px = canvas_size(fx, fy, extra_h)
+    h_px = max(h_px, 64)
+    x0 = w_px // 2
+    y0 = h_px
+
+    layers: dict[str, Image.Image] = {
+        "top": Image.new("RGBA", (w_px, h_px), (0, 0, 0, 0)),
+        "south": Image.new("RGBA", (w_px, h_px), (0, 0, 0, 0)),
+        "east": Image.new("RGBA", (w_px, h_px), (0, 0, 0, 0)),
+    }
+
+    if slope_id != "flat":
+        foundation_layer = Image.new("RGBA", (w_px, h_px), (0, 0, 0, 0))
+        foundation_material: str = spec.get("foundation_material", "dirt")
+        iso_stepped_foundation(
+            canvas=foundation_layer,
+            x0=x0,
+            y0=y0,
+            fx=fx,
+            fy=fy,
+            slope_id=slope_id,
+            material=foundation_material,
+            palette=palette,
+        )
+        layers["foundation"] = foundation_layer
+
+    flat = compose_sprite(spec)
+    for face in ("top", "south", "east"):
+        layers[face] = flat.copy()
+
+    return layers, (w_px, h_px)

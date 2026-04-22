@@ -5,8 +5,10 @@ Entry: `python -m sprite_gen render {archetype}`
 
 Exit codes:
     0 — success
-    1 — spec missing / invalid YAML / schema validation error / NotImplementedError
+    1 — spec missing / invalid YAML / schema validation error / promote source missing
     2 — argparse user-error (bad flag value, etc.)
+    4 — Aseprite binary not found (promote --edit)
+    5 — registry HTTP / transport / unrecoverable catalog error
 """
 
 from __future__ import annotations
@@ -309,7 +311,11 @@ def _cmd_palette_import(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _render_one(archetype: str, terrain_override: Optional[str] = None) -> int:
+def _render_one(
+    archetype: str,
+    terrain_override: Optional[str] = None,
+    layered: bool = False,
+) -> int:
     """Load spec for *archetype*, optionally override terrain, render PNG variants.
 
     Args:
@@ -362,6 +368,19 @@ def _render_one(archetype: str, terrain_override: Optional[str] = None) -> int:
             relpath = out_file
         print(f"wrote {relpath}")
 
+        if layered:
+            from .aseprite_io import write_layered_aseprite
+            from .compose import compose_layers
+
+            layers, size = compose_layers(variant_spec)
+            ase_file = _OUT_DIR / f"{out_name}_v{idx + 1:02d}.aseprite"
+            write_layered_aseprite(ase_file, layers, size)
+            try:
+                arel = ase_file.relative_to(Path.cwd())
+            except ValueError:
+                arel = ase_file
+            print(f"wrote {arel}")
+
     return 0
 
 
@@ -373,13 +392,14 @@ def _render_one(archetype: str, terrain_override: Optional[str] = None) -> int:
 def _cmd_render(args: argparse.Namespace) -> int:
     """Dispatch render subcommand: single-archetype or --all batch."""
     terrain_override: Optional[str] = getattr(args, "terrain", None)
+    layered: bool = bool(getattr(args, "layered", False))
 
     if getattr(args, "all", False):
         # Batch mode: glob sorted specs, iterate, aggregate exit.
         failed: list[str] = []
         for spec_file in sorted(_SPECS_DIR.glob("*.yaml")):
             stem = spec_file.stem
-            rc = _render_one(stem, terrain_override)
+            rc = _render_one(stem, terrain_override, layered=layered)
             if rc != 0:
                 failed.append(stem)
         if failed:
@@ -388,7 +408,7 @@ def _cmd_render(args: argparse.Namespace) -> int:
         return 0
 
     # Single-archetype mode.
-    return _render_one(args.archetype, terrain_override)
+    return _render_one(args.archetype, terrain_override, layered=layered)
 
 
 # ---------------------------------------------------------------------------
@@ -442,6 +462,12 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"Valid ids: {sorted(_VALID_SLOPE_IDS)}. "
             "Non-flat variants raise NotImplementedError until Stage 1.4."
         ),
+    )
+    render_parser.add_argument(
+        "--layered",
+        action="store_true",
+        default=False,
+        help="Co-emit layered .aseprite alongside flat PNG (TECH-182).",
     )
 
     # -- palette --------------------------------------------------------------
@@ -510,14 +536,78 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Path to the .gpl file to import.",
     )
 
-    # -- reserved stubs -------------------------------------------------------
-    subparsers.add_parser("promote", help="(reserved — Stage 1.4)")
-    subparsers.add_parser("reject", help="(reserved — Stage 1.4)")
+    promote_parser = subparsers.add_parser(
+        "promote",
+        help="Promote a rendered PNG or .aseprite to Assets/Sprites/Generated/.",
+    )
+    promote_parser.add_argument("src", metavar="SRC", help="Source PNG or .aseprite (with --edit).")
+    promote_parser.add_argument("--as", dest="dest_name", required=True, metavar="NAME", help="Destination slug.")
+    promote_parser.add_argument(
+        "--edit",
+        action="store_true",
+        default=False,
+        help="Flatten .aseprite via Aseprite CLI before promote.",
+    )
+    promote_parser.add_argument(
+        "--no-push",
+        action="store_true",
+        default=False,
+        help="Skip catalog HTTP push after promote.",
+    )
+
+    reject_parser = subparsers.add_parser(
+        "reject",
+        help="Delete out/{archetype}_v*.png variants.",
+    )
+    reject_parser.add_argument("archetype", metavar="ARCHETYPE", help="Archetype slug (output name stem).")
+    reject_parser.add_argument("--yes", action="store_true", default=False, help="Skip interactive confirmation.")
 
     parsed = parser.parse_args(argv)
 
     if parsed.command == "render":
         return _cmd_render(parsed)
+
+    if parsed.command == "promote":
+        from pathlib import Path as _P
+
+        from .aseprite_bin import AsepriteBinNotFoundError
+        from .curate import PromoteEditFlagError, promote
+        from .registry_client import (
+            CatalogConfigError,
+            RegistryClientError,
+            RegistryConnectionError,
+            ValidationError,
+        )
+
+        try:
+            promote(
+                _P(parsed.src),
+                parsed.dest_name,
+                edit=parsed.edit,
+                push=not parsed.no_push,
+            )
+        except FileNotFoundError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        except PromoteEditFlagError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        except AsepriteBinNotFoundError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 4
+        except CatalogConfigError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 5
+        except (RegistryConnectionError, ValidationError, RegistryClientError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 5
+        return 0
+
+    if parsed.command == "reject":
+        from .curate import reject
+
+        reject(parsed.archetype, _OUT_DIR, confirm=not parsed.yes)
+        return 0
 
     if parsed.command == "palette":
         palette_cmd = getattr(parsed, "palette_command", None)
