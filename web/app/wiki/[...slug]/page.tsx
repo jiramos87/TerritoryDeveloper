@@ -4,8 +4,8 @@ import { loadMdxContent } from '@/lib/mdx/loader';
 import { loadGlossaryTerms } from '@/lib/glossary/import';
 import { listWikiSlugs } from '@/lib/wiki/slugs';
 import { GlossaryShell } from '@/components/GlossaryShell';
-import { tokens } from '@/lib/tokens';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { Prose } from '@/components/type/Prose';
 import type { PageFrontmatter } from '@/lib/mdx/types';
 import type { GlossaryTerm } from '@/lib/glossary/types';
 
@@ -107,55 +107,25 @@ export default async function WikiPage({
   const { source, frontmatter } = content;
   return (
     <main
-      style={{
-        minHeight: '100vh',
-        backgroundColor: tokens.colors['bg-canvas'],
-        color: tokens.colors['text-primary'],
-        fontFamily: tokens.fontFamily.sans.join(', '),
-        padding: `${tokens.spacing[8]} ${tokens.spacing[4]}`,
-        maxWidth: '800px',
-        margin: '0 auto',
-      }}
+      className="min-h-screen max-w-[800px] mx-auto bg-[var(--ds-bg-canvas)] text-[var(--ds-text-primary)] font-sans py-[var(--ds-spacing-xl)] px-[var(--ds-spacing-md)]"
     >
       <Breadcrumb crumbs={[...wikiCrumbs, { label: frontmatter.title }]} />
       <header
-        style={{
-          marginBottom: tokens.spacing[8],
-          borderBottom: `1px solid ${tokens.colors['bg-panel']}`,
-          paddingBottom: tokens.spacing[4],
-        }}
+        className="mb-[var(--ds-spacing-xl)] border-b border-[var(--ds-bg-panel)] pb-[var(--ds-spacing-md)]"
       >
         <h1
-          style={{
-            fontSize: tokens.fontSize['2xl'][0],
-            lineHeight: tokens.fontSize['2xl'][1],
-            fontFamily: tokens.fontFamily.mono.join(', '),
-            color: tokens.colors['text-primary'],
-            margin: 0,
-          }}
+          className="m-0 font-mono text-[1.5rem] leading-8 text-[var(--ds-text-primary)]"
         >
           {frontmatter.title}
         </h1>
         <p
-          style={{
-            fontSize: tokens.fontSize.base[0],
-            lineHeight: tokens.fontSize.base[1],
-            color: tokens.colors['text-muted'],
-            marginTop: tokens.spacing[2],
-            marginBottom: 0,
-          }}
+          className="m-0 mt-[var(--ds-spacing-xs)] text-[1rem] leading-6 text-[var(--ds-text-muted)]"
         >
           {frontmatter.description}
         </p>
       </header>
-      <article
-        style={{
-          fontSize: tokens.fontSize.base[0],
-          lineHeight: tokens.fontSize.base[1],
-          color: tokens.colors['text-primary'],
-        }}
-      >
-        {source}
+      <article>
+        <Prose>{source}</Prose>
       </article>
     </main>
   );

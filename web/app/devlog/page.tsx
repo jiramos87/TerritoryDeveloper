@@ -5,8 +5,8 @@ import matter from 'gray-matter';
 import Link from 'next/link';
 import type { DevlogFrontmatter } from '@/lib/mdx/types';
 import { computeReadingTime } from '@/lib/mdx/reading-time';
-import { tokens } from '@/lib/tokens';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { Prose } from '@/components/type/Prose';
 
 export const metadata: Metadata = {
   title: 'Devlog — Territory',
@@ -80,152 +80,73 @@ export default async function DevlogListPage() {
 
   return (
     <main
-      style={{
-        minHeight: '100vh',
-        backgroundColor: tokens.colors['bg-canvas'],
-        color: tokens.colors['text-primary'],
-        fontFamily: tokens.fontFamily.sans.join(', '),
-        padding: `${tokens.spacing[8]} ${tokens.spacing[4]}`,
-        maxWidth: '800px',
-        margin: '0 auto',
-      }}
+      className="min-h-screen max-w-[800px] mx-auto bg-[var(--ds-bg-canvas)] text-[var(--ds-text-primary)] font-sans py-[var(--ds-spacing-xl)] px-[var(--ds-spacing-md)]"
     >
       <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Devlog' }]} />
       <header
-        style={{
-          marginBottom: tokens.spacing[8],
-          borderBottom: `1px solid ${tokens.colors['bg-panel']}`,
-          paddingBottom: tokens.spacing[4],
-        }}
+        className="mb-[var(--ds-spacing-xl)] border-b border-[var(--ds-bg-panel)] pb-[var(--ds-spacing-md)]"
       >
         <h1
-          style={{
-            fontSize: tokens.fontSize['2xl'][0],
-            lineHeight: tokens.fontSize['2xl'][1],
-            fontFamily: tokens.fontFamily.mono.join(', '),
-            color: tokens.colors['text-primary'],
-            margin: 0,
-          }}
+          className="m-0 font-mono text-[1.5rem] leading-8 text-[var(--ds-text-primary)]"
         >
           Devlog
         </h1>
         <p
-          style={{
-            fontSize: tokens.fontSize.base[0],
-            lineHeight: tokens.fontSize.base[1],
-            color: tokens.colors['text-muted'],
-            marginTop: tokens.spacing[2],
-            marginBottom: 0,
-          }}
+          className="m-0 mt-[var(--ds-spacing-xs)] text-[1rem] leading-6 text-[var(--ds-text-muted)]"
         >
           Development log for Territory, an isometric city builder.
         </p>
       </header>
 
-      <section>
+      <Prose>
         {entries.length === 0 ? (
-          <p
-            style={{
-              color: tokens.colors['text-muted'],
-              fontSize: tokens.fontSize.base[0],
-              lineHeight: tokens.fontSize.base[1],
-            }}
-          >
+          <p className="text-[1rem] leading-6 text-[var(--ds-text-muted)] m-0">
             No posts yet — check back soon.
           </p>
         ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul className="list-none p-0 m-0">
             {entries.map((entry) => (
               <li
                 key={entry.slug}
-                style={{
-                  marginBottom: tokens.spacing[8],
-                  paddingBottom: tokens.spacing[6],
-                  borderBottom: `1px solid ${tokens.colors['bg-panel']}`,
-                }}
+                className="mb-[var(--ds-spacing-xl)] pb-[var(--ds-spacing-lg)] border-b border-[var(--ds-bg-panel)]"
               >
-                {/* Date + reading time */}
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: tokens.spacing[3],
-                    alignItems: 'center',
-                    marginBottom: tokens.spacing[2],
-                  }}
+                  className="flex gap-[var(--ds-spacing-sm)] items-center mb-[var(--ds-spacing-xs)]"
                 >
                   <time
                     dateTime={entry.frontmatter.date}
-                    style={{
-                      fontSize: tokens.fontSize.sm[0],
-                      lineHeight: tokens.fontSize.sm[1],
-                      fontFamily: tokens.fontFamily.mono.join(', '),
-                      color: tokens.colors['text-muted'],
-                    }}
+                    className="font-mono text-sm leading-5 text-[var(--ds-text-muted)]"
                   >
                     {entry.frontmatter.date}
                   </time>
-                  <span
-                    style={{
-                      fontSize: tokens.fontSize.sm[0],
-                      lineHeight: tokens.fontSize.sm[1],
-                      color: tokens.colors['text-muted'],
-                    }}
-                  >
+                  <span className="text-sm leading-5 text-[var(--ds-text-muted)]">
                     {entry.readingTime} min read
                   </span>
                 </div>
 
-                {/* Title */}
                 <h2
-                  style={{
-                    fontSize: tokens.fontSize.xl[0],
-                    lineHeight: tokens.fontSize.xl[1],
-                    fontFamily: tokens.fontFamily.mono.join(', '),
-                    color: tokens.colors['text-primary'],
-                    margin: 0,
-                    marginBottom: tokens.spacing[2],
-                  }}
+                  className="font-mono text-xl leading-7 m-0 mb-[var(--ds-spacing-xs)]"
                 >
                   <Link
                     href={`/devlog/${entry.slug}`}
-                    style={{
-                      color: tokens.colors['text-primary'],
-                      textDecoration: 'underline',
-                    }}
+                    className="text-[var(--ds-text-primary)] underline"
                   >
                     {entry.frontmatter.title}
                   </Link>
                 </h2>
 
-                {/* Excerpt */}
                 <p
-                  style={{
-                    fontSize: tokens.fontSize.base[0],
-                    lineHeight: tokens.fontSize.base[1],
-                    color: tokens.colors['text-muted'],
-                    margin: 0,
-                    marginBottom: tokens.spacing[3],
-                  }}
+                  className="m-0 mb-[var(--ds-spacing-sm)] text-[1rem] leading-6 text-[var(--ds-text-muted)]"
                 >
                   {entry.frontmatter.excerpt}
                 </p>
 
-                {/* Tag chips */}
                 {entry.frontmatter.tags.length > 0 && (
-                  <div style={{ display: 'flex', gap: tokens.spacing[2], flexWrap: 'wrap' }}>
+                  <div className="flex flex-wrap gap-[var(--ds-spacing-xs)]">
                     {entry.frontmatter.tags.map((tag) => (
                       <span
                         key={tag}
-                        style={{
-                          display: 'inline-block',
-                          fontSize: tokens.fontSize.xs[0],
-                          lineHeight: tokens.fontSize.xs[1],
-                          fontFamily: tokens.fontFamily.mono.join(', '),
-                          color: tokens.colors['text-muted'],
-                          backgroundColor: tokens.colors['bg-panel'],
-                          borderRadius: '9999px',
-                          padding: `2px ${tokens.spacing[2]}`,
-                        }}
+                        className="inline-block font-mono text-xs leading-4 text-[var(--ds-text-muted)] bg-[var(--ds-bg-panel)] rounded-full [padding:2px_var(--ds-spacing-xs)]"
                       >
                         {tag}
                       </span>
@@ -236,7 +157,7 @@ export default async function DevlogListPage() {
             ))}
           </ul>
         )}
-      </section>
+      </Prose>
     </main>
   );
 }

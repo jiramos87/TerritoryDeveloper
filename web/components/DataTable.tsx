@@ -36,13 +36,13 @@ export function DataTable<T,>({
 }: Props<T>): ReactNode {
   return (
     <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse text-sm text-text-primary">
+      <table className="w-full border-collapse text-sm text-[var(--ds-text-primary)]">
         <thead>
-          <tr className="border-b border-text-muted/20">
+          <tr className="border-b border-[var(--ds-border-subtle)]">
             {statusCell && (
               <th
                 scope="col"
-                className="px-3 py-2 text-left font-mono text-xs text-text-muted uppercase tracking-wider"
+                className="px-3 py-2 text-left font-mono text-xs text-[var(--ds-text-muted)] uppercase tracking-wider"
               >
                 Status
               </th>
@@ -56,7 +56,7 @@ export function DataTable<T,>({
                     ? (col.sortDirection ?? 'none')
                     : undefined
                 }
-                className="px-3 py-2 text-left font-mono text-xs text-text-muted uppercase tracking-wider"
+                className="px-3 py-2 text-left font-mono text-xs text-[var(--ds-text-muted)] uppercase tracking-wider"
               >
                 <span className="inline-flex items-center gap-1">
                   {col.header}
@@ -75,7 +75,7 @@ export function DataTable<T,>({
             {pctColumn && (
               <th
                 scope="col"
-                className="px-3 py-2 text-left font-mono text-xs text-text-muted uppercase tracking-wider"
+                className="px-3 py-2 text-left font-mono text-xs text-[var(--ds-text-muted)] uppercase tracking-wider"
               >
                 {pctColumn.label ?? 'Progress'}
               </th>
@@ -88,7 +88,7 @@ export function DataTable<T,>({
             return (
               <tr
                 key={key}
-                className="border-b border-text-muted/10 hover:bg-bg-panel/50 transition-colors"
+                className="border-b border-[var(--ds-border-subtle)] hover:bg-[color:color-mix(in_srgb,var(--ds-bg-panel)_50%,transparent)] transition-colors"
               >
                 {statusCell && (
                   <td className="px-3 py-2 align-middle">
@@ -98,7 +98,7 @@ export function DataTable<T,>({
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
-                    className="px-3 py-2 align-middle text-text-primary"
+                    className="px-3 py-2 align-middle text-[var(--ds-text-primary)]"
                   >
                     {col.render
                       ? col.render(row)

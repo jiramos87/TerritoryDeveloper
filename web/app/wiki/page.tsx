@@ -4,8 +4,8 @@ import { loadGlossaryTerms } from '@/lib/glossary/import';
 import { listWikiSlugs } from '@/lib/wiki/slugs';
 import { DataTable, type Column } from '@/components/DataTable';
 import { WikiSearch } from '@/components/WikiSearch';
-import { tokens } from '@/lib/tokens';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { Prose } from '@/components/type/Prose';
 
 export const metadata: Metadata = {
   title: 'Wiki',
@@ -35,7 +35,7 @@ const COLUMNS: Column<IndexRow>[] = [
     render: (r) => (
       <Link
         href={`/wiki/${r.slug}`}
-        style={{ color: tokens.colors['text-primary'], textDecoration: 'underline' }}
+        className="text-[var(--ds-text-primary)] underline"
       >
         {r.title}
       </Link>
@@ -46,15 +46,7 @@ const COLUMNS: Column<IndexRow>[] = [
     header: 'Source',
     render: (r) => (
       <span
-        style={{
-          display: 'inline-block',
-          fontSize: tokens.fontSize.xs[0],
-          fontFamily: tokens.fontFamily.mono.join(', '),
-          color: tokens.colors['text-muted'],
-          backgroundColor: tokens.colors['bg-panel'],
-          borderRadius: '9999px',
-          padding: `2px ${tokens.spacing[2]}`,
-        }}
+        className="inline-block rounded-full font-mono text-[0.75rem] leading-4 text-[var(--ds-text-muted)] bg-[var(--ds-bg-panel)] [padding:2px_var(--ds-spacing-xs)]"
       >
         {r.source}
       </span>
@@ -103,55 +95,31 @@ export default async function WikiIndexPage() {
 
   return (
     <main
-      style={{
-        minHeight: '100vh',
-        backgroundColor: tokens.colors['bg-canvas'],
-        color: tokens.colors['text-primary'],
-        fontFamily: tokens.fontFamily.sans.join(', '),
-        padding: `${tokens.spacing[8]} ${tokens.spacing[4]}`,
-        maxWidth: '800px',
-        margin: '0 auto',
-      }}
+      className="min-h-screen max-w-[800px] mx-auto bg-[var(--ds-bg-canvas)] text-[var(--ds-text-primary)] font-sans py-[var(--ds-spacing-xl)] px-[var(--ds-spacing-md)]"
     >
       <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Wiki' }]} />
       <header
-        style={{
-          marginBottom: tokens.spacing[8],
-          borderBottom: `1px solid ${tokens.colors['bg-panel']}`,
-          paddingBottom: tokens.spacing[4],
-        }}
+        className="mb-[var(--ds-spacing-xl)] border-b border-[var(--ds-bg-panel)] pb-[var(--ds-spacing-md)]"
       >
         <h1
-          style={{
-            fontSize: tokens.fontSize['2xl'][0],
-            lineHeight: tokens.fontSize['2xl'][1],
-            fontFamily: tokens.fontFamily.mono.join(', '),
-            color: tokens.colors['text-primary'],
-            margin: 0,
-          }}
+          className="m-0 font-mono text-[1.5rem] leading-8 text-[var(--ds-text-primary)]"
         >
           Wiki
         </h1>
         <p
-          style={{
-            fontSize: tokens.fontSize.base[0],
-            lineHeight: tokens.fontSize.base[1],
-            color: tokens.colors['text-muted'],
-            marginTop: tokens.spacing[2],
-            marginBottom: 0,
-          }}
+          className="m-0 mt-[var(--ds-spacing-xs)] text-[1rem] leading-6 text-[var(--ds-text-muted)]"
         >
           Index of canonical glossary terms and hand-authored pages.
         </p>
         <WikiSearch />
       </header>
-      <section>
+      <Prose>
         <DataTable<IndexRow>
           columns={COLUMNS}
           rows={rows}
           getRowKey={(r) => r.slug}
         />
-      </section>
+      </Prose>
     </main>
   );
 }

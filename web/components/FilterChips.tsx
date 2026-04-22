@@ -14,7 +14,9 @@ export type FilterChipsProps = { chips: Chip[] }
 
 const chipClass = (active: boolean) =>
   `inline-flex items-center rounded px-2 py-0.5 text-xs font-mono ${
-    active ? 'bg-panel text-primary' : 'bg-canvas text-muted'
+    active
+      ? 'bg-[var(--ds-bg-panel)] text-[var(--ds-text-primary)]'
+      : 'bg-[var(--ds-bg-canvas)] text-[var(--ds-text-muted)]'
   }`
 
 export function FilterChips({ chips }: FilterChipsProps) {
