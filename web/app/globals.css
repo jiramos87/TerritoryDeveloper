@@ -56,6 +56,58 @@
   --spacing-6: 1.5rem;
   --spacing-8: 2rem;
   --spacing-12: 3rem;
+
+  /* Design system — ds-* prefix (B1: no collision with --color-* / --text-* / --spacing-*) */
+  --ds-font-size-display: 3.815rem;
+  --ds-font-size-h1: 3.052rem;
+  --ds-font-size-h2: 2.442rem;
+  --ds-font-size-h3: 1.953rem;
+  --ds-font-size-body-lg: 1.563rem;
+  --ds-font-size-body: 1.25rem;
+  --ds-font-size-body-sm: 1rem;
+  --ds-font-size-caption: 0.8rem;
+  --ds-font-size-mono-code: 0.64rem;
+  --ds-font-size-mono-meta: 0.512rem;
+
+  --ds-spacing-2xs: 0.25rem;
+  --ds-spacing-xs: 0.5rem;
+  --ds-spacing-sm: 0.75rem;
+  --ds-spacing-md: 1rem;
+  --ds-spacing-lg: 1.5rem;
+  --ds-spacing-xl: 2rem;
+  --ds-spacing-2xl: 3rem;
+  --ds-spacing-3xl: 4rem;
+  --ds-spacing-layout: 8rem;
+
+  --ds-duration-instant: 0ms;
+  --ds-duration-subtle: 120ms;
+  --ds-duration-gentle: 200ms;
+  --ds-duration-deliberate: 320ms;
+  --ds-duration-reduced-motion: 0ms;
+
+  --ds-text-primary: #e8e8e8;
+  --ds-text-secondary: #6a6a6a;
+  --ds-text-meta: #6a6a6a;
+  --ds-text-disabled: #6a6a6a;
+
+  --ds-surface-canvas: #0a0a0a;
+  --ds-surface-raised: #1a1a1a;
+  --ds-surface-sunken: #0f0f0f;
+  --ds-surface-inset: #121212;
+
+  --ds-accent-terrain: #3a9b4a;
+  --ds-accent-water: #38bdf8;
+  --ds-accent-warm: #e8a33d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ds-duration-instant: 0ms;
+    --ds-duration-subtle: 0ms;
+    --ds-duration-gentle: 0ms;
+    --ds-duration-deliberate: 0ms;
+    --ds-duration-reduced-motion: 0ms;
+  }
 }
 
 body {
