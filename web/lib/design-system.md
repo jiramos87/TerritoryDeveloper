@@ -140,11 +140,49 @@ Bindings are **defaults**; components may override with design-review.
 
 ---
 
+## §7 — CD Pilot Bundle appendix
+
+> **Maintenance:** This section transcribes the Step 8 console pilot handoff for spec alignment. When the bundle under `web/design-refs/step-8-console/` changes, re-run `npx tsx tools/scripts/transcribe-cd-tokens.ts --from-source` for token/CSS/TS sync, then update this appendix if `HANDOFF.md` narrative drifts.
+
+### Canonical sources
+
+| Source | Role |
+|--------|------|
+| `web/design-refs/step-8-console/HANDOFF.md` | Primary developer handoff (component inventory, tokens, a11y, asset manifest, known drifts). |
+| `docs/web-platform-post-mvp-extensions.md` | **`### CD Pilot Bundle — 2026-04-18`** — pilot capture metadata, bundle layout, token delta vs `palette.json`, fidelity gate, follow-up surfaces. |
+| `docs/web-platform-post-mvp-extensions.md` **§8** | Informed-by references: **Shopify** developer-portal patterns (sidebar tree, two-panel code layout, badge chips) and **Dribbble** breadcrumb navigation pattern — see **NB5** in that doc so future work keeps visual provenance. |
+
+### Pilot scope (from handoff)
+
+- **Stack (prototype):** React 18 UMD + Babel standalone in the pilot bundle; production port targets Next.js App Router (`web/`).
+- **Tokens:** Locked in `ds/colors_and_type.css` — raw palette, semantic aliases, type scale, spacing (4px base), radii (max 8px + pill), elevation shadows, motion (four duration stops + enter/exit easing), focus ring. Console-specific additions (e.g. metal stops, `--font-lcd`) live in `console.css` in the bundle, not in the extracted `@theme` pipeline.
+- **Motion:** CD uses `--dur-fast` (80ms) through `--dur-reveal` (480ms); `prefers-reduced-motion: reduce` collapses durations and disables continuous animations (CRT sweep, reel, pulse, blink, shimmer).
+- **Primitives (inventory):** Chrome — `Rack`, `Bezel`, `Screen`, `LED`, `TapeReel`, `VuStrip`, `TransportStrip`. Data — `Button`, `StatusChip`, `IdChip`, `StatBar`, `FilterChip`, `HeatCell`, plus table styling via `.table` in `console.css`. Helpers — `Legend`, `DensityToggle`, empty/loading/error/stale states. Assets — logo suite, `TIcon.*` transport family, hero and pillar art, `Sparkline`. Screens — Landing, Dashboard, Releases, Detail, Design kit.
+- **Accessibility (summary):** Real controls (`<button>` / `<a>`), `aria-label` on icon-only controls, `aria-pressed` on filter chips, focus-visible ring using warn/amber accent, documented contrast table in the handoff (including flags for red chip on-blocked and Ultra density row height).
+
+### Token delta vs locked palette (extensions narrative)
+
+The extensions doc records pilot approval of **`--raw-blue` / info role** and semantic additions derived without new raws beyond that delta. Drift vs `web/lib/tokens/palette.json` is enforced in CI via `tools/scripts/extract-cd-tokens.ts` and `web/design-refs/step-8-console/.drift-report.md`.
+
+### Known drifts and flags (from handoff §7)
+
+- Hero and pillar art delivered as stylized SVG (not raster “matte painting”).
+- Transport icons delivered as outline set; solid variants optional at port time.
+- Red status chip: contrast flag in handoff — evaluate `#c02828` or dark foreground if AA-normal is required on small text.
+- Ultra density: row height may fall below WCAG 2.2 target size — document as power-user mode if policy requires 44px minimum.
+
+### Asset manifest (abbrev.)
+
+The handoff §6 maps each bundle file to suggested Next.js destinations (`components/console/*`, `app/*` routes, `public/fonts`, etc.). Prototype-only HTML entries are reference-only.
+
+---
+
 ## Document control
 
 | Item | Value |
 |------|--------|
 | Informed-by | `docs/web-platform-post-mvp-extensions.md` §8 (Shopify + Dribbble observations, NB5) |
 | Palette | `web/lib/tokens/palette.json` |
-| Code mirror | `web/lib/design-tokens.ts` (Stage 22 T22.3) |
-| CSS vars | `web/app/globals.css` `@theme` `ds` prefix (T22.4) |
+| Code mirror | `web/lib/design-tokens.ts` (Stage 22 T22.3) + `cdBundle` (Stage 24 CD transcription) |
+| CSS vars | `web/app/globals.css` `@theme` `ds` prefix (T22.4) + `/* CD-BUNDLE-START */` block (Stage 24) |
+| CD pilot | `web/design-refs/step-8-console/HANDOFF.md` + extensions `### CD Pilot Bundle — 2026-04-18` |
