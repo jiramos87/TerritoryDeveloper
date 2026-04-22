@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { BadgeChip, type Status } from '@/components/BadgeChip';
+import { ConsoleMediaShowcase } from '@/components/dev/ConsoleMediaShowcase';
 import { ConsoleChromeShowcase } from '@/components/console/ConsoleChromeShowcase';
 import { Surface } from '@/components/surface/Surface';
 import { Heading, type HeadingLevel } from '@/components/type/Heading';
@@ -124,6 +125,15 @@ export default function DesignSystemShowcasePage() {
             island for interaction).
           </p>
           <ConsoleChromeShowcase />
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-sm font-mono uppercase tracking-widest text-text-muted">Media transport + TIcon</h2>
+          <p className="text-sm text-text-muted">
+            Stage 26 — 13-glyph <code className="font-mono">TIcon</code> matrix and four{' '}
+            <code className="font-mono">MediaTransport</code> state demos (client).
+          </p>
+          <ConsoleMediaShowcase />
         </section>
 
         <section className="space-y-4">
