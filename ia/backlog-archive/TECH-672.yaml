@@ -1,0 +1,29 @@
+id: TECH-672
+type: tech
+title: "Boot load path"
+priority: medium
+status: closed
+section: "Grid asset visual registry — Stage 2.2 (GridAssetCatalog runtime loader)"
+spec: ia/projects/TECH-672.md
+files: []
+notes: |
+  Load JSON bytes/string from `StreamingAssets` and/or `Resources` per TECH-664 decision path; `Awake` on scene `GridAssetCatalog` `MonoBehaviour` calls parse+index+missing resolution; document init order w.r.t. `ZoneSubTypeRegistry` (no singleton: serialized ref + `FindObjectOfType` once in `Awake` if needed). Fire `OnCatalogReloaded` after first successful load.
+acceptance: |
+  - [ ] `TextAsset` / `File.ReadAllText` path per documented repo location; works in Editor + Player where applicable.
+  - [ ] `Awake` only for load orchestration; no per-frame `FindObjectOfType` in `Update`/`LateUpdate`.
+  - [ ] XML `///` on public `GetAsset`/`TryGet` + `Awake` behavior.
+depends_on:
+  - TECH-663
+  - TECH-664
+depends_on_raw: "TECH-663, TECH-664"
+related:
+  - TECH-669
+  - TECH-670
+  - TECH-671
+  - TECH-673
+created: 2026-04-22
+completed: \"2026-04-22\"
+raw_markdown: |
+  Boot load path — GridAssetCatalog snapshot load in Awake + event.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T2.2.4

@@ -731,6 +731,13 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 ### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
 
+
+### Web platform — Stage 28 (broad `tokens.*` → `ds-*` + Prose for wiki/devlog)
+
+- [ ] **TECH-667** — **Breadcrumb + Sidebar token migration** (web-platform Stage 28 T28.1)
+
+- [ ] **TECH-668** — **Primitives + MDX Prose (wiki/devlog)** (web-platform Stage 28 T28.2)
+
 ## High Priority
 
 <!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->
