@@ -1,3 +1,4 @@
+export { TIcon, type TIconGlyphProps } from './icons/TIcon';
 export { Bezel, type BezelProps } from './Bezel';
 export { LED, type LEDProps, type LedColor, type LedState } from './LED';
 export {
