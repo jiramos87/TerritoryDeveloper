@@ -1,0 +1,30 @@
+id: TECH-636
+type: tech
+title: "Console chrome frame smoke tests (Rack, Bezel, Screen, LED)"
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: "Web platform — Stage 25 (console chrome primitives)"
+spec: ia/projects/TECH-636.md
+files:
+  - web/components/console/__tests__/chrome-frame.test.tsx
+notes: |
+  Jest + RTL tests under `web/components/console/__tests__/` for static quartet; fixture props; assert
+  render + root tag + `--ds-*` class presence. Matches `web/lib/__tests__/` patterns.
+acceptance: |
+  - [ ] Test file covers all four components.
+  - [ ] Assertions stay deterministic (no snapshot churn without intent).
+  - [ ] `npm run validate:web` includes test run.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-634
+  - TECH-635
+  - TECH-637
+  - TECH-638
+  - TECH-639
+created: 2026-04-22
+raw_markdown: |
+  Console chrome frame smoke tests — T25.3
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T25.3
