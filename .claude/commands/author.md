@@ -21,7 +21,7 @@ Forward via Agent tool with `subagent_type: "plan-author"` (when `FORCE_MODEL` s
 >
 > Run `ia/skills/plan-author/SKILL.md` end-to-end for `$ARGUMENTS`. Default invocation: Stage-scoped bulk pass across ALL N Task specs of target Stage (1st arg = `MASTER_PLAN_PATH`; 2nd arg = `STAGE_ID`). Escape hatch: `--task {ISSUE_ID}` = single-spec re-author, bulk pass of N=1.
 >
-> Auto-invoked inside `/stage-file` chain tail (F6 re-fold 2026-04-20 — bulk Stage 1×N after stage-file-applier, before plan-reviewer). Manual invocation: `--task {ISSUE_ID}` re-author (single-issue path after `/project-new`), re-run after `plan-review` finds drift, or standalone recovery.
+> Auto-invoked inside `/stage-file` chain tail (F6 re-fold 2026-04-20 + plan-digest 2026-04-22 — bulk Stage 1×N after stage-file-applier, before `plan-digest`, then plan-reviewer). Manual invocation: `--task {ISSUE_ID}` re-author (single-issue path after `/project-new`), re-run after `plan-review` finds drift, or standalone recovery. After `/author` completes, run **`plan-digest`** (subagent) before `/plan-review` or `/ship` — canonical gate is `§Plan Digest`, not `§Plan Author`.
 >
 > ## Phase loop
 >
@@ -42,4 +42,4 @@ Forward via Agent tool with `subagent_type: "plan-author"` (when `FORCE_MODEL` s
 >
 > ## Output
 >
-> Single caveman message: Stage {STAGE_ID} — N specs authored ({split_count} bulk pass(es)). Per-Task §Plan Author sub-section counts + canonical-term replacement counts. Next: `claude-personal "/plan-review {MASTER_PLAN_PATH} Stage {STAGE_ID}"` (multi-task) OR `claude-personal "/implement {ISSUE_ID}"` (N=1).
+> Single caveman message: Stage {STAGE_ID} — N specs authored ({split_count} bulk pass(es)). Per-Task §Plan Author sub-section counts + canonical-term replacement counts. Next: `plan-digest` subagent on `{MASTER_PLAN_PATH} Stage {STAGE_ID}` (multi-task) or `--task {ISSUE_ID}` (N=1), then `claude-personal "/plan-review {MASTER_PLAN_PATH} Stage {STAGE_ID}"` (multi-task) OR `claude-personal "/ship {ISSUE_ID}"` (N=1; `/ship` implements + verify + review + audit).

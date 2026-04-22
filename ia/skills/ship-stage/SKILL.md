@@ -128,9 +128,9 @@ Store returned payload `{glossary_anchors, router_domains, spec_sections, invari
 
 ---
 
-## Step 1.5 — §Plan Author readiness gate (prerequisite)
+## Step 1.5 — §Plan Digest readiness gate (prerequisite; lazy-migration branch for legacy §Plan Author)
 
-`/ship-stage` does NOT run `/author` or `/plan-review` internally — both fold into `/stage-file` dispatcher (F6 re-fold 2026-04-20). Specs arriving at `/ship-stage` must already carry populated `## §Plan Author` from `/stage-file` chain tail.
+`/ship-stage` does NOT run `/author` or `/plan-review` internally — both fold into `/stage-file` dispatcher (F6 re-fold 2026-04-20). `/ship-stage` DOES auto-invoke `plan-digest` JIT for legacy specs whose `§Plan Author` is populated but `§Plan Digest` missing (lazy-migration branch per Q13 2026-04-22). Specs arriving at `/ship-stage` must carry populated `## §Plan Digest`; legacy Draft specs with `§Plan Author` only are upgraded on first re-entry.
 
 **Readiness id list** (which specs to check):
 
@@ -140,24 +140,24 @@ Store returned payload `{glossary_anchors, router_domains, spec_sections, invari
 | **`PASS2_ONLY=1`** | All **`STAGE_FILED_IDS`** (specs usually still on disk until closeout). |
 | Idle exit at Step 0 | Do not reach this gate. |
 
-**Idempotent readiness check:** for each id in the readiness id list, read `ia/projects/{ISSUE_ID}*.md` and locate `## §Plan Author`. Treat a spec as **populated** when ALL of these hold:
+**Idempotent readiness check:** for each id in the readiness id list, read `ia/projects/{ISSUE_ID}*.md` and locate `## §Plan Digest`. Treat a spec as **digested** when ALL of these hold:
 
-1. `## §Plan Author` heading exists.
+1. `## §Plan Digest` heading exists.
 2. No line inside the block (until next `## ` heading at same/higher level) matches `_pending` case-insensitively.
-3. All four sub-headings (`### §Audit Notes`, `### §Examples`, `### §Test Blueprint`, `### §Acceptance`) exist with non-whitespace body content.
+3. Sub-headings `### §Goal`, `### §Acceptance`, `### §Mechanical Steps` exist with non-whitespace body content.
 
-**If ALL specs populated:** continue to Step 2 (Pass 1) **or** Step 1.6 / 3 when **`PASS2_ONLY`**.
+**If ALL specs digested:** continue to Step 2 (Pass 1) **or** Step 1.6 / 3 when **`PASS2_ONLY`**.
 
-**If ANY spec still `_pending_` or missing sub-headings:** stop chain. Emit:
+**If ANY spec missing §Plan Digest BUT populated §Plan Author:** auto-invoke `plan-digest` JIT (lazy-migration branch — Q13 2026-04-22). Emit ONE-TIME session warning: `LAZY_MIGRATION: §Plan Author → §Plan Digest upgrade on re-entry for {ISSUE_ID_LIST}`. Dispatch `plan-digest` as subagent on the Stage; wait for completion + lint PASS; re-run the readiness check.
+
+**If ANY spec has neither §Plan Digest NOR §Plan Author:** stop chain. Emit:
 
 ```
-SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}
-Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"
+SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}
+Next: claude-personal "/plan-digest {MASTER_PLAN_PATH} Stage {STAGE_ID}"
 ```
 
-Then user runs `/author` (+ `/plan-review` when needed) and re-invokes `/ship-stage`. Gate is idempotent — safe to re-enter after partial-failure recovery.
-
-**Rationale:** `/stage-file` chain (stage-file-planner → stage-file-applier → plan-author → plan-reviewer → plan-fix-applier) ships specs pre-authored + pre-reviewed. `/ship-stage` only verifies readiness — does NOT re-dispatch those subagents. If chain crashed mid-flight between `/stage-file` subagents, re-run `/stage-file` (idempotent) or stand-alone `/author` + `/plan-review` to close the gap; then resume `/ship-stage`.
+**Rationale:** `/stage-file` chain now ends with `plan-digest` + `plan-review` (plan-digest insertion 2026-04-22) — specs arrive with populated `§Plan Digest`. Legacy Draft specs (filed before plan-digest) carry `§Plan Author` only; lazy-migration auto-upgrades them on first `/ship-stage` entry. Branch retires when the last Draft is re-entered.
 
 ---
 
@@ -246,7 +246,7 @@ ISSUE_ID = CURRENT_TASK.issue_id
 
 Dispatch `spec-implementer` subagent (Sonnet):
 
-> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §7 Implementation Plan end-to-end, phase by phase. Pre-loaded context: {CHAIN_CONTEXT}. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
+> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §Plan Digest (§Mechanical Steps) end-to-end, step by step. Pre-loaded context: {CHAIN_CONTEXT}. §Plan Digest is the canonical plan — §Plan Author no longer present post-2026-04-22. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
 
 **Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → stop, emit STOPPED line + partial chain digest.
 
@@ -350,7 +350,7 @@ Run `verify-loop` (full Path A+B, no `--skip-path-b`) on cumulative Stage delta:
 
 Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
 
-> Mission: Run opus-code-review on Stage-level diff (cumulative delta: same anchor as Step 3.1). STAGE_MCP_BUNDLE: {CHAIN_CONTEXT} — shared spec/invariant/glossary context cached from Phase 1 (do NOT re-query domain-context-load). All N §Plan Author sections from `{MASTER_PLAN_PATH}` are the acceptance reference. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan tuples targeting the appropriate spec files.
+> Mission: Run opus-code-review on Stage-level diff (cumulative delta: same anchor as Step 3.1). STAGE_MCP_BUNDLE: {CHAIN_CONTEXT} — shared spec/invariant/glossary context cached from Phase 1 (do NOT re-query domain-context-load). All N §Plan Digest sections from task specs for `{MASTER_PLAN_PATH}` are the acceptance reference. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan tuples targeting the appropriate spec files.
 
 **Verdict PASS / minor:** continue to Step 3.4.
 
@@ -451,7 +451,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ## Exit lines
 
 - **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff — **only** after **Step 3.5 closeout** completed successfully (validators green). Never PASSED immediately after Step 3.1 / 3.4 alone.
-- **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `Next: claude-personal "/author {MASTER_PLAN_PATH} Stage {STAGE_ID}"`.
+- **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `Next: claude-personal "/plan-digest {MASTER_PLAN_PATH} Stage {STAGE_ID}"`.
 - **Pass 1 compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest (tasks-completed + uncommitted tail + unstarted list) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 1 implement failure (--per-task-verify only):** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
@@ -473,7 +473,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - Stage-scoped closeout (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) fires ONCE after Pass 2 audit (and skipped steps as applicable) when upstream gates pass — do NOT call per Task; do NOT skip; do NOT emit PASSED without it; do NOT defer to “run `/closeout` later” on green path.
 - Chain-level stage digest is a NEW scope distinct from plan-applier Mode stage-closeout per-task digest aggregation.
 - `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
-- `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Step 1.5 is a readiness gate only; non-populated `§Plan Author` → STOPPED + handoff. Do NOT dispatch `plan-author` or `plan-reviewer` from this skill.
+- `plan-author` + `plan-review` do NOT run inside `/ship-stage` — both fold into `/stage-file` dispatcher. Step 1.5 is a readiness gate; non-digested AND non-authored → STOPPED + `/plan-digest` handoff. Do NOT dispatch `plan-author` or `plan-reviewer` from this skill. **Exception (lazy-migration, Q13 2026-04-22):** when a spec has populated `§Plan Author` but missing `§Plan Digest`, auto-invoke `plan-digest` JIT with a one-time session warning — this is the only subagent ship-stage dispatches outside Pass 1 / Pass 2.
 - **Stage tail (`PASS2_ONLY`):** open `ia/backlog/{ISSUE_ID}.yaml` for any Stage filed id while table rows are Done ⇒ **not** idle exit; run Pass 2 through closeout. Aligns with `validate:master-plan-status` **R6**.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.
 

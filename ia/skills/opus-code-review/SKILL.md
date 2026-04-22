@@ -50,7 +50,7 @@ When invoked as **Pass 2 of `/ship-stage`** (Stage-end bulk code-review, not per
 - Caller (`ship-stage` Step 3.2) provides this diff or the anchor SHA; do NOT recompute per-Task diffs.
 
 **Acceptance reference:**
-- All N `§Plan Author` sections from `{MASTER_PLAN_PATH}` for the Stage's Tasks serve as the combined acceptance criteria reference. Read all N spec files (or the master plan Stage block) to assemble the full acceptance surface.
+- All N `§Plan Digest` sections from task specs for `{MASTER_PLAN_PATH}` for the Stage's Tasks serve as the combined acceptance criteria reference. Read all N spec files (or the master plan Stage block) to assemble the full acceptance surface.
 
 **Shared context amortization:**
 - `STAGE_MCP_BUNDLE` is REQUIRED in Stage-diff mode — the `domain-context-load` payload cached by `ship-stage` Phase 1. Do NOT re-run `domain-context-load`; do NOT re-query `glossary_discover`, `router_for_task`, or `invariants_summary`.

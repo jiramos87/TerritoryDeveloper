@@ -111,7 +111,7 @@ Bootstrap from `ia/templates/project-spec-template.md`. Populate:
 - `> **Last updated:** {TODAY}`.
 - `## 1. Summary` — single skeleton paragraph: `{TITLE} — implementation TBD. Spec body authored by plan-author at N=1.`
 - `## 7. Implementation Plan` — placeholder line: `_pending — plan-author writes phases at N=1._`
-- Leave `§Plan Author` subsections empty — plan-author writes at N=1.
+- Leave `§Plan Digest` (and any `§Plan Author` if present) at template defaults — `plan-author` → `plan-digest` chain fills executable digest at N=1.
 - Leave all other template sections at their default placeholder text.
 
 Do NOT run `validate:dead-project-specs` here — runs in Phase 5.
@@ -139,10 +139,11 @@ Idempotency: overwrite if file exists.
    Filed: {ISSUE_ID} — {TITLE}
    Validators: exit 0.
    Next: claude-personal "/author --task {ISSUE_ID}"
+   Then: claude-personal "/plan-digest --task {ISSUE_ID}"
    Then: claude-personal "/ship {ISSUE_ID}"
    ```
 
-   Hard rule: `/author --task` **before** `/ship` (populate §Plan Author); `/ship` does not run plan-author — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
+   Hard rule: `plan-author` → `plan-digest` **before** `/ship` (populate `§Plan Digest`); `/ship` does not run those subagents — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
 
 ---
 
@@ -165,7 +166,7 @@ Sonnet pair-tail NEVER guesses. Immediate escalation triggers:
 - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — plan-author (TECH-478) writes spec body.
 - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
 - Do NOT edit `BACKLOG.md` directly — materialize-backlog.sh regenerates it.
-- Do NOT auto-invoke plan-author — applier stops at tail; handoff points user to `/author --task` then `/ship`.
+- Do NOT auto-invoke plan-author or plan-digest — applier stops at tail; handoff points user to `/author --task` then `/plan-digest --task` then `/ship`.
 - Do NOT read `§Project-New Plan` tuples — this skill has no pair-head; reads args verbatim.
 - Do NOT update any orchestrator task table — single-issue path has no master-plan row.
 

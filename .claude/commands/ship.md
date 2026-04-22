@@ -9,7 +9,7 @@ Orchestrate all five per-Task lifecycle stages for `$ARGUMENTS` in order. Run ea
 
 Follow `caveman:caveman` for all your own output and all dispatched subagents below. Standard exceptions: code, commits, security/auth, verbatim tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
-**Related:** [`/ship-stage`](ship-stage.md) (multi-task Stage chain — implement / verify / code-review / audit / closeout) · [`/stage-file`](stage-file.md) (seam #2 chain; N=1 handoff → `/ship`) · [`/author`](author.md) (writes `§Plan Author`; prerequisite for this command) · [`/closeout`](closeout.md) (Stage-scoped bulk closeout — NOT per-Task).
+**Related:** [`/ship-stage`](ship-stage.md) (multi-task Stage chain — implement / verify / code-review / audit / closeout) · [`/stage-file`](stage-file.md) (seam #2 chain; N=1 handoff → `/ship`) · [`/author`](author.md) (ephemeral `§Plan Author`) · [`/plan-digest`](plan-digest.md) (canonical `§Plan Digest` — gate for this command) · [`/closeout`](closeout.md) (Stage-scoped bulk closeout — NOT per-Task).
 
 Subagents reused from the `/ship-stage` chain: [`spec-implementer`](../agents/spec-implementer.md), [`verify-loop`](../agents/verify-loop.md), [`opus-code-reviewer`](../agents/opus-code-reviewer.md), [`plan-applier`](../agents/plan-applier.md) Mode code-fix, [`opus-auditor`](../agents/opus-auditor.md).
 
@@ -37,24 +37,24 @@ If no master plan references the issue, print `master plan: (none — standalone
 
 ## Stage sequence
 
-### Stage 1 — Readiness gate (`§Plan Author` populated)
+### Stage 1 — Readiness gate (`§Plan Digest` populated)
 
-`/ship` does NOT run `/author` or `/plan-review` internally — both fold into `/stage-file` chain (F6 re-fold 2026-04-20). Specs arriving at `/ship` must already carry populated `## §Plan Author` from `/stage-file` chain tail OR from manual `/author --task $ARGUMENTS`.
+`/ship` does NOT run `/author`, `/plan-digest`, or `/plan-review` internally — they fold into `/stage-file` or manual prep. Specs arriving at `/ship` must carry populated `## §Plan Digest` (or legacy `## §Plan Author` only — same lazy-migration expectation as `ship-stage` Step 1.5; run `plan-digest` before `/ship`).
 
-**Idempotent readiness check:** read `ia/projects/$ARGUMENTS*.md` and locate `## §Plan Author`. Treat spec as **populated** when ALL of these hold:
+**Idempotent readiness check:** read `ia/projects/$ARGUMENTS*.md` and locate `## §Plan Digest`. Treat spec as **digested** when ALL of these hold:
 
-1. `## §Plan Author` heading exists.
+1. `## §Plan Digest` heading exists.
 2. No line inside the block (until next `## ` heading at same/higher level) matches `_pending` case-insensitively.
-3. All four sub-headings (`### §Audit Notes`, `### §Examples`, `### §Test Blueprint`, `### §Acceptance`) exist with non-whitespace body content.
+3. Sub-headings `### §Goal`, `### §Acceptance`, `### §Mechanical Steps` exist with non-whitespace body content.
 
-**Gate:** spec populated → continue to Stage 2. Otherwise STOP:
+**Gate:** spec digested → continue to Stage 2. Otherwise STOP:
 
 ```
-SHIP $ARGUMENTS: STOPPED — prerequisite: §Plan Author not populated
-Next: claude-personal "/author --task $ARGUMENTS"
+SHIP $ARGUMENTS: STOPPED — prerequisite: §Plan Digest not populated
+Next: claude-personal "/author --task $ARGUMENTS" then claude-personal "/plan-digest --task $ARGUMENTS"
 ```
 
-Gate is idempotent — safe to re-enter after `/author --task` completes.
+Gate is idempotent — safe to re-enter after `/author` + `plan-digest` completes.
 
 ---
 
@@ -68,7 +68,7 @@ Dispatch Agent with `subagent_type: "spec-implementer"`:
 >
 > ## Phase loop
 >
-> 1. Read spec (focus §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §Plan Author, §9 Issues Found, §10 Lessons Learned). Start at first unticked phase.
+> 1. Read spec (focus §5 Proposed Design, §6 Decision Log, §Plan Digest (§Mechanical Steps), §9 Issues Found, §10 Lessons Learned). Start at first unticked step.
 > 2. MCP context per phase — `backlog_issue` + `router_for_task` + targeted `spec_section` / `spec_sections`. `invariants_summary` once when runtime C#/subsystem changes involved.
 > 3. Implement with minimal diffs. `Edit` for existing files, `Write` only for new files.
 > 4. Verify after each phase per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause.
@@ -140,7 +140,7 @@ Dispatch Agent with `subagent_type: "opus-code-reviewer"`:
 
 > ## Mission
 >
-> Run `ia/skills/opus-code-review/SKILL.md` end-to-end for `$ARGUMENTS`. Phase 1 Load diff (`git diff main...HEAD` across `ia/**/*.md` + `Assets/Scripts/**/*.cs`; fallback staged + recent-commit diff) + `ia/projects/$ARGUMENTS*.md` §7 Implementation Plan / §Plan Author §Acceptance / §Findings / §Verification. Run `domain-context-load` subskill for shared MCP bundle (keywords from spec title + domain terms). Load `invariants_summary` domain subset for changed files. Phase 2 Run 8-check review matrix → verdict (PASS / minor / critical). Phase 2a PASS → write `## §Code Review` mini-report. Phase 2b minor → mini-report + suggestions (fix-in-place or defer). Phase 3 critical → write `## §Code Fix Plan` tuples (contract 4-key shape — `operation`, `target_path`, `target_anchor`, `payload`) + `## §Code Review` mini-report. Phase 4 Hand-off `{verdict, issue_id}`.
+> Run `ia/skills/opus-code-review/SKILL.md` end-to-end for `$ARGUMENTS`. Phase 1 Load diff (`git diff main...HEAD` across `ia/**/*.md` + `Assets/Scripts/**/*.cs`; fallback staged + recent-commit diff) + `ia/projects/$ARGUMENTS*.md` §7 Implementation Plan / §Plan Digest §Acceptance / §Findings / §Verification. Run `domain-context-load` subskill for shared MCP bundle (keywords from spec title + domain terms). Load `invariants_summary` domain subset for changed files. Phase 2 Run 8-check review matrix → verdict (PASS / minor / critical). Phase 2a PASS → write `## §Code Review` mini-report. Phase 2b minor → mini-report + suggestions (fix-in-place or defer). Phase 3 critical → write `## §Code Fix Plan` tuples (contract 4-key shape — `operation`, `target_path`, `target_anchor`, `payload`) + `## §Code Review` mini-report. Phase 4 Hand-off `{verdict, issue_id}`.
 >
 > ## Hard boundaries
 >
@@ -191,7 +191,7 @@ Dispatch Agent with `subagent_type: "opus-auditor"`:
 
 > ## Mission
 >
-> Run `ia/skills/opus-audit/SKILL.md` — **N=1 single-Task degenerate case** for `$ARGUMENTS`. No master plan / no Stage block: treat the one spec as Stage of N=1. Phase 0 sequential-dispatch guardrail trivially satisfied (single Task). Phase 1 load shared MCP bundle via `domain-context-load` (keywords: spec title + `audit` + domain terms). Phase 2 read `ia/projects/$ARGUMENTS*.md` §7 Implementation Plan / §Plan Author / §Findings / §Verification / §Code Review. Phase 3 synthesize ONE `§Audit` paragraph (consistent voice with stage-scoped audits). Phase 4 write via `replace_section` on `## §Audit` (or `insert_after ## §Verification` if absent). Phase 5 caveman hand-off summary.
+> Run `ia/skills/opus-audit/SKILL.md` — **N=1 single-Task degenerate case** for `$ARGUMENTS`. No master plan / no Stage block: treat the one spec as Stage of N=1. Phase 0 sequential-dispatch guardrail trivially satisfied (single Task). Phase 1 load shared MCP bundle via `domain-context-load` (keywords: spec title + `audit` + domain terms). Phase 2 read `ia/projects/$ARGUMENTS*.md` §7 Implementation Plan / §Plan Digest / §Findings / §Verification / §Code Review. Phase 3 synthesize ONE `§Audit` paragraph (consistent voice with stage-scoped audits). Phase 4 write via `replace_section` on `## §Audit` (or `insert_after ## §Verification` if absent). Phase 5 caveman hand-off summary.
 >
 > ## Hard boundaries
 >
@@ -259,9 +259,9 @@ If the issue is standalone (no master plan), or the master plan has no remaining
 ## Hard boundaries
 
 - Sequential stage dispatch only — no parallel (each gate inputs the previous stage's outputs).
-- Readiness gate (Stage 1) is idempotent on populated `§Plan Author` — safe to re-enter after `/author --task` completes.
+- Readiness gate (Stage 1) is idempotent on populated `§Plan Digest` — safe to re-enter after `/author --task` + `plan-digest` completes.
 - Code-review critical re-entry cap = **1**; second critical → `CRITICAL_TWICE` human-review directive. Do NOT re-enter a third time.
-- Do NOT dispatch `plan-author`, `plan-reviewer`, or `stage-closeout-planner` from `/ship` — all out of scope per post-T7.14 / F6 re-fold surface split.
+- Do NOT dispatch `plan-author`, `plan-digest`, `plan-reviewer`, or `stage-closeout-planner` from `/ship` — all out of scope per post-T7.14 / F6 re-fold + plan-digest surface split.
 - Do NOT archive `ia/backlog/{id}.yaml`, delete `ia/projects/{id}.md`, or flip master-plan task row Status from this command. Archival territory belongs to `/ship-stage` Step 3.5 / `/closeout`.
 - Do NOT skip stages on green path. PASSED is emitted **only** after Stage 5 audit succeeds.
 - Retired surfaces `spec-kickoff` and single-issue `closeout` are tombstoned under `.claude/agents/_retired/` — do NOT invoke; kickoff work is absorbed into `/author` (via `/stage-file` or manual `--task`), closeout into Stage-scoped `/closeout`.

@@ -55,5 +55,11 @@
     "deploy:web": "bash tools/scripts/vercel-deploy.sh",
     "deploy:web:preview": "bash tools/scripts/vercel-deploy.sh --preview",
     "validate:e2e": "npm --prefix web run test:e2e:ci"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "volta": {
+    "node": "22.18.0"
   }
 }

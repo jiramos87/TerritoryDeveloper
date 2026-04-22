@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (42)
+## Tools (51)
 
 | Tool | Description |
 |------|-------------|
@@ -95,6 +95,20 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`unity_callers_of`** | Static callers scan for a given C# method name across `Assets/Scripts/`. |
 | **`unity_subscribers_of`** | Static subscribers scan for a given C# event name across `Assets/Scripts/`. |
 | **`unity_bridge_lease`** | Acquire / release the Unity bridge single-agent lease (companion to `unity_bridge_command`). Coordinates concurrent agents on one Unity instance. |
+
+### Plan-Digest tool family (Q12 2026-04-22)
+
+| Tool | Purpose | Token budget |
+|------|---------|--------------|
+| **`plan_digest_verify_paths`** | Path existence map | ≤1 line / path |
+| **`plan_digest_resolve_anchor`** | Unique-anchor resolver (hits + ≤3 line context) | ≤20 lines |
+| **`plan_digest_render_literal`** | Verbatim line-range reader (cap 100 lines) | Range-bounded |
+| **`plan_digest_scan_for_picks`** | Lint-only hand-wavy-phrase detector | ≤20 findings |
+| **`plan_digest_lint`** | 9-point rubric gate (`ia/rules/plan-digest-contract.md`) | ≤20 failures |
+| **`plan_digest_gate_author_helper`** | Canonical gate-command suggester per edit tuple | 1 line |
+| **`plan_digest_compile_stage_doc`** | Stitch per-Task §Plan Digest slices into `docs/implementation/<slug>-stage-<id>-plan.md` | Compiled doc size |
+
+All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative. Mode `audit` of `plan_digest_compile_stage_doc` is flag-gated on `PLAN_DIGEST_AUDIT_MODE=1` (scaffold, not wired into any chain).
 
 **Examples (conceptual):**
 

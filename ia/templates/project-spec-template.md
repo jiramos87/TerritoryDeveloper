@@ -138,27 +138,31 @@ task_key: "{{T_KEY}}"
 
 - …
 
-## §Plan Author
+## §Plan Digest
 
-<!-- Pair-head: `plan-author` Opus Stage-scoped bulk non-pair (no Sonnet tail). Populated once per Stage after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). 4 sub-sections in strict order. -->
+<!-- Canonical executable plan — `plan-digest` Opus Stage-scoped bulk non-pair. Populated once per Stage after `plan-author` (ephemeral intermediate; dropped by plan-digest in same pass). Enforces 9-point rubric via `plan_digest_lint` MCP tool. Q5 2026-04-22: §Plan Author does NOT survive in committed spec. -->
 
-_pending — populated by `/author {MASTER_PLAN_PATH} {STAGE_ID}`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
+_pending — populated by `/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}`. Sub-sections: §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps (each step carries Goal / Edits / Gate / STOP / MCP hints). Template: `ia/templates/plan-digest-section.md`._
 
-### §Audit Notes
+### §Goal
 
-<!-- Upfront conceptual audit — risks, ambiguity, invariant touches. 2–5 bullets. -->
-
-### §Examples
-
-<!-- Concrete inputs/outputs + edge cases + legacy shapes. Tables or code blocks. -->
-
-### §Test Blueprint
-
-<!-- Structured tuples consumed by `/implement` + `/verify-loop`. One row per test: `{test_name, inputs, expected, harness}`. -->
+<!-- 1–2 sentences — task outcome in product / domain terms. -->
 
 ### §Acceptance
 
-<!-- Refined per-Task acceptance criteria — narrower than Stage Exit. Checkbox list. -->
+<!-- Refined per-Task acceptance — narrower than Stage Exit. Checkbox list. -->
+
+### §Test Blueprint
+
+<!-- Structured tuples consumed by `/implement` + `/verify-loop`. -->
+
+### §Examples
+
+<!-- Concrete inputs/outputs + edge cases. Tables or code blocks. -->
+
+### §Mechanical Steps
+
+<!-- Sequential, pre-decided. Each step: Goal / Edits (before+after) / Gate / STOP / MCP hints. -->
 
 ## Open Questions (resolve before / during implementation)
 

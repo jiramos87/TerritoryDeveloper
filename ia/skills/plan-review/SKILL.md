@@ -25,7 +25,7 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Sonnet pair-head (model downgrade 2026-04-20 — drift scan is mechanical against plan-author output). Runs **once per Stage** before any Task kickoff begins. Reads the Stage header + all filed Task specs + invariants; checks alignment against master-plan intent; outputs either a **PASS sentinel** or a structured **§Plan Fix tuple list** under the target Stage block.
+**Role:** Sonnet pair-head (model downgrade 2026-04-20 — drift scan is mechanical against `plan-digest` output; Q1-revision 2026-04-22 made the plan-digest gate always-on). Runs **once per Stage** after `plan-digest` and before any Task kickoff begins. Reads the Stage header + all filed Task specs' §Plan Digest + invariants; checks alignment against master-plan intent; outputs either a **PASS sentinel** or a structured **§Plan Fix tuple list** under the target Stage block.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #1, §Escalation rule.
 Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode **plan-fix**.
@@ -44,7 +44,7 @@ Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode 
 ## Phase 1 — Load Stage context
 
 1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` block: Objectives, Exit criteria, Tasks table.
-2. For each Task row in the Stage whose Status ≠ `Done`: read `ia/projects/{ISSUE_ID}.md` — §1 Summary, §2 Goals, §7 Implementation Plan, §8 Acceptance Criteria.
+2. For each Task row in the Stage whose Status ≠ `Done`: read `ia/projects/{ISSUE_ID}.md` — §1 Summary, §2 Goals, §Plan Digest (§Goal / §Acceptance / §Mechanical Steps), §8 Acceptance Criteria.
 3. Load invariants subset via `mcp__territory-ia__invariants_summary` (domain = skill, tooling, ia).
 4. Load glossary anchors for terms appearing in Task specs via `mcp__territory-ia__glossary_discover` + `mcp__territory-ia__glossary_lookup`.
 5. Load relevant spec sections via `mcp__territory-ia__spec_sections` (pair-contract, project-hierarchy, orchestrator-vs-spec).

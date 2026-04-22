@@ -60,7 +60,7 @@ Pre-condition: every Task row in target Stage has Status = `Done` (post-verify) 
 ### Bash fallback (MCP unavailable)
 
 1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` block: Objectives, Exit criteria, Tasks table. Collect every Task row `{task_key, name, issue_id}` with Status = `Done`.
-2. For each Task: read `ia/projects/{ISSUE_ID}.md` sections — §Audit (paragraph), §7 Implementation Plan (completed phases + deliverables), §9 Issues Found, §10 Lessons Learned, Verification block snippet (when present), §Plan Author §Acceptance (checkbox state).
+2. For each Task: read `ia/projects/{ISSUE_ID}.md` sections — §Audit (paragraph), §7 Implementation Plan (completed phases + deliverables), §9 Issues Found, §10 Lessons Learned, Verification block snippet (when present), §Plan Digest §Acceptance (checkbox state).
 3. Load invariants subset via `invariants_summary` (domain keywords from Stage Objectives).
 4. Load glossary table via `glossary_discover` → `glossary_lookup` for every canonical term touched by any Task's §Audit or §Lessons Learned.
 5. Load relevant rule bodies via `list_rules` + `rule_content` when any §Audit paragraph cites a rule section for migration (e.g. invariant rewrite, pair-contract seam update).

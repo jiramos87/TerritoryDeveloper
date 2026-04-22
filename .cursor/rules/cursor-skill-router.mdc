@@ -30,6 +30,7 @@ If a skill has Cursor-specific caveats, read `.cursor/rules/cursor-lifecycle-ada
 | stage-file, file pending tasks | `ia/skills/stage-file/SKILL.md` | `stage-file` |
 | create one project issue/spec | `ia/skills/project-new/SKILL.md` | `project-new` |
 | author stage plan sections | `ia/skills/plan-author/SKILL.md` | `plan-author` |
+| digest stage plan, compile implementation doc | `ia/skills/plan-digest/SKILL.md` | `plan-digest` |
 | plan review | `ia/skills/plan-review/SKILL.md` | `plan-review` |
 | code review against spec/invariants | `ia/skills/opus-code-review/SKILL.md` | `opus-code-review` |
 | plan applier, apply plan fix, apply code fix, apply closeout tuples | `ia/skills/plan-applier/SKILL.md` | `plan-applier` |

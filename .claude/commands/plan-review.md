@@ -1,11 +1,11 @@
 ---
-description: Drift-scan a Stage's §Plan Author sections + master-plan Stage block. Dispatches `plan-reviewer` (Opus pair-head seam #1) → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage between `/author` and per-Task `/implement` loop.
+description: Drift-scan a Stage's §Plan Digest sections + master-plan Stage block. Dispatches `plan-reviewer` (Opus pair-head seam #1) → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage after `/plan-digest` and before per-Task `/implement` loop.
 argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
 # /plan-review — dispatch seam #1 pair (plan-review → plan-applier Mode plan-fix)
 
-Use `plan-reviewer` subagent (`.claude/agents/plan-reviewer.md`) to scan Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}` for drift between `§Plan Author` sections (authored by `/author`), master-plan Stage block, Task spec §Objective / §Background / §Implementation Plan, invariants, and glossary. On drift → writes `§Plan Fix` tuple list + auto-dispatches **`plan-applier`** (Sonnet pair-tail, Mode plan-fix) to apply tuples + run `validate:master-plan-status` + `validate:backlog-yaml` gate.
+Use `plan-reviewer` subagent (`.claude/agents/plan-reviewer.md`) to scan Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}` for drift between `§Plan Digest` sections (from `plan-digest` after `/author`), master-plan Stage block, Task spec §1 / §2 / §7, invariants, and glossary. On drift → writes `§Plan Fix` tuple list + auto-dispatches **`plan-applier`** (Sonnet pair-tail, Mode plan-fix) to apply tuples + run `validate:master-plan-status` + `validate:backlog-yaml` gate.
 
 ## Argument parsing
 
@@ -19,7 +19,7 @@ Forward via Agent tool with `subagent_type: "plan-reviewer"` (when `FORCE_MODEL`
 >
 > ## Mission
 >
-> Run `ia/skills/plan-review/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Phase 1 Load Stage context: Stage block + all N Task §Plan Author / §Implementation Plan / §Acceptance Criteria / §Open Questions + shared MCP bundle (glossary / router / invariants) + master-plan Stage Objective / Exit criteria. Phase 2 Drift scan (12-check matrix: canonical-term drift, acceptance/exit mismatch, invariant-touch gaps, glossary-intro missing, dep-cycle, etc.). Zero drift → PASS sentinel under Stage block. Drift → write `§Plan Fix` tuple list (contract 4-key shape — `operation`, `target_path`, `target_anchor`, `payload`). Phase 3 Hand-off: escalate to pair-tail when tuples present.
+> Run `ia/skills/plan-review/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Phase 1 Load Stage context: Stage block + all N Task §Plan Digest / §Implementation Plan / §Acceptance Criteria / §Open Questions + shared MCP bundle (glossary / router / invariants) + master-plan Stage Objective / Exit criteria. Phase 2 Drift scan (12-check matrix: canonical-term drift, acceptance/exit mismatch, invariant-touch gaps, glossary-intro missing, dep-cycle, etc.). Zero drift → PASS sentinel under Stage block. Drift → write `§Plan Fix` tuple list (contract 4-key shape — `operation`, `target_path`, `target_anchor`, `payload`). Phase 3 Hand-off: escalate to pair-tail when tuples present.
 >
 > ## Hard boundaries
 >

@@ -25,7 +25,7 @@ No MCP from skill body beyond the Tool recipe below.
 
 **Lifecycle:** AFTER an umbrella `ia/projects/{umbrella-slug}-master-plan.md` is authored AND the sibling tracker `ia/projects/{umbrella-slug}-rollout-tracker.md` is seeded (by `release-rollout-enumerate`). BEFORE per-row `/design-explore` / `/master-plan-new` / `/master-plan-extend` / `/stage-decompose` / `/stage-file`. Drives rollout until every row reaches column (f) `✓`.
 
-`design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-reviewer` (→ `plan-applier` on critical, cap=1) → `project-new` → `project-spec-implement` → `/closeout` (Stage-scoped). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
+`design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-digest` → `plan-reviewer` (→ `plan-applier` on critical, cap=1) → `project-new` → `project-spec-implement` → `/closeout` (Stage-scoped). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
 
 **Related:** [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/skills/README.md`](../README.md).
 
@@ -92,7 +92,7 @@ Run `term-anchor-verify` subskill ([`ia/skills/term-anchor-verify/SKILL.md`](../
 **Autonomous chain (b) ✓ path:**
 1. Call Agent `master-plan-new` subagent with exploration doc path.
 2. Wait for success. Read authored plan to find first Stage (Stage 1.1 or equivalent).
-3. Dispatch the `/stage-file` agent chain against that Stage — sequence these four (or five on critical) subagents in order, waiting for each to return before dispatching the next: (i) `stage-file-planner` → (ii) `stage-file-applier` → (iii) `plan-author` → (iv) `plan-reviewer`. If `plan-reviewer` returns PASS → proceed to Phase 5. If `plan-reviewer` returns critical → (v) dispatch `plan-applier` Mode plan-fix, then re-dispatch `plan-reviewer` once (cap=1). Second critical → abort chain + surface to user.
+3. Dispatch the `/stage-file` agent chain against that Stage — sequence these five (or six on critical) subagents in order, waiting for each to return before dispatching the next: (i) `stage-file-planner` → (ii) `stage-file-applier` → (iii) `plan-author` → (iv) `plan-digest` → (v) `plan-reviewer`. If `plan-reviewer` returns PASS → proceed to Phase 5. If `plan-reviewer` returns critical → (vi) dispatch `plan-applier` Mode plan-fix, then re-dispatch `plan-reviewer` once (cap=1). Second critical → abort chain + surface to user.
 4. Wait for PASS → (f) ✓. Proceed to Phase 5.
 
 **Human pause conditions (break the chain):**
@@ -110,7 +110,7 @@ Run `term-anchor-verify` subskill ([`ia/skills/term-anchor-verify/SKILL.md`](../
 | (c) NEW | Agent `master-plan-new` subagent | No |
 | (c) EXTEND | Agent `master-plan-extend` subagent | No |
 | (d)/(e) | Agent `stage-decompose` subagent | No |
-| (f) | Sequential chain: `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, cap=1), each step via Agent tool in order. Stage resolved from child plan first Stage. | No |
+| (f) | Sequential chain: `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-digest` → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, cap=1), each step via Agent tool in order. Stage resolved from child plan first Stage. | No |
 | (g) | Inline glossary_discover + spec authoring; no subagent | Only if MCP fails |
 
 All `{slug}` / `{N}` / `{M}` / `{UMBRELLA_SPEC}` values MUST be resolved from tracker + child plan before dispatch — never use un-substituted placeholders.
@@ -119,7 +119,7 @@ All `{slug}` / `{N}` / `{M}` / `{UMBRELLA_SPEC}` values MUST be resolved from tr
 
 After (f) ✓ row terminal, emit summary:
 ```
-{ROW_SLUG} → (f) ✓. chain: master-plan-new ({doc}) → stage-file-planner → stage-file-applier → plan-author → plan-reviewer ({Stage N.M}, {issue-ids}). Tier: {A|B|C|D|E}. Next-row recommendation below.
+{ROW_SLUG} → (f) ✓. chain: master-plan-new ({doc}) → stage-file-planner → stage-file-applier → plan-author → plan-digest → plan-reviewer ({Stage N.M}, {issue-ids}). Tier: {A|B|C|D|E}. Next-row recommendation below.
 ```
 
 ### Phase 5 — Tracker update
@@ -205,7 +205,7 @@ Follow ia/skills/release-rollout/SKILL.md end-to-end. Inputs:
   ROW_SLUG: {optional — specific row to advance}
   OPERATION: {advance | status | next} (default: advance)
 
-Phase 0 validates both specs. Phase 1 reads row state + identifies next-cell-to-tick. Phase 2 runs Tool recipe (skipped on OPERATION=status). Phase 3 runs column-(g) align gate if target = (e). Phase 4: when (b) ✓ → autonomous chain (c)→(f) via Agent tool (master-plan-new → read first Stage → stage-file-planner → stage-file-applier → plan-author → plan-reviewer, with plan-applier on critical, cap=1); human pause ONLY for incomplete (b), ⚠️, ❓, or subagent failure. Phase 5 invokes release-rollout-track after each subagent returns. Phase 6 emits Tier-ordered next-row pick.
+Phase 0 validates both specs. Phase 1 reads row state + identifies next-cell-to-tick. Phase 2 runs Tool recipe (skipped on OPERATION=status). Phase 3 runs column-(g) align gate if target = (e). Phase 4: when (b) ✓ → autonomous chain (c)→(f) via Agent tool (master-plan-new → read first Stage → stage-file-planner → stage-file-applier → plan-author → plan-digest → plan-reviewer, with plan-applier on critical, cap=1); human pause ONLY for incomplete (b), ⚠️, ❓, or subagent failure. Phase 5 invokes release-rollout-track after each subagent returns. Phase 6 emits Tier-ordered next-row pick.
 
 Hard STOPs:
 - Tracker missing → release-rollout-enumerate first.

@@ -11,13 +11,13 @@ Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering 
 
 # Mission
 
-Execute `## 7. Implementation Plan` of `ia/projects/{ISSUE_ID}*.md` end-to-end, phase by phase, minimal diffs. Read spec first, then implement. Verification per agent-led policy after each substantive change.
+Execute `## §Plan Digest` (§Mechanical Steps sub-section) of `ia/projects/{ISSUE_ID}*.md` end-to-end, step by step, minimal diffs. §Plan Digest is the canonical executable plan — §Plan Author is no longer present in committed specs (Q5 2026-04-22). Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing but §Plan Author present → ship-stage Phase 1.5 will have auto-invoked plan-digest JIT; if still missing, abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
 
 # Recipe
 
 Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Phase loop:
 
-1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §9 Issues Found, §10 Lessons Learned. Start at first unticked phase.
+1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §Plan Digest (§Mechanical Steps), §9 Issues Found, §10 Lessons Learned. Start at first unticked step.
 1b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for ISSUE_ID in task table. Flip `In Review → In Progress` (or `Draft → In Progress` if kickoff skipped) in Status column. Update top-of-file `> **Status:**` pointer. No match → log one line; continue.
 2. **MCP context per phase** — `mcp__territory-ia__issue_context_bundle({ issue_id })` (composite bundle — pending registration; replaces sequential `backlog_issue` → `router_for_task` → `glossary_discover` → `spec_section` → `invariants_summary` chain). Never load whole `ia/specs/*.md` when slices suffice.
 

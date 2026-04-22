@@ -1,0 +1,8 @@
+---
+description: "Linearize composite-skill invocation (e.g. `/ship-stage {PLAN} {STAGE}`) into one laid-out markdown plan — decision-tree shape, explicit `on_success` / `on_failure` edges, positional args substituted literally, runtime-only values as `${placeholder}`. Parses `.claude/commands/{cmd}.md` → `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`, walks phase sequence, inlines direct subagents, summarizes nested skills past `--depth`. Emits plan to `ia/plans/{cmd-slug}-{arg-slug}-unfold.md`. Use before a risky composite run to preview, after editing a skill to diff drift, or to hand a fresh agent a single executable plan without the skill runtime. Triggers — \"unfold\", \"/unfold\", \"flatten skill\", \"precompile skill\", \"linearize skill\", \"turn skill into plan\", \"preview composite skill\", \"dry-run skill plan\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/unfold/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

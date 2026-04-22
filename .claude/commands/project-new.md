@@ -1,11 +1,11 @@
 ---
-description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head seam #3) → `project-new-applier` (Sonnet pair-tail) → chains `/author --task {ISSUE_ID}` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
+description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head seam #3) → `project-new-applier` (Sonnet pair-tail) → chains `/author --task` then `/plan-digest --task` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
 argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--priority P1|P2|P3|P4]"
 ---
 
-# /project-new — dispatch seam #3 pair then chain `/author --task`
+# /project-new — dispatch seam #3 pair then chain `/author` + `/plan-digest --task`
 
-Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/author --task {ISSUE_ID}` (N=1) to fill `§Plan Author` + canonical-term fold.
+Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/author --task {ISSUE_ID}` (N=1) to fill `§Plan Author` + canonical-term fold, then `/plan-digest --task {ISSUE_ID}` to produce `§Plan Digest`.
 
 `$ARGUMENTS` carries free-text intent (title + product prompt). Optional `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); planner asks when ambiguous. Optional `--priority {P1|P2|P3|P4}` overrides inference.
 
@@ -60,9 +60,9 @@ Forward via Agent tool with `subagent_type: "project-new-applier"`:
 > - Do NOT reuse retired ids.
 > - Do NOT commit — user decides.
 
-## Step 3 — Auto-chain `/author --task {ISSUE_ID}` (N=1 bulk)
+## Step 3 — Auto-chain `/author --task {ISSUE_ID}` then `/plan-digest --task {ISSUE_ID}` (N=1 bulk)
 
-On applier success: auto-invoke `/author --task {ISSUE_ID}` (Stage-scoped bulk `plan-author` at N=1 per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold on the one filed spec. Rev 3 single-task path skips `plan-review` at N=1 — next step is `/implement {ISSUE_ID}` directly.
+On applier success: auto-invoke `/author --task {ISSUE_ID}` (Stage-scoped bulk `plan-author` at N=1 per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold on the one filed spec. Then auto-invoke `/plan-digest --task {ISSUE_ID}` to mechanize into `§Plan Digest` and drop `§Plan Author` (Q5 2026-04-22). Rev 3 single-task path skips `plan-review` at N=1 — next step is `/implement {ISSUE_ID}` directly.
 
 ## Output
 

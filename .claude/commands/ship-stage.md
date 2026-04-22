@@ -1,11 +1,11 @@
 ---
-description: Stage-scoped chain shipper — Pass 1 implement/compile + Pass 2 verify-loop + code-review + audit + closeout. Gates on §Plan Author readiness (specs must arrive pre-authored + pre-reviewed from `/stage-file` chain). Args: {MASTER_PLAN_PATH} {STAGE_ID}.
+description: Stage-scoped chain shipper — Pass 1 implement/compile + Pass 2 verify-loop + code-review + audit + closeout. Gates on §Plan Digest readiness (specs must arrive with digest + pre-reviewed from `/stage-file` chain; lazy-migration for legacy §Plan Author). Args: {MASTER_PLAN_PATH} {STAGE_ID}.
 argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--per-task-verify] [--no-resume] [--force-model {model}]"
 ---
 
 # /ship-stage — stage-scoped chain dispatcher
 
-Chain **per-Task implement+compile → Pass 2 verify-loop → code-review → audit → closeout** across every non-Done filed task row of `$ARGUMENTS`. Prerequisite: `/stage-file` chain already populated `§Plan Author` + passed `/plan-review` (else readiness gate stops with handoff).
+Chain **per-Task implement+compile → Pass 2 verify-loop → code-review → audit → closeout** across every non-Done filed task row of `$ARGUMENTS`. Prerequisite: `/stage-file` chain already populated `§Plan Digest` (after plan-digest) + passed `/plan-review` (else readiness gate stops with handoff; legacy `§Plan Author` only → JIT `plan-digest`).
 
 Follow `caveman:caveman` for all your own output and all dispatched subagents. Standard exceptions: code, commits, security/auth, verbatim tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
@@ -41,7 +41,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 >
 > 1. Phase 0 — Parse stage task table (narrow regex; fail loud on schema mismatch).
 > 2. Phase 1 — Context load via `domain-context-load` subskill (once per chain).
-> 3. Phase 1.5 — §Plan Author readiness gate (`ia/skills/ship-stage/SKILL.md` Step 1.5): for each pending spec verify `## §Plan Author` populated. Non-populated → `STOPPED — prerequisite: §Plan Author not populated for {ISSUE_ID_LIST}` + `/author` handoff; no Pass 1.
+> 3. Phase 1.5 — §Plan Digest readiness gate (`ia/skills/ship-stage/SKILL.md` Step 1.5): for each pending spec verify `## §Plan Digest` populated. If missing but `## §Plan Author` populated → auto-invoke `plan-digest` JIT (lazy migration) + emit one-time session warning; resume Pass 1 afterward. Both missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/plan-digest` handoff; no Pass 1.
 > 4. Phase 1.6 — Resume gate (SKILL Step 1.6): `git log --first-parent -400` for `feat(TECH-xxx):` / `fix(TECH-xxx):` per pending Task; skip Pass 1 for satisfied ids; all satisfied → skip Pass 1 → Pass 2 only. Disabled by `--no-resume` or `--per-task-verify`.
 > 5. Phase 2 — Pass 1 per-Task loop: implement (`spec-implementer` work inline) → `unity:compile-check` → atomic commit (resume skips satisfied tasks) (unless `--per-task-verify`, which also runs per-Task verify-loop + code-review in Pass 1).
 > 6. Phase 3 — Pass 2 Stage-end (once after all Pass 1 tasks): full `verify-loop` (Path A+B) on cumulative delta → Stage-level code-review → audit → **closeout** (`stage-closeout-planner` → `plan-applier` Mode stage-closeout). **Closeout is mandatory** when upstream Pass 2 gates pass — do not emit `PASSED` or defer `/closeout` after successful verify + review + audit (see `ia/skills/ship-stage/SKILL.md` **Normative — closeout is part of `PASSED`**).
@@ -53,7 +53,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 > End with one of:
 > - `SHIP_STAGE {STAGE_ID}: PASSED` (**only** after Step 3.5 closeout + validators succeed — not after verify/audit alone)
 > - `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — {gate}: {reason}`
-> - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Author not populated for …` (+ `/author` Next line)
+> - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for …` (+ `/plan-digest` Next line)
 > - `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL`
 > - `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch`
 

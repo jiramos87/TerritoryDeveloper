@@ -299,4 +299,12 @@ After persist: if expansion validates, propose one of:
 
 ---
 
+## Relentless human polling (companion to plan-digest)
+
+Pick-prevention is layered across design-explore → plan-author → plan-digest. This skill is the upstream-most layer: poll the human question-by-question (one open question per turn, never a batch) until every decision is locked in the design doc BEFORE the master plan is compiled. Result: by the time `plan-author` runs, zero picks remain; by the time `plan-digest` lint-scans for picks (`plan_digest_scan_for_picks`), leaks are exceptional. Leak = abort chain + route back to `/design-explore` (not a silent deferral).
+
+See `ia/rules/plan-digest-contract.md` rubric point 1 (zero open picks) and `ia/skills/plan-digest/SKILL.md` Phase 4 lint gate.
+
+---
+
 ## Changelog

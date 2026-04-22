@@ -39,7 +39,8 @@ Some Opus Stage-scoped stages have no Sonnet pair-tail — one Opus bulk call wr
 
 | Stage | Opus output | Scope | Notes |
 |-------|-------------|-------|-------|
-| `plan-author` | `§Plan Author` section (4 sub-sections) per Task spec | Bulk authoring across N Task specs of a Stage in one Opus pass | Non-pair. Absorbs retired `spec-enrich` canonical-term fold. Fires after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. |
+| `plan-author` | `§Plan Author` section (4 sub-sections) per Task spec — **ephemeral** (dropped by `plan-digest`) | Bulk authoring across N Task specs of a Stage in one Opus pass | Non-pair. Absorbs retired `spec-enrich` canonical-term fold. Fires after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. §Plan Author is intermediate — `plan-digest` consumes + drops it in the same write pass (Q5 2026-04-22). |
+| `plan-digest` | `§Plan Digest` section (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps) per Task spec + aggregate at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` | Mechanizes §Plan Author across N Task specs of a Stage in one Opus pass | Non-pair (Q1 revised 2026-04-22: always-on). Runs after `plan-author`, before `plan-reviewer`. 9-point rubric enforced externally via `plan_digest_lint`; cap=1 retry; second failure escalates to user. Two modes: `stage` (live) + `audit` (flag-gated scaffold on `PLAN_DIGEST_AUDIT_MODE=1`). |
 | `opus-audit` | `§Audit` paragraph per Task spec | Bulk post-verify audit across N Task specs of a Stage in one Opus pass | Non-pair. Feeds `stage-closeout-plan` (seam #4 head) at Stage end. |
 
 ## Tier 2 bundle reuse
@@ -50,6 +51,7 @@ One `cache_block` is assembled per Stage by `domain-context-load` Phase N and st
 |---------|-----------------------|---------------------|
 | `stage-file-plan` Phase 0 | Yes — Stage-start | All Tasks in Phase 3/4 |
 | `plan-author` Phase 0 | Yes — Stage-start | All N specs authored in bulk |
+| `plan-digest` Phase 0 | No — reuses cache_block from `plan-author` / orchestrator | All N specs digested in bulk |
 | `opus-audit` Phase 0 | Yes — Stage-start | All N audit paragraphs |
 | `stage-closeout-plan` Phase 0 | Yes — Stage-start | All closeout tuples |
 
@@ -115,6 +117,8 @@ Re-running an applied `§Plan` from scratch = exit 0 + zero diff. This unblocks 
 
 - `ia/rules/project-hierarchy.md` — Stage/Task lifecycle the pair seams operate on.
 - `ia/rules/orchestrator-vs-spec.md` — status flip matrix; pair-tails (esp. seam 2) flip status per R1/R2.
-- `ia/templates/project-spec-template.md` — defines §Plan Author / §Audit / §Code Review / §Code Fix Plan section anchors.
+- `ia/templates/project-spec-template.md` — defines §Plan Digest / §Audit / §Code Review / §Code Fix Plan section anchors.
 - `ia/templates/master-plan-template.md` — defines §Stage File Plan / §Plan Fix / §Stage Closeout Plan section anchors.
 - `ia/skills/plan-author/SKILL.md` — Stage-scoped bulk non-pair (fold of retired spec-enrich).
+- `ia/skills/plan-digest/SKILL.md` — Stage-scoped bulk non-pair; mechanizes §Plan Author into §Plan Digest (Q1 revised 2026-04-22 always-on).
+- `ia/rules/plan-digest-contract.md` — 9-point rubric enforced by `plan_digest_lint`.

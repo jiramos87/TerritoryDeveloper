@@ -1,11 +1,11 @@
 ---
-description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs + §Plan Author populated + plan-review PASS. Dispatches `stage-file-planner` (Opus pair-head) → `stage-file-applier` (Sonnet pair-tail) → `plan-author` (bulk Stage 1×N) → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP. Chain tail per F6 re-fold (2026-04-20). Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
+description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs + §Plan Author populated → §Plan Digest mechanized (§Plan Author dropped) + plan-review PASS. Dispatches `stage-file-planner` (Opus pair-head) → `stage-file-applier` (Sonnet pair-tail) → `plan-author` (bulk Stage 1×N) → `plan-digest` (bulk Stage 1×N, always-on) → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP. Chain tail per F6 re-fold (2026-04-20) + plan-digest insertion (2026-04-22). Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
 argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
-# /stage-file — dispatch seam #2 chain (planner → applier → author → review → STOP)
+# /stage-file — dispatch seam #2 chain (planner → applier → author → digest → review → STOP)
 
-Use `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical) to bulk-file + author + review all `_pending_` tasks of `$ARGUMENTS` in ONE command. Chain STOPS at plan-review PASS (or cap=1 critical-twice). **Next:** `/ship-stage` (N≥2 — runs implement + verify + code-review + audit + closeout) OR `/ship` (N=1).
+Use `stage-file-planner` → `stage-file-applier` → `plan-author` → `plan-digest` → `plan-reviewer` (→ `plan-applier` Mode plan-fix on critical) to bulk-file + author + digest + review all `_pending_` tasks of `$ARGUMENTS` in ONE command. Chain STOPS at plan-review PASS (or cap=1 critical-twice). **Next:** `/ship-stage` (N≥2 — runs implement + verify + code-review + audit + closeout) OR `/ship` (N=1).
 
 ## Argument parsing
 
@@ -76,7 +76,27 @@ Forward via Agent tool with `subagent_type: "plan-author"` (when `FORCE_MODEL` s
 
 Plan-author must return success + N specs with populated `§Plan Author` before Step 4. Failure → abort chain with handoff `/author --stage {MASTER_PLAN_PATH} {STAGE_ID}`.
 
-## Step 4 — Dispatch `plan-reviewer` (Sonnet pair-head; cap=1 on critical)
+## Step 4 — Dispatch `plan-digest` (Opus Stage-scoped bulk non-pair)
+
+Forward via Agent tool with `subagent_type: "plan-digest"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
+
+> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+>
+> ## Mission
+>
+> Run `ia/skills/plan-digest/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. For every Task spec whose `§Plan Author` is populated, mechanize into `§Plan Digest` (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with Edits + Gate + STOP + MCP hints) and DROP `§Plan Author` in the same write pass. Compile aggregate doc at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` via `plan_digest_compile_stage_doc`. Self-lint via `plan_digest_lint` (cap=1 retry).
+>
+> ## Hard boundaries
+>
+> - Do NOT write code, run verify, or flip Task status.
+> - Do NOT resolve picks — `plan_digest_scan_for_picks` is lint-only. Leak → abort + `/author` handoff.
+> - Every `before_string` in a digest edit tuple must resolve to exactly 1 hit via `plan_digest_resolve_anchor`.
+> - Mode `audit` is flag-gated (`PLAN_DIGEST_AUDIT_MODE=1`); do NOT dispatch it from this chain.
+> - Idempotent on re-entry: if `§Plan Digest` already populated AND lint passes, skip.
+
+Plan-digest must return success + N specs with populated `§Plan Digest` (and `§Plan Author` dropped) + aggregate doc written + lint PASS before Step 5. Failure → abort chain with handoff `/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}`.
+
+## Step 5 — Dispatch `plan-reviewer` (Sonnet pair-head; cap=1 on critical)
 
 Forward via Agent tool with `subagent_type: "plan-reviewer"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
 
@@ -95,10 +115,10 @@ Forward via Agent tool with `subagent_type: "plan-reviewer"` (when `FORCE_MODEL`
 
 Branching:
 
-- **PASS** → continue to Step 5 (STOP).
+- **PASS** → continue to Step 6 (STOP).
 - **critical** (tuples written) → dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail) to apply tuples verbatim; re-dispatch `plan-reviewer`. Re-entry cap = 1. Second critical → abort chain with `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE` + handoff `/plan-review {MASTER_PLAN_PATH} {STAGE_ID}` for human review.
 
-### Step 4a — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical) (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`)
+### Step 5a — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical) (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`)
 
 > Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
@@ -113,9 +133,9 @@ Branching:
 > - Do NOT write normative prose.
 > - Do NOT commit.
 
-After applier success → re-dispatch `plan-reviewer` (Step 4).
+After applier success → re-dispatch `plan-reviewer` (Step 5).
 
-## Step 5 — Boundary stop (NO auto-chain to ship-stage)
+## Step 6 — Boundary stop (NO auto-chain to ship-stage)
 
 Per F6 re-fold (2026-04-20): `/stage-file` STOPS at plan-review PASS. Do NOT auto-invoke `/ship-stage`. User decides when to ship.
 
@@ -123,9 +143,9 @@ Rationale: collapse stage-entry from 3 commands (`/stage-file` + `/author` + `/p
 
 ## Output
 
-Chain completion summary: tasks filed ids + `§Plan Author` populated per spec + plan-review PASS + validators ok + next-step proposal. Emit exactly:
+Chain completion summary: tasks filed ids + `§Plan Digest` populated per spec (after plan-digest) + plan-review PASS + validators ok + next-step proposal. Emit exactly:
 
 - **N≥2:** `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID}"` — runs implement + verify + code-review + audit + closeout.
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"` — single-task path (no ship-stage).
 
-Hard rule: `/ship-stage` is multi-task only — for N=1 use `/ship`. `/ship-stage` Phase 1.5 readiness gate is idempotent on populated `§Plan Author`, so re-invocation on partial-failure recovery is safe.
+Hard rule: `/ship-stage` is multi-task only — for N=1 use `/ship`. `/ship-stage` Phase 1.5 readiness gate is idempotent on populated `§Plan Digest`, so re-invocation on partial-failure recovery is safe.

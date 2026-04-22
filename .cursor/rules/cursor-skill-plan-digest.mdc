@@ -1,0 +1,8 @@
+---
+description: "Opus Stage-scoped bulk non-pair stage. Runs AFTER plan-author (populated §Plan Author per spec) and BEFORE plan-review. Reads all N §Plan Author sections + current repo state via MCP; writes per-spec §Plan Digest (rich format: mechanical steps + gates + acceptance + test blueprint + glossary refs + examples + STOP + implementer MCP-tool hints) that SURVIVES in the final spec (§Plan Author is ephemeral and dropped). Compiles aggregate doc at docs/implementation/{slug}-stage-{STAGE_ID}-plan.md via plan_digest_compile_stage_doc. Self-lints via plan_digest_lint (cap=1 retry; second fail escalates to user). Two modes: `stage` (live) + `audit` (scaffold, flag-gated). Always-on: every executor class benefits from the mechanical form. Triggers: \"/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}\", \"digest stage plan\", \"compile stage implementation doc\", auto-dispatched from /stage-file Step 4."
+alwaysApply: false
+---
+Read and follow: @ia/skills/plan-digest/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

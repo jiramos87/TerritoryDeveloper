@@ -29,7 +29,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Opus **Stage-scoped bulk** spec-body author. Non-pair (no Sonnet tail). Runs **once per Stage** after `stage-file-apply` writes N stubs (multi-task path) or once at N=1 after `project-new-apply` (single-task path). Reads ALL N filed spec stubs + Stage header + shared Stage MCP bundle + invariants + pre-loaded glossary anchors in one bulk pass; writes ALL N `§Plan Author` sections in one Opus round. Same pass enforces canonical glossary terms across `§Objective` / `§Background` / `§Implementation Plan` — absorbs retired `spec-enrich` stage.
 
-Does **NOT** write code, run verify, or flip Task status. Downstream: `plan-review` (seam #1 gate) then per-Task `/implement`.
+Does **NOT** write code, run verify, or flip Task status. Downstream: `plan-digest` (mechanizes §Plan Author → §Plan Digest + drops §Plan Author), then `plan-review` (drift scan on final §Plan Digest), then per-Task `/implement`.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — plan-author listed as non-pair Stage-scoped Opus stage; no Sonnet tail.
 
@@ -261,7 +261,8 @@ Does NOT flip Task Status — `plan-review` (multi-task) or `/implement` (single
 ## Cross-references
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — plan-author non-pair entry; 4 surviving pair seams.
-- [`ia/skills/plan-review/SKILL.md`](../plan-review/SKILL.md) — downstream seam #1 gate (multi-task path).
+- [`ia/skills/plan-digest/SKILL.md`](../plan-digest/SKILL.md) — downstream bulk non-pair (mechanizes §Plan Author → §Plan Digest; §Plan Author is ephemeral per Q5 2026-04-22).
+- [`ia/skills/plan-review/SKILL.md`](../plan-review/SKILL.md) — downstream seam #1 gate (multi-task path; drift scan on final §Plan Digest).
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - [`ia/skills/stage-file-apply/SKILL.md`](../stage-file-apply/SKILL.md) — upstream (writes N stubs before plan-author fires).
 - [`ia/skills/project-new-apply/SKILL.md`](../project-new-apply/SKILL.md) — upstream N=1 path.
@@ -278,7 +279,7 @@ Does NOT flip Task Status — `plan-review` (multi-task) or `/implement` (single
 Stage-entry friction logged in lifecycle-refactor T8 dry-run (F6 finding): 3 commands across 2 CLI sessions (`/stage-file` → `/author` → `/plan-review`). User directive: collapse into ONE `/stage-file` invocation.
 
 **Fix:**
-`plan-author` now dispatched from `/stage-file` chain tail (Step 3 in `.claude/commands/stage-file.md`) AFTER `stage-file-applier` writes N stubs + BEFORE `plan-reviewer` drift scan. Idempotent: re-entry on populated `§Plan Author` = no-op skip. Standalone `/author` + `--task {ISSUE_ID}` re-author surface remain valid for single-issue path (post `/project-new`) and Stage recovery. Ordering constraint satisfied — `plan-author` requires stubs on disk (stage-file-applier Step 2 output), cannot fold higher into `stage-file-planner`. Chain terminates at plan-review PASS (STOP); handoff to `/ship-stage` (N≥2) or `/ship` (N=1). `/ship-stage` Phase 1.5 now a READINESS GATE only (no active plan-author dispatch) — STOPPED + `/author` handoff on partial-failure recovery.
+`plan-author` is dispatched from `/stage-file` Step 3 (`.claude/commands/stage-file.md`) AFTER `stage-file-applier` writes N stubs + BEFORE `plan-digest` (Step 4) + `plan-reviewer` (Step 5) drift scan. Idempotent: re-entry on populated `§Plan Author` = no-op skip. Standalone `/author` + `--task {ISSUE_ID}` re-author surface remain valid for single-issue path (post `/project-new`) and Stage recovery. Ordering constraint satisfied — `plan-author` requires stubs on disk (stage-file-applier Step 2 output), cannot fold higher into `stage-file-planner`. Chain terminates at plan-review PASS (STOP); handoff to `/ship-stage` (N≥2) or `/ship` (N=1). `/ship-stage` Phase 1.5 is a READINESS GATE on `§Plan Digest` (lazy-migration from legacy `§Plan Author` if needed) — STOPPED + `/plan-digest` handoff on missing digest.
 
 **Rollout row:** f6-re-fold
 

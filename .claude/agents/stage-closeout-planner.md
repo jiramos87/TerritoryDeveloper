@@ -25,7 +25,7 @@ Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read m
 # Recipe
 
 1. **Parse args** — 1st arg = `MASTER_PLAN_PATH`; 2nd arg = `STAGE_ID`.
-2. **Phase 1 — Load Stage + Task closeout context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row with Status = `Done`: read `ia/projects/{ISSUE_ID}.md` §Audit + §7 Implementation Plan + §9 Issues Found + §10 Lessons Learned + Verification block + §Plan Author §Acceptance. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path, stage_id })` (composite bundle — pending registration; replaces sequential `invariants_summary` → `glossary_discover` → `glossary_lookup` chain). Call `list_rules` + `rule_content` when any §Audit cites a rule section.
+2. **Phase 1 — Load Stage + Task closeout context** — Read master-plan Stage block (Objectives, Exit criteria, Tasks table). For each Task row with Status = `Done`: read `ia/projects/{ISSUE_ID}.md` §Audit + §7 Implementation Plan + §9 Issues Found + §10 Lessons Learned + Verification block + §Plan Digest §Acceptance. Call `mcp__territory-ia__lifecycle_stage_context({ master_plan_path, stage_id })` (composite bundle — pending registration; replaces sequential `invariants_summary` → `glossary_discover` → `glossary_lookup` chain). Call `list_rules` + `rule_content` when any §Audit cites a rule section.
 
    ### Bash fallback (MCP unavailable or tool not yet registered)
 
