@@ -1,0 +1,27 @@
+id: TECH-664
+type: tech
+title: "Write to Unity consumable path"
+priority: medium
+status: closed
+section: Grid asset visual registry — Stage 2.1 (Export CLI + snapshot schema)
+spec: ia/projects/TECH-664.md
+files: []
+notes: |
+  Choose StreamingAssets vs Resources; write generated JSON; document .meta policy and hot-reload dev note per master-plan Step 2 Objectives.
+acceptance: |
+  - [ ] Single authoritative output path documented in repo.
+  - [ ] Idempotent write + mkdir -p behavior.
+  - [ ] README or exploration pointer for Unity load contract.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-662
+  - TECH-663
+  - TECH-665
+  - TECH-666
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  Write to Unity consumable path — Stage 2.1 snapshot file placement.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T2.1.3

@@ -1,0 +1,27 @@
+id: TECH-663
+type: tech
+title: "Snapshot JSON schema + version"
+priority: medium
+status: closed
+section: Grid asset visual registry — Stage 2.1 (Export CLI + snapshot schema)
+spec: ia/projects/TECH-663.md
+files: []
+notes: |
+  Versioned snapshot envelope: schemaVersion, generatedAt, ordered arrays for assets/sprites/bindings/economy. Stable key ordering. Contract doc for Unity GridAssetCatalog (Stage 2.2).
+acceptance: |
+  - [ ] Top-level schemaVersion + generatedAt ISO-8601.
+  - [ ] Arrays for assets, sprites, bindings, economy with stable sort keys.
+  - [ ] Human-readable schema note or JSON Schema file under tools/docs for agents.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-662
+  - TECH-664
+  - TECH-665
+  - TECH-666
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  Snapshot JSON schema + version — Stage 2.1 catalog snapshot envelope.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T2.1.2
