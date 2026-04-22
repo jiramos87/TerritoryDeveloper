@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Newspaper, LayoutDashboard, Layers3, Menu, X } from 'lucide-react';
-import { tokens } from '@/lib/tokens';
 
 const LINKS = [
   { href: '/', label: 'Home', Icon: Home },
@@ -22,17 +21,15 @@ export default function Sidebar() {
     <>
       <button
         aria-label="Toggle navigation"
-        className="md:hidden fixed top-4 left-4 z-50"
-        style={{ color: tokens.colors['text-primary'] }}
+        className="md:hidden fixed top-4 left-4 z-50 text-[var(--ds-text-primary)]"
         onClick={() => setOpen((v) => !v)}
       >
         {open ? <X size={24} /> : <Menu size={24} />}
       </button>
       <nav
-        className={`flex flex-col gap-2 p-4 fixed inset-y-0 left-0 w-48 z-40 transform transition-transform md:static md:translate-x-0 ${
+        className={`flex flex-col gap-2 p-4 fixed inset-y-0 left-0 w-48 z-40 transform transition-transform bg-[var(--ds-bg-canvas)] text-[var(--ds-text-primary)] md:static md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ backgroundColor: tokens.colors['bg-canvas'], color: tokens.colors['text-primary'] }}
       >
         {LINKS.map(({ href, label, Icon }) => {
           const active = pathname === href;
@@ -40,11 +37,10 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-2 rounded px-2 py-1"
-              style={
+              className={
                 active
-                  ? { color: tokens.colors['text-accent-warn'], backgroundColor: tokens.colors['bg-panel'] }
-                  : { color: tokens.colors['text-muted'] }
+                  ? 'flex items-center gap-2 rounded px-2 py-1 text-[var(--ds-text-accent-warn)] bg-[var(--ds-bg-panel)]'
+                  : 'flex items-center gap-2 rounded px-2 py-1 text-[var(--ds-text-muted)]'
               }
               onClick={() => setOpen(false)}
             >

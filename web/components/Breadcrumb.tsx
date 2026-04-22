@@ -17,18 +17,27 @@ export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
         return (
           <span key={i} className="flex items-center gap-2">
             {i > 0 && (
-              <span className="text-text-muted opacity-40 select-none font-light" aria-hidden>
+              <span
+                className="text-[var(--ds-text-muted)] opacity-40 select-none font-light"
+                aria-hidden
+              >
                 /
               </span>
             )}
             {isLast || !crumb.href ? (
-              <span className={isLast ? 'text-text-primary font-medium' : 'text-text-muted'}>
+              <span
+                className={
+                  isLast
+                    ? 'text-[var(--ds-text-primary)] font-medium'
+                    : 'text-[var(--ds-text-muted)]'
+                }
+              >
                 {crumb.label}
               </span>
             ) : (
               <Link
                 href={crumb.href}
-                className="text-text-muted hover:text-text-primary transition-colors underline-offset-2 hover:underline"
+                className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] transition-colors underline-offset-2 hover:underline"
               >
                 {crumb.label}
               </Link>
