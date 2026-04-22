@@ -1,3 +1,5 @@
+import type { CatalogAssetRow } from "./catalog-asset";
+import type { CatalogEconomyRow } from "./catalog-economy";
 import type { CatalogAssetStatus, CatalogSpriteSlot } from "./catalog-enums";
 
 /**
@@ -59,3 +61,31 @@ export interface CatalogCreateAssetBody {
     sprite_id: string;
   }>;
 }
+
+/** `PATCH /api/catalog/assets/:id` (Stage 1.3) — versioned partial update. */
+export type CatalogPatchAssetBody = Partial<
+  Pick<
+    CatalogAssetRow,
+    | "display_name"
+    | "status"
+    | "replaced_by"
+    | "footprint_w"
+    | "footprint_h"
+    | "placement_mode"
+    | "unlocks_after"
+    | "has_button"
+  >
+> & {
+  updated_at: string;
+  economy?: Partial<
+    Pick<
+      CatalogEconomyRow,
+      | "base_cost_cents"
+      | "monthly_upkeep_cents"
+      | "demolition_refund_pct"
+      | "construction_ticks"
+      | "budget_envelope_id"
+      | "cost_catalog_row_id"
+    >
+  >;
+};
