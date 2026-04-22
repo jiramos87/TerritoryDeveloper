@@ -1,0 +1,30 @@
+id: TECH-616
+type: TECH
+title: "Seed seven Zone S assets"
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: "Step 1 — Stage 1.1 (Migrations + Zone S seed)"
+spec: ia/projects/TECH-616.md
+files: []
+notes: |
+  SQL seed or `tools/` runner inserts seven Zone S catalog rows; ids 0–6 map to slugs compatible with
+  `Assets/Resources/Economy/zone-sub-types.json` intent. Sprite binds nullable until art; document placeholder
+  strategy.
+acceptance: |
+  - [ ] Seven rows with correct slugs / categories per economy spec.
+  - [ ] Cents / registry fields populated or explicitly defaulted.
+  - [ ] Seed is repeatable (fixture SQL or idempotent upsert pattern).
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-612
+  - TECH-613
+  - TECH-614
+  - TECH-615
+  - TECH-617
+created: "2026-04-22"
+raw_markdown: |
+  Seed seven Zone S assets — catalog reference data Stage 1.1.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.1.5

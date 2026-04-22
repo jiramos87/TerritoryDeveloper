@@ -1,0 +1,30 @@
+id: TECH-615
+type: TECH
+title: "Author 0012 pool DDL"
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: "Step 1 — Stage 1.1 (Migrations + Zone S seed)"
+spec: ia/projects/TECH-615.md
+files:
+  - db/migrations/0012_catalog_spawn_pools.sql
+notes: |
+  Add `db/migrations/0012_catalog_spawn_pools.sql`: `catalog_spawn_pool`, `catalog_pool_member` with
+  `weight`, FK to `catalog_asset`. Empty tables acceptable at end of Stage; seeds follow in sibling tasks.
+acceptance: |
+  - [ ] Pool + member tables with `weight` column and FK to assets.
+  - [ ] Migration ordering after `0011` enforced in filename chain.
+  - [ ] Ready for optional seed smoke in T1.1.6.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-612
+  - TECH-613
+  - TECH-614
+  - TECH-616
+  - TECH-617
+created: "2026-04-22"
+raw_markdown: |
+  Author 0012 pool DDL — spawn pool migration Stage 1.1.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.1.4
