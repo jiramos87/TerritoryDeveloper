@@ -1,0 +1,31 @@
+id: TECH-649
+type: tech
+title: "MediaTransport composite + design-system media showcase"
+priority: medium
+status: closed
+section: "Web platform — Stage 26 (asset pipeline + media transport)"
+spec: ia/projects/TECH-649.md
+files:
+  - web/components/console/MediaTransport.tsx
+  - web/app/(dev)/design-system/page.tsx
+  - web/components/console/index.ts
+notes: |
+  Stage 26 T26.4. Client composite: `TransportStrip` + `TIcon`; full state + action map; dev page matrix. **Depends on** archived **TECH-638** (TransportStrip). **Related:** **TECH-646**–**TECH-648**.
+acceptance: |
+  - [ ] `MediaTransport` matches props from master-plan Intent.
+  - [ ] `aria-label` on controls; reduced-motion posture documented.
+  - [ ] Design-system page: icon matrix + `MediaTransport` demo all states.
+  - [ ] `npm run validate:web` green.
+depends_on:
+  - TECH-638
+depends_on_raw: "TECH-638 (TransportStrip — Stage 25)"
+related:
+  - TECH-646
+  - TECH-647
+  - TECH-648
+created: 2026-04-22
+completed: "2026-04-22"
+raw_markdown: |
+  MediaTransport + showcase — Stage 26 T26.4; spec `ia/projects/TECH-649.md`
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T26.4

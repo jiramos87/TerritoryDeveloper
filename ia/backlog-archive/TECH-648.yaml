@@ -1,0 +1,29 @@
+id: TECH-648
+type: tech
+title: "TIcon 13-glyph RSC family from console-assets"
+priority: medium
+status: closed
+section: "Web platform — Stage 26 (asset pipeline + media transport)"
+spec: ia/projects/TECH-648.md
+files:
+  - web/components/console/icons/TIcon.tsx
+  - web/components/console/index.ts
+notes: |
+  Stage 26 T26.3. `TIcon` namespace + barrel; `fill="currentColor"`; paths from CD `console-assets.jsx`. **Related:** **TECH-646**, **TECH-647**, **TECH-649**.
+acceptance: |
+  - [ ] All 13 glyphs exported (`TIcon.Play` … `TIcon.Solo`).
+  - [ ] Props: size, className, aria-label.
+  - [ ] Barrel exports updated.
+  - [ ] `npm run validate:web` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-646
+  - TECH-647
+  - TECH-649
+created: 2026-04-22
+completed: "2026-04-22"
+raw_markdown: |
+  TIcon 13-glyph family — Stage 26 T26.3; spec `ia/projects/TECH-648.md`
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T26.3
