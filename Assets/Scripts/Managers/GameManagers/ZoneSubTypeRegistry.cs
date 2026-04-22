@@ -95,4 +95,41 @@ public class ZoneSubTypeRegistry : MonoBehaviour
         assetId = SubTypeIdToAssetId[subTypeId];
         return true;
     }
+
+    /// <summary>
+    /// Picker label using catalog display name and build cost in whole sim units (JSON <c>baseCost</c> scale).
+    /// </summary>
+    public bool TryGetPickerLabelForSubType(int subTypeId, out string line, out int costCents)
+    {
+        line = null;
+        costCents = 0;
+        if (_gridAssetCatalog == null || !TryGetAssetIdForSubType(subTypeId, out int assetId))
+            return false;
+        if (!_gridAssetCatalog.TryGetAsset(assetId, out var asset) ||
+            !_gridAssetCatalog.TryGetEconomyForAsset(assetId, out var econ))
+            return false;
+        costCents = econ.base_cost_cents;
+        int displayUnits = costCents / 100;
+        line = $"{asset.display_name} (${displayUnits})";
+        return true;
+    }
+
+    /// <summary>
+    /// State Service placement draw amount in whole sim units; catalog <c>base_cost_cents / 100</c> when indexed.
+    /// </summary>
+    public bool TryGetStateServiceBuildCostSimUnits(int subTypeId, out int simUnits)
+    {
+        simUnits = 0;
+        var entry = GetById(subTypeId);
+        if (entry == null) return false;
+        if (_gridAssetCatalog != null &&
+            TryGetAssetIdForSubType(subTypeId, out int assetId) &&
+            _gridAssetCatalog.TryGetEconomyForAsset(assetId, out var econ))
+        {
+            simUnits = econ.base_cost_cents / 100;
+            return true;
+        }
+        simUnits = entry.baseCost;
+        return true;
+    }
 }

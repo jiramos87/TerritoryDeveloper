@@ -98,7 +98,15 @@ namespace Territory.Economy
 
                 var label = btnObj.GetComponentInChildren<Text>();
                 if (label != null)
-                    label.text = $"{entry.displayName} (${entry.baseCost})";
+                {
+                    if (registry != null && registry.TryGetPickerLabelForSubType(entry.id, out string line, out _))
+                        label.text = line;
+                    else
+                    {
+                        Debug.LogError("[SubTypePickerModal] [TECH-686] catalog-backed label failed for subType " + entry.id);
+                        label.text = $"{entry.displayName} (—)";
+                    }
+                }
 
                 int capturedId = entry.id;
                 var button = btnObj.GetComponent<Button>();

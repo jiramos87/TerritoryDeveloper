@@ -70,7 +70,14 @@ namespace Territory.Economy
             if (cell == null)
                 return false;
 
-            if (budgetAllocation == null || !budgetAllocation.TryDraw(subTypeId, entry.baseCost))
+            if (!registry.TryGetStateServiceBuildCostSimUnits(subTypeId, out int buildCost))
+            {
+                GameNotificationManager.Instance?.PostError(
+                    $"Zone S placement failed: could not resolve build cost for sub-type id {subTypeId}.");
+                return false;
+            }
+
+            if (budgetAllocation == null || !budgetAllocation.TryDraw(subTypeId, buildCost))
             {
                 GameNotificationManager.Instance?.PostNotification(
                     $"{entry.displayName} envelope exhausted",

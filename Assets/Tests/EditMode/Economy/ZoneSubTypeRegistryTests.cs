@@ -13,12 +13,15 @@ namespace Territory.Tests.EditMode.Economy
     /// </summary>
     public class ZoneSubTypeRegistryTests
     {
+        private GameObject catalogHost;
         private ZoneSubTypeRegistry registry;
         private EconomyManager economy;
 
         [SetUp]
         public void SetUp()
         {
+            catalogHost = new GameObject("TestGridAssetCatalog");
+            catalogHost.AddComponent<GridAssetCatalog>();
             registry = new GameObject("TestRegistry").AddComponent<ZoneSubTypeRegistry>();
             // Awake fires immediately in EditMode — loads Resources/Economy/zone-sub-types.json.
             Assume.That(registry.Entries.Count, Is.EqualTo(7),
@@ -32,6 +35,7 @@ namespace Territory.Tests.EditMode.Economy
         public void TearDown()
         {
             if (registry != null) UnityEngine.Object.DestroyImmediate(registry.gameObject);
+            if (catalogHost != null) UnityEngine.Object.DestroyImmediate(catalogHost);
             if (economy != null) UnityEngine.Object.DestroyImmediate(economy.gameObject);
         }
 
