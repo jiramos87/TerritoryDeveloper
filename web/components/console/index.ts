@@ -5,6 +5,8 @@ export {
   type MediaTransportState,
 } from './MediaTransport';
 export { TIcon, type TIconGlyphProps } from './icons/TIcon';
+export { HeatCell, heatDensityBucket, type HeatCellProps } from './HeatCell';
+export { Sparkline, type SparklineProps } from './Sparkline';
 export { Bezel, type BezelProps } from './Bezel';
 export { LED, type LEDProps, type LedColor, type LedState } from './LED';
 export {
