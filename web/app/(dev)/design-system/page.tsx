@@ -1,7 +1,9 @@
+// Stage 27 T27.6 — CD ScreenDesign cross-check (augments T23.4 + T25.6; NB-CD4 de-dupe)
 import { notFound } from 'next/navigation';
 import { BadgeChip, type Status } from '@/components/BadgeChip';
 import { ConsoleMediaShowcase } from '@/components/dev/ConsoleMediaShowcase';
 import { ConsoleChromeShowcase } from '@/components/console/ConsoleChromeShowcase';
+import { HeatCell, Rack } from '@/components/console';
 import { Surface } from '@/components/surface/Surface';
 import { Heading, type HeadingLevel } from '@/components/type/Heading';
 import { Prose } from '@/components/type/Prose';
@@ -36,6 +38,15 @@ const DS_VAR_ROWS: { name: string; value: string }[] = [
   { name: '--ds-spacing-md', value: '1rem' },
   { name: '--ds-surface-raised', value: 'panel' },
   { name: '--ds-duration-subtle', value: '120ms' },
+];
+
+const RAW_SWATCH: { v: string; label: string }[] = [
+  { v: 'var(--ds-raw-green)', label: 'raw green' },
+  { v: 'var(--ds-raw-amber)', label: 'raw amber' },
+  { v: 'var(--ds-raw-red)', label: 'raw red' },
+  { v: 'var(--ds-raw-blue)', label: 'raw blue' },
+  { v: 'var(--ds-raw-panel)', label: 'raw panel' },
+  { v: 'var(--ds-raw-text)', label: 'raw text' },
 ];
 
 export const metadata = {
@@ -156,6 +167,49 @@ export default function DesignSystemShowcasePage() {
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section className="space-y-4" id="cd-screen-design-t27">
+          <h2 className="text-sm font-mono uppercase tracking-widest text-text-muted">
+            CD design kit (Stage 27 — delta)
+          </h2>
+          <p className="text-sm text-text-muted">
+            NB-CD4: Headings, Prose, Surface motion, and Console chrome above stay canonical; this
+            block adds CD `ScreenDesign` matrix rows (palette + density) without forking the pilot
+            bundle.
+          </p>
+          <Rack label="Palette swatches (raw)">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {RAW_SWATCH.map((s) => (
+                <div
+                  key={s.label}
+                  className="flex min-h-16 items-end rounded-sm border border-black p-2"
+                  style={{ background: s.v }}
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-wide text-white mix-blend-difference">
+                    {s.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Rack>
+          <Rack label="HeatmapCell scale (null → peak)">
+            <div className="flex flex-wrap items-center gap-1">
+              {[0, 1, 2, 4, 6, 8].map((n) => (
+                <HeatCell key={n} n={n} />
+              ))}
+              <span className="ml-3 font-mono text-[10px] text-text-muted">CD density buckets</span>
+            </div>
+          </Rack>
+          <Rack label="Motion stops (CD parity)">
+            <p className="mb-3 text-sm text-text-muted">
+              Durations align with <code className="font-mono">--ds-duration-*</code> — see Surface
+              motion section for live demos; reduced-motion: coerces to 0 in globals.
+            </p>
+            <ul className="list-inside list-disc space-y-1 font-mono text-sm text-text-muted">
+              <li>instant / subtle / gentle / deliberate</li>
+            </ul>
+          </Rack>
         </section>
       </div>
     </div>
