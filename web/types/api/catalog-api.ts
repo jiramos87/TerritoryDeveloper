@@ -89,3 +89,14 @@ export type CatalogPatchAssetBody = Partial<
     >
   >;
 };
+
+/** `POST /api/catalog/assets/:id/retire` (Stage 1.3). */
+export interface CatalogRetireBody {
+  replaced_by?: string | null;
+}
+
+/** `POST /api/catalog/preview-diff` (Stage 1.3) — `patch` is shallow asset-field overrides only. */
+export interface CatalogPreviewDiffRequest {
+  asset_id: string;
+  patch: Record<string, unknown>;
+}
