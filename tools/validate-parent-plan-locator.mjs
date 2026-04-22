@@ -20,9 +20,8 @@
  * are passed (defensive; the help text discourages it).
  */
 
-import { createRequire } from "node:module";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ---------------------------------------------------------------------------
 // Resolve repo root from this file's location
@@ -45,15 +44,15 @@ const yamlDirs = ["ia/backlog", "ia/backlog-archive"];
 const planGlob = "ia/projects/*master-plan*.md";
 
 // ---------------------------------------------------------------------------
-// Import compiled core (no tsx on hot path)
+// Import compiled core (no tsx on hot path) — ESM `import()` (dist is ESM)
 // ---------------------------------------------------------------------------
 
-const require = createRequire(import.meta.url);
 const distPath = path.join(
   repoRoot,
   "tools/mcp-ia-server/dist/parser/parent-plan-validator.js",
 );
-const { validateParentPlanLocator } = require(distPath);
+
+const { validateParentPlanLocator } = await import(pathToFileURL(distPath).href);
 
 // ---------------------------------------------------------------------------
 // Run validator
