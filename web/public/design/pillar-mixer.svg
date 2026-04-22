@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Pillar — mixer">
+  <rect width="400" height="300" style="fill: #141414"/>
+      <g>
+      <rect x="37" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="28" y="102" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="32" y1="110" x2="48" y2="110" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="40" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH01</text>
+    </g>
+    <g>
+      <rect x="79" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="70" y="139" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="74" y1="147" x2="90" y2="147" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="82" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH02</text>
+    </g>
+    <g>
+      <rect x="121" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="112" y="176" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="116" y1="184" x2="132" y2="184" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="124" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH03</text>
+    </g>
+    <g>
+      <rect x="163" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="154" y="213" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="158" y1="221" x2="174" y2="221" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="166" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH04</text>
+    </g>
+    <g>
+      <rect x="205" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="196" y="250" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="200" y1="258" x2="216" y2="258" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="208" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH05</text>
+    </g>
+    <g>
+      <rect x="247" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="238" y="107" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="242" y1="115" x2="258" y2="115" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="250" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH06</text>
+    </g>
+    <g>
+      <rect x="289" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="280" y="144" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="284" y1="152" x2="300" y2="152" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="292" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH07</text>
+    </g>
+    <g>
+      <rect x="331" y="60" width="6" height="180" style="fill: #050505; stroke: #000"/>
+      <rect x="322" y="181" width="24" height="16" rx="2" style="fill: #2a2a2a; stroke: #000"/>
+      <line x1="326" y1="189" x2="342" y2="189" style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.5"/>
+      <text x="334" y="260" style="font-family: Geist Mono, ui-monospace, monospace; font-size: 8px; fill: var(--ds-text-secondary, #6a6a6a); text-anchor: middle; letter-spacing: 0.1em">CH08</text>
+    </g>
+
+      <circle cx="40" cy="40" r="3" style="fill: var(--ds-accent-terrain, #3a9b4a); opacity: 0.9"/>
+    <circle cx="82" cy="40" r="3" style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.9"/>
+    <circle cx="124" cy="40" r="3" style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.9"/>
+    <circle cx="166" cy="40" r="3" style="fill: var(--ds-accent-terrain, #3a9b4a); opacity: 0.9"/>
+    <circle cx="208" cy="40" r="3" style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.9"/>
+    <circle cx="250" cy="40" r="3" style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.9"/>
+    <circle cx="292" cy="40" r="3" style="fill: var(--ds-accent-terrain, #3a9b4a); opacity: 0.9"/>
+    <circle cx="334" cy="40" r="3" style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.9"/>
+
+  <g style="font-family: Geist Mono, ui-monospace, monospace; font-size: 9px; fill: var(--ds-raw-amber, #e8a33d); letter-spacing: 0.2em; opacity: 0.8">
+    <text x="16" y="24">MIX // MASTER</text>
+  </g>
+</svg>

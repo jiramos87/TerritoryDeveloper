@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="TD">
+  <rect
+    width="64"
+    height="64"
+    rx="4"
+    style="fill: var(--ds-raw-black, #0a0a0a)"
+  />
+  <g style="fill: var(--ds-raw-amber, #e8a33d)">
+    <path d="M14 22 h16 v4 h-6 v16 h-4 v-16 h-6z" />
+    <path
+      d="M33 22 h8 a9 10 0 0 1 9 10 a9 10 0 0 1 -9 10 h-8 z M37 26 v12 h4 a5 6 0 0 0 5 -6 a5 6 0 0 0 -5 -6 z"
+    />
+  </g>
+</svg>

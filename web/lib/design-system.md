@@ -181,6 +181,21 @@ The extensions doc records pilot approval of **`--raw-blue` / info role** and se
 
 **`web/public/design/` filename convention (Stage 26 Exit):** `logomark.svg`, `wordmark.svg`, `lettermark.svg`, `strapline-lockup.svg`, `hero-art.svg`, `pillar-planet.svg`, `pillar-signal.svg`, `pillar-mixer.svg`, `pillar-radar.svg`, `pillar-tape.svg`. Source traces: `web/design-refs/step-8-console/src/console-assets.jsx` (CD bundle, read-only).
 
+#### §7.1 — Static `public/design` inventory (CD → file)
+
+| File | CD source (approx.) |
+| --- | --- |
+| `logomark.svg` | `Logomark` (logo suite) |
+| `wordmark.svg` | `Wordmark` |
+| `lettermark.svg` | `Lettermark` |
+| `strapline-lockup.svg` | `StraplineLockup` |
+| `hero-art.svg` | `HeroArt` |
+| `pillar-planet.svg` | `PillarPlanet` |
+| `pillar-signal.svg` | `PillarSignal` |
+| `pillar-mixer.svg` | `PillarMixer` |
+| `pillar-radar.svg` | `PillarRadar` |
+| `pillar-tape.svg` | `PillarTape` |
+
 ### Asset manifest (abbrev.)
 
 The handoff §6 maps each bundle file to suggested Next.js destinations (`components/console/*`, `app/*` routes, `public/fonts`, etc.). Prototype-only HTML entries are reference-only.

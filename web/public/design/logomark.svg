@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Territory Developer">
+  <defs>
+    <radialGradient id="lm-rg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color: var(--ds-raw-black, #0a0a0a); stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #000; stop-opacity: 1" />
+    </radialGradient>
+    <filter id="lm-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.8" />
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="8" style="fill: url(#lm-rg)" />
+  <g
+    style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 0.6; fill: none; opacity: 0.4"
+  >
+    <circle cx="32" cy="32" r="26" />
+    <circle cx="32" cy="32" r="19" />
+    <circle cx="32" cy="32" r="12" />
+    <line x1="6" y1="32" x2="58" y2="32" />
+    <line x1="32" y1="6" x2="32" y2="58" />
+  </g>
+  <path
+    d="M32 32 L54 22 A24 24 0 0 1 54 42 Z"
+    style="fill: var(--ds-raw-amber, #e8a33d); opacity: 0.12"
+  />
+  <g style="fill: var(--ds-raw-amber, #e8a33d)" filter="url(#lm-glow)">
+    <path d="M14 22 h16 v4 h-6 v16 h-4 v-16 h-6z" />
+    <path
+      d="M33 22 h8 a9 10 0 0 1 9 10 a9 10 0 0 1 -9 10 h-8 z M37 26 v12 h4 a5 6 0 0 0 5 -6 a5 6 0 0 0 -5 -6 z"
+    />
+  </g>
+  <circle cx="50" cy="14" r="2" style="fill: var(--ds-raw-amber, #e8a33d)" />
+  <circle
+    cx="50"
+    cy="14"
+    r="3.5"
+    style="fill: none; stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 0.5; opacity: 0.5"
+  />
+</svg>

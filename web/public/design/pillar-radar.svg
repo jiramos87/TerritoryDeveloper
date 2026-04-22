@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Pillar  radar">
+  <defs>
+    <radialGradient id="pr-bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color: #0a1510" />
+      <stop offset="100%" style="stop-color: #000" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" style="fill: url(#pr-bg)" />
+  <g
+    transform="translate(200 150)"
+    style="stroke: var(--ds-accent-terrain, #3a9b4a); fill: none; opacity: 0.7"
+  >
+    <circle r="120" stroke-width="0.6" />
+    <circle r="90" stroke-width="0.5" opacity="0.6" />
+    <circle r="60" stroke-width="0.5" opacity="0.5" />
+    <circle r="30" stroke-width="0.4" opacity="0.4" />
+    <line x1="-120" y1="0" x2="120" y2="0" stroke-width="0.3" />
+    <line x1="0" y1="-120" x2="0" y2="120" stroke-width="0.3" />
+    <line x1="-85" y1="-85" x2="85" y2="85" stroke-width="0.3" opacity="0.4" />
+    <line x1="85" y1="-85" x2="-85" y2="85" stroke-width="0.3" opacity="0.4" />
+  </g>
+  <g transform="translate(200 150)">
+    <path
+      d="M0 0 L120 -60 A120 120 0 0 1 100 80 Z"
+      style="fill: var(--ds-accent-terrain, #3a9b4a); opacity: 0.15"
+    />
+    <line
+      x1="0"
+      y1="0"
+      x2="120"
+      y2="-60"
+      style="stroke: var(--ds-accent-terrain, #3a9b4a); stroke-width: 1"
+    />
+  </g>
+  <g style="fill: var(--ds-raw-amber, #e8a33d)">
+    <circle cx="260" cy="110" r="3" />
+    <circle cx="150" cy="200" r="2" />
+    <circle cx="220" cy="170" r="2.5" />
+  </g>
+  <g style="font-family: Geist Mono, ui-monospace, monospace; font-size: 9px; fill: var(--ds-accent-terrain, #3a9b4a); letter-spacing: 0.2em; opacity: 0.9">
+    <text x="16" y="24">RADAR // SWEEP</text>
+  </g>
+</svg>

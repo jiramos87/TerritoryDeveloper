@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Territory planet viewport">
+  <defs>
+    <radialGradient id="ha-sky" cx="50%" cy="20%" r="90%">
+      <stop offset="0%" style="stop-color: var(--ds-accent-water, #1a2540); stop-opacity: 1" />
+      <stop offset="35%" style="stop-color: #0a0f1c; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #000; stop-opacity: 1" />
+    </radialGradient>
+    <radialGradient id="ha-planet" cx="35%" cy="40%" r="70%">
+      <stop offset="0%" style="stop-color: #2a3a55" />
+      <stop offset="55%" style="stop-color: #0a0f1c" />
+      <stop offset="100%" style="stop-color: #000" />
+    </radialGradient>
+    <linearGradient id="ha-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0" />
+      <stop offset="85%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0" />
+      <stop offset="98%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0.9" />
+      <stop offset="100%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0" />
+    </linearGradient>
+    <radialGradient id="ha-glow" cx="72%" cy="18%" r="30%">
+      <stop offset="0%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0.35" />
+      <stop offset="100%" style="stop-color: var(--ds-raw-amber, #e8a33d); stop-opacity: 0" />
+    </radialGradient>
+    <radialGradient id="ha-atmos" cx="50%" cy="50%" r="50%">
+      <stop offset="88%" style="stop-color: var(--ds-accent-water, #4a7bc8); stop-opacity: 0" />
+      <stop offset="96%" style="stop-color: var(--ds-accent-water, #4a7bc8); stop-opacity: 0.35" />
+      <stop offset="100%" style="stop-color: var(--ds-accent-water, #4a7bc8); stop-opacity: 0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="900" style="fill: url(#ha-sky)"/>
+  <g>    <circle cx="0" cy="0" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="547" cy="523" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="294" cy="146" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="41" cy="669" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="588" cy="292" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="335" cy="815" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="82" cy="438" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="629" cy="61" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="376" cy="584" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="123" cy="207" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="670" cy="730" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="417" cy="353" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="164" cy="876" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="711" cy="499" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="458" cy="122" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="205" cy="645" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="752" cy="268" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="499" cy="791" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="246" cy="414" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="793" cy="37" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="540" cy="560" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="287" cy="183" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="34" cy="706" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="581" cy="329" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="328" cy="852" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="75" cy="475" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="622" cy="98" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="369" cy="621" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="116" cy="244" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="663" cy="767" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="410" cy="390" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="157" cy="13" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="704" cy="536" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="451" cy="159" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="198" cy="682" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="745" cy="305" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="492" cy="828" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="239" cy="451" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="786" cy="74" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="533" cy="597" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="280" cy="220" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="27" cy="743" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="574" cy="366" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="321" cy="889" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="68" cy="512" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="615" cy="135" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="362" cy="658" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="109" cy="281" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="656" cy="804" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="403" cy="427" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="150" cy="50" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="697" cy="573" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="444" cy="196" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="191" cy="719" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="738" cy="342" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="485" cy="865" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="232" cy="488" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="779" cy="111" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="526" cy="634" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="273" cy="257" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="20" cy="780" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="567" cy="403" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="314" cy="26" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="61" cy="549" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="608" cy="172" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="355" cy="695" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="102" cy="318" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="649" cy="841" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="396" cy="464" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="143" cy="87" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="690" cy="610" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="437" cy="233" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="184" cy="756" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="731" cy="379" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="478" cy="2" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="225" cy="525" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="772" cy="148" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="519" cy="671" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="266" cy="294" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="13" cy="817" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="560" cy="440" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="307" cy="63" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="54" cy="586" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="601" cy="209" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="348" cy="732" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="95" cy="355" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="642" cy="878" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="389" cy="501" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="136" cy="124" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="683" cy="647" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="430" cy="270" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="177" cy="793" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="724" cy="416" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="471" cy="39" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="218" cy="562" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="765" cy="185" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="512" cy="708" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="259" cy="331" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="6" cy="854" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="553" cy="477" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="300" cy="100" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="47" cy="623" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="594" cy="246" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="341" cy="769" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="88" cy="392" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="635" cy="15" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="382" cy="538" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="129" cy="161" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="676" cy="684" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="423" cy="307" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="170" cy="830" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="717" cy="453" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="464" cy="76" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+    <circle cx="211" cy="599" r="0.4" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.5"/>
+    <circle cx="758" cy="222" r="0.6000000000000001" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.7"/>
+    <circle cx="505" cy="745" r="0.8" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8999999999999999"/>
+    <circle cx="252" cy="368" r="0.30000000000000004" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.4"/>
+    <circle cx="799" cy="891" r="0.5" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.6"/>
+    <circle cx="546" cy="514" r="0.7" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.8"/>
+    <circle cx="293" cy="137" r="0.2" style="fill: var(--ds-raw-text, #e8e8e8); opacity: 0.3"/>
+  </g>
+  <circle cx="640" cy="180" r="180" style="fill: url(#ha-glow)"/>
+  <circle cx="380" cy="560" r="340" style="fill: url(#ha-atmos)"/>
+  <circle cx="380" cy="560" r="320" style="fill: url(#ha-planet)"/>
+  <circle cx="380" cy="560" r="320" style="fill: url(#ha-rim); opacity: 0.85"/>
+  <g style="fill: #1a2a18; opacity: 0.85">
+    <path d="M260 420 Q300 380 360 400 Q400 420 380 460 Q340 480 300 470 Q260 450 260 420 Z"/>
+    <path d="M420 520 Q480 500 520 540 Q540 580 500 600 Q450 610 420 580 Q400 550 420 520 Z"/>
+    <path d="M300 620 Q340 600 400 620 Q440 650 410 680 Q360 690 310 670 Q280 645 300 620 Z"/>
+    <path d="M220 520 Q260 510 280 540 Q290 570 260 580 Q230 575 220 560 Z"/>
+  </g>
+  <g style="stroke: var(--ds-accent-water, #4a7bc8); stroke-width: 0.4; fill: none; opacity: 0.25">
+    <path d="M60 560 a320 320 0 0 1 640 0" />
+    <path d="M60 560 a320 240 0 0 1 640 0" />
+    <path d="M60 560 a320 160 0 0 1 640 0" />
+    <path d="M60 560 a320 80 0 0 1 640 0" />
+    <path d="M60 560 a320 320 0 0 0 640 0" />
+    <path d="M60 560 a320 240 0 0 0 640 0" />
+    <line x1="380" y1="240" x2="380" y2="880"/>
+    <line x1="250" y1="260" x2="250" y2="860"/>
+    <line x1="510" y1="260" x2="510" y2="860"/>
+  </g>
+  <g style="fill: none; stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 0.8; opacity: 0.7">
+    <ellipse cx="380" cy="560" rx="460" ry="380" transform="rotate(-18 380 560)"/>
+  </g>
+  <g transform="rotate(-18 380 560) translate(840 560)">
+    <circle r="4" style="fill: var(--ds-raw-amber, #e8a33d)"/>
+    <circle r="8" style="fill: none; stroke: var(--ds-raw-amber, #e8a33d); opacity: 0.5"/>
+  </g>
+  <g style="font-family: Geist Mono, ui-monospace, monospace; font-size: 11px; fill: var(--ds-accent-water, #4a7bc8); letter-spacing: 0.2em">
+    <text x="32" y="42">TER/DEV//001</text>
+    <text x="32" y="58" style="opacity: 0.6">LAT 42.1184 N</text>
+    <text x="32" y="72" style="opacity: 0.6">LNG 71.4128 W</text>
+    <text x="640" y="42" text-anchor="start">T+00:04:23:17</text>
+    <text x="640" y="58" text-anchor="start" style="opacity: 0.6">ORBIT STABLE</text>
+  </g>
+  <g style="font-family: Geist Mono, ui-monospace, monospace; font-size: 10px; fill: var(--ds-raw-amber, #e8a33d); letter-spacing: 0.15em; opacity: 0.8">
+    <text x="32" y="868">SIGNAL: NOMINAL</text>
+    <text x="32" y="882" style="opacity: 0.6">PAYLOAD: 7/12 NODES</text>
+  </g>
+  <g style="stroke: var(--ds-raw-amber, #e8a33d); stroke-width: 1.2; fill: none; opacity: 0.8">
+    <path d="M20 100 L20 140 L60 140"/>
+    <path d="M780 100 L780 140 L740 140"/>
+    <path d="M20 800 L20 760 L60 760"/>
+    <path d="M780 800 L780 760 L740 760"/>
+  </g>
+</svg>
