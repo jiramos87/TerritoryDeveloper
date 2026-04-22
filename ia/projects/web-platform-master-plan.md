@@ -585,7 +585,7 @@
 
 ### Stage 22 — Visual design layer / Design system spec + token pipeline
 
-**Status:** Draft (tasks _pending_ — reset via TECH-411 Phase 1)
+**Status:** Draft (tasks _pending_ — not yet filed)
 
 **Objectives:** Author `web/lib/design-system.md` spec; derive `web/lib/design-tokens.ts` (TS const); extend `globals.css` `@theme` with `ds-*` CSS custom properties; unit-test scale monotonicity + alias resolution + reduced-motion.
 
@@ -637,61 +637,7 @@
 
 ---
 
-### Stage 24 — Visual design layer / Priority surfaces adoption + broad token migration
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Objectives:** Re-skin landing hero + dashboard with new primitives (priority surfaces per Q1); broad `tokens.*` → `ds-*` alias migration across remaining components + wiki/devlog Prose wrap. Lighthouse baseline captured before Phase 1 re-skin.
-
-**Exit:**
-
-- Lighthouse baseline (LCP / CLS / TBT) captured on `localhost:4000` + `/dashboard` BEFORE any re-skin (NB3).
-- `web/app/page.tsx` landing hero: `<Heading level="display">` + `<Surface tone="raised" motion="subtle">` + `--ds-accent-terrain` on CTA; full-English user-facing copy unchanged (B3 / CLAUDE.md §6).
-- `web/app/dashboard/page.tsx` re-skinned; stat blocks in `<Surface>`; headings via `<Heading>`; `BadgeChip` uses `ds-*` aliases; `/dashboard/releases/**` (Step 7) unaffected (regression guard).
-- `grep "tokens\."` surfaces enumerated; `Breadcrumb`, `Sidebar`, `BadgeChip`, `DataTable`, `FilterChips` migrated to `ds-*` CSS var classes; alias-neutral (palette unchanged — NB4 / Example 3 from extensions doc).
-- `web/app/wiki/**` + `web/app/devlog/**` MDX output wrapped in `<Prose>`; no layout rework.
-- `npm run validate:web` green; manual visual diff noted in PR body.
-- Phase 1 — Priority surfaces adoption (landing hero + dashboard re-skin).
-- Phase 2 — Broad token-alias migration (components + wiki/devlog Prose wrap).
-
-**Tasks:**
-
-| Task | Issue | Status | Intent |
-| --- | --- | --- | --- |
-| T24.1 | _pending_ | _pending_ | Capture Lighthouse baseline (LCP / CLS / TBT) on `localhost:4000` BEFORE any edit; store scores in PR body (NB3). Re-skin `web/app/page.tsx` landing hero: `<Heading level="display">` on main title; `<Surface tone="raised" motion="subtle" padding="section">` on hero panel; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3). `npm run validate:web` green. |
-| T24.2 | _pending_ | _pending_ | Re-skin `web/app/dashboard/page.tsx`: wrap stat blocks in `<Surface tone="raised" padding="md">`; replace raw `<h1>`/`<h2>` with `<Heading level="h1">` / `<Heading level="h2">`; update `BadgeChip` usages to `ds-*` alias classes; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green. |
-| T24.3 | _pending_ | _pending_ | Grep `tokens\.` across `web/app/**/*.tsx` + `web/components/**/*.tsx`; enumerate surfaces; migrate `web/components/Breadcrumb.tsx` + `web/components/Sidebar.tsx` inline `tokens.*` → `bg-[var(--ds-*)]` / `text-[var(--ds-*)]` Tailwind v4 arbitrary value classes; confirm alias-neutral (zero visual diff — same hex values per Example 3); `npm run validate:web` green. |
-| T24.4 | _pending_ | _pending_ | Migrate `web/components/BadgeChip.tsx` + `web/components/DataTable.tsx` + `web/components/FilterChips.tsx` inline `tokens.*` → `ds-*` CSS var classes; wrap MDX output in `web/app/wiki/**` + `web/app/devlog/**` pages in `<Prose>` component (vertical rhythm only; no layout rework); `npm run validate:web` green; manual visual diff on `localhost:4000/wiki` + `/devlog` noted in PR body. |
-
----
-
-### Stage 25 — Visual design layer / Docs + validation
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Objectives:** Update `web/README.md` (Design System section) + `CLAUDE.md §6` (spec path row); final `validate:web` green gate; post-skin Lighthouse check against Stage 8.3 baseline (NB3 regression guard).
-
-**Exit:**
-
-- `web/README.md` has `## Design System` section: spec path, primitive one-liners, showcase route note, `ds-*` class convention (Tailwind v4 CSS custom properties, not `tailwind.config.ts`).
-- `CLAUDE.md §6` has row for `web/lib/design-system.md`.
-- `npm run validate:web` green.
-- Lighthouse post-check on `/`: LCP ≤ Stage 8.3 T8.3.1 baseline × 1.1; CLS < 0.1; if CLS regressed → set all `Surface motion="none"` in landing + dashboard as fallback.
-- Phase 1 — Docs (`web/README.md` + `CLAUDE.md §6`).
-- Phase 2 — Final validation (`validate:web` + Lighthouse post-check).
-
-**Tasks:**
-
-| Task | Issue | Status | Intent |
-| --- | --- | --- | --- |
-| T25.1 | _pending_ | _pending_ | Update `web/README.md` — add `## Design System` section: cite `web/lib/design-system.md` as authoritative spec; one-liner per primitive (`Heading` — level-bound RSC typography; `Prose` — MDX vertical-rhythm wrapper; `Surface` — tone/padding/motion panel); showcase route (`web/app/_design-system/page.tsx`, dev-only, unlinked); `ds-*` class convention note (Tailwind v4 CSS vars via `--ds-*` in `globals.css`, not `tailwind.config.ts`). |
-| T25.2 | _pending_ | _pending_ | Update `CLAUDE.md §6` web workspace section — add row for design-system spec: `web/lib/design-system.md — Design system spec: type/spacing/motion/alias tables; derivation source for web/lib/design-tokens.ts + globals.css @theme ds-* block`; add caveman carve-out reminder: page-body JSX strings in `web/app/**/page.tsx` stay full English (CLAUDE.md §6 authority). |
-| T25.3 | _pending_ | _pending_ | Run `npm run validate:web` (lint + typecheck + build) from repo root; fix any type or lint regressions introduced in Stages 8.1–8.3; confirm exit 0; report exit code + any fixes in PR body. |
-| T25.4 | _pending_ | _pending_ | Run Lighthouse on `localhost:4000` (landing); record LCP / CLS / TBT; compare against Stage 8.3 T8.3.1 baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if CLS regressed → set `Surface motion="none"` in landing + dashboard and re-run Lighthouse; document result + any remediation in PR body (NB3). |
-
----
-
-### Stage 26 — Visual design layer / CD bundle extraction + transcription pipeline
+### Stage 24 — Visual design layer / CD bundle extraction + transcription pipeline
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -711,14 +657,14 @@
 
 | Task | Issue | Status | Intent |
 | --- | --- | --- | --- |
-| T26.1 | _pending_ | _pending_ | Author `tools/scripts/extract-cd-tokens.ts` — reads `web/design-refs/step-8-console/ds/colors_and_type.css` + `web/design-refs/step-8-console/ds/palette.json`; parses CSS custom properties under `:root`; emits canonical token map shape `{ raws: {...}, semantic: {...}, motion: {...}, typeScale: {...}, spacing: {...} }` as JSON to stdout OR to `--out` arg path; tsx-runnable via `npx tsx`; zero runtime deps outside node built-ins; JSDoc cites B-CD1 (drift-on-mutation guard). |
-| T26.2 | _pending_ | _pending_ | Author drift-report emitter as second pass in `extract-cd-tokens.ts` — diffs canonical map raws against `web/lib/tokens/palette.json` raws; emits `web/design-refs/step-8-console/.drift-report.md` Markdown table (columns: Key, CD value, palette.json value, Match?); exit code 0 on zero drift, exit 1 on any mismatch (CI-friendly). Author `tools/scripts/__tests__/extract-cd-tokens.test.ts` — snapshot test on known-clean bundle + fabricated-mismatch fixture. |
-| T26.3 | _pending_ | _pending_ | Author `tools/scripts/transcribe-cd-tokens.ts` — consumes canonical map JSON via stdin or `--in` arg; applies D1 motion rename (`--dur-fast` → `--ds-duration-instant` etc. — exact mapping TBV at P0 decision resolution) + D2 prefix rename (`--raw-*` → `--ds-*`, `--text-*` → `--ds-text-*`, `--dur-*` → `--ds-duration-*`); emits two output blocks: (a) CSS fragment appended to `web/app/globals.css` `@theme` inside marker comments `/* CD-BUNDLE-START */` ... `/* CD-BUNDLE-END */` (idempotent re-run replaces block between markers), (b) TS fragment for `web/lib/design-tokens.ts` under `export const cdBundle = { ... } as const`; refuses to write when `.drift-report.md` non-empty. |
-| T26.4 | _pending_ | _pending_ | Transcribe `web/design-refs/step-8-console/HANDOFF.md` contents into `web/lib/design-system.md` new `## §7 — CD Pilot Bundle appendix` subsection; preserve section structure (type scale notes, spacing scale, motion vocab decisions, primitive list); cite extensions doc `## CD Pilot Bundle — 2026-04-18` as canonical narrative source; cite Dribbble breadcrumb + Shopify dev docs refs from extensions doc §8 (NB5); add banner "Generated from `tools/scripts/transcribe-cd-tokens.ts`; re-run script if bundle re-issues". `npm run validate:web` green. |
+| T24.1 | _pending_ | _pending_ | Author `tools/scripts/extract-cd-tokens.ts` — reads `web/design-refs/step-8-console/ds/colors_and_type.css` + `web/design-refs/step-8-console/ds/palette.json`; parses CSS custom properties under `:root`; emits canonical token map shape `{ raws: {...}, semantic: {...}, motion: {...}, typeScale: {...}, spacing: {...} }` as JSON to stdout OR to `--out` arg path; tsx-runnable via `npx tsx`; zero runtime deps outside node built-ins; JSDoc cites B-CD1 (drift-on-mutation guard). |
+| T24.2 | _pending_ | _pending_ | Author drift-report emitter as second pass in `extract-cd-tokens.ts` — diffs canonical map raws against `web/lib/tokens/palette.json` raws; emits `web/design-refs/step-8-console/.drift-report.md` Markdown table (columns: Key, CD value, palette.json value, Match?); exit code 0 on zero drift, exit 1 on any mismatch (CI-friendly). Author `tools/scripts/__tests__/extract-cd-tokens.test.ts` — snapshot test on known-clean bundle + fabricated-mismatch fixture. |
+| T24.3 | _pending_ | _pending_ | Author `tools/scripts/transcribe-cd-tokens.ts` — consumes canonical map JSON via stdin or `--in` arg; applies D1 motion rename (`--dur-fast` → `--ds-duration-instant` etc. — exact mapping TBV at P0 decision resolution) + D2 prefix rename (`--raw-*` → `--ds-*`, `--text-*` → `--ds-text-*`, `--dur-*` → `--ds-duration-*`); emits two output blocks: (a) CSS fragment appended to `web/app/globals.css` `@theme` inside marker comments `/* CD-BUNDLE-START */` ... `/* CD-BUNDLE-END */` (idempotent re-run replaces block between markers), (b) TS fragment for `web/lib/design-tokens.ts` under `export const cdBundle = { ... } as const`; refuses to write when `.drift-report.md` non-empty. |
+| T24.4 | _pending_ | _pending_ | Transcribe `web/design-refs/step-8-console/HANDOFF.md` contents into `web/lib/design-system.md` new `## §7 — CD Pilot Bundle appendix` subsection; preserve section structure (type scale notes, spacing scale, motion vocab decisions, primitive list); cite extensions doc `## CD Pilot Bundle — 2026-04-18` as canonical narrative source; cite Dribbble breadcrumb + Shopify dev docs refs from extensions doc §8 (NB5); add banner "Generated from `tools/scripts/transcribe-cd-tokens.ts`; re-run script if bundle re-issues". `npm run validate:web` green. |
 
 ---
 
-### Stage 27 — Visual design layer / Console chrome primitive library
+### Stage 25 — Visual design layer / Console chrome primitive library
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -739,50 +685,20 @@
 
 | Task | Issue | Status | Intent |
 | --- | --- | --- | --- |
-| T27.1 | _pending_ | _pending_ | Author `web/components/console/Rack.tsx` + `web/components/console/Bezel.tsx` — port from CD `web/design-refs/step-8-console/src/console-primitives.jsx` `Rack` + `Bezel` components; convert JSX → TSX with typed props (`tone?: 'default' | 'muted'`, `padding?: 'sm' | 'md' | 'lg'`); map CD className references to `--ds-surface-*` + `--ds-spacing-*` via Tailwind v4 arbitrary values (`bg-[var(--ds-surface-raised)]`); pure RSC (no hooks); barrel-exported via `web/components/console/index.ts` (create alongside). |
-| T27.2 | _pending_ | _pending_ | Author `web/components/console/Screen.tsx` + `web/components/console/LED.tsx` — port CD `Screen` + `LED` components; `Screen` props: `tone?: 'dark' | 'readout'` + `inset?: boolean`; `LED` props: `state?: 'off' | 'on' | 'blink' | 'error'`, `color?: 'green' | 'amber' | 'red' | 'info'` mapped to `--ds-accent-*` aliases (or `--ds-status-*`); pure RSC; append to `web/components/console/index.ts`. |
-| T27.3 | _pending_ | _pending_ | Author `web/components/console/__tests__/chrome-frame.test.tsx` — smoke-render tests for Rack / Bezel / Screen / LED against fixture props (all tone/padding/state combos); assert no throw + expected root tag + `--ds-*` var presence in style/className; jest + React Testing Library per existing `web/lib/__tests__/` conventions. |
-| T27.4 | _pending_ | _pending_ | Author `web/components/console/TapeReel.tsx` — port CD `TapeReel`; `'use client'` + `useEffect` for rotation animation; props: `spinning?: boolean`, `size?: 'sm' | 'md' | 'lg'`; CSS animation via `--ds-duration-*` vars with `@media (prefers-reduced-motion: reduce) { animation: none }` rule authored in `web/app/globals.css`; NB-CD3 reduced-motion audit documented in component JSDoc; append to console barrel. |
-| T27.5 | _pending_ | _pending_ | Author `web/components/console/VuStrip.tsx` + `web/components/console/TransportStrip.tsx` — port CD `VuStrip` (level meter strip; props: `level: number 0..1`, `peak?: boolean`) + `TransportStrip` (Rewind/Play/Pause/Stop/FastForward/Eject button row; props: `state: 'stopped' | 'playing' | 'paused'`, `onAction: (action) => void`); `'use client'` for interaction; `prefers-reduced-motion: reduce` media-query collapses VuStrip smoothing transitions; TransportStrip buttons consume `Button` primitive (Stage 8.2 or inline); append to console barrel. |
-| T27.6 | _pending_ | _pending_ | Extend `web/app/_design-system/page.tsx` (Stage 8.2 T8.2.4 output) — append `## Console chrome` section rendering all 7 primitives against fixture props (Rack-wrapped demo of Bezel + Screen + LED matrix + TapeReel spin demo + VuStrip level bars + TransportStrip interactive row); NODE_ENV guard already applied at page top (Stage 8.2); noindex already applied; `npm run validate:web` green. |
+| T25.1 | _pending_ | _pending_ | Author `web/components/console/Rack.tsx` + `web/components/console/Bezel.tsx` — port from CD `web/design-refs/step-8-console/src/console-primitives.jsx` `Rack` + `Bezel` components; convert JSX → TSX with typed props (`tone?: 'default' | 'muted'`, `padding?: 'sm' | 'md' | 'lg'`); map CD className references to `--ds-surface-*` + `--ds-spacing-*` via Tailwind v4 arbitrary values (`bg-[var(--ds-surface-raised)]`); pure RSC (no hooks); barrel-exported via `web/components/console/index.ts` (create alongside). |
+| T25.2 | _pending_ | _pending_ | Author `web/components/console/Screen.tsx` + `web/components/console/LED.tsx` — port CD `Screen` + `LED` components; `Screen` props: `tone?: 'dark' | 'readout'` + `inset?: boolean`; `LED` props: `state?: 'off' | 'on' | 'blink' | 'error'`, `color?: 'green' | 'amber' | 'red' | 'info'` mapped to `--ds-accent-*` aliases (or `--ds-status-*`); pure RSC; append to `web/components/console/index.ts`. |
+| T25.3 | _pending_ | _pending_ | Author `web/components/console/__tests__/chrome-frame.test.tsx` — smoke-render tests for Rack / Bezel / Screen / LED against fixture props (all tone/padding/state combos); assert no throw + expected root tag + `--ds-*` var presence in style/className; jest + React Testing Library per existing `web/lib/__tests__/` conventions. |
+| T25.4 | _pending_ | _pending_ | Author `web/components/console/TapeReel.tsx` — port CD `TapeReel`; `'use client'` + `useEffect` for rotation animation; props: `spinning?: boolean`, `size?: 'sm' | 'md' | 'lg'`; CSS animation via `--ds-duration-*` vars with `@media (prefers-reduced-motion: reduce) { animation: none }` rule authored in `web/app/globals.css`; NB-CD3 reduced-motion audit documented in component JSDoc; append to console barrel. |
+| T25.5 | _pending_ | _pending_ | Author `web/components/console/VuStrip.tsx` + `web/components/console/TransportStrip.tsx` — port CD `VuStrip` (level meter strip; props: `level: number 0..1`, `peak?: boolean`) + `TransportStrip` (Rewind/Play/Pause/Stop/FastForward/Eject button row; props: `state: 'stopped' | 'playing' | 'paused'`, `onAction: (action) => void`); `'use client'` for interaction; `prefers-reduced-motion: reduce` media-query collapses VuStrip smoothing transitions; TransportStrip buttons consume `Button` primitive (Stage 8.2 or inline); append to console barrel. |
+| T25.6 | _pending_ | _pending_ | Extend `web/app/_design-system/page.tsx` (Stage 8.2 T23.4 output) — append `## Console chrome` section rendering all 7 primitives against fixture props (Rack-wrapped demo of Bezel + Screen + LED matrix + TapeReel spin demo + VuStrip level bars + TransportStrip interactive row); NODE_ENV guard already applied at page top (Stage 8.2); noindex already applied; `npm run validate:web` green. |
 
 ---
 
-### Stage 28 — Visual design layer / Full-flow screen port + port harness
+### Stage 26 — Visual design layer / Asset pipeline + media transport strip
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Objectives:** Port the remaining CD bundle screens not covered by Stage 8.3 (D4 = full-flow lock 2026-04-18): `ScreenReleases` → `/dashboard/releases/page.tsx` and `ScreenDetail` → `/dashboard/releases/[releaseId]/progress/page.tsx`. Stage 7.2 server-side fetcher contracts (`loadAllPlans`, `getReleasePlans`, `computePlanMetrics`, `buildPlanTree`, `deriveDefaultExpandedStepId`, `resolveRelease`) MUST be preserved — ports are presentation-layer only. Author the port harness as reusable `.jsx` → `.tsx` conversion notes + a localStorage-usage audit script so future CD bundle iterations can re-run the codemod mechanically. Per-screen schema diff gate (NB-CD2) enforces CD fixture shape vs loader output match before merge.
-
-**Exit:**
-
-- `tools/scripts/audit-localstorage.ts`: scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed routing; emits per-file audit report Markdown; runs pre-port as gate.
-- `web/app/dashboard/releases/page.tsx`: reskinned via CD `ScreenReleases` JSX; existing server-side `resolveRelease`/registry calls preserved verbatim; full-English user-facing labels unchanged (CLAUDE.md §6 / B3).
-- `web/app/dashboard/releases/[releaseId]/progress/page.tsx`: reskinned via CD `ScreenDetail` JSX; `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` preserved; `<PlanTree>` Client island (TECH-352) contract unchanged.
-- `web/app/_design-system/page.tsx` port augmentation: absorb CD `ScreenDesign` demo content NOT duplicated by Stage 8.2 T8.2.4 (NB-CD4 de-dupe); NODE_ENV guard + noindex preserved.
-- Per-screen schema diff docs in PR body: CD `data.js` fixture shape vs loader output shape matched (NB-CD2).
-- Lighthouse pre-port capture on `/dashboard/releases` + `/dashboard/releases/full-game-mvp/progress`; post-port LCP ≤ baseline × 1.1, CLS < 0.1.
-- `npm run validate:web` green.
-- Phase 1 — Port harness audit + Releases + Detail screen port.
-- Phase 2 — Showcase augmentation + schema diff gate + Lighthouse capture.
-
-**Tasks:**
-
-| Task | Issue | Status | Intent |
-| --- | --- | --- | --- |
-| T28.1 | _pending_ | _pending_ | Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7. |
-| T28.2 | _pending_ | _pending_ | Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx`; preserve Stage 7.2 server-side `resolveRelease` + registry calls; wrap in `<Rack>` + `<Bezel>` console chrome from Stage 8.6; replace CD `data.js` rollup call with existing registry read; per-screen schema diff documented in PR body; full-English user-facing labels unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
-| T28.3 | _pending_ | _pending_ | Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` flow verbatim; wrap in `<Rack>` + `<Bezel>`; `<PlanTree>` (TECH-352) Client island contract unchanged; reserved comment for `/rollout` sibling preserved (B1 guard); per-screen schema diff noted in PR body. |
-| T28.4 | _pending_ | _pending_ | Port CD `ScreenDesign` content augmentation into `web/app/_design-system/page.tsx` — absorb CD demo sections NOT already covered by Stage 8.2 T8.2.4 + Stage 8.6 T8.6.6 (color swatches matrix, motion stops demo, chrome wrap demo); de-duplicate against existing showcase content (NB-CD4); NODE_ENV guard + noindex preserved; unlinked from `Sidebar.tsx` (NB2). |
-| T28.5 | _pending_ | _pending_ | Capture Lighthouse baseline (LCP / CLS / TBT) on `localhost:4000/dashboard/releases` + `/dashboard/releases/full-game-mvp/progress` BEFORE Phase 1 ports land (coordinate timing); after port, re-run Lighthouse; compare post-port scores against baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if regressed → flag in PR body + consider Surface motion downgrade on those routes; document schema diff (CD fixture shape vs loader output) per screen in PR body (NB-CD2); `npm run validate:web` green. |
-
----
-
-### Stage 29 — Visual design layer / Asset pipeline + media transport strip
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Objectives:** Land the asset pipeline decision (D6 — still open at Stage 8.7 close time) and import the CD bundle's SVG logo suite + pillar scenes + media icon family from `web/design-refs/step-8-console/src/console-assets.jsx`. Recommendation per S-CD3: `public/` SVG for hero / pillar scenes (cacheable + indexable), inline React components for the 13-glyph media icon family (palette-locked via CSS vars). Ship `<MediaTransport>` as a net-new composite component (R16) wrapping CD `TransportStrip` + media icons.
+**Objectives:** Land the asset pipeline decision (D6 — still open at Stage 8.5 close time) and import the CD bundle's SVG logo suite + pillar scenes + media icon family from `web/design-refs/step-8-console/src/console-assets.jsx`. Recommendation per S-CD3: `public/` SVG for hero / pillar scenes (cacheable + indexable), inline React components for the 13-glyph media icon family (palette-locked via CSS vars). Ship `<MediaTransport>` as a net-new composite component (R16) wrapping CD `TransportStrip` + media icons.
 
 **Exit:**
 
@@ -799,10 +715,172 @@
 
 | Task | Issue | Status | Intent |
 | --- | --- | --- | --- |
-| T29.1 | _pending_ | _pending_ | Document D6 asset pipeline decision in `web/lib/design-system.md` §7 appendix: rationale for `public/` SVG (hero + pillar scenes — cacheable via Vercel CDN + indexable + palette-locked via inline `style` attrs) vs inline React (icon family — CSS-var theming, palette-locked via `currentColor`) vs sprite sheet (rejected — no build-time bundler affordance in App Router default). Create `web/public/design/` directory with `.gitkeep`; document per-asset category path convention. |
-| T29.2 | _pending_ | _pending_ | Extract logo suite + hero + pillar SVGs from CD `web/design-refs/step-8-console/src/console-assets.jsx` inline React SVG components into standalone `.svg` files under `web/public/design/`: `logomark.svg`, `wordmark.svg`, `lettermark.svg`, `strapline-lockup.svg`, `hero-art.svg`, `pillar-planet.svg`, `pillar-signal.svg`, `pillar-mixer.svg`, `pillar-radar.svg`, `pillar-tape.svg`; replace inline `fill` props with `style` attrs using `--ds-*` CSS vars so theme tracks palette; cite CD bundle source in `design-system.md` §7 appendix per-asset row. |
-| T29.3 | _pending_ | _pending_ | Author `web/components/console/icons/TIcon.tsx` — inline React component family exporting `TIcon.Play` / `Pause` / `Stop` / `Record` / `Rewind` / `FastForward` / `RewindEnd` / `FastForwardEnd` / `Eject` / `Loop` / `Shuffle` / `Mute` / `Solo` (13 glyphs); port SVG paths from CD `console-assets.jsx`; all use `fill="currentColor"` for `--ds-*` CSS-var theming; props `{ size?: number, className?: string, 'aria-label'?: string }`; pure RSC; barrel-append to `web/components/console/index.ts`. |
-| T29.4 | _pending_ | _pending_ | Author `web/components/console/MediaTransport.tsx` — composite wrapping `TransportStrip` (Stage 8.6 T8.6.5) + `TIcon` family (T8.8.3); props `state: 'stopped' | 'playing' | 'paused' | 'recording'` + `actions: Partial<Record<'play' | 'pause' | 'stop' | 'rewind' | 'ff' | 'eject', () => void>>`; `'use client'` for dispatch; `aria-label` on each button; reduced-motion audit (no animation by default). Extend `web/app/_design-system/page.tsx` with media-icon matrix + `<MediaTransport>` demo row (all state values); `npm run validate:web` green. |
+| T26.1 | _pending_ | _pending_ | Document D6 asset pipeline decision in `web/lib/design-system.md` §7 appendix: rationale for `public/` SVG (hero + pillar scenes — cacheable via Vercel CDN + indexable + palette-locked via inline `style` attrs) vs inline React (icon family — CSS-var theming, palette-locked via `currentColor`) vs sprite sheet (rejected — no build-time bundler affordance in App Router default). Create `web/public/design/` directory with `.gitkeep`; document per-asset category path convention. |
+| T26.2 | _pending_ | _pending_ | Extract logo suite + hero + pillar SVGs from CD `web/design-refs/step-8-console/src/console-assets.jsx` inline React SVG components into standalone `.svg` files under `web/public/design/`: `logomark.svg`, `wordmark.svg`, `lettermark.svg`, `strapline-lockup.svg`, `hero-art.svg`, `pillar-planet.svg`, `pillar-signal.svg`, `pillar-mixer.svg`, `pillar-radar.svg`, `pillar-tape.svg`; replace inline `fill` props with `style` attrs using `--ds-*` CSS vars so theme tracks palette; cite CD bundle source in `design-system.md` §7 appendix per-asset row. |
+| T26.3 | _pending_ | _pending_ | Author `web/components/console/icons/TIcon.tsx` — inline React component family exporting `TIcon.Play` / `Pause` / `Stop` / `Record` / `Rewind` / `FastForward` / `RewindEnd` / `FastForwardEnd` / `Eject` / `Loop` / `Shuffle` / `Mute` / `Solo` (13 glyphs); port SVG paths from CD `console-assets.jsx`; all use `fill="currentColor"` for `--ds-*` CSS-var theming; props `{ size?: number, className?: string, 'aria-label'?: string }`; pure RSC; barrel-append to `web/components/console/index.ts`. |
+| T26.4 | _pending_ | _pending_ | Author `web/components/console/MediaTransport.tsx` — composite wrapping `TransportStrip` (Stage 8.4 T25.5) + `TIcon` family (T26.3); props `state: 'stopped' | 'playing' | 'paused' | 'recording'` + `actions: Partial<Record<'play' | 'pause' | 'stop' | 'rewind' | 'ff' | 'eject', () => void>>`; `'use client'` for dispatch; `aria-label` on each button; reduced-motion audit (no animation by default). Extend `web/app/_design-system/page.tsx` with media-icon matrix + `<MediaTransport>` demo row (all state values); `npm run validate:web` green. |
+
+---
+
+### Stage 27 — Visual design layer / Full-flow screen port + port harness
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Port the full CD bundle screen flow per D4 lock (2026-04-18) — **all 4 production routes + 1 dev-only**: `ScreenLanding` → `/`, `ScreenDashboard` → `/dashboard`, `ScreenReleases` → `/dashboard/releases`, `ScreenDetail` → `/dashboard/releases/[releaseId]/progress`, `ScreenDesign` augmentation → `_design-system`. Stage 7.2 server-side fetcher contracts (`loadAllPlans`, `getReleasePlans`, `computePlanMetrics`, `buildPlanTree`, `deriveDefaultExpandedStepId`, `resolveRelease`) MUST be preserved — ports are presentation-layer only. Author the port harness as reusable `.jsx` → `.tsx` conversion notes + a localStorage-usage audit script so future CD bundle iterations can re-run the codemod mechanically. Per-screen schema diff gate (NB-CD2) enforces CD fixture shape vs loader output match before merge.
+
+**Exit:**
+
+- `tools/scripts/audit-localstorage.ts`: scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed routing; emits per-file audit report Markdown; runs pre-port as gate.
+- `web/app/page.tsx`: reskinned via CD `ScreenLanding` JSX; full-English user-facing copy unchanged (B3 / CLAUDE.md §6); hero wrapped in `<Rack>` + `<Bezel>` + `<Heading level="display">`.
+- `web/app/dashboard/page.tsx`: reskinned via CD `ScreenDashboard` JSX; summary bezels + heatmap + filters + step-tree per CD layout; existing `PlanChart` + `FilterChips` + `DataTable` contracts preserved.
+- `web/app/dashboard/releases/page.tsx`: reskinned via CD `ScreenReleases` JSX; existing server-side `resolveRelease`/registry calls preserved verbatim; full-English user-facing labels unchanged.
+- `web/app/dashboard/releases/[releaseId]/progress/page.tsx`: reskinned via CD `ScreenDetail` JSX; `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` preserved; `<PlanTree>` Client island (TECH-352) contract unchanged.
+- `web/app/_design-system/page.tsx` port augmentation: absorb CD `ScreenDesign` demo content NOT duplicated by Stage 8.2 T23.4 + Stage 8.4 T25.6 (NB-CD4 de-dupe); NODE_ENV guard + noindex preserved.
+- Per-screen schema diff docs in PR body: CD `data.js` fixture shape vs loader output shape matched (NB-CD2).
+- Lighthouse pre-port capture on all 4 production routes; post-port LCP ≤ baseline × 1.1, CLS < 0.1.
+- `npm run validate:web` green.
+- Phase 1 — Port harness audit + landing + dashboard ports.
+- Phase 2 — Releases + Detail + design-system augmentation + Lighthouse gate.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T27.1 | _pending_ | _pending_ | Author `tools/scripts/audit-localstorage.ts` — scans `web/design-refs/step-8-console/src/*.jsx` for `localStorage.` references + `useState`-backed pseudo-routing; emits `web/design-refs/step-8-console/.localstorage-audit.md` Markdown report (file + line + match context); tsx-runnable via `npx tsx`; JSDoc cites B-CD2 (localStorage conversion guard). Document in `web/lib/design-system.md` §7 appendix the port harness mechanics: `.jsx` → `.tsx` prop typing checklist, `localStorage.getItem` → `useEffect` + client island swap, `data.js` fixture → loader swap per D7. |
+| T27.2 | _pending_ | _pending_ | Port CD `ScreenLanding` → `web/app/page.tsx`; wrap hero in `<Rack>` + `<Bezel>` (Stage 8.4 T25.1/T25.2); `<Heading level="display">` on main title; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
+| T27.3 | _pending_ | _pending_ | Port CD `ScreenDashboard` → `web/app/dashboard/page.tsx`; summary bezels + heatmap + filters + step-tree per CD layout; wrap stat blocks in `<Surface tone="raised">` or `<Bezel>` per CD spec; replace raw `<h1>`/`<h2>` with `<Heading>`; preserve existing `PlanChart` + `FilterChips` + `DataTable` contracts; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green. |
+| T27.4 | _pending_ | _pending_ | Port CD `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenReleases` → `web/app/dashboard/releases/page.tsx`; preserve Stage 7.2 server-side `resolveRelease` + registry calls; wrap in `<Rack>` + `<Bezel>` console chrome from Stage 8.4; replace CD `data.js` rollup call with existing registry read; per-screen schema diff documented in PR body; full-English user-facing labels unchanged (CLAUDE.md §6 / B3); `npm run validate:web` green. |
+| T27.5 | _pending_ | _pending_ | Port CD `ScreenDetail` → `web/app/dashboard/releases/[releaseId]/progress/page.tsx`; preserve Stage 7.2 `loadAllPlans` + `getReleasePlans` + `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId` flow verbatim; wrap in `<Rack>` + `<Bezel>`; `<PlanTree>` (TECH-352) Client island contract unchanged; reserved comment for `/rollout` sibling preserved (B1 guard); per-screen schema diff noted in PR body. |
+| T27.6 | _pending_ | _pending_ | Port CD `ScreenDesign` content augmentation into `web/app/_design-system/page.tsx` — absorb CD demo sections NOT already covered by Stage 8.2 T23.4 + Stage 8.4 T25.6 (color swatches matrix, motion stops demo, chrome wrap demo); de-duplicate against existing showcase content (NB-CD4); NODE_ENV guard + noindex preserved; unlinked from `Sidebar.tsx` (NB2). |
+| T27.7 | _pending_ | _pending_ | Capture Lighthouse baseline (LCP / CLS / TBT) on all 4 production routes (`localhost:4000/`, `/dashboard`, `/dashboard/releases`, `/dashboard/releases/full-game-mvp/progress`) BEFORE Phase 1 ports land (coordinate timing); after port, re-run Lighthouse; compare post-port scores against baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if regressed → flag in PR body + consider Surface motion downgrade on those routes; document schema diff (CD fixture shape vs loader output) per screen in PR body (NB-CD2); `npm run validate:web` green. |
+
+---
+
+### Stage 28 — Visual design layer / Broad component token migration
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Broad `tokens.*` → `ds-*` alias migration across shared components not covered by screen-port stages + wrap wiki/devlog MDX output in `<Prose>`. Alias-neutral (palette unchanged — NB4 / Example 3 from extensions doc). Landing + dashboard re-skin scope is **absorbed into Stage 8.6** (full-flow screen port) and no longer lives here.
+
+**Exit:**
+
+- `grep "tokens\."` surfaces enumerated; `Breadcrumb`, `Sidebar`, `BadgeChip`, `DataTable`, `FilterChips` migrated to `ds-*` CSS var classes; alias-neutral (zero visual diff — same hex values per Example 3).
+- `web/app/wiki/**` + `web/app/devlog/**` MDX output wrapped in `<Prose>`; no layout rework.
+- `npm run validate:web` green; manual visual diff on `localhost:4000/wiki` + `/devlog` noted in PR body.
+- Phase 1 — Shared component migration (Breadcrumb + Sidebar).
+- Phase 2 — Remaining primitives + wiki/devlog Prose wrap.
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T28.1 | _pending_ | _pending_ | Grep `tokens\.` across `web/app/**/*.tsx` + `web/components/**/*.tsx`; enumerate surfaces; migrate `web/components/Breadcrumb.tsx` + `web/components/Sidebar.tsx` inline `tokens.*` → `bg-[var(--ds-*)]` / `text-[var(--ds-*)]` Tailwind v4 arbitrary value classes; confirm alias-neutral (zero visual diff — same hex values per Example 3); `npm run validate:web` green. |
+| T28.2 | _pending_ | _pending_ | Migrate `web/components/BadgeChip.tsx` + `web/components/DataTable.tsx` + `web/components/FilterChips.tsx` inline `tokens.*` → `ds-*` CSS var classes; wrap MDX output in `web/app/wiki/**` + `web/app/devlog/**` pages in `<Prose>` component (vertical rhythm only; no layout rework); `npm run validate:web` green; manual visual diff on `localhost:4000/wiki` + `/devlog` noted in PR body. |
+
+---
+
+### Stage 29 — Visual design layer / Docs + validation
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Update `web/README.md` (Design System section) + `CLAUDE.md §6` (spec path row); final `validate:web` green gate; post-port Lighthouse check against Stage 8.6 baseline (NB3 regression guard).
+
+**Exit:**
+
+- `web/README.md` has `## Design System` section: spec path, primitive one-liners, showcase route note, `ds-*` class convention (Tailwind v4 CSS custom properties, not `tailwind.config.ts`).
+- `CLAUDE.md §6` has row for `web/lib/design-system.md`.
+- `npm run validate:web` green.
+- Lighthouse post-check on `/`: LCP ≤ Stage 8.6 T27.7 baseline × 1.1; CLS < 0.1; if CLS regressed → set all `Surface motion="none"` in landing + dashboard as fallback.
+- Phase 1 — Docs (`web/README.md` + `CLAUDE.md §6`).
+- Phase 2 — Final validation (`validate:web` + Lighthouse post-check).
+
+**Tasks:**
+
+| Task | Issue | Status | Intent |
+| --- | --- | --- | --- |
+| T29.1 | _pending_ | _pending_ | Update `web/README.md` — add `## Design System` section: cite `web/lib/design-system.md` as authoritative spec; one-liner per primitive (`Heading` — level-bound RSC typography; `Prose` — MDX vertical-rhythm wrapper; `Surface` — tone/padding/motion panel); showcase route (`web/app/_design-system/page.tsx`, dev-only, unlinked); `ds-*` class convention note (Tailwind v4 CSS vars via `--ds-*` in `globals.css`, not `tailwind.config.ts`). |
+| T29.2 | _pending_ | _pending_ | Update `CLAUDE.md §6` web workspace section — add row for design-system spec: `web/lib/design-system.md — Design system spec: type/spacing/motion/alias tables; derivation source for web/lib/design-tokens.ts + globals.css @theme ds-* block`; add caveman carve-out reminder: page-body JSX strings in `web/app/**/page.tsx` stay full English (CLAUDE.md §6 authority). |
+| T29.3 | _pending_ | _pending_ | Run `npm run validate:web` (lint + typecheck + build) from repo root; fix any type or lint regressions introduced in Stages 8.1–8.7; confirm exit 0; report exit code + any fixes in PR body. |
+| T29.4 | _pending_ | _pending_ | Run Lighthouse on `localhost:4000` (landing); record LCP / CLS / TBT; compare against Stage 8.6 T27.7 baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if CLS regressed → set `Surface motion="none"` in landing + dashboard and re-run Lighthouse; document result + any remediation in PR body (NB3). |
+
+---
+
+### Stage 30 — Catalog admin CRUD views / List + detail surface
+
+**Status:** Draft (tasks _pending_ — not yet filed; Step 9 opens only when Step 8 Final + grid-asset-visual-registry Step 1.3 shipped)
+
+**Objectives:** Ship the catalog list page + single-asset detail view under `/admin/catalog/**`, consuming `GET /api/catalog/assets` and `GET /api/catalog/assets/:id` from grid-asset-visual-registry Step 1.3. All surfaces built on `--ds-*` primitives + console chrome (Rack / Bezel / Screen) per D5 lock.
+
+**Exit:**
+
+- `web/app/admin/catalog/assets/page.tsx` RSC: list view with `status` filter (`published` default), category filter, pagination; wraps rows in `<DataTable>` (post-Stage-8 token-migrated); `<Rack>` frame + `<Breadcrumb>` Dashboard › Admin › Catalog.
+- `web/app/admin/catalog/assets/[id]/page.tsx` RSC: joined asset + economy + sprite-slot view; read-only at this stage; `<Surface tone="raised">` for each subsystem panel.
+- Auth gate via `web/proxy.ts` matcher widen to `/admin/:path*`; unauthenticated → 302 `/auth/login`.
+- Sidebar `LINKS` entry added: `{ href: '/admin/catalog/assets', label: 'Catalog', Icon: Boxes }`.
+- `npm run validate:web` green; Playwright route spec covers list + detail 200.
+- Phase 1 — List RSC + auth matcher + sidebar link.
+- Phase 2 — Detail RSC + playwright coverage.
+
+**Tasks:** _pending_ — materialize via `/stage-decompose` when Step 9 opens.
+
+---
+
+### Stage 31 — Catalog admin CRUD views / Edit + create forms + retire action
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Ship authoring surfaces: edit form on detail page (PATCH with optimistic-lock + `preview-diff` preview), create form at `/admin/catalog/assets/new`, retire action with `replaced_by` picker. Forms consume `/api/catalog/assets` POST + PATCH + `/retire` + `/preview-diff` endpoints.
+
+**Exit:**
+
+- `web/app/admin/catalog/assets/[id]/edit/page.tsx` Client island: form fields bound to joined DTO; PATCH submits with `updated_at` optimistic-lock; 409 response renders conflict resolution UI.
+- `web/app/admin/catalog/assets/new/page.tsx` Client island: blank-form create; POST transactional (asset + economy + sprite-slots in one call).
+- Retire modal: confirm dialog + `replaced_by` combobox (catalog-lookup); POST `/api/catalog/assets/:id/retire`.
+- Preview-diff panel: calls `POST /api/catalog/preview-diff` before commit; shows human-readable plan.
+- `npm run validate:web` green; Playwright spec covers create + edit + 409 conflict + retire happy path.
+- Phase 1 — Edit form + optimistic-lock UX.
+- Phase 2 — Create form + retire modal + preview-diff panel + playwright.
+
+**Tasks:** _pending_ — materialize via `/stage-decompose` when Step 9 opens.
+
+---
+
+### Stage 32 — Catalog admin CRUD views / Pool management surface
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Ship spawn-pool management UI at `/admin/catalog/pools`: list pools, view members, edit per-member `weight` inline, add/remove pool members via catalog-asset picker. Consumes Stage 1.4 MCP-backed pool routes (or direct drizzle calls if routes not exposed for pools at Step 1 close).
+
+**Exit:**
+
+- `web/app/admin/catalog/pools/page.tsx` RSC: pool list with member count + weight sum preview.
+- `web/app/admin/catalog/pools/[id]/page.tsx` RSC + Client island for weight editing; drag-order optional (deferred if pool member order is catalog-authoritative).
+- Add-member modal: catalog-asset search + weight input.
+- `npm run validate:web` green; Playwright spec covers pool list + member add + weight edit.
+- Phase 1 — Pool list RSC + detail RSC.
+- Phase 2 — Weight editing + add/remove member flow + playwright.
+
+**Tasks:** _pending_ — materialize via `/stage-decompose` when Step 9 opens.
+
+---
+
+### Stage 33 — Catalog admin CRUD views / Docs + nav polish + E2E
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Document the admin surface, add admin-section parent in Sidebar (collapsible group), run full Playwright suite against the admin flows, final validate gate.
+
+**Exit:**
+
+- `web/README.md` has `## Catalog admin` section: route list, auth expectations, consumer contract vs `/api/catalog/*`.
+- `CLAUDE.md §6` route table extended with `/admin/catalog/**` rows.
+- Sidebar groups admin routes under a collapsible `Admin` section; Dashboard routes untouched (regression guard).
+- Full Playwright e2e suite green headless on preview deploy (route coverage + filter + form + 409 conflict + retire + pool flows).
+- `npm run validate:web` + `npm run validate:e2e` green.
+- Phase 1 — Docs + Sidebar grouping.
+- Phase 2 — E2E suite consolidation + final validate gate.
+
+**Tasks:** _pending_ — materialize via `/stage-decompose` when Step 9 opens.
 
 ---
 

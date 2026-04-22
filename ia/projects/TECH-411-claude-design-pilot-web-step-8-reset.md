@@ -9,9 +9,9 @@ task_key: ""
 # TECH-411 — Claude Design pilot: web Step 8 reset + validation
 
 > **Issue:** [TECH-411](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** Dropped (2026-04-22 — experiment wrapper deemed unnecessary; CD bundle ingestion absorbed directly into `ia/projects/web-platform-master-plan.md` Step 8 Stages 24–27; yaml archived to `ia/backlog-archive/TECH-411.yaml`)
 > **Created:** 2026-04-18
-> **Last updated:** 2026-04-18
+> **Last updated:** 2026-04-22
 
 <!--
   Filename: ia/projects/TECH-411-claude-design-pilot-web-step-8-reset.md
