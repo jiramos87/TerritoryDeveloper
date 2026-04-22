@@ -860,26 +860,6 @@
           "id": "TECH-633",
           "checklist_line": "- [ ] **TECH-633** \u2014 **design-system.md \u00a77 CD appendix** (web-platform Stage 24 T24.4)",
           "trailing_blanks": 1
-        },
-        {
-          "type": "prose",
-          "lines": [
-            "",
-            "### Web platform \u2014 Stage 28 (broad `tokens.*` \u2192 `ds-*` + Prose for wiki/devlog)",
-            ""
-          ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-667",
-          "checklist_line": "- [ ] **TECH-667** \u2014 **Breadcrumb + Sidebar token migration** (web-platform Stage 28 T28.1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-668",
-          "checklist_line": "- [ ] **TECH-668** \u2014 **Primitives + MDX Prose (wiki/devlog)** (web-platform Stage 28 T28.2)",
-          "trailing_blanks": 1
         }
       ]
     },

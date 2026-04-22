@@ -1,0 +1,34 @@
+id: TECH-668
+type: TECH
+title: "Migrate BadgeChip, DataTable, FilterChips to ds-*; wrap wiki/devlog MDX in Prose; validate:web"
+priority: medium
+status: closed
+section: Web Platform / Stage 28 — Visual design layer (token migration)
+spec: 'closed: project spec removed on Stage 28 closeout'
+files:
+  - web/components/BadgeChip.tsx
+  - web/components/DataTable.tsx
+  - web/components/FilterChips.tsx
+  - web/components/status-tokens.ts
+  - web/components/type/Prose.tsx
+  - web/app/wiki/page.tsx
+  - web/app/wiki/[...slug]/page.tsx
+  - web/app/devlog/page.tsx
+  - web/app/devlog/[slug]/page.tsx
+notes: |
+  Primitives: same alias-neutral `tokens.*` → `ds-*` Tailwind v4 pattern as T28.1. Wiki + devlog: wrap MDX
+  body in `<Prose>` (vertical rhythm; no layout grid changes). PR documents manual look at /wiki and /devlog
+  on localhost. Gate: `npm run validate:web` from repo root.
+acceptance: |
+  - [x] BadgeChip, DataTable, FilterChips free of `tokens.` inline strings per Intent.
+  - [x] `web/app/wiki/**` and `web/app/devlog/**` page files wrap content in `<Prose>` as specified.
+  - [x] `npm run validate:web` exits 0; PR body notes manual check on /wiki and /devlog.
+depends_on: []
+related:
+  - TECH-667
+created: 2026-04-22
+completed: 2026-04-22
+raw_markdown: |
+  Migrate three primitives to ds-*; Prose wrap for wiki and devlog; validate:web and manual visual check
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T28.2

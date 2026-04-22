@@ -1674,6 +1674,18 @@
         },
         {
           "type": "issue",
+          "id": "TECH-667",
+          "checklist_line": "- [x] **TECH-667** — Grep tokens across web; migrate Breadcrumb + Sidebar to ds-* Tailwind arbitrary classes; validate:web (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-668",
+          "checklist_line": "- [x] **TECH-668** — Migrate BadgeChip, DataTable, FilterChips to ds-*; wrap wiki/devlog MDX in Prose; validate:web (2026-04-22)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
           "id": "TECH-650",
           "checklist_line": "- [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)",
           "trailing_blanks": 1

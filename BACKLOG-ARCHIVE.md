@@ -1661,6 +1661,10 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-20)
 
+- [x] **TECH-667** — Grep tokens across web; migrate Breadcrumb + Sidebar to ds-* Tailwind arbitrary classes; validate:web (2026-04-22)
+
+- [x] **TECH-668** — Migrate BadgeChip, DataTable, FilterChips to ds-*; wrap wiki/devlog MDX in Prose; validate:web (2026-04-22)
+
 - [x] **TECH-650** — catalog_list + catalog_get MCP tools (grid-asset-visual-registry Stage 1.4 T1.4.1) (2026-04-22)
 
 - [x] **TECH-651** — catalog_upsert + catalog_pool_* MCP tools (Stage 1.4 T1.4.2) (2026-04-22)

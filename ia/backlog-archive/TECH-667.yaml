@@ -1,0 +1,26 @@
+id: TECH-667
+type: TECH
+title: "Grep tokens across web; migrate Breadcrumb + Sidebar to ds-* Tailwind arbitrary classes; validate:web"
+priority: medium
+status: closed
+section: Web Platform / Stage 28 — Visual design layer (token migration)
+spec: 'closed: project spec removed on Stage 28 closeout'
+files:
+  - web/components/Breadcrumb.tsx
+  - web/components/Sidebar.tsx
+notes: |
+  Nav chrome: replace inline `tokens.*` Tailwind class strings with `bg-[var(--ds-*)]`, `text-[var(--ds-*)]`
+  per design-system + NB4. Grep first; alias-neutral (same resolved hex). Gate: `npm run validate:web` from repo root.
+acceptance: |
+  - [x] Grep/rg inventory of `tokens.` in `web/app` + `web/components` recorded in PR or comment.
+  - [x] Breadcrumb + Sidebar: no remaining `tokens.` class token strings where `ds-*` equivalent exists.
+  - [x] `npm run validate:web` exits 0.
+depends_on: []
+related:
+  - TECH-668
+created: 2026-04-22
+completed: 2026-04-22
+raw_markdown: |
+  Grep `tokens\.` across web app and components; migrate Breadcrumb and Sidebar to ds-* classes; validate:web
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T28.1
