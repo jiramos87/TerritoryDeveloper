@@ -49,3 +49,12 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 | `npm run validate:claude-imports` | Assert every `@`-import in this file exists + stays within line budget. Drift gate. |
 
 Further commands (`validate:frontmatter`, `validate:cache-block-sizing`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` + relevant skill bodies.
+
+## 6. Web design spec (authoritative)
+
+| File | Role |
+| --- | --- |
+| `web/lib/design-system.md` | Type, spacing, motion, alias tables — canonical spec for the web design layer |
+| `web/lib/design-tokens.ts` + `web/app/globals.css` (`@theme`, `ds-*`) | Derived token surfaces; keep new `ds-*` in CSS, not a legacy `tailwind.config.ts` |
+
+**Page copy:** user-facing body strings in `web/app/**/page.tsx` stay full English; app shell, identifiers, and IA prose stay caveman — `ia/rules/agent-output-caveman.md` exceptions.
