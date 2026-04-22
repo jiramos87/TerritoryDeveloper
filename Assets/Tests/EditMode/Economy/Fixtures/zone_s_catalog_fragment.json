@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-22T00:00:00.000Z",
+  "includeDrafts": false,
+  "importHygiene": [],
+  "assets": [
+    {"id":"0","category":"zone_s","slug":"police","display_name":"Police","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"1","category":"zone_s","slug":"fire","display_name":"Fire","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"2","category":"zone_s","slug":"education","display_name":"Education","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"3","category":"zone_s","slug":"health","display_name":"Health","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"4","category":"zone_s","slug":"parks","display_name":"Parks","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"5","category":"zone_s","slug":"public_housing","display_name":"Public Housing","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""},
+    {"id":"6","category":"zone_s","slug":"public_offices","display_name":"Public Offices","status":"published","replaced_by":"","footprint_w":1,"footprint_h":1,"placement_mode":"","unlocks_after":"","has_button":true,"updated_at":""}
+  ],
+  "sprites": [],
+  "bindings": [],
+  "economy": [
+    {"asset_id":"0","base_cost_cents":50000,"monthly_upkeep_cents":5000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"1","base_cost_cents":60000,"monthly_upkeep_cents":6000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"2","base_cost_cents":80000,"monthly_upkeep_cents":8000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"3","base_cost_cents":100000,"monthly_upkeep_cents":10000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"4","base_cost_cents":30000,"monthly_upkeep_cents":3000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"5","base_cost_cents":70000,"monthly_upkeep_cents":7000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""},
+    {"asset_id":"6","base_cost_cents":90000,"monthly_upkeep_cents":9000,"demolition_refund_pct":0,"construction_ticks":0,"budget_envelope_id":0,"cost_catalog_row_id":""}
+  ]
+}
