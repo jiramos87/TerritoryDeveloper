@@ -1,6 +1,10 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Loads Zone S sub-type entries from Resources JSON and maps legacy subTypeId 0..6 to
+/// <see cref="GridAssetCatalog"/> rows for catalog-backed costs and labels (Stage 2.3).
+/// </summary>
 public class ZoneSubTypeRegistry : MonoBehaviour
 {
     [Serializable]
@@ -25,11 +29,26 @@ public class ZoneSubTypeRegistry : MonoBehaviour
 
     [SerializeField] private string configResourcePath = "Economy/zone-sub-types";
 
+    [SerializeField] private GridAssetCatalog _gridAssetCatalog;
+
     private ZoneSubTypeEntry[] _entries = Array.Empty<ZoneSubTypeEntry>();
 
     public System.Collections.Generic.IReadOnlyList<ZoneSubTypeEntry> Entries => _entries;
 
-    private void Awake() => LoadFromJson();
+    /// <summary>Scene catalog instance resolved in <see cref="Awake"/>; used by Stage 2.3 map + UI.</summary>
+    internal GridAssetCatalog Catalog => _gridAssetCatalog;
+
+    private void Awake()
+    {
+        if (_gridAssetCatalog == null)
+            _gridAssetCatalog = FindObjectOfType<GridAssetCatalog>();
+        if (_gridAssetCatalog == null)
+        {
+            Debug.LogError("[ZoneSubTypeRegistry] GridAssetCatalog not found in scene.");
+            return;
+        }
+        LoadFromJson();
+    }
 
     public void LoadFromJson()
     {
