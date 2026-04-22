@@ -60,7 +60,15 @@ For each Task:
 3. For each step, ask `plan_digest_gate_author_helper({operation, file, before, after})` for the canonical gate command + expectation; embed verbatim.
 4. Author STOP clause per step (what edit to re-open, or which upstream surface to escalate to).
 5. Author Implementer MCP-tool hints per step (subset of `backlog_issue`, `glossary_lookup`, `invariant_preflight`, `plan_digest_resolve_anchor`, `unity_bridge_command`, etc.) — mechanical list, not narrative.
-6. Write one `## §Plan Digest` section per spec under anchor **between §10 Lessons Learned and §Open Questions** (replaces §Plan Author — delete the §Plan Author block in the same write pass; Q5). Shape mirrors the template `ia/templates/plan-digest-section.md`.
+6. **Scene Wiring step (mandatory when §Plan Author §Scene Wiring populated):** if §Plan Author carries a `§Scene Wiring` sub-section (trigger fired per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md)), emit a dedicated **Scene Wiring** mechanical step in §Plan Digest §Mechanical Steps. Shape:
+   - **Goal:** wire `{ComponentName}` into `Assets/Scenes/{SCENE}.unity` under `{parent_object}` with all `[SerializeField]` fields populated per §Scene Wiring.
+   - **Edits:** prefer `unity_bridge_command` kinds in sequence `open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`. Text-edit fallback only when bridge unavailable — include verbatim YAML before/after blocks for the `.unity` hunk.
+   - **Gate:** `npm run unity:compile-check` exits 0.
+   - **STOP:** scene file edit must appear in `git diff`; if absent after gate → re-open the Scene Wiring step, do NOT close the Task.
+   - **MCP hints:** `unity_bridge_command` (preferred), `find_gameobject` to confirm parent, `get_compilation_status` as compile gate when the Editor holds the project lock.
+   - **Evidence (required verbatim in `after:` literal or §Acceptance):** scene/parent/component/serialized_fields/unity_events/compile_check block per the scene-wiring rule.
+   Place this step LAST in §Mechanical Steps (after all script + test edits, before closeout) so the gate runs against the final runtime surface.
+7. Write one `## §Plan Digest` section per spec under anchor **between §10 Lessons Learned and §Open Questions** (replaces §Plan Author — delete the §Plan Author block in the same write pass; Q5). Shape mirrors the template `ia/templates/plan-digest-section.md`.
 
 ## Phase 3 — Compile aggregate stage doc
 
@@ -85,3 +93,4 @@ Emit caveman summary: N specs digested; aggregate doc path; lint pass status. Ne
 - Do NOT author §Plan Author (upstream). Do NOT resolve picks — `plan_digest_scan_for_picks` is lint-only; leak = abort + `/author` handoff.
 - Do NOT regress to per-Task mode if tokens exceed threshold — split into ⌈N/2⌉ bulk sub-passes.
 - Mode `audit` stays flag-gated; no chain dispatches it.
+- Do NOT skip the Scene Wiring mechanical step when §Plan Author carries `§Scene Wiring` — wiring is a Stage deliverable per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md); dropping the step lets Stages ship dead runtime paths (grid-asset-visual-registry 2.2 canonical incident).

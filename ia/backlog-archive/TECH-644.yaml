@@ -1,0 +1,31 @@
+id: TECH-644
+type: tech
+title: "PATCH optimistic lock"
+priority: high
+status: closed
+section: "Step 1 — Stage 1.3 — /api/catalog/* routes"
+spec: ia/projects/TECH-644.md
+files:
+  - web/app/api/catalog/
+  - web/lib/db/
+  - web/types/api/
+notes: |
+  `PATCH /api/catalog/assets/:id` with **`updated_at`** check; 409 with fresh row on conflict per master-plan concurrency. **Related:** **TECH-640**–**TECH-643**, **TECH-645**.
+acceptance: |
+  - [ ] Stale `updated_at` returns 409 + current row body.
+  - [ ] Successful patch bumps revision / timestamp consistently.
+  - [ ] `npm run validate:web` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-643
+  - TECH-645
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  PATCH optimistic lock — Stage 1.3 T1.3.5; spec `ia/projects/TECH-644.md`
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.5

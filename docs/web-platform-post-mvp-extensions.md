@@ -570,7 +570,7 @@ Sub-decisions confirmed:
 - Motion vocab = 4 durations (`instant` / `subtle` 120ms / `gentle` 200ms / `deliberate` 320ms); reduced-motion first (media query collapses all to `instant`); CSS transitions only, no animation library.
 - Semantic aliases = `text.*` / `surface.*` / `accent.*` namespaces; Tailwind classes prefixed `ds-` to avoid default collisions.
 - Priority surfaces (Q1): landing `/` hero + `/dashboard` re-skin in Phase D; broad token-alias migration in Phase E.
-- Showcase page at `web/app/_design-system/page.tsx` (dev-only, noindex, unlinked from Sidebar).
+- Showcase page at `web/app/(dev)/design-system/page.tsx` (dev-only, noindex, unlinked from Sidebar).
 
 ### Architecture
 
@@ -588,7 +588,7 @@ flowchart LR
   Legacy --> Dashboard
   Legacy --> Wiki[app/wiki/**]
   Legacy --> Devlog[app/devlog/**]
-  Primitives --> Showcase[app/_design-system/page.tsx<br/>dev-only]
+  Primitives --> Showcase[app/(dev)/design-system/page.tsx<br/>dev-only]
   Spec -.cite.-> README[web/README.md + CLAUDE.md §6]
 ```
 
@@ -612,7 +612,7 @@ Web-only design. `invariants_summary` skipped (no runtime C# coupling — game s
 | `web/app/page.tsx` (landing hero) | Consume `Heading` + `Surface` + motion tokens; restrained fade-in on mount | n/a | Intended visual lift | Reduced-motion first. User-facing copy stays full English per CLAUDE.md §6 carve-out. |
 | `web/app/dashboard/page.tsx` | Re-skin via new primitives; zero data-flow change | n/a | Visual lift | Section 1 release route (`/dashboard/releases/**`) unaffected. |
 | `web/app/wiki/**` + `web/app/devlog/**` | Prose wrapper on MDX output + alias migration; no layout rework | n/a | Visually neutral | Deeper polish deferred (Shopify patterns = follow-on). |
-| `web/app/_design-system/page.tsx` (NEW, dev-only) | Showcase page rendering primitives + swatches | n/a | Additive | Unlinked + `noindex` meta + `NODE_ENV !== 'production'` gate. |
+| `web/app/(dev)/design-system/page.tsx` (NEW, dev-only) | Showcase page rendering primitives + swatches | n/a | Additive | Unlinked + `noindex` meta + `NODE_ENV !== 'production'` gate. |
 | `web/README.md` + `CLAUDE.md` §6 | Doc rows for design-system spec path + caveman carve-out reminder | n/a | Additive | — |
 | `ia/specs/glossary.md` | No new rows (web-only surface) | n/a | No change | — |
 
@@ -636,7 +636,7 @@ Phase C — Prose + surface primitives
   - [ ] web/components/type/Heading.tsx — props: level (display|h1|h2|h3|…), weight, asChild; maps to ds-* fontSize utilities
   - [ ] web/components/type/Prose.tsx — body container with vertical rhythm (spacing.md between siblings); wraps MDX output
   - [ ] web/components/surface/Surface.tsx — props: tone (raised|sunken|inset), padding (sm|md|lg|section), motion (none|subtle|gentle|deliberate); default motion='none' keeps RSC-compat; non-none adds client island with useEffect data-mounted attr
-  - [ ] web/app/_design-system/page.tsx — dev-only showcase (unlinked, noindex, NODE_ENV gate); renders every primitive + alias swatch + motion demo
+  - [ ] web/app/(dev)/design-system/page.tsx — dev-only showcase (unlinked, noindex, NODE_ENV gate); renders every primitive + alias swatch + motion demo
   Risk: Surface motion island — keep default none; gate dev showcase to avoid indexing
 
 Phase D — Landing hero + dashboard adoption (priority surfaces per Q1)
@@ -757,7 +757,7 @@ BLOCKING resolved inline before persist:
 NON-BLOCKING (carried):
 
 - **NB1** — Game-accent palette subset (which raw in-game colors promote to `accent.*`) needs designer taste call at Phase A; seed with `terrainGreen` + `waterBlue` + one warm, revisit per-surface if WCAG AA contrast fails.
-- **NB2** — `web/app/_design-system/page.tsx` showcase = `noindex` + unlinked + `NODE_ENV !== 'production'` gate; dev-only.
+- **NB2** — `web/app/(dev)/design-system/page.tsx` showcase = `noindex` + unlinked + `NODE_ENV !== 'production'` gate; dev-only.
 - **NB3** — Lighthouse LCP baseline captured BEFORE Phase D re-skin so regression measurable.
 - **NB4** — Inline-style token sweep (Phase E) — grep `tokens\.` across `web/app/**/*.tsx` + `web/components/**/*.tsx` before PR; one PR per surface group for review sanity.
 - **NB5** — `design-system.md` spec cites Dribbble breadcrumb + Shopify dev docs observations (§8 source screenshots) as informed-by references so future agents know visual origin.
@@ -766,7 +766,7 @@ SUGGESTIONS:
 
 - **S1** — If `design-tokens.ts` gains complexity, split per-namespace (`tokens-type.ts`, `tokens-motion.ts`); defer until Phase B size dictates.
 - **S2** — Lighthouse regression guard could automate as `npm run validate:web:lighthouse`; nice-to-have, defer.
-- **S3** — Storybook instead of `_design-system/page.tsx` showcase — heavier dep; deferred unless component count grows past ~15.
+- **S3** — Storybook instead of `/design-system` showcase — heavier dep; deferred unless component count grows past ~15.
 
 ### Expansion metadata
 
@@ -881,7 +881,7 @@ Delta count: 1 raw added / 7 locked = **14%** (under 30% threshold from pilot De
 **Product decisions locked (2026-04-18):**
 
 - **D5 — Console-rack aesthetic adoption: SITE-WIDE.** Console chrome (Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip) ships as production primitives. P4 conditional removed; P7 stage candidate becomes mandatory.
-- **D4 — Screen-port scope: FULL FLOW (4 production + 1 dev-only).** All four production routes ported: `/` (Landing), `/dashboard` (Dashboard), `/dashboard/releases` (Releases), `/dashboard/releases/:id/progress` (Detail). Plus `_design-system` dev-only showcase. Rationale: half-themed app would set console-aesthetic expectation on Landing + Dashboard then break it on the release-tracking surfaces (the day-to-day use case). Cohesive end-to-end journey or none at all.
+- **D4 — Screen-port scope: FULL FLOW (4 production + 1 dev-only).** All four production routes ported: `/` (Landing), `/dashboard` (Dashboard), `/dashboard/releases` (Releases), `/dashboard/releases/:id/progress` (Detail). Plus `/design-system` dev-only showcase. Rationale: half-themed app would set console-aesthetic expectation on Landing + Dashboard then break it on the release-tracking surfaces (the day-to-day use case). Cohesive end-to-end journey or none at all.
 
 **Decisions still open (technical / port mechanics):**
 
@@ -905,7 +905,7 @@ Delta count: 1 raw added / 7 locked = **14%** (under 30% threshold from pilot De
 | R8 | Stage 8.1 T8.1.4 — `globals.css` `@theme` block `--ds-*` prefix (B1 guard) | CD uses `--raw-*/--text-*/--dur-*` naming, NOT `--ds-*` | **Blocking** (prefix strategy must reconcile) |
 | R9 | Stage 8.1 Exit — `design-tokens.test.ts` unit tests | CD delivered no tests | Additive |
 | R10 | Stage 8.2 Exit — Heading / Prose / Surface primitives (RSC) | CD delivered console chrome extras (Rack, Bezel, Screen, LED, TapeReel, VuStrip, TransportStrip), NOT Heading / Prose / Surface | Additive |
-| R11 | Stage 8.2 T8.2.4 — `_design-system/page.tsx` dev-only showcase | CD delivered `ScreenDesign` `/design` jsx — port target; needs NODE_ENV guard + noindex + unlinked | Additive |
+| R11 | Stage 8.2 T8.2.4 — `/design-system` dev-only showcase | CD delivered `ScreenDesign` `/design` jsx — port target; needs NODE_ENV guard + noindex + unlinked | Additive |
 | R12 | Stage 8.3 T8.3.1 + T8.3.2 — landing + dashboard re-skin | CD delivered 5 screens (Landing, Dashboard, Releases, Detail, Design) — scope expanded 2 → 5 | **Resolved 2026-04-18** — D4 = full flow; all 4 production screens + 1 dev-only ported |
 | R13 | Stage 8.3 T8.3.3 + T8.3.4 — `tokens.*` → `ds-*` alias migration on Breadcrumb / Sidebar / BadgeChip / DataTable / FilterChips | CD reskinned 6 primitives (Button, BadgeChip / StatusChip, StatBar, FilterChip, HeatCell, DataTable via `.table` class) | Additive |
 | R14 | CD bundle §8 follow-up #1 — console aesthetic adoption decision (site-wide / landing-only / reject) | No prior phase owns this | **Resolved 2026-04-18** — D5 = site-wide; console chrome library mandatory |
@@ -923,7 +923,7 @@ Delta count: 1 raw added / 7 locked = **14%** (under 30% threshold from pilot De
 | Adoption decision gate | User-gate prompt at revised Stage 8.1 Phase 1 covering D5 (console adoption scope) before committing port effort. |
 | Asset pipeline strategy | Picks inline React / `public/` SVG / sprite sheet, scoped to confirmed adoption surface (D6). |
 | Port harness | `.jsx` → `.tsx` mechanical conversion, localStorage → Next App Router swap, `data.js` fixture → real loader swap (per-screen). |
-| Showcase port | `ScreenDesign` → `web/app/_design-system/page.tsx` with NODE_ENV guard + noindex + Sidebar exclusion. |
+| Showcase port | `ScreenDesign` → `web/app/(dev)/design-system/page.tsx` with NODE_ENV guard + noindex + Sidebar exclusion. |
 | Console chrome library | Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip — net-new primitives; mandatory per D5 = site-wide. |
 | Reskin verification harness | Visual-diff hook (Playwright snapshot or screenshot-in-PR) for ported screens — guards against alias-resolution regressions. |
 
@@ -948,7 +948,7 @@ flowchart LR
   Bundle --> Port
   Port --> Landing[app/page.tsx]
   Port --> Dashboard[app/dashboard/page.tsx]
-  Port --> Showcase[app/_design-system/page.tsx<br/>NODE_ENV guard]
+  Port --> Showcase[app/(dev)/design-system/page.tsx<br/>NODE_ENV guard]
   Port --> Releases[app/dashboard/releases/page.tsx]
   Port --> Detail[app/dashboard/releases/:id/page.tsx]
   Asset[Asset pipeline<br/>D6 gate] --> Chrome
@@ -977,7 +977,7 @@ flowchart LR
 | `web/components/{Button,BadgeChip,StatBar,DataTable,FilterChips,HeatmapCell}.tsx` | Existing — token-alias migration to `--ds-*` | Visually neutral (aliases resolve to same hexes) | Per-component PR; manual visual diff. |
 | `web/app/page.tsx` + `web/app/dashboard/page.tsx` | Required port targets per D4 = full flow | Visual lift | Lighthouse baseline pre-port; full-English copy preserved. |
 | `web/app/dashboard/releases/**` + `web/app/dashboard/releases/[releaseId]/**` | Required port targets per D4 = full flow | Visual lift; server-side fetcher contracts preserved | Stage 7.2 release-progress loaders untouched; presentation-layer-only swap; per-screen schema diff in PR body (NB-CD2). |
-| `web/app/_design-system/page.tsx` (NEW per Stage 8.2) | `ScreenDesign` jsx ported with NODE_ENV guard + noindex + Sidebar exclusion | Additive | Same R11 mitigation as original Stage 8.2 T8.2.4. |
+| `web/app/(dev)/design-system/page.tsx` (NEW per Stage 8.2) | `ScreenDesign` jsx ported with NODE_ENV guard + noindex + Sidebar exclusion | Additive | Same R11 mitigation as original Stage 8.2 T8.2.4. |
 | `web/app/proxy.ts` matcher (TECH-358) | None — auth gate on `/dashboard*` unchanged | No change | — |
 | `web/lib/loaders/*` | Port harness swaps CD `data.js` fixture → existing loaders | Additive (per-screen wiring) | One PR per ported screen; loader signatures unchanged. |
 | `ia/specs/glossary.md` | No new rows (web-only surface) | No change | — |
@@ -1016,7 +1016,7 @@ P3 — Test harness (Stage 8.1 Exit unchanged)
 
 P4 — Stage 8.2 primitives (expanded scope per D5 = site-wide)
   - [ ] `web/components/type/Heading.tsx` + `Prose.tsx` + `surface/Surface.tsx` (R10 unchanged; original Stage 8.2 T8.2.1–T8.2.3 task list intact).
-  - [ ] Showcase port — port `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenDesign` → `web/app/_design-system/page.tsx`; add `if (process.env.NODE_ENV === 'production') { notFound() }` guard; `export const metadata = { robots: { index: false } }`; NOT added to `Sidebar.tsx` LINKS (R11). De-duplicate against original Stage 8.2 T8.2.4 spec per NB-CD4.
+  - [ ] Showcase port — port `web/design-refs/step-8-console/src/console-screens.jsx` `ScreenDesign` → `web/app/(dev)/design-system/page.tsx`; add `if (process.env.NODE_ENV === 'production') { notFound() }` guard; `export const metadata = { robots: { index: false } }`; NOT added to `Sidebar.tsx` LINKS (R11). De-duplicate against original Stage 8.2 T8.2.4 spec per NB-CD4.
   - [ ] **MANDATORY (per D5)** — Console chrome library (Rack / Bezel / Screen / LED / TapeReel / VuStrip / TransportStrip) ported as primitives under `web/components/console/`. Per-primitive PR; `prefers-reduced-motion` audit on TapeReel + VuStrip (NB-CD3).
   Risk: TapeReel + VuStrip animation hooks must respect reduced-motion; full visual diff per primitive in PR body.
 
@@ -1146,7 +1146,7 @@ NON-BLOCKING (carried):
 - **NB-CD1** — Drift report format unspecified — JSON vs Markdown vs plain stdout. Recommend Markdown table written to `web/design-refs/step-8-console/.drift-report.md` for PR-body inclusion; defer to P1 implementer.
 - **NB-CD2** — D7 `data.js` → loader swap may surface schema mismatches (CD fixture shape vs `web/lib/loaders/*` actual shape). Recommend per-screen schema diff in PR body before merge; defer to P6 implementer.
 - **NB-CD3** — Console chrome library ports may need `prefers-reduced-motion` audit per primitive (TapeReel + VuStrip likely animated). Recommend P7 task includes reduced-motion sweep.
-- **NB-CD4** — `ScreenDesign` showcase port (R11 / P4) may include CD-only demo content (color swatches, motion stops) that duplicates existing `_design-system/page.tsx` plan. Recommend P4 task de-duplicates against original Stage 8.2 T8.2.4 spec rather than wholesale jsx port.
+- **NB-CD4** — `ScreenDesign` showcase port (R11 / P4) may include CD-only demo content (color swatches, motion stops) that duplicates existing `/(dev)/design-system/page.tsx` plan. Recommend P4 task de-duplicates against original Stage 8.2 T8.2.4 spec rather than wholesale jsx port.
 - **NB-CD5** — D4 = all 5 expands Stage 8.3 task count from 2 → 5 ports — propose splitting into Stage 8.3a (mandatory Landing + Dashboard) + Stage 8.3b (conditional Releases + Detail + Design). Defer to `master-plan-extend` decomposition.
 
 SUGGESTIONS:

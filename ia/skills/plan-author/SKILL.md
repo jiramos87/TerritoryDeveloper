@@ -137,6 +137,24 @@ For each Task spec in the bulk input, write one `§Plan Author` section containi
 ### §Findings
 
 <!-- Per-Task audit notes surfaced during author pass — risks flagged, glossary gaps, unresolved cross-refs. Populated inline at author time; consumed by opus-audit without asserting non-empty gate. Leave blank if no findings. -->
+
+### §Scene Wiring
+
+<!-- MANDATORY sub-section when any trigger in `ia/rules/unity-scene-wiring.md` fires for this Task. Omit entirely (no empty stub) when no trigger fires. -->
+
+<!-- Trigger detection (at author time): scan Task scope for
+       (a) a new `class X : MonoBehaviour` under `Assets/Scripts/**/*.cs` that exposes `[SerializeField]` / `UnityEvent` / reads StreamingAssets, OR
+       (b) a new `[SerializeField]` field on an existing scene object, OR
+       (c) a new prefab expected at scene boot, OR
+       (d) a new `UnityEvent` wired from the Inspector.
+     Zero triggers → skip this sub-section entirely. -->
+
+- **target_scene:** `Assets/Scenes/{SCENE}.unity` (default `MainScene.unity`; see target scene table in `ia/rules/unity-scene-wiring.md`).
+- **parent_object:** e.g. `Game Managers` (sibling of `EconomyManager`, `GridManager`, etc.).
+- **component:** `{ComponentName}` (script `guid` read from adjacent `.cs.meta`).
+- **serialized_fields:** one row per `[SerializeField]` — value must match spec or be marked `(none — dev placeholder)` with explicit spec carve-out.
+- **unity_events:** `empty` OR `listener_count: N` with listener signature per spec.
+- **fallback_notes:** edit-mode bridge path (`open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`) vs text-edit fallback; note any `gap_reason: bridge_kind_missing`.
 ```
 
 **Placement:** `§Plan Author` section goes **between §10 Lessons Learned** and **§Open Questions** in the target spec. Anchor: insert after last line of `## 10. Lessons Learned` block, before `## Open Questions`.
@@ -260,6 +278,7 @@ Does NOT flip Task Status — `plan-review` (multi-task) or `/implement` (single
 
 ## Cross-references
 
+- [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — trigger checklist for the `§Scene Wiring` sub-section; omit sub-section entirely when no trigger fires, author it in full when any trigger fires.
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — plan-author non-pair entry; 4 surviving pair seams.
 - [`ia/skills/plan-digest/SKILL.md`](../plan-digest/SKILL.md) — downstream bulk non-pair (mechanizes §Plan Author → §Plan Digest; §Plan Author is ephemeral per Q5 2026-04-22).
 - [`ia/skills/plan-review/SKILL.md`](../plan-review/SKILL.md) — downstream seam #1 gate (multi-task path; drift scan on final §Plan Digest).

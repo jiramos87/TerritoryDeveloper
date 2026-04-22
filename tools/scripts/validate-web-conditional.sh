@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run full web validation (lint + typecheck + tests) only when web/ is touched in the
+# Run full web validation (lint + typecheck + tests + next build) only when web/ is touched in the
 # *current working tree or index* (unstaged or staged), or CI / explicit overrides force it.
 # Does NOT scan branch diff vs main — parallel agents on one branch would false-trigger.
 # Otherwise: npm run progress (master plans → docs/progress.html).
@@ -30,7 +30,7 @@ collect_paths() {
 }
 
 if [[ "${CI:-}" == "true" ]] || [[ "${CI:-}" == "1" ]]; then
-  echo "[validate-web-conditional] CI=true — full web validation (npm run validate:web)"
+  echo "[validate-web-conditional] CI=true — full web validation (lint, typecheck, test, build)"
   exec npm run validate:web
 fi
 
@@ -46,10 +46,10 @@ fi
 
 PATHS="$(collect_paths | sort -u)"
 if echo "${PATHS}" | web_path_touched; then
-  echo "[validate-web-conditional] web/ in working tree or index — full web validation (npm run validate:web)"
+  echo "[validate-web-conditional] web/ in working tree or index — full web validation (lint, typecheck, test, build)"
   exec npm run validate:web
 fi
 
-echo "[validate-web-conditional] No web/ paths in unstaged or staged changes — skipping lint/typecheck/test."
+echo "[validate-web-conditional] No web/ paths in unstaged or staged changes — skipping web lint/typecheck/test/build."
 echo "[validate-web-conditional] Dashboard progress quick check: npm run progress (master plans → docs/progress.html)"
 exec npm run progress

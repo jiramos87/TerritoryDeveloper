@@ -34,7 +34,7 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Related:** [`ship.md`](../../../.claude/commands/ship.md) (single-task chain — readiness → implement → verify-loop → code-review (fix loop cap=1) → audit; **no closeout** — Stage-scoped only) · [`verify-loop`](../verify-loop/SKILL.md) (`--skip-path-b` flag) · [`domain-context-load`](../domain-context-load/SKILL.md) (MCP cache subskill) · Stage-scoped closeout pair: [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) → [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (absorbs retired `project-stage-close` + `project-spec-close` per T7.14 / M6 collapse).
+**Related:** [`ship.md`](../../../.claude/commands/ship.md) (single-task chain — readiness → implement → verify-loop → code-review (fix loop cap=1) → audit; **no closeout** — Stage-scoped only) · [`verify-loop`](../verify-loop/SKILL.md) (`--skip-path-b` flag) · [`domain-context-load`](../domain-context-load/SKILL.md) (MCP cache subskill) · Stage-scoped closeout pair: [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) → [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (absorbs retired `project-stage-close` + `project-spec-close` per T7.14 / M6 collapse). Scene wiring: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — Pass 1 Step 2.2 preflight + Pass 2 Step 3.2 code-review gate.
 
 **Verification policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
@@ -250,9 +250,17 @@ Dispatch `spec-implementer` subagent (Sonnet):
 
 **Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → stop, emit STOPPED line + partial chain digest.
 
-### Step 2.2 — Compile gate
+### Step 2.2 — Compile gate + scene-wiring preflight
 
 Run `npm run unity:compile-check` (Path: repo root, ~15 s). Non-zero exit = compile failure.
+
+**Scene-wiring preflight (additive, runs in same step):** if §Plan Digest for this Task carries a **Scene Wiring** mechanical step, confirm the Task diff includes an edit to `Assets/Scenes/*.unity` (or adds a prefab under `Assets/Prefabs/**`). Missing scene edit under a wiring trigger = Pass 1 failure:
+
+```
+STOPPED at {ISSUE_ID} — scene_wiring: §Plan Digest Scene Wiring step fired but no Assets/Scenes/*.unity edit in Task diff
+```
+
+Contract source: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). `spec-implementer` step 10 owns the wiring execution; this preflight is the ship-stage backstop.
 
 **On failure:** emit:
 
@@ -350,7 +358,7 @@ Run `verify-loop` (full Path A+B, no `--skip-path-b`) on cumulative Stage delta:
 
 Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
 
-> Mission: Run opus-code-review on Stage-level diff (cumulative delta: same anchor as Step 3.1). STAGE_MCP_BUNDLE: {CHAIN_CONTEXT} — shared spec/invariant/glossary context cached from Phase 1 (do NOT re-query domain-context-load). All N §Plan Digest sections from task specs for `{MASTER_PLAN_PATH}` are the acceptance reference. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan tuples targeting the appropriate spec files.
+> Mission: Run opus-code-review on Stage-level diff (cumulative delta: same anchor as Step 3.1). STAGE_MCP_BUNDLE: {CHAIN_CONTEXT} — shared spec/invariant/glossary context cached from Phase 1 (do NOT re-query domain-context-load). All N §Plan Digest sections from task specs for `{MASTER_PLAN_PATH}` are the acceptance reference. Include scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md): any Task whose §Plan Digest carries **Scene Wiring** must have a matching `Assets/Scenes/*.unity` edit in the cumulative diff AND an evidence block in §8 Acceptance. Missing wiring under a fired trigger = critical verdict. Emit verdict (PASS / minor / critical). On critical: write §Code Fix Plan tuples targeting the appropriate spec files.
 
 **Verdict PASS / minor:** continue to Step 3.4.
 
@@ -453,6 +461,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - **Success:** `SHIP_STAGE {STAGE_ID}: PASSED` + chain digest + `Next:` handoff — **only** after **Step 3.5 closeout** completed successfully (validators green). Never PASSED immediately after Step 3.1 / 3.4 alone.
 - **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `Next: claude-personal "/plan-digest {MASTER_PLAN_PATH} Stage {STAGE_ID}"`.
 - **Pass 1 compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest (tasks-completed + uncommitted tail + unstarted list) + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
+- **Pass 1 scene-wiring preflight failure:** `STOPPED at {ISSUE_ID} — scene_wiring: §Plan Digest Scene Wiring step fired but no Assets/Scenes/*.unity edit in Task diff` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after agent wires the scene per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
 - **Pass 1 implement failure (--per-task-verify only):** `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 - **Pass 2 verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive.
 - **Pass 2 code-review critical twice:** `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest + human review required (structural issue).

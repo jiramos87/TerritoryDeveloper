@@ -1,0 +1,31 @@
+id: TECH-645
+type: tech
+title: "Retire + preview-diff"
+priority: high
+status: closed
+section: "Step 1 — Stage 1.3 — /api/catalog/* routes"
+spec: ia/projects/TECH-645.md
+files:
+  - web/app/api/catalog/
+  - web/lib/db/
+  - web/types/api/
+notes: |
+  `POST .../retire` with optional **`replaced_by`**; `POST /api/catalog/preview-diff` non-mutating plan output. **Related:** **TECH-640**–**TECH-644**.
+acceptance: |
+  - [ ] Retire path sets status + optional remap; validates replacement FK.
+  - [ ] Preview-diff does not write DB; idempotent re-call same result for same input.
+  - [ ] `npm run validate:web` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-643
+  - TECH-644
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  Retire + preview-diff — Stage 1.3 T1.3.6; spec `ia/projects/TECH-645.md`
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.6

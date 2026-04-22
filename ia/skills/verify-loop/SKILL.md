@@ -165,7 +165,8 @@ Use when batch CLI unavailable or need `debug_context_bundle`/screenshots.
 3. `unity_bridge_command` `kind: enter_play_mode`, `timeout_ms: 40000` → poll `get_play_mode_status` until `play_mode_ready` + `ready: true` + grid dims when `has_grid_dimensions`.
 4. `unity_bridge_command` `kind: debug_context_bundle`, `timeout_ms: 40000`, `seed_cell: "x,y"` per `{SEED_CELLS}` — store `response.bundle` (`anomaly_count`, `anomalies`, `cell_export`, screenshot, console).
 5. Optional: `get_console_logs`, `capture_screenshot` (`include_ui: true`) per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md).
-6. `unity_bridge_command` `kind: exit_play_mode`, `timeout_ms: 40000`.
+6. **Scene-wiring reachability (when triggers fired per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md)):** confirm the wired component is live in the scene — `unity_bridge_command` `kind: find_gameobject` with the wired parent/name, then `debug_context_bundle` should show the component active (no NPE on `Awake`, expected `[SerializeField]` values present). Absent component under a fired trigger = escalate with `gap_reason: bridge_kind_missing` OR record anomaly for Step 6 fix iteration.
+7. `unity_bridge_command` `kind: exit_play_mode`, `timeout_ms: 40000`.
 
 Both paths in one session → run Path A first (`--quit-editor-first`), then `npm run unity:ensure-editor` before Path B.
 

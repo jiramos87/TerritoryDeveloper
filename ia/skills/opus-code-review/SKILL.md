@@ -91,6 +91,7 @@ Run review against all checks below. Collect findings by severity.
 | Cross-ref links (sibling skills, contract, agents) resolve | minor |
 | Frontmatter `phases:` present on new SKILL.md files | minor |
 | No new singletons; no `FindObjectOfType` in per-frame (C# only) | critical if violated |
+| **Scene wiring** — Task whose §Plan Digest carries a **Scene Wiring** mechanical step OR whose diff fires any trigger in [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) (new runtime MonoBehaviour / new `[SerializeField]` / new StreamingAssets consumer / new prefab at scene boot / new scene-level `UnityEvent`) has a matching `Assets/Scenes/*.unity` edit in the diff AND the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) in §8 Acceptance | **critical if trigger fired but no `.unity` / prefab edit, or evidence block absent** |
 
 **Determine verdict:**
 - Zero findings → **PASS**.
@@ -215,6 +216,7 @@ Caller routes to `plan-applier` Mode code-fix `{ISSUE_ID}`.
 
 ## Cross-references
 
+- [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — scene-wiring trigger list + evidence block; feeds Phase 2 critical check.
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #4, §Escalation rule.
 - [`ia/skills/plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Sonnet pair-tail Mode code-fix.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.

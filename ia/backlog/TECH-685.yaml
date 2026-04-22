@@ -1,0 +1,26 @@
+id: TECH-685
+type: TECH
+title: "Map subTypeId to asset_id"
+priority: medium
+status: open
+section: "Grid asset visual registry — Stage 2.3 (Zone S consumer migration)"
+spec: ia/projects/TECH-685.md
+files: []
+notes: |
+  Stable map from legacy `ZoneSubTypeEntry.id` values `0..6` to catalog `asset_id` (PK) matching seeded Zone S rows. Document JSON-only pre-catalog era vs snapshot-driven era in spec Decision Log. No runtime file I/O here beyond what catalog already provides.
+acceptance: |
+  - [ ] One authoritative map type (class or nested struct) colocated with `ZoneSubTypeRegistry` or adjacent partial file.
+  - [ ] Values match seven Zone S assets in published snapshot; mismatch covered by tests in T2.3.4.
+  - [ ] `///` comment block documenting migration from `Resources/.../zone-sub-types` JSON.
+depends_on:
+  - TECH-672
+depends_on_raw: "TECH-672 — boot snapshot loader prerequisite"
+related:
+  - TECH-684
+  - TECH-686
+  - TECH-687
+created: 2026-04-22
+raw_markdown: |
+  Map subTypeId to asset_id — seven-row map + migration notes
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T2.3.2

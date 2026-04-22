@@ -50,7 +50,9 @@ export interface HeadingProps {
 }
 
 /**
- * RSC heading / type line — `level` maps to HTML tag and `text-[var(--ds-font-size-*)]`.
+ * RSC heading / type line — `level` maps to a semantic HTML tag and the matching
+ * `--ds-font-size-…` token from `levelToTextClass` (do not put glob/wildcard syntax in
+ * JSDoc backticks: Tailwind content scan treats them as class candidates).
  * @see `web/lib/design-system.md` section 5 (component map).
  * Spec: `ia/projects/web-platform-master-plan.md` Stage 23 T23.1.
  */

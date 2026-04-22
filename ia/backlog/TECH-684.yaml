@@ -1,0 +1,27 @@
+id: TECH-684
+type: TECH
+title: "Wire registry to catalog"
+priority: medium
+status: open
+section: "Grid asset visual registry — Stage 2.3 (Zone S consumer migration)"
+spec: ia/projects/TECH-684.md
+files: []
+notes: |
+  `ZoneSubTypeRegistry` on same scene as `GridAssetCatalog`: add `[SerializeField] GridAssetCatalog catalog` + single `FindObjectOfType<GridAssetCatalog>()` fallback in `Awake` if unset.
+  `Awake` must run after or tolerate catalog `Awake` order per TECH-672; no hot-loop `FindObjectOfType` per `unity-invariants` #3.
+acceptance: |
+  - [ ] `[SerializeField] GridAssetCatalog catalog` on component.
+  - [ ] One-time resolution when null: `FindObjectOfType<GridAssetCatalog>()` in `Awake` only.
+  - [ ] Defensive `LogError` in English if still null after resolution.
+depends_on:
+  - TECH-672
+depends_on_raw: "TECH-672 — boot snapshot loader prerequisite"
+related:
+  - TECH-685
+  - TECH-686
+  - TECH-687
+created: 2026-04-22
+raw_markdown: |
+  Wire registry to catalog — SerializeField + Awake resolution for GridAssetCatalog
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T2.3.1

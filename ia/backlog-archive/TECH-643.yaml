@@ -1,0 +1,31 @@
+id: TECH-643
+type: tech
+title: "POST create transactional"
+priority: high
+status: closed
+section: "Step 1 — Stage 1.3 — /api/catalog/* routes"
+spec: ia/projects/TECH-643.md
+files:
+  - web/app/api/catalog/
+  - web/lib/db/
+  - web/types/api/
+notes: |
+  `POST /api/catalog/assets` creates core + economy + sprite binds in one **transaction**; slot uniqueness. **Related:** **TECH-640**–**TECH-642**, **TECH-644**, **TECH-645**.
+acceptance: |
+  - [ ] All inserts commit or roll back together.
+  - [ ] Duplicate `(category, slug)` returns clear 4xx.
+  - [ ] `npm run validate:web` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-640
+  - TECH-641
+  - TECH-642
+  - TECH-644
+  - TECH-645
+completed: "2026-04-22"
+created: 2026-04-22
+raw_markdown: |
+  POST create transactional — Stage 1.3 T1.3.4; spec `ia/projects/TECH-643.md`
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.4
