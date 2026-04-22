@@ -308,6 +308,7 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
                     ▼
               Unity client
               ├── GridAssetCatalog (boot loader, in-memory snapshot)
+              │     └── Import hygiene manifest (TECH-665) lists allowlisted texture paths + PPU/pivot hints for baker tooling
               ├── ZoneSubTypeRegistry (wraps catalog for Zone S today; converges long-term)
               ├── ZoneManager / GridManager / CursorManager (consume catalog)
               ├── PlacementValidator (single owner of can-place rules, drives green/red ghost)
