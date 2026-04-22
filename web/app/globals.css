@@ -228,3 +228,46 @@ body {
     transform: none;
   }
 }
+
+/* Console chrome — Stage 25 (CD `console-primitives.jsx` / `console.css`; NB-CD3 reduced-motion) */
+@keyframes ds-console-screen-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.ds-console-screen-sweep {
+  background: linear-gradient(
+    180deg,
+    transparent 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 55%
+  );
+  animation: ds-console-screen-sweep 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-console-screen-sweep {
+    animation: none;
+    display: none;
+  }
+}
+
+@keyframes ds-console-led-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.ds-console-led-blink {
+  animation: ds-console-led-blink 1.2s cubic-bezier(0.2, 0, 0, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-console-led-blink {
+    animation: none;
+  }
+}
