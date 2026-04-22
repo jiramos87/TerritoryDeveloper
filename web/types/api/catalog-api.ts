@@ -1,4 +1,4 @@
-import type { CatalogAssetStatus } from "./catalog-enums";
+import type { CatalogAssetStatus, CatalogSpriteSlot } from "./catalog-enums";
 
 /**
  * Shared query / body types for Stage 1.3 ` /api/catalog/*` handlers (this file is types-only).
@@ -32,4 +32,30 @@ export interface CatalogPreviewDiffResult<TBefore = unknown, TAfter = unknown> {
   after: TAfter;
   /** Optional list of top-level field keys that differ. */
   diff_keys?: string[];
+}
+
+/** `POST /api/catalog/assets` (Stage 1.3). */
+export interface CatalogCreateAssetBody {
+  category: string;
+  slug: string;
+  display_name: string;
+  status: CatalogAssetStatus;
+  replaced_by?: string | null;
+  footprint_w?: number;
+  footprint_h?: number;
+  placement_mode?: string | null;
+  unlocks_after?: string | null;
+  has_button?: boolean;
+  economy: {
+    base_cost_cents: number;
+    monthly_upkeep_cents: number;
+    demolition_refund_pct?: number;
+    construction_ticks?: number;
+    budget_envelope_id?: number | null;
+    cost_catalog_row_id?: string | null;
+  };
+  sprite_binds: Array<{
+    slot: CatalogSpriteSlot;
+    sprite_id: string;
+  }>;
 }
