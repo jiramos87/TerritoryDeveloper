@@ -855,15 +855,6 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Spec: `ia/projects/TECH-14.md`
   - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
 
-- [ ] **TECH-411** — Claude Design pilot: web Step 8 reset + validation
-  - Type: tech / methodology pilot
-  - Files: `ia/projects/web-platform-master-plan.md`, `docs/web-platform-post-mvp-extensions.md`, `ia/projects/ui-polish-master-plan.md`, TECH-375..378 yaml
-  - Spec: `ia/projects/TECH-411-claude-design-pilot-web-step-8-reset.md`
-  - Notes: Timeboxed pilot on web Step 8 (pre-implementation; TECH-375..378 Draft). Reset → run Claude Design manually → persist bundle → `/design-explore --against` gap analysis → re-decompose Step 8 → re-file Stage 8.1 → `/ship-stage` → measure → retrospective w/ 3 go/no-go decisions (broader CD, game ui-polish pilot, `--visual` flag). **Guardrails:** no flag wiring; no game pilot; `palette.json` locked; no `/dashboard/releases/**` regression; abort at Phase 5 if fidelity insufficient.
-  - Acceptance: reset green; bundle persisted; Step 8 re-decomposed; Stage 8.1 re-filed + shipped; retrospective w/ 3 decisions; follow-up TECH ids cross-referenced.
-  - Depends on: master-plan status sync audit (user-managed) — must finish before Phase 1 reset
-  - Related: TECH-375, TECH-376, TECH-377, TECH-378
-
 - [ ] **FEAT-11** — Education level / Schools
   - Type: feature (new system)
   - Files: new managers + `CityStats.cs`, `DemandManager.cs`

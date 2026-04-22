@@ -1,0 +1,28 @@
+id: TECH-618
+type: TECH
+title: "Author `web/lib/design-system.md` — §1 type scale (10 levels, 1.25 minor-third ratio: `display` 3.815rem → `mono-meta`; weight + letter-spacing per level per extensions doc Example 1) + §2 spacing (4px grid, 9 stops: `2xs` 4px → `layout` 128px) + §3 motion vocab (4 durations: `instant` 0ms / `subtle` 120ms / `gentle` 200ms / `deliberate` 320ms; `prefers-reduced-motion: reduce` collapses all to `instant`; CSS transitions only) + §4 semantic aliases (`text.primary/secondary/meta/disabled`, `surface.canvas/raised/sunken/inset`, `accent.terrain/water/warm`) + §5 component map (per-component scale + spacing + motion bindings) + §6 a11y (WCAG AA on all aliases, `focus-visible` ring spec, keyboard nav); cites Dribbble + Shopify design references (extensions doc §8 source screenshots; NB5); cap ~10 pages."
+priority: medium
+status: closed
+completed: "2026-04-22"
+section: Web platform — Visual design layer
+spec: ia/projects/TECH-618.md
+files:
+  - web/lib/design-system.md
+  - docs/web-platform-post-mvp-extensions.md
+notes: |
+  Spec-only Phase 1 deliverable. Cites `docs/web-platform-post-mvp-extensions.md` §8 + NB5; caps ~10 pages. No `design-tokens.ts` or `globals.css` edits in this task — sibling T22.3/T22.4 own pipeline.
+acceptance: |
+  - [x] `web/lib/design-system.md` present with §1–§6 per master-plan Intent.
+  - [x] Dribbble + Shopify design references cited (extensions §8, NB5).
+  - [x] `design-system.md` length ~≤10 pages; game-accent scope identified for T22.2.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-619
+  - TECH-620
+  - TECH-621
+created: 2026-04-22
+raw_markdown: |
+  - [ ] **TECH-618** — Author design-system spec (T22.1)
+parent_plan: ia/projects/web-platform-master-plan.md
+task_key: T22.1
