@@ -1,12 +1,14 @@
 /**
- * Grid asset catalog load CLI (Stage 2.1 — TECH-662).
- * Snapshot serialization (TECH-663+) lands in follow-up commits.
- *
- * **Env:** `DATABASE_URL` required.
+ * Grid asset catalog → snapshot (Stage 2.1 — TECH-662+).
+ * TECH-663: stdout-only snapshot. TECH-664: default file write.
  */
+import { buildCatalogSnapshot } from "@/lib/catalog/build-catalog-snapshot";
 import { loadCatalogForExport } from "@/lib/catalog/load-catalog-for-export";
+import { stableJsonStringify } from "@/lib/catalog/stable-json-stringify";
 
-function parse(argv: string[]): { includeDrafts: boolean; help: boolean } {
+function parse(
+  argv: string[],
+): { includeDrafts: boolean; help: boolean } {
   let includeDrafts = false;
   let help = false;
   for (const a of argv) {
@@ -19,12 +21,15 @@ function parse(argv: string[]): { includeDrafts: boolean; help: boolean } {
 async function main(): Promise<void> {
   const { includeDrafts, help } = parse(process.argv.slice(2));
   if (help) {
-    console.log(`usage: npx tsx web/scripts/catalog-export-cli.ts [--include-drafts]`);
+    console.log(
+      `usage: npx tsx web/scripts/catalog-export-cli.ts [--include-drafts]\n` +
+        `  Emits versioned JSON snapshot to stdout. Default filter: published only.`,
+    );
     process.exit(0);
   }
   const loaded = await loadCatalogForExport({ includeDrafts });
-  // eslint-disable-next-line no-console -- JSON contract for piping / inspection
-  console.log(JSON.stringify(loaded, null, 2));
+  const snapshot = buildCatalogSnapshot(loaded, { includeDrafts });
+  process.stdout.write(stableJsonStringify(snapshot));
 }
 
 main().catch((e) => {

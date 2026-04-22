@@ -274,7 +274,7 @@ Many items from the prior Zone-S-specific §7 apply **mutatis mutandis** to **mu
 
 ### 8.1 Chosen approach — **(D) Postgres-backed catalog, endpoints-first, Unity reads a boot-time snapshot**
 
-The catalog's source of truth is the existing **Postgres** database (Drizzle in `web/`, raw SQL migrations under `db/migrations/`), not `Resources/*.json` files. Files become a **derived export** produced by a build step for two reasons: (a) sprite-gen round-trip (YAML ↔ archetypes ↔ curation queue), (b) shipped-build snapshot the Unity client loads once at boot.
+The catalog's source of truth is the existing **Postgres** database (SQL migrations under `db/migrations/` are authoritative; **`web/`** uses hand-written DTOs — **no Drizzle** post-2026-04-22 audit), not `Resources/*.json` files. Files become a **derived export** produced by a build step for two reasons: (a) sprite-gen round-trip (YAML ↔ archetypes ↔ curation queue), (b) shipped-build snapshot the Unity client loads once at boot.
 
 Logical tables (names illustrative):
 
@@ -289,6 +289,8 @@ Logical tables (names illustrative):
 **Invariants.** `(category, slug)` unique. Money is **integer cents**. `art_revision` increments when a sprite's bytes change so caches bust. Saves store `asset_id` (stable numeric PK) — renames are cosmetic.
 
 ### 8.2 Architecture
+
+<!-- catalog-snapshot-schema-TECH-663: top-level `{ schemaVersion, generatedAt, assets[], sprites[], … }` matches hand-written DTOs in `web/lib/catalog/build-catalog-snapshot.ts`; stable key order is enforced at stringify time (see `tools/docs/catalog-snapshot-schema.md`). -->
 
 ```
 DB (Postgres)
@@ -323,7 +325,7 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
 
 | Subsystem | Change |
 |-----------|--------|
-| **DB (`db/migrations/`)** | New migration series (`0011_catalog_*`) introducing the seven tables above. Drizzle schema lives in `web/drizzle/` so endpoints inherit types for free. |
+| **DB (`db/migrations/`)** | New migration series (`0011_catalog_*`) introducing the seven tables above. **Amendment 2026-04-22:** `web/` does **not** use Drizzle; hand-written DTOs in **`web/types/api/catalog*.ts`** (see `docs/architecture-audit-handoff-2026-04-22.md` Row 2). |
 | **Backend endpoints** (`web/app/api/`) | New CRUD routes under `/api/catalog/*`. Optimistic-lock semantics. Draft/published filter on list. Preview-diff endpoint powers both the admin UI and agent dry-run. |
 | **MCP bridge (`tools/mcp-ia-server/`)** | New `catalog_*` tool family, agent-safe. `unity_bridge_command` gains the `wire_asset_from_catalog` kind (high-level, idempotent, transactional, dry-run flag). Allowlist updates in `caller-allowlist.ts`: add + modify free, delete guarded. |
 | **`Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs`** | Implements the `wire_asset_from_catalog` composite: instantiate → parent under scene-contract path → bind UiTheme → hook onClick. Snapshot + rollback on failure. |
@@ -338,7 +340,7 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
 ### 8.4 Implementation points
 
 1. **Migrations** — add `0011_catalog_core.sql` (asset / sprite / binding / economy) and `0012_catalog_spawn_pools.sql` (pool / member). Seed Zone S seven rows as the first fixture.
-2. **Drizzle schema + types** — under `web/drizzle/schema/catalog*.ts`. Derive endpoint I/O types directly from the schema.
+2. **TypeScript DTOs** — under `web/types/api/catalog*.ts` (hand-written, aligned to migrations; no Drizzle in `web/` per architecture audit 2026-04-22). Optional **zod** at route boundary.
 3. **Backend endpoints** — `GET /api/catalog/assets`, `GET /api/catalog/assets/:id`, `POST`, `PATCH` (optimistic lock), `POST /api/catalog/assets/:id/retire`, `POST /api/catalog/preview-diff`. Raw SQL stays available via the existing agent SQL tool as the escape hatch.
 4. **MCP `catalog_*` tools** — thin wrappers over the endpoints so agents get typed tool schemas and dry-run flags.
 5. **Export step** — script under `tools/` that reads the DB and writes a snapshot artefact Unity loads at boot. Dev path supports hot-reload; shipped builds embed the snapshot.
