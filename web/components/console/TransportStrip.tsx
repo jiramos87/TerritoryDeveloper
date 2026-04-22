@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  Eject,
+  ArrowUpFromLine,
   FastForward,
   Pause,
   Play,
@@ -41,13 +41,11 @@ const activeStopped =
   'shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_0_1px_rgba(232,232,232,0.12)] text-[var(--ds-text-primary)]';
 
 function ActionButton({
-  action,
   label,
   Icon,
   className = '',
   ...rest
 }: {
-  action: TransportAction;
   label: string;
   Icon: LucideIcon;
   className?: string;
@@ -68,43 +66,33 @@ export function TransportStrip({
     <div
       className={`flex flex-wrap items-center gap-2 p-[var(--ds-spacing-sm)] ${className}`.trim()}
     >
+      <ActionButton label="Rewind" Icon={Rewind} onClick={() => onAction('rewind')} />
       <ActionButton
-        action="rewind"
-        label="Rewind"
-        Icon={Rewind}
-        onClick={() => onAction('rewind')}
-      />
-      <ActionButton
-        action="play"
         label="Play"
         Icon={Play}
         className={state === 'playing' ? `h-12 w-12 ${activePlaying}` : 'h-12 w-12'}
         onClick={() => onAction('play')}
       />
       <ActionButton
-        action="pause"
         label="Pause"
         Icon={Pause}
         className={state === 'paused' ? `h-12 w-12 ${activePaused}` : 'h-12 w-12'}
         onClick={() => onAction('pause')}
       />
       <ActionButton
-        action="stop"
         label="Stop"
         Icon={Square}
         className={state === 'stopped' ? activeStopped : ''}
         onClick={() => onAction('stop')}
       />
       <ActionButton
-        action="fastForward"
         label="Fast forward"
         Icon={FastForward}
         onClick={() => onAction('fastForward')}
       />
       <ActionButton
-        action="eject"
         label="Eject"
-        Icon={Eject}
+        Icon={ArrowUpFromLine}
         onClick={() => onAction('eject')}
       />
     </div>
