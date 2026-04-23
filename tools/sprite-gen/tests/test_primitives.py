@@ -37,7 +37,7 @@ import pytest
 from PIL import Image, ImageChops
 
 from src.canvas import canvas_size
-from src.primitives import iso_cube, iso_prism
+from src.primitives import iso_cube, iso_ground_diamond, iso_prism
 
 # ---------------------------------------------------------------------------
 # Shared constants
@@ -56,6 +56,11 @@ _FIXTURE_PALETTE: dict = {
             "bright": [48, 48, 240],
             "mid":    [40, 40, 200],
             "dark":   [24, 24, 120],
+        },
+        "grass_flat": {
+            "bright": [104, 168, 56],
+            "mid":    [78,  126, 42],
+            "dark":   [32,  72,  8],
         },
     },
 }
@@ -302,3 +307,21 @@ def test_iso_prism_pixel_kwargs():
         material="stub_red", palette=_FIXTURE_PALETTE,
     )
     assert ImageChops.difference(a, b).getbbox() is None
+
+
+def test_iso_ground_diamond_smoke():
+    """1×1 ground diamond has expected alpha bbox (DAS §2.1)."""
+    w = 64
+    canvas = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+    iso_ground_diamond(
+        canvas=canvas,
+        x0=w // 2,
+        y0=w,
+        fx=1,
+        fy=1,
+        material="grass_flat",
+        palette=_FIXTURE_PALETTE,
+    )
+    assert canvas.getbbox() == (0, 15, 64, 48)
+    top = _FIXTURE_PALETTE["materials"]["grass_flat"]["bright"]
+    assert canvas.getpixel((32, 17))[:3] == tuple(top)

@@ -37,7 +37,7 @@ def _run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
 
 
 def test_gpl_header_and_row_count():
-    """GPL text starts with GIMP Palette header and has 24 body rows (8 mats × 3 levels)."""
+    """GPL text starts with GIMP Palette header; body rows = 3 × material count."""
     text = export_gpl("residential", palettes_dir=PALETTES_DIR)
     lines = text.splitlines()
     assert lines[0] == "GIMP Palette"
@@ -45,7 +45,10 @@ def test_gpl_header_and_row_count():
     assert lines[2] == "Columns: 3"
     assert lines[3] == "#"
     body = [ln for ln in lines[4:] if ln.strip()]
-    assert len(body) == 27, f"expected 27 body rows (9 materials × 3 levels), got {len(body)}"
+    n_mat = len(load_palette("residential", palettes_dir=PALETTES_DIR)["materials"])
+    assert len(body) == n_mat * 3, (
+        f"expected {n_mat * 3} body rows ({n_mat} materials × 3 levels), got {len(body)}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -149,4 +152,5 @@ def test_cli_import(tmp_path):
     # The JSON should still be valid and deep-equal to original.
     original = load_palette("residential", palettes_dir=PALETTES_DIR)
     assert original["class"] == "residential"
-    assert len(original["materials"]) == 9
+    expected_n = len(json.loads(RESIDENTIAL_JSON.read_text(encoding="utf-8"))["materials"])
+    assert len(original["materials"]) == expected_n

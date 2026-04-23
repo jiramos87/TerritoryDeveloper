@@ -14,7 +14,8 @@ Reference:
 """
 
 from .iso_cube import iso_cube
+from .iso_ground_diamond import iso_ground_diamond
 from .iso_prism import iso_prism
 from .iso_stepped_foundation import iso_stepped_foundation
 
-__all__ = ["iso_cube", "iso_prism", "iso_stepped_foundation"]
+__all__ = ["iso_cube", "iso_ground_diamond", "iso_prism", "iso_stepped_foundation"]

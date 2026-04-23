@@ -59,6 +59,11 @@ _FIXTURE_PALETTE_DATA = {
             "mid":    [130, 95,  55],
             "dark":   [80,  58,  33],
         },
+        "grass_flat": {
+            "bright": [104, 168, 56],
+            "mid":    [78,  126, 42],
+            "dark":   [32,  72,  8],
+        },
     },
 }
 
@@ -394,3 +399,17 @@ def test_unknown_slope_raises():
     }
     with pytest.raises(SlopeKeyError):
         compose_sprite(spec)
+
+
+def test_iso_ground_diamond_dispatch():
+    """iso_ground_diamond is invokable via composition type (Stage 6)."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "terrain": "flat",
+        "composition": [
+            {"type": "iso_ground_diamond", "material": "grass_flat"},
+        ],
+    }
+    img = compose_sprite(spec)
+    assert img.getbbox() is not None

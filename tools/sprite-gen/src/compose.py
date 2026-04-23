@@ -40,7 +40,12 @@ from PIL import Image
 
 from .canvas import canvas_size
 from .palette import load_palette
-from .primitives import iso_cube, iso_prism, iso_stepped_foundation
+from .primitives import (
+    iso_cube,
+    iso_ground_diamond,
+    iso_prism,
+    iso_stepped_foundation,
+)
 from .slopes import SlopeKeyError, get_corner_z  # noqa: F401 — re-exported for callers
 
 # ---------------------------------------------------------------------------
@@ -58,6 +63,7 @@ class UnknownPrimitiveError(ValueError):
 
 _DISPATCH: dict[str, object] = {
     "iso_cube": iso_cube,
+    "iso_ground_diamond": iso_ground_diamond,
     "iso_prism": iso_prism,
     "iso_stepped_foundation": iso_stepped_foundation,
 }
@@ -168,6 +174,19 @@ def compose_sprite(spec: dict) -> Image.Image:
                 f"Unknown primitive type {prim_type!r}. "
                 f"Known types: {sorted(_DISPATCH.keys())}"
             )
+
+        if prim_type == "iso_ground_diamond":
+            material_g = str(entry.get("material", ""))
+            iso_ground_diamond(
+                canvas=canvas,
+                x0=x0,
+                y0=y0,
+                fx=int(entry.get("fx", fx)),
+                fy=int(entry.get("fy", fy)),
+                material=material_g,
+                palette=palette,
+            )
+            continue
 
         material = str(entry.get("material", ""))
         offset_z = int(entry.get("offset_z", 0))
