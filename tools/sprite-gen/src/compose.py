@@ -253,9 +253,9 @@ def compose_sprite(spec: dict) -> Image.Image:
 
         material = str(entry.get("material", ""))
         offset_z = int(entry.get("offset_z", 0))
-        # DAS §2.1/§2.2: diamond bottom row is at y = h_px - 17 (16 px pad + 1 for
-        # inclusive pixel). Building primitives anchor at diamond bottom, not canvas
-        # bottom. Stage 6.1 hotfix.
+        # DAS §2.1/§2.2: diamond bottom row is at y = canvas_h - 17 (16 px pad + 1 for
+        # PIL inclusive pixel indexing). Building primitives anchor at diamond bottom,
+        # not canvas bottom. Stage 6.1 hotfix.
         pivot_pad = 17 if spec.get("ground") != "none" else 0
         adjusted_y0 = y0 - pivot_pad - offset_z
 
