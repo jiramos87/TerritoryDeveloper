@@ -435,7 +435,50 @@ Curator UI / CI consume the sidecar to surface low-confidence renders without bl
 
 ---
 
-## 6. Future decoration backlog (not in Stages 6–14)
+## 6. Preset system (Stage 6.6)
+
+**Status:** locked 2026-04-23 — TECH-730..736. Forward-pointer: `tools/sprite-gen/presets/`.
+
+Presets let an author bootstrap a sprite from a named base spec using a single top-level key:
+
+```yaml
+# author spec
+preset: suburban_house_with_yard
+id: my_little_house
+output:
+  name: my_little_house.png
+vary:
+  padding:
+    values: [0, 1, 2]
+```
+
+### §6.1 Grammar — `preset: <name>`
+
+- Top-level `preset: <name>` key resolves to `tools/sprite-gen/presets/<name>.yaml`.
+- Loader parses the preset file as the base spec, pops the `preset:` key from the author data, then applies author-override merge.
+- Missing preset (typo, unknown name) → `SpecError` whose message lists every valid preset stem under `presets/` — the author discovers valid names on the first failed run.
+
+### §6.2 Merge rule — author overrides + `vary:` union + wipe-raises
+
+- **Author overrides.** Author fields win per-key; nested dicts deep-merge (preset `output: {name, pivot}` + author `output: {name}` preserves preset `pivot`).
+- **`vary:` union.** Preset `vary:` axes survive unchanged unless the author supplies the same axis. Author can add brand-new axes (union) or replace existing ones per-axis (override).
+- **Wipe-raises.** Author writing `vary: {}` or `vary: null` raises `SpecError`. Whole-block wipe is refused so preset-driven variation cannot be silently disabled. Per-axis disable is still allowed (author `vary.<axis>: null`).
+
+### §6.3 Seeded preset catalogue (2026-04-23)
+
+| Preset | Footprint | Ground | `vary:` axes |
+| --- | --- | --- | --- |
+| `suburban_house_with_yard` | `[1, 1]` (residential_small) | `grass_flat` + texture | `roof`, `facade`, `ground` |
+| `strip_mall_with_parking` | `[2, 1]` (commercial_store) | `pavement` + `pavement_stripe_yellow` via `materials` list | `facade`, `ground` |
+| `row_houses_3x` | `[3, 1]` (residential_small, `tiled-row-3` slot) | shared `grass_flat` across row | `facade`, `roof` (both `per_tile`) |
+
+`row_houses_3x` renders cleanly once the Stage 9 parametric-slot addendum (TECH-744) lands; the preset file ships ahead so authors can reference it immediately.
+
+### §6.4 Open question resolved
+
+- **Does the author `preset:` key survive into the resolved spec?** No — it is popped before merge so downstream validators never see it as an unknown top-level field.
+
+## 7. Future decoration backlog (not in Stages 6–14)
 
 Queued for post-v1 stages:
 - `iso_street_lamp`
