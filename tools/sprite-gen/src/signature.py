@@ -557,3 +557,196 @@ def validate_against(
         failures.append("bbox.spans_full_width expected True, got False")
 
     return ValidationReport(ok=not failures, failures=failures)
+
+
+# ---------------------------------------------------------------------------
+# TECH-725 — Three-source envelope aggregator
+# ---------------------------------------------------------------------------
+#
+# Turns three inputs — catalog prior, promoted JSONL rows, rejected JSONL rows
+# — into a single ``vary.*`` envelope the composer can gate renders against.
+#
+# Envelope shape::
+#
+#     {
+#         "<dotted.axis.path>": {"min": <num>, "max": <num>},
+#         ...
+#     }
+#
+# Keys are dotted ``vary_values`` leaf paths (e.g. ``"roof.h_px"``). The
+# envelope dict is distinct from the catalog signature shape (bbox / palette /
+# silhouette / ground / decoration_hints) — it models the ``vary.*`` sampling
+# space directly.
+#
+# Semantics (``envelope = catalog ∪ promoted − rejected-zones``):
+#
+#   - Catalog prior seeds initial bounds per axis.
+#   - Promoted rows tighten bounds toward the validated centroid (running
+#     ``min`` / ``max`` of promoted ``vary_values``).
+#   - Rejected rows carve floor zones per :data:`REASON_AXIS_MAP` — each
+#     rejection reason pins the ``min`` or ``max`` of a single axis one unit
+#     away from the rejected sample.
+#   - Determinism: rows are sorted by ``(variant_path, timestamp)`` before
+#     aggregation; same inputs produce byte-identical output.
+
+
+# Lazy import to avoid circular dependency — curate.py imports signature.py
+# transitively via its spec_loader plumbing in a future task. The constant
+# itself is bound here as module-level for import stability.
+from .curate import REJECTION_REASONS  # noqa: E402  (placed after public API)
+
+
+REASON_AXIS_MAP: dict[str, tuple[str, str]] = {
+    "roof-too-shallow":     ("roof.h_px",         "min"),
+    "roof-too-tall":        ("roof.h_px",         "max"),
+    "facade-too-saturated": ("facade.saturation", "max"),
+    "ground-too-uniform":   ("ground.hue_jitter", "min"),
+}
+
+
+def _row_sort_key(row: dict) -> tuple:
+    """Stable sort key for promoted / rejected rows — determinism guard."""
+    return (str(row.get("variant_path", "")), float(row.get("timestamp", 0.0)))
+
+
+def _flatten_vary_values(vary: dict, prefix: str = "") -> dict[str, float]:
+    """Walk a ``vary_values`` tree → flat ``{"dotted.path": scalar}`` dict.
+
+    Non-numeric leaves (strings, lists) are dropped — envelope math is scalar.
+    """
+    flat: dict[str, float] = {}
+    for key, val in vary.items():
+        path = f"{prefix}{key}" if not prefix else f"{prefix}.{key}"
+        if isinstance(val, dict):
+            flat.update(_flatten_vary_values(val, prefix=path))
+        elif isinstance(val, (int, float)) and not isinstance(val, bool):
+            flat[path] = float(val)
+    return flat
+
+
+def _initial_envelope_from_catalog(catalog: Optional[dict]) -> dict[str, dict]:
+    """Seed the envelope from an optional catalog prior.
+
+    ``catalog`` accepts a flat ``{axis: {min, max}}`` dict or a nested
+    ``vary_values``-shaped dict; both normalize into the canonical flat shape.
+    ``None`` or ``{}`` → empty envelope.
+    """
+    if not catalog:
+        return {}
+    env: dict[str, dict] = {}
+    for key, val in catalog.items():
+        if isinstance(val, dict) and {"min", "max"}.issubset(val.keys()):
+            env[key] = {"min": float(val["min"]), "max": float(val["max"])}
+        elif isinstance(val, dict):
+            # Nested shape — flatten recursively.
+            nested = _initial_envelope_from_catalog(
+                {f"{key}.{k}": v for k, v in val.items()}
+            )
+            env.update(nested)
+    return env
+
+
+def _promoted_hull(promoted: list[dict]) -> dict[str, dict]:
+    """Build the min/max hull over every promoted sample per axis."""
+    hull: dict[str, dict] = {}
+    for row in promoted:
+        for axis, value in _flatten_vary_values(row.get("vary_values", {})).items():
+            cur = hull.get(axis)
+            if cur is None:
+                hull[axis] = {"min": value, "max": value}
+            else:
+                cur["min"] = min(cur["min"], value)
+                cur["max"] = max(cur["max"], value)
+    return hull
+
+
+def _apply_promoted_hull(env: dict[str, dict], hull: dict[str, dict]) -> None:
+    """Tighten the envelope toward the promoted hull.
+
+    Semantics: when both catalog prior and promoted hull exist on an axis,
+    the envelope collapses to the promoted hull (strictly ≤ prior, since
+    well-formed promoted samples sit inside the prior). When only catalog
+    exists, the prior is kept. When only promoted exists, the hull seeds the
+    axis (no prior to intersect).
+    """
+    for axis, bounds in hull.items():
+        env[axis] = {"min": bounds["min"], "max": bounds["max"]}
+
+
+def _carve_out(
+    env: dict[str, dict],
+    axis_path: str,
+    bound: str,
+    vary_values: dict,
+) -> None:
+    """Push a bound away from a rejected sample by +1 / −1 unit.
+
+    ``bound == "min"`` → raise ``env[axis].min`` to ``rejected_value + 1``.
+    ``bound == "max"`` → lower ``env[axis].max`` to ``rejected_value - 1``.
+    No-op when the rejected sample has no value on ``axis_path``.
+    If the axis is absent from the envelope, the carve-out seeds it as a
+    degenerate point at the carved bound — downstream code treats it as a
+    floor/ceiling constraint.
+    """
+    flat = _flatten_vary_values(vary_values)
+    rejected = flat.get(axis_path)
+    if rejected is None:
+        return
+    cur = env.get(axis_path)
+    if bound == "min":
+        new_min = rejected + 1.0
+        if cur is None:
+            env[axis_path] = {"min": new_min, "max": new_min}
+        else:
+            cur["min"] = max(cur["min"], new_min)
+            # Ensure min <= max (tighten max if carve-out collapsed range).
+            if cur["min"] > cur["max"]:
+                cur["max"] = cur["min"]
+    elif bound == "max":
+        new_max = rejected - 1.0
+        if cur is None:
+            env[axis_path] = {"min": new_max, "max": new_max}
+        else:
+            cur["max"] = min(cur["max"], new_max)
+            if cur["max"] < cur["min"]:
+                cur["min"] = cur["max"]
+
+
+def compute_envelope(
+    catalog: Optional[dict] = None,
+    promoted: Optional[list[dict]] = None,
+    rejected: Optional[list[dict]] = None,
+) -> dict[str, dict]:
+    """Aggregate three sources into a live ``vary.*`` envelope.
+
+    Args:
+        catalog: Optional catalog prior — flat ``{axis: {min, max}}`` or
+            nested ``vary_values``-shaped dict. ``None`` or ``{}`` → empty
+            prior (envelope derived from promoted alone).
+        promoted: Iterable of promoted JSONL rows (TECH-723 schema). Each row
+            must carry ``vary_values`` + ``variant_path`` + ``timestamp``.
+        rejected: Iterable of rejected JSONL rows (TECH-724 schema). Each
+            row must carry ``reason`` in :data:`REASON_AXIS_MAP`.
+
+    Returns:
+        Flat envelope dict ``{axis: {min, max}}``. Axes present in any of the
+        three inputs appear in the result; axes present nowhere are omitted.
+
+    Raises:
+        KeyError: ``rejected`` row carries a ``reason`` outside
+            :data:`REASON_AXIS_MAP`.
+    """
+    env = _initial_envelope_from_catalog(catalog)
+
+    # Promoted hull is order-independent (min/max aggregates); still sort the
+    # input list for stable downstream traces.
+    promoted_sorted = sorted(promoted or [], key=_row_sort_key)
+    hull = _promoted_hull(promoted_sorted)
+    _apply_promoted_hull(env, hull)
+
+    for row in sorted(rejected or [], key=_row_sort_key):
+        reason = row["reason"]
+        axis_path, bound = REASON_AXIS_MAP[reason]
+        _carve_out(env, axis_path, bound, row.get("vary_values", {}))
+
+    return env

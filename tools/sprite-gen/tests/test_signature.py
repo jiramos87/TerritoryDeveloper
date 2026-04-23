@@ -9,11 +9,14 @@ import pytest
 from PIL import Image
 
 from src.signature import (
+    REASON_AXIS_MAP,
     SignatureStaleError,
     ValidationReport,
+    compute_envelope,
     compute_signature,
     validate_against,
 )
+from src.curate import REJECTION_REASONS
 
 
 # ---------------------------------------------------------------------------
@@ -178,3 +181,76 @@ def test_validate_fallback_mode_always_passes(tmp_path: Path, fallback_graph: Pa
     blank = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
     report = validate_against(sig, blank)
     assert report.ok is True
+
+
+# ---------------------------------------------------------------------------
+# TECH-725 — Three-source envelope aggregator
+# ---------------------------------------------------------------------------
+
+
+def _promoted_row(path: str, h_px: float, t: float = 0.0) -> dict:
+    return {
+        "variant_path": path,
+        "vary_values": {"roof": {"h_px": h_px}},
+        "timestamp": t,
+    }
+
+
+def _rejected_row(path: str, reason: str, h_px: float, t: float = 0.0) -> dict:
+    return {
+        "variant_path": path,
+        "vary_values": {"roof": {"h_px": h_px}},
+        "reason": reason,
+        "timestamp": t,
+    }
+
+
+def test_envelope_union_tightens() -> None:
+    # Catalog prior admits [4, 20]; 5 promoted samples sit in [8, 12].
+    catalog = {"roof.h_px": {"min": 4.0, "max": 20.0}}
+    promoted = [_promoted_row(f"out/v{i}.png", h_px=h, t=float(i))
+                for i, h in enumerate([8, 9, 10, 11, 12])]
+    env = compute_envelope(catalog=catalog, promoted=promoted, rejected=[])
+    # Promoted tightens toward observed hull (8..12), strictly narrower than prior.
+    assert env["roof.h_px"]["min"] == 8.0
+    assert env["roof.h_px"]["max"] == 12.0
+
+
+def test_envelope_carveout() -> None:
+    # 3 rejects with roof-too-shallow at h_px ∈ {5, 6, 7} → min raised to 8.
+    catalog = {"roof.h_px": {"min": 4.0, "max": 20.0}}
+    rejected = [_rejected_row(f"out/r{i}.png", "roof-too-shallow", h_px=h, t=float(i))
+                for i, h in enumerate([5, 6, 7])]
+    env = compute_envelope(catalog=catalog, promoted=[], rejected=rejected)
+    # Nearest reject was h=7 → min = 7 + 1 = 8 (monotonic; later rejects don't
+    # lower the already-raised floor).
+    assert env["roof.h_px"]["min"] == 8.0
+    assert env["roof.h_px"]["max"] == 20.0
+
+
+def test_envelope_deterministic() -> None:
+    import random
+    catalog = {"roof.h_px": {"min": 4.0, "max": 20.0}}
+    promoted_a = [_promoted_row(f"out/v{i}.png", h_px=h, t=float(i))
+                  for i, h in enumerate([8, 9, 10, 11, 12])]
+    promoted_b = list(promoted_a)
+    rng = random.Random(42)
+    rng.shuffle(promoted_b)
+    env_a = compute_envelope(catalog=catalog, promoted=promoted_a, rejected=[])
+    env_b = compute_envelope(catalog=catalog, promoted=promoted_b, rejected=[])
+    assert json.dumps(env_a, sort_keys=True) == json.dumps(env_b, sort_keys=True)
+
+
+def test_envelope_empty_fallback() -> None:
+    catalog = {"roof.h_px": {"min": 4.0, "max": 20.0}}
+    env = compute_envelope(catalog=catalog, promoted=[], rejected=[])
+    assert env == {"roof.h_px": {"min": 4.0, "max": 20.0}}
+
+
+@pytest.mark.parametrize("reason", list(REJECTION_REASONS))
+def test_reason_axis_map_coverage(reason: str) -> None:
+    # Every controlled-vocab rejection reason must carve a declared axis.
+    assert reason in REASON_AXIS_MAP
+    axis, bound = REASON_AXIS_MAP[reason]
+    assert isinstance(axis, str) and "." in axis
+    assert bound in ("min", "max")
