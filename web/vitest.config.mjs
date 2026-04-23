@@ -21,5 +21,11 @@ export default defineConfig({
     // Populate DATABASE_URL from repo root .env / postgres-dev.json for DB-backed tests.
     setupFiles: ['tests/api/_vitest-setup.ts'],
     environment: 'node',
+    // Force serial file execution: catalog API specs mutate the same Postgres DB
+    // (TRUNCATE + seed per test); parallel workers clobber each other. Vitest 4
+    // removed `poolOptions` nesting — singleThread/singleFork are top-level.
+    fileParallelism: false,
+    singleThread: true,
+    singleFork: true,
   },
 });
