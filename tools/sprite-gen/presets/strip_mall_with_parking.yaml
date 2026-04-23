@@ -1,0 +1,43 @@
+# Preset: strip_mall_with_parking (TECH-733, Stage 6.6)
+# Commercial strip with pavement ground + facade / ground variation.
+# Consumers reference via `preset: strip_mall_with_parking`; author supplies
+# own `id:` + `output.name:`. Uses supported Stage 6.4 ground accent form
+# (`materials` list + texture density) in lieu of a dedicated `accent_keys`
+# grammar; pavement_stripe_yellow appears via the `materials` list.
+class: commercial_store
+footprint: [2, 1]
+terrain: flat
+levels: 1
+palette: commercial
+ground:
+  materials: [pavement, pavement_stripe_yellow]
+  texture:
+    density: { min: 0.4, max: 0.7 }
+building:
+  footprint_ratio: [0.85, 0.55]
+  composition:
+    - { type: iso_cube, role: wall, material: wall_concrete_grey, w: 2, d: 1 }
+    - { type: iso_prism, role: roof, material: roof_flat_tar, w: 2, d: 1, h_px: 3, pitch: 0.0, axis: ew, offset_z_role: above_walls }
+composition:
+  - { type: iso_cube, role: wall, material: wall_concrete_grey, w: 2, d: 1 }
+  - { type: iso_prism, role: roof, material: roof_flat_tar, w: 2, d: 1, h_px: 3, pitch: 0.0, axis: ew, offset_z_role: above_walls }
+output:
+  variants: 4
+variants:
+  count: 4
+  seed_scope: palette+geometry
+  vary:
+    ground:
+      hue_jitter: { min: -4, max: 4 }
+      value_jitter: { min: -8, max: 8 }
+      texture:
+        density: { min: 0.4, max: 0.7 }
+vary:
+  facade:
+    material:
+      values: [wall_concrete_grey, wall_stucco_tan, wall_brick_red]
+  ground:
+    material:
+      values: [pavement, pavement_stripe_yellow]
+diffusion:
+  enabled: false
