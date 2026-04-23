@@ -413,3 +413,30 @@ def test_iso_ground_diamond_dispatch():
     }
     img = compose_sprite(spec)
     assert img.getbbox() is not None
+
+
+def test_compose_prepends_ground_for_das_class():
+    """DAS `class` in default map auto-prepends ground without explicit `ground:`."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "terrain": "flat",
+        "class": "residential_small",
+        "composition": [_cube_entry(h=16, offset_z=0)],
+    }
+    img = compose_sprite(spec)
+    assert img.getbbox() is not None
+
+
+def test_compose_skips_ground_when_none():
+    """ground: none skips ground diamond; cube stack still renders."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "terrain": "flat",
+        "class": "residential_small",
+        "ground": "none",
+        "composition": [_cube_entry(h=16, offset_z=0)],
+    }
+    img = compose_sprite(spec)
+    assert img.getbbox() is not None

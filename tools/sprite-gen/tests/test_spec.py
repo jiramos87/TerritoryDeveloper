@@ -9,7 +9,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from src.spec import REQUIRED_KEYS, SpecValidationError, load_spec
+from src.spec import (
+    REQUIRED_KEYS,
+    SpecValidationError,
+    composition_entries,
+    default_footprint_ratio_for_class,
+    default_ground_for_class,
+    load_spec,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 VALID_YAML = FIXTURES / "spec_valid.yaml"
@@ -196,3 +203,23 @@ def test_non_mapping_root_raises(tmp_path):
     with pytest.raises(SpecValidationError) as exc_info:
         load_spec(p)
     assert exc_info.value.field == "<root>"
+
+
+def test_default_ground_residential_small():
+    assert default_ground_for_class("residential_small") == "grass_flat"
+
+
+def test_default_ground_commercial_store():
+    assert default_ground_for_class("commercial_store") == "pavement"
+
+
+def test_default_footprint_ratio_residential_small():
+    assert default_footprint_ratio_for_class("residential_small") == (0.45, 0.45)
+
+
+def test_composition_entries_prefers_top_level():
+    s = {
+        "composition": [{"type": "iso_cube", "w": 1, "d": 1, "h": 8, "material": "x"}],
+        "building": {"composition": [{"type": "iso_prism", "h": 1, "material": "y"}]},
+    }
+    assert len(composition_entries(s)) == 1

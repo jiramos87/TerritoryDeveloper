@@ -112,3 +112,51 @@ def load_spec(path: Union[str, Path]) -> dict:
             )
 
     return data
+
+
+# --- Stage 6 — class defaults (DAS §4.2 + §2.5) ---
+
+_DEFAULT_GROUND: dict[str, str] = {
+    "residential_small": "grass_flat",
+    "residential_dense_tower": "grass_flat",
+    "residential_heavy": "grass_flat",
+    "commercial_store": "pavement",
+    "commercial_dense": "pavement",
+    "commercial_small": "pavement",
+    "industrial_light": "pavement",
+    "industrial_heavy": "pavement",
+    "power_nuclear": "mustard_industrial",
+    "waterplant": "grass_flat",
+}
+
+_DEFAULT_FOOTPRINT_RATIO: dict[str, tuple[float, float]] = {
+    "residential_small": (0.45, 0.45),
+    "residential_dense_tower": (0.9, 0.9),
+    "residential_heavy": (0.45, 0.45),
+    "commercial_store": (0.55, 0.55),
+    "commercial_small": (0.55, 0.55),
+    "commercial_dense": (0.95, 0.95),
+    "industrial_light": (0.7, 0.7),
+    "industrial_heavy": (0.7, 0.7),
+    "power_nuclear": (0.7, 0.7),
+    "waterplant": (0.8, 0.8),
+}
+
+
+def default_ground_for_class(class_name: str) -> str:
+    return _DEFAULT_GROUND.get(class_name, "grass_flat")
+
+
+def default_footprint_ratio_for_class(class_name: str) -> tuple[float, float]:
+    return _DEFAULT_FOOTPRINT_RATIO.get(class_name, (1.0, 1.0))
+
+
+def composition_entries(spec: dict) -> list:
+    """Top-level `composition` or R11 `building.composition`, whichever is set."""
+    c = spec.get("composition")
+    if c is not None:
+        return c
+    b = spec.get("building")
+    if isinstance(b, dict) and b.get("composition") is not None:
+        return b["composition"]
+    return []

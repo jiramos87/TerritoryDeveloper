@@ -47,6 +47,12 @@ from .primitives import (
     iso_stepped_foundation,
 )
 from .slopes import SlopeKeyError, get_corner_z  # noqa: F401 — re-exported for callers
+from .spec import (
+    _DEFAULT_GROUND,
+    composition_entries,
+    default_footprint_ratio_for_class,
+    default_ground_for_class,
+)
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -116,18 +122,19 @@ def compose_sprite(spec: dict) -> Image.Image:
         SlopeKeyError:        If ``spec["terrain"]`` is not a recognised slope id.
     """
     fx, fy = spec["footprint"]
-    composition = spec.get("composition", [])
+    composition = composition_entries(spec)
     slope_id: str = spec.get("terrain", "flat")
 
     # --- Load palette once for the whole sprite ---
     palette = load_palette(spec["palette"])  # FileNotFoundError propagates if missing
 
+    def _stack_h(entry: dict) -> int:
+        h = entry.get("h_px", entry.get("h", 0))
+        return int(h) + int(entry.get("offset_z", 0))
+
     # --- Derive extra_h from tallest stack entry ---
     if composition:
-        stack_extra_h = max(
-            int(entry.get("h", 0)) + int(entry.get("offset_z", 0))
-            for entry in composition
-        )
+        stack_extra_h = max(_stack_h(entry) for entry in composition)
     else:
         stack_extra_h = 0
 
@@ -150,6 +157,30 @@ def compose_sprite(spec: dict) -> Image.Image:
     # --- SE-corner anchor (y-down; primitives draw upward from this point) ---
     x0 = w_px // 2
     y0 = h_px
+
+    # --- Stage 6: ground diamond (R11 / DAS classes; legacy specs omit `ground` + old class) ---
+    cls = str(spec.get("class", ""))
+    graw = spec.get("ground")
+    if graw != "none":
+        in_map = cls in _DEFAULT_GROUND
+        if graw not in (None, "") or in_map:
+            gmat = str(graw) if graw not in (None, "") else default_ground_for_class(cls)
+            iso_ground_diamond(
+                canvas=canvas,
+                x0=x0,
+                y0=y0,
+                fx=fx,
+                fy=fy,
+                material=gmat,
+                palette=palette,
+            )
+
+    building = spec.get("building") or {}
+    fr = building.get("footprint_ratio")
+    if fr is None:
+        wr, dr = default_footprint_ratio_for_class(str(spec.get("class", "")))
+    else:
+        wr, dr = float(fr[0]), float(fr[1])
 
     # --- Foundation auto-insert (non-flat terrain only; drawn before composition stack) ---
     if slope_id != "flat":
@@ -215,6 +246,16 @@ def compose_sprite(spec: dict) -> Image.Image:
             kwargs["pitch"] = float(entry.get("pitch", 0.5))
             kwargs["axis"]  = str(entry.get("axis", "ns"))
 
+        if wr != 1.0 or dr != 1.0:
+            if "w_px" in kwargs:
+                kwargs["w_px"] = int(round(float(kwargs["w_px"]) * wr))
+            elif "w" in kwargs:
+                kwargs["w"] = float(kwargs["w"]) * wr
+            if "d_px" in kwargs:
+                kwargs["d_px"] = int(round(float(kwargs["d_px"]) * dr))
+            elif "d" in kwargs:
+                kwargs["d"] = float(kwargs["d"]) * dr
+
         fn(**kwargs)  # type: ignore[operator]
 
     return canvas
@@ -223,16 +264,17 @@ def compose_sprite(spec: dict) -> Image.Image:
 def compose_layers(spec: dict) -> tuple[dict[str, Image.Image], tuple[int, int]]:
     """Per-face RGBA layers for layered `.aseprite` export (TECH-182)."""
     fx, fy = spec["footprint"]
-    composition = spec.get("composition", [])
+    composition = composition_entries(spec)
     slope_id: str = spec.get("terrain", "flat")
 
     palette = load_palette(spec["palette"])
 
+    def _stack_h2(entry: dict) -> int:
+        h = entry.get("h_px", entry.get("h", 0))
+        return int(h) + int(entry.get("offset_z", 0))
+
     if composition:
-        stack_extra_h = max(
-            int(entry.get("h", 0)) + int(entry.get("offset_z", 0))
-            for entry in composition
-        )
+        stack_extra_h = max(_stack_h2(entry) for entry in composition)
     else:
         stack_extra_h = 0
 
