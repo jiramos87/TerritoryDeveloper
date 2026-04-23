@@ -95,16 +95,49 @@ def _load_preset(name: str) -> dict:
     return data
 
 
+def _merge_vary(base_vary: object, overlay_vary: object) -> dict:
+    """Merge preset ``vary`` with author ``vary`` under Stage 6.6 rules.
+
+    Rules (TECH-731):
+        - Author ``vary: null`` or ``vary: {}`` → SpecError (whole-block wipe
+          is refused; individual axes can be nulled instead).
+        - Preset axes survive unchanged when author omits them.
+        - Author axis value replaces preset axis value (per-axis override).
+        - Author new axis is unioned in.
+    """
+    if overlay_vary is None or (isinstance(overlay_vary, dict) and not overlay_vary):
+        raise SpecError(
+            field="vary",
+            message=(
+                "author spec may not wipe preset `vary:` block — "
+                "override individual axes instead"
+            ),
+        )
+    if not isinstance(overlay_vary, dict):
+        raise SpecError(
+            field="vary",
+            message=(
+                f"author `vary` must be a dict, got {type(overlay_vary).__name__}"
+            ),
+        )
+    base = dict(base_vary) if isinstance(base_vary, dict) else {}
+    for axis, value in overlay_vary.items():
+        base[axis] = value  # per-axis replace / union
+    return base
+
+
 def _deep_merge(base: dict, overlay: dict) -> dict:
-    """Recursive dict-merge: overlay wins per-key; nested dicts merge.
+    """Recursive dict-merge: overlay wins per-key; `vary` routed via TECH-731.
 
     Scalars / lists / non-dicts in either side → overlay wins entirely.
-    Nested dicts → merge recursively. TECH-731 extends this function with
-    a dedicated ``vary:`` branch under :func:`_merge_vary`.
+    Nested dicts → merge recursively. The ``vary`` key is routed through
+    :func:`_merge_vary` so the Stage 6.6 wipe-guard + union semantics apply.
     """
     out: dict = dict(base)
     for key, value in overlay.items():
-        if isinstance(value, dict) and isinstance(out.get(key), dict):
+        if key == "vary":
+            out[key] = _merge_vary(out.get(key), value)
+        elif isinstance(value, dict) and isinstance(out.get(key), dict):
             out[key] = _deep_merge(out[key], value)
         else:
             out[key] = value
