@@ -2,7 +2,7 @@ id: TECH-745
 type: TECH
 title: Spec schema — ground.passthrough flag
 priority: medium
-status: open
+status: closed
 section: Stage 7 addendum — Cross-tile passthrough pattern
 spec: ia/projects/TECH-745.md
 files:

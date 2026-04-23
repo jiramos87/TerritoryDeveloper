@@ -2,7 +2,7 @@ id: TECH-746
 type: TECH
 title: Composer — inhibit noise + clamp jitter on passthrough tiles
 priority: medium
-status: open
+status: closed
 section: Stage 7 addendum — Cross-tile passthrough pattern
 spec: ia/projects/TECH-746.md
 files:

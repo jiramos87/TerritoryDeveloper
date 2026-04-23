@@ -197,6 +197,13 @@ output: { name: empty_lot_flat.png }
 
 Default is `false`, so every pre-Stage-7 spec keeps byte-identical output.
 
+**Stage 7 addendum lessons (TECH-745..748):**
+
+- Strict bool guard on the flag beats truthy-accept — silent coercion hides author intent.
+- Passthrough rendering is implemented by **skipping** existing primitives, not adding new ones; cheapest implementation, highest author leverage.
+- Byte-hash baselines + bounded-diff tests give complementary safety nets (hash locks the no-change path, bounded diff locks the change path).
+- Capstone doc written last against actual composer behaviour — writing it ahead of the composer would have baked in a different jitter threshold or missed `value_jitter = 0`.
+
 ---
 
 ## 4. Palette signature per category

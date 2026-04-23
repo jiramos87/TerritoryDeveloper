@@ -2,7 +2,7 @@ id: TECH-748
 type: TECH
 title: DAS §3 amendment — cross-tile passthrough pattern
 priority: low
-status: open
+status: closed
 section: Stage 7 addendum — Cross-tile passthrough pattern
 spec: ia/projects/TECH-748.md
 files:

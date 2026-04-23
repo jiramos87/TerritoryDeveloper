@@ -2084,10 +2084,10 @@ validation_gate:
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T7.10.1 | Spec schema: `ground.passthrough` flag | **TECH-745** | Draft | `tools/sprite-gen/src/spec.py` — accept `ground.passthrough: bool` sibling of `material`; default `false`; non-bool raises `SpecError`. Consumes L17. |
-| T7.10.2 | Composer: inhibit noise + clamp jitter | **TECH-746** | Draft | `tools/sprite-gen/src/compose.py` — ground render path checks `spec.ground.passthrough`; when true: skip `iso_ground_noise` call; force `hue_jitter = min(hue_jitter, 0.01)`; `value_jitter = 0`. Base material colour preserved so neighbor tiles blend. |
-| T7.10.3 | Tests — `test_ground_passthrough.py` | **TECH-747** | Draft | `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) `passthrough=true` render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamped even if author sets higher; (e) `passthrough=false` (default) unchanged. |
-| T7.10.4 | DAS §3 amendment — passthrough pattern | **TECH-748** | Draft | `docs/sprite-gen-art-design-system.md` §3 — new subsection "Cross-tile passthrough" documenting the existing slope-sprite "empty lot / natural-park-walkway" pattern + the flat-archetype extension via `ground.passthrough: true`. Explains rendering implications (no noise; narrowest jitter). |
+| T7.10.1 | Spec schema: `ground.passthrough` flag | **TECH-745** | Done | `tools/sprite-gen/src/spec.py` — accept `ground.passthrough: bool` sibling of `material`; default `false`; non-bool raises `SpecError`. Consumes L17. |
+| T7.10.2 | Composer: inhibit noise + clamp jitter | **TECH-746** | Done | `tools/sprite-gen/src/compose.py` — ground render path checks `spec.ground.passthrough`; when true: skip `iso_ground_noise` call; force `hue_jitter = min(hue_jitter, 0.01)`; `value_jitter = 0`. Base material colour preserved so neighbor tiles blend. |
+| T7.10.3 | Tests — `test_ground_passthrough.py` | **TECH-747** | Done | `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) `passthrough=true` render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamped even if author sets higher; (e) `passthrough=false` (default) unchanged. |
+| T7.10.4 | DAS §3 amendment — passthrough pattern | **TECH-748** | Done | `docs/sprite-gen-art-design-system.md` §3 — new subsection "Cross-tile passthrough" documenting the existing slope-sprite "empty lot / natural-park-walkway" pattern + the flat-archetype extension via `ground.passthrough: true`. Explains rendering implications (no noise; narrowest jitter). |
 
 ### §Stage File Plan
 

@@ -2,7 +2,7 @@ id: TECH-747
 type: TECH
 title: Tests — test_ground_passthrough.py
 priority: medium
-status: open
+status: closed
 section: Stage 7 addendum — Cross-tile passthrough pattern
 spec: ia/projects/TECH-747.md
 files:
