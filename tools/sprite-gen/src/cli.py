@@ -451,6 +451,134 @@ def _cmd_refresh_signatures(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# TECH-712 — bootstrap-variants --from-signature
+# ---------------------------------------------------------------------------
+
+
+def _derive_vary_from_signature(signature: dict) -> dict:
+    """Derive sensible `vary:` defaults from a class signature envelope.
+
+    Minimum-viable mapping — silhouette band drives `roof.h_px`; bbox
+    height variance drives `footprint_ratio.d`. Additional axes expand in
+    later stages. Returns a plain dict ready to merge into `variants.vary`.
+    """
+    vary: dict = {}
+
+    sil = signature.get("silhouette", {}).get("peaks_above_diamond_top") or {}
+    px_above = sil.get("px_above_mean")
+    if isinstance(px_above, (int, float)):
+        mean = int(round(float(px_above)))
+        # Expand ±50% around the mean, clamped to at least {min: 0, max: max+1}.
+        lo = max(0, int(mean * 0.5))
+        hi = max(mean + 1, int(mean * 1.5))
+        vary.setdefault("roof", {})["h_px"] = {"min": lo, "max": hi}
+
+    bbox_height = signature.get("bbox", {}).get("height") or {}
+    lo_h = bbox_height.get("min")
+    hi_h = bbox_height.get("max")
+    if isinstance(lo_h, (int, float)) and isinstance(hi_h, (int, float)):
+        # Normalise against a 64-px canvas to a footprint ratio range.
+        lo_r = round(float(lo_h) / 64.0, 2)
+        hi_r = round(float(hi_h) / 64.0, 2)
+        if hi_r > lo_r:
+            vary.setdefault("footprint_ratio", {})["d"] = {"min": lo_r, "max": hi_r}
+
+    return vary
+
+
+def _deep_merge_preserve_author(base: dict, extra: dict) -> None:
+    """Merge `extra` into `base`; author-authored keys always win.
+
+    Only writes `extra[k]` when `k` absent from `base`. Recurses through
+    nested dicts so partial-shadow authoring is possible.
+    """
+    for key, value in extra.items():
+        if key not in base:
+            base[key] = value
+            continue
+        if isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge_preserve_author(base[key], value)
+
+
+def _cmd_bootstrap_variants(args: argparse.Namespace) -> int:
+    """Dispatch `bootstrap-variants <stem> --from-signature`.
+
+    Reads `signatures/<class>.signature.json` (class derived from the
+    spec), derives sensible `vary:` defaults, merges them into the named
+    spec file (author keys win). Never runs during render.
+
+    Exit codes:
+        0 — spec + signature both present; spec updated in place.
+        1 — signature missing; spec missing; YAML error.
+        2 — required flag missing.
+    """
+    import json as _json
+
+    if not args.from_signature:
+        print(
+            "error: --from-signature is currently required",
+            file=sys.stderr,
+        )
+        return 2
+
+    spec_path = _SPECS_DIR / f"{args.stem}.yaml"
+    if not spec_path.exists():
+        print(f"error: spec not found: {spec_path}", file=sys.stderr)
+        return 1
+
+    try:
+        spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        print(f"error: malformed YAML in {spec_path}: {exc}", file=sys.stderr)
+        return 1
+
+    if not isinstance(spec, dict):
+        print(f"error: spec root is not a mapping: {spec_path}", file=sys.stderr)
+        return 1
+
+    class_name = spec.get("class")
+    if not isinstance(class_name, str):
+        print(
+            f"error: spec missing required `class` field: {spec_path}",
+            file=sys.stderr,
+        )
+        return 1
+
+    sig_path = _SIGNATURES_DIR / f"{class_name}.signature.json"
+    if not sig_path.exists():
+        print(
+            f"error: signature missing for class {class_name!r}. "
+            f"Run: python3 -m src refresh-signatures {class_name}",
+            file=sys.stderr,
+        )
+        return 1
+
+    signature = _json.loads(sig_path.read_text(encoding="utf-8"))
+    derived_vary = _derive_vary_from_signature(signature)
+
+    # Normalise variants into object shape before merging.
+    variants = spec.get("variants")
+    if isinstance(variants, int):
+        spec["variants"] = {
+            "count": variants,
+            "vary": {},
+            "seed_scope": "palette",
+        }
+    elif not isinstance(variants, dict):
+        spec["variants"] = {"count": 1, "vary": {}, "seed_scope": "palette"}
+    spec["variants"].setdefault("vary", {})
+
+    _deep_merge_preserve_author(spec["variants"]["vary"], derived_vary)
+
+    spec_path.write_text(
+        yaml.safe_dump(spec, sort_keys=False),
+        encoding="utf-8",
+    )
+    print(f"bootstrapped vary: for {args.stem} (from {sig_path.name})")
+    return 0
+
+
 def _cmd_render(args: argparse.Namespace) -> int:
     """Dispatch render subcommand: single-archetype or --all batch."""
     terrain_override: Optional[str] = getattr(args, "terrain", None)
@@ -640,6 +768,23 @@ def main(argv: Optional[list[str]] = None) -> int:
     reject_parser.add_argument("archetype", metavar="ARCHETYPE", help="Archetype slug (output name stem).")
     reject_parser.add_argument("--yes", action="store_true", default=False, help="Skip interactive confirmation.")
 
+    # -- bootstrap-variants (TECH-712) ---------------------------------------
+    bootstrap_parser = subparsers.add_parser(
+        "bootstrap-variants",
+        help="Write sensible `vary:` defaults into a spec from its class signature.",
+    )
+    bootstrap_parser.add_argument(
+        "stem",
+        metavar="STEM",
+        help="Spec filename stem (resolves tools/sprite-gen/specs/{STEM}.yaml).",
+    )
+    bootstrap_parser.add_argument(
+        "--from-signature",
+        action="store_true",
+        default=False,
+        help="Read signatures/<class>.signature.json and derive vary: defaults.",
+    )
+
     parsed = parser.parse_args(argv)
 
     if parsed.command == "render":
@@ -647,6 +792,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if parsed.command == "refresh-signatures":
         return _cmd_refresh_signatures(parsed)
+
+    if parsed.command == "bootstrap-variants":
+        return _cmd_bootstrap_variants(parsed)
 
     if parsed.command == "promote":
         from pathlib import Path as _P
