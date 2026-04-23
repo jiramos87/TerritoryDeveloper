@@ -1,0 +1,28 @@
+id: TECH-752
+type: TECH
+title: POST create transactional
+priority: high
+status: open
+section: grid-asset-visual-registry
+spec: ia/projects/TECH-752.md
+files: []
+notes: |
+  `POST /api/catalog/assets` creates `catalog_asset` + `catalog_economy` + `catalog_asset_sprite` bindings
+  in a single transaction; validate slot uniqueness server-side. Use `web/lib/db/` transactional pattern.
+  Errors via TECH-751 helper. Stage 1.3 Phase 2.
+acceptance: |
+  - All-or-nothing write across three tables.
+  - Slot uniqueness check per asset before commit.
+  - 400 on validation fail; 409 on unique conflict; 201 on success.
+  - Integration test / curl proves rollback on mid-tx fail.
+depends_on:
+  - TECH-626
+  - TECH-628
+depends_on_raw: DTOs (TECH-626, TECH-628) + error helper (TECH-751) finalized; gates create route design.
+related:
+  - TECH-751
+  - TECH-753
+  - TECH-754
+created: 2026-04-23
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.4

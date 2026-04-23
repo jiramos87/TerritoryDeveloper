@@ -1,0 +1,28 @@
+id: TECH-753
+type: TECH
+title: PATCH optimistic lock
+priority: high
+status: open
+section: grid-asset-visual-registry
+spec: ia/projects/TECH-753.md
+files: []
+notes: |
+  `PATCH /api/catalog/assets/:id` compares client-provided `updated_at`; bumps column on success; returns
+  **409** with fresh row body on stale lock (per exploration §8.2 concurrency rule). Uses TECH-751 error
+  helper. Covers write to `catalog_asset` + `catalog_economy` scope per locked decision.
+acceptance: |
+  - UPDATE ... WHERE id = :id AND updated_at = :client_updated_at.
+  - Row count 0 → 409 + fresh GET payload.
+  - Row count 1 → 200 with updated DTO.
+  - Integration test: simulate stale client + fresh client.
+depends_on:
+  - TECH-626
+  - TECH-628
+depends_on_raw: DTOs (TECH-626, TECH-628) + error helper (TECH-751) finalized; gates update route design.
+related:
+  - TECH-751
+  - TECH-752
+  - TECH-754
+created: 2026-04-23
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.5

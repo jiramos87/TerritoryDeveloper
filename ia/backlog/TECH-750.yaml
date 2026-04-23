@@ -1,0 +1,25 @@
+id: TECH-750
+type: TECH
+title: GET by id joined shape
+priority: high
+status: open
+section: grid-asset-visual-registry
+spec: ia/projects/TECH-750.md
+files: []
+notes: |
+  `GET /api/catalog/assets/:id` under `web/app/api/catalog/assets/[id]/route.ts`. Return asset + economy +
+  sprite slot join as documented DTO shape (TECH-626). Stable JSON key naming; document in spec §7.
+  404 on missing or retired-not-found per HTTP error contract (TECH-751).
+acceptance: |
+  - Joined DTO matches TECH-626 composite shape.
+  - 404 when asset missing; document retire visibility (hidden by default).
+  - Integration smoke: curl returns expected keys for seeded Zone S id.
+depends_on:
+  - TECH-626
+depends_on_raw: DTO shape finalized in TECH-626; gates composite join design.
+related:
+  - TECH-749
+  - TECH-751
+created: 2026-04-23
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T1.3.2
