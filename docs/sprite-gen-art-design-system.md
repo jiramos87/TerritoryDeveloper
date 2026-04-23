@@ -168,6 +168,35 @@ Calibration signatures are the canonical runtime calibration source. See `tools/
 - Side faces = 2-tone brown `#503810` / `#382810`.
 - Bay slopes include water strip on low edge.
 
+### 3.1 Cross-tile passthrough (Stage 7 addendum — TECH-745..748)
+
+Some tiles must read as a **seamless continuation of their neighbours** rather than as a discrete sprite. The existing slope-sprite renderer already uses this for the "empty lot / natural-park-walkway" pattern — the slope sprite deliberately carries no standalone detail so adjacent flat tiles flow visually through it. TECH-745..746 extend the same idea to flat archetypes via a new YAML flag.
+
+**Slope baseline (existing).** The slope passthrough pattern (empty-lot and natural-park-walkway slope sprites) renders the bare `iso_slope_wedge` + flat grass top face with **no added decoration and no noise**. Neighbour tiles' sprites line up and the bridge reads as a continuous surface.
+
+**Flat-archetype extension (new).** Authors opt any flat tile into the same pattern by setting `ground.passthrough: true`:
+
+```yaml
+id: empty_lot_flat
+class: residential_small
+footprint: [1, 1]
+terrain: flat
+ground:
+  material: grass_flat
+  passthrough: true        # neighbour-blending bridge tile
+palette: residential
+output: { name: empty_lot_flat.png }
+```
+
+**Rendering implications (composer contract):**
+
+- `iso_ground_noise` is **not called** on a passthrough tile (texture / density keys are ignored). Surface stays untextured.
+- `hue_jitter` band is clamped to ≤ `0.01`° per bound — effectively identity through `_jittered_ramp`'s no-op path.
+- `value_jitter` is forced to `None` — no brightness drift.
+- The base material colour and `iso_ground_diamond` call are **unchanged** — only the overlay passes are inhibited. This preserves the 1-px rim shade so the tile still reads as a tile when viewed in isolation.
+
+Default is `false`, so every pre-Stage-7 spec keeps byte-identical output.
+
 ---
 
 ## 4. Palette signature per category
