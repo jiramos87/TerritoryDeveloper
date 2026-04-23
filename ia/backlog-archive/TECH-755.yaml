@@ -2,7 +2,8 @@ id: TECH-755
 type: infrastructure / web
 title: Catalog API test harness + happy-path coverage
 priority: high
-status: open
+status: closed
+completed: 2026-04-23
 section: grid-asset-visual-registry-master-plan
 spec_path: ia/projects/TECH-755.md
 files:

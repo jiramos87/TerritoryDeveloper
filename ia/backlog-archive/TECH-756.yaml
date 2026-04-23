@@ -2,7 +2,8 @@ id: TECH-756
 type: bug / web
 title: Catalog API behavior gaps + doc/ref reconciliation
 priority: high
-status: open
+status: closed
+completed: 2026-04-23
 section: grid-asset-visual-registry-master-plan
 spec_path: ia/projects/TECH-756.md
 files:

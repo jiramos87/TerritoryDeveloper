@@ -38,7 +38,7 @@
 
 ### Step 1 — Postgres catalog + HTTP API + MCP tools
 
-**Status:** In Progress — Stage 1.3 (remaining Step 1 stages _pending_)
+**Status:** Final
 
 **Backlog state (Step 1):** Stage 1.1 archived (6); Stage 1.2 archived (**TECH-626**–**TECH-629**)
 
@@ -384,7 +384,7 @@
 
 #### Stage 1.3 — Catalog API gap-patch: test harness + behavior fixes
 
-**Status:** In Progress
+**Status:** Final
 
 **Objectives:** Patch concrete gaps found in shipped `/api/catalog/*` routes (TECH-640..645 surface): build integration test harness; fix 6 behavior bugs; reconcile doc/refs.
 
@@ -397,15 +397,15 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Integration test harness + happy-path coverage.
-- [ ] Phase 2 — Behavior gaps (6 bug fixes) + paired regression tests + doc/ref reconciliation.
+- [x] Phase 1 — Integration test harness + happy-path coverage.
+- [x] Phase 2 — Behavior gaps (6 bug fixes) + paired regression tests + doc/ref reconciliation.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.3.1 | Catalog API test harness + happy-path coverage | 1 | **TECH-755** | Draft | Integration test infra for `/api/catalog/*`: DB setup/teardown per test, transactional rollback, HTTP helper, seed fixture. Happy-path tests: GET list published-default, GET by id joined shape snapshot, POST create 201, PATCH 200, retire 200, preview-diff 200 stable JSON. |
-| T1.3.2 | Catalog API behavior gaps + doc/ref reconciliation | 2 | **TECH-756** | Draft | Six bug fixes with paired regression tests: GET-by-id retired-asset 404 filter; POST slot uniqueness pre-check; PATCH unknown-field reject; PATCH no-op-body reject; preview-diff swap `throw e` → `catalogJsonError`; retire 409 on invalid `replaced_by`. Doc: pagination + error contract + retire idempotency in `web-backend-logic.md`; fix JSDoc `@see` refs in 4 route files. |
+| T1.3.1 | Catalog API test harness + happy-path coverage | 1 | **TECH-755** | Done (archived) | Integration test infra for `/api/catalog/*`: DB setup/teardown per test, transactional rollback, HTTP helper, seed fixture. Happy-path tests: GET list published-default, GET by id joined shape snapshot, POST create 201, PATCH 200, retire 200, preview-diff 200 stable JSON. |
+| T1.3.2 | Catalog API behavior gaps + doc/ref reconciliation | 2 | **TECH-756** | Done (archived) | Six bug fixes with paired regression tests: GET-by-id retired-asset 404 filter; POST slot uniqueness pre-check; PATCH unknown-field reject; PATCH no-op-body reject; preview-diff swap `throw e` → `catalogJsonError`; retire 409 on invalid `replaced_by`. Doc: pagination + error contract + retire idempotency in `web-backend-logic.md`; fix JSDoc `@see` refs in 4 route files. |
 
 ### §Stage File Plan
 
@@ -533,9 +533,9 @@ mechanicalization_score:
       - Pagination contract: does shipped list route already implement cursor vs offset? Doc the as-built.
 ```
 
-### §Plan Fix — PENDING
+### §Plan Fix — PASS (no drift)
 
-> stage-file-plan authored — awaiting stage-file-apply tail.
+> plan-review recheck 2026-04-23 (Stage 1.3): TECH-755 / TECH-756 — §1/§2 vs task Intent; §7 phases; §8 acceptance; §Plan Digest; frontmatter `phases:`; cross-ref anchors; invariant compliance; glossary. Drift candidates: none.
 
 #### Stage 1.4 — MCP `catalog_*` tools + allowlist
 
