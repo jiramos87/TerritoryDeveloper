@@ -1,0 +1,27 @@
+id: TECH-690
+type: tech
+title: "Zoning channel match MVP"
+priority: high
+status: open
+section: Stage 3.1 — PlacementValidator core API
+spec: ia/projects/TECH-690.md
+files: []
+notes: |
+  Zone S manual placement consults validator before commit; use GridManager public API only; avoid new
+  GridManager methods unless justified in §Findings. Integrates with TECH-689 result shape.
+acceptance: |
+  - [ ] Manual placement path blocks illegal zoning channel mismatches using validator output.
+  - [ ] No direct grid.cellArray access from validator; GridManager extraction only.
+  - [ ] Document any unavoidable GridManager API addition in §Findings.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-688
+  - TECH-689
+  - TECH-691
+  - TECH-692
+created: 2026-04-22
+raw_markdown: |
+  Zoning channel match MVP — Zone S manual placement path consults validator before commit; keep GridManager extraction.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T3.1.3

@@ -87,7 +87,7 @@ public class CatalogAssetRowDto
     public int footprint_w;
     public int footprint_h;
     public string placement_mode;
-    public string unlocks_after;
+    public string unlocks_after; // PlacementValidator (TECH-692) reads via catalog snapshot row
     public bool has_button;
     public string updated_at;
 }

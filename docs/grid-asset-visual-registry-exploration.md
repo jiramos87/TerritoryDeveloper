@@ -324,6 +324,8 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
 
 ### 8.3 Subsystem impact
 
+<!-- TECH-688: PlacementValidator implementation — ia/projects/TECH-688.md §7 -->
+
 | Subsystem | Change |
 |-----------|--------|
 | **DB (`db/migrations/`)** | New migration series (`0011_catalog_*`) introducing the seven tables above. **Amendment 2026-04-22:** `web/` does **not** use Drizzle; hand-written DTOs in **`web/types/api/catalog*.ts`** (see `docs/architecture-audit-handoff-2026-04-22.md` Row 2). |

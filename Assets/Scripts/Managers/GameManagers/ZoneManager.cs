@@ -29,6 +29,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     public WaterManager waterManager;
     public InterstateManager interstateManager;
     public SlopePrefabRegistry slopePrefabRegistry;
+    [SerializeField] private ZoneSubTypeRegistry zoneSubTypeRegistry;
+    [SerializeField] private PlacementValidator placementValidator;
     #endregion
 
     #region Zone Prefabs and Configuration
@@ -782,6 +784,17 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     {
         CityCell cell = gridManager.GetCell(cellX, cellY);
         if (cell == null) return false;
+
+        if (placementValidator != null)
+        {
+            if (zoneSubTypeRegistry == null)
+                zoneSubTypeRegistry = FindObjectOfType<ZoneSubTypeRegistry>();
+            if (zoneSubTypeRegistry != null && zoneSubTypeRegistry.TryGetAssetIdForSubType(subTypeId, out int assetId))
+            {
+                PlacementResult pr = placementValidator.CanPlace(assetId, cellX, cellY, 0, zoneType);
+                if (!pr.IsAllowed) return false;
+            }
+        }
 
         cell.zoneType = zoneType;
 

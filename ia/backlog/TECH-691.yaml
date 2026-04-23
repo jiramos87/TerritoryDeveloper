@@ -1,0 +1,27 @@
+id: TECH-691
+type: tech
+title: "Affordability gate"
+priority: medium
+status: open
+section: Stage 3.1 — PlacementValidator core API
+spec: ia/projects/TECH-691.md
+files: []
+notes: |
+  Read baseCost cents from GridAssetCatalog economy snapshot; delegate to existing EconomyManager try/spend
+  APIs. Unaffordable → PlacementFailReason.Unaffordable.
+acceptance: |
+  - [ ] Query catalog snapshot for baseCost; align with economy spec cents.
+  - [ ] Call existing spend/affordability check pattern used elsewhere for buildings.
+  - [ ] Unit or EditMode test: affordable vs unaffordable paths.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-688
+  - TECH-689
+  - TECH-690
+  - TECH-692
+created: 2026-04-22
+raw_markdown: |
+  Affordability gate — Query baseCost cents from catalog economy snapshot; delegate to existing spend/try APIs.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T3.1.4

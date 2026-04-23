@@ -1,0 +1,28 @@
+id: TECH-688
+type: tech
+title: "Author PlacementValidator type"
+priority: high
+status: open
+section: Stage 3.1 — PlacementValidator core API
+spec: ia/projects/TECH-688.md
+files: []
+notes: |
+  New MonoBehaviour or plain C# service under GameManagers/Services; serialized GridManager,
+  GridAssetCatalog, EconomyManager refs per unity-invariants Inspector pattern. No direct grid.cellArray.
+  Stage 3.1 Phase 1 — types foundation for CanPlace MVP.
+acceptance: |
+  - [ ] PlacementValidator lives under Assets/Scripts/Managers/GameManagers/ (or Services sibling).
+  - [ ] SerializeField refs: GridManager, GridAssetCatalog, EconomyManager; Awake resolves via FindObjectOfType fallback where pattern already exists in codebase.
+  - [ ] Public CanPlace signature reserved (bool + detail) even if body returns placeholder true until T3.1.2 lands.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-689
+  - TECH-690
+  - TECH-691
+  - TECH-692
+created: 2026-04-22
+raw_markdown: |
+  Author PlacementValidator type — New class file; serialized refs to GridManager, GridAssetCatalog, EconomyManager per guardrails.
+parent_plan: ia/projects/grid-asset-visual-registry-master-plan.md
+task_key: T3.1.1
