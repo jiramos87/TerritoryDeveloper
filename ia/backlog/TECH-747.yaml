@@ -1,0 +1,26 @@
+id: TECH-747
+type: TECH
+title: Tests — test_ground_passthrough.py
+priority: medium
+status: open
+section: Stage 7 addendum — Cross-tile passthrough pattern
+spec: ia/projects/TECH-747.md
+files:
+  - tools/sprite-gen/tests/test_ground_passthrough.py
+notes: |
+  `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) passthrough render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamp enforced; (e) `passthrough=false` unchanged.
+acceptance: |
+  - [ ] Five named tests present + green
+  - [ ] Visual-diff tests use bounded byte-count difference (not exact pixel)
+  - [ ] Default-false path byte-identical to pre-addendum baseline
+  - [ ] `pytest tools/sprite-gen/tests/ -q` green
+depends_on:
+  - TECH-745
+  - TECH-746
+depends_on_raw: Tests exercise schema flag (TECH-745) + composer behaviour (TECH-746)
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-747 — Tests — test_ground_passthrough.py
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T7.10.3

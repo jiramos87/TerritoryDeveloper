@@ -1,0 +1,29 @@
+id: TECH-732
+type: TECH
+title: Seed preset — suburban_house_with_yard
+priority: medium
+status: open
+section: Stage 6.6 — Preset system
+spec: ia/projects/TECH-732.md
+files:
+  - tools/sprite-gen/presets/suburban_house_with_yard.yaml
+notes: |
+  `tools/sprite-gen/presets/suburban_house_with_yard.yaml` — fully-valid spec (minus `id`/`output.name`) for `residential_small` class with grass ground (texture on) + `vary:` covering roof / facade / ground.
+acceptance: |
+  - [ ] Renders cleanly with `preset: suburban_house_with_yard` and no author overrides
+  - [ ] `vary:` covers ≥3 axes (roof, facade, ground)
+  - [ ] Ground uses Stage 6.4 object form (material + texture)
+  - [ ] Unit test covers preset-only render path
+depends_on:
+  - TECH-730
+  - TECH-731
+  - TECH-715
+  - TECH-718
+depends_on_raw: TECH-730/731 (preset loader + merge) + TECH-715 (ground object) + TECH-718 (composer jitter/texture)
+related:
+  - TECH-735
+created: 2026-04-23
+raw_markdown: |
+  TECH-732 — Seed preset — suburban_house_with_yard
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.6.3

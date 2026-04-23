@@ -1,0 +1,27 @@
+id: TECH-746
+type: TECH
+title: Composer — inhibit noise + clamp jitter on passthrough tiles
+priority: medium
+status: open
+section: Stage 7 addendum — Cross-tile passthrough pattern
+spec: ia/projects/TECH-746.md
+files:
+  - tools/sprite-gen/src/compose.py
+notes: |
+  `tools/sprite-gen/src/compose.py` — ground render path: when `passthrough=true`, skip `iso_ground_noise`; clamp `hue_jitter ≤ 0.01`; `value_jitter = 0`. Base material colour preserved so neighbor tiles blend.
+acceptance: |
+  - [ ] `iso_ground_noise` skipped when `passthrough=true`
+  - [ ] `hue_jitter` clamped to ≤0.01
+  - [ ] `value_jitter` forced to 0
+  - [ ] Base material colour preserved
+  - [ ] Unit tests cover render diff + jitter clamp (in TECH-747)
+depends_on:
+  - TECH-745
+depends_on_raw: Composer reads schema flag added by TECH-745
+related:
+  - TECH-747
+created: 2026-04-23
+raw_markdown: |
+  TECH-746 — Composer — inhibit noise + clamp jitter on passthrough tiles
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T7.10.2

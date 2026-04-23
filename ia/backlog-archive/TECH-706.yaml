@@ -2,7 +2,7 @@ id: TECH-706
 type: TECH
 title: Spec loader include_in_signature per-sprite override
 priority: medium
-status: open
+status: closed
 section: Stage 6.2 — Art Signatures per class
 spec: ia/projects/TECH-706.md
 files:

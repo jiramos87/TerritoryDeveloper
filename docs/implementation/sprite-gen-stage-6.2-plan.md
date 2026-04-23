@@ -4,7 +4,7 @@ Compiled 2026-04-23 from 5 task spec(s): **TECH-704** .. **TECH-708**.
 
 **Master plan:** `ia/projects/sprite-gen-master-plan.md` — Stage 6.2 — Art Signatures per class.
 
-**Status:** Draft. Specs: `ia/projects/TECH-704.md` .. `ia/projects/TECH-708.md`; yaml: `ia/backlog/TECH-704.yaml` .. `ia/backlog/TECH-708.yaml`.
+**Status:** Closed 2026-04-23. See `BACKLOG-ARCHIVE.md` rows for TECH-704 / TECH-705 / TECH-706 / TECH-707 / TECH-708 (archived yaml under `ia/backlog-archive/`); spec files deleted at closeout.
 
 ---
 

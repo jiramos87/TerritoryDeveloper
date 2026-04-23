@@ -629,7 +629,7 @@
 
 ### Stage 6.1 — Pivot hotfix + regression tighten
 
-**Status:** Draft — 2026-04-23. Retroactive filing of the in-session pivot hotfix applied during the 2026-04-23 sprite-gen improvement session (`/tmp/sprite-gen-improvement-session.md` §3 Stage 6.1). The composer patch (`pivot_pad = 17 if spec.get("ground") != "none" else 0`) is already live in the working tree at `tools/sprite-gen/src/compose.py:256`; this stage produces the issue trail and tightens the regression suite that the in-session work skipped. **Locks consumed:** L1 (pivot_pad=17 per DAS §2.1/§2.2). **Issues closed:** I1 (composer anchors buildings above ground diamond), I2 (regression loose).
+**Status:** Done — 2026-04-23. Retroactive filing of the in-session pivot hotfix applied during the 2026-04-23 sprite-gen improvement session (`/tmp/sprite-gen-improvement-session.md` §3 Stage 6.1). The composer patch (`pivot_pad = 17 if spec.get("ground") != "none" else 0`) is already live in the working tree at `tools/sprite-gen/src/compose.py:256`; this stage produces the issue trail and tightens the regression suite that the in-session work skipped. **Locks consumed:** L1 (pivot_pad=17 per DAS §2.1/§2.2). **Issues closed:** I1 (composer anchors buildings above ground diamond), I2 (regression loose).
 
 **Objectives:** Lock the in-session pivot_pad patch behind a DAS-cited comment; replace the loose `10 <= y0 <= 16` scale-calibration bound with the tight DAS §2.3 envelope (`y1 == 48`, `content_h ∈ [32, 36]`); add a parametrized bbox regression to `tests/test_render_integration.py` covering every live spec under `tools/sprite-gen/specs/`.
 
@@ -651,9 +651,9 @@
 
 | Task   | Name                                                     | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                          |
 | ------ | -------------------------------------------------------- | ------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T6.1.1 | Formalize pivot_pad patch + DAS-cited comment            | **TECH-701** | Draft  | `tools/sprite-gen/src/compose.py:256` — confirm in-session hotfix (`pivot_pad = 17 if spec.get("ground") != "none" else 0`; `adjusted_y0 = y0 - pivot_pad - offset_z`); inline comment cites DAS §2.1 (diamond bottom y = canvas_h − 17) + §2.2 (pivot UV 16/canvas_h; +1 for PIL inclusive pixel indexing). Retroactive — code already landed in working tree. |
-| T6.1.2 | Tighten `test_scale_calibration.py` regression bounds    | **TECH-702** | Draft  | `tools/sprite-gen/tests/test_scale_calibration.py` — replace loose `10 <= y0 <= 16` with tight DAS §2.3 envelope: assert rendered bbox `y1 == 48`, `content_h ∈ [32, 36]`. House1-64 reference signature stays authoritative.                                                                                                                                   |
-| T6.1.3 | Per-spec bbox regression in `test_render_integration.py` | **TECH-703** | Draft  | `tools/sprite-gen/tests/test_render_integration.py` — parametrized fixture iterating `specs/*.yaml` (1×1 live specs only: `building_residential_small`, `building_residential_light_{a,b,c}`). For each spec: compose → assert bbox `(0, 15, 64, 48)`. Skip non-1×1 specs.                                                                                      |
+| T6.1.1 | Formalize pivot_pad patch + DAS-cited comment            | **TECH-701** | Done   | `tools/sprite-gen/src/compose.py:256` — confirm in-session hotfix (`pivot_pad = 17 if spec.get("ground") != "none" else 0`; `adjusted_y0 = y0 - pivot_pad - offset_z`); inline comment cites DAS §2.1 (diamond bottom y = canvas_h − 17) + §2.2 (pivot UV 16/canvas_h; +1 for PIL inclusive pixel indexing). Retroactive — code already landed in working tree. |
+| T6.1.2 | Tighten `test_scale_calibration.py` regression bounds    | **TECH-702** | Done   | `tools/sprite-gen/tests/test_scale_calibration.py` — replace loose `10 <= y0 <= 16` with tight DAS §2.3 envelope: assert rendered bbox `y1 == 48`, `content_h ∈ [32, 36]`. House1-64 reference signature stays authoritative.                                                                                                                                   |
+| T6.1.3 | Per-spec bbox regression in `test_render_integration.py` | **TECH-703** | Done   | `tools/sprite-gen/tests/test_render_integration.py` — parametrized fixture iterating `specs/*.yaml` (1×1 live specs only: `building_residential_small`, `building_residential_light_{a,b,c}`). For each spec: compose → assert bbox `(0, 15, 64, 48)`. Skip non-1×1 specs.                                                                                      |
 
 
 ### §Stage File Plan
@@ -764,11 +764,11 @@
 
 | Task   | Name                                                                       | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ------ | -------------------------------------------------------------------------- | ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T6.2.1 | Signature module core (`src/signature.py`)                                 | **TECH-704** | Draft  | New module with `compute_signature(class_name, folder_glob) -> dict`, `validate_against(signature, rendered_img) -> ValidationReport`, `SignatureStaleError`. JSON shape per handoff §3 Stage 6.2 spec (class / refreshed_at / source_count / source_checksum / mode / bbox / palette / silhouette / ground / decoration_hints). L15 sample-size policy: `0 → mode: fallback` (copy from `_fallback.json` target class), `1 → mode: point-match` (single-sprite values), `>=2 → mode: envelope` (min/max/mean). L3 staleness guard: `validate_against` recomputes checksum and raises `SignatureStaleError("signature stale — run python3 -m src refresh-signatures <class>")` on mismatch. |
-| T6.2.2 | CLI `refresh-signatures` + `signatures/` scaffold                          | **TECH-705** | Draft  | New subcommand `python3 -m src refresh-signatures [class?]`; writes or rewrites `tools/sprite-gen/signatures/<class>.signature.json`. Create `tools/sprite-gen/signatures/` dir with `_fallback.json` (fallback-class graph per L15), plus bootstrap `residential_small.signature.json` computed from `Assets/Sprites/residential_small/*.png` (≥2 samples → envelope mode). Committed to git.                                                                                                                                                                                                                                                                                              |
-| T6.2.3 | Spec loader `include_in_signature: false` override                         | **TECH-706** | Draft  | `tools/sprite-gen/src/spec.py` — accept optional top-level `include_in_signature: <bool>` (default `true`) on YAML specs. Signature refresh skips sprites whose source YAML opts out. Default preserves existing behaviour; no migration needed.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| T6.2.4 | `tests/test_signature_calibration.py` + retire `test_scale_calibration.py` | **TECH-707** | Draft  | New parametrized test iterating every `signatures/*.signature.json`; runs `validate_against(signature, compose_sprite(load_spec(<class canonical spec>)))` and asserts `.ok == True`. Once `residential_small.signature.json` lands + the parametrized case is green, delete `tests/test_scale_calibration.py` (or replace with `pytest.mark.skip("superseded by test_signature_calibration")`). Full suite still exits 0.                                                                                                                                                                                                                                                                  |
-| T6.2.5 | DAS §2.6 pointer block                                                     | **TECH-708** | Draft  | `docs/sprite-gen-art-design-system.md` — add §2.6 "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Brief; forward-pointer only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| T6.2.1 | Signature module core (`src/signature.py`)                                 | **TECH-704** | Done   | New module with `compute_signature(class_name, folder_glob) -> dict`, `validate_against(signature, rendered_img) -> ValidationReport`, `SignatureStaleError`. JSON shape per handoff §3 Stage 6.2 spec (class / refreshed_at / source_count / source_checksum / mode / bbox / palette / silhouette / ground / decoration_hints). L15 sample-size policy: `0 → mode: fallback` (copy from `_fallback.json` target class), `1 → mode: point-match` (single-sprite values), `>=2 → mode: envelope` (min/max/mean). L3 staleness guard: `validate_against` recomputes checksum and raises `SignatureStaleError("signature stale — run python3 -m src refresh-signatures <class>")` on mismatch. |
+| T6.2.2 | CLI `refresh-signatures` + `signatures/` scaffold                          | **TECH-705** | Done   | New subcommand `python3 -m src refresh-signatures [class?]`; writes or rewrites `tools/sprite-gen/signatures/<class>.signature.json`. Create `tools/sprite-gen/signatures/` dir with `_fallback.json` (fallback-class graph per L15), plus bootstrap `residential_small.signature.json` computed from `Assets/Sprites/residential_small/*.png` (≥2 samples → envelope mode). Committed to git.                                                                                                                                                                                                                                                                                              |
+| T6.2.3 | Spec loader `include_in_signature: false` override                         | **TECH-706** | Done   | `tools/sprite-gen/src/spec.py` — accept optional top-level `include_in_signature: <bool>` (default `true`) on YAML specs. Signature refresh skips sprites whose source YAML opts out. Default preserves existing behaviour; no migration needed.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| T6.2.4 | `tests/test_signature_calibration.py` + retire `test_scale_calibration.py` | **TECH-707** | Done   | New parametrized test iterating every `signatures/*.signature.json`; runs `validate_against(signature, compose_sprite(load_spec(<class canonical spec>)))` and asserts `.ok == True`. Once `residential_small.signature.json` lands + the parametrized case is green, delete `tests/test_scale_calibration.py` (or replace with `pytest.mark.skip("superseded by test_signature_calibration")`). Full suite still exits 0.                                                                                                                                                                                                                                                                  |
+| T6.2.5 | DAS §2.6 pointer block                                                     | **TECH-708** | Done   | `docs/sprite-gen-art-design-system.md` — add §2.6 "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Brief; forward-pointer only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 
 ### §Stage File Plan
@@ -1528,6 +1528,610 @@
 ### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.5 tasks **TECH-723**..**TECH-729** aligned with §3 Stage 6.5 block of `/tmp/sprite-gen-improvement-session.md`; lock L11 threaded through all 7 tasks. Aggregate doc: `docs/implementation/sprite-gen-stage-6.5-plan.md`. Downstream: file Stage 6.6.
+
+---
+
+### Stage 6.6 — Preset system
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.6 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L13 (`preset: <name>` top-level key injects a base spec; author fields override; `vary:` block from preset is preserved — author may extend / override individual `vary.*` entries but not wipe the block).
+
+**Objectives:** Let authors bootstrap a sprite from a named preset that already carries geometry, palette, placement, and `vary:` decisions. `tools/sprite-gen/presets/<name>.yaml` holds fully-valid specs (minus `id` / `output.name`). The loader recognises `preset: <name>`, injects the preset as base, applies author overrides, and preserves the preset's `vary:` block under a strict merge rule (union on axes; non-wipe on the block itself). Seed three presets — `suburban_house_with_yard`, `strip_mall_with_parking`, `row_houses_3x` — so Stage 6.6 ships with live consumers. Tests lock override + preservation + preset-referenced-twice determinism. DAS §6 addendum.
+
+**Exit:**
+
+- `tools/sprite-gen/src/spec.py` — `preset: <name>` top-level key resolves to `tools/sprite-gen/presets/<name>.yaml`, merged with author fields (author wins per-field); `vary:` merge rule preserves preset axes, allows author to add / override individual axes, and raises `SpecError` on author attempting to wipe the whole `vary:` block.
+- `tools/sprite-gen/presets/suburban_house_with_yard.yaml` — fully-valid spec minus `id` / `output.name`.
+- `tools/sprite-gen/presets/strip_mall_with_parking.yaml` — fully-valid spec minus `id` / `output.name`.
+- `tools/sprite-gen/presets/row_houses_3x.yaml` — fully-valid spec minus `id` / `output.name`.
+- `tools/sprite-gen/tests/test_preset_system.py` — override semantics; `vary:` preservation; preset-referenced-twice determinism; missing-preset error.
+- `docs/sprite-gen-art-design-system.md` §6 addendum — preset contract, merge rule, seeded presets catalogue.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- [ ] Phase 1 — Loader: `preset: <name>` key + base-inject + author-override merge.
+- [ ] Phase 2 — `vary:` block merge rule (union + non-wipe guard).
+- [ ] Phase 3 — Seed preset `suburban_house_with_yard.yaml`.
+- [ ] Phase 4 — Seed preset `strip_mall_with_parking.yaml`.
+- [ ] Phase 5 — Seed preset `row_houses_3x.yaml`.
+- [ ] Phase 6 — Tests: `test_preset_system.py`.
+- [ ] Phase 7 — DAS §6 addendum.
+
+**Tasks:**
+
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T6.6.1 | Loader: `preset: <name>` inject + author override | **TECH-730** | Draft | `tools/sprite-gen/src/spec.py` — new `preset: <name>` top-level key. Loader resolves to `tools/sprite-gen/presets/<name>.yaml`, parses as base, then applies author-provided fields as overrides (author wins per-field). Missing preset file → `SpecError` listing valid preset names. Consumes L13. |
+| T6.6.2 | `vary:` block merge rule (union + non-wipe) | **TECH-731** | Draft | `tools/sprite-gen/src/spec.py` — `vary:` merge: preset axes preserved by default; author may add new `vary.*` axes or override individual axis values; author writing `vary: {}` or `vary: null` to wipe the block raises `SpecError`. Ensures preset-driven variation can't be silently disabled. |
+| T6.6.3 | Seed `presets/suburban_house_with_yard.yaml` | **TECH-732** | Draft | `tools/sprite-gen/presets/suburban_house_with_yard.yaml` — fully-valid spec (minus `id` / `output.name`) tuned for `residential_small` class: house footprint + grass ground (texture on) + `vary:` block over roof / facade / ground. Renders without author overrides. |
+| T6.6.4 | Seed `presets/strip_mall_with_parking.yaml` | **TECH-733** | Draft | `tools/sprite-gen/presets/strip_mall_with_parking.yaml` — fully-valid spec (minus `id` / `output.name`) tuned for commercial strip: wide footprint + pavement ground + `vary:` block over facade + ground. Renders without author overrides. |
+| T6.6.5 | Seed `presets/row_houses_3x.yaml` | **TECH-734** | Draft | `tools/sprite-gen/presets/row_houses_3x.yaml` — fully-valid spec (minus `id` / `output.name`) using `tiled-row-3` slot (Stage 9 addendum) + shared grass ground + per-row `vary:` block. Renders without author overrides when Stage 9 addendum lands. |
+| T6.6.6 | Tests: `test_preset_system.py` | **TECH-735** | Draft | `tools/sprite-gen/tests/test_preset_system.py` — (a) author field wins merge; (b) author `vary.padding` doesn't erase preset `vary.roof`; (c) author `vary: null` raises; (d) preset referenced twice with same seed → byte-identical output; (e) missing preset → `SpecError` with valid list. |
+| T6.6.7 | DAS §6 addendum — preset contract + catalogue | **TECH-736** | Draft | `docs/sprite-gen-art-design-system.md` §6 — document `preset: <name>` key + merge rule + `vary:` preservation semantic + the three seeded presets. Forward-pointer to `presets/` dir for discoverability. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: TECH-730
+  title: Loader — preset key inject + author override
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — new `preset: <name>` top-level key. Loader resolves to `tools/sprite-gen/presets/<name>.yaml`, parses as base, applies author-provided fields as overrides (author wins per-field). Missing preset → `SpecError` with valid list.
+  depends_on:
+    - TECH-709
+    - TECH-710
+    - TECH-711
+    - TECH-712
+    - TECH-713
+    - TECH-714
+  related:
+    - TECH-731
+  stub_body:
+    summary: |
+      Top-level `preset:` key resolves to a base YAML, merged with author overrides. Errors early + points to valid preset names.
+    goals: |
+      1. `preset: <name>` resolves + parses base YAML.
+      2. Author fields override preset fields per-key.
+      3. Missing preset → `SpecError` listing valid names.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumes `tools/sprite-gen/presets/*.yaml` (TECH-732..734).
+    impl_plan_sketch: |
+      Phase 1 — Detect `preset` key; Phase 2 — Load base YAML; Phase 3 — Deep-merge author fields; Phase 4 — Error on missing preset.
+- reserved_id: TECH-731
+  title: vary block merge rule (union + non-wipe)
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — `vary:` merge: preset axes preserved by default; author may add / override individual axes; author attempting to wipe the block (`vary: null` or `vary: {}`) raises `SpecError`.
+  depends_on:
+    - TECH-730
+  related: []
+  stub_body:
+    summary: |
+      `vary:` merge preserves preset-supplied axes; author can extend or override per axis; wiping the block raises.
+    goals: |
+      1. Preset axes survive unless explicitly overridden per axis.
+      2. Author new axes merge in (union).
+      3. `vary: {}` / `vary: null` from author → `SpecError`.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumer: `tests/test_preset_system.py` (TECH-735).
+    impl_plan_sketch: |
+      Phase 1 — Detect author `vary` shape; Phase 2 — Union merge with preset; Phase 3 — Wipe-guard raises.
+- reserved_id: TECH-732
+  title: Seed preset — suburban_house_with_yard
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/presets/suburban_house_with_yard.yaml` — fully-valid spec (minus `id`/`output.name`) for `residential_small` class with grass ground (texture on) + `vary:` covering roof / facade / ground.
+  depends_on:
+    - TECH-730
+    - TECH-731
+    - TECH-715
+    - TECH-718
+  related:
+    - TECH-735
+  stub_body:
+    summary: |
+      First seed preset — residential_small with grass yard + ground texture + variation over roof / facade / ground.
+    goals: |
+      1. Renders cleanly with `preset: suburban_house_with_yard` and no author overrides.
+      2. `vary:` covers ≥3 axes (roof, facade, ground).
+      3. Ground uses Stage 6.4 object form (material + texture).
+    systems_map: |
+      `tools/sprite-gen/presets/suburban_house_with_yard.yaml` (new).
+    impl_plan_sketch: |
+      Phase 1 — Copy base from `building_residential_small.yaml`; Phase 2 — Strip `id` / `output.name`; Phase 3 — Add yard ground + `vary:`.
+- reserved_id: TECH-733
+  title: Seed preset — strip_mall_with_parking
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/presets/strip_mall_with_parking.yaml` — fully-valid spec (minus `id`/`output.name`) for commercial strip: wide footprint + pavement ground + `vary:` over facade + ground.
+  depends_on:
+    - TECH-730
+    - TECH-731
+    - TECH-715
+    - TECH-718
+  related:
+    - TECH-735
+  stub_body:
+    summary: |
+      Second seed preset — commercial strip with pavement ground and variation over facade + ground.
+    goals: |
+      1. Renders cleanly with `preset: strip_mall_with_parking` and no author overrides.
+      2. Pavement ground uses Stage 6.4 accent keys (TECH-716 seeded).
+      3. `vary:` covers ≥2 axes (facade, ground).
+    systems_map: |
+      `tools/sprite-gen/presets/strip_mall_with_parking.yaml` (new).
+    impl_plan_sketch: |
+      Phase 1 — Scaffold spec with wide footprint; Phase 2 — Pavement ground + texture; Phase 3 — `vary:` block.
+- reserved_id: TECH-734
+  title: Seed preset — row_houses_3x
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/presets/row_houses_3x.yaml` — fully-valid spec (minus `id`/`output.name`) using `tiled-row-3` slot (Stage 9 addendum) + shared grass ground + per-row `vary:` block.
+  depends_on:
+    - TECH-730
+    - TECH-731
+    - TECH-744
+  related:
+    - TECH-735
+  stub_body:
+    summary: |
+      Third seed preset — row-houses 3x pattern riding Stage 9's parametric `tiled-row-N` slot.
+    goals: |
+      1. Renders cleanly with `preset: row_houses_3x` once Stage 9 addendum lands.
+      2. Uses `tiled-row-3` slot (parametric slot grammar).
+      3. Shared grass ground across row; `vary:` applies per-house.
+    systems_map: |
+      `tools/sprite-gen/presets/row_houses_3x.yaml` (new).
+    impl_plan_sketch: |
+      Phase 1 — Scaffold with `tiled-row-3`; Phase 2 — Shared ground; Phase 3 — Per-house `vary:`.
+- reserved_id: TECH-735
+  title: Tests — test_preset_system.py
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_preset_system.py` — (a) author field wins merge; (b) author `vary.padding` doesn't erase preset `vary.roof`; (c) author `vary: null` raises; (d) preset-referenced-twice determinism; (e) missing preset → `SpecError` with valid list.
+  depends_on:
+    - TECH-730
+    - TECH-731
+    - TECH-732
+    - TECH-733
+    - TECH-734
+  related: []
+  stub_body:
+    summary: |
+      One test file locking preset loader behaviour end-to-end.
+    goals: |
+      1. Five named tests (override, vary preservation, vary wipe raises, determinism, missing preset).
+      2. Uses each seeded preset at least once.
+      3. Deterministic seeds throughout.
+    systems_map: |
+      `tools/sprite-gen/tests/test_preset_system.py`; consumers: spec loader (TECH-730/731).
+    impl_plan_sketch: |
+      Phase 1 — Override test; Phase 2 — Vary preservation + wipe guard; Phase 3 — Determinism + missing preset.
+- reserved_id: TECH-736
+  title: DAS §6 addendum — preset contract + catalogue
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §6 — document `preset: <name>` key + merge rule + `vary:` preservation + the three seeded presets. Forward-pointer to `presets/` dir.
+  depends_on:
+    - TECH-730
+    - TECH-731
+    - TECH-732
+    - TECH-733
+    - TECH-734
+  related: []
+  stub_body:
+    summary: |
+      Doc addendum — preset contract + merge rule + catalogue of three seeded presets.
+    goals: |
+      1. §6 documents `preset: <name>` grammar + resolution rule.
+      2. §6 documents merge rule (author overrides; `vary:` union; wipe raises).
+      3. §6 catalogues the three seeded presets with short descriptions.
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §6.
+    impl_plan_sketch: |
+      Phase 1 — Locate §6; Phase 2 — Append contract + merge rule; Phase 3 — Catalogue table.
+```
+
+**Dependency gate:** Stage 6.3 merged (TECH-709..714) for `vary:` grammar that presets carry; Stage 6.4 merged (TECH-715/718) for ground object form used by seeded presets. `row_houses_3x` additionally waits on Stage 9 addendum (TECH-744 — parametric `tiled-row-N` slot) before it renders cleanly.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.6 tasks **TECH-730**..**TECH-736** aligned with §3 Stage 6.6 block of `/tmp/sprite-gen-improvement-session.md`; lock L13 threaded through loader + merge rule + seeded presets. Aggregate doc: `docs/implementation/sprite-gen-stage-6.6-plan.md`. Downstream: file Stage 6.7.
+
+---
+
+### Stage 6.7 — Animation schema reservation (tiny)
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.7 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L16 (reserve animation schema today; implementation deferred).
+
+**Objectives:** Reserve the animation schema in the spec grammar without implementing any frame-based rendering. Spec loader accepts `output.animation:` reserved block but the only permitted value in v1 is `enabled: false`; anything else raises. Per-primitive `animate: none` key is accepted; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`. DAS §12 gets a new "Animation (reserved; not yet implemented)" stub documenting the reserved keys. Independent stage — no code-path dependency.
+
+**Exit:**
+
+- `tools/sprite-gen/src/spec.py` — recognises `output.animation:` block; validates `enabled: false` only (other values → `SpecError`); permits reserved sibling keys (`frames`, `fps`, `loop`, `phase_offset`, `layers`) without interpreting them.
+- `tools/sprite-gen/src/primitives/*.py` (or `compose.py` per-primitive dispatch) — accepts `animate: none`; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`.
+- `tools/sprite-gen/tests/test_animation_reservation.py` — reserved block accepted; `enabled: true` raises; `animate: flicker` raises `NotImplementedError`.
+- `docs/sprite-gen-art-design-system.md` §12 — new stub "Animation (reserved; not yet implemented)" documenting the reserved schema + acceptable v1 values.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- [ ] Phase 1 — Spec loader accepts reserved `output.animation:` block.
+- [ ] Phase 2 — Per-primitive `animate:` reservation.
+- [ ] Phase 3 — Tests: `test_animation_reservation.py`.
+- [ ] Phase 4 — DAS §12 stub.
+
+**Tasks:**
+
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T6.7.1 | Spec loader: reserved `output.animation:` block | **TECH-737** | Draft | `tools/sprite-gen/src/spec.py` — recognise top-level `output.animation:` dict; validate only `enabled: false` passes; raise `SpecError` on `enabled: true` (reserved but not implemented). Sibling keys `frames`, `fps`, `loop`, `phase_offset`, `layers` accepted without interpretation. Consumes L16. |
+| T6.7.2 | Per-primitive `animate:` reservation | **TECH-738** | Draft | Composer / primitive dispatch — accepts `animate: none` on any decoration entry; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`. Centralised check so every primitive inherits the guard. |
+| T6.7.3 | Tests: `test_animation_reservation.py` | **TECH-739** | Draft | `tools/sprite-gen/tests/test_animation_reservation.py` — (a) `enabled: false` block parses cleanly; (b) `enabled: true` raises `SpecError`; (c) primitive with `animate: none` renders; (d) `animate: flicker` raises `NotImplementedError` with "DAS §12" in message. |
+| T6.7.4 | DAS §12 stub — "Animation (reserved; not yet implemented)" | **TECH-740** | Draft | `docs/sprite-gen-art-design-system.md` §12 — new stub documents reserved keys (`output.animation.*`, per-primitive `animate:`), enumerates v1 permitted values (`enabled: false`, `animate: none`), and forward-points to future animation milestone. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: TECH-737
+  title: Spec loader — reserved output.animation block
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — recognise top-level `output.animation:` dict; validate only `enabled: false`; reserved siblings (`frames`, `fps`, `loop`, `phase_offset`, `layers`) accepted without interpretation; `enabled: true` raises `SpecError`.
+  depends_on: []
+  related:
+    - TECH-738
+  stub_body:
+    summary: |
+      Accept `output.animation:` reserved block in spec grammar; `enabled: false` is the only permitted runtime value in v1.
+    goals: |
+      1. `output.animation:` block parses without breaking v1 composer.
+      2. `enabled: false` passes; `enabled: true` raises `SpecError`.
+      3. Reserved siblings accepted and preserved in the resolved spec.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumers: `tests/test_animation_reservation.py` (TECH-739).
+    impl_plan_sketch: |
+      Phase 1 — Detect `output.animation`; Phase 2 — Validate `enabled`; Phase 3 — Tolerate reserved siblings.
+- reserved_id: TECH-738
+  title: Per-primitive animate reservation
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Composer / primitive dispatch — accepts `animate: none`; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`. Single shared guard so every primitive inherits the check.
+  depends_on:
+    - TECH-737
+  related:
+    - TECH-739
+  stub_body:
+    summary: |
+      Per-primitive `animate:` key accepts `none`; any other value raises `NotImplementedError` with DAS §12 pointer.
+    goals: |
+      1. Centralised guard — every primitive inherits without duplication.
+      2. `animate: none` is a no-op passthrough.
+      3. Any other value raises with actionable DAS pointer.
+    systems_map: |
+      Composer / primitive dispatch in `tools/sprite-gen/src/compose.py` (or equivalent).
+    impl_plan_sketch: |
+      Phase 1 — Centralise check in composer dispatch; Phase 2 — Raise on unknown values.
+- reserved_id: TECH-739
+  title: Tests — test_animation_reservation.py
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_animation_reservation.py` — (a) reserved block parses; (b) `enabled: true` raises `SpecError`; (c) `animate: none` primitive renders; (d) `animate: flicker` raises `NotImplementedError` with "DAS §12" in message.
+  depends_on:
+    - TECH-737
+    - TECH-738
+  related: []
+  stub_body:
+    summary: |
+      One test file locking the reservation contract end-to-end.
+    goals: |
+      1. Four named tests green.
+      2. Error paths assert message content (not just type).
+      3. `pytest tools/sprite-gen/tests/ -q` green overall.
+    systems_map: |
+      `tools/sprite-gen/tests/test_animation_reservation.py` (new).
+    impl_plan_sketch: |
+      Phase 1 — Spec-block parse/raise tests; Phase 2 — Primitive animate no-op + raise tests.
+- reserved_id: TECH-740
+  title: DAS §12 stub — Animation (reserved; not yet implemented)
+  priority: low
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §12 — new stub "Animation (reserved; not yet implemented)" documenting reserved keys + v1 permitted values + forward pointer.
+  depends_on:
+    - TECH-737
+    - TECH-738
+  related: []
+  stub_body:
+    summary: |
+      Doc stub reserving DAS §12 for future animation work.
+    goals: |
+      1. §12 documents `output.animation.*` reserved keys.
+      2. §12 documents per-primitive `animate:` with permitted v1 value list.
+      3. §12 forward-points to future animation milestone.
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §12.
+    impl_plan_sketch: |
+      Phase 1 — Insert §12 heading; Phase 2 — Reserved-keys table; Phase 3 — v1 permitted values + forward pointer.
+```
+
+**Dependency gate:** None. Independent stage; can ship alongside or ahead of Stage 6.6.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.7 tasks **TECH-737**..**TECH-740** aligned with §3 Stage 6.7 block of `/tmp/sprite-gen-improvement-session.md`; lock L16 threaded through spec loader + per-primitive guard + doc stub. Aggregate doc: `docs/implementation/sprite-gen-stage-6.7-plan.md`. Downstream: Stage 9 addendum (`tiled-row-N`) next.
+
+---
+
+### Stage 9 addendum — Parametric `tiled-row-N` / `tiled-column-N`
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 9 addendum (`/tmp/sprite-gen-improvement-session.md`). **Issues closed:** I7. **Filing hint:** amend Stage 9 T9.2 before it becomes an issue — this block stands in until Stage 9 is itself filed with full task YAMLs.
+
+**Objectives:** Upgrade the Stage 9 slot grammar from fixed names (`tiled-row-3`, `tiled-row-4`, `tiled-column-3`) to a parametric form: `tiled-row-N` / `tiled-column-N` for any `N ≥ 2`. `resolve_slot` distributes N buildings evenly across the relevant axis while respecting footprint. Unblocks `MediumResidentialBuilding-2-128.png` (5-house row) as T9.3's visual target, and — cross-stage — is what makes `row_houses_3x` (TECH-734 / Stage 6.6) render cleanly.
+
+**Exit:**
+
+- `tools/sprite-gen/src/slots.py` — `tiled-(row|column)-N` name grammar parsed via regex; `N < 2` or non-int `N` raises `SpecError`.
+- `tools/sprite-gen/src/slots.py` — `resolve_slot("tiled-row-N", footprint, idx, count)` distributes `count` buildings evenly across the row axis with integer-pixel anchors; ditto for `tiled-column-N`.
+- `tools/sprite-gen/tests/test_parametric_slots.py` — parse valid + invalid names; distribute for N ∈ {2, 3, 4, 5}; anchors equal-spaced + integer-pixel.
+- `docs/sprite-gen-art-design-system.md` §5 R11 amended — table row for parametric slot grammar (replaces hard-coded `tiled-row-3/4`).
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- [ ] Phase 1 — Parser regex + validation.
+- [ ] Phase 2 — Even-distribution resolver (row + column axes).
+- [ ] Phase 3 — Tests: `test_parametric_slots.py`.
+- [ ] Phase 4 — DAS §5 R11 amendment.
+
+**Tasks:**
+
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T9.add.1 | Slot name grammar — `tiled-(row\|column)-N` parser | **TECH-741** | Draft | `tools/sprite-gen/src/slots.py` — parse slot name via regex `^tiled-(row\|column)-(\d+)$`; capture axis + `N`; validate `N ≥ 2`; otherwise raise `SpecError` with the offending name. Hard-coded names from T9.2 stay accepted transitionally (alias through parser). |
+| T9.add.2 | `resolve_slot` distribute N evenly across axis | **TECH-742** | Draft | `tools/sprite-gen/src/slots.py` — `resolve_slot(name, footprint, idx, count)` returns `(x_px, y_px)` for the `idx`-th of `count` buildings, equal-spaced along the named axis. Integer-pixel anchors (no subpixel). Footprint respected so anchors stay inside the ground diamond. |
+| T9.add.3 | Tests — `test_parametric_slots.py` | **TECH-743** | Draft | `tools/sprite-gen/tests/test_parametric_slots.py` — (a) parser accepts `tiled-row-2..5` + `tiled-column-2..5`; (b) `tiled-row-1` raises; (c) `tiled-foo-3` raises; (d) distribute equal-spaced integer-pixel anchors for N ∈ {2,3,4,5}; (e) column axis mirrored. |
+| T9.add.4 | DAS §5 R11 amendment — parametric slot grammar | **TECH-744** | Draft | `docs/sprite-gen-art-design-system.md` §5 R11 — replace hard-coded `tiled-row-3/4` entries with a parametric row documenting `tiled-(row\|column)-N` for `N ≥ 2`. Forward-pointer to `row_houses_3x` preset (TECH-734) as a consumer. Capstone — merges last to reflect actual parser. |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: TECH-741
+  title: Slot name grammar — tiled-(row|column)-N parser
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/slots.py` — parse slot name via regex; capture axis + `N`; validate `N ≥ 2`; otherwise raise `SpecError`. Hard-coded legacy names accepted transitionally (alias through parser).
+  depends_on: []
+  related:
+    - TECH-742
+  stub_body:
+    summary: |
+      Parametric slot name parser: `tiled-(row|column)-N` for N ≥ 2.
+    goals: |
+      1. Regex parse captures axis ∈ {row, column} and `N`.
+      2. `N < 2` or non-int raises `SpecError`.
+      3. Hard-coded legacy names (`tiled-row-3`, etc.) alias through the parser.
+    systems_map: |
+      `tools/sprite-gen/src/slots.py`; consumer: `resolve_slot` (TECH-742).
+    impl_plan_sketch: |
+      Phase 1 — Regex + capture; Phase 2 — N ≥ 2 validation; Phase 3 — Legacy alias.
+- reserved_id: TECH-742
+  title: resolve_slot distribute N evenly across axis
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/slots.py` — `resolve_slot(name, footprint, idx, count)` returns `(x_px, y_px)` for the `idx`-th of `count` buildings, equal-spaced along the named axis. Integer-pixel anchors; footprint respected.
+  depends_on:
+    - TECH-741
+  related:
+    - TECH-743
+  stub_body:
+    summary: |
+      Distribute N buildings evenly along the row or column axis with integer-pixel anchors.
+    goals: |
+      1. `resolve_slot` accepts `(name, footprint, idx, count)`.
+      2. Anchors are equal-spaced integers along the named axis.
+      3. Anchors stay inside the ground diamond (footprint-aware).
+    systems_map: |
+      `tools/sprite-gen/src/slots.py`; consumer: composer building-dispatch + TECH-734 preset.
+    impl_plan_sketch: |
+      Phase 1 — Axis dispatch; Phase 2 — Equal-space math; Phase 3 — Integer-pixel clamp.
+- reserved_id: TECH-743
+  title: Tests — test_parametric_slots.py
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_parametric_slots.py` — parser accept + reject paths; distribute for N ∈ {2,3,4,5}; anchors equal-spaced integer-pixel; column mirrored.
+  depends_on:
+    - TECH-741
+    - TECH-742
+  related: []
+  stub_body:
+    summary: |
+      One test file locking parser + distributor end-to-end.
+    goals: |
+      1. Parser accept/reject asserted.
+      2. Distribute correctness for N ∈ {2,3,4,5}.
+      3. Column axis mirror of row.
+    systems_map: |
+      `tools/sprite-gen/tests/test_parametric_slots.py` (new).
+    impl_plan_sketch: |
+      Phase 1 — Parser tests; Phase 2 — Distribute tests (row); Phase 3 — Column mirror.
+- reserved_id: TECH-744
+  title: DAS §5 R11 amendment — parametric slot grammar
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §5 R11 — replace hard-coded `tiled-row-3/4` entries with a parametric row documenting `tiled-(row|column)-N` for `N ≥ 2`. Forward-pointer to `row_houses_3x` preset (TECH-734).
+  depends_on:
+    - TECH-741
+    - TECH-742
+    - TECH-743
+  related:
+    - TECH-734
+  stub_body:
+    summary: |
+      Doc capstone — replace hard-coded slot rows with the parametric grammar.
+    goals: |
+      1. §5 R11 documents `tiled-(row|column)-N` with `N ≥ 2`.
+      2. Hard-coded row entries removed or redirected.
+      3. Forward pointer to `row_houses_3x` preset (TECH-734).
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §5 R11.
+    impl_plan_sketch: |
+      Phase 1 — Locate R11; Phase 2 — Replace rows; Phase 3 — Forward pointer.
+```
+
+**Dependency gate:** None for the addendum itself. Consumer chain: TECH-734 (`row_houses_3x`, Stage 6.6) depends on TECH-744 — renders cleanly only once the addendum lands. Stage 9 master block T9.2 will fold this grammar when filed proper.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 9 addendum tasks **TECH-741**..**TECH-744** aligned with §3 Stage 9 addendum block of `/tmp/sprite-gen-improvement-session.md`; parametric `tiled-(row|column)-N` grammar threaded through parser + resolver + tests + doc. TECH-744 is the capstone consumed by TECH-734 (Stage 6.6 `row_houses_3x`). Aggregate doc: `docs/implementation/sprite-gen-stage-9-addendum-plan.md`. Downstream: file Stage 7 addendum (cross-tile passthrough).
+
+---
+
+### Stage 7 addendum — Cross-tile passthrough pattern
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 7 addendum (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L17. **Filing hint:** amend Stage 7 decoration authoring guidance — this block stands in until Stage 7 is itself merged proper.
+
+**Objectives:** Document the existing slope-sprite "empty lot / natural-park-walkway passthrough" pattern (where adjacent tiles visually continue through a neighbor-blending bridge) and extend it to flat archetypes via a new `ground.passthrough: true` flag. When true, the composer inhibits `iso_ground_noise` and clamps `hue_jitter` to its narrowest value so the tile reads as a seamless continuation of its neighbors.
+
+**Exit:**
+
+- `tools/sprite-gen/src/spec.py` — accepts `ground.passthrough: bool` (default `false`); validates type.
+- `tools/sprite-gen/src/compose.py` (or ground render path) — when `passthrough=true`: skip `iso_ground_noise`, force `hue_jitter ≤ 0.01`, preserve base material colour so neighbor tiles blend.
+- `tools/sprite-gen/tests/test_ground_passthrough.py` — flag parses; render skips noise + clamps jitter; byte-difference vs. `passthrough=false` non-zero but bounded.
+- `docs/sprite-gen-art-design-system.md` §3 — new subsection documenting the existing slope pattern + the flat-archetype extension with the new flag.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- [ ] Phase 1 — Spec schema: `ground.passthrough` flag.
+- [ ] Phase 2 — Composer: inhibit noise + clamp hue jitter on passthrough tiles.
+- [ ] Phase 3 — Tests: `test_ground_passthrough.py`.
+- [ ] Phase 4 — DAS §3 amendment.
+
+**Tasks:**
+
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T7.10.1 | Spec schema: `ground.passthrough` flag | **TECH-745** | Draft | `tools/sprite-gen/src/spec.py` — accept `ground.passthrough: bool` sibling of `material`; default `false`; non-bool raises `SpecError`. Consumes L17. |
+| T7.10.2 | Composer: inhibit noise + clamp jitter | **TECH-746** | Draft | `tools/sprite-gen/src/compose.py` — ground render path checks `spec.ground.passthrough`; when true: skip `iso_ground_noise` call; force `hue_jitter = min(hue_jitter, 0.01)`; `value_jitter = 0`. Base material colour preserved so neighbor tiles blend. |
+| T7.10.3 | Tests — `test_ground_passthrough.py` | **TECH-747** | Draft | `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) `passthrough=true` render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamped even if author sets higher; (e) `passthrough=false` (default) unchanged. |
+| T7.10.4 | DAS §3 amendment — passthrough pattern | **TECH-748** | Draft | `docs/sprite-gen-art-design-system.md` §3 — new subsection "Cross-tile passthrough" documenting the existing slope-sprite "empty lot / natural-park-walkway" pattern + the flat-archetype extension via `ground.passthrough: true`. Explains rendering implications (no noise; narrowest jitter). |
+
+### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- reserved_id: TECH-745
+  title: Spec schema — ground.passthrough flag
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — accept `ground.passthrough: bool` sibling of `material`; default `false`; non-bool raises `SpecError`.
+  depends_on: []
+  related:
+    - TECH-746
+  stub_body:
+    summary: |
+      Add `ground.passthrough: bool` flag with validation and default.
+    goals: |
+      1. `ground.passthrough: true|false` parses.
+      2. Default value `false` when absent.
+      3. Non-bool value raises `SpecError`.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumer: composer ground path (TECH-746).
+    impl_plan_sketch: |
+      Phase 1 — Type guard on ground block; Phase 2 — Default propagation.
+- reserved_id: TECH-746
+  title: Composer — inhibit noise + clamp jitter on passthrough tiles
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — ground render path: when `passthrough=true`, skip `iso_ground_noise`; clamp `hue_jitter ≤ 0.01`; `value_jitter = 0`. Base material colour preserved.
+  depends_on:
+    - TECH-745
+  related:
+    - TECH-747
+  stub_body:
+    summary: |
+      Passthrough tiles render as neighbor-blending bridges — no noise, narrowest jitter.
+    goals: |
+      1. `iso_ground_noise` skipped when passthrough=true.
+      2. `hue_jitter` clamped to ≤0.01; `value_jitter` forced to 0.
+      3. Base material colour preserved so neighbors blend.
+    systems_map: |
+      `tools/sprite-gen/src/compose.py` ground render path; consumer: `tests/test_ground_passthrough.py` (TECH-747).
+    impl_plan_sketch: |
+      Phase 1 — Branch on passthrough; Phase 2 — Skip noise call; Phase 3 — Clamp jitter.
+- reserved_id: TECH-747
+  title: Tests — test_ground_passthrough.py
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) passthrough render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamp enforced; (e) `passthrough=false` unchanged.
+  depends_on:
+    - TECH-745
+    - TECH-746
+  related: []
+  stub_body:
+    summary: |
+      One test file locking passthrough semantics end-to-end.
+    goals: |
+      1. Five named tests green.
+      2. Visual-diff tests use bounded byte-count difference (not exact pixel).
+      3. Default-false path byte-identical to pre-addendum baseline.
+    systems_map: |
+      `tools/sprite-gen/tests/test_ground_passthrough.py` (new).
+    impl_plan_sketch: |
+      Phase 1 — Flag parse / raise tests; Phase 2 — Render skip-noise test; Phase 3 — Jitter clamp + default-unchanged tests.
+- reserved_id: TECH-748
+  title: DAS §3 amendment — cross-tile passthrough pattern
+  priority: low
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §3 — new subsection documenting existing slope-sprite passthrough pattern + flat-archetype extension via `ground.passthrough: true`; rendering implications (no noise; narrowest jitter).
+  depends_on:
+    - TECH-745
+    - TECH-746
+  related: []
+  stub_body:
+    summary: |
+      Doc amendment — passthrough pattern for slope + flat archetypes.
+    goals: |
+      1. §3 documents existing slope-sprite passthrough pattern.
+      2. §3 documents `ground.passthrough: true` flat-archetype extension.
+      3. §3 documents rendering implications (no noise; narrowest jitter).
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §3.
+    impl_plan_sketch: |
+      Phase 1 — Locate §3 insertion point; Phase 2 — Write slope-pattern doc; Phase 3 — Flat-archetype extension + rendering implications.
+```
+
+**Dependency gate:** None. Independent stage addendum; can ship alongside or ahead of Stage 7 proper. Stage 7 master block (when filed) folds this in as authoring guidance on decoration placement.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 7 addendum tasks **TECH-745**..**TECH-748** aligned with §3 Stage 7 addendum block of `/tmp/sprite-gen-improvement-session.md`; lock L17 threaded through schema flag + composer inhibit/clamp + tests + DAS §3 doc. Aggregate doc: `docs/implementation/sprite-gen-stage-7-addendum-plan.md`. Downstream: handoff exhausted — all 9 stages filed.
 
 ---
 

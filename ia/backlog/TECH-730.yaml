@@ -1,0 +1,31 @@
+id: TECH-730
+type: TECH
+title: Loader — preset key inject + author override
+priority: high
+status: open
+section: Stage 6.6 — Preset system
+spec: ia/projects/TECH-730.md
+files:
+  - tools/sprite-gen/src/spec.py
+notes: |
+  `tools/sprite-gen/src/spec.py` — new `preset: <name>` top-level key. Loader resolves to `tools/sprite-gen/presets/<name>.yaml`, parses as base, applies author-provided fields as overrides (author wins per-field). Missing preset → `SpecError` with valid list.
+acceptance: |
+  - [ ] `preset: <name>` resolves + parses base YAML
+  - [ ] Author fields override preset fields per-key
+  - [ ] Missing preset → `SpecError` listing valid preset names
+  - [ ] Unit tests cover resolution + override + error path
+depends_on:
+  - TECH-709
+  - TECH-710
+  - TECH-711
+  - TECH-712
+  - TECH-713
+  - TECH-714
+depends_on_raw: Stage 6.3 merged (placement + variants + seeds + bootstrap CLI + tests + DAS R11.1)
+related:
+  - TECH-731
+created: 2026-04-23
+raw_markdown: |
+  TECH-730 — Loader — preset key inject + author override
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.6.1

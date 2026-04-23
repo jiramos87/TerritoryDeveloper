@@ -1,0 +1,27 @@
+id: TECH-743
+type: TECH
+title: Tests — test_parametric_slots.py
+priority: high
+status: open
+section: Stage 9 addendum — Parametric tiled-row-N / tiled-column-N
+spec: ia/projects/TECH-743.md
+files:
+  - tools/sprite-gen/tests/test_parametric_slots.py
+notes: |
+  `tools/sprite-gen/tests/test_parametric_slots.py` — parser accept `tiled-row-2..5` + `tiled-column-2..5`; `tiled-row-1` raises; `tiled-foo-3` raises; distribute equal-spaced integer-pixel anchors for N ∈ {2,3,4,5}; column axis mirrored.
+acceptance: |
+  - [ ] Parser accept tests cover N ∈ {2,3,4,5} for row + column
+  - [ ] Parser reject tests cover `tiled-row-1`, malformed names
+  - [ ] Distribute tests assert equal spacing + integer pixels
+  - [ ] Column axis is mirror of row axis
+  - [ ] `pytest tools/sprite-gen/tests/ -q` green
+depends_on:
+  - TECH-741
+  - TECH-742
+depends_on_raw: Tests exercise both parser (TECH-741) and resolver (TECH-742)
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-743 — Tests — test_parametric_slots.py
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T9.2.3

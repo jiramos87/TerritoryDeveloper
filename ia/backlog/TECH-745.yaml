@@ -1,0 +1,25 @@
+id: TECH-745
+type: TECH
+title: Spec schema — ground.passthrough flag
+priority: medium
+status: open
+section: Stage 7 addendum — Cross-tile passthrough pattern
+spec: ia/projects/TECH-745.md
+files:
+  - tools/sprite-gen/src/spec.py
+notes: |
+  `tools/sprite-gen/src/spec.py` — accept `ground.passthrough: bool` sibling of `material`; default `false`; non-bool raises `SpecError`.
+acceptance: |
+  - [ ] `ground.passthrough: true|false` parses clean
+  - [ ] Default value `false` when key absent
+  - [ ] Non-bool value raises `SpecError`
+  - [ ] Unit tests cover accept + default + raise paths (in TECH-747)
+depends_on: []
+depends_on_raw: Standalone schema flag — no dependency
+related:
+  - TECH-746
+created: 2026-04-23
+raw_markdown: |
+  TECH-745 — Spec schema — ground.passthrough flag
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T7.10.1

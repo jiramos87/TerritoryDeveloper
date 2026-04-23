@@ -2,7 +2,7 @@ id: TECH-707
 type: TECH
 title: tests/test_signature_calibration.py parametrized + retire test_scale_calibration
 priority: high
-status: open
+status: closed
 section: Stage 6.2 — Art Signatures per class
 spec: ia/projects/TECH-707.md
 files:

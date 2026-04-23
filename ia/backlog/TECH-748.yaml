@@ -1,0 +1,26 @@
+id: TECH-748
+type: TECH
+title: DAS §3 amendment — cross-tile passthrough pattern
+priority: low
+status: open
+section: Stage 7 addendum — Cross-tile passthrough pattern
+spec: ia/projects/TECH-748.md
+files:
+  - docs/sprite-gen-art-design-system.md
+notes: |
+  `docs/sprite-gen-art-design-system.md` §3 — new subsection documenting existing slope-sprite passthrough pattern + flat-archetype extension via `ground.passthrough: true`; rendering implications (no noise; narrowest jitter).
+acceptance: |
+  - [ ] §3 documents existing slope-sprite passthrough pattern (empty lot / natural-park-walkway)
+  - [ ] §3 documents `ground.passthrough: true` flat-archetype extension
+  - [ ] §3 documents rendering implications (no noise; narrowest jitter)
+  - [ ] Grep check confirms `passthrough` + flat/slope phrases present
+depends_on:
+  - TECH-745
+  - TECH-746
+depends_on_raw: Doc reflects actual schema + composer behaviour — writes after code ships
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-748 — DAS §3 amendment — cross-tile passthrough pattern
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T7.10.4

@@ -2,7 +2,7 @@ id: TECH-704
 type: TECH
 title: Signature module core (src/signature.py) with L15 sample-size policy
 priority: high
-status: open
+status: closed
 section: Stage 6.2 — Art Signatures per class
 spec: ia/projects/TECH-704.md
 files:

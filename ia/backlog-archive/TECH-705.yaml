@@ -2,7 +2,7 @@ id: TECH-705
 type: TECH
 title: CLI refresh-signatures + signatures/ scaffold + residential_small bootstrap
 priority: high
-status: open
+status: closed
 section: Stage 6.2 — Art Signatures per class
 spec: ia/projects/TECH-705.md
 files:

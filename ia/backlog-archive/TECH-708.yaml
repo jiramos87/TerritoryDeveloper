@@ -2,7 +2,7 @@ id: TECH-708
 type: TECH
 title: DAS §2.6 pointer — signatures are canonical calibration source
 priority: medium
-status: open
+status: closed
 section: Stage 6.2 — Art Signatures per class
 spec: ia/projects/TECH-708.md
 files:
