@@ -142,6 +142,9 @@ def load_spec(path: Union[str, Path]) -> dict:
     _normalize_variants(data)
     _normalize_seeds(data)
 
+    # TECH-715 — ground accepts string or object; "none" sentinel stays string.
+    _normalize_ground(data)
+
     return data
 
 
@@ -269,6 +272,86 @@ def _normalize_variants(data: dict) -> None:
     raise SpecValidationError(
         field="variants",
         message=f"field 'variants' must be int or dict, got {type(v).__name__}",
+    )
+
+
+# ---------------------------------------------------------------------------
+# TECH-715 — ground-field normalization (string / object form)
+# ---------------------------------------------------------------------------
+
+
+_GROUND_OBJECT_KEYS: frozenset[str] = frozenset(
+    {"material", "materials", "hue_jitter", "value_jitter", "texture"}
+)
+
+
+def _normalize_ground(data: dict) -> None:
+    """Normalise ``ground:`` to a single object shape.
+
+    Forms accepted:
+        - absent / None            → unchanged (composer falls back to class default)
+        - ``"none"`` sentinel      → unchanged (skip ground diamond)
+        - any other str ``m``      → ``{"material": m, "materials": None,
+                                        "hue_jitter": None, "value_jitter": None,
+                                        "texture": None}``
+        - dict with subset of keys → defaults filled to None; both
+                                     ``material`` and ``materials`` set → error.
+
+    Units (documented for consumers — TECH-718):
+        ``hue_jitter`` in degrees; ``value_jitter`` in percent of HSV V.
+    """
+    raw = data.get("ground")
+    if raw is None or raw == "none":
+        return
+    if isinstance(raw, str):
+        data["ground"] = {
+            "material": raw,
+            "materials": None,
+            "hue_jitter": None,
+            "value_jitter": None,
+            "texture": None,
+        }
+        return
+    if isinstance(raw, dict):
+        unknown = set(raw.keys()) - _GROUND_OBJECT_KEYS
+        if unknown:
+            raise SpecValidationError(
+                field="ground",
+                message=(
+                    f"ground: unknown key(s) {sorted(unknown)}; "
+                    f"expected {sorted(_GROUND_OBJECT_KEYS)}"
+                ),
+            )
+        if raw.get("material") and raw.get("materials"):
+            raise SpecValidationError(
+                field="ground",
+                message="ground: supply either 'material' or 'materials', not both",
+            )
+        materials = raw.get("materials")
+        if materials is not None:
+            if not isinstance(materials, list) or not materials:
+                raise SpecValidationError(
+                    field="ground.materials",
+                    message=(
+                        "ground.materials must be a non-empty list of strings"
+                    ),
+                )
+            if not all(isinstance(m, str) for m in materials):
+                raise SpecValidationError(
+                    field="ground.materials",
+                    message="ground.materials entries must be strings",
+                )
+        data["ground"] = {
+            "material": raw.get("material"),
+            "materials": materials,
+            "hue_jitter": raw.get("hue_jitter"),
+            "value_jitter": raw.get("value_jitter"),
+            "texture": raw.get("texture"),
+        }
+        return
+    raise SpecValidationError(
+        field="ground",
+        message=f"ground: expected str or dict, got {type(raw).__name__}",
     )
 
 

@@ -114,6 +114,34 @@ _DISPATCH: dict[str, object] = {
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# TECH-715 — ground accessor: string | object | None → material name or None
+# ---------------------------------------------------------------------------
+
+
+def _ground_material(graw) -> str | None:
+    """Return the effective ground material name or None.
+
+    Accepts:
+        - str (legacy form)              → returned verbatim unless empty
+        - dict (TECH-715 object form)    → ``material`` key (or first of
+                                            ``materials`` list)
+        - anything else / falsy          → None
+    """
+    if graw in (None, ""):
+        return None
+    if isinstance(graw, str):
+        return graw
+    if isinstance(graw, dict):
+        m = graw.get("material")
+        if m:
+            return str(m)
+        pool = graw.get("materials")
+        if isinstance(pool, list) and pool:
+            return str(pool[0])
+    return None
+
+
 def compose_sprite(spec: dict) -> Image.Image:
     """Compose a sprite from an archetype spec dict.
 
@@ -197,9 +225,11 @@ def compose_sprite(spec: dict) -> Image.Image:
     cls = str(spec.get("class", ""))
     graw = spec.get("ground")
     if graw != "none":
+        # TECH-715: accept object form from spec loader normalisation + raw string.
+        g_material = _ground_material(graw)
         in_map = cls in _DEFAULT_GROUND
-        if graw not in (None, "") or in_map:
-            gmat = str(graw) if graw not in (None, "") else default_ground_for_class(cls)
+        if g_material is not None or in_map:
+            gmat = g_material if g_material is not None else default_ground_for_class(cls)
             iso_ground_diamond(
                 canvas=canvas,
                 x0=x0,
