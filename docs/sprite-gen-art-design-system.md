@@ -293,6 +293,57 @@ diffusion:
   enabled: false
 ```
 
+### R11.1 Stage 6.3 additions (placement + split seeds + vary grammar)
+
+Stage 6.3 (TECH-709..714) extends R11 with three surface groups — all optional, all back-compat.
+
+**Placement (under `building:`):**
+
+- `footprint_px: [bx, by]` — pixel-exact footprint; wins over `footprint_ratio` when both present (emits `DeprecationWarning: footprint_px wins`).
+- `padding: { n, e, s, w }` — asymmetric empty space per side, px integers; each subkey defaults to `0` and omitted subkeys fill in.
+- `align: center | sw | ne | nw | se | custom` — anchor for the building mass; default `center` preserves byte-identical legacy render. `custom` returns zero offset for callers that supply explicit shifts.
+
+**Split seeds (top-level):**
+
+- `palette_seed: int` + `geometry_seed: int` — independent rng streams for palette-scoped vs geometry-scoped `vary.` axes.
+- Legacy scalar `seed: int` fans out to both (`palette_seed = geometry_seed = seed`) when neither split seed is present. Explicit split seeds always win.
+
+**`vary:` grammar (under `variants.vary`):**
+
+- Numeric range leaf: `{min, max}` — `randint` for int endpoints, `uniform` for floats.
+- Categorical leaf: `{values: [...]}` — `rng.choice`.
+- Scope selector: `variants.seed_scope ∈ {palette, geometry, palette+geometry}`; default `palette` preserves pre-Stage-6.3 behaviour.
+- Axis classification (which rng drives which leaf): path roots `palette` / `material` / `materials` + leaf names starting with `color` / `hue` / `value` / `tint` route through the palette rng; everything else (roof, footprint, padding, …) routes through the geometry rng.
+
+**Object form of `variants:` (scalar still supported):**
+
+`variants: 4` normalises to `{count: 4, vary: {}, seed_scope: "palette"}`. Object form accepts all three subkeys directly. `variants.count` defaults to `1`, `vary` to `{}`, `seed_scope` to `"palette"`.
+
+**End-to-end example:**
+
+```yaml
+id: building_residential_small_v2
+class: residential_small
+footprint: [1, 1]
+terrain: flat
+palette: residential
+palette_seed: 101
+geometry_seed: 4
+variants:
+  count: 4
+  vary:
+    roof: { h_px: { min: 6, max: 14 } }
+    palette: { color_wall: { values: [cream, sand, ochre] } }
+  seed_scope: palette+geometry
+building:
+  footprint_px: [28, 28]
+  padding: { n: 2, e: 0, s: 10, w: 0 }
+  align: sw
+  composition:
+    - { type: iso_cube,  material: wall_cream, h_px: 10 }
+    - { type: iso_prism, material: roof_red,   pitch: 0.5, axis: ns, h_px: 8, offset_z: 10 }
+```
+
 ### R12 — Stage-6+ roadmap
 See master plan `ia/projects/sprite-gen-master-plan.md` Stages 6–14 (+15 optional).
 
