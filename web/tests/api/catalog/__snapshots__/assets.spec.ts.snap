@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`catalog api happy path (published only) > catalog_get_by_id_returns_joined_snapshot 1`] = `
+"{
+  "asset": {
+    "category": "zone_s",
+    "display_name": "Fire",
+    "footprint_h": 1,
+    "footprint_w": 1,
+    "has_button": true,
+    "id": "1",
+    "placement_mode": null,
+    "replaced_by": null,
+    "slug": "fire",
+    "status": "published",
+    "unlocks_after": null,
+    "updated_at": "<normalized>"
+  },
+  "economy": {
+    "asset_id": "1",
+    "base_cost_cents": 60000,
+    "budget_envelope_id": null,
+    "construction_ticks": 0,
+    "cost_catalog_row_id": null,
+    "demolition_refund_pct": 0,
+    "monthly_upkeep_cents": 6000
+  },
+  "sprite_slots": []
+}
+"
+`;
