@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-23T21:28:15.533Z",
+  "last_generated": "2026-04-23T21:45:06.967Z",
   "graph": {
     "A* search": {
       "related": [

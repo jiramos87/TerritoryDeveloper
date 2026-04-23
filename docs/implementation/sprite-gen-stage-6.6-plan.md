@@ -12,13 +12,13 @@ Stage 6.6 adds a preset layer on top of the sprite-gen spec grammar. `tools/spri
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T6.6.1 | [TECH-730](../../ia/projects/TECH-730.md) | Loader — `preset:` inject + author override | high | TECH-709..714 |
-| T6.6.2 | [TECH-731](../../ia/projects/TECH-731.md) | `vary:` block merge rule (union + non-wipe) | high | TECH-730 |
-| T6.6.3 | [TECH-732](../../ia/projects/TECH-732.md) | Seed preset — `suburban_house_with_yard` | medium | TECH-730, TECH-731, TECH-715, TECH-718 |
-| T6.6.4 | [TECH-733](../../ia/projects/TECH-733.md) | Seed preset — `strip_mall_with_parking` | medium | TECH-730, TECH-731, TECH-715, TECH-718 |
-| T6.6.5 | [TECH-734](../../ia/projects/TECH-734.md) | Seed preset — `row_houses_3x` | medium | TECH-730, TECH-731, TECH-744 |
-| T6.6.6 | [TECH-735](../../ia/projects/TECH-735.md) | Tests — `test_preset_system.py` | high | TECH-730..734 |
-| T6.6.7 | [TECH-736](../../ia/projects/TECH-736.md) | DAS §6 addendum — preset contract + catalogue | medium | TECH-730..734 |
+| T6.6.1 | [TECH-730](../../BACKLOG-ARCHIVE.md#tech-730) | Loader — `preset:` inject + author override | high | TECH-709..714 |
+| T6.6.2 | [TECH-731](../../BACKLOG-ARCHIVE.md#tech-731) | `vary:` block merge rule (union + non-wipe) | high | TECH-730 |
+| T6.6.3 | [TECH-732](../../BACKLOG-ARCHIVE.md#tech-732) | Seed preset — `suburban_house_with_yard` | medium | TECH-730, TECH-731, TECH-715, TECH-718 |
+| T6.6.4 | [TECH-733](../../BACKLOG-ARCHIVE.md#tech-733) | Seed preset — `strip_mall_with_parking` | medium | TECH-730, TECH-731, TECH-715, TECH-718 |
+| T6.6.5 | [TECH-734](../../BACKLOG-ARCHIVE.md#tech-734) | Seed preset — `row_houses_3x` | medium | TECH-730, TECH-731, TECH-744 |
+| T6.6.6 | [TECH-735](../../BACKLOG-ARCHIVE.md#tech-735) | Tests — `test_preset_system.py` | high | TECH-730..734 |
+| T6.6.7 | [TECH-736](../../BACKLOG-ARCHIVE.md#tech-736) | DAS §6 addendum — preset contract + catalogue | medium | TECH-730..734 |
 
 ## 3. Lock → task map
 
