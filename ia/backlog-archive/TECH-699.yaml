@@ -1,0 +1,30 @@
+id: TECH-699
+type: infrastructure / Python
+title: Scale-calibration regression test
+priority: high
+status: closed
+section: Stage 6 — Scale calibration + ground diamond primitive (DAS hotfix)
+spec: 'closed: project spec removed on Stage 6 closeout'
+files:
+  - tools/sprite-gen/tests/test_scale_calibration.py
+notes: |
+  Render building_residential_small_v01; assert bbox + dominant colors vs House1-64 reference per DAS §2.3.
+acceptance: |
+  - [ ] Content bbox height 35±3 px, y0 13±3 px
+  - [ ] x0=0 x1=63
+  - [ ] Top-20% dominant colors within HSV ΔE≤15 vs reference PNG
+depends_on: []
+depends_on_raw: None — Stage 6 dependency gate
+related:
+  - TECH-693
+  - TECH-694
+  - TECH-695
+  - TECH-696
+  - TECH-697
+  - TECH-698
+  - TECH-700
+created: 2026-04-23
+raw_markdown: |
+  TECH-699 — Scale-calibration regression test
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.7

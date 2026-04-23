@@ -1,0 +1,30 @@
+id: TECH-698
+type: infrastructure / Python
+title: Ground diamond tests
+priority: high
+status: closed
+section: Stage 6 — Scale calibration + ground diamond primitive (DAS hotfix)
+spec: 'closed: project spec removed on Stage 6 closeout'
+files:
+  - tools/sprite-gen/tests/test_ground_diamond.py
+notes: |
+  Bbox and material coverage tests for iso_ground_diamond per Stage 6 exit bullets.
+acceptance: |
+  - [ ] 1×1 grass_flat bbox (0,15)→64×33
+  - [ ] All 8 materials non-empty bbox
+  - [ ] 2×2 bbox (0,31)→128×65
+depends_on: []
+depends_on_raw: None — Stage 6 dependency gate
+related:
+  - TECH-693
+  - TECH-694
+  - TECH-695
+  - TECH-696
+  - TECH-697
+  - TECH-699
+  - TECH-700
+created: 2026-04-23
+raw_markdown: |
+  TECH-698 — Ground diamond tests
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.6

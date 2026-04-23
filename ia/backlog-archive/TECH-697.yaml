@@ -1,0 +1,30 @@
+id: TECH-697
+type: infrastructure / Python
+title: Re-calibrated building_residential_small spec
+priority: high
+status: closed
+section: Stage 6 — Scale calibration + ground diamond primitive (DAS hotfix)
+spec: 'closed: project spec removed on Stage 6 closeout'
+files:
+  - tools/sprite-gen/specs/building_residential_small.yaml
+notes: |
+  Rewrite archetype YAML to DAS §5 R11 with ground, footprint_ratio, levels, pixel-native stack, 4 variants.
+acceptance: |
+  - [ ] YAML validates against loader
+  - [ ] Four seeded variants
+  - [ ] Compose smoke for v01
+depends_on: []
+depends_on_raw: None — Stage 6 dependency gate
+related:
+  - TECH-693
+  - TECH-694
+  - TECH-695
+  - TECH-696
+  - TECH-698
+  - TECH-699
+  - TECH-700
+created: 2026-04-23
+raw_markdown: |
+  TECH-697 — Re-calibrated building_residential_small spec
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.5
