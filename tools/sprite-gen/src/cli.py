@@ -53,9 +53,12 @@ _REPO_ROOT = _TOOL_ROOT.parent.parent
 # unrelated size variants. Globs are joined into a single {a,b}-style call
 # via shell-agnostic iteration in :func:`_cmd_refresh_signatures`.
 _CLASS_SOURCE_GLOBS: dict[str, list[str]] = {
+    # Both 64x64 canvas references (mixing 32x32 House1.png skews envelope
+    # into a different coordinate space). Flat + NW-slope bracket the
+    # y0/height envelope the compositor produces today.
     "residential_small": [
-        str(_REPO_ROOT / "Assets/Sprites/Residential/House1.png"),
         str(_REPO_ROOT / "Assets/Sprites/Residential/House1-64.png"),
+        str(_REPO_ROOT / "Assets/Sprites/Residential/House1-64_NWSlope.png"),
     ],
 }
 
