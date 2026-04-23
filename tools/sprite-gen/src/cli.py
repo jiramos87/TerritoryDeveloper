@@ -775,6 +775,39 @@ def main(argv: Optional[list[str]] = None) -> int:
     reject_parser.add_argument("archetype", metavar="ARCHETYPE", help="Archetype slug (output name stem).")
     reject_parser.add_argument("--yes", action="store_true", default=False, help="Skip interactive confirmation.")
 
+    # -- log-promote / log-reject (TECH-723 / TECH-724) ----------------------
+    from .curate import REJECTION_REASONS as _REJECTION_REASONS  # local import
+
+    log_promote_parser = subparsers.add_parser(
+        "log-promote",
+        help="Append a curator-approved variant to curation/promoted.jsonl (TECH-723).",
+    )
+    log_promote_parser.add_argument(
+        "variant",
+        metavar="VARIANT_PNG",
+        help="Rendered variant PNG path (e.g. out/building_residential_small_v01.png).",
+    )
+
+    log_reject_parser = subparsers.add_parser(
+        "log-reject",
+        help="Append a curator-rejected variant to curation/rejected.jsonl (TECH-724).",
+    )
+    log_reject_parser.add_argument(
+        "variant",
+        metavar="VARIANT_PNG",
+        help="Rendered variant PNG path.",
+    )
+    log_reject_parser.add_argument(
+        "--reason",
+        required=True,
+        choices=_REJECTION_REASONS,
+        metavar="REASON",
+        help=(
+            "Controlled rejection reason tag. "
+            f"Valid: {list(_REJECTION_REASONS)}."
+        ),
+    )
+
     # -- bootstrap-variants (TECH-712) ---------------------------------------
     bootstrap_parser = subparsers.add_parser(
         "bootstrap-variants",
@@ -843,6 +876,49 @@ def main(argv: Optional[list[str]] = None) -> int:
         from .curate import reject
 
         reject(parsed.archetype, _OUT_DIR, confirm=not parsed.yes)
+        return 0
+
+    if parsed.command == "log-promote":
+        from .curate import VariantParseError, log_promote
+
+        try:
+            target = log_promote(parsed.variant)
+        except VariantParseError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        except FileNotFoundError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        try:
+            rel = Path(target).relative_to(Path.cwd())
+        except ValueError:
+            rel = target
+        print(f"[log-promote] appended → {rel}")
+        return 0
+
+    if parsed.command == "log-reject":
+        from .curate import (
+            InvalidRejectionReasonError,
+            VariantParseError,
+            log_reject,
+        )
+
+        try:
+            target = log_reject(parsed.variant, parsed.reason)
+        except InvalidRejectionReasonError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        except VariantParseError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        except FileNotFoundError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        try:
+            rel = Path(target).relative_to(Path.cwd())
+        except ValueError:
+            rel = target
+        print(f"[log-reject] appended ({parsed.reason}) → {rel}")
         return 0
 
     if parsed.command == "palette":
