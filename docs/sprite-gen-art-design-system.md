@@ -491,3 +491,43 @@ Queued for post-v1 stages:
 - `iso_statue`
 - `iso_antenna`
 - Animation primitives (cooling-tower steam, smokestack smoke, bulldozer frames, generic 4-frame sheets) — separate future exploration.
+
+## §12 Animation (reserved; not yet implemented)
+
+Stage 6.7 reserves the schema surface so spec authors and future animation devs
+know the seam before the implementation lands. No frame-based rendering exists
+in v1. This section locks the reserved keys, their v1 permitted values, and
+error-message behaviour; interpretation is deferred to a future animation
+milestone.
+
+### §12.1 Reserved keys
+
+| Key | Location | v1 behaviour |
+| --- | --- | --- |
+| `output.animation.enabled` | top-level `output:` block | `false` (or omitted) accepted; `true` raises `SpecError("… DAS §12")` |
+| `output.animation.frames` | sibling under `output.animation:` | accepted verbatim; not interpreted |
+| `output.animation.fps` | sibling under `output.animation:` | accepted verbatim; not interpreted |
+| `output.animation.loop` | sibling under `output.animation:` | accepted verbatim; not interpreted |
+| `output.animation.phase_offset` | sibling under `output.animation:` | accepted verbatim; not interpreted |
+| `output.animation.layers` | sibling under `output.animation:` | accepted verbatim; not interpreted |
+| `animate` | per-`composition` entry | `none` (or omitted) accepted; any other value raises `NotImplementedError("Animation deferred; see DAS §12")` |
+
+### §12.2 v1 permitted values
+
+- `output.animation.enabled: false` — the only runtime value accepted today.
+- `animate: none` — per-primitive passthrough; the key is stripped before the
+  primitive is invoked, so primitives stay animation-ignorant.
+
+Any other value on either surface is a hard fail — reservations are strict so
+authors don't ship specs that silently claim animation support.
+
+### §12.3 Forward pointer
+
+The full animation milestone will cover frame sheets, per-layer motion, loop
+semantics, and phase offsets. Until that milestone lands, the reserved keys
+above are the canonical stub — do not extend the grammar without updating this
+section and the associated tests in
+`tools/sprite-gen/tests/test_animation_reservation.py`.
+
+Related: TECH-737 (spec loader), TECH-738 (composer guard), TECH-739 (contract
+tests), TECH-740 (this section). Future milestone TBD.
