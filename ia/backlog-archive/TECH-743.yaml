@@ -2,7 +2,7 @@ id: TECH-743
 type: TECH
 title: Tests — test_parametric_slots.py
 priority: high
-status: open
+status: closed
 section: Stage 9 addendum — Parametric tiled-row-N / tiled-column-N
 spec: ia/projects/TECH-743.md
 files:

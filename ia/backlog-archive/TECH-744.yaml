@@ -2,7 +2,7 @@ id: TECH-744
 type: TECH
 title: DAS §5 R11 amendment — parametric slot grammar
 priority: medium
-status: open
+status: closed
 section: Stage 9 addendum — Parametric tiled-row-N / tiled-column-N
 spec: ia/projects/TECH-744.md
 files:

@@ -1954,10 +1954,10 @@ validation_gate:
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T9.add.1 | Slot name grammar — `tiled-(row\|column)-N` parser | **TECH-741** | Draft | `tools/sprite-gen/src/slots.py` — parse slot name via regex `^tiled-(row\|column)-(\d+)$`; capture axis + `N`; validate `N ≥ 2`; otherwise raise `SpecError` with the offending name. Hard-coded names from T9.2 stay accepted transitionally (alias through parser). |
-| T9.add.2 | `resolve_slot` distribute N evenly across axis | **TECH-742** | Draft | `tools/sprite-gen/src/slots.py` — `resolve_slot(name, footprint, idx, count)` returns `(x_px, y_px)` for the `idx`-th of `count` buildings, equal-spaced along the named axis. Integer-pixel anchors (no subpixel). Footprint respected so anchors stay inside the ground diamond. |
-| T9.add.3 | Tests — `test_parametric_slots.py` | **TECH-743** | Draft | `tools/sprite-gen/tests/test_parametric_slots.py` — (a) parser accepts `tiled-row-2..5` + `tiled-column-2..5`; (b) `tiled-row-1` raises; (c) `tiled-foo-3` raises; (d) distribute equal-spaced integer-pixel anchors for N ∈ {2,3,4,5}; (e) column axis mirrored. |
-| T9.add.4 | DAS §5 R11 amendment — parametric slot grammar | **TECH-744** | Draft | `docs/sprite-gen-art-design-system.md` §5 R11 — replace hard-coded `tiled-row-3/4` entries with a parametric row documenting `tiled-(row\|column)-N` for `N ≥ 2`. Forward-pointer to `row_houses_3x` preset (TECH-734) as a consumer. Capstone — merges last to reflect actual parser. |
+| T9.add.1 | Slot name grammar — `tiled-(row\|column)-N` parser | **TECH-741** | Done | `tools/sprite-gen/src/slots.py` — parse slot name via regex `^tiled-(row\|column)-(\d+)$`; capture axis + `N`; validate `N ≥ 2`; otherwise raise `SpecError` with the offending name. Hard-coded names from T9.2 stay accepted transitionally (alias through parser). |
+| T9.add.2 | `resolve_slot` distribute N evenly across axis | **TECH-742** | Done | `tools/sprite-gen/src/slots.py` — `resolve_slot(name, footprint, idx, count)` returns `(x_px, y_px)` for the `idx`-th of `count` buildings, equal-spaced along the named axis. Integer-pixel anchors (no subpixel). Footprint respected so anchors stay inside the ground diamond. |
+| T9.add.3 | Tests — `test_parametric_slots.py` | **TECH-743** | Done | `tools/sprite-gen/tests/test_parametric_slots.py` — (a) parser accepts `tiled-row-2..5` + `tiled-column-2..5`; (b) `tiled-row-1` raises; (c) `tiled-foo-3` raises; (d) distribute equal-spaced integer-pixel anchors for N ∈ {2,3,4,5}; (e) column axis mirrored. |
+| T9.add.4 | DAS §5 R11 amendment — parametric slot grammar | **TECH-744** | Done | `docs/sprite-gen-art-design-system.md` §5 R11 — replace hard-coded `tiled-row-3/4` entries with a parametric row documenting `tiled-(row\|column)-N` for `N ≥ 2`. Forward-pointer to `row_houses_3x` preset (TECH-734) as a consumer. Capstone — merges last to reflect actual parser. |
 
 ### §Stage File Plan
 

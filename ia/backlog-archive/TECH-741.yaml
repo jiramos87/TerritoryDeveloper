@@ -2,7 +2,7 @@ id: TECH-741
 type: TECH
 title: Slot name grammar — tiled-(row|column)-N parser
 priority: high
-status: open
+status: closed
 section: Stage 9 addendum — Parametric tiled-row-N / tiled-column-N
 spec: ia/projects/TECH-741.md
 files:

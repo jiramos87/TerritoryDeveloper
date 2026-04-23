@@ -2,7 +2,7 @@ id: TECH-742
 type: TECH
 title: resolve_slot distribute N evenly across axis
 priority: high
-status: open
+status: closed
 section: Stage 9 addendum — Parametric tiled-row-N / tiled-column-N
 spec: ia/projects/TECH-742.md
 files:
