@@ -162,7 +162,8 @@ def test_optional_fields_passthrough(tmp_path):
 
     assert result["levels"] == 3
     assert result["seed"] == 99
-    assert result["variants"] == 2
+    # TECH-710: scalar `variants: N` normalises to object shape.
+    assert result["variants"] == {"count": 2, "vary": {}, "seed_scope": "palette"}
     assert result["diffusion"] == {"enabled": False, "strength": 0.1}
 
 
@@ -342,6 +343,81 @@ def test_footprint_px_bad_shape_raises(tmp_path):
     with pytest.raises(SpecValidationError) as exc_info:
         load_spec(p)
     assert exc_info.value.field == "building.footprint_px"
+
+
+# ---------------------------------------------------------------------------
+# TECH-710 — variants block + split-seed normalization
+# ---------------------------------------------------------------------------
+
+
+def test_variants_scalar(tmp_path):
+    spec = _minimal_spec()
+    spec["variants"] = 4
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["variants"] == {"count": 4, "vary": {}, "seed_scope": "palette"}
+
+
+def test_variants_object(tmp_path):
+    spec = _minimal_spec()
+    spec["variants"] = {
+        "count": 4,
+        "vary": {"roof": {"h_px": {"min": 6, "max": 14}}},
+        "seed_scope": "geometry",
+    }
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["variants"]["count"] == 4
+    assert d["variants"]["vary"]["roof"]["h_px"] == {"min": 6, "max": 14}
+    assert d["variants"]["seed_scope"] == "geometry"
+
+
+def test_variants_object_defaults_seed_scope(tmp_path):
+    spec = _minimal_spec()
+    spec["variants"] = {"count": 3}
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["variants"]["seed_scope"] == "palette"
+    assert d["variants"]["vary"] == {}
+
+
+def test_seed_scope_invalid(tmp_path):
+    spec = _minimal_spec()
+    spec["variants"] = {"count": 2, "seed_scope": "weird"}
+    p = _write_yaml(tmp_path, spec)
+    with pytest.raises(SpecValidationError) as exc_info:
+        load_spec(p)
+    assert exc_info.value.field == "variants.seed_scope"
+
+
+def test_seed_fanout(tmp_path):
+    spec = _minimal_spec()
+    spec["seed"] = 42
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["palette_seed"] == 42
+    assert d["geometry_seed"] == 42
+    assert d["seed"] == 42  # legacy key preserved
+
+
+def test_split_seeds_explicit(tmp_path):
+    spec = _minimal_spec()
+    spec["palette_seed"] = 101
+    spec["geometry_seed"] = 202
+    spec["seed"] = 99
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["palette_seed"] == 101
+    assert d["geometry_seed"] == 202
+
+
+def test_split_seeds_absent(tmp_path):
+    """No legacy seed + no split seeds → keys remain absent."""
+    spec = _minimal_spec()
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert "palette_seed" not in d
+    assert "geometry_seed" not in d
 
 
 def test_footprint_conflict_warn(tmp_path):

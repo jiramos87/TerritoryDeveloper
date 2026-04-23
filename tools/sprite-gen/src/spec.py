@@ -13,6 +13,11 @@ _VALID_ALIGNS: frozenset[str] = frozenset(
     {"center", "sw", "ne", "nw", "se", "custom"}
 )
 
+# TECH-710 — valid seed-scope axes for `variants.seed_scope`.
+_VALID_SEED_SCOPES: frozenset[str] = frozenset(
+    {"palette", "geometry", "palette+geometry"}
+)
+
 # Required keys: (key_name, expected_type)
 REQUIRED_KEYS: list[tuple[str, type]] = [
     ("id", str),
@@ -133,6 +138,10 @@ def load_spec(path: Union[str, Path]) -> dict:
     if isinstance(building, dict):
         data["building"] = _normalize_building_placement(building)
 
+    # TECH-710 — variants block + split seeds (palette_seed / geometry_seed).
+    _normalize_variants(data)
+    _normalize_seeds(data)
+
     return data
 
 
@@ -212,6 +221,74 @@ def _normalize_building_placement(building: dict) -> dict:
         )
 
     return building
+
+
+# ---------------------------------------------------------------------------
+# TECH-710 — variants block + split-seed normalization
+# ---------------------------------------------------------------------------
+
+
+def _normalize_variants(data: dict) -> None:
+    """Normalise `variants` to `{count, vary, seed_scope}` object shape.
+
+    Legacy scalar `variants: N` → `{count: N, vary: {}, seed_scope: "palette"}`.
+    Object form passes through with defaulted subkeys + enum-validated
+    `seed_scope`. `variants: null` (or absent) leaves the key untouched.
+    """
+    v = data.get("variants")
+    if v is None:
+        return
+    if isinstance(v, bool):
+        raise SpecValidationError(
+            field="variants",
+            message=f"field 'variants' must be int or dict, got {type(v).__name__}",
+        )
+    if isinstance(v, int):
+        data["variants"] = {"count": v, "vary": {}, "seed_scope": "palette"}
+        return
+    if isinstance(v, dict):
+        v.setdefault("count", 1)
+        v.setdefault("vary", {})
+        scope = v.setdefault("seed_scope", "palette")
+        if scope not in _VALID_SEED_SCOPES:
+            raise SpecValidationError(
+                field="variants.seed_scope",
+                message=(
+                    f"variants.seed_scope={scope!r} not in {sorted(_VALID_SEED_SCOPES)}"
+                ),
+            )
+        if not isinstance(v.get("vary"), dict):
+            raise SpecValidationError(
+                field="variants.vary",
+                message=(
+                    f"field 'variants.vary' must be dict, "
+                    f"got {type(v.get('vary')).__name__}"
+                ),
+            )
+        return
+    raise SpecValidationError(
+        field="variants",
+        message=f"field 'variants' must be int or dict, got {type(v).__name__}",
+    )
+
+
+def _normalize_seeds(data: dict) -> None:
+    """Fan legacy scalar `seed: N` → `palette_seed = geometry_seed = N`.
+
+    Explicit split seeds always win; fan-out only happens when neither
+    `palette_seed` nor `geometry_seed` is set.
+    """
+    palette = data.get("palette_seed")
+    geometry = data.get("geometry_seed")
+    legacy = data.get("seed")
+    if palette is None and geometry is None and legacy is not None:
+        if not isinstance(legacy, int) or isinstance(legacy, bool):
+            raise SpecValidationError(
+                field="seed",
+                message=f"field 'seed' must be int, got {type(legacy).__name__}",
+            )
+        data["palette_seed"] = int(legacy)
+        data["geometry_seed"] = int(legacy)
 
 
 # --- Stage 6 — class defaults (DAS §4.2 + §2.5) ---
