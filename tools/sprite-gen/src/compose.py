@@ -723,3 +723,244 @@ def _set_deep(target: dict, path: tuple, value) -> None:
             cursor[key] = sub
         cursor = sub
     cursor[path[-1]] = value
+
+
+# ---------------------------------------------------------------------------
+# TECH-726 — Render-time score-and-retry quality gate
+# ---------------------------------------------------------------------------
+#
+# ``render(spec, *, envelope=None, retry_cap=5, gate_enabled=False)`` wraps
+# the variant loop with an envelope-aware score-and-retry gate:
+#
+#   1. Sample ``vary:`` via :func:`sample_variant`.
+#   2. Render via :func:`compose_sprite`.
+#   3. Score the sampled ``vary_values`` against the envelope
+#      (TECH-725 :func:`signature.compute_envelope`).
+#   4. If below ``_FLOOR`` and retries remain → advance seed, re-sample.
+#
+# Flag-off / ``envelope=None`` paths delegate to pre-Stage-6.5
+# ``compose_sprite(sample_variant(spec, i))`` unchanged — existing golden
+# tests act as the parity oracle (Open Q2 in TECH-726.md).
+
+import math as _math
+
+_FLOOR: float = 0.5  # score threshold; below → retry
+
+
+def _score_variant(vary_values: dict, envelope: dict) -> dict:
+    """Score one sampled variant against the live envelope.
+
+    Contract:
+      - Per-axis normalized deviation ``d_a = clamp(|v_a - c_a| / h_a, 0, 1)``
+        where ``c_a = (min+max)/2`` and ``h_a = (max-min)/2``. Degenerate
+        ``h_a == 0`` → ``d_a = 0``.
+      - Aggregate metric: ``L2 = sqrt(mean(d_a^2))``.
+      - Score = ``1.0 - L2`` (higher = closer to centroid).
+      - Carved-zone hard-fail: if the sample violates any
+        :data:`signature.REASON_AXIS_MAP`-derived floor/ceiling, short-circuit
+        to ``{"score": 0.0, "failing_zones": [...]}``.
+
+    Returns:
+        ``{"score": float, "failing_zones": list[str]}``.
+    """
+    flat = _flatten_vary_leaves(vary_values)
+    failing = _carved_zone_hits(flat, envelope)
+    if failing:
+        return {"score": 0.0, "failing_zones": failing}
+
+    squares, n = 0.0, 0
+    for axis, value in flat.items():
+        bounds = envelope.get(axis)
+        if bounds is None:
+            continue
+        lo, hi = float(bounds["min"]), float(bounds["max"])
+        c = (lo + hi) / 2.0
+        h = (hi - lo) / 2.0
+        d = 0.0 if h == 0 else min(abs(value - c) / h, 1.0)
+        squares += d * d
+        n += 1
+    if n == 0:
+        return {"score": 1.0, "failing_zones": []}
+    l2 = _math.sqrt(squares / n)
+    return {"score": 1.0 - l2, "failing_zones": []}
+
+
+def _flatten_vary_leaves(vary_values: dict, prefix: str = "") -> dict[str, float]:
+    """Walk ``vary_values`` → ``{"dotted.path": scalar}`` (scalar leaves only)."""
+    flat: dict[str, float] = {}
+    for key, val in vary_values.items():
+        path = key if not prefix else f"{prefix}.{key}"
+        if isinstance(val, dict):
+            flat.update(_flatten_vary_leaves(val, prefix=path))
+        elif isinstance(val, (int, float)) and not isinstance(val, bool):
+            flat[path] = float(val)
+    return flat
+
+
+def _carved_zone_hits(flat_values: dict[str, float], envelope: dict) -> list[str]:
+    """Return axes where the sampled value sits inside a carve-out zone.
+
+    Carve-out semantics (TECH-725): envelope ``{min, max}`` bounds were
+    tightened away from known-bad samples. A fresh sample violates the
+    carve-out iff it falls outside the envelope bounds on that axis.
+    """
+    hits: list[str] = []
+    for axis, value in flat_values.items():
+        bounds = envelope.get(axis)
+        if bounds is None:
+            continue
+        lo, hi = float(bounds["min"]), float(bounds["max"])
+        if value < lo or value > hi:
+            hits.append(axis)
+    return hits
+
+
+def _diff_vary_leaves_inline(base_spec: dict, sampled_spec: dict) -> dict:
+    """Reconstruct concrete ``vary_values`` from a sampled spec.
+
+    Mirrors ``curate._diff_vary_leaves`` but avoids the import (circular
+    otherwise — curate depends on compose, not the reverse). Walks the
+    declared ``variants.vary`` leaf paths and reads values from the sampled
+    spec; handles ``vary.ground.*`` specially per TECH-720 (ground axes land
+    on ``sampled["ground"][...]``).
+    """
+    variants = (base_spec.get("variants") or {})
+    vary_decl = variants.get("vary") or {}
+    out: dict = {}
+    for path_tuple, _leaf in _walk_vary(vary_decl, ()):
+        value = _read_sampled_deep(sampled_spec, path_tuple)
+        if value is None:
+            continue
+        _set_nested(out, list(path_tuple), value)
+    return out
+
+
+def _read_sampled_deep(sampled_spec: dict, path: tuple):
+    """Fetch scalar value at dotted ``vary:`` leaf path from sampled spec.
+
+    Handles TECH-720 ``vary.ground.*`` axes that live at ``spec["ground"][...]``
+    after sampling (not at ``spec["vary"]...``), including the
+    ``{min==max}`` collapse shape of `hue_jitter` / `value_jitter`.
+    """
+    if not path:
+        return None
+    root = path[0]
+
+    if root == "ground":
+        g = sampled_spec.get("ground")
+        if not isinstance(g, dict):
+            return None
+        # vary.ground.material → ground.material (scalar string — skipped by
+        # scoring, but still reconstructable for diagnostics).
+        if len(path) == 2 and path[1] in ("hue_jitter", "value_jitter"):
+            entry = g.get(path[1])
+            if isinstance(entry, dict) and "min" in entry and entry.get("min") == entry.get("max"):
+                return entry["min"]
+            return None
+        if len(path) == 3 and path[1] == "texture" and path[2] == "density":
+            tex = g.get("texture")
+            if isinstance(tex, dict):
+                return tex.get("density")
+            return None
+        return None
+
+    cursor = sampled_spec
+    for key in path:
+        if not isinstance(cursor, dict):
+            return None
+        cursor = cursor.get(key)
+    if isinstance(cursor, (int, float)) and not isinstance(cursor, bool):
+        return cursor
+    if isinstance(cursor, str):
+        return cursor
+    return None
+
+
+def _set_nested(out: dict, keys: list, value) -> None:
+    cursor = out
+    for key in keys[:-1]:
+        sub = cursor.get(key)
+        if not isinstance(sub, dict):
+            sub = {}
+            cursor[key] = sub
+        cursor = sub
+    cursor[keys[-1]] = value
+
+
+def render(
+    spec: dict,
+    *,
+    envelope: dict | None = None,
+    retry_cap: int = 5,
+    gate_enabled: bool = False,
+):
+    """Variant-producing generator with optional envelope-gated retry.
+
+    Args:
+        spec: Validated archetype dict (already normalised by ``load_spec``).
+        envelope: Optional ``vary.*`` envelope from
+            :func:`signature.compute_envelope`. ``None`` → gate skipped.
+        retry_cap: Max attempts per variant when the gate is active.
+        gate_enabled: Master feature flag. ``False`` (default) → byte-identical
+            pre-Stage-6.5 path, delegating to
+            ``compose_sprite(sample_variant(spec, i))`` unchanged.
+
+    Yields:
+        One :class:`PIL.Image.Image` per variant index in
+        ``spec["variants"]["count"]`` (or 1 when ``variants`` absent).
+
+        On exhaustion (``retry_cap`` attempts all below ``_FLOOR``), yields the
+        best-scoring attempt as a tuple
+        ``(image, {"score": float, "seed": int, "attempts": list[int],
+                  "failing_zones": list[str]})`` — TECH-727 consumes this.
+    """
+    variants = spec.get("variants")
+    count = (
+        variants.get("count", 1) if isinstance(variants, dict) else 1
+    )
+
+    gate_active = gate_enabled and envelope is not None
+
+    for i in range(count):
+        if not gate_active:
+            yield compose_sprite(sample_variant(spec, i))
+            continue
+
+        palette_seed = int(spec.get("palette_seed", spec.get("seed", 0)) or 0)
+        best = None
+        attempts: list[int] = []
+        passed = False
+
+        for retry in range(retry_cap):
+            seed = palette_seed + i * (retry_cap + 1) + retry
+            spec_i = {**spec, "palette_seed": seed}
+            sampled = sample_variant(spec_i, i)
+            variant_img = compose_sprite(sampled)
+            vary_values = _diff_vary_leaves_inline(spec_i, sampled)
+            score = _score_variant(vary_values, envelope)
+            attempts.append(seed)
+            if best is None or score["score"] > best["score"]:
+                best = {
+                    "image": variant_img,
+                    "score": score["score"],
+                    "failing_zones": score["failing_zones"],
+                    "retry": retry,
+                    "seed": seed,
+                    "attempts": list(attempts),
+                }
+            if score["score"] >= _FLOOR:
+                passed = True
+                yield variant_img
+                break
+
+        if not passed and best is not None:
+            # Exhausted; emit best attempt + diagnostic tuple for TECH-727.
+            yield (
+                best["image"],
+                {
+                    "score": best["score"],
+                    "seed": best["seed"],
+                    "attempts": best["attempts"],
+                    "failing_zones": best["failing_zones"],
+                },
+            )
