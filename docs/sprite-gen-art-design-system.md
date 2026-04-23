@@ -366,6 +366,19 @@ building:
     - { type: iso_prism, material: roof_red,   pitch: 0.5, axis: ns, h_px: 8, offset_z: 10 }
 ```
 
+### R11.2 Stage 9 addendum — parametric slot-name grammar (TECH-741..744)
+
+Tiled multi-building slots use a parametric name grammar instead of a fixed enum. The resolver (`tools/sprite-gen/src/slots.py`) distributes `N` buildings evenly along the named axis with integer-pixel anchors.
+
+| Slot name | Meaning |
+| --- | --- |
+| `tiled-(row\|column)-N` | `N ≥ 2` buildings evenly spaced along the named axis. Integer-pixel anchors. Consumer: `resolve_slot(name, footprint, idx, count)`. Example preset: [`row_houses_3x`](../tools/sprite-gen/presets/row_houses_3x.yaml) uses `tiled-row-3`. |
+
+> **Legacy compatibility.** Hard-coded names `tiled-row-3`, `tiled-row-4`, and `tiled-column-3` continue to parse through the parametric grammar — they are not special-cased. Authors may keep existing hard-coded slot strings or migrate to `tiled-row-N` form freely.
+
+- Parser (`parse_slot`) — `^tiled-(row|column)-(\d+)$`; raises `SpecError` on mismatch or `N < 2`.
+- Resolver (`resolve_slot(name, footprint, idx, count)`) — equal-spaced `(idx + 0.5) / count`; `count != N` raises `SpecError`.
+
 ### R12 — Stage-6+ roadmap
 See master plan `ia/projects/sprite-gen-master-plan.md` Stages 6–14 (+15 optional).
 
