@@ -46,6 +46,7 @@ def test_ground_string_form_normalises(tmp_path: Path) -> None:
         "hue_jitter": None,
         "value_jitter": None,
         "texture": None,
+        "passthrough": False,  # TECH-745 default
     }
 
 

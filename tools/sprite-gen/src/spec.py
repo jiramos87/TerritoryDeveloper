@@ -602,7 +602,7 @@ def _normalize_vary_ground(raw: dict) -> dict:
 
 
 _GROUND_OBJECT_KEYS: frozenset[str] = frozenset(
-    {"material", "materials", "hue_jitter", "value_jitter", "texture"}
+    {"material", "materials", "hue_jitter", "value_jitter", "texture", "passthrough"}
 )
 
 
@@ -631,6 +631,7 @@ def _normalize_ground(data: dict) -> None:
             "hue_jitter": None,
             "value_jitter": None,
             "texture": None,
+            "passthrough": False,
         }
         return
     if isinstance(raw, dict):
@@ -662,12 +663,23 @@ def _normalize_ground(data: dict) -> None:
                     field="ground.materials",
                     message="ground.materials entries must be strings",
                 )
+        # TECH-745 — strict bool guard on `ground.passthrough`; default False.
+        passthrough = raw.get("passthrough", False)
+        if not isinstance(passthrough, bool):
+            raise SpecValidationError(
+                field="ground.passthrough",
+                message=(
+                    f"ground.passthrough must be bool, "
+                    f"got {type(passthrough).__name__}={passthrough!r}"
+                ),
+            )
         data["ground"] = {
             "material": raw.get("material"),
             "materials": materials,
             "hue_jitter": raw.get("hue_jitter"),
             "value_jitter": raw.get("value_jitter"),
             "texture": raw.get("texture"),
+            "passthrough": passthrough,
         }
         return
     raise SpecValidationError(
