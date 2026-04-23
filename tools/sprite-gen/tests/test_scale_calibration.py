@@ -48,12 +48,21 @@ def rendered() -> Image.Image:
     return compose_sprite(spec)
 
 
-def test_residential_small_bbox_y0_in_envelope(rendered: Image.Image) -> None:
+def test_residential_small_bbox_y1_diamond_bottom(rendered: Image.Image) -> None:
+    """DAS §2.3: House1-64 content bbox bottom = 48 (diamond bottom invariant)."""
+    box = rendered.getbbox()
+    assert box is not None
+    _x0, _y0, _x1, y1 = box
+    assert y1 == 48, f"y1={y1} != 48 (DAS §2.3 diamond-bottom invariant)"
+
+
+def test_residential_small_bbox_content_h_envelope(rendered: Image.Image) -> None:
+    """DAS §2.3: House1-64 content_h = 35 ± 2 (covers variant permutation)."""
     box = rendered.getbbox()
     assert box is not None
     _x0, y0, _x1, y1 = box
-    # DAS §2.3: House1-64 y0 ≈ 13 ± 3; Stage-6 output targets same band
-    assert 10 <= y0 <= 16, f"y0={y0} outside [10, 16]"
+    content_h = y1 - y0
+    assert 32 <= content_h <= 36, f"content_h={content_h} outside [32, 36]"
 
 
 def test_residential_small_bbox_spans_width(rendered: Image.Image) -> None:
