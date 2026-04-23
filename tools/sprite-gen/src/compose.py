@@ -1011,6 +1011,9 @@ def render(
 
         if not passed and best is not None:
             # Exhausted — TECH-727 sidecar if caller supplied a target path.
+            # `attempts` captures every seed tried (full trajectory), not just
+            # the prefix up to the best-scoring attempt.
+            full_attempts = list(attempts)
             target_path = None
             if variant_paths is not None and i < len(variant_paths):
                 target_path = variant_paths[i]
@@ -1019,7 +1022,7 @@ def render(
                     target_path,
                     final_score=best["score"],
                     envelope_snapshot=envelope,
-                    attempted_seeds=best["attempts"],
+                    attempted_seeds=full_attempts,
                     failing_zones=best["failing_zones"],
                 )
                 yield best["image"]
@@ -1029,7 +1032,7 @@ def render(
                     {
                         "score": best["score"],
                         "seed": best["seed"],
-                        "attempts": best["attempts"],
+                        "attempts": full_attempts,
                         "failing_zones": best["failing_zones"],
                     },
                 )
