@@ -24,7 +24,7 @@ from typing import Optional
 import yaml
 
 from .spec import SpecValidationError, load_spec
-from .compose import compose_sprite
+from .compose import compose_sprite, sample_variant
 from .signature import compute_signature
 from .palette import (
     GplParseError,
@@ -374,7 +374,7 @@ def _render_one(
     _OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     for idx in range(n_variants):
-        variant_spec = apply_variant(spec, idx)
+        variant_spec = sample_variant(apply_variant(spec, idx), idx)
         try:
             img = compose_sprite(variant_spec)
         except PaletteKeyError as exc:
@@ -825,6 +825,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Read signatures/<class>.signature.json and derive vary: defaults.",
     )
 
+    # -- inspect (calibration-phase visual-review helper) --------------------
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Pixel bbox + tile-diamond footprint containment JSON report.",
+    )
+    inspect_parser.add_argument(
+        "pngs",
+        nargs="+",
+        metavar="PNG",
+        help="One or more rendered PNG paths (out/*.png). Multi = batch variation report.",
+    )
+
     parsed = parser.parse_args(argv)
 
     if parsed.command == "render":
@@ -920,6 +932,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             rel = target
         print(f"[log-reject] appended ({parsed.reason}) → {rel}")
         return 0
+
+    if parsed.command == "inspect":
+        from . import inspect as _inspect
+
+        return _inspect.main(list(parsed.pngs))
 
     if parsed.command == "palette":
         palette_cmd = getattr(parsed, "palette_command", None)

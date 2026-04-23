@@ -1,0 +1,25 @@
+id: demo_position_padding
+preset: suburban_house_with_yard
+seed: 11
+output:
+  name: demo_position_padding
+  variants: 4
+variants:
+  count: 4
+  seed_scope: palette+geometry
+  vary:
+    building:
+      padding:
+        n: { min: 0, max: 10 }
+        e: { min: 0, max: 10 }
+        s: { min: 0, max: 10 }
+        w: { min: 0, max: 10 }
+      footprint_ratio:
+        values:
+          - [0.35, 0.35]
+          - [0.45, 0.45]
+          - [0.55, 0.55]
+          - [0.40, 0.55]
+          - [0.55, 0.40]
+      align:
+        values: [center, sw, se, nw, ne]

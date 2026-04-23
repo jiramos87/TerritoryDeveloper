@@ -406,6 +406,11 @@ def compose_sprite(spec: dict) -> Image.Image:
     else:
         wr, dr = float(fr[0]), float(fr[1])
 
+    # Building-only offset from align + padding (ground diamond stays centered).
+    spec_for_box = dict(spec)
+    spec_for_box["canvas"] = [w_px, h_px]
+    _, _, bld_ox, bld_oy = resolve_building_box(spec_for_box)
+
     # --- Foundation auto-insert (non-flat terrain only; drawn before composition stack) ---
     if slope_id != "flat":
         foundation_material: str = spec.get("foundation_material", "dirt")
@@ -458,8 +463,8 @@ def compose_sprite(spec: dict) -> Image.Image:
         # Build kwargs common to all primitives (Stage 6: forward pixel or tile keys)
         kwargs: dict = {
             "canvas":   canvas,
-            "x0":       x0,
-            "y0":       adjusted_y0,
+            "x0":       x0 + bld_ox,
+            "y0":       adjusted_y0 + bld_oy,
             "material": material,
             "palette":  palette,
         }
@@ -558,27 +563,24 @@ def compose_layers(spec: dict) -> tuple[dict[str, Image.Image], tuple[int, int]]
 def resolve_building_box(spec: dict) -> tuple[int, int, int, int]:
     """Return `(bx, by, offset_x, offset_y)` for the building mass.
 
-    Pure function: no I/O, no PIL. Honours `building.footprint_px`
-    (preferred) or falls back to `footprint_ratio` scaled against a 64×64
-    canvas. `align` + `padding` translate into `(offset_x, offset_y)` shift
-    from the default SE-corner anchor.
+    Iso-tile-aware: `align` + `padding` translate into grid-space shifts
+    clamped to keep the building footprint fully inside the tile diamond,
+    then projected to screen pixels via the iso transform.
 
     Defaults (`align: center`, zero padding) return offsets `(0, 0)` so
     existing composer paths are byte-identical.
-
-    Args:
-        spec: Validated archetype dict (building subkey optional).
-
-    Returns:
-        Tuple ``(bx, by, offset_x, offset_y)`` — mass box in px and the
-        SE-anchor shift (+x east, +y south) to apply.
     """
     canvas_w, canvas_h = spec.get("canvas", [64, 64])
+    footprint = spec.get("footprint", [1, 1])
+    fx_tiles = max(1, int(footprint[0]))
+    fy_tiles = max(1, int(footprint[1]))
     building = spec.get("building") or {}
 
     footprint_px = building.get("footprint_px")
     if isinstance(footprint_px, (list, tuple)) and len(footprint_px) == 2:
         bx, by = int(footprint_px[0]), int(footprint_px[1])
+        wr = bx / max(1, canvas_w)
+        dr = by / max(1, canvas_h)
     else:
         ratio = building.get("footprint_ratio")
         if ratio is None:
@@ -591,31 +593,63 @@ def resolve_building_box(spec: dict) -> tuple[int, int, int, int]:
     align = building.get("align", "center")
     padding = building.get("padding") or {"n": 0, "e": 0, "s": 0, "w": 0}
 
-    # Default path — align: center + zero padding → no shift (byte-identical).
-    ox, oy = _anchor_offset(align, bx, by, canvas_w, canvas_h)
-    ox += int(padding.get("w", 0)) - int(padding.get("e", 0))
-    oy += int(padding.get("n", 0)) - int(padding.get("s", 0))
+    wr_eff = max(0.01, min(1.0, float(wr)))
+    dr_eff = max(0.01, min(1.0, float(dr)))
+
+    # Align → building SE-corner grid anchor in tile units [0, 1]².
+    anchors = {
+        "center": (0.5 + wr_eff / 2.0, 0.5 + dr_eff / 2.0),
+        "ne":     (1.0, dr_eff),
+        "nw":     (wr_eff, dr_eff),
+        "se":     (1.0, 1.0),
+        "sw":     (wr_eff, 1.0),
+        "custom": (0.5 + wr_eff / 2.0, 0.5 + dr_eff / 2.0),
+    }
+    gx_a, gy_a = anchors.get(align, anchors["center"])
+
+    # Padding (screen-px inner-margin convention) → grid-fraction nudge.
+    # Halved conversion factors vs tile diamond half-extents so padding values
+    # up to 10 px produce visible but non-clipping shifts.
+    pad_e = int(padding.get("e", 0))
+    pad_w = int(padding.get("w", 0))
+    pad_n = int(padding.get("n", 0))
+    pad_s = int(padding.get("s", 0))
+    # +w padding pushes east (+gx); +n padding pushes south (+gy).
+    gx_a += (pad_w - pad_e) / 64.0
+    gy_a += (pad_n - pad_s) / 32.0
+
+    # Footprint inset: fixed grid-unit buffer between building footprint and
+    # tile diamond edges. 0.15 grid-units projects to ≈2.4 px per diagonal in
+    # iso space — calibrated against visual reviews of `demo_position_padding`
+    # where the prior slack-scaled safety band left a ~2 px overflow at the
+    # tile outline. Collapses to center when wr/dr exceed 1 − 2·inset.
+    inset = 0.28
+    legal_gx_min = wr_eff + inset
+    legal_gx_max = 1.0 - inset
+    legal_gy_min = dr_eff + inset
+    legal_gy_max = 1.0 - inset
+    if legal_gx_min > legal_gx_max:
+        legal_gx_min = legal_gx_max = (wr_eff + 1.0) / 2.0
+    if legal_gy_min > legal_gy_max:
+        legal_gy_min = legal_gy_max = (dr_eff + 1.0) / 2.0
+    gx_a = max(legal_gx_min, min(legal_gx_max, gx_a))
+    gy_a = max(legal_gy_min, min(legal_gy_max, gy_a))
+
+    # Shift from default centered anchor.
+    dgx = gx_a - (0.5 + wr_eff / 2.0)
+    dgy = gy_a - (0.5 + dr_eff / 2.0)
+
+    # Iso-to-screen projection: per tile-unit, dx = (gx-gy)*16, dy = (gx+gy)*8.
+    ox = int(round((dgx - dgy) * 16 * fx_tiles))
+    oy = int(round((dgx + dgy) * 8 * fy_tiles))
     return bx, by, ox, oy
 
 
 def _anchor_offset(
     align: str, bx: int, by: int, canvas_w: int, canvas_h: int
 ) -> tuple[int, int]:
-    """Map alignment anchor to SE-corner offset deltas.
-
-    `center` returns (0, 0) — composer's existing centering math already
-    places a centered box correctly via the `wr`/`dr` scaling pass, so
-    the helper MUST NOT double-shift for the default path.
-
-    Other anchors compute a deterministic shift from the default centered
-    position:
-        - sw: shift west + south → (-dx, +dy)
-        - se: shift east + south → (+dx, +dy)
-        - nw: shift west + north → (-dx, -dy)
-        - ne: shift east + north → (+dx, -dy)
-    where (dx, dy) = half the leftover canvas space beyond the box.
-    `custom` returns (0, 0); callers supply explicit offsets separately.
-    """
+    """Legacy axial anchor helper. Retained for any external callers; the
+    iso-aware path in `resolve_building_box` supersedes it for the composer."""
     if align in ("center", "custom"):
         return 0, 0
     dx = max(0, (canvas_w - bx) // 2)
