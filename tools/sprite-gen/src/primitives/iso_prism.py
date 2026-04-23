@@ -42,6 +42,8 @@ from PIL import Image, ImageDraw
 
 from ..palette import apply_ramp
 
+from ._kwargs import normalize_dims
+
 _PITCH_MIN = 1e-3  # clamp pitch below this to avoid degenerate geometry
 
 
@@ -81,13 +83,18 @@ def iso_prism(
     canvas: Image.Image,
     x0: int,
     y0: int,
-    w: float,
-    d: float,
-    h: float,
-    pitch: float,
-    axis: str,
-    material: str,
-    palette: dict,
+    w: float | None = None,
+    d: float | None = None,
+    h: float | None = None,
+    *,
+    w_px: int | None = None,
+    d_px: int | None = None,
+    h_px: int | None = None,
+    pitch: float = 0.5,
+    axis: str = "ns",
+    material: str = "",
+    palette: dict | None = None,
+    **kwargs: object,
 ) -> None:
     """Draw an isometric pitched-roof prism on *canvas* in-place.
 
@@ -148,6 +155,22 @@ def iso_prism(
         ValueError:       If ``axis`` is not ``'ns'`` or ``'ew'``.
         PaletteKeyError:  If ``material`` is not in ``palette["materials"]``.
     """
+    del kwargs
+    if palette is None:
+        raise TypeError("iso_prism: palette is required")
+    w_px_c, d_px_c, h_px_c = normalize_dims(
+        w=w,
+        d=d,
+        h=h,
+        w_px=w_px,
+        d_px=d_px,
+        h_px=h_px,
+        prim="iso_prism",
+    )
+    w = w_px_c / 32.0
+    d = d_px_c / 32.0
+    h = float(h_px_c)
+
     if axis not in ("ns", "ew"):
         raise ValueError(f"iso_prism: axis must be 'ns' or 'ew', got {axis!r}")
 

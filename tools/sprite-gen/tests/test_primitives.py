@@ -31,9 +31,10 @@ on the real ``palettes/residential.json``.
 from __future__ import annotations
 
 import pathlib
+import warnings
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageChops
 
 from src.canvas import canvas_size
 from src.primitives import iso_cube, iso_prism
@@ -233,3 +234,71 @@ def test_iso_prism_rejects_bad_axis():
     with pytest.raises(ValueError, match="axis"):
         iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="diag",
                   material="stub_red", palette=_FIXTURE_PALETTE)
+
+
+# ---------------------------------------------------------------------------
+# Stage 6 — pixel-native kwargs (TECH-693)
+# ---------------------------------------------------------------------------
+
+
+def test_iso_cube_accepts_w_px():
+    """w_px/d_px/h_px path matches expected face width for 1×1 tile in px."""
+    canvas = _blank_canvas()
+    iso_cube(
+        canvas,
+        _X0,
+        _Y0,
+        w_px=32,
+        d_px=32,
+        h_px=32,
+        material="stub_red",
+        palette=_FIXTURE_PALETTE,
+    )
+    assert _alpha_count(canvas, _BBOX_TOP_CUBE) > 0
+
+
+def test_iso_cube_tile_alias_parity():
+    """Tile w/d/h and pixel kwargs produce identical pixels for 1×1×32."""
+    a = _blank_canvas()
+    b = _blank_canvas()
+    iso_cube(a, _X0, _Y0, 1, 1, 32, material="stub_red", palette=_FIXTURE_PALETTE)
+    iso_cube(
+        b, _X0, _Y0, w_px=32, d_px=32, h_px=32,
+        material="stub_red", palette=_FIXTURE_PALETTE,
+    )
+    assert ImageChops.difference(a, b).getbbox() is None
+
+
+def test_iso_cube_px_wins_on_conflict():
+    """Both w and w_px → w_px used; DeprecationWarning once."""
+    canvas = _blank_canvas()
+    with warnings.catch_warnings(record=True) as wrec:
+        warnings.simplefilter("always")
+        iso_cube(
+            canvas,
+            _X0,
+            _Y0,
+            w=1,
+            d=1,
+            w_px=48,
+            d_px=32,
+            h_px=32,
+            material="stub_red",
+            palette=_FIXTURE_PALETTE,
+        )
+    assert any(issubclass(x.category, DeprecationWarning) for x in wrec)
+
+
+def test_iso_prism_pixel_kwargs():
+    """iso_prism accepts w_px/d_px/h_px like iso_cube."""
+    a = _blank_canvas()
+    b = _blank_canvas()
+    iso_prism(
+        a, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="ns",
+        material="stub_red", palette=_FIXTURE_PALETTE,
+    )
+    iso_prism(
+        b, _X0, _Y0, w_px=32, d_px=32, h_px=32, pitch=0.5, axis="ns",
+        material="stub_red", palette=_FIXTURE_PALETTE,
+    )
+    assert ImageChops.difference(a, b).getbbox() is None

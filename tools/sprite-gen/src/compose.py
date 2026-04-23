@@ -173,17 +173,23 @@ def compose_sprite(spec: dict) -> Image.Image:
         offset_z = int(entry.get("offset_z", 0))
         adjusted_y0 = y0 - offset_z  # y-down: higher z → smaller y
 
-        # Build kwargs common to all primitives
+        # Build kwargs common to all primitives (Stage 6: forward pixel or tile keys)
         kwargs: dict = {
             "canvas":   canvas,
             "x0":       x0,
             "y0":       adjusted_y0,
-            "w":        float(entry.get("w", 1)),
-            "d":        float(entry.get("d", 1)),
-            "h":        float(entry.get("h", 0)),
             "material": material,
             "palette":  palette,
         }
+        for k in ("w_px", "d_px", "h_px", "w", "d", "h"):
+            if k in entry:
+                kwargs[k] = int(entry[k]) if k.endswith("_px") else float(entry[k])
+        if "w" not in entry and "w_px" not in entry:
+            kwargs["w"] = 1.0
+        if "d" not in entry and "d_px" not in entry:
+            kwargs["d"] = 1.0
+        if "h" not in entry and "h_px" not in entry:
+            kwargs["h"] = 0.0
 
         # iso_prism-specific kwargs
         if prim_type == "iso_prism":

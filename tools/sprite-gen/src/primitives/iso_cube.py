@@ -31,6 +31,8 @@ from PIL import Image, ImageDraw
 
 from ..palette import apply_ramp
 
+from ._kwargs import normalize_dims
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -68,11 +70,16 @@ def iso_cube(
     canvas: Image.Image,
     x0: int,
     y0: int,
-    w: float,
-    d: float,
-    h: float,
-    material: str,
-    palette: dict,
+    w: float | None = None,
+    d: float | None = None,
+    h: float | None = None,
+    *,
+    w_px: int | None = None,
+    d_px: int | None = None,
+    h_px: int | None = None,
+    material: str = "",
+    palette: dict | None = None,
+    **kwargs: object,
 ) -> None:
     """Draw an isometric rectangular box on *canvas* in-place.
 
@@ -111,6 +118,22 @@ def iso_cube(
     Raises:
         PaletteKeyError: If ``material`` is not in ``palette["materials"]``.
     """
+    del kwargs
+    if palette is None:
+        raise TypeError("iso_cube: palette is required")
+    w_px_c, d_px_c, h_px_c = normalize_dims(
+        w=w,
+        d=d,
+        h=h,
+        w_px=w_px,
+        d_px=d_px,
+        h_px=h_px,
+        prim="iso_cube",
+    )
+    w = w_px_c / 32.0
+    d = d_px_c / 32.0
+    h = float(h_px_c)
+
     bright = apply_ramp(palette, material, "top")
     mid    = apply_ramp(palette, material, "south")
     dark   = apply_ramp(palette, material, "east")
