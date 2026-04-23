@@ -345,9 +345,22 @@ def compose_sprite(spec: dict) -> Image.Image:
         if g_material is not None or in_map:
             gmat = g_material if g_material is not None else default_ground_for_class(cls)
 
+            # TECH-745 — neighbor-blending passthrough: noise inhibited + jitter clamped.
+            g_passthrough = bool(isinstance(graw, dict) and graw.get("passthrough"))
+
             # TECH-718 — build jittered palette for the ground layer when spec requests it.
             g_hue_jitter = isinstance(graw, dict) and graw.get("hue_jitter") or None
             g_value_jitter = isinstance(graw, dict) and graw.get("value_jitter") or None
+            if g_passthrough:
+                # TECH-746 — clamp `hue_jitter` band to ≤0.01 magnitude (degrees);
+                # force `value_jitter` to zero. Clamp is per-bound so asymmetric
+                # bands still collapse to the narrowest identity-preserving window.
+                if isinstance(g_hue_jitter, dict):
+                    g_hue_jitter = {
+                        "min": max(-0.01, min(0.01, float(g_hue_jitter.get("min", 0)))),
+                        "max": max(-0.01, min(0.01, float(g_hue_jitter.get("max", 0)))),
+                    }
+                g_value_jitter = None
             palette_seed: int = int(spec.get("palette_seed", spec.get("seed", 0)) or 0)
             ground_palette = _jitter_ground_palette(
                 palette, gmat, g_hue_jitter, g_value_jitter, seed=palette_seed
@@ -364,8 +377,9 @@ def compose_sprite(spec: dict) -> Image.Image:
             )
 
             # TECH-718 — auto-insert iso_ground_noise when texture is specified.
+            # TECH-746 — passthrough inhibits noise entirely so tile reads as seamless.
             g_texture = isinstance(graw, dict) and graw.get("texture") or None
-            if g_texture:
+            if g_texture and not g_passthrough:
                 t_density = float(g_texture.get("density", 0.0)) if isinstance(g_texture, dict) else 0.0
                 if t_density > 0.0:
                     # Derive noise seed from palette_seed + 1 (distinct from jitter seed).
