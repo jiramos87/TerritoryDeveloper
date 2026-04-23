@@ -48,6 +48,167 @@ class SpecValidationError(Exception):
         return f"missing required field: {self.field}"
 
 
+# TECH-730 — public alias used by preset system + test file for consistency
+# with the Stage 6.6 plan digest (`SpecError`). Both names point to the same
+# class so existing callers + new preset code share one exception type.
+SpecError = SpecValidationError
+
+
+# ---------------------------------------------------------------------------
+# TECH-730 / TECH-731 — Preset system (Stage 6.6)
+# ---------------------------------------------------------------------------
+
+_PRESET_DIR: Path = Path(__file__).resolve().parent.parent / "presets"
+
+
+def _valid_preset_names() -> list[str]:
+    """Return sorted list of available preset stems under ``presets/``."""
+    if not _PRESET_DIR.is_dir():
+        return []
+    return sorted(p.stem for p in _PRESET_DIR.glob("*.yaml"))
+
+
+def _load_preset(name: str) -> dict:
+    """Load a preset YAML from ``tools/sprite-gen/presets/<name>.yaml``.
+
+    Raises:
+        SpecError: name does not resolve to a file under ``presets/``; the
+            error message lists every valid preset stem for fast discovery.
+    """
+    path = _PRESET_DIR / f"{name}.yaml"
+    if not path.exists():
+        valid = _valid_preset_names()
+        raise SpecError(
+            field="preset",
+            message=f"unknown preset {name!r}. valid presets: {valid}",
+        )
+    with path.open("r", encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    if not isinstance(data, dict):
+        raise SpecError(
+            field="preset",
+            message=(
+                f"preset {name!r} did not parse as mapping "
+                f"(got {type(data).__name__})"
+            ),
+        )
+    return data
+
+
+def _deep_merge(base: dict, overlay: dict) -> dict:
+    """Recursive dict-merge: overlay wins per-key; nested dicts merge.
+
+    Scalars / lists / non-dicts in either side → overlay wins entirely.
+    Nested dicts → merge recursively. TECH-731 extends this function with
+    a dedicated ``vary:`` branch under :func:`_merge_vary`.
+    """
+    out: dict = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+
+def _apply_preset(data: dict) -> dict:
+    """If ``data`` carries a top-level ``preset:`` key, inject + merge.
+
+    Author fields override preset fields per-key; ``vary:`` goes through
+    the TECH-731 union/wipe-guard merge. The ``preset`` key is popped so
+    downstream validators never see it as an unknown top-level field.
+    """
+    if "preset" not in data:
+        return data
+    name = data.pop("preset")
+    if not isinstance(name, str) or not name:
+        raise SpecError(
+            field="preset",
+            message=f"`preset:` must be a non-empty string, got {name!r}",
+        )
+    base = _load_preset(name)
+    base.pop("preset", None)  # defensive: presets must not recurse
+    return _deep_merge(base, data)
+
+
+def load_spec_from_dict(data: dict) -> dict:
+    """Validate a preloaded dict spec (TECH-730 test helper).
+
+    Same pipeline as :func:`load_spec` but skips the YAML file read so
+    tests can hand in a dict directly. Supports top-level ``preset:``.
+    """
+    if not isinstance(data, dict):
+        raise SpecValidationError(
+            field="<root>",
+            message=(
+                f"missing required field: <root> (expected mapping, "
+                f"got {type(data).__name__})"
+            ),
+        )
+    data = _apply_preset(dict(data))
+
+    if "composition" not in data and isinstance(data.get("building"), dict):
+        bc = data["building"].get("composition")
+        if isinstance(bc, list):
+            data = {**data, "composition": bc}
+
+    data.setdefault("include_in_signature", True)
+
+    for key, expected_type in REQUIRED_KEYS:
+        if key not in data:
+            raise SpecValidationError(field=key)
+        value = data[key]
+        if not isinstance(value, expected_type):
+            raise SpecValidationError(
+                field=key,
+                message=(
+                    f"field '{key}' must be {expected_type.__name__}, "
+                    f"got {type(value).__name__}"
+                ),
+            )
+
+    footprint = data["footprint"]
+    if len(footprint) != 2 or not all(isinstance(v, int) for v in footprint):
+        raise SpecValidationError(
+            field="footprint",
+            message=(
+                "field 'footprint' must be a 2-element list of ints, "
+                f"got {footprint!r}"
+            ),
+        )
+
+    composition = data["composition"]
+    if len(composition) == 0:
+        raise SpecValidationError(
+            field="composition",
+            message="field 'composition' must be a non-empty list",
+        )
+    for i, entry in enumerate(composition):
+        if not isinstance(entry, dict):
+            raise SpecValidationError(
+                field="composition",
+                message=(
+                    f"field 'composition[{i}]' must be a dict, "
+                    f"got {type(entry).__name__}"
+                ),
+            )
+        if "type" not in entry:
+            raise SpecValidationError(
+                field="composition",
+                message=f"field 'composition[{i}]' missing required key 'type'",
+            )
+
+    building = data.get("building")
+    if isinstance(building, dict):
+        data["building"] = _normalize_building_placement(building)
+
+    _normalize_variants(data)
+    _normalize_seeds(data)
+    _normalize_ground(data)
+
+    return data
+
+
 def load_spec(path: Union[str, Path]) -> dict:
     """Load and validate an archetype YAML spec file.
 
@@ -77,6 +238,10 @@ def load_spec(path: Union[str, Path]) -> dict:
             field="<root>",
             message=f"missing required field: <root> (expected mapping, got {type(data).__name__})",
         )
+
+    # TECH-730 — preset injection + author-override merge runs before any
+    # schema validation so the merged spec passes required-key checks.
+    data = _apply_preset(data)
 
     # R11: `building.composition` aliases to top-level for validation
     if "composition" not in data and isinstance(data.get("building"), dict):
