@@ -79,3 +79,38 @@ def test_render_integration_smoke(clean_residential_out):
     for p in pngs:
         with Image.open(p) as img:
             assert img.size == (64, 64), f"{p.name}: expected (64, 64), got {img.size}"
+
+
+# ---------------------------------------------------------------------------
+# Stage 6.1 T6.1.3: per-spec bbox regression (closes I2)
+# ---------------------------------------------------------------------------
+
+from src.compose import compose_sprite  # noqa: E402
+from src.spec import load_spec  # noqa: E402
+
+_SPECS_DIR = _TOOL_ROOT / "specs"
+
+
+def _live_1x1_flat_specs() -> list[Path]:
+    """Live `specs/*.yaml` filtered to 1×1 flat footprint (sloped excluded)."""
+    out: list[Path] = []
+    for path in sorted(_SPECS_DIR.glob("*.yaml")):
+        spec = load_spec(path)
+        if spec.get("footprint") != [1, 1]:
+            continue
+        if spec.get("terrain") not in (None, "flat"):
+            continue
+        out.append(path)
+    return out
+
+
+@pytest.mark.parametrize(
+    "spec_path",
+    _live_1x1_flat_specs(),
+    ids=lambda p: p.stem,
+)
+def test_every_live_1x1_spec_bbox(spec_path: Path) -> None:
+    """DAS §2.3: every live 1×1 flat spec renders with bbox (0, 15, 64, 48)."""
+    rendered = compose_sprite(load_spec(spec_path))
+    box = rendered.getbbox()
+    assert box == (0, 15, 64, 48), f"{spec_path.stem}: bbox={box}"
