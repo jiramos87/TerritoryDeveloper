@@ -18,6 +18,12 @@ _VALID_SEED_SCOPES: frozenset[str] = frozenset(
     {"palette", "geometry", "palette+geometry"}
 )
 
+# TECH-737 — reserved sibling keys under `output.animation:` (v1 schema stub;
+# siblings are preserved verbatim, not interpreted, until animation lands).
+ANIMATION_RESERVED_KEYS: frozenset[str] = frozenset(
+    {"frames", "fps", "loop", "phase_offset", "layers"}
+)
+
 # Required keys: (key_name, expected_type)
 REQUIRED_KEYS: list[tuple[str, type]] = [
     ("id", str),
@@ -164,6 +170,59 @@ def _apply_preset(data: dict) -> dict:
     return _deep_merge(base, data)
 
 
+# ---------------------------------------------------------------------------
+# TECH-737 — reserved `output.animation:` block (Stage 6.7)
+# ---------------------------------------------------------------------------
+
+
+def _validate_animation(output: dict) -> None:
+    """Validate the reserved ``output.animation:`` block.
+
+    Rules (Stage 6.7 / TECH-737):
+        - Missing ``output.animation`` → no-op.
+        - ``enabled: false`` (or absent) → accepted; siblings preserved as-is.
+        - ``enabled: <anything else>`` → ``SpecError`` referencing DAS §12.
+        - Unknown sibling keys beyond :data:`ANIMATION_RESERVED_KEYS` ∪
+          ``{"enabled"}`` are rejected so typos don't slip through.
+
+    Implementation keeps the dict untouched so downstream consumers see the
+    author's reserved siblings verbatim — interpretation is deferred to the
+    future animation milestone (DAS §12).
+    """
+    if not isinstance(output, dict):
+        return
+    anim = output.get("animation")
+    if anim is None:
+        return
+    if not isinstance(anim, dict):
+        raise SpecValidationError(
+            field="output.animation",
+            message=(
+                f"output.animation must be a dict, got {type(anim).__name__}; "
+                f"see DAS §12"
+            ),
+        )
+    enabled = anim.get("enabled", False)
+    if enabled is not False:
+        raise SpecValidationError(
+            field="output.animation.enabled",
+            message=(
+                "output.animation.enabled: only 'false' permitted in v1; "
+                "see DAS §12"
+            ),
+        )
+    permitted = ANIMATION_RESERVED_KEYS | {"enabled"}
+    unknown = set(anim.keys()) - permitted
+    if unknown:
+        raise SpecValidationError(
+            field="output.animation",
+            message=(
+                f"output.animation: unknown key(s) {sorted(unknown)}; "
+                f"permitted: {sorted(permitted)}; see DAS §12"
+            ),
+        )
+
+
 def load_spec_from_dict(data: dict) -> dict:
     """Validate a preloaded dict spec (TECH-730 test helper).
 
@@ -238,6 +297,9 @@ def load_spec_from_dict(data: dict) -> dict:
     _normalize_variants(data)
     _normalize_seeds(data)
     _normalize_ground(data)
+
+    # TECH-737 — reserved output.animation schema (Stage 6.7).
+    _validate_animation(data.get("output", {}))
 
     return data
 
@@ -342,6 +404,9 @@ def load_spec(path: Union[str, Path]) -> dict:
 
     # TECH-715 — ground accepts string or object; "none" sentinel stays string.
     _normalize_ground(data)
+
+    # TECH-737 — reserved output.animation schema (Stage 6.7).
+    _validate_animation(data.get("output", {}))
 
     return data
 
