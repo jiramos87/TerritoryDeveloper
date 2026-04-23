@@ -2,7 +2,7 @@ id: TECH-737
 type: TECH
 title: Spec loader — reserved output.animation block
 priority: medium
-status: open
+status: closed
 section: Stage 6.7 — Animation schema reservation
 spec: ia/projects/TECH-737.md
 files:

@@ -2,7 +2,7 @@ id: TECH-738
 type: TECH
 title: Per-primitive animate reservation
 priority: medium
-status: open
+status: closed
 section: Stage 6.7 — Animation schema reservation
 spec: ia/projects/TECH-738.md
 files:

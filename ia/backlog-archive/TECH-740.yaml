@@ -2,7 +2,7 @@ id: TECH-740
 type: TECH
 title: DAS §12 stub — Animation (reserved; not yet implemented)
 priority: low
-status: open
+status: closed
 section: Stage 6.7 — Animation schema reservation
 spec: ia/projects/TECH-740.md
 files:

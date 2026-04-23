@@ -1826,10 +1826,10 @@ validation_gate:
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T6.7.1 | Spec loader: reserved `output.animation:` block | **TECH-737** | Draft | `tools/sprite-gen/src/spec.py` — recognise top-level `output.animation:` dict; validate only `enabled: false` passes; raise `SpecError` on `enabled: true` (reserved but not implemented). Sibling keys `frames`, `fps`, `loop`, `phase_offset`, `layers` accepted without interpretation. Consumes L16. |
-| T6.7.2 | Per-primitive `animate:` reservation | **TECH-738** | Draft | Composer / primitive dispatch — accepts `animate: none` on any decoration entry; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`. Centralised check so every primitive inherits the guard. |
-| T6.7.3 | Tests: `test_animation_reservation.py` | **TECH-739** | Draft | `tools/sprite-gen/tests/test_animation_reservation.py` — (a) `enabled: false` block parses cleanly; (b) `enabled: true` raises `SpecError`; (c) primitive with `animate: none` renders; (d) `animate: flicker` raises `NotImplementedError` with "DAS §12" in message. |
-| T6.7.4 | DAS §12 stub — "Animation (reserved; not yet implemented)" | **TECH-740** | Draft | `docs/sprite-gen-art-design-system.md` §12 — new stub documents reserved keys (`output.animation.*`, per-primitive `animate:`), enumerates v1 permitted values (`enabled: false`, `animate: none`), and forward-points to future animation milestone. |
+| T6.7.1 | Spec loader: reserved `output.animation:` block | **TECH-737** | Done | `tools/sprite-gen/src/spec.py` — recognise top-level `output.animation:` dict; validate only `enabled: false` passes; raise `SpecError` on `enabled: true` (reserved but not implemented). Sibling keys `frames`, `fps`, `loop`, `phase_offset`, `layers` accepted without interpretation. Consumes L16. |
+| T6.7.2 | Per-primitive `animate:` reservation | **TECH-738** | Done | Composer / primitive dispatch — accepts `animate: none` on any decoration entry; any other value raises `NotImplementedError("Animation deferred; see DAS §12")`. Centralised check so every primitive inherits the guard. |
+| T6.7.3 | Tests: `test_animation_reservation.py` | **TECH-739** | Done | `tools/sprite-gen/tests/test_animation_reservation.py` — (a) `enabled: false` block parses cleanly; (b) `enabled: true` raises `SpecError`; (c) primitive with `animate: none` renders; (d) `animate: flicker` raises `NotImplementedError` with "DAS §12" in message. |
+| T6.7.4 | DAS §12 stub — "Animation (reserved; not yet implemented)" | **TECH-740** | Done | `docs/sprite-gen-art-design-system.md` §12 — new stub documents reserved keys (`output.animation.*`, per-primitive `animate:`), enumerates v1 permitted values (`enabled: false`, `animate: none`), and forward-points to future animation milestone. |
 
 ### §Stage File Plan
 

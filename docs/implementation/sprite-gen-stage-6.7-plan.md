@@ -12,10 +12,10 @@ Stage 6.7 reserves the animation surface in the spec grammar without implementin
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T6.7.1 | [TECH-737](../../ia/projects/TECH-737.md) | Spec loader — reserved `output.animation` block | medium | — |
-| T6.7.2 | [TECH-738](../../ia/projects/TECH-738.md) | Per-primitive `animate:` reservation | medium | TECH-737 |
-| T6.7.3 | [TECH-739](../../ia/projects/TECH-739.md) | Tests — `test_animation_reservation.py` | medium | TECH-737, TECH-738 |
-| T6.7.4 | [TECH-740](../../ia/projects/TECH-740.md) | DAS §12 stub — Animation (reserved; not yet implemented) | low | TECH-737, TECH-738 |
+| T6.7.1 | [TECH-737](../../BACKLOG-ARCHIVE.md) | Spec loader — reserved `output.animation` block | medium | — |
+| T6.7.2 | [TECH-738](../../BACKLOG-ARCHIVE.md) | Per-primitive `animate:` reservation | medium | TECH-737 |
+| T6.7.3 | [TECH-739](../../BACKLOG-ARCHIVE.md) | Tests — `test_animation_reservation.py` | medium | TECH-737, TECH-738 |
+| T6.7.4 | [TECH-740](../../BACKLOG-ARCHIVE.md) | DAS §12 stub — Animation (reserved; not yet implemented) | low | TECH-737, TECH-738 |
 
 ## 3. Lock → task map
 

@@ -2,7 +2,7 @@ id: TECH-739
 type: TECH
 title: Tests — test_animation_reservation.py
 priority: medium
-status: open
+status: closed
 section: Stage 6.7 — Animation schema reservation
 spec: ia/projects/TECH-739.md
 files:
