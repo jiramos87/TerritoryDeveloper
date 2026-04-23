@@ -369,6 +369,70 @@ building:
 ### R12 — Stage-6+ roadmap
 See master plan `ia/projects/sprite-gen-master-plan.md` Stages 6–14 (+15 optional).
 
+### §5.13 Curation log schema (Stage 6.5, TECH-723/724)
+
+`curation/promoted.jsonl` and `curation/rejected.jsonl` are append-only JSONL feedback logs under `tools/sprite-gen/curation/`. One row per curator action. Verbs `log-promote` (TECH-723) and `log-reject` (TECH-724) are orthogonal to the TECH-179 `promote` (PNG → Unity ship) and `reject` (glob-delete) verbs.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `variant_path` | string | Path to rendered variant PNG |
+| `vary_values` | object | Nested `vary:` leaves recovered via `compose.sample_variant(spec, idx)` |
+| `bbox` | object | Measured alpha bbox (`x0`, `y0`, `width`, `height`) |
+| `palette_stats` | object | `opaque_count`, `distinct_colors`, `mean_rgb` |
+| `timestamp` | number | Unix seconds |
+| `reason` | string | `rejected.jsonl` only — one of `REJECTION_REASONS` |
+
+CLI:
+
+```bash
+python3 -m src log-promote out/residential_small_v03.png
+python3 -m src log-reject  out/residential_small_v07.png --reason roof-too-shallow
+```
+
+### §5.14 Rejection reasons → vary.* zone map (TECH-724/725)
+
+Controlled vocabulary `REJECTION_REASONS`:
+
+- `roof-too-shallow`
+- `roof-too-tall`
+- `facade-too-saturated`
+- `ground-too-uniform`
+
+Each reason carves one `vary.*` axis bound away from the rejected sample (`REASON_AXIS_MAP`, `src/signature.py`):
+
+| Reason | `vary.*` axis | Bound |
+|--------|---------------|-------|
+| `roof-too-shallow` | `roof.h_px` | `min` |
+| `roof-too-tall` | `roof.h_px` | `max` |
+| `facade-too-saturated` | `facade.saturation` | `max` |
+| `ground-too-uniform` | `ground.hue_jitter` | `min` |
+
+Carve-out = nudge bound by 1 unit (`new_min = rejected_value + 1`, `new_max = rejected_value - 1`). The aggregator `compute_envelope(catalog, promoted, rejected)` produces the live `vary.*` envelope as `catalog ∪ promoted − rejected-zones` — promoted rows tighten bounds toward the validated centroid, rejected rows carve floors/ceilings. Sort-before-aggregate determinism.
+
+### §5.15 Composer score-and-retry contract (TECH-726)
+
+`compose.render(spec, *, envelope=None, retry_cap=5, gate_enabled=False)` wraps the variant loop with an envelope-aware quality gate:
+
+1. Sample `vary:` via `sample_variant(spec, i)`.
+2. Render via `compose_sprite(sampled_spec)`.
+3. Score: per-axis normalized deviation `d_a = clamp(|v_a - c_a| / h_a, 0, 1)` where `c_a = (min+max)/2`, `h_a = (max-min)/2`; aggregate `L2 = sqrt(mean(d_a^2))`; `score = 1.0 − L2`. Carved-zone hits (sample outside envelope bounds) hard-fail to `score = 0.0`.
+4. If `score < _FLOOR` (`0.5`) and retries remain: advance seed `palette_seed + variant_idx * (retry_cap + 1) + retry`; re-sample.
+5. `gate_enabled=False` or `envelope=None` → byte-identical pre-Stage-6.5 path (existing golden tests as parity oracle).
+
+### §5.16 .needs_review sidecar semantics (TECH-727)
+
+When the gate exhausts `retry_cap` without meeting `_FLOOR`, a versioned JSON sidecar `<variant>.needs_review.json` is written next to the best-scoring variant. Non-blocking — pipeline continues. Schema v1:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `schema_version` | int | `1` |
+| `final_score` | float | Score of the best-scoring attempt |
+| `envelope_snapshot` | object | Envelope used at render time |
+| `attempted_seeds` | int[] | Full trajectory of seeds tried |
+| `failing_zones` | string[] | Carved `vary.*` axes hit on the best attempt |
+
+Curator UI / CI consume the sidecar to surface low-confidence renders without blocking the pipeline.
+
 ---
 
 ## 6. Future decoration backlog (not in Stages 6–14)
