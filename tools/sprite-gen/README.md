@@ -36,8 +36,10 @@ pip install -r requirements.txt
 
 - Orchestrator master plan: `ia/projects/sprite-gen-master-plan.md`
 - Exploration / design rationale: `docs/isometric-sprite-generator-exploration.md`
+- Art / calibration source: `docs/sprite-gen-art-design-system.md` (DAS)
+- User-facing field reference: `docs/sprite-gen-usage.md` (ground, `footprint_ratio`, `levels`, R11 `building` block)
 
 ## Status
 
-Stage 1 in progress. Canvas math, primitives, CLI, and promote flow are follow-up tasks.
 `out/` is gitignored — rendered sprites are ephemeral until promoted.
+Stage 6 adds pixel-native primitives, ground auto-layer, and R11 nested specs — see `docs/sprite-gen-usage.md` §Stage 6 fields.
