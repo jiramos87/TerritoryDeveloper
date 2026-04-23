@@ -16,8 +16,11 @@ acceptance: |
   - [ ] Score function penalises carved zones as hard-fail
   - [ ] Unit test covers retry trajectory + feature-flag regression
 depends_on:
+  - TECH-723
   - TECH-725
-depends_on_raw: TECH-725 — compute_envelope produces the floor/zones the gate consults
+depends_on_raw: |
+  TECH-725 — compute_envelope produces the floor/zones the gate consults;
+  TECH-723 — ships `_diff_vary_leaves` helper used by `_score_variant` to recover `vary_values` from `sample_variant`.
 related:
   - TECH-727
 created: 2026-04-23

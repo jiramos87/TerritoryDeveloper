@@ -69,7 +69,7 @@ $ python3 -m src.curate log-promote renders/residential_small__variant3.png
 
 - New `log-promote` subparser (sibling of existing `promote` / `reject`).
 - `_measure_variant(path)` → `{bbox, palette_stats}` via Pillow + existing palette module.
-- `_load_vary_values(path)` → read from rendered sprite's metadata sidecar (from Stage 6.3 variant loop).
+- `_load_vary_values(path)` → parse `variant_idx` from filename (e.g. `residential_small__variant3.png` → `3`), load spec YAML, invoke `compose.sample_variant(spec, variant_idx)`, diff sampled-vs-base spec to extract the concrete `vary:` values that went into that render. Zero extra files on disk; leans on TECH-711's already-deterministic `sample_variant` (split seeds + `seed_scope`).
 - `_append_jsonl(row, target_path)` → open with `a`, write `json.dumps(row)+"\n"`; create file if missing.
 
 ## 6. Decision Log
@@ -77,7 +77,7 @@ $ python3 -m src.curate log-promote renders/residential_small__variant3.png
 | Date | Decision | Rationale | Alternatives |
 |------|----------|-----------|--------------|
 | 2026-04-23 | Append-only JSONL | Trivial to diff + aggregate; history preserved by construction | SQLite — rejected, over-engineering |
-| 2026-04-23 | `vary_values` sourced from sidecar, not re-sampled | Avoids drift between render and curator | Re-sample from spec + seed — rejected, non-trivial |
+| 2026-04-23 | `vary_values` re-sampled via `compose.sample_variant(spec, variant_idx)` | TECH-711 already made `sample_variant` deterministic (split seeds + `seed_scope`); re-sampling a deterministic function from the same inputs produces the same output — no drift possible. Zero extra files on disk; no Stage 6.3 retro-fit. | Emit `<variant>.meta.json` sidecar at render time — rejected, requires a Stage 6.3 retro-fit (sidecar writer never shipped there) and duplicates info already recoverable from `(spec, palette_seed, geometry_seed, variant_idx)`. |
 | 2026-04-23 | Verb name `log-promote` (not `promote`) | Avoid collision with existing `promote` (TECH-179 PNG→Unity ship); keep shipping + logging as orthogonal curator verbs | `promote` — rejected, collision; `curate-accept` — rejected, redundant given parent module is `curate` |
 
 ## 7. Implementation Plan
@@ -143,10 +143,28 @@ Log a rendered variant into a curator-approved JSONL feed that downstream aggreg
 
 ```python
 # tools/sprite-gen/src/curate.py (excerpt)
-import json, time
+import json, re, time
 from pathlib import Path
+from .compose import sample_variant
+from .spec import load_spec
 
 _PROMOTED = Path("curation/promoted.jsonl")
+_VARIANT_RE = re.compile(r"(.+)__variant(\d+)\.png$")
+
+def _resolve_spec_and_idx(variant_path: str) -> tuple[dict, int]:
+    """Map `renders/{archetype}__variant{idx}.png` → (spec_dict, idx)."""
+    name = Path(variant_path).name
+    m = _VARIANT_RE.match(name)
+    if not m:
+        raise ValueError(f"not a variant PNG: {variant_path}")
+    archetype, idx = m.group(1), int(m.group(2))
+    return load_spec(Path(f"specs/{archetype}.yaml")), idx
+
+def _load_vary_values(variant_path: str) -> dict:
+    """Re-sample via deterministic `sample_variant` — zero extra files."""
+    spec, idx = _resolve_spec_and_idx(variant_path)
+    sampled = sample_variant(spec, idx)
+    return _diff_vary_leaves(spec, sampled)
 
 def _append_jsonl(row: dict, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -181,11 +199,11 @@ def log_promote(variant_path: str) -> None:
 cd tools/sprite-gen && python3 -m src.curate log-promote --help
 ```
 
-#### Step 2 — Measurement + sidecar read helpers
+#### Step 2 — Measurement + re-sample helpers
 
 **Edits:**
 
-- Same file — `_measure_variant`, `_load_vary_values`.
+- Same file — `_measure_variant`, `_resolve_spec_and_idx` (filename parser), `_load_vary_values` (re-sample via `compose.sample_variant`), `_diff_vary_leaves` (pull concrete values from sampled spec).
 
 **Gate:**
 
@@ -209,7 +227,8 @@ cd tools/sprite-gen && python3 -m pytest tests/test_curate.py -q
 
 ## Open Questions (resolve before / during implementation)
 
-1. Sidecar metadata file format — confirm from Stage 6.3 (TECH-711 variant loop). **Resolution:** read whatever `<variant>.meta.json` is emitted by composer; if Stage 6.3 didn't ship one, TECH-723 gets first-mover rights on schema.
+1. ~~Sidecar metadata file format — confirm from Stage 6.3 (TECH-711 variant loop).~~ **Resolved 2026-04-23:** Stage 6.3 never shipped a sidecar (scope check: master plan lines 893–1083; skill gap — master-plan-new / stage-file-planner didn't cross-check that Stage 6.5's TECH-723 depends on sidecar that Stage 6.3 doesn't emit — logged for `/skill-train`). TECH-723 switches to re-sample via `compose.sample_variant(spec, variant_idx)` — deterministic, zero-file. Filename pattern: `{archetype}__variant{idx}.png`; parser: `re.search(r"__variant(\d+)\.png$", path)`.
+2. Spec lookup — given a variant PNG path, how to find the owning spec YAML? **Resolution:** path convention is `renders/{archetype}__variant{idx}.png`; spec lives at `specs/{archetype}.yaml`. Add `_resolve_spec_path(variant_path)` helper that mirrors this mapping.
 
 ---
 

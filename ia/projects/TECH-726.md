@@ -70,16 +70,25 @@ compose.render(spec, envelope=env, retry_cap=5)
 ### 5.2 Architecture / implementation
 
 - `_score_variant(variant, envelope)` → `{score: float, failing_zones: list[str]}`.
-- Score = 1.0 − mean-normalized-distance-from-centroid across axes; `0.0` if any axis hits carved zone.
-- Retry loop: while `attempt < retry_cap and score < floor`: advance seed; re-sample; re-render; re-score.
+- **Score contract (pinned):**
+  - **Inputs per variant:** sampled `vary_values` (recovered via `compose.sample_variant(spec, variant_idx)` — same mechanism as TECH-723 `_load_vary_values`).
+  - **Per-axis normalized deviation** `d_a`: for each leaf axis `a` with envelope `{min, max}` and sampled value `v_a`, compute centroid `c_a = (min+max)/2`, half-range `h_a = (max-min)/2`, then `d_a = abs(v_a - c_a) / h_a` clamped to `[0, 1]` (degenerate `h_a = 0` → `d_a = 0`).
+  - **Aggregate metric:** L2 Euclidean mean — `L2 = sqrt(sum(d_a^2) / n_axes)`. Stays in `[0, 1]`; penalizes single large deviations more than an L1 mean would.
+  - **Score:** `1.0 - L2` (higher = closer to centroid = better).
+  - **Carved-zone hard-fail:** if any axis in `failing_zones` (computed via TECH-725 `REASON_AXIS_MAP` / floor-and-ceiling comparison against `env[axis][bound]`), return `{"score": 0.0, "failing_zones": [...]}` short-circuit before L2 math.
+- **Floor** `_FLOOR = 0.5` — module-level constant (revisitable via TECH-728 fixture retry-rate distribution); `gate_enabled=False` feature flag (default off) bypasses the gate entirely and renders identically to pre-Stage-6.5.
+- Retry loop: while `attempt < retry_cap and score < _FLOOR`: advance seed (`palette_seed + variant_idx * (retry_cap + 1) + retry`); re-sample via `sample_variant`; re-render via `compose_sprite`; re-score.
 
 ## 6. Decision Log
 
 | Date | Decision | Rationale | Alternatives |
 |------|----------|-----------|--------------|
 | 2026-04-23 | Hard-fail on carved zones | Carve-outs are "known bad"; don't soft-score them | Soft penalty — rejected, defeats reason-carve semantics |
-| 2026-04-23 | Feature-flag gate | Back-compat before Stage 6.5 merges everywhere | Unconditional — rejected, breaks golden PNGs before curation dataset exists |
+| 2026-04-23 | Feature-flag gate (`gate_enabled=False` default) | Back-compat before Stage 6.5 merges everywhere | Unconditional — rejected, breaks golden PNGs before curation dataset exists |
 | 2026-04-23 | Seed = `palette_seed + variant_index * (N+1) + retry` | Distinct across (variant, retry) pairs | `palette_seed + retry` — rejected, crosses variant boundaries |
+| 2026-04-23 | L2 Euclidean aggregate (per-axis normalized, `[0, 1]`) | Penalizes a single large axis deviation more than L1 would; stays bounded so `_FLOOR = 0.5` has consistent semantics across axis count | L1 mean — rejected, masks single-axis outliers; Chebyshev — rejected, overreacts to one noisy axis |
+| 2026-04-23 | `_FLOOR = 0.5` starting value | Permissive enough to not over-retry on sparse curation data; TECH-728 fixture can calibrate | 0.7 — rejected, likely forces exhaustion before dataset density exists; 0.3 — rejected, gate becomes ineffective |
+| 2026-04-23 | Re-sample `vary_values` via `compose.sample_variant(spec, variant_idx)` | Deterministic; matches TECH-723 `_load_vary_values` mechanism — one source of truth for how vary_values are reconstructed | Track inside render loop — rejected, duplicates sampling state across two code paths |
 
 ## 7. Implementation Plan
 
@@ -124,10 +133,11 @@ Composer picks up an envelope-aware quality gate: sample, render, score, retry �
 
 ### §Acceptance
 
-- [ ] `compose.render(spec, envelope=env, retry_cap=5)` retries below-floor variants up to 5 times
-- [ ] `compose.render(spec, envelope=None)` is byte-identical to pre-change baseline
+- [ ] `compose.render(spec, envelope=env, retry_cap=5, gate_enabled=True)` retries below-floor variants up to 5 times
+- [ ] `compose.render(spec, envelope=None)` and `compose.render(spec, envelope=env, gate_enabled=False)` both yield byte-identical output to pre-Stage-6.5 `compose_sprite(spec)` (existing golden tests pass untouched — parity baseline = current goldens)
 - [ ] Seed advancement: `palette_seed + variant_index * (retry_cap + 1) + retry_index`
-- [ ] Score function returns `0.0` on any carved-zone hit (hard-fail)
+- [ ] Score function: per-axis `d_a = clamp(abs(v_a - c_a) / h_a, 0, 1)`; aggregate `L2 = sqrt(mean(d_a^2))`; `score = 1.0 - L2`; hard-fail `score = 0.0` on any carved-zone hit
+- [ ] `_FLOOR = 0.5` module-level constant
 - [ ] Determinism: same `(spec, envelope, palette_seed)` → same trajectory + same final variant
 - [ ] `pytest tools/sprite-gen/tests/ -q` green
 
@@ -144,33 +154,57 @@ Composer picks up an envelope-aware quality gate: sample, render, score, retry �
 
 ```python
 # tools/sprite-gen/src/compose.py (excerpt)
-def render(spec, *, envelope=None, retry_cap=5, palette_seed=0):
-    for i in range(spec.variants.count):
-        if envelope is None:
-            variant = _render_single(spec, palette_seed=palette_seed + i)
-            yield variant
+import math
+
+_FLOOR = 0.5  # score threshold; below → retry
+
+def render(spec, *, envelope=None, retry_cap=5, gate_enabled=False):
+    """Variant generator. Flag-off or envelope-None → pre-Stage-6.5 path."""
+    palette_seed = int(spec.get("palette_seed", spec.get("seed", 0)) or 0)
+    count = spec.get("variants", {}).get("count", 1)
+    for i in range(count):
+        if envelope is None or not gate_enabled:
+            yield compose_sprite(sample_variant(spec, i))  # byte-identical pre-gate
             continue
         best = None
+        attempts = []
         for retry in range(retry_cap):
             seed = palette_seed + i * (retry_cap + 1) + retry
-            variant = _render_single(spec, palette_seed=seed)
-            score = _score_variant(variant, envelope)
+            spec_i = {**spec, "palette_seed": seed}
+            sampled = sample_variant(spec_i, i)
+            variant = compose_sprite(sampled)
+            vary_values = _diff_vary_leaves(spec_i, sampled)  # same helper as TECH-723
+            score = _score_variant(vary_values, envelope)
+            attempts.append(seed)
             if best is None or score["score"] > best["score"]:
                 best = {"variant": variant, "score": score["score"],
-                        "failing_zones": score["failing_zones"], "retry": retry,
-                        "seed": seed}
+                        "failing_zones": score["failing_zones"],
+                        "retry": retry, "seed": seed, "attempts": list(attempts)}
             if score["score"] >= _FLOOR:
                 yield variant
                 break
         else:
             yield best  # consumed by TECH-727 sidecar path
 
-def _score_variant(variant, envelope) -> dict:
-    failing = _carved_zone_hits(variant, envelope)
+def _score_variant(vary_values: dict, envelope: dict) -> dict:
+    """L2 Euclidean mean of per-axis normalized deviations; hard-fail carved zones."""
+    failing = _carved_zone_hits(vary_values, envelope)
     if failing:
         return {"score": 0.0, "failing_zones": failing}
-    distance = _normalized_distance_from_centroid(variant, envelope)
-    return {"score": 1.0 - distance, "failing_zones": []}
+    squares, n = 0.0, 0
+    for axis_path, v in _walk_leaves(vary_values):
+        bounds = _resolve_env_bounds(envelope, axis_path)
+        if bounds is None:
+            continue
+        lo, hi = bounds["min"], bounds["max"]
+        c, h = (lo + hi) / 2.0, (hi - lo) / 2.0
+        d = 0.0 if h == 0 else min(abs(v - c) / h, 1.0)
+        squares += d * d
+        n += 1
+    if n == 0:
+        return {"score": 1.0, "failing_zones": []}
+    l2 = math.sqrt(squares / n)
+    return {"score": 1.0 - l2, "failing_zones": []}
 ```
 
 ### §Mechanical Steps
@@ -211,7 +245,8 @@ cd tools/sprite-gen && python3 -m pytest tests/ -q
 
 ## Open Questions (resolve before / during implementation)
 
-1. `_FLOOR` value — 0.5? **Resolution:** start at 0.5; revisit once TECH-728 fixtures show retry-rate distribution.
+1. ~~`_FLOOR` value — 0.5?~~ **Resolved 2026-04-23:** `_FLOOR = 0.5` module-level; revisit once TECH-728 fixtures show retry-rate distribution (Acceptance footnote on Stage 6.5 close).
+2. ~~Parity baseline fixture?~~ **Resolved 2026-04-23:** None needed. Flag-off / `envelope=None` path delegates to existing `compose_sprite(sample_variant(spec, i))` unchanged — existing golden-PNG tests act as the parity oracle. Test `test_flag_off_byte_identical` = assert new `render` generator with flag off yields pixels equal to direct `compose_sprite(sample_variant(spec, i))` for each variant.
 
 ---
 
