@@ -274,3 +274,83 @@ def test_include_in_signature_honours_explicit_true(tmp_path):
     p = _write_yaml(tmp_path, spec)
     d = load_spec(p)
     assert d["include_in_signature"] is True
+
+
+# ---------------------------------------------------------------------------
+# TECH-709 — placement schema (building.footprint_px / padding / align)
+# ---------------------------------------------------------------------------
+
+
+def _spec_with_building(**building_fields) -> dict:
+    spec = _minimal_spec()
+    spec["building"] = {
+        "composition": [{"type": "iso_cube", "w": 1, "d": 1, "h": 8, "material": "m"}],
+        **building_fields,
+    }
+    return spec
+
+
+def test_placement_defaults(tmp_path):
+    """Spec without placement fields normalises to defaults."""
+    spec = _spec_with_building()
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["building"]["padding"] == {"n": 0, "e": 0, "s": 0, "w": 0}
+    assert d["building"]["align"] == "center"
+    assert "footprint_px" not in d["building"]
+
+
+def test_placement_explicit(tmp_path):
+    spec = _spec_with_building(
+        footprint_px=[28, 28],
+        padding={"n": 1, "e": 2, "s": 3, "w": 4},
+        align="sw",
+    )
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["building"]["footprint_px"] == [28, 28]
+    assert d["building"]["padding"] == {"n": 1, "e": 2, "s": 3, "w": 4}
+    assert d["building"]["align"] == "sw"
+
+
+def test_placement_padding_partial_fills_defaults(tmp_path):
+    spec = _spec_with_building(padding={"s": 10})
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["building"]["padding"] == {"n": 0, "e": 0, "s": 10, "w": 0}
+
+
+def test_align_invalid(tmp_path):
+    spec = _spec_with_building(align="diagonal")
+    p = _write_yaml(tmp_path, spec)
+    with pytest.raises(SpecValidationError) as exc_info:
+        load_spec(p)
+    assert exc_info.value.field == "building.align"
+
+
+def test_padding_non_int_raises(tmp_path):
+    spec = _spec_with_building(padding={"n": "10px"})
+    p = _write_yaml(tmp_path, spec)
+    with pytest.raises(SpecValidationError) as exc_info:
+        load_spec(p)
+    assert exc_info.value.field == "building.padding"
+
+
+def test_footprint_px_bad_shape_raises(tmp_path):
+    spec = _spec_with_building(footprint_px=[28])
+    p = _write_yaml(tmp_path, spec)
+    with pytest.raises(SpecValidationError) as exc_info:
+        load_spec(p)
+    assert exc_info.value.field == "building.footprint_px"
+
+
+def test_footprint_conflict_warn(tmp_path):
+    spec = _spec_with_building(
+        footprint_px=[28, 28],
+        footprint_ratio=[0.45, 0.45],
+    )
+    p = _write_yaml(tmp_path, spec)
+    with pytest.warns(DeprecationWarning, match="footprint_px wins"):
+        d = load_spec(p)
+    assert d["building"]["footprint_px"] == [28, 28]
+    assert d["building"]["footprint_ratio"] == [0.45, 0.45]

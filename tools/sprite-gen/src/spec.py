@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Union
 
 import yaml
+
+# TECH-709 — valid alignment anchors for `building.align`.
+_VALID_ALIGNS: frozenset[str] = frozenset(
+    {"center", "sw", "ne", "nw", "se", "custom"}
+)
 
 # Required keys: (key_name, expected_type)
 REQUIRED_KEYS: list[tuple[str, type]] = [
@@ -122,7 +128,90 @@ def load_spec(path: Union[str, Path]) -> dict:
                 message=f"field 'composition[{i}]' missing required key 'type'",
             )
 
+    # TECH-709 — placement schema additions (building.footprint_px / padding / align).
+    building = data.get("building")
+    if isinstance(building, dict):
+        data["building"] = _normalize_building_placement(building)
+
     return data
+
+
+# ---------------------------------------------------------------------------
+# TECH-709 — placement-field normalization (building.footprint_px, padding, align)
+# ---------------------------------------------------------------------------
+
+
+def _normalize_building_placement(building: dict) -> dict:
+    """Normalise `building.padding` / `building.align` + warn on footprint conflict.
+
+    In-place on the supplied dict; returns the same reference for chaining.
+
+    Behaviour:
+        - `padding` default `{n:0, e:0, s:0, w:0}`; missing subkeys default to 0.
+        - `padding` values must be ints; `SpecValidationError` raised otherwise.
+        - `align` default `center`; non-enum raises `SpecValidationError`.
+        - Both `footprint_px` and `footprint_ratio` present → `DeprecationWarning`.
+        - `footprint_px` passes through when set but must be a 2-element list.
+    """
+    # padding: concrete 4-key dict (consumers never need None-checks).
+    raw_padding = building.get("padding") or {}
+    if not isinstance(raw_padding, dict):
+        raise SpecValidationError(
+            field="building.padding",
+            message=(
+                f"field 'building.padding' must be dict, got {type(raw_padding).__name__}"
+            ),
+        )
+    normalised_padding: dict[str, int] = {}
+    for side in ("n", "e", "s", "w"):
+        value = raw_padding.get(side, 0)
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise SpecValidationError(
+                field="building.padding",
+                message=(
+                    f"field 'building.padding.{side}' must be int, "
+                    f"got {type(value).__name__}"
+                ),
+            )
+        normalised_padding[side] = int(value)
+    building["padding"] = normalised_padding
+
+    # align: enum validation with default center.
+    align = building.get("align", "center")
+    if align not in _VALID_ALIGNS:
+        raise SpecValidationError(
+            field="building.align",
+            message=(
+                f"building.align={align!r} not in {sorted(_VALID_ALIGNS)}"
+            ),
+        )
+    building["align"] = align
+
+    # footprint_px shape guard (optional; passes through when absent).
+    footprint_px = building.get("footprint_px")
+    if footprint_px is not None:
+        if (
+            not isinstance(footprint_px, list)
+            or len(footprint_px) != 2
+            or not all(isinstance(v, int) and not isinstance(v, bool) for v in footprint_px)
+        ):
+            raise SpecValidationError(
+                field="building.footprint_px",
+                message=(
+                    "field 'building.footprint_px' must be a 2-element list of ints, "
+                    f"got {footprint_px!r}"
+                ),
+            )
+
+    # Conflict warning: `footprint_px` + `footprint_ratio` both set.
+    if "footprint_px" in building and "footprint_ratio" in building:
+        warnings.warn(
+            "building.footprint_px wins over footprint_ratio; drop one.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+    return building
 
 
 # --- Stage 6 — class defaults (DAS §4.2 + §2.5) ---
