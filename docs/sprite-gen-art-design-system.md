@@ -123,6 +123,10 @@ Every 1×1 sprite's ground diamond: `bbox = y0=15, h=33, w=64` — a **32 px tal
 | commercial_strip (2×2) | 0.8 × 0.5 | sides only |
 | industrial_heavy (3×3) | 0.7 × 0.7 cluster | paved yard + roads |
 
+### 2.6 Calibration signatures
+
+Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `tools/sprite-gen/src/signature.py` (Stage 6.2, TECH-704..708). Envelopes there supersede the ad-hoc per-spec bounds previously asserted in `tests/test_scale_calibration.py`.
+
 ---
 
 ## 3. Visual style cues per category
