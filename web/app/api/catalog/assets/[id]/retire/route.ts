@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 /**
- * @see `ia/projects/TECH-645.md` — `POST /api/catalog/assets/:id/retire`
+ * @see `ia/rules/web-backend-logic.md#retire-idempotency` — `POST /api/catalog/assets/:id/retire`
  */
 export async function POST(request: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -35,9 +35,12 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   const sql = getSql();
   try {
     if (rep != null) {
-      const ex = await sql`select 1 from catalog_asset where id = ${rep} limit 1`;
+      const ex = await sql`select status from catalog_asset where id = ${rep} limit 1`;
       if (ex.length === 0) {
-        return catalogJsonError(404, "not_found", "replaced_by asset not found");
+        return catalogJsonError(409, "conflict", "replaced_by asset not found");
+      }
+      if ((ex[0] as { status: string }).status === "retired") {
+        return catalogJsonError(409, "conflict", "replaced_by asset is retired");
       }
     }
     const [r] = await sql`
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
     if (!r) {
       return catalogJsonError(404, "not_found", "Asset not found");
     }
-    const out = await loadCatalogAssetById(id);
+    const out = await loadCatalogAssetById(id, { includeRetired: true });
     if (out === "notfound" || out === "badid") {
       return catalogJsonError(500, "internal", "Read after retire failed", { logContext: "retire" });
     }

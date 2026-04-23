@@ -13,12 +13,15 @@ import {
  */
 export async function loadCatalogAssetById(
   idParam: string,
+  opts: { includeRetired?: boolean } = {},
 ): Promise<CatalogAssetByIdResult | "notfound" | "badid"> {
   if (!/^\d{1,32}$/.test(idParam)) return "badid";
   const idNum = Number(idParam);
   if (!Number.isSafeInteger(idNum) || idNum < 1) return "badid";
   const sql = getSql();
-  const ar = await sql`select * from catalog_asset where id = ${idNum} limit 1`;
+  const ar = opts.includeRetired
+    ? await sql`select * from catalog_asset where id = ${idNum} limit 1`
+    : await sql`select * from catalog_asset where id = ${idNum} and status != 'retired' limit 1`;
   if (ar.length === 0) return "notfound";
   const asset = mapRowToCatalogAsset(ar[0] as never);
   const ecoRows = await sql`select * from catalog_economy where asset_id = ${idNum} limit 1`;

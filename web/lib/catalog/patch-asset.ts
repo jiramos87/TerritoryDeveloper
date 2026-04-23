@@ -1,7 +1,13 @@
 import { getSql } from "@/lib/db/client";
 import type { CatalogPatchAssetBody } from "@/types/api/catalog-api";
-import { mapRowToCatalogAsset, mapRowToEconomy } from "@/lib/catalog/row-mappers";
+import {
+  mapRowToAssetSprite,
+  mapRowToCatalogAsset,
+  mapRowToEconomy,
+  mapRowToSprite,
+} from "@/lib/catalog/row-mappers";
 import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
+import type { CatalogAssetByIdResult } from "@/types/api/catalog-asset-by-id";
 
 type PatchOk = {
   ok: true;
@@ -11,10 +17,25 @@ type PatchOutcome =
   | PatchOk
   | { ok: "notfound" }
   | { ok: "badid" }
+  | { ok: "no_fields" }
+  | { ok: "unknown_fields"; unknownFields: string[] }
   | {
       ok: "conflict";
       current: NonNullable<Exclude<Awaited<ReturnType<typeof loadCatalogAssetById>>, "notfound" | "badid">>;
     };
+
+const ALLOWED_PATCH_KEYS = new Set([
+  "updated_at",
+  "display_name",
+  "status",
+  "replaced_by",
+  "footprint_w",
+  "footprint_h",
+  "placement_mode",
+  "unlocks_after",
+  "has_button",
+  "economy",
+]);
 
 /**
  * @see `ia/projects/TECH-644.md` — `UPDATE` with `where id` + `updated_at` match; 0 rows → 409.
@@ -29,9 +50,13 @@ export async function patchCatalogAsset(
   if (!body.updated_at || typeof body.updated_at !== "string") {
     return { ok: "badid" };
   }
+  const unknownFields = Object.keys(body).filter((k) => !ALLOWED_PATCH_KEYS.has(k));
+  if (unknownFields.length > 0) {
+    return { ok: "unknown_fields", unknownFields };
+  }
   const { updated_at: _v, ...rest } = body;
   if (Object.keys(rest).length === 0) {
-    return { ok: "badid" };
+    return { ok: "no_fields" };
   }
   const sql = getSql();
   return await sql.begin(async (tx) => {
@@ -114,10 +139,64 @@ export async function patchCatalogAsset(
         where asset_id = ${idNum}
       `;
     }
-    const composite = await loadCatalogAssetById(idParam);
-    if (composite === "notfound" || composite === "badid") {
-      return { ok: "notfound" as const };
-    }
+    // Bug 7 (TECH-756): Build composite inline from `tx` so the response reflects
+    // the just-applied UPDATE. Calling `loadCatalogAssetById(idParam)` here would
+    // open a fresh pool connection outside this txn (READ COMMITTED → stale snapshot).
+    const asset = mapRowToCatalogAsset(urow as never);
+    const ecoRows = await tx`select * from catalog_economy where asset_id = ${idNum} limit 1`;
+    const economy = ecoRows[0] ? mapRowToEconomy(ecoRows[0] as never) : null;
+    const slotRows = await tx`
+      select
+        cas.asset_id,
+        cas.sprite_id,
+        cas.slot,
+        spr.id,
+        spr.path,
+        spr.ppu,
+        spr.pivot_x,
+        spr.pivot_y,
+        spr.provenance,
+        spr.generator_archetype_id,
+        spr.generator_build_fingerprint,
+        spr.art_revision
+      from catalog_asset_sprite cas
+      inner join catalog_sprite spr on spr.id = cas.sprite_id
+      where cas.asset_id = ${idNum}
+    `;
+    const sprite_slots: CatalogAssetByIdResult["sprite_slots"] = (
+      slotRows as unknown as Array<{
+        asset_id: string | number | bigint;
+        sprite_id: string | number | bigint;
+        slot: string;
+        id: string | number | bigint;
+        path: string;
+        ppu: number;
+        pivot_x: number;
+        pivot_y: number;
+        provenance: string;
+        generator_archetype_id: string | null;
+        generator_build_fingerprint: string | null;
+        art_revision: number;
+      }>
+    ).map((r) => ({
+      binding: mapRowToAssetSprite({
+        asset_id: r.asset_id,
+        sprite_id: r.sprite_id,
+        slot: r.slot,
+      }),
+      sprite: mapRowToSprite({
+        id: r.id,
+        path: r.path,
+        ppu: r.ppu,
+        pivot_x: r.pivot_x,
+        pivot_y: r.pivot_y,
+        provenance: r.provenance,
+        generator_archetype_id: r.generator_archetype_id,
+        generator_build_fingerprint: r.generator_build_fingerprint,
+        art_revision: r.art_revision,
+      }),
+    }));
+    const composite: CatalogAssetByIdResult = { asset, economy, sprite_slots };
     return { ok: true, composite } satisfies PatchOk;
   });
 }

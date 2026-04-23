@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
 import { computeCatalogAssetPreview } from "@/lib/catalog/preview-diff";
-import { catalogJsonError } from "@/lib/catalog/catalog-api-errors";
+import { catalogJsonError, responseFromPostgresError } from "@/lib/catalog/catalog-api-errors";
 import type { CatalogPreviewDiffRequest } from "@/types/api/catalog-api";
 
 export const dynamic = "force-dynamic";
 
 /**
- * @see `ia/projects/TECH-645.md` — `POST /api/catalog/preview-diff` (read-only; no `INSERT`/`UPDATE`).
+ * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `POST /api/catalog/preview-diff` (read-only; no `INSERT`/`UPDATE`).
  */
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -34,6 +34,6 @@ export async function POST(request: NextRequest) {
     if (e instanceof Error && e.message === "DATABASE_URL not set — required for DB access.") {
       return catalogJsonError(500, "internal", "Database not configured", { logContext: "preview" });
     }
-    throw e;
+    return responseFromPostgresError(e, "Preview diff failed");
   }
 }

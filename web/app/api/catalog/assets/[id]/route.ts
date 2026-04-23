@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 /**
- * @see `ia/projects/TECH-641.md` — `GET /api/catalog/assets/:id`
+ * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `GET /api/catalog/assets/:id`
  */
 export async function GET(_request: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest, ctx: Ctx) {
 }
 
 /**
- * @see `ia/projects/TECH-644.md` — `PATCH /api/catalog/assets/:id`
+ * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `PATCH /api/catalog/assets/:id`
  */
 export async function PATCH(request: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -44,7 +44,15 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
   try {
     const out = await patchCatalogAsset(id, body as CatalogPatchAssetBody);
     if (out.ok === "badid") {
-      return catalogJsonError(400, "bad_request", "Invalid id or body (need updated_at + one field to patch)");
+      return catalogJsonError(400, "bad_request", "Invalid id or updated_at (need valid numeric id + ISO updated_at)");
+    }
+    if (out.ok === "unknown_fields") {
+      return catalogJsonError(400, "bad_request", "PATCH body contains unknown fields", {
+        details: { unknown_fields: out.unknownFields },
+      });
+    }
+    if (out.ok === "no_fields") {
+      return catalogJsonError(400, "bad_request", "PATCH body must include at least one field to update");
     }
     if (out.ok === "notfound") {
       return catalogJsonError(404, "not_found", "Asset not found");

@@ -40,6 +40,34 @@ Scope: `web/` Next.js workspace (App Router).
 | Count tasks by status → totals | Display `done / total` from props |
 | Aggregate cross-plan metrics | Render a number passed in |
 
+## Pagination contract
+
+`GET /api/catalog/assets` uses keyset (cursor) pagination on `bigserial id`, ascending:
+
+- Query params: `limit` (default 200, range 1–500), `cursor` (numeric id string; scans `id > cursor`).
+- Response: `{ assets: CatalogAsset[], next_cursor: string | null, limit: number }`.
+- `next_cursor` is the last row id when `assets.length === limit`, else `null` (exhausted).
+- See `web/lib/catalog/parse-list-query.ts` + `web/app/api/catalog/assets/route.ts`.
+
+## Error-response envelope
+
+All `/api/catalog/*` routes emit errors via `web/lib/catalog/catalog-api-errors.ts` helpers:
+
+- `catalogJsonError(status, code, message, { details?, current?, logContext? })`.
+- `responseFromPostgresError(e, fallback)` maps `23505 → 409 unique_violation`, `23503 → 400 foreign_key_violation`, `22P02 → 400 bad_request`, else `500 internal`.
+- Response body: `{ error: string, code: CatalogErrorCode, details?: unknown, current?: unknown }` — no stack traces in body.
+- `CatalogErrorCode` enum: `bad_request | not_found | conflict | internal | unique_violation | foreign_key_violation`.
+
+## Retire idempotency
+
+`POST /api/catalog/assets/:id/retire`:
+
+- Empty body valid: retires asset with `replaced_by = null`.
+- `replaced_by` missing id → 409 `conflict` (not 404 — 404 reserved for the primary `:id`).
+- `replaced_by` references a retired asset → 409 `conflict`.
+- `replaced_by === :id` (self) → 400 `bad_request`.
+- Re-retiring an already-retired asset returns 200 with the current composite (idempotent).
+
 ## Relation to other rules
 
 - Caveman / English boundary: `ia/rules/agent-output-caveman.md` §exceptions — user-facing copy under `web/content/**` + page-body strings stay full English.

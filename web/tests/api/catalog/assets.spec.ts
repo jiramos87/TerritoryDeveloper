@@ -109,14 +109,11 @@ describe("catalog api happy path (published only)", () => {
       { id },
     );
     expect(res.status).toBe(200);
-    // NOTE: Bug 7 (post-PATCH composite stale) — `patchCatalogAsset` re-reads via
-    // `loadCatalogAssetById` using `getSql()` instead of the enclosing `tx`, so the
-    // response body contains pre-UPDATE state. Owned by TECH-756 follow-up. Happy
-    // path verifies persistence via a subsequent GET round-trip instead.
-    const postRes = await invokeRoute(byIdGet, "GET", `/api/catalog/assets/${id}`, undefined, { id });
-    expect(postRes.status).toBe(200);
-    const post = (await postRes.json()) as { asset: { display_name: string } };
-    expect(post.asset.display_name).toBe("patched");
+    // Bug 7 fixed in TECH-756: PATCH response now reflects the just-applied UPDATE
+    // (inline composite build from `tx`, no out-of-txn re-read). Strict regression in
+    // bugs.spec.ts → catalog_patch_response_reflects_updated_fields_no_round_trip.
+    const out = (await res.json()) as { asset: { display_name: string } };
+    expect(out.asset.display_name).toBe("patched");
   });
 
   test("catalog_retire_returns_200_with_null_replaced_by", async () => {

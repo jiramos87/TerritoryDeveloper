@@ -25,7 +25,7 @@ function statusFragment(sql: Sql, opts: { includeDraft: boolean; statusFilter: s
 }
 
 /**
- * @see `ia/projects/TECH-640.md` — `GET /api/catalog/assets`
+ * @see `ia/rules/web-backend-logic.md#pagination-contract` — `GET /api/catalog/assets`
  */
 export async function GET(request: NextRequest) {
   const parsed = parseListQueryParams(request.nextUrl.searchParams);
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * @see `ia/projects/TECH-643.md` — `POST /api/catalog/assets`
+ * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `POST /api/catalog/assets`
  */
 export async function POST(request: NextRequest) {
   let body: unknown;
