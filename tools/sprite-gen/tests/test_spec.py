@@ -247,3 +247,30 @@ def test_load_spec_r11_building_composition(tmp_path):
     assert d["class"] == "residential_small"
     assert d["building"]["footprint_ratio"] == [0.45, 0.45]
     assert d["composition"][0]["type"] == "iso_cube"
+
+
+# ---------------------------------------------------------------------------
+# TECH-706 — include_in_signature per-spec override
+# ---------------------------------------------------------------------------
+
+
+def test_include_in_signature_defaults_true(tmp_path):
+    p = _write_yaml(tmp_path, _minimal_spec())
+    d = load_spec(p)
+    assert d["include_in_signature"] is True
+
+
+def test_include_in_signature_honours_false(tmp_path):
+    spec = _minimal_spec()
+    spec["include_in_signature"] = False
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["include_in_signature"] is False
+
+
+def test_include_in_signature_honours_explicit_true(tmp_path):
+    spec = _minimal_spec()
+    spec["include_in_signature"] = True
+    p = _write_yaml(tmp_path, spec)
+    d = load_spec(p)
+    assert d["include_in_signature"] is True

@@ -73,6 +73,11 @@ def load_spec(path: Union[str, Path]) -> dict:
         if isinstance(bc, list):
             data = {**data, "composition": bc}
 
+    # TECH-706: Stage 6.2 per-sprite opt-out from signature ingestion.
+    # Default True so existing specs behave identically; signature refresh
+    # filters out sprites whose source YAML sets this to False.
+    data.setdefault("include_in_signature", True)
+
     # Required-key presence + type checks
     for key, expected_type in REQUIRED_KEYS:
         if key not in data:
