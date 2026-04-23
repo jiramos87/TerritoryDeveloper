@@ -465,3 +465,136 @@ def test_compose_levels_stacks_wall():
     assert img.getbbox() is not None
     # Second band sits above first (higher in image = lower y) — more opaque rows than one wall.
     assert img.size[1] == 64
+
+
+# ---------------------------------------------------------------------------
+# TECH-711 — resolve_building_box + sample_variant
+# ---------------------------------------------------------------------------
+
+from src.compose import resolve_building_box, sample_variant
+
+
+def test_resolve_building_box_center_default():
+    """Legacy spec (no placement fields, align defaults center) → offsets (0,0)."""
+    spec = {"class": "residential_small", "footprint": [1, 1]}
+    bx, by, ox, oy = resolve_building_box(spec)
+    # 64x64 canvas * 0.45 ratio → 29
+    assert (bx, by) == (29, 29)
+    assert (ox, oy) == (0, 0)
+
+
+def test_resolve_building_box_footprint_px_wins():
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "building": {
+            "footprint_px": [28, 28],
+            "footprint_ratio": [0.9, 0.9],
+            "padding": {"n": 0, "e": 0, "s": 0, "w": 0},
+            "align": "center",
+        },
+    }
+    bx, by, _, _ = resolve_building_box(spec)
+    assert (bx, by) == (28, 28)
+
+
+def test_resolve_building_box_sw_anchor():
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "building": {
+            "footprint_px": [28, 28],
+            "padding": {"n": 0, "e": 0, "s": 0, "w": 0},
+            "align": "sw",
+        },
+    }
+    _, _, ox, oy = resolve_building_box(spec)
+    # 64 - 28 = 36; half = 18 → (-18, +18)
+    assert (ox, oy) == (-18, 18)
+
+
+def test_resolve_building_box_padding_shifts_north():
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "building": {
+            "footprint_px": [28, 28],
+            "padding": {"n": 0, "e": 0, "s": 10, "w": 0},
+            "align": "center",
+        },
+    }
+    _, _, ox, oy = resolve_building_box(spec)
+    # south padding shifts building north (negative y).
+    assert ox == 0
+    assert oy == -10
+
+
+def test_sample_variant_legacy_no_vary_returns_copy():
+    """Spec without `variants.vary` → deep copy, no mutation."""
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "variants": {"count": 4, "vary": {}, "seed_scope": "palette"},
+        "palette_seed": 1,
+        "geometry_seed": 2,
+    }
+    out = sample_variant(spec, 0)
+    assert out == spec
+    assert out is not spec  # deep copy
+
+
+def test_sample_variant_geometry_scope_samples_geometry_axis():
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "variants": {
+            "count": 4,
+            "vary": {"roof": {"h_px": {"min": 6, "max": 14}}},
+            "seed_scope": "geometry",
+        },
+        "palette_seed": 999,
+        "geometry_seed": 42,
+    }
+    out0 = sample_variant(spec, 0)
+    out1 = sample_variant(spec, 1)
+    # Each variant gets a concrete int in range
+    v0 = out0["roof"]["h_px"]
+    v1 = out1["roof"]["h_px"]
+    assert 6 <= v0 <= 14
+    assert 6 <= v1 <= 14
+
+
+def test_sample_variant_deterministic():
+    """Same spec + same idx → identical sampled spec across runs."""
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "variants": {
+            "count": 4,
+            "vary": {"roof": {"h_px": {"min": 6, "max": 14}}},
+            "seed_scope": "geometry",
+        },
+        "palette_seed": 1,
+        "geometry_seed": 7,
+    }
+    a = sample_variant(spec, 2)
+    b = sample_variant(spec, 2)
+    assert a["roof"]["h_px"] == b["roof"]["h_px"]
+
+
+def test_sample_variant_split_seed_palette_scope_ignores_geometry_axis():
+    """seed_scope=palette → geometry-classified axes are NOT resampled."""
+    spec = {
+        "class": "residential_small",
+        "footprint": [1, 1],
+        "variants": {
+            "count": 4,
+            "vary": {"roof": {"h_px": {"min": 6, "max": 14}}},
+            "seed_scope": "palette",
+        },
+        "palette_seed": 1,
+        "geometry_seed": 2,
+    }
+    out = sample_variant(spec, 0)
+    # Geometry axis untouched → roof key absent from output
+    assert "roof" not in out or "h_px" not in out.get("roof", {})

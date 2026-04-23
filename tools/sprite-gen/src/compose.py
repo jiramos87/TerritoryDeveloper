@@ -36,6 +36,9 @@ Reference:
 
 from __future__ import annotations
 
+import copy
+from random import Random
+
 from PIL import Image
 
 from .canvas import canvas_size
@@ -352,3 +355,179 @@ def compose_layers(spec: dict) -> tuple[dict[str, Image.Image], tuple[int, int]]
         layers[face] = flat.copy()
 
     return layers, (w_px, h_px)
+
+
+# ---------------------------------------------------------------------------
+# TECH-711 — pure helpers for placement + variant sampling (Stage 6.3)
+# ---------------------------------------------------------------------------
+
+
+def resolve_building_box(spec: dict) -> tuple[int, int, int, int]:
+    """Return `(bx, by, offset_x, offset_y)` for the building mass.
+
+    Pure function: no I/O, no PIL. Honours `building.footprint_px`
+    (preferred) or falls back to `footprint_ratio` scaled against a 64×64
+    canvas. `align` + `padding` translate into `(offset_x, offset_y)` shift
+    from the default SE-corner anchor.
+
+    Defaults (`align: center`, zero padding) return offsets `(0, 0)` so
+    existing composer paths are byte-identical.
+
+    Args:
+        spec: Validated archetype dict (building subkey optional).
+
+    Returns:
+        Tuple ``(bx, by, offset_x, offset_y)`` — mass box in px and the
+        SE-anchor shift (+x east, +y south) to apply.
+    """
+    canvas_w, canvas_h = spec.get("canvas", [64, 64])
+    building = spec.get("building") or {}
+
+    footprint_px = building.get("footprint_px")
+    if isinstance(footprint_px, (list, tuple)) and len(footprint_px) == 2:
+        bx, by = int(footprint_px[0]), int(footprint_px[1])
+    else:
+        ratio = building.get("footprint_ratio")
+        if ratio is None:
+            wr, dr = default_footprint_ratio_for_class(str(spec.get("class", "")))
+        else:
+            wr, dr = float(ratio[0]), float(ratio[1])
+        bx = int(round(canvas_w * wr))
+        by = int(round(canvas_h * dr))
+
+    align = building.get("align", "center")
+    padding = building.get("padding") or {"n": 0, "e": 0, "s": 0, "w": 0}
+
+    # Default path — align: center + zero padding → no shift (byte-identical).
+    ox, oy = _anchor_offset(align, bx, by, canvas_w, canvas_h)
+    ox += int(padding.get("w", 0)) - int(padding.get("e", 0))
+    oy += int(padding.get("n", 0)) - int(padding.get("s", 0))
+    return bx, by, ox, oy
+
+
+def _anchor_offset(
+    align: str, bx: int, by: int, canvas_w: int, canvas_h: int
+) -> tuple[int, int]:
+    """Map alignment anchor to SE-corner offset deltas.
+
+    `center` returns (0, 0) — composer's existing centering math already
+    places a centered box correctly via the `wr`/`dr` scaling pass, so
+    the helper MUST NOT double-shift for the default path.
+
+    Other anchors compute a deterministic shift from the default centered
+    position:
+        - sw: shift west + south → (-dx, +dy)
+        - se: shift east + south → (+dx, +dy)
+        - nw: shift west + north → (-dx, -dy)
+        - ne: shift east + north → (+dx, -dy)
+    where (dx, dy) = half the leftover canvas space beyond the box.
+    `custom` returns (0, 0); callers supply explicit offsets separately.
+    """
+    if align in ("center", "custom"):
+        return 0, 0
+    dx = max(0, (canvas_w - bx) // 2)
+    dy = max(0, (canvas_h - by) // 2)
+    if align == "sw":
+        return -dx, dy
+    if align == "se":
+        return dx, dy
+    if align == "nw":
+        return -dx, -dy
+    if align == "ne":
+        return dx, -dy
+    return 0, 0
+
+
+def sample_variant(spec: dict, variant_idx: int) -> dict:
+    """Return a deep copy of *spec* with `variants.vary` ranges sampled.
+
+    Uses split seeds (`palette_seed` + `geometry_seed`) + `seed_scope` to
+    decide which rng drives each axis. Back-compat: when no `vary:` entries
+    exist, returns an unchanged deep copy.
+
+    Args:
+        spec: Validated archetype dict (`variants` already normalised to
+            object form by `load_spec`).
+        variant_idx: Zero-based variant index.
+
+    Returns:
+        Deep copy with `vary:` ranges resolved to concrete values written
+        into the corresponding spec fields.
+    """
+    out = copy.deepcopy(spec)
+    variants = out.get("variants")
+    if not isinstance(variants, dict):
+        return out
+    vary = variants.get("vary") or {}
+    if not vary:
+        return out
+
+    palette_seed = int(out.get("palette_seed", out.get("seed", 0)) or 0)
+    geometry_seed = int(out.get("geometry_seed", out.get("seed", 0)) or 0)
+    scope = variants.get("seed_scope", "palette")
+
+    palette_rng = Random(palette_seed + variant_idx)
+    geometry_rng = Random(geometry_seed + variant_idx)
+
+    for path, leaf in _walk_vary(vary, ()):
+        axis_scope = _axis_scope(path)
+        active = scope in ("palette+geometry",) or scope == axis_scope
+        if not active:
+            continue
+        rng = palette_rng if axis_scope == "palette" else geometry_rng
+        value = _sample_leaf(leaf, rng)
+        if value is not None:
+            _set_deep(out, path, value)
+    return out
+
+
+def _walk_vary(node, prefix: tuple):
+    """Yield `(path_tuple, leaf_dict)` for every terminal `{min,max}` or
+    `{values: [...]}` leaf under `vary:`."""
+    if isinstance(node, dict):
+        # Leaf?
+        if ("min" in node and "max" in node) or "values" in node:
+            yield prefix, node
+            return
+        for key, sub in node.items():
+            yield from _walk_vary(sub, prefix + (key,))
+
+
+def _sample_leaf(leaf: dict, rng: Random):
+    if "values" in leaf and isinstance(leaf["values"], list) and leaf["values"]:
+        return rng.choice(leaf["values"])
+    if "min" in leaf and "max" in leaf:
+        lo, hi = leaf["min"], leaf["max"]
+        if isinstance(lo, int) and isinstance(hi, int):
+            return rng.randint(lo, hi)
+        return rng.uniform(float(lo), float(hi))
+    return None
+
+
+def _axis_scope(path: tuple) -> str:
+    """Classify a `vary.` axis as palette or geometry by path root.
+
+    Palette axes: any path whose root is `palette` or `material` or whose
+    leaf name begins with `color`/`hue`/`value`. Everything else is
+    geometry (footprint, roof, padding, …).
+    """
+    if not path:
+        return "geometry"
+    root = path[0]
+    if root in ("palette", "material", "materials"):
+        return "palette"
+    last = path[-1]
+    if any(last.startswith(p) for p in ("color", "hue", "value", "tint")):
+        return "palette"
+    return "geometry"
+
+
+def _set_deep(target: dict, path: tuple, value) -> None:
+    cursor = target
+    for key in path[:-1]:
+        sub = cursor.get(key)
+        if not isinstance(sub, dict):
+            sub = {}
+            cursor[key] = sub
+        cursor = sub
+    cursor[path[-1]] = value
