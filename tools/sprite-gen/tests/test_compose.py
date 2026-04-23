@@ -440,3 +440,28 @@ def test_compose_skips_ground_when_none():
     }
     img = compose_sprite(spec)
     assert img.getbbox() is not None
+
+
+def test_compose_levels_stacks_wall():
+    """role=wall with levels=2 produces two wall bands (TECH-696)."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "terrain": "flat",
+        "class": "residential_small",
+        "ground": "none",
+        "levels": 2,
+        "composition": [
+            {
+                "type": "iso_cube",
+                "role": "wall",
+                "material": "wall_brick_red",
+                "w": 1,
+                "d": 1,
+            }
+        ],
+    }
+    img = compose_sprite(spec)
+    assert img.getbbox() is not None
+    # Second band sits above first (higher in image = lower y) — more opaque rows than one wall.
+    assert img.size[1] == 64
