@@ -15,10 +15,10 @@ Cross-stage note: TECH-734 (`row_houses_3x`, Stage 6.6) was filed with `depends_
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T9.add.1 | [TECH-741](../../ia/projects/TECH-741.md) | Slot name grammar — `tiled-(row\|column)-N` parser | high | — |
-| T9.add.2 | [TECH-742](../../ia/projects/TECH-742.md) | `resolve_slot` distribute N evenly across axis | high | TECH-741 |
-| T9.add.3 | [TECH-743](../../ia/projects/TECH-743.md) | Tests — `test_parametric_slots.py` | high | TECH-741, TECH-742 |
-| T9.add.4 | [TECH-744](../../ia/projects/TECH-744.md) | DAS §5 R11 amendment — parametric slot grammar | medium | TECH-741, TECH-742, TECH-743 |
+| T9.add.1 | [TECH-741](../../ia/backlog-archive/TECH-741.yaml) | Slot name grammar — `tiled-(row\|column)-N` parser | high | — |
+| T9.add.2 | [TECH-742](../../ia/backlog-archive/TECH-742.yaml) | `resolve_slot` distribute N evenly across axis | high | TECH-741 |
+| T9.add.3 | [TECH-743](../../ia/backlog-archive/TECH-743.yaml) | Tests — `test_parametric_slots.py` | high | TECH-741, TECH-742 |
+| T9.add.4 | [TECH-744](../../ia/backlog-archive/TECH-744.yaml) | DAS §5 R11 amendment — parametric slot grammar | medium | TECH-741, TECH-742, TECH-743 |
 
 ## 3. Issue → task map
 

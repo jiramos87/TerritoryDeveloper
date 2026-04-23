@@ -13,10 +13,10 @@ The Stage 7 addendum documents an existing visual-language pattern — the slope
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T7.10.1 | [TECH-745](../../ia/projects/TECH-745.md) | Spec schema — `ground.passthrough` flag | medium | — |
-| T7.10.2 | [TECH-746](../../ia/projects/TECH-746.md) | Composer — inhibit noise + clamp jitter on passthrough tiles | medium | TECH-745 |
-| T7.10.3 | [TECH-747](../../ia/projects/TECH-747.md) | Tests — `test_ground_passthrough.py` | medium | TECH-745, TECH-746 |
-| T7.10.4 | [TECH-748](../../ia/projects/TECH-748.md) | DAS §3 amendment — cross-tile passthrough pattern | low | TECH-745, TECH-746 |
+| T7.10.1 | [TECH-745](../../ia/backlog-archive/TECH-745.yaml) | Spec schema — `ground.passthrough` flag | medium | — |
+| T7.10.2 | [TECH-746](../../ia/backlog-archive/TECH-746.yaml) | Composer — inhibit noise + clamp jitter on passthrough tiles | medium | TECH-745 |
+| T7.10.3 | [TECH-747](../../ia/backlog-archive/TECH-747.yaml) | Tests — `test_ground_passthrough.py` | medium | TECH-745, TECH-746 |
+| T7.10.4 | [TECH-748](../../ia/backlog-archive/TECH-748.yaml) | DAS §3 amendment — cross-tile passthrough pattern | low | TECH-745, TECH-746 |
 
 ## 3. Lock → task map
 

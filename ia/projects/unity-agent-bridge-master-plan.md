@@ -715,7 +715,7 @@ validators: ["materialize-backlog.sh", "npm run validate:all"]
 
 **Backlog state (Step 2):** 0 filed
 
-**Objectives:** Add **localhost** **`HttpListener`** transport (same JSON envelope as **`agent_bridge_job`** commands) for sub-second round-trips. Extend observability: log forwarding, screenshot / health **`kind`** hardening per analysis **Phase B** / §5.
+**Objectives:** Add **localhost** **`HttpListener`** transport (same JSON envelope as **`agent_bridge_job`** commands) for sub-second round-trips. Extend observability: log forwarding, screenshot / health **`kind`** hardening per analysis **Phase B** / §5. **Editor-only assembly** (`Assets/Scripts/Editor/`); no runtime / player-build code path (analysis §4 line 52). Consistent with `docs/db-boundaries.md` — Unity runtime never talks to Postgres directly; bridge stays Editor-dev surface.
 
 **Exit criteria:**
 
@@ -746,6 +746,7 @@ validators: ["materialize-backlog.sh", "npm run validate:all"]
 - Default port **7780** (configurable **`EditorPrefs`**) with conflict detection.
 - Same command envelope as **`unity_bridge_command`** **`request`** jsonb.
 - Automated or scripted smoke: **`curl`** POST → **`completed`** response when Editor idle.
+- **Transport policy (locked):** MCP **`unity_bridge_command`** + **`unity_export_*`** sugar tools stay on the **`agent_bridge_job`** Postgres queue (multi-process durability, MCP stdio). HTTP transport = agent-machine escape hatch for sub-second interactive loops; never a replacement for the DB queue.
 
 **Phases:**
 
@@ -757,7 +758,7 @@ validators: ["materialize-backlog.sh", "npm run validate:all"]
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.1.1 | HttpListener Editor class | 1 | _pending_ | _pending_ | New Editor static (e.g. **`AgentBridgeHttpHost`**) registering **`localhost`** prefix only; reject non-loopback; start/stop tied to Editor play mode preference (documented). |
+| T2.1.1 | HttpListener Editor class | 1 | _pending_ | _pending_ | New Editor static (e.g. **`AgentBridgeHttpHost`**) placed under **`Assets/Scripts/Editor/`** only; never referenced from runtime assemblies. Registers **`localhost`** prefix only; rejects non-loopback; start/stop tied to Editor play mode preference (documented). |
 | T2.1.2 | Main-thread command queue | 1 | _pending_ | _pending_ | Queue **`BridgeCommand`** payloads from listener thread; drain on **`EditorApplication.update`** (same pump pattern as screenshot deferral). |
 | T2.1.3 | Shared dispatch extraction | 2 | _pending_ | _pending_ | Refactor **`AgentBridgeCommandRunner`** so dequeue + HTTP paths call single **`ExecuteBridgeCommand`** internal API — no duplicate switch bodies. |
 | T2.1.4 | HTTP integration smoke | 2 | _pending_ | _pending_ | Repo script under **`tools/scripts/`** or MCP test: POST sample **`get_play_mode_status`** → JSON **`completed`**; document **`curl`** in **`docs/mcp-ia-server.md`**. |
@@ -777,6 +778,7 @@ validators: ["materialize-backlog.sh", "npm run validate:all"]
 - Forwarding path from **`logMessageReceived`** to bridge responses (or ring buffer merge) specified and shipped.
 - Screenshot / health **`kind`** behavior matches **`unity-development-context`** §10 table; **`docs/mcp-ia-server.md`** updated.
 - **`npm run validate:all`** green.
+- **Scope boundary:** Editor Play-mode diagnostics only; not production telemetry, not shipped to players. Shipped-game observability stays on the distribution plan's `BuildInfo` + `/download/latest.json` surfaces (`docs/distribution-exploration.md`).
 
 **Phases:**
 
@@ -866,7 +868,7 @@ validators: ["materialize-backlog.sh", "npm run validate:all"]
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T3.2.1 | Replay capture scope | 1 | _pending_ | _pending_ | Identify minimal hooks: **`GameSaveManager`** seed + input queue vs full action log — document data written to **`tools/reports/`** gitignored paths. |
+| T3.2.1 | Replay capture scope | 1 | _pending_ | _pending_ | Identify minimal hooks: **`GameSaveManager`** seed + input queue vs full action log — document data written to **`tools/reports/`** gitignored paths. **Boundary (locked):** replay artifacts write to Editor filesystem (`tools/reports/`) only — never Postgres, never shipped player. Shipped-game save format stays filesystem-only per `docs/distribution-exploration.md` + `docs/db-boundaries.md`. |
 | T3.2.2 | Replay spike prototype | 1 | _pending_ | _pending_ | Optional throwaway Editor script: load fixture + N ticks — **not** CI — prove deterministic snapshot equality for one scenario. |
 | T3.2.3 | Visual diff automation assessment | 2 | _pending_ | _pending_ | Compare **`ScreenCapture`** pairs + structural diff from Step 3.1; decide ship vs **`post-mvp`** bucket. |
 | T3.2.4 | Gate decision + extensions pointer | 2 | _pending_ | _pending_ | Write **Decision** paragraph in exploration doc OR extensions doc; if defer-only, no production code requirement. |
