@@ -742,9 +742,59 @@ def _set_deep(target: dict, path: tuple, value) -> None:
 # ``compose_sprite(sample_variant(spec, i))`` unchanged — existing golden
 # tests act as the parity oracle (Open Q2 in TECH-726.md).
 
+import json as _json
 import math as _math
+from dataclasses import asdict as _asdict, dataclass as _dataclass
+from pathlib import Path as _Path
 
 _FLOOR: float = 0.5  # score threshold; below → retry
+
+
+# TECH-727 — versioned JSON sidecar emitted on gate exhaustion.
+@_dataclass
+class NeedsReviewSidecar:
+    """Non-blocking diagnostic emitted when the composer gate exhausts retries.
+
+    Written adjacent to the best-scoring variant as
+    ``<variant>.needs_review.json``. Curator UI / CI consume it to surface
+    low-confidence renders without failing the pipeline.
+
+    Schema versioned from day one so downstream consumers can evolve.
+    """
+
+    schema_version: int
+    final_score: float
+    envelope_snapshot: dict
+    attempted_seeds: list
+    failing_zones: list
+
+
+def _needs_review_path(variant_path) -> _Path:
+    """Return the ``<variant>.needs_review.json`` path next to *variant_path*."""
+    p = _Path(variant_path)
+    return p.with_suffix(".needs_review.json")
+
+
+def _write_needs_review(
+    variant_path,
+    *,
+    final_score: float,
+    envelope_snapshot: dict,
+    attempted_seeds: list,
+    failing_zones: list,
+) -> _Path:
+    """Write the sidecar next to *variant_path* and return its path."""
+    sidecar = NeedsReviewSidecar(
+        schema_version=1,
+        final_score=float(final_score),
+        envelope_snapshot=envelope_snapshot,
+        attempted_seeds=list(attempted_seeds),
+        failing_zones=list(failing_zones),
+    )
+    out = _needs_review_path(variant_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(_json.dumps(_asdict(sidecar), indent=2, sort_keys=True))
+    return out
 
 
 def _score_variant(vary_values: dict, envelope: dict) -> dict:
@@ -893,6 +943,7 @@ def render(
     envelope: dict | None = None,
     retry_cap: int = 5,
     gate_enabled: bool = False,
+    variant_paths: list | None = None,
 ):
     """Variant-producing generator with optional envelope-gated retry.
 
@@ -904,15 +955,20 @@ def render(
         gate_enabled: Master feature flag. ``False`` (default) → byte-identical
             pre-Stage-6.5 path, delegating to
             ``compose_sprite(sample_variant(spec, i))`` unchanged.
+        variant_paths: Optional list of output paths keyed by variant index.
+            When present AND gate exhausts retries AND the path is provided
+            for that index, TECH-727 sidecar ``<variant>.needs_review.json``
+            is written next to the variant. ``None`` or missing entry → no
+            sidecar (caller owns diagnostics via the yielded tuple).
 
     Yields:
         One :class:`PIL.Image.Image` per variant index in
         ``spec["variants"]["count"]`` (or 1 when ``variants`` absent).
 
-        On exhaustion (``retry_cap`` attempts all below ``_FLOOR``), yields the
-        best-scoring attempt as a tuple
-        ``(image, {"score": float, "seed": int, "attempts": list[int],
-                  "failing_zones": list[str]})`` — TECH-727 consumes this.
+        On exhaustion (``retry_cap`` attempts all below ``_FLOOR``): yields
+        the best-scoring image (+ TECH-727 sidecar written if
+        ``variant_paths[i]`` supplied) OR, when no path is known, a
+        ``(image, diagnostics)`` tuple for caller-side diagnostics.
     """
     variants = spec.get("variants")
     count = (
@@ -954,13 +1010,26 @@ def render(
                 break
 
         if not passed and best is not None:
-            # Exhausted; emit best attempt + diagnostic tuple for TECH-727.
-            yield (
-                best["image"],
-                {
-                    "score": best["score"],
-                    "seed": best["seed"],
-                    "attempts": best["attempts"],
-                    "failing_zones": best["failing_zones"],
-                },
-            )
+            # Exhausted — TECH-727 sidecar if caller supplied a target path.
+            target_path = None
+            if variant_paths is not None and i < len(variant_paths):
+                target_path = variant_paths[i]
+            if target_path is not None:
+                _write_needs_review(
+                    target_path,
+                    final_score=best["score"],
+                    envelope_snapshot=envelope,
+                    attempted_seeds=best["attempts"],
+                    failing_zones=best["failing_zones"],
+                )
+                yield best["image"]
+            else:
+                yield (
+                    best["image"],
+                    {
+                        "score": best["score"],
+                        "seed": best["seed"],
+                        "attempts": best["attempts"],
+                        "failing_zones": best["failing_zones"],
+                    },
+                )
