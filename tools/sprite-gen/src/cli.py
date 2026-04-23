@@ -25,6 +25,7 @@ import yaml
 
 from .spec import SpecValidationError, load_spec
 from .compose import compose_sprite
+from .signature import compute_signature
 from .palette import (
     GplParseError,
     PaletteKeyError,
@@ -44,6 +45,19 @@ _TOOL_ROOT = _SRC_DIR.parent
 _SPECS_DIR = _TOOL_ROOT / "specs"
 _OUT_DIR = _TOOL_ROOT / "out"
 _PALETTES_DIR = _TOOL_ROOT / "palettes"
+_SIGNATURES_DIR = _TOOL_ROOT / "signatures"
+_REPO_ROOT = _TOOL_ROOT.parent.parent
+
+# TECH-705 — class name -> list of glob patterns resolving to reference PNGs
+# under Assets/Sprites/. Keep patterns narrow enough to exclude slope /
+# unrelated size variants. Globs are joined into a single {a,b}-style call
+# via shell-agnostic iteration in :func:`_cmd_refresh_signatures`.
+_CLASS_SOURCE_GLOBS: dict[str, list[str]] = {
+    "residential_small": [
+        str(_REPO_ROOT / "Assets/Sprites/Residential/House1.png"),
+        str(_REPO_ROOT / "Assets/Sprites/Residential/House1-64.png"),
+    ],
+}
 
 # ---------------------------------------------------------------------------
 # Slope variant enum — matches Slope variant naming glossary +
@@ -389,6 +403,51 @@ def _render_one(
 # ---------------------------------------------------------------------------
 
 
+def _cmd_refresh_signatures(args: argparse.Namespace) -> int:
+    """Dispatch `refresh-signatures [class?]` — regenerate signature JSON.
+
+    With no class: iterate every class in `_CLASS_SOURCE_GLOBS`.
+    With a class: regenerate only that one.
+
+    Returns:
+        0 on success, 1 on unknown class / I/O error.
+    """
+    import json as _json
+
+    fallback_path = _SIGNATURES_DIR / "_fallback.json"
+    targets: list[str]
+    if args.cls:
+        if args.cls not in _CLASS_SOURCE_GLOBS:
+            print(
+                f"error: unknown class {args.cls!r}; known: {sorted(_CLASS_SOURCE_GLOBS)}",
+                file=sys.stderr,
+            )
+            return 1
+        targets = [args.cls]
+    else:
+        targets = sorted(_CLASS_SOURCE_GLOBS)
+
+    _SIGNATURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    for cls in targets:
+        globs = _CLASS_SOURCE_GLOBS[cls]
+        sig = compute_signature(
+            cls,
+            globs,
+            fallback_graph_path=fallback_path if fallback_path.is_file() else None,
+            spec_loader=load_spec,
+        )
+        out_path = _SIGNATURES_DIR / f"{cls}.signature.json"
+        out_path.write_text(_json.dumps(sig, indent=2) + "\n", encoding="utf-8")
+        try:
+            rel = out_path.relative_to(Path.cwd())
+        except ValueError:
+            rel = out_path
+        print(f"wrote {rel} (mode={sig['mode']}, source_count={sig['source_count']})")
+
+    return 0
+
+
 def _cmd_render(args: argparse.Namespace) -> int:
     """Dispatch render subcommand: single-archetype or --all batch."""
     terrain_override: Optional[str] = getattr(args, "terrain", None)
@@ -555,6 +614,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Skip catalog HTTP push after promote.",
     )
 
+    # -- refresh-signatures ---------------------------------------------------
+    refresh_parser = subparsers.add_parser(
+        "refresh-signatures",
+        help="Regenerate tools/sprite-gen/signatures/<class>.signature.json (TECH-705).",
+    )
+    refresh_parser.add_argument(
+        "cls",
+        nargs="?",
+        default=None,
+        metavar="CLASS",
+        help=(
+            "Optional class name; omit to refresh every known class. "
+            f"Known classes: {sorted(_CLASS_SOURCE_GLOBS)}"
+        ),
+    )
+
     reject_parser = subparsers.add_parser(
         "reject",
         help="Delete out/{archetype}_v*.png variants.",
@@ -566,6 +641,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if parsed.command == "render":
         return _cmd_render(parsed)
+
+    if parsed.command == "refresh-signatures":
+        return _cmd_refresh_signatures(parsed)
 
     if parsed.command == "promote":
         from pathlib import Path as _P

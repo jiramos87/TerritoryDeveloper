@@ -1,0 +1,4 @@
+{
+  "_comment": "Class -> fallback-target-class graph (Stage 6.2 L15). When source_count == 0, compute_signature copies from the target class's signature. Author additions as plain key-value pairs.",
+  "residential_small": "residential_row"
+}

@@ -1,0 +1,120 @@
+{
+  "class": "residential_small",
+  "refreshed_at": "2026-04-23",
+  "source_count": 2,
+  "source_checksum": "sha256:b886bebe044645da8f009eb7a54ac83819fbfe77bd4673309f8366ee7e3d1468",
+  "mode": "envelope",
+  "fallback_of": null,
+  "bbox": {
+    "height": {
+      "min": 18.0,
+      "max": 35.0,
+      "mean": 26.5
+    },
+    "y0": {
+      "min": 6.0,
+      "max": 13.0,
+      "mean": 9.5
+    },
+    "spans_full_width": true
+  },
+  "palette": {
+    "wall_dominant": [
+      [
+        106,
+        190,
+        48
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        196,
+        175,
+        155
+      ]
+    ],
+    "roof_dominant": [
+      [
+        106,
+        190,
+        48
+      ],
+      [
+        167,
+        73,
+        73
+      ],
+      [
+        40,
+        63,
+        206
+      ]
+    ],
+    "top_20pct_band": [
+      [
+        106,
+        190,
+        48
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        59,
+        108,
+        25
+      ],
+      [
+        132,
+        126,
+        135
+      ],
+      [
+        138,
+        111,
+        48
+      ]
+    ]
+  },
+  "silhouette": {
+    "peaks_above_diamond_top": {
+      "freq": 0.5625,
+      "px_above_mean": 3.8125
+    },
+    "has_pitched_roof": {
+      "freq": 0.9063
+    }
+  },
+  "ground": {
+    "dominant": [
+      [
+        106,
+        190,
+        48
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        59,
+        108,
+        25
+      ]
+    ],
+    "variance": {
+      "hue_stddev": 0.1479,
+      "value_stddev": 0.3449
+    }
+  },
+  "decoration_hints": {
+    "trees_per_tile_mean": null,
+    "grass_ratio_mean": 0.5516
+  }
+}

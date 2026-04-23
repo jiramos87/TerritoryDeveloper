@@ -414,18 +414,26 @@ def _summarize(
 
 
 def _resolve_sources(
-    folder_glob: str,
+    folder_glob,
     *,
     spec_loader: Optional[Callable[[Path], dict]] = None,
 ) -> list[Path]:
-    """Expand glob + filter out specs flagged include_in_signature=false.
+    """Expand glob(s) + filter out specs flagged include_in_signature=false.
+
+    `folder_glob` accepts either a single glob string or a list of glob
+    strings; results are de-duped by path.
 
     `spec_loader` is an injected callable returning the spec dict for a given
     .yaml path; when None no YAML filtering happens (pure PNG glob).
     """
     from glob import glob as _glob
 
-    matches = sorted(Path(p) for p in _glob(folder_glob, recursive=True))
+    patterns = [folder_glob] if isinstance(folder_glob, str) else list(folder_glob)
+    collected: set[Path] = set()
+    for pat in patterns:
+        for p in _glob(pat, recursive=True):
+            collected.add(Path(p))
+    matches = sorted(collected)
     pngs = [p for p in matches if p.suffix.lower() == ".png"]
 
     if spec_loader is None:
@@ -450,7 +458,7 @@ def _resolve_sources(
 
 def compute_signature(
     class_name: str,
-    folder_glob: str,
+    folder_glob,
     *,
     fallback_graph_path: Optional[Path] = None,
     spec_loader: Optional[Callable[[Path], dict]] = None,
@@ -459,7 +467,8 @@ def compute_signature(
 
     Args:
         class_name: Canonical class label (e.g. ``residential_small``).
-        folder_glob: Glob pattern (cwd-relative) resolving to source PNGs.
+        folder_glob: Glob pattern string OR list of glob patterns
+            resolving to source PNGs.
         fallback_graph_path: Optional path to ``_fallback.json`` used when
             ``source_count == 0``.
         spec_loader: Optional callable ``(Path) -> dict`` to honour the
