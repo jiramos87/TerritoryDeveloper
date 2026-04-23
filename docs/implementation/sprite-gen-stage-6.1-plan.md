@@ -4,7 +4,7 @@ Compiled 2026-04-23 from 3 task spec(s): **TECH-701** .. **TECH-703**.
 
 **Master plan:** `ia/projects/sprite-gen-master-plan.md` — Stage 6.1 — Pivot hotfix + regression tighten.
 
-**Status:** Draft. Specs: `ia/projects/TECH-701.md` .. `ia/projects/TECH-703.md`; yaml: `ia/backlog/TECH-701.yaml` .. `ia/backlog/TECH-703.yaml`.
+**Status:** Closed 2026-04-23. See `BACKLOG-ARCHIVE.md` rows for TECH-701 / TECH-702 / TECH-703 (archived yaml under `ia/backlog-archive/`); spec files deleted at closeout.
 
 ---
 
