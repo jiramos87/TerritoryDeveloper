@@ -2,7 +2,7 @@ id: TECH-729
 type: TECH
 title: DAS §5 addendum — curation loop + floor + sidecar
 priority: medium
-status: open
+status: closed
 section: Stage 6.5 — Curation-trained quality gate
 spec: ia/projects/TECH-729.md
 files:

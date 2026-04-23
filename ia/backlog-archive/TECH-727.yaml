@@ -2,7 +2,7 @@ id: TECH-727
 type: TECH
 title: .needs_review sidecar on floor-miss
 priority: medium
-status: open
+status: closed
 section: Stage 6.5 — Curation-trained quality gate
 spec: ia/projects/TECH-727.md
 files:

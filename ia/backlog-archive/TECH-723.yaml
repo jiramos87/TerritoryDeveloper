@@ -2,7 +2,7 @@ id: TECH-723
 type: TECH
 title: curate.py log-promote → promoted.jsonl
 priority: high
-status: open
+status: closed
 section: Stage 6.5 — Curation-trained quality gate
 spec: ia/projects/TECH-723.md
 files:

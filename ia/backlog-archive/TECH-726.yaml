@@ -2,7 +2,7 @@ id: TECH-726
 type: TECH
 title: Composer render-time score-and-retry gate
 priority: high
-status: open
+status: closed
 section: Stage 6.5 — Curation-trained quality gate
 spec: ia/projects/TECH-726.md
 files:

@@ -2,7 +2,7 @@ id: TECH-725
 type: TECH
 title: Signature three-source aggregator
 priority: high
-status: open
+status: closed
 section: Stage 6.5 — Curation-trained quality gate
 spec: ia/projects/TECH-725.md
 files:
