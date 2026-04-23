@@ -4,6 +4,8 @@
 > Source handoff: `/tmp/sprite-gen-improvement-session.md` §3 Stage 6.4 block (frozen 2026-04-23)
 > Locks consumed: **L8** (`ground:` accepts string or object), **L9** (`ground.*` joins `vary:` vocabulary), **L10** (new primitive `iso_ground_noise` + palette accent keys).
 
+**Status:** Closed 2026-04-23. See `BACKLOG-ARCHIVE.md` rows for TECH-715 / TECH-716 / TECH-717 / TECH-718 / TECH-719 / TECH-720 / TECH-721 / TECH-722 (archived yaml under `ia/backlog-archive/`); spec files deleted at closeout.
+
 ## 1. Scope
 
 Stage 6.4 lifts the ground surface from a single-material string into a variable, textured, jitter-aware expression of intent. Loader normalises both forms; composer honours jitter + auto-inserts noise; palette carries accent colours; signatures feed data-driven jitter bounds; variants grammar gains a ground axis; a single test file locks the whole surface; docs close the loop.
@@ -12,14 +14,14 @@ Stage 6.4 lifts the ground surface from a single-material string into a variable
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T6.4.1 | [TECH-715](../../ia/projects/TECH-715.md) | Ground schema — string / object form loader normalization | high | TECH-710..714 |
-| T6.4.2 | [TECH-716](../../ia/projects/TECH-716.md) | Palette JSON `accent_dark` / `accent_light` keys | medium | TECH-714 |
-| T6.4.3 | [TECH-717](../../ia/projects/TECH-717.md) | `iso_ground_noise` primitive | high | TECH-716 |
-| T6.4.4 | [TECH-718](../../ia/projects/TECH-718.md) | Composer ground jitter + texture auto-insert | high | TECH-715, TECH-717 |
-| T6.4.5 | [TECH-719](../../ia/projects/TECH-719.md) | Signature extractor `ground.*` extension | medium | TECH-714 |
-| T6.4.6 | [TECH-720](../../ia/projects/TECH-720.md) | `vary.ground.*` grammar | high | TECH-710, TECH-715 |
-| T6.4.7 | [TECH-721](../../ia/projects/TECH-721.md) | Tests — `test_ground_variation.py` | high | TECH-718, TECH-720 |
-| T6.4.8 | [TECH-722](../../ia/projects/TECH-722.md) | DAS §4.1 addendum — accent keys + noise density | medium | TECH-716, TECH-717 |
+| T6.4.1 | TECH-715 | Ground schema — string / object form loader normalization | high | TECH-710..714 |
+| T6.4.2 | TECH-716 | Palette JSON `accent_dark` / `accent_light` keys | medium | TECH-714 |
+| T6.4.3 | TECH-717 | `iso_ground_noise` primitive | high | TECH-716 |
+| T6.4.4 | TECH-718 | Composer ground jitter + texture auto-insert | high | TECH-715, TECH-717 |
+| T6.4.5 | TECH-719 | Signature extractor `ground.*` extension | medium | TECH-714 |
+| T6.4.6 | TECH-720 | `vary.ground.*` grammar | high | TECH-710, TECH-715 |
+| T6.4.7 | TECH-721 | Tests — `test_ground_variation.py` | high | TECH-718, TECH-720 |
+| T6.4.8 | TECH-722 | DAS §4.1 addendum — accent keys + noise density | medium | TECH-716, TECH-717 |
 
 ## 3. Lock → task map
 

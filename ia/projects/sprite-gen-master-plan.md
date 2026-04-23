@@ -1085,7 +1085,7 @@
 
 ### Stage 6.4 — Ground variation
 
-**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.4 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L8 (`ground:` accepts string or object; back-compat by construction), L9 (`ground.`* joins `vary:` vocabulary; signature bounds jitter), L10 (new primitive `iso_ground_noise`; palette gains `accent_dark`/`accent_light`).
+**Status:** Final — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.4 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L8 (`ground:` accepts string or object; back-compat by construction), L9 (`ground.`* joins `vary:` vocabulary; signature bounds jitter), L10 (new primitive `iso_ground_noise`; palette gains `accent_dark`/`accent_light`).
 
 **Objectives:** Extend the ground surface beyond a single material string. Accept an object form `{material, materials, hue_jitter, value_jitter, texture}` on the spec (string form still valid; normalises to `{material: <str>}` with zero jitter / no texture). Wire the composer to sample hue/value jitter per variant and auto-insert an `iso_ground_noise` pass when `ground.texture` is set. Ship the new `iso_ground_noise` primitive + palette JSON `accent_dark`/`accent_light` extensions. Extend the signature extractor (TECH-704) so `ground.dominant` + `ground.variance` drive `vary.ground.`* bounds. Add `vary.ground.*` grammar (consumes L9). Land `tests/test_ground_variation.py`. DAS §4.1 addendum.
 
@@ -1116,14 +1116,14 @@
 
 | Task   | Name                                                     | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                        |
 | ------ | -------------------------------------------------------- | ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T6.4.1 | Ground schema: string / object form loader normalization | **TECH-715** | Draft  | `tools/sprite-gen/src/spec.py` — `ground:` accepts either string (normalises to `{material: <str>}`, zero jitter, no texture) or full object (`material` OR `materials: [...]`, optional `hue_jitter: float`, `value_jitter: float`, `texture: {primitive, density, palette}`). Back-compat: string form stays byte-identical. Consumes L8.                                   |
-| T6.4.2 | Palette JSON `accent_dark` / `accent_light` keys         | **TECH-716** | Draft  | `tools/sprite-gen/palettes/*.json` — schema gains optional `accent_dark` / `accent_light` per material key. Palette loader surfaces both; absent → consumer no-ops (noise primitive skips scatter). Seed default values for `grass_flat` + `pavement` so Stage 6.4 ships with at least 2 materials texturable. Consumes L10 (palette surface).                                |
-| T6.4.3 | `iso_ground_noise` primitive                             | **TECH-717** | Draft  | `tools/sprite-gen/src/primitives/iso_ground_noise.py` — new primitive `iso_ground_noise(img, x0, y0, *, material, density, seed, palette)`. Scatters accent pixels inside diamond mask only (no bleed onto building area). Density clamped 0..0.15 (guardrail). Deterministic under seed. Consumes L10 (primitive surface).                                                   |
-| T6.4.4 | Composer ground jitter + texture auto-insert             | **TECH-718** | Draft  | `tools/sprite-gen/src/compose.py` — before rendering `iso_ground_diamond`, apply `hue_jitter` / `value_jitter` sampled from `palette_seed + i` to the material's ramp. When `ground.texture` set, auto-insert an `iso_ground_noise` pass between the diamond and the first building primitive; author never hand-adds to `composition:`. Legacy string-form specs unchanged.  |
-| T6.4.5 | Signature extractor `ground.`* extension                 | **TECH-719** | Draft  | `tools/sprite-gen/src/signature.py` — extend extractor to populate `ground.dominant` (dominant palette on ground-only band of reference sprite) + `ground.variance` (hue_stddev + value_stddev across samples). Matches JSON shape from TECH-704 spec. Consumed by `bootstrap-variants --from-signature` to derive `vary.ground.`* bounds. Consumes L9 upstream.              |
-| T6.4.6 | `vary.ground.*` grammar                                  | **TECH-720** | Draft  | `tools/sprite-gen/src/spec.py` — accept `vary.ground.{material: {values: [...]}, hue_jitter: {min, max}, value_jitter: {min, max}, texture: {density: {min, max}}}` inside `variants.vary`. Loader validates range objects (from TECH-710). Composer variant loop samples these from `palette_seed + i`. Consumes L9 (vary surface).                                          |
-| T6.4.7 | Tests: `test_ground_variation.py`                        | **TECH-721** | Draft  | `tools/sprite-gen/tests/test_ground_variation.py` — covers (a) legacy string form byte-identical, (b) object form round-trip, (c) `materials: [...]` pool renders one of each seeded, (d) non-zero jitter produces per-variant diffs (`!= 0` pixel diff), (e) zero jitter produces byte-identical variants, (f) noise primitive: mask clipped to diamond + density monotonic. |
-| T6.4.8 | DAS §4.1 addendum — palette accent keys + noise density  | **TECH-722** | Draft  | `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.`* bounds.                                                                                                                                             |
+| T6.4.1 | Ground schema: string / object form loader normalization | **TECH-715** | Done  | `tools/sprite-gen/src/spec.py` — `ground:` accepts either string (normalises to `{material: <str>}`, zero jitter, no texture) or full object (`material` OR `materials: [...]`, optional `hue_jitter: float`, `value_jitter: float`, `texture: {primitive, density, palette}`). Back-compat: string form stays byte-identical. Consumes L8.                                   |
+| T6.4.2 | Palette JSON `accent_dark` / `accent_light` keys         | **TECH-716** | Done  | `tools/sprite-gen/palettes/*.json` — schema gains optional `accent_dark` / `accent_light` per material key. Palette loader surfaces both; absent → consumer no-ops (noise primitive skips scatter). Seed default values for `grass_flat` + `pavement` so Stage 6.4 ships with at least 2 materials texturable. Consumes L10 (palette surface).                                |
+| T6.4.3 | `iso_ground_noise` primitive                             | **TECH-717** | Done  | `tools/sprite-gen/src/primitives/iso_ground_noise.py` — new primitive `iso_ground_noise(img, x0, y0, *, material, density, seed, palette)`. Scatters accent pixels inside diamond mask only (no bleed onto building area). Density clamped 0..0.15 (guardrail). Deterministic under seed. Consumes L10 (primitive surface).                                                   |
+| T6.4.4 | Composer ground jitter + texture auto-insert             | **TECH-718** | Done  | `tools/sprite-gen/src/compose.py` — before rendering `iso_ground_diamond`, apply `hue_jitter` / `value_jitter` sampled from `palette_seed + i` to the material's ramp. When `ground.texture` set, auto-insert an `iso_ground_noise` pass between the diamond and the first building primitive; author never hand-adds to `composition:`. Legacy string-form specs unchanged.  |
+| T6.4.5 | Signature extractor `ground.`* extension                 | **TECH-719** | Done  | `tools/sprite-gen/src/signature.py` — extend extractor to populate `ground.dominant` (dominant palette on ground-only band of reference sprite) + `ground.variance` (hue_stddev + value_stddev across samples). Matches JSON shape from TECH-704 spec. Consumed by `bootstrap-variants --from-signature` to derive `vary.ground.`* bounds. Consumes L9 upstream.              |
+| T6.4.6 | `vary.ground.*` grammar                                  | **TECH-720** | Done  | `tools/sprite-gen/src/spec.py` — accept `vary.ground.{material: {values: [...]}, hue_jitter: {min, max}, value_jitter: {min, max}, texture: {density: {min, max}}}` inside `variants.vary`. Loader validates range objects (from TECH-710). Composer variant loop samples these from `palette_seed + i`. Consumes L9 (vary surface).                                          |
+| T6.4.7 | Tests: `test_ground_variation.py`                        | **TECH-721** | Done  | `tools/sprite-gen/tests/test_ground_variation.py` — covers (a) legacy string form byte-identical, (b) object form round-trip, (c) `materials: [...]` pool renders one of each seeded, (d) non-zero jitter produces per-variant diffs (`!= 0` pixel diff), (e) zero jitter produces byte-identical variants, (f) noise primitive: mask clipped to diamond + density monotonic. |
+| T6.4.8 | DAS §4.1 addendum — palette accent keys + noise density  | **TECH-722** | Done  | `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.`* bounds.                                                                                                                                             |
 
 
 ### §Stage File Plan
@@ -1317,6 +1317,58 @@
 ### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.4 tasks **TECH-715**..**TECH-722** aligned with §3 Stage 6.4 block of `/tmp/sprite-gen-improvement-session.md`; locks L8/L9/L10 mapped one-to-one. Aggregate doc: `docs/implementation/sprite-gen-stage-6.4-plan.md`. Downstream: file Stage 6.5.
+
+### §Stage Closeout Plan
+
+> Scope: Stage 6.4 — Ground variation (TECH-715..722). All 8 tasks PASS code-review + audit. 330/330 tests green. Ready for archive.
+
+```yaml
+stage: "6.4"
+status_flip:
+  - file: ia/projects/sprite-gen-master-plan.md
+    targets:
+      - {row: T6.4.1, field: Status, from: Draft, to: Done}
+      - {row: T6.4.2, field: Status, from: Draft, to: Done}
+      - {row: T6.4.3, field: Status, from: Draft, to: Done}
+      - {row: T6.4.4, field: Status, from: Draft, to: Done}
+      - {row: T6.4.5, field: Status, from: Draft, to: Done}
+      - {row: T6.4.6, field: Status, from: Draft, to: Done}
+      - {row: T6.4.7, field: Status, from: Draft, to: Done}
+      - {row: T6.4.8, field: Status, from: Draft, to: Done}
+      - {row: "Stage 6.4", field: Status, from: Draft, to: Final}
+
+archive_records:
+  - id: TECH-715
+    src: ia/backlog/TECH-715.yaml
+    dst: ia/backlog-archive/TECH-715.yaml
+  - id: TECH-716
+    src: ia/backlog/TECH-716.yaml
+    dst: ia/backlog-archive/TECH-716.yaml
+  - id: TECH-717
+    src: ia/backlog/TECH-717.yaml
+    dst: ia/backlog-archive/TECH-717.yaml
+  - id: TECH-718
+    src: ia/backlog/TECH-718.yaml
+    dst: ia/backlog-archive/TECH-718.yaml
+  - id: TECH-719
+    src: ia/backlog/TECH-719.yaml
+    dst: ia/backlog-archive/TECH-719.yaml
+  - id: TECH-720
+    src: ia/backlog/TECH-720.yaml
+    dst: ia/backlog-archive/TECH-720.yaml
+  - id: TECH-721
+    src: ia/backlog/TECH-721.yaml
+    dst: ia/backlog-archive/TECH-721.yaml
+  - id: TECH-722
+    src: ia/backlog/TECH-722.yaml
+    dst: ia/backlog-archive/TECH-722.yaml
+
+delete_specs: []  # executed at closeout 2026-04-23; spec files removed
+
+validation_gate:
+  - cmd: "bash tools/scripts/materialize-backlog.sh"
+  - cmd: "npm run validate:all"
+```
 
 ---
 
