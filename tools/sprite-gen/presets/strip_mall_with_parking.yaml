@@ -12,7 +12,7 @@ palette: commercial
 ground:
   materials: [pavement, pavement_stripe_yellow]
   texture:
-    density: { min: 0.4, max: 0.7 }
+    density: 0.55
 building:
   footprint_ratio: [0.85, 0.55]
   composition:
