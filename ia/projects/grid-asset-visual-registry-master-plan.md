@@ -384,7 +384,7 @@
 
 #### Stage 1.3 — Catalog API gap-patch: test harness + behavior fixes
 
-**Status:** Draft (tasks _pending_)
+**Status:** In Progress
 
 **Objectives:** Patch concrete gaps found in shipped `/api/catalog/*` routes (TECH-640..645 surface): build integration test harness; fix 6 behavior bugs; reconcile doc/refs.
 

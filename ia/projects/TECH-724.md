@@ -1,12 +1,12 @@
 ---
-purpose: "TECH-724 — curate.py reject --reason subcommand appending JSONL rows to curation/rejected.jsonl with controlled vocab."
+purpose: "TECH-724 — curate.py log-reject --reason subcommand appending JSONL rows to curation/rejected.jsonl with controlled vocab."
 audience: both
 loaded_by: ondemand
 slices_via: none
 parent_plan: ia/projects/sprite-gen-master-plan.md
 task_key: T6.5.2
 ---
-# TECH-724 — curate.py reject --reason → rejected.jsonl
+# TECH-724 — curate.py log-reject --reason → rejected.jsonl
 
 > **Issue:** [TECH-724](../../BACKLOG.md)
 > **Status:** Draft
@@ -15,13 +15,15 @@ task_key: T6.5.2
 
 ## 1. Summary
 
-Add `reject <variant> --reason <tag>` subcommand to `tools/sprite-gen/src/curate.py`. Row shape mirrors `promoted.jsonl` plus a `reason` field. Controlled reason vocabulary at ship time: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`. Invalid tags raise at the CLI boundary.
+Add `log-reject <variant> --reason <tag>` subcommand to `tools/sprite-gen/src/curate.py`. Row shape mirrors `promoted.jsonl` plus a `reason` field. Controlled reason vocabulary at ship time: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`. Invalid tags raise at the CLI boundary.
+
+Verb `log-reject` (not `reject`) disambiguates from the existing `reject` subcommand (TECH-179) which glob-deletes `out/{archetype}_v*.png` — a different concern (destruction) from the curator feedback log (this task).
 
 ## 2. Goals and Non-Goals
 
 ### 2.1 Goals
 
-1. `reject <variant> --reason <tag>` appends one JSONL row to `curation/rejected.jsonl`.
+1. `log-reject <variant> --reason <tag>` appends one JSONL row to `curation/rejected.jsonl`.
 2. Row shape = promoted row shape + `reason: <tag>`.
 3. Invalid `<tag>` → non-zero exit + helpful error listing valid tags.
 4. Reuses TECH-723 row-writer + measurement helpers (no duplication).
@@ -30,12 +32,13 @@ Add `reject <variant> --reason <tag>` subcommand to `tools/sprite-gen/src/curate
 
 1. Aggregator logic that maps reasons to `vary.*` zones — TECH-725.
 2. Composer integration — TECH-726.
+3. File deletion — already handled by existing `reject` verb (TECH-179).
 
 ## 3. User / Developer Stories
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Curator | Reject with named reason | CLI appends row + prints confirmation |
+| 1 | Curator | Log a rejection with named reason | CLI appends row + prints confirmation |
 | 2 | Curator | Mistyped reason caught early | Invalid tag → exit 1 with valid-tag list |
 | 3 | Sprite-gen dev | Row carries same stats as promoted | Aggregator treats both inputs uniformly |
 
@@ -43,11 +46,11 @@ Add `reject <variant> --reason <tag>` subcommand to `tools/sprite-gen/src/curate
 
 ### 4.1 Domain behavior
 
-After TECH-723 ships, `promote` exists. No rejection path.
+After TECH-723 ships, `log-promote` exists. Existing `reject` (TECH-179) glob-deletes files — orthogonal to logging.
 
 ### 4.2 Systems map
 
-- `tools/sprite-gen/src/curate.py` — extend CLI.
+- `tools/sprite-gen/src/curate.py` — extend CLI with `log-reject`.
 - `curation/rejected.jsonl` — new append-only log file.
 
 ### 4.3 Implementation investigation notes
@@ -59,17 +62,17 @@ Keep reason vocabulary as a module-level tuple so it can be imported by TECH-725
 ### 5.1 Target behavior
 
 ```bash
-$ python3 -m src.curate reject renders/residential_small__variant7.png --reason roof-too-shallow
-[reject] appended row → curation/rejected.jsonl
+$ python3 -m src.curate log-reject renders/residential_small__variant7.png --reason roof-too-shallow
+[log-reject] appended row → curation/rejected.jsonl
 
-$ python3 -m src.curate reject renders/... --reason blerg
+$ python3 -m src.curate log-reject renders/... --reason blerg
 error: invalid --reason: 'blerg'. Valid: roof-too-shallow, roof-too-tall, facade-too-saturated, ground-too-uniform
 ```
 
 ### 5.2 Architecture / implementation
 
 - Module constant `REJECTION_REASONS = ("roof-too-shallow", "roof-too-tall", "facade-too-saturated", "ground-too-uniform")`.
-- `reject` subparser validates `--reason` against the constant; `SystemExit(2)` on miss.
+- `log-reject` subparser validates `--reason` against the constant; `SystemExit(2)` on miss.
 - Row builder reuses TECH-723 helpers + injects `reason` field.
 
 ## 6. Decision Log
@@ -78,10 +81,11 @@ error: invalid --reason: 'blerg'. Valid: roof-too-shallow, roof-too-tall, facade
 |------|----------|-----------|--------------|
 | 2026-04-23 | Controlled vocab at ship | Free-text reasons won't aggregate; carve-out map needs enumerable keys | Free-text — rejected, creates aggregator ambiguity |
 | 2026-04-23 | Four initial tags | Covers the dominant "bad variant" failure modes observed in curation pilots | Exhaustive up-front set — rejected, over-specified |
+| 2026-04-23 | Verb name `log-reject` (not `reject`) | Avoid collision with existing `reject` (TECH-179 glob-delete); keep destruction + logging as orthogonal curator verbs | `reject` — rejected, collision; `curate-reject` — rejected, redundant given parent module is `curate` |
 
 ## 7. Implementation Plan
 
-### Phase 1 — Controlled vocab constant + `reject` subparser
+### Phase 1 — Controlled vocab constant + `log-reject` subparser
 
 ### Phase 2 — Row writer reuses TECH-723 helpers
 
@@ -91,16 +95,17 @@ error: invalid --reason: 'blerg'. Valid: roof-too-shallow, roof-too-tall, facade
 
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
-| Valid reason appends | Python | `pytest tests/test_curate.py::test_reject_valid_reason -q` | One row appended |
-| Invalid reason exits | Python | `pytest tests/test_curate.py::test_reject_invalid_reason_exits -q` | Non-zero exit + stderr list |
-| All four tags accepted | Python | `pytest tests/test_curate.py::test_reject_all_initial_reasons -q` | Parametrized over vocab |
+| Valid reason appends | Python | `pytest tests/test_curate.py::test_log_reject_valid_reason -q` | One row appended |
+| Invalid reason exits | Python | `pytest tests/test_curate.py::test_log_reject_invalid_reason_exits -q` | Non-zero exit + stderr list |
+| All four tags accepted | Python | `pytest tests/test_curate.py::test_log_reject_all_initial_reasons -q` | Parametrized over vocab |
 
 ## 8. Acceptance Criteria
 
-- [ ] `reject <variant> --reason <tag>` appends JSONL row.
+- [ ] `log-reject <variant> --reason <tag>` appends JSONL row.
 - [ ] Row shape mirrors `promoted.jsonl` plus `reason: <tag>`.
 - [ ] Invalid `<tag>` → CLI error listing valid tags.
 - [ ] Unit test covers all four initial reasons + invalid-reason error.
+- [ ] Existing `reject` verb (TECH-179 glob-delete) keeps current behaviour — no regression.
 
 ## 9. Issues Found During Development
 
@@ -111,29 +116,31 @@ error: invalid --reason: 'blerg'. Valid: roof-too-shallow, roof-too-tall, facade
 ## 10. Lessons Learned
 
 - Controlled vocabularies at the CLI boundary catch typos at curator time, not at aggregator time — cheaper to fix.
+- `log-` prefix namespaces feedback-log verbs away from shipping/destruction verbs in the same module.
 
 ## §Plan Digest
 
 ### §Goal
 
-Capture curator vetoes with a controlled-vocabulary reason tag so the signature aggregator can carve out `vary.*` zones pointing away from undesirable variant characteristics.
+Capture curator vetoes with a controlled-vocabulary reason tag so the signature aggregator can carve out `vary.*` zones pointing away from undesirable variant characteristics. Verb named `log-reject` to stay orthogonal to existing `reject` (glob-delete, TECH-179).
 
 ### §Acceptance
 
-- [ ] `python3 -m src.curate reject <variant> --reason <tag>` appends one JSONL row when `<tag>` is in `REJECTION_REASONS`
+- [ ] `python3 -m src.curate log-reject <variant> --reason <tag>` appends one JSONL row when `<tag>` is in `REJECTION_REASONS`
 - [ ] Row shape = promoted row + `reason: <tag>`
 - [ ] `--reason <bad-tag>` exits with non-zero status and prints the valid tag list to stderr
 - [ ] `REJECTION_REASONS` module-level constant importable from `src.curate` (used by TECH-725 + tests)
+- [ ] Existing `reject` subcommand (TECH-179 glob-delete) retains current behaviour — no regression
 - [ ] `pytest tools/sprite-gen/tests/test_curate.py -q` green
 
 ### §Test Blueprint
 
 | test_name | inputs | expected | harness |
 |-----------|--------|----------|---------|
-| test_reject_valid_reason | variant + `--reason roof-too-shallow` | 1 row appended with reason field | pytest |
-| test_reject_invalid_reason_exits | variant + `--reason blerg` | SystemExit non-zero; stderr has vocab list | pytest |
-| test_reject_all_initial_reasons | parametrize over 4 tags | all 4 append cleanly | pytest |
-| test_reject_row_schema_matches_promote | compare schema sans `reason` | identical key set | pytest |
+| test_log_reject_valid_reason | variant + `--reason roof-too-shallow` | 1 row appended with reason field | pytest |
+| test_log_reject_invalid_reason_exits | variant + `--reason blerg` | SystemExit non-zero; stderr has vocab list | pytest |
+| test_log_reject_all_initial_reasons | parametrize over 4 tags | all 4 append cleanly | pytest |
+| test_log_reject_row_schema_matches_log_promote | compare schema sans `reason` | identical key set | pytest |
 
 ### §Examples
 
@@ -146,7 +153,7 @@ REJECTION_REASONS = (
 
 _REJECTED = Path("curation/rejected.jsonl")
 
-def reject(variant_path: str, reason: str) -> None:
+def log_reject(variant_path: str, reason: str) -> None:
     if reason not in REJECTION_REASONS:
         valid = ", ".join(REJECTION_REASONS)
         raise SystemExit(f"error: invalid --reason: {reason!r}. Valid: {valid}")
@@ -169,36 +176,36 @@ def reject(variant_path: str, reason: str) -> None:
 
 **Edits:**
 
-- `tools/sprite-gen/src/curate.py` — add constant + `reject` subparser with `--reason` choices (`argparse choices=REJECTION_REASONS`).
+- `tools/sprite-gen/src/curate.py` — add constant + `log-reject` subparser with `--reason` choices (`argparse choices=REJECTION_REASONS`).
 
 **Gate:**
 
 ```bash
-cd tools/sprite-gen && python3 -m src.curate reject --help | grep -E 'roof-too-shallow'
+cd tools/sprite-gen && python3 -m src.curate log-reject --help | grep -E 'roof-too-shallow'
 ```
 
 #### Step 2 — Row writer reuse
 
 **Edits:**
 
-- Same file — `reject` body reuses TECH-723 helpers + adds `reason` field.
+- Same file — `log_reject` body reuses TECH-723 helpers + adds `reason` field.
 
 **Gate:**
 
 ```bash
-cd tools/sprite-gen && python3 -m pytest tests/test_curate.py::test_reject_valid_reason -q
+cd tools/sprite-gen && python3 -m pytest tests/test_curate.py::test_log_reject_valid_reason -q
 ```
 
 #### Step 3 — Invalid-reason guard
 
 **Edits:**
 
-- Same file — pre-check in `reject` (argparse `choices` also guards; double-guard protects direct Python callers).
+- Same file — pre-check in `log_reject` (argparse `choices` also guards; double-guard protects direct Python callers).
 
 **Gate:**
 
 ```bash
-cd tools/sprite-gen && python3 -m pytest tests/test_curate.py::test_reject_invalid_reason_exits -q
+cd tools/sprite-gen && python3 -m pytest tests/test_curate.py::test_log_reject_invalid_reason_exits -q
 ```
 
 **MCP hints:** none.

@@ -6,14 +6,14 @@
 
 ## 1. Scope
 
-Stage 6.5 closes the feedback loop from artist curation back into the generator. `curate.py` gains `promote` / `reject --reason` subcommands; the signature extractor becomes a three-source aggregator (`catalog ∪ promoted − rejected-zones`); the composer adds a score-and-retry gate with an N-retry cap and a `.needs_review` sidecar on exhaustion. Tests and DAS §5 close the contract.
+Stage 6.5 closes the feedback loop from artist curation back into the generator. `curate.py` gains `log-promote` / `log-reject --reason` subcommands (verb names disambiguate from existing `promote` PNG→Unity ship + `reject` glob-delete — TECH-179); the signature extractor becomes a three-source aggregator (`catalog ∪ promoted − rejected-zones`); the composer adds a score-and-retry gate with an N-retry cap and a `.needs_review` sidecar on exhaustion. Tests and DAS §5 close the contract.
 
 ## 2. Tasks
 
 | Task key | Issue | Title | Priority | Depends on |
 |----------|-------|-------|----------|-----------|
-| T6.5.1 | [TECH-723](../../ia/projects/TECH-723.md) | `curate.py promote` → `promoted.jsonl` | high | TECH-704..708 |
-| T6.5.2 | [TECH-724](../../ia/projects/TECH-724.md) | `curate.py reject --reason` → `rejected.jsonl` | high | TECH-723 |
+| T6.5.1 | [TECH-723](../../ia/projects/TECH-723.md) | `curate.py log-promote` → `promoted.jsonl` | high | TECH-704..708 |
+| T6.5.2 | [TECH-724](../../ia/projects/TECH-724.md) | `curate.py log-reject --reason` → `rejected.jsonl` | high | TECH-723 |
 | T6.5.3 | [TECH-725](../../ia/projects/TECH-725.md) | Signature three-source aggregator | high | TECH-723, TECH-724 |
 | T6.5.4 | [TECH-726](../../ia/projects/TECH-726.md) | Composer render-time score-and-retry gate | high | TECH-725 |
 | T6.5.5 | [TECH-727](../../ia/projects/TECH-727.md) | `.needs_review` sidecar on floor-miss | medium | TECH-726 |

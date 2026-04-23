@@ -1,6 +1,6 @@
 id: TECH-723
 type: TECH
-title: curate.py promote → promoted.jsonl
+title: curate.py log-promote → promoted.jsonl
 priority: high
 status: open
 section: Stage 6.5 — Curation-trained quality gate
@@ -8,9 +8,9 @@ spec: ia/projects/TECH-723.md
 files:
   - tools/sprite-gen/src/curate.py
 notes: |
-  `tools/sprite-gen/src/curate.py` — new `promote <variant>` subcommand appending a JSONL row to `curation/promoted.jsonl`. Row carries rendered variant path, sampled `vary:` values, measured bbox/palette stats.
+  `tools/sprite-gen/src/curate.py` — new `log-promote <variant>` subcommand appending a JSONL row to `curation/promoted.jsonl`. Row carries rendered variant path, sampled `vary:` values, measured bbox/palette stats. Verb disambiguates from existing `promote` (TECH-179 PNG→Unity ship).
 acceptance: |
-  - [ ] `promote <variant>` appends one JSON row to `curation/promoted.jsonl`
+  - [ ] `log-promote <variant>` appends one JSON row to `curation/promoted.jsonl`
   - [ ] Row carries variant path + sampled `vary:` values + measured bbox/palette stats
   - [ ] Idempotent append (prior rows untouched)
   - [ ] Unit test covers row shape + idempotency
@@ -26,6 +26,6 @@ related:
   - TECH-725
 created: 2026-04-23
 raw_markdown: |
-  TECH-723 — curate.py promote → promoted.jsonl
+  TECH-723 — curate.py log-promote → promoted.jsonl
 parent_plan: ia/projects/sprite-gen-master-plan.md
 task_key: T6.5.1

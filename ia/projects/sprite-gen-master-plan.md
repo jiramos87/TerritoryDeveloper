@@ -1376,11 +1376,11 @@ validation_gate:
 
 **Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.5 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L11 (curation/promoted.jsonl + rejected.jsonl feed the signature aggregator; composer gates renders against the evolving envelope).
 
-**Objectives:** Close the feedback loop from artist curation back into the generator. `curate.py` gains `promote` + `reject --reason` subcommands that append JSONL rows. The signature extractor becomes a three-source aggregator: `envelope = catalog ∪ promoted − rejected-zones` (rejection reasons carve out floor zones in `vary.`*). The composer adds a render-time gate: sample `vary:` → render → score against the evolving envelope → re-sample up to N times; after N, write best-scoring variant and mark a `.needs_review` metadata sidecar. Ship tests + DAS §5 addendum.
+**Objectives:** Close the feedback loop from artist curation back into the generator. `curate.py` gains `log-promote` + `log-reject --reason` subcommands that append JSONL rows (verb names disambiguate from existing `promote` = PNG→Unity ship + `reject` = glob-delete — TECH-179). The signature extractor becomes a three-source aggregator: `envelope = catalog ∪ promoted − rejected-zones` (rejection reasons carve out floor zones in `vary.`*). The composer adds a render-time gate: sample `vary:` → render → score against the evolving envelope → re-sample up to N times; after N, write best-scoring variant and mark a `.needs_review` metadata sidecar. Ship tests + DAS §5 addendum.
 
 **Exit:**
 
-- `tools/sprite-gen/src/curate.py` — `promote` appends JSONL row to `curation/promoted.jsonl` (rendered variant + sampled `vary:` values + measured bbox/palette stats); `reject --reason <tag>` appends to `curation/rejected.jsonl`.
+- `tools/sprite-gen/src/curate.py` — `log-promote` appends JSONL row to `curation/promoted.jsonl` (rendered variant + sampled `vary:` values + measured bbox/palette stats); `log-reject --reason <tag>` appends to `curation/rejected.jsonl`.
 - `tools/sprite-gen/src/signature.py` — aggregator `envelope = catalog ∪ promoted − rejected-zones`; rejection reasons map to `vary.`* floor zones (e.g. `roof-too-shallow` → floor on `vary.roof.h_px`).
 - `tools/sprite-gen/src/compose.py` — render-time score-and-retry loop: sample `vary:` → render → score → if below floor, re-sample (configurable N, default 5).
 - `tools/sprite-gen/src/compose.py` — after N retries without meeting floor, write best-scoring output + `.needs_review` sidecar in metadata.
@@ -1390,8 +1390,8 @@ validation_gate:
 
 **Phases:**
 
-- Phase 1 — `curate.py promote` subcommand + `promoted.jsonl` writer.
-- Phase 2 — `curate.py reject --reason` subcommand + `rejected.jsonl` writer.
+- Phase 1 — `curate.py log-promote` subcommand + `promoted.jsonl` writer.
+- Phase 2 — `curate.py log-reject --reason` subcommand + `rejected.jsonl` writer.
 - Phase 3 — Signature three-source aggregator (catalog ∪ promoted − rejected-zones).
 - Phase 4 — Composer render-time score-and-retry gate (N retries, default 5).
 - Phase 5 — `.needs_review` sidecar writer on floor-miss.
@@ -1403,8 +1403,8 @@ validation_gate:
 
 | Task   | Name                                              | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                               |
 | ------ | ------------------------------------------------- | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T6.5.1 | `curate.py promote` → `promoted.jsonl`            | **TECH-723** | Draft  | `tools/sprite-gen/src/curate.py` — add `promote <variant>` subcommand that appends JSONL row to `curation/promoted.jsonl`. Row carries: rendered variant path, sampled `vary:` values, measured bbox/palette stats from the rendered image. Idempotent append; no mutation. Consumes L11.                                                            |
-| T6.5.2 | `curate.py reject --reason` → `rejected.jsonl`    | **TECH-724** | Draft  | `tools/sprite-gen/src/curate.py` — add `reject <variant> --reason <tag>` subcommand. `<tag>` is a controlled vocabulary (initial set: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`). Row format mirrors `promoted.jsonl` plus `reason: <tag>`. Consumes L11.                                                    |
+| T6.5.1 | `curate.py log-promote` → `promoted.jsonl`        | **TECH-723** | Draft  | `tools/sprite-gen/src/curate.py` — add `log-promote <variant>` subcommand that appends JSONL row to `curation/promoted.jsonl`. Row carries: rendered variant path, sampled `vary:` values, measured bbox/palette stats from the rendered image. Idempotent append; no mutation. Verb disambiguates from existing `promote` (TECH-179 PNG→Unity ship). Consumes L11.                                             |
+| T6.5.2 | `curate.py log-reject --reason` → `rejected.jsonl`| **TECH-724** | Draft  | `tools/sprite-gen/src/curate.py` — add `log-reject <variant> --reason <tag>` subcommand. `<tag>` is a controlled vocabulary (initial set: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`). Row format mirrors `promoted.jsonl` plus `reason: <tag>`. Verb disambiguates from existing `reject` (TECH-179 glob-delete). Consumes L11.                                           |
 | T6.5.3 | Signature three-source aggregator                 | **TECH-725** | Draft  | `tools/sprite-gen/src/signature.py` — `compute_envelope(catalog, promoted, rejected)` returns `vary.`* bounds where `envelope = catalog ∪ promoted − rejected-zones`. Each rejection `reason` maps to a zone carve-out (e.g. `roof-too-shallow` floors `vary.roof.h_px.min`). Deterministic. Consumes L11.                                           |
 | T6.5.4 | Composer render-time score-and-retry gate         | **TECH-726** | Draft  | `tools/sprite-gen/src/compose.py` — wrap variant render in score-and-retry loop: sample `vary:` from envelope → render → score variant against envelope floor → if below, re-sample (new `palette_seed + i + retry`). Configurable N (default 5). Scoring heuristic: normalized distance from envelope centroid + hard-fail penalty on carved zones. |
 | T6.5.5 | `.needs_review` sidecar on floor-miss             | **TECH-727** | Draft  | `tools/sprite-gen/src/compose.py` — after N retries without meeting floor, emit best-scoring variant and write `<sprite>.needs_review.json` sidecar containing: final score, envelope snapshot, attempted seeds, failing zones. CI / curator consumes sidecars to surface low-confidence renders.                                                    |
@@ -1418,11 +1418,11 @@ validation_gate:
 
 ```yaml
 - reserved_id: TECH-723
-  title: curate.py promote → promoted.jsonl
+  title: curate.py log-promote → promoted.jsonl
   priority: high
   issue_type: TECH
   notes: |
-    `tools/sprite-gen/src/curate.py` — new `promote <variant>` subcommand appending a JSONL row to `curation/promoted.jsonl`. Row carries rendered variant path, sampled `vary:` values, measured bbox/palette stats.
+    `tools/sprite-gen/src/curate.py` — new `log-promote <variant>` subcommand appending a JSONL row to `curation/promoted.jsonl`. Row carries rendered variant path, sampled `vary:` values, measured bbox/palette stats. Verb disambiguates from existing `promote` (TECH-179 PNG→Unity ship + catalog push).
   depends_on:
     - TECH-704
     - TECH-705
@@ -1434,9 +1434,9 @@ validation_gate:
     - TECH-725
   stub_body:
     summary: |
-      `promote` subcommand captures curator approvals into a JSONL log so the signature aggregator can tighten the envelope toward real artist-validated variants.
+      `log-promote` subcommand captures curator approvals into a JSONL log so the signature aggregator can tighten the envelope toward real artist-validated variants.
     goals: |
-      1. `promote <variant>` appends one JSON row to `curation/promoted.jsonl`.
+      1. `log-promote <variant>` appends one JSON row to `curation/promoted.jsonl`.
       2. Row carries variant path + sampled `vary:` values + measured bbox/palette stats.
       3. Idempotent append; no mutation of prior rows.
     systems_map: |
@@ -1444,20 +1444,20 @@ validation_gate:
     impl_plan_sketch: |
       Phase 1 — CLI subcommand scaffold; Phase 2 — Measurement helpers (bbox + palette stats); Phase 3 — JSONL writer + idempotency test.
 - reserved_id: TECH-724
-  title: curate.py reject --reason → rejected.jsonl
+  title: curate.py log-reject --reason → rejected.jsonl
   priority: high
   issue_type: TECH
   notes: |
-    `tools/sprite-gen/src/curate.py` — new `reject <variant> --reason <tag>` subcommand appending to `curation/rejected.jsonl`. Controlled reason vocabulary: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`.
+    `tools/sprite-gen/src/curate.py` — new `log-reject <variant> --reason <tag>` subcommand appending to `curation/rejected.jsonl`. Controlled reason vocabulary: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`. Verb disambiguates from existing `reject` (TECH-179 glob-delete).
   depends_on:
     - TECH-723
   related:
     - TECH-725
   stub_body:
     summary: |
-      `reject` captures artist vetoes with a controlled reason tag, so the signature aggregator can carve out `vary.*` zones that produce undesirable variants.
+      `log-reject` captures artist vetoes with a controlled reason tag, so the signature aggregator can carve out `vary.*` zones that produce undesirable variants.
     goals: |
-      1. `reject <variant> --reason <tag>` appends JSONL row.
+      1. `log-reject <variant> --reason <tag>` appends JSONL row.
       2. Row shape mirrors `promoted.jsonl` plus `reason: <tag>`.
       3. Invalid `<tag>` → CLI error (controlled vocab enforced).
     systems_map: |
