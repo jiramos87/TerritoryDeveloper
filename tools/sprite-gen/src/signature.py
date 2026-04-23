@@ -28,8 +28,10 @@ import datetime as _dt
 import hashlib
 import json
 from collections import Counter
+from colorsys import rgb_to_hsv
 from dataclasses import dataclass, field
 from pathlib import Path
+from statistics import stdev
 from typing import Callable, Iterable, Optional
 
 from PIL import Image
@@ -180,9 +182,14 @@ def _measure_silhouette(img: Image.Image) -> dict:
 
 
 def _measure_ground(img: Image.Image) -> dict:
-    """Ground band measurement (bottom ~20% of content).
+    """Ground band measurement (bottom ~20% of content bbox) — TECH-719.
 
-    Emits dominant colours + simple hue/value std-dev proxies.
+    Returns:
+        ``dominant``: single modal RGB list ``[r, g, b]``, or ``None`` on empty band.
+        ``variance.hue_stddev``: population HSV hue stddev in degrees, or ``None``.
+        ``variance.value_stddev``: population HSV value stddev in percent, or ``None``.
+
+    L15 fallback contract: zero-pixel band → all fields ``None``.
     """
     w, h = img.size
     box = img.getbbox() or (0, 0, w, h)
@@ -198,31 +205,25 @@ def _measure_ground(img: Image.Image) -> dict:
                 pixels.append(p[:3])
 
     if not pixels:
-        return {"dominant": [], "variance": {"hue_stddev": 0.0, "value_stddev": 0.0}}
+        return {"dominant": None, "variance": {"hue_stddev": None, "value_stddev": None}}
 
-    dominant = [list(rgb) for rgb, _ in Counter(pixels).most_common(3)]
+    # Modal RGB as dominant.
+    dominant_rgb, _ = Counter(pixels).most_common(1)[0]
+    dominant = list(dominant_rgb)
 
-    def _value(rgb: tuple[int, int, int]) -> float:
-        return max(rgb) / 255.0
+    # HSV stddev in natural units: hue degrees (0–360), value percent (0–100).
+    hsvs = [rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0) for (r, g, b) in pixels]
+    hues_deg = [h * 360.0 for h, _s, _v in hsvs]
+    vals_pct = [v * 100.0 for _h, _s, v in hsvs]
 
-    values = [_value(p) for p in pixels]
-    vmean = sum(values) / len(values)
-    vstd = (sum((v - vmean) ** 2 for v in values) / len(values)) ** 0.5
-
-    # Coarse hue proxy: normalized R/(R+G+B)
-    def _hue(rgb: tuple[int, int, int]) -> float:
-        s = sum(rgb)
-        return rgb[0] / s if s else 0.0
-
-    hues = [_hue(p) for p in pixels]
-    hmean = sum(hues) / len(hues)
-    hstd = (sum((hv - hmean) ** 2 for hv in hues) / len(hues)) ** 0.5
+    h_stddev = round(stdev(hues_deg), 4) if len(hues_deg) > 1 else 0.0
+    v_stddev = round(stdev(vals_pct), 4) if len(vals_pct) > 1 else 0.0
 
     return {
         "dominant": dominant,
         "variance": {
-            "hue_stddev": round(hstd, 4),
-            "value_stddev": round(vstd, 4),
+            "hue_stddev": h_stddev,
+            "value_stddev": v_stddev,
         },
     }
 
@@ -318,19 +319,33 @@ def _summarize_silhouette(measurements: list[dict]) -> dict:
 
 
 def _summarize_ground(measurements: list[dict]) -> dict:
-    # Aggregate dominant colours across all samples.
+    """Aggregate ground measurements across N sprites (TECH-719).
+
+    ``dominant``: modal RGB across all per-sprite dominants (or ``None``).
+    ``variance``: mean of per-sprite stddevs; ``None`` when all are ``None``.
+    """
     all_dom: list[tuple[int, int, int]] = []
     for m in measurements:
-        for rgb in m["ground"]["dominant"]:
-            all_dom.append(tuple(rgb))
-    dom = [list(rgb) for rgb, _ in Counter(all_dom).most_common(3)]
-    hue = [m["ground"]["variance"]["hue_stddev"] for m in measurements]
-    val = [m["ground"]["variance"]["value_stddev"] for m in measurements]
+        d = m["ground"]["dominant"]
+        if d is not None:
+            all_dom.append(tuple(d))  # type: ignore[arg-type]
+
+    dominant: list[int] | None = None
+    if all_dom:
+        dominant_rgb, _ = Counter(all_dom).most_common(1)[0]
+        dominant = list(dominant_rgb)
+
+    hue_vals = [m["ground"]["variance"]["hue_stddev"] for m in measurements if m["ground"]["variance"]["hue_stddev"] is not None]
+    val_vals = [m["ground"]["variance"]["value_stddev"] for m in measurements if m["ground"]["variance"]["value_stddev"] is not None]
+
+    hue_mean: float | None = round(sum(hue_vals) / len(hue_vals), 4) if hue_vals else None
+    val_mean: float | None = round(sum(val_vals) / len(val_vals), 4) if val_vals else None
+
     return {
-        "dominant": dom,
+        "dominant": dominant,
         "variance": {
-            "hue_stddev": round(sum(hue) / len(hue), 4),
-            "value_stddev": round(sum(val) / len(val), 4),
+            "hue_stddev": hue_mean,
+            "value_stddev": val_mean,
         },
     }
 

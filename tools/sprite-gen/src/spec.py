@@ -268,11 +268,69 @@ def _normalize_variants(data: dict) -> None:
                     f"got {type(v.get('vary')).__name__}"
                 ),
             )
+        # TECH-720 — validate vary.ground sub-dict when present.
+        vary = v["vary"]
+        if "ground" in vary:
+            if not isinstance(vary["ground"], dict):
+                raise SpecValidationError(
+                    field="variants.vary.ground",
+                    message=f"vary.ground must be dict, got {type(vary['ground']).__name__}",
+                )
+            vary["ground"] = _normalize_vary_ground(vary["ground"])
         return
     raise SpecValidationError(
         field="variants",
         message=f"field 'variants' must be int or dict, got {type(v).__name__}",
     )
+
+
+# ---------------------------------------------------------------------------
+# TECH-720 — vary.ground grammar validation helpers
+# ---------------------------------------------------------------------------
+
+
+def _validate_range(raw: object, field: str) -> dict:
+    """Validate and normalise a ``{min: N, max: N}`` range dict.
+
+    Raises ``SpecValidationError`` when *raw* is not a dict or lacks min/max.
+    """
+    if not isinstance(raw, dict) or "min" not in raw or "max" not in raw:
+        raise SpecValidationError(
+            field=field,
+            message=f"{field}: expected {{min, max}} dict, got {raw!r}",
+        )
+    return {"min": float(raw["min"]), "max": float(raw["max"])}
+
+
+def _normalize_vary_ground(raw: dict) -> dict:
+    """Validate and normalise a ``vary.ground`` sub-dict (TECH-720).
+
+    Accepted keys: ``material.values`` (non-empty list), ``hue_jitter`` ({min, max}),
+    ``value_jitter`` ({min, max}), ``texture.density`` ({min, max}).
+    Unknown top-level keys are silently ignored (forward-compat).
+    """
+    out: dict = {}
+    if "material" in raw:
+        values = raw["material"].get("values") if isinstance(raw["material"], dict) else None
+        if not values or not isinstance(values, list) or len(values) == 0:
+            raise SpecValidationError(
+                field="vary.ground.material.values",
+                message="vary.ground.material.values: expected non-empty list of strings",
+            )
+        if not all(isinstance(v, str) for v in values):
+            raise SpecValidationError(
+                field="vary.ground.material.values",
+                message="vary.ground.material.values: all entries must be strings",
+            )
+        out["material"] = {"values": list(values)}
+    for axis in ("hue_jitter", "value_jitter"):
+        if axis in raw:
+            out[axis] = _validate_range(raw[axis], f"vary.ground.{axis}")
+    if "texture" in raw:
+        tex = raw["texture"]
+        if isinstance(tex, dict) and "density" in tex:
+            out["texture"] = {"density": _validate_range(tex["density"], "vary.ground.texture.density")}
+    return out
 
 
 # ---------------------------------------------------------------------------

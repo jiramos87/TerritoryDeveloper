@@ -184,6 +184,28 @@ Calibration signatures are the canonical runtime calibration source. See `tools/
 | mustard_industrial | `#b8a858` | `#888040` | `#585028` | Power-plant ground. |
 | outline | — | — | `#000000` | 1-px silhouette on small/medium buildings. |
 
+#### §4.1.A Accent keys (`accent_dark` / `accent_light`)
+
+Each material entry may optionally declare `accent_dark` and `accent_light` RGB tuples (TECH-716). Consumed by scatter primitives (e.g. `iso_ground_noise`) to paint specks that read darker/lighter than the base ramp. Absent keys → consumers no-op for that material.
+
+```json
+"grass_flat": {
+  "bright": [104, 168, 56],
+  "mid":    [78,  126, 42],
+  "dark":   [32,   72,  8],
+  "accent_dark":  [22, 52, 8],
+  "accent_light": [140, 196, 80]
+}
+```
+
+#### §4.1.B `iso_ground_noise` density range
+
+`iso_ground_noise` accepts a `density` parameter in the range `0..0.15`. Values outside this range are clamped. Zero density = no-op. The guardrail prevents accent scatter from overpowering the ramp and breaking the silhouette-first reading of a building sprite.
+
+#### §4.1.C Signature-derived `vary.ground.*` bounds
+
+Rather than hand-tuning jitter ranges, authors may consult extracted `signatures/` JSON (shape defined TECH-704, ground fields populated TECH-719). `ground.variance.hue_stddev` / `value_stddev` from the signature → sensible `vary.ground.hue_jitter` / `value_jitter` bounds without guessing.
+
 ### 4.2 Per-class building wall palettes
 
 | Class | Bright / Mid / Dark | Roof accent |

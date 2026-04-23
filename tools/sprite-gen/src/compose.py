@@ -37,6 +37,8 @@ Reference:
 from __future__ import annotations
 
 import copy
+import random as _random_mod
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from random import Random
 
 from PIL import Image
@@ -47,6 +49,7 @@ from .palette import load_palette
 from .primitives import (
     iso_cube,
     iso_ground_diamond,
+    iso_ground_noise,
     iso_prism,
     iso_stepped_foundation,
 )
@@ -98,12 +101,97 @@ def _expand_level_entries(composition: list, spec: dict) -> list:
 
 
 # ---------------------------------------------------------------------------
+# TECH-718 — ground ramp HSV jitter helper
+# ---------------------------------------------------------------------------
+
+
+def _jitter_ground_palette(
+    palette: dict,
+    material: str,
+    hue_jitter: dict | None,
+    value_jitter: dict | None,
+    *,
+    seed: int,
+) -> dict:
+    """Return a palette copy with *material*'s bright/mid/dark ramp jittered (TECH-718).
+
+    Returns *palette* unchanged when both jitters are None or span zero (identity path
+    preserves byte-identical legacy behaviour).
+    """
+    entry = palette["materials"].get(material, {})
+    raw_ramp: list[tuple[int, int, int]] = []
+    for key in ("bright", "mid", "dark"):
+        val = entry.get(key)
+        if val is not None:
+            raw_ramp.append(tuple(int(c) for c in val))  # type: ignore[arg-type]
+
+    jittered = _jittered_ramp(raw_ramp, hue_jitter, value_jitter, seed)
+    if jittered is raw_ramp:
+        return palette  # identity — no mutation needed
+
+    # Shallow-copy palette; deep-copy only the target material entry.
+    new_mat_entry = dict(entry)
+    for i, key in enumerate(("bright", "mid", "dark")):
+        if i < len(jittered):
+            new_mat_entry[key] = list(jittered[i])
+    new_materials = dict(palette["materials"])
+    new_materials[material] = new_mat_entry
+    return {**palette, "materials": new_materials}
+
+
+def _jittered_ramp(
+    ramp: list[tuple[int, int, int]],
+    hue_jitter: dict | None,
+    value_jitter: dict | None,
+    seed: int,
+) -> list[tuple[int, int, int]]:
+    """Return a hue/value-jittered copy of *ramp* (TECH-718).
+
+    Identity (returns *ramp* unchanged) when both jitters are None or span zero.
+
+    Args:
+        ramp:         List of ``(R, G, B)`` tuples from the palette.
+        hue_jitter:   ``{"min": float, "max": float}`` in degrees, or ``None``.
+        value_jitter: ``{"min": float, "max": float}`` in % of HSV V, or ``None``.
+        seed:         RNG seed — deterministic per ``palette_seed + variant_index``.
+
+    Returns:
+        New list of ``(R, G, B)`` tuples, or *ramp* itself when no jitter applies.
+    """
+    hj_min = hj_max = 0.0
+    vj_min = vj_max = 0.0
+    if hue_jitter:
+        hj_min = float(hue_jitter.get("min", 0))
+        hj_max = float(hue_jitter.get("max", 0))
+    if value_jitter:
+        vj_min = float(value_jitter.get("min", 0))
+        vj_max = float(value_jitter.get("max", 0))
+
+    if hj_min == hj_max == 0.0 and vj_min == vj_max == 0.0:
+        return ramp  # identity — no copy needed
+
+    rng = _random_mod.Random(seed)
+    dh = rng.uniform(hj_min, hj_max) / 360.0
+    dv = rng.uniform(vj_min, vj_max) / 100.0
+
+    out: list[tuple[int, int, int]] = []
+    for r, g, b in ramp:
+        h, s, v = rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+        h = (h + dh) % 1.0
+        v = max(0.0, min(1.0, v + dv))
+        nr, ng, nb = hsv_to_rgb(h, s, v)
+        out.append((int(nr * 255), int(ng * 255), int(nb * 255)))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Dispatch table
 # ---------------------------------------------------------------------------
 
 _DISPATCH: dict[str, object] = {
     "iso_cube": iso_cube,
     "iso_ground_diamond": iso_ground_diamond,
+    "iso_ground_noise": iso_ground_noise,
     "iso_prism": iso_prism,
     "iso_stepped_foundation": iso_stepped_foundation,
 }
@@ -230,6 +318,15 @@ def compose_sprite(spec: dict) -> Image.Image:
         in_map = cls in _DEFAULT_GROUND
         if g_material is not None or in_map:
             gmat = g_material if g_material is not None else default_ground_for_class(cls)
+
+            # TECH-718 — build jittered palette for the ground layer when spec requests it.
+            g_hue_jitter = isinstance(graw, dict) and graw.get("hue_jitter") or None
+            g_value_jitter = isinstance(graw, dict) and graw.get("value_jitter") or None
+            palette_seed: int = int(spec.get("palette_seed", spec.get("seed", 0)) or 0)
+            ground_palette = _jitter_ground_palette(
+                palette, gmat, g_hue_jitter, g_value_jitter, seed=palette_seed
+            )
+
             iso_ground_diamond(
                 canvas=canvas,
                 x0=x0,
@@ -237,8 +334,30 @@ def compose_sprite(spec: dict) -> Image.Image:
                 fx=fx,
                 fy=fy,
                 material=gmat,
-                palette=palette,
+                palette=ground_palette,
             )
+
+            # TECH-718 — auto-insert iso_ground_noise when texture is specified.
+            g_texture = isinstance(graw, dict) and graw.get("texture") or None
+            if g_texture:
+                t_density = float(g_texture.get("density", 0.0)) if isinstance(g_texture, dict) else 0.0
+                if t_density > 0.0:
+                    # Derive noise seed from palette_seed + 1 (distinct from jitter seed).
+                    noise_seed = palette_seed + 1
+                    # Diamond top-apex y: span*8 - 1 (iso_ground_diamond geometry).
+                    span = fx + fy
+                    top_y = span * 8 - 1
+                    iso_ground_noise(
+                        canvas=canvas,
+                        x0=x0,
+                        y0=top_y,
+                        material=gmat,
+                        density=t_density,
+                        seed=noise_seed,
+                        palette=ground_palette,
+                        fx=fx,
+                        fy=fy,
+                    )
 
     building = spec.get("building") or {}
     fr = building.get("footprint_ratio")
@@ -499,7 +618,16 @@ def sample_variant(spec: dict, variant_idx: int) -> dict:
     palette_rng = Random(palette_seed + variant_idx)
     geometry_rng = Random(geometry_seed + variant_idx)
 
+    # TECH-720 — vary.ground is palette-domain; process before generic walk.
+    vary_ground = vary.get("ground")
+    if vary_ground and isinstance(vary_ground, dict):
+        palette_active = scope in ("palette", "palette+geometry")
+        if palette_active:
+            _apply_vary_ground(out, vary_ground, palette_rng)
+
     for path, leaf in _walk_vary(vary, ()):
+        if path and path[0] == "ground":
+            continue  # handled above
         axis_scope = _axis_scope(path)
         active = scope in ("palette+geometry",) or scope == axis_scope
         if not active:
@@ -509,6 +637,40 @@ def sample_variant(spec: dict, variant_idx: int) -> dict:
         if value is not None:
             _set_deep(out, path, value)
     return out
+
+
+def _apply_vary_ground(out: dict, vary_ground: dict, rng: Random) -> None:
+    """Merge sampled ``vary.ground`` values into ``out["ground"]`` (TECH-720).
+
+    ``out["ground"]`` must already be an object dict (normalised by TECH-715).
+    If absent or string-form, this is a no-op (back-compat).
+    """
+    g = out.get("ground")
+    if not isinstance(g, dict):
+        return
+
+    if "material" in vary_ground:
+        values = vary_ground["material"].get("values")
+        if values:
+            g["material"] = rng.choice(values)
+            g.pop("materials", None)
+
+    for axis in ("hue_jitter", "value_jitter"):
+        if axis in vary_ground:
+            r = vary_ground[axis]
+            lo, hi = float(r["min"]), float(r["max"])
+            sampled = rng.uniform(lo, hi)
+            g[axis] = {"min": sampled, "max": sampled}
+
+    if "texture" in vary_ground and "density" in vary_ground["texture"]:
+        r = vary_ground["texture"]["density"]
+        lo, hi = float(r["min"]), float(r["max"])
+        density = rng.uniform(lo, hi)
+        g.setdefault("texture", {})
+        if isinstance(g["texture"], dict):
+            g["texture"]["density"] = density
+        else:
+            g["texture"] = {"density": density}
 
 
 def _walk_vary(node, prefix: tuple):
