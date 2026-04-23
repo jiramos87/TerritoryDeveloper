@@ -67,6 +67,12 @@ def load_spec(path: Union[str, Path]) -> dict:
             message=f"missing required field: <root> (expected mapping, got {type(data).__name__})",
         )
 
+    # R11: `building.composition` aliases to top-level for validation
+    if "composition" not in data and isinstance(data.get("building"), dict):
+        bc = data["building"].get("composition")
+        if isinstance(bc, list):
+            data = {**data, "composition": bc}
+
     # Required-key presence + type checks
     for key, expected_type in REQUIRED_KEYS:
         if key not in data:

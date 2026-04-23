@@ -223,3 +223,27 @@ def test_composition_entries_prefers_top_level():
         "building": {"composition": [{"type": "iso_prism", "h": 1, "material": "y"}]},
     }
     assert len(composition_entries(s)) == 1
+
+
+def test_load_spec_r11_building_composition(tmp_path):
+    p = _write_yaml(
+        tmp_path,
+        {
+            "id": "b_r_s",
+            "class": "residential_small",
+            "footprint": [1, 1],
+            "terrain": "flat",
+            "palette": "residential",
+            "output": {"name": "b"},
+            "building": {
+                "footprint_ratio": [0.45, 0.45],
+                "composition": [
+                    {"type": "iso_cube", "role": "wall", "w": 1, "d": 1, "h_px": 8, "material": "m"}
+                ],
+            },
+        },
+    )
+    d = load_spec(p)
+    assert d["class"] == "residential_small"
+    assert d["building"]["footprint_ratio"] == [0.45, 0.45]
+    assert d["composition"][0]["type"] == "iso_cube"

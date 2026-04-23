@@ -1,14 +1,26 @@
-id: building_residential_small_v1
-class: residential
+id: building_residential_small
+class: residential_small
 footprint: [1, 1]
 terrain: flat
-levels: 2
+ground: grass_flat
+levels: 1
 seed: 42
 palette: residential
-composition:
-  - { type: iso_cube,  w: 1, d: 1, h: 16, material: wall_brick_red }
-  - { type: iso_cube,  w: 1, d: 1, h: 16, material: wall_brick_red, offset_z: 16 }
-  - { type: iso_prism, w: 1, d: 1, h: 12, pitch: 0.5, axis: ns, material: roof_tile_brown, offset_z: 32 }
+building:
+  footprint_ratio: [0.45, 0.45]
+  composition:
+    - { type: iso_cube, role: wall, material: wall_brick_red, w: 1, d: 1 }
+    - {
+        type: iso_prism,
+        role: roof,
+        material: roof_tile_brown,
+        w: 1,
+        d: 1,
+        h_px: 8,
+        pitch: 0.5,
+        axis: ns,
+        offset_z_role: above_walls,
+      }
 output:
   name: building_residential_small
   variants: 4
