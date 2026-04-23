@@ -1,0 +1,27 @@
+id: TECH-726
+type: TECH
+title: Composer render-time score-and-retry gate
+priority: high
+status: open
+section: Stage 6.5 — Curation-trained quality gate
+spec: ia/projects/TECH-726.md
+files:
+  - tools/sprite-gen/src/compose.py
+notes: |
+  `tools/sprite-gen/src/compose.py` — wrap variant render in score-and-retry loop: sample → render → score against envelope → re-sample up to N times (default 5). Scoring = normalized distance from envelope centroid + hard-fail penalty on carved zones.
+acceptance: |
+  - [ ] Retry count configurable; default 5
+  - [ ] Deterministic: same seeds → same retry trajectory
+  - [ ] Feature-flag off → byte-identical to pre-gate render
+  - [ ] Score function penalises carved zones as hard-fail
+  - [ ] Unit test covers retry trajectory + feature-flag regression
+depends_on:
+  - TECH-725
+depends_on_raw: TECH-725 — compute_envelope produces the floor/zones the gate consults
+related:
+  - TECH-727
+created: 2026-04-23
+raw_markdown: |
+  TECH-726 — Composer render-time score-and-retry gate
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.5.4

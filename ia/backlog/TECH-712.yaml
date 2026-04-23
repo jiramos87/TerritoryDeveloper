@@ -1,0 +1,26 @@
+id: TECH-712
+type: TECH
+title: CLI bootstrap-variants --from-signature
+priority: medium
+status: open
+section: Stage 6.3 — Placement + variant randomness + split seeds
+spec: ia/projects/TECH-712.md
+files:
+  - tools/sprite-gen/src/__main__.py
+notes: |
+  New CLI subcommand `python3 -m src bootstrap-variants <stem> --from-signature`. Reads `signatures/<class>.signature.json` (class derived from spec), writes sensible `vary:` defaults into the named spec (e.g. `vary.roof.h_px` from signature silhouette band). Opt-in; never auto-rewrites during render. Consumes L7.
+acceptance: |
+  - [ ] `python3 -m src bootstrap-variants <stem> --from-signature` exits 0 when signature exists
+  - [ ] Writes `vary:` block into `tools/sprite-gen/specs/<stem>.yaml`
+  - [ ] Preserves author-authored keys (merge, not overwrite)
+  - [ ] Exits non-zero with helpful message when signature missing
+depends_on:
+  - TECH-710
+depends_on_raw: TECH-710 — variants loader normalization must land first
+related:
+  - TECH-705
+created: 2026-04-23
+raw_markdown: |
+  TECH-712 — CLI bootstrap-variants --from-signature
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.3.4

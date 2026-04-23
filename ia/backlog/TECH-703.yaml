@@ -1,0 +1,26 @@
+id: TECH-703
+type: TECH
+title: Per-spec bbox regression in test_render_integration.py
+priority: high
+status: open
+section: Stage 6.1 — Pivot hotfix + regression tighten
+spec: ia/projects/TECH-703.md
+files:
+  - tools/sprite-gen/tests/test_render_integration.py
+notes: |
+  Parametrize a new `test_every_live_1x1_spec_bbox` across every `specs/*.yaml` in the sprite-gen tool tree; assert bbox equals exactly `(0, 15, 64, 48)` for each 1×1 live spec (`building_residential_small` + 3 `building_residential_light_{a,b,c}` variants). Closes I2 regression hole — any spec that anchors a building too high / too low fails at CI.
+acceptance: |
+  - [ ] Glob `tools/sprite-gen/specs/*.yaml`; filter to 1×1 specs
+  - [ ] Parametrized pytest case per live 1×1 spec
+  - [ ] Each case asserts `rendered.getbbox() == (0, 15, 64, 48)`
+  - [ ] `pytest tools/sprite-gen/tests/test_render_integration.py -q` green (4+ parametrized cases)
+depends_on:
+  - TECH-701
+depends_on_raw: TECH-701 — pivot_pad comment locked first
+related:
+  - TECH-702
+created: 2026-04-23
+raw_markdown: |
+  TECH-703 — Per-spec bbox regression in test_render_integration.py
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.1.3

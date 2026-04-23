@@ -1,0 +1,27 @@
+id: TECH-714
+type: TECH
+title: DAS R11 addendum — placement + split seeds + vary grammar
+priority: medium
+status: open
+section: Stage 6.3 — Placement + variant randomness + split seeds
+spec: ia/projects/TECH-714.md
+files:
+  - docs/sprite-gen-art-design-system.md
+notes: |
+  `docs/sprite-gen-art-design-system.md` R11 addendum — new placement fields (`building.footprint_px`, `padding`, `align`), split seed semantics (`palette_seed`, `geometry_seed`, legacy `seed` fan-out), and `vary:` grammar (range objects + `seed_scope`).
+acceptance: |
+  - [ ] R11 addendum documents placement fields
+  - [ ] R11 addendum documents split seeds + legacy fan-out
+  - [ ] R11 addendum documents `vary:` grammar
+  - [ ] Doc-only change
+depends_on:
+  - TECH-709
+  - TECH-710
+depends_on_raw: TECH-709 + TECH-710 — schema must exist before doc references fields
+related:
+  - TECH-711
+created: 2026-04-23
+raw_markdown: |
+  TECH-714 — DAS R11 addendum — placement + split seeds + vary grammar
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.3.6

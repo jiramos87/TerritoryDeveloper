@@ -1,0 +1,26 @@
+id: TECH-721
+type: TECH
+title: Tests — test_ground_variation.py
+priority: high
+status: open
+section: Stage 6.4 — Ground variation
+spec: ia/projects/TECH-721.md
+files:
+  - tools/sprite-gen/tests/test_ground_variation.py
+notes: |
+  `tools/sprite-gen/tests/test_ground_variation.py` — covers (a) legacy string form byte-identical, (b) object form round-trip, (c) `materials: [...]` pool renders one of each seeded, (d) non-zero jitter produces per-variant diffs, (e) zero jitter produces byte-identical variants, (f) noise primitive: mask clipped to diamond + density monotonic.
+acceptance: |
+  - [ ] Six named test cases (legacy string, object, pool, non-zero jitter, zero jitter, noise mask)
+  - [ ] Reproducibility: same seeds produce identical output across runs
+  - [ ] `pytest tools/sprite-gen/tests/ -q` green
+  - [ ] Noise mask test asserts zero accent pixels outside diamond bounds
+depends_on:
+  - TECH-718
+  - TECH-720
+depends_on_raw: TECH-718 (composer) + TECH-720 (grammar) — both must land first
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-721 — Tests — test_ground_variation.py
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.4.7

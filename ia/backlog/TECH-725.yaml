@@ -1,0 +1,29 @@
+id: TECH-725
+type: TECH
+title: Signature three-source aggregator
+priority: high
+status: open
+section: Stage 6.5 — Curation-trained quality gate
+spec: ia/projects/TECH-725.md
+files:
+  - tools/sprite-gen/src/signature.py
+notes: |
+  `tools/sprite-gen/src/signature.py` — `compute_envelope(catalog, promoted, rejected)` returns `vary.*` bounds where `envelope = catalog ∪ promoted − rejected-zones`. Rejection reasons map to zone carve-outs.
+acceptance: |
+  - [ ] `compute_envelope` returns `vary.*` bounds from three inputs
+  - [ ] Union of catalog + promoted tightens bounds toward validated variants
+  - [ ] Rejection reasons carve out `vary.*` floor zones via reason→axis map
+  - [ ] Deterministic: same inputs → same envelope
+  - [ ] Unit tests cover all three source combinations + empty-input fallback
+depends_on:
+  - TECH-723
+  - TECH-724
+depends_on_raw: TECH-723 (promoted.jsonl writer) + TECH-724 (rejected.jsonl writer) — aggregator reads both
+related:
+  - TECH-726
+  - TECH-729
+created: 2026-04-23
+raw_markdown: |
+  TECH-725 — Signature three-source aggregator
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.5.3

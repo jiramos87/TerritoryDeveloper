@@ -1,0 +1,27 @@
+id: TECH-722
+type: TECH
+title: DAS §4.1 addendum — accent keys + noise density
+priority: medium
+status: open
+section: Stage 6.4 — Ground variation
+spec: ia/projects/TECH-722.md
+files:
+  - docs/sprite-gen-art-design-system.md
+notes: |
+  `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.*` bounds.
+acceptance: |
+  - [ ] §4.1 lists `accent_dark` / `accent_light` as optional per-material palette keys
+  - [ ] §4.1 documents noise density guardrail (0..0.15)
+  - [ ] §4.1 forward-points to `signatures/` for `vary.ground.*` authoring
+  - [ ] Grep check: keys + guardrail present
+depends_on:
+  - TECH-716
+  - TECH-717
+depends_on_raw: TECH-716 (palette keys) + TECH-717 (noise primitive) — both must land first
+related:
+  - TECH-708
+created: 2026-04-23
+raw_markdown: |
+  TECH-722 — DAS §4.1 addendum — accent keys + noise density
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.4.8

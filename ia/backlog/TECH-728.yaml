@@ -1,0 +1,27 @@
+id: TECH-728
+type: TECH
+title: Tests — test_curation_loop.py
+priority: high
+status: open
+section: Stage 6.5 — Curation-trained quality gate
+spec: ia/projects/TECH-728.md
+files:
+  - tools/sprite-gen/tests/test_curation_loop.py
+notes: |
+  `tools/sprite-gen/tests/test_curation_loop.py` — (a) envelope tightens toward promoted samples after N promotes (before/after fixture); (b) `vary:` range shrinks in direction of rejection reasons (before/after); (c) `.needs_review` flag set when floor not met in N tries.
+acceptance: |
+  - [ ] Before/after envelope comparison after N promotes asserts tightening
+  - [ ] Before/after `vary.*` range after N rejects shows carve-out toward reason
+  - [ ] `.needs_review` sidecar presence asserted on floor-miss
+  - [ ] Deterministic seeds throughout
+  - [ ] `pytest tools/sprite-gen/tests/ -q` green
+depends_on:
+  - TECH-726
+  - TECH-727
+depends_on_raw: TECH-726 (gate) + TECH-727 (sidecar) — both must ship before integration tests
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-728 — Tests — test_curation_loop.py
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.5.6

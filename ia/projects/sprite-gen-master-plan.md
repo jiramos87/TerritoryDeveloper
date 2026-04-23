@@ -7,12 +7,14 @@
 > **Last updated:** 2026-04-23 (Stages 6–14 appended as the DAS-driven scale-calibration + decoration + footprint-unlock extension. Lock L9 supersedes the earlier "v1 all 1×1" lock; water-facing slopes move in-scope; v1 primitive set expands from 3 to 20).
 >
 > **Exploration source:**
+>
 > - `docs/isometric-sprite-generator-exploration.md` (§2 Locked decisions, §3 Architecture, §5–§9 Primitive/Palette/Slope/YAML/Folder design, §13 Phase plan, §15 Success criteria — ground truth for Stages 1–5).
 > - `docs/asset-snapshot-mvp-exploration.md` (§7.5 L6 + L7 + L8, §9.1 Architecture, §9.5.A) — extension source for Stage 5 push hook.
 > - `docs/sprite-gen-art-design-system.md` — **canonical DAS** (dimensional math, palette anchors, outline policy, 17-primitive decoration set, archetype YAML schema v2) — ground truth for Stages 6–14.
 > - `/tmp/sprite-gen-style-audit.md` — DAS polling transcript and audit raw data (197-sprite catalog inventory + bbox measurements + palette extraction).
 >
 > **Locked decisions (do not reopen in this plan):**
+>
 > - North star: unblock EA shipping — geometry-only MVP ships first; diffusion is opt-in.
 > - Asset scope v1: buildings + slope-aware foundations only; terrain slope tiles stay hand-drawn.
 > - Canvas math: `width = (fx+fy)×32`, `height = multiple of 32`; diamond bottom-center anchor.
@@ -32,11 +34,13 @@
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
 >
 > **Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**
+>
 > - `ia/projects/multi-scale-master-plan.md` — adds `RegionCell` / `CountryCell` types + parent-scale stubs + save-schema bumps. Sprite-gen v1 renders only city-scale 1×1 buildings; region / country scale sprite needs (cell sprites, city-node-at-region-zoom, region-node-at-country-zoom) surface when multi-scale Step 4 opens — see Deferred decomposition below.
 > - `ia/projects/blip-master-plan.md` — audio subsystem. Disjoint surfaces (Python tool vs Unity C#); no sprite-gen collision.
 > - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
 >
 > **Read first if landing cold:**
+>
 > - `docs/isometric-sprite-generator-exploration.md` — full design + architecture + examples. §2 Locked decisions + §3 Architecture + §13 Phase plan are ground truth.
 > - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — doc semantics + phase/task cardinality rule (≥2 tasks per phase).
 > - `ia/rules/invariants.md` — no runtime C# invariants at risk (tool is Python, Unity-isolated). Unity import pivot/PPU correctness enforced by `unity_meta.py` in Stage 1.4.
@@ -46,7 +50,7 @@
 
 ## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending`_ (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
 ---
 
@@ -70,14 +74,16 @@
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T1.1 | Folder scaffold | **TECH-123** | Done | Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml), `README.md` stub |
-| T1.2 | Canvas math module | **TECH-124** | Done | `src/canvas.py` — implement `canvas_size(fx, fy, extra_h=0) → (w, h)` using `(fx+fy)*32` width formula; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`; docstring cites §4 Canvas math from exploration doc |
-| T1.3 | iso_cube primitive | **TECH-125** | Done | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
-| T1.4 | iso_prism primitive | **TECH-126** | Done | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube |
-| T1.5 | Canvas unit tests | **TECH-127** | Done (archived) | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table |
+
+| Task | Name                  | Issue        | Status          | Intent                                                                                                                                                                                                                                                                                                                                 |
+| ---- | --------------------- | ------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1.1 | Folder scaffold       | **TECH-123** | Done            | Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml), `README.md` stub                                                                                                              |
+| T1.2 | Canvas math module    | **TECH-124** | Done            | `src/canvas.py` — implement `canvas_size(fx, fy, extra_h=0) → (w, h)` using `(fx+fy)*32` width formula; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`; docstring cites §4 Canvas math from exploration doc                                                                                                                                 |
+| T1.3 | iso_cube primitive    | **TECH-125** | Done            | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
+| T1.4 | iso_prism primitive   | **TECH-126** | Done            | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube                                                                                                      |
+| T1.5 | Canvas unit tests     | **TECH-127** | Done (archived) | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table                                                                                     |
 | T1.6 | Primitive smoke tests | **TECH-128** | Done (archived) | `tests/test_primitives.py` — render `iso_cube(w=1,d=1,h=32,material=STUB_RED)` on `canvas_size(1,1,32)=(64,32)` canvas; assert non-zero alpha per face bbox (top/south/east); same smoke for `iso_prism` both axes (pitch=0.5); save fixtures to `tests/fixtures/` tracked in git; re-export `iso_prism` from `primitives/__init__.py` |
+
 
 ---
 
@@ -101,14 +107,16 @@
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T2.1 | Compose layer | **TECH-147** | Done (archived) | `src/compose.py` — `compose_sprite(spec: dict) → PIL.Image`: create canvas via `canvas_size(fx, fy, extra_h=0)`, iterate `composition:` list, dispatch each entry to matching primitive (iso_cube / iso_prism), return composited image; `extra_h` derived from tallest primitive stack |
-| T2.2 | YAML spec loader | **TECH-148** | Done (archived) | `src/spec.py` — `load_spec(path) → dict`: load YAML + validate required keys (id, class, footprint, terrain, composition, palette, output); `SpecValidationError` raised on missing/malformed fields; CLI catches and exits with code 1 (per §10 exit codes) |
-| T2.3 | Render CLI command | **TECH-149** | Done (archived) | `src/cli.py` — `render {archetype}` command: resolve `specs/{archetype}.yaml`, load + validate spec, call `compose_sprite` N times (variants count from spec), apply seed-based permutations (material swap within class, prism pitch ±20%), write `out/{name}_v01.png` … `_v{N:02d}.png` |
-| T2.4 | Render --all command | **TECH-150** | Done (archived) | `src/cli.py` — `render --all` command: glob `specs/*.yaml`, iterate, call `render {archetype}` logic per spec; collect errors per spec (exit 0 only if all succeeded, else print failed archetypes + exit 1); `--terrain {slope_id}` CLI flag overrides spec `terrain` field (matches §10 CLI interface) |
-| T2.5 | First archetype YAML | **TECH-151** | Done | `specs/building_residential_small.yaml` — first archetype: `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`; composition: iso_cube×2 (wall_brick_red) + iso_prism (roof_tile_brown, pitch=0.5, axis=ns); `palette: residential`; `diffusion.enabled: false` |
-| T2.6 | Integration smoke test | **TECH-152** | Done | Integration smoke: run `python -m sprite_gen render building_residential_small` in CI-friendly subprocess; assert `out/building_residential_small_v01.png` exists + PIL open succeeds + image size == (64, 64); assert 4 variant files written; no exception raised |
+
+| Task | Name                   | Issue        | Status          | Intent                                                                                                                                                                                                                                                                                                                                            |
+| ---- | ---------------------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T2.1 | Compose layer          | **TECH-147** | Done (archived) | `src/compose.py` — `compose_sprite(spec: dict) → PIL.Image`: create canvas via `canvas_size(fx, fy, extra_h=0)`, iterate `composition:` list, dispatch each entry to matching primitive (iso_cube / iso_prism), return composited image; `extra_h` derived from tallest primitive stack                                                           |
+| T2.2 | YAML spec loader       | **TECH-148** | Done (archived) | `src/spec.py` — `load_spec(path) → dict`: load YAML + validate required keys (id, class, footprint, terrain, composition, palette, output); `SpecValidationError` raised on missing/malformed fields; CLI catches and exits with code 1 (per §10 exit codes)                                                                                      |
+| T2.3 | Render CLI command     | **TECH-149** | Done (archived) | `src/cli.py` — `render {archetype}` command: resolve `specs/{archetype}.yaml`, load + validate spec, call `compose_sprite` N times (variants count from spec), apply seed-based permutations (material swap within class, prism pitch ±20%), write `out/{name}_v01.png` … `_v{N:02d}.png`                                                         |
+| T2.4 | Render --all command   | **TECH-150** | Done (archived) | `src/cli.py` — `render --all` command: glob `specs/*.yaml`, iterate, call `render {archetype}` logic per spec; collect errors per spec (exit 0 only if all succeeded, else print failed archetypes + exit 1); `--terrain {slope_id}` CLI flag overrides spec `terrain` field (matches §10 CLI interface)                                          |
+| T2.5 | First archetype YAML   | **TECH-151** | Done            | `specs/building_residential_small.yaml` — first archetype: `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`; composition: iso_cube×2 (wall_brick_red) + iso_prism (roof_tile_brown, pitch=0.5, axis=ns); `palette: residential`; `diffusion.enabled: false` |
+| T2.6 | Integration smoke test | **TECH-152** | Done            | Integration smoke: run `python -m sprite_gen render building_residential_small` in CI-friendly subprocess; assert `out/building_residential_small_v01.png` exists + PIL open succeeds + image size == (64, 64); assert 4 variant files written; no exception raised                                                                               |
+
 
 ---
 
@@ -135,17 +143,19 @@
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T3.1 | K-means extractor | **TECH-153** | Done (archived) | `src/palette.py` — `extract_palette(cls, source_paths, n_clusters=8) → dict`: open PNGs with Pillow, flatten non-transparent pixels to numpy array, run `scipy.cluster.vq.kmeans2`, for each centroid synthesize 3-level ramp (HSV value ×1.2/1.0/0.6, clamped 0–255); return dict `{cluster_idx: {bright, mid, dark}}` ready for human naming |
-| T3.2 | Palette extract CLI | **TECH-154** | In Progress | `src/cli.py` — `palette extract {class} --sources "glob_pattern"` command: call `extract_palette`, print each cluster's color swatch (ANSI 24-bit color block), prompt stdin for material name per cluster, write named result to `tools/sprite-gen/palettes/{class}.json` (matches §6 Palette system JSON schema) |
-| T3.3 | Palette apply_ramp | **TECH-155** | Done (archived) | `src/palette.py` — `load_palette(cls) → dict`: read `palettes/{cls}.json`; `apply_ramp(palette, material_name, face) → (R,G,B)`: face ∈ {'top','south','east'} → bright/mid/dark; raise `PaletteKeyError` if material_name not in palette (caught by compose layer, exits code 2 per §10). **Merged with T1.3.4 into TECH-155** — API + sole consumer land atomic. |
-| T3.4 | Palette-driven compose | **TECH-155** | Done (archived) | Update `src/compose.py` to call `load_palette(spec['palette'])` once per sprite, pass palette to each primitive call; primitives accept `material: str` + `palette: dict` replacing stub color; `compose_sprite` now fully palette-driven. **Merged with T1.3.3 into TECH-155**. |
-| T3.5 | Palette unit tests | **TECH-156** | Done (archived) | `tests/test_palette.py` — mock K-means centroids (3 fixed RGB values), assert 3-level ramp values (bright = centroid HSV-V ×1.2 clamped, dark ×0.6); assert `apply_ramp(palette, 'wall_brick_red', 'top')` returns bright tuple; assert `apply_ramp(..., 'east')` returns dark tuple |
-| T3.6 | Bootstrap residential palette | **TECH-157** | Done (archived) | Run `palette extract residential --sources "Assets/Sprites/Residential/House1-64.png"` (or equivalent direct call); hand-name 8 clusters → produce `tools/sprite-gen/palettes/residential.json` with at minimum: wall_brick_red, roof_tile_brown, window_glass, concrete; check in JSON file |
-| T3.7 | GPL export command | **TECH-158** | Done (archived) | `src/palette.py` — `export_gpl(cls, dest_path=None) → str`: read `palettes/{cls}.json`, emit GIMP palette format (`GIMP Palette` header + `Name:` + `Columns:` + `R G B name` rows); swatch naming `{material}_{level}` where level ∈ {bright,mid,dark}; 3N rows for N materials; `src/cli.py` — `palette export {class}` command writes `palettes/{class}.gpl`; add `.gpl` to `.gitignore` (JSON is source of truth). **Merged with T1.3.8+T1.3.9 into TECH-158** — round-trip symmetry. |
-| T3.8 | GPL import command | **TECH-158** | Done (archived) | `src/palette.py` — `import_gpl(cls, gpl_path) → dict`: parse `.gpl` (skip header, read R G B name rows), group rows by material name (strip `_bright/_mid/_dark` suffix), emit JSON in Stage 1.3 schema; raise `GplParseError` on malformed rows; `src/cli.py` — `palette import {class} --gpl path` command writes/overwrites `palettes/{class}.json`, prints diff vs prior JSON. **Merged into TECH-158**. |
-| T3.9 | GPL round-trip test | **TECH-158** | Done (archived) | `tests/test_palette_gpl.py` — round-trip test: start from fixture `palettes/residential.json` → `export_gpl` → parse back with `import_gpl` → assert deep-equal with original (every material × face RGB identical); assert `.gpl` output contains `GIMP Palette` header + 12 swatch rows for 4 materials; assert malformed `.gpl` raises `GplParseError`. **Merged into TECH-158**. |
+
+| Task | Name                          | Issue        | Status          | Intent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---- | ----------------------------- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T3.1 | K-means extractor             | **TECH-153** | Done (archived) | `src/palette.py` — `extract_palette(cls, source_paths, n_clusters=8) → dict`: open PNGs with Pillow, flatten non-transparent pixels to numpy array, run `scipy.cluster.vq.kmeans2`, for each centroid synthesize 3-level ramp (HSV value ×1.2/1.0/0.6, clamped 0–255); return dict `{cluster_idx: {bright, mid, dark}}` ready for human naming                                                                                                                                            |
+| T3.2 | Palette extract CLI           | **TECH-154** | In Progress     | `src/cli.py` — `palette extract {class} --sources "glob_pattern"` command: call `extract_palette`, print each cluster's color swatch (ANSI 24-bit color block), prompt stdin for material name per cluster, write named result to `tools/sprite-gen/palettes/{class}.json` (matches §6 Palette system JSON schema)                                                                                                                                                                        |
+| T3.3 | Palette apply_ramp            | **TECH-155** | Done (archived) | `src/palette.py` — `load_palette(cls) → dict`: read `palettes/{cls}.json`; `apply_ramp(palette, material_name, face) → (R,G,B)`: face ∈ {'top','south','east'} → bright/mid/dark; raise `PaletteKeyError` if material_name not in palette (caught by compose layer, exits code 2 per §10). **Merged with T1.3.4 into TECH-155** — API + sole consumer land atomic.                                                                                                                        |
+| T3.4 | Palette-driven compose        | **TECH-155** | Done (archived) | Update `src/compose.py` to call `load_palette(spec['palette'])` once per sprite, pass palette to each primitive call; primitives accept `material: str` + `palette: dict` replacing stub color; `compose_sprite` now fully palette-driven. **Merged with T1.3.3 into TECH-155**.                                                                                                                                                                                                          |
+| T3.5 | Palette unit tests            | **TECH-156** | Done (archived) | `tests/test_palette.py` — mock K-means centroids (3 fixed RGB values), assert 3-level ramp values (bright = centroid HSV-V ×1.2 clamped, dark ×0.6); assert `apply_ramp(palette, 'wall_brick_red', 'top')` returns bright tuple; assert `apply_ramp(..., 'east')` returns dark tuple                                                                                                                                                                                                      |
+| T3.6 | Bootstrap residential palette | **TECH-157** | Done (archived) | Run `palette extract residential --sources "Assets/Sprites/Residential/House1-64.png"` (or equivalent direct call); hand-name 8 clusters → produce `tools/sprite-gen/palettes/residential.json` with at minimum: wall_brick_red, roof_tile_brown, window_glass, concrete; check in JSON file                                                                                                                                                                                              |
+| T3.7 | GPL export command            | **TECH-158** | Done (archived) | `src/palette.py` — `export_gpl(cls, dest_path=None) → str`: read `palettes/{cls}.json`, emit GIMP palette format (`GIMP Palette` header + `Name:` + `Columns:` + `R G B name` rows); swatch naming `{material}_{level}` where level ∈ {bright,mid,dark}; 3N rows for N materials; `src/cli.py` — `palette export {class}` command writes `palettes/{class}.gpl`; add `.gpl` to `.gitignore` (JSON is source of truth). **Merged with T1.3.8+T1.3.9 into TECH-158** — round-trip symmetry. |
+| T3.8 | GPL import command            | **TECH-158** | Done (archived) | `src/palette.py` — `import_gpl(cls, gpl_path) → dict`: parse `.gpl` (skip header, read R G B name rows), group rows by material name (strip `_bright/_mid/_dark` suffix), emit JSON in Stage 1.3 schema; raise `GplParseError` on malformed rows; `src/cli.py` — `palette import {class} --gpl path` command writes/overwrites `palettes/{class}.json`, prints diff vs prior JSON. **Merged into TECH-158**.                                                                              |
+| T3.9 | GPL round-trip test           | **TECH-158** | Done (archived) | `tests/test_palette_gpl.py` — round-trip test: start from fixture `palettes/residential.json` → `export_gpl` → parse back with `import_gpl` → assert deep-equal with original (every material × face RGB identical); assert `.gpl` output contains `GIMP Palette` header + 12 swatch rows for 4 materials; assert malformed `.gpl` raises `GplParseError`. **Merged into TECH-158**.                                                                                                      |
+
 
 ---
 
@@ -166,12 +176,14 @@
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T4.1 | Slopes YAML table | **TECH-175** | Done | `tools/sprite-gen/slopes.yaml` — per-corner Z table (in pixels) for 17 land slope variants: flat, N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay; corner keys: n/e/s/w; values: 0 or 16 (per §7 Slope-aware foundation table); codes must match `Assets/Sprites/Slopes/` filename stems exactly per **Slope variant naming** |
+
+| Task | Name                   | Issue        | Status          | Intent                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---- | ---------------------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| T4.1 | Slopes YAML table      | **TECH-175** | Done            | `tools/sprite-gen/slopes.yaml` — per-corner Z table (in pixels) for 17 land slope variants: flat, N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay; corner keys: n/e/s/w; values: 0 or 16 (per §7 Slope-aware foundation table); codes must match `Assets/Sprites/Slopes/` filename stems exactly per **Slope variant naming**                   |
 | T4.2 | iso_stepped_foundation | **TECH-176** | Done (archived) | `src/primitives/iso_stepped_foundation.py` — `iso_stepped_foundation(canvas, x0, y0, fx, fy, slope_id, material, palette)`: read `slopes.yaml` per-corner Z for slope_id; build stair/wedge pixel geometry bridging sloped ground plane (variable corners) to flat top at `max(n,e,s,w)+2` lip px; draw using `apply_ramp(material, 'south')` / `apply_ramp(material, 'east')` for visible faces |
-| T4.3 | Slope auto-insert | **TECH-177** | Done (archived) | Update `src/compose.py` `compose_sprite`: if `spec['terrain'] != 'flat'`, prepend `iso_stepped_foundation(...)` to primitive stack; recalculate `extra_h = max_corner_z` from slopes.yaml; recompute canvas size + pivot via `canvas_size(fx, fy, extra_h)` + `pivot_uv(canvas_h)`; raise `SlopeKeyError` (exit code 1) if slope_id not in slopes.yaml |
-| T4.4 | Slope regression tests | **TECH-178** | Done (archived) | Slope regression test spec `specs/building_residential_small_N.yaml` (copy of small, terrain: N); run `python -m sprite_gen render building_residential_small_N`; assert output PNG height > 64 (canvas grew by max_corner_z=16); assert pivot_uv != (0.5, 0.25); render all 17 slope variants via `--terrain` CLI flag; assert no crash |
+| T4.3 | Slope auto-insert      | **TECH-177** | Done (archived) | Update `src/compose.py` `compose_sprite`: if `spec['terrain'] != 'flat'`, prepend `iso_stepped_foundation(...)` to primitive stack; recalculate `extra_h = max_corner_z` from slopes.yaml; recompute canvas size + pivot via `canvas_size(fx, fy, extra_h)` + `pivot_uv(canvas_h)`; raise `SlopeKeyError` (exit code 1) if slope_id not in slopes.yaml                                           |
+| T4.4 | Slope regression tests | **TECH-178** | Done (archived) | Slope regression test spec `specs/building_residential_small_N.yaml` (copy of small, terrain: N); run `python -m sprite_gen render building_residential_small_N`; assert output PNG height > 64 (canvas grew by max_corner_z=16); assert pivot_uv != (0.5, 0.25); render all 17 slope variants via `--terrain` CLI flag; assert no crash                                                         |
+
 
 ---
 
@@ -199,31 +211,33 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Curation CLI (promote / reject) + Unity `.meta` writer.
-- [ ] Phase 2 — Layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration).
-- [ ] Phase 3 — HTTP client module + config resolution.
-- [ ] Phase 4 — Promote integration + `--no-push` CLI flag.
-- [ ] Phase 5 — Conflict handling + tests + docs.
+- Phase 1 — Curation CLI (promote / reject) + Unity `.meta` writer.
+- Phase 2 — Layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration).
+- Phase 3 — HTTP client module + config resolution.
+- Phase 4 — Promote integration + `--no-push` CLI flag.
+- Phase 5 — Conflict handling + tests + docs.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T5.1 | Unity meta writer | **TECH-179** | Done (archived) | `src/unity_meta.py` — `write_meta(png_path, canvas_h) → str`: emit Unity `.meta` YAML string with guid (uuid4), textureImporter settings: PPU=64, spritePivot=(0.5, 16/canvas_h), filterMode=Point, textureCompression=None, spriteMode=Single; `src/curate.py` — `promote(src_png, dest_name)`: copy PNG to `Assets/Sprites/Generated/{dest_name}.png`, call `write_meta`, write `.meta` file alongside. _(Relocated from Stage 4 T4.5 on 2026-04-22.)_ |
-| T5.2 | Promote/reject CLI | **TECH-180** | Done (archived) | `src/cli.py` — `promote out/X.png --as name` command: call `curate.promote()`; assert dest file exists + `.meta` exists; `reject {archetype}` command: glob `out/{archetype}_*.png`, delete all; integration test: promote then reject the same file, assert `Assets/Sprites/Generated/` has promoted file, `out/` is clean after reject. _(Relocated from Stage 4 T4.6 on 2026-04-22.)_ |
-| T5.3 | Aseprite bin resolver | **TECH-181** | Done (archived) | `src/aseprite_bin.py` — `find_aseprite_bin() → Path`: resolve in order `$ASEPRITE_BIN` env var → `tools/sprite-gen/config.toml` `[aseprite] bin` → platform default probes (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, then `~/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite`); raise `AsepriteBinNotFoundError` on miss (caught by CLI, exit code 4 with install hint); unit test mocks filesystem + env var. _(Relocated from Stage 4 T4.7 on 2026-04-22.)_ |
-| T5.4 | Layered aseprite emit | **TECH-182** | Done (archived) | `src/aseprite_io.py` — `write_layered_aseprite(dest_path, layers: dict[str, PIL.Image], canvas_size)`: write `.aseprite` via `py_aseprite` (add to `requirements.txt`) with named layers in stacking order (`foundation`, `east`, `south`, `top`); transparent alpha preserved per layer; update `src/compose.py` to split per-face buffers when `layered=True` flag passed; add `--layered` flag to `cli.py render`; composer always co-emits flat PNG so non-Aseprite users stay unblocked. _(Relocated from Stage 4 T4.8 on 2026-04-22.)_ |
-| T5.5 | Promote --edit round-trip | **TECH-183** | Done (archived) | `src/curate.py` — extend `promote(src, dest_name, edit=False)`: if `src.suffix == '.aseprite'` and `edit=True`, shell-out `{aseprite_bin} --batch {src} --save-as {tmp}.png` (subprocess, check returncode), then run existing PNG promote pipeline on `{tmp}.png`; cleanup tmp after; `src/cli.py` — `promote ... --edit` flag; integration test: render --layered → modify one layer pixel via PIL → promote --edit → assert flattened PNG + `.meta` exist in `Assets/Sprites/Generated/`, assert modified pixel present in output. _(Relocated from Stage 4 T4.9 on 2026-04-22.)_ |
-| T5.6 | RegistryClient scaffold | **TECH-674** | Done (archived) | `src/registry_client.py` — class `RegistryClient(url: str, timeout: int = 5)` with `create_asset(payload) -> dict`, `patch_asset(id: int, payload: dict, updated_at: str) -> dict`, `get_asset_by_slug(slug: str) -> Optional[dict]`; exception hierarchy `RegistryClientError` → `ConnectionError` / `ConflictError(existing_row)` / `ValidationError(errors)`; add `requests` to `tools/sprite-gen/requirements.txt`. |
-| T5.7 | Catalog URL resolver | **TECH-675** | Done (archived) | `src/registry_client.py` — `resolve_catalog_url() -> str`: read env `TG_CATALOG_API_URL` first, `tools/sprite-gen/config.toml` `[catalog] url` second; raise `CatalogConfigError` with hint when neither set and push=True; `--no-push` short-circuits (not called); unit test covers env precedence + config fallback + both-missing. |
-| T5.8 | Promote payload + push | **TECH-676** | Done (archived) | Update `src/curate.py` `promote(src, dest_name, edit=False, push=True)` — after `.meta` writes succeed, call `_build_catalog_payload(dest_name, canvas_h, spec_meta) -> dict` (slug, world_sprite_path, ppu=64, pivot, generator_archetype_id, category) + `RegistryClient(resolve_catalog_url()).create_asset(payload)`. Catch `ConflictError` → compare rows → `patch_asset` on drift; noop on match. |
-| T5.9 | CLI --no-push flag | **TECH-677** | Done (archived) | `src/cli.py` — extend `promote` command signature with `--no-push` (default false = push); pass through to `curate.promote(..., push=not args.no_push)`; ensure `promote --edit --no-push` skips HTTP once (single push path across flattened + direct PNG variants); `README.md` CLI usage table updated. |
-| T5.10 | RegistryClient tests | **TECH-678** | Done (archived) | `tests/test_registry_client.py` — use `responses` fixture; cases: 200 create happy, 409 with matching existing row (skip, no PATCH), 409 with drifted existing row (PATCH issued with `updated_at`), 422 validation (ValidationError raised + CLI exit 1), `ConnectionError` (exit 5); assert no HTTP call made when `push=False`. |
-| T5.11 | Promote integration smoke | **TECH-679** | Done (archived) | `tests/test_promote_push.py` — end-to-end: spin up `responses`-mocked catalog server; `render building_residential_small` → `promote out/X.png --as residential-small-01` → assert POST `/api/catalog/assets` issued with expected JSON payload; run `--no-push` variant → assert zero HTTP calls; document exit code 5 handling in `docs/sprite-gen-usage.md`. |
+
+| Task  | Name                      | Issue        | Status          | Intent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----- | ------------------------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| T5.1  | Unity meta writer         | **TECH-179** | Done (archived) | `src/unity_meta.py` — `write_meta(png_path, canvas_h) → str`: emit Unity `.meta` YAML string with guid (uuid4), textureImporter settings: PPU=64, spritePivot=(0.5, 16/canvas_h), filterMode=Point, textureCompression=None, spriteMode=Single; `src/curate.py` — `promote(src_png, dest_name)`: copy PNG to `Assets/Sprites/Generated/{dest_name}.png`, call `write_meta`, write `.meta` file alongside. *(Relocated from Stage 4 T4.5 on 2026-04-22.)*                                                                                                                             |
+| T5.2  | Promote/reject CLI        | **TECH-180** | Done (archived) | `src/cli.py` — `promote out/X.png --as name` command: call `curate.promote()`; assert dest file exists + `.meta` exists; `reject {archetype}` command: glob `out/{archetype}_*.png`, delete all; integration test: promote then reject the same file, assert `Assets/Sprites/Generated/` has promoted file, `out/` is clean after reject. *(Relocated from Stage 4 T4.6 on 2026-04-22.)*                                                                                                                                                                                             |
+| T5.3  | Aseprite bin resolver     | **TECH-181** | Done (archived) | `src/aseprite_bin.py` — `find_aseprite_bin() → Path`: resolve in order `$ASEPRITE_BIN` env var → `tools/sprite-gen/config.toml` `[aseprite] bin` → platform default probes (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, then `~/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite`); raise `AsepriteBinNotFoundError` on miss (caught by CLI, exit code 4 with install hint); unit test mocks filesystem + env var. *(Relocated from Stage 4 T4.7 on 2026-04-22.)*                                                   |
+| T5.4  | Layered aseprite emit     | **TECH-182** | Done (archived) | `src/aseprite_io.py` — `write_layered_aseprite(dest_path, layers: dict[str, PIL.Image], canvas_size)`: write `.aseprite` via `py_aseprite` (add to `requirements.txt`) with named layers in stacking order (`foundation`, `east`, `south`, `top`); transparent alpha preserved per layer; update `src/compose.py` to split per-face buffers when `layered=True` flag passed; add `--layered` flag to `cli.py render`; composer always co-emits flat PNG so non-Aseprite users stay unblocked. *(Relocated from Stage 4 T4.8 on 2026-04-22.)*                                         |
+| T5.5  | Promote --edit round-trip | **TECH-183** | Done (archived) | `src/curate.py` — extend `promote(src, dest_name, edit=False)`: if `src.suffix == '.aseprite'` and `edit=True`, shell-out `{aseprite_bin} --batch {src} --save-as {tmp}.png` (subprocess, check returncode), then run existing PNG promote pipeline on `{tmp}.png`; cleanup tmp after; `src/cli.py` — `promote ... --edit` flag; integration test: render --layered → modify one layer pixel via PIL → promote --edit → assert flattened PNG + `.meta` exist in `Assets/Sprites/Generated/`, assert modified pixel present in output. *(Relocated from Stage 4 T4.9 on 2026-04-22.)* |
+| T5.6  | RegistryClient scaffold   | **TECH-674** | Done (archived) | `src/registry_client.py` — class `RegistryClient(url: str, timeout: int = 5)` with `create_asset(payload) -> dict`, `patch_asset(id: int, payload: dict, updated_at: str) -> dict`, `get_asset_by_slug(slug: str) -> Optional[dict]`; exception hierarchy `RegistryClientError` → `ConnectionError` / `ConflictError(existing_row)` / `ValidationError(errors)`; add `requests` to `tools/sprite-gen/requirements.txt`.                                                                                                                                                              |
+| T5.7  | Catalog URL resolver      | **TECH-675** | Done (archived) | `src/registry_client.py` — `resolve_catalog_url() -> str`: read env `TG_CATALOG_API_URL` first, `tools/sprite-gen/config.toml` `[catalog] url` second; raise `CatalogConfigError` with hint when neither set and push=True; `--no-push` short-circuits (not called); unit test covers env precedence + config fallback + both-missing.                                                                                                                                                                                                                                               |
+| T5.8  | Promote payload + push    | **TECH-676** | Done (archived) | Update `src/curate.py` `promote(src, dest_name, edit=False, push=True)` — after `.meta` writes succeed, call `_build_catalog_payload(dest_name, canvas_h, spec_meta) -> dict` (slug, world_sprite_path, ppu=64, pivot, generator_archetype_id, category) + `RegistryClient(resolve_catalog_url()).create_asset(payload)`. Catch `ConflictError` → compare rows → `patch_asset` on drift; noop on match.                                                                                                                                                                              |
+| T5.9  | CLI --no-push flag        | **TECH-677** | Done (archived) | `src/cli.py` — extend `promote` command signature with `--no-push` (default false = push); pass through to `curate.promote(..., push=not args.no_push)`; ensure `promote --edit --no-push` skips HTTP once (single push path across flattened + direct PNG variants); `README.md` CLI usage table updated.                                                                                                                                                                                                                                                                           |
+| T5.10 | RegistryClient tests      | **TECH-678** | Done (archived) | `tests/test_registry_client.py` — use `responses` fixture; cases: 200 create happy, 409 with matching existing row (skip, no PATCH), 409 with drifted existing row (PATCH issued with `updated_at`), 422 validation (ValidationError raised + CLI exit 1), `ConnectionError` (exit 5); assert no HTTP call made when `push=False`.                                                                                                                                                                                                                                                   |
+| T5.11 | Promote integration smoke | **TECH-679** | Done (archived) | `tests/test_promote_push.py` — end-to-end: spin up `responses`-mocked catalog server; `render building_residential_small` → `promote out/X.png --as residential-small-01` → assert POST `/api/catalog/assets` issued with expected JSON payload; run `--no-push` variant → assert zero HTTP calls; document exit code 5 handling in `docs/sprite-gen-usage.md`.                                                                                                                                                                                                                      |
+
 
 ### §Stage File Plan
 
-<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
 
 ```yaml
 - reserved_id: ""
@@ -375,7 +389,7 @@
 
 **Exit:**
 
-- `src/primitives/*` — each primitive accepts `w_px`, `d_px`, `h_px` (pixel-native). Back-compat: `w`, `d`, `h` (tile-unit) accepted and translated to px via `w_px = w * 32` etc.
+- `src/primitives/`* — each primitive accepts `w_px`, `d_px`, `h_px` (pixel-native). Back-compat: `w`, `d`, `h` (tile-unit) accepted and translated to px via `w_px = w * 32` etc.
 - `src/primitives/iso_ground_diamond.py` — new primitive; renders full-tile flat diamond with 1-px rim-shade; materials per DAS §4.1 `grass_flat`, `grass_dense`, `pavement`, `water_deep`, `zoning_*`, `mustard_industrial`.
 - `src/compose.py` — auto-prepends `iso_ground_diamond(fx, fy, ground)` unless `spec.ground: none`; applies spec-level `footprint_ratio: [wr, dr]` by scaling each composition primitive's `w_px`/`d_px` by the ratio.
 - `src/constants.py` (new) — per-class `level_h` table: `{residential_small: 12, commercial_small: 12, residential_heavy: 16, commercial_dense: 16, industrial_*: 16}`.
@@ -386,27 +400,29 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Pixel-native primitives + back-compat translation.
-- [ ] Phase 2 — `iso_ground_diamond` primitive + 8 materials.
-- [ ] Phase 3 — Composer auto-prepend + `footprint_ratio` scaling.
-- [ ] Phase 4 — `level_h` constants + re-calibrated `building_residential_small` spec + calibration regression test.
+- Phase 1 — Pixel-native primitives + back-compat translation.
+- Phase 2 — `iso_ground_diamond` primitive + 8 materials.
+- Phase 3 — Composer auto-prepend + `footprint_ratio` scaling.
+- Phase 4 — `level_h` constants + re-calibrated `building_residential_small` spec + calibration regression test.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T6.1 | Pixel-native primitive signatures | **TECH-693** | Done | Extend `iso_cube`, `iso_prism`, `iso_stepped_foundation` (and any other existing primitive) to accept `w_px`, `d_px`, `h_px` kwargs; keep `w,d,h` as deprecated tile-unit aliases (multiplied by 32). Update all internal call sites in `compose.py`. |
-| T6.2 | `iso_ground_diamond` primitive + materials | **TECH-694** | Done | New `src/primitives/iso_ground_diamond.py`; draws 64×32 px diamond (or `(fx+fy)×32` × `(fx+fy)×16`) at standard y0=15 offset on a 1×1 canvas; renders 1-px rim-shade via `apply_ramp(material, 'dark')`. Materials: `grass_flat`, `grass_dense`, `pavement`, `water_deep`, `zoning_residential`, `zoning_commercial`, `zoning_industrial`, `mustard_industrial`. |
-| T6.3 | Composer ground auto-prepend + `footprint_ratio` | **TECH-695** | Done | Update `compose_sprite`: read `spec.ground` (default per-class from DAS §4.2, fallback `grass_flat`); prepend `iso_ground_diamond` call; read `spec.building.footprint_ratio` (default `[1.0, 1.0]` back-compat); scale each composition primitive `w_px *= footprint_ratio[0]`, `d_px *= footprint_ratio[1]`. Recompute x-offset to center the scaled building on the diamond. |
-| T6.4 | `level_h` constants + spec expansion | **TECH-696** | Done | `src/constants.py` — `LEVEL_H = {"residential_small": 12, "commercial_small": 12, ..., "industrial_heavy": 16}`; composer honors `spec.levels` when set (overrides raw `h_px` on stacked cubes). |
-| T6.5 | Re-calibrated `building_residential_small` spec | **TECH-697** | Done | Rewrite `specs/building_residential_small.yaml` to DAS §5 R11 schema: `class: residential_small`, `footprint: [1,1]`, `ground: grass_flat`, `levels: 1`, `building.footprint_ratio: [0.45, 0.45]`, pixel-native composition with 10-px-tall wall cube + 8-px-tall roof prism, 4 seeded variants. |
-| T6.6 | Ground diamond tests | **TECH-698** | Done | `tests/test_ground_diamond.py` — assert 1×1 `iso_ground_diamond('grass_flat')` produces bbox `(0,15)→64×33`; loop through all 8 materials, assert non-empty bbox + expected dominant color; assert 2×2 variant produces `(0,31)→128×65`. |
-| T6.7 | Scale-calibration regression test | **TECH-699** | Done | `tests/test_scale_calibration.py` — render `building_residential_small_v01.png` via compose; assert content bbox height `35 ± 3 px`, y0 `13 ± 3 px`, x0=0, x1=63; assert dominant colors in top 20% pixels match `House1-64.png` dominant colors within HSV ΔE=15. |
-| T6.8 | `README` / usage doc update | **TECH-700** | Done | Update `tools/sprite-gen/README.md` + `docs/sprite-gen-usage.md` with new spec fields `ground` + `footprint_ratio` + `levels`; link to DAS sections §2.5 + §4.1. |
+
+| Task | Name                                             | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                          |
+| ---- | ------------------------------------------------ | ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.1 | Pixel-native primitive signatures                | **TECH-693** | Done   | Extend `iso_cube`, `iso_prism`, `iso_stepped_foundation` (and any other existing primitive) to accept `w_px`, `d_px`, `h_px` kwargs; keep `w,d,h` as deprecated tile-unit aliases (multiplied by 32). Update all internal call sites in `compose.py`.                                                                                                                           |
+| T6.2 | `iso_ground_diamond` primitive + materials       | **TECH-694** | Done   | New `src/primitives/iso_ground_diamond.py`; draws 64×32 px diamond (or `(fx+fy)×32` × `(fx+fy)×16`) at standard y0=15 offset on a 1×1 canvas; renders 1-px rim-shade via `apply_ramp(material, 'dark')`. Materials: `grass_flat`, `grass_dense`, `pavement`, `water_deep`, `zoning_residential`, `zoning_commercial`, `zoning_industrial`, `mustard_industrial`.                |
+| T6.3 | Composer ground auto-prepend + `footprint_ratio` | **TECH-695** | Done   | Update `compose_sprite`: read `spec.ground` (default per-class from DAS §4.2, fallback `grass_flat`); prepend `iso_ground_diamond` call; read `spec.building.footprint_ratio` (default `[1.0, 1.0]` back-compat); scale each composition primitive `w_px *= footprint_ratio[0]`, `d_px *= footprint_ratio[1]`. Recompute x-offset to center the scaled building on the diamond. |
+| T6.4 | `level_h` constants + spec expansion             | **TECH-696** | Done   | `src/constants.py` — `LEVEL_H = {"residential_small": 12, "commercial_small": 12, ..., "industrial_heavy": 16}`; composer honors `spec.levels` when set (overrides raw `h_px` on stacked cubes).                                                                                                                                                                                |
+| T6.5 | Re-calibrated `building_residential_small` spec  | **TECH-697** | Done   | Rewrite `specs/building_residential_small.yaml` to DAS §5 R11 schema: `class: residential_small`, `footprint: [1,1]`, `ground: grass_flat`, `levels: 1`, `building.footprint_ratio: [0.45, 0.45]`, pixel-native composition with 10-px-tall wall cube + 8-px-tall roof prism, 4 seeded variants.                                                                                |
+| T6.6 | Ground diamond tests                             | **TECH-698** | Done   | `tests/test_ground_diamond.py` — assert 1×1 `iso_ground_diamond('grass_flat')` produces bbox `(0,15)→64×33`; loop through all 8 materials, assert non-empty bbox + expected dominant color; assert 2×2 variant produces `(0,31)→128×65`.                                                                                                                                        |
+| T6.7 | Scale-calibration regression test                | **TECH-699** | Done   | `tests/test_scale_calibration.py` — render `building_residential_small_v01.png` via compose; assert content bbox height `35 ± 3 px`, y0 `13 ± 3 px`, x0=0, x1=63; assert dominant colors in top 20% pixels match `House1-64.png` dominant colors within HSV ΔE=15.                                                                                                              |
+| T6.8 | `README` / usage doc update                      | **TECH-700** | Done   | Update `tools/sprite-gen/README.md` + `docs/sprite-gen-usage.md` with new spec fields `ground` + `footprint_ratio` + `levels`; link to DAS sections §2.5 + §4.1.                                                                                                                                                                                                                |
+
 
 ### §Stage File Plan
 
-<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
 
 ```yaml
 - reserved_id: TECH-693
@@ -414,7 +430,7 @@
   priority: high
   issue_type: TECH
   notes: |
-    Extend primitives (`iso_cube`, `iso_prism`, `iso_stepped_foundation`) with `w_px`/`d_px`/`h_px`; keep tile-unit `w`,`d`,`h` as aliases (*32). Touch `tools/sprite-gen/src/primitives/*` + `compose.py` call sites. DAS pixel-native calibration (Stage 6 hotfix).
+    Extend primitives (`iso_cube`, `iso_prism`, `iso_stepped_foundation`) with `w_px`/`d_px`/`h_px`; keep tile-unit `w`,`d`,`h` as aliases (*32). Touch `tools/sprite-gen/src/primitives/`* + `compose.py` call sites. DAS pixel-native calibration (Stage 6 hotfix).
   depends_on: []
   related:
     - TECH-694
@@ -611,6 +627,910 @@
 
 ---
 
+### Stage 6.1 — Pivot hotfix + regression tighten
+
+**Status:** Draft — 2026-04-23. Retroactive filing of the in-session pivot hotfix applied during the 2026-04-23 sprite-gen improvement session (`/tmp/sprite-gen-improvement-session.md` §3 Stage 6.1). The composer patch (`pivot_pad = 17 if spec.get("ground") != "none" else 0`) is already live in the working tree at `tools/sprite-gen/src/compose.py:256`; this stage produces the issue trail and tightens the regression suite that the in-session work skipped. **Locks consumed:** L1 (pivot_pad=17 per DAS §2.1/§2.2). **Issues closed:** I1 (composer anchors buildings above ground diamond), I2 (regression loose).
+
+**Objectives:** Lock the in-session pivot_pad patch behind a DAS-cited comment; replace the loose `10 <= y0 <= 16` scale-calibration bound with the tight DAS §2.3 envelope (`y1 == 48`, `content_h ∈ [32, 36]`); add a parametrized bbox regression to `tests/test_render_integration.py` covering every live spec under `tools/sprite-gen/specs/`.
+
+**Exit:**
+
+- `tools/sprite-gen/src/compose.py:256` — `pivot_pad = 17 if spec.get("ground") != "none" else 0`; `adjusted_y0 = y0 - pivot_pad - offset_z`; inline comment cites DAS §2.1 (diamond bottom at `y = canvas_h - 17`) + §2.2 (pivot 16 px from canvas bottom; +1 for PIL inclusive pixel indexing).
+- `tools/sprite-gen/tests/test_scale_calibration.py` — assertions tightened to `y1 == 48` and `content_h ∈ [32, 36]`; loose `10 <= y0 <= 16` bound removed.
+- `tools/sprite-gen/tests/test_render_integration.py` — parametrized `test_every_live_spec_has_bbox_below_diamond` across all `specs/*.yaml` in the tool tree; asserts bbox `(0, 15, 64, 48)` for every 1×1 live spec (`building_residential_small`, `building_residential_light_a|b|c`).
+- `pytest tools/sprite-gen/tests/` exits 0 — 218+ tests green.
+
+**Phases:**
+
+- Phase 1 — Formalize pivot_pad comment at `compose.py:256` (retroactive; no code change — lock wording + DAS citation).
+- Phase 2 — Tighten `test_scale_calibration.py` bounds.
+- Phase 3 — Parametrized per-spec bbox regression in `test_render_integration.py`.
+
+**Tasks:**
+
+
+| Task   | Name                                                     | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                          |
+| ------ | -------------------------------------------------------- | ------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.1.1 | Formalize pivot_pad patch + DAS-cited comment            | **TECH-701** | Draft  | `tools/sprite-gen/src/compose.py:256` — confirm in-session hotfix (`pivot_pad = 17 if spec.get("ground") != "none" else 0`; `adjusted_y0 = y0 - pivot_pad - offset_z`); inline comment cites DAS §2.1 (diamond bottom y = canvas_h − 17) + §2.2 (pivot UV 16/canvas_h; +1 for PIL inclusive pixel indexing). Retroactive — code already landed in working tree. |
+| T6.1.2 | Tighten `test_scale_calibration.py` regression bounds    | **TECH-702** | Draft  | `tools/sprite-gen/tests/test_scale_calibration.py` — replace loose `10 <= y0 <= 16` with tight DAS §2.3 envelope: assert rendered bbox `y1 == 48`, `content_h ∈ [32, 36]`. House1-64 reference signature stays authoritative.                                                                                                                                   |
+| T6.1.3 | Per-spec bbox regression in `test_render_integration.py` | **TECH-703** | Draft  | `tools/sprite-gen/tests/test_render_integration.py` — parametrized fixture iterating `specs/*.yaml` (1×1 live specs only: `building_residential_small`, `building_residential_light_{a,b,c}`). For each spec: compose → assert bbox `(0, 15, 64, 48)`. Skip non-1×1 specs.                                                                                      |
+
+
+### §Stage File Plan
+
+
+
+```yaml
+- reserved_id: TECH-701
+  title: Formalize pivot_pad patch + DAS-cited comment at compose.py:256
+  priority: high
+  issue_type: TECH
+  notes: |
+    Retroactive filing. In-session hotfix `pivot_pad = 17 if spec.get("ground") != "none" else 0`; `adjusted_y0 = y0 - pivot_pad - offset_z` already applied at `tools/sprite-gen/src/compose.py:256`. Task locks the wording + DAS §2.1/§2.2 citation in the inline comment so the invariant does not drift. No code path change.
+  depends_on: []
+  related:
+    - TECH-702
+    - TECH-703
+  stub_body:
+    summary: |
+      Retroactive filing of pivot_pad hotfix. Composer anchors building primitives 17 px above canvas bottom when ground diamond is present; comment cites DAS §2.1 (diamond bottom 16 px + 1 inclusive pixel) + §2.2 (pivot UV = 16/canvas_h).
+    goals: |
+      1. Confirm `pivot_pad = 17 if spec.get("ground") != "none" else 0` at `compose.py:256`.
+      2. Confirm `adjusted_y0 = y0 - pivot_pad - offset_z` at `compose.py:260`.
+      3. Inline comment explicitly names DAS §2.1 + §2.2.
+    systems_map: |
+      `tools/sprite-gen/src/compose.py` (pivot_pad block around line 256); `docs/sprite-gen-art-design-system.md` §2.1 / §2.2 (source of truth for 17-px pad derivation).
+    impl_plan_sketch: |
+      Phase 1 — Read compose.py around the patch; verify DAS citation on the inline comment; adjust wording if drifted (no functional change). Gate: `pytest tools/sprite-gen/tests/ -q` stays green (218 tests).
+- reserved_id: TECH-702
+  title: Tighten test_scale_calibration.py regression bounds
+  priority: high
+  issue_type: TECH
+  notes: |
+    Replace loose `10 <= y0 <= 16` bound with the tight DAS §2.3 House1-64 envelope: `y1 == 48`, `content_h ∈ [32, 36]`. Closes the regression hole that let the original pivot bug ship.
+  depends_on:
+    - TECH-701
+  related:
+    - TECH-703
+  stub_body:
+    summary: |
+      Scale-calibration regression tightened to the exact DAS §2.3 envelope from House1-64 (y1 = 48, content_h between 32 and 36 inclusive). No more loose y0 range.
+    goals: |
+      1. Add `assert y1 == 48` on rendered bbox.
+      2. Add `assert 32 <= content_h <= 36`.
+      3. Remove or deprecate the loose `10 <= y0 <= 16` check.
+    systems_map: |
+      `tools/sprite-gen/tests/test_scale_calibration.py` (`test_residential_small_bbox_y0_in_envelope` + neighbouring bbox checks); DAS §2.3 anchor metrics table.
+    impl_plan_sketch: |
+      Phase 1 — Rewrite `test_residential_small_bbox_*` functions with tight assertions referencing DAS §2.3. Gate: `pytest tools/sprite-gen/tests/test_scale_calibration.py -q` green against the current `building_residential_small.yaml` render.
+- reserved_id: TECH-703
+  title: Per-spec bbox regression in test_render_integration.py
+  priority: high
+  issue_type: TECH
+  notes: |
+    Parametrize a new `test_every_live_1x1_spec_bbox` across every `specs/*.yaml` in the sprite-gen tool tree; assert bbox equals exactly `(0, 15, 64, 48)` for each 1×1 live spec (`building_residential_small` + 3 `building_residential_light_{a,b,c}` variants). Closes I2 regression hole — any spec that anchors a building too high / too low fails at CI.
+  depends_on:
+    - TECH-701
+  related:
+    - TECH-702
+  stub_body:
+    summary: |
+      Parametrized bbox regression proves the pivot hotfix holds for every live 1×1 spec, not only the canonical `building_residential_small`.
+    goals: |
+      1. Glob `tools/sprite-gen/specs/*.yaml`; collect 1×1 specs into a pytest parametrize.
+      2. Render each spec via `compose_sprite(load_spec(path))`.
+      3. Assert `rendered.getbbox() == (0, 15, 64, 48)` per spec.
+    systems_map: |
+      `tools/sprite-gen/tests/test_render_integration.py` (new parametrized test); `tools/sprite-gen/specs/` (glob source); `src/spec.py`, `src/compose.py` (render path).
+    impl_plan_sketch: |
+      Phase 1 — Add `@pytest.mark.parametrize("spec_path", _live_1x1_specs())` test; `_live_1x1_specs()` filters specs with `footprint: [1,1]`. Gate: `pytest tools/sprite-gen/tests/test_render_integration.py -q` green — 4+ parametrized cases.
+```
+
+**Dependency gate:** None. Independent hotfix filing ahead of Stage 7.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.1 tasks **TECH-701**..**TECH-703** aligned with §3 Stage 6.1 block of `/tmp/sprite-gen-improvement-session.md`; no fix tuples. Aggregate doc: `docs/implementation/sprite-gen-stage-6.1-plan.md`. Downstream: file Stage 6.2.
+
+---
+
+### Stage 6.2 — Art Signatures per class
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.2 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L2 (Calibration = summarized Art Signatures per class; runtime never reads raw sprites), L3 (signature JSON carries `source_checksum`; stale raises actionable refresh), L4 (Spec YAML `include_in_signature: false` per-sprite override), L15 (sample-size policy: 0 → fallback, 1 → point-match, ≥2 → envelope).
+
+**Objectives:** Replace ad-hoc scale-calibration with per-class calibration signatures committed under `tools/sprite-gen/signatures/<class>.signature.json`. Build a `src/signature.py` module that (a) extracts bbox / palette / silhouette / ground / decoration-hints summaries from `Assets/Sprites/<class>/*.png`, (b) validates generator output against the envelope, (c) fails fast with `SignatureStaleError` when `source_checksum` drifts. Introduce CLI `refresh-signatures [class?]` to regenerate summaries on demand. Replace `test_scale_calibration.py` with parametrized `test_signature_calibration.py` once `residential_small.signature.json` lands.
+
+**Exit:**
+
+- `tools/sprite-gen/src/signature.py` — `compute_signature(class_name, folder_glob) -> dict`; `validate_against(signature, rendered_img) -> ValidationReport`; `SignatureStaleError` on checksum mismatch; implements L15 sample-size branches (`source_count == 0 → mode: fallback`, `== 1 → point-match`, `>= 2 → envelope`).
+- `tools/sprite-gen/src/__main__.py` (or `src/cli.py`) — new subcommand `python3 -m src refresh-signatures [class?]`; writes / rewrites `signatures/<class>.signature.json`.
+- `tools/sprite-gen/signatures/` — dir scaffold with `_fallback.json` fallback-class graph (e.g. `residential_small → residential_row`) and `residential_small.signature.json` bootstrap (computed from `Assets/Sprites/residential_small/*.png`; ≥2 samples → envelope mode).
+- `tools/sprite-gen/src/spec.py` — accepts `include_in_signature: false` on spec-level override (per-sprite exclusion from signature ingestion).
+- `tools/sprite-gen/tests/test_signature_calibration.py` — parametrized over every `signatures/*.signature.json`; asserts `validate_against(signature, compose_sprite(load_spec(<class canonical spec>)))` returns `.ok == True`.
+- `tools/sprite-gen/tests/test_scale_calibration.py` deprecated (file deleted or reduced to a `pytest.mark.skip("superseded by test_signature_calibration")` stub) once `residential_small.signature.json` lands; TECH-702's tight-bound assertions absorbed into the signature envelope.
+- `docs/sprite-gen-art-design-system.md` §2.6 new pointer block — "Calibration signatures are the canonical runtime calibration source; see `tools/sprite-gen/signatures/` + `src/signature.py`."
+- `pytest tools/sprite-gen/tests/` exits 0 — 221+ tests green (TECH-703 baseline + at least one new signature calibration case).
+
+**Phases:**
+
+- Phase 1 — Author `src/signature.py` core module (JSON shape, L15 sample-size policy, `compute_signature` + `validate_against` + `SignatureStaleError`).
+- Phase 2 — CLI `refresh-signatures` subcommand + `signatures/` dir scaffold + `_fallback.json` fallback graph + `residential_small.signature.json` bootstrap.
+- Phase 3 — Spec loader `include_in_signature: false` per-sprite override.
+- Phase 4 — `tests/test_signature_calibration.py` parametrized + retire `test_scale_calibration.py`.
+- Phase 5 — DAS §2.6 pointer doc block.
+
+**Tasks:**
+
+
+| Task   | Name                                                                       | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------ | -------------------------------------------------------------------------- | ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.2.1 | Signature module core (`src/signature.py`)                                 | **TECH-704** | Draft  | New module with `compute_signature(class_name, folder_glob) -> dict`, `validate_against(signature, rendered_img) -> ValidationReport`, `SignatureStaleError`. JSON shape per handoff §3 Stage 6.2 spec (class / refreshed_at / source_count / source_checksum / mode / bbox / palette / silhouette / ground / decoration_hints). L15 sample-size policy: `0 → mode: fallback` (copy from `_fallback.json` target class), `1 → mode: point-match` (single-sprite values), `>=2 → mode: envelope` (min/max/mean). L3 staleness guard: `validate_against` recomputes checksum and raises `SignatureStaleError("signature stale — run python3 -m src refresh-signatures <class>")` on mismatch. |
+| T6.2.2 | CLI `refresh-signatures` + `signatures/` scaffold                          | **TECH-705** | Draft  | New subcommand `python3 -m src refresh-signatures [class?]`; writes or rewrites `tools/sprite-gen/signatures/<class>.signature.json`. Create `tools/sprite-gen/signatures/` dir with `_fallback.json` (fallback-class graph per L15), plus bootstrap `residential_small.signature.json` computed from `Assets/Sprites/residential_small/*.png` (≥2 samples → envelope mode). Committed to git.                                                                                                                                                                                                                                                                                              |
+| T6.2.3 | Spec loader `include_in_signature: false` override                         | **TECH-706** | Draft  | `tools/sprite-gen/src/spec.py` — accept optional top-level `include_in_signature: <bool>` (default `true`) on YAML specs. Signature refresh skips sprites whose source YAML opts out. Default preserves existing behaviour; no migration needed.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| T6.2.4 | `tests/test_signature_calibration.py` + retire `test_scale_calibration.py` | **TECH-707** | Draft  | New parametrized test iterating every `signatures/*.signature.json`; runs `validate_against(signature, compose_sprite(load_spec(<class canonical spec>)))` and asserts `.ok == True`. Once `residential_small.signature.json` lands + the parametrized case is green, delete `tests/test_scale_calibration.py` (or replace with `pytest.mark.skip("superseded by test_signature_calibration")`). Full suite still exits 0.                                                                                                                                                                                                                                                                  |
+| T6.2.5 | DAS §2.6 pointer block                                                     | **TECH-708** | Draft  | `docs/sprite-gen-art-design-system.md` — add §2.6 "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Brief; forward-pointer only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+
+### §Stage File Plan
+
+
+
+```yaml
+- reserved_id: TECH-704
+  title: Signature module core (src/signature.py) with L15 sample-size policy
+  priority: high
+  issue_type: TECH
+  notes: |
+    New module `tools/sprite-gen/src/signature.py` exposing `compute_signature(class_name, folder_glob) -> dict`, `validate_against(signature, rendered_img) -> ValidationReport`, and `SignatureStaleError`. JSON shape per handoff §3 Stage 6.2 (class / refreshed_at / source_count / source_checksum / mode / fallback_of / bbox / palette / silhouette / ground / decoration_hints). L15 branches: source_count 0 → fallback, 1 → point-match, ≥2 → envelope. L3 staleness guard: recompute checksum on validate; mismatch raises `SignatureStaleError("signature stale — run python3 -m src refresh-signatures <class>")`.
+  depends_on:
+    - TECH-701
+    - TECH-702
+    - TECH-703
+  related: []
+  stub_body:
+    summary: |
+      Core signature module: extracts bbox / palette / silhouette / ground / decoration-hints summaries from a class folder of reference sprites; validates rendered images against the envelope; fails fast on stale checksum.
+    goals: |
+      1. `compute_signature(class_name, folder_glob)` returns the documented JSON dict.
+      2. `validate_against(signature, rendered_img)` returns `ValidationReport(ok, failures)`; raises `SignatureStaleError` on checksum mismatch.
+      3. L15 sample-size policy fully wired: 0 → fallback, 1 → point-match, ≥2 → envelope.
+    systems_map: |
+      New `tools/sprite-gen/src/signature.py`; consumers: `tests/test_signature_calibration.py` (T6.2.4), `src/__main__.py` refresh CLI (T6.2.2), eventual composer render-time gate (Stage 6.5).
+    impl_plan_sketch: |
+      Phase 1 — JSON shape + checksum helper; Phase 2 — extractor (bbox/palette/silhouette/ground/decoration_hints); Phase 3 — L15 branches + fallback graph resolution; Phase 4 — `validate_against` + `SignatureStaleError`. Gate: `pytest tools/sprite-gen/tests/test_signature.py -q` (new unit tests live with the module).
+- reserved_id: TECH-705
+  title: CLI refresh-signatures + signatures/ scaffold + residential_small bootstrap
+  priority: high
+  issue_type: TECH
+  notes: |
+    New CLI subcommand `python3 -m src refresh-signatures [class?]`. Creates/updates `tools/sprite-gen/signatures/<class>.signature.json`. Scaffolds `tools/sprite-gen/signatures/` dir with `_fallback.json` fallback-class graph and bootstrap `residential_small.signature.json` (source: `Assets/Sprites/residential_small/*.png`; ≥2 samples → envelope mode). All JSON committed to git so CI reads same snapshot.
+  depends_on:
+    - TECH-704
+  related:
+    - TECH-706
+  stub_body:
+    summary: |
+      Ship the operator surface for signatures — one CLI entry point, one dir of canonical JSON, one fallback graph. `residential_small.signature.json` lands with the stage so downstream tests have a real envelope to assert against.
+    goals: |
+      1. `python3 -m src refresh-signatures` regenerates every signature in `signatures/`.
+      2. `python3 -m src refresh-signatures <class>` regenerates one class.
+      3. `signatures/_fallback.json` + `signatures/residential_small.signature.json` committed.
+    systems_map: |
+      `tools/sprite-gen/src/__main__.py` (or new `src/cli.py`); `tools/sprite-gen/signatures/`; `Assets/Sprites/<class>/*.png` (ingestion source); depends on `src/signature.py` from TECH-704.
+    impl_plan_sketch: |
+      Phase 1 — Wire subcommand into existing argparse; Phase 2 — `signatures/` dir + `_fallback.json` seeded with residential_small → residential_row; Phase 3 — Bootstrap `residential_small.signature.json` by running `refresh-signatures residential_small` against live catalog.
+- reserved_id: TECH-706
+  title: Spec loader include_in_signature per-sprite override
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` accepts optional top-level boolean `include_in_signature` (default `true`). Signature refresh ingestion skips sprites whose source YAML opts out via `include_in_signature: false`. Back-compat by construction — existing specs unchanged.
+  depends_on:
+    - TECH-704
+  related:
+    - TECH-705
+  stub_body:
+    summary: |
+      Per-sprite opt-out so experimental / reference / deprecated specs don't contaminate class envelopes.
+    goals: |
+      1. `load_spec` surfaces `include_in_signature` (default `true`).
+      2. Refresh pipeline (T6.2.2) filters out opted-out specs.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py` (loader); `src/signature.py::compute_signature` (consumer, reads flag via `load_spec` when iterating).
+    impl_plan_sketch: |
+      Phase 1 — Add field to spec schema + loader; Phase 2 — filter in `compute_signature` source iteration. Gate: unit test with one opt-out spec confirms exclusion.
+- reserved_id: TECH-707
+  title: tests/test_signature_calibration.py parametrized + retire test_scale_calibration
+  priority: high
+  issue_type: TECH
+  notes: |
+    New parametrized test iterating every `signatures/*.signature.json`; for each class: `validate_against(signature, compose_sprite(load_spec(<class canonical spec>)))` must return `.ok == True`. Once green, delete or skip `tests/test_scale_calibration.py` — TECH-702 tight bounds now live in the signature envelope.
+  depends_on:
+    - TECH-704
+    - TECH-705
+  related:
+    - TECH-702
+  stub_body:
+    summary: |
+      Replaces per-spec bbox regression with full signature validation; auto-covers new classes as their signature JSON lands.
+    goals: |
+      1. `test_signature_calibration[residential_small]` green against live signature.
+      2. `test_scale_calibration.py` retired (deleted or pytest.mark.skip).
+      3. Full suite `pytest tools/sprite-gen/tests/ -q` exits 0 with same or higher test count.
+    systems_map: |
+      `tools/sprite-gen/tests/test_signature_calibration.py` (new); `tools/sprite-gen/tests/test_scale_calibration.py` (retired); `signatures/residential_small.signature.json` (reference envelope).
+    impl_plan_sketch: |
+      Phase 1 — Parametrize over `signatures/*.signature.json` glob; Phase 2 — Drop `test_scale_calibration.py`; Phase 3 — Run full suite.
+- reserved_id: TECH-708
+  title: DAS §2.6 pointer — signatures are canonical calibration source
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Add DAS §2.6 section: "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Forward-pointer; no re-documentation of the JSON shape (keep authoritative spec in signature module docstring).
+  depends_on:
+    - TECH-704
+  related: []
+  stub_body:
+    summary: |
+      DAS §2.6 delta — point readers at signatures/ as the canonical calibration source. No detailed schema duplication; trust the module docstring.
+    goals: |
+      1. DAS §2.6 new section authored.
+      2. Pointer cites `tools/sprite-gen/signatures/` + `src/signature.py`.
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md`.
+    impl_plan_sketch: |
+      Phase 1 — Insert §2.6 block after existing §2.5 (or wherever the current §2 chain ends); commit as doc-only change.
+```
+
+**Dependency gate:** Stage 6.1 merged (TECH-701..703). L12 stage order lock.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.2 tasks **TECH-704**..**TECH-708** aligned with §3 Stage 6.2 block of `/tmp/sprite-gen-improvement-session.md`; JSON shape (L20 verbatim) + L15 sample-size policy carried into TECH-704. Aggregate doc: `docs/implementation/sprite-gen-stage-6.2-plan.md`. Downstream: file Stage 6.3.
+
+---
+
+### Stage 6.3 — Placement + variant randomness + split seeds
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.3 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L5 (Spec gains `building.footprint_px`, `building.padding`, `building.align`), L6 (`variants:` becomes block `{count, vary, seed_scope}` with legacy scalar back-compat), L7 (`bootstrap-variants --from-signature` CLI; never auto-rewrites), L14 (split seeds `palette_seed` + `geometry_seed`).
+
+**Objectives:** Grow the spec schema so authors can express non-centered placement, per-axis variation ranges, and split seeds for palette vs geometry independence. Wire the composer to honour the new fields via a `resolve_building_box` helper and a variant sampling loop. Add a `bootstrap-variants --from-signature` CLI that reads `signatures/<class>.signature.json` and writes sensible `vary:` defaults into a spec (opt-in; never auto-rewrites). Land three new test files covering placement combinatorics, geometric variants determinism, and split-seed independence.
+
+**Exit:**
+
+- `tools/sprite-gen/src/spec.py` — accepts `building.footprint_px`, `building.padding: {n,e,s,w}`, `building.align ∈ {center, sw, ne, nw, se, custom}` (default `center`); `variants:` block `{count, vary, seed_scope}` with legacy scalar `variants: N` back-compat; top-level `palette_seed` + `geometry_seed` (legacy scalar `seed: N` fans to both when split seeds absent).
+- `tools/sprite-gen/src/compose.py` — new helper `resolve_building_box(spec) -> (bx, by, offset_x, offset_y)` honouring footprint_px / ratio / align / padding; variant loop samples each `vary:` range deterministically from `geometry_seed + i`; palette samples from `palette_seed + i`; `variants.seed_scope` default `palette` preserves legacy behaviour.
+- `tools/sprite-gen/src/__main__.py` — new subcommand `python3 -m src bootstrap-variants <stem> --from-signature` reads `signatures/<class>.signature.json` and writes sensible `vary:` defaults into the named spec; opt-in only; never auto-rewrites during render.
+- `tools/sprite-gen/tests/test_building_placement.py` — matrix over footprint_px / ratio / padding / align; asserts resolved mass bbox per case.
+- `tools/sprite-gen/tests/test_variants_geometric.py` — same spec + `vary:` produces 4 variants with pairwise distinct bboxes; identical outputs across runs with same seeds.
+- `tools/sprite-gen/tests/test_split_seeds.py` — freezing `palette_seed` varies only geometry when `geometry_seed` advances, and vice versa.
+- `docs/sprite-gen-art-design-system.md` R11 addendum — new placement fields + split seed semantics + `vary:` grammar.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- Phase 1 — Spec schema additions: `building.footprint_px` / `padding` / `align` + loader normalization.
+- Phase 2 — `variants:` block + split seeds loader normalization.
+- Phase 3 — Composer `resolve_building_box` helper + variant loop sampling.
+- Phase 4 — CLI `bootstrap-variants --from-signature`.
+- Phase 5 — Tests: placement + variants + split seeds.
+- Phase 6 — DAS R11 addendum.
+
+**Tasks:**
+
+
+| Task   | Name                                                            | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------ | --------------------------------------------------------------- | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.3.1 | Placement schema: `building.footprint_px` / `padding` / `align` | **TECH-709** | Draft  | `tools/sprite-gen/src/spec.py` — accept optional `building.footprint_px: [bx, by]` (wins over `footprint_ratio` when both present), `building.padding: {n, e, s, w}` in px (default all 0), `building.align ∈ {center, sw, ne, nw, se, custom}` (default `center`). Back-compat: existing specs without these fields render byte-identical. Consumes L5.                                                                                             |
+| T6.3.2 | `variants:` block + split seeds normalization                   | **TECH-710** | Draft  | `tools/sprite-gen/src/spec.py` — accept `variants: {count, vary, seed_scope}` object; legacy scalar `variants: N` normalises to `{count: N, vary: {}, seed_scope: palette}`. Accept top-level `palette_seed: int` + `geometry_seed: int`; legacy scalar `seed: N` fans out to both when split seeds absent. `seed_scope` default `palette` preserves legacy behaviour. Consumes L6, L14.                                                             |
+| T6.3.3 | Composer `resolve_building_box` + variant loop sampling         | **TECH-711** | Draft  | `tools/sprite-gen/src/compose.py` — new helper `resolve_building_box(spec) -> (bx, by, offset_x, offset_y)` encapsulating footprint_px / ratio / align / padding math (pure function, unit-tested). Variant loop samples each `vary:` range deterministically from `geometry_seed + i` for geometry axes and `palette_seed + i` for palette. Centering falls out of SE-corner anchor math; no geometry change when `align: center` and padding zero. |
+| T6.3.4 | CLI `bootstrap-variants --from-signature`                       | **TECH-712** | Draft  | `tools/sprite-gen/src/__main__.py` — new subcommand `python3 -m src bootstrap-variants <stem> --from-signature`. Reads `signatures/<class>.signature.json` (class derived from spec), writes sensible `vary:` defaults into the named spec (e.g. `vary.roof.h_px` from signature's silhouette band). Opt-in; never auto-rewrites during render. Consumes L7.                                                                                         |
+| T6.3.5 | Tests: placement + variants + split seeds                       | **TECH-713** | Draft  | `tools/sprite-gen/tests/test_building_placement.py` — matrix over footprint_px / ratio / padding / align combinations; asserts resolved mass bbox per case. `test_variants_geometric.py` — same spec + `vary:` → 4 variants pairwise-distinct bboxes; identical outputs across runs with same seeds. `test_split_seeds.py` — freezing `palette_seed` varies geometry only when `geometry_seed` advances, and vice versa.                             |
+| T6.3.6 | DAS R11 addendum                                                | **TECH-714** | Draft  | `docs/sprite-gen-art-design-system.md` — extend R11 with new placement fields (`building.footprint_px`, `padding`, `align`), split seed semantics (`palette_seed`, `geometry_seed`, legacy `seed` fan-out), and `vary:` grammar (range objects + `seed_scope`).                                                                                                                                                                                      |
+
+
+### §Stage File Plan
+
+
+
+```yaml
+- reserved_id: TECH-709
+  title: Placement schema — building.footprint_px / padding / align
+  priority: high
+  issue_type: TECH
+  notes: |
+    Extend `tools/sprite-gen/src/spec.py` to accept optional `building.footprint_px: [bx, by]` (wins over `footprint_ratio` when both present), `building.padding: {n, e, s, w}` in px (default all 0), `building.align ∈ {center, sw, ne, nw, se, custom}` (default `center`). Back-compat: specs without these fields render byte-identical. Consumes L5.
+  depends_on:
+    - TECH-704
+    - TECH-705
+    - TECH-706
+    - TECH-707
+    - TECH-708
+  related:
+    - TECH-710
+    - TECH-711
+  stub_body:
+    summary: |
+      Introduces pixel-exact building placement on the 64-px canvas — footprint_px, asymmetric padding, and alignment anchor. No composer change in this task (pure schema); composer wiring lives in TECH-711.
+    goals: |
+      1. `building.footprint_px: [bx, by]` accepted and surfaced via `load_spec`.
+      2. `building.padding: {n, e, s, w}` accepted; default `{0, 0, 0, 0}`.
+      3. `building.align` accepted with values `{center, sw, ne, nw, se, custom}`; default `center`.
+      4. Back-compat: existing specs produce byte-identical output.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumers: `src/compose.py::resolve_building_box` (TECH-711), `tests/test_building_placement.py` (TECH-713).
+    impl_plan_sketch: |
+      Phase 1 — Schema validation + defaults in loader; Phase 2 — Unit tests for default/explicit cases; Phase 3 — Full suite regression.
+- reserved_id: TECH-710
+  title: variants block + split seeds loader normalization
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` accepts `variants: {count, vary, seed_scope}` object; legacy scalar `variants: N` normalises to `{count: N, vary: {}, seed_scope: palette}`. Top-level `palette_seed: int` + `geometry_seed: int`; legacy scalar `seed: N` fans to both when split seeds absent. `seed_scope` default `palette` preserves legacy behaviour. Consumes L6, L14.
+  depends_on:
+    - TECH-704
+    - TECH-705
+    - TECH-706
+    - TECH-707
+    - TECH-708
+  related:
+    - TECH-709
+    - TECH-711
+  stub_body:
+    summary: |
+      Normalise the variants + split-seed surface in one loader pass. Back-compat by construction: every legacy shape maps cleanly to the new object shape with documented defaults.
+    goals: |
+      1. `variants: {count, vary, seed_scope}` accepted; scalar `variants: N` still works.
+      2. `palette_seed` + `geometry_seed` accepted; legacy `seed: N` fans to both.
+      3. `seed_scope` default `palette` preserved.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumers: `src/compose.py` variant loop (TECH-711), `tests/test_variants_geometric.py` + `tests/test_split_seeds.py` (TECH-713).
+    impl_plan_sketch: |
+      Phase 1 — normalise scalar → object in loader; Phase 2 — Fan-out legacy `seed`; Phase 3 — Unit tests for each legacy shape + object shape.
+- reserved_id: TECH-711
+  title: Composer resolve_building_box helper + variant loop sampling
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — new pure helper `resolve_building_box(spec) -> (bx, by, offset_x, offset_y)` encapsulating footprint_px / ratio / align / padding math. Variant loop samples each `vary:` range deterministically from `geometry_seed + i` for geometry axes and `palette_seed + i` for palette. Centering falls out of SE-corner anchor math; no geometry change when `align: center` and padding zero.
+  depends_on:
+    - TECH-709
+    - TECH-710
+  related:
+    - TECH-713
+  stub_body:
+    summary: |
+      Composer honours placement + variant fields with a pure helper + seed-split sampler. Back-compat: existing specs render byte-identical thanks to default `align: center` + zero padding + `seed_scope: palette`.
+    goals: |
+      1. `resolve_building_box(spec)` returns `(bx, by, offset_x, offset_y)` consistent across all placement combos.
+      2. Variant loop uses `geometry_seed + i` for geometry, `palette_seed + i` for palette.
+      3. Legacy specs render byte-identical (zero diff against baseline).
+    systems_map: |
+      `tools/sprite-gen/src/compose.py` (new helper + variant loop). Consumers: `tests/test_building_placement.py` + `tests/test_variants_geometric.py` (TECH-713).
+    impl_plan_sketch: |
+      Phase 1 — Author `resolve_building_box` + unit tests; Phase 2 — Wire into composer pre-render; Phase 3 — Variant loop split-seed sampling; Phase 4 — Byte-identical regression on live specs.
+- reserved_id: TECH-712
+  title: CLI bootstrap-variants --from-signature
+  priority: medium
+  issue_type: TECH
+  notes: |
+    New subcommand `python3 -m src bootstrap-variants <stem> --from-signature`. Reads `signatures/<class>.signature.json` (class derived from spec), writes sensible `vary:` defaults into the named spec (e.g. `vary.roof.h_px` from signature silhouette band). Opt-in; never auto-rewrites during render. Consumes L7.
+  depends_on:
+    - TECH-710
+  related:
+    - TECH-705
+  stub_body:
+    summary: |
+      Let authors bootstrap a `vary:` block from their class signature — saves them deriving ranges by hand. Opt-in only.
+    goals: |
+      1. CLI subcommand parses `<stem>` + `--from-signature` flag.
+      2. Reads `signatures/<class>.signature.json` for the spec's class.
+      3. Writes `vary:` block into the spec (preserving author-authored keys; never overwrites).
+    systems_map: |
+      `tools/sprite-gen/src/__main__.py` (new subcommand); `tools/sprite-gen/signatures/` (read-only); target: `tools/sprite-gen/specs/<stem>.yaml`.
+    impl_plan_sketch: |
+      Phase 1 — Wire subparser; Phase 2 — Derive `vary:` defaults from signature envelope fields; Phase 3 — Non-destructive write (merge, don't overwrite).
+- reserved_id: TECH-713
+  title: Tests — placement + variants + split seeds
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_building_placement.py` — matrix over footprint_px / ratio / padding / align combinations; asserts resolved mass bbox per case. `test_variants_geometric.py` — same spec + `vary:` → 4 variants pairwise-distinct bboxes; identical outputs across runs with same seeds. `test_split_seeds.py` — freezing `palette_seed` varies only geometry when `geometry_seed` advances, and vice versa.
+  depends_on:
+    - TECH-711
+    - TECH-712
+  related: []
+  stub_body:
+    summary: |
+      Three new test files pin placement combinatorics + variant determinism + split-seed independence. Full matrix coverage so drift surfaces in CI.
+    goals: |
+      1. `test_building_placement.py` exercises ≥12 combos (4 aligns × 3 padding profiles).
+      2. `test_variants_geometric.py` asserts 4 distinct bboxes + reproducibility.
+      3. `test_split_seeds.py` asserts seed-split independence.
+    systems_map: |
+      `tools/sprite-gen/tests/test_building_placement.py` + `test_variants_geometric.py` + `test_split_seeds.py` (all new); depends on composer helper (TECH-711) + CLI bootstrap (TECH-712).
+    impl_plan_sketch: |
+      Phase 1 — placement matrix; Phase 2 — geometric variants determinism; Phase 3 — split-seed independence; Phase 4 — Full suite regression.
+- reserved_id: TECH-714
+  title: DAS R11 addendum — placement + split seeds + vary grammar
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` R11 addendum — new placement fields (`building.footprint_px`, `padding`, `align`), split seed semantics (`palette_seed`, `geometry_seed`, legacy `seed` fan-out), and `vary:` grammar (range objects + `seed_scope`).
+  depends_on:
+    - TECH-709
+    - TECH-710
+  related:
+    - TECH-711
+  stub_body:
+    summary: |
+      Doc-only addendum: makes R11 the canonical reference for the new schema surface.
+    goals: |
+      1. R11 documents placement fields.
+      2. R11 documents split seeds + legacy fan-out.
+      3. R11 documents `vary:` grammar (range objects + `seed_scope`).
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` R11 section.
+    impl_plan_sketch: |
+      Phase 1 — Draft addendum text; Phase 2 — Cross-link to spec files under `tools/sprite-gen/specs/`; Phase 3 — Grep-check for updated fields.
+```
+
+**Dependency gate:** Stage 6.2 merged (TECH-704..708). L12 stage order lock. `bootstrap-variants --from-signature` (TECH-712) specifically depends on `signatures/` directory existing (TECH-705) and `variants:` block loader (TECH-710).
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.3 tasks **TECH-709**..**TECH-714** aligned with §3 Stage 6.3 block of `/tmp/sprite-gen-improvement-session.md`; locks L5/L6/L7/L14 mapped one-to-one. Aggregate doc: `docs/implementation/sprite-gen-stage-6.3-plan.md`. Downstream: file Stage 6.4.
+
+---
+
+### Stage 6.4 — Ground variation
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.4 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L8 (`ground:` accepts string or object; back-compat by construction), L9 (`ground.`* joins `vary:` vocabulary; signature bounds jitter), L10 (new primitive `iso_ground_noise`; palette gains `accent_dark`/`accent_light`).
+
+**Objectives:** Extend the ground surface beyond a single material string. Accept an object form `{material, materials, hue_jitter, value_jitter, texture}` on the spec (string form still valid; normalises to `{material: <str>}` with zero jitter / no texture). Wire the composer to sample hue/value jitter per variant and auto-insert an `iso_ground_noise` pass when `ground.texture` is set. Ship the new `iso_ground_noise` primitive + palette JSON `accent_dark`/`accent_light` extensions. Extend the signature extractor (TECH-704) so `ground.dominant` + `ground.variance` drive `vary.ground.`* bounds. Add `vary.ground.*` grammar (consumes L9). Land `tests/test_ground_variation.py`. DAS §4.1 addendum.
+
+**Exit:**
+
+- `tools/sprite-gen/src/spec.py` — `ground:` accepts string (normalise to `{material: <str>}`, zero jitter, no texture) or full object (`material` OR `materials: [...]`, `hue_jitter`, `value_jitter`, `texture: {primitive, density, palette}`); also accepts `vary.ground.{material, hue_jitter, value_jitter, texture.density}` inside `variants.vary`.
+- `tools/sprite-gen/src/primitives/iso_ground_noise.py` — new primitive `iso_ground_noise(img, x0, y0, *, material, density, seed, palette)`; scatters accent pixels inside diamond mask only (density 0..0.15 guardrail).
+- `tools/sprite-gen/palettes/*.json` — schema gains optional `accent_dark` / `accent_light` per material key (absent → noise primitive no-ops).
+- `tools/sprite-gen/src/compose.py` — applies ground `hue_jitter` / `value_jitter` per variant (sampled from `palette_seed + i`) before rendering `iso_ground_diamond`; auto-inserts `iso_ground_noise` pass when `ground.texture` set (author does not hand-add to `composition:`).
+- `tools/sprite-gen/src/signature.py` — extractor writes `ground.dominant` + `ground.variance` (consumed by `bootstrap-variants --from-signature` when deriving `vary.ground.`* bounds).
+- `tools/sprite-gen/tests/test_ground_variation.py` — covers legacy string form (byte-identical), object form, material pool, jitter non-zero diff, noise primitive mask + density.
+- `docs/sprite-gen-art-design-system.md` §4.1 addendum — documents `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- Phase 1 — Ground schema: string/object form loader normalization.
+- Phase 2 — Palette JSON `accent_dark`/`accent_light` keys.
+- Phase 3 — `iso_ground_noise` primitive.
+- Phase 4 — Composer ground jitter + texture auto-insert.
+- Phase 5 — Signature extractor `ground.`* extension.
+- Phase 6 — `vary.ground.*` grammar.
+- Phase 7 — Tests: `test_ground_variation.py`.
+- Phase 8 — DAS §4.1 addendum.
+
+**Tasks:**
+
+
+| Task   | Name                                                     | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                                                        |
+| ------ | -------------------------------------------------------- | ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.4.1 | Ground schema: string / object form loader normalization | **TECH-715** | Draft  | `tools/sprite-gen/src/spec.py` — `ground:` accepts either string (normalises to `{material: <str>}`, zero jitter, no texture) or full object (`material` OR `materials: [...]`, optional `hue_jitter: float`, `value_jitter: float`, `texture: {primitive, density, palette}`). Back-compat: string form stays byte-identical. Consumes L8.                                   |
+| T6.4.2 | Palette JSON `accent_dark` / `accent_light` keys         | **TECH-716** | Draft  | `tools/sprite-gen/palettes/*.json` — schema gains optional `accent_dark` / `accent_light` per material key. Palette loader surfaces both; absent → consumer no-ops (noise primitive skips scatter). Seed default values for `grass_flat` + `pavement` so Stage 6.4 ships with at least 2 materials texturable. Consumes L10 (palette surface).                                |
+| T6.4.3 | `iso_ground_noise` primitive                             | **TECH-717** | Draft  | `tools/sprite-gen/src/primitives/iso_ground_noise.py` — new primitive `iso_ground_noise(img, x0, y0, *, material, density, seed, palette)`. Scatters accent pixels inside diamond mask only (no bleed onto building area). Density clamped 0..0.15 (guardrail). Deterministic under seed. Consumes L10 (primitive surface).                                                   |
+| T6.4.4 | Composer ground jitter + texture auto-insert             | **TECH-718** | Draft  | `tools/sprite-gen/src/compose.py` — before rendering `iso_ground_diamond`, apply `hue_jitter` / `value_jitter` sampled from `palette_seed + i` to the material's ramp. When `ground.texture` set, auto-insert an `iso_ground_noise` pass between the diamond and the first building primitive; author never hand-adds to `composition:`. Legacy string-form specs unchanged.  |
+| T6.4.5 | Signature extractor `ground.`* extension                 | **TECH-719** | Draft  | `tools/sprite-gen/src/signature.py` — extend extractor to populate `ground.dominant` (dominant palette on ground-only band of reference sprite) + `ground.variance` (hue_stddev + value_stddev across samples). Matches JSON shape from TECH-704 spec. Consumed by `bootstrap-variants --from-signature` to derive `vary.ground.`* bounds. Consumes L9 upstream.              |
+| T6.4.6 | `vary.ground.*` grammar                                  | **TECH-720** | Draft  | `tools/sprite-gen/src/spec.py` — accept `vary.ground.{material: {values: [...]}, hue_jitter: {min, max}, value_jitter: {min, max}, texture: {density: {min, max}}}` inside `variants.vary`. Loader validates range objects (from TECH-710). Composer variant loop samples these from `palette_seed + i`. Consumes L9 (vary surface).                                          |
+| T6.4.7 | Tests: `test_ground_variation.py`                        | **TECH-721** | Draft  | `tools/sprite-gen/tests/test_ground_variation.py` — covers (a) legacy string form byte-identical, (b) object form round-trip, (c) `materials: [...]` pool renders one of each seeded, (d) non-zero jitter produces per-variant diffs (`!= 0` pixel diff), (e) zero jitter produces byte-identical variants, (f) noise primitive: mask clipped to diamond + density monotonic. |
+| T6.4.8 | DAS §4.1 addendum — palette accent keys + noise density  | **TECH-722** | Draft  | `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.`* bounds.                                                                                                                                             |
+
+
+### §Stage File Plan
+
+
+
+```yaml
+- reserved_id: TECH-715
+  title: Ground schema — string / object form loader normalization
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — `ground:` accepts string (normalises to `{material: <str>}`, zero jitter, no texture) or full object (`material` OR `materials: [...]`, optional `hue_jitter: float`, `value_jitter: float`, `texture: {primitive, density, palette}`). Back-compat: string form stays byte-identical. Consumes L8.
+  depends_on:
+    - TECH-709
+    - TECH-710
+    - TECH-711
+    - TECH-712
+    - TECH-713
+    - TECH-714
+  related:
+    - TECH-718
+    - TECH-720
+  stub_body:
+    summary: |
+      Normalise `ground:` at the loader so the composer reads one object shape regardless of author form. Byte-identical output for legacy string specs.
+    goals: |
+      1. String form normalises to `{material: <str>}`, zero jitter, no texture.
+      2. Object form round-trips with defaults filled in.
+      3. Explicit `materials: [...]` accepted (pool for variant sampling).
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumers: composer (TECH-718), vary loader (TECH-720).
+    impl_plan_sketch: |
+      Phase 1 — Detect str vs dict; emit object; Phase 2 — Fill defaults; Phase 3 — Unit tests.
+- reserved_id: TECH-716
+  title: Palette JSON accent_dark / accent_light keys
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/palettes/*.json` — schema gains optional `accent_dark` / `accent_light` per material key. Palette loader surfaces both; absent → noise primitive no-ops. Seed `grass_flat` + `pavement` so Stage 6.4 ships with texturable materials.
+  depends_on:
+    - TECH-714
+  related:
+    - TECH-717
+  stub_body:
+    summary: |
+      Extend palette schema with optional accent keys; seed two materials so noise primitive has consumers at Stage 6.4 close.
+    goals: |
+      1. Palette loader surfaces `accent_dark` / `accent_light` (or None).
+      2. `grass_flat` + `pavement` seeded with both keys in the active palette.
+      3. Existing palette entries unchanged.
+    systems_map: |
+      `tools/sprite-gen/palettes/*.json`; `tools/sprite-gen/src/palette.py` (loader).
+    impl_plan_sketch: |
+      Phase 1 — Loader surfaces optional keys; Phase 2 — Seed values in active palette JSON; Phase 3 — Unit test for absence → None.
+- reserved_id: TECH-717
+  title: iso_ground_noise primitive
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/primitives/iso_ground_noise.py` — new primitive `iso_ground_noise(img, x0, y0, *, material, density, seed, palette)`. Scatters accent pixels inside diamond mask only (no bleed onto building area). Density clamped 0..0.15. Deterministic under seed.
+  depends_on:
+    - TECH-716
+  related:
+    - TECH-718
+  stub_body:
+    summary: |
+      Scatter-pixel primitive that textures the ground diamond with palette accent colours. Self-masks to diamond shape; respects density guardrail; deterministic under seed.
+    goals: |
+      1. Primitive signature matches composer dispatch contract.
+      2. Scatter confined to diamond mask (verified via pixel accounting).
+      3. Density 0..0.15 hard-clamp.
+      4. Seed determinism: same (x0, y0, material, density, seed, palette) → identical pixels.
+    systems_map: |
+      `tools/sprite-gen/src/primitives/iso_ground_noise.py`; register in `src/primitives/__init__.py` + `src/compose.py::_DISPATCH`.
+    impl_plan_sketch: |
+      Phase 1 — Diamond mask from `iso_ground_diamond` geometry; Phase 2 — Pixel scatter from `random.Random(seed)`; Phase 3 — Density clamp + palette accent lookup.
+- reserved_id: TECH-718
+  title: Composer ground jitter + texture auto-insert
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — before rendering `iso_ground_diamond`, apply `hue_jitter` / `value_jitter` sampled from `palette_seed + i` to the material's ramp. When `ground.texture` set, auto-insert an `iso_ground_noise` pass between the diamond and the first building primitive. Legacy string-form specs unchanged.
+  depends_on:
+    - TECH-715
+    - TECH-717
+  related:
+    - TECH-720
+  stub_body:
+    summary: |
+      Composer honours jitter + texture fields. Legacy byte-identical guard still passes.
+    goals: |
+      1. Jitter sampled from `palette_seed + i`; zero jitter → byte-identical vs baseline.
+      2. `ground.texture` set → noise pass auto-inserted.
+      3. Author never hand-adds `iso_ground_noise` to `composition:`.
+    systems_map: |
+      `tools/sprite-gen/src/compose.py`; depends on `src/primitives/iso_ground_noise.py` (TECH-717).
+    impl_plan_sketch: |
+      Phase 1 — Jitter helper on palette ramp; Phase 2 — Wire into `iso_ground_diamond` call; Phase 3 — Conditional noise-pass insertion; Phase 4 — Byte-identical legacy regression.
+- reserved_id: TECH-719
+  title: Signature extractor ground.* extension
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/signature.py` — extend extractor to populate `ground.dominant` (dominant palette on ground-only band of reference sprite) + `ground.variance` (hue_stddev + value_stddev across samples). Matches JSON shape from TECH-704. Consumed by `bootstrap-variants --from-signature` to derive `vary.ground.`* bounds.
+  depends_on:
+    - TECH-714
+  related:
+    - TECH-712
+    - TECH-720
+  stub_body:
+    summary: |
+      Signature extractor now fills the `ground` block — lets `bootstrap-variants` propose data-driven jitter ranges instead of hand-tuned guesses.
+    goals: |
+      1. `ground.dominant` populated from ground-band pixels.
+      2. `ground.variance.hue_stddev` + `value_stddev` populated.
+      3. L15 policy respected (fallback mode leaves ground fields null).
+    systems_map: |
+      `tools/sprite-gen/src/signature.py`; consumers: `src/__main__.py::bootstrap-variants` (TECH-712 extension).
+    impl_plan_sketch: |
+      Phase 1 — Ground-band isolation on reference sprite; Phase 2 — Palette dominant + stddev math; Phase 3 — JSON shape verification against TECH-704 spec.
+- reserved_id: TECH-720
+  title: vary.ground.* grammar
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/spec.py` — accept `vary.ground.{material: {values: [...]}, hue_jitter: {min, max}, value_jitter: {min, max}, texture: {density: {min, max}}}` inside `variants.vary`. Loader validates range objects (TECH-710). Composer variant loop samples these from `palette_seed + i`.
+  depends_on:
+    - TECH-710
+    - TECH-715
+  related:
+    - TECH-718
+  stub_body:
+    summary: |
+      Extend the `vary:` grammar with a ground axis so variants can randomise material / jitter / noise density without hand-rolling a per-spec loop.
+    goals: |
+      1. Loader validates `vary.ground.`* range objects.
+      2. Composer samples these from `palette_seed + i`.
+      3. Back-compat: specs without `vary.ground` unchanged.
+    systems_map: |
+      `tools/sprite-gen/src/spec.py`; consumers: composer variant loop (TECH-718).
+    impl_plan_sketch: |
+      Phase 1 — Extend `_normalize_variants` validation to accept ground axis; Phase 2 — Composer samples during variant iteration; Phase 3 — Unit tests.
+- reserved_id: TECH-721
+  title: Tests — test_ground_variation.py
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_ground_variation.py` — covers (a) legacy string form byte-identical, (b) object form round-trip, (c) `materials: [...]` pool renders one of each seeded, (d) non-zero jitter produces per-variant diffs, (e) zero jitter produces byte-identical variants, (f) noise primitive: mask clipped to diamond + density monotonic.
+  depends_on:
+    - TECH-718
+    - TECH-720
+  related: []
+  stub_body:
+    summary: |
+      One test file covering every surface touched by Stage 6.4. Catches jitter leakage, noise-mask bleed, and materials pool non-determinism.
+    goals: |
+      1. Six named cases (legacy, object, pool, non-zero jitter, zero jitter, noise mask).
+      2. Reproducibility: same seeds → identical output across runs.
+      3. Full suite `pytest tools/sprite-gen/tests/ -q` green.
+    systems_map: |
+      `tools/sprite-gen/tests/test_ground_variation.py` (new); consumers: `src/compose.py` + `src/primitives/iso_ground_noise.py`.
+    impl_plan_sketch: |
+      Phase 1 — Legacy + object form; Phase 2 — Pool; Phase 3 — Jitter diffs; Phase 4 — Noise primitive mask / density.
+- reserved_id: TECH-722
+  title: DAS §4.1 addendum — accent keys + noise density
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.*` bounds.
+  depends_on:
+    - TECH-716
+    - TECH-717
+  related:
+    - TECH-708
+  stub_body:
+    summary: |
+      Doc addendum that closes the loop — authors learn about accent keys and noise density limits in the design system doc, not in code comments.
+    goals: |
+      1. §4.1 lists `accent_dark` / `accent_light` as optional per-material palette keys.
+      2. §4.1 documents noise density guardrail 0..0.15.
+      3. §4.1 forward-points to `signatures/` for `vary.ground.*` authoring.
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §4.1.
+    impl_plan_sketch: |
+      Phase 1 — Locate §4.1 table; Phase 2 — Append 3 short subsections; Phase 3 — Grep check.
+```
+
+**Dependency gate:** Stage 6.2 merged (TECH-704..708) + Stage 6.3 merged (TECH-709..714). L12 stage order lock. Signature extension (TECH-719) specifically extends TECH-704's extractor.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.4 tasks **TECH-715**..**TECH-722** aligned with §3 Stage 6.4 block of `/tmp/sprite-gen-improvement-session.md`; locks L8/L9/L10 mapped one-to-one. Aggregate doc: `docs/implementation/sprite-gen-stage-6.4-plan.md`. Downstream: file Stage 6.5.
+
+---
+
+### Stage 6.5 — Curation-trained quality gate
+
+**Status:** Draft — 2026-04-23. Filed from the 2026-04-23 sprite-gen improvement session §3 Stage 6.5 block (`/tmp/sprite-gen-improvement-session.md`). **Locks consumed:** L11 (curation/promoted.jsonl + rejected.jsonl feed the signature aggregator; composer gates renders against the evolving envelope).
+
+**Objectives:** Close the feedback loop from artist curation back into the generator. `curate.py` gains `promote` + `reject --reason` subcommands that append JSONL rows. The signature extractor becomes a three-source aggregator: `envelope = catalog ∪ promoted − rejected-zones` (rejection reasons carve out floor zones in `vary.`*). The composer adds a render-time gate: sample `vary:` → render → score against the evolving envelope → re-sample up to N times; after N, write best-scoring variant and mark a `.needs_review` metadata sidecar. Ship tests + DAS §5 addendum.
+
+**Exit:**
+
+- `tools/sprite-gen/src/curate.py` — `promote` appends JSONL row to `curation/promoted.jsonl` (rendered variant + sampled `vary:` values + measured bbox/palette stats); `reject --reason <tag>` appends to `curation/rejected.jsonl`.
+- `tools/sprite-gen/src/signature.py` — aggregator `envelope = catalog ∪ promoted − rejected-zones`; rejection reasons map to `vary.`* floor zones (e.g. `roof-too-shallow` → floor on `vary.roof.h_px`).
+- `tools/sprite-gen/src/compose.py` — render-time score-and-retry loop: sample `vary:` → render → score → if below floor, re-sample (configurable N, default 5).
+- `tools/sprite-gen/src/compose.py` — after N retries without meeting floor, write best-scoring output + `.needs_review` sidecar in metadata.
+- `tools/sprite-gen/tests/test_curation_loop.py` — (a) envelope tightens toward promoted samples after N promotes (before/after fixture); (b) `vary:` range shrinks in direction of rejection reasons (before/after fixture); (c) `.needs_review` flag set when floor not met in N tries.
+- `docs/sprite-gen-art-design-system.md` §5 addendum — curation loop + scoring floor + `.needs_review` semantics.
+- `pytest tools/sprite-gen/tests/` exits 0.
+
+**Phases:**
+
+- Phase 1 — `curate.py promote` subcommand + `promoted.jsonl` writer.
+- Phase 2 — `curate.py reject --reason` subcommand + `rejected.jsonl` writer.
+- Phase 3 — Signature three-source aggregator (catalog ∪ promoted − rejected-zones).
+- Phase 4 — Composer render-time score-and-retry gate (N retries, default 5).
+- Phase 5 — `.needs_review` sidecar writer on floor-miss.
+- Phase 6 — Tests: `test_curation_loop.py`.
+- Phase 7 — DAS §5 addendum.
+
+**Tasks:**
+
+
+| Task   | Name                                              | Issue        | Status | Intent                                                                                                                                                                                                                                                                                                                                               |
+| ------ | ------------------------------------------------- | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6.5.1 | `curate.py promote` → `promoted.jsonl`            | **TECH-723** | Draft  | `tools/sprite-gen/src/curate.py` — add `promote <variant>` subcommand that appends JSONL row to `curation/promoted.jsonl`. Row carries: rendered variant path, sampled `vary:` values, measured bbox/palette stats from the rendered image. Idempotent append; no mutation. Consumes L11.                                                            |
+| T6.5.2 | `curate.py reject --reason` → `rejected.jsonl`    | **TECH-724** | Draft  | `tools/sprite-gen/src/curate.py` — add `reject <variant> --reason <tag>` subcommand. `<tag>` is a controlled vocabulary (initial set: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`). Row format mirrors `promoted.jsonl` plus `reason: <tag>`. Consumes L11.                                                    |
+| T6.5.3 | Signature three-source aggregator                 | **TECH-725** | Draft  | `tools/sprite-gen/src/signature.py` — `compute_envelope(catalog, promoted, rejected)` returns `vary.`* bounds where `envelope = catalog ∪ promoted − rejected-zones`. Each rejection `reason` maps to a zone carve-out (e.g. `roof-too-shallow` floors `vary.roof.h_px.min`). Deterministic. Consumes L11.                                           |
+| T6.5.4 | Composer render-time score-and-retry gate         | **TECH-726** | Draft  | `tools/sprite-gen/src/compose.py` — wrap variant render in score-and-retry loop: sample `vary:` from envelope → render → score variant against envelope floor → if below, re-sample (new `palette_seed + i + retry`). Configurable N (default 5). Scoring heuristic: normalized distance from envelope centroid + hard-fail penalty on carved zones. |
+| T6.5.5 | `.needs_review` sidecar on floor-miss             | **TECH-727** | Draft  | `tools/sprite-gen/src/compose.py` — after N retries without meeting floor, emit best-scoring variant and write `<sprite>.needs_review.json` sidecar containing: final score, envelope snapshot, attempted seeds, failing zones. CI / curator consumes sidecars to surface low-confidence renders.                                                    |
+| T6.5.6 | Tests: `test_curation_loop.py`                    | **TECH-728** | Draft  | `tools/sprite-gen/tests/test_curation_loop.py` — three cases: (a) envelope tightens toward promoted samples after N promotes (before/after fixture); (b) `vary:` range shrinks in direction of rejection reasons (before/after); (c) `.needs_review` flag set when floor not met in N tries. Deterministic seeds throughout.                         |
+| T6.5.7 | DAS §5 addendum — curation loop + floor + sidecar | **TECH-729** | Draft  | `docs/sprite-gen-art-design-system.md` §5 — new/extended section covering promotion/rejection JSONL schema, envelope aggregator rule, rejection-reason → `vary.`* zone map, composer score-and-retry contract, and `.needs_review` sidecar semantics.                                                                                                |
+
+
+### §Stage File Plan
+
+
+
+```yaml
+- reserved_id: TECH-723
+  title: curate.py promote → promoted.jsonl
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/curate.py` — new `promote <variant>` subcommand appending a JSONL row to `curation/promoted.jsonl`. Row carries rendered variant path, sampled `vary:` values, measured bbox/palette stats.
+  depends_on:
+    - TECH-704
+    - TECH-705
+    - TECH-706
+    - TECH-707
+    - TECH-708
+  related:
+    - TECH-724
+    - TECH-725
+  stub_body:
+    summary: |
+      `promote` subcommand captures curator approvals into a JSONL log so the signature aggregator can tighten the envelope toward real artist-validated variants.
+    goals: |
+      1. `promote <variant>` appends one JSON row to `curation/promoted.jsonl`.
+      2. Row carries variant path + sampled `vary:` values + measured bbox/palette stats.
+      3. Idempotent append; no mutation of prior rows.
+    systems_map: |
+      `tools/sprite-gen/src/curate.py`; consumers: `src/signature.py::compute_envelope` (TECH-725).
+    impl_plan_sketch: |
+      Phase 1 — CLI subcommand scaffold; Phase 2 — Measurement helpers (bbox + palette stats); Phase 3 — JSONL writer + idempotency test.
+- reserved_id: TECH-724
+  title: curate.py reject --reason → rejected.jsonl
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/curate.py` — new `reject <variant> --reason <tag>` subcommand appending to `curation/rejected.jsonl`. Controlled reason vocabulary: `roof-too-shallow`, `roof-too-tall`, `facade-too-saturated`, `ground-too-uniform`.
+  depends_on:
+    - TECH-723
+  related:
+    - TECH-725
+  stub_body:
+    summary: |
+      `reject` captures artist vetoes with a controlled reason tag, so the signature aggregator can carve out `vary.*` zones that produce undesirable variants.
+    goals: |
+      1. `reject <variant> --reason <tag>` appends JSONL row.
+      2. Row shape mirrors `promoted.jsonl` plus `reason: <tag>`.
+      3. Invalid `<tag>` → CLI error (controlled vocab enforced).
+    systems_map: |
+      `tools/sprite-gen/src/curate.py`; consumers: `src/signature.py::compute_envelope` (TECH-725).
+    impl_plan_sketch: |
+      Phase 1 — Controlled vocab constant; Phase 2 — Row writer reuses TECH-723 helpers; Phase 3 — Unit test for invalid reason.
+- reserved_id: TECH-725
+  title: Signature three-source aggregator
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/signature.py` — `compute_envelope(catalog, promoted, rejected)` returns `vary.*` bounds where `envelope = catalog ∪ promoted − rejected-zones`. Rejection reasons map to zone carve-outs.
+  depends_on:
+    - TECH-723
+    - TECH-724
+  related:
+    - TECH-726
+    - TECH-729
+  stub_body:
+    summary: |
+      Aggregator consumes catalog signatures + promoted samples and subtracts rejected-zones, producing the live envelope the composer gate consults.
+    goals: |
+      1. Union of catalog + promoted tightens bounds toward validated variants.
+      2. Rejection reasons carve out `vary.*` floor zones via a reason→axis map.
+      3. Deterministic: same inputs → same envelope.
+    systems_map: |
+      `tools/sprite-gen/src/signature.py`; consumers: composer score-and-retry gate (TECH-726).
+    impl_plan_sketch: |
+      Phase 1 — Reason→axis carve-out table; Phase 2 — Envelope math (union + subtraction); Phase 3 — Unit tests.
+- reserved_id: TECH-726
+  title: Composer render-time score-and-retry gate
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — wrap variant render in score-and-retry loop: sample → render → score against envelope → re-sample up to N times (default 5). Scoring = normalized distance from envelope centroid + hard-fail penalty on carved zones.
+  depends_on:
+    - TECH-725
+  related:
+    - TECH-727
+  stub_body:
+    summary: |
+      Composer gate rejects variants that land in carved zones or drift too far from the envelope, re-sampling until a variant passes or N retries exhausted.
+    goals: |
+      1. Retry count configurable; default 5.
+      2. Deterministic: same seeds → same retry trajectory.
+      3. Zero retries case = byte-identical to pre-gate render (feature flag off).
+    systems_map: |
+      `tools/sprite-gen/src/compose.py`; consumes `src/signature.py::compute_envelope` (TECH-725).
+    impl_plan_sketch: |
+      Phase 1 — Score function; Phase 2 — Retry loop with seed advancement; Phase 3 — Feature-flag for back-compat.
+- reserved_id: TECH-727
+  title: .needs_review sidecar on floor-miss
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — on N-retries exhaustion, write `<sprite>.needs_review.json` sidecar with final score, envelope snapshot, attempted seeds, failing zones. Curator consumes sidecars to surface low-confidence renders.
+  depends_on:
+    - TECH-726
+  related: []
+  stub_body:
+    summary: |
+      Sidecar metadata file surfaces low-confidence renders for curator review without blocking the pipeline.
+    goals: |
+      1. File name `<sprite>.needs_review.json` adjacent to rendered sprite.
+      2. Contents: final score, envelope snapshot, attempted seeds, failing zones.
+      3. Absent when variant meets floor within retries.
+    systems_map: |
+      `tools/sprite-gen/src/compose.py`; consumer: curator tooling / CI gate (future).
+    impl_plan_sketch: |
+      Phase 1 — Sidecar schema dataclass; Phase 2 — Writer on floor-miss branch; Phase 3 — Absence test on floor-met branch.
+- reserved_id: TECH-728
+  title: Tests — test_curation_loop.py
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_curation_loop.py` — (a) envelope tightens toward promoted samples after N promotes (before/after fixture); (b) `vary:` range shrinks in direction of rejection reasons (before/after); (c) `.needs_review` flag set when floor not met in N tries.
+  depends_on:
+    - TECH-726
+    - TECH-727
+  related: []
+  stub_body:
+    summary: |
+      One test file exercising the full curation → aggregator → gate → sidecar loop with deterministic before/after fixtures.
+    goals: |
+      1. Before/after envelope comparison after N promotes.
+      2. Before/after `vary.*` range after N rejects with a named reason.
+      3. `.needs_review` sidecar presence/absence assertion.
+    systems_map: |
+      `tools/sprite-gen/tests/test_curation_loop.py`; consumers: `curate.py`, `signature.py`, `compose.py`.
+    impl_plan_sketch: |
+      Phase 1 — Before/after envelope test; Phase 2 — Rejection-zone test; Phase 3 — Needs_review test.
+- reserved_id: TECH-729
+  title: DAS §5 addendum — curation loop + floor + sidecar
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `docs/sprite-gen-art-design-system.md` §5 — promotion/rejection JSONL schema, envelope aggregator rule, rejection-reason → `vary.*` zone map, composer score-and-retry contract, `.needs_review` sidecar semantics.
+  depends_on:
+    - TECH-723
+    - TECH-724
+    - TECH-725
+    - TECH-726
+    - TECH-727
+  related: []
+  stub_body:
+    summary: |
+      Docs close the loop — artists learn the curation contract + reason vocabulary + what `.needs_review` means from the design system doc, not code comments.
+    goals: |
+      1. §5 documents JSONL schema for promoted / rejected rows.
+      2. §5 publishes rejection-reason → `vary.*` zone carve-out map.
+      3. §5 documents `.needs_review` sidecar semantics.
+    systems_map: |
+      `docs/sprite-gen-art-design-system.md` §5.
+    impl_plan_sketch: |
+      Phase 1 — JSONL schema table; Phase 2 — Reason→axis map table; Phase 3 — Sidecar semantics subsection.
+```
+
+**Dependency gate:** Stage 6.2 merged (TECH-704..708). L12 stage order lock. Signature aggregator (TECH-725) specifically extends TECH-704's extractor with new inputs.
+
+### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — Stage 6.5 tasks **TECH-723**..**TECH-729** aligned with §3 Stage 6.5 block of `/tmp/sprite-gen-improvement-session.md`; lock L11 threaded through all 7 tasks. Aggregate doc: `docs/implementation/sprite-gen-stage-6.5-plan.md`. Downstream: file Stage 6.6.
+
+---
+
 ### Stage 7 — Decoration primitives — vegetation & yard
 
 **Status:** Draft — 2026-04-23.
@@ -629,24 +1549,26 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Tree + bush + grass-tuft primitives.
-- [ ] Phase 2 — Pool + path + pavement patch + fence.
-- [ ] Phase 3 — Placement strategies + composer integration.
-- [ ] Phase 4 — Per-primitive tests + placement regression.
+- Phase 1 — Tree + bush + grass-tuft primitives.
+- Phase 2 — Pool + path + pavement patch + fence.
+- Phase 3 — Placement strategies + composer integration.
+- Phase 4 — Per-primitive tests + placement regression.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T7.1 | `iso_tree_fir` primitive | _pending_ | Draft | 2–3 green domes stacked + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`. Visual target: `House1-64.png` trees and `Forest1-64.png` dense fill per DAS §3. |
-| T7.2 | `iso_tree_deciduous` primitive | _pending_ | Draft | Round-crown tree; `color_var ∈ {green, green_yellow, green_blue}`; palette key `tree_deciduous`. |
-| T7.3 | `iso_bush` + `iso_grass_tuft` | _pending_ | Draft | Low green puff (bush ~6×6 px) + single-pixel accents (grass tuft); palette keys `bush`, `grass_tuft`. |
-| T7.4 | `iso_pool` primitive | _pending_ | Draft | Light-blue rectangle with white rim; sizes: `w_px/d_px ∈ [8..20]`; palette key `pool`. Composer validates: 2×2+ only. |
-| T7.5 | `iso_path` + `iso_pavement_patch` | _pending_ | Draft | Beige/grey walkway strip; `axis ∈ {ns, ew}`; path width 2–4 px; pavement patch fills arbitrary rect; palette key `pavement`. |
-| T7.6 | `iso_fence` primitive | _pending_ | Draft | Thin 1–2 px beige/tan line along one side; `side ∈ {n,s,e,w}`; palette key `fence`. |
-| T7.7 | Placement strategies | _pending_ | Draft | `src/placement.py` — pure function: given decoration list + footprint + seed → list of (primitive_call, x, y, kwargs). Strategies: `corners`, `perimeter`, `random_border`, `grid(rows,cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed. |
-| T7.8 | Composer `decorations:` integration | _pending_ | Draft | `compose_sprite` reads `spec.decorations`; calls `placement.place`; draws in z-order ground → yard-deco → building → roof-deco. Raises `DecorationScopeError` on 1×1 + `iso_pool`. |
-| T7.9 | Vegetation + placement tests | _pending_ | Draft | `tests/test_decorations_vegetation.py` + `tests/test_placement.py`; smoke each primitive; seed-stability test. |
+
+| Task | Name                                | Issue     | Status | Intent                                                                                                                                                                                                                                                                             |
+| ---- | ----------------------------------- | --------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T7.1 | `iso_tree_fir` primitive            | *pending* | Draft  | 2–3 green domes stacked + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`. Visual target: `House1-64.png` trees and `Forest1-64.png` dense fill per DAS §3.                                                                                                          |
+| T7.2 | `iso_tree_deciduous` primitive      | *pending* | Draft  | Round-crown tree; `color_var ∈ {green, green_yellow, green_blue}`; palette key `tree_deciduous`.                                                                                                                                                                                   |
+| T7.3 | `iso_bush` + `iso_grass_tuft`       | *pending* | Draft  | Low green puff (bush ~6×6 px) + single-pixel accents (grass tuft); palette keys `bush`, `grass_tuft`.                                                                                                                                                                              |
+| T7.4 | `iso_pool` primitive                | *pending* | Draft  | Light-blue rectangle with white rim; sizes: `w_px/d_px ∈ [8..20]`; palette key `pool`. Composer validates: 2×2+ only.                                                                                                                                                              |
+| T7.5 | `iso_path` + `iso_pavement_patch`   | *pending* | Draft  | Beige/grey walkway strip; `axis ∈ {ns, ew}`; path width 2–4 px; pavement patch fills arbitrary rect; palette key `pavement`.                                                                                                                                                       |
+| T7.6 | `iso_fence` primitive               | *pending* | Draft  | Thin 1–2 px beige/tan line along one side; `side ∈ {n,s,e,w}`; palette key `fence`.                                                                                                                                                                                                |
+| T7.7 | Placement strategies                | *pending* | Draft  | `src/placement.py` — pure function: given decoration list + footprint + seed → list of (primitive_call, x, y, kwargs). Strategies: `corners`, `perimeter`, `random_border`, `grid(rows,cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed. |
+| T7.8 | Composer `decorations:` integration | *pending* | Draft  | `compose_sprite` reads `spec.decorations`; calls `placement.place`; draws in z-order ground → yard-deco → building → roof-deco. Raises `DecorationScopeError` on 1×1 + `iso_pool`.                                                                                                 |
+| T7.9 | Vegetation + placement tests        | *pending* | Draft  | `tests/test_decorations_vegetation.py` + `tests/test_placement.py`; smoke each primitive; seed-stability test.                                                                                                                                                                     |
+
 
 **Dependency gate:** Stage 6 archived (need pixel-native primitives + ground diamond + `footprint_ratio` scaling).
 
@@ -668,23 +1590,25 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Window grid + door primitives.
-- [ ] Phase 2 — Storefront sign + parapet cap (commercial-focused).
-- [ ] Phase 3 — Chimney + roof vent + pipe column.
-- [ ] Phase 4 — Composer `details:` block + face validation tests.
+- Phase 1 — Window grid + door primitives.
+- Phase 2 — Storefront sign + parapet cap (commercial-focused).
+- Phase 3 — Chimney + roof vent + pipe column.
+- Phase 4 — Composer `details:` block + face validation tests.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T8.1 | `iso_window_grid` primitive | _pending_ | Draft | Draw grid of N×M windows on a face; `rows`, `cols`, `face ∈ {south, east}`, `material ∈ {window_blue, window_dark}`. Visual target: `DenseCommercialBuilding-2.png` horizontal band pattern. |
-| T8.2 | `iso_door` primitive | _pending_ | Draft | Draw dark rectangle at face ground level; `w_px, h_px`, `face ∈ {south, east}`. |
-| T8.3 | `iso_storefront_sign` primitive | _pending_ | Draft | Facade band across south face; `h_px`, `color` picked from commercial sign palette. Visual target: `Store-1.png` teal signage strip. |
-| T8.4 | `iso_parapet_cap` primitive | _pending_ | Draft | Top-edge band drawn at the roof seam; `color` from `parapet_pink/peach`. Visual target: `DenseCommercialBuilding-1.png` pink cap. |
-| T8.5 | `iso_chimney` + `iso_roof_vent` primitives | _pending_ | Draft | Vertical rect (chimney) / small box (vent) anchored on top face; `h_px`, `material`. |
-| T8.6 | `iso_pipe_column` primitive | _pending_ | Draft | Vertical pipe + darker cap on south/east face; `h_px`, `material`. Visual target: `WaterPlant-1-128.png` blue pipe columns. |
-| T8.7 | Composer `details:` block | _pending_ | Draft | `compose_sprite` reads `spec.building.details`; validates face per primitive; draws in correct z-order (walls → window_grid → door → chimney/vent on top). |
-| T8.8 | Building-detail tests | _pending_ | Draft | `tests/test_decorations_building.py` — smoke each primitive; test face-validation raises on invalid face. |
+
+| Task | Name                                       | Issue     | Status | Intent                                                                                                                                                                                       |
+| ---- | ------------------------------------------ | --------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T8.1 | `iso_window_grid` primitive                | *pending* | Draft  | Draw grid of N×M windows on a face; `rows`, `cols`, `face ∈ {south, east}`, `material ∈ {window_blue, window_dark}`. Visual target: `DenseCommercialBuilding-2.png` horizontal band pattern. |
+| T8.2 | `iso_door` primitive                       | *pending* | Draft  | Draw dark rectangle at face ground level; `w_px, h_px`, `face ∈ {south, east}`.                                                                                                              |
+| T8.3 | `iso_storefront_sign` primitive            | *pending* | Draft  | Facade band across south face; `h_px`, `color` picked from commercial sign palette. Visual target: `Store-1.png` teal signage strip.                                                         |
+| T8.4 | `iso_parapet_cap` primitive                | *pending* | Draft  | Top-edge band drawn at the roof seam; `color` from `parapet_pink/peach`. Visual target: `DenseCommercialBuilding-1.png` pink cap.                                                            |
+| T8.5 | `iso_chimney` + `iso_roof_vent` primitives | *pending* | Draft  | Vertical rect (chimney) / small box (vent) anchored on top face; `h_px`, `material`.                                                                                                         |
+| T8.6 | `iso_pipe_column` primitive                | *pending* | Draft  | Vertical pipe + darker cap on south/east face; `h_px`, `material`. Visual target: `WaterPlant-1-128.png` blue pipe columns.                                                                  |
+| T8.7 | Composer `details:` block                  | *pending* | Draft  | `compose_sprite` reads `spec.building.details`; validates face per primitive; draws in correct z-order (walls → window_grid → door → chimney/vent on top).                                   |
+| T8.8 | Building-detail tests                      | *pending* | Draft  | `tests/test_decorations_building.py` — smoke each primitive; test face-validation raises on invalid face.                                                                                    |
+
 
 **Dependency gate:** Stage 6 archived.
 
@@ -707,20 +1631,22 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `footprint: [2,2]` canvas math + composer support.
-- [ ] Phase 2 — `buildings:` list + named slots.
-- [ ] Phase 3 — 3 reference archetype specs + regression tests.
+- Phase 1 — `footprint: [2,2]` canvas math + composer support.
+- Phase 2 — `buildings:` list + named slots.
+- Phase 3 — 3 reference archetype specs + regression tests.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T9.1 | `footprint: [2,2]` canvas + compose | _pending_ | Draft | `canvas_size(2, 2)` returns `(128, 0)`; `iso_ground_diamond(2, 2, ...)` renders 128×64 diamond at y0=31; assert pivot = `(0.5, 16/128)`. |
-| T9.2 | `buildings:` list + slot resolver | _pending_ | Draft | `src/slots.py` — `resolve_slot(slot_name, footprint, building_bbox) → (x_px, y_px)`; slot table per DAS §5 R11. Back-compat: `spec.building: {...}` lifted to `spec.buildings: [{...}]` with `slot: centered`. |
-| T9.3 | `residential_row_medium_2x2.yaml` | _pending_ | Draft | 3 small houses tiled N→S (`slot: tiled-row-3`), each with random pastel wall color from `{cyan, red, yellow}` per variant. Visual target: `MediumResidentialBuilding-2-128.png`. |
-| T9.4 | `residential_suburban_2x2.yaml` | _pending_ | Draft | 1 centered house + front-yard path + pool on back-right + trees on corners. Visual target: `LightResidentialBuilding-2-128.png`. |
-| T9.5 | `commercial_light_2x2.yaml` | _pending_ | Draft | 1 centered larger commercial block with glass blue facade + paved perimeter + parapet cap. Visual target: `LightCommercialBuilding-2-128.png`. |
-| T9.6 | 2×2 regression tests | _pending_ | Draft | Per-archetype: render → assert bbox matches reference within ±3 px; dominant colors match within HSV ΔE=15. |
+
+| Task | Name                                | Issue     | Status | Intent                                                                                                                                                                                                         |
+| ---- | ----------------------------------- | --------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T9.1 | `footprint: [2,2]` canvas + compose | *pending* | Draft  | `canvas_size(2, 2)` returns `(128, 0)`; `iso_ground_diamond(2, 2, ...)` renders 128×64 diamond at y0=31; assert pivot = `(0.5, 16/128)`.                                                                       |
+| T9.2 | `buildings:` list + slot resolver   | *pending* | Draft  | `src/slots.py` — `resolve_slot(slot_name, footprint, building_bbox) → (x_px, y_px)`; slot table per DAS §5 R11. Back-compat: `spec.building: {...}` lifted to `spec.buildings: [{...}]` with `slot: centered`. |
+| T9.3 | `residential_row_medium_2x2.yaml`   | *pending* | Draft  | 3 small houses tiled N→S (`slot: tiled-row-3`), each with random pastel wall color from `{cyan, red, yellow}` per variant. Visual target: `MediumResidentialBuilding-2-128.png`.                               |
+| T9.4 | `residential_suburban_2x2.yaml`     | *pending* | Draft  | 1 centered house + front-yard path + pool on back-right + trees on corners. Visual target: `LightResidentialBuilding-2-128.png`.                                                                               |
+| T9.5 | `commercial_light_2x2.yaml`         | *pending* | Draft  | 1 centered larger commercial block with glass blue facade + paved perimeter + parapet cap. Visual target: `LightCommercialBuilding-2-128.png`.                                                                 |
+| T9.6 | 2×2 regression tests                | *pending* | Draft  | Per-archetype: render → assert bbox matches reference within ±3 px; dominant colors match within HSV ΔE=15.                                                                                                    |
+
 
 **Dependency gate:** Stages 6 + 7 archived (ground diamond + yard decorations). Stage 8 optional (buildings render without details for basic match).
 
@@ -742,21 +1668,23 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `footprint: [3,3]` canvas + ground.
-- [ ] Phase 2 — `iso_paved_parking` primitive.
-- [ ] Phase 3 — Industrial + power archetypes + regression tests.
+- Phase 1 — `footprint: [3,3]` canvas + ground.
+- Phase 2 — `iso_paved_parking` primitive.
+- Phase 3 — Industrial + power archetypes + regression tests.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T10.1 | `footprint: [3,3]` canvas support | _pending_ | Draft | `iso_ground_diamond(3, 3, 'mustard_industrial')` renders 192×96 diamond; pivot = `(0.5, 16/192)`; composer handles slot resolver for 3×3. |
-| T10.2 | `iso_paved_parking` primitive | _pending_ | Draft | Rect pavement fill + 1-px yellow stripes at configurable spacing; palette key `pavement` + `stripe_yellow`. |
-| T10.3 | `industrial_heavy_3x3.yaml` | _pending_ | Draft | Office + warehouse on back-left / back-right slots, paved parking filling front half, yellow painted stripes. Target: `HeavyIndustrialBuilding-1-192.png`. |
-| T10.4 | `powerplant_nuclear_3x3.yaml` | _pending_ | Draft | Office slab back-center + 3× `iso_cooling_tower` primitives arranged front, mustard ground plate. Cooling tower primitive stub (static, single frame, no smoke). |
-| T10.5 | `iso_cooling_tower` primitive (static) | _pending_ | Draft | Tapered cylinder — trapezoid front face + ellipse top; `h_px`, `material: cooling_tower_grey`. No smoke plume in v1 (animation deferred). |
-| T10.6 | `iso_smokestack` primitive | _pending_ | Draft | Thin tall cylinder; `h_px`, `material`. For heavy industrial rooftops. |
-| T10.7 | 3×3 regression tests | _pending_ | Draft | Per-archetype render + bbox + dominant color match vs references. |
+
+| Task  | Name                                   | Issue     | Status | Intent                                                                                                                                                           |
+| ----- | -------------------------------------- | --------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T10.1 | `footprint: [3,3]` canvas support      | *pending* | Draft  | `iso_ground_diamond(3, 3, 'mustard_industrial')` renders 192×96 diamond; pivot = `(0.5, 16/192)`; composer handles slot resolver for 3×3.                        |
+| T10.2 | `iso_paved_parking` primitive          | *pending* | Draft  | Rect pavement fill + 1-px yellow stripes at configurable spacing; palette key `pavement` + `stripe_yellow`.                                                      |
+| T10.3 | `industrial_heavy_3x3.yaml`            | *pending* | Draft  | Office + warehouse on back-left / back-right slots, paved parking filling front half, yellow painted stripes. Target: `HeavyIndustrialBuilding-1-192.png`.       |
+| T10.4 | `powerplant_nuclear_3x3.yaml`          | *pending* | Draft  | Office slab back-center + 3× `iso_cooling_tower` primitives arranged front, mustard ground plate. Cooling tower primitive stub (static, single frame, no smoke). |
+| T10.5 | `iso_cooling_tower` primitive (static) | *pending* | Draft  | Tapered cylinder — trapezoid front face + ellipse top; `h_px`, `material: cooling_tower_grey`. No smoke plume in v1 (animation deferred).                        |
+| T10.6 | `iso_smokestack` primitive             | *pending* | Draft  | Thin tall cylinder; `h_px`, `material`. For heavy industrial rooftops.                                                                                           |
+| T10.7 | 3×3 regression tests                   | *pending* | Draft  | Per-archetype render + bbox + dominant color match vs references.                                                                                                |
+
 
 **Dependency gate:** Stage 9 archived (needs 2×2 machinery; 3×3 is a direct extension).
 
@@ -778,20 +1706,22 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `canvas_size` extra_floors param + composer auto-select.
-- [ ] Phase 2 — Multi-floor window band replication.
-- [ ] Phase 3 — Tall-tower archetype specs + regression tests.
+- Phase 1 — `canvas_size` extra_floors param + composer auto-select.
+- Phase 2 — Multi-floor window band replication.
+- Phase 3 — Tall-tower archetype specs + regression tests.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T11.1 | `canvas_size(extra_floors)` param | _pending_ | Draft | Extend canvas math to accept `extra_floors ∈ {0,1,2,3}`; composer auto-picks based on building height vs base canvas. |
-| T11.2 | Multi-floor window band | _pending_ | Draft | `iso_window_grid` with `rows ≥ 3` automatically tiles the grid vertically per-floor with `level_h` spacing. |
-| T11.3 | `residential_heavy_tall_1x1.yaml` | _pending_ | Draft | `levels: 6`, `footprint_ratio: [0.9, 0.9]`, cool-grey facade, cyan window band × 6. Target: `HeavyResidentialBuilding-1-64.png` (64×128). |
-| T11.4 | `commercial_dense_tall_1x1.yaml` | _pending_ | Draft | `levels: 6`, glass blue facade, pink parapet cap. Target: `DenseCommercialBuilding-2.png`. |
-| T11.5 | `commercial_dense_mega_2x2.yaml` | _pending_ | Draft | `footprint: [2,2]`, `levels: 12`, `extra_floors: 3` → 128×256 canvas. Target: `DenseCommercialBuilding-1.png`. |
-| T11.6 | Tall-canvas regression tests | _pending_ | Draft | Per-archetype bbox + pivot UV assertion. |
+
+| Task  | Name                              | Issue     | Status | Intent                                                                                                                                    |
+| ----- | --------------------------------- | --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| T11.1 | `canvas_size(extra_floors)` param | *pending* | Draft  | Extend canvas math to accept `extra_floors ∈ {0,1,2,3}`; composer auto-picks based on building height vs base canvas.                     |
+| T11.2 | Multi-floor window band           | *pending* | Draft  | `iso_window_grid` with `rows ≥ 3` automatically tiles the grid vertically per-floor with `level_h` spacing.                               |
+| T11.3 | `residential_heavy_tall_1x1.yaml` | *pending* | Draft  | `levels: 6`, `footprint_ratio: [0.9, 0.9]`, cool-grey facade, cyan window band × 6. Target: `HeavyResidentialBuilding-1-64.png` (64×128). |
+| T11.4 | `commercial_dense_tall_1x1.yaml`  | *pending* | Draft  | `levels: 6`, glass blue facade, pink parapet cap. Target: `DenseCommercialBuilding-2.png`.                                                |
+| T11.5 | `commercial_dense_mega_2x2.yaml`  | *pending* | Draft  | `footprint: [2,2]`, `levels: 12`, `extra_floors: 3` → 128×256 canvas. Target: `DenseCommercialBuilding-1.png`.                            |
+| T11.6 | Tall-canvas regression tests      | *pending* | Draft  | Per-archetype bbox + pivot UV assertion.                                                                                                  |
+
 
 **Dependency gate:** Stages 6, 8 archived (needs pixel-native + window-grid). Stage 9 archived (for 2×2 tall mega).
 
@@ -814,19 +1744,21 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Palette JSON schema v2 + migration of existing `residential.json`.
-- [ ] Phase 2 — Bootstrap 5 additional class palettes from DAS §4.2.
-- [ ] Phase 3 — Silhouette outline pass + per-class policy.
+- Phase 1 — Palette JSON schema v2 + migration of existing `residential.json`.
+- Phase 2 — Bootstrap 5 additional class palettes from DAS §4.2.
+- Phase 3 — Silhouette outline pass + per-class policy.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T12.1 | Palette schema v2 | _pending_ | Draft | Migrate `residential.json` to `{materials, ground, decorations}`; `load_palette` reads v2 schema, falls back to v1 flat for back-compat. |
-| T12.2 | Bootstrap class palettes | _pending_ | Draft | Create `commercial.json`, `industrial.json`, `power.json`, `water.json`, `environmental.json` using values from DAS §4.2. |
-| T12.3 | Silhouette outline primitive | _pending_ | Draft | `src/outline.py` — scan alpha channel, draw 1-px black on exterior edges of building-only mask (exclude ground + decorations). Applied last, before composition to canvas. |
-| T12.4 | Per-class outline policy | _pending_ | Draft | `OUTLINE_SILHOUETTE` constant; composer honors. |
-| T12.5 | Palette + outline tests | _pending_ | Draft | `tests/test_palette_v2.py` + `tests/test_outline.py`. |
+
+| Task  | Name                         | Issue     | Status | Intent                                                                                                                                                                     |
+| ----- | ---------------------------- | --------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T12.1 | Palette schema v2            | *pending* | Draft  | Migrate `residential.json` to `{materials, ground, decorations}`; `load_palette` reads v2 schema, falls back to v1 flat for back-compat.                                   |
+| T12.2 | Bootstrap class palettes     | *pending* | Draft  | Create `commercial.json`, `industrial.json`, `power.json`, `water.json`, `environmental.json` using values from DAS §4.2.                                                  |
+| T12.3 | Silhouette outline primitive | *pending* | Draft  | `src/outline.py` — scan alpha channel, draw 1-px black on exterior edges of building-only mask (exclude ground + decorations). Applied last, before composition to canvas. |
+| T12.4 | Per-class outline policy     | *pending* | Draft  | `OUTLINE_SILHOUETTE` constant; composer honors.                                                                                                                            |
+| T12.5 | Palette + outline tests      | *pending* | Draft  | `tests/test_palette_v2.py` + `tests/test_outline.py`.                                                                                                                      |
+
 
 **Dependency gate:** Stage 6 archived.
 
@@ -848,19 +1780,21 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `iso_slope_wedge` primitive + `slopes.yaml` water extension.
-- [ ] Phase 2 — Composer default swap.
-- [ ] Phase 3 — 34-variant regression matrix.
+- Phase 1 — `iso_slope_wedge` primitive + `slopes.yaml` water extension.
+- Phase 2 — Composer default swap.
+- Phase 3 — 34-variant regression matrix.
 
 **Tasks:**
 
-| Task | Name | Issue | Status | Intent |
-| --- | --- | --- | --- | --- |
-| T13.1 | `iso_slope_wedge` primitive | _pending_ | Draft | Renders tilted grass top + 2-tone brown side faces; handles all 17 land slope codes. Palette key `earth_brown` (2-tone, no bright). |
-| T13.2 | `slopes.yaml` water extension | _pending_ | Draft | Add 17 `*-water` variants; each carries `water_strip_edges` metadata telling the primitive where to paint the water strip. |
-| T13.3 | Water-strip rendering | _pending_ | Draft | `iso_slope_wedge` reads `water_strip_edges`, paints water_deep bright color on the low edge. |
-| T13.4 | Composer default swap | _pending_ | Draft | `compose.py`: when `terrain != 'flat'`, use `iso_slope_wedge` by default; legacy `iso_stepped_foundation` accessible via `spec.foundation_primitive`. |
-| T13.5 | 34-variant regression test | _pending_ | Draft | `tests/test_slopes_matrix.py` — parametrized test across 34 slope codes; render + bbox + dominant color vs hand-drawn reference. |
+
+| Task  | Name                          | Issue     | Status | Intent                                                                                                                                                |
+| ----- | ----------------------------- | --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T13.1 | `iso_slope_wedge` primitive   | *pending* | Draft  | Renders tilted grass top + 2-tone brown side faces; handles all 17 land slope codes. Palette key `earth_brown` (2-tone, no bright).                   |
+| T13.2 | `slopes.yaml` water extension | *pending* | Draft  | Add 17 `*-water` variants; each carries `water_strip_edges` metadata telling the primitive where to paint the water strip.                            |
+| T13.3 | Water-strip rendering         | *pending* | Draft  | `iso_slope_wedge` reads `water_strip_edges`, paints water_deep bright color on the low edge.                                                          |
+| T13.4 | Composer default swap         | *pending* | Draft  | `compose.py`: when `terrain != 'flat'`, use `iso_slope_wedge` by default; legacy `iso_stepped_foundation` accessible via `spec.foundation_primitive`. |
+| T13.5 | 34-variant regression test    | *pending* | Draft  | `tests/test_slopes_matrix.py` — parametrized test across 34 slope codes; render + bbox + dominant color vs hand-drawn reference.                      |
+
 
 **Dependency gate:** Stage 6 archived.
 
@@ -878,34 +1812,36 @@
 - Catalog populated on both `tools/sprite-gen/specs/` and `Assets/Sprites/Generated/` (after promote).
 - Initial list (no cap — more archetypes filed opportunistically):
 
-| # | Archetype | Footprint | Notes |
-|---|---|---|---|
-| A1  | `residential_small` | 1×1 | Stage 6 calibration target |
-| A2  | `residential_row_medium` | 2×2 | Stage 9 reference |
-| A3  | `residential_suburban` | 2×2 | Stage 9 reference |
-| A4  | `residential_heavy_tall` | 1×1 × 128 | Stage 11 reference |
-| A5  | `commercial_store` | 1×1 | Stage 6/7 extension |
-| A6  | `commercial_medium` | 1×1 | |
-| A7  | `commercial_light` | 2×2 | Stage 9 reference |
-| A8  | `commercial_dense_tall` | 1×1 × 128 | Stage 11 reference |
-| A9  | `commercial_dense_mega` | 2×2 × 256 | Stage 11 reference |
-| A10 | `industrial_light` | 1×1 | |
-| A11 | `industrial_medium` | 2×2 | |
-| A12 | `industrial_heavy` | 3×3 | Stage 10 reference |
-| A13 | `powerplant_nuclear` | 3×3 | Stage 10 reference (static, no animation) |
-| A14 | `waterplant` | 2×2 | |
-| A15 | `forest_fill` | 1×1 | Environmental |
-| A16 | `zoning_grass` | 1×1 | Empty-lot default |
-| A17 | `zoning_residential` / `zoning_commercial` / `zoning_industrial` | 1×1 × 3 | Empty-lot per-class |
+
+| #   | Archetype                                                        | Footprint | Notes                                     |
+| --- | ---------------------------------------------------------------- | --------- | ----------------------------------------- |
+| A1  | `residential_small`                                              | 1×1       | Stage 6 calibration target                |
+| A2  | `residential_row_medium`                                         | 2×2       | Stage 9 reference                         |
+| A3  | `residential_suburban`                                           | 2×2       | Stage 9 reference                         |
+| A4  | `residential_heavy_tall`                                         | 1×1 × 128 | Stage 11 reference                        |
+| A5  | `commercial_store`                                               | 1×1       | Stage 6/7 extension                       |
+| A6  | `commercial_medium`                                              | 1×1       |                                           |
+| A7  | `commercial_light`                                               | 2×2       | Stage 9 reference                         |
+| A8  | `commercial_dense_tall`                                          | 1×1 × 128 | Stage 11 reference                        |
+| A9  | `commercial_dense_mega`                                          | 2×2 × 256 | Stage 11 reference                        |
+| A10 | `industrial_light`                                               | 1×1       |                                           |
+| A11 | `industrial_medium`                                              | 2×2       |                                           |
+| A12 | `industrial_heavy`                                               | 3×3       | Stage 10 reference                        |
+| A13 | `powerplant_nuclear`                                             | 3×3       | Stage 10 reference (static, no animation) |
+| A14 | `waterplant`                                                     | 2×2       |                                           |
+| A15 | `forest_fill`                                                    | 1×1       | Environmental                             |
+| A16 | `zoning_grass`                                                   | 1×1       | Empty-lot default                         |
+| A17 | `zoning_residential` / `zoning_commercial` / `zoning_industrial` | 1×1 × 3   | Empty-lot per-class                       |
+
 
 **Phases:**
 
-- [ ] Phase 1 — Slope-matrix CLI infrastructure (if not already in Stage 13: batch `--terrain` expansion + filename convention `<archetype>_<slope_code>.png`).
-- [ ] Phase 2 — Residential archetypes (A1–A4).
-- [ ] Phase 3 — Commercial archetypes (A5–A9).
-- [ ] Phase 4 — Industrial + power + water archetypes (A10–A14).
-- [ ] Phase 5 — Environmental + zoning archetypes (A15–A17).
-- [ ] Phase 6 — Opportunistic additions (no cap).
+- Phase 1 — Slope-matrix CLI infrastructure (if not already in Stage 13: batch `--terrain` expansion + filename convention `<archetype>_<slope_code>.png`).
+- Phase 2 — Residential archetypes (A1–A4).
+- Phase 3 — Commercial archetypes (A5–A9).
+- Phase 4 — Industrial + power + water archetypes (A10–A14).
+- Phase 5 — Environmental + zoning archetypes (A15–A17).
+- Phase 6 — Opportunistic additions (no cap).
 
 **Tasks:** Filed per archetype — task format `T14.<An>.flat` (flat archetype spec) + `T14.<An>.matrix` (34-variant regression test). Full task list filed when each archetype is picked up.
 
@@ -922,3 +1858,4 @@
 Not detailed here; a new exploration doc will scope animation support once Stages 6–14 close.
 
 ---
+

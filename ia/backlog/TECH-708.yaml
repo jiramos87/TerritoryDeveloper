@@ -1,0 +1,24 @@
+id: TECH-708
+type: TECH
+title: DAS §2.6 pointer — signatures are canonical calibration source
+priority: medium
+status: open
+section: Stage 6.2 — Art Signatures per class
+spec: ia/projects/TECH-708.md
+files:
+  - docs/sprite-gen-art-design-system.md
+notes: |
+  Add DAS §2.6 section: "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Forward-pointer only; no re-documentation of the JSON shape (authoritative spec lives in signature module docstring).
+acceptance: |
+  - [ ] DAS §2.6 new section authored
+  - [ ] Pointer cites `tools/sprite-gen/signatures/` + `src/signature.py`
+  - [ ] Doc-only change; no test impact
+depends_on:
+  - TECH-704
+depends_on_raw: TECH-704 — signature module exists before doc points to it
+related: []
+created: 2026-04-23
+raw_markdown: |
+  TECH-708 — DAS §2.6 pointer — signatures are canonical calibration source
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.2.5

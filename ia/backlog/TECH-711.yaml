@@ -1,0 +1,28 @@
+id: TECH-711
+type: TECH
+title: Composer resolve_building_box helper + variant loop sampling
+priority: high
+status: open
+section: Stage 6.3 — Placement + variant randomness + split seeds
+spec: ia/projects/TECH-711.md
+files:
+  - tools/sprite-gen/src/compose.py
+notes: |
+  `tools/sprite-gen/src/compose.py` — new pure helper `resolve_building_box(spec) -> (bx, by, offset_x, offset_y)` encapsulating footprint_px / ratio / align / padding math. Variant loop samples each `vary:` range deterministically from `geometry_seed + i` for geometry axes and `palette_seed + i` for palette. Centering falls out of SE-corner anchor math; no geometry change when `align: center` and padding zero.
+acceptance: |
+  - [ ] `resolve_building_box(spec)` returns `(bx, by, offset_x, offset_y)` tuple
+  - [ ] All placement combos covered (footprint_px / ratio / padding / align)
+  - [ ] Variant loop uses `geometry_seed + i` for geometry, `palette_seed + i` for palette
+  - [ ] Legacy specs render byte-identical (no diff)
+  - [ ] Unit tests cover pure helper
+depends_on:
+  - TECH-709
+  - TECH-710
+depends_on_raw: TECH-709 + TECH-710 — schema must land first
+related:
+  - TECH-713
+created: 2026-04-23
+raw_markdown: |
+  TECH-711 — Composer resolve_building_box helper + variant loop sampling
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T6.3.3
