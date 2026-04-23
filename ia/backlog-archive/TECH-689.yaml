@@ -2,7 +2,8 @@ id: TECH-689
 type: tech
 title: "Reason codes + result struct"
 priority: high
-status: open
+status: closed
+completed: 2026-04-23
 section: Stage 3.1 — PlacementValidator core API
 spec: ia/projects/TECH-689.md
 files: []

@@ -324,7 +324,7 @@ Backend CRUD endpoints  ── raw SQL escape hatch (agent-callable)
 
 ### 8.3 Subsystem impact
 
-<!-- TECH-688: PlacementValidator implementation — ia/projects/TECH-688.md §7 -->
+<!-- TECH-688: PlacementValidator implementation — archived in ia/backlog-archive/TECH-688.yaml (Stage 3.1 closed) -->
 
 | Subsystem | Change |
 |-----------|--------|

@@ -2,7 +2,8 @@ id: TECH-692
 type: tech
 title: "Unlock gate stub"
 priority: medium
-status: open
+status: closed
+completed: 2026-04-23
 section: Stage 3.1 — PlacementValidator core API
 spec: ia/projects/TECH-692.md
 files: []

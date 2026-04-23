@@ -2,7 +2,8 @@ id: TECH-690
 type: tech
 title: "Zoning channel match MVP"
 priority: high
-status: open
+status: closed
+completed: 2026-04-23
 section: Stage 3.1 — PlacementValidator core API
 spec: ia/projects/TECH-690.md
 files: []

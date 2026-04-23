@@ -1,6 +1,6 @@
 # Grid asset visual registry — Master Plan (Bucket 12 MVP spine)
 
-> **Status:** In Progress — Step 3 / Stage 3.1
+> **Status:** In Progress — Step 3 / Stage 3.2 next (Stage 3.1 closed)
 >
 > **Scope:** Postgres-backed **grid asset catalog** (identity, sprites, economy, spawn pools) as source of truth; **HTTP + MCP** for agents; **Unity boot snapshot** consumed by **`GridAssetCatalog`** (no new singleton — Inspector + `FindObjectOfType` per `unity-invariants` #4); **Zone S** first consumer via **`ZoneSubTypeRegistry`** convergence; **`PlacementValidator`** owns place-here legality; **`wire_asset_from_catalog`** bridge kind for design-system-safe Control Panel wiring; export + import hygiene + IA scene contract. **Out:** sprite-gen composition logic (Bucket 5), deep sim rules beyond catalog reads, `web/` dashboard product UI (Bucket 9 transport only — this plan adds `/api/catalog/*` on the existing Next app). Post-MVP extensions → recommend `docs/grid-asset-visual-registry-post-mvp-extensions.md` (not authored by this workflow).
 >
@@ -1060,9 +1060,9 @@ mechanicalization_score:
 
 ### Step 3 — Placement validator + save semantics + sprite GC
 
-**Status:** In Progress (Stage 3.1 filed; Stages 3.2–3.3 still _pending_)
+**Status:** In Progress (Stage 3.1 done; Stages 3.2–3.3 still _pending_)
 
-**Backlog state (Step 3):** Stage 3.1 filed (**TECH-688**..**TECH-692**); Stages 3.2–3.3 still _pending_
+**Backlog state (Step 3):** Stage 3.1 done (**TECH-688**..**TECH-692** archived); Stages 3.2–3.3 still _pending_
 
 **Objectives:** Introduce **`PlacementValidator`** (new type) as **single owner** of **`CanPlace(assetId, cell, rotation)`** with structured reason codes for UX + ghosts. Extend **save DTO** to store **`asset_id`** and implement **`replaced_by`** remap on load. Add **sprite GC** janitor endpoint or SQL job per exploration §8.4 point 11.
 
@@ -1085,7 +1085,7 @@ mechanicalization_score:
 
 #### Stage 3.1 — `PlacementValidator` core API
 
-**Status:** In Progress — 5 tasks filed (**TECH-688**..**TECH-692**, all Draft)
+**Status:** Done — 5 tasks closed (**TECH-688**..**TECH-692**, all archived)
 
 **Objectives:** Deterministic **legality** answers: footprint placeholder (1×1 MVP), zoning channel match, unlock stub, affordability hook via **`EconomyManager`** / treasury services.
 
@@ -1103,11 +1103,11 @@ mechanicalization_score:
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T3.1.1 | Author PlacementValidator type | 1 | **TECH-688** | Draft | New class file; serialized refs to **`GridManager`**, **`GridAssetCatalog`**, **`EconomyManager`** per guardrails. |
-| T3.1.2 | Reason codes + result struct | 1 | **TECH-689** | Draft | Structured enum covers footprint, zoning, locked, unaffordable, occupied; XML docs on public API. |
-| T3.1.3 | Zoning channel match MVP | 1 | **TECH-690** | Draft | Zone S manual placement path consults validator before commit; keep **`GridManager`** extraction — no new `GridManager` methods unless unavoidable (justify in §Findings). |
-| T3.1.4 | Affordability gate | 2 | **TECH-691** | Draft | Query **`baseCost`** cents from catalog economy snapshot; delegate to existing spend/try APIs. |
-| T3.1.5 | Unlock gate stub | 2 | **TECH-692** | Draft | Read **`unlocks_after`** string; integrate with existing tech stub or return **Allowed** if not implemented — document. |
+| T3.1.1 | Author PlacementValidator type | 1 | **TECH-688** | Done (archived) | New class file; serialized refs to **`GridManager`**, **`GridAssetCatalog`**, **`EconomyManager`** per guardrails. |
+| T3.1.2 | Reason codes + result struct | 1 | **TECH-689** | Done (archived) | Structured enum covers footprint, zoning, locked, unaffordable, occupied; XML docs on public API. |
+| T3.1.3 | Zoning channel match MVP | 1 | **TECH-690** | Done (archived) | Zone S manual placement path consults validator before commit; keep **`GridManager`** extraction — no new `GridManager` methods unless unavoidable (justify in §Findings). |
+| T3.1.4 | Affordability gate | 2 | **TECH-691** | Done (archived) | Query **`baseCost`** cents from catalog economy snapshot; delegate to existing spend/try APIs. |
+| T3.1.5 | Unlock gate stub | 2 | **TECH-692** | Done (archived) | Read **`unlocks_after`** string; integrate with existing tech stub or return **Allowed** if not implemented — document. |
 
 ### §Stage File Plan
 

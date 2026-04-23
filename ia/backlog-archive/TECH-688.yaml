@@ -2,7 +2,8 @@ id: TECH-688
 type: tech
 title: "Author PlacementValidator type"
 priority: high
-status: open
+status: closed
+completed: 2026-04-23
 section: Stage 3.1 — PlacementValidator core API
 spec: ia/projects/TECH-688.md
 files: []

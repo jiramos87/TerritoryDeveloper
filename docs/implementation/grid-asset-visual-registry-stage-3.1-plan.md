@@ -47,7 +47,7 @@ Orchestrator: `ia/projects/grid-asset-visual-registry-master-plan.md`.
 ```
 ### 8.3 Subsystem impact
 
-<!-- TECH-688: PlacementValidator implementation — ia/projects/TECH-688.md §7 -->
+<!-- TECH-688: PlacementValidator implementation — ia/backlog-archive/TECH-688.yaml -->
 ```
 
 **Gate:**
@@ -296,7 +296,7 @@ npm run unity:compile-check
 
 **Edits:**
 
-- `ia/projects/TECH-691.md` — **before:** `|  |  |  |  |` — **after:** `| 2026-04-22 | Cost field | Use base_cost_cents from GridAssetCatalog economy row (see GridAssetCatalog.Dto.cs) |  |`
+- `ia/backlog-archive/TECH-691.yaml` — **before:** `|  |  |  |  |` — **after:** `| 2026-04-22 | Cost field | Use base_cost_cents from GridAssetCatalog economy row (see GridAssetCatalog.Dto.cs) |  |` (spec archived post-closeout).
 
 **Gate:**
 
@@ -363,7 +363,7 @@ npm run unity:compile-check
 
 **Edits:**
 
-- `ia/projects/TECH-692.md` — **before:** `### Phase 1 — Unlock stub` — **after:** `### Phase 1 — Unlock stub\n\n<!-- TECH-692: consult catalog row unlocks_after inside PlacementValidator.CanPlace per §7 -->`
+- `ia/backlog-archive/TECH-692.yaml` — **before:** `### Phase 1 — Unlock stub` — **after:** `### Phase 1 — Unlock stub\n\n<!-- TECH-692: consult catalog row unlocks_after inside PlacementValidator.CanPlace per §7 -->` (spec archived post-closeout).
 
 **Gate:**
 
