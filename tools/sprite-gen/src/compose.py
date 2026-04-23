@@ -70,6 +70,32 @@ class UnknownPrimitiveError(ValueError):
     """Raised when a composition entry `type:` is not in the dispatch dict."""
 
 
+# ---------------------------------------------------------------------------
+# TECH-738 — per-primitive `animate:` reservation guard (Stage 6.7)
+# ---------------------------------------------------------------------------
+
+
+def _check_animate(entry: dict) -> dict:
+    """Strip + validate the per-primitive ``animate:`` reservation key.
+
+    Rules (Stage 6.7 / TECH-738):
+        - Key absent or ``animate: none`` → return *entry* copy without
+          ``animate`` so the downstream primitive never sees the kwarg.
+        - Any other value → ``NotImplementedError("Animation deferred; see
+          DAS §12")`` with the offending value quoted for debugging.
+
+    Centralised here so every primitive dispatch site inherits the guard
+    without duplication; also keeps primitives ignorant of animation.
+    """
+    animate = entry.get("animate", None)
+    if animate is None or animate == "none":
+        return {k: v for k, v in entry.items() if k != "animate"}
+    raise NotImplementedError(
+        f"Animation deferred; see DAS §12 "
+        f"(unsupported animate value: {animate!r})"
+    )
+
+
 def _expand_level_entries(composition: list, spec: dict) -> list:
     """Stage 6 — repeat role=wall by ``spec.levels``; roof above_walls offset."""
     cls = str(spec.get("class", ""))
@@ -382,6 +408,10 @@ def compose_sprite(spec: dict) -> Image.Image:
 
     # --- Iterate composition in order (later entries on top) ---
     for entry in composition:
+        # TECH-738 — centralised `animate:` guard; strips the key or raises
+        # NotImplementedError for any non-`none` value. Every primitive
+        # dispatch site below inherits the guard via `entry` reassignment.
+        entry = _check_animate(entry)
         prim_type = entry.get("type")
         fn = _DISPATCH.get(prim_type)  # type: ignore[arg-type]
         if fn is None:
