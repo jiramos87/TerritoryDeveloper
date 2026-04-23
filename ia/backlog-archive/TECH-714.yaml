@@ -2,7 +2,7 @@ id: TECH-714
 type: TECH
 title: DAS R11 addendum — placement + split seeds + vary grammar
 priority: medium
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-714.md
 files:

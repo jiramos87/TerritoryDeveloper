@@ -2,7 +2,7 @@ id: TECH-710
 type: TECH
 title: variants block + split seeds loader normalization
 priority: high
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-710.md
 files:

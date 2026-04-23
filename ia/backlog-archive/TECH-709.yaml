@@ -2,7 +2,7 @@ id: TECH-709
 type: TECH
 title: Placement schema — building.footprint_px / padding / align
 priority: high
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-709.md
 files:

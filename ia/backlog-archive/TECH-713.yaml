@@ -2,7 +2,7 @@ id: TECH-713
 type: TECH
 title: Tests — placement + variants + split seeds
 priority: high
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-713.md
 files:

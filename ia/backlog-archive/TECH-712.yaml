@@ -2,7 +2,7 @@ id: TECH-712
 type: TECH
 title: CLI bootstrap-variants --from-signature
 priority: medium
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-712.md
 files:

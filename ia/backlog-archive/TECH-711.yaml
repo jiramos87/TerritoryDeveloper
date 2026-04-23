@@ -2,7 +2,7 @@ id: TECH-711
 type: TECH
 title: Composer resolve_building_box helper + variant loop sampling
 priority: high
-status: open
+status: closed
 section: Stage 6.3 — Placement + variant randomness + split seeds
 spec: ia/projects/TECH-711.md
 files:

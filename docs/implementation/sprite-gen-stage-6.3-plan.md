@@ -4,7 +4,7 @@ Compiled 2026-04-23 from 6 task spec(s): **TECH-709** .. **TECH-714**.
 
 **Master plan:** `ia/projects/sprite-gen-master-plan.md` — Stage 6.3 — Placement + variant randomness + split seeds.
 
-**Status:** Draft. Specs: `ia/projects/TECH-709.md` .. `ia/projects/TECH-714.md`; yaml: `ia/backlog/TECH-709.yaml` .. `ia/backlog/TECH-714.yaml`.
+**Status:** Done (2026-04-23). Specs deleted after closeout; issues archived under `ia/backlog-archive/TECH-709.yaml` .. `ia/backlog-archive/TECH-714.yaml`. Historical detail via `BACKLOG-ARCHIVE.md`.
 
 ---
 
