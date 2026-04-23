@@ -1,0 +1,28 @@
+id: building_residential_light_b
+class: residential_small
+footprint: [1, 1]
+terrain: flat
+ground: grass_flat
+levels: 1
+seed: 202
+palette: residential
+building:
+  footprint_ratio: [0.50, 0.50]
+  composition:
+    - { type: iso_cube, role: wall, material: wall_brick_grey, w: 1, d: 1, h_px: 14 }
+    - {
+        type: iso_prism,
+        role: roof,
+        material: roof_tile_brown,
+        w: 1,
+        d: 1,
+        h_px: 8,
+        pitch: 0.5,
+        axis: ew,
+        offset_z_role: above_walls,
+      }
+output:
+  name: building_residential_light_b
+  variants: 4
+diffusion:
+  enabled: false
