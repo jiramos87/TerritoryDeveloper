@@ -23,6 +23,7 @@ phases:
   - "Resolve anchors"
   - "Write §Stage Closeout Plan tuples"
   - "Hand-off"
+  - "emit_preflight_header"
 ---
 
 # Stage-closeout-plan skill (Opus pair-head, seam #4)

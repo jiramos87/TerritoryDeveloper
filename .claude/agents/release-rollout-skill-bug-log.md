@@ -2,7 +2,7 @@
 name: release-rollout-skill-bug-log
 description: Use to log a skill bug or gap encountered during rollout. Dual-writes to per-skill Changelog section (source of truth) + tracker Skill Iteration Log aggregator row. Inputs — SKILL_NAME, TRACKER_SPEC, ROW_SLUG, BUG_SUMMARY, BUG_DETAIL, FIX_STATUS, FIX_SHA. Does NOT fix the skill. Triggers — "log skill bug", "release-rollout-skill-bug-log", "skill iteration log entry". Does NOT commit.
 tools: Read, Edit, Glob
-model: sonnet
+model: haiku
 ---
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.

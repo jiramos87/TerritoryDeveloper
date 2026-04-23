@@ -2,7 +2,7 @@
 name: release-rollout-track
 description: Use to flip one cell in a rollout tracker doc after a downstream subagent returns success. Inputs — TRACKER_SPEC path, ROW_SLUG, TARGET_COL, NEW_MARKER, TICKET, CHANGELOG_NOTE. Validates row + column + marker, runs column-(g) align verify via term-anchor-verify subskill when relevant, flips cell in place (idempotent), appends Change log row. Triggers — "track cell flip", "update tracker after stage-file", "release-rollout-track {row-slug} {col} {ticket}". Does NOT commit. Does NOT touch other rows.
 tools: Read, Edit, Glob, Grep, mcp__territory-ia__glossary_lookup, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_section
-model: sonnet
+model: haiku
 ---
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.

@@ -23,6 +23,7 @@ phases:
   - "Mechanize per-Task §Plan Digest"
   - "Compile aggregate stage doc"
   - "Self-lint via plan_digest_lint"
+  - "emit_preflight_header"
   - "Hand-off"
 ---
 
@@ -55,7 +56,17 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 For each Task:
 
-1. Translate §Plan Author narrative into a sequential checklist of **Edit** tuples, each with `(operation, target_path, before_string, after_string)`. Use `plan_digest_verify_paths` to confirm every target exists; use `plan_digest_resolve_anchor` to confirm every `before_string` is unique.
+1. Translate §Plan Author narrative into a sequential checklist of **Edit** tuples, each with `(operation, target_path, before_string, after_string, invariant_touchpoints, validator_gate)`. Use `plan_digest_verify_paths` to confirm every target exists; use `plan_digest_resolve_anchor` to confirm every `before_string` is unique.
+
+   Required tuple fields:
+   ```yaml
+   invariant_touchpoints:
+     - id: string
+       gate: string   # MCP call or grep pattern
+       expected: "pass" | "unchanged" | "none"
+   validator_gate: string   # npm run validate:all | npm run unity:compile-check | ...
+   ```
+   If step has no runtime impact, `invariant_touchpoints: none (utility)` replaces the array.
 2. Render exact literals for code blocks via `plan_digest_render_literal` when the digest must quote a file literally.
 3. For each step, ask `plan_digest_gate_author_helper({operation, file, before, after})` for the canonical gate command + expectation; embed verbatim.
 4. Author STOP clause per step (what edit to re-open, or which upstream surface to escalate to).
@@ -83,7 +94,19 @@ For each per-Task §Plan Digest slice AND the aggregate stage doc:
 
 Retry cap = 1.
 
-## Phase 5 — Hand-off
+## Phase 5 — emit_preflight_header
+
+Run `mechanicalization-preflight` skill over the aggregate §Plan Digest output:
+
+1. Call `mcp__territory-ia__mechanicalization_preflight_lint({artifact_path, artifact_kind: "plan_digest"})`.
+2. `pass: true` → prepend `mechanicalization_score` YAML header before the tuple list per `ia/rules/mechanicalization-contract.md`.
+3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]`; do NOT emit artifact.
+
+Extended `plan_digest_lint` rules:
+- Every step touching `Assets/**/*.cs` or runtime files MUST carry non-empty `invariant_touchpoints[]` OR opt-out marker `invariant_touchpoints: none (utility)`. Missing → lint rule 10 failure.
+- Every step MUST carry `validator_gate`. Missing → lint rule 11 failure.
+
+## Phase 6 — Hand-off
 
 Emit caveman summary: N specs digested; aggregate doc path; lint pass status. Next: `/plan-review {MASTER_PLAN_PATH} {STAGE_ID}` (multi-task) OR `claude-personal "/ship {ISSUE_ID}"` (N=1 — same digest gate as `ship` Step 1.5; `/ship` includes implement. Skip standalone `/implement` unless explicitly desired.)
 

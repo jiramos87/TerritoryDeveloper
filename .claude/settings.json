@@ -81,6 +81,23 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/filter-validate-all.sh"
+          },
+          {
+            "type": "command",
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/filter-unity-compile.sh"
+          },
+          {
+            "type": "command",
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/filter-git-log.sh"
+          }
+        ]
+      },
+      {
         "matcher": "*",
         "hooks": [
           {

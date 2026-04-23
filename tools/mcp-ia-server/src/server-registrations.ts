@@ -47,6 +47,10 @@ import { registerPlanDigestResolveAnchor } from "./tools/plan-digest-resolve-anc
 import { registerPlanDigestRenderLiteral } from "./tools/plan-digest-render-literal.js";
 import { registerPlanDigestScanForPicks } from "./tools/plan-digest-scan-for-picks.js";
 import { registerPlanDigestLint } from "./tools/plan-digest-lint.js";
+import { registerMechanicalizationPreflightLint } from "./tools/mechanicalization-preflight-lint.js";
+import { registerVerifyClassify } from "./tools/verify-classify.js";
+import { registerIssueContextBundle } from "./tools/issue-context-bundle.js";
+import { registerLifecycleStageContext } from "./tools/lifecycle-stage-context.js";
 import { registerPlanDigestGateAuthorHelper } from "./tools/plan-digest-gate-author-helper.js";
 import { registerPlanDigestCompileStageDoc } from "./tools/plan-digest-compile-stage-doc.js";
 import { registerCatalogList } from "./tools/catalog-list.js";
@@ -119,6 +123,10 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerPlanDigestRenderLiteral(server);
   registerPlanDigestScanForPicks(server);
   registerPlanDigestLint(server);
+  registerMechanicalizationPreflightLint(server);
+  registerVerifyClassify(server);
+  registerIssueContextBundle(server, registry);
+  registerLifecycleStageContext(server, registry);
   registerPlanDigestGateAuthorHelper(server);
   registerPlanDigestCompileStageDoc(server);
   registerCatalogList(server);

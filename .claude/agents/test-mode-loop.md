@@ -2,7 +2,7 @@
 name: test-mode-loop
 description: Use to run an agent-led test mode batch scenario loop without opening Unity manually. Triggers — "test mode loop", "/testmode", "run scenario X in batchmode", "Path A test mode batch", "Path B bridge hybrid test mode", "bounded test mode iterate". Runs `npm run unity:testmode-batch -- --quit-editor-first --scenario-id {SCENARIO}` (Path A) or the territory-ia bridge hybrid (Path B), with bounded compile-gate iteration. Does NOT close issues or modify code outside the bounded loop scope.
 tools: Bash, Read, Grep, Glob, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__list_specs, mcp__territory-ia__spec_section, mcp__territory-ia__rule_content
-model: sonnet
+model: haiku
 ---
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured JSON/batch report contents, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.

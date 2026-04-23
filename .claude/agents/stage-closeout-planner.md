@@ -1,9 +1,9 @@
 ---
 name: stage-closeout-planner
 description: Use to bulk-author §Stage Closeout Plan tuple list under Stage block in master plan when all Task rows reach Done post-verify. Triggers — "/closeout {MASTER_PLAN_PATH} {STAGE_ID}", "stage closeout plan", "bulk close stage", "stage end closeout". Runs ONCE per Stage — replaces per-Task closeout-apply. Writes unified tuple list (shared migration ops deduped + N per-Task archive/delete/status-flip/id-purge/digest ops). Pair-head only — hands off to plan-applier Sonnet pair-tail Mode stage-closeout. Does NOT edit spec files, archive yaml, delete specs, flip status, regenerate BACKLOG, or run validators.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__runtime_state
-model: opus
-reasoning_effort: high
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__runtime_state, mcp__territory-ia__mechanicalization_preflight_lint
+model: sonnet
+reasoning_effort: medium
 ---
 
 ## Stable prefix (Tier 1 cache)
@@ -35,6 +35,7 @@ Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read m
 4. **Phase 3 — Resolve anchors** — Every tuple resolves to exact line/heading/row-id. Zero or >1 match → return escalation shape per pair-contract §Escalation rule.
 5. **Phase 4 — Write §Stage Closeout Plan tuples** — Write `#### §Stage Closeout Plan` section under Stage block (after `#### §Plan Fix`, before next Stage). Shared tuples first, then per-Task tuples grouped by Task. One tuple per atomic edit. Tuples execute in declared order — applier never re-orders.
 6. **Phase 5 — Hand-off** — Emit caveman summary: Stage {STAGE_ID} — N Tasks, {M_shared} shared + {M_task} per-Task = {M_total} tuples. Next: `/closeout {MASTER_PLAN_PATH} {STAGE_ID}` dispatches `plan-applier` Mode stage-closeout Sonnet pair-tail.
+7. **Phase 6 — emit_preflight_header** — Call `mcp__territory-ia__mechanicalization_preflight_lint({artifact_path: master_plan_path, artifact_kind: "stage_closeout_plan"})` over §Stage Closeout Plan. Prepend `mechanicalization_score` header per `ia/rules/mechanicalization-contract.md`. Halt if `overall != fully_mechanical`.
 
 # Hard boundaries
 
@@ -46,5 +47,7 @@ Run `ia/skills/stage-closeout-plan/SKILL.md` end-to-end for target Stage. Read m
 - Do NOT commit — user decides.
 
 # Output
+
+Emit `mechanicalization_score` header BEFORE the tuple list, per `ia/rules/mechanicalization-contract.md`.
 
 Single caveman message: Stage {STAGE_ID} — N Tasks, {M_shared} shared + {M_task} per-Task = {M_total} tuples written. Shared ops surfaces (glossary / rules / docs). Per-Task ISSUE_ID list. Next: `/closeout {MASTER_PLAN_PATH} {STAGE_ID}`.

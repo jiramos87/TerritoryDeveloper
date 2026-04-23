@@ -21,6 +21,7 @@ phases:
   - "Batch Depends-on verification"
   - "Emit §Stage File Plan tuples"
   - "Anchor resolution + handoff"
+  - "emit_preflight_header"
 ---
 
 # Stage-file-plan skill (Opus pair-head)

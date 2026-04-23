@@ -1,7 +1,7 @@
 ---
 name: plan-digest
 description: Use to mechanize §Plan Author into §Plan Digest across ALL N Task specs of one Stage in a single Opus pass + compile aggregate doc at docs/implementation/. Triggers — "/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}", "digest stage plan", "compile stage implementation doc". Runs AFTER plan-author, BEFORE plan-reviewer. §Plan Author is ephemeral; §Plan Digest survives in the final spec (Q5). Self-lints via plan_digest_lint (cap=1 retry).
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__plan_digest_resolve_anchor, mcp__territory-ia__plan_digest_render_literal, mcp__territory-ia__plan_digest_scan_for_picks, mcp__territory-ia__plan_digest_lint, mcp__territory-ia__plan_digest_gate_author_helper, mcp__territory-ia__plan_digest_compile_stage_doc, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__master_plan_locate
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__plan_digest_resolve_anchor, mcp__territory-ia__plan_digest_render_literal, mcp__territory-ia__plan_digest_scan_for_picks, mcp__territory-ia__plan_digest_lint, mcp__territory-ia__plan_digest_gate_author_helper, mcp__territory-ia__plan_digest_compile_stage_doc, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__master_plan_locate, mcp__territory-ia__invariant_preflight, mcp__territory-ia__mechanicalization_preflight_lint
 model: opus
 reasoning_effort: high
 ---
@@ -12,7 +12,7 @@ Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — one stderr l
 
 # Mission
 
-Run `ia/skills/plan-digest/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Read all N §Plan Author sections; write per-Task §Plan Digest (rich format: mechanical edits + gates + STOP + acceptance + test blueprint + implementer MCP-tool hints); drop §Plan Author from each spec in the same write pass; compile aggregate at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md`; self-lint via `plan_digest_lint` (cap=1 retry).
+Run `ia/skills/plan-digest/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Each mechanical step MUST carry `invariant_touchpoints[]` + `validator_gate`; output MUST emit `mechanicalization_score` header. Read all N §Plan Author sections; write per-Task §Plan Digest (rich format: mechanical edits + gates + STOP + acceptance + test blueprint + implementer MCP-tool hints); drop §Plan Author from each spec in the same write pass; compile aggregate at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md`; self-lint via `plan_digest_lint` (cap=1 retry).
 
 # Hard boundaries
 

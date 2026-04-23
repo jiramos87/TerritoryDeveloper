@@ -18,6 +18,7 @@ phases:
   - "Load diff + context"
   - "Verdict branch"
   - "Write §Code Fix Plan (critical only)"
+  - "emit_preflight_header_if_code_fix_plan"
   - "Hand-off"
 ---
 
@@ -196,6 +197,18 @@ Include `§Code Review` mini-report as separate write (same pass):
 
     §Code Fix Plan written. Spawning plan-applier Mode code-fix.
 ```
+
+---
+
+## Phase 3.5 — emit_preflight_header_if_code_fix_plan (critical branch only)
+
+Scoped to critical verdict path only. After §Code Fix Plan tuples are authored:
+
+1. Call `mcp__territory-ia__mechanicalization_preflight_lint({artifact_path: issue_spec_path, artifact_kind: "code_fix_plan"})` over the emitted §Code Fix Plan.
+2. `pass: true` → prepend `mechanicalization_score` header before tuple list per `ia/rules/mechanicalization-contract.md`.
+3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]`. Do NOT hand off to pair-tail.
+
+PASS and minor branches: skip this phase entirely.
 
 ---
 

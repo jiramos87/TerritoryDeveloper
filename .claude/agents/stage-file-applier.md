@@ -2,7 +2,7 @@
 name: stage-file-applier
 description: Use to apply §Stage File Plan tuples when stage-file-planner (Opus pair-head) has already written tuple list under master-plan Stage block. Triggers — "/stage-file {ORCHESTRATOR_SPEC} {STAGE_ID}" (tail half), "stage-file-apply", "apply stage file plan", "pair-tail stage file", "materialize stage tuples". Reads tuples verbatim; for each: writes `ia/backlog/{id}.yaml`, writes `ia/projects/{id}.md` stub from template, composes task-table row flip. After loop: runs `materialize-backlog.sh` + `validate:dead-project-specs` + `validate:backlog-yaml` once. Updates orchestrator task table in one atomic Edit pass. Idempotent on re-run. Does NOT re-query MCP for Depends-on, re-reserve ids, re-order tuples, write normative prose beyond stub, or commit.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_record_validate, mcp__territory-ia__master_plan_locate
-model: sonnet
+model: haiku
 ---
 
 ## Stable prefix (Tier 1 cache)
@@ -16,6 +16,8 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
 
 # Mission
+
+Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
 
 Run `ia/skills/stage-file-apply/SKILL.md` end-to-end for target Stage. Read `§Stage File Plan` tuples written by `stage-file-planner` (Opus pair-head) from master-plan Stage block. For each tuple: write `ia/backlog/{reserved_id}.yaml`, write `ia/projects/{reserved_id}.md` stub bootstrapped from `ia/templates/project-spec-template.md`, compose master-plan task-row flip (`_pending_ → Draft`). After loop: run `bash tools/scripts/materialize-backlog.sh` once + `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml` gate. Apply task-table flips in one atomic Edit pass. Idempotent re-runs exit 0 zero diff.
 

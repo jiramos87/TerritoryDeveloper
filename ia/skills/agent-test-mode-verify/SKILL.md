@@ -49,11 +49,13 @@ None apply → **skip** loop, state why in handoff; rely on `validate:all` + nor
 
 ## Tool recipe (ordered)
 
+After each command capture the exit code then call `mcp__territory-ia__verify_classify({command, exit_code, stderr, stdout})`. If `failure_enum != NONE`, execute `suggested_recovery.action`; re-run the step once if `suggested_recovery.retry == true`.
+
 1. **Gate** — Apply table above; skip → document + stop.
-2. **`validate:all`** — When diff touches MCP/schemas/IA indexes/fixtures/specs.
-3. **Compile gate** — After C# changes: prefer `unity_bridge_command` `get_compilation_status`/`unity_compile` (Editor open, Path B); else `npm run unity:compile-check`. Never run compile-check while Editor holds projectPath lock. Full order: [`close-dev-loop`](../close-dev-loop/SKILL.md) § Compile gate.
+2. **`validate:all`** — When diff touches MCP/schemas/IA indexes/fixtures/specs. Capture exit code + call `verify_classify` → recovery → 1 retry.
+3. **Compile gate** — After C# changes: prefer `unity_bridge_command` `get_compilation_status`/`unity_compile` (Editor open, Path B); else `npm run unity:compile-check`. Capture exit code + call `verify_classify` → recovery → 1 retry. Never run compile-check while Editor holds projectPath lock. Full order: [`close-dev-loop`](../close-dev-loop/SKILL.md) § Compile gate.
 4. **Scenario** — Committed id (e.g. `reference-flat-32x32`) or agent-generated path with `--scenario-path`. Prefer `scenario_descriptor_v1` layout from [`BUILDER.md`](../../../tools/fixtures/scenarios/BUILDER.md).
-5. **Path A or B** (below). Both in one session → Path A first (`--quit-editor-first`), then `unity:ensure-editor` before Path B.
+5. **Path A or B** (below). Both in one session → Path A first (`--quit-editor-first`), then `unity:ensure-editor` before Path B. Capture exit code + call `verify_classify` → recovery → 1 retry.
 6. **Iterate** — On failure, fix + repeat from step 2 up to `{MAX_ITERATIONS}` (default 2).
 7. **Handoff** — Verdict, artifact paths, exit codes; request human normal-game QA.
 

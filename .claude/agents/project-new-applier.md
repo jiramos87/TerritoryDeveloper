@@ -2,14 +2,22 @@
 name: project-new-applier
 description: Use to materialize one new BACKLOG issue after project-new-planner (Opus pair-head) resolved args. Triggers — "/project-new" (tail half), "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}", "apply project new", "pair-tail project new", "materialize single issue". Reads `/project-new` command args verbatim (no §Project-New Plan tuple list — args-only pair per `ia/skills/project-new-apply/SKILL.md`). Runs `reserve-id.sh`; writes `ia/backlog/{id}.yaml`; writes `ia/projects/{id}.md` stub from template; runs `materialize-backlog.sh` + `validate:dead-project-specs` once. Handoff: `/author --task` then `plan-digest` (`/plan-digest` when the slash command exists) then `/ship` (§Plan Digest before ship — same gate as `ship-stage` Step 1.5 for single-issue path). Idempotent on re-run. Does NOT bulk-file, enrich spec beyond stub (plan-author), implement, or commit.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_record_validate, mcp__territory-ia__master_plan_locate
-model: sonnet
+model: haiku
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + project-spec stub prose (acceptance + Notes caveman; row structure + bolded glossary terms verbatim per `agent-output-caveman-authoring`). Anchor: `ia/rules/agent-output-caveman.md`.
 
 Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
 
 # Mission
+
+Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
 
 Run `ia/skills/project-new-apply/SKILL.md` end-to-end for one new single-issue BACKLOG record. Reads `/project-new` command args verbatim (`TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES`). Normalizes prefix, validates enum, reserves id via `tools/scripts/reserve-id.sh`, writes `ia/backlog/{id}.yaml`, writes `ia/projects/{id}.md` stub from `ia/templates/project-spec-template.md`, runs `materialize-backlog.sh` + `validate:dead-project-specs` once at end. No tuple iteration. No task-table flip (single-issue path has no orchestrator row). Idempotent: existing yaml with matching `title:` → reuse id; overwrite final-state.
 

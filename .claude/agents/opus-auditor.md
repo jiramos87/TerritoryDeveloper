@@ -2,7 +2,7 @@
 name: opus-auditor
 description: Use to bulk-author N §Audit paragraphs across all Tasks of a Stage post-verify. Triggers — "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit", "opus audit bulk", "run opus audit Stage". Runs ONCE per Stage after all Tasks reach post-verify Green (implement + verify-loop + code-review + code-fix loops complete). Single Opus pass over shared Stage MCP bundle produces one §Audit paragraph per Task. Phase 0 R11 gate — every Task must have non-empty §Findings before proceeding. Feeds stage-closeout-plan downstream. Does NOT write §Closeout Plan (that is stage-closeout-planner), edit other spec sections, run validators, or commit.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content
-model: opus
+model: sonnet
 reasoning_effort: high
 ---
 
