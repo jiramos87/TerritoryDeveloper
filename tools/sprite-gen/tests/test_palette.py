@@ -20,6 +20,7 @@ from palette import (
     apply_ramp,
     extract_palette,
     load_palette,
+    material_accents,
     write_palette_json,
 )
 
@@ -273,6 +274,74 @@ def test_extract_palette_ramp_math_mid_v(tmp_path):
     assert entry["bright"] == expected["bright"], f"bright mismatch: {entry['bright']} != {expected['bright']}"
     assert entry["mid"] == expected["mid"], f"mid mismatch: {entry['mid']} != {expected['mid']}"
     assert entry["dark"] == expected["dark"], f"dark mismatch: {entry['dark']} != {expected['dark']}"
+
+
+# ---------------------------------------------------------------------------
+# TECH-716 — accent_dark / accent_light surfacing
+# ---------------------------------------------------------------------------
+
+
+def test_material_accents_absent_returns_none_pair():
+    """Material without accent keys → (None, None)."""
+    palette = {
+        "class": "t",
+        "materials": {"plain": {"bright": [1, 2, 3], "mid": [1, 2, 3], "dark": [1, 2, 3]}},
+    }
+    assert material_accents(palette, "plain") == (None, None)
+
+
+def test_material_accents_present_returns_tuples():
+    """Material with both accent keys → (dark_tuple, light_tuple)."""
+    palette = {
+        "class": "t",
+        "materials": {
+            "grass_flat": {
+                "bright": [1, 2, 3],
+                "mid": [1, 2, 3],
+                "dark": [1, 2, 3],
+                "accent_dark": [54, 96, 28],
+                "accent_light": [148, 198, 96],
+            }
+        },
+    }
+    dark, light = material_accents(palette, "grass_flat")
+    assert dark == (54, 96, 28)
+    assert light == (148, 198, 96)
+
+
+def test_material_accents_partial():
+    """Only one accent key set → other component is None."""
+    palette = {
+        "class": "t",
+        "materials": {"m": {"bright": [0, 0, 0], "mid": [0, 0, 0], "dark": [0, 0, 0],
+                            "accent_dark": [1, 2, 3]}},
+    }
+    dark, light = material_accents(palette, "m")
+    assert dark == (1, 2, 3)
+    assert light is None
+
+
+def test_material_accents_missing_material_raises():
+    with pytest.raises(PaletteKeyError):
+        material_accents({"class": "t", "materials": {}}, "nope")
+
+
+def test_residential_seeded_materials_have_accents():
+    """Active palette seeds `grass_flat` + `pavement` with both accent keys."""
+    repo_palettes = Path(__file__).parent.parent / "palettes"
+    palette = load_palette("residential", palettes_dir=repo_palettes)
+    for mat in ("grass_flat", "pavement"):
+        dark, light = material_accents(palette, mat)
+        assert dark is not None, f"{mat}.accent_dark missing"
+        assert light is not None, f"{mat}.accent_light missing"
+
+
+def test_residential_other_materials_unchanged():
+    """Existing material ramps (non-seeded) remain 3-key (no accent leakage)."""
+    repo_palettes = Path(__file__).parent.parent / "palettes"
+    palette = load_palette("residential", palettes_dir=repo_palettes)
+    assert material_accents(palette, "wall_brick_red") == (None, None)
+    assert material_accents(palette, "mortar") == (None, None)
 
 
 def test_extract_palette_ramp_math_high_v_clamped(tmp_path):

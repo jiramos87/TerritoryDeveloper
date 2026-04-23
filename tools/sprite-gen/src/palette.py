@@ -62,6 +62,43 @@ def load_palette(cls: str, palettes_dir: Path = PALETTES_DIR) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def material_accents(
+    palette: dict, material_name: str
+) -> tuple[tuple[int, int, int] | None, tuple[int, int, int] | None]:
+    """Surface optional ``accent_dark`` / ``accent_light`` RGB tuples (TECH-716).
+
+    Returns ``(accent_dark, accent_light)``; either component is ``None``
+    when the palette entry omits that key. Used by scatter primitives
+    (``iso_ground_noise``) — absent accents → primitive no-op.
+
+    Args:
+        palette:       Loaded palette dict (output of ``load_palette``).
+        material_name: Key into ``palette["materials"]``.
+
+    Returns:
+        ``(accent_dark_or_none, accent_light_or_none)`` tuple.
+
+    Raises:
+        PaletteKeyError: If ``material_name`` is not in ``palette["materials"]``.
+    """
+    materials = palette["materials"]
+    if material_name not in materials:
+        raise PaletteKeyError(material_name)
+    entry = materials[material_name]
+
+    def _coerce(key: str) -> tuple[int, int, int] | None:
+        raw = entry.get(key)
+        if raw is None:
+            return None
+        if not isinstance(raw, (list, tuple)) or len(raw) != 3:
+            raise ValueError(
+                f"palette[{material_name!r}][{key!r}]: expected 3-element RGB list, got {raw!r}"
+            )
+        return (int(raw[0]), int(raw[1]), int(raw[2]))
+
+    return _coerce("accent_dark"), _coerce("accent_light")
+
+
 def apply_ramp(palette: dict, material_name: str, face: str) -> tuple[int, int, int]:
     """Map a face identifier to its ramp RGB from the palette.
 

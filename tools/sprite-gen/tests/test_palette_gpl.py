@@ -66,7 +66,15 @@ def test_round_trip_residential(tmp_path):
     original = load_palette("residential", palettes_dir=PALETTES_DIR)
 
     assert result["class"] == "residential"
-    assert result["materials"] == original["materials"], (
+    # GPL format only carries bright/mid/dark ramps; optional TECH-716
+    # accent_dark / accent_light keys don't round-trip through .gpl, so
+    # compare only the canonical ramp levels.
+    _LEVEL_KEYS = {"bright", "mid", "dark"}
+    stripped_original = {
+        name: {k: v for k, v in entry.items() if k in _LEVEL_KEYS}
+        for name, entry in original["materials"].items()
+    }
+    assert result["materials"] == stripped_original, (
         "Round-trip materials mismatch"
     )
 

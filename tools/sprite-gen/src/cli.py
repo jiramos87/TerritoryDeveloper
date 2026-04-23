@@ -296,6 +296,13 @@ def _cmd_palette_import(args: argparse.Namespace) -> int:
 
     new_materials = new_palette["materials"]
 
+    # Preserve non-ramp keys (e.g. accent_dark / accent_light — TECH-716) from prior JSON.
+    for mat_name, new_levels in new_materials.items():
+        prior_entry = prior_materials.get(mat_name, {})
+        for key, val in prior_entry.items():
+            if key not in ("bright", "mid", "dark"):
+                new_levels.setdefault(key, val)
+
     # Emit diff lines or "no change".
     changed = False
     for mat_name, levels in new_materials.items():
