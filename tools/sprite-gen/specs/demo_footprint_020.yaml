@@ -1,0 +1,29 @@
+id: demo_footprint_020
+# Axis 4 probe — footprint_ratio 0.20 (very small).
+# Wall base width ≈ 0.20 * 64 = 12.8 px. Failure hypothesis: wall reads as
+# single pixel sliver; roof overhangs dominate; silhouette fails to read
+# as "house" at 1×1 tile zoom.
+class: residential_small
+footprint: [1, 1]
+terrain: flat
+levels: 1
+palette: residential
+seed: 11
+ground:
+  material: grass_flat
+building:
+  footprint_ratio: [0.20, 0.20]
+  composition:
+    - { type: iso_cube, role: wall, material: wall_brick_red, w: 1, d: 1 }
+    - { type: iso_prism, role: roof, material: roof_tile_brown, w: 1, d: 1, h_px: 8, pitch: 0.5, axis: ns, offset_z_role: above_walls }
+composition:
+  - { type: iso_cube, role: wall, material: wall_brick_red, w: 1, d: 1 }
+  - { type: iso_prism, role: roof, material: roof_tile_brown, w: 1, d: 1, h_px: 8, pitch: 0.5, axis: ns, offset_z_role: above_walls }
+output:
+  name: demo_footprint_020
+  variants: 1
+variants:
+  count: 1
+  seed_scope: geometry
+diffusion:
+  enabled: false

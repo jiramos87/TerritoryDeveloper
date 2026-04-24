@@ -117,7 +117,82 @@ While authoring the probe specs, confirmed via `sample_variant` trace that `vari
 ### Next calibration candidates (refreshed)
 
 - **Axis 3 — Palette variation across variants** (variation verdict currently keys on pixel-count + bbox shift; add palette-distance check).
-- **Axis 4 — `footprint_ratio` lower bound** (at 0.25..0.30, wall-base pixel resolution).
+- **Axis 4 — `footprint_ratio` bounds** — see §Axis 4 below.
 - **Axis 5 — `residential_heavy` / `commercial_dense` roof bounds** (LEVEL_H=16 class, taller buildings, different silhouette budget).
 - **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
 - **Prerequisite for Axes 3+5:** ~~fix dead `variants.vary.{roof,wall}.*` plumbing~~ — done in this session (see sub-finding above). Axes 3+5 can now use one spec + vary block.
+
+---
+
+## Axis 4 — `footprint_ratio` full bounds (residential_small 1×1)
+
+**Date:** 2026-04-24
+**Specs:**
+- Lower sweep: `demo_footprint_020.yaml` / `_025.yaml` / `_030.yaml` / `_035.yaml` (ratios 0.20 / 0.25 / 0.30 / 0.35)
+- Upper sweep: `demo_footprint_050.yaml` / `_065.yaml` / `_080.yaml` / `_095.yaml` (ratios 0.50 / 0.65 / 0.80 / 0.95)
+- All 8 specs identical except `building.footprint_ratio`; pitch 0.5, h_px 8, palette `residential`, seed 11.
+
+**Reader:** `resolve_building_box` + compose-sprite bbox → `src/inspect.py`.
+
+### Problem
+
+Establish bounds on `building.footprint_ratio` (wr, dr) before silhouette fails to read as a building at 1×1 tile zoom (64×64 canvas). Axis 1 footprint containment is mechanical; Axis 4 probes whether the *semantic read* ("house" / "shed" / "industrial") holds across the full 0..1 range.
+
+### Probe sweep
+
+| Probe | ratio | bbox (w×h px) | Pixels | sw / se norm | Containment | Reads as |
+|-------|-------|---------------|--------|--------------|-------------|----------|
+| 020 | 0.20 | 13×22 | 223 | 0.19 / 0.22 | pass | tiny blob / marker |
+| 025 | 0.25 | 17×23 | 296 | 0.25 / 0.29 | pass | shed / outhouse |
+| 030 | 0.30 | 19×24 | 340 | 0.29 / 0.32 | pass | small house |
+| 035 | 0.35 | 23×26 | 434 | 0.35 / 0.38 | pass | house (near suburban baseline) |
+| 050 | 0.50 | 33×29 | 705 | 0.51 / 0.54 | pass | house (clean silhouette) |
+| 065 | 0.65 | 41×33 | 955 | 0.64 / 0.67 | pass | large house, ground NE/SW still visible |
+| 080 | 0.80 | 51×38 | 1311 | 0.79 / 0.83 | pass | dominates tile, thin ground sliver |
+| 095 | 0.95 | 61×43 | 1731 | 0.95 / 0.98 | pass | fills tile, industrial block |
+
+sw/se norms stay < 1.0 across all 8 probes — Axis 1 containment holds even at 0.95 because `resolve_building_box` collapses to center anchor above `wr > 1 - 2·inset` (= 0.44 with `inset = 0.28`), and the diamond geometry at 1×1 accommodates bbox up to ~0.95 centered.
+
+### Verdict
+
+- **All 8 variants acceptable** per user visual review. Full range 0.20..0.95 is usable.
+- **Semantic banding** (emergent, not enforced):
+  - 0.20..0.28 → marker / shed / outhouse (too small for `residential_small` but valid for accessory / decor sprites)
+  - 0.30..0.55 → `residential_small` house silhouette (suburban preset territory)
+  - 0.55..0.75 → large residential / mixed use
+  - 0.75..0.95 → **industrial / commercial / warehouse** — user confirmed ("bigger ones will serve as industrial for sure")
+- This means `footprint_ratio` doubles as a *class discriminator*, not just a size parameter. Class-to-ratio mapping should be captured in `default_footprint_ratio_for_class` (already exists — verify bands match above).
+
+### Final parameters
+
+- **No new clamp** on `footprint_ratio` in `compose.py`. Full 0.01..0.99 useful range retained (lower bound = `max(0.01, ...)` in `wr_eff` clamp at L596).
+- Accepted ratio bands for single-tile archetypes:
+  - `residential_small`: **0.30..0.55** (spec `suburban_house_with_yard` already in this range)
+  - `industrial_small` / `commercial_dense` candidates: **0.70..0.95** (new presets TBD — currently no archetype tests this band)
+- Recommendation: add archetype-specific `footprint_ratio` defaults so presets don't have to re-specify.
+
+### Sub-finding — `variants.vary.footprint_ratio.*` dead path (second dead plumb)
+
+While authoring Axis 4 probes, confirmed `variants.vary.footprint_ratio.{w,d} = {min, max}` in specs routes through `_walk_vary` → `_set_deep` → `target['footprint_ratio']['{w,d}']` **on the top-level spec dict**. But `compose_sprite` reads `building.footprint_ratio` as a 2-element *list* `[wr, dr]` (compose.py L403, L585), never as a dict. So:
+
+1. Vary path writes `out['footprint_ratio']['d'] = 0.4` — lands on unused top-level dict key.
+2. `compose_sprite` still reads `out['building']['footprint_ratio']` → original spec value.
+3. `_derive_vary_from_signature` (cli.py L492) emits `vary['footprint_ratio']['d'] = {min, max}` — also dead.
+
+Same shape as the roof/wall dead-plumb fixed earlier in-session, but requires *list-index* routing (`.w` → index 0, `.d` → index 1) into `building.footprint_ratio`, not dict-field routing. Not fixed in this session — Axis 4 used 8 direct specs instead.
+
+**Fix candidate:** extend `_set_deep` with a second special-case: when `path[0] == 'footprint_ratio'` and `path[1] in {'w', 'd'}`, route into `target['building']['footprint_ratio']` as list-indexed write (w → idx 0, d → idx 1). Auto-promote list if missing.
+
+**Impact if fixed:** Axis 4 sweep collapses from 8 specs to 1 spec + vary block — material token cost reduction for future lower-bound / upper-bound probes on similar list-typed fields.
+
+### Supporting helpers
+
+- `src/inspect.py` — bbox + containment verdict. Works unchanged.
+- `open /abs/path/demo_footprint_*.png` — macOS Preview gallery. IDE-hidden (gitignored); use absolute paths.
+
+### Next calibration candidates (refreshed)
+
+- **Axis 3 — Palette variation across variants** (variation verdict currently keys on pixel-count + bbox shift; add palette-distance check to `inspect`).
+- **Axis 5 — `residential_heavy` / `commercial_dense` / industrial bounds** (LEVEL_H=16 class, taller buildings, different silhouette budget — now with Axis 4 upper-ratio evidence that 0.75..0.95 reads as industrial).
+- **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
+- **Follow-up fix:** plumb `variants.vary.footprint_ratio.{w,d}` into `building.footprint_ratio` list (companion to the roof/wall/foundation plumbing fix).
