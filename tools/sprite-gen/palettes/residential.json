@@ -327,6 +327,13 @@
         "dark": [28, 72, 76]
       }
     },
+    "bush": {
+      "bright": [118, 180, 82],
+      "mid": [76, 130, 58]
+    },
+    "grass_tuft": {
+      "bright": [148, 210, 96]
+    },
     "mustard_industrial": {
       "bright": [
         210,

@@ -1,0 +1,28 @@
+id: TECH-764
+type: TECH
+title: "`iso_bush` + `iso_grass_tuft` primitives"
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-764.md
+files: []
+notes: |
+  Two small vegetation primitives colocated: `iso_bush` (low green puff ~6×6 px; palette key `bush`) and `iso_grass_tuft` (1-pixel accents; palette key `grass_tuft`). Both pure functions; no outline pass.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-762
+  - TECH-763
+  - TECH-770
+acceptance: |
+  - [ ] `iso_bush` renders a ~6×6 px green puff with 2-level internal ramp under palette key `bush`.
+  - [ ] `iso_grass_tuft` renders 1–3 single-pixel accents under palette key `grass_tuft`.
+  - [ ] Both primitives honour `scale` kwarg and variant seed.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-764** — `iso_bush` + `iso_grass_tuft` primitives
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/src/primitives/iso_bush.py`, `iso_grass_tuft.py`
+    - Related: **TECH-762**, **TECH-763**, **TECH-770**
+    - Notes: Two small vegetation primitives colocated. `iso_bush` (low green puff ~6×6 px; palette key `bush`) and `iso_grass_tuft` (1-pixel accents; palette key `grass_tuft`). Both pure functions; no outline pass.
