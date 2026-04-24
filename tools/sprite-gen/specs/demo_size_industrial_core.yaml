@@ -1,0 +1,30 @@
+id: demo_size_industrial_core
+# Axis 5 probe — industrial core size bounds.
+# Class industrial_heavy (LEVEL_H=16, industrial ground default).
+# Footprint 0.85 (upper-ratio per doc Axis 4 — reads as industrial).
+# Flat roof pitch 0.0, h_px 2 (industrial warehouse silhouette).
+# Expected: bulky concrete mass, mustard-industrial roof cap, pavement ground.
+class: industrial_heavy
+footprint: [1, 1]
+terrain: flat
+levels: 1
+palette: residential
+seed: 11
+ground:
+  material: pavement
+building:
+  footprint_ratio: [0.85, 0.85]
+  composition:
+    - { type: iso_cube, role: wall, material: concrete, w: 1, d: 1 }
+    - { type: iso_prism, role: roof, material: mustard_industrial, w: 1, d: 1, h_px: 2, pitch: 0.0, axis: ns, offset_z_role: above_walls }
+composition:
+  - { type: iso_cube, role: wall, material: concrete, w: 1, d: 1 }
+  - { type: iso_prism, role: roof, material: mustard_industrial, w: 1, d: 1, h_px: 2, pitch: 0.0, axis: ns, offset_z_role: above_walls }
+output:
+  name: demo_size_industrial_core
+  variants: 1
+variants:
+  count: 1
+  seed_scope: geometry
+diffusion:
+  enabled: false

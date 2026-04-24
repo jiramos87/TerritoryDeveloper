@@ -1,0 +1,28 @@
+id: demo_size_residential_heavy
+# Axis 5 probe — residential_heavy size bounds.
+# LEVEL_H=16 via class default (_expand_level_entries auto-fill, h_px omitted).
+# Footprint 0.45 (class default). Gabled roof pitch 0.5 (family home silhouette).
+# Expected: taller wall mass than residential_small (12 → 16 px), same gable profile.
+class: residential_heavy
+footprint: [1, 1]
+terrain: flat
+levels: 1
+palette: residential
+seed: 11
+ground:
+  material: grass_flat
+building:
+  composition:
+    - { type: iso_cube, role: wall, material: wall_brick_red, w: 1, d: 1 }
+    - { type: iso_prism, role: roof, material: roof_tile_brown, w: 1, d: 1, h_px: 8, pitch: 0.5, axis: ns, offset_z_role: above_walls }
+composition:
+  - { type: iso_cube, role: wall, material: wall_brick_red, w: 1, d: 1 }
+  - { type: iso_prism, role: roof, material: roof_tile_brown, w: 1, d: 1, h_px: 8, pitch: 0.5, axis: ns, offset_z_role: above_walls }
+output:
+  name: demo_size_residential_heavy
+  variants: 1
+variants:
+  count: 1
+  seed_scope: geometry
+diffusion:
+  enabled: false

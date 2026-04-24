@@ -303,10 +303,56 @@ verdict: pass
 - **Palette JSON data can mislead for a long time.** Color names are not validated against their RGB triplets. Other entries in `palettes/residential.json` that look suspect post-hoc: `roof_tile_brown` is actually red `(232,90,90)`, `roof_tile_grey` is actually dark red `(154,56,56)`, `trim` is green `(71,130,30)`. Not fixed this session — flag for a follow-up naming-vs-color pass.
 - **Agent visual check (inline PNG read) catches data bugs that metric passes.** Plumbing verdict = pass + data wrong = user sees green walls. Metric stack alone insufficient without agent or human visual pass.
 
+---
+
+## Axis 5 — `residential_heavy` / `commercial_dense` / `industrial_core` size bounds (LEVEL_H=16)
+
+**Date:** 2026-04-24
+**Specs:** one per archetype, 1 geometry variant each:
+- `tools/sprite-gen/specs/demo_size_residential_heavy.yaml` — class `residential_heavy`, footprint 0.45 (class default), pitch 0.5, roof h_px 8, grass_flat ground.
+- `tools/sprite-gen/specs/demo_size_commercial_dense.yaml` — class `commercial_dense`, footprint 0.95 (class default), pitch 0.1, roof h_px 4, pavement ground.
+- `tools/sprite-gen/specs/demo_size_industrial_core.yaml` — class `industrial_heavy` (label `industrial_core`), footprint 0.85 (upper-ratio per Axis 4), pitch 0.0, roof h_px 2, pavement ground, `mustard_industrial` roof.
+
+**Surface:** `src/compose.py::_expand_level_entries` LEVEL_H auto-fill (wall `h_px` omitted → class-driven 16 px) + `src/constants.py::LEVEL_H` table + `src/spec.py::_DEFAULT_FOOTPRINT_RATIO` table.
+
+### Hypothesis
+
+Three LEVEL_H=16 classes should read as distinct size archetypes at the silhouette level: narrow gabled residential, wide flat commercial, wide flat-mustard industrial. Probe verifies class-default plumbing (LEVEL_H pickup without explicit wall `h_px`) and footprint-ratio / pitch / material combinations differentiate visually.
+
+### Probe run
+
+| Archetype | Class | Footprint | Pitch | Roof h_px | bbox | pixels | containment |
+|---|---|---|---|---|---|---|---|
+| residential_heavy | `residential_heavy` | 0.45×0.45 | 0.5 | 8 | [18,16,46,47] | 708 | pass |
+| commercial_dense | `commercial_dense` | 0.95×0.95 | 0.1 | 4 | [0,1,63,47] | 1920 | overflow 2 px |
+| industrial_core | `industrial_heavy` | 0.85×0.85 | 0.0 | 2 | [0,4,63,47] | 1682 | overflow 2 px |
+
+### Dead-plumb triage
+
+| Archetype | Sampled geometry distinct? | Rendered silhouette distinct? | Root cause |
+|---|---|---|---|
+| all 3 | Yes | Yes | Plumbing OK |
+
+LEVEL_H=16 picked up from class when wall entry omits `h_px` — `_expand_level_entries` line 136–147 auto-fills from `LEVEL_H[cls]`. Visual wall mass in all 3 renders visibly taller than residential_small (LEVEL_H=12) baseline.
+
+### Verdict
+
+**User accepted** — archetypes read distinctly: tall-narrow residential, wide-flat commercial, wide-mustard industrial.
+
+Containment overflow 2 px on commercial + industrial is **expected** given footprint 0.85/0.95 (building bbox extends past tile-diamond corners ~2 px at wide upper ratios). Not a bug.
+
+### Lessons
+
+- **Class-driven LEVEL_H auto-fill works.** Omit wall `h_px` in specs → `_expand_level_entries` picks up `LEVEL_H[class]` automatically. No per-spec override needed for standard class heights.
+- **`industrial_core` is a presentation label, not a class.** Only `industrial_light` / `industrial_heavy` exist in `constants.LEVEL_H` and `spec._DEFAULT_FOOTPRINT_RATIO`. Use `class: industrial_heavy` and convey "core" semantics via footprint_ratio override (0.85 upper-ratio) + mustard roof + flat pitch.
+- **Roof data bugs carry forward.** `roof_tile_brown` + `roof_tile_grey` still render red (flagged Axis 3, unfixed). Residential + commercial roofs both read red in Axis 5 renders. Not a blocker for size calibration — silhouette differentiation dominates.
+- **Pavement grounds register as 0 in inspect metric.** `_is_ground_pixel` heuristic is green-dominant; grey pavement falls into building-pixel bucket. Known limitation from Axis 3; does not affect verdict. Extend heuristic in a later inspect-metric pass.
+
 ### Next calibration candidates (refreshed)
 
-- **Axis 5 — `residential_heavy` / `commercial_dense` / industrial bounds** (LEVEL_H=16 class, taller silhouette, different roof pitch budget — Axis 4 confirmed upper-ratio 0.75..0.95 reads as industrial).
 - **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
-- **Palette naming-vs-color audit** — sweep `palettes/*.json`, flag names that don't match their mid-RGB hue (e.g. `roof_tile_brown` = red, `trim` = green, `roof_tile_grey` = red).
+- **Palette naming-vs-color audit** — sweep `palettes/*.json`, flag names that don't match their mid-RGB hue (e.g. `roof_tile_brown` = red, `trim` = green, `roof_tile_grey` = red). Axis 5 re-confirmed carry-over.
+- **Inspect ground heuristic extension** — teach `_is_ground_pixel` to recognize pavement (neutral grey, low saturation) so `ground_sig` populates for commercial/industrial archetypes.
+- **Containment rule for wide archetypes** — consider relaxing diamond-corner containment for footprint ≥ 0.85; current 2-px overflow is aesthetic, not a plumbing bug.
 - **Follow-up fix (carried from Axis 4):** plumb `variants.vary.footprint_ratio.{w,d}` into `building.footprint_ratio` list (second dead-plumb, still open).
 - **New skill available:** `/sprite-gen-calibrate-axis {AXIS}` (`ia/skills/sprite-gen-calibrate-axis/SKILL.md`) codifies this cycle — probes → render+inspect → agent visual → dead-plumb triage matrix → user verdict → fix loop → doc append → axis-scoped commit. Apply to Axis 5+.

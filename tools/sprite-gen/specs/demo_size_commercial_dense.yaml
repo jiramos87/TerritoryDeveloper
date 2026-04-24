@@ -1,0 +1,28 @@
+id: demo_size_commercial_dense
+# Axis 5 probe — commercial_dense size bounds.
+# LEVEL_H=16 via class default. Footprint 0.95 (class default — nearly tile-filling).
+# Low-pitch roof 0.1, h_px 4 (urban dense / flat-ish silhouette).
+# Expected: wide concrete box, minimal roof profile, pavement ground.
+class: commercial_dense
+footprint: [1, 1]
+terrain: flat
+levels: 1
+palette: residential
+seed: 11
+ground:
+  material: pavement
+building:
+  composition:
+    - { type: iso_cube, role: wall, material: concrete, w: 1, d: 1 }
+    - { type: iso_prism, role: roof, material: roof_tile_grey, w: 1, d: 1, h_px: 4, pitch: 0.1, axis: ns, offset_z_role: above_walls }
+composition:
+  - { type: iso_cube, role: wall, material: concrete, w: 1, d: 1 }
+  - { type: iso_prism, role: roof, material: roof_tile_grey, w: 1, d: 1, h_px: 4, pitch: 0.1, axis: ns, offset_z_role: above_walls }
+output:
+  name: demo_size_commercial_dense
+  variants: 1
+variants:
+  count: 1
+  seed_scope: geometry
+diffusion:
+  enabled: false
