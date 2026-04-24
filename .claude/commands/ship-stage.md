@@ -1,5 +1,5 @@
 ---
-description: DB-backed two-pass Stage chain dispatcher — Pass A per-task implement+compile (NO commits) + Pass B per-stage verify-loop + code-review (inline fix per E14) + audit + inline closeout via stage_closeout_apply (per C10) + single stage commit + stage_verification_flip. Gates on §Plan Digest readiness from /stage-authoring. Args: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume].
+description: DB-backed two-pass Stage chain dispatcher — Pass A per-task implement+compile (NO commits) + Pass B per-stage verify-loop + code-review (inline fix per E14) + inline closeout via stage_closeout_apply (per C10) + single stage commit + stage_verification_flip. Gates on §Plan Digest readiness from /stage-authoring. Args: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume].
 argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--no-resume] [--force-model {model}]"
 ---
 
@@ -48,11 +48,11 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 > 4. Phase 3 — §Plan Digest readiness gate via `task_spec_section(task_id, "Plan Digest")` per pending task. Missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff. No JIT lazy migration.
 > 5. Phase 4 — Resume gate via `task_state` DB query. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree-clean guard). Disabled by `--no-resume`.
 > 6. Phase 5 — Pass A per-task loop: implement (`spec-implementer` work inline) → `unity:compile-check` + scene-wiring preflight → `task_status_flip(implemented)` + `journal_append`. **NO commits.** Stop on first failure.
-> 7. Phase 6 — Pass B per-stage (runs ONCE): full `verify-loop` (Path A+B) on `git diff HEAD` → code-review on Stage diff (inline fix per E14; cap=1) → audit → per-task `task_status_flip(verified)` then `task_status_flip(done)`.
+> 7. Phase 6 — Pass B per-stage (runs ONCE): full `verify-loop` (Path A+B) on `git diff HEAD` → code-review on Stage diff (inline fix per E14; cap=1) → per-task `task_status_flip(verified)` then `task_status_flip(done)`.
 > 8. Phase 7 — Inline closeout: `stage_closeout_apply(slug, stage_id)` (DB-backed per C10) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `_closed/`.
 > 9. Phase 8 — Stage commit + verification record: single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` (covers all Pass A + code-review fixes + closeout mv per E13) → capture `STAGE_COMMIT_SHA` → per-task `task_commit_record(task_id, commit_sha, "feat", ...)` → `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")` (E11 history-preserving INSERT).
 > 10. Phase 9 — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
-> 11. Phase 10 — Next-stage resolver via `master_plan_state(slug)` — 4 cases priority: filed → `/ship-stage`; pending → `/stage-file`; skeleton → `/stage-decompose`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`.
+> 11. Phase 10 — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`. Skeleton stages → `STOPPED — skeleton stage encountered`.
 >
 > ## Hard boundaries (critical)
 >

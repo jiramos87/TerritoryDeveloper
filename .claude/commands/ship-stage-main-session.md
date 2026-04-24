@@ -1,5 +1,5 @@
 ---
-description: No-subagent variant of /ship-stage. Executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → DB resume gate → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix per E14) + audit + verified→done flips + inline stage_closeout_apply per C10 + single stage commit per E13 + stage_verification_flip) inline. Wraps ia/skills/ship-stage-main-session. Closeout mandatory on green.
+description: No-subagent variant of /ship-stage. Executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → DB resume gate → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix per E14) + verified→done flips + inline stage_closeout_apply per C10 + single stage commit per E13 + stage_verification_flip) inline. Wraps ia/skills/ship-stage-main-session. Closeout mandatory on green.
 argument-hint: "{MASTER_PLAN_RELATIVE_PATH} {STAGE_ID} [--no-resume]"
 ---
 
@@ -42,7 +42,7 @@ Read `ia/skills/ship-stage-main-session/SKILL.md` end-to-end. Then read the cano
 
 ## Step 2 — Execute the chain inline
 
-Perform every phase from `ia/skills/ship-stage/SKILL.md` **yourself**, in this session, using territory-ia MCP + bash + direct file edits. Do **not** dispatch any subagent (`ship-stage`, `spec-implementer`, `opus-code-reviewer`, `opus-auditor`, `verify-loop`, `plan-applier`).
+Perform every phase from `ia/skills/ship-stage/SKILL.md` **yourself**, in this session, using territory-ia MCP + bash + direct file edits. Do **not** dispatch any subagent (`ship-stage`, `spec-implementer`, `opus-code-reviewer`, `verify-loop`, `plan-applier`).
 
 Phases (matches `ia/skills/ship-stage-main-session/SKILL.md` frontmatter `phases:`):
 
@@ -59,12 +59,11 @@ Phases (matches `ia/skills/ship-stage-main-session/SKILL.md` frontmatter `phases
 7. **Phase 6 — Pass B per-stage** (runs ONCE):
    - **6.1 verify-loop** — full Path A + Path B on cumulative `git diff HEAD` (Pass A worktree dirty). `verdict == pass` required; fail → `STAGE_VERIFY_FAIL` + chain digest, no rollback, worktree stays dirty.
    - **6.2 code-review** — opus-code-reviewer work inline on Stage diff with shared `CHAIN_CONTEXT`. **On critical: apply fixes inline via direct Edit/Write per design E14** — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired plan-applier code-fix mode. Re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
-   - **6.3 audit** — opus-auditor work inline Stage 1×N.
-   - **6.4 per-task verified→done flips** — for each task in `STAGE_TASK_IDS` (skip if already terminal): `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both).
+   - **6.3 per-task verified→done flips** — for each task in `STAGE_TASK_IDS` (skip if already terminal): `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both).
 8. **Phase 7 — Inline closeout (DB + filesystem)** — `stage_closeout_apply(slug, stage_id)` (DB-backed per design C10; replaces retired `stage-closeout-plan` → `stage-closeout-apply` skill pair) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `ia/projects/{SLUG}/_closed/` (skip silently if no match — pre-Step-9 foldering).
 9. **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL changes (Pass A diffs + code-review fixes + closeout mv per E13). Capture `STAGE_COMMIT_SHA`. Per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`. `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")` (E11 history-preserving INSERT).
 10. **Phase 9** — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
-11. **Phase 10** — Next-stage resolver via `master_plan_state(slug)` — 4 cases priority: filed → `/ship-stage`; pending → `/stage-file`; skeleton → `/stage-decompose`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`.
+11. **Phase 10** — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`. Skeleton stages → `STOPPED — skeleton stage encountered`.
 
 ## Hard boundaries (critical)
 

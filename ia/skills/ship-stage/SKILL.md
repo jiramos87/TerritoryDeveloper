@@ -1,5 +1,5 @@
 ---
-purpose: "Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review (inline fix cap=1) + audit + per-task task_status_flip(verified→done) + stage_closeout_apply + single stage-end commit + per-task task_commit_record + stage_verification_flip. Inline closeout (stage-closeout-* pair retired). Resume gate via task_state status query (no git scan)."
+purpose: "Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + single stage-end commit + per-task task_commit_record + stage_verification_flip. Resume gate via task_state status query (no git scan)."
 audience: agent
 loaded_by: skill:ship-stage
 slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
@@ -9,7 +9,7 @@ description: >
   two-pass DB-backed chain. Pass A (per-task): implement + unity:compile-check
   fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A
   leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD
-  diff + code-review on Stage diff (inline fix cap=1) + audit + per-task
+  diff + code-review on Stage diff (inline fix cap=1) + per-task
   task_status_flip(verified→done) + stage_closeout_apply + git mv stage spec
   file to _closed/ (guarded) + single stage commit feat({slug}-stage-X.Y) +
   per-task task_commit_record + stage_verification_flip(pass, commit_sha).
@@ -25,7 +25,7 @@ phases:
   - "Plan Digest readiness gate"
   - "Resume gate"
   - "Pass A per-task (implement + compile + status flip)"
-  - "Pass B per-stage (verify + code-review + audit)"
+  - "Pass B per-stage (verify + code-review)"
   - "Inline closeout (DB + filesystem)"
   - "Stage commit + verification record"
   - "Chain digest"
@@ -43,7 +43,6 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 - [`stage-authoring`](../stage-authoring/SKILL.md) — populates §Plan Digest in DB before this skill runs.
 - [`spec-implementer`](../spec-implementer/SKILL.md) — Pass A implement subagent.
 - [`opus-code-reviewer`](../opus-code-reviewer/SKILL.md) — Pass B code-review (inline fix per E14).
-- [`opus-auditor`](../opus-auditor/SKILL.md) — Pass B audit.
 - Scene wiring contract: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
 - Verification policy: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
@@ -51,9 +50,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ## Normative — closeout is part of `PASSED`
 
-When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not critical second time; audit completes), the chain **must** run **Step 4 inline closeout** in the **same** invocation. Do **not**:
+When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not critical second time), the chain **must** run **Step 4 inline closeout** in the **same** invocation. Do **not**:
 
-- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify or audit alone.
+- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify or code-review alone.
 - Tell the operator to run a separate `/closeout` later.
 
 `SHIP_STAGE {STAGE_ID}: PASSED` is valid **only** after `stage_closeout_apply` succeeded + stage commit landed + `stage_verification_flip(pass, commit_sha)` recorded.
@@ -99,7 +98,7 @@ Call `stage_bundle(slug=SLUG, stage_id=STAGE_ID_DB)`. Returns:
 
 Define:
 - `PENDING_TASKS` = tasks with `status ∈ {pending, implemented}` (drives Pass A + Pass B).
-- `STAGE_TASK_IDS` = all task ids in `tasks` (full Stage scope for code-review + audit + closeout).
+- `STAGE_TASK_IDS` = all task ids in `tasks` (full Stage scope for code-review + closeout).
 
 ---
 
@@ -115,7 +114,7 @@ context_label: "{SLUG} {STAGE_ID_DB}"
 
 **`tooling_only_flag` heuristic:** flip to `true` when `MASTER_PLAN_PATH` matches `/mcp-lifecycle-tools|ia-infrastructure|tooling|bridge-environment|backlog-yaml-mcp|ia-dev-db/` OR stage touches only `tools/**`, `ia/**`, `.claude/**`, `docs/**`, `web/**` (no `Assets/**/*.cs`).
 
-Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to per-task `spec-implementer` + Stage-scoped `opus-code-reviewer` + `opus-auditor`.
+Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to per-task `spec-implementer` + Stage-scoped `opus-code-reviewer`.
 
 ---
 
@@ -224,7 +223,7 @@ Continue to next task.
 
 ## Step 6 — Pass B: per-stage bulk (runs ONCE)
 
-**Order is fixed:** 6.1 verify → 6.2 code-review (inline fix cap=1) → 6.3 audit → 6.4 status flip done.
+**Order is fixed:** 6.1 verify → 6.2 code-review (inline fix cap=1) → 6.3 status flip done.
 
 ### Step 6.1 — Verify-loop on cumulative HEAD diff
 
@@ -268,15 +267,7 @@ Journal each iteration:
 journal_append({ phase: "pass_b.code_review", payload_kind: "review_verdict", payload: { verdict, iteration } })
 ```
 
-### Step 6.3 — Audit
-
-Dispatch `opus-auditor` subagent (Opus) — Stage-scoped:
-
-> Mission: Run opus-audit Stage 1×N for Stage {STAGE_ID_DB}. Slug: {SLUG}. Task ids: {STAGE_TASK_IDS}. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. Return audit report.
-
-Journal: `phase: "pass_b.audit", payload_kind: "audit_report", payload: { task_count: N }`.
-
-### Step 6.4 — Per-task status flip (verified → done)
+### Step 6.3 — Per-task status flip (verified → done)
 
 For each task in `STAGE_TASK_IDS` (not just `PENDING_TASKS` — full Stage scope):
 - Skip if `task.status ∈ {done, archived}` (defensive guard for re-entry).
@@ -297,7 +288,7 @@ Call `stage_closeout_apply(slug=SLUG, stage_id=STAGE_ID_DB)`.
 
 Returns `{slug, stage_id, archived_task_count, stage_status: "done"}`.
 
-**Failure** (any non-terminal task remains): STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}`. Should not happen on green path (Step 6.4 flipped all to done) — implies DB drift. Human repair.
+**Failure** (any non-terminal task remains): STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}`. Should not happen on green path (Step 6.3 flipped all to done) — implies DB drift. Human repair.
 
 ### Step 7.2 — Filesystem mv (guarded)
 
@@ -339,7 +330,7 @@ feat({SLUG}-stage-{STAGE_ID_DB}): {short summary from master_plan_title or Stage
 Stage {STAGE_ID_DB} — {N} tasks: {comma-separated STAGE_TASK_IDS}
 
 Pass A: implement + compile (all tasks)
-Pass B: verify-loop pass + code-review {PASS|minor} + audit
+Pass B: verify-loop pass + code-review {PASS|minor}
 Closeout: {archived_task_count} tasks archived; ia_stages.status=done
 ```
 
@@ -406,7 +397,7 @@ Emit one chain-level stage digest at chain end (success or STOPPED).
   "archived_task_count": N,
   "next_handoff": {
     "case": "filed|pending|skeleton|umbrella-done|stopped|stage_verify_fail",
-    "command": "/ship-stage|/stage-file|/stage-decompose|/closeout",
+    "command": "/ship-stage|/stage-file|/closeout",
     "args": "ia/projects/{slug}-master-plan.md Stage X.Y",
     "shell": "claude-personal \"...\""
   }
@@ -421,7 +412,7 @@ Caveman summary follows JSON: tasks shipped, stage commit sha (short), verify ou
 
 Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 
-**4 cases (priority order):**
+**3 cases (priority order):**
 
 1. **Next filed stage** — next stage with ≥1 task `status ∈ {pending, implemented}` (real ids, not `_pending_`):
    → `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage X.Y"`
@@ -429,11 +420,10 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 2. **Next pending stage** — next stage where tasks are `_pending_` (not yet filed in DB):
    → `Next: claude-personal "/stage-file {MASTER_PLAN_PATH} Stage X.Y"`
 
-3. **Next skeleton stage** — next stage with no tasks:
-   → `Next: claude-personal "/stage-decompose {MASTER_PLAN_PATH} Stage X.Y"`
-
-4. **Umbrella done** — no more stages:
+3. **Umbrella done** — no more stages:
    → `Next: claude-personal "/closeout {UMBRELLA_ISSUE_ID}"` if identifiable from master plan header. Else `All stages done — umbrella close pending.`
+
+**Skeleton stages** (no tasks at all) are author-time gaps; surface as `STOPPED — skeleton stage encountered: Stage X.Y. Author tasks via stage-authoring or extend master plan.`
 
 ---
 
@@ -490,7 +480,7 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 
 ## Open Questions
 
-- Crash-survivable session journal: `journal_append` writes to `ia_ship_stage_journal` table — survives process crash. Resume on re-invocation reads journal by `session_id` to detect mid-Pass-B state (e.g. verify done but audit not). Currently Step 6 re-runs as a unit; finer sub-step resume deferred.
+- Crash-survivable session journal: `journal_append` writes to `ia_ship_stage_journal` table — survives process crash. Resume on re-invocation reads journal by `session_id` to detect mid-Pass-B state (e.g. verify done but status-flip not). Currently Step 6 re-runs as a unit; finer sub-step resume deferred.
 - `stage_closeout_apply` filesystem mv: DB-only tool; this skill body owns the `git mv` to `_closed/`. Step 9 of `ia-dev-db-refactor` will introduce per-stage spec foldering — guarded existence check covers both pre/post-Step-9 shapes.
 
 ---
@@ -506,7 +496,7 @@ Pre-Step-8 ship-stage made per-task commits in Pass A, then ran Stage closeout v
 
 **Fix per design C9 / C10 / E11 / E13 / E14:**
 - **Pass A (per-task):** implement + `unity:compile-check` + `task_status_flip(implemented)`. NO commit.
-- **Pass B (per-stage):** `verify-loop` on cumulative HEAD diff + `opus-code-reviewer` (inline Edit/Write fix cap=1, no `§Code Fix Plan` tuples) + `opus-auditor` + per-task `task_status_flip(verified→done)`.
+- **Pass B (per-stage):** `verify-loop` on cumulative HEAD diff + `opus-code-reviewer` (inline Edit/Write fix cap=1, no `§Code Fix Plan` tuples) + per-task `task_status_flip(verified→done)`.
 - **Inline closeout:** `stage_closeout_apply` (DB) + guarded `git mv` stage spec to `_closed/` (filesystem). Drops `stage-closeout-plan` + `stage-closeout-apply` skills + `plan-applier` code-fix mode + `stage-closeout-planner` agent.
 - **Stage commit:** single `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covering all Pass A diffs + code-review fixes + closeout fs mv (E13).
 - **Per-task commit record:** `task_commit_record(task_id, STAGE_COMMIT_SHA, "feat")` per task (shared sha; idempotent per UNIQUE).
