@@ -1,0 +1,27 @@
+id: TECH-765
+type: TECH
+title: "`iso_pool` primitive"
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-765.md
+files: []
+notes: |
+  `tools/sprite-gen/src/primitives/iso_pool.py` — light-blue rectangle with white rim; `w_px`/`d_px ∈ [8..20]`; palette key `pool`. Composer gate (T7.8 / TECH-769) rejects `iso_pool` on 1×1 archetype via `DecorationScopeError`.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-769
+  - TECH-770
+acceptance: |
+  - [ ] `iso_pool(canvas, x0, y0, w_px, d_px, palette)` draws filled rectangle with 1-px white rim.
+  - [ ] `w_px, d_px ∈ [8, 20]`; out-of-range raises `ValueError`.
+  - [ ] Palette key `pool` resolves light-blue + white-rim colours from active palette.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-765** — `iso_pool` primitive
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/src/primitives/iso_pool.py`
+    - Related: **TECH-769**, **TECH-770**
+    - Notes: Light-blue rectangle with white rim; `w_px`/`d_px ∈ [8..20]`; palette key `pool`. Composer gate (T7.8 / TECH-769) rejects `iso_pool` on 1×1 archetype via `DecorationScopeError`.

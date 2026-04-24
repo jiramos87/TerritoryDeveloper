@@ -334,6 +334,11 @@
     "grass_tuft": {
       "bright": [148, 210, 96]
     },
+    "pool": {
+      "bright": [112, 198, 232],
+      "mid": [78, 158, 198],
+      "rim": [248, 248, 248]
+    },
     "mustard_industrial": {
       "bright": [
         210,
