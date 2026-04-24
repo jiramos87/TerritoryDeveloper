@@ -1,0 +1,29 @@
+id: TECH-771
+type: TECH
+title: Placement seed-stability tests
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-771.md
+files: []
+notes: |
+  `tools/sprite-gen/tests/test_placement.py` — each placement strategy places declared count at stable coords given same seed. Covers composer `decorations:` integration from T7.7 + T7.8 (TECH-768 + TECH-769).
+depends_on:
+  - TECH-768
+  - TECH-769
+depends_on_raw: "**TECH-768**, **TECH-769**"
+related:
+  - TECH-770
+acceptance: |
+  - [ ] Each strategy (`corners`, `perimeter`, `random_border`, `grid`, `centered_front`, `centered_back`, explicit) produces expected item count.
+  - [ ] Same seed + same inputs → byte-identical coord list across runs.
+  - [ ] Composer integration (T7.8) raises `DecorationScopeError` on 1×1 + `iso_pool` regression case.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-771** — Placement seed-stability tests
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/tests/test_placement.py`
+    - Depends on: **TECH-768**, **TECH-769**
+    - Related: **TECH-770**
+    - Notes: Each placement strategy places declared count at stable coords given same seed. Covers composer `decorations:` integration from T7.7 + T7.8 (TECH-768 + TECH-769).

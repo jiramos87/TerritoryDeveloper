@@ -296,17 +296,39 @@ def _cmd_palette_import(args: argparse.Namespace) -> int:
 
     new_materials = new_palette["materials"]
 
-    # Preserve non-ramp keys (e.g. accent_dark / accent_light — TECH-716) from prior JSON.
+    # Preserve non-ramp keys (e.g. accent_dark / accent_light — TECH-716, pool.rim
+    # — TECH-765) and nested ramps (tree_deciduous — TECH-763) from prior JSON.
     for mat_name, new_levels in new_materials.items():
         prior_entry = prior_materials.get(mat_name, {})
         for key, val in prior_entry.items():
             if key not in ("bright", "mid", "dark"):
                 new_levels.setdefault(key, val)
+    # Restore prior nested-ramp materials that GPL round-trip cannot express,
+    # and drop the synthetic flattened expansions (`tree_deciduous_green`,
+    # `tree_deciduous_green_yellow`, ...) that import_gpl produced for them.
+    nested_prefixes: list[str] = []
+    for mat_name, prior_entry in prior_materials.items():
+        if isinstance(prior_entry, dict) and any(
+            isinstance(v, dict) for v in prior_entry.values()
+        ):
+            new_materials[mat_name] = prior_entry
+            nested_prefixes.append(mat_name)
+    for synthetic in [
+        n
+        for n in list(new_materials.keys())
+        if any(n.startswith(f"{p}_") for p in nested_prefixes)
+    ]:
+        new_materials.pop(synthetic, None)
 
-    # Emit diff lines or "no change".
+    # Emit diff lines or "no change". Iterate only over levels the imported
+    # material actually exposes (decoration partials like bush/grass_tuft/pool).
     changed = False
     for mat_name, levels in new_materials.items():
+        if any(isinstance(v, dict) for v in levels.values()):
+            continue  # Nested ramps skipped (preserved verbatim above).
         for level in ("bright", "mid", "dark"):
+            if level not in levels:
+                continue
             new_rgb = levels[level]
             old_rgb = (prior_materials.get(mat_name) or {}).get(level)
             if old_rgb != new_rgb:

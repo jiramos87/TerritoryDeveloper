@@ -271,10 +271,31 @@ def export_gpl(
     """
     palette = load_palette(cls, palettes_dir=palettes_dir)
     lines = ["GIMP Palette", f"Name: {cls}", "Columns: 3", "#"]
+
+    def _emit_levels(prefix: str, levels: dict) -> None:
+        """Emit GPL rows for a flat bright/mid/dark ramp, or recurse nested ramps.
+
+        Decoration ramps (TECH-762+) introduced partial ramps (`bush` lacks
+        `dark`) and nested ramps (`tree_deciduous.green.*`). Skip missing
+        levels rather than crashing; recurse one level into dict-of-dicts.
+        """
+        flat_keys = ("bright", "mid", "dark")
+        # Nested ramp: any value that is itself a dict (not a 3-tuple list)
+        has_nested = any(isinstance(v, dict) for v in levels.values())
+        if has_nested:
+            for sub_name, sub_levels in levels.items():
+                if isinstance(sub_levels, dict):
+                    _emit_levels(f"{prefix}_{sub_name}", sub_levels)
+            return
+        for level in flat_keys:
+            triple = levels.get(level)
+            if triple is None or not isinstance(triple, (list, tuple)) or len(triple) != 3:
+                continue
+            r, g, b = triple
+            lines.append(f"{int(r):3d} {int(g):3d} {int(b):3d}\t{prefix}_{level}")
+
     for mat_name, levels in palette["materials"].items():
-        for level in ("bright", "mid", "dark"):
-            r, g, b = levels[level]
-            lines.append(f"{r:3d} {g:3d} {b:3d}\t{mat_name}_{level}")
+        _emit_levels(mat_name, levels)
     text = "\n".join(lines) + "\n"
     if dest_path is not None:
         dest_path.write_text(text, encoding="utf-8")
@@ -358,12 +379,10 @@ def import_gpl(cls: str, gpl_path: Path) -> dict:
             )
         materials[mat_name][level] = [r, g, b]
 
-    # Validate every material has all three levels.
-    for mat_name, levels in materials.items():
-        missing = _VALID_LEVELS - set(levels.keys())
-        if missing:
-            raise GplParseError(
-                f"material {mat_name!r} missing level(s): {sorted(missing)}"
-            )
+    # TECH-762+ decoration ramps ship partial (bush/grass_tuft/pool) or nested
+    # (tree_deciduous) — `import_gpl` accepts any subset of {bright, mid, dark};
+    # callers needing a full ramp assert on their own contract.
+    if not materials:
+        raise GplParseError("no material rows found in GPL body")
 
     return {"class": cls, "materials": materials}

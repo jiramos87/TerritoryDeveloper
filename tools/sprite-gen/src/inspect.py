@@ -76,14 +76,21 @@ def inspect_png(path: str | Path) -> dict:
     y_min = h
     x_max = -1
     y_max = -1
+    palette_all: set[tuple[int, int, int]] = set()
+    palette_building: set[tuple[int, int, int]] = set()
+    palette_ground: set[tuple[int, int, int]] = set()
 
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
             if a < 16:
                 continue
+            rgb = (r, g, b)
+            palette_all.add(rgb)
             if _is_ground_pixel(r, g, b, a):
+                palette_ground.add(rgb)
                 continue
+            palette_building.add(rgb)
             building_pixels += 1
             if x < x_min:
                 x_min = x
@@ -96,6 +103,17 @@ def inspect_png(path: str | Path) -> dict:
 
     dia = _tile_diamond(w, h)
 
+    palette_report = {
+        "total": len(palette_all),
+        "building": len(palette_building),
+        "ground": len(palette_ground),
+        "sig": _palette_signature(palette_all),
+        "building_sig": _palette_signature(palette_building),
+        "ground_sig": _palette_signature(palette_ground),
+        "_raw_building": sorted(palette_building),
+        "_raw_ground": sorted(palette_ground),
+    }
+
     if building_pixels == 0:
         return {
             "path": str(p),
@@ -106,6 +124,7 @@ def inspect_png(path: str | Path) -> dict:
             "containment": "empty",
             "overflow_px": 0,
             "pixel_count": 0,
+            "palette": palette_report,
         }
 
     corners = [
@@ -143,7 +162,25 @@ def inspect_png(path: str | Path) -> dict:
         "containment": verdict,
         "overflow_px": footprint_overflow,
         "pixel_count": building_pixels,
+        "palette": palette_report,
     }
+
+
+def _palette_signature(colors: set[tuple[int, int, int]]) -> str:
+    """Stable hash of the sorted unique-color set — identical sprites share a sig."""
+    import hashlib
+    serialized = ",".join(f"{r:02x}{g:02x}{b:02x}" for (r, g, b) in sorted(colors))
+    return hashlib.sha1(serialized.encode("ascii")).hexdigest()[:12]
+
+
+def _jaccard(a: set, b: set) -> float:
+    """Jaccard similarity |A∩B| / |A∪B|. 1.0 = identical, 0.0 = disjoint."""
+    if not a and not b:
+        return 1.0
+    union = a | b
+    if not union:
+        return 1.0
+    return len(a & b) / len(union)
 
 
 def inspect_batch(paths: list[str | Path]) -> dict:
@@ -164,19 +201,76 @@ def inspect_batch(paths: list[str | Path]) -> dict:
         ys_min = [b[1] for b in bboxes]
         bbox_shift_px = max(max(xs_min) - min(xs_min), max(ys_min) - min(ys_min))
 
-    variation_pass = False
+    geometric_pass = False
     if pixel_spread_pct is not None and pixel_spread_pct > 5.0:
-        variation_pass = True
+        geometric_pass = True
     if bbox_shift_px is not None and bbox_shift_px > 4:
-        variation_pass = True
+        geometric_pass = True
+
+    # Palette variation — Jaccard distance across all variant pairs + distinct-sig counts.
+    palette_variation = _compute_palette_variation(reports)
+
+    # Strip raw palette sets from per-variant report (bloat) after use.
+    for r in reports:
+        pal = r.get("palette")
+        if isinstance(pal, dict):
+            pal.pop("_raw_building", None)
+            pal.pop("_raw_ground", None)
+
+    # Overall verdict: pass if EITHER geometric OR palette variation fires.
+    overall_pass = geometric_pass or palette_variation["verdict"] == "pass"
 
     return {
         "variants": reports,
         "variation": {
             "pixel_spread_pct": pixel_spread_pct,
             "bbox_shift_px": bbox_shift_px,
-            "verdict": "pass" if variation_pass else "static",
+            "geometric_verdict": "pass" if geometric_pass else "static",
+            "palette": palette_variation,
+            "verdict": "pass" if overall_pass else "static",
         },
+    }
+
+
+def _compute_palette_variation(reports: list[dict]) -> dict:
+    """Compute palette diversity across variants.
+
+    Metrics:
+    - `distinct_total_sigs` / `distinct_building_sigs` / `distinct_ground_sigs`:
+      number of unique palette signatures (1 = all variants share palette).
+    - `min_building_jaccard` / `min_ground_jaccard`: worst-case Jaccard similarity
+      across any variant pair. 1.0 = identical palettes; < 0.9 = palette varies.
+    - `verdict`: `pass` when any dimension shows variation, else `static`.
+    """
+    total_sigs = {r["palette"]["sig"] for r in reports if r.get("palette")}
+    building_sigs = {r["palette"]["building_sig"] for r in reports if r.get("palette")}
+    ground_sigs = {r["palette"]["ground_sig"] for r in reports if r.get("palette")}
+
+    building_sets = [set(map(tuple, r["palette"].get("_raw_building", []))) for r in reports if r.get("palette")]
+    ground_sets = [set(map(tuple, r["palette"].get("_raw_ground", []))) for r in reports if r.get("palette")]
+
+    min_b_jaccard: Optional[float] = None
+    min_g_jaccard: Optional[float] = None
+    if len(building_sets) >= 2:
+        jaccards_b = [_jaccard(a, b) for i, a in enumerate(building_sets) for b in building_sets[i + 1:]]
+        min_b_jaccard = round(min(jaccards_b), 3) if jaccards_b else None
+    if len(ground_sets) >= 2:
+        jaccards_g = [_jaccard(a, b) for i, a in enumerate(ground_sets) for b in ground_sets[i + 1:]]
+        min_g_jaccard = round(min(jaccards_g), 3) if jaccards_g else None
+
+    palette_varied = len(total_sigs) > 1 or len(building_sigs) > 1 or len(ground_sigs) > 1
+    if min_b_jaccard is not None and min_b_jaccard < 0.9:
+        palette_varied = True
+    if min_g_jaccard is not None and min_g_jaccard < 0.9:
+        palette_varied = True
+
+    return {
+        "distinct_total_sigs": len(total_sigs),
+        "distinct_building_sigs": len(building_sigs),
+        "distinct_ground_sigs": len(ground_sigs),
+        "min_building_jaccard": min_b_jaccard,
+        "min_ground_jaccard": min_g_jaccard,
+        "verdict": "pass" if palette_varied else "static",
     }
 
 
@@ -186,6 +280,10 @@ def main(argv: list[str]) -> int:
         return 2
     if len(argv) == 1:
         report = inspect_png(argv[0])
+        pal = report.get("palette")
+        if isinstance(pal, dict):
+            pal.pop("_raw_building", None)
+            pal.pop("_raw_ground", None)
     else:
         report = inspect_batch(argv)
     print(json.dumps(report, indent=2))

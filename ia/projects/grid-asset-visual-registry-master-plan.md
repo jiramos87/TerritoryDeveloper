@@ -1,6 +1,6 @@
 # Grid asset visual registry — Master Plan (Bucket 12 MVP spine)
 
-> **Status:** In Progress — Step 3 / Stage 3.3 next (Stage 3.1–3.2 closed)
+> **Status:** In Progress — Stage 3.3 / TECH-772 (Stages 1.1–3.2 archived)
 >
 > **Scope:** Postgres-backed **grid asset catalog** (identity, sprites, economy, spawn pools) as source of truth; **HTTP + MCP** for agents; **Unity boot snapshot** consumed by **`GridAssetCatalog`** (no new singleton — Inspector + `FindObjectOfType` per `unity-invariants` #4); **Zone S** first consumer via **`ZoneSubTypeRegistry`** convergence; **`PlacementValidator`** owns place-here legality; **`wire_asset_from_catalog`** bridge kind for design-system-safe Control Panel wiring; export + import hygiene + IA scene contract. **Out:** sprite-gen composition logic (Bucket 5), deep sim rules beyond catalog reads, `web/` dashboard product UI (Bucket 9 transport only — this plan adds `/api/catalog/*` on the existing Next app). Post-MVP extensions → recommend `docs/grid-asset-visual-registry-post-mvp-extensions.md` (not authored by this workflow).
 >
@@ -15,7 +15,7 @@
 > - **Concurrency:** optimistic **`updated_at`** on writes; conflicting PATCH returns retriable error.
 > - **Bucket 12** child under `ia/projects/full-game-mvp-master-plan.md` (umbrella edit is a **separate** follow-up task, not auto-applied here).
 >
-> **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
+> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage block + 5-col Task table schema — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
 >
 > **Coordination:** **`ia/projects/ui-polish-master-plan.md`** owns widget/visual contracts; this plan owns **catalog + bridge recipes**. **`ia/projects/sprite-gen-master-plan.md`** feeds **`generator_archetype_id`** + paths. **`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`** / **`ia/projects/session-token-latency-master-plan.md`** = registration-only follow-ups when new MCP kinds ship.
 >
@@ -25,44 +25,18 @@
 > - `ia/specs/economy-system.md` §Zone sub-type registry (`lineStart` 28) + Zone S — **`ZoneSubTypeRegistry`** vocabulary.
 > - `ia/specs/ui-design-system.md` §1 Foundations + §2 Components — **`UiTheme`**, **`IlluminatedButton`**, Control Panel paths (appendix lands Step 4).
 > - `ia/specs/persistence-system.md` — Load pipeline order (`lineStart` 24) before mutating save fields.
-> - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — cardinality (≥2 tasks/phase).
+> - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — 2-level Stage/Task cardinality (≥2 tasks per Stage, hard; ≤6 soft).
 > - `ia/rules/invariants.md` — #1 (specs vs `ia/projects/`), #2 (`reserve-id.sh`), #3 (MCP-first retrieval).
 > - `ia/rules/unity-invariants.md` — #3 (no `FindObjectOfType` in hot loops), #4 (no new singletons — **`GridAssetCatalog`** is scene **`MonoBehaviour`**), #5 (no direct `cellArray` — **`PlacementValidator`** consumes **`GridManager`** API), #6 (do not grow **`GridManager`** — extract helpers).
 > - MCP: `backlog_issue {id}` per referenced id once tasks file; never full `BACKLOG.md` read.
 
 ---
 
-## Steps
+## Stages
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-plan` + `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `stage-file-apply` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` → `In Review`; `/implement` → `In Progress`; `/closeout` (Stage-scoped) → `Done (archived)` + phase box when last task of phase closes + stage `Final` + step rollup; `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `ia/projects/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
 
-### Step 1 — Postgres catalog + HTTP API + MCP tools
-
-**Status:** Final
-
-**Backlog state (Step 1):** Stage 1.1 archived (6); Stage 1.2 archived (**TECH-626**–**TECH-629**)
-
-**Objectives:** Land the **authoritative catalog** in Postgres with the seven logical tables from exploration §8.1 (core + economy + sprite bind + spawn pools). Expose **CRUD + preview-diff** over **`/api/catalog/*`** with **optimistic locking** and **draft/published** filters. Register thin **`catalog_*`** MCP tools and **`caller_agent`** allowlist hooks so agents mutate data without ad-hoc SQL (raw SQL tool remains escape hatch).
-
-**Exit criteria:**
-
-- `db/migrations/0011_catalog_core.sql` + `db/migrations/0012_catalog_spawn_pools.sql` applied; Zone S **seven rows** seeded via fixture SQL or repeatable seed script.
-- Hand-written **DTO modules** under `web/types/api/catalog*.ts` match migration columns; `npm run validate:web` (or project typecheck) green for touched `web/` surfaces.
-- Routes implemented: `GET /api/catalog/assets`, `GET /api/catalog/assets/:id`, `POST`, `PATCH` (409 on stale `updated_at`), `POST /api/catalog/assets/:id/retire`, `POST /api/catalog/preview-diff`.
-- `tools/mcp-ia-server/` registers **`catalog_list`**, **`catalog_get`**, **`catalog_upsert`**, pool helpers per §8.3; `tools/mcp-ia-server/src/auth/caller-allowlist.ts` updated for mutation classes (coordinate minimal registration-only tasks in mcp-lifecycle plan if required).
-- `npm run validate:all` green for IA/MCP edits.
-
-**Art:** None
-
-**Relevant surfaces (load when step opens):**
-
-- `docs/grid-asset-visual-registry-exploration.md` §8.1–§8.4
-- `ia/specs/economy-system.md` §Zone sub-type registry (`Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` cited in glossary)
-- Router: economy + persistence domains; **`web/app/api/`** (new routes) — `web-backend-logic` rule on-demand for App Router patterns
-- New: `db/migrations/0011_catalog_core.sql`, `db/migrations/0012_catalog_spawn_pools.sql` (paths `(new)` until landed)
-- Existing: `db/migrations/0001_ia_tables.sql` … `0010_agent_bridge_lease.sql`, `web/lib/db/`, `web/types/api/` (catalog DTOs — Stage 1.2), `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/auth/caller-allowlist.ts`
-
-#### Stage 1.1 — Migrations + Zone S seed
+### Stage 1.1 — Migrations + Zone S seed
 
 **Status:** Final
 
@@ -74,27 +48,22 @@
 - Zone S seed maps **ids 0–6** to slugs compatible with `Assets/Resources/Economy/zone-sub-types.json` intent.
 - Document rollback / one-shot repair note in task §Findings if needed.
 
-**Phases:**
-
-- [x] Phase 1 — Core tables + constraints + indexes.
-- [x] Phase 2 — Pool tables + membership + seed fixture.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.1.1 | Author 0011 core DDL | 1 | **TECH-612** | Done (archived) | Add `catalog_asset`, `catalog_sprite`, `catalog_asset_sprite`, `catalog_economy` per exploration §8.1; **`(category, slug)`** UNIQUE; money columns **`NOT NULL`** where required; **`updated_at`** trigger or app-managed column. |
-| T1.1.2 | Indexes FKs and status filters | 1 | **TECH-613** | Done (archived) | Index **`status`**, **`asset_id`** joins, **`sprite_id`** lookups; FK `ON DELETE` policy aligned with soft-retire + GC story (document chosen behavior in §Implementation). |
-| T1.1.3 | Migration smoke + idempotency | 1 | **TECH-614** | Done (archived) | Run migrate twice / fresh DB; verify no duplicate enum casts; add CI-friendly **`db:migrate`** note or script touch if repo requires. |
-| T1.1.4 | Author 0012 pool DDL | 2 | **TECH-615** | Done (archived) | `catalog_spawn_pool`, `catalog_pool_member` + **`weight`**; FK to `catalog_asset`. |
-| T1.1.5 | Seed seven Zone S assets | 2 | **TECH-616** | Done (archived) | SQL seed or `tools/` seed runner inserts seven rows + placeholder sprite bind strategy (nullable until art lands). |
-| T1.1.6 | Pool seed smoke optional | 2 | **TECH-617** | Done (archived) | Minimal pool row proving **`catalog_pool_member`** write path; optional if MVP defers pools until Step 2 consumer needs it — if deferred, document explicit deferral in §Findings (still land empty tables). |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.1.1 | Author 0011 core DDL | **TECH-612** | Done (archived) | Add `catalog_asset`, `catalog_sprite`, `catalog_asset_sprite`, `catalog_economy` per exploration §8.1; **`(category, slug)`** UNIQUE; money columns **`NOT NULL`** where required; **`updated_at`** trigger or app-managed column. |
+| T1.1.2 | Indexes FKs and status filters | **TECH-613** | Done (archived) | Index **`status`**, **`asset_id`** joins, **`sprite_id`** lookups; FK `ON DELETE` policy aligned with soft-retire + GC story (document chosen behavior in §Implementation). |
+| T1.1.3 | Migration smoke + idempotency | **TECH-614** | Done (archived) | Run migrate twice / fresh DB; verify no duplicate enum casts; add CI-friendly **`db:migrate`** note or script touch if repo requires. |
+| T1.1.4 | Author 0012 pool DDL | **TECH-615** | Done (archived) | `catalog_spawn_pool`, `catalog_pool_member` + **`weight`**; FK to `catalog_asset`. |
+| T1.1.5 | Seed seven Zone S assets | **TECH-616** | Done (archived) | SQL seed or `tools/` seed runner inserts seven rows + placeholder sprite bind strategy (nullable until art lands). |
+| T1.1.6 | Pool seed smoke optional | **TECH-617** | Done (archived) | Minimal pool row proving **`catalog_pool_member`** write path; optional if MVP defers pools until Step 2 consumer needs it — if deferred, document explicit deferral in §Findings (still land empty tables). |
 
 #### §Stage Closeout Plan
 
 > Stage 1.1 closeout applied 2026-04-22 — archive `ia/backlog/TECH-612`–`TECH-617` → `ia/backlog-archive/`; delete matching `ia/projects/TECH-612`–`TECH-617` specs; task rows → **Done (archived)**; `materialize-backlog.sh` + `validate:all`.
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -243,11 +212,15 @@
       - [ ] Note outcome in §Findings for Step 2 consumers.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 1.2 — Catalog DTOs + API types (no Drizzle)
+#### §Stage Audit
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 1.2 — Catalog DTOs + API types (no Drizzle)
 
 **Status:** Final
 
@@ -258,25 +231,20 @@
 - DTO modules typecheck; **`npm run validate:web`** (or `web` typecheck) passes.
 - No drift vs migrations (column names + nullability) — documented spot-check in §7 / Decision Log.
 
-**Phases:**
-
-- [x] Phase 1 — Core + pool row DTOs (0011 / 0012).
-- [x] Phase 2 — List/preview/lock DTOs + validation policy (script or doc).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.2.1 | Core catalog DTOs (0011) | 1 | **TECH-626** | Done (archived) | Hand-written types for `catalog_asset` / `catalog_sprite` / `catalog_asset_sprite` / `catalog_economy` matching `0011`; shapes for join used in **`GET /api/catalog/assets/:id`**. |
-| T1.2.2 | Pool DTOs (0012) | 1 | **TECH-627** | Done (archived) | Types for `catalog_spawn_pool` + `catalog_pool_member` matching `0012`; test helpers or documented insert pattern for pool membership. |
-| T1.2.3 | API filter + lock + preview DTOs | 2 | **TECH-628** | Done (archived) | Shared types for list filters (`status`, `category`), optimistic-lock payload (`updated_at`), preview-diff result shape. |
-| T1.2.4 | DTO ↔ migration alignment | 2 | **TECH-629** | Done (archived) | Wire **`package.json` script** or **doc checklist** so DTO fields stay aligned with `0011`/`0012` SQL (no `drizzle-kit`; SQL is authoritative). |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.2.1 | Core catalog DTOs (0011) | **TECH-626** | Done (archived) | Hand-written types for `catalog_asset` / `catalog_sprite` / `catalog_asset_sprite` / `catalog_economy` matching `0011`; shapes for join used in **`GET /api/catalog/assets/:id`**. |
+| T1.2.2 | Pool DTOs (0012) | **TECH-627** | Done (archived) | Types for `catalog_spawn_pool` + `catalog_pool_member` matching `0012`; test helpers or documented insert pattern for pool membership. |
+| T1.2.3 | API filter + lock + preview DTOs | **TECH-628** | Done (archived) | Shared types for list filters (`status`, `category`), optimistic-lock payload (`updated_at`), preview-diff result shape. |
+| T1.2.4 | DTO ↔ migration alignment | **TECH-629** | Done (archived) | Wire **`package.json` script** or **doc checklist** so DTO fields stay aligned with `0011`/`0012` SQL (no `drizzle-kit`; SQL is authoritative). |
 
 #### §Stage Closeout Plan
 
 > Stage 1.2 closeout applied inline with ship-stage Pass 2 — **TECH-626**–**TECH-629** archived to `ia/backlog-archive/`, specs deleted, table flipped **Done (archived)**; no glossary/rule migrations.
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -376,13 +344,17 @@
       - [ ] If doc-only: §7 checklist + `web/README.md` link.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
 > **Recheck 2026-04-22 (Stage 1.2):** `TECH-626`–`TECH-629` — §1/§2 vs task **Intent**; §7 phases; §8 acceptance; §Plan Digest; frontmatter `phases:`; DTO / no-Drizzle lock vs `docs/architecture-audit-handoff-2026-04-22.md`. Drift candidates: none.
 
-#### Stage 1.3 — Catalog API gap-patch: test harness + behavior fixes
+#### §Stage Audit
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 1.3 — Catalog API gap-patch: test harness + behavior fixes
 
 **Status:** Final
 
@@ -395,19 +367,14 @@
 - `ia/rules/web-backend-logic.md` updated (pagination + error contract + retire idempotency); JSDoc `@see` refs reconciled.
 - `npm run validate:all` + `npm run validate:web` green.
 
-**Phases:**
-
-- [x] Phase 1 — Integration test harness + happy-path coverage.
-- [x] Phase 2 — Behavior gaps (6 bug fixes) + paired regression tests + doc/ref reconciliation.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.3.1 | Catalog API test harness + happy-path coverage | 1 | **TECH-755** | Done (archived) | Integration test infra for `/api/catalog/*`: DB setup/teardown per test, transactional rollback, HTTP helper, seed fixture. Happy-path tests: GET list published-default, GET by id joined shape snapshot, POST create 201, PATCH 200, retire 200, preview-diff 200 stable JSON. |
-| T1.3.2 | Catalog API behavior gaps + doc/ref reconciliation | 2 | **TECH-756** | Done (archived) | Six bug fixes with paired regression tests: GET-by-id retired-asset 404 filter; POST slot uniqueness pre-check; PATCH unknown-field reject; PATCH no-op-body reject; preview-diff swap `throw e` → `catalogJsonError`; retire 409 on invalid `replaced_by`. Doc: pagination + error contract + retire idempotency in `web-backend-logic.md`; fix JSDoc `@see` refs in 4 route files. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.3.1 | Catalog API test harness + happy-path coverage | **TECH-755** | Done (archived) | Integration test infra for `/api/catalog/*`: DB setup/teardown per test, transactional rollback, HTTP helper, seed fixture. Happy-path tests: GET list published-default, GET by id joined shape snapshot, POST create 201, PATCH 200, retire 200, preview-diff 200 stable JSON. |
+| T1.3.2 | Catalog API behavior gaps + doc/ref reconciliation | **TECH-756** | Done (archived) | Six bug fixes with paired regression tests: GET-by-id retired-asset 404 filter; POST slot uniqueness pre-check; PATCH unknown-field reject; PATCH no-op-body reject; preview-diff swap `throw e` → `catalogJsonError`; retire 409 on invalid `replaced_by`. Doc: pagination + error contract + retire idempotency in `web-backend-logic.md`; fix JSDoc `@see` refs in 4 route files. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -533,11 +500,15 @@ mechanicalization_score:
       - Pagination contract: does shipped list route already implement cursor vs offset? Doc the as-built.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review recheck 2026-04-23 (Stage 1.3): TECH-755 / TECH-756 — §1/§2 vs task Intent; §7 phases; §8 acceptance; §Plan Digest; frontmatter `phases:`; cross-ref anchors; invariant compliance; glossary. Drift candidates: none.
 
-#### Stage 1.4 — MCP `catalog_*` tools + allowlist
+#### §Stage Audit
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 1.4 — MCP `catalog_*` tools + allowlist
 
 **Status:** Final
 
@@ -548,48 +519,33 @@ mechanicalization_score:
 - MCP server lists new tools; package tests cover happy + error paths.
 - Docs snippet in `docs/mcp-ia-server.md` updated if required by validators.
 
-**Phases:**
-
-- [x] Phase 1 — Tool implementations.
-- [x] Phase 2 — Tests + allowlist + docs index.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.4.1 | catalog_list + catalog_get | 1 | **TECH-650** | Done | Thin wrappers over HTTP or shared DB layer; enforce **published** default for agents unless flag set. |
-| T1.4.2 | catalog_upsert + pool tools | 1 | **TECH-651** | Done | Implement **`catalog_upsert`** + minimal **`catalog_pool_*`** per §8.3; validate payloads server-side. |
-| T1.4.3 | MCP unit tests | 1 | **TECH-652** | Done | Extend `tools/mcp-ia-server` tests with fixture DB or mocked fetch; cover dry-run flags if exposed here. |
-| T1.4.4 | caller-allowlist updates | 2 | **TECH-653** | Done | Edit `caller-allowlist.ts` — classify create/update vs delete guarded; follow existing TECH-506 patterns. |
-| T1.4.5 | Doc touch + validate:all | 2 | **TECH-654** | Done | Update human MCP catalog if CI requires; run **`npm run validate:all`** green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.4.1 | catalog_list + catalog_get | **TECH-650** | Done | Thin wrappers over HTTP or shared DB layer; enforce **published** default for agents unless flag set. |
+| T1.4.2 | catalog_upsert + pool tools | **TECH-651** | Done | Implement **`catalog_upsert`** + minimal **`catalog_pool_*`** per §8.3; validate payloads server-side. |
+| T1.4.3 | MCP unit tests | **TECH-652** | Done | Extend `tools/mcp-ia-server` tests with fixture DB or mocked fetch; cover dry-run flags if exposed here. |
+| T1.4.4 | caller-allowlist updates | **TECH-653** | Done | Edit `caller-allowlist.ts` — classify create/update vs delete guarded; follow existing TECH-506 patterns. |
+| T1.4.5 | Doc touch + validate:all | **TECH-654** | Done | Update human MCP catalog if CI requires; run **`npm run validate:all`** green. |
 
-### Step 2 — Snapshot export + Unity `GridAssetCatalog` + Zone S consumer
+#### §Stage File Plan
 
-**Status:** Final
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage File Plan` pair seam (see `ia/rules/plan-apply-pair-contract.md`). Tasks TECH-650–TECH-654 filed inline under pre-refactor flow; see archived yaml in `ia/backlog-archive/`._
 
-**Backlog state (Step 2):** Stage 2.1 closed (archived **TECH-662**–**TECH-666**); Stage 2.2 closed (archived **TECH-669**–**TECH-673**); Stage 2.3 closed (archived **TECH-684**–**TECH-687**)
+#### §Plan Fix
 
-**Objectives:** Add **`tools/`** export that dumps **published** catalog to a **versioned snapshot file** Unity loads at boot. Implement **`GridAssetCatalog`** as scene **`MonoBehaviour`** (serialized refs + `FindObjectOfType` fallback) exposing queries by **`asset_id`** and **`(category, slug)`**. Migrate **`ZoneSubTypeRegistry`** read path to **`GridAssetCatalog`** for Zone S while preserving envelope/upkeep callers.
+_retroactive-skip — pre-refactor Stage; no `plan-review` sweep persisted inline._
 
-**Exit criteria:**
+#### §Stage Audit
 
-- Export script writes snapshot under agreed path (e.g. `Assets/StreamingAssets/...` or `Assets/Resources/...`) + documents **hot-reload** dev signal hook (stub OK if broadcast channel not ready).
-- `GridAssetCatalog.cs` at `Assets/Scripts/Managers/GameManagers/GridAssetCatalog.cs` parses snapshot; fires **`OnCatalogReloaded`**; **no** `FindObjectOfType` in per-frame paths.
-- `ZoneSubTypeRegistry` consumes catalog rows for the seven sub-types; `npm run unity:compile-check` green.
-- Import hygiene: export embeds **sprite paths + PPU/pivot** policy fields for allowlisted textures (or references manifest sidecar).
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24)._
 
-**Art:** Optional placeholder sprites for dev missing-asset policy; can remain pink-square stub.
+#### §Stage Closeout Plan
 
-**Relevant surfaces:**
+_retroactive-skip — Stage closed inline under pre-refactor per-Task closeout flow; task rows flipped to Done, specs deleted, archive yaml in `ia/backlog-archive/TECH-650`–`TECH-654`._
 
-- `docs/grid-asset-visual-registry-exploration.md` §5–§6, §8.2 snapshot lifecycle
-- `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` (existing)
-- `Assets/Scripts/Managers/GameManagers/GridManager.cs` (read-only contract — no new responsibilities)
-- New: `Assets/Scripts/Managers/GameManagers/GridAssetCatalog.cs` `(new)`
-- New: `tools/catalog-export/` or `tools/scripts/catalog-export.*` `(new)`
-- Existing: `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs`, `UIManager` toolbar bindings (read when wiring)
-
-#### Stage 2.1 — Export CLI + snapshot schema
+### Stage 2.1 — Export CLI + snapshot schema
 
 **Status:** Done
 
@@ -600,22 +556,17 @@ mechanicalization_score:
 - `node tools/...` (or `npm run catalog:export`) produces snapshot; second run stable ordering.
 - Document inputs to hash key (exploration §7 baker determinism themes).
 
-**Phases:**
-
-- [x] Phase 1 — Reader + JSON schema.
-- [x] Phase 2 — CI `--check` + docs.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.1.1 | Export reads published rows | 1 | **TECH-662** | Done | Query joins asset/sprite/bind/economy; filter **`status=published`** for ship; dev flag includes draft. |
-| T2.1.2 | Snapshot JSON schema + version | 1 | **TECH-663** | Done | Top-level **`schemaVersion`**, **`generatedAt`**, arrays for assets/sprites/bindings; stable sort keys. |
-| T2.1.3 | Write to Unity consumable path | 1 | **TECH-664** | Done | Choose `StreamingAssets` vs `Resources`; document tradeoff; ensure `.meta` policy for generated file. |
-| T2.1.4 | Import hygiene hooks | 2 | **TECH-665** | Done | Emit sidecar list of texture paths for allowlisted **`TextureImporter`** adjustment (or embed PPU per exploration §6). |
-| T2.1.5 | Stale check mode | 2 | **TECH-666** | Done | `catalog:export --check` compares hash vs working tree file; exit non-zero on drift for CI optional gate. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.1.1 | Export reads published rows | **TECH-662** | Done | Query joins asset/sprite/bind/economy; filter **`status=published`** for ship; dev flag includes draft. |
+| T2.1.2 | Snapshot JSON schema + version | **TECH-663** | Done | Top-level **`schemaVersion`**, **`generatedAt`**, arrays for assets/sprites/bindings; stable sort keys. |
+| T2.1.3 | Write to Unity consumable path | **TECH-664** | Done | Choose `StreamingAssets` vs `Resources`; document tradeoff; ensure `.meta` policy for generated file. |
+| T2.1.4 | Import hygiene hooks | **TECH-665** | Done | Emit sidecar list of texture paths for allowlisted **`TextureImporter`** adjustment (or embed PPU per exploration §6). |
+| T2.1.5 | Stale check mode | **TECH-666** | Done | `catalog:export --check` compares hash vs working tree file; exit non-zero on drift for CI optional gate. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -737,11 +688,15 @@ mechanicalization_score:
       Phase 2 — --check flag: parse args, run export in memory, diff vs on-disk file, stderr message on mismatch.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 2.2 — `GridAssetCatalog` runtime loader
+#### §Stage Audit
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 2.2 — `GridAssetCatalog` runtime loader
 
 **Status:** Final
 
@@ -752,20 +707,15 @@ mechanicalization_score:
 - Main scene contains component instance wired via Inspector; **`Awake`** loads snapshot; **`GetAsset`/`TryGet`** APIs documented XML summary.
 - **`OnCatalogReloaded`** invoked after reload.
 
-**Phases:**
-
-- [x] Phase 1 — Parse + index.
-- [x] Phase 2 — Boot + reload hook.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.2.1 | DTOs + parser | 1 | **TECH-669** | Done (archived) | `JsonUtility`-friendly DTOs or split files if needed; avoid Newtonsoft unless separate issue introduces it. |
-| T2.2.2 | Indexes by id and slug | 1 | **TECH-670** | Done (archived) | `Dictionary<int, CatalogAssetEntry>` + composite key `(category, slug)`; defensive duplicates log + skip. |
-| T2.2.3 | Missing sprite resolution | 1 | **TECH-671** | Done (archived) | Dev: loud placeholder material/sprite reference; Ship: mark row unavailable for UI queries. |
-| T2.2.4 | Boot load path | 2 | **TECH-672** | Done (archived) | `StreamingAssets`/`Resources` load; timing vs `ZoneSubTypeRegistry` init order documented; no singleton pattern. |
-| T2.2.5 | Hot-reload signal stub | 2 | **TECH-673** | Done (archived) | Editor/dev only: file watcher or bridge ping triggers reload + event; shipped players no-op. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.2.1 | DTOs + parser | **TECH-669** | Done (archived) | `JsonUtility`-friendly DTOs or split files if needed; avoid Newtonsoft unless separate issue introduces it. |
+| T2.2.2 | Indexes by id and slug | **TECH-670** | Done (archived) | `Dictionary<int, CatalogAssetEntry>` + composite key `(category, slug)`; defensive duplicates log + skip. |
+| T2.2.3 | Missing sprite resolution | **TECH-671** | Done (archived) | Dev: loud placeholder material/sprite reference; Ship: mark row unavailable for UI queries. |
+| T2.2.4 | Boot load path | **TECH-672** | Done (archived) | `StreamingAssets`/`Resources` load; timing vs `ZoneSubTypeRegistry` init order documented; no singleton pattern. |
+| T2.2.5 | Hot-reload signal stub | **TECH-673** | Done (archived) | Editor/dev only: file watcher or bridge ping triggers reload + event; shipped players no-op. |
 
 #### §Stage Audit
 
@@ -783,7 +733,7 @@ mechanicalization_score:
 
 > Stage 2.2 closeout applied 2026-04-22 (after compile gate) — **TECH-669**–**TECH-673** `status: closed` in `ia/backlog-archive/{id}.yaml` (source open rows removed); `ia/projects/TECH-669`–`TECH-673` deleted; table **Done (archived)**; `BACKLOG.md` / `BACKLOG-ARCHIVE.md` via `materialize-backlog.sh` + `validate:all` green; `docs/implementation/grid-asset-visual-registry-stage-2.2-plan.md` task index points at archive, not deleted specs; no glossary or MCP `catalog_*` change in this stage (Unity runtime only).
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -911,11 +861,11 @@ mechanicalization_score:
       Phase 2 — Wrap watcher init in editor conditional; `Update` not used; manual refresh ok for stub.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 2.3 — Zone S consumer migration
+### Stage 2.3 — Zone S consumer migration
 
 **Status:** Final
 
@@ -926,19 +876,14 @@ mechanicalization_score:
 - `SubTypePickerModal`, `BudgetAllocationService`, `ZoneSService` compile against new lookup APIs.
 - EditMode tests cover seven ids resolution.
 
-**Phases:**
-
-- [x] Phase 1 — Registry refactor.
-- [x] Phase 2 — Call-site smoke + tests.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.3.1 | Wire registry to catalog | 1 | **TECH-684** | Done (archived) | Inject `[SerializeField] GridAssetCatalog catalog` + fallback `FindObjectOfType` in `Awake` on `ZoneSubTypeRegistry` GameObject. |
-| T2.3.2 | Map subTypeId to asset_id | 1 | **TECH-685** | Done (archived) | Stable mapping table (`0..6` → catalog PK) from seed; document migration from JSON-only era. |
-| T2.3.3 | Update callers | 2 | **TECH-686** | Done (archived) | Adjust `UIManager` / modals to use registry APIs without breaking envelope logic. |
-| T2.3.4 | EditMode tests | 2 | **TECH-687** | Done (archived) | Tests load snapshot fixture under `Assets/Tests/EditMode/...`; assert costs + display names. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.3.1 | Wire registry to catalog | **TECH-684** | Done (archived) | Inject `[SerializeField] GridAssetCatalog catalog` + fallback `FindObjectOfType` in `Awake` on `ZoneSubTypeRegistry` GameObject. |
+| T2.3.2 | Map subTypeId to asset_id | **TECH-685** | Done (archived) | Stable mapping table (`0..6` → catalog PK) from seed; document migration from JSON-only era. |
+| T2.3.3 | Update callers | **TECH-686** | Done (archived) | Adjust `UIManager` / modals to use registry APIs without breaking envelope logic. |
+| T2.3.4 | EditMode tests | **TECH-687** | Done (archived) | Tests load snapshot fixture under `Assets/Tests/EditMode/...`; assert costs + display names. |
 
 #### §Stage Audit
 
@@ -955,7 +900,7 @@ mechanicalization_score:
 
 > **Applied 2026-04-22 (ship-stage-main-session):** archived **TECH-684**…**TECH-687** to `ia/backlog-archive/` (`status: closed`, `completed: "2026-04-22"`); removed temporary `ia/projects/TECH-684`…`TECH-687` specs; flipped Stage 2.3 task table to **Done (archived)** and Stage **Status** to **Final**; ran `materialize-backlog.sh` + `validate:all`.
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1054,36 +999,11 @@ mechanicalization_score:
       Phase 1 — Add fixture + tests calling public registry surface only; no Play Mode.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-### Step 3 — Placement validator + save semantics + sprite GC
-
-**Status:** In Progress (Stages 3.1–3.2 done; Stage 3.3 still _pending_)
-
-**Backlog state (Step 3):** Stage 3.1 done (**TECH-688**..**TECH-692** archived); Stage 3.2 done (**TECH-757**..**TECH-761** archived); Stage 3.3 still _pending_
-
-**Objectives:** Introduce **`PlacementValidator`** (new type) as **single owner** of **`CanPlace(assetId, cell, rotation)`** with structured reason codes for UX + ghosts. Extend **save DTO** to store **`asset_id`** and implement **`replaced_by`** remap on load. Add **sprite GC** janitor endpoint or SQL job per exploration §8.4 point 11.
-
-**Exit criteria:**
-
-- `PlacementValidator.cs` under `Assets/Scripts/Managers/GameManagers/` (or `Services/` sibling) — **does not** touch `grid.cellArray` directly; uses **`GridManager`** public API only.
-- Ghost tint + tooltip consumers read validator output (stub rotation if always zero in MVP).
-- `GameSaveManager` + `CellData` (or parallel structure) persists **`asset_id`**; load applies **`replaced_by`** chain safely.
-- Admin/agent **`catalog_sprite` GC** removes unreferenced rows per policy.
-
-**Art:** None
-
-**Relevant surfaces:**
-
-- `docs/grid-asset-visual-registry-exploration.md` §8.3 **`PlacementValidator`**, **`GameSaveManager`**
-- `ia/specs/persistence-system.md` Load pipeline (`lineStart` 24)
-- `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`, `CellData` definition sites
-- `Assets/Scripts/Managers/GameManagers/CursorManager.cs`, `ZoneManager.cs` (integration hooks — extract if needed)
-- New: `Assets/Scripts/Managers/GameManagers/PlacementValidator.cs` `(new)`
-
-#### Stage 3.1 — `PlacementValidator` core API
+### Stage 3.1 — `PlacementValidator` core API
 
 **Status:** Done — 5 tasks closed (**TECH-688**..**TECH-692**, all archived)
 
@@ -1094,22 +1014,17 @@ mechanicalization_score:
 - Public method returns **`PlacementResult`** (allowed + **`PlacementFailReason`** + optional detail string).
 - Unit tests table-driven for core cases.
 
-**Phases:**
-
-- [ ] Phase 1 — Types + zoning match.
-- [ ] Phase 2 — Economy + unlock stubs.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T3.1.1 | Author PlacementValidator type | 1 | **TECH-688** | Done (archived) | New class file; serialized refs to **`GridManager`**, **`GridAssetCatalog`**, **`EconomyManager`** per guardrails. |
-| T3.1.2 | Reason codes + result struct | 1 | **TECH-689** | Done (archived) | Structured enum covers footprint, zoning, locked, unaffordable, occupied; XML docs on public API. |
-| T3.1.3 | Zoning channel match MVP | 1 | **TECH-690** | Done (archived) | Zone S manual placement path consults validator before commit; keep **`GridManager`** extraction — no new `GridManager` methods unless unavoidable (justify in §Findings). |
-| T3.1.4 | Affordability gate | 2 | **TECH-691** | Done (archived) | Query **`baseCost`** cents from catalog economy snapshot; delegate to existing spend/try APIs. |
-| T3.1.5 | Unlock gate stub | 2 | **TECH-692** | Done (archived) | Read **`unlocks_after`** string; integrate with existing tech stub or return **Allowed** if not implemented — document. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.1.1 | Author PlacementValidator type | **TECH-688** | Done (archived) | New class file; serialized refs to **`GridManager`**, **`GridAssetCatalog`**, **`EconomyManager`** per guardrails. |
+| T3.1.2 | Reason codes + result struct | **TECH-689** | Done (archived) | Structured enum covers footprint, zoning, locked, unaffordable, occupied; XML docs on public API. |
+| T3.1.3 | Zoning channel match MVP | **TECH-690** | Done (archived) | Zone S manual placement path consults validator before commit; keep **`GridManager`** extraction — no new `GridManager` methods unless unavoidable (justify in §Findings). |
+| T3.1.4 | Affordability gate | **TECH-691** | Done (archived) | Query **`baseCost`** cents from catalog economy snapshot; delegate to existing spend/try APIs. |
+| T3.1.5 | Unlock gate stub | **TECH-692** | Done (archived) | Read **`unlocks_after`** string; integrate with existing tech stub or return **Allowed** if not implemented — document. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1240,11 +1155,15 @@ mechanicalization_score:
       - [ ] Minimal test or §8 manual step.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 3.2 — Ghost + tooltip integration
+#### §Stage Audit
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 3.2 — Ghost + tooltip integration
 
 **Status:** Done — 2026-04-24 (5 tasks closed: **TECH-757**..**TECH-761**)
 
@@ -1254,22 +1173,17 @@ mechanicalization_score:
 
 - Play Mode manual smoke documented; no **`Collider2D`** added to world tiles.
 
-**Phases:**
-
-- [x] Phase 1 — Cursor / preview hook.
-- [x] Phase 2 — Tooltip + UX polish pass.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T3.2.1 | Wire ghost preview to validator | 1 | **TECH-757** | Done | `CursorManager` or dedicated preview helper calls **`CanPlace`** each move; throttle if needed (no per-frame `FindObjectOfType`). |
-| T3.2.2 | Valid tint path | 1 | **TECH-758** | Done | Reuse existing sprite tint utilities; ensure **sortingOrder** unaffected. |
-| T3.2.3 | Invalid tint path | 1 | **TECH-759** | Done | Red tint + reason propagation to UI layer. |
-| T3.2.4 | Tooltip reason string | 2 | **TECH-760** | Done | `UIManager` or local tooltip controller shows **human-readable** mapping from enum. |
-| T3.2.5 | Play Mode smoke checklist | 2 | **TECH-761** | Done | Document scenario steps for verify-loop; no automated Play test required if policy says manual — state explicitly. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.2.1 | Wire ghost preview to validator | **TECH-757** | Done | `CursorManager` or dedicated preview helper calls **`CanPlace`** each move; throttle if needed (no per-frame `FindObjectOfType`). |
+| T3.2.2 | Valid tint path | **TECH-758** | Done | Reuse existing sprite tint utilities; ensure **sortingOrder** unaffected. |
+| T3.2.3 | Invalid tint path | **TECH-759** | Done | Red tint + reason propagation to UI layer. |
+| T3.2.4 | Tooltip reason string | **TECH-760** | Done | `UIManager` or local tooltip controller shows **human-readable** mapping from enum. |
+| T3.2.5 | Play Mode smoke checklist | **TECH-761** | Done | Document scenario steps for verify-loop; no automated Play test required if policy says manual — state explicitly. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1466,13 +1380,17 @@ mechanicalization_score:
         amend as needed.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
-#### Stage 3.3 — Save `asset_id` + `replaced_by` + sprite GC
+#### §Stage Audit
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+### Stage 3.3 — Save `asset_id` + `replaced_by` + sprite GC
+
+**Status:** In Progress (tasks filed: TECH-772, TECH-773, TECH-774, TECH-775)
 
 **Objectives:** Persist **`asset_id`** in save; remap retired assets; GC **orphan sprites** safely.
 
@@ -1481,47 +1399,192 @@ mechanicalization_score:
 - Schema bump issue filed if needed; migration respects **`persistence-system`** restore order.
 - GC tool or route deletes only **unreferenced** `catalog_sprite` rows.
 
-**Phases:**
-
-- [ ] Phase 1 — Save/load plumbing.
-- [ ] Phase 2 — GC endpoint + safety checks.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T3.3.1 | Add save fields | 1 | _pending_ | _pending_ | Extend `CellData` / building DTO with **`assetId`**; default **0** means legacy; bump **`GameSaveData.CurrentSchemaVersion`** if required. |
-| T3.3.2 | Load-time remap | 1 | _pending_ | _pending_ | Walk **`replaced_by`** chain with cycle guard; log telemetry on missing rows. |
-| T3.3.3 | GC SQL or admin route | 2 | _pending_ | _pending_ | Implement refcount query across **`catalog_asset_sprite`** + **`catalog_pool_member`**; dry-run flag returns candidates. |
-| T3.3.4 | Tests for remap + GC | 2 | _pending_ | _pending_ | EditMode or server tests cover chain remap + **no delete** when referenced. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.3.1 | Add save fields | **TECH-772** | Draft | Extend `CellData` / building DTO with **`assetId`**; default **0** means legacy; bump **`GameSaveData.CurrentSchemaVersion`** if required. |
+| T3.3.2 | Load-time remap | **TECH-773** | Draft | Walk **`replaced_by`** chain with cycle guard; log telemetry on missing rows. |
+| T3.3.3 | GC SQL or admin route | **TECH-774** | Draft | Implement refcount query across **`catalog_asset_sprite`** + **`catalog_pool_member`**; dry-run flag returns candidates. |
+| T3.3.4 | Tests for remap + GC | **TECH-775** | Draft | EditMode or server tests cover chain remap + **no delete** when referenced. |
 
-### Step 4 — `wire_asset_from_catalog` + dry-run + scene contract IA
+#### §Plan Fix
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+> plan-review pass 2 — 2 tuples. `out bool remapped` references survive in §Test Blueprint + §Examples after pass-1 §Acceptance fix. Spawn `plan-applier` Mode plan-fix `ia/projects/grid-asset-visual-registry-master-plan.md 3.3`.
 
-**Backlog state (Step 4):** 0 filed
+```yaml
+- operation: replace_section
+  target_path: ia/projects/TECH-775.md
+  target_anchor: "| `GridAssetRemapTests.StraightChain_ReturnsTerminal`"
+  payload: |
+    | `GridAssetRemapTests.StraightChain_ReturnsTerminal` | snapshot with `{1→2, 2→3, 3=terminal}`, assetId=1 | `RemapAssetIdOnLoad` returns `3` (int) | unity-batch |
+    | `GridAssetRemapTests.CyclicChain_DetectedAndLogged` | snapshot with `{1→2, 2→1}`, assetId=1 | returns `1` (input passthrough); `LogWarning` fired with `cycle` substring | unity-batch |
+    | `GridAssetRemapTests.MissingAsset_FallbackNoCrash` | empty snapshot, assetId=99 | returns `99` (identity fallback); no exception thrown | unity-batch |
 
-**Objectives:** Implement composite **`unity_bridge_command`** kind **`wire_asset_from_catalog`** in `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs` (partial class pattern): **snapshot → instantiate → parent → bind `UiTheme` / `IlluminatedButton` → hook onClick → save scene** with **rollback** on failure. Add **`ia/specs/ui-design-system.md` appendix** listing **canonical scene paths** for toolbar/HUD/modal host. Document **verify-loop** recipe for agent-driven UI wiring.
+- operation: replace_section
+  target_path: ia/projects/TECH-775.md
+  target_anchor: "| EditMode: snapshot `{1→2, 2→3}`, `assetId=1`"
+  payload: |
+    | EditMode: snapshot `{1→2, 2→3}`, `assetId=1` | `RemapAssetIdOnLoad(1, snap) == 3` | Chain happy path — int return, no `out bool` |
+    | EditMode: snapshot `{1→2, 2→1}`, `assetId=1` | `RemapAssetIdOnLoad(1, snap) == 1`; log contains `cycle` | Cycle detection — returns input int |
+    | EditMode: empty snapshot, `assetId=99` | `RemapAssetIdOnLoad(99, snap) == 99`; no exception | Missing asset identity fallback |
+```
 
-**Exit criteria:**
+#### §Stage File Plan
 
-- New bridge kind registered end-to-end (MCP DTO + switch dispatch + tests if pattern exists).
-- **`dry_run: true`** returns structured plan JSON without mutating scene.
-- UI spec appendix merged; glossary rows **Grid asset catalog** / **Grid asset baker** / **Art manifest (grid)** land per exploration §9.5 in a Stage task here or umbrella IA task.
-- `npm run unity:compile-check` green after Editor partial changes.
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
-**Art:** None (uses existing UI prefabs)
+<!-- mechanicalization_score: { overall: fully_mechanical, artifact_kind: stage_file_plan, tuples: 4 } -->
 
-**Relevant surfaces:**
+```yaml
+- reserved_id: "TECH-772"
+  title: "Add save fields"
+  priority: high
+  issue_type: tech
+  notes: |
+    Extend CellData / building DTO with assetId (int, default 0 = legacy pre-catalog marker); bump
+    GameSaveData.schemaVersion + wire MigrateLoadedSaveData when field added. Respect persistence-system
+    Load pipeline order — no reorder. Stage 3.3 Phase 1 — save plumbing foundation for remap + GC.
+  depends_on: []
+  related:
+    - "TECH-773"
+    - "TECH-774"
+    - "TECH-775"
+  stub_body:
+    summary: |
+      Add assetId field to CellData (and/or building DTO) so saves persist stable catalog asset_id;
+      bump GameSaveData.schemaVersion when schema changes; migrate legacy saves (assetId == 0) in
+      MigrateLoadedSaveData before any restore step.
+    goals: |
+      - CellData carries assetId (int, default 0) serialized into save.
+      - GameSaveData.schemaVersion bumped iff field addition changes binary compatibility.
+      - MigrateLoadedSaveData handles legacy saves deterministically (default assetId = 0 = legacy pre-catalog).
+      - Save round-trip test covers v0 → v{new} upgrade path.
+    systems_map: |
+      - Assets/Scripts/Managers/GameManagers/GameSaveManager.cs (CellData DTO, MigrateLoadedSaveData)
+      - Assets/Scripts/Managers/GameManagers/GridManager.cs (CellData write/read sites)
+      - ia/specs/persistence-system.md §Save + §Load pipeline (restore order unchanged)
+      - glossary: Save data, CellData, Legacy save
+    impl_plan_sketch: |
+      ### Phase 1 — DTO + schema bump
+      - [ ] Add assetId field to CellData (default 0).
+      - [ ] Bump GameSaveData.schemaVersion if field touches binary layout; else document no-bump rationale.
+      - [ ] Extend MigrateLoadedSaveData to treat missing assetId as 0 (legacy marker).
+      - [ ] Round-trip test: save v_prev → load → resave matches.
+- reserved_id: "TECH-773"
+  title: "Load-time replaced_by remap"
+  priority: high
+  issue_type: tech
+  notes: |
+    Walk catalog replaced_by chain with cycle guard during load (post-Migrate, pre-restore); log telemetry
+    on missing rows (dev = loud placeholder, ship = hide + telemetry per locked decisions). Consumes
+    assetId introduced in sibling Add-save-fields task.
+  depends_on: []
+  related:
+    - "TECH-772"
+    - "TECH-774"
+    - "TECH-775"
+  stub_body:
+    summary: |
+      At load time, each CellData.assetId walks the catalog replaced_by chain (with cycle guard +
+      depth cap) to its current live id; missing rows emit telemetry + follow missing-asset policy
+      (dev loud placeholder / ship hide).
+    goals: |
+      - Remap utility consumes GridAssetCatalog snapshot; walks replaced_by with visited-set cycle guard.
+      - Missing asset row → telemetry log + fallback per locked decision; load does NOT crash.
+      - Integrate remap between MigrateLoadedSaveData and cell restore step (preserves persistence-system order).
+      - Unit / EditMode test: chain A→B→C remaps A to C; cyclic chain detected + reported.
+    systems_map: |
+      - GameSaveManager.cs (load path, post-migrate hook)
+      - GridAssetCatalog (catalog snapshot consumer — Inspector ref, no new singleton)
+      - ia/specs/persistence-system.md §Load pipeline
+      - docs/grid-asset-visual-registry-exploration.md §8.4 point 11 (missing-asset policy)
+    impl_plan_sketch: |
+      ### Phase 1 — Remap + telemetry
+      - [ ] Author RemapAssetIdsOnLoad helper (catalog + cycle guard + depth cap).
+      - [ ] Hook between MigrateLoadedSaveData and grid cell restore.
+      - [ ] Telemetry log on missing id (category = loud placeholder dev / hide ship).
+      - [ ] Tests: straight chain remap, cyclic chain abort, missing row fallback.
+- reserved_id: "TECH-774"
+  title: "Sprite GC admin route + refcount"
+  priority: medium
+  issue_type: tech
+  notes: |
+    GC endpoint or SQL job deletes only unreferenced catalog_sprite rows; refcount walks
+    catalog_asset_sprite + catalog_pool_member; dry-run flag returns candidate set without mutation.
+    Stage 3.3 Phase 2 — server-side hygiene, no Unity runtime touch.
+  depends_on: []
+  related:
+    - "TECH-772"
+    - "TECH-773"
+    - "TECH-775"
+  stub_body:
+    summary: |
+      Author admin-only route or SQL migration / job that finds catalog_sprite rows with zero
+      references across catalog_asset_sprite + catalog_pool_member; dry-run returns candidate ids;
+      commit path deletes only after allowlist + optimistic-lock guards.
+    goals: |
+      - Refcount query joins catalog_sprite with catalog_asset_sprite + catalog_pool_member; emits orphans.
+      - dryRun=true returns candidate rows; dryRun=false commits delete within single transaction.
+      - Admin caller_agent allowlist gate on mutating path (reuse existing web/ auth allowlist pattern).
+      - Telemetry: delete count + candidate count per run.
+    systems_map: |
+      - db/migrations/ (no schema change expected — runtime query / route only)
+      - web/app/api/catalog/* (new admin subroute, App Router)
+      - web/types/api/catalog*.ts (hand-written DTOs — no Drizzle per locked decisions)
+      - tools/mcp-ia-server/src/auth/caller-allowlist.ts (mutation allowlist)
+      - docs/grid-asset-visual-registry-exploration.md §8.4 point 11
+    impl_plan_sketch: |
+      ### Phase 1 — Refcount + dry-run
+      - [ ] Author SQL refcount query (LEFT JOIN + HAVING COUNT = 0).
+      - [ ] Expose POST /api/catalog/sprites/gc with { dryRun } body.
+      - [ ] DTO under web/types/api/catalog-gc.ts.
+      - [ ] Allowlist gate + transaction wrapper on commit path.
+- reserved_id: "TECH-775"
+  title: "Tests for remap + GC"
+  priority: medium
+  issue_type: tech
+  notes: |
+    EditMode tests cover replaced_by chain remap (straight + cyclic + missing); server-side tests
+    (Vitest or existing web test pattern) cover GC refcount — orphan row deleted, referenced row
+    preserved. Stage 3.3 Phase 2 — closes Exit criteria.
+  depends_on: []
+  related:
+    - "TECH-772"
+    - "TECH-773"
+    - "TECH-774"
+  stub_body:
+    summary: |
+      Regression tests for Stage 3.3 remap + GC paths — Unity EditMode for load-time remap helper,
+      server-side tests for GC refcount + no-delete-when-referenced invariant.
+    goals: |
+      - EditMode test asserts A→B→C chain remap result id + missing-row fallback does not crash.
+      - Server test asserts GC candidate set excludes any catalog_sprite referenced by catalog_asset_sprite
+        OR catalog_pool_member.
+      - dry-run vs commit paths both covered.
+      - Tests green under npm run validate:all / relevant test runner.
+    systems_map: |
+      - Assets/Tests/EditMode/ (remap helper tests — match existing pattern)
+      - web/ test harness (Vitest / Jest — whichever the repo uses for api routes)
+      - GameSaveManager.cs remap hook
+      - web/app/api/catalog/sprites/gc route
+    impl_plan_sketch: |
+      ### Phase 1 — Test coverage
+      - [ ] EditMode fixture for RemapAssetIdsOnLoad (3 cases: chain, cycle, missing).
+      - [ ] Server test fixture seeds catalog + sprite + pool rows; asserts GC orphan filter.
+      - [ ] dryRun path returns candidates without mutation; commit path deletes + row count drops.
+      - [ ] Wire into CI / verify:local chain.
+```
 
-- `docs/grid-asset-visual-registry-exploration.md` §1.4, §8.3–§8.4 points 8–10
-- `ia/specs/ui-design-system.md` — appendix `(new)` section
-- `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs` (existing partial)
-- `docs/agent-led-verification-policy.md` — UI wiring evidence notes `(touch)`
-- `ia/specs/glossary.md` — new rows `(touch)`
-- `docs/mcp-ia-server.md` — kind catalog `(touch)`
+#### §Stage Audit
 
-#### Stage 4.1 — Bridge composite implementation
+_pending — populated by `/audit ia/projects/grid-asset-visual-registry-master-plan.md Stage 3.3` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+_pending — populated by `/closeout ia/projects/grid-asset-visual-registry-master-plan.md Stage 3.3` planner pass when all Tasks reach `Done`._
+
+### Stage 4.1 — Bridge composite implementation
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1532,22 +1595,33 @@ mechanicalization_score:
 - Edit Mode run creates toolbar button wired to existing **`UIManager`** entry stub.
 - Logs each sub-step for agent observability.
 
-**Phases:**
-
-- [ ] Phase 1 — DTO + dispatch wiring.
-- [ ] Phase 2 — Scene graph mutations + save.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.1.1 | Kind enum + DTO fields | 1 | _pending_ | _pending_ | Extend mutation DTO with **`wire_asset_from_catalog`** payload: `assetId`, `dryRun`, `parentPath`, `uiThemeRef` strategy. |
-| T4.1.2 | Dispatch switch case | 1 | _pending_ | _pending_ | Route in `AgentBridgeCommandRunner.Mutations.cs` per **bridge tooling patterns** (`unity-invariants` doc). |
-| T4.1.3 | Resolve catalog row | 1 | _pending_ | _pending_ | Editor-only read of snapshot or DB bridge — choose one deterministic source for Edit Mode (document). |
-| T4.1.4 | Instantiate + parent + bind | 2 | _pending_ | _pending_ | Reuse `instantiate_prefab`, `set_gameobject_parent`, `assign_serialized_field` primitives internally. |
-| T4.1.5 | onClick wire + save_scene | 2 | _pending_ | _pending_ | Hook to existing inspector-exposed handler; call **`save_scene`**; return structured success object. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.1.1 | Kind enum + DTO fields | _pending_ | _pending_ | Extend mutation DTO with **`wire_asset_from_catalog`** payload: `assetId`, `dryRun`, `parentPath`, `uiThemeRef` strategy. |
+| T4.1.2 | Dispatch switch case | _pending_ | _pending_ | Route in `AgentBridgeCommandRunner.Mutations.cs` per **bridge tooling patterns** (`unity-invariants` doc). |
+| T4.1.3 | Resolve catalog row | _pending_ | _pending_ | Editor-only read of snapshot or DB bridge — choose one deterministic source for Edit Mode (document). |
+| T4.1.4 | Instantiate + parent + bind | _pending_ | _pending_ | Reuse `instantiate_prefab`, `set_gameobject_parent`, `assign_serialized_field` primitives internally. |
+| T4.1.5 | onClick wire + save_scene | _pending_ | _pending_ | Hook to existing inspector-exposed handler; call **`save_scene`**; return structured success object. |
 
-#### Stage 4.2 — Transactional snapshot + dry-run
+#### §Stage File Plan
+
+_pending — populated by `/stage-file ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.1` planner pass._
+
+#### §Plan Fix
+
+_pending — populated by `/plan-review ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.1` when fixes are needed._
+
+#### §Stage Audit
+
+_pending — populated by `/audit ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.1` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+_pending — populated by `/closeout ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.1` planner pass when all Tasks reach `Done`._
+
+### Stage 4.2 — Transactional snapshot + dry-run
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1558,21 +1632,32 @@ mechanicalization_score:
 - Failed run leaves scene unchanged (Edit Mode test).
 - Telemetry fields include **`recipe_id`** + **`caller_agent`** passthrough if available.
 
-**Phases:**
-
-- [ ] Phase 1 — Snapshot/restore mechanism.
-- [ ] Phase 2 — Dry-run path + tests.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.2.1 | Pre-snapshot hook | 1 | _pending_ | _pending_ | Serialize relevant `GameObject` hierarchy or use Unity `Undo` stack if compatible with bridge — pick one pattern and document limits. |
-| T4.2.2 | Rollback on failure | 1 | _pending_ | _pending_ | Ensure exceptions in any sub-step trigger restore; return `partial` metadata for agents. |
-| T4.2.3 | dry_run plan JSON | 2 | _pending_ | _pending_ | No prefab instance persists; output lists intended creates + property sets. |
-| T4.2.4 | EditMode bridge tests | 2 | _pending_ | _pending_ | If repo has Editor test asmdef, cover success + rollback; else document **`verify-loop`** manual path. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.2.1 | Pre-snapshot hook | _pending_ | _pending_ | Serialize relevant `GameObject` hierarchy or use Unity `Undo` stack if compatible with bridge — pick one pattern and document limits. |
+| T4.2.2 | Rollback on failure | _pending_ | _pending_ | Ensure exceptions in any sub-step trigger restore; return `partial` metadata for agents. |
+| T4.2.3 | dry_run plan JSON | _pending_ | _pending_ | No prefab instance persists; output lists intended creates + property sets. |
+| T4.2.4 | EditMode bridge tests | _pending_ | _pending_ | If repo has Editor test asmdef, cover success + rollback; else document **`verify-loop`** manual path. |
 
-#### Stage 4.3 — IA scene contract + verification docs + glossary
+#### §Stage File Plan
+
+_pending — populated by `/stage-file ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.2` planner pass._
+
+#### §Plan Fix
+
+_pending — populated by `/plan-review ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.2` when fixes are needed._
+
+#### §Stage Audit
+
+_pending — populated by `/audit ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.2` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+_pending — populated by `/closeout ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.2` planner pass when all Tasks reach `Done`._
+
+### Stage 4.3 — IA scene contract + verification docs + glossary
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1583,19 +1668,30 @@ mechanicalization_score:
 - `ia/specs/ui-design-system.md` contains **Scene contract (agents)** appendix.
 - `ia/specs/glossary.md` rows added; `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Spec appendix.
-- [ ] Phase 2 — Glossary + policy doc touch.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.3.1 | Author UI scene contract appendix | 1 | _pending_ | _pending_ | Document toolbar root, HUD strip, modal host, Control Panel mount paths with **MainScene** examples. |
-| T4.3.2 | Cross-link bridge doc | 1 | _pending_ | _pending_ | Update `docs/mcp-ia-server.md` **`unity_bridge_command`** section listing **`wire_asset_from_catalog`** fields. |
-| T4.3.3 | Glossary rows | 2 | _pending_ | _pending_ | Add **Grid asset catalog**, **Grid asset baker**, **Art manifest (grid)** per exploration §9.5 with links to specs. |
-| T4.3.4 | Verification policy note | 2 | _pending_ | _pending_ | `docs/agent-led-verification-policy.md` short subsection: agent UI wiring evidence expectations (Edit Mode scene diff + optional Play smoke). |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.3.1 | Author UI scene contract appendix | _pending_ | _pending_ | Document toolbar root, HUD strip, modal host, Control Panel mount paths with **MainScene** examples. |
+| T4.3.2 | Cross-link bridge doc | _pending_ | _pending_ | Update `docs/mcp-ia-server.md` **`unity_bridge_command`** section listing **`wire_asset_from_catalog`** fields. |
+| T4.3.3 | Glossary rows | _pending_ | _pending_ | Add **Grid asset catalog**, **Grid asset baker**, **Art manifest (grid)** per exploration §9.5 with links to specs. |
+| T4.3.4 | Verification policy note | _pending_ | _pending_ | `docs/agent-led-verification-policy.md` short subsection: agent UI wiring evidence expectations (Edit Mode scene diff + optional Play smoke). |
+
+#### §Stage File Plan
+
+_pending — populated by `/stage-file ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.3` planner pass._
+
+#### §Plan Fix
+
+_pending — populated by `/plan-review ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.3` when fixes are needed._
+
+#### §Stage Audit
+
+_pending — populated by `/audit ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.3` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+_pending — populated by `/closeout ia/projects/grid-asset-visual-registry-master-plan.md Stage 4.3` planner pass when all Tasks reach `Done`._
 
 ---
 
@@ -1603,18 +1699,20 @@ mechanicalization_score:
 
 **Do:**
 
-- Open one stage at a time. Next stage opens only after current stage's `/closeout` (Stage-scoped pair) runs.
-- Run `claude-personal "/stage-file ia/projects/grid-asset-visual-registry-master-plan.md Stage {N}.{M}"` (routes to `stage-file-plan` + `stage-file-apply` pair) to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
-- Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
+- Open one Stage at a time. Next Stage opens only after current Stage's Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode stage-closeout) runs.
+- Run `/stage-file ia/projects/grid-asset-visual-registry-master-plan.md Stage {N}.{M}` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs (planner→applier pair).
+- Update Stage `Status` as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc + scope-boundary doc.
 - Keep this orchestrator synced with umbrella **`full-game-mvp-master-plan.md`** when Bucket 12 row lands — separate PR/task from this file's author time.
+- Extend via `/master-plan-extend {this-doc} {source-doc}` when a new exploration or extensions doc introduces new Stages — do NOT hand-insert Stage blocks.
 
 **Do not:**
 
-- Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only terminal step work flips step headers; the file stays.
+- Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal Stage landing triggers a final `Status: Final`; the file stays.
 - Silently promote post-MVP items into MVP stages — park them in `docs/grid-asset-visual-registry-post-mvp-extensions.md` once authored.
-- Merge partial stage state — every stage must land on a green bar.
-- Insert BACKLOG rows directly into this doc — only `stage-file` materializes them.
+- Merge partial Stage state — every Stage must land on a green bar.
+- Insert BACKLOG rows directly into this doc — only `stage-file-apply` materializes them.
+- Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/master-plan-extend` so MCP context + cardinality gate + progress regen fire.
 - Introduce new **singletons** for **`GridAssetCatalog`** — violates `unity-invariants` #4.
 
 ---
@@ -1624,3 +1722,4 @@ mechanicalization_score:
 | Date | Note |
 |------|------|
 | 2026-04-21 | Orchestrator authored from `docs/grid-asset-visual-registry-exploration.md` §8 via `master-plan-new`. |
+| 2026-04-24 | Canonical-shape refactor per `ia/projects/MASTER-PLAN-STRUCTURE.md`: dropped `### Step N` wrappers (Stages now flat siblings), promoted `#### Stage` → `### Stage`, demoted `### §Stage File Plan` / `### §Plan Fix` / `### §Stage Closeout Plan` → `#### §…`, stripped `**Phases:**` checkbox blocks, dropped Phase column from Task tables (5-col). Retroactive §Stage Audit sentinels for archived Stages (1.1–3.2) predating the 2026-04-24 lifecycle refactor; forward Stages 3.3 / 4.1 / 4.2 / 4.3 carry `_pending_` §Stage Audit sentinels. Header Hierarchy rules now cite `MASTER-PLAN-STRUCTURE.md` + `plan-apply-pair-contract.md`; Tracking legend replaced with canonical 4-value Stage enum. |

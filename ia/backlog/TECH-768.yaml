@@ -1,0 +1,27 @@
+id: TECH-768
+type: TECH
+title: Placement strategies
+priority: high
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-768.md
+files: []
+notes: |
+  `tools/sprite-gen/src/placement.py` — pure function `place(decorations, footprint, seed) → list[(primitive_call, x_px, y_px, kwargs)]`. Strategies: `corners`, `perimeter`, `random_border`, `grid(rows, cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-769
+  - TECH-771
+acceptance: |
+  - [ ] `place(decorations, footprint, seed)` returns `list[(primitive_call, x_px, y_px, kwargs)]`.
+  - [ ] Seven strategies supported: `corners`, `perimeter`, `random_border`, `grid(rows, cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`.
+  - [ ] Output deterministic per seed — same inputs always produce identical coord list.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-768** — Placement strategies
+    - Type: TECH
+    - Priority: high
+    - Files: `tools/sprite-gen/src/placement.py`
+    - Related: **TECH-769**, **TECH-771**
+    - Notes: Pure function `place(decorations, footprint, seed) → list[(primitive_call, x_px, y_px, kwargs)]`. Strategies: `corners`, `perimeter`, `random_border`, `grid(rows, cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed.

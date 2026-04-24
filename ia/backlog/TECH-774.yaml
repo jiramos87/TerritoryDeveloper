@@ -1,0 +1,31 @@
+id: TECH-774
+type: tech
+title: "Sprite GC admin route + refcount"
+priority: medium
+status: open
+section: "Stage 3.3"
+spec: "ia/projects/TECH-774.md"
+files:
+  - "web/app/api/catalog/sprites/gc.ts"
+  - "web/types/api/catalog-gc.ts"
+notes: |
+  GC endpoint or SQL job deletes only unreferenced catalog_sprite rows; refcount walks
+  catalog_asset_sprite + catalog_pool_member; dry-run flag returns candidate set without mutation.
+  Stage 3.3 Phase 2 — server-side hygiene, no Unity runtime touch.
+acceptance: |
+  - Refcount query joins catalog_sprite with catalog_asset_sprite + catalog_pool_member; emits orphans.
+  - dryRun=true returns candidate rows; dryRun=false commits delete within single transaction.
+  - Admin caller_agent allowlist gate on mutating path (reuse existing web/ auth allowlist pattern).
+  - Telemetry: delete count + candidate count per run.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-772"
+  - "TECH-773"
+  - "TECH-775"
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-774** — Sprite GC admin route + refcount
+    - Type: tech
+    - Priority: medium
+    - Notes: GC endpoint or SQL job deletes only unreferenced catalog_sprite rows; refcount walks catalog_asset_sprite + catalog_pool_member.

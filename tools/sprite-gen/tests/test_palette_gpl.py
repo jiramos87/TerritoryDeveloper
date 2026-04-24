@@ -37,7 +37,14 @@ def _run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
 
 
 def test_gpl_header_and_row_count():
-    """GPL text starts with GIMP Palette header; body rows = 3 × material count."""
+    """GPL text starts with GIMP Palette header; body rows = emitted levels.
+
+    TECH-762+ decoration ramps (`bush`, `grass_tuft`, `pool`) expose partial
+    ramps (no `dark`); `tree_deciduous` is nested (`green`, `green_yellow`,
+    `green_blue`). `export_gpl` now emits one row per available level and
+    recurses nested ramps. Row count = sum of bright/mid/dark levels actually
+    present across the (possibly-nested) material tree.
+    """
     text = export_gpl("residential", palettes_dir=PALETTES_DIR)
     lines = text.splitlines()
     assert lines[0] == "GIMP Palette"
@@ -45,9 +52,21 @@ def test_gpl_header_and_row_count():
     assert lines[2] == "Columns: 3"
     assert lines[3] == "#"
     body = [ln for ln in lines[4:] if ln.strip()]
-    n_mat = len(load_palette("residential", palettes_dir=PALETTES_DIR)["materials"])
-    assert len(body) == n_mat * 3, (
-        f"expected {n_mat * 3} body rows ({n_mat} materials × 3 levels), got {len(body)}"
+
+    materials = load_palette("residential", palettes_dir=PALETTES_DIR)["materials"]
+    canonical_levels = ("bright", "mid", "dark")
+
+    def _count_levels(levels: dict) -> int:
+        # Nested: recurse into dict-of-dicts.
+        if any(isinstance(v, dict) for v in levels.values()):
+            return sum(
+                _count_levels(sub) for sub in levels.values() if isinstance(sub, dict)
+            )
+        return sum(1 for k in canonical_levels if k in levels)
+
+    expected = sum(_count_levels(levels) for levels in materials.values())
+    assert len(body) == expected, (
+        f"expected {expected} body rows (emitted levels only), got {len(body)}"
     )
 
 
@@ -57,7 +76,13 @@ def test_gpl_header_and_row_count():
 
 
 def test_round_trip_residential(tmp_path):
-    """Export residential JSON → .gpl → import → deep-equal materials block."""
+    """Export residential JSON → .gpl → import → deep-equal on full ramps only.
+
+    TECH-762+ decoration ramps (partial `bush`/`grass_tuft`/`pool`, nested
+    `tree_deciduous`) don't round-trip through GPL. Round-trip is asserted
+    on materials that expose a full `bright`+`mid`+`dark` ramp; decoration
+    ramps ship via palette JSON directly.
+    """
     gpl_path = tmp_path / "residential.gpl"
     export_gpl("residential", dest_path=gpl_path, palettes_dir=PALETTES_DIR)
     assert gpl_path.exists()
@@ -66,16 +91,31 @@ def test_round_trip_residential(tmp_path):
     original = load_palette("residential", palettes_dir=PALETTES_DIR)
 
     assert result["class"] == "residential"
-    # GPL format only carries bright/mid/dark ramps; optional TECH-716
-    # accent_dark / accent_light keys don't round-trip through .gpl, so
-    # compare only the canonical ramp levels.
-    _LEVEL_KEYS = {"bright", "mid", "dark"}
+    _FULL_KEYS = {"bright", "mid", "dark"}
+
+    def _is_full_flat(entry: dict) -> bool:
+        # Nested ramps (any dict-valued child) are excluded from round-trip.
+        if any(isinstance(v, dict) for v in entry.values()):
+            return False
+        return _FULL_KEYS.issubset(entry.keys())
+
     stripped_original = {
-        name: {k: v for k, v in entry.items() if k in _LEVEL_KEYS}
+        name: {k: v for k, v in entry.items() if k in _FULL_KEYS}
         for name, entry in original["materials"].items()
+        if _is_full_flat(entry)
     }
-    assert result["materials"] == stripped_original, (
-        "Round-trip materials mismatch"
+    # Filter result the same way, AND drop synthetic flattened nested-ramp
+    # material names (e.g. `tree_deciduous_green`) — GPL has no nesting, so
+    # reimport inflates them into top-level entries with no counterpart
+    # in the original palette.
+    original_names = set(original["materials"].keys())
+    stripped_result = {
+        name: {k: v for k, v in entry.items() if k in _FULL_KEYS}
+        for name, entry in result["materials"].items()
+        if _is_full_flat(entry) and name in original_names
+    }
+    assert stripped_result == stripped_original, (
+        "Round-trip materials mismatch on canonical full-ramp materials"
     )
 
 
@@ -107,9 +147,14 @@ def test_bad_level_suffix(tmp_path):
         import_gpl("test", gpl)
 
 
-def test_incomplete_material(tmp_path):
-    """Material with only _bright row (missing mid + dark) raises GplParseError."""
-    gpl = _write_gpl(tmp_path, [" 10  20  30\twall_brick_red_bright"])
+def test_empty_body(tmp_path):
+    """GPL with no material rows raises GplParseError.
+
+    TECH-762+: partial ramps (only `bright`) are now allowed to support
+    decoration materials (bush/grass_tuft/pool). Strict whole-ramp validation
+    is out; the remaining negative on body shape is `no rows at all`.
+    """
+    gpl = _write_gpl(tmp_path, [])
     with pytest.raises(GplParseError):
         import_gpl("test", gpl)
 

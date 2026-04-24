@@ -56,6 +56,7 @@
 
 ### Stage 1 — Geometry MVP / Scaffolding + Primitive Renderer (Layer 1)
 
+
 **Status:** Final (6 tasks archived as **TECH-123** through **TECH-128**; BACKLOG state: 6 archived / 6)
 
 **Objectives:** Bootstrap `tools/sprite-gen/` folder structure and implement the two core primitives (`iso_cube`, `iso_prism`) with NW-light 3-level shade pass. Canvas sizing + Unity pivot math extracted to `canvas.py`. Unit tests validate pixel-perfect output against canonical canvas examples from the exploration doc.
@@ -84,10 +85,34 @@
 | T1.5 | Canvas unit tests     | **TECH-127** | Done (archived) | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table                                                                                     |
 | T1.6 | Primitive smoke tests | **TECH-128** | Done (archived) | `tests/test_primitives.py` — render `iso_cube(w=1,d=1,h=32,material=STUB_RED)` on `canvas_size(1,1,32)=(64,32)` canvas; assert non-zero alpha per face bbox (top/south/east); same smoke for `iso_prism` both axes (pitch=0.5); save fixtures to `tests/fixtures/` tracked in git; re-export `iso_prism` from `primitives/__init__.py` |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 2 — Geometry MVP / Composition + YAML Schema + CLI Skeleton (Layer 2)
+
 
 **Status:** Final (6 tasks archived as **TECH-147** through **TECH-152**; closed 2026-04-15)
 
@@ -117,10 +142,34 @@
 | T2.5 | First archetype YAML   | **TECH-151** | Done            | `specs/building_residential_small.yaml` — first archetype: `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`; composition: iso_cube×2 (wall_brick_red) + iso_prism (roof_tile_brown, pitch=0.5, axis=ns); `palette: residential`; `diffusion.enabled: false` |
 | T2.6 | Integration smoke test | **TECH-152** | Done            | Integration smoke: run `python -m sprite_gen render building_residential_small` in CI-friendly subprocess; assert `out/building_residential_small_v01.png` exists + PIL open succeeds + image size == (64, 64); assert 4 variant files written; no exception raised                                                                               |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 3 — Geometry MVP / Palette System (Layer 3)
+
 
 **Status:** Final (all 9 tasks **TECH-153**..**TECH-158** archived; T1.3.3+T1.3.4 merged into **TECH-155**; T1.3.7+T1.3.8+T1.3.9 merged into **TECH-158**)
 
@@ -156,10 +205,34 @@
 | T3.8 | GPL import command            | **TECH-158** | Done (archived) | `src/palette.py` — `import_gpl(cls, gpl_path) → dict`: parse `.gpl` (skip header, read R G B name rows), group rows by material name (strip `_bright/_mid/_dark` suffix), emit JSON in Stage 1.3 schema; raise `GplParseError` on malformed rows; `src/cli.py` — `palette import {class} --gpl path` command writes/overwrites `palettes/{class}.json`, prints diff vs prior JSON. **Merged into TECH-158**.                                                                              |
 | T3.9 | GPL round-trip test           | **TECH-158** | Done (archived) | `tests/test_palette_gpl.py` — round-trip test: start from fixture `palettes/residential.json` → `export_gpl` → parse back with `import_gpl` → assert deep-equal with original (every material × face RGB identical); assert `.gpl` output contains `GIMP Palette` header + 12 swatch rows for 4 materials; assert malformed `.gpl` raises `GplParseError`. **Merged into TECH-158**.                                                                                                      |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 4 — Geometry MVP / Slope-Aware Foundation
+
 
 **Status:** Final — 4 tasks archived (**TECH-175**..**TECH-178**). Curation CLI (promote/reject + Unity `.meta`) + Aseprite Tier-2 integration (layered `.aseprite` emit + `promote --edit` round-trip) relocated to Stage 5 on 2026-04-22 so they sequence atomically with the snapshot push hook (promote → push in one pipeline).
 
@@ -184,10 +257,34 @@
 | T4.3 | Slope auto-insert      | **TECH-177** | Done (archived) | Update `src/compose.py` `compose_sprite`: if `spec['terrain'] != 'flat'`, prepend `iso_stepped_foundation(...)` to primitive stack; recalculate `extra_h = max_corner_z` from slopes.yaml; recompute canvas size + pivot via `canvas_size(fx, fy, extra_h)` + `pivot_uv(canvas_h)`; raise `SlopeKeyError` (exit code 1) if slope_id not in slopes.yaml                                           |
 | T4.4 | Slope regression tests | **TECH-178** | Done (archived) | Slope regression test spec `specs/building_residential_small_N.yaml` (copy of small, terrain: N); run `python -m sprite_gen render building_residential_small_N`; assert output PNG height > 64 (canvas grew by max_corner_z=16); assert pivot_uv != (0.5, 0.25); render all 17 slope variants via `--terrain` CLI flag; assert no crash                                                         |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 5 — Layer 5 Curation + Snapshot push hook / Unity meta + Aseprite Tier-2 + Registry catalog integration
+
 
 **Status:** Final — tasks **TECH-179..183** + **TECH-674..679** archived 2026-04-22. Dependency gate (TECH-640..645) satisfied (archived).
 
@@ -209,14 +306,6 @@
 
 **Dependency gate:** Registry-push half of the stage (T5.6..T5.11) opens only after `grid-asset-visual-registry-master-plan.md` Step 1 Stage 1.3 archives `TECH-640`..`TECH-645` (HTTP `POST /api/catalog/assets` + `PATCH /api/catalog/assets/:id` + 409 optimistic-lock contract live). Curation half (T5.1..T5.5) carries no external dependency — can proceed immediately since issues TECH-179..TECH-183 are already filed.
 
-**Phases:**
-
-- Phase 1 — Curation CLI (promote / reject) + Unity `.meta` writer.
-- Phase 2 — Layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration).
-- Phase 3 — HTTP client module + config resolution.
-- Phase 4 — Promote integration + `--no-push` CLI flag.
-- Phase 5 — Conflict handling + tests + docs.
-
 **Tasks:**
 
 
@@ -235,7 +324,7 @@
 | T5.11 | Promote integration smoke | **TECH-679** | Done (archived) | `tests/test_promote_push.py` — end-to-end: spin up `responses`-mocked catalog server; `render building_residential_small` → `promote out/X.png --as residential-small-01` → assert POST `/api/catalog/assets` issued with expected JSON payload; run `--no-push` variant → assert zero HTTP calls; document exit code 5 handling in `docs/sprite-gen-usage.md`.                                                                                                                                                                                                                      |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -379,9 +468,28 @@
 
 `PASS` — 2026-04-22 — six new tasks **TECH-674**..**TECH-679** carry §Plan Digest + aggregate `docs/implementation/sprite-gen-stage-5-plan.md`. Prior curation issues **TECH-179**..**183** unchanged (already had digest).
 
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 6 — Scale calibration + ground diamond primitive (DAS hotfix)
+
 
 **Status:** Final — closed 2026-04-23 (8 tasks **TECH-693**..**TECH-700** archived via `0837d3f`). Shipped as a **standalone hotfix PR** ahead of Stages 7–14 (Lock H2). Closes the 3× scale bug so the current `building_residential_small` archetype visually matches `House1-64.png`.
 
@@ -398,13 +506,6 @@
 - `tests/test_scale_calibration.py` — render `building_residential_small_v01.png`; assert content bbox height within `35 ± 3 px`, content bbox y0 within `13 ± 3 px` (matches `House1-64.png` signature per DAS §2.3).
 - `docs/sprite-gen-usage.md` updated with `footprint_ratio` + `ground` spec fields.
 
-**Phases:**
-
-- Phase 1 — Pixel-native primitives + back-compat translation.
-- Phase 2 — `iso_ground_diamond` primitive + 8 materials.
-- Phase 3 — Composer auto-prepend + `footprint_ratio` scaling.
-- Phase 4 — `level_h` constants + re-calibrated `building_residential_small` spec + calibration regression test.
-
 **Tasks:**
 
 
@@ -420,7 +521,7 @@
 | T6.8 | `README` / usage doc update                      | **TECH-700** | Done   | Update `tools/sprite-gen/README.md` + `docs/sprite-gen-usage.md` with new spec fields `ground` + `footprint_ratio` + `levels`; link to DAS sections §2.5 + §4.1.                                                                                                                                                                                                                |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -621,13 +722,26 @@
 
 **Dependency gate:** None. Independent hotfix; can be branched off `master` directly.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6 tasks **TECH-693**..**TECH-700** aligned; no fix tuples. Aggregate doc: `docs/implementation/sprite-gen-stage-6-plan.md`. Downstream pipeline continue.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.1 — Pivot hotfix + regression tighten
+
 
 **Status:** Final — closed 2026-04-23 (3 tasks **TECH-701**..**TECH-703** archived; closeout residue repaired via `15d5f11`). Retroactive filing of the in-session pivot hotfix applied during the 2026-04-23 sprite-gen improvement session (`/tmp/sprite-gen-improvement-session.md` §3 Stage 6.1). The composer patch (`pivot_pad = 17 if spec.get("ground") != "none" else 0`) went live at `tools/sprite-gen/src/compose.py:256`; this stage produced the issue trail and tightened the regression suite. **Locks consumed:** L1 (pivot_pad=17 per DAS §2.1/§2.2). **Issues closed:** I1 (composer anchors buildings above ground diamond), I2 (regression loose).
 
@@ -640,12 +754,6 @@
 - `tools/sprite-gen/tests/test_render_integration.py` — parametrized `test_every_live_spec_has_bbox_below_diamond` across all `specs/*.yaml` in the tool tree; asserts bbox `(0, 15, 64, 48)` for every 1×1 live spec (`building_residential_small`, `building_residential_light_a|b|c`).
 - `pytest tools/sprite-gen/tests/` exits 0 — 218+ tests green.
 
-**Phases:**
-
-- Phase 1 — Formalize pivot_pad comment at `compose.py:256` (retroactive; no code change — lock wording + DAS citation).
-- Phase 2 — Tighten `test_scale_calibration.py` bounds.
-- Phase 3 — Parametrized per-spec bbox regression in `test_render_integration.py`.
-
 **Tasks:**
 
 
@@ -656,7 +764,7 @@
 | T6.1.3 | Per-spec bbox regression in `test_render_integration.py` | **TECH-703** | Done   | `tools/sprite-gen/tests/test_render_integration.py` — parametrized fixture iterating `specs/*.yaml` (1×1 live specs only: `building_residential_small`, `building_residential_light_{a,b,c}`). For each spec: compose → assert bbox `(0, 15, 64, 48)`. Skip non-1×1 specs.                                                                                      |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -728,13 +836,26 @@
 
 **Dependency gate:** None. Independent hotfix filing ahead of Stage 7.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.1 tasks **TECH-701**..**TECH-703** aligned with §3 Stage 6.1 block of `/tmp/sprite-gen-improvement-session.md`; no fix tuples. Aggregate doc: `docs/implementation/sprite-gen-stage-6.1-plan.md`. Downstream: file Stage 6.2.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.2 — Art Signatures per class
+
 
 **Status:** Final — closed 2026-04-23 (5 tasks **TECH-704**..**TECH-708** archived via `959ab1a`). **Locks consumed:** L2 (Calibration = summarized Art Signatures per class; runtime never reads raw sprites), L3 (signature JSON carries `source_checksum`; stale raises actionable refresh), L4 (Spec YAML `include_in_signature: false` per-sprite override), L15 (sample-size policy: 0 → fallback, 1 → point-match, ≥2 → envelope).
 
@@ -751,14 +872,6 @@
 - `docs/sprite-gen-art-design-system.md` §2.6 new pointer block — "Calibration signatures are the canonical runtime calibration source; see `tools/sprite-gen/signatures/` + `src/signature.py`."
 - `pytest tools/sprite-gen/tests/` exits 0 — 221+ tests green (TECH-703 baseline + at least one new signature calibration case).
 
-**Phases:**
-
-- Phase 1 — Author `src/signature.py` core module (JSON shape, L15 sample-size policy, `compute_signature` + `validate_against` + `SignatureStaleError`).
-- Phase 2 — CLI `refresh-signatures` subcommand + `signatures/` dir scaffold + `_fallback.json` fallback graph + `residential_small.signature.json` bootstrap.
-- Phase 3 — Spec loader `include_in_signature: false` per-sprite override.
-- Phase 4 — `tests/test_signature_calibration.py` parametrized + retire `test_scale_calibration.py`.
-- Phase 5 — DAS §2.6 pointer doc block.
-
 **Tasks:**
 
 
@@ -771,7 +884,7 @@
 | T6.2.5 | DAS §2.6 pointer block                                                     | **TECH-708** | Done   | `docs/sprite-gen-art-design-system.md` — add §2.6 "Calibration signatures are the canonical runtime calibration source. See `tools/sprite-gen/signatures/` + `src/signature.py`." Brief; forward-pointer only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -884,13 +997,26 @@
 
 **Dependency gate:** Stage 6.1 merged (TECH-701..703). L12 stage order lock.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.2 tasks **TECH-704**..**TECH-708** aligned with §3 Stage 6.2 block of `/tmp/sprite-gen-improvement-session.md`; JSON shape (L20 verbatim) + L15 sample-size policy carried into TECH-704. Aggregate doc: `docs/implementation/sprite-gen-stage-6.2-plan.md`. Downstream: file Stage 6.3.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.3 — Placement + variant randomness + split seeds
+
 
 **Status:** Final — closed 2026-04-23 (6 tasks **TECH-709**..**TECH-714** archived via `7da3749`). **Locks consumed:** L5 (Spec gains `building.footprint_px`, `building.padding`, `building.align`), L6 (`variants:` becomes block `{count, vary, seed_scope}` with legacy scalar back-compat), L7 (`bootstrap-variants --from-signature` CLI; never auto-rewrites), L14 (split seeds `palette_seed` + `geometry_seed`).
 
@@ -907,15 +1033,6 @@
 - `docs/sprite-gen-art-design-system.md` R11 addendum — new placement fields + split seed semantics + `vary:` grammar.
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- Phase 1 — Spec schema additions: `building.footprint_px` / `padding` / `align` + loader normalization.
-- Phase 2 — `variants:` block + split seeds loader normalization.
-- Phase 3 — Composer `resolve_building_box` helper + variant loop sampling.
-- Phase 4 — CLI `bootstrap-variants --from-signature`.
-- Phase 5 — Tests: placement + variants + split seeds.
-- Phase 6 — DAS R11 addendum.
-
 **Tasks:**
 
 
@@ -929,7 +1046,7 @@
 | T6.3.6 | DAS R11 addendum                                                | **TECH-714** | Done  | `docs/sprite-gen-art-design-system.md` — extend R11 with new placement fields (`building.footprint_px`, `padding`, `align`), split seed semantics (`palette_seed`, `geometry_seed`, legacy `seed` fan-out), and `vary:` grammar (range objects + `seed_scope`).                                                                                                                                                                                      |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -1077,13 +1194,26 @@
 
 **Dependency gate:** Stage 6.2 merged (TECH-704..708). L12 stage order lock. `bootstrap-variants --from-signature` (TECH-712) specifically depends on `signatures/` directory existing (TECH-705) and `variants:` block loader (TECH-710).
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.3 tasks **TECH-709**..**TECH-714** aligned with §3 Stage 6.3 block of `/tmp/sprite-gen-improvement-session.md`; locks L5/L6/L7/L14 mapped one-to-one. Aggregate doc: `docs/implementation/sprite-gen-stage-6.3-plan.md`. Downstream: file Stage 6.4.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.4 — Ground variation
+
 
 **Status:** Final — closed 2026-04-23 (8 tasks **TECH-715**..**TECH-722** archived via `7dd80d7` + residual cleanup `0822391`). **Locks consumed:** L8 (`ground:` accepts string or object; back-compat by construction), L9 (`ground.`* joins `vary:` vocabulary; signature bounds jitter), L10 (new primitive `iso_ground_noise`; palette gains `accent_dark`/`accent_light`).
 
@@ -1100,17 +1230,6 @@
 - `docs/sprite-gen-art-design-system.md` §4.1 addendum — documents `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range.
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- Phase 1 — Ground schema: string/object form loader normalization.
-- Phase 2 — Palette JSON `accent_dark`/`accent_light` keys.
-- Phase 3 — `iso_ground_noise` primitive.
-- Phase 4 — Composer ground jitter + texture auto-insert.
-- Phase 5 — Signature extractor `ground.`* extension.
-- Phase 6 — `vary.ground.*` grammar.
-- Phase 7 — Tests: `test_ground_variation.py`.
-- Phase 8 — DAS §4.1 addendum.
-
 **Tasks:**
 
 
@@ -1126,7 +1245,7 @@
 | T6.4.8 | DAS §4.1 addendum — palette accent keys + noise density  | **TECH-722** | Done  | `docs/sprite-gen-art-design-system.md` §4.1 — document `accent_dark` / `accent_light` palette keys + `iso_ground_noise` density range (0..0.15 guardrail). Forward-pointer to `signatures/` for authoring `vary.ground.`* bounds.                                                                                                                                             |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -1314,11 +1433,17 @@
 
 **Dependency gate:** Stage 6.2 merged (TECH-704..708) + Stage 6.3 merged (TECH-709..714). L12 stage order lock. Signature extension (TECH-719) specifically extends TECH-704's extractor.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.4 tasks **TECH-715**..**TECH-722** aligned with §3 Stage 6.4 block of `/tmp/sprite-gen-improvement-session.md`; locks L8/L9/L10 mapped one-to-one. Aggregate doc: `docs/implementation/sprite-gen-stage-6.4-plan.md`. Downstream: file Stage 6.5.
 
-### §Stage Closeout Plan
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
 
 > Scope: Stage 6.4 — Ground variation (TECH-715..722). All 8 tasks PASS code-review + audit. 330/330 tests green. Ready for archive.
 
@@ -1374,6 +1499,7 @@ validation_gate:
 
 ### Stage 6.5 — Curation-trained quality gate
 
+
 **Status:** Final — closed 2026-04-23 (7 tasks **TECH-723**..**TECH-729** archived via `1ac0da0`). **Locks consumed:** L11 (curation/promoted.jsonl + rejected.jsonl feed the signature aggregator; composer gates renders against the evolving envelope).
 
 **Objectives:** Close the feedback loop from artist curation back into the generator. `curate.py` gains `log-promote` + `log-reject --reason` subcommands that append JSONL rows (verb names disambiguate from existing `promote` = PNG→Unity ship + `reject` = glob-delete — TECH-179). The signature extractor becomes a three-source aggregator: `envelope = catalog ∪ promoted − rejected-zones` (rejection reasons carve out floor zones in `vary.`*). The composer adds a render-time gate: sample `vary:` → render → score against the evolving envelope → re-sample up to N times; after N, write best-scoring variant and mark a `.needs_review` metadata sidecar. Ship tests + DAS §5 addendum.
@@ -1387,16 +1513,6 @@ validation_gate:
 - `tools/sprite-gen/tests/test_curation_loop.py` — (a) envelope tightens toward promoted samples after N promotes (before/after fixture); (b) `vary:` range shrinks in direction of rejection reasons (before/after fixture); (c) `.needs_review` flag set when floor not met in N tries.
 - `docs/sprite-gen-art-design-system.md` §5 addendum — curation loop + scoring floor + `.needs_review` semantics.
 - `pytest tools/sprite-gen/tests/` exits 0.
-
-**Phases:**
-
-- Phase 1 — `curate.py log-promote` subcommand + `promoted.jsonl` writer.
-- Phase 2 — `curate.py log-reject --reason` subcommand + `rejected.jsonl` writer.
-- Phase 3 — Signature three-source aggregator (catalog ∪ promoted − rejected-zones).
-- Phase 4 — Composer render-time score-and-retry gate (N retries, default 5).
-- Phase 5 — `.needs_review` sidecar writer on floor-miss.
-- Phase 6 — Tests: `test_curation_loop.py`.
-- Phase 7 — DAS §5 addendum.
 
 **Tasks:**
 
@@ -1412,7 +1528,7 @@ validation_gate:
 | T6.5.7 | DAS §5 addendum — curation loop + floor + sidecar | **TECH-729** | Done   | `docs/sprite-gen-art-design-system.md` §5 — new/extended section covering promotion/rejection JSONL schema, envelope aggregator rule, rejection-reason → `vary.`* zone map, composer score-and-retry contract, and `.needs_review` sidecar semantics.                                                                                                |
 
 
-### §Stage File Plan
+#### §Stage File Plan
 
 
 
@@ -1577,13 +1693,26 @@ validation_gate:
 
 **Dependency gate:** Stage 6.2 merged (TECH-704..708). L12 stage order lock. Signature aggregator (TECH-725) specifically extends TECH-704's extractor with new inputs.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.5 tasks **TECH-723**..**TECH-729** aligned with §3 Stage 6.5 block of `/tmp/sprite-gen-improvement-session.md`; lock L11 threaded through all 7 tasks. Aggregate doc: `docs/implementation/sprite-gen-stage-6.5-plan.md`. Downstream: file Stage 6.6.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.6 — Preset system
+
 
 **Status:** Final — closed 2026-04-23 (7 tasks **TECH-730**..**TECH-736** archived via `71a3a4d`). **Locks consumed:** L13 (`preset: <name>` top-level key injects a base spec; author fields override; `vary:` block from preset is preserved — author may extend / override individual `vary.*` entries but not wipe the block).
 
@@ -1599,16 +1728,6 @@ validation_gate:
 - `docs/sprite-gen-art-design-system.md` §6 addendum — preset contract, merge rule, seeded presets catalogue.
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- [ ] Phase 1 — Loader: `preset: <name>` key + base-inject + author-override merge.
-- [ ] Phase 2 — `vary:` block merge rule (union + non-wipe guard).
-- [ ] Phase 3 — Seed preset `suburban_house_with_yard.yaml`.
-- [ ] Phase 4 — Seed preset `strip_mall_with_parking.yaml`.
-- [ ] Phase 5 — Seed preset `row_houses_3x.yaml`.
-- [ ] Phase 6 — Tests: `test_preset_system.py`.
-- [ ] Phase 7 — DAS §6 addendum.
-
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
@@ -1621,7 +1740,7 @@ validation_gate:
 | T6.6.6 | Tests: `test_preset_system.py` | **TECH-735** | Done | `tools/sprite-gen/tests/test_preset_system.py` — (a) author field wins merge; (b) author `vary.padding` doesn't erase preset `vary.roof`; (c) author `vary: null` raises; (d) preset referenced twice with same seed → byte-identical output; (e) missing preset → `SpecError` with valid list. |
 | T6.6.7 | DAS §6 addendum — preset contract + catalogue | **TECH-736** | Done | `docs/sprite-gen-art-design-system.md` §6 — document `preset: <name>` key + merge rule + `vary:` preservation semantic + the three seeded presets. Forward-pointer to `presets/` dir for discoverability. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1795,13 +1914,26 @@ validation_gate:
 
 **Dependency gate:** Stage 6.3 merged (TECH-709..714) for `vary:` grammar that presets carry; Stage 6.4 merged (TECH-715/718) for ground object form used by seeded presets. `row_houses_3x` additionally waits on Stage 9 addendum (TECH-744 — parametric `tiled-row-N` slot) before it renders cleanly.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.6 tasks **TECH-730**..**TECH-736** aligned with §3 Stage 6.6 block of `/tmp/sprite-gen-improvement-session.md`; lock L13 threaded through loader + merge rule + seeded presets. Aggregate doc: `docs/implementation/sprite-gen-stage-6.6-plan.md`. Downstream: file Stage 6.7.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 6.7 — Animation schema reservation (tiny)
+
 
 **Status:** Final — closed 2026-04-23 (4 tasks **TECH-737**..**TECH-740** archived via `36fbca5`). **Locks consumed:** L16 (reserve animation schema today; implementation deferred).
 
@@ -1815,13 +1947,6 @@ validation_gate:
 - `docs/sprite-gen-art-design-system.md` §12 — new stub "Animation (reserved; not yet implemented)" documenting the reserved schema + acceptable v1 values.
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- [ ] Phase 1 — Spec loader accepts reserved `output.animation:` block.
-- [ ] Phase 2 — Per-primitive `animate:` reservation.
-- [ ] Phase 3 — Tests: `test_animation_reservation.py`.
-- [ ] Phase 4 — DAS §12 stub.
-
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
@@ -1831,7 +1956,7 @@ validation_gate:
 | T6.7.3 | Tests: `test_animation_reservation.py` | **TECH-739** | Done | `tools/sprite-gen/tests/test_animation_reservation.py` — (a) `enabled: false` block parses cleanly; (b) `enabled: true` raises `SpecError`; (c) primitive with `animate: none` renders; (d) `animate: flicker` raises `NotImplementedError` with "DAS §12" in message. |
 | T6.7.4 | DAS §12 stub — "Animation (reserved; not yet implemented)" | **TECH-740** | Done | `docs/sprite-gen-art-design-system.md` §12 — new stub documents reserved keys (`output.animation.*`, per-primitive `animate:`), enumerates v1 permitted values (`enabled: false`, `animate: none`), and forward-points to future animation milestone. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1923,13 +2048,26 @@ validation_gate:
 
 **Dependency gate:** None. Independent stage; can ship alongside or ahead of Stage 6.6.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 6.7 tasks **TECH-737**..**TECH-740** aligned with §3 Stage 6.7 block of `/tmp/sprite-gen-improvement-session.md`; lock L16 threaded through spec loader + per-primitive guard + doc stub. Aggregate doc: `docs/implementation/sprite-gen-stage-6.7-plan.md`. Downstream: Stage 9 addendum (`tiled-row-N`) next.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 9 addendum — Parametric `tiled-row-N` / `tiled-column-N`
+
 
 **Status:** Final — closed 2026-04-23 (4 tasks **TECH-741**..**TECH-744** archived via `3d776cd`). **Issues closed:** I7. **Filing hint:** amend Stage 9 T9.2 before it becomes an issue — this block stands in until Stage 9 is itself filed with full task YAMLs.
 
@@ -1943,13 +2081,6 @@ validation_gate:
 - `docs/sprite-gen-art-design-system.md` §5 R11 amended — table row for parametric slot grammar (replaces hard-coded `tiled-row-3/4`).
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- [ ] Phase 1 — Parser regex + validation.
-- [ ] Phase 2 — Even-distribution resolver (row + column axes).
-- [ ] Phase 3 — Tests: `test_parametric_slots.py`.
-- [ ] Phase 4 — DAS §5 R11 amendment.
-
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
@@ -1959,7 +2090,7 @@ validation_gate:
 | T9.add.3 | Tests — `test_parametric_slots.py` | **TECH-743** | Done | `tools/sprite-gen/tests/test_parametric_slots.py` — (a) parser accepts `tiled-row-2..5` + `tiled-column-2..5`; (b) `tiled-row-1` raises; (c) `tiled-foo-3` raises; (d) distribute equal-spaced integer-pixel anchors for N ∈ {2,3,4,5}; (e) column axis mirrored. |
 | T9.add.4 | DAS §5 R11 amendment — parametric slot grammar | **TECH-744** | Done | `docs/sprite-gen-art-design-system.md` §5 R11 — replace hard-coded `tiled-row-3/4` entries with a parametric row documenting `tiled-(row\|column)-N` for `N ≥ 2`. Forward-pointer to `row_houses_3x` preset (TECH-734) as a consumer. Capstone — merges last to reflect actual parser. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -2053,13 +2184,26 @@ validation_gate:
 
 **Dependency gate:** None for the addendum itself. Consumer chain: TECH-734 (`row_houses_3x`, Stage 6.6) depends on TECH-744 — renders cleanly only once the addendum lands. Stage 9 master block T9.2 will fold this grammar when filed proper.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 9 addendum tasks **TECH-741**..**TECH-744** aligned with §3 Stage 9 addendum block of `/tmp/sprite-gen-improvement-session.md`; parametric `tiled-(row|column)-N` grammar threaded through parser + resolver + tests + doc. TECH-744 is the capstone consumed by TECH-734 (Stage 6.6 `row_houses_3x`). Aggregate doc: `docs/implementation/sprite-gen-stage-9-addendum-plan.md`. Downstream: file Stage 7 addendum (cross-tile passthrough).
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 7 addendum — Cross-tile passthrough pattern
+
 
 **Status:** Final — closed 2026-04-23 (4 tasks **TECH-745**..**TECH-748** archived via `bbfeff9`). **Locks consumed:** L17. **Filing hint:** amend Stage 7 decoration authoring guidance — this block stands in until Stage 7 is itself merged proper.
 
@@ -2073,13 +2217,6 @@ validation_gate:
 - `docs/sprite-gen-art-design-system.md` §3 — new subsection documenting the existing slope pattern + the flat-archetype extension with the new flag.
 - `pytest tools/sprite-gen/tests/` exits 0.
 
-**Phases:**
-
-- [ ] Phase 1 — Spec schema: `ground.passthrough` flag.
-- [ ] Phase 2 — Composer: inhibit noise + clamp hue jitter on passthrough tiles.
-- [ ] Phase 3 — Tests: `test_ground_passthrough.py`.
-- [ ] Phase 4 — DAS §3 amendment.
-
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
@@ -2089,7 +2226,7 @@ validation_gate:
 | T7.10.3 | Tests — `test_ground_passthrough.py` | **TECH-747** | Done | `tools/sprite-gen/tests/test_ground_passthrough.py` — (a) flag parses; (b) non-bool raises; (c) `passthrough=true` render skips noise (visual diff vs. baseline); (d) `hue_jitter` clamped even if author sets higher; (e) `passthrough=false` (default) unchanged. |
 | T7.10.4 | DAS §3 amendment — passthrough pattern | **TECH-748** | Done | `docs/sprite-gen-art-design-system.md` §3 — new subsection "Cross-tile passthrough" documenting the existing slope-sprite "empty lot / natural-park-walkway" pattern + the flat-archetype extension via `ground.passthrough: true`. Explains rendering implications (no noise; narrowest jitter). |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -2181,15 +2318,28 @@ validation_gate:
 
 **Dependency gate:** None. Independent stage addendum; can ship alongside or ahead of Stage 7 proper. Stage 7 master block (when filed) folds this in as authoring guidance on decoration placement.
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — Stage 7 addendum tasks **TECH-745**..**TECH-748** aligned with §3 Stage 7 addendum block of `/tmp/sprite-gen-improvement-session.md`; lock L17 threaded through schema flag + composer inhibit/clamp + tests + DAS §3 doc. Aggregate doc: `docs/implementation/sprite-gen-stage-7-addendum-plan.md`. Downstream: handoff exhausted — all 9 stages filed.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
 ### Stage 7 — Decoration primitives — vegetation & yard
 
-**Status:** Draft — 2026-04-24. Not yet filed (10 tasks T7.1..T7.9b still `*pending*`). Next stage to enter `/stage-file`.
+
+**Status:** Draft — 2026-04-24. Filed (10 tasks T7.1..T7.9b → TECH-762..TECH-771, all Draft status). Ready for `/plan-author`.
 
 **Objectives:** Ship the yard-and-vegetation half of the DAS R9 primitive set — the primitives that make residential/suburban sprites feel alive (trees, bushes, grass tufts, pool, path, pavement patch, fence). Wire seed-based placement strategies so YAML specs stay short and deterministic.
 
@@ -2203,35 +2353,298 @@ validation_gate:
 - `tests/test_decorations_vegetation.py` — per-primitive smoke (non-empty bbox, expected palette); `tests/test_placement.py` — each strategy places the declared count of items at stable coords given the same seed.
 - DAS §5 R9 rows 1–8 implemented.
 
-**Phases:**
-
-- Phase 1 — Tree + bush + grass-tuft primitives.
-- Phase 2 — Pool + path + pavement patch + fence.
-- Phase 3 — Placement strategies + composer integration.
-- Phase 4 — Per-primitive tests + placement regression.
-
 **Tasks:**
 
 
 | Task | Name                                | Issue     | Status | Intent                                                                                                                                                                                                                                                                             |
 | ---- | ----------------------------------- | --------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T7.1 | `iso_tree_fir` primitive            | *pending* | pending  | 2–3 green domes stacked + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`. Visual target: `House1-64.png` trees and `Forest1-64.png` dense fill per DAS §3.                                                                                                          |
-| T7.2 | `iso_tree_deciduous` primitive      | *pending* | pending  | Round-crown tree; `color_var ∈ {green, green_yellow, green_blue}`; palette key `tree_deciduous`.                                                                                                                                                                                   |
-| T7.3 | `iso_bush` + `iso_grass_tuft`       | *pending* | pending  | Low green puff (bush ~6×6 px) + single-pixel accents (grass tuft); palette keys `bush`, `grass_tuft`.                                                                                                                                                                              |
-| T7.4 | `iso_pool` primitive                | *pending* | pending  | Light-blue rectangle with white rim; sizes: `w_px/d_px ∈ [8..20]`; palette key `pool`. Composer validates: 2×2+ only.                                                                                                                                                              |
-| T7.5 | `iso_path` + `iso_pavement_patch`   | *pending* | pending  | Beige/grey walkway strip; `axis ∈ {ns, ew}`; path width 2–4 px; pavement patch fills arbitrary rect; palette key `pavement`.                                                                                                                                                       |
-| T7.6 | `iso_fence` primitive               | *pending* | pending  | Thin 1–2 px beige/tan line along one side; `side ∈ {n,s,e,w}`; palette key `fence`.                                                                                                                                                                                                |
-| T7.7 | Placement strategies                | *pending* | pending  | `src/placement.py` — pure function: given decoration list + footprint + seed → list of (primitive_call, x, y, kwargs). Strategies: `corners`, `perimeter`, `random_border`, `grid(rows,cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed. |
-| T7.8 | Composer `decorations:` integration | *pending* | pending  | `compose_sprite` reads `spec.decorations`; calls `placement.place`; draws in z-order ground → yard-deco → building → roof-deco. Raises `DecorationScopeError` on 1×1 + `iso_pool`.                                                                                                 |
-| T7.9a | Vegetation primitive smoke tests   | *pending* | pending  | `tests/test_decorations_vegetation.py` — per-primitive smoke (non-empty bbox, expected palette) across all 7 vegetation/yard primitives from T7.1–T7.6.                                                                                                                            |
-| T7.9b | Placement seed-stability tests     | *pending* | pending  | `tests/test_placement.py` — each strategy (`corners`, `perimeter`, `random_border`, `grid`, `centered_front/back`, explicit) places declared count at stable coords given same seed. Regression for composer integration from T7.7–T7.8.                                          |
+| T7.1 | `iso_tree_fir` primitive            | **TECH-762** | Draft  | 2–3 green domes stacked + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`. Visual target: `House1-64.png` trees and `Forest1-64.png` dense fill per DAS §3.                                                                                                          |
+| T7.2 | `iso_tree_deciduous` primitive      | **TECH-763** | Draft  | Round-crown tree; `color_var ∈ {green, green_yellow, green_blue}`; palette key `tree_deciduous`.                                                                                                                                                                                   |
+| T7.3 | `iso_bush` + `iso_grass_tuft`       | **TECH-764** | Draft  | Low green puff (bush ~6×6 px) + single-pixel accents (grass tuft); palette keys `bush`, `grass_tuft`.                                                                                                                                                                              |
+| T7.4 | `iso_pool` primitive                | **TECH-765** | Draft  | Light-blue rectangle with white rim; sizes: `w_px/d_px ∈ [8..20]`; palette key `pool`. Composer validates: 2×2+ only.                                                                                                                                                              |
+| T7.5 | `iso_path` + `iso_pavement_patch`   | **TECH-766** | Draft  | Beige/grey walkway strip; `axis ∈ {ns, ew}`; path width 2–4 px; pavement patch fills arbitrary rect; palette key `pavement`.                                                                                                                                                       |
+| T7.6 | `iso_fence` primitive               | **TECH-767** | Draft  | Thin 1–2 px beige/tan line along one side; `side ∈ {n,s,e,w}`; palette key `fence`.                                                                                                                                                                                                |
+| T7.7 | Placement strategies                | **TECH-768** | Draft  | `src/placement.py` — pure function: given decoration list + footprint + seed → list of (primitive_call, x, y, kwargs). Strategies: `corners`, `perimeter`, `random_border`, `grid(rows,cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed. |
+| T7.8 | Composer `decorations:` integration | **TECH-769** | Draft  | `compose_sprite` reads `spec.decorations`; calls `placement.place`; draws in z-order ground → yard-deco → building → roof-deco. Raises `DecorationScopeError` on 1×1 + `iso_pool`.                                                                                                 |
+| T7.9a | Vegetation primitive smoke tests   | **TECH-770** | Draft  | `tests/test_decorations_vegetation.py` — per-primitive smoke (non-empty bbox, expected palette) across all 7 vegetation/yard primitives from T7.1–T7.6.                                                                                                                            |
+| T7.9b | Placement seed-stability tests     | **TECH-771** | Draft  | `tests/test_placement.py` — each strategy (`corners`, `perimeter`, `random_border`, `grid`, `centered_front/back`, explicit) places declared count at stable coords given same seed. Regression for composer integration from T7.7–T7.8.                                          |
 
 
 **Dependency gate:** Stage 6 archived (need pixel-native primitives + ground diamond + `footprint_ratio` scaling).
 
+#### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+mechanicalization_score:
+  anchors: ok
+  picks: ok
+  invariants: ok
+  validators: ok
+  escalation_enum: ok
+  overall: fully_mechanical
+- reserved_id: TECH-762
+  title: "`iso_tree_fir` primitive"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/primitives/iso_tree_fir.py` — pure function `(canvas, x0, y0, scale=1.0, variant=0, palette, **kwargs)`. Draws 2–3 stacked green domes + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`; internal 2–3-level ramp; no outline pass. Visual target: `House1-64.png` + `Forest1-64.png` dense fill per DAS §3.
+  depends_on: []
+  related:
+    - TECH-763
+    - TECH-764
+    - TECH-770
+  stub_body:
+    summary: |
+      Ship `iso_tree_fir` primitive — first vegetation primitive of the DAS R9 set. Stacked green domes on dark-green shadow base; scale parameter drives overall footprint; palette key `tree_fir` (3-level ramp).
+    goals: |
+      1. `iso_tree_fir(canvas, x0, y0, scale, variant, palette)` draws 2–3 stacked green domes on dark shadow base.
+      2. `scale ∈ [0.5, 1.5]` controls dome cluster footprint; pixel positions snap to integer coords.
+      3. Palette key `tree_fir` resolves 3 ramp levels (bright/mid/dark) from the active palette.
+    systems_map: |
+      New file `tools/sprite-gen/src/primitives/iso_tree_fir.py`; re-exported from `tools/sprite-gen/src/primitives/__init__.py`. Consumer: composer dispatch (T7.8 / TECH-769); test surface: `tests/test_decorations_vegetation.py` (T7.9a / TECH-770). Visual references: `Assets/Sprites/House1-64.png`, `Assets/Sprites/Forest1-64.png` per DAS §3.
+    impl_plan_sketch: |
+      Phase 1 — Primitive signature + palette ramp wiring.
+      Phase 2 — Dome cluster geometry (2–3 domes, scale-driven layout).
+      Phase 3 — Dark-green shadow base + smoke render check under default palette.
+- reserved_id: TECH-763
+  title: "`iso_tree_deciduous` primitive"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/primitives/iso_tree_deciduous.py` — round-crown tree; `color_var ∈ {green, green_yellow, green_blue}` selects ramp variant; palette key `tree_deciduous`. Same pure-function signature as `iso_tree_fir`; no outline pass.
+  depends_on: []
+  related:
+    - TECH-762
+    - TECH-764
+    - TECH-770
+  stub_body:
+    summary: |
+      Ship `iso_tree_deciduous` primitive — round-crown counterpart to the fir. `color_var` kwarg selects one of three ramp variants under palette key `tree_deciduous`.
+    goals: |
+      1. `iso_tree_deciduous(canvas, x0, y0, scale, variant, palette, color_var=…)` draws round-crown tree.
+      2. `color_var ∈ {green, green_yellow, green_blue}` picks three distinct ramps from `tree_deciduous`.
+      3. Invalid `color_var` raises `ValueError` with canonical list in message.
+    systems_map: |
+      New file `tools/sprite-gen/src/primitives/iso_tree_deciduous.py`; re-exported from `primitives/__init__.py`. Palette consumer: `palettes/*.json` entries under key `tree_deciduous`. Test surface: `tests/test_decorations_vegetation.py` (T7.9a / TECH-770).
+    impl_plan_sketch: |
+      Phase 1 — Primitive signature + `color_var` validation.
+      Phase 2 — Round-crown ellipse geometry + trunk base.
+      Phase 3 — Wire `color_var` to ramp selection under palette key `tree_deciduous`.
+- reserved_id: TECH-764
+  title: "`iso_bush` + `iso_grass_tuft` primitives"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Two small vegetation primitives colocated: `iso_bush` (low green puff ~6×6 px; palette key `bush`) and `iso_grass_tuft` (1-pixel accents; palette key `grass_tuft`). Both pure functions; no outline pass.
+  depends_on: []
+  related:
+    - TECH-762
+    - TECH-763
+    - TECH-770
+  stub_body:
+    summary: |
+      Two low-profile vegetation primitives. `iso_bush` = ~6×6 px green puff; `iso_grass_tuft` = single-pixel green accents scattered at the anchor. Both palette-driven, scale-aware.
+    goals: |
+      1. `iso_bush` renders a ~6×6 px green puff with 2-level internal ramp under palette key `bush`.
+      2. `iso_grass_tuft` renders 1–3 single-pixel accents under palette key `grass_tuft`.
+      3. Both primitives honour `scale` kwarg and variant seed.
+    systems_map: |
+      New files `tools/sprite-gen/src/primitives/iso_bush.py` + `iso_grass_tuft.py`; both re-exported from `primitives/__init__.py`. Test surface: `tests/test_decorations_vegetation.py` (T7.9a / TECH-770).
+    impl_plan_sketch: |
+      Phase 1 — `iso_bush` puff geometry + palette wiring.
+      Phase 2 — `iso_grass_tuft` pixel-accent drawer.
+      Phase 3 — Re-export both; smoke-render under residential palette.
+- reserved_id: TECH-765
+  title: "`iso_pool` primitive"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/primitives/iso_pool.py` — light-blue rectangle with white rim; `w_px`/`d_px ∈ [8..20]`; palette key `pool`. Composer gate (T7.8 / TECH-769) rejects `iso_pool` on 1×1 archetype via `DecorationScopeError`.
+  depends_on: []
+  related:
+    - TECH-769
+    - TECH-770
+  stub_body:
+    summary: |
+      Ship `iso_pool` primitive — light-blue rectangle with white rim. Size kwargs bounded to 8–20 px. Hard-gated by composer on 1×1 footprints (composer enforcement lives in T7.8 / TECH-769).
+    goals: |
+      1. `iso_pool(canvas, x0, y0, w_px, d_px, palette)` draws filled rectangle with 1-px white rim.
+      2. `w_px, d_px ∈ [8, 20]`; out-of-range raises `ValueError`.
+      3. Palette key `pool` resolves light-blue + white-rim colours from active palette.
+    systems_map: |
+      New file `tools/sprite-gen/src/primitives/iso_pool.py`; re-exported from `primitives/__init__.py`. Composer gate (1×1 rejection) lives in T7.8 / TECH-769 — scope boundary noted here; primitive itself is footprint-agnostic.
+    impl_plan_sketch: |
+      Phase 1 — Primitive signature + size-range validator.
+      Phase 2 — Light-blue rectangle fill + white rim draw.
+      Phase 3 — Palette key wiring + smoke render.
+- reserved_id: TECH-766
+  title: "`iso_path` + `iso_pavement_patch` primitives"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    Two yard-surface primitives colocated. `iso_path` — beige/grey walkway strip; `axis ∈ {ns, ew}`; width 2–4 px. `iso_pavement_patch` — fills arbitrary rect. Both under palette key `pavement`; no outline pass.
+  depends_on: []
+  related:
+    - TECH-767
+    - TECH-770
+  stub_body:
+    summary: |
+      Two pavement-family primitives. `iso_path` = narrow directional walkway; `iso_pavement_patch` = rectangular surface fill. Shared palette key `pavement`.
+    goals: |
+      1. `iso_path(canvas, x0, y0, length_px, axis, palette, width_px=2)` draws strip; `axis ∈ {ns, ew}`; `width_px ∈ [2, 4]`.
+      2. `iso_pavement_patch(canvas, x0, y0, w_px, d_px, palette)` fills rect with beige/grey under palette key `pavement`.
+      3. Invalid axis or width raises `ValueError` with canonical list in message.
+    systems_map: |
+      New files `tools/sprite-gen/src/primitives/iso_path.py` + `iso_pavement_patch.py`; both re-exported from `primitives/__init__.py`. Shared palette key `pavement` in `palettes/*.json`. Test surface: `tests/test_decorations_vegetation.py` (T7.9a / TECH-770).
+    impl_plan_sketch: |
+      Phase 1 — `iso_path` axis + width validation + strip draw.
+      Phase 2 — `iso_pavement_patch` rect-fill draw.
+      Phase 3 — Re-export + smoke-render both primitives.
+- reserved_id: TECH-767
+  title: "`iso_fence` primitive"
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/primitives/iso_fence.py` — thin 1–2 px beige/tan line along one side; `side ∈ {n, s, e, w}`; palette key `fence`. Pure function; no outline pass.
+  depends_on: []
+  related:
+    - TECH-770
+  stub_body:
+    summary: |
+      Ship `iso_fence` primitive — thin 1–2 px line bordering one side of a footprint. Side kwarg selects cardinal direction.
+    goals: |
+      1. `iso_fence(canvas, x0, y0, length_px, side, palette, thickness_px=1)` draws 1–2 px line along one side.
+      2. `side ∈ {n, s, e, w}`; invalid side raises `ValueError`.
+      3. Palette key `fence` resolves beige/tan colour from active palette.
+    systems_map: |
+      New file `tools/sprite-gen/src/primitives/iso_fence.py`; re-exported from `primitives/__init__.py`. Test surface: `tests/test_decorations_vegetation.py` (T7.9a / TECH-770).
+    impl_plan_sketch: |
+      Phase 1 — Primitive signature + side validator.
+      Phase 2 — Per-side line-draw geometry (thickness 1–2 px).
+      Phase 3 — Palette key wiring + smoke render.
+- reserved_id: TECH-768
+  title: Placement strategies
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/placement.py` — pure function `place(decorations, footprint, seed) → list[(primitive_call, x_px, y_px, kwargs)]`. Strategies: `corners`, `perimeter`, `random_border`, `grid(rows, cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`. Deterministic per seed.
+  depends_on: []
+  related:
+    - TECH-769
+    - TECH-771
+  stub_body:
+    summary: |
+      Ship `placement.py` — pure decoration placement engine. Given a decoration list + footprint + seed, returns deterministic pixel coords for each primitive call.
+    goals: |
+      1. `place(decorations, footprint, seed)` returns `list[(primitive_call, x_px, y_px, kwargs)]`.
+      2. Seven strategies supported: `corners`, `perimeter`, `random_border`, `grid(rows, cols)`, `centered_front`, `centered_back`, explicit `[x_px, y_px]`.
+      3. Output deterministic per seed — same inputs always produce identical coord list.
+    systems_map: |
+      New file `tools/sprite-gen/src/placement.py`. Consumer: composer `decorations:` dispatch (T7.8 / TECH-769). Test surface: `tests/test_placement.py` (T7.9b / TECH-771).
+    impl_plan_sketch: |
+      Phase 1 — `place()` signature + per-strategy dispatch skeleton.
+      Phase 2 — Deterministic strategies (`corners`, `centered_*`, `grid`, explicit).
+      Phase 3 — Seeded-random strategies (`perimeter`, `random_border`) via `random.Random(seed)`.
+- reserved_id: TECH-769
+  title: Composer `decorations:` integration
+  priority: high
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/src/compose.py` — `compose_sprite` reads `spec.decorations`; calls `placement.place(...)`; draws z-order ground → yard-deco → building → roof-deco. Raises `DecorationScopeError` on 1×1 footprint + `iso_pool`.
+  depends_on:
+    - TECH-768
+  related:
+    - TECH-765
+    - TECH-771
+  stub_body:
+    summary: |
+      Wire `spec.decorations` into `compose_sprite`. Dispatch each placed primitive in correct z-order. Hard-gate `iso_pool` on 1×1 footprints via `DecorationScopeError`.
+    goals: |
+      1. `compose_sprite` reads `spec.decorations: list[...]`; iterates `placement.place(...)` output.
+      2. Z-order enforced: ground diamond → yard decorations → building → roof decorations.
+      3. Footprint-scope gate raises `DecorationScopeError` when a 1×1 spec includes `iso_pool`.
+    systems_map: |
+      Modify `tools/sprite-gen/src/compose.py` — consume `placement.place` from T7.7 / TECH-768. Dispatch table maps primitive names → primitive callables from `primitives/` (T7.1–T7.6). New exception `DecorationScopeError` in `compose.py` (or `exceptions.py`). Test surface: `tests/test_placement.py` (T7.9b / TECH-771).
+    impl_plan_sketch: |
+      Phase 1 — Spec field read + `placement.place` call.
+      Phase 2 — Z-order dispatch for ground / yard / building / roof layers.
+      Phase 3 — `DecorationScopeError` guard for 1×1 + `iso_pool` combo.
+- reserved_id: TECH-770
+  title: Vegetation primitive smoke tests
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_decorations_vegetation.py` — per-primitive smoke tests across 7 vegetation/yard primitives from T7.1–T7.6 (TECH-762..TECH-767). Assert non-empty bbox + expected palette colours present.
+  depends_on:
+    - TECH-762
+    - TECH-763
+    - TECH-764
+    - TECH-765
+    - TECH-766
+    - TECH-767
+  related:
+    - TECH-771
+  stub_body:
+    summary: |
+      One test file covering smoke render + palette assertions for all 7 yard/vegetation primitives shipped in T7.1–T7.6.
+    goals: |
+      1. Each of `iso_tree_fir`, `iso_tree_deciduous`, `iso_bush`, `iso_grass_tuft`, `iso_pool`, `iso_path`, `iso_pavement_patch`, `iso_fence` renders without exception under residential palette.
+      2. Each render produces non-empty bounding box on the output canvas.
+      3. Dominant colour of each render matches expected palette key (bright/mid ramp level).
+    systems_map: |
+      New file `tools/sprite-gen/tests/test_decorations_vegetation.py`. Depends on primitives shipped by T7.1–T7.6 (TECH-762..TECH-767). Uses default residential palette under `tools/sprite-gen/palettes/residential.json`.
+    impl_plan_sketch: |
+      Phase 1 — Smoke-render test per primitive (non-empty bbox).
+      Phase 2 — Dominant-colour assertion per primitive against expected palette key.
+      Phase 3 — Parametrize across the 7-primitive set to keep the file short.
+- reserved_id: TECH-771
+  title: Placement seed-stability tests
+  priority: medium
+  issue_type: TECH
+  notes: |
+    `tools/sprite-gen/tests/test_placement.py` — each placement strategy places declared count at stable coords given same seed. Covers composer `decorations:` integration from T7.7 + T7.8 (TECH-768 + TECH-769).
+  depends_on:
+    - TECH-768
+    - TECH-769
+  related:
+    - TECH-770
+  stub_body:
+    summary: |
+      One test file locking placement determinism. For each strategy, assert the declared decoration count is produced at stable coords under a fixed seed.
+    goals: |
+      1. Each strategy (`corners`, `perimeter`, `random_border`, `grid`, `centered_front`, `centered_back`, explicit) produces expected item count.
+      2. Same seed + same inputs → byte-identical coord list across runs.
+      3. Composer integration (T7.8) raises `DecorationScopeError` on 1×1 + `iso_pool` regression case.
+    systems_map: |
+      New file `tools/sprite-gen/tests/test_placement.py`. Depends on `placement.place` from T7.7 / TECH-768 + composer integration from T7.8 / TECH-769.
+    impl_plan_sketch: |
+      Phase 1 — Per-strategy count + coord-stability tests.
+      Phase 2 — Cross-run determinism check (run twice, diff coord lists).
+      Phase 3 — `DecorationScopeError` regression on 1×1 + `iso_pool` spec.
+```
+
+#### §Plan Fix — PASS (re-entry, no new drift)
+
+> plan-review exit 0 (re-entry pass, cap=1) — Stage 7 tasks TECH-762..TECH-771 aligned. Prior tuple (TECH-770 §1 Summary "7"→"8") applied successfully. Two residual stale "7" occurrences remain in TECH-770 §3 and §7b (non-critical, no goal/acceptance divergence); second-pass cap reached — emitting PASS. Downstream: proceed to `/author`.
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 8 — Decoration primitives — building details (windows, doors, roof, signage)
+
 
 **Status:** Draft — 2026-04-23.
 
@@ -2244,13 +2657,6 @@ validation_gate:
 - Spec schema: `building.details: list[...]` processed after `composition:`, drawn in face-order with proper z-clipping.
 - Palette keys per DAS §4: `window_blue`, `window_dark`, `door_dark`, `sign_teal`, `sign_cyan`, `parapet_pink`, `parapet_peach`, `chimney_red`, `vent_grey`.
 - `tests/test_decorations_building.py` — per-primitive smoke; face-validation tests.
-
-**Phases:**
-
-- Phase 1 — Window grid + door primitives.
-- Phase 2 — Storefront sign + parapet cap (commercial-focused).
-- Phase 3 — Chimney + roof vent + pipe column.
-- Phase 4 — Composer `details:` block + face validation tests.
 
 **Tasks:**
 
@@ -2269,9 +2675,34 @@ validation_gate:
 
 **Dependency gate:** Stage 6 archived.
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 9 — Footprint unlock — 2×2 composites + multi-building clusters
+
 
 **Status:** Draft — 2026-04-23. First archetype lock-break per L9.
 
@@ -2285,12 +2716,6 @@ validation_gate:
 - Composer resolves slots → anchor pixel coords deterministically.
 - 3 new archetype specs shipped: `residential_row_medium_2x2.yaml` (3 colored houses tiled-row-3), `residential_suburban_2x2.yaml` (1 centered house + pool + trees), `commercial_light_2x2.yaml` (single larger store + paved surround).
 - Regression tests per archetype: render → assert bbox height matches reference (`MediumResidentialBuilding-2-128.png` / `LightResidentialBuilding-2-128.png` / `LightCommercialBuilding-2-128.png`) within ±3 px.
-
-**Phases:**
-
-- Phase 1 — `footprint: [2,2]` canvas math + composer support.
-- Phase 2 — `buildings:` list + named slots.
-- Phase 3 — 3 reference archetype specs + regression tests.
 
 **Tasks:**
 
@@ -2307,9 +2732,34 @@ validation_gate:
 
 **Dependency gate:** Stages 6 + 7 archived (ground diamond + yard decorations). Stage 8 optional (buildings render without details for basic match).
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 10 — Footprint unlock — 3×3 industrial + paved-yard composition
+
 
 **Status:** Draft — 2026-04-23.
 
@@ -2322,12 +2772,6 @@ validation_gate:
 - `industrial_heavy_3x3.yaml` — office + warehouse cluster + paved driveway + parking stripes.
 - `powerplant_nuclear_3x3.yaml` — office slab + 3 cooling towers (static, animation deferred) + mustard ground.
 - Regression tests vs `HeavyIndustrialBuilding-1-192.png` and the first frame of `power-plant-nuclear-sprite-sheet.png` (bbox ±3 px tolerance).
-
-**Phases:**
-
-- Phase 1 — `footprint: [3,3]` canvas + ground.
-- Phase 2 — `iso_paved_parking` primitive.
-- Phase 3 — Industrial + power archetypes + regression tests.
 
 **Tasks:**
 
@@ -2345,9 +2789,34 @@ validation_gate:
 
 **Dependency gate:** Stage 9 archived (needs 2×2 machinery; 3×3 is a direct extension).
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 11 — Vertical unlock — tall canvases (+64 per floor tier)
+
 
 **Status:** Draft — 2026-04-23.
 
@@ -2360,12 +2829,6 @@ validation_gate:
 - Window-band repeat: `iso_window_grid` handles multi-floor automatic replication when `rows` is set high enough.
 - Reference specs: `residential_heavy_tall_1x1.yaml` → 64×128, `commercial_dense_tall_1x1.yaml` → 64×128, `commercial_dense_mega_2x2.yaml` → 128×256.
 - Pivot UV recomputes correctly: `(0.5, 16/128)`, `(0.5, 16/256)`.
-
-**Phases:**
-
-- Phase 1 — `canvas_size` extra_floors param + composer auto-select.
-- Phase 2 — Multi-floor window band replication.
-- Phase 3 — Tall-tower archetype specs + regression tests.
 
 **Tasks:**
 
@@ -2382,9 +2845,34 @@ validation_gate:
 
 **Dependency gate:** Stages 6, 8 archived (needs pixel-native + window-grid). Stage 9 archived (for 2×2 tall mega).
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 12 — Palette system v2 + outline policy
+
 
 **Status:** Draft — 2026-04-23.
 
@@ -2398,12 +2886,6 @@ validation_gate:
 - Rim-shade handled inside `iso_ground_diamond` (no separate outline pass).
 - Per-class outline policy in `src/constants.py`: `OUTLINE_SILHOUETTE = {"residential_small": True, "commercial_small": True, "industrial_light": True, "commercial_dense": False, "residential_heavy": False, ...}`.
 - `tests/test_palette_v2.py` — load each palette, assert schema; `tests/test_outline.py` — silhouette pass produces 1-px black ring.
-
-**Phases:**
-
-- Phase 1 — Palette JSON schema v2 + migration of existing `residential.json`.
-- Phase 2 — Bootstrap 5 additional class palettes from DAS §4.2.
-- Phase 3 — Silhouette outline pass + per-class policy.
 
 **Tasks:**
 
@@ -2419,9 +2901,34 @@ validation_gate:
 
 **Dependency gate:** Stage 6 archived.
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 13 — Slope refactor — 2-tone cliff + water-facing slopes
+
 
 **Status:** Draft — 2026-04-23.
 
@@ -2434,12 +2941,6 @@ validation_gate:
 - Composer default: when `spec.terrain != 'flat'`, uses `iso_slope_wedge` (not `iso_stepped_foundation`).
 - Legacy `iso_stepped_foundation` kept as opt-in (`spec.foundation_primitive: iso_stepped_foundation`) for multi-floor buildings that need stepping.
 - Regression tests: all 34 (17 land + 17 water) slope variants render without crash; bbox matches existing `Slopes/*.png` counterparts within ±3 px.
-
-**Phases:**
-
-- Phase 1 — `iso_slope_wedge` primitive + `slopes.yaml` water extension.
-- Phase 2 — Composer default swap.
-- Phase 3 — 34-variant regression matrix.
 
 **Tasks:**
 
@@ -2455,9 +2956,34 @@ validation_gate:
 
 **Dependency gate:** Stage 6 archived.
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 14 — Archetype library expansion + slope matrix per archetype
+
 
 **Status:** Draft — 2026-04-23. **No archetype cap (Lock H3).**
 
@@ -2491,28 +3017,68 @@ validation_gate:
 | A17 | `zoning_residential` / `zoning_commercial` / `zoning_industrial` | 1×1 × 3   | Empty-lot per-class                       |
 
 
-**Phases:**
-
-- Phase 1 — Slope-matrix CLI infrastructure (if not already in Stage 13: batch `--terrain` expansion + filename convention `<archetype>_<slope_code>.png`).
-- Phase 2 — Residential archetypes (A1–A4).
-- Phase 3 — Commercial archetypes (A5–A9).
-- Phase 4 — Industrial + power + water archetypes (A10–A14).
-- Phase 5 — Environmental + zoning archetypes (A15–A17).
-- Phase 6 — Opportunistic additions (no cap).
-
 **Tasks:** Filed per archetype — task format `T14.<An>.flat` (flat archetype spec) + `T14.<An>.matrix` (34-variant regression test). Full task list filed when each archetype is picked up.
 
 **Dependency gate:** Stages 6–13 archived for full catalog to reach quality bar. Individual flat-archetype tasks (A1, A5, etc.) can ship as each prior stage lands.
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 15 — (Deferred) Effects & animation
+
 
 **Status:** Deferred — separate future exploration per Lock I4.
 
 **Objectives:** Animation descriptors — cooling-tower steam plumes (4-frame), smokestack smoke (loop), bulldozer 5-frame sheet (existing ref), generic 4-frame animation sheets per DAS §1 Effects entries.
 
 Not detailed here; a new exploration doc will scope animation support once Stages 6–14 close.
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 

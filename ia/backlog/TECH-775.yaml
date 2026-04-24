@@ -1,0 +1,30 @@
+id: TECH-775
+type: tech
+title: "Tests for remap + GC"
+priority: medium
+status: open
+section: "Stage 3.3"
+spec: "ia/projects/TECH-775.md"
+files:
+  - "Assets/Tests/EditMode/"
+notes: |
+  EditMode tests cover replaced_by chain remap (straight + cyclic + missing); server-side tests
+  (Vitest or existing web test pattern) cover GC refcount — orphan row deleted, referenced row
+  preserved. Stage 3.3 Phase 2 — closes Exit criteria.
+acceptance: |
+  - EditMode test asserts A→B→C chain remap result id + missing-row fallback does not crash.
+  - Server test asserts GC candidate set excludes any catalog_sprite referenced by catalog_asset_sprite OR catalog_pool_member.
+  - dry-run vs commit paths both covered.
+  - Tests green under npm run validate:all / relevant test runner.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-772"
+  - "TECH-773"
+  - "TECH-774"
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-775** — Tests for remap + GC
+    - Type: tech
+    - Priority: medium
+    - Notes: EditMode tests cover replaced_by chain remap (straight + cyclic + missing); server-side tests cover GC refcount.

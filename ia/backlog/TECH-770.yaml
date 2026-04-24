@@ -1,0 +1,33 @@
+id: TECH-770
+type: TECH
+title: Vegetation primitive smoke tests
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-770.md
+files: []
+notes: |
+  `tools/sprite-gen/tests/test_decorations_vegetation.py` — per-primitive smoke tests across 7 vegetation/yard primitives from T7.1–T7.6 (TECH-762..TECH-767). Assert non-empty bbox + expected palette colours present.
+depends_on:
+  - TECH-762
+  - TECH-763
+  - TECH-764
+  - TECH-765
+  - TECH-766
+  - TECH-767
+depends_on_raw: "**TECH-762**, **TECH-763**, **TECH-764**, **TECH-765**, **TECH-766**, **TECH-767**"
+related:
+  - TECH-771
+acceptance: |
+  - [ ] Each of `iso_tree_fir`, `iso_tree_deciduous`, `iso_bush`, `iso_grass_tuft`, `iso_pool`, `iso_path`, `iso_pavement_patch`, `iso_fence` renders without exception under residential palette.
+  - [ ] Each render produces non-empty bounding box on the output canvas.
+  - [ ] Dominant colour of each render matches expected palette key (bright/mid ramp level).
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-770** — Vegetation primitive smoke tests
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/tests/test_decorations_vegetation.py`
+    - Depends on: **TECH-762**, **TECH-763**, **TECH-764**, **TECH-765**, **TECH-766**, **TECH-767**
+    - Related: **TECH-771**
+    - Notes: Per-primitive smoke tests across 7 vegetation/yard primitives from T7.1–T7.6 (TECH-762..TECH-767). Assert non-empty bbox + expected palette colours present.

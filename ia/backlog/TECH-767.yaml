@@ -1,0 +1,26 @@
+id: TECH-767
+type: TECH
+title: "`iso_fence` primitive"
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-767.md
+files: []
+notes: |
+  `tools/sprite-gen/src/primitives/iso_fence.py` — thin 1–2 px beige/tan line along one side; `side ∈ {n, s, e, w}`; palette key `fence`. Pure function; no outline pass.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-770
+acceptance: |
+  - [ ] `iso_fence(canvas, x0, y0, length_px, side, palette, thickness_px=1)` draws 1–2 px line along one side.
+  - [ ] `side ∈ {n, s, e, w}`; invalid side raises `ValueError`.
+  - [ ] Palette key `fence` resolves beige/tan colour from active palette.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-767** — `iso_fence` primitive
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/src/primitives/iso_fence.py`
+    - Related: **TECH-770**
+    - Notes: Thin 1–2 px beige/tan line along one side; `side ∈ {n, s, e, w}`; palette key `fence`. Pure function; no outline pass.
