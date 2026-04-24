@@ -310,6 +310,23 @@
         34
       ]
     },
+    "tree_deciduous": {
+      "green": {
+        "bright": [120, 196, 96],
+        "mid": [84, 150, 70],
+        "dark": [44, 90, 42]
+      },
+      "green_yellow": {
+        "bright": [180, 214, 88],
+        "mid": [140, 172, 62],
+        "dark": [82, 110, 34]
+      },
+      "green_blue": {
+        "bright": [96, 178, 158],
+        "mid": [62, 130, 124],
+        "dark": [28, 72, 76]
+      }
+    },
     "mustard_industrial": {
       "bright": [
         210,

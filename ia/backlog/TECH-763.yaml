@@ -1,0 +1,28 @@
+id: TECH-763
+type: TECH
+title: "`iso_tree_deciduous` primitive"
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-763.md
+files: []
+notes: |
+  `tools/sprite-gen/src/primitives/iso_tree_deciduous.py` — round-crown tree; `color_var ∈ {green, green_yellow, green_blue}` selects ramp variant; palette key `tree_deciduous`. Same pure-function signature as `iso_tree_fir`; no outline pass.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-762
+  - TECH-764
+  - TECH-770
+acceptance: |
+  - [ ] `iso_tree_deciduous(canvas, x0, y0, scale, variant, palette, color_var=…)` draws round-crown tree.
+  - [ ] `color_var ∈ {green, green_yellow, green_blue}` picks three distinct ramps from `tree_deciduous`.
+  - [ ] Invalid `color_var` raises `ValueError` with canonical list in message.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-763** — `iso_tree_deciduous` primitive
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/src/primitives/iso_tree_deciduous.py`
+    - Related: **TECH-762**, **TECH-764**, **TECH-770**
+    - Notes: Round-crown tree; `color_var ∈ {green, green_yellow, green_blue}` selects ramp variant; palette key `tree_deciduous`. Same pure-function signature as `iso_tree_fir`; no outline pass.
