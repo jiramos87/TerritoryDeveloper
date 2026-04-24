@@ -60,7 +60,9 @@
 
 ### Stage {{N}}.{{M}} — {{Stage Name}}
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 
 **Backlog state (Stage {{N}}.{{M}}):** 0 filed
 

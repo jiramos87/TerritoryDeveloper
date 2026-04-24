@@ -482,9 +482,11 @@ Emit to stdout (chain-level consumer = `/ship-stage` orchestrator or direct user
 
 Per [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) R5:
 
-1. **Stage header:** find `#### Stage {STAGE_ID} — {Title}` block in `MASTER_PLAN_PATH`. Rewrite `**Status:**` line `In Progress` → `Final`. Idempotent if already `Final`.
+1. **Stage header:** find stage heading line matching regex `^#{3,4} Stage {STAGE_ID}\b` in `MASTER_PLAN_PATH` (accept `### Stage` or `#### Stage` — author-time depth varies across `master-plan-new` / `master-plan-extend` / `stage-decompose`). Within 20 lines below the heading, locate the `**Status:**` line. Rewrite the entire Status line to `**Status:** Final — closed {YYYY-MM-DD} ({N} tasks {FIRST_ID}..{LAST_ID} archived via {COMMIT_SHA})` regardless of the current state-token (`Draft` / `Draft — {date}. Filed from …` / `In Progress` / `Done` / dated variants all accepted — the applier OVERWRITES, does not substring-match). Idempotent if the line already starts with `**Status:** Final`.
 2. **Step header rollup:** if every Stage of parent Step `N` has `Status: Final` → rewrite Step header `**Status:**` line to `Final`. Idempotent.
 3. **Plan top-Status rollup:** if every Step has `Status: Final` → rewrite top-of-file `> **Status:**` line to `Final`. Idempotent. Otherwise rewrite to `In Progress — Step {next_open_step}` (shift cursor to next non-Final step).
+4. **Post-flip self-check (R5 gate assertion):** re-read the stage heading + 20 lines below; grep `^\*\*Status:\*\* Final\b`; if no match → escalate `{escalation: true, reason: "stage_status_flip_failed", stage_id: "{STAGE_ID}"}`. Prevents silent misses from heading-depth or anchor drift.
+5. **Pre-flip warn (B5 guard):** if Status line pre-edit matches NEITHER `**Status:** In Progress` NOR `**Status:** Final` NOR `**Status:** Draft` (canonical tokens) → log stderr `[plan-applier] WARN stage {STAGE_ID} status line non-canonical: "{raw_line}" — overwriting to Final`. Does not block; surfaces upstream R2 miss from `stage-file-apply`.
 
 ### 5c. Hand-off
 
@@ -526,6 +528,7 @@ Sonnet pair-tail NEVER guesses. Immediate return-to-Opus triggers (per `plan-app
 | `materialize-backlog.sh` non-zero | `{escalation: true, reason: "materialize failed: {stderr}"}` |
 | `validate:all` non-zero exit | `{escalation: true, reason: "validator failed: {exit_code} {stderr}"}` |
 | `flock` transient (2nd attempt) | `{escalation: true, tuple_index: N, reason: "flock timeout 2x"}` |
+| Phase 5b self-check — stage Status line not `**Status:** Final` post-edit | `{escalation: true, reason: "stage_status_flip_failed", stage_id: "{STAGE_ID}"}` |
 
 Opus pair-head receives escalation → revises `§Stage Closeout Plan` → applier re-runs from scratch (idempotency guarantees safety).
 
@@ -540,7 +543,7 @@ Opus pair-head receives escalation → revises `§Stage Closeout Plan` → appli
 - `digest_emit`: MCP call idempotent (read-only from applier's perspective; digest regenerated per call — no write to disk).
 - Shared `replace_section` / `insert_*` / `append_row` / `set_frontmatter` / `write_file`: per Phase 2b rules.
 - `materialize-backlog.sh` + `validate:all`: idempotent by design.
-- Stage / Step / Plan Status flips: overwrite to desired final state — no-op if already matches.
+- Stage / Step / Plan Status flips: overwrite to desired final state — no-op if already matches. Overwrites are unconditional on prior token (Draft / In Progress / Done / dated variants all get rewritten to Final). Non-canonical pre-edit tokens trigger WARN (Phase 5b step 5) but do NOT block.
 
 Re-running fully-applied state = exit 0 + zero diff.
 

@@ -97,7 +97,9 @@ Per stage, author the block (verbatim shape):
 ```markdown
 #### Stage {STEP_ID}.{M} — {Name}
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 
 **Objectives:** {1–3 sentences — what this stage lands}.
 
@@ -187,7 +189,9 @@ Find the `### Step {STEP_ID}` block (from the skeleton `Status: Draft (decomposi
 ```markdown
 ### Step {STEP_ID} — {Name}
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 
 **Backlog state (Step {STEP_ID}):** 0 filed
 
@@ -225,7 +229,9 @@ If the section has no remaining `_TBD_` bullets (all steps decomposed), add a no
 Find the `### Step {STEP_ID}` block's `**Status:**` line. If it reads `Skeleton` (or `Draft (decomposition deferred…)` or any Skeleton variant), rewrite it to:
 
 ```markdown
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 ```
 
 This flip signals that the step is now decomposed and ready for `stage-file` but no tasks are filed yet (`_pending_`). Do NOT flip to `In Progress` — that is `stage-file`'s responsibility (R2). Do NOT touch the plan top-of-file `> **Status:**` from here — `stage-file` owns that flip (R1). Flip is idempotent: if Status is already `Draft (tasks _pending_…)`, no change needed.

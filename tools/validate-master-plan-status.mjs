@@ -217,8 +217,10 @@ function parsePlan(filePath) {
       continue;
     }
 
-    // #### Stage N.M — …
-    const stageMatch = /^####\s+Stage\s+[\d.]+/.test(stripped);
+    // ### Stage N.M — … or #### Stage N.M — …
+    // Heading depth varies by authoring skill (master-plan-new emits ####,
+    // template.md + some hand-authored plans emit ###). Accept both.
+    const stageMatch = /^#{3,4}\s+Stage\s+[\d.]+/.test(stripped);
     if (stageMatch) {
       flushStage();
       if (!currentStep) {

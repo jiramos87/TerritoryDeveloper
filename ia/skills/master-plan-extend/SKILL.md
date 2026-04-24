@@ -138,7 +138,9 @@ Per confirmed new step (ALL of them, starting at `START_STEP_NUMBER`), author th
 ```markdown
 ### Step {N} — {Name}
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 
 **Backlog state (Step {N}):** 0 filed
 
@@ -192,7 +194,9 @@ Per stage, author the block shape (6-column task table — matches `ia/templates
 ```markdown
 #### Stage {N}.{M} — {Name}
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft
+
+**Notes:** tasks _pending_ — not yet filed
 
 **Objectives:** {1–3 sentences — what this stage lands}.
 
