@@ -37,7 +37,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `ORCHESTRATOR_SPEC` | User prompt | Path to existing `ia/projects/{slug}-master-plan.md` — required. Must exist. Must match orchestrator shape (header block + `## Stages` + tracking legend + `## Orchestration guardrails`). |
+| `ORCHESTRATOR_SPEC` | User prompt | SLUG carrier. Accepts repo-relative path forms `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` (legacy filesystem shapes — files no longer exist post Step 9.6; only basename parses to derive `{slug}`). DB-first via `master_plan_render(slug)` — must return existing plan payload. Must match orchestrator shape (header block + `## Stages` + tracking legend + `## Orchestration guardrails`). |
 | `SOURCE_DOC` | User prompt | Path to exploration doc (carries `## Design Expansion` or semantic equivalent) OR extensions doc (`{slug}-post-mvp-extensions.md` listing deferred Stages) — required. Must carry at least one Implementation Point / Roadmap entry not already represented in orchestrator. |
 | `SOURCE_SECTION` | User prompt | Optional. When `SOURCE_DOC` is an umbrella multi-bucket exploration (e.g. `full-game-mvp-exploration.md`), specify the bucket heading or section slug (e.g. `Bucket 7 — Audio polish & Blip`). Phase 0 + Phase 2 load only that subsection + its Implementation Points block; remaining buckets ignored to prevent token blow-up and wrong-bucket bleed. |
 | `START_STAGE_NUMBER` | User prompt | Optional `N.M` override. Default: next free `N.M` after last existing Stage (e.g. last = Stage 3.2 → new Stages start at Stage 3.3, or Stage 4.1 for new top-level cluster — see Phase 1). Extend appends — never overwrites existing Stages. |
@@ -49,25 +49,29 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 
 ### Phase 0 — Load + validate
 
-Read `{ORCHESTRATOR_SPEC}`. If `SOURCE_SECTION` provided, note it for Phase 2 scoping (full doc still read here for shape check).
+Derive `{SLUG}` from `{ORCHESTRATOR_SPEC}` basename (strip `-master-plan.md` OR `/index.md` suffix — both legacy filesystem shapes). Call `master_plan_render({slug: SLUG})` to fetch DB-backed plan payload (preamble + Stage inventory + Tasks). `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
 
-**Hard-required (STOP if missing):**
+If `SOURCE_SECTION` provided, note it for Phase 2 scoping. The rendered payload is the source of truth — no filesystem read of `{ORCHESTRATOR_SPEC}` (file no longer exists post Step 9.6).
+
+**Hard-required in rendered preamble (STOP if missing):**
 
 - `## Stages` + tracking legend present (canonical Stage enum `Draft | In Review | In Progress | Final` per MASTER-PLAN-STRUCTURE.md §6.2).
 - `## Orchestration guardrails` present (Do / Do not lists).
-- At least one `### Stage {N}.{M}` block exists (H3 depth — H4 `#### Stage` is retired drift).
+- At least one Stage row in `ia_stages` (rendered as `### Stage {N}.{M}` block) exists.
 
-**Insert-if-missing (header-repair — do NOT STOP; inject BEFORE continuing validation):**
+**Insert-if-missing (header-repair — do NOT STOP; inject in Phase 6 preamble write):**
 
 - `**Last updated:** {YYYY-MM-DD}` absent → insert under the orchestrator title block (before `**Status:**` or first header field); set to today's date.
 - `**Locked decisions (do not reopen in this plan):**` absent → insert as empty bullet-list field in header block.
 - `**Hierarchy rules:**` line references old 3-level `step > stage > phase > task` phrasing → replace with canonical line citing `ia/projects/MASTER-PLAN-STRUCTURE.md` first (see MASTER-PLAN-STRUCTURE.md §2).
 
-After header-repair, continue. Missing hard-required shape → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator) OR hand-migrate to canonical shape first.
+Header-repair lands via `master_plan_preamble_write` in Phase 6 — collect deltas here, apply atomically with Stage inserts.
 
-**Retired-surface detection (soft warn, do NOT STOP):** If orchestrator carries any `### Step N` block, `**Phases:**` checkbox list, or 6-column Task table with `Phase` column → emit warning in handoff recommending migration to canonical 2-level shape. Do NOT auto-migrate (structural rewrite — user decides). New Stages authored by this skill use canonical shape regardless of legacy drift in existing blocks.
+Missing hard-required shape in rendered preamble → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
 
-Read `{SOURCE_DOC}`. If `SOURCE_SECTION` provided, load only that section + its Implementation Points / Roadmap sub-block; ignore remaining sections. Confirm expansion intent present — literal `## Design Expansion` OR semantic equivalents:
+**Retired-surface detection (soft warn, do NOT STOP):** If preamble carries any `### Step N` block, `**Phases:**` checkbox list, or 6-column Task table with `Phase` column → emit warning in handoff recommending migration to canonical 2-level shape. Do NOT auto-migrate (structural rewrite — user decides). New Stages authored by this skill use canonical shape regardless of legacy drift in existing blocks.
+
+Read `{SOURCE_DOC}` (filesystem — exploration / extensions docs remain on disk). If `SOURCE_SECTION` provided, load only that section + its Implementation Points / Roadmap sub-block; ignore remaining sections. Confirm expansion intent present — literal `## Design Expansion` OR semantic equivalents:
 
 | Intent | Literal heading | Semantic equivalents accepted |
 |---|---|---|
@@ -80,8 +84,8 @@ Missing approach + staged skeleton intent → STOP. Extensions docs must carry a
 
 Hold in working memory:
 
-- **Existing Stage inventory** — list of `(N, M, name, status)` tuples from all `### Stage {N}.{M}` blocks.
-- **Existing Locked decisions** — must not be re-contested by new Stages.
+- **Existing Stage inventory** — list of `(N, M, name, status)` tuples from `master_plan_render` payload.
+- **Existing Locked decisions** — must not be re-contested by new Stages (parsed from rendered preamble).
 - **Source doc Implementation Points / Roadmap / Deferred list** — raw skeleton for new Stages.
 - **Source doc Architecture / Component map** — entry / exit points → §"Relevant surfaces" per new Stage.
 - **Source doc Subsystem Impact** — touched subsystems + invariant numbers → per-stage guardrails.
@@ -222,28 +226,33 @@ Subskill returns `{stages_lt_2, stages_gt_6, single_file_tasks, oversized_tasks,
 
 Also covers Phase 4 task sizing: single-file/function/struct tasks → `single_file_tasks`; >3 unrelated subsystems → `oversized_tasks`.
 
-### Phase 6 — Persist in place
+### Phase 6 — Persist (DB-only)
 
-Edit `{ORCHESTRATOR_SPEC}`. Operations (in order, atomic — single Write or sequential Edits):
+DB MCP writes only — no filesystem Edits. Operations (in order):
 
-1. **Header sync (idempotent — for each field: Grep → Edit if exists, else inject):**
-   - `**Last updated:**` present → update to today's date. Absent → insert under orchestrator title block (before `**Status:**`). (May already exist after Phase 0 header-repair; skip if already today's date.)
-   - `**Exploration source:**` present → append `{SOURCE_DOC}` entry if not already listed, format: `` `{SOURCE_DOC}` (§{new-stage-relevant sections}) — extension source for Stages {START}.{M_first}..{END}.{M_last} ``. Absent → insert field + entry.
-   - `**Locked decisions (do not reopen in this plan):**` present → append new bullets from source doc. Absent → insert field + bullets.
-   - `**Read first if landing cold:**` present AND Phase 2 surfaced new invariant numbers → merge them in. Absent → skip.
-   - `**Hierarchy rules:**` line references retired 3-level phrasing → replace with canonical line (per MASTER-PLAN-STRUCTURE.md §2).
+1. **Preamble write (atomic header sync):** Build new preamble string by merging current rendered preamble + header-repair deltas (Phase 0) + source-doc additions:
+   - `**Last updated:**` → today's date (insert if absent).
+   - `**Exploration source:**` → append `` `{SOURCE_DOC}` (§{new-stage-relevant sections}) — extension source for Stages {START}.{M_first}..{END}.{M_last} `` if not present.
+   - `**Locked decisions (do not reopen in this plan):**` → append new bullets from source doc.
+   - `**Read first if landing cold:**` → merge new invariant numbers from Phase 2.
+   - `**Hierarchy rules:**` → replace retired 3-level phrasing with canonical line.
+   - Call `master_plan_preamble_write({slug: SLUG, preamble: <new preamble string>})`.
 
-2. **Stage block insertion:**
-   - Locate insertion point: last `### Stage {N}.{M}` block END (after its `#### §Stage Closeout Plan` subsection) → immediately before the closing `---` separator that precedes `## Orchestration guardrails`.
-   - Insert each new `### Stage {START}.{M_first}` ... `### Stage {END}.{M_last}` block in order, fully decomposed (from Phase 4 output).
+2. **Stage block insertion (per new Stage):** For each new `Stage {START}.{M_first}` ... `Stage {END}.{M_last}` block from Phase 4:
+   - Call `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: "<full Stage block markdown>"})`.
 
-3. **Orchestration guardrails:** do NOT modify unless source doc introduces a new guardrail category (rare — user must explicitly request). Default behavior: leave intact.
+   **MCP gap:** `stage_insert` not yet wired (Step 9.6.8 only landed `master_plan_render` / `stage_render` / `master_plan_preamble_write` / `master_plan_change_log_append`). Skill blocked on this gap — add to Step 9.6 followup tracker. Workaround until wired: emit Stage block markdown in handoff, ask user to insert manually via SQL.
+
+3. **Change-log audit row:** Call `master_plan_change_log_append({slug: SLUG, kind: "plan_extended", body: "Extended via {SOURCE_DOC} — +N stages ({START}.{M_first}..{END}.{M_last}), +M tasks"})`.
+
+4. **Orchestration guardrails:** do NOT modify unless source doc introduces a new guardrail category (rare — user must explicitly request). Default behavior: leave intact.
 
 **Do NOT:**
 
-- Touch existing `### Stage {N}.{M}` blocks — not even cosmetic edits (retired-surface warnings go in handoff, not auto-fix).
-- Overwrite orchestrator header `**Status:**` line — lifecycle skills flip it. (Exception: Phase 6c R6 demote — see below.)
-- Insert BACKLOG rows. Create `ia/projects/{ISSUE_ID}.md` stubs. Tasks stay `_pending_`.
+- Touch existing Stage rows in `ia_stages` — not even cosmetic edits (retired-surface warnings go in handoff, not auto-fix).
+- Overwrite top-of-preamble `**Status:**` line — lifecycle skills flip it. (Exception: Phase 6c R6 demote — see below.)
+- Insert BACKLOG rows. Create flat `ia/projects/{ISSUE_ID}.md` stubs. Tasks stay `_pending_`.
+- Read or write `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` — DB is sole source of truth post Step 9.6.
 - Rename or delete `{SOURCE_DOC}`. Do not edit its expansion block.
 - Commit. User decides when.
 
@@ -253,9 +262,9 @@ Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress
 
 ### Phase 6c — Demote top Status if currently Final (R6)
 
-After persisting new Stage blocks, check the plan top-of-file `> **Status:**` line:
+After persisting new Stage blocks, check the rendered preamble `> **Status:**` line:
 
-- If top Status reads `Final` AND `appended_stages ≥ 1`: rewrite top Status to `In Progress — Stage {N_first_new}.{M_first_new} pending (extensions appended)` where `(N_first_new, M_first_new)` = first new Stage identifier.
+- If top Status reads `Final` AND `appended_stages ≥ 1`: rewrite top Status to `In Progress — Stage {N_first_new}.{M_first_new} pending (extensions appended)` where `(N_first_new, M_first_new)` = first new Stage identifier. Land via second `master_plan_preamble_write` call (preamble re-fetch via `master_plan_render` → string-replace Status line → write).
 - If top Status is NOT `Final` (e.g. already `In Progress`, `Draft`): leave unchanged.
 - Rationale: a `Final` plan that gains new Stages is no longer complete — the top Status must reflect that active work remains.
 - This flip is idempotent: re-running when Status already reflects the new stage produces zero diff.
@@ -275,10 +284,11 @@ Single concise message (caveman) naming:
 
 **Umbrella flip (if applicable):** If `{ORCHESTRATOR_SPEC}` is a child orchestrator under an umbrella plan (detected by: umbrella's Stage/bucket table references `{slug}-master-plan.md`, OR user provides umbrella path):
 
+- Derive `{UMBRELLA_SLUG}` from umbrella path basename. Call `master_plan_render({slug: UMBRELLA_SLUG})` to fetch umbrella preamble.
 - Find child row in umbrella's table where Status = `Planned` or blank.
-- Flip to `In Progress` (first EXTEND of a previously-Planned child).
-- Append to umbrella `## Change log`: `{YYYY-MM-DD} — {ORCHESTRATOR_SPEC} extended via {SOURCE_DOC}; status → In Progress.`
-- Include flip confirmation in handoff message: "Umbrella `{umbrella-path}` — child row `{slug}` → In Progress."
+- Build new umbrella preamble: flip child row Status → `In Progress`. Land via `master_plan_preamble_write({slug: UMBRELLA_SLUG, preamble: <updated>})`.
+- Call `master_plan_change_log_append({slug: UMBRELLA_SLUG, kind: "child_extended", body: "{SLUG} extended via {SOURCE_DOC}; status → In Progress."})`.
+- Include flip confirmation in handoff message: "Umbrella `{UMBRELLA_SLUG}` — child row `{SLUG}` → In Progress."
 
 ---
 
@@ -300,8 +310,8 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 
 ## Guardrails
 
-- IF `{ORCHESTRATOR_SPEC}` does not exist → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
-- IF `{ORCHESTRATOR_SPEC}` shape check fails (missing header / Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
+- IF `master_plan_render({slug: SLUG})` returns `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
+- IF rendered preamble shape check fails (missing header / Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
 - IF `{SOURCE_DOC}` missing expansion + staged skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
 - IF `START_STAGE_NUMBER` collides with an existing `N.M` pair → STOP. Overwriting existing Stages requires a fresh revision cycle, not this skill.
 - IF proposed new stage duplicates an existing stage name / objective → apply Phase 1 resolution playbook: Draft unpersisted Stage → merge; In Review+ → STOP and ask rename/drop/revision-cycle; near-overlap with distinct scope → proceed with note.
@@ -310,8 +320,9 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 - IF router returns `no_matching_domain` for a new subsystem → note gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
 - IF source doc introduces a locked decision that contradicts an existing Locked decision in `{ORCHESTRATOR_SPEC}` → STOP. Contradictions require explicit re-decision + edit to original exploration doc — not appendable via this skill.
 - IF authored new Stage block uses `#### Stage` H4 heading, `**Phases:**` checkbox list, or 6-column Task table with `Phase` column → STOP and re-author. Those are RETIRED surfaces (see MASTER-PLAN-STRUCTURE.md §1).
-- Do NOT touch existing Stage blocks (even to clean retired-surface drift — route user to a separate migration task).
-- Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
+- Do NOT touch existing Stage rows in `ia_stages` (even to clean retired-surface drift — route user to a separate migration task).
+- Do NOT read or write `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR flat `ia/projects/{ISSUE_ID}.md` — DB is sole source of truth post Step 9.6.
+- Do NOT insert BACKLOG rows. Do NOT create flat `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
 - Do NOT delete or rename `{SOURCE_DOC}`. Do NOT edit its expansion / extensions block.
 - Do NOT commit — user decides when.
 

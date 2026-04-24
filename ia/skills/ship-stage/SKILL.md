@@ -10,8 +10,8 @@ description: >
   fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A
   leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD
   diff + code-review on Stage diff (inline fix cap=1) + per-task
-  task_status_flip(verified→done) + stage_closeout_apply + git mv stage spec
-  file to _closed/ (guarded) + single stage commit feat({slug}-stage-X.Y) +
+  task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append
+  (audit row) + single stage commit feat({slug}-stage-X.Y) +
   per-task task_commit_record + stage_verification_flip(pass, commit_sha).
   Resume gate queries task_state per pending task; status='implemented' skips
   Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle
@@ -26,7 +26,7 @@ phases:
   - "Resume gate"
   - "Pass A per-task (implement + compile + status flip)"
   - "Pass B per-stage (verify + code-review)"
-  - "Inline closeout (DB + filesystem)"
+  - "Inline closeout (DB-only)"
   - "Stage commit + verification record"
   - "Chain digest"
   - "Next-stage resolver"
@@ -278,7 +278,7 @@ Journal: per task `phase: "pass_b.task_done", payload_kind: "task_status_flip", 
 
 ---
 
-## Step 7 — Inline closeout (DB + filesystem)
+## Step 7 — Inline closeout (DB-only)
 
 **Mandatory** when Step 6 upstream gates succeeded.
 
@@ -290,26 +290,21 @@ Returns `{slug, stage_id, archived_task_count, stage_status: "done"}`.
 
 **Failure** (any non-terminal task remains): STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}`. Should not happen on green path (Step 6.3 flipped all to done) — implies DB drift. Human repair.
 
-### Step 7.2 — Filesystem mv (guarded)
+### Step 7.2 — Change-log audit row
 
-**Pre-Step-9 of `ia-dev-db-refactor` (current branch):** stage spec files may not yet be split into per-stage shape. Existence check first:
+Append audit row to `ia_master_plan_change_log` via MCP:
 
-```bash
-STAGE_SPEC_GLOB="ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md"
-CLOSED_DIR="ia/projects/{SLUG}/_closed"
+```
+master_plan_change_log_append({
+  slug: SLUG,
+  kind: "stage_closed",
+  body: "Stage {STAGE_ID_DB} closed — {archived_task_count} tasks archived ({STAGE_TASK_IDS})"
+})
 ```
 
-If any file matches `STAGE_SPEC_GLOB`:
-1. `mkdir -p {CLOSED_DIR}`.
-2. `git mv {STAGE_SPEC_GLOB} {CLOSED_DIR}/`.
+**No filesystem mv** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5. Per-stage spec foldering shape (`ia/projects/{slug}/stage-*.md`) was an intermediate target retired in 9.6 — DB is sole source of truth.
 
-If no matches → skip silently (Step 9 foldering not yet applied to this plan).
-
-### Step 7.3 — Stage spec stub redirect (Step 9+)
-
-Reserved for post-Step-9 foldering shape. Pre-Step-9: no-op.
-
-Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { archived_task_count, fs_mv: true|false }`.
+Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { archived_task_count }`.
 
 ---
 
@@ -320,7 +315,7 @@ Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { a
 Stage worktree state at this point:
 - All Pass A implementation changes (uncommitted — never committed in Pass A).
 - Code-review inline fixes (if any iteration ran).
-- Closeout filesystem mv (if Step 7.2 fired).
+- DB-only closeout (Step 7) leaves no filesystem diff — only `ia_*` tables mutated.
 
 Single commit covers everything. Format per design E13:
 
@@ -335,7 +330,7 @@ Closeout: {archived_task_count} tasks archived; ia_stages.status=done
 ```
 
 Stage worktree:
-1. `git add -A` (stages all Pass A diffs + closeout mv).
+1. `git add -A` (stages all Pass A diffs + any code-review fixes).
 2. `git commit -m "$(cat <<'EOF' ... EOF)"` (HEREDOC to preserve formatting).
 3. Capture commit sha: `STAGE_COMMIT_SHA=$(git rev-parse HEAD)`.
 
@@ -453,10 +448,10 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - Code-review critical re-entry cap = 1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
 - Code-reviewer applies fixes **inline via direct Edit/Write** per design E14 — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired `plan-applier` code-fix mode.
 - Inline closeout (Step 7) is mandatory on green Pass B — do NOT defer to separate `/closeout` invocation. Stage-closeout-* skill pair retired per design C10.
-- Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes + closeout filesystem mv) in ONE commit per design E13.
+- Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes) in ONE commit per design E13. Closeout (Step 7) is DB-only — no filesystem diff.
 - `domain-context-load` fires ONCE at chain start (Step 2); do NOT re-call per task.
 - Do NOT auto-invoke `/stage-authoring`, `/author`, or `/plan-digest` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
-- Filesystem mv (Step 7.2) is guarded — pre-Step-9 foldering may have no per-stage spec file; check existence before `git mv`.
+- Do NOT read or edit `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR `ia/projects/{ISSUE_ID}.md` — DB is source of truth post Step 9.6. Closeout writes audit rows via `master_plan_change_log_append`, never `git mv` to `_closed/`.
 - DB is source of truth post-Step-6 of `ia-dev-db-refactor`. Do NOT fall back to filesystem-only operations on `db_unavailable` — escalate to human; halt chain.
 
 ---
@@ -481,7 +476,6 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 ## Open Questions
 
 - Crash-survivable session journal: `journal_append` writes to `ia_ship_stage_journal` table — survives process crash. Resume on re-invocation reads journal by `session_id` to detect mid-Pass-B state (e.g. verify done but status-flip not). Currently Step 6 re-runs as a unit; finer sub-step resume deferred.
-- `stage_closeout_apply` filesystem mv: DB-only tool; this skill body owns the `git mv` to `_closed/`. Step 9 of `ia-dev-db-refactor` will introduce per-stage spec foldering — guarded existence check covers both pre/post-Step-9 shapes.
 
 ---
 
@@ -497,14 +491,14 @@ Pre-Step-8 ship-stage made per-task commits in Pass A, then ran Stage closeout v
 **Fix per design C9 / C10 / E11 / E13 / E14:**
 - **Pass A (per-task):** implement + `unity:compile-check` + `task_status_flip(implemented)`. NO commit.
 - **Pass B (per-stage):** `verify-loop` on cumulative HEAD diff + `opus-code-reviewer` (inline Edit/Write fix cap=1, no `§Code Fix Plan` tuples) + per-task `task_status_flip(verified→done)`.
-- **Inline closeout:** `stage_closeout_apply` (DB) + guarded `git mv` stage spec to `_closed/` (filesystem). Drops `stage-closeout-plan` + `stage-closeout-apply` skills + `plan-applier` code-fix mode + `stage-closeout-planner` agent.
-- **Stage commit:** single `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covering all Pass A diffs + code-review fixes + closeout fs mv (E13).
+- **Inline closeout:** `stage_closeout_apply` (DB) + `master_plan_change_log_append` audit row. Drops `stage-closeout-plan` + `stage-closeout-apply` skills + `plan-applier` code-fix mode + `stage-closeout-planner` agent. No filesystem mv post Step 9.6 (folder shape retired; flat task specs deleted).
+- **Stage commit:** single `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covering all Pass A diffs + code-review fixes (E13). Closeout is DB-only.
 - **Per-task commit record:** `task_commit_record(task_id, STAGE_COMMIT_SHA, "feat")` per task (shared sha; idempotent per UNIQUE).
 - **Stage verification:** `stage_verification_flip(slug, stage_id, "pass", STAGE_COMMIT_SHA)` (E11 history-preserving).
 - **Resume gate:** `task_state.status == "implemented"` query replaces git scan. PASS_B_ONLY when all `PENDING_TASKS` are `implemented`. Worktree-clean inconsistency check at PASS_B_ONLY entry.
 - **Drop:** `--per-task-verify` flag (legacy rollback for pre-DB), Step 1.6 git scan, lazy-migration `§Plan Author → §Plan Digest` branch, `Step 1.5` reference to `plan-author` / `plan-review`.
 
-**Acceptance gate:** smoke run on filed+authored throwaway stage on `feature/ia-dev-db-refactor` branch. All tasks `implemented → verified → done`; stage file lands in `_closed/` (post-Step-9 only) or skipped (pre-Step-9); single `feat({slug}-stage-X.Y):` commit on branch; no per-task commits during Pass A; `ia_stage_verifications` row populated.
+**Acceptance gate:** smoke run on filed+authored throwaway stage on `feature/ia-dev-db-refactor` branch. All tasks `implemented → verified → done`; `ia_master_plan_change_log` carries `stage_closed` audit row; single `feat({slug}-stage-X.Y):` commit on branch; no per-task commits during Pass A; `ia_stage_verifications` row populated.
 
 **Rollout row:** ia-dev-db-refactor-step-8
 

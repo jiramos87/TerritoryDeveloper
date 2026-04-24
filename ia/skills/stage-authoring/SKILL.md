@@ -56,7 +56,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 | Param | Source | Notes |
 |-------|--------|-------|
-| `ORCHESTRATOR_SPEC` | 1st arg | Repo-relative path to `ia/projects/{master-plan}.md`. |
+| `ORCHESTRATOR_SPEC` | 1st arg | SLUG carrier. Accepts repo-relative path forms `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` (legacy filesystem shapes — files no longer exist post Step 9.6; basename parses to derive `{slug}`). DB-first via `master_plan_render` / `stage_render`. |
 | `STAGE_ID` | 2nd arg | e.g. `5` or `Stage 5` or `7.2`. |
 | `--task {ISSUE_ID}` | optional | Single-spec re-author escape hatch (bulk pass of N=1). |
 
@@ -96,12 +96,12 @@ If composite unavailable → fall back to [`domain-context-load`](../domain-cont
 
 ## Phase 2 — Read filed Task spec stubs
 
-1. Read `ORCHESTRATOR_SPEC`. Locate `### Stage {STAGE_ID}` (H3 canonical). Collect Task rows with Status ∈ {Draft, In Review, In Progress} AND filed `{ISSUE_ID}` (non-`_pending_` Issue column).
-2. For each Task: prefer DB read via `mcp__territory-ia__task_spec_body({ task_id: "{ISSUE_ID}" })`. Fallback to `Read ia/projects/{ISSUE_ID}.md` when DB body empty (pre-Step-9 transitional — bodies may live on filesystem).
+1. Derive `SLUG` from `ORCHESTRATOR_SPEC` arg (basename strip `-master-plan.md` OR `/index.md`). Use `lifecycle_stage_context` (Phase 1) `stage_header` payload OR call `mcp__territory-ia__stage_render({ slug, stage_id })` to fetch Stage block. Parse Task-table rows with Status ∈ {Draft, In Review, In Progress} AND filed `{ISSUE_ID}` (non-`_pending_` Issue column). Master plan body lives in DB post Step 9.6 — no filesystem read.
+2. For each Task: read body via `mcp__territory-ia__task_spec_body({ task_id: "{ISSUE_ID}" })`. DB is source of truth post Step 9.6 — no `ia/projects/{ISSUE_ID}.md` filesystem fallback (flat task specs deleted in Step 9.6.5).
 3. Verify each spec carries §1 Summary + §2.1 Goals + §7 Implementation Plan + `## §Plan Digest _pending — populated by /stage-authoring_` sentinel (or §Plan Digest already populated → idempotent skip per Phase 8.3).
-4. Collect into `task_specs[] = [{task_id, body, source: "db"|"fs"}]`.
+4. Collect into `task_specs[] = [{task_id, body, source: "db"}]`.
 
-Missing spec stub → abort with `STOPPED — task spec missing for {ISSUE_ID}`. Re-route caller to `/stage-file` to file the stub first.
+Missing spec body in DB → abort with `STOPPED — task spec body missing for {ISSUE_ID}`. Re-route caller to `/stage-file` to file the stub first.
 
 ---
 
@@ -363,11 +363,9 @@ Errors:
 - `section_anchor_ambiguous` → escalate; manual edit fallback.
 - `db_unavailable` → escalate; do NOT fall back to filesystem write (DB is source of truth per Step 6+).
 
-**Filesystem write (transitional):** while `ia/projects/{ISSUE_ID}.md` files still exist on disk pre-Step-9, ALSO Edit the file in-place to keep filesystem mirror coherent. Replace any existing `## §Plan Digest` block (idempotent on re-run) or insert after last line of `## 10. Lessons Learned` (before `## Open Questions`). Drop legacy `## §Plan Author` block in same write pass.
+**No filesystem mirror** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5. DB write is sole persistence.
 
-Post-Step-9 (filesystem specs DELETED): drop the filesystem mirror branch — DB write is the only persistence.
-
-**Idempotency:** if `task_spec_section_write` returns `unchanged: true` (DB body matches new content) → skip filesystem mirror; record skip in hand-off counter.
+**Idempotency:** if `task_spec_section_write` returns `unchanged: true` (DB body matches new content) → record skip in hand-off counter.
 
 ---
 
@@ -383,7 +381,6 @@ Per-Task:
   …
 drift_warnings: {true|false}
 DB writes: {N} task_spec_section_write OK; {K} unchanged.
-Filesystem mirrors: {N} updated.
 next=stage-authoring-chain-continue
 ```
 

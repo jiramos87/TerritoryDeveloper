@@ -50,7 +50,7 @@ Original pre-refactor monolith archived: [`ia/skills/_retired/stage-file-monolit
 
 | Param | Source | Notes |
 |-------|--------|-------|
-| `ORCHESTRATOR_SPEC` | 1st arg | Repo-relative path to `ia/projects/{master-plan}.md`. Glob fallback only when exactly one `*-master-plan.md` exists. |
+| `ORCHESTRATOR_SPEC` | 1st arg | SLUG carrier. Accepts repo-relative path forms `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` (legacy filesystem shapes — files no longer exist post Step 9.6; only basename parses to derive `{slug}`). DB-first via `master_plan_render(slug)`. |
 | `STAGE_ID` | 2nd arg | e.g. `5` or `Stage 5` or `7.2`. |
 | `ISSUE_PREFIX` | 3rd arg or default | `TECH` / `FEAT` / `BUG` / `ART` / `AUDIO` — default `TECH` (no dash). |
 
@@ -99,17 +99,29 @@ If composite unavailable → fall back to [`domain-context-load`](../domain-cont
 
 ## Phase 2 — Read Stage block + cardinality + sizing gates
 
-### 2.1 Read Stage block
+### 2.1 Derive SLUG + read Stage block via DB
 
-Read `ORCHESTRATOR_SPEC`. Locate `### Stage {STAGE_ID}` (H3 canonical). Legacy H4 `#### Stage` accepted with warning `[stage-file] WARN legacy H4 Stage heading — re-author via /master-plan-extend to canonical H3`.
+Derive `SLUG` from `ORCHESTRATOR_SPEC` arg: strip leading `ia/projects/` + trailing `-master-plan.md` OR `/index.md` segment. Master plan body lives in DB post Step 9.6 — flat / folder shape on disk is retired.
 
-Extract: Objectives, Exit criteria, Task-table rows. Collect `_pending_` rows into `pending_tasks[]` in task-table order. Each row = `{task_key: "T{STAGE_ID}.{K}", name, intent, priority}`.
+Call:
 
-### 2.2 Extract orchestrator slug + H1 title
+```
+mcp__territory-ia__stage_render({ slug: "{SLUG}", stage_id: "{STAGE_ID}" })
+```
 
-Read `ORCHESTRATOR_SPEC` H1 line. Pattern: `# {Title} — Master Plan ({SCOPE_LABEL})`. Extract `{Title}`. Strip trailing `— Master Plan` + scope tag. Store as `PLAN_TITLE`.
+Returns `{stage_id, title, status, objective, exit_criteria, tasks[], block_md}`. `block_md` is the rendered H3 `### Stage {STAGE_ID}` block (canonical shape — H4 legacy not produced by renderer).
 
-Derive `SLUG` from filename: `ia/projects/{slug}-master-plan.md` → `{slug}`. Used as `task_insert.slug` arg + manifest resolution fallback.
+Parse `block_md` Task-table rows. Collect `_pending_` rows into `pending_tasks[]` in task-table order. Each row = `{task_key: "T{STAGE_ID}.{K}", name, intent, priority}`.
+
+`stage_render` not-found → halt `{reason: "stage {STAGE_ID} not found in ia_stages for slug {SLUG}"}`.
+
+### 2.2 Read plan title via DB
+
+```
+mcp__territory-ia__master_plan_render({ slug: "{SLUG}" })
+```
+
+Returns `{slug, title, preamble, stages[]}`. Store `PLAN_TITLE` = `title`. `SLUG` already derived in 2.1. Used as `task_insert.slug` arg + manifest resolution fallback.
 
 ### 2.3 Cardinality gate
 
@@ -261,11 +273,10 @@ Read `ia/state/backlog-sections.json`. Locate section where `.header === TARGET_
 
 Write manifest back. Atomic per Task (buffer if needed; flush after entire loop to minimize disk churn).
 
-### 5.4 Write spec stub
+### 5.4 Write spec stub body to DB
 
-Bootstrap `ia/projects/{ISSUE_ID}.md` from [`ia/templates/project-spec-template.md`](../../templates/project-spec-template.md):
+Compose stub body string from [`ia/templates/project-spec-template.md`](../../templates/project-spec-template.md):
 
-- Frontmatter: `parent_plan: "{ORCHESTRATOR_SPEC}"`, `task_key: "T{STAGE_ID}.{K}"`.
 - `# {ISSUE_ID} — {title}`
 - `> **Issue:** [{ISSUE_ID}](../../BACKLOG.md)`
 - `> **Status:** Draft`
@@ -278,7 +289,7 @@ Bootstrap `ia/projects/{ISSUE_ID}.md` from [`ia/templates/project-spec-template.
 - `## §Plan Digest` → `_pending — populated by /plan-digest_`
 - §Audit / §Code Review / §Code Fix Plan → `_pending_` sentinels.
 
-Write to `ia/projects/{ISSUE_ID}.md`. Overwrite-safe (idempotent).
+Persist to DB via `mcp__territory-ia__task_spec_section_write({ task_id: ISSUE_ID, section: "raw_markdown", body: <stub body> })`. **No filesystem write** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5; DB is sole persistence post Step 9.6. Idempotent — `unchanged: true` return is safe skip.
 
 ### 5.5 Record for post-loop
 
@@ -306,36 +317,40 @@ npm run validate:dead-project-specs
 
 Non-zero exit → escalate. `validate:backlog-yaml` **skipped** — no yaml written on DB path.
 
-### 6.3 Update orchestrator task-table
+### 6.3 Task-table flip — auto-handled by DB
 
-Atomic Edit pass on `ORCHESTRATOR_SPEC`. For each `filed_tasks[]` entry:
+`task_insert` writes `ia_tasks` row with `status='Draft'`. Markdown task table is rendered view via `stage_render` MCP (not on disk post Step 9.6). No filesystem Edit needed — DB row IS the source.
 
-- Replace `_pending_` in `Issue` column with `**{ISSUE_ID}**`.
-- Replace `_pending_` in `Status` column with `Draft`.
+### 6.4 R2 — Stage Status flip via change_log
 
-All rows in one Edit (do NOT update row-by-row mid-loop).
-
-### 6.4 R2 — Stage header Status flip
-
-Find `^### Stage {STAGE_ID}\b` in orchestrator. Within 20 lines below, locate `**Status:**` line. Overwrite to:
+No `stage_status_flip` MCP exists yet (followup gap; only `stage_closeout_apply` sets `done`). Mid-lifecycle pending → in_progress flip persists via change-log entry on master plan:
 
 ```
-**Status:** In Progress — {YYYY-MM-DD} ({N} tasks filed)
+mcp__territory-ia__master_plan_change_log_append({
+  slug: "{SLUG}",
+  kind: "stage_status_flip",
+  body: "Stage {STAGE_ID}: Draft → In Progress ({N} tasks filed {YYYY-MM-DD})"
+})
 ```
 
-Regardless of prior token (`Draft`, `In Review`, dated variants). Idempotent if already `In Progress`. Post-flip self-check — re-grep + assert; fail → escalate `{reason: "stage_status_r2_flip_failed", stage_id: "{STAGE_ID}"}`.
+Followup: needs `stage_status_flip(slug, stage_id, status)` mutation that sets `ia_stages.status` enum directly. Until then, change-log entry is the audit record; renderer reads `ia_stages.status` (defaults `pending` until `stage_closeout_apply` sets `done`).
 
-Pre-flip B5 guard: if Status pre-edit matches NEITHER `Draft` NOR `In Review` NOR `In Progress` NOR `Final` → log `[stage-file] WARN stage {STAGE_ID} status non-canonical: "{raw_line}" — overwriting to In Progress`. Does not block.
+### 6.5 R1 — Master-plan top Status flip via preamble
 
-### 6.5 R1 — Master-plan top Status flip
-
-Read top-of-file `> **Status:**` line. If equals `Draft` (any variant) → rewrite:
+Master plan top Status lives in `ia_master_plans.preamble`. Read current preamble via `master_plan_render` (Phase 2.2). If `> **Status:** Draft` → rewrite preamble locally swapping line to `> **Status:** In Progress — Stage {STAGE_ID}` then persist:
 
 ```
-> **Status:** In Progress — Stage {STAGE_ID}
+mcp__territory-ia__master_plan_preamble_write({
+  slug: "{SLUG}",
+  preamble: "{updated preamble markdown}",
+  change_log: {
+    kind: "status_flip_r1",
+    body: "preamble Status: Draft → In Progress (Stage {STAGE_ID})"
+  }
+})
 ```
 
-If already `In Progress` → leave.
+Already `In Progress` → skip (idempotent).
 
 ### 6.6 Regenerate progress dashboard (non-blocking)
 
@@ -386,7 +401,9 @@ Single-skill NEVER guesses. Immediate halt triggers:
 | Manifest section ambiguous after heuristic | Prompt user; wait. |
 | `materialize-backlog.sh` non-zero | Halt post-loop; emit stderr. |
 | `validate:dead-project-specs` non-zero | Halt post-loop; emit stderr. |
-| R2 Stage Status self-check miss | Escalate; do not retry. |
+| `master_plan_preamble_write` `slug_not_found` (Phase 6.5) | Halt; `master_plan_insert` mutation gap (master-plan-new). |
+| `master_plan_change_log_append` `slug_not_found` (Phase 6.4) | Halt; same gap as above. |
+| `stage_render` not-found (Phase 2.1) | Halt before any DB write. |
 
 ---
 
@@ -411,6 +428,7 @@ Re-running fully-applied state = exit 0 + zero diff.
 - Do NOT reorder Tasks — apply in task-table order.
 - Do NOT update task-table mid-loop — atomic Edit after Phase 6.1+6.2 exit 0.
 - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates from DB + manifest.
+- Do NOT read or edit `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` — DB is source of truth post Step 9.6; use `master_plan_render` / `stage_render` / `master_plan_preamble_write` / `master_plan_change_log_append` MCP tools.
 - Do NOT call `domain-context-load` per Task — Phase 1 once per Stage.
 - Do NOT commit — user decides.
 
@@ -424,6 +442,6 @@ Re-running fully-applied state = exit 0 + zero diff.
 
 **Symptom:** Pre-merge two-subagent pair (`stage-file-plan` Opus + `stage-file-apply` Sonnet) wrote yaml files + used `reserve-id.sh` + `materialize-backlog.sh` reading yaml. DB-primary refactor (Step 6 of `docs/ia-dev-db-refactor-implementation.md`) requires DB-only writes via `task_insert` MCP.
 
-**Fix:** Collapsed pair into single skill per design doc B1. Filing phase uses `task_insert` MCP (DB-backed per-prefix sequence); no yaml written. Manifest append logic inlined (Phase 5.3) — derives target section from master-plan H1 slug heuristic (fallback user prompt). Spec stubs still written to `ia/projects/` (body in DB is Step 9 territory). Pre-refactor pair body archived at `ia/skills/_retired/stage-file-plan/SKILL.md` + `ia/skills/_retired/stage-file-apply/SKILL.md`.
+**Fix:** Collapsed pair into single skill per design doc B1. Filing phase uses `task_insert` MCP (DB-backed per-prefix sequence); no yaml written. Manifest append logic inlined (Phase 5.3) — derives target section from master-plan H1 slug heuristic (fallback user prompt). Spec stubs persisted via `task_spec_section_write` MCP — no filesystem write (flat task specs deleted Step 9.6.5). Pre-refactor pair body archived at `ia/skills/_retired/stage-file-plan/SKILL.md` + `ia/skills/_retired/stage-file-apply/SKILL.md`.
 
 **Rollout row:** ia-dev-db-refactor Step 6

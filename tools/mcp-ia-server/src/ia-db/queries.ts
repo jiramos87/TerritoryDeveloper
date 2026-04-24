@@ -470,6 +470,220 @@ export async function queryStageBundle(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Master-plan + stage RENDER surfaces (Step 9.6.8 — Option A DB pivot).
+//
+// Reconstruct the verbatim markdown that used to live under
+// `ia/projects/{slug}/{index.md, stage-X.Y-*.md}` from structured columns
+// (preamble + objective + exit_criteria + tasks) and the change log table.
+// ---------------------------------------------------------------------------
+
+export interface StageRenderRowDB {
+  slug: string;
+  stage_id: string;
+  title: string | null;
+  status: StageRowDB["status"];
+  objective: string | null;
+  exit_criteria: string | null;
+  tasks: StageTaskSummary[];
+  rendered: string;
+}
+
+export interface MasterPlanChangeLogRow {
+  entry_id: number;
+  ts: string;
+  kind: string;
+  body: string;
+  actor: string | null;
+  commit_sha: string | null;
+}
+
+export interface MasterPlanRenderDB {
+  slug: string;
+  title: string;
+  preamble: string | null;
+  stages: StageRenderRowDB[];
+  change_log?: MasterPlanChangeLogRow[];
+}
+
+/** Render a single stage block as markdown — heading + status + objective + exit + tasks table. */
+export function renderStageBlock(stage: Omit<StageRenderRowDB, "rendered">): string {
+  const lines: string[] = [];
+  const titlePart = stage.title ? ` — ${stage.title}` : "";
+  lines.push(`### Stage ${stage.stage_id}${titlePart}`);
+  lines.push("");
+  lines.push(`**Status:** ${stage.status}`);
+  if (stage.objective && stage.objective.trim()) {
+    lines.push("");
+    lines.push(`**Objectives:** ${stage.objective.trim()}`);
+  }
+  if (stage.exit_criteria && stage.exit_criteria.trim()) {
+    lines.push("");
+    lines.push(`**Exit:**`);
+    lines.push(stage.exit_criteria.replace(/\n+$/, ""));
+  }
+  if (stage.tasks.length > 0) {
+    lines.push("");
+    lines.push(`**Tasks:**`);
+    lines.push("");
+    lines.push(`| ID | Title | Status |`);
+    lines.push(`| --- | --- | --- |`);
+    for (const t of stage.tasks) {
+      lines.push(`| ${t.task_id} | ${escapeTableCell(t.title)} | ${t.status} |`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function escapeTableCell(s: string): string {
+  return s.replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
+
+/** Fetch one stage rendered as markdown + structured fields. */
+export async function queryStageRender(
+  slug: string,
+  stage_id: string,
+): Promise<StageRenderRowDB | null> {
+  const pool = poolOrThrow();
+  const sr = await pool.query<{
+    title: string | null;
+    objective: string | null;
+    exit_criteria: string | null;
+    status: StageRowDB["status"];
+  }>(
+    `SELECT title, objective, exit_criteria, status
+       FROM ia_stages
+      WHERE slug = $1 AND stage_id = $2`,
+    [slug, stage_id],
+  );
+  if (sr.rowCount === 0) return null;
+  const stage = sr.rows[0]!;
+  const tr = await pool.query<StageTaskSummary>(
+    `SELECT task_id, title, status, priority
+       FROM ia_tasks
+      WHERE slug = $1 AND stage_id = $2
+      ORDER BY task_id`,
+    [slug, stage_id],
+  );
+  const base = {
+    slug,
+    stage_id,
+    title: stage.title,
+    status: stage.status,
+    objective: stage.objective,
+    exit_criteria: stage.exit_criteria,
+    tasks: tr.rows,
+  };
+  return { ...base, rendered: renderStageBlock(base) };
+}
+
+/** Fetch master plan preamble + ALL stages rendered. Optional last-N change log. */
+export async function queryMasterPlanRender(
+  slug: string,
+  opts: { include_change_log?: boolean; change_log_limit?: number } = {},
+): Promise<MasterPlanRenderDB | null> {
+  const pool = poolOrThrow();
+  const pr = await pool.query<{ title: string; preamble: string | null }>(
+    `SELECT title, preamble FROM ia_master_plans WHERE slug = $1`,
+    [slug],
+  );
+  if (pr.rowCount === 0) return null;
+  const plan = pr.rows[0]!;
+
+  const sr = await pool.query<{
+    stage_id: string;
+    title: string | null;
+    status: StageRowDB["status"];
+    objective: string | null;
+    exit_criteria: string | null;
+  }>(
+    `SELECT stage_id, title, status, objective, exit_criteria
+       FROM ia_stages
+      WHERE slug = $1
+      ORDER BY stage_id`,
+    [slug],
+  );
+  const tr = await pool.query<{
+    stage_id: string;
+    task_id: string;
+    title: string;
+    status: TaskRowDB["status"];
+    priority: string | null;
+  }>(
+    `SELECT stage_id, task_id, title, status, priority
+       FROM ia_tasks
+      WHERE slug = $1 AND stage_id IS NOT NULL
+      ORDER BY stage_id, task_id`,
+    [slug],
+  );
+  const tasksByStage = new Map<string, StageTaskSummary[]>();
+  for (const t of tr.rows) {
+    let bucket = tasksByStage.get(t.stage_id);
+    if (!bucket) {
+      bucket = [];
+      tasksByStage.set(t.stage_id, bucket);
+    }
+    bucket.push({ task_id: t.task_id, title: t.title, status: t.status, priority: t.priority });
+  }
+  const stages: StageRenderRowDB[] = sr.rows.map((s) => {
+    const base = {
+      slug,
+      stage_id: s.stage_id,
+      title: s.title,
+      status: s.status,
+      objective: s.objective,
+      exit_criteria: s.exit_criteria,
+      tasks: tasksByStage.get(s.stage_id) ?? [],
+    };
+    return { ...base, rendered: renderStageBlock(base) };
+  });
+
+  let change_log: MasterPlanChangeLogRow[] | undefined;
+  if (opts.include_change_log) {
+    change_log = await queryMasterPlanChangeLog(slug, opts.change_log_limit ?? 50);
+  }
+
+  return {
+    slug,
+    title: plan.title,
+    preamble: plan.preamble,
+    stages,
+    ...(change_log ? { change_log } : {}),
+  };
+}
+
+/** Fetch latest N change log entries for a master plan (DESC by ts). */
+export async function queryMasterPlanChangeLog(
+  slug: string,
+  limit: number,
+): Promise<MasterPlanChangeLogRow[]> {
+  const pool = poolOrThrow();
+  const lim = Math.max(1, Math.min(500, Math.floor(limit)));
+  const res = await pool.query<{
+    entry_id: string;
+    ts: string;
+    kind: string;
+    body: string;
+    actor: string | null;
+    commit_sha: string | null;
+  }>(
+    `SELECT entry_id::text AS entry_id, ts, kind, body, actor, commit_sha
+       FROM ia_master_plan_change_log
+      WHERE slug = $1
+      ORDER BY ts DESC
+      LIMIT $2`,
+    [slug, lim],
+  );
+  return res.rows.map((r) => ({
+    entry_id: parseInt(r.entry_id, 10),
+    ts: r.ts,
+    kind: r.kind,
+    body: r.body,
+    actor: r.actor,
+    commit_sha: r.commit_sha,
+  }));
+}
+
 export interface TaskBundleDB extends TaskStateDB {
   stage: StageRowDB | null;
   master_plan_title: string | null;
