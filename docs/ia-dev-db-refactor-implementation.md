@@ -526,7 +526,7 @@ slices_via: none
 
 | Step | Status | Started | Done | Commit | Notes |
 |------|--------|---------|------|--------|-------|
-| 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | _pending commit_ | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
+| 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
 | 2 — Import script | pending | — | — | — | — |
 | 3 — Read MCP tools | pending | — | — | — | — |
 | 4 — Write MCP tools | pending | — | — | — | — |
