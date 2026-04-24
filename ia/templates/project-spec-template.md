@@ -21,7 +21,7 @@ task_key: "{{T_KEY}}"
 <!--
   Filename: `ia/projects/{ISSUE_ID}-{description}.md` (e.g. `BUG-37-zone-cleanup.md`,
   `FEAT-44-water-junction.md`). Legacy bare `{ISSUE_ID}.md` accepted for back-compat.
-  Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
+  Structure guide: ../../docs/PROJECT-SPEC-STRUCTURE.md
   Glossary: ../specs/glossary.md (spec wins on conflict).
   Separate product behavior (§1–5.1, §8, Open Questions) from impl notes (§5.2+, §7, optional "Implementation investigation").
   Authoring style: caveman prose (drop articles/filler/hedging; fragments OK). Tables, code, seed prompts stay normal.
@@ -103,7 +103,7 @@ task_key: "{{T_KEY}}"
 - [ ] …
 
 <!--
-  ## 7b. Test Contracts — ../projects/PROJECT-SPEC-STRUCTURE.md (list item "7b. Test Contracts").
+  ## 7b. Test Contracts — ../../docs/PROJECT-SPEC-STRUCTURE.md (list item "7b. Test Contracts").
   Tooling / verification table. Glossary terms for *what* is checked. Not a substitute for ## Open Questions.
   **FEAT-** / **BUG-** specs w/ runtime **C#**, **Play Mode**, **Load pipeline** claims: 1+ row per **§8** bullet (or **TBD** + owner).
   Doc-only **TECH-**/**ART-**/**AUDIO-**: single **N/A** row OK when **§8** has no testable claims.

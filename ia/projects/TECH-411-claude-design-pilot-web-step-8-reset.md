@@ -15,7 +15,7 @@ task_key: ""
 
 <!--
   Filename: ia/projects/TECH-411-claude-design-pilot-web-step-8-reset.md
-  Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
+  Structure guide: ../../docs/PROJECT-SPEC-STRUCTURE.md
   Glossary: ../specs/glossary.md (spec wins on conflict).
   Authoring style: caveman prose (drop articles/filler/hedging; fragments OK). Tables, code, seed prompts stay normal.
 -->

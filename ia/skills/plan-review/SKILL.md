@@ -173,7 +173,7 @@ pending — re-run T8.1 against external open master plan with _pending_ Task (T
 
 **Rollout row:** m8-retrospective
 
-**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+**Tracker aggregator:** [`docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../../docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---
 
@@ -192,6 +192,6 @@ pending — Sonnet-downgrade for mechanical checks; Opus retained only for cross
 
 **Rollout row:** m8-retrospective
 
-**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+**Tracker aggregator:** [`docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../../docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---

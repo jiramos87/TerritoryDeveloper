@@ -1,5 +1,5 @@
 ---
-purpose: "Expand a deferred skeleton Stage in an existing orchestrator master plan into a full Task table (5-column canonical). Edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file. Canonical shape: `ia/projects/MASTER-PLAN-STRUCTURE.md`."
+purpose: "Expand a deferred skeleton Stage in an existing orchestrator master plan into a full Task table (5-column canonical). Edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`."
 audience: agent
 loaded_by: skill:stage-decompose
 slices_via: glossary_discover, glossary_lookup, router_for_task, invariants_summary, spec_sections
@@ -12,7 +12,7 @@ description: >
   Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage
   into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that).
   2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical
-  shape authority: `ia/projects/MASTER-PLAN-STRUCTURE.md`.
+  shape authority: `docs/MASTER-PLAN-STRUCTURE.md`.
   Triggers: "/stage-decompose {path} Stage 2.3", "decompose stage 2.3", "expand stage skeleton",
   "materialize deferred stage", "decompose before stage-file".
 model: inherit
@@ -31,7 +31,7 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). Exceptions: Exit criteria carry type/method/file precision; Relevant surfaces stay explicit (paths + line refs).
 
-**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative source for Stage block shape, 5-column Task table schema, required subsections. This skill fills in TO that shape; drift → MASTER-PLAN-STRUCTURE.md wins.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative source for Stage block shape, 5-column Task table schema, required subsections. This skill fills in TO that shape; drift → MASTER-PLAN-STRUCTURE.md wins.
 
 **Lifecycle:** AFTER [`master-plan-new`](../master-plan-new/SKILL.md) (or [`master-plan-extend`](../master-plan-extend/SKILL.md)) authors the orchestrator with a skeleton Stage, BEFORE [`stage-file`](../stage-file/SKILL.md) files the tasks. `stage-file` requires `_pending_` tasks — this skill materializes them.
 
@@ -43,7 +43,7 @@ master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → 
 - Rare cases where a Stage was intentionally left as skeleton (Objectives + Exit only) pending downstream design clarity.
 - Old pre-lifecycle-refactor plans whose Stages carry `**Stages:** _TBD_` or `decomposition deferred` markers that need forward migration.
 
-**Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
+**Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
 ---
 
@@ -315,7 +315,7 @@ Follow ia/skills/stage-decompose/SKILL.md end-to-end. Inputs:
   ORCHESTRATOR_SPEC: {path to *-master-plan.md}
   STAGE_ID: {N.M, e.g. 2.3}
 
-Canonical master-plan shape: ia/projects/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 4 pending subsections). 2-level hierarchy Stage > Task (no Steps, no Phases).
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 4 pending subsections). 2-level hierarchy Stage > Task (no Steps, no Phases).
 Phase 1 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary).
 Cardinality gate requires ≥2 tasks per Stage AND ≤6 soft — pause for user confirmation on either violation.
 Only the target STAGE_ID is decomposed; all other deferred Stages remain as skeletons.
@@ -333,4 +333,4 @@ After persist: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STAGE_ID
 
 **source:** canonical-structure consolidation (MASTER-PLAN-STRUCTURE.md authored)
 
-**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy. Decomposed deferred `### Step N` blocks into H4 Stages with `**Phases:**` checkbox list + 6-column Task table carrying `Phase` column; also flipped Step header `Skeleton → Planned` (R7 — now retired per orchestrator-vs-spec.md). Per post-lifecycle-refactor 2-level hierarchy, this skill now operates on deferred `### Stage N.M` skeletons (H3, no Step wrapper), fills in the 5-column Task table + 4 pending subsections (§Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan), and leaves Status flipping to downstream skills (`stage-file-apply` owns R1 + R2). Cite `ia/projects/MASTER-PLAN-STRUCTURE.md` as authoritative shape source. Input rename `STEP_ID → STAGE_ID` (N.M format).
+**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy. Decomposed deferred `### Step N` blocks into H4 Stages with `**Phases:**` checkbox list + 6-column Task table carrying `Phase` column; also flipped Step header `Skeleton → Planned` (R7 — now retired per orchestrator-vs-spec.md). Per post-lifecycle-refactor 2-level hierarchy, this skill now operates on deferred `### Stage N.M` skeletons (H3, no Step wrapper), fills in the 5-column Task table + 4 pending subsections (§Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan), and leaves Status flipping to downstream skills (`stage-file-apply` owns R1 + R2). Cite `docs/MASTER-PLAN-STRUCTURE.md` as authoritative shape source. Input rename `STEP_ID → STAGE_ID` (N.M format).

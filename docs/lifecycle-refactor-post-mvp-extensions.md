@@ -10,7 +10,7 @@ slices_via: none
 Deferred scope parked here during M0–M8 freeze. Fold into `ia/projects/lifecycle-refactor-master-plan.md` via `/master-plan-extend` after T4.2.1 freeze lift.
 
 Parent plan: `ia/projects/lifecycle-refactor-master-plan.md`
-Pickup trigger: `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md ia/projects/lifecycle-refactor-post-mvp-extensions.md`
+Pickup trigger: `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md docs/lifecycle-refactor-post-mvp-extensions.md`
 Freeze gate: M8 sign-off (Stage 8 T4.2.1).
 
 ## Context — why deferred
@@ -86,7 +86,7 @@ When freeze lifts:
 
 1. Confirm T4.2.1 Done in `ia/projects/lifecycle-refactor-master-plan.md`.
 2. Pick scope variant (C-min / C-med / C-full) per Decision matrix above.
-3. Run `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md ia/projects/lifecycle-refactor-post-mvp-extensions.md`.
+3. Run `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md docs/lifecycle-refactor-post-mvp-extensions.md`.
 4. `master-plan-extend` appends new Step with stages → phases → tasks decomposed; tasks seeded `_pending_`.
 5. `/stage-file` bulk-files TECH issues against the new stage.
 6. Normal `/ship-stage` chain from there.

@@ -26,7 +26,7 @@
 
 ### Problem statement
 
-`ia/projects/full-game-mvp-rollout-tracker.md` carries a 12-row × 7-column lifecycle matrix (cells (a) Enumerate → (g) Align per child master plan). Matrix state is the canonical "how much of the full game is built" signal. Current surfaces:
+`docs/full-game-mvp-rollout-tracker.md` carries a 12-row × 7-column lifecycle matrix (cells (a) Enumerate → (g) Align per child master plan). Matrix state is the canonical "how much of the full game is built" signal. Current surfaces:
 
 - Markdown table in the tracker doc itself — dense, grep-friendly, but zero visual completion density.
 - `/dashboard` (Step 3–4) — per-plan task-level breakdown; does NOT surface umbrella rollout-lifecycle state; no per-cell completion glyph beyond raw `✓ / ◐ / — / ❓ / ⚠️`.
@@ -35,7 +35,7 @@ Gap: **no dashboard view visualizes rollout completion as a glanceable "what's d
 
 ### Hard constraints
 
-- Read-only consumer of `ia/projects/full-game-mvp-rollout-tracker.md` (+ child master plans where cell drill-down requires). Tracker doc stays authoritative; view is projection.
+- Read-only consumer of `docs/full-game-mvp-rollout-tracker.md` (+ child master plans where cell drill-down requires). Tracker doc stays authoritative; view is projection.
 - Re-uses Stage 1.2 design primitives (`DataTable`, `StatBar`, `BadgeChip`, `FilterChips`, `HeatmapCell`) + design tokens (NYT palette + `raw.green` + `bg-bg-status-done` alias from Stage 4). No new primitive unless approach comparison proves existing set insufficient.
 - Behind same auth middleware as `/dashboard` (Step 5.3 landed `web/middleware.ts` matcher `['/dashboard']` — extend matcher array, do NOT fork middleware).
 - `tools/progress-tracker/parse.mjs` + `web/lib/plan-loader.ts` stay untouched. New loader if tracker-specific parsing required.

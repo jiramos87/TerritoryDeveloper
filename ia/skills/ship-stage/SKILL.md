@@ -36,7 +36,7 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md). H3 `### Stage X.Y` heading; 5-col task table `Task | Name | Issue | Status | Intent`; 2-level Stage > Task hierarchy.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md). H3 `### Stage X.Y` heading; 5-col task table `Task | Name | Issue | Status | Intent`; 2-level Stage > Task hierarchy.
 
 **Related:**
 - [`verify-loop`](../verify-loop/SKILL.md) — internal `MAX_ITERATIONS=2` fix loop (no outer retry here).

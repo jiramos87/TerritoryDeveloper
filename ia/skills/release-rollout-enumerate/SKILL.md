@@ -78,7 +78,7 @@ Each flag → row marker `⚠️` on affected column + entry in Disagreements ap
 
 ### Phase 3 — Tracker authoring
 
-Author `ia/projects/{umbrella-slug}-rollout-tracker.md` matching the canonical shape (see [`full-game-mvp-rollout-tracker.md`](../../projects/full-game-mvp-rollout-tracker.md)):
+Author `ia/projects/{umbrella-slug}-rollout-tracker.md` matching the canonical shape (see [`full-game-mvp-rollout-tracker.md`](../../../docs/full-game-mvp-rollout-tracker.md)):
 
 1. Header block — Status, Scope, Baseline SHA, Read-first, Hard rules.
 2. Rollout steps definition table — columns (a)–(g) with semantics + gate owner.
@@ -162,6 +162,6 @@ Phase 4 handoff + §Next step wrapped as `claude-personal "/..."` with explicit 
 
 **Rollout row:** standalone (seeder skill)
 
-**Tracker aggregator:** [`ia/projects/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../projects/full-game-mvp-rollout-tracker.md#skill-iteration-log)
+**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log)
 
 ---

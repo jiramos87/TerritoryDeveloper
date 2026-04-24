@@ -29,7 +29,7 @@ _retroactive-skip — pre-refactor Stage; no `plan-review` sweep persisted inlin
 
 #### §Stage Audit
 
-_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24)._
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `docs/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24)._
 
 #### §Stage Closeout Plan
 

@@ -16,7 +16,7 @@
 > - Reuse existing **`[MenuItem]`** export bodies — dispatch-only changes; no duplicate grid read logic.
 > - **Grid reads:** **`GridManager.GetCell`** only where bridge touches cells — **invariant #5**.
 >
-> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (canonical Stage > Task 2-level shape — authoritative) · `ia/rules/project-hierarchy.md` · `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable) · `ia/rules/plan-apply-pair-contract.md`.
+> **Hierarchy rules:** `docs/MASTER-PLAN-STRUCTURE.md` (canonical Stage > Task 2-level shape — authoritative) · `ia/rules/project-hierarchy.md` · `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable) · `ia/rules/plan-apply-pair-contract.md`.
 >
 > **Read first if landing cold:**
 >
@@ -24,7 +24,7 @@
 > - `ia/specs/unity-development-context.md` §10 — Editor agent diagnostics, **`editor_export_*`**, **`agent_bridge_job`**.
 > - `docs/mcp-ia-server.md` — MCP tool catalog + bridge tools.
 > - `ia/skills/ide-bridge-evidence/SKILL.md` — evidence / **`debug_context_bundle`** contract.
-> - `ia/projects/MASTER-PLAN-STRUCTURE.md` + `ia/rules/project-hierarchy.md` — doc semantics + Stage / Task cardinality rule (≥2 Tasks per Stage).
+> - `docs/MASTER-PLAN-STRUCTURE.md` + `ia/rules/project-hierarchy.md` — doc semantics + Stage / Task cardinality rule (≥2 Tasks per Stage).
 > - `ia/rules/invariants.md` — **#5** (no direct **`gridArray`** / **`cellArray`** outside **`GridManager`**), **#3** (no hot-loop **`FindObjectOfType`** — bridge polling stays Editor update), **#6** (do not grow **`GridManager`** — extract helpers if new play-mode probes).
 > - MCP: `backlog_issue {id}` per referenced id once tasks file; never full `BACKLOG.md` read.
 
@@ -32,7 +32,7 @@
 
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `ia/projects/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
 
 ### Stage index
 

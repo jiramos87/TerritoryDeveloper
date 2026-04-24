@@ -18,7 +18,7 @@
 >
 > - `ia/specs/game-overview.md` — vision + principles
 > - `ia/specs/simulation-system.md` — current single-scale tick loop (MCP `spec_section`)
-> - `ia/projects/multi-scale-post-mvp-expansion.md` — scope boundary (what's OUT of MVP)
+> - `docs/multi-scale-post-mvp-expansion.md` — scope boundary (what's OUT of MVP)
 > - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — doc semantics
 > - MCP: `backlog_issue {id}` per referenced id; never full `BACKLOG.md` read.
 

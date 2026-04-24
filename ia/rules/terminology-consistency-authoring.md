@@ -16,7 +16,7 @@ Add/change code, `ia/specs/`, `ia/rules/`, `BACKLOG.md`, `docs/`, how-tos, tutor
 1. **C# / assets** — [`coding-conventions.md`](coding-conventions.md) for identifiers, XML docs, new prefab naming.
 2. **MCP tools** — snake_case; match server registration (`tools/mcp-ia-server/src/index.ts`); update [`tools/mcp-ia-server/README.md`](../../tools/mcp-ia-server/README.md) + [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) on add/rename.
 3. **New concepts** — new domain term or redefined behavior → add/update glossary row + authoritative spec section. No backlog-only / chat-only terms.
-4. **Project specs** (`ia/projects/{ISSUE_ID}.md`) — glossary terms in **Open Questions**; questions define **game logic**, not implementation ([`AGENTS.md`](../../AGENTS.md) `ia/projects/` policy + [`PROJECT-SPEC-STRUCTURE.md`](../projects/PROJECT-SPEC-STRUCTURE.md)).
+4. **Project specs** (`ia/projects/{ISSUE_ID}.md`) — glossary terms in **Open Questions**; questions define **game logic**, not implementation ([`AGENTS.md`](../../AGENTS.md) `ia/projects/` policy + [`PROJECT-SPEC-STRUCTURE.md`](../../docs/PROJECT-SPEC-STRUCTURE.md)).
 5. **Reference specs** (`ia/specs/*.md`) — [`REFERENCE-SPEC-STRUCTURE.md`](../specs/REFERENCE-SPEC-STRUCTURE.md); prefer glossary vocabulary; **isometric-geography-system.md** authoritative for shared terrain/road/water rules.
 6. **Backlog Notes / Files / Acceptance** — reuse spec/glossary vocabulary.
 

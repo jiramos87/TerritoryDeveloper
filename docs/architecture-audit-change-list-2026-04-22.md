@@ -423,7 +423,7 @@ Replace with:
 > - Auth (W7): deferred entirely per 2026-04-22 audit — no `/api/auth/*` and no auth UI surface in MVP. If/when portal re-enters scope, roll-own JWT + sessions remains the locked preference (not re-decide); no third-party auth provider.
 ```
 
-**6d.** Edit `ia/projects/full-game-mvp-rollout-tracker.md` — row 4 (`web-platform`), column (d). Find the cell text:
+**6d.** Edit `docs/full-game-mvp-rollout-tracker.md` — row 4 (`web-platform`), column (d). Find the cell text:
 
 ```
 ✓ (Steps 1–4 Final; 5–6 Paused)
@@ -435,7 +435,7 @@ Replace with:
 ✓ (Steps 1–4 + 6 Final; Step 5 Done 2026-04-17 with architecture outputs retired 2026-04-22 per audit — see `docs/architecture-audit-change-list-2026-04-22.md`)
 ```
 
-**6e.** Append a Skill Iteration Log row to `ia/projects/full-game-mvp-rollout-tracker.md` noting the 2026-04-22 audit retirement. Locate the `## Skill Iteration Log` section (or equivalent change log table near the bottom of the tracker) and append a single-line entry:
+**6e.** Append a Skill Iteration Log row to `docs/full-game-mvp-rollout-tracker.md` noting the 2026-04-22 audit retirement. Locate the `## Skill Iteration Log` section (or equivalent change log table near the bottom of the tracker) and append a single-line entry:
 
 ```
 | 2026-04-22 | web-platform | Architecture audit: Neon driver swapped → postgres-js; Drizzle dropped; auth surface deleted. Row 4 (d) cell updated. | architecture audit |
@@ -447,7 +447,7 @@ If the log table column shape differs, match it — minimum field: date, row slu
 
 ```bash
 grep -q "retired 2026-04-22" ia/projects/web-platform-master-plan.md && echo OK
-grep -q "retired 2026-04-22" ia/projects/full-game-mvp-rollout-tracker.md && echo OK
+grep -q "retired 2026-04-22" docs/full-game-mvp-rollout-tracker.md && echo OK
 ```
 
 Both must print `OK`.
@@ -527,7 +527,7 @@ grep -n "already landed as of 2026-04-22" ia/projects/multi-scale-master-plan.md
 test -f docs/db-boundaries.md
 ```
 
-Final `git diff --stat` sanity: expect changes under `web/lib/db/client.ts`, `web/package.json`, `web/package-lock.json`, deletions under `web/lib/db/schema.ts` + `web/drizzle.config.ts` + `web/drizzle/**` + `web/app/api/auth/**` + `web/app/auth/**` + `web/proxy.ts`, edits to `web/app/robots.ts` + `web/README.md` + `web/.env.local.example`, a new `docs/db-boundaries.md`, 5 line edits in `ia/skills/release-rollout/SKILL.md`, edits in `ia/projects/web-platform-master-plan.md` + `ia/projects/full-game-mvp-rollout-tracker.md` + `ia/projects/multi-scale-master-plan.md`.
+Final `git diff --stat` sanity: expect changes under `web/lib/db/client.ts`, `web/package.json`, `web/package-lock.json`, deletions under `web/lib/db/schema.ts` + `web/drizzle.config.ts` + `web/drizzle/**` + `web/app/api/auth/**` + `web/app/auth/**` + `web/proxy.ts`, edits to `web/app/robots.ts` + `web/README.md` + `web/.env.local.example`, a new `docs/db-boundaries.md`, 5 line edits in `ia/skills/release-rollout/SKILL.md`, edits in `ia/projects/web-platform-master-plan.md` + `docs/full-game-mvp-rollout-tracker.md` + `ia/projects/multi-scale-master-plan.md`.
 
 ---
 

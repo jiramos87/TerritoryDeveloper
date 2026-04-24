@@ -47,7 +47,7 @@ ia/projects/{slug}-master-plan.md
 > **Exploration source:** `{DOC_PATH}`
 > **Locked decisions (do not reopen):** {bulleted list}
 > **Sibling orchestrators in flight:** {optional; parallel-work rule}
-> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (this doc; Stage > Task 2-level) · `ia/rules/orchestrator-vs-spec.md` · `ia/rules/plan-apply-pair-contract.md`
+> **Hierarchy rules:** `docs/MASTER-PLAN-STRUCTURE.md` (this doc; Stage > Task 2-level) · `ia/rules/orchestrator-vs-spec.md` · `ia/rules/plan-apply-pair-contract.md`
 > **Read first if landing cold:** {bulleted list}
 
 ---

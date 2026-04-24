@@ -40,7 +40,7 @@ Read docs/lifecycle-refactor-stage-8-dry-run-findings.md end-to-end. Execute the
 
   Row 7 — Log Stage 8 dry-run findings via release-rollout-skill-bug-log helper.
     - For each finding F1..F12 (F8 retracted), call helper with SKILL_NAME=plan-author|plan-review|stage-file-apply|ship-stage as applicable.
-    - TRACKER_SPEC = ia/projects/lifecycle-refactor-rollout-tracker.md (create if absent — single-row umbrella tracker for this refactor).
+    - TRACKER_SPEC = docs/lifecycle-refactor-rollout-tracker.md (create if absent — single-row umbrella tracker for this refactor).
     - ROW_SLUG = m8-retrospective.
     - Dual-write pattern: per-skill Changelog + tracker Skill Iteration Log.
 

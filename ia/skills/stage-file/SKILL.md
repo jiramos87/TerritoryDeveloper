@@ -38,7 +38,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Single-skill filing. Reads Stage block; gates cardinality + sizing; writes DB rows via `task_insert` MCP (no yaml); appends manifest entry; bootstraps spec stub; regenerates BACKLOG.md via DB path; flips Status lines.
 
-**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative. Stage heading H3 `### Stage N.M`; 5-col Task table `| Task | Name | Issue | Status | Intent |` (no Phase column); Task id `T{N}.{M}.{K}`.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative. Stage heading H3 `### Stage N.M`; 5-col Task table `| Task | Name | Issue | Status | Intent |` (no Phase column); Task id `T{N}.{M}.{K}`.
 
 **Step 6 of `docs/ia-dev-db-refactor-implementation.md`** — this skill replaces retired [`stage-file-plan/SKILL.md`](../_retired/stage-file-plan/SKILL.md) + [`stage-file-apply/SKILL.md`](../_retired/stage-file-apply/SKILL.md). Seam #2 pair collapsed to single invocation per design doc B1.
 

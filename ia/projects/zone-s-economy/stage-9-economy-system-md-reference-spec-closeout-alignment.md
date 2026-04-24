@@ -11,7 +11,7 @@
 - `ia/rules/agent-router.md` table gets new row(s) for economy / Zone S domain → `economy-system.md` sections.
 - `tools/mcp-ia-server/data/spec-index.json` regenerated (captures new spec).
 - `npm run validate:all` green.
-- Umbrella rollout tracker (`ia/projects/full-game-mvp-rollout-tracker.md`) Bucket 3 row columns (a)–(e) verified complete; column (g) align gate closed.
+- Umbrella rollout tracker (`docs/full-game-mvp-rollout-tracker.md`) Bucket 3 row columns (a)–(e) verified complete; column (g) align gate closed.
 - Phase 1 — Author `economy-system.md` + glossary repointing + router table update.
 - Phase 2 — Index regen + full validation + umbrella alignment.
 
@@ -23,7 +23,7 @@
 | T9.2 | Repoint glossary rows to new spec | **TECH-594** | Done | Update 10 glossary rows added in Steps 1/2 (`Zone S`, `BudgetAllocationService`, `BondLedgerService`, `TreasuryFloorClampService`, `ZoneSService`, `IMaintenanceContributor`, `ZoneSubTypeRegistry`, `IBudgetAllocator`, `IBondLedger`, `envelope (budget)`) — replace exploration-doc placeholder links with `ia/specs/economy-system.md#{anchor}` links. Preserves cross-link integrity. |
 | T9.3 | Router-table row for economy domain | **TECH-595** | Done | Update `ia/rules/agent-router.md` routing table: add row(s) mapping task-domain keywords ("zone s", "economy", "budget", "bond", "maintenance") to `economy-system.md` sections. Ensures MCP `router_for_task` dispatches correctly in future agent sessions. |
 | T9.4 | Index regen + `validate:all` | **TECH-596** | Done | Run `npm run mcp-ia-index` to regenerate `tools/mcp-ia-server/data/spec-index.json` + `glossary-index.json` + `glossary-graph-index.json`. Run `npm run validate:all`; fix any frontmatter / dead-link issues. Confirm MCP tests pass (`tools/mcp-ia-server/tests`). |
-| T9.5 | Umbrella rollout-tracker alignment check | **TECH-597** | Done | Read `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row. Verify columns (a)–(e) marked complete (design-explore → master-plan → stage-file → project-spec-kickoff → glossary rows landed). Verify column (g) align gate closed (spec + router + glossary all pointing to `economy-system.md`). Do NOT tick column (f) — that's `/stage-file` authoring, not this closeout stage. Document state in closeout notes. |
+| T9.5 | Umbrella rollout-tracker alignment check | **TECH-597** | Done | Read `docs/full-game-mvp-rollout-tracker.md` Bucket 3 row. Verify columns (a)–(e) marked complete (design-explore → master-plan → stage-file → project-spec-kickoff → glossary rows landed). Verify column (g) align gate closed (spec + router + glossary all pointing to `economy-system.md`). Do NOT tick column (f) — that's `/stage-file` authoring, not this closeout stage. Document state in closeout notes. |
 
 <!-- sizing-gate-waiver: Stage 9 IA-only (spec + glossary + router + index + tracker); multi-subsystem doc touch expected; accepted -->
 
@@ -140,7 +140,7 @@
   title: "Umbrella rollout-tracker alignment check"
   priority: medium
   notes: |
-    Verify `ia/projects/full-game-mvp-rollout-tracker.md` Bucket 3 row: columns (a)–(e) complete; column (g) align gate closed. Document findings in spec closeout notes; do not tick column (f) here.
+    Verify `docs/full-game-mvp-rollout-tracker.md` Bucket 3 row: columns (a)–(e) complete; column (g) align gate closed. Document findings in spec closeout notes; do not tick column (f) here.
   depends_on:
     - "TECH-596"
   related:
@@ -155,7 +155,7 @@
       - Tracker row state documented; mismatches filed or noted for umbrella owner.
       - Explicit note that column (f) tick is out of scope for this task.
     systems_map: |
-      - `ia/projects/full-game-mvp-rollout-tracker.md`, `ia/projects/zone-s-economy-master-plan.md`
+      - `docs/full-game-mvp-rollout-tracker.md`, `ia/projects/zone-s-economy-master-plan.md`
     impl_plan_sketch: |
       Phase 1 — Read tracker + compare to repo. Phase 2 — Write findings into Task spec §Verification / Decision Log as needed.
 ```

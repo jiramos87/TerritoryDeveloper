@@ -208,4 +208,4 @@ ia/projects/{slug}-master-plan/
 - Release-rollout skill bugs: `ia/skills/release-rollout-skill-bug-log/SKILL.md` (row-scoped, not stage-scoped — different surface).
 - Token capture recipes: [`docs/chain-execution-token-analysis.md`](chain-execution-token-analysis.md).
 - Canonical optimization roadmap: [`docs/lifecycle-token-optimization-audit.md`](lifecycle-token-optimization-audit.md).
-- Canonical master-plan shape: [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../ia/projects/MASTER-PLAN-STRUCTURE.md).
+- Canonical master-plan shape: [`docs/MASTER-PLAN-STRUCTURE.md`](../docs/MASTER-PLAN-STRUCTURE.md).

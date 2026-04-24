@@ -14,7 +14,7 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 |----------|---------|
 | This file | Section conventions, terminology rules, lifecycle, and checklist for **new** reference specs. |
 | [`ia/specs/glossary.md`](glossary.md) | Canonical **domain** term tables; reference specs should prefer these names. |
-| [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](../projects/PROJECT-SPEC-STRUCTURE.md) | Temporary **project specs** (`{ISSUE_ID}.md`) — product vs implementation split, Open Questions, closure. |
+| [`docs/PROJECT-SPEC-STRUCTURE.md`](../../docs/PROJECT-SPEC-STRUCTURE.md) | Temporary **project specs** (`{ISSUE_ID}.md`) — product vs implementation split, Open Questions, closure. |
 
 ## Reference spec vs project spec
 

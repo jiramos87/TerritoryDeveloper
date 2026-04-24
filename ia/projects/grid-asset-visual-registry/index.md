@@ -15,7 +15,7 @@
 > - **Concurrency:** optimistic **`updated_at`** on writes; conflicting PATCH returns retriable error.
 > - **Bucket 12** child under `ia/projects/full-game-mvp-master-plan.md` (umbrella edit is a **separate** follow-up task, not auto-applied here).
 >
-> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage block + 5-col Task table schema — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
+> **Hierarchy rules:** `docs/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage block + 5-col Task table schema — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
 >
 > **Coordination:** **`ia/projects/ui-polish-master-plan.md`** owns widget/visual contracts; this plan owns **catalog + bridge recipes**. **`ia/projects/sprite-gen-master-plan.md`** feeds **`generator_archetype_id`** + paths. **`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`** / **`ia/projects/session-token-latency-master-plan.md`** = registration-only follow-ups when new MCP kinds ship.
 >
@@ -34,7 +34,7 @@
 
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `ia/projects/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
 
 ### Stage index
 
@@ -79,4 +79,4 @@
 | Date | Note |
 |------|------|
 | 2026-04-21 | Orchestrator authored from `docs/grid-asset-visual-registry-exploration.md` §8 via `master-plan-new`. |
-| 2026-04-24 | Canonical-shape refactor per `ia/projects/MASTER-PLAN-STRUCTURE.md`: dropped `### Step N` wrappers (Stages now flat siblings), promoted `#### Stage` → `### Stage`, demoted `### §Stage File Plan` / `### §Plan Fix` / `### §Stage Closeout Plan` → `#### §…`, stripped `**Phases:**` checkbox blocks, dropped Phase column from Task tables (5-col). Retroactive §Stage Audit sentinels for archived Stages (1.1–3.2) predating the 2026-04-24 lifecycle refactor; forward Stages 3.3 / 4.1 / 4.2 / 4.3 carry `_pending_` §Stage Audit sentinels. Header Hierarchy rules now cite `MASTER-PLAN-STRUCTURE.md` + `plan-apply-pair-contract.md`; Tracking legend replaced with canonical 4-value Stage enum. |
+| 2026-04-24 | Canonical-shape refactor per `docs/MASTER-PLAN-STRUCTURE.md`: dropped `### Step N` wrappers (Stages now flat siblings), promoted `#### Stage` → `### Stage`, demoted `### §Stage File Plan` / `### §Plan Fix` / `### §Stage Closeout Plan` → `#### §…`, stripped `**Phases:**` checkbox blocks, dropped Phase column from Task tables (5-col). Retroactive §Stage Audit sentinels for archived Stages (1.1–3.2) predating the 2026-04-24 lifecycle refactor; forward Stages 3.3 / 4.1 / 4.2 / 4.3 carry `_pending_` §Stage Audit sentinels. Header Hierarchy rules now cite `MASTER-PLAN-STRUCTURE.md` + `plan-apply-pair-contract.md`; Tracking legend replaced with canonical 4-value Stage enum. |
