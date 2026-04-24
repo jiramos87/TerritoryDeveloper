@@ -101,6 +101,7 @@ Run `mechanicalization-preflight` skill over the aggregate §Plan Digest output:
 1. Call `mcp__territory-ia__mechanicalization_preflight_lint({artifact_path, artifact_kind: "plan_digest"})`.
 2. `pass: true` → prepend `mechanicalization_score` YAML header before the tuple list per `ia/rules/mechanicalization-contract.md`.
 3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]`; do NOT emit artifact.
+4. **Advisory escape hatch (TECH-776 regex drift):** if `pass: false` AND `failing_fields == ["picks"]` AND Phase 4 `plan_digest_lint` was PASS across all per-Task slices + aggregate AND no missing-path findings in `findings[]` → prepend `mechanicalization_score: advisory_partial; failing_fields: [picks]; reason: preflight-regex-vs-rich-format-drift` header + continue (do NOT halt). Tracks structural fix in TECH-776.
 
 Extended `plan_digest_lint` rules:
 - Every step touching `Assets/**/*.cs` or runtime files MUST carry non-empty `invariant_touchpoints[]` OR opt-out marker `invariant_touchpoints: none (utility)`. Missing → lint rule 10 failure.

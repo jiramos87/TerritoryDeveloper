@@ -42,7 +42,7 @@
 > - `{{sibling-master-plan.md}}` — {{overlap + collision surface + parallel-work note}}.
 > - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
 >
-> **Hierarchy rules:** `ia/rules/project-hierarchy.md` (stage > task — 2-level). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
+> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage + Task table shape — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
 >
 > **Read first if landing cold:**
 >
@@ -56,7 +56,7 @@
 
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress — {active task} | Final` (per `ia/rules/project-hierarchy.md`). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `/enrich` → `In Review`; `/implement` → `In Progress`; `closeout-apply` → `Done (archived)`; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `ia/projects/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
 
 ### Stage {{N}}.{{M}} — {{Stage Name}}
 
@@ -100,9 +100,15 @@ _pending — populated by `/stage-file` planner pass._
 
 #### §Plan Fix
 
-> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-fix-apply` reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
 
 _pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N}}.{{M}}` when all Tasks reach Done post-verify._
 
 #### §Stage Closeout Plan
 

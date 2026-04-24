@@ -40,6 +40,7 @@
 
 ### Stage 1 — Quick Wins / Glossary Bulk-Terms Extension
 
+
 **Status:** Done (2026-04-18)
 
 **Objectives:** Extend `glossary-lookup.ts` to accept a `terms: string[]` array alongside the existing `term: string` param; return per-term `{ results, errors }` partial-result shape. Back-compat: single `term` param still works unchanged.
@@ -58,9 +59,34 @@
 | T1.1 | Bulk terms handler | **TECH-314** | Done | Extend `tools/mcp-ia-server/src/tools/glossary-lookup.ts` to accept `terms?: string[]` alongside `term?: string`. When `terms` present, fan out to per-term lookup, aggregate into `{ results: {[term]: GlossaryEntry}, errors: {[term]: { code, message }} }` + `meta.partial: { succeeded, failed }`. Single-`term` path returns existing shape via backward-compat branch. |
 | T1.2 | Bulk terms tests | **TECH-315** | Done | Unit tests in `tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts`: bulk happy path (all found), partial failure (one term not found → in `errors`, rest in `results`), single-`term` back-compat, empty `terms: []` → `{ results: {}, errors: {}, meta.partial: {succeeded:0,failed:0} }`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 2 — Quick Wins / Structured Invariants Summary
+
 
 **Status:** Final (2026-04-18)
 
@@ -87,9 +113,34 @@
 | T2.3 | Invariants tests | **TECH-373** | Done (archived) | Unit tests in `tools/mcp-ia-server/tests/tools/invariants-summary.test.ts`: `domain` filter match; `domain` matches nothing → `{ invariants: [], markdown: "" }` (not error); no `domain` → all 13 returned; `markdown` side-channel populated regardless of filter. |
 | T2.4 | Release prep v0.6.0 | **TECH-374** | Done (archived) | Bump `tools/mcp-ia-server/package.json` `version` to `0.6.0`; add `CHANGELOG.md` entry: `v0.6.0 — Quick wins: glossary bulk-terms + structured invariants`. Advisory note: "tag this commit `mcp-pre-envelope-v0.5.0` for P2 rollback target". |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 3 — Envelope Foundation (Breaking Cut) / Envelope Infrastructure + Auth
+
 
 **Status:** Final (2026-04-18)
 
@@ -112,9 +163,34 @@
 | T3.3 | Envelope unit tests | **TECH-390** | Done (archived) | Tests in `tools/mcp-ia-server/tests/envelope.test.ts`: `wrapTool` happy path (`ok: true, payload`); envelope passthrough (no double-wrap); bare `Error` → `internal_error` (per TECH-388 Decision Log); typed throw `{code: "db_unconfigured", hint?, details?}` preserves code + optional fields; `meta` passthrough. |
 | T3.4 | Allowlist unit tests | **TECH-391** | Done (archived) | Tests for `checkCaller`: authorized caller → no throw; unauthorized caller → `unauthorized_caller`; `caller_agent` undefined → `unauthorized_caller`; tool not in map (read-only) → no throw (allowlist only gates mutation/authorship tools; read tools bypass). |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 4 — Envelope Foundation (Breaking Cut) / Rewrite 32 Tool Handlers
+
 
 **Status:** Done
 
@@ -147,9 +223,34 @@
 | T4.7 | Wrap bridge tools | **TECH-404** | Done (archived) | Wrap `unity-bridge-command.ts`, `unity-bridge-lease.ts`, `unity-bridge-get.ts` (via `unity_bridge_get` / `unity_compile` kinds), `unity-compile.ts` in `wrapTool`; timeout path: inject `error.details = { command_id, last_output_preview }` before wrapping; `db_unconfigured` → `{ ok: false, error: { code: "db_unconfigured" } }`. |
 | T4.8 | Wrap Unity analysis tools | **TECH-405** | Done (archived) | Wrap `findobjectoftype-scan.ts`, `unity-callers-of.ts`, `unity-subscribers-of.ts`, `csharp-class-summary.ts` in `wrapTool`; no-results path returns `ok: true, payload: { matches: [] }` (not error); parse failure → `ok: false, error: { code: "invalid_input" }`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 5 — Envelope Foundation (Breaking Cut) / Alias Removal + Structured Prose + Batch Shape
+
 
 **Status:** Final (2026-04-18)
 
@@ -175,9 +276,34 @@
 | T5.3 | Batch partial-result — spec_sections | **TECH-428** | Done (archived) | Refactor `spec-sections.ts` to return `{ results: {[spec_key]: {sections: [...]}}, errors: {[spec_key]: {code, message}}, meta: {partial: {succeeded, failed}} }`. One bad input key → `errors[key]`, rest still succeed; envelope `ok: true` when ≥1 succeeds. |
 | T5.4 | Batch partial-result — glossary_lookup | **TECH-429** | Done (archived) | Wire partial-result shape for `glossary_lookup({ terms: [...] })` (handler extended in Stage 1.1) through the Stage 2.2 envelope wrapper; ensure `meta.partial` propagates to `EnvelopeMeta`; single-`term` path still returns unwrapped `GlossaryEntry` in `payload`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 6 — Envelope Foundation (Breaking Cut) / Caller Sweep + Snapshot Tests + CI Gate
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -202,9 +328,34 @@
 | T6.3 | CI envelope-shape script | _pending_ | _pending_ | Author `tools/scripts/validate-mcp-envelope-shape.mjs` — greps `tools/mcp-ia-server/src/tools/*.ts` for function bodies that `return {` without `wrapTool`; exits non-zero if found. Add `"validate:mcp-envelope-shape"` to root `package.json` scripts + add to `validate:all` composition. |
 | T6.4 | Release prep v1.0.0 | _pending_ | _pending_ | Bump `tools/mcp-ia-server/package.json` to `1.0.0`; add `CHANGELOG.md` entry `v1.0.0 — Breaking: unified ToolEnvelope, alias removal, structured prose tools, partial-result batch`; include migration table (alias → canonical); note rollback path (`git revert <merge-sha>`) and pre-envelope tag `mcp-pre-envelope-v0.5.0`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 7 — Composite Bundles + Graph Freshness / `issue_context_bundle` + `lifecycle_stage_context`
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -229,9 +380,34 @@
 | T7.3 | lifecycle_stage_context | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/lifecycle-stage-context.ts`: `stage ∈ {author, implement, verify, close}` → stage map dispatches `issue_context_bundle` + stage-specific extras: `author` adds glossary anchors + Stage 1×N bulk-author context (replaces the retired `kickoff` stage per M6 collapse); `implement` adds per-phase domain prep + invariants; `verify` adds bridge preflight hints; `close` adds closeout digest + journal search. `meta.partial` aggregates across all sub-fetches. |
 | T7.4 | lifecycle_stage_context tests | _pending_ | _pending_ | Tests: all 4 stage values (`author` / `implement` / `verify` / `close`) return enriched bundles; unknown `stage` value → `{ ok: false, error: { code: "invalid_input" } }`; optional stage-extra sub-fetch failure → `ok: true`, `meta.partial.failed++`; `stage: "close"` + db unconfigured → graceful degradation on journal + digest. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 8 — Composite Bundles + Graph Freshness / `orchestrator_snapshot`
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -256,9 +432,34 @@
 | T8.3 | Snapshot tool tests | _pending_ | _pending_ | Tests for `orchestrator_snapshot`: multi-stage master-plan with mixed `_pending_`/`Draft`/`Done` task rows parsed; file outside `ia/projects/` → `invalid_input`; rollout sibling absent → `ok: true`, `rollout_tracker_row: null`; slug not found → `issue_not_found`. |
 | T8.4 | Parser unit tests | _pending_ | _pending_ | Tests for `orchestrator-parser.ts`: partial stage table (some `_pending_`) → `_pending_` preserved in output; phase checkbox `- [ ]` → `checked: false`, `- [x]` → `checked: true`; task row without Issue id → `issue: "_pending_"`; status pointer regex: `**Status:** In Progress — Stage 1.1` → `{ pointer: "In Progress — Stage 1.1" }`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 9 — Composite Bundles + Graph Freshness / Graph Freshness + Skill Recipe Sweep
+
 
 **Status:** Done
 
@@ -439,6 +640,12 @@
     Plan-author flagged stale T2.4.2 ref in TECH-517 §Audit Notes via HTML WARN comment. T2.4.2 = pre-collapse decomposition numbering; current master-plan uses flat T9.x. Rewrite sentence to cite sibling T9.3 (TECH-516), drop WARN comment.
 ```
 
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
 #### §Stage Closeout Plan
 
 > stage-closeout-plan — 4 Tasks (0 shared migration ops + 16 per-Task ops + 1 stage-level status flip = 17 tuples total). Spawn `stage-closeout-apply ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md 9`.
@@ -566,6 +773,7 @@
 
 ### Stage 10 — Mutations + Authorship + Bridge + Journal Lifecycle / Orchestrator + Rollout Mutations
 
+
 **Status:** Draft (tasks _pending_ — not yet filed)
 
 **Objectives:** Implement two mutation tools that replace fragile regex-based `Edit` calls in lifecycle skills: `orchestrator_task_update` for task-table + phase-checkbox + status-pointer edits, and `rollout_tracker_flip` for rollout lifecycle cell advances.
@@ -589,9 +797,34 @@
 | T10.3 | orchestrator mutation tests | _pending_ | _pending_ | Tests for `orchestrator_task_update`: status flip `_pending_ → Draft` in task table; phase checkbox toggle; top-status-pointer rewrite; unauthorized caller → `unauthorized_caller`; file outside `ia/projects/` → `invalid_input`; issue_id not found in table → `invalid_input`; no `id:` field mutation. |
 | T10.4 | rollout flip tests | _pending_ | _pending_ | Tests for `rollout_tracker_flip`: cell advance happy path with snapshot of written markdown; glyph-preservation: invalid glyph → `invalid_input`; valid glyph set passes; unauthorized caller → `unauthorized_caller`; cell label not found in row → `invalid_input`; row slug not found in tracker → `invalid_input`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 11 — Mutations + Authorship + Bridge + Journal Lifecycle / IA Authorship Tools
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -617,9 +850,34 @@
 | T11.3 | spec_section_append | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/spec-section-append.ts` via `wrapTool` + `checkCaller`: validate `spec` exists via `list_specs`; call `spec_outline` to check heading uniqueness (duplicate heading → `invalid_input`); append new section markdown to bottom of spec file; spawn non-blocking `npm run build:spec-index`; return `{ spec, heading, appended_at }`. |
 | T11.4 | rule_create + authorship tests | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/rule-create.ts` via `wrapTool` + `checkCaller`: validate `path` under `ia/rules/`; check file uniqueness; write file with required frontmatter; return `{ path, created_at }`. Tests for all 4 authorship tools: happy paths; unauthorized caller → `unauthorized_caller`; cross-ref validation failure → `invalid_input` with nearest-match hint; duplicate guard. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 12 — Mutations + Authorship + Bridge + Journal Lifecycle / Bridge Pipeline + Jobs List
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -644,9 +902,34 @@
 | T12.3 | Timeout auto-attach | _pending_ | _pending_ | Extend `unity-bridge-command.ts` timeout error path: before `wrapTool` surfaces the `timeout` error, inject `details: { command_id, last_output_preview, completed_kinds: string[] }` — where `completed_kinds` = list of kinds that completed before timeout; `last_output_preview` = last N chars of bridge job output column. Update snapshot test in `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`. |
 | T12.4 | Bridge + jobs tests | _pending_ | _pending_ | Tests for `unity_bridge_pipeline`: sync-complete path (3 mock kinds < 30s ceiling); async-convert path (> 30s ceiling mock → `{ job_id }`); timeout on kind 2 → `error.details.completed_kinds` contains completed kinds only. Tests for `unity_bridge_jobs_list`: filter by `status: "running"`; empty result; `db_unconfigured`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 13 — Mutations + Authorship + Bridge + Journal Lifecycle / Journal Lifecycle
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -672,9 +955,34 @@
 | T13.3 | Closeout digest journaled_sections | _pending_ | _pending_ | Extend `project-spec-closeout-digest.ts`: after computing checklist, query `SELECT DISTINCT kind FROM ia_project_spec_journal WHERE issue_id = $1`; add `journaled_sections: string[]` to `payload`; `db_unconfigured` → `journaled_sections: []`, `meta.partial.failed++`. Update `ia/skills/stage-closeout-plan/SKILL.md` + `ia/skills/plan-applier/SKILL.md` (Mode stage-closeout) to read `journaled_sections` before calling `journal_entry_sync` (skip if already persisted). Retired `ia/skills/closeout/SKILL.md` / `project-spec-close/SKILL.md` paths folded into this pair per M6 collapse. |
 | T13.4 | Journal lifecycle tests | _pending_ | _pending_ | Tests for `journal_entry_sync`: dedup — same `(issue_id, kind, body)` twice → single DB row; different body same issue → two rows; cascade delete removes all issue rows; migration: second run no-op (idempotent). Tests for `project_spec_closeout_digest.journaled_sections`: populated when journal has prior entries; empty `[]` when db_unconfigured. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 14 — Critical Misses: Authoring Parity + Atomicity + Dry-run (post-plan review addendum) / Master-plan Authoring Tools
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -700,9 +1008,34 @@
 | T14.3 | stage_decompose_apply | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/stage-decompose-apply.ts` via `wrapTool` + `checkCaller` (allowlist: `stage-decompose`). Parse orchestrator; locate step by `step_id`; detect skeleton marker (missing stages section OR `_pending decomposition_` placeholder); replace with generated stages → phases → tasks structure; preserve step header + Objectives + Exit criteria + Relevant surfaces verbatim; cardinality-validate before write; target step already decomposed → `invalid_input` (hint: edit in place or rerun `stage-decompose` skill). |
 | T14.4 | Authoring tool tests | _pending_ | _pending_ | Tests in `tools/mcp-ia-server/tests/tools/master-plan-authoring.test.ts`: happy paths for all three tools; cardinality violations (phase with 1 task, stage with 1 phase, duplicate ids) → `invalid_input` with violation list; path outside `ia/projects/` → `invalid_input`; unauthorized caller → `unauthorized_caller`; `master_plan_create` on existing file → `invalid_input` (hint: `master_plan_step_append`); `stage_decompose_apply` on already-decomposed step → `invalid_input`; `master_plan_step_append` snapshot test confirms existing Steps byte-identical post-append. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 15 — Critical Misses: Authoring Parity + Atomicity + Dry-run (post-plan review addendum) / Transactional Batch
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -726,9 +1059,34 @@
 | T15.3 | Atomic + partial batch tests | _pending_ | _pending_ | Tests in `tools/mcp-ia-server/tests/tools/mutation-batch.test.ts`: `all_or_nothing` happy path (3 ops all succeed, all writes persist); mid-batch failure (op 2 of 3 fails) → rollback verified via SHA-256 equality between pre-batch snapshot and post-rollback files; `best_effort` returns `{results: {0:..., 2:...}, errors: {1:...}}` + `meta.partial: {succeeded:2, failed:1}`; flock contention — two concurrent batches serialize deterministically; unauthorized op `caller_agent` → `unauthorized_caller` from inner op (batch still rolls back under `all_or_nothing`). |
 | T15.4 | Caller skill adoption | _pending_ | _pending_ | Update `ia/skills/stage-file-apply/SKILL.md` (post-M6 name; was `stage-file`) to wrap per-stage file-creation ops (N × `backlog_record_create` + N × `spec_create` + 1 × `orchestrator_task_update` + 1 × BACKLOG regen) in `mutation_batch(mode: "all_or_nothing")` — prevents half-filed stages. Update `ia/skills/plan-applier/SKILL.md` Mode stage-closeout (Stage-scoped `/closeout` pair tail; absorbs retired `project-spec-close`) closeout sequence (yaml archive move + BACKLOG row delete + spec-file delete + orchestrator status flip) to batch. Both skills document bash fallback path when MCP unavailable. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 16 — Critical Misses: Authoring Parity + Atomicity + Dry-run (post-plan review addendum) / Dry-run Preview
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -753,9 +1111,34 @@
 | T16.3 | Dry-run for master-plan authoring + mutation_batch | _pending_ | _pending_ | Wire dry-run path into `master_plan_create`, `master_plan_step_append`, `stage_decompose_apply` (Stage 5.1 tools) — each computes serialized output, diffs against current file (empty string for `master_plan_create` new file), returns without writing. Extend `mutation_batch` (Stage 5.2) to propagate `dry_run: true` into each nested op's args; aggregate per-op diffs into `payload.diffs: { [op_index]: { diff, affected_paths, would_write: true } }`; skip `snapshotFiles` + `restoreSnapshots` entirely when dry-run. |
 | T16.4 | Dry-run tests + release prep | _pending_ | _pending_ | Snapshot tests in `tools/mcp-ia-server/tests/mutation/dry-run.test.ts`: fixture input → stable diff string per tool (one `ok: true` fixture per mutation + authorship tool). Behavioral tests: dry-run never writes (compare SHA-256 of affected files before + after call); `dry_run: true` + unauthorized `caller_agent` → still `unauthorized_caller` (auth gate runs before dry-run branch); dry-run via `mutation_batch` returns aggregated `payload.diffs` map. Bump `tools/mcp-ia-server/package.json` to `1.1.0`; `CHANGELOG.md` entry `v1.1.0 — Master-plan authoring (create/step_append/stage_decompose_apply) + mutation_batch (all_or_nothing/best_effort) + dry_run across all mutation/authorship tools`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 17 — Theme B MCP Surface Remainder (session-token-latency audit extension) / Parse Cache + Progressive Disclosure + Doc Drift + YAML-First + Descriptor Lint
+
 
 **Status:** Done (2026-04-19)
 
@@ -797,15 +1180,10 @@
 - `tools/mcp-ia-server/CHANGELOG.md` — v1.2.0 release entry.
 - Prior stage handoff: Stage 16 (Dry-run Preview, Draft) — dry-run semantics carry over to any new mutations, but Stage 17 tools are read-only + tooling, so no dry-run coupling.
 
-**Phases:**
-
-- [ ] Phase 1 — Performance + cache layer (parse cache + dist switch; yaml-first manifest cache).
-- [ ] Phase 2 — Surface-shape + CI gates (progressive disclosure defaults; README drift lint; descriptor-prose lint; release prep).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
 | T17.1 | Parse cache + dist build (B4) | 1 | **TECH-495** | Done (archived) | Author `tools/mcp-ia-server/src/parser/parse-cache.ts` — mtime-keyed JSON cache at `tools/mcp-ia-server/.cache/parse-cache.json`; `readCached(path, mtime)` returns parsed AST on hit, `null` on miss; `writeCached(path, mtime, ast)` persists. Wire into `markdown-parser.ts` `parseDocument()` — cache lookup first, parse on miss, write-through on success. Add `tools/mcp-ia-server/package.json` `"build": "tsc -p tsconfig.build.json"` producing `dist/index.js`; flip `.mcp.json` `args` to `["tools/mcp-ia-server/dist/index.js"]` (preserve `REPO_ROOT` + `DEBUG_MCP_COMPUTE` env). Dev-env fallback: `MCP_SOURCE_MODE=1` env flag swaps args back to `tsx` on source — documented in `CLAUDE.md §2` or server README. Gitignore `.cache/` dir. |
 | T17.2 | YAML-first parser + manifest cache (B8) | 1 | **TECH-496** | Done (archived) | Audit `tools/mcp-ia-server/src/parser/backlog-parser.ts` resolution order — confirm `ia/backlog/{id}.yaml` is checked BEFORE `BACKLOG.md` fallback for every id lookup; rewrite any ordering violation. Add manifest cache: read `ia/backlog/` dir mtime at first call per session; cache `{id → yaml-path}` map keyed by mtime; invalidate + re-scan on mtime change. Target: cumulative savings on highest-frequency MCP tool (`backlog_issue`). Unit tests: yaml-first ordering on mixed-state (yaml + archived yaml + BACKLOG-only); manifest cache hit + miss paths; archived-yaml resolution. |
 | T17.3 | README drift CI (B6) | 2 | **TECH-497** | Done (archived) | Author `tools/scripts/validate-mcp-readme.mjs` — parse `tools/mcp-ia-server/README.md` tool-table row count; grep `registerTool\(` count in `tools/mcp-ia-server/src/index.ts`; exit non-zero with descriptive diff (missing rows / extra rows) when counts differ. Add `"validate:mcp-readme": "node tools/scripts/validate-mcp-readme.mjs"` to root `package.json` scripts; compose into `validate:all`. **Depends on Stage 9 T9.4 Done** — do not land until catalog rewrite merges, otherwise lint churns against a stale README. Confirm T9.4 complete at `/stage-file` time. |
@@ -1041,6 +1419,24 @@
     impl_plan_sketch: |
       Phase 1 — Bump version + append CHANGELOG entry (scope + migration + rollback pointer). Run `validate:all`. Advise human to tag pre-commit before merge.
 ```
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 

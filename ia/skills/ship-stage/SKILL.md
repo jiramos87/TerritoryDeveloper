@@ -34,6 +34,8 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
+**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative. H3 `### Stage N.M` heading; 5-col Task table `| Task | Name | Issue | Status | Intent |` (Phase column retired); 2-level hierarchy Stage > Task (Step layer retired); Stage subsections `#### §Stage File Plan` / `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan`.
+
 **Related:** [`ship.md`](../../../.claude/commands/ship.md) (single-task chain — readiness → implement → verify-loop → code-review (fix loop cap=1) → audit; **no closeout** — Stage-scoped only) · [`verify-loop`](../verify-loop/SKILL.md) (`--skip-path-b` flag) · [`domain-context-load`](../domain-context-load/SKILL.md) (MCP cache subskill) · Stage-scoped closeout pair: [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) → [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (absorbs retired `project-stage-close` + `project-spec-close` per T7.14 / M6 collapse). Scene wiring: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — Pass 1 Step 2.2 preflight + Pass 2 Step 3.2 code-review gate.
 
 **Verification policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
@@ -78,7 +80,7 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 2. Locate stage header: scan for a heading line matching `#### {STAGE_ID}` (any number of leading `#` followed by a space, then `{STAGE_ID}`). Accept `## Stage X.Y`, `### Stage X.Y`, `#### Stage X.Y` to be header-depth agnostic. Regex: `/^#{2,6}\s+Stage\s+X\.Y\b/` where X.Y comes from `STAGE_ID`.
 3. Collect lines between that heading and the next heading of equal or lower depth.
 4. Locate task table: find a Markdown table with header row containing columns `Issue` and `Status` (case-insensitive, any column order). Regex: `/\|\s*Issue\s*\|/i` on the header row.
-5. **Schema drift guard:** only `Issue` + `Status` are required columns. Canonical master-plan schema is the 6-column superset `Task | Name | Phase | Issue | Status | Intent` — all other columns are advisory. If `Issue` OR `Status` column not found within the stage block → emit `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + diff showing required columns `[Issue, Status]` (canonical superset `[Task, Name, Phase, Issue, Status, Intent]`) vs found column headers. Stop.
+5. **Schema drift guard:** only `Issue` + `Status` are required columns. Canonical master-plan schema (per [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)) is the 5-column shape `Task | Name | Issue | Status | Intent` — Phase column retired 2026-04-24 (lifecycle-refactor); any lingering `Phase` column is advisory legacy drift. If `Issue` OR `Status` column not found within the stage block → emit `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + diff showing required columns `[Issue, Status]` (canonical 5-col `[Task, Name, Issue, Status, Intent]`) vs found column headers. Stop.
 6. Extract rows: for each data row, parse `Issue` column (must match `/\*\*?(TECH|BUG|FEAT|ART|AUDIO)-\d+\*\*?/` or bare id) and `Status` column.
 7. Filter: keep rows where `Status` is NOT `Done` / `archived` / `skipped` (case-insensitive). These are the **pending implementation tasks** (drive Pass 1 — same as “pending tasks” below).
 8. Collect **`STAGE_FILED_IDS`**: every issue id appearing in a row whose Issue column is not `_pending_` (table order, de-dupe by first occurrence). Used for Pass 2 scope + resume anchor when Pass 1 is empty.
@@ -95,12 +97,10 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 
 **Parser fixtures (verify at authoring, not runtime):**
 
-- `citystats-overhaul-master-plan.md` Stage 1.1 — `####` depth, 6-col schema `Task | Name | Phase | Issue | Status | Intent`.
-- `multi-scale-master-plan.md` Stage 1.1 — `####` depth, same 6-col schema.
-- `backlog-yaml-mcp-alignment-master-plan.md` Stage 1.1 — `####` depth, same schema.
-- `mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` Stage 1.1 — `####` depth, same schema. Two tasks TECH-314 + TECH-315 (first `/ship-stage` production run, 2026-04-18).
+- Canonical shape post-lifecycle-refactor 2026-04-24: `### Stage X.Y` (H3) + 5-col schema `Task | Name | Issue | Status | Intent`.
+- Legacy fixtures (pre-refactor) carried `#### Stage` (H4) + 6-col `Task | Name | Phase | Issue | Status | Intent`. Parser accepts both during migration window; `Issue` + `Status` are the only required columns.
 
-All current master plans use `####` headers and the 6-col schema. Parser accepts `##`–`######` to be forward-compatible; only `Issue` + `Status` columns are required, other columns ignored.
+Parser accepts `##`–`######` to be forward-compatible; only `Issue` + `Status` columns are required, other columns ignored.
 
 ---
 
@@ -442,16 +442,16 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 
 **4 cases (in priority order):**
 
-1. **Next filed stage** — next `####` Stage heading where task table has ≥1 row with `Status != Done/archived/skipped` AND issue ids are real (not `_pending_`):
+1. **Next filed stage** — next `### Stage X.Y` heading (H3 canonical; accept H4 legacy drift) where task table has ≥1 row with `Status != Done/archived/skipped` AND issue ids are real (not `_pending_`):
    → `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage X.Y"`
 
-2. **Next pending stage** — next `####` Stage heading where task table rows have `_pending_` issue ids (tasks not yet filed):
+2. **Next pending stage** — next `### Stage X.Y` heading where task table rows have `_pending_` issue ids (tasks not yet filed):
    → `Next: claude-personal "/stage-file {MASTER_PLAN_PATH} Stage X.Y"`
 
-3. **Next skeleton step** — next Step section with no filed stages beneath it (fully unpopulated):
-   → `Next: claude-personal "/stage-decompose {MASTER_PLAN_PATH} Step N"`
+3. **Next skeleton stage** — next `### Stage X.Y` heading with no Task table populated (skeleton body per [`MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)):
+   → `Next: claude-personal "/stage-decompose {MASTER_PLAN_PATH} Stage X.Y"` (2-level hierarchy; Step layer retired 2026-04-24).
 
-4. **Umbrella done** — no more stages/steps in any state:
+4. **Umbrella done** — no more stages in any state:
    → `Next: claude-personal "/closeout {UMBRELLA_ISSUE_ID}"` (if identifiable from master plan header) OR print `All stages done — umbrella close pending.`
 
 ---
@@ -509,6 +509,18 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ---
 
 ## Changelog
+
+### 2026-04-24 — Canonical master-plan shape alignment (H3 Stage + 5-col table + Step layer retired)
+
+**Status:** applied
+
+**Symptom:** Step 0 §5 referenced 6-column superset `Task | Name | Phase | Issue | Status | Intent`; Step 5 case 3 suggested `/stage-decompose {MASTER_PLAN_PATH} Step N` — both retired by lifecycle-refactor 2026-04-24 (Phase column dropped; Step layer dropped; 2-level Stage > Task hierarchy).
+
+**Fix:** Step 0 §5 schema guard now cites canonical 5-col `Task | Name | Issue | Status | Intent` per [`MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md); Phase column marked advisory-legacy. Step 5 case 3 emits `/stage-decompose {MASTER_PLAN_PATH} Stage X.Y` (Step layer retired). Parser fixtures updated to canonical shape; legacy H4 + 6-col noted as migration-window drift. Canonical-shape reference paragraph added at top. Parser remains forward-compatible (`##`–`######`, Issue + Status required only).
+
+**Rollout row:** lifecycle-refactor-2026-04-24
+
+---
 
 ### 2026-04-20 — Stage tail detect (`PASS2_ONLY`) + R6 alignment
 

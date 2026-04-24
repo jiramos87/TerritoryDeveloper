@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">28%</div>
-      <div class="overall-count">55 / 149 tasks</div>
+      <div class="overall-pct">0%</div>
+      <div class="overall-count">0 / 0 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:28%"></div>
+      <div class="overall-seg-fill" style="width:0%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -389,8 +389,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Grid asset visual registry</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:43%"></div></div>
-        <span class="mini-pct">43%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -437,8 +437,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Session Token + Latency Remediation</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:20%"></div></div>
-        <span class="mini-pct">20%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -469,8 +469,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Unity IDE Agent Bridge</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:22%"></div></div>
-        <span class="mini-pct">22%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -768,40 +768,40 @@ h2.plan-title {
       <h2 class="plan-title">Grid asset visual registry — Master Plan (Bucket 12 MVP spine)</h2>
       <a class="plan-doc-link" href="../ia/projects/grid-asset-visual-registry-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 3 / Stage 3.1</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 3.3 / TECH-772 (Stages 1.1–3.2 archived)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#70a0e0" title="Global plan progress (step-weighted)">43%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 71%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:47%" title="29 Done"></div><div class="seg seg-draft" style="width:8%" title="5 Draft"></div><div class="seg seg-pending" style="width:45%" title="28 Pending"></div></div>
-    <span class="seg-count">29 / 62</span>
+    <div class="seg-bar"><div class="seg-empty"></div></div>
+    <span class="seg-count">0 / 0</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 29 Done</span><span class="chip chip-draft">📝 5 Draft</span><span class="chip chip-pending">⏳ 28 Pending</span><span class="chip chip-total">📋 62 Total</span>
+    <span class="chip chip-total">📋 0 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 1 · Postgres catalog + HTTP API …</span>
+    <span class="ctx-step">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.3 · Next `/api/catalog/*` routes</span>
+    <span class="ctx-stage">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="`GET /api/catalog/assets` with `status=published` default; optional draft flag for admin; pagination if row count grows.">🎯 <span class="task-id">T1.3.1</span> <span class="task-name">GET list route + filters</span></span>
+    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Reads (list + get).">☐ Reads (list + get).</span><span class="phase-pill phase-pending" title="Phase 2 — Writes + preview-diff + retire.">☐ Writes + preview-diff + retire.</span>
+    <span class="phase-pill phase-muted">No active stage</span>
   </div>
 
   
   <details class="sibling-details">
-    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
-    <ul><li>- **Bucket 12** child under `ia/projects/full-game-mvp-master-plan.md` (umbrella edit is a **separate** follow-up task, not auto-applied here).</li><li>**Coordination:** **`ia/projects/ui-polish-master-plan.md`** owns widget/visual contracts; this plan owns **catalog + bridge recipes**. **`ia/projects/sprite-gen-master-plan.md`** feeds **`generator_archetype_id`** + paths. **`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`** / **`ia/projects/session-token-latency-master-plan.md`** = registration-only follow-ups when new MCP kinds ship.</li><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-plan` + `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `stage-file-apply` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` → `In Review`; `/implement` → `In Progress`; `/closeout` (Stage-scoped) → `Done (archived)` + phase box when last task of phase closes + stage `Final` + step rollup; `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
+    <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
+    <ul><li>- **Bucket 12** child under `ia/projects/full-game-mvp-master-plan.md` (umbrella edit is a **separate** follow-up task, not auto-applied here).</li><li>**Coordination:** **`ia/projects/ui-polish-master-plan.md`** owns widget/visual contracts; this plan owns **catalog + bridge recipes**. **`ia/projects/sprite-gen-master-plan.md`** feeds **`generator_archetype_id`** + paths. **`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`** / **`ia/projects/session-token-latency-master-plan.md`** = registration-only follow-ups when new MCP kinds ship.</li><li>plan-review pass 2 — 2 tuples. `out bool remapped` references survive in §Test Blueprint + §Examples after pass-1 §Acceptance fix. Spawn `plan-applier` Mode plan-fix `ia/projects/grid-asset-visual-registry-master-plan.md 3.3`.</li></ul>
   </details>
 </div>
 
@@ -1034,32 +1034,32 @@ h2.plan-title {
     </div>
     <span class="plan-status status-inprogress">🔄 In Progress — Step 2 / Stage 2.2</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">20%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 2: 0%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:29%" title="14 Done"></div><div class="seg seg-draft" style="width:8%" title="4 Draft"></div><div class="seg seg-pending" style="width:63%" title="27 Pending"></div></div>
-    <span class="seg-count">14 / 49</span>
+    <div class="seg-bar"><div class="seg-empty"></div></div>
+    <span class="seg-count">0 / 0</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 14 Done</span><span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 27 Pending</span><span class="chip chip-total">📋 49 Total</span>
+    <span class="chip chip-total">📋 0 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 2 · Authority chain collapse (Th…</span>
+    <span class="ctx-step">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 2.1 · Lifecycle taxonomy authority…</span>
+    <span class="ctx-stage">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Shrink `ia/rules/agent-lifecycle.md` to ≤12 lines: retain header + one-sentence purpose + `Full canonical doc: docs/agent-lifecycle.md` pointer + `## Ordered flow` stub linking there. Collapse `CLAUDE">🎯 <span class="task-id">T2.1.1</span> <span class="task-name">Collapse rule + CLAUDE.md §3</span></span>
+    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-done" title="Phase 1 — Doc-triangle authority chain collapse (A1).">✅ Doc-triangle authority chain collapse (A1).</span><span class="phase-pill phase-done" title="Phase 2 — MEMORY.md hygiene (A4).">✅ MEMORY.md hygiene (A4).</span>
+    <span class="phase-pill phase-muted">No active stage</span>
   </div>
 
   
@@ -1116,7 +1116,7 @@ h2.plan-title {
       <h2 class="plan-title">Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)</h2>
       <a class="plan-doc-link" href="../ia/projects/sprite-gen-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Stage 7+ (Stage 6 Done 2026-04-23; Stages 6–14 filed as scale-calibration + decoration + footprint-unlock extension, per `docs/sprite-gen-art-design-system.md`)</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 7 next (Stages 1–6.7 + 7 addendum + 9 addendum Final / archived as of 2026-04-24; Stage 7 decoration primitives Draft — next to file; Stages 8–14 Draft; Stage 15 Deferred)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -1204,41 +1204,37 @@ h2.plan-title {
       <h2 class="plan-title">Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)</h2>
       <a class="plan-doc-link" href="../ia/projects/unity-agent-bridge-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 2.1</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">22%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 67%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:32%" title="12 Done"></div><div class="seg seg-pending" style="width:68%" title="20 Pending"></div></div>
-    <span class="seg-count">12 / 38</span>
+    <div class="seg-bar"><div class="seg-empty"></div></div>
+    <span class="seg-count">0 / 0</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 12 Done</span><span class="chip chip-pending">⏳ 20 Pending</span><span class="chip chip-total">📋 38 Total</span>
+    <span class="chip chip-total">📋 0 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 1 · Hardening: parameterized exp…</span>
+    <span class="ctx-step">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.1 · Parameterized Editor bridge …</span>
+    <span class="ctx-stage">—</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agen">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Runner params DTO + dispatch</span></span>
+    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-done" title="Phase 1 — Runner **`params`** parsing + switch dispatch for chunk / sorting / agent context.">✅ Runner **`params`** parsing + switch dispatch…</span><span class="phase-pill phase-done" title="Phase 2 — Menu static methods / wrappers accept bounded parameters aligned with §10.">✅ Menu static methods / wrappers accept bounded…</span><span class="phase-pill phase-done" title="Phase 3 — Preconditions: **`get_play_mode_status`** / grid init gating + **`failed`** JSON contract.">✅ Preconditions: **`get_play_mode_status`** / g…</span><span class="phase-pill phase-pending" title="Define param structs (ExportCellChunkParams, ExportSortingDebugParams, ExportAgentContextParams)">☐ Define param structs (ExportCellChunkParams, …</span><span class="phase-pill phase-pending" title="Extend BridgeCommand deserialization to populate params from request JSON">☐ Extend BridgeCommand deserialization to popul…</span><span class="phase-pill phase-pending" title="Route parameterized requests through runner switch to menu statics">☐ Route parameterized requests through runner s…</span><span class="phase-pill phase-pending" title="Extend unity_bridge_command request Zod with optional params sub-object">☐ Extend unity_bridge_command request Zod with …</span><span class="phase-pill phase-pending" title="Add fixture covering each new kind + param shape">☐ Add fixture covering each new kind + param shape</span><span class="phase-pill phase-pending" title="Confirm existing non-parameterized kinds pass unchanged">☐ Confirm existing non-parameterized kinds pass…</span><span class="phase-pill phase-pending" title="Add parameter-accepting overloads to Export methods">☐ Add parameter-accepting overloads to Export m…</span><span class="phase-pill phase-pending" title="Wire MenuItem wrappers to overloads with default params">☐ Wire MenuItem wrappers to overloads with defa…</span><span class="phase-pill phase-pending" title="Confirm bridge runner dispatch reaches parameterized path">☐ Confirm bridge runner dispatch reaches parame…</span><span class="phase-pill phase-pending" title="Enumerate all Reports menu items; confirm each invocation succeeds">☐ Enumerate all Reports menu items; confirm eac…</span><span class="phase-pill phase-pending" title="Check file output paths for duplicates">☐ Check file output paths for duplicates</span><span class="phase-pill phase-pending" title="Verify Postgres registry export rows match pre-refactor baseline">☐ Verify Postgres registry export rows match pr…</span><span class="phase-pill phase-pending" title="Add isInitialized / TerrainManager readiness check before Play-only dispatch">☐ Add isInitialized / TerrainManager readiness …</span><span class="phase-pill phase-pending" title="Return failed + error JSON on precondition failure">☐ Return failed + error JSON on precondition fa…</span><span class="phase-pill phase-pending" title="Align error strings with analysis §8.3 risk categories">☐ Align error strings with analysis §8.3 risk c…</span><span class="phase-pill phase-pending" title="Add EditMode test: enqueue export_cell_chunk → assert completed keys">☐ Add EditMode test: enqueue export_cell_chunk …</span><span class="phase-pill phase-pending" title="Add EditMode test: export when grid absent → assert failed + error key">☐ Add EditMode test: export when grid absent → …</span><span class="phase-pill phase-pending" title="Add MCP-side test if tooling coverage needed">☐ Add MCP-side test if tooling coverage needed</span>
+    <span class="phase-pill phase-muted">No active stage</span>
   </div>
 
   
-  <details class="sibling-details">
-    <summary>🔗 Sibling coordination <span class="sibling-count">0 orchestrators in flight</span></summary>
-    <ul><li>**Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-plan` + `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `stage-file-apply` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` → `In Review`; `/implement` → `In Progress`; `/closeout` (Stage-scoped) → `Done (archived)` + phase box when last task of phase closes + stage `Final` + step rollup; `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).</li></ul>
-  </details>
 </div>
 
 <div class="plan-card">
@@ -1292,7 +1288,7 @@ h2.plan-title {
       <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-other">⏳ MVP Done 2026-04-17 — Steps 1–4 + 6 Final. Step 5 Done 2026-04-17 but architecture outputs (Drizzle schema, `/api/auth/*` stubs, auth middleware + login page, `DASHBOARD_AUTH_SKIP` bypass) retired 2026-04-22 per architecture audit (`docs/architecture-audit-change-list-2026-04-22.md`); Postgres driver swapped from `@neondatabase/serverless` to `postgres`-js. Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — MVP Done 2026-04-17 (Steps 1–4 + 6 Final; Step 5 Done but architecture outputs retired 2026-04-22 per `docs/architecture-audit-change-list-2026-04-22.md`; Postgres driver swapped `@neondatabase/serverless` → `postgres`-js). Post-MVP extensions tracked in `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` + `/master-plan-extend` Step 7+.</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -1325,7 +1321,7 @@ h2.plan-title {
   
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
-    <ul><li>**Status:** MVP Done 2026-04-17 — Steps 1–4 + 6 Final. Step 5 Done 2026-04-17 but architecture outputs (Drizzle schema, `/api/auth/*` stubs, auth middleware + login page, `DASHBOARD_AUTH_SKIP` bypass) retired 2026-04-22 per architecture audit (`docs/architecture-audit-change-list-2026-04-22.md`); Postgres driver swapped from `@neondatabase/serverless` to `postgres`-js. Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.</li><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+    <ul><li>**Status:** In Progress — MVP Done 2026-04-17 (Steps 1–4 + 6 Final; Step 5 Done but architecture outputs retired 2026-04-22 per `docs/architecture-audit-change-list-2026-04-22.md`; Postgres driver swapped `@neondatabase/serverless` → `postgres`-js). Post-MVP extensions tracked in `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` + `/master-plan-extend` Step 7+.</li><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
   </details>
 </div>
 

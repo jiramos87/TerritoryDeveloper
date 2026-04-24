@@ -34,6 +34,7 @@
 
 ### Stage 1 — DSP foundations + audio infra / Audio infrastructure + persistent bootstrap
 
+
 **Status:** Final
 
 **Objectives:** Mixer asset + three routing groups wired. `BlipBootstrap` prefab instantiated in `MainMenu.unity` boot scene, survives scene loads. Headless SFX volume binding via `PlayerPrefs` → `AudioMixer.SetFloat` at `BlipBootstrap.Awake` (no Settings UI in MVP — visible slider + mute toggle post-MVP per `docs/blip-post-mvp-extensions.md` §4). Scene-load suppression policy documented so Blip stays silent until `BlipCatalog.Awake` completes.
@@ -57,7 +58,32 @@
 | T1.3 | BlipBootstrap prefab | **TECH-100** | Done | `BlipBootstrap` GameObject prefab + `DontDestroyOnLoad(transform.root.gameObject)` in `Awake` (pattern per `GameNotificationManager.cs`). Empty Catalog / Player / MixerRouter / CooldownRegistry child slots (populated Step 2). Placed at root of `MainMenu.unity` (boot scene; build index 0 per `MainMenuController.cs`). |
 | T1.4 | Scene-load suppression | **TECH-101** | Done (archived) | Scene-load suppression policy — no Blip fires until `BlipCatalog.Awake` sets ready flag. Document in glossary rows for **Blip mixer group** + **Blip bootstrap**. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 2 — DSP foundations + audio infra / Patch data model
+
 
 **Status:** Done — TECH-111..TECH-115 Done
 
@@ -84,7 +110,32 @@
 | T2.4 | BlipPatchFlat struct | **TECH-114** | Done | `BlipPatchFlat` blittable readonly struct — mirrors SO scalars; no managed refs; no `AudioMixerGroup` ref (held in `BlipMixerRouter` parallel to catalog — Step 2). `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` nested. Single `mixerGroupIndex` int slot. |
 | T2.5 | patchHash content hash | **TECH-115** | Done | `patchHash` content hash — FNV-1a 32-bit digest over serialized scalar fields (osc freqs, env timings, env shapes, filter cutoff, jitter values, cooldown). Stable; ignores Unity GUID + version. `[SerializeField] private int patchHash` persisted on `OnValidate`; `Awake` / `OnEnable` recomputes + asserts match (warn-only). Glossary rows for **Blip patch**, **Blip patch flat**, **patch hash**. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 3 — DSP foundations + audio infra / Voice DSP kernel
+
 
 **Status:** Final — all tasks complete (TECH-116..120 Done, TECH-135 Done; TECH-121 + TECH-122 compressed into TECH-135)
 
@@ -114,7 +165,32 @@
 | T3.5 | One-pole LP filter | _archived_ | Done | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
 | T3.6 | Render driver + jitter (consolidated) | **TECH-135** | Done | `BlipVoice.Render` driver w/ integrated per-invocation jitter — per-sample loop (osc × envelope × filter → buffer, `ref state`, zero alloc) + pitch cents / gain dB / pan ± jitter via xorshift `rngState`, honors `deterministic` flag. Consolidates former T1.3.6 (TECH-121) + T1.3.7 (TECH-122) per stage compress (2026-04-14). |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 4 — DSP foundations + audio infra / EditMode DSP tests
+
 
 **Status:** Done (closed 2026-04-15 — all 5 tasks archived)
 
@@ -146,11 +222,36 @@
 
 **Backlog state (Step 1):** All Step 1 task rows stay in this doc as `_pending_`. File BACKLOG rows + project specs when parent stage → `In Progress` via `stage-file` skill. Stages 2.x + 3.x task decomposition deferred until Step 2 + Step 3 open.
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ## Step 2 — Bake + facade + PlayMode smoke
 
 **Status:** Final
 
 ### Stage 5 — Bake + facade + PlayMode smoke / Bake-to-clip pipeline
+
 
 **Status:** Done — TECH-159 / TECH-160 / TECH-161 / TECH-162 Done (archived) 2026-04-15
 
@@ -174,9 +275,34 @@
 | T5.3 | LRU ordering + access tracking | **TECH-161** (archived) | Done (archived) | `BlipBakeEntry` private nested class/struct holding `BlipBakeKey key`, `AudioClip clip`, `long byteCount`. `_lru` access order: newest at tail, oldest at head. Hit → `_lru.Remove(node); _lru.AddLast(node)`. Miss insert → `_lru.AddLast(entry)` after render. Unit-test-able helper `TryEvictHead() → bool` for Phase 2 budget loop. |
 | T5.4 | Memory budget + eviction loop | **TECH-162** (archived) | Done (archived) | Ctor param `long budgetBytes = 4L * 1024 * 1024`. Track `_totalBytes` running sum. Each entry `byteCount = lengthSamples * sizeof(float)`. On insert, loop: while `_totalBytes + newByteCount > budgetBytes && _lru.First != null` → pop head, `UnityEngine.Object.Destroy(evicted.clip)`, subtract `evicted.byteCount` from `_totalBytes`, remove from `_index`. Then add new entry + `_totalBytes += newByteCount`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 6 — Bake + facade + PlayMode smoke / Catalog + mixer router + cooldown registry + player pool
+
 
 **Status:** Done (6 tasks archived 2026-04-15 — **TECH-169**..**TECH-174**)
 
@@ -204,9 +330,34 @@
 | T6.5 | BlipPlayer pool construction | **TECH-173** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipPlayer.cs` (`: MonoBehaviour`). `[SerializeField] private int poolSize = 16`. `Awake` instantiates `poolSize` child GameObjects (`new GameObject("BlipVoice_0".."BlipVoice_15")`) parented under this transform, each with `AudioSource` component (`playOnAwake = false`, `loop = false`). Holds `AudioSource[] _pool` + `int _cursor = 0`. Placed as child of `BlipBootstrap` prefab. Calls `BlipEngine.Bind(this)` at end of `Awake`. |
 | T6.6 | BlipPlayer PlayOneShot dispatch | **TECH-174** | Done (archived) | `BlipPlayer.PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — selects `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still playing (voice-steal overwrite — no crossfade, post-MVP per orchestration guardrails), sets `source.clip = clip; source.pitch = pitch; source.volume = gain; source.outputAudioMixerGroup = group;` then `source.Play()`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 7 — Bake + facade + PlayMode smoke / BlipEngine facade + main-thread gate
+
 
 **Status:** Done — 4 tasks archived (TECH-188..TECH-191) 2026-04-15
 
@@ -230,9 +381,34 @@
 | T7.3 | Play dispatch body | **TECH-190** | Done (archived) | `BlipEngine.Play(BlipId id, float pitchMult, float gainMult)` body: `AssertMainThread()` → `var cat = ResolveCatalog(); if (cat == null \ | \ | !cat.IsReady) return;` → `var nowDsp = AudioSettings.dspTime; ref readonly var patch = ref cat.Resolve(id); if (!cat.CooldownRegistry.TryConsume(id, nowDsp, patch.cooldownMs)) return;` → variant index = deterministic (fixed 0) if `patch.deterministic` else xorshift on per-id RNG state held on catalog → `AudioClip clip = cat.Baker.BakeOrGet(in patch, variantIndex);` → `AudioMixerGroup group = cat.MixerRouter.Get(id);` → `ResolvePlayer().PlayOneShot(clip, pitchMult, gainMult, group);`. Expose `cat.IsReady`, `cat.CooldownRegistry`, `cat.Baker`, `cat.MixerRouter` internals via `internal` props on `BlipCatalog`. |
 | T7.4 | StopAll dispatch body | **TECH-191** (archived) | Done (archived) | `BlipEngine.StopAll(BlipId id)` body: `AssertMainThread()` → resolve catalog + player → query `cat.Baker` for all cached `AudioClip` refs matching `(patchHash, *)` for this `id` (expose `BlipBaker.EnumerateClipsForPatchHash(int patchHash) → IEnumerable<AudioClip>` helper). Iterate `BlipPlayer._pool`; call `source.Stop()` where `source.clip` matches any enumerated clip. Non-destructive — does not evict baked clips from cache. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
 ### Stage 8 — Bake + facade + PlayMode smoke / PlayMode smoke test
+
 
 **Status:** Done — TECH-196..TECH-199 all archived 2026-04-15.
 
@@ -257,11 +433,36 @@
 | T8.3 | Resolution + routing assertions | **TECH-198** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_AllMvpIds_ResolvesAndRoutes()` — for each `BlipId` in `{UiButtonHover, UiButtonClick, ToolRoadTick, ToolRoadComplete, ToolBuildingPlace, ToolBuildingDenied, WorldCellSelected, EcoMoneyEarned, EcoMoneySpent, SysSaveGame}`: assert `catalog.Resolve(id)` returns non-null patch ref (patchHash != 0), `catalog.MixerRouter.Get(id) != null`, `Assert.DoesNotThrow(() => BlipEngine.Play(id))`. `yield return null` once after loop to drain AudioSource.Play side-effects. |
 | T8.4 | Pool + cooldown assertions | **TECH-199** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — use a fixture `BlipId` w/ near-zero cooldown (e.g. `ToolRoadTick` 30 ms) plus one w/ long cooldown. Fire 16 rapid `BlipEngine.Play(tickId)` within one frame (no yield between) — assert no exception + `player._cursor == 0` after wrap (expose via `internal` accessor). For cooldown: fire `Play(longCooldownId)` once, immediately fire again; verify second call returns silently (track `catalog.CooldownRegistry` last-play dict didn't update, OR expose a debug counter `BlipCooldownRegistry.BlockedCount` incremented on block). |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ## Step 3 — Patches + integration + golden fixtures + promotion
 
 **Status:** Final
 
 ### Stage 9 — Patches + integration + golden fixtures + promotion / Patch authoring + catalog wiring
+
 
 **Status:** Done (all tasks archived 2026-04-15 — TECH-209..TECH-212)
 
@@ -286,7 +487,32 @@
 | T9.3 | MixerGroup refs + catalog wire | **TECH-211** | Done (archived) | Set `mixerGroup` authoring ref on all 10 SOs per exploration §14 routing table (open each SO in Inspector, assign `AudioMixerGroup` from `BlipMixer.mixer` asset). Wire `BlipCatalog.entries[]` in Inspector — 10 `BlipPatchEntry` rows (`BlipId` + `BlipPatch` asset ref). Open `BlipBootstrap` prefab; confirm Catalog + Player child slots populated. |
 | T9.4 | PlayMode smoke verify | **TECH-212** | Done (archived) | PlayMode smoke: enter Play Mode, load `MainMenu.unity`, poll `BlipCatalog.IsReady`; for all 10 `BlipId` values assert `catalog.Resolve(id).patchHash != 0` + `catalog.MixerRouter.Get(id) != null`. `npm run unity:compile-check` green. Confirms SO → catalog → mixer-router chain complete before any call site lands. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 10 — Patches + integration + golden fixtures + promotion / UI + Eco + Sys call sites
+
 
 **Status:** Done — all tasks archived 2026-04-15 (TECH-215..TECH-218)
 
@@ -310,7 +536,32 @@
 | T10.3 | Economy earn/spend call sites | **TECH-217** | Done (archived) | `EconomyManager.cs` — add `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney(amount)` in `AddMoney` (line ~205). Add `BlipEngine.Play(BlipId.EcoMoneySpent)` after `cityStats.RemoveMoney(amount)` in success branch of `SpendMoney` (line ~169). Monthly-maintenance path (`ChargeMonthlyMaintenance` → `SpendMoney`) must NOT fire — guard with `notifyInsufficientFunds == true` condition or add private overload with `bool fireBlip = true`. |
 | T10.4 | SaveGame call sites | **TECH-218** | Done (archived) | `GameSaveManager.cs` — add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText(path, ...)` in `SaveGame` (line ~69) and after equivalent write in `TryWriteGameSaveToPath` (line ~91). 2 s cooldown in patch SO `cooldownMs = 2000`; `BlipCooldownRegistry` gates rapid manual saves — no additional guard. `npm run unity:compile-check` green. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 11 — Patches + integration + golden fixtures + promotion / World lane call sites
+
 
 **Status:** Done — all 4 tasks archived (TECH-219 + TECH-220 archived 2026-04-15, TECH-221 + TECH-222 archived 2026-04-16)
 
@@ -334,7 +585,32 @@
 | T11.3 | Building place/denied call sites | **TECH-221** | Done (archived) | `BuildingPlacementService.cs` — add `using Territory.Audio;` import, `BlipEngine.Play(BlipId.ToolBuildingPlace)` in `PlaceBuilding` success branch (after `PostBuildingConstructed`, line ~251), `BlipEngine.Play(BlipId.ToolBuildingDenied)` in `else` branch (after `PostBuildingPlacementError`, line ~258). Kickoff audit 2026-04-16 relocated denied call from GridManager caller — `HandleBuildingPlacement` line 874 is a 4-line delegate with no fail-reason branch. Insufficient-funds early-return stays silent. Scope: 1 file, 3 line-additions. |
 | T11.4 | GridManager cell-select | **TECH-222** | Done | `GridManager.cs` — add `using Territory.Audio;` import + `BlipEngine.Play(BlipId.WorldCellSelected)` after line 391 (`selectedPoint = mouseGridPosition`, left-click-down) + line 399 (`selectedPoint = pendingRightClickGridPosition`, right-click-up non-pan). Kickoff 2026-04-16 confirmed file lacks `Territory.Audio` import — sibling TECH-221 lesson propagated. Invariant #6 carve-out: one-liner side-effect, not new GridManager logic. Invariant #3: `BlipEngine` self-caches — no per-frame lookup added. 80 ms cooldown in patch SO. `npm run unity:compile-check` green. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 12 — Patches + integration + golden fixtures + promotion / Golden fixtures + spec promotion + glossary
+
 
 **Status:** Done (closed 2026-04-16) — all tasks archived (TECH-227..TECH-230)
 
@@ -357,6 +633,30 @@
 | T12.2 | Golden fixture regression test | **TECH-228** | Done (archived) | `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` in existing `Blip.Tests.EditMode.asmdef` (Stage 1.4 — no new asmdef; namespace `Territory.Tests.EditMode.Audio`). Parameterized `[TestCase(BlipId.*)]` × 10: parse `tools/fixtures/blip/{id}-v0.json` via `JsonUtility.FromJson<BlipFixtureDto>`, load SO via `AssetDatabase.LoadAssetAtPath<BlipPatch>("Assets/Audio/Blip/Patches/BlipPatch_{id}.asset")`, re-render via existing `BlipTestFixtures.RenderPatch(in flat, sampleRate=48000, seconds=sampleCount/sampleRate, variant)`, assert `SumAbsHash` within 1e-6 + zero-crossing count within ±2 + `patch.PatchHash == fx.patchHash` (fails if fixture stale — msg points at TECH-227 bake script). Kickoff 2026-04-16: aligned spec sample-rate 44100→48000, namespace `Blip.*`→`Territory.*`, helper class `BlipTestHelpers`→`BlipTestFixtures`, asset path `Assets/Audio/BlipPatches/`→`Assets/Audio/Blip/Patches/`, `RenderPatch` 3rd arg sampleCount→seconds. |
 | T12.3 | Exploration → spec promotion | **TECH-229** | Done (archived) | Promote `docs/blip-procedural-sfx-exploration.md` → `ia/specs/audio-blip.md`. Restructure to match `ia/specs/*.md` conventions (section numbering, header format). Add "Superseded by `ia/specs/audio-blip.md`" banner at top of exploration doc. `npm run validate:all` — checks dead spec refs + frontmatter. |
 | T12.4 | Glossary rows + cross-refs | **TECH-230** | Done (archived) | `ia/specs/glossary.md` — add rows: **Blip variant** (per-patch randomized sound selection index 0..variantCount-1), **Blip cooldown** (minimum ms between same-id plays; enforced by `BlipCooldownRegistry`), **Bake-to-clip** (on-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable mirror in `BlipCatalog.Awake`). Rewrite Spec col on 5 existing Audio rows from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N` per kickoff §5.2 mapping. Refresh Index row line 32 to list all 9 Audio terms. `npm run validate:all` green. Kickoff 2026-04-16: corrected over-claim (spec listed 13 existing rows; only 5 exist) + glossary 3-col format (was 4-col) + bundled Index refresh. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
@@ -391,6 +691,7 @@
 
 ### Stage 13 — Patches + integration + golden fixtures + promotion / Options panel UI (slider + mute toggle + controller stub)
 
+
 **Status:** Final (4 tasks filed 2026-04-16 — TECH-235..TECH-238 all archived; closed 2026-04-16)
 
 **Objectives:** Add SFX volume `Slider` (0..1) + mute `Toggle` to `OptionsPanel` programmatic construction in `MainMenuController.CreateOptionsPanel`. Land `BlipVolumeController` stub MonoBehaviour (fields + listener wire-up, no persist/apply logic). `BlipBootstrap` exposes `BlipMixer` accessor. No persist or apply logic yet.
@@ -414,7 +715,32 @@
 | T13.3 | Bind + InitListeners wire-up | **TECH-237** | Done (archived) | In `MainMenuController.CreateOptionsPanel` replace placeholder discards `_ = sfxSlider; _ = sfxToggle;` (lines 393–394) with: `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Add `private BlipVolumeController _volumeController;` (no `[SerializeField]`, runtime-only) after `optionsBackButton` decl (line 34). Back button (lines 396–397) and `panel.SetActive(false)` (line 399) unchanged. `npm run unity:compile-check` green. Kickoff 2026-04-16: real line numbers (back button 396 not 339, SetActive 399 not 342); insertion site is TECH-236 placeholder discards, not generic "before SetActive"; call-order rationale locked in spec Decision Log. |
 | T13.4 | OnPanelOpen lifecycle hook | **TECH-238** | Done (archived) | In `MainMenuController.OnOptionsClicked` (line 569): insert `_volumeController?.OnPanelOpen();` immediately before `optionsPanel.SetActive(true)` (line 573), inside the existing `if (optionsPanel != null)` guard (single-statement `if` becomes a block). Guard is null-safe — `CreateOptionsPanel` standard path sets `_volumeController`; `?.` covers fallback / first-frame edge cases. Stub body fires lifecycle (Stage 4.2 T4.2.1 replaces with real `OnEnable` — `SetActive(true)` triggers `OnEnable` automatically so this call becomes a pre-open prime before show). Confirm `CloseOptionsPanel` (line 576) requires no symmetrical hook (`OnDisable` lifecycle covers cleanup). Kickoff 2026-04-16: real line numbers (569 / 576 not ~511 / ~517); insertion site is inside the null guard block, not before; Decision Log locks ordering (blip → prime → activate). |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 14 — Patches + integration + golden fixtures + promotion / Settings controller + persistence + mute semantics
+
 
 **Status:** Done (TECH-243..TECH-246 all archived 2026-04-16)
 
@@ -439,6 +765,30 @@
 | T14.4 | Glossary bootstrap row update | **TECH-246** | Done (archived) | `ia/specs/glossary.md` — **Blip bootstrap** row: append to definition "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec cross-ref already points `ia/specs/audio-blip.md §5.1`, `§5.2` — confirm no change needed. `npm run validate:all` green. |
 
 **Dependencies:** None. Step 4 independent of Steps 5–7.
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
@@ -478,6 +828,7 @@
 
 ### Stage 15 — Patches + integration + golden fixtures + promotion / FX data model + memoryless cores
 
+
 **Status:** Done (all 5 tasks TECH-256..TECH-260 archived)
 
 **Objectives:** New `BlipFxKind` enum + `BlipFxSlot` / `BlipFxSlotFlat` structs establish the per-patch FX chain data model. `BlipPatch.fxChain` + `BlipPatchFlat` inline FX fields added. `BlipVoiceState` gains per-slot FX state. New `BlipFxChain.cs` implements 4 no-delay-buffer processors (bit-crush, ring-mod, soft-clip, DC blocker); Comb/Allpass/Chorus/Flanger return passthrough stubs until Stage 5.2. `BlipVoice.Render` FX loop wired post-envelope — empty chain = passthrough, MVP golden fixtures unaffected.
@@ -503,7 +854,32 @@
 | T15.4 | BlipFxChain.cs memoryless cores | **TECH-259** | Done (archived) | New `Assets/Scripts/Audio/Blip/BlipFxChain.cs`: `internal static class BlipFxChain`. `static void ProcessFx(ref float x, BlipFxKind kind, float p0, float p1, ref float dcZ1, ref float dcY1, ref float ringPhase, int sampleRate)`: BitCrush `x=Mathf.Round(x*steps)/steps, steps=1<<(int)p0`; RingMod `ringPhase+=2π*p0/sampleRate; x*=Mathf.Sin(ringPhase)`; SoftClip `x=x/(1f+Mathf.Abs(x))`; DcBlocker `float y=x-dcZ1+0.9995f*dcY1; dcZ1=x; dcY1=y; x=y`; Comb/Allpass/Chorus/Flanger → passthrough (stubs). Zero allocs; no Unity API. |
 | T15.5 | BlipVoice.Render FX loop + NoAlloc extension | **TECH-260** | Done (archived) | Post-envelope FX dispatch in `BlipVoice.Render`: unrolled `if (patch.fxSlotCount >= 1) BlipFxChain.ProcessFx(ref sample, patch.fx0.kind, patch.fx0.param0, patch.fx0.param1, ref state.dcZ1_0, ref state.dcY1_0, ref state.ringModPhase_0, sampleRate)` … (4 slots, no array alloc). Empty chain (`fxSlotCount=0`) fast-exits. `BlipNoAllocTests` gains `Render_WithFxChain_ZeroManagedAlloc` — 2-slot BitCrush+DcBlocker patch; assert delta/call ≤ 0. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 16 — Patches + integration + golden fixtures + promotion / Delay-line FX + BlipDelayPool
+
 
 **Status:** Done (closed 2026-04-17 — TECH-270..TECH-275 all archived)
 
@@ -533,7 +909,32 @@
 | T16.5 | Chorus + flanger kernels | **TECH-274** | Done (archived) | Chorus (`BlipFxChain.ProcessFx` Chorus case): 2-tap read at `offset±(p1_samples*sin(ringModPhase_N))`; write input; output `=(1-p2)*x+p2*0.5*(tap0+tap1)`; `ringModPhase_N+=2π*p0/sampleRate` (ring-mod phase repurposed for LFO — ring-mod and chorus/flanger are mutually exclusive per slot; enforced in `BlipPatch.OnValidate`). Flanger: same, depth clamped 1..10 ms. |
 | T16.6 | NoAlloc delay-FX test + Render overload clean-up | **TECH-275** | Done (archived) | `BlipNoAllocTests.Render_WithChorus_ZeroManagedAlloc`: pre-lease 1 chorus delay buf outside `GC.GetAllocatedBytesForCurrentThread` window; 10 renders; assert delta/call ≤ 0. Confirm 7-param `BlipVoice.Render` overload still compiles; `BlipBakerTests` + `BlipDeterminismTests` suites still green after overload addition. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 17 — Patches + integration + golden fixtures + promotion / LFOs + routing matrix + param smoothing
+
 
 **Status:** Final
 
@@ -561,7 +962,32 @@
 | T17.3 | SmoothOnePole helper + LFO per-sample advance | **TECH-287** | Done (archived) | `public static float SmoothOnePole(ref float z, float target, float coef)` added to `BlipVoice.cs`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop. Per-sample phase advance: `state.lfoPhase0 += TwoPi * patch.lfo0Flat.rateHz / sampleRate; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi` (same for `lfoPhase1`). |
 | T17.4 | LFO routing matrix + EditMode test + glossary | **TECH-288** | Done (archived) | LFO output dispatch in `BlipVoice.Render`: sample waveform per `BlipLfoKind` (Sine `Math.Sin(phase)`, Triangle `2/π*Math.Asin(Math.Sin(phase))`, Square `Math.Sign(Math.Sin(phase))`, S&H on zero-crossing) → scale by `depth` → route: Pitch adds to `pitchCents` applied in jitter block, Gain multiplies `gainMult`, FilterCutoff offsets `cutoffHz` before α compute, Pan offsets `panOffset`. Apply `SmoothOnePole` on each. `BlipLfoTests.cs` (new): sine LFO zero-crossing count + monotonic rise/fall asserts. Glossary rows: **Blip LFO**, **Param smoothing**, **Blip LUT pool** to `ia/specs/glossary.md`. |
 
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ### Stage 18 — Patches + integration + golden fixtures + promotion / Biquad BP + integration + golden-fixture regression gate
+
 
 **Status:** In Progress — 4 tasks filed 2026-04-18 (TECH-434..TECH-437)
 
@@ -588,6 +1014,30 @@
 | T18.4 | Golden fixture regression + spec + all 6 glossary rows | **TECH-437** | Draft | Confirm `BlipGoldenFixtureTests` all 10 MVP hashes pass (empty FX chain + zero LFOs + None/LowPass filter = passthrough). 6 glossary rows to `ia/specs/glossary.md`: **Blip FX chain** (`BlipFxChain.ProcessFx` ordered per-patch FX processors), **Blip LFO** (`BlipLfo`/`BlipLfoFlat` per-sample modulator), **Biquad band-pass** (`BlipFilterKind.BandPass` DF-II transposed 2nd-order BP), **Param smoothing** (`BlipVoice.SmoothOnePole` 20 ms 1-pole), **Blip delay pool** (`BlipDelayPool` float[] lease service), **Blip LUT pool** (`BlipLutPool` stub). `ia/specs/audio-blip.md §4.2`: BandPass enum value + `resonanceQ`. `npm run validate:all` green. |
 
 **Dependencies:** Step 1 Done. Ships BEFORE Step 6 (patches depend on FX / LFO / biquad surfaces).
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 

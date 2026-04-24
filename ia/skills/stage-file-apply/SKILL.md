@@ -31,6 +31,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Sonnet pair-tail (seam #2). Reads `§Stage File Plan` tuples written by `stage-file-plan` (Opus pair-head); for each tuple: reserves id, writes yaml, writes spec stub, appends task-table update; after loop: materializes + validates. Never re-queries MCP for Depends-on (planner verified). Never reorders, merges, or interprets tuples.
 
+**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative. Stage heading H3 `### Stage N.M`; 5-col Task table `| Task | Name | Issue | Status | Intent |` (no Phase column); Task id `T{N}.{M}.{K}`; Stage subsections `#### §Stage File Plan`, `#### §Plan Fix`, `#### §Stage Audit`, `#### §Stage Closeout Plan`. Legacy H4 Stage heading + Step-layer references + Phase column retired.
+
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #2, §Validation gate, §Escalation rule, §Idempotency requirement.
 Sibling pair-head: [`stage-file-plan/SKILL.md`](../stage-file-plan/SKILL.md).
 
@@ -60,9 +62,9 @@ Read `ORCHESTRATOR_SPEC` Stage block directly for context re-check. Tuples still
 
 ## Phase 1 — Read `§Stage File Plan`
 
-1. Open `ORCHESTRATOR_SPEC`. Locate `#### Stage {STAGE_ID}` block.
-2. Find `### §Stage File Plan` subsection within Stage block. If absent → escalate: `{escalation: true, reason: "§Stage File Plan section not found in Stage {STAGE_ID}", tuple_index: null}`.
-3. Parse YAML tuple list under `### §Stage File Plan`. Load into ordered array `tuples[]`.
+1. Open `ORCHESTRATOR_SPEC`. Locate `### Stage {STAGE_ID}` block (H3 canonical). Legacy `#### Stage` (H4) accepted as drift — emit stderr warning `[stage-file-apply] WARN legacy H4 Stage heading detected for Stage {STAGE_ID} — re-author via /master-plan-extend to canonical H3`.
+2. Find `#### §Stage File Plan` subsection within Stage block (H4 canonical — sibling of `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan`). If absent → escalate: `{escalation: true, reason: "§Stage File Plan section not found in Stage {STAGE_ID}", tuple_index: null}`.
+3. Parse YAML tuple list under `#### §Stage File Plan`. Load into ordered array `tuples[]`.
 4. Validate each tuple has all required keys: `reserved_id`, `title`, `priority`, `notes`, `depends_on`, `related`, `stub_body`. Missing key → escalate: `{escalation: true, tuple_index: N, reason: "missing key {KEY}"}`.
 5. Verify `stub_body` has sub-fields: `summary`, `goals`, `systems_map`, `impl_plan_sketch`. Missing sub-field → escalate.
 
@@ -174,8 +176,8 @@ After Phase 4 exits 0:
 1. **Update orchestrator task table** — for each entry in `filed_tasks[]`: replace `_pending_` in Issue column with `**{ISSUE_ID}**`; replace `_pending_` in Status column with `Draft`. Atomic: update all rows in one edit (do NOT update row-by-row mid-loop).
 
 2. **Flip header Status lines** (R1 + R2):
-   - **R2 — Stage header:** find stage heading line matching regex `^#{3,4} Stage {STAGE_ID}\b` in orchestrator (accept `### Stage` or `#### Stage` — author-time heading depth varies across `master-plan-new` / `master-plan-extend` / `stage-decompose`). Within 20 lines below the heading, locate the `**Status:**` line. Rewrite entire Status line to `**Status:** In Progress — {YYYY-MM-DD} ({N} tasks filed)` regardless of prior state-token (`Draft` / `Draft — {date}. Filed from …` / `Planned` / dated variants all accepted — the applier OVERWRITES, does not substring-match). Idempotent if line already starts with `**Status:** In Progress`. Post-flip self-check: re-grep stage heading + 20 lines; assert `^\*\*Status:\*\* In Progress\b` match; if no match → escalate `{escalation: true, reason: "stage_status_r2_flip_failed", stage_id: "{STAGE_ID}"}`. Pre-flip warn (B5 guard): if Status line pre-edit matches NEITHER `**Status:** Draft` NOR `**Status:** Planned` NOR `**Status:** In Progress` NOR `**Status:** Final` → log stderr `[stage-file-apply] WARN stage {STAGE_ID} status line non-canonical: "{raw_line}" — overwriting to In Progress`. Does not block.
-   - **R1 — Plan top Status:** read top-of-file `> **Status:**` line. If equals `Draft` (any variant) → rewrite to `In Progress — Step {STEP_N} / Stage {STAGE_ID}` where `STEP_N` = parent step number. If already contains `In Progress` → leave unchanged.
+   - **R2 — Stage header:** find stage heading line matching regex `^### Stage {STAGE_ID}\b` in orchestrator (H3 canonical per [`MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)). Legacy H4 `#### Stage` accepted as drift with warning (see Phase 1). Within 20 lines below the heading, locate the `**Status:**` line. Rewrite entire Status line to `**Status:** In Progress — {YYYY-MM-DD} ({N} tasks filed)` regardless of prior state-token (`Draft` / `Draft — {date}. Filed from …` / dated variants all accepted — the applier OVERWRITES, does not substring-match). Idempotent if line already starts with `**Status:** In Progress`. Post-flip self-check: re-grep stage heading + 20 lines; assert `^\*\*Status:\*\* In Progress\b` match; if no match → escalate `{escalation: true, reason: "stage_status_r2_flip_failed", stage_id: "{STAGE_ID}"}`. Pre-flip warn (B5 guard): if Status line pre-edit matches NEITHER `**Status:** Draft` NOR `**Status:** In Review` NOR `**Status:** In Progress` NOR `**Status:** Final` → log stderr `[stage-file-apply] WARN stage {STAGE_ID} status line non-canonical: "{raw_line}" — overwriting to In Progress`. Does not block. Retired: `Planned` + `Skeleton` status tokens (R7 Skeleton→Planned flip removed per lifecycle-refactor 2026-04-24).
+   - **R1 — Plan top Status:** read top-of-file `> **Status:**` line. If equals `Draft` (any variant) → rewrite to `In Progress — Stage {STAGE_ID}` (2-level hierarchy; Step layer retired per [`MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)). If already contains `In Progress` → leave unchanged.
 
 3. **Regenerate progress dashboard** (non-blocking):
    ```bash
@@ -249,6 +251,18 @@ Re-running fully-applied state = exit 0 + zero diff.
 ## §Changelog emitter
 
 ## Changelog
+
+### 2026-04-24 — Lifecycle-refactor alignment: H3 Stage canonical + Step layer retired
+
+**Status:** applied
+
+**Symptom:** Skill body referenced `#### Stage` H4 heading and `Step {STEP_N}` in R1 top-Status flip — both retired by lifecycle-refactor (2-level Stage > Task hierarchy). Drift risk: applier could flip top-Status to `In Progress — Step 3 / Stage 3.2` on a hierarchy that no longer has Steps.
+
+**Fix:** Phase 1 Stage heading lookup = `### Stage` H3 (legacy H4 accepted with stderr warning). Phase 5 R2 regex tightened to `^### Stage`. Phase 5 R1 top-Status flip writes `In Progress — Stage {STAGE_ID}` (drops `Step {STEP_N} / `). Stage subsection lookup confirmed H4 `#### §Stage File Plan` (sibling of `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan`). Pre-flip B5 guard drops retired `Planned` token, adds `In Review` to canonical set. Canonical-shape reference paragraph added at top.
+
+**Rollout row:** lifecycle-refactor-2026-04-24
+
+---
 
 ### 2026-04-20 — F6 re-fold: plan-author + plan-review fold into `/stage-file` chain tail
 

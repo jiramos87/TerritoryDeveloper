@@ -31,46 +31,14 @@
 
 ---
 
-## Steps
+## Stages
 
 > **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level step rollup + plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
 
 ---
 
-### Step 1 — Token-economy baseline + MCP surface pruning
+### Stage 1.1 — Baseline measurement (gating)
 
-**Status:** Final
-
-**Backlog state (Step 1):** 14 filed / 14 closed across Stages 1.1–1.3 (TECH-510..513, TECH-524..527, TECH-534..539 — all archived).
-
-**Objectives:** Establish a durable telemetry baseline (aggregate p50/p95/p99 for session input tokens + cache metrics + hook latency) that gates all subsequent Steps. Ship the three independent surface-pruning items from Theme B that do not require the T10.2 stable-block: B1 MCP server split (IA-core vs Unity-bridge), B3 per-agent tool-allowlist narrowing, and B7-extended session-level harness. Close with a single post-Stage-1.3 telemetry sweep providing per-theme attribution.
-
-**Exit criteria:**
-
-- `tools/scripts/agent-telemetry/baseline-summary.json` committed with p50/p95/p99 for `total_input_tokens`, `cache_read_tokens`, `cache_write_tokens`, `mcp_cold_start_ms`, `hook_fork_count`, `hook_fork_total_ms` (≥10 sessions measured).
-- `tools/mcp-ia-server/src/index-ia.ts` + `tools/mcp-ia-server/src/index-bridge.ts` extracted; `index.ts` retained as backward-compat default; `MCP_SPLIT_SERVERS=0` default in `.mcp.json`; integration test passes.
-- 7 target agents (`verifier.md`, `spec-implementer.md`, `stage-decompose.md`, `project-new-planner.md`, `project-new-applier.md`, `design-explore.md`, `test-mode-loop.md`) carry narrowed `tools:` frontmatter; CI lint `npm run validate:agent-tools` passes.
-- PostToolUse telemetry hook (`tools/scripts/agent-telemetry/session-hook.sh`) active; per-session JSONL appended to `.claude/telemetry/{session-id}.jsonl` (gitignored).
-- `tools/scripts/agent-telemetry/baseline-summary-post-stage1.json` committed; diff vs baseline-summary.json shows per-theme attribution for B1/B3/B7.
-- `npm run validate:all` green.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/session-token-latency-audit-exploration.md` §Design Expansion — Post-M8 §Architecture + §Subsystem Impact + §Implementation Points
-- `docs/ai-mechanics-audit-2026-04-19.md` §Theme B items B1/B3/B7
-- `.mcp.json` (exists) — server split target
-- `tools/mcp-ia-server/src/index.ts` (exists) — split source
-- `tools/mcp-ia-server/src/index-ia.ts` (new)
-- `tools/mcp-ia-server/src/index-bridge.ts` (new)
-- `.claude/agents/verifier.md`, `spec-implementer.md`, `stage-decompose.md`, `project-new-planner.md`, `project-new-applier.md`, `design-explore.md`, `test-mode-loop.md` (all exist) — B3 allowlist targets
-- `.claude/settings.json` (exists) — PostToolUse hook addition
-- `tools/scripts/agent-telemetry/` (new dir) — B7 harness
-- `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — coordinate B1 split decision before Pass 2 B4 dist build
-
----
-
-#### Stage 1.1 — Baseline measurement (gating)
 
 **Status:** Final
 
@@ -83,21 +51,16 @@
 - `tools/scripts/agent-telemetry/baseline-summary.json` committed; p50/p95/p99 present for all 6 required metrics (≥10 sessions).
 - `.gitignore` updated: `*.jsonl` raw files excluded; summary JSON tracked.
 
-**Phases:**
-
-- [x] Phase 1 — Telemetry tooling: author baseline-collect.sh + schema validator script.
-- [x] Phase 2 — Collection run: execute ≥10 sessions; aggregate + commit baseline-summary.json.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.1.1 | Baseline collect script | 1 | **TECH-510** | Done | Author `tools/scripts/agent-telemetry/baseline-collect.sh` (new dir): reads `DEBUG_MCP_COMPUTE` stderr + PostToolUse hook stdout; appends JSONL to `.claude/telemetry/{session-id}.jsonl` with fields `ts`, `session_id`, `total_input_tokens`, `cache_read_tokens`, `cache_write_tokens`, `mcp_cold_start_ms`, `hook_fork_count`, `hook_fork_total_ms`. Update `.gitignore`: `.claude/telemetry/*.jsonl` excluded, `*-summary.json` tracked. |
-| T1.1.2 | Telemetry schema validator | 1 | **TECH-511** | Done | Author `npm run validate:telemetry-schema` in `package.json` `scripts`: reads any `.claude/telemetry/*.jsonl` sample; asserts all 8 required fields present + typed correctly; exits non-zero on schema mismatch. Wire into `validate:all` composition in root `package.json`. |
-| T1.1.3 | Baseline collection run | 2 | **TECH-512** | Done | Execute ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file` lifecycle seams) with `baseline-collect.sh` active. Aggregate raw JSONL to `tools/scripts/agent-telemetry/baseline-summary.json` (p50/p95/p99 per metric); commit. No per-theme attribution — single aggregate floor only. |
-| T1.1.4 | Gate validation + provenance | 2 | **TECH-513** | Done | Validate `baseline-summary.json` schema via `npm run validate:telemetry-schema`; assert all 6 metric keys present. Append measurement provenance (session count, date range, model, seam mix) to `docs/session-token-latency-audit-exploration.md` §Provenance. Confirm `npm run validate:all` green. Stage 1.2 entry conditional on this task Done. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.1.1 | Baseline collect script | **TECH-510** | Done | Author `tools/scripts/agent-telemetry/baseline-collect.sh` (new dir): reads `DEBUG_MCP_COMPUTE` stderr + PostToolUse hook stdout; appends JSONL to `.claude/telemetry/{session-id}.jsonl` with fields `ts`, `session_id`, `total_input_tokens`, `cache_read_tokens`, `cache_write_tokens`, `mcp_cold_start_ms`, `hook_fork_count`, `hook_fork_total_ms`. Update `.gitignore`: `.claude/telemetry/*.jsonl` excluded, `*-summary.json` tracked. |
+| T1.1.2 | Telemetry schema validator | **TECH-511** | Done | Author `npm run validate:telemetry-schema` in `package.json` `scripts`: reads any `.claude/telemetry/*.jsonl` sample; asserts all 8 required fields present + typed correctly; exits non-zero on schema mismatch. Wire into `validate:all` composition in root `package.json`. |
+| T1.1.3 | Baseline collection run | **TECH-512** | Done | Execute ≥10 representative sessions (mix of `/implement`, `/ship`, `/stage-file` lifecycle seams) with `baseline-collect.sh` active. Aggregate raw JSONL to `tools/scripts/agent-telemetry/baseline-summary.json` (p50/p95/p99 per metric); commit. No per-theme attribution — single aggregate floor only. |
+| T1.1.4 | Gate validation + provenance | **TECH-513** | Done | Validate `baseline-summary.json` schema via `npm run validate:telemetry-schema`; assert all 6 metric keys present. Append measurement provenance (session count, date range, model, seam mix) to `docs/session-token-latency-audit-exploration.md` §Provenance. Confirm `npm run validate:all` green. Stage 1.2 entry conditional on this task Done. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -264,6 +227,18 @@
       5. Hand off: Stage 1.2 entry unblocked.
 ```
 
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
 #### §Stage Closeout Plan
 
 <!-- stage-closeout-plan output — do not hand-edit; apply via stage-closeout-apply -->
@@ -382,7 +357,8 @@
 
 ---
 
-#### Stage 1.2 — MCP server split (B1)
+### Stage 1.2 — MCP server split (B1)
+
 
 **Status:** Final
 
@@ -396,21 +372,16 @@
 - `.mcp.json` `territory-ia-bridge` server entry added; `MCP_SPLIT_SERVERS=0` default.
 - Integration test `tools/mcp-ia-server/tests/server-split.test.ts` passes: `MCP_SPLIT_SERVERS=1` + design-explore dispatch → bridge tools absent from `tools/list`; spec-implementer dispatch + bridge prefix → bridge tools present.
 
-**Phases:**
-
-- [ ] Phase 1 — Server extraction: author index-ia.ts + index-bridge.ts; update .mcp.json.
-- [ ] Phase 2 — Integration test + flag documentation.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.2.1 | Extract IA-core + bridge servers | 1 | **TECH-524** | Done | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
-| T1.2.2 | .mcp.json split config | 1 | **TECH-525** | Done | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
-| T1.2.3 | Integration test fixture | 2 | **TECH-526** | Done | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
-| T1.2.4 | Flag-flip timeline doc | 2 | **TECH-527** | Done | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.2.1 | Extract IA-core + bridge servers | **TECH-524** | Done | In `tools/mcp-ia-server/src/`: author `index-ia.ts` registering all IA-authoring tools (backlog, router, glossary, spec, rules, invariants, journal, reserve, materialize surfaces); author `index-bridge.ts` registering Unity-bridge + compute tools (14 tools). Original `index.ts` retained as backward-compat default importing both. Add `MCP_SPLIT_SERVERS` env check to `index.ts`: when `=1`, `index-ia.ts` standalone path loads. |
+| T1.2.2 | .mcp.json split config | **TECH-525** | Done | Add `territory-ia-bridge` entry to `.mcp.json` pointing to `index-bridge.ts`; add `"MCP_SPLIT_SERVERS": "0"` to existing `territory-ia` env block (alongside existing `DEBUG_MCP_COMPUTE`). Document `MCP_SPLIT_SERVERS=1` flag semantics in `docs/mcp-ia-server.md` (new §Server split architecture section). |
+| T1.2.3 | Integration test fixture | **TECH-526** | Done | Author `tools/mcp-ia-server/tests/server-split.test.ts`: assert `MCP_SPLIT_SERVERS=1` + design-explore-style dispatch → `tools/list` response excludes `unity_bridge_command`; assert spec-implementer-style dispatch with bridge server prefix declared → bridge tools present. Add `npm run test:mcp-split` script to `package.json`. |
+| T1.2.4 | Flag-flip timeline doc | **TECH-527** | Done | Document `MCP_SPLIT_SERVERS` flag-flip timeline in Stage 1.3 header (flip from `0` to `1` after post-stage sweep confirms correctness per NB-6 resolution). Update `docs/session-token-latency-audit-exploration.md` §Open questions to mark B1 primary decision closed. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -576,9 +547,28 @@
       3. Run npm run validate:all.
 ```
 
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
-#### Stage 1.3 — Allowlist narrowing + telemetry harness + post-stage sweep (B3 + B7 + sweep)
+### Stage 1.3 — Allowlist narrowing + telemetry harness + post-stage sweep (B3 + B7 + sweep)
+
 
 **Status:** Final
 
@@ -598,24 +588,18 @@
 - `tools/scripts/agent-telemetry/baseline-summary-post-stage1.json` committed; diff vs `baseline-summary.json` shows per-theme attribution rows for B1/B3/B7.
 - `MCP_SPLIT_SERVERS` default flipped to `1` in `.mcp.json` after sweep validates correctness.
 
-**Phases:**
-
-- [ ] Phase 1 — Agent allowlist narrowing (B3).
-- [ ] Phase 2 — Telemetry harness (B7-extended).
-- [ ] Phase 3 — Post-stage sweep + flag flip.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.3.1 | Per-agent tools: narrowing | 1 | **TECH-534** | Done | Add `tools:` frontmatter to 7 target agents (`.claude/agents/verifier.md`, `spec-implementer.md`, `stage-decompose.md`, `project-new-planner.md`, `project-new-applier.md`, `design-explore.md`, `test-mode-loop.md`). Allowlist: Bash + Read + Grep + Glob + domain-relevant MCP tools only (e.g. verifier: `unity_bridge_command`, `unity_bridge_get`, `invariants_summary`, `backlog_issue`, `spec_section`; design-explore: `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, `spec_outline`, `invariants_summary`, `list_rules`, `rule_content`). See exploration §Examples §B3 for verifier before/after shape. |
-| T1.3.2 | Agent-tools CI lint | 1 | **TECH-535** | Done | Author `npm run validate:agent-tools` in `package.json`: reads all `.claude/agents/*.md` frontmatter; asserts `tools:` present for the 7 narrowed agents; asserts no wildcard entry; alerts on any tool not in the approved MCP server namespace. Add to `validate:all` chain. Carry NB-7 (allowlist drift prevention) as enforced CI gate. |
-| T1.3.3 | PostToolUse session hook | 2 | **TECH-536** | Done | Add `PostToolUse` entry to `.claude/settings.json` hooks array: `{"matcher": "*", "hooks": [{"type": "command", "command": "tools/scripts/agent-telemetry/session-hook.sh"}]}`. Author `tools/scripts/agent-telemetry/session-hook.sh`: reads tool name + duration from hook env vars; appends JSONL to `.claude/telemetry/{session-id}.jsonl`; exits 0 always (non-blocking). Reuses JSONL schema from T1.1.1. |
-| T1.3.4 | Session aggregation helper | 2 | **TECH-537** | Done | Author `tools/scripts/agent-telemetry/aggregate-session.sh {session-id}`: reads JSONL for session; outputs per-tool p50/p99 duration + token estimates. Used by post-stage sweep script (T1.3.5). Update `.gitignore` to confirm raw JSONL excluded; `tools/scripts/agent-telemetry/*-summary.json` tracked. |
-| T1.3.5 | Post-stage sweep run | 3 | **TECH-538** | Done | STUB — `baseline-summary-post-stage1.json` committed as schema-conformant placeholder per user direction (real sweep requires ≥10 human-driven sessions; self-modification hazard precludes the running agent from producing its own telemetry). Follow-up issue required for real sweep. |
-| T1.3.6 | Per-theme attribution + flag flip | 3 | **TECH-539** | Done | Sweep report `tools/scripts/agent-telemetry/sweep-report-post-stage1.md` authored with per-theme attribution framework (B1/B3/B7). `MCP_SPLIT_SERVERS` flag flip DEFERRED pending real sweep data (stub cannot validate B1 attribution per NB-6 resolution). Default `0` retained in `.mcp.json`. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.3.1 | Per-agent tools: narrowing | **TECH-534** | Done | Add `tools:` frontmatter to 7 target agents (`.claude/agents/verifier.md`, `spec-implementer.md`, `stage-decompose.md`, `project-new-planner.md`, `project-new-applier.md`, `design-explore.md`, `test-mode-loop.md`). Allowlist: Bash + Read + Grep + Glob + domain-relevant MCP tools only (e.g. verifier: `unity_bridge_command`, `unity_bridge_get`, `invariants_summary`, `backlog_issue`, `spec_section`; design-explore: `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, `spec_outline`, `invariants_summary`, `list_rules`, `rule_content`). See exploration §Examples §B3 for verifier before/after shape. |
+| T1.3.2 | Agent-tools CI lint | **TECH-535** | Done | Author `npm run validate:agent-tools` in `package.json`: reads all `.claude/agents/*.md` frontmatter; asserts `tools:` present for the 7 narrowed agents; asserts no wildcard entry; alerts on any tool not in the approved MCP server namespace. Add to `validate:all` chain. Carry NB-7 (allowlist drift prevention) as enforced CI gate. |
+| T1.3.3 | PostToolUse session hook | **TECH-536** | Done | Add `PostToolUse` entry to `.claude/settings.json` hooks array: `{"matcher": "*", "hooks": [{"type": "command", "command": "tools/scripts/agent-telemetry/session-hook.sh"}]}`. Author `tools/scripts/agent-telemetry/session-hook.sh`: reads tool name + duration from hook env vars; appends JSONL to `.claude/telemetry/{session-id}.jsonl`; exits 0 always (non-blocking). Reuses JSONL schema from T1.1.1. |
+| T1.3.4 | Session aggregation helper | **TECH-537** | Done | Author `tools/scripts/agent-telemetry/aggregate-session.sh {session-id}`: reads JSONL for session; outputs per-tool p50/p99 duration + token estimates. Used by post-stage sweep script (T1.3.5). Update `.gitignore` to confirm raw JSONL excluded; `tools/scripts/agent-telemetry/*-summary.json` tracked. |
+| T1.3.5 | Post-stage sweep run | **TECH-538** | Done | STUB — `baseline-summary-post-stage1.json` committed as schema-conformant placeholder per user direction (real sweep requires ≥10 human-driven sessions; self-modification hazard precludes the running agent from producing its own telemetry). Follow-up issue required for real sweep. |
+| T1.3.6 | Per-theme attribution + flag flip | **TECH-539** | Done | Sweep report `tools/scripts/agent-telemetry/sweep-report-post-stage1.md` authored with per-theme attribution framework (B1/B3/B7). `MCP_SPLIT_SERVERS` flag flip DEFERRED pending real sweep data (stub cannot validate B1 attribution per NB-6 resolution). Default `0` retained in `.mcp.json`. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -843,47 +827,28 @@
       5. npm run validate:all.
 ```
 
----
+#### §Plan Fix
 
-### Step 2 — Authority chain collapse (Themes A + C)
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
 
-**Status:** In Progress — Stage 2.2
+_pending — populated by `/plan-review` when fixes are needed._
 
-**Backlog state (Step 2):** 4 filed (TECH-577..580) — Stage 2.1 Pass 1 shipped; backlog rows still open until Stage-scoped `/closeout`; Stage 2.2 not yet filed
+#### §Stage Audit
 
-**Objectives:** Eliminate authority-chain violations across the always-loaded ambient surface (CLAUDE.md / AGENTS.md / `docs/agent-lifecycle.md` duplication — A1), caveman preamble restatements across ~40 surfaces (A2), oversized MEMORY.md entries (A4), and slash-command triple-statement dispatch (C1/C2). Lands the "single source of truth per topic" design principle across the full doc triangle. Seed lint (C3) ships in this Step as the CI gate enforcing future compliance.
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
 
-**Pre-conditions:** lifecycle-refactor Stage 10 T10.2 (`ia/skills/_preamble/stable-block.md` authored and in canonical ingestion path) + T10.4 (F5 tool-uniformity validator for pair-seam agents) must both be Done before Stage 2.1 starts.
+_retroactive-skip — Stage archived prior to 2026-04-24 lifecycle refactor that introduced the canonical `§Stage Audit` subsection (see `ia/projects/MASTER-PLAN-STRUCTURE.md` §3.4 + Changelog entry 2026-04-24). Task-level §Audit prose captured in per-Task specs during Stage-scoped closeout before spec deletion; no retroactive re-run needed._
 
-**Exit criteria:**
+#### §Stage Closeout Plan
 
-- `docs/agent-lifecycle.md` = sole authority for lifecycle taxonomy; `ia/rules/agent-lifecycle.md` shrunk to ≤12-line pointer stub; CLAUDE.md §3 Key files ≤20 lines.
-- AGENTS.md §3 lifecycle section: cross-reference only (≤8 lines), no restated taxonomy.
-- `.claude/memory/{slug}.md` files written for every MEMORY.md entry that exceeded 10 lines; MEMORY.md index ≤180 lines.
-- `ia/skills/_preamble/stable-block.md` referenced (not restated) in all 13 subagent bodies + ~30 skill preambles + slash-command seeds.
-- `npm run validate:skill-seeds` passes: every `Seed prompt` code block in `ia/skills/*/SKILL.md` names an existing subagent + files that exist.
-- `/implement`, `/verify-loop`, `/closeout`, `/ship`, `/ship-stage` command bodies ≤ 60 lines each; mission statements stripped; parameter forwarding only.
-- `npm run validate:all` green.
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
 
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/session-token-latency-audit-exploration.md` §Theme A + §Theme C rows
-- `ia/skills/_preamble/stable-block.md` (new — authored by lifecycle-refactor T10.2; must exist before Stage 2.1)
-- `ia/rules/agent-lifecycle.md` (exists) — shrink target
-- `CLAUDE.md` §3 Key files (exists) — collapse target
-- `AGENTS.md` §3 (exists) — cross-ref collapse target
-- `docs/agent-lifecycle.md` (exists) — promote to sole authority
-- `.claude/memory/` (new dir, currently empty) — A4 promotion target
-- MEMORY.md root + `~/.claude-personal/projects/.../memory/MEMORY.md` — A4 source
-- `.claude/agents/*.md` (13 subagent bodies, all exist) — A2 preamble de-dupe targets
-- `ia/skills/*/SKILL.md` (~30 skills) — A2 + C3 targets
-- `.claude/commands/*.md` — C1/C2 flatten targets
-- Prior step outputs: `tools/scripts/agent-telemetry/baseline-summary-post-stage1.json` + `tools/scripts/agent-telemetry/baseline-summary.json`
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-#### Stage 2.1 — Lifecycle taxonomy authority chain (A1 + A4)
+### Stage 2.1 — Lifecycle taxonomy authority chain (A1 + A4)
+
 
 **Status:** In Progress — Pass 2 tail (TECH-577..580 open in backlog until `/closeout`)
 
@@ -900,21 +865,16 @@
 - `.claude/memory/` dir: ≥1 `{slug}.md` file per oversized MEMORY.md entry; MEMORY.md index ≤180 lines.
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [x] Phase 1 — Doc-triangle authority chain collapse (A1).
-- [x] Phase 2 — MEMORY.md hygiene (A4).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.1.1 | Collapse rule + CLAUDE.md §3 | 1 | **TECH-577** | Pass 2 pending | Shrink `ia/rules/agent-lifecycle.md` to ≤12 lines: retain header + one-sentence purpose + `Full canonical doc: docs/agent-lifecycle.md` pointer + `## Ordered flow` stub linking there. Collapse `CLAUDE.md` §3 Key files: remove lifecycle taxonomy prose (≤20 lines remain); add `docs/agent-lifecycle.md` row to key-files table as sole lifecycle authority. Run `npm run validate:all`. |
-| T2.1.2 | Collapse AGENTS.md §3 | 1 | **TECH-578** | Pass 2 pending | Shrink `AGENTS.md` §3 lifecycle section: replace full taxonomy table with ≤8-line block: "Full lifecycle flow: `docs/agent-lifecycle.md`. Surface map table: `ia/rules/agent-lifecycle.md` §Surface map." Remove restated step/stage/phase/task definitions. Verify no other AGENTS.md section duplicates CLAUDE.md key-files inventory. `npm run validate:all`. |
-| T2.1.3 | MEMORY.md oversized-entry promotion | 2 | **TECH-579** | Pass 2 pending | Identify all MEMORY.md entries (both root `MEMORY.md` and `~/.claude-personal/projects/.../memory/MEMORY.md`) exceeding 10 lines. For each: write `{slug}.md` to `.claude/memory/` (repo-scoped entries) or `~/.claude-personal/projects/.../memory/` (user entries) with full content. Replace MEMORY.md inline content with pointer line `- [{Title}]({slug}.md) — {one-line hook}`. |
-| T2.1.4 | MEMORY.md index validation | 2 | **TECH-580** | Pass 2 pending | Confirm both MEMORY.md files ≤200 lines (harness truncation threshold). Validate all pointer links resolve to existing files. Check `docs/agent-lifecycle.md` still has correct `Status:` + last-updated front matter after A1 edits. `npm run validate:all` green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.1.1 | Collapse rule + CLAUDE.md §3 | **TECH-577** | Pass 2 pending | Shrink `ia/rules/agent-lifecycle.md` to ≤12 lines: retain header + one-sentence purpose + `Full canonical doc: docs/agent-lifecycle.md` pointer + `## Ordered flow` stub linking there. Collapse `CLAUDE.md` §3 Key files: remove lifecycle taxonomy prose (≤20 lines remain); add `docs/agent-lifecycle.md` row to key-files table as sole lifecycle authority. Run `npm run validate:all`. |
+| T2.1.2 | Collapse AGENTS.md §3 | **TECH-578** | Pass 2 pending | Shrink `AGENTS.md` §3 lifecycle section: replace full taxonomy table with ≤8-line block: "Full lifecycle flow: `docs/agent-lifecycle.md`. Surface map table: `ia/rules/agent-lifecycle.md` §Surface map." Remove restated step/stage/phase/task definitions. Verify no other AGENTS.md section duplicates CLAUDE.md key-files inventory. `npm run validate:all`. |
+| T2.1.3 | MEMORY.md oversized-entry promotion | **TECH-579** | Pass 2 pending | Identify all MEMORY.md entries (both root `MEMORY.md` and `~/.claude-personal/projects/.../memory/MEMORY.md`) exceeding 10 lines. For each: write `{slug}.md` to `.claude/memory/` (repo-scoped entries) or `~/.claude-personal/projects/.../memory/` (user entries) with full content. Replace MEMORY.md inline content with pointer line `- [{Title}]({slug}.md) — {one-line hook}`. |
+| T2.1.4 | MEMORY.md index validation | **TECH-580** | Pass 2 pending | Confirm both MEMORY.md files ≤200 lines (harness truncation threshold). Validate all pointer links resolve to existing files. Check `docs/agent-lifecycle.md` still has correct `Status:` + last-updated front matter after A1 edits. `npm run validate:all` green. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1013,13 +973,26 @@
       3. `npm run validate:all`.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all Task specs aligned. No tuples emitted. Downstream pipeline continue.
 
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
+
 ---
 
-#### Stage 2.2 — Preamble de-dupe + seed lint (A2 + C3)
+### Stage 2.2 — Preamble de-dupe + seed lint (A2 + C3)
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1035,23 +1008,43 @@
 - `npm run validate:skill-seeds` passes: every `Seed prompt` code block names an existing `.claude/agents/{name}.md` file + references files that exist on disk.
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Preamble de-dupe across subagents + skills (A2).
-- [ ] Phase 2 — Skill-seed lint authoring + validation (C3).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.2.1 | Subagent preamble collapse | 1 | _pending_ | _pending_ | In all 13 `.claude/agents/*.md` bodies: locate full-text caveman directive block (typically the first 10–20 lines or `@`-loaded preamble section); replace with `@ia/skills/_preamble/stable-block.md` reference line (single line, ≤15 tokens). Verify behavior unchanged: stable-block already contains `agent-output-caveman` rule. Run `npm run validate:all`. |
-| T2.2.2 | Skill + command preamble collapse | 1 | _pending_ | _pending_ | In all `ia/skills/*/SKILL.md` preamble sections where caveman directive is restated verbatim: replace with `Caveman default — see \`ia/skills/_preamble/stable-block.md\``. In `.claude/commands/*.md` "forward verbatim" blocks: strip caveman directive restatement; keep parameter-forwarding prose only. Spot-check 5 skills + 3 commands before/after. `npm run validate:all`. |
-| T2.2.3 | validate:skill-seeds script | 2 | _pending_ | _pending_ | Author `tools/scripts/validate-skill-seeds.sh` (or Node equivalent): reads every `Seed prompt` fenced code block in `ia/skills/*/SKILL.md`; extracts subagent name + referenced file paths; asserts each subagent maps to existing `.claude/agents/{name}.md`; asserts each file path resolves on disk. Add `npm run validate:skill-seeds` to `package.json` + `validate:all` chain. |
-| T2.2.4 | Seed-drift remediation | 2 | _pending_ | _pending_ | Run `npm run validate:skill-seeds`; fix any seed-subagent name drift or stale file references found (expected: subagent renames from lifecycle-refactor M3/M6 collapse — `spec-kickoff` → retired, `closeout` → `stage-closeout-planner`). Commit fixes. `npm run validate:all` green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.2.1 | Subagent preamble collapse | _pending_ | _pending_ | In all 13 `.claude/agents/*.md` bodies: locate full-text caveman directive block (typically the first 10–20 lines or `@`-loaded preamble section); replace with `@ia/skills/_preamble/stable-block.md` reference line (single line, ≤15 tokens). Verify behavior unchanged: stable-block already contains `agent-output-caveman` rule. Run `npm run validate:all`. |
+| T2.2.2 | Skill + command preamble collapse | _pending_ | _pending_ | In all `ia/skills/*/SKILL.md` preamble sections where caveman directive is restated verbatim: replace with `Caveman default — see \`ia/skills/_preamble/stable-block.md\``. In `.claude/commands/*.md` "forward verbatim" blocks: strip caveman directive restatement; keep parameter-forwarding prose only. Spot-check 5 skills + 3 commands before/after. `npm run validate:all`. |
+| T2.2.3 | validate:skill-seeds script | _pending_ | _pending_ | Author `tools/scripts/validate-skill-seeds.sh` (or Node equivalent): reads every `Seed prompt` fenced code block in `ia/skills/*/SKILL.md`; extracts subagent name + referenced file paths; asserts each subagent maps to existing `.claude/agents/{name}.md`; asserts each file path resolves on disk. Add `npm run validate:skill-seeds` to `package.json` + `validate:all` chain. |
+| T2.2.4 | Seed-drift remediation | _pending_ | _pending_ | Run `npm run validate:skill-seeds`; fix any seed-subagent name drift or stale file references found (expected: subagent renames from lifecycle-refactor M3/M6 collapse — `spec-kickoff` → retired, `closeout` → `stage-closeout-planner`). Commit fixes. `npm run validate:all` green. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-#### Stage 2.3 — Slash-command dispatch flattening (C1 + C2)
+### Stage 2.3 — Slash-command dispatch flattening (C1 + C2)
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1067,51 +1060,43 @@
 - Human-readable "What this does" block (10–20 lines) preserved at top per C5 Q5 resolution.
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Core lifecycle commands collapse (C1).
-- [ ] Phase 2 — /ship command slim (C2) + integration gate.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.3.1 | Collapse implement + verify-loop + closeout | 1 | _pending_ | _pending_ | In `.claude/commands/implement.md`, `verify-loop.md`, `closeout.md`: remove "Subagent prompt (forward verbatim)" block restating subagent Mission + Phase loop. Retain: "What this does" block (10–20 lines human summary, per Q5 resolution), parameter list (ISSUE_ID / MASTER_PLAN_PATH / STAGE_ID), gate boundary lines. Target ≤60 lines each. `npm run validate:all`. |
-| T2.3.2 | Collapse ship-stage + kickoff commands | 1 | _pending_ | _pending_ | In `.claude/commands/ship-stage.md` and any remaining command bodies carrying full mission restatement: apply same collapse (≤60 lines; "What this does" header + parameters + gate). Check `.claude/commands/_retired/` for stale references; clean drift (no action if clean). `npm run validate:all`. |
-| T2.3.3 | /ship command slim | 2 | _pending_ | _pending_ | `.claude/commands/ship.md` (currently ~192 lines): collapse to ≤60 lines. Keep: "What this does" (≤15 lines), ISSUE_ID / MASTER_PLAN_PATH params, gate-boundary check (master plan located?), dispatch line. Strip: full Phase loop restatement, hard-boundaries repeat, example invocations already in subagent body. Model after condensed ship-stage shape from T2.3.2. |
-| T2.3.4 | Integration smoke + token delta | 2 | _pending_ | _pending_ | Run full `/ship {ISSUE_ID}` dispatch on a dry-run issue; confirm subagent body authoritative (no degraded behavior from stripped command). Estimate per-`/ship` token saving vs pre-C1/C2 baseline: diff collapsed command byte count × invocation frequency from telemetry. Commit finding to `docs/session-token-latency-audit-exploration.md` §Provenance. `npm run validate:all` green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T2.3.1 | Collapse implement + verify-loop + closeout | _pending_ | _pending_ | In `.claude/commands/implement.md`, `verify-loop.md`, `closeout.md`: remove "Subagent prompt (forward verbatim)" block restating subagent Mission + Phase loop. Retain: "What this does" block (10–20 lines human summary, per Q5 resolution), parameter list (ISSUE_ID / MASTER_PLAN_PATH / STAGE_ID), gate boundary lines. Target ≤60 lines each. `npm run validate:all`. |
+| T2.3.2 | Collapse ship-stage + kickoff commands | _pending_ | _pending_ | In `.claude/commands/ship-stage.md` and any remaining command bodies carrying full mission restatement: apply same collapse (≤60 lines; "What this does" header + parameters + gate). Check `.claude/commands/_retired/` for stale references; clean drift (no action if clean). `npm run validate:all`. |
+| T2.3.3 | /ship command slim | _pending_ | _pending_ | `.claude/commands/ship.md` (currently ~192 lines): collapse to ≤60 lines. Keep: "What this does" (≤15 lines), ISSUE_ID / MASTER_PLAN_PATH params, gate-boundary check (master plan located?), dispatch line. Strip: full Phase loop restatement, hard-boundaries repeat, example invocations already in subagent body. Model after condensed ship-stage shape from T2.3.2. |
+| T2.3.4 | Integration smoke + token delta | _pending_ | _pending_ | Run full `/ship {ISSUE_ID}` dispatch on a dry-run issue; confirm subagent body authoritative (no degraded behavior from stripped command). Estimate per-`/ship` token saving vs pre-C1/C2 baseline: diff collapsed command byte count × invocation frequency from telemetry. Commit finding to `docs/session-token-latency-audit-exploration.md` §Provenance. `npm run validate:all` green. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-### Step 3 — Hook plane + repo surface hygiene (Themes D + E remainder)
+### Stage 3.1 — Session-start preamble + compact-survival (D2 + D4)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Backlog state (Step 3):** 0 filed
-
-**Objectives:** Complete the hook-plane work not covered in Theme-0-r1: make `session-start-prewarm.sh` emit a deterministic cacheable preamble (D2) and add compact-survival state capture (D4). Trim the oversized output-style descriptors `verification-report.md` and `closeout-digest.md` (E3). Step is mostly independent of T10.2/T10.4 and can begin once Stage 1.3 sweep is complete.
-
-**Exit criteria:**
-
-- `tools/scripts/claude-hooks/session-start-prewarm.sh`: volatile data (branch, dirty count) emitted to stderr only; stdout emits deterministic cacheable preamble block (fixed content: active-freeze status + MCP server version + enabled ruleset name).
-- `.claude/last-compact-summary.md` written on compact/Stop event; contains current task id + active stage + last 3 tool call names.
-- `.claude/output-styles/verification-report.md`: ≤35 lines; field semantics extracted to `docs/agent-led-verification-policy.md` §Output format; Part 1 / Part 2 structure + example block retained.
-- `.claude/output-styles/closeout-digest.md`: audited; trimmed if over 50 lines.
-- `npm run validate:all` green.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `tools/scripts/claude-hooks/session-start-prewarm.sh` (exists) — D2 refactor target
-- `.claude/settings.json` (exists) — D4 hook entry addition
-- `.claude/output-styles/verification-report.md` (exists, 87 lines) — E3 trim target
-- `.claude/output-styles/closeout-digest.md` (exists) — E3 audit target
-- `docs/agent-led-verification-policy.md` (exists) — E3 field-semantics destination
-- Prior step outputs: Steps 1–2 telemetry sweep + command collapse
-
----
-
-#### Stage 3.1 — Session-start preamble + compact-survival (D2 + D4)
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1125,23 +1110,43 @@
 - `.claude/last-compact-summary.md` gitignored (session-ephemeral state).
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Session-start preamble refactor (D2).
-- [ ] Phase 2 — Compact-survival hook (D4).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T3.1.1 | Session-start deterministic preamble | 1 | _pending_ | _pending_ | Refactor `tools/scripts/claude-hooks/session-start-prewarm.sh`: move `branch=$(git branch ...)` + dirty-count line to emit via `>&2` (stderr); add fixed stdout block: `echo "[territory-developer] MCP: territory-ia v$(…) | Ruleset: invariants+lifecycle+caveman | Freeze: $(cat ia/state/lifecycle-refactor-migration.json | jq -r '.status')"`. Volatile suffix no longer destabilises cached prefix. |
-| T3.1.2 | Runtime-state.json skeleton (F4 prep) | 1 | _pending_ | _pending_ | Committed schema `tools/schemas/runtime-state.schema.json` + `ia/state/runtime-state.example.json`; live `ia/state/runtime-state.json` **gitignored** (per clone). Fields: `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id`, `updated_at`. `active_task_id` / `active_stage` live only in `.claude/active-session.json` or `.cursor/active-session.json` — not in shared runtime-state file. Ship MCP `runtime_state` (read + write under flock). SessionStart reads `ia/state/runtime-state.json` + optional active-session for preamble. |
-| T3.1.3 | Compact-survival hook | 2 | _pending_ | _pending_ | Author `tools/scripts/claude-hooks/compact-summary.sh`: on Stop/PostCompact event reads `ia/state/runtime-state.json` + last 3 entries from `.claude/telemetry/{session-id}.jsonl`; writes `.claude/last-compact-summary.md` (`active_task_id`, `active_stage`, `last_3_tools`, `ts`). Add Stop hook entry to `.claude/settings.json` hooks array. Add `.claude/last-compact-summary.md` to `.gitignore`. |
-| T3.1.4 | Compact re-orientation test | 2 | _pending_ | _pending_ | Manual test: run session → compact → resume; verify `.claude/last-compact-summary.md` present + readable; confirm SessionStart preamble emits `active_task_id` from it. Confirm `npm run validate:all` green. Document compact-survival UX in `docs/agent-led-verification-policy.md` §Session continuity (new 3-line sub-section). |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.1.1 | Session-start deterministic preamble | _pending_ | _pending_ | Refactor `tools/scripts/claude-hooks/session-start-prewarm.sh`: move `branch=$(git branch ...)` + dirty-count line to emit via `>&2` (stderr); add fixed stdout block: `echo "[territory-developer] MCP: territory-ia v$(…) | Ruleset: invariants+lifecycle+caveman | Freeze: $(cat ia/state/lifecycle-refactor-migration.json | jq -r '.status')"`. Volatile suffix no longer destabilises cached prefix. |
+| T3.1.2 | Runtime-state.json skeleton (F4 prep) | _pending_ | _pending_ | Committed schema `tools/schemas/runtime-state.schema.json` + `ia/state/runtime-state.example.json`; live `ia/state/runtime-state.json` **gitignored** (per clone). Fields: `last_verify_exit_code`, `last_bridge_preflight_exit_code`, `queued_test_scenario_id`, `updated_at`. `active_task_id` / `active_stage` live only in `.claude/active-session.json` or `.cursor/active-session.json` — not in shared runtime-state file. Ship MCP `runtime_state` (read + write under flock). SessionStart reads `ia/state/runtime-state.json` + optional active-session for preamble. |
+| T3.1.3 | Compact-survival hook | _pending_ | _pending_ | Author `tools/scripts/claude-hooks/compact-summary.sh`: on Stop/PostCompact event reads `ia/state/runtime-state.json` + last 3 entries from `.claude/telemetry/{session-id}.jsonl`; writes `.claude/last-compact-summary.md` (`active_task_id`, `active_stage`, `last_3_tools`, `ts`). Add Stop hook entry to `.claude/settings.json` hooks array. Add `.claude/last-compact-summary.md` to `.gitignore`. |
+| T3.1.4 | Compact re-orientation test | _pending_ | _pending_ | Manual test: run session → compact → resume; verify `.claude/last-compact-summary.md` present + readable; confirm SessionStart preamble emits `active_task_id` from it. Confirm `npm run validate:all` green. Document compact-survival UX in `docs/agent-led-verification-policy.md` §Session continuity (new 3-line sub-section). |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-#### Stage 3.2 — Output-style surface trim (E3)
+### Stage 3.2 — Output-style surface trim (E3)
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1154,54 +1159,41 @@
 - Verifier + stage-closeout-applier subagents dispatch with correct output style shape (no regression).
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Output-style trim + validation.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T3.2.1 | Trim verification-report.md | 1 | _pending_ | _pending_ | Read `.claude/output-styles/verification-report.md` (87 lines); extract field-semantic prose (per-field descriptions, JSON schema commentary) to new `docs/agent-led-verification-policy.md` §Verification output fields sub-section. Retain in file: brief purpose line, Part 1 JSON header shape (≤10 lines), Part 2 caveman summary shape (≤5 lines), one canonical example (≤15 lines). Target ≤35 lines. Update `verifier.md` + `verify-loop.md` agent bodies if they inline-reference line numbers. |
-| T3.2.2 | Trim closeout-digest.md + validate | 1 | _pending_ | _pending_ | Read `.claude/output-styles/closeout-digest.md`; if > 50 lines apply same trim pattern (extract semantics to `docs/agent-led-verification-policy.md` §Closeout digest output fields). Update `stage-closeout-applier.md` if it references specific lines. Run full `/verify` + `/closeout` dispatch dry-run to confirm output shapes parse correctly. `npm run validate:all` green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.2.1 | Trim verification-report.md | _pending_ | _pending_ | Read `.claude/output-styles/verification-report.md` (87 lines); extract field-semantic prose (per-field descriptions, JSON schema commentary) to new `docs/agent-led-verification-policy.md` §Verification output fields sub-section. Retain in file: brief purpose line, Part 1 JSON header shape (≤10 lines), Part 2 caveman summary shape (≤5 lines), one canonical example (≤15 lines). Target ≤35 lines. Update `verifier.md` + `verify-loop.md` agent bodies if they inline-reference line numbers. |
+| T3.2.2 | Trim closeout-digest.md + validate | _pending_ | _pending_ | Read `.claude/output-styles/closeout-digest.md`; if > 50 lines apply same trim pattern (extract semantics to `docs/agent-led-verification-policy.md` §Closeout digest output fields). Update `stage-closeout-applier.md` if it references specific lines. Run full `/verify` + `/closeout` dispatch dry-run to confirm output shapes parse correctly. `npm run validate:all` green. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-### Step 4 — Rev-4 larger bets (Theme F)
+### Stage 4.1 — Session-level MCP memoization + unified runtime state (F2 + F4)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Backlog state (Step 4):** 0 filed
-
-**Objectives:** Ship the structural improvements that require rev-4 Tier 1/Tier 2 cache design to be stable: session-level MCP memoization (F2), unified runtime-state.json (F4, building on Stage 3.1 skeleton), prescriptive cache-breakpoint MCP tool (F5), and skills-navigator MCP tool (F6). File tracking issues for harness-gated items F3 + F7 (no code change; monitoring only).
-
-**Pre-conditions:** Stage 3.1 `runtime-state.json` skeleton must be Done before Stage 4.1 (F4 full migration uses the skeleton). Lifecycle-refactor Stage 10 T10.7 (20-block guardrail) recommended before Stage 4.2 (F5 prescriptive tool complements T10.7 prohibitive rule).
-
-**Exit criteria:**
-
-- `.claude/tool-usage.jsonl` (session-ephemeral, gitignored): PostToolUse hook appends `{tool_name, args_hash, result_hash, ts}` per call.
-- Subagent dispatch reads `.claude/tool-usage.jsonl` for current session; skips re-call when args_hash matches within Stage window.
-- `ia/state/runtime-state.json`: flat-file markers (`last-verify-exit-code`, `last-bridge-preflight-exit-code`, `.queued-test-scenario-id`) fully migrated; hooks write via `jq` append.
-- New MCP tool `cache_breakpoint_recommend(stage_id)` registered in `tools/mcp-ia-server/src/index-ia.ts`; returns 4 anchors (Tier 1 prefix end, Tier 2 bundle end, spec end, last executor-mutable block).
-- New MCP tool `skill_for_task(keywords, lifecycle_stage)` registered; returns matching `ia/skills/*/SKILL.md` path + URL + first-phase body.
-- Tracking issues filed for F3 (harness caveman hook) + F7 (`defer_loading: true`); linked from exploration doc.
-- `npm run validate:all` green.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/session-token-latency-audit-exploration.md` §Theme F items F2/F3/F4/F5/F6/F7
-- `docs/prompt-caching-mechanics.md` §3 (Tier 1 + Tier 2 anchor definitions) — F5 dependency
-- `.claude/settings.json` — PostToolUse hook updates
-- `tools/mcp-ia-server/src/index-ia.ts` (will exist post-Stage 1.2) — F5/F6 registration target
-- `tools/mcp-ia-server/src/index.ts` (exists) — F5/F6 interim registration target if split not yet flipped
-- `ia/skills/README.md` (exists) — F6 index source
-- `docs/agent-lifecycle.md` — lifecycle_stage enum for F6 (pre-refactor `ia/rules/agent-lifecycle.md` retired)
-- Prior step outputs: `ia/state/runtime-state.json` skeleton (Stage 3.1 T3.1.2), `.claude/tool-usage.jsonl` schema (extends T1.1.1 telemetry)
-
----
-
-#### Stage 4.1 — Session-level MCP memoization + unified runtime state (F2 + F4)
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1216,24 +1208,44 @@
 - `verify-loop` + `bridge-environment-preflight` skills write exit codes to `runtime-state.json` via `jq` (reuses D3 `jq` dep from Theme-0-r1 D3 issue).
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Tool-usage memoization (F2).
-- [ ] Phase 2 — Unified runtime state migration (F4).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.1.1 | Tool-usage PostToolUse hook | 1 | _pending_ | _pending_ | **scope: claude-code-only** — Extend `.claude/settings.json` PostToolUse hook (or add second hook entry): run `tools/scripts/agent-telemetry/tool-usage-hook.sh`. Author that script: reads tool name + args + result from hook env; computes `args_hash = sha256(tool_name + sorted_args_json)`, `result_hash = sha256(result_json)`; appends JSON line to `.claude/tool-usage.jsonl`. Add `.claude/tool-usage.jsonl` to `.gitignore`. |
-| T4.1.2 | Subagent memoization read path | 1 | _pending_ | _pending_ | In `spec-implementer.md` + `design-explore.md` preamble: add "Session-window memoization check" block: before `glossary_discover` / `router_for_task` calls, compute args_hash; check `.claude/tool-usage.jsonl` for matching `{tool_name, args_hash}` within same `session_id`; if found, use cached `result_hash` lookup from a companion `.claude/tool-usage-cache.json` (key: args_hash → result). Skip live MCP call. Author `tools/scripts/agent-telemetry/cache-lookup.sh {tool_name} {args_hash}` returning result or exit 1 on miss. |
-| T4.1.3 | Unified runtime-state migration | 2 | _pending_ | _pending_ | All write paths → `ia/state/runtime-state.json`. MCP `runtime_state` write path (patch + lockfile). Skills (`verify-loop`, `bridge-environment-preflight`, `agent-test-mode-verify`) write via MCP where available; `tools/scripts/runtime-state-write.sh` + `jq` fallback documented. |
-| T4.1.4 | Flat-file marker cleanup | 2 | _pending_ | _pending_ | After migration verified: delete old flat-file markers (`.claude/last-verify-exit-code`, `.claude/last-bridge-preflight-exit-code`, root `/.queued-test-scenario-id` if present). Exit criteria: no references to legacy marker paths remain (grep check). SessionStart preamble reads `last_verify_exit_code` from `ia/state/runtime-state.json`. `npm run validate:all` green. |
-| T4.1.5 | Harness-agnostic surfacing (F4b) | 2 | _pending_ | _pending_ | `ia/rules/runtime-state.md`, `AGENTS.md` / `CLAUDE.md` / `ia/rules/invariants.md` pointers, `.cursor/rules/runtime-state.mdc`, subagent self-read lines + glossary `runtime-state`; `validate:runtime-state` in `validate:all`; MCP catalog parity with `runtime_state` registration. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.1.1 | Tool-usage PostToolUse hook | _pending_ | _pending_ | **scope: claude-code-only** — Extend `.claude/settings.json` PostToolUse hook (or add second hook entry): run `tools/scripts/agent-telemetry/tool-usage-hook.sh`. Author that script: reads tool name + args + result from hook env; computes `args_hash = sha256(tool_name + sorted_args_json)`, `result_hash = sha256(result_json)`; appends JSON line to `.claude/tool-usage.jsonl`. Add `.claude/tool-usage.jsonl` to `.gitignore`. |
+| T4.1.2 | Subagent memoization read path | _pending_ | _pending_ | In `spec-implementer.md` + `design-explore.md` preamble: add "Session-window memoization check" block: before `glossary_discover` / `router_for_task` calls, compute args_hash; check `.claude/tool-usage.jsonl` for matching `{tool_name, args_hash}` within same `session_id`; if found, use cached `result_hash` lookup from a companion `.claude/tool-usage-cache.json` (key: args_hash → result). Skip live MCP call. Author `tools/scripts/agent-telemetry/cache-lookup.sh {tool_name} {args_hash}` returning result or exit 1 on miss. |
+| T4.1.3 | Unified runtime-state migration | _pending_ | _pending_ | All write paths → `ia/state/runtime-state.json`. MCP `runtime_state` write path (patch + lockfile). Skills (`verify-loop`, `bridge-environment-preflight`, `agent-test-mode-verify`) write via MCP where available; `tools/scripts/runtime-state-write.sh` + `jq` fallback documented. |
+| T4.1.4 | Flat-file marker cleanup | _pending_ | _pending_ | After migration verified: delete old flat-file markers (`.claude/last-verify-exit-code`, `.claude/last-bridge-preflight-exit-code`, root `/.queued-test-scenario-id` if present). Exit criteria: no references to legacy marker paths remain (grep check). SessionStart preamble reads `last_verify_exit_code` from `ia/state/runtime-state.json`. `npm run validate:all` green. |
+| T4.1.5 | Harness-agnostic surfacing (F4b) | _pending_ | _pending_ | `ia/rules/runtime-state.md`, `AGENTS.md` / `CLAUDE.md` / `ia/rules/invariants.md` pointers, `.cursor/rules/runtime-state.mdc`, subagent self-read lines + glossary `runtime-state`; `validate:runtime-state` in `validate:all`; MCP catalog parity with `runtime_state` registration. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-#### Stage 4.2 — Cache-breakpoint prescriptive tooling (F5)
+### Stage 4.2 — Cache-breakpoint prescriptive tooling (F5)
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1248,23 +1260,43 @@
 - `docs/prompt-caching-mechanics.md` §F5: 4-anchor layout documented as prescriptive recipe (not just prohibitive reference).
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — MCP tool authoring + registration.
-- [ ] Phase 2 — CI lint + docs.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.2.1 | cache_breakpoint_recommend MCP tool | 1 | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/cache-breakpoint-recommend.ts`: `registerTool("cache_breakpoint_recommend", ...)` with input `stage_id: string`; reads stage block from `ia/projects/*/master-plan.md` matching stage_id; returns 4 anchor objects `{name, anchor_type, location_hint}` per `prompt-caching-mechanics.md` §3 Tier 1/Tier 2 definitions + Tier 3 (spec end) + Tier 4 (last executor-mutable block). Register in `index-ia.ts`. |
-| T4.2.2 | Skill preamble breakpoint annotation | 1 | _pending_ | _pending_ | Update `ia/skills/*/SKILL.md` preamble sections (lifecycle skills: `stage-file-plan`, `project-spec-implement`, `opus-code-review`, `stage-closeout-plan`, `plan-author`, `opus-audit`) to include a `cache_breakpoints:` frontmatter line listing the 4 anchor names. Use `cache_breakpoint_recommend` output to derive correct values per skill's lifecycle_stage. |
-| T4.2.3 | validate:cache-breakpoints CI script | 2 | _pending_ | _pending_ | Author `tools/scripts/validate-cache-breakpoints.sh`: reads `ia/skills/*/SKILL.md` frontmatter; for skills with `phases:` key (progress-emit lifecycle skills), asserts `cache_breakpoints:` key present with ≥4 named anchors. Add `npm run validate:cache-breakpoints` to `package.json` + `validate:all` chain. |
-| T4.2.4 | 4-anchor layout documentation | 2 | _pending_ | _pending_ | Append `## F5 — Prescriptive 4-anchor recipe` to `docs/prompt-caching-mechanics.md`: document Tier 1 (stable prefix end), Tier 2 (bundle end), Tier 3 (spec end), Tier 4 (last executor-mutable block); note 4-anchor Anthropic cap; note how this complements T10.7 prohibitive rule (forbids >1 stable-prefix block) with prescriptive layout guidance. `npm run validate:all`. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.2.1 | cache_breakpoint_recommend MCP tool | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/cache-breakpoint-recommend.ts`: `registerTool("cache_breakpoint_recommend", ...)` with input `stage_id: string`; reads stage block from `ia/projects/*/master-plan.md` matching stage_id; returns 4 anchor objects `{name, anchor_type, location_hint}` per `prompt-caching-mechanics.md` §3 Tier 1/Tier 2 definitions + Tier 3 (spec end) + Tier 4 (last executor-mutable block). Register in `index-ia.ts`. |
+| T4.2.2 | Skill preamble breakpoint annotation | _pending_ | _pending_ | Update `ia/skills/*/SKILL.md` preamble sections (lifecycle skills: `stage-file-plan`, `project-spec-implement`, `opus-code-review`, `stage-closeout-plan`, `plan-author`, `opus-audit`) to include a `cache_breakpoints:` frontmatter line listing the 4 anchor names. Use `cache_breakpoint_recommend` output to derive correct values per skill's lifecycle_stage. |
+| T4.2.3 | validate:cache-breakpoints CI script | _pending_ | _pending_ | Author `tools/scripts/validate-cache-breakpoints.sh`: reads `ia/skills/*/SKILL.md` frontmatter; for skills with `phases:` key (progress-emit lifecycle skills), asserts `cache_breakpoints:` key present with ≥4 named anchors. Add `npm run validate:cache-breakpoints` to `package.json` + `validate:all` chain. |
+| T4.2.4 | 4-anchor layout documentation | _pending_ | _pending_ | Append `## F5 — Prescriptive 4-anchor recipe` to `docs/prompt-caching-mechanics.md`: document Tier 1 (stable prefix end), Tier 2 (bundle end), Tier 3 (spec end), Tier 4 (last executor-mutable block); note 4-anchor Anthropic cap; note how this complements T10.7 prohibitive rule (forbids >1 stable-prefix block) with prescriptive layout guidance. `npm run validate:all`. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-#### Stage 4.3 — Skills navigator MCP tool + harness-gated tracking (F6 + F3 + F7)
+### Stage 4.3 — Skills navigator MCP tool + harness-gated tracking (F6 + F3 + F7)
+
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -1278,64 +1310,43 @@
 - `docs/session-token-latency-audit-exploration.md` §Open questions: F3 + F7 tracking issues linked.
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Skills navigator MCP tool (F6).
-- [ ] Phase 2 — Harness-gated tracking issues (F3 + F7).
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T4.3.1 | skill_for_task MCP tool | 1 | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/skill-for-task.ts`: `registerTool("skill_for_task", ...)` with inputs `keywords: string[]`, `lifecycle_stage?: string`; reads `ia/skills/README.md` index + each `ia/skills/*/SKILL.md` frontmatter (`title`, `phases`, `trigger` fields); computes keyword overlap score; returns top-1 match with `{skill_name, skill_path, url, first_phase_body}` (first phase body = first `### Phase 1` section text, ≤500 tokens). Register in `index-ia.ts`. |
-| T4.3.2 | skill_for_task integration test | 1 | _pending_ | _pending_ | Author `tools/mcp-ia-server/tests/skill-for-task.test.ts`: assert `skill_for_task(["implement", "spec"], "implement")` returns path containing `project-spec-implement`; assert `skill_for_task(["stage", "file"], "stage-file")` returns path containing `stage-file-plan`. Add `npm run test:skill-for-task`. `npm run validate:all`. |
-| T4.3.3 | F3 tracking issue | 2 | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F3 harness-level caveman enforcement (PreCompletion hook)`: notes that `output-style: caveman` frontmatter in skill files requires `PreCompletion` hook support from Claude Code harness; links to `docs/session-token-latency-audit-exploration.md` §F3; blocked until Anthropic harness team confirms `PreCompletion` semantics. Zero code change. Link filed issue from exploration doc §Open questions Q3. |
-| T4.3.4 | F7 tracking issue | 2 | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F7 defer_loading: true MCP rollout`: monitors Claude Code release notes for `defer_loading: true` per-tool support; links to exploration §F7 + audit source; antidote to B1 two-server split when harness supports per-tool deferred loading. Zero code change until harness confirms. Link filed issue from exploration §Open questions. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.3.1 | skill_for_task MCP tool | _pending_ | _pending_ | Author `tools/mcp-ia-server/src/tools/skill-for-task.ts`: `registerTool("skill_for_task", ...)` with inputs `keywords: string[]`, `lifecycle_stage?: string`; reads `ia/skills/README.md` index + each `ia/skills/*/SKILL.md` frontmatter (`title`, `phases`, `trigger` fields); computes keyword overlap score; returns top-1 match with `{skill_name, skill_path, url, first_phase_body}` (first phase body = first `### Phase 1` section text, ≤500 tokens). Register in `index-ia.ts`. |
+| T4.3.2 | skill_for_task integration test | _pending_ | _pending_ | Author `tools/mcp-ia-server/tests/skill-for-task.test.ts`: assert `skill_for_task(["implement", "spec"], "implement")` returns path containing `project-spec-implement`; assert `skill_for_task(["stage", "file"], "stage-file")` returns path containing `stage-file-plan`. Add `npm run test:skill-for-task`. `npm run validate:all`. |
+| T4.3.3 | F3 tracking issue | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F3 harness-level caveman enforcement (PreCompletion hook)`: notes that `output-style: caveman` frontmatter in skill files requires `PreCompletion` hook support from Claude Code harness; links to `docs/session-token-latency-audit-exploration.md` §F3; blocked until Anthropic harness team confirms `PreCompletion` semantics. Zero code change. Link filed issue from exploration doc §Open questions Q3. |
+| T4.3.4 | F7 tracking issue | _pending_ | _pending_ | File `/project-new TECH-{id}: Track F7 defer_loading: true MCP rollout`: monitors Claude Code release notes for `defer_loading: true` per-tool support; links to exploration §F7 + audit source; antidote to B1 two-server split when harness supports per-tool deferred loading. Zero code change until harness confirms. Link filed issue from exploration §Open questions. |
+
+#### §Stage File Plan
+
+> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/stage-file` planner pass._
+
+#### §Plan Fix
+
+> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+
+_pending — populated by `/plan-review` when fixes are needed._
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 
-### Step 5 — Synthesized context pack (D5)
+### Stage 5.1 — PreCompact digest + SessionStart re-injection
 
-**Status:** In Progress — Stage 5.1
-
-**Backlog state (Step 5):** 4 filed (TECH-520..TECH-523 — Stage 5.1)
-
-**Objectives:** Extend compact-survival from Stage 3.1's last-3-tools signal into a full synthesized context pack written on PreCompact event and re-injected on SessionStart. Agents resuming after `/compact` recover active focus + surfaces + recent decisions + open questions from `.claude/context-pack.md` without re-reading source files. Hook stays shell-only (no `claude -p` subprocess) to keep compact path fast (<200 ms) and deterministic. Semantic placement = Stage 3.3 of Step 3; filed here as Step 5 per skill append-only contract — human reviewer may relocate block post-apply.
-
-**Pre-conditions:** Step 3 Stage 3.1 T3.1.2 (`ia/state/runtime-state.json` skeleton) + T3.1.3 (`compact-summary.sh` Stop/PostCompact hook) must be Done before Step 5 Stage 5.1 starts. Stage 4.1 T4.1.1 (`.claude/tool-usage.jsonl`) = soft dependency — optional `Recent memoized calls` section omitted silently if absent.
-
-**Exit criteria:**
-
-- `tools/scripts/claude-hooks/context-pack.sh` (new) executable; emits `.claude/context-pack.md` per §2 schema of extensions doc (Active focus + Relevant surfaces + Recent decisions + Open questions + Last tool outputs + Loaded context sources).
-- `.claude/settings.json` hooks array gains PreCompact entry invoking `context-pack.sh`.
-- `.claude/context-pack.md` session-ephemeral, gitignored.
-- Size cap 300 lines enforced via awk at block boundaries (Recent decisions drop first, then Open questions; Relevant surfaces never truncated).
-- `tools/scripts/claude-hooks/session-start-prewarm.sh` extended to cat pack content after deterministic block + `---` separator, gated by file existence + 24 h freshness.
-- Stale pack (>24 h) → stderr warning, no stdout emission. Missing pack → silent.
-- Manual re-orientation integration test passes: session → 2 Read + 2 Edit → `/compact` → resume → agent cites active task + stage + ≥2 relevant surfaces with zero Read calls on source files before first answer.
-- `docs/agent-led-verification-policy.md` §Session continuity extended with pack re-injection contract (schema, freshness gate, truncation policy).
-- `npm run validate:all` green.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/session-token-latency-post-mvp-extensions.md` §1–§4 (extension rationale + schema + Stage header) + §5 (pre-authored §Audit Notes / §Examples / §Test Blueprint / §Acceptance per task).
-- `docs/session-token-latency-audit-exploration.md` §D4 — compact-survival origin row.
-- `tools/scripts/claude-hooks/session-start-prewarm.sh` (exists) — re-injection extension target.
-- `tools/scripts/claude-hooks/compact-summary.sh` (new, Stage 3.1 T3.1.3) — sibling Stop/PostCompact hook; `context-pack.sh` is PreCompact counterpart.
-- `tools/scripts/claude-hooks/context-pack.sh` (new) — primary deliverable.
-- `ia/state/runtime-state.json` (new, Stage 3.1 T3.1.2) — primary digest input.
-- `.claude/settings.json` (exists) — PreCompact hook entry addition.
-- `.claude/telemetry/{session-id}.jsonl` (exists post-Stage 1) — secondary digest input.
-- `.claude/tool-usage.jsonl` (new, Stage 4.1 T4.1.1, soft dep) — optional tertiary input.
-- `ia/projects/session-token-latency-master-plan.md` (this file) — Stage block regex parser target.
-- `docs/agent-led-verification-policy.md` (exists) — §Session continuity re-injection contract destination.
-- `.gitignore` (exists) — ephemeral marker addition.
-- Prior step outputs: Step 4 (`runtime-state.json` full schema + `tool-usage.jsonl` from Stage 4.1) + Step 3 (compact-summary.sh sibling hook + §Session continuity doc sub-section from T3.1.4).
-
----
-
-#### Stage 5.1 — PreCompact digest + SessionStart re-injection
 
 **Status:** In Progress — Stage 5.1 (TECH-520, TECH-521, TECH-522, TECH-523)
 
@@ -1355,21 +1366,16 @@
 - `docs/agent-led-verification-policy.md` §Session continuity extended with ≥3-line "Context pack re-injection" paragraph covering schema, freshness gate, truncation policy.
 - `npm run validate:all` green.
 
-**Phases:**
-
-- [ ] Phase 1 — Digest script authoring (schema + runtime-state + telemetry + size cap).
-- [ ] Phase 2 — Re-injection + integration test + docs.
-
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T5.1.1 | PreCompact digest script — schema + runtime-state | 1 | **TECH-520** | Draft | Author `tools/scripts/claude-hooks/context-pack.sh`: on PreCompact event reads `ia/state/runtime-state.json` for `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; reads `.claude/active-session.json` or `.cursor/active-session.json` for `active_task_id`, `active_stage`; parses active master plan Stage block via same narrow regex `/ship-stage` Phase 0 uses (Stage name + Exit criteria first 5 bullets + Relevant surfaces first 20 lines); emits `.claude/context-pack.md` per extensions doc §2 schema (Active focus + Relevant surfaces + Loaded context sources sections). Add PreCompact hook entry to `.claude/settings.json` hooks array. Add `.claude/context-pack.md` to `.gitignore`. All `jq` calls guarded with `\|\| echo "unknown"`; exit 0 on partial failure; `# Context pack — SCHEMA MISMATCH` marker on malformed inputs. No `claude -p` subprocess. |
-| T5.1.2 | Digest script — telemetry + tool-usage + size cap | 1 | **TECH-521** | Draft | Extend `context-pack.sh`: append `Last tool outputs (pointers only)` section from `.claude/telemetry/{session-id}.jsonl` (last 10 rows via `tail -10 \| jq -c '{name, exit, ts}'`); if `.claude/tool-usage.jsonl` exists (Stage 4.1 T4.1.1), append `Recent memoized calls` section with top 10 `{tool_name, args_hash_short, result_hash_short, ts}`. Enforce 300-line cap via awk truncation at Recent decisions / Open questions block boundaries (blank-line delimited, not mid-line): drop oldest Recent decisions block first, then oldest Open questions. Emit `_[...truncated N oldest decisions]_` marker when truncation fires. Relevant surfaces never truncated. Soft-guard missing files with `[ -f ... ]` checks. |
-| T5.1.3 | SessionStart re-injection + deterministic preamble compat | 2 | **TECH-522** | Draft | Extend `tools/scripts/claude-hooks/session-start-prewarm.sh` (Stage 3.1 T3.1.1): after deterministic preamble block + `---` separator, if `-f .claude/context-pack.md` AND pack `ts` header <24 h old, then `cat .claude/context-pack.md`. Stale pack (>24 h) → stderr warning `stale context pack ({age_hours} h old); regenerate via /pack-context`, no stdout emission. Missing pack → silent, no stdout or stderr. Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback). Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix cacheability — verify via diff of two runs. Document re-injection contract in `docs/agent-led-verification-policy.md` §Session continuity (extend sub-section first added by Stage 3.1 T3.1.4). |
-| T5.1.4 | Re-orientation integration test + validate:all | 2 | **TECH-523** | Draft | Manual integration test per protocol in extensions doc §5 T3.3.4 §Examples: start session on filed task → 2 Read + 2 Edit on 4 distinct source files → `/compact` → inspect `.claude/context-pack.md` (Active focus populated; Relevant surfaces lists all 4 files; ≥1 Recent decision; Last tool outputs lists last 4 actions); resume session (new terminal) → verify SessionStart preamble includes pack content; ask agent "what are you working on?" → confirm model cites active task + stage + ≥2 relevant surfaces with **zero** Read calls on source files before first answer. Screenshot + tool-call log evidence linked in task Verification block. `docs/agent-led-verification-policy.md` §Session continuity updated with full re-injection contract (≥3-line paragraph). `npm run validate:all` green. |
+| Task | Name | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.1.1 | PreCompact digest script — schema + runtime-state | **TECH-520** | Draft | Author `tools/scripts/claude-hooks/context-pack.sh`: on PreCompact event reads `ia/state/runtime-state.json` for `queued_test_scenario_id`, `last_verify_exit_code`, `last_bridge_preflight_exit_code`; reads `.claude/active-session.json` or `.cursor/active-session.json` for `active_task_id`, `active_stage`; parses active master plan Stage block via same narrow regex `/ship-stage` Phase 0 uses (Stage name + Exit criteria first 5 bullets + Relevant surfaces first 20 lines); emits `.claude/context-pack.md` per extensions doc §2 schema (Active focus + Relevant surfaces + Loaded context sources sections). Add PreCompact hook entry to `.claude/settings.json` hooks array. Add `.claude/context-pack.md` to `.gitignore`. All `jq` calls guarded with `\|\| echo "unknown"`; exit 0 on partial failure; `# Context pack — SCHEMA MISMATCH` marker on malformed inputs. No `claude -p` subprocess. |
+| T5.1.2 | Digest script — telemetry + tool-usage + size cap | **TECH-521** | Draft | Extend `context-pack.sh`: append `Last tool outputs (pointers only)` section from `.claude/telemetry/{session-id}.jsonl` (last 10 rows via `tail -10 \| jq -c '{name, exit, ts}'`); if `.claude/tool-usage.jsonl` exists (Stage 4.1 T4.1.1), append `Recent memoized calls` section with top 10 `{tool_name, args_hash_short, result_hash_short, ts}`. Enforce 300-line cap via awk truncation at Recent decisions / Open questions block boundaries (blank-line delimited, not mid-line): drop oldest Recent decisions block first, then oldest Open questions. Emit `_[...truncated N oldest decisions]_` marker when truncation fires. Relevant surfaces never truncated. Soft-guard missing files with `[ -f ... ]` checks. |
+| T5.1.3 | SessionStart re-injection + deterministic preamble compat | **TECH-522** | Draft | Extend `tools/scripts/claude-hooks/session-start-prewarm.sh` (Stage 3.1 T3.1.1): after deterministic preamble block + `---` separator, if `-f .claude/context-pack.md` AND pack `ts` header <24 h old, then `cat .claude/context-pack.md`. Stale pack (>24 h) → stderr warning `stale context pack ({age_hours} h old); regenerate via /pack-context`, no stdout emission. Missing pack → silent, no stdout or stderr. Platform-agnostic ts parsing (macOS BSD `date -jf` + GNU `date -d` fallback). Placement in volatile suffix preserves Stage 3.1 D2 deterministic prefix cacheability — verify via diff of two runs. Document re-injection contract in `docs/agent-led-verification-policy.md` §Session continuity (extend sub-section first added by Stage 3.1 T3.1.4). |
+| T5.1.4 | Re-orientation integration test + validate:all | **TECH-523** | Draft | Manual integration test per protocol in extensions doc §5 T3.3.4 §Examples: start session on filed task → 2 Read + 2 Edit on 4 distinct source files → `/compact` → inspect `.claude/context-pack.md` (Active focus populated; Relevant surfaces lists all 4 files; ≥1 Recent decision; Last tool outputs lists last 4 actions); resume session (new terminal) → verify SessionStart preamble includes pack content; ask agent "what are you working on?" → confirm model cites active task + stage + ≥2 relevant surfaces with **zero** Read calls on source files before first answer. Screenshot + tool-call log evidence linked in task Verification block. `docs/agent-led-verification-policy.md` §Session continuity updated with full re-injection contract (≥3-line paragraph). `npm run validate:all` green. |
 
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -1567,9 +1573,21 @@
       5. Stage 5.1 closeout unblocked.
 ```
 
-### §Plan Fix — PASS (no drift)
+#### §Plan Fix — PASS (no drift)
 
 <!-- plan-review verdict — 2026-04-20 — Stage 5.1 (TECH-520/521/522/523) — 12/12 checks pass; downstream continue. -->
+
+#### §Stage Audit
+
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+
+_pending — populated by `/audit {{this-doc}} Stage {{N.M}}` once all Tasks reach Done post-verify._
+
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify. Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N.M}}` planner pass when all Tasks reach `Done`._
 
 ---
 

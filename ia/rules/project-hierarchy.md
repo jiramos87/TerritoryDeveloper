@@ -11,6 +11,8 @@ alwaysApply: true
 
 Two levels, loosely bound. All orchestrator docs + project specs use this shape.
 
+**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../projects/MASTER-PLAN-STRUCTURE.md) — file shape, Stage block shape, 5-column Task table schema, Status enums, lifecycle flip matrix. Every authoring skill cites that doc. This file covers the hierarchy + cardinality contract; MASTER-PLAN-STRUCTURE.md covers the written section shape.
+
 | Level | Definition | Materialization | Lifecycle |
 |-------|-----------|-----------------|-----------|
 | **Stage** | Shippable compilable increment (merged PRs) authored as a `### Stage N.M` block in a master plan; carries Exit + Tasks subsections | Authored at `master-plan-new` time; refined later by `master-plan-extend` / `stage-decompose` | Permanent in orchestrator; flips `Draft → In Review → In Progress → Final` over its lifetime |

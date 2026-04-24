@@ -30,6 +30,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Opus pair-head (seam #2). Loads shared Stage context once; reads orchestrator Stage block; gates cardinality; batch-verifies Depends-on ids; emits `§Stage File Plan` tuple list under Stage block in master plan. Pair-tail [`stage-file-apply`](../stage-file-apply/SKILL.md) materializes tuples without re-querying MCP.
 
+**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative. Stage heading H3 `### Stage N.M`; 5-col Task table `| Task | Name | Issue | Status | Intent |` (no Phase column); 4 Stage subsections (`#### §Stage File Plan` / `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan`). Legacy H4 Stage + Phase column + Skeleton status retired.
+
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #2, §Escalation rule, §Tier 2 bundle reuse.
 Sibling pair-tail: [`stage-file-apply/SKILL.md`](../stage-file-apply/SKILL.md).
 Mode-routing: [`stage-file/SKILL.md`](../stage-file/SKILL.md) — File mode routes here; Compress mode routes to [`stage-compress`](../stage-compress/SKILL.md).
@@ -74,7 +76,7 @@ Store returned payload as **shared context block**: `{glossary_anchors, router_d
 
 ## Phase 1 — Read Stage block + cardinality gate
 
-1. Read `ORCHESTRATOR_SPEC`. Locate `#### Stage {STAGE_ID}` block. Extract: Objectives, Exit criteria, Task table rows.
+1. Read `ORCHESTRATOR_SPEC`. Locate `### Stage {STAGE_ID}` block (H3 canonical per [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)). Legacy `#### Stage` (H4) accepted as drift — emit warning "Legacy H4 Stage heading detected — re-author via /master-plan-extend to canonical H3"; continue. Extract: Objectives, Exit criteria, Task table rows.
 2. Classify mode from Task status counts (same logic as `stage-file` mode detection):
    - **File mode** (≥1 `_pending_` task, 0 `Draft` tasks) → continue.
    - **Compress mode** (0 `_pending_`, ≥1 `Draft`) → STOP; instruct caller to route to [`stage-compress`](../stage-compress/SKILL.md).
@@ -149,12 +151,12 @@ Fields:
 
 ## Phase 4 — Write `§Stage File Plan` to master plan
 
-Write the tuple list under the target Stage block in `ORCHESTRATOR_SPEC`. Operation = `insert_after` targeting anchor `task_key:T{STAGE_ID}` (last task row in stage) or `#### Stage {STAGE_ID}` heading if no tasks exist yet.
+Write the tuple list under the target Stage block in `ORCHESTRATOR_SPEC`. Operation = `insert_after` targeting anchor `task_key:T{STAGE_ID}` (last task row in stage) or `### Stage {STAGE_ID}` heading if no tasks exist yet.
 
 Section format:
 
 ```markdown
-### §Stage File Plan
+#### §Stage File Plan
 
 <!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
 
@@ -169,7 +171,7 @@ Section format:
 ```
 
 After writing, scan `ORCHESTRATOR_SPEC` to confirm:
-- `### §Stage File Plan` heading exists under Stage block.
+- `#### §Stage File Plan` heading exists under Stage block (H4 subsection, sibling of `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan` per canonical master-plan shape).
 - Count of tuples = count of `pending_tasks[]`.
 - Each tuple has all 7 required keys (`reserved_id`, `title`, `priority`, `notes`, `depends_on`, `related`, `stub_body`).
 
@@ -204,3 +206,5 @@ Next: claude-personal "/stage-file-apply {ORCHESTRATOR_SPEC} {STAGE_ID}"
 ## §Changelog emitter
 
 ## Changelog
+
+- **2026-04-24** — Align with canonical master-plan shape ([`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md)). Phase 1 Stage heading lookup = H3 `### Stage {STAGE_ID}` (H4 accepted as legacy drift with warning). Phase 4 anchor fallback = `### Stage {STAGE_ID}`. `§Stage File Plan` subsection = H4 `####` (sibling of `#### §Plan Fix` / `#### §Stage Audit` / `#### §Stage Closeout Plan`). Added canonical-shape reference paragraph at top.
