@@ -19,6 +19,7 @@ Reference:
 
 from .iso_bush import iso_bush
 from .iso_cube import iso_cube
+from .iso_fence import iso_fence
 from .iso_grass_tuft import iso_grass_tuft
 from .iso_ground_diamond import iso_ground_diamond
 from .iso_ground_noise import iso_ground_noise
@@ -33,6 +34,7 @@ from .iso_tree_fir import iso_tree_fir
 __all__ = [
     "iso_bush",
     "iso_cube",
+    "iso_fence",
     "iso_grass_tuft",
     "iso_ground_diamond",
     "iso_ground_noise",
