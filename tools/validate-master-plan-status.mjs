@@ -182,7 +182,9 @@ function parsePlan(filePath) {
     // Top-level ## section headers (e.g. "## Steps", "## Decision Log")
     // But NOT "## Step N" which is a step heading in some plans (blip uses h2 for post-MVP steps)
     if (/^##\s+/.test(stripped) && !stripped.startsWith("###") && !/^##\s+Step\s+\d/.test(stripped)) {
-      if (/^##\s+Steps/.test(stripped)) {
+      if (/^##\s+(Steps|Stages)\b/.test(stripped)) {
+        // Accept both "## Steps" (canonical per template) and "## Stages"
+        // (web-platform-master-plan uses this — plan has no Step layer).
         inStepsSection = true;
       } else if (inStepsSection) {
         // Leaving the Steps section (e.g. ## Decision Log, ## Deferred decomposition)

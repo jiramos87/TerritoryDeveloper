@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-22 (Stage 24 Done — TECH-630…TECH-633 closeout)
 >
-> **Status:** MVP Done 2026-04-17 — Steps 1–4 + 6 Final. Step 5 Done 2026-04-17 but architecture outputs (Drizzle schema, `/api/auth/*` stubs, auth middleware + login page, `DASHBOARD_AUTH_SKIP` bypass) retired 2026-04-22 per architecture audit (`docs/architecture-audit-change-list-2026-04-22.md`); Postgres driver swapped from `@neondatabase/serverless` to `postgres`-js. Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.
+> **Status:** In Progress — MVP Done 2026-04-17 (Steps 1–4 + 6 Final; Step 5 Done but architecture outputs retired 2026-04-22 per `docs/architecture-audit-change-list-2026-04-22.md`; Postgres driver swapped `@neondatabase/serverless` → `postgres`-js). Post-MVP extensions tracked in `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` + `/master-plan-extend` Step 7+.
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions companion doc: `docs/web-platform-post-mvp-extensions.md` (seeded §1 rollout completion view + §§2–7 deferred stubs).
 >

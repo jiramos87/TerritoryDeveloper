@@ -28,6 +28,10 @@
 
 > **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/author` (`plan-author`) → `In Review`; `/implement` → `In Progress`; the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode `stage-closeout`) → task rows `Done (archived)` + stage `Final` + stage-level rollup.
 
+## Step 1 — DSP foundations + audio infra
+
+**Status:** Final
+
 ### Stage 1 — DSP foundations + audio infra / Audio infrastructure + persistent bootstrap
 
 **Status:** Final
@@ -142,6 +146,10 @@
 
 **Backlog state (Step 1):** All Step 1 task rows stay in this doc as `_pending_`. File BACKLOG rows + project specs when parent stage → `In Progress` via `stage-file` skill. Stages 2.x + 3.x task decomposition deferred until Step 2 + Step 3 open.
 
+## Step 2 — Bake + facade + PlayMode smoke
+
+**Status:** Final
+
 ### Stage 5 — Bake + facade + PlayMode smoke / Bake-to-clip pipeline
 
 **Status:** Done — TECH-159 / TECH-160 / TECH-161 / TECH-162 Done (archived) 2026-04-15
@@ -248,6 +256,10 @@
 | T8.2 | Boot-scene fixture SetUp | **TECH-197** | Done (archived) | In `BlipPlayModeSmokeTests`: `[UnitySetUp] public IEnumerator SetUp()` → `SceneManager.LoadScene("MainMenu", LoadSceneMode.Single)` then `yield return null` × 2 (one frame for `Awake` cascade, one for ready flag). Assert `BlipBootstrap.Instance != null`, `Object.FindObjectOfType<BlipCatalog>().IsReady == true`. Hold catalog + player refs as private fields for per-test access. `[UnityTearDown]` unloads scene cleanly. |
 | T8.3 | Resolution + routing assertions | **TECH-198** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_AllMvpIds_ResolvesAndRoutes()` — for each `BlipId` in `{UiButtonHover, UiButtonClick, ToolRoadTick, ToolRoadComplete, ToolBuildingPlace, ToolBuildingDenied, WorldCellSelected, EcoMoneyEarned, EcoMoneySpent, SysSaveGame}`: assert `catalog.Resolve(id)` returns non-null patch ref (patchHash != 0), `catalog.MixerRouter.Get(id) != null`, `Assert.DoesNotThrow(() => BlipEngine.Play(id))`. `yield return null` once after loop to drain AudioSource.Play side-effects. |
 | T8.4 | Pool + cooldown assertions | **TECH-199** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — use a fixture `BlipId` w/ near-zero cooldown (e.g. `ToolRoadTick` 30 ms) plus one w/ long cooldown. Fire 16 rapid `BlipEngine.Play(tickId)` within one frame (no yield between) — assert no exception + `player._cursor == 0` after wrap (expose via `internal` accessor). For cooldown: fire `Play(longCooldownId)` once, immediately fire again; verify second call returns silently (track `catalog.CooldownRegistry` last-play dict didn't update, OR expose a debug counter `BlipCooldownRegistry.BlockedCount` incremented on block). |
+
+## Step 3 — Patches + integration + golden fixtures + promotion
+
+**Status:** Final
 
 ### Stage 9 — Patches + integration + golden fixtures + promotion / Patch authoring + catalog wiring
 
