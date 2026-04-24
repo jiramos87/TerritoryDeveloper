@@ -53,6 +53,7 @@ public class CursorManager : MonoBehaviour
         if (placementValidator == null)
             placementValidator = FindObjectOfType<PlacementValidator>();
         PlacementResultChanged += ApplyPreviewTint;
+        PlacementReasonChanged += OnPlacementReasonForwardToTooltip;
         Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
     }
 
@@ -340,6 +341,12 @@ public class CursorManager : MonoBehaviour
     {
         PlacementResultChanged = null;
         PlacementReasonChanged = null;
+    }
+
+    private void OnPlacementReasonForwardToTooltip(PlacementFailReason reason)
+    {
+        if (cachedUIManager == null) return;
+        cachedUIManager.ShowPlacementReasonTooltip(reason);
     }
 }
 }

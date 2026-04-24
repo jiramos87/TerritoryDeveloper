@@ -197,6 +197,16 @@ public partial class UIManager
         RequestToolbarChromeRefresh();
     }
 
+    private static readonly System.Collections.Generic.Dictionary<PlacementFailReason, string> PlacementReasonStringMap =
+        new System.Collections.Generic.Dictionary<PlacementFailReason, string>
+        {
+            { PlacementFailReason.Footprint, "Out of bounds or unsupported footprint." }, // TODO: localize
+            { PlacementFailReason.Zoning, "Wrong zone for this asset." }, // TODO: localize
+            { PlacementFailReason.Locked, "Asset locked — research required." }, // TODO: localize
+            { PlacementFailReason.Unaffordable, "Insufficient funds." }, // TODO: localize
+            { PlacementFailReason.Occupied, "Cell already occupied." }, // TODO: localize
+        };
+
     public void ShowInsufficientFundsTooltip(string itemType, int cost)
     {
         if (insufficientFundsPanel == null || insufficientFundsText == null)
@@ -256,6 +266,52 @@ public partial class UIManager
         CanvasGroup cg = insufficientFundsPanel.GetComponent<CanvasGroup>();
         if (cg != null)
             yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, PopupFadeDurationSeconds);
+        insufficientFundsPanel.SetActive(false);
+    }
+
+    public void ShowPlacementReasonTooltip(PlacementFailReason reason)
+    {
+        if (reason == PlacementFailReason.None)
+        {
+            HidePlacementReasonTooltip();
+            return;
+        }
+
+        if (insufficientFundsPanel == null || insufficientFundsText == null)
+            return;
+
+        if (!PlacementReasonStringMap.TryGetValue(reason, out string msg))
+        {
+            Debug.LogWarning($"PlacementReasonStringMap missing entry for {reason}; tooltip suppressed.");
+            HidePlacementReasonTooltip();
+            return;
+        }
+
+        if (hideTooltipCoroutine != null)
+        {
+            StopCoroutine(hideTooltipCoroutine);
+            hideTooltipCoroutine = null;
+        }
+
+        insufficientFundsText.text = msg;
+
+        CanvasGroup cg = UiCanvasGroupUtility.EnsureCanvasGroup(insufficientFundsPanel);
+        cg.blocksRaycasts = false;
+        cg.interactable = false;
+        cg.alpha = 1f;
+        insufficientFundsPanel.SetActive(true);
+    }
+
+    public void HidePlacementReasonTooltip()
+    {
+        if (hideTooltipCoroutine != null)
+        {
+            StopCoroutine(hideTooltipCoroutine);
+            hideTooltipCoroutine = null;
+        }
+
+        if (insufficientFundsPanel == null || !insufficientFundsPanel.activeSelf)
+            return;
         insufficientFundsPanel.SetActive(false);
     }
 
