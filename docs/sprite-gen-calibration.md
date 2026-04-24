@@ -99,15 +99,15 @@ Tile diamond top apex at y=31.5 on 64-high canvas. All 4 pass footprint containm
   - `composition[roof].h_px`: **6..16** (suburban preset currently 8; `vary` band 6..10 is a conservative subset).
 - `residential_heavy` class (`LEVEL_H = 16`) likely wants higher `h_px` — separate calibration axis when that class gets probed.
 
-### Sub-finding — `variants.vary.roof.h_px` dead path (BUG)
+### Sub-finding — `variants.vary.roof.h_px` dead path (FIXED in-session)
 
-While authoring the probe specs, confirmed via `sample_variant` trace that `variants.vary.roof.*` does NOT propagate to `composition[role=roof]` entries. Path `('roof', 'h_px')` is written to `out['roof']['h_px']` by `_set_deep`, but `compose_sprite` reads from the composition list, not from a top-level `roof` key. Effective roof variability today = `apply_variant` pitch jitter only (±~10% around base).
+While authoring the probe specs, confirmed via `sample_variant` trace that `variants.vary.roof.*` did NOT propagate to `composition[role=roof]` entries. Path `('roof', 'h_px')` was written to `out['roof']['h_px']` by `_set_deep`, but `compose_sprite` reads from the composition list, not from a top-level `roof` key. Effective roof variability = `apply_variant` pitch jitter only (±~10% around base).
 
-**Impact:** preset-level `variants.vary.roof.h_px: {min, max}` in `suburban_house_with_yard.yaml` is inert. `_derive_vary_from_signature` (cli.py L466) emits the same dead shape. `bootstrap-variants --from-signature` currently produces specs that look parameterized but render uniformly.
+**Impact (pre-fix):** preset-level `variants.vary.roof.h_px: {min, max}` in `suburban_house_with_yard.yaml` was inert. `_derive_vary_from_signature` (cli.py L466) emits the same shape. `bootstrap-variants --from-signature` produced specs that looked parameterized but rendered uniformly.
 
-**Fix candidate:** in `_set_deep` (or a new `_apply_vary_composition` helper), when a vary path root is `roof` / `wall` / composition-role name, route writes into the matching `composition[*]` entry instead of top-level. Covers `roof.h_px`, `roof.pitch`, `roof.axis`, future `wall.h_px`.
+**Fix applied** (`tools/sprite-gen/src/compose.py` `_set_deep`): role-aware routing — when vary path root ∈ `{wall, roof, foundation}` and `target['composition']` contains an entry with matching `role`, `_set_deep` recurses into the composition entry instead of the top-level key. Covers `roof.h_px`, `roof.pitch`, `roof.axis`, `wall.h_px`, `foundation.*`. Functional check: vary range `{6..14}` now produces h_px values 13 / 13 / 10 / 7 across 4 variants (was uniform pre-fix).
 
-**Next step:** open BUG issue via `/project-new` — "sprite-gen: `variants.vary.roof.*` / `wall.*` paths don't plumb to composition entries (dead vary path)".
+**Test state:** `pytest tools/sprite-gen/tests` = 62 pass, 1 pre-existing fail (`test_sw_anchor_shifts_west_and_south`) unrelated to this fix — caused by Axis 1's `inset=0.28` clamp collapsing SW corner anchors to center. Confirmed pre-existing via `git stash` bisect.
 
 ### Supporting helpers
 
@@ -120,4 +120,4 @@ While authoring the probe specs, confirmed via `sample_variant` trace that `vari
 - **Axis 4 — `footprint_ratio` lower bound** (at 0.25..0.30, wall-base pixel resolution).
 - **Axis 5 — `residential_heavy` / `commercial_dense` roof bounds** (LEVEL_H=16 class, taller buildings, different silhouette budget).
 - **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
-- **Prerequisite for Axes 3+5:** fix dead `variants.vary.{roof,wall}.*` plumbing so sweeps can use one spec + vary block instead of N specs.
+- **Prerequisite for Axes 3+5:** ~~fix dead `variants.vary.{roof,wall}.*` plumbing~~ — done in this session (see sub-finding above). Axes 3+5 can now use one spec + vary block.

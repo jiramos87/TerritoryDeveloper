@@ -792,7 +792,29 @@ def _axis_scope(path: tuple) -> str:
     return "geometry"
 
 
+# Composition role keys that route `variants.vary.{role}.{field}` writes
+# into matching `composition[*]` entries instead of a top-level key.
+# Without this routing those paths land on an unused `target['roof']` /
+# `target['wall']` / … dict that `compose_sprite` never reads.
+_COMPOSITION_ROLE_KEYS = frozenset({"wall", "roof", "foundation"})
+
+
 def _set_deep(target: dict, path: tuple, value) -> None:
+    if path and path[0] in _COMPOSITION_ROLE_KEYS:
+        role = path[0]
+        composition = target.get("composition")
+        if isinstance(composition, list) and len(path) >= 2:
+            field_path = path[1:]
+            applied = False
+            for entry in composition:
+                if isinstance(entry, dict) and entry.get("role") == role:
+                    _set_deep(entry, field_path, value)
+                    applied = True
+            if applied:
+                return
+        # Fall through to generic top-level write when no matching role
+        # entry exists (back-compat + keeps non-composition paths working).
+
     cursor = target
     for key in path[:-1]:
         sub = cursor.get(key)
