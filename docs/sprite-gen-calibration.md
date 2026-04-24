@@ -196,3 +196,117 @@ Same shape as the roof/wall dead-plumb fixed earlier in-session, but requires *l
 - **Axis 5 — `residential_heavy` / `commercial_dense` / industrial bounds** (LEVEL_H=16 class, taller buildings, different silhouette budget — now with Axis 4 upper-ratio evidence that 0.75..0.95 reads as industrial).
 - **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
 - **Follow-up fix:** plumb `variants.vary.footprint_ratio.{w,d}` into `building.footprint_ratio` list (companion to the roof/wall/foundation plumbing fix).
+
+---
+
+## Axis 3 — Palette variation across variants (residential_small 1×1)
+
+**Date:** 2026-04-24
+**Spec:** `tools/sprite-gen/specs/demo_palette_variation.yaml` — 6 variants, `seed_scope: palette`, geometry constants (footprint_ratio 0.45, pitch 0.5, h_px 8, seed 11).
+**Vary block:**
+- `variants.vary.wall.material.values: [wall_brick_red, wall_brick_grey, concrete]`
+- `variants.vary.roof.material.values: [roof_tile_brown, roof_tile_grey, mustard_industrial]`
+- `variants.vary.ground.material.values: [grass_flat, grass_dense, dirt]`
+
+**Surface:** `src/compose.py` (`sample_variant`, `_axis_scope`, `_set_deep`, `_COMPOSITION_ROLE_KEYS`) + `palettes/residential.json` + new `src/inspect.py` palette metrics.
+
+### Hypothesis
+
+Earlier Axis 2 session fixed `_set_deep` composition-role routing (`wall.material` → `composition[*].material`). Axis 3 probes whether palette actually varies across variants under `seed_scope: palette`, and whether `inspect.py` can mechanically detect palette diversity (current verdict keyed on geometry — pixel spread + bbox shift — which stays 0 under palette-only vary).
+
+### Probe run — pre-fix
+
+6 renders produced only **2 distinct palette sigs** across 6 variants (expected 3×3×3 combinations, seed-driven sampling). Ground varied (4 distinct ground sigs). Wall + roof never varied.
+
+### Dead-plumb triage (2×2 matrix)
+
+| Sampled values distinct? | Rendered palettes distinct? | Root cause |
+|---|---|---|
+| Wall/roof: **No** | No | Plumbing bug |
+
+Trace via inline `sample_variant` driver:
+```
+v01: wall=wall_brick_red roof=roof_tile_brown ground=grass_flat
+v02: wall=wall_brick_red roof=roof_tile_brown ground=grass_dense
+...  (wall + roof NEVER change)
+```
+
+Root cause: `_axis_scope(('wall','material'))` returned `"geometry"`. Spec had `seed_scope: "palette"`. Active check `scope in ("palette+geometry",) or scope == axis_scope` → `"palette" == "geometry"` false → wall/roof axes skipped. Only ground (handled separately in `_apply_vary_ground`) varied.
+
+**Third dead-plumb of the calibration sweep** (first: roof/wall `_set_deep` routing; second: footprint_ratio list-index routing, still unfixed; third: this one).
+
+### Fix #1 (code) — `_axis_scope` composition-role material classification
+
+```python
+# src/compose.py
+def _axis_scope(path):
+    ...
+    last = path[-1]
+    if any(last.startswith(p) for p in ("color", "hue", "value", "tint")):
+        return "palette"
+    # NEW — composition-role material vary routes into composition[*].material
+    # via _COMPOSITION_ROLE_KEYS; classify as palette so seed_scope=palette
+    # actually samples wall.material / roof.material / foundation.material.
+    if root in _COMPOSITION_ROLE_KEYS and last in ("material", "materials"):
+        return "palette"
+    return "geometry"
+```
+
+Post-fix probe: **5 distinct palette sigs / 4 distinct ground sigs** across 6 variants (one RNG collision v02↔v03 — acceptable). `min_building_jaccard: 0.0` → palettes fully disjoint when they differ.
+
+### Probe run — post-plumbing-fix, pre-palette-data-fix
+
+User visual flagged v01 + v04 showing **green walls** despite `concrete` being sampled. Expected concrete to be grey.
+
+### Dead-plumb triage (re-run on visual mismatch)
+
+| Sampled values distinct? | Rendered palettes distinct? | Root cause |
+|---|---|---|
+| Yes | Yes (plumbing OK) | Data bug — palette JSON mislabeled |
+
+Inspection of `palettes/residential.json`:
+- `concrete` → RGB `(127,228,58)` / `(106,190,48)` / `(64,114,29)` — bright **green**, not grey
+- `wall_brick_red` → `(235,214,194)` / `(196,178,162)` / `(118,107,97)` — **cream/beige**, not red
+
+### Fix #2 (data) — `palettes/residential.json`
+
+- `concrete` → grey triplet `(180,180,180)` / `(140,140,140)` / `(85,85,85)`
+- `wall_brick_red` → brick-red triplet `(200,90,70)` / `(160,65,50)` / `(110,40,30)`
+
+Post-data-fix probe verdict: **user accepted all 6 variants** — "no green found in walls".
+
+### Metric stack extension — `src/inspect.py`
+
+Added palette-variation metrics alongside existing geometry check:
+
+- Per-variant palette extraction during pixel scan — building pixels vs ground pixels (heuristic: green-dominant RGB → ground).
+- `palette.sig` / `palette.building_sig` / `palette.ground_sig` — SHA-1 hash of sorted unique-color set, 12-hex-char truncated. Fast equality check across variants.
+- `_jaccard(a, b)` — set similarity for min-jaccard pair analysis.
+- Aggregate `variation.palette.{distinct_total_sigs, distinct_building_sigs, distinct_ground_sigs, min_building_jaccard, min_ground_jaccard, verdict}`.
+- Overall batch `variation.verdict = "pass"` if **geometry OR palette** varies (old check was geometry-only → false-negatives on palette-only vary).
+
+Jaccard threshold: < 0.9 → palettes varied. Distinct-sig > 1 also flips verdict.
+
+### Final metrics — Axis 3 accepted run
+
+```
+distinct_total_sigs: 5 / 6
+distinct_building_sigs: 5 / 6
+distinct_ground_sigs: 4 / 6
+min_building_jaccard: 0.0    (disjoint when they differ)
+verdict: pass
+```
+
+### Lessons
+
+- **Third plumbing fix in the same seam** (`sample_variant` dispatch). Pattern: any new `_COMPOSITION_ROLE_KEYS` entry needs mirrored `_axis_scope` classification for `material` / `materials`. Add an audit test that asserts `_axis_scope((role, 'material'))` == `"palette"` for every role in `_COMPOSITION_ROLE_KEYS`.
+- **Palette JSON data can mislead for a long time.** Color names are not validated against their RGB triplets. Other entries in `palettes/residential.json` that look suspect post-hoc: `roof_tile_brown` is actually red `(232,90,90)`, `roof_tile_grey` is actually dark red `(154,56,56)`, `trim` is green `(71,130,30)`. Not fixed this session — flag for a follow-up naming-vs-color pass.
+- **Agent visual check (inline PNG read) catches data bugs that metric passes.** Plumbing verdict = pass + data wrong = user sees green walls. Metric stack alone insufficient without agent or human visual pass.
+
+### Next calibration candidates (refreshed)
+
+- **Axis 5 — `residential_heavy` / `commercial_dense` / industrial bounds** (LEVEL_H=16 class, taller silhouette, different roof pitch budget — Axis 4 confirmed upper-ratio 0.75..0.95 reads as industrial).
+- **Axis 6 — Multi-tile slot grammar** (`tiled-row-N`, `tiled-column-N`) — separate multi-tile calibration helper needed.
+- **Palette naming-vs-color audit** — sweep `palettes/*.json`, flag names that don't match their mid-RGB hue (e.g. `roof_tile_brown` = red, `trim` = green, `roof_tile_grey` = red).
+- **Follow-up fix (carried from Axis 4):** plumb `variants.vary.footprint_ratio.{w,d}` into `building.footprint_ratio` list (second dead-plumb, still open).
+- **New skill available:** `/sprite-gen-calibrate-axis {AXIS}` (`ia/skills/sprite-gen-calibrate-axis/SKILL.md`) codifies this cycle — probes → render+inspect → agent visual → dead-plumb triage matrix → user verdict → fix loop → doc append → axis-scoped commit. Apply to Axis 5+.

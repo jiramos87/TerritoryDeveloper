@@ -858,6 +858,11 @@ def _axis_scope(path: tuple) -> str:
     last = path[-1]
     if any(last.startswith(p) for p in ("color", "hue", "value", "tint")):
         return "palette"
+    # Composition-role material vary routes into `composition[*].material`
+    # via _COMPOSITION_ROLE_KEYS; classify as palette so seed_scope=palette
+    # actually samples wall.material / roof.material / foundation.material.
+    if root in _COMPOSITION_ROLE_KEYS and last in ("material", "materials"):
+        return "palette"
     return "geometry"
 
 
