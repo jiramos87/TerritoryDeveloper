@@ -1,6 +1,6 @@
 # Grid asset visual registry — Master Plan (Bucket 12 MVP spine)
 
-> **Status:** In Progress — Step 3 / Stage 3.2 next (Stage 3.1 closed)
+> **Status:** In Progress — Step 3 / Stage 3.3 next (Stage 3.1–3.2 closed)
 >
 > **Scope:** Postgres-backed **grid asset catalog** (identity, sprites, economy, spawn pools) as source of truth; **HTTP + MCP** for agents; **Unity boot snapshot** consumed by **`GridAssetCatalog`** (no new singleton — Inspector + `FindObjectOfType` per `unity-invariants` #4); **Zone S** first consumer via **`ZoneSubTypeRegistry`** convergence; **`PlacementValidator`** owns place-here legality; **`wire_asset_from_catalog`** bridge kind for design-system-safe Control Panel wiring; export + import hygiene + IA scene contract. **Out:** sprite-gen composition logic (Bucket 5), deep sim rules beyond catalog reads, `web/` dashboard product UI (Bucket 9 transport only — this plan adds `/api/catalog/*` on the existing Next app). Post-MVP extensions → recommend `docs/grid-asset-visual-registry-post-mvp-extensions.md` (not authored by this workflow).
 >
@@ -1060,9 +1060,9 @@ mechanicalization_score:
 
 ### Step 3 — Placement validator + save semantics + sprite GC
 
-**Status:** In Progress (Stage 3.1 done; Stages 3.2–3.3 still _pending_)
+**Status:** In Progress (Stages 3.1–3.2 done; Stage 3.3 still _pending_)
 
-**Backlog state (Step 3):** Stage 3.1 done (**TECH-688**..**TECH-692** archived); Stages 3.2–3.3 still _pending_
+**Backlog state (Step 3):** Stage 3.1 done (**TECH-688**..**TECH-692** archived); Stage 3.2 done (**TECH-757**..**TECH-761** archived); Stage 3.3 still _pending_
 
 **Objectives:** Introduce **`PlacementValidator`** (new type) as **single owner** of **`CanPlace(assetId, cell, rotation)`** with structured reason codes for UX + ghosts. Extend **save DTO** to store **`asset_id`** and implement **`replaced_by`** remap on load. Add **sprite GC** janitor endpoint or SQL job per exploration §8.4 point 11.
 
@@ -1246,7 +1246,7 @@ mechanicalization_score:
 
 #### Stage 3.2 — Ghost + tooltip integration
 
-**Status:** In Progress — 2026-04-24 (5 tasks filed: **TECH-757**..**TECH-761**)
+**Status:** Done — 2026-04-24 (5 tasks closed: **TECH-757**..**TECH-761**)
 
 **Objectives:** Preview flows set **green/red** tint from validator; tooltips show **reason** string; **`GridManager`** hit-test contract unchanged.
 
@@ -1256,18 +1256,18 @@ mechanicalization_score:
 
 **Phases:**
 
-- [ ] Phase 1 — Cursor / preview hook.
-- [ ] Phase 2 — Tooltip + UX polish pass.
+- [x] Phase 1 — Cursor / preview hook.
+- [x] Phase 2 — Tooltip + UX polish pass.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T3.2.1 | Wire ghost preview to validator | 1 | **TECH-757** | Draft | `CursorManager` or dedicated preview helper calls **`CanPlace`** each move; throttle if needed (no per-frame `FindObjectOfType`). |
-| T3.2.2 | Valid tint path | 1 | **TECH-758** | Draft | Reuse existing sprite tint utilities; ensure **sortingOrder** unaffected. |
-| T3.2.3 | Invalid tint path | 1 | **TECH-759** | Draft | Red tint + reason propagation to UI layer. |
-| T3.2.4 | Tooltip reason string | 2 | **TECH-760** | Draft | `UIManager` or local tooltip controller shows **human-readable** mapping from enum. |
-| T3.2.5 | Play Mode smoke checklist | 2 | **TECH-761** | Draft | Document scenario steps for verify-loop; no automated Play test required if policy says manual — state explicitly. |
+| T3.2.1 | Wire ghost preview to validator | 1 | **TECH-757** | Done | `CursorManager` or dedicated preview helper calls **`CanPlace`** each move; throttle if needed (no per-frame `FindObjectOfType`). |
+| T3.2.2 | Valid tint path | 1 | **TECH-758** | Done | Reuse existing sprite tint utilities; ensure **sortingOrder** unaffected. |
+| T3.2.3 | Invalid tint path | 1 | **TECH-759** | Done | Red tint + reason propagation to UI layer. |
+| T3.2.4 | Tooltip reason string | 2 | **TECH-760** | Done | `UIManager` or local tooltip controller shows **human-readable** mapping from enum. |
+| T3.2.5 | Play Mode smoke checklist | 2 | **TECH-761** | Done | Document scenario steps for verify-loop; no automated Play test required if policy says manual — state explicitly. |
 
 ### §Stage File Plan
 
