@@ -1,20 +1,18 @@
 /**
  * MCP tool: runtime_state — read / merge-write shared repo runtime state
- * (ia/state/runtime-state.json) under flock via tools/scripts/runtime-state-write.sh.
+ * via Postgres `ia_runtime_state` (singleton row, id=1).
  *
  * Harness-agnostic: Cursor / Claude Code / any MCP client. Active task / stage live in
- * per-harness active-session JSON — not this file.
+ * per-harness active-session JSON — not this row.
+ *
+ * DB-primary as of Step 9.6.5 (2026-04-24). Replaces ia/state/runtime-state.json
+ * + tools/scripts/runtime-state-write.sh flock script.
  */
 
 import { z } from "zod";
-import { readFileSync, existsSync, writeFileSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { randomBytes } from "node:crypto";
-import { spawnSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { getIaDatabasePool } from "../ia-db/pool.js";
 
 const PATCH_KEYS = [
   "last_verify_exit_code",
@@ -22,17 +20,26 @@ const PATCH_KEYS = [
   "queued_test_scenario_id",
 ] as const;
 
+type PatchKey = (typeof PATCH_KEYS)[number];
+
 const inputShape = {
   action: z
     .enum(["read", "write"])
-    .describe('Read full JSON, or merge-write a patch ("write").'),
+    .describe('Read full row, or merge-write a patch ("write").'),
   patch: z
     .record(z.string(), z.unknown())
     .optional()
     .describe(
-      'For action "write": shallow merge keys (last_verify_exit_code, last_bridge_preflight_exit_code, queued_test_scenario_id). updated_at is set automatically.',
+      'For action "write": shallow merge keys (last_verify_exit_code, last_bridge_preflight_exit_code, queued_test_scenario_id). updated_at set automatically.',
     ),
 };
+
+interface RuntimeStateRow {
+  last_verify_exit_code: number | null;
+  last_bridge_preflight_exit_code: number | null;
+  queued_test_scenario_id: string | null;
+  updated_at: Date | string;
+}
 
 function jsonResult(payload: unknown) {
   return {
@@ -45,36 +52,8 @@ function jsonResult(payload: unknown) {
   };
 }
 
-function buildScriptEnv(repoRoot: string): NodeJS.ProcessEnv {
-  const homebrew =
-    "/opt/homebrew/opt/util-linux/bin:/opt/homebrew/opt/util-linux/sbin";
-  const existing = process.env.PATH ?? "";
-  return {
-    ...process.env,
-    REPO_ROOT: repoRoot,
-    PATH: existing.includes("util-linux") ? existing : `${homebrew}:${existing}`,
-  };
-}
-
-function readStateFile(repoRoot: string): { ok: true; data: unknown } | { ok: false; code: string; message: string } {
-  const p = join(repoRoot, "ia/state/runtime-state.json");
-  if (!existsSync(p)) {
-    return { ok: true, data: null };
-  }
-  try {
-    const raw = readFileSync(p, "utf8");
-    return { ok: true, data: JSON.parse(raw) as unknown };
-  } catch (e) {
-    return {
-      ok: false,
-      code: "RUNTIME_STATE_READ_FAILED",
-      message: e instanceof Error ? e.message : String(e),
-    };
-  }
-}
-
 function validatePatch(patch: Record<string, unknown>): string | null {
-  const bad = Object.keys(patch).filter((k) => !PATCH_KEYS.includes(k as (typeof PATCH_KEYS)[number]));
+  const bad = Object.keys(patch).filter((k) => !PATCH_KEYS.includes(k as PatchKey));
   if (bad.length) return `Invalid patch keys: ${bad.join(", ")}. Allowed: ${PATCH_KEYS.join(", ")}`;
   for (const k of PATCH_KEYS) {
     if (!(k in patch)) continue;
@@ -83,36 +62,23 @@ function validatePatch(patch: Record<string, unknown>): string | null {
       if (v !== null && typeof v !== "string") return `${k} must be string or null`;
       continue;
     }
-    if (typeof v !== "number" || !Number.isInteger(v)) return `${k} must be integer`;
+    if (v !== null && (typeof v !== "number" || !Number.isInteger(v))) {
+      return `${k} must be integer or null`;
+    }
   }
   return null;
 }
 
-function writeState(repoRoot: string, patch: Record<string, unknown>): { ok: true } | { ok: false; code: string; stderr: string } {
-  const script = join(repoRoot, "tools/scripts/runtime-state-write.sh");
-  const patchFile = join(tmpdir(), `rs-patch-${randomBytes(8).toString("hex")}.json`);
-  writeFileSync(patchFile, JSON.stringify(patch), "utf8");
-  try {
-    const r = spawnSync(script, [patchFile], {
-      encoding: "utf8",
-      env: buildScriptEnv(repoRoot),
-      maxBuffer: 2 * 1024 * 1024,
-    });
-    if (r.status !== 0) {
-      return {
-        ok: false,
-        code: "RUNTIME_STATE_WRITE_FAILED",
-        stderr: (r.stderr || r.stdout || "").trim() || `exit ${r.status}`,
-      };
-    }
-    return { ok: true };
-  } finally {
-    try {
-      unlinkSync(patchFile);
-    } catch {
-      /* best-effort */
-    }
-  }
+function rowToPayload(row: RuntimeStateRow): Record<string, unknown> {
+  return {
+    last_verify_exit_code: row.last_verify_exit_code,
+    last_bridge_preflight_exit_code: row.last_bridge_preflight_exit_code,
+    queued_test_scenario_id: row.queued_test_scenario_id,
+    updated_at:
+      typeof row.updated_at === "string"
+        ? new Date(row.updated_at).toISOString()
+        : row.updated_at.toISOString(),
+  };
 }
 
 export function registerRuntimeState(server: McpServer): void {
@@ -121,7 +87,7 @@ export function registerRuntimeState(server: McpServer): void {
     {
       title: "Runtime state (verify / bridge / queued scenario)",
       description:
-        "Read or merge-write ia/state/runtime-state.json (gitignored per clone). Uses flock. " +
+        "Read or merge-write ia_runtime_state singleton row in Postgres. " +
         "Patch keys: last_verify_exit_code, last_bridge_preflight_exit_code, queued_test_scenario_id.",
       inputSchema: inputShape,
     },
@@ -131,13 +97,37 @@ export function registerRuntimeState(server: McpServer): void {
         if (!parsed.success) {
           return jsonResult({ code: "invalid_input", issues: parsed.error.issues });
         }
-        const repoRoot = resolveRepoRoot();
         const { action, patch } = parsed.data;
+        const pool = getIaDatabasePool();
+        if (!pool) {
+          return jsonResult({
+            code: "db_unavailable",
+            message:
+              "ia_runtime_state requires DATABASE_URL or config/postgres-dev.json (no JSON fallback after Step 9.6.5).",
+          });
+        }
 
         if (action === "read") {
-          const r = readStateFile(repoRoot);
-          if (!r.ok) return jsonResult(r);
-          return jsonResult({ ok: true, path: "ia/state/runtime-state.json", data: r.data });
+          try {
+            const { rows } = await pool.query<RuntimeStateRow>(
+              `SELECT last_verify_exit_code, last_bridge_preflight_exit_code, queued_test_scenario_id, updated_at
+                 FROM ia_runtime_state WHERE id = 1`,
+            );
+            if (rows.length === 0) {
+              return jsonResult({
+                ok: false,
+                code: "RUNTIME_STATE_MISSING",
+                message: "ia_runtime_state row id=1 not seeded — run db:migrate.",
+              });
+            }
+            return jsonResult({ ok: true, source: "ia_runtime_state", data: rowToPayload(rows[0]) });
+          } catch (e) {
+            return jsonResult({
+              ok: false,
+              code: "RUNTIME_STATE_READ_FAILED",
+              message: e instanceof Error ? e.message : String(e),
+            });
+          }
         }
 
         if (!patch || Object.keys(patch).length === 0) {
@@ -146,12 +136,37 @@ export function registerRuntimeState(server: McpServer): void {
         const err = validatePatch(patch as Record<string, unknown>);
         if (err) return jsonResult({ code: "invalid_input", message: err });
 
-        const w = writeState(repoRoot, patch as Record<string, unknown>);
-        if (!w.ok) return jsonResult({ code: w.code, stderr: w.stderr });
-
-        const again = readStateFile(repoRoot);
-        if (!again.ok) return jsonResult(again);
-        return jsonResult({ ok: true, path: "ia/state/runtime-state.json", data: again.data });
+        const sets: string[] = [];
+        const values: unknown[] = [];
+        let i = 1;
+        for (const k of PATCH_KEYS) {
+          if (k in patch) {
+            sets.push(`${k} = $${i++}`);
+            values.push((patch as Record<string, unknown>)[k]);
+          }
+        }
+        sets.push("updated_at = now()");
+        try {
+          const { rows } = await pool.query<RuntimeStateRow>(
+            `UPDATE ia_runtime_state SET ${sets.join(", ")} WHERE id = 1
+              RETURNING last_verify_exit_code, last_bridge_preflight_exit_code, queued_test_scenario_id, updated_at`,
+            values,
+          );
+          if (rows.length === 0) {
+            return jsonResult({
+              ok: false,
+              code: "RUNTIME_STATE_MISSING",
+              message: "ia_runtime_state row id=1 not seeded — run db:migrate.",
+            });
+          }
+          return jsonResult({ ok: true, source: "ia_runtime_state", data: rowToPayload(rows[0]) });
+        } catch (e) {
+          return jsonResult({
+            ok: false,
+            code: "RUNTIME_STATE_WRITE_FAILED",
+            message: e instanceof Error ? e.message : String(e),
+          });
+        }
       });
     },
   );
