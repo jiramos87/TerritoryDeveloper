@@ -22,6 +22,12 @@ namespace Territory.Tests.EditMode.GridAsset
         public void PlacementResultChanged_FiresWithStructPayload() { Assert.Inconclusive("authored in /implement"); }
 
         [Test]
+        public void ValidResult_AppliesGreenTint_PreservesSortingOrder() { Assert.Inconclusive("authored in /implement (TECH-758)"); }
+
+        [Test]
+        public void ValidResult_Idempotent_OneColorWritePerTransition() { Assert.Inconclusive("authored in /implement (TECH-758)"); }
+
+        [Test]
         public void OnDestroy_ClearsSubscribers_NoStaleFanout() { Assert.Inconclusive("authored in /implement"); }
     }
 }

@@ -35,6 +35,11 @@ public class CursorManager : MonoBehaviour
     private Camera cachedMainCamera;
     private UIManager cachedUIManager;
 
+    private enum PreviewTintState { None, Valid, Invalid }
+    private PreviewTintState _lastTintState = PreviewTintState.None;
+    private Color _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
+    private static readonly Color PreviewTintGreen = new Color(0.4f, 1f, 0.4f, 0.5f);
+
     void Start()
     {
         hotSpot = Vector2.zero;
@@ -45,6 +50,7 @@ public class CursorManager : MonoBehaviour
         cachedUIManager = FindObjectOfType<UIManager>();
         if (placementValidator == null)
             placementValidator = FindObjectOfType<PlacementValidator>();
+        PlacementResultChanged += ApplyPreviewTint;
         Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
     }
 
@@ -106,9 +112,11 @@ public class CursorManager : MonoBehaviour
 
             if (spriteRenderer != null)
             {
-                spriteRenderer.color = new Color(1, 1, 1, 0.5f); // Set transparency
+                _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
+                spriteRenderer.color = _originalPreviewColor; // Set transparency
                 // Set a high sorting order to ensure preview appears on top
                 spriteRenderer.sortingOrder = 10000;
+                _lastTintState = PreviewTintState.None;
             }
             else
             {
@@ -157,7 +165,12 @@ public class CursorManager : MonoBehaviour
                     previewInstance = Instantiate(roadPrefab);
                     SpriteRenderer sr = previewInstance.GetComponent<SpriteRenderer>();
                     if (sr == null) sr = previewInstance.GetComponentInChildren<SpriteRenderer>();
-                    if (sr != null) sr.color = new Color(1, 1, 1, 0.5f);
+                    if (sr != null)
+                    {
+                        _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
+                        sr.color = _originalPreviewColor;
+                    }
+                    _lastTintState = PreviewTintState.None;
                     foreach (var col in previewInstance.GetComponentsInChildren<Collider2D>())
                         Destroy(col);
                 }
@@ -234,6 +247,22 @@ public class CursorManager : MonoBehaviour
     private bool IsPointerOverUI()
     {
         return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
+
+    private void ApplyPreviewTint(PlacementResult result)
+    {
+        if (previewInstance == null) return;
+        SpriteRenderer renderer = previewInstance.GetComponent<SpriteRenderer>();
+        if (renderer == null) renderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
+        if (renderer == null) return;
+
+        if (result.IsAllowed)
+        {
+            if (_lastTintState == PreviewTintState.Valid) return;
+            renderer.color = PreviewTintGreen;
+            _lastTintState = PreviewTintState.Valid;
+        }
+        // Invalid branch authored in TECH-759.
     }
 
     private Texture2D GetScaledBulldozerTexture()
