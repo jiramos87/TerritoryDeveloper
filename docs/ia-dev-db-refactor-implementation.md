@@ -60,17 +60,29 @@ slices_via: none
 - Audit column names (`created_at`, `updated_at`, `actor` — choose convention consistent with existing Unity-bridge tables).
 - Migration file naming (timestamp convention — match existing chain).
 
-**Findings (implementer fills after green):**
+**Findings (2026-04-24 — step 1 applied):**
 
-```
-- Migration file path:
-- Tables created (count + names):
-- Enum values chosen + rationale:
-- FK cascade policy + rationale:
-- Index build timing + size estimate:
-- Seed values for sequences:
-- Surprises / gotchas:
-```
+- **Migration file path:** `db/migrations/0015_ia_tasks_core.sql` (naming: `NNNN_{snake_case}.sql` per existing chain; next free slot was 0015).
+- **Tables created (9 new):** `ia_master_plans`, `ia_stages`, `ia_tasks`, `ia_task_deps`, `ia_task_spec_history`, `ia_task_commits`, `ia_stage_verifications`, `ia_ship_stage_journal`, `ia_fix_plan_tuples`. Existing `ia_project_spec_journal` (migration 0007) unchanged — Stage 2 import will bridge journal rows into the new `ia_ship_stage_journal` shape or retain separately (TBD).
+- **Enum types chosen:** `task_status` (`pending|implemented|verified|done|archived` — matches ship-stage lifecycle), `stage_status` (`pending|in_progress|done`), `stage_verdict` (`pass|fail|partial`), `ia_task_dep_kind` (`depends_on|related` — F3 unified join table with discriminator rather than two separate tables; reduces surface, keeps same index locality).
+- **FK cascade policy:**
+  - `ia_stages.slug` → `ia_master_plans.slug` = **CASCADE** (plan retire drops stages).
+  - `ia_tasks (slug, stage_id)` → `ia_stages (slug, stage_id)` = **RESTRICT + DEFERRABLE INITIALLY DEFERRED** (tasks protect stages; deferral lets import re-seat rows inside one tx).
+  - `ia_task_deps.task_id` → `ia_tasks.task_id` = **CASCADE**; `depends_on_id` = **RESTRICT** (don't silently drop outgoing edges).
+  - `ia_task_spec_history.task_id` = **CASCADE** (history dies with task).
+  - `ia_task_commits.task_id` = **CASCADE**.
+  - `ia_stage_verifications (slug, stage_id)` = **CASCADE**.
+  - `ia_ship_stage_journal.task_id` = **RESTRICT** (journal is append-only; preserves forensic trail).
+  - `ia_fix_plan_tuples.task_id` = **CASCADE** (ephemeral tuples).
+- **Indexes built (25 on new tables):** `ia_tasks` — GIN `body_tsv` + GIN `body gin_trgm_ops` + btree `(slug, stage_id)`, `status`, `prefix`, `updated_at DESC`; `ia_task_deps` — reverse-lookup btree on `depends_on_id` + kind; `ia_ship_stage_journal` — session timeline + task + stage + payload_kind; `ia_fix_plan_tuples` — partial indexes on `applied_at IS NULL` (active tuples) + `applied_at IS NOT NULL` (expiry sweep target). Build was instant on empty tables — remeasure after Step 2 bulk-load.
+- **Seed values (sequences, from `ia/state/id-counter.json` snapshot 2026-04-24):** `tech_id_seq` = 777, `feat_id_seq` = 54, `bug_id_seq` = 59, `art_id_seq` = 5, `audio_id_seq` = 2. Each `nextval` returns that value then advances. Post-smoke rewind applied (`setval(..., seed, false)`) so Step 2 import sees pristine counter state.
+- **Extensions:** `pg_trgm` created idempotently (first use in repo DB; Unity-bridge tables unaffected).
+- **Concurrency primitive choices (F10):** deferred to Step 4 (mutation tools). Schema carries no triggers yet — history writes + advisory-lock semantics land alongside the tools that need them.
+- **Surprises / gotchas:**
+  1. `expires_at timestamptz GENERATED ALWAYS AS (applied_at + interval '30 days') STORED` was rejected — Postgres considers `timestamptz + interval` non-immutable because `session_timezone` can shift the result. Resolution: dropped the generated column; TTL is computed in the query layer (`applied_at + interval '30 days'`). Index on `applied_at IS NOT NULL` covers the expiry sweep.
+  2. `SELECT setval('seq', value, false)` with `false` = next `nextval` returns `value`. Verified `last_value=777, is_called=f` → first `nextval` will return 777 (= TECH-777 = first unused id). id-counter.json shows `TECH: 776` as the **last used**; seed is correct.
+  3. `ia_project_spec_journal` from migration 0007 coexists under a different ownership (role `javier`) than the new `ia_*` tables (role `postgres`). Does not block schema but may surface during import; Step 2 should explicitly bridge or sidestep.
+- **Regression check:** `npm run db:bridge-preflight` exit 0 — Unity-bridge schema unaffected.
 
 **Commit:** `feat(ia-dev-db): step 1 — DB schema foundation (ia_* tables + types + indexes)`
 
@@ -514,7 +526,7 @@ slices_via: none
 
 | Step | Status | Started | Done | Commit | Notes |
 |------|--------|---------|------|--------|-------|
-| 1 — DB schema foundation | pending | — | — | — | — |
+| 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | _pending commit_ | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
 | 2 — Import script | pending | — | — | — | — |
 | 3 — Read MCP tools | pending | — | — | — | — |
 | 4 — Write MCP tools | pending | — | — | — | — |
