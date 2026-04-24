@@ -296,16 +296,19 @@ slices_via: none
 - Journal payload schema enforcement — runtime validation (zod / ajv) or trust-but-document?
 - Rollback policy on partial failure (tx abort + re-raise, or partial commit + report?).
 
-**Findings:**
+**Findings (2026-04-24 — step 4 applied):**
 
-```
-- Tools added (names):
-- Concurrency test outcome:
-- Sequence seed + first inserted id:
-- History trigger vs tool-side write:
-- Journal schema enforcement:
-- Surprises:
-```
+- **Tools added (names):** 9 total registered in new bucket `registerIaDbWriteTools()` (`tools/mcp-ia-server/src/tools/ia-db-writes.ts`). Names: `task_insert`, `task_status_flip`, `task_spec_section_write`, `task_commit_record`, `stage_verification_flip`, `stage_closeout_apply`, `journal_append`, `fix_plan_write`, `fix_plan_consume`. Server tool count 69 → 78 (`validate:mcp-readme` green). Underlying mutation functions live in `src/ia-db/mutations.ts`; MCP wrappers are thin zod-shape + `wrapTool` envelopes that map `IaDbUnavailableError` → `db_unconfigured` + `IaDbValidationError` → `invalid_input` at the tool boundary.
+- **Concurrency test outcome:** `tests/ia-db/mutations.test.ts` exercises two parallel `task_status_flip` calls on the same row via `Promise.all([flip→implemented, flip→verified])`. Both resolve without error; final row status is one of the two targets (row-level `SELECT … FOR UPDATE` inside `withTx` serialises). Duration 36.9 ms — no deadlock, no corruption, status cleanly settled. Parallel-insert test (5× `task_insert` via `Promise.all`) produced 5 unique monotonic ids in 177.2 ms — per-prefix sequence `nextval('tech_id_seq')` handles concurrent claims without advisory locks (sequence atomicity is sufficient).
+- **Sequence seed + first inserted id:** After Step 2 import + Step 4 smoke, `tech_id_seq.last_value = 817` (post-test cleanup). Largest pre-existing `TECH-` id = 816 (from Step 2 import); first `task_insert`-reserved id during Step 4 tests was `TECH-817`. `ON CONFLICT DO NOTHING` path not needed — sequence monotonicity is authoritative. `feat_id_seq`, `bug_id_seq`, `art_id_seq`, `audio_id_seq` untouched by Step 4 (no sample inserts under those prefixes; seeded to `max(existing id) + 1` in Step 1 migration).
+- **History trigger vs tool-side write:** **Tool-side write** chosen. `mutateTaskSpecSectionWrite` wraps `BEGIN` → `SELECT body FROM ia_tasks WHERE task_id = $1 FOR UPDATE` → insert prior body into `ia_task_spec_history` → update `ia_tasks.body` with new section → `COMMIT`. Rationale (F5): explicit write inside the same tx keeps the snapshot coupled to the mutation that caused it and gives the tool control over `actor` / `change_reason` / `git_sha` metadata that a blind-trigger cannot populate. Schema carries no `BEFORE UPDATE` trigger. Round-trip test confirms both the new body and the history row are visible after commit.
+- **Journal schema enforcement:** **Trust-but-document** at payload body level. Tool-boundary validation (zod + explicit checks) enforces: `session_id` / `phase` / `payload_kind` non-empty strings, `payload` is a non-null non-array object (jsonb). Internal payload shape per `payload_kind` is NOT validated — documented in tool description + Step 12 retrospective invariant. This mirrors the design-doc F9 stance (journal as audit trail, not a typed message bus); future work can add per-`payload_kind` validators in a separate tool without schema changes.
+- **Surprises:**
+  - **Pre-existing drift in `catalog-list.ts`** unrelated to Step 4 — TS2367 (boolean-vs-number comparison) + TS2345 (zod union vs param type) were already red on HEAD. Widened `runCatalogList` input type `include_draft?: boolean | string | number` to match the zod inference that was already in the schema. Build was blocked on this; fix is a 1-line type widen + no runtime-behaviour change. Logged here cross-step because `npm run build` gate couldn't advance without it.
+  - **Test-setup schema drift** — first pass of `mutations.test.ts` inserted into `ia_master_plans` with `status` column + into `ia_stages` with `status = 'active'`. Actual 0015 schema: `ia_master_plans` has no `status`; `ia_stages.status` is `stage_status` ENUM (`pending` | `in_progress` | `done`). Fixed by dropping the column + using `'in_progress'`. Reinforces Step 3 Finding re. reading migrations before trusting design-doc shorthand.
+  - **Sandbox slug pattern** (`__test_sandbox__`) works cleanly: `before()` inserts plan + stage, `after()` cascade-deletes in FK order (deps → commits → spec_history → fix_tuples → tasks → verifications → stages → journal → master_plans). Post-test row counts confirmed zero. Real master-plan data untouched.
+  - **Latencies (local dev DB, test measurements):** `task_insert` round-trip 84.8 ms, parallel ×5 177.2 ms (~35 ms per insert steady state), `task_status_flip` concurrent 36.9 ms, `task_spec_section_write` replace + history 38.4 ms, append-when-missing 9.9 ms, `journal_append` round-trip 6.96 ms, `fix_plan_write` + `fix_plan_consume` lifecycle 73.85 ms. Well within the F1 design budget.
+  - **`fix_plan_consume` idempotency verified:** re-run on already-consumed `(task_id, round)` returns `consumed = 0` without error (partial `applied_at IS NULL` filter handles it cleanly — no need for advisory state flag).
 
 **Commit:** `feat(ia-dev-db): step 4 — write MCP tools (atomic task/stage/journal mutations)`
 
@@ -599,7 +602,7 @@ slices_via: none
 | 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
 | 2 — Import script | done | 2026-04-24 | 2026-04-24 | `b274063` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
 | 3 — Read MCP tools | done | 2026-04-24 | 2026-04-24 | `9e6ddee` | 8 DB-backed read tools wired through registerIaDbReadTools; sliceSection pure fn + unit tests; trgm retargeted body→title + migration 0016; importer linkage fix (parent_plan from frontmatter + stage from section) raised stages 254→260 |
-| 4 — Write MCP tools | pending | — | — | — | — |
+| 4 — Write MCP tools | done | 2026-04-24 | 2026-04-24 | `_pending_` | 9 DB-backed mutation tools wired via registerIaDbWriteTools; tool count 69→78; parallel 5× insert monotonic (tech_id_seq 817); concurrent status_flip serialised via SELECT FOR UPDATE; tool-side history write; journal trust-but-document; fix_plan_consume idempotent; 7 round-trip + concurrency tests green; pre-existing catalog-list.ts type drift fixed en passant |
 | 5 — BACKLOG.md generator | pending | — | — | — | — |
 | 6 — stage-file skill | pending | — | — | — | — |
 | 7 — stage-authoring skill | pending | — | — | — | — |
@@ -613,9 +616,7 @@ slices_via: none
 
 Implementers append entries here as discoveries surface that do NOT belong to a single step.
 
-```
-— empty —
-```
+- **2026-04-24 (Step 4 side-fix)** — `tools/mcp-ia-server/src/tools/catalog-list.ts` had two pre-existing TypeScript errors on HEAD (TS2367 boolean-vs-number comparison line 47; TS2345 zod-schema-vs-param type drift line 131) blocking `npm run build`. Root cause: the zod `inputSchema` already used `z.union([boolean, string, number])` for `include_draft`, but `runCatalogList`'s param signature was narrower (`include_draft?: boolean`). Fixed by widening the param type to match the schema (`boolean | string | number`). No runtime-behaviour change — the coercion at line 44 already handled all three types. Logged here because the fix was required to unblock Step 4's build gate and is unrelated to mutation-tool scope.
 
 ### 2.3 Open questions surfaced during execution
 
@@ -641,3 +642,4 @@ Implementers append entries here as discoveries surface that do NOT belong to a 
 
 - **2026-04-24** — Doc seeded on `feature/ia-dev-db-refactor` branch cut from `main @ 1563765`. All 12 steps outlined with Goal / Inputs / Outputs / Acceptance / Voids / Findings / Commit. Running log + status table initialized empty. Operating model: pure sequential, implementer fills voids + findings, no master-plan ceremony.
 - **2026-04-24** — Step 3 landed: 8 DB-backed MCP read tools (`task_state`, `stage_state`, `master_plan_state`, `task_spec_body`, `task_spec_section`, `task_spec_search`, `stage_bundle`, `task_bundle`) + pure `sliceSection` fn with unit tests + trigram re-targeted to `ia_tasks.title` (migration `0016_ia_tasks_title_trgm.sql`) + importer linkage fallbacks (`deriveParentPlanFromBody` + `deriveStageFromSection`) raising stages 254→260. All acceptance checks green, latencies <300ms.
+- **2026-04-24** — Step 4 landed: 9 DB-backed MCP mutation tools (`task_insert`, `task_status_flip`, `task_spec_section_write`, `task_commit_record`, `stage_verification_flip`, `stage_closeout_apply`, `journal_append`, `fix_plan_write`, `fix_plan_consume`) wired via `registerIaDbWriteTools()`. Server tool count 69 → 78, `validate:mcp-readme` green. Parallel 5× `task_insert` → 5 unique monotonic ids (per-prefix DB sequence, no advisory locks needed); concurrent `task_status_flip` serialised via row-level `SELECT FOR UPDATE` inside `withTx`; `task_spec_section_write` uses tool-side history write (not trigger) to capture `actor` / `change_reason` / `git_sha` alongside the snapshot; journal adopts trust-but-document stance on payload body shape (boundary validation only). 7 round-trip + concurrency + lifecycle tests green (`tests/ia-db/mutations.test.ts`). Pre-existing `catalog-list.ts` type drift fixed en passant (see §2.2).

@@ -34,7 +34,7 @@ function statusWhereClause(
 export async function runCatalogList(
   pool: Pool,
   input: {
-    include_draft?: boolean;
+    include_draft?: boolean | string | number;
     status?: string;
     category?: string;
     limit?: number;
