@@ -83,7 +83,11 @@ def _strategy_perimeter(
     fy: int,
     rng: _random_mod.Random,
 ) -> list[tuple[str, int, int, dict]]:
-    del rng
+    """Evenly-spaced border points with seeded rotation offset.
+
+    Seed determines which border index serves as the first pick so same
+    seed → identical layout, different seed → shifted layout.
+    """
     name = deco["primitive"]
     kw = deco.get("kwargs", {})
     count = int(deco.get("count", 4))
@@ -92,9 +96,10 @@ def _strategy_perimeter(
     w_px, d_px = _pixel_extent(fx, fy)
     border = _border_points(w_px, d_px)
     n = len(border)
+    offset = rng.randrange(n) if n > 0 else 0
     out: list[tuple[str, int, int, dict]] = []
     for i in range(count):
-        idx = (i * n) // count
+        idx = (offset + (i * n) // count) % n
         x, y = border[idx]
         out.append((name, int(x), int(y), dict(kw)))
     return out
