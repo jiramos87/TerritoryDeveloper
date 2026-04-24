@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 # materialize-backlog.sh
 #
-# Regenerate BACKLOG.md + BACKLOG-ARCHIVE.md from:
-#   ia/backlog/*.yaml + ia/backlog-archive/*.yaml  (issue records)
-#   ia/state/backlog-sections.json                 (section order + prose)
+# Regenerate BACKLOG.md + BACKLOG-ARCHIVE.md.
+#
+# Default source (post-Step-5 of ia-dev-db-refactor): IA Postgres DB
+#   (ia_tasks.raw_markdown) via tools/scripts/materialize-backlog-from-db.mjs.
+# Legacy source (pre-Step-5 / fallback): ia/backlog/*.yaml +
+#   ia/backlog-archive/*.yaml via tools/scripts/materialize-backlog.mjs.
+# Ordering manifests (shared by both paths):
+#   ia/state/backlog-sections.json
 #   ia/state/backlog-archive-sections.json
 #
 # Round-trip safe: diff vs pre-migration files must be whitespace-only.
 #
 # Usage:
 #   bash tools/scripts/materialize-backlog.sh [--check]
+#
+# Source selection (env):
+#   MATERIALIZE_BACKLOG_SOURCE=db        (default — DB-sourced)
+#   MATERIALIZE_BACKLOG_SOURCE=yaml      (legacy yaml path)
 #
 # --check: exit non-zero if generated output differs from on-disk files
 #          (whitespace-normalized diff).
@@ -46,10 +55,21 @@ LOCK_FILE="${REPO_ROOT}/ia/state/.materialize-backlog.lock"
 EXTRA_ARGS=()
 [ "$CHECK_MODE" = "1" ] && EXTRA_ARGS+=(--check)
 
+SOURCE="${MATERIALIZE_BACKLOG_SOURCE:-db}"
+case "$SOURCE" in
+  db)    DELEGATE="${REPO_ROOT}/tools/postgres-ia/materialize-backlog-from-db.mjs" ;;
+  yaml)  DELEGATE="${REPO_ROOT}/tools/scripts/materialize-backlog.mjs" ;;
+  *)
+    echo "ERROR: unknown MATERIALIZE_BACKLOG_SOURCE='${SOURCE}' (expected 'db' or 'yaml')" >&2
+    exit 2
+    ;;
+esac
+
 # Acquire exclusive lock to prevent concurrent materialization races.
 # Mirror the reserve-id.sh pattern: flock fd 9, then delegate.
 (
   flock -x 9
-  # Delegate to Node (handles yaml parsing + section manifest assembly)
-  node "${REPO_ROOT}/tools/scripts/materialize-backlog.mjs" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} "$@"
+  # Delegate to Node (DB-sourced by default; yaml fallback via
+  # MATERIALIZE_BACKLOG_SOURCE=yaml). Both honour --check for diff mode.
+  node "${DELEGATE}" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} "$@"
 ) 9>"${LOCK_FILE}"

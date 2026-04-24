@@ -167,10 +167,12 @@ function deriveStageFromSection(
 }
 
 function statusFromYaml(s: string): "pending" | "archived" {
-  // Yaml `closed` → archived; everything else starts as pending.
+  // ParsedBacklogIssue.status is post-normalization: yamlToIssue maps
+  // yaml `status: closed` → `"completed"`, else `"open"`. So here we
+  // flip `completed` → archived; `open` (and anything else) → pending.
   // Step 4 mutation tools manage the finer lifecycle states
   // (implemented / verified / done) going forward.
-  return s === "closed" ? "archived" : "pending";
+  return s === "completed" ? "archived" : "pending";
 }
 
 function prefixOfId(id: string): string {
@@ -217,10 +219,16 @@ async function main() {
 
   // --- load filesystem state ---------------------------------------------
 
-  const { records: allIssues, parseErrorCount } = loadAllYamlIssues(
-    REPO_ROOT,
-    "all",
-  );
+  const openResult = loadAllYamlIssues(REPO_ROOT, "open");
+  const archiveResult = loadAllYamlIssues(REPO_ROOT, "archive");
+  const parseErrorCount =
+    openResult.parseErrorCount + archiveResult.parseErrorCount;
+  // Tag each record with its source directory so the status-derivation
+  // below honours the yaml directory split even when a yaml's `status:`
+  // field disagrees (e.g. TECH-411 lives in ia/backlog-archive/ but has
+  // `status: open` — the directory is the view-split oracle).
+  const archiveIds = new Set(archiveResult.records.map((r) => r.issue_id));
+  const allIssues = [...openResult.records, ...archiveResult.records];
   console.log(
     `ia-db-import: loaded ${allIssues.length} yaml issues (parse errors: ${parseErrorCount})`,
   );
@@ -322,6 +330,7 @@ async function main() {
     type: string | null;
     notes: string | null;
     body: string;
+    raw_markdown: string | null;
     completed_at: string | null;
     archived_at: string | null;
   }
@@ -349,7 +358,13 @@ async function main() {
       );
     }
 
-    const status = statusFromYaml(iss.status);
+    // Directory is the view-split oracle (ia/backlog/ → open,
+    // ia/backlog-archive/ → archived). Falls back to yaml status field
+    // only when neither directory claims the id (defensive — shouldn't
+    // happen given loadAllYamlIssues scans both).
+    const status: "pending" | "archived" = archiveIds.has(iss.issue_id)
+      ? "archived"
+      : statusFromYaml(iss.status);
     const body = loadTaskBody(iss.issue_id);
     const slug =
       deriveSlugFromParentPlan(iss.parent_plan) ??
@@ -370,6 +385,7 @@ async function main() {
       type: iss.type ?? null,
       notes: iss.notes ?? null,
       body,
+      raw_markdown: iss.raw_markdown ?? null,
       completed_at: status === "archived" ? new Date().toISOString() : null,
       archived_at: status === "archived" ? new Date().toISOString() : null,
     });
@@ -462,8 +478,8 @@ async function main() {
       await client.query(
         `INSERT INTO ia_tasks
            (task_id, prefix, slug, stage_id, title, status, priority, type,
-            notes, body, completed_at, archived_at)
-         VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10, $11, $12)`,
+            notes, body, raw_markdown, completed_at, archived_at)
+         VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10, $11, $12, $13)`,
         [
           t.task_id,
           t.prefix,
@@ -475,6 +491,7 @@ async function main() {
           t.type,
           t.notes,
           t.body,
+          t.raw_markdown,
           t.completed_at,
           t.archived_at,
         ],
