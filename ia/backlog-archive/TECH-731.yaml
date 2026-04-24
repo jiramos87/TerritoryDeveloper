@@ -2,7 +2,7 @@ id: TECH-731
 type: TECH
 title: vary block merge rule (union + non-wipe)
 priority: high
-status: open
+status: closed
 section: Stage 6.6 — Preset system
 spec: ia/projects/TECH-731.md
 files:

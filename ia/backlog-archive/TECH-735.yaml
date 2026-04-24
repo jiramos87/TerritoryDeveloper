@@ -2,7 +2,7 @@ id: TECH-735
 type: TECH
 title: Tests — test_preset_system.py
 priority: high
-status: open
+status: closed
 section: Stage 6.6 — Preset system
 spec: ia/projects/TECH-735.md
 files:

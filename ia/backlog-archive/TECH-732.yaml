@@ -2,7 +2,7 @@ id: TECH-732
 type: TECH
 title: Seed preset — suburban_house_with_yard
 priority: medium
-status: open
+status: closed
 section: Stage 6.6 — Preset system
 spec: ia/projects/TECH-732.md
 files:
