@@ -190,6 +190,26 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
+- [ ] **TECH-858 — Cross-check `related` ids exist** — In `tools/validate-backlog-yaml.mjs`, after loading both dirs, iterate records + assert every id in `related: []` exists in the combined set (open + archive).
+  - Acceptance — In `tools/validate-backlog-yaml.mjs`, after loading both dirs, iterate records + assert every id in `related: []` exists in the combined set (open + archive).
+  - Spec — [`ia/projects/TECH-858.md`](ia/projects/TECH-858.md)
+
+- [ ] **TECH-860 — Fixtures for `related` existence check** — Add to `tools/scripts/test-fixtures/` — `related-exists-pass/` (two records, one refers to the other), `related-exists-fail/` (record refers to nonexistent id).
+  - Acceptance — Add to `tools/scripts/test-fixtures/` — `related-exists-pass/` (two records, one refers to the other), `related-exists-fail/` (record refers to nonexistent id).
+  - Spec — [`ia/projects/TECH-860.md`](ia/projects/TECH-860.md)
+
+- [ ] **TECH-861 — Enforce `depends_on_raw` non-empty** — In `validate-backlog-yaml.mjs`, reject records where `depends_on: []` is non-empty AND `depends_on_raw` is empty / missing.
+  - Acceptance — In `validate-backlog-yaml.mjs`, reject records where `depends_on: []` is non-empty AND `depends_on_raw` is empty / missing.
+  - Spec — [`ia/projects/TECH-861.md`](ia/projects/TECH-861.md)
+
+- [ ] **TECH-862 — Warn on `depends_on_raw` drift** — Warning (not error) when `depends_on_raw` mentions an id not present in `depends_on: []`.
+  - Acceptance — Warning (not error) when `depends_on_raw` mentions an id not present in `depends_on: []`.
+  - Spec — [`ia/projects/TECH-862.md`](ia/projects/TECH-862.md)
+
+- [ ] **TECH-863 — Fixtures for `depends_on_raw` checks** — Add fixtures — `depends-raw-pass/`, `depends-raw-empty-fail/`, `depends-raw-drift-warn/`.
+  - Acceptance — Add fixtures — `depends-raw-pass/`, `depends-raw-empty-fail/`, `depends-raw-drift-warn/`.
+  - Spec — [`ia/projects/TECH-863.md`](ia/projects/TECH-863.md)
+
 ## MCP lifecycle tools — Opus 4.7 audit program
 
 Orchestrator: [`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`](projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Reshapes 32-tool MCP surface from 4.6-era sequential-call shape to 4.7-era composite-bundle + structured-envelope architecture. Step 1 closed — Stage 1.1 + Stage 1.2 archived (glossary bulk-`terms`, structured `invariants_summary`, v0.6.0 release). Step 2 In Progress — Stage 2.1 archived (TECH-388..TECH-391: envelope + caller allowlist + unit tests). Stage 2.2 opened 2026-04-18 — 8 tasks filed below (TECH-398..TECH-405: wrap all 32 handlers in `wrapTool` by family — spec / rule+router / glossary / invariant / backlog / DB-coupled / bridge / Unity analysis). Step 2 exit ships as breaking release v1.0.0.

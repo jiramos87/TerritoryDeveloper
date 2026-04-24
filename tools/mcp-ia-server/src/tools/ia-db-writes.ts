@@ -119,6 +119,12 @@ export function registerTaskInsert(server: McpServer): void {
           .optional()
           .describe("Related task ids. All must exist."),
         status: STATUS_ENUM.optional().describe("Initial status (default `pending`)."),
+        raw_markdown: z
+          .string()
+          .optional()
+          .describe(
+            "Verbatim BACKLOG.md row block (checklist line + sub-bullets). Persisted to `ia_tasks.raw_markdown` (migration 0017) so the DB-sourced BACKLOG.md generator can emit byte-identical output. Omit to leave column null.",
+          ),
       },
     },
     async (args) =>
@@ -143,6 +149,7 @@ export function registerTaskInsert(server: McpServer): void {
                     | "verified"
                     | "done"
                     | "archived";
+                  raw_markdown?: string;
                 }
               | undefined,
           ) => {
@@ -173,6 +180,7 @@ export function registerTaskInsert(server: McpServer): void {
                 depends_on: input?.depends_on,
                 related: input?.related,
                 status: input?.status,
+                raw_markdown: input?.raw_markdown ?? null,
               });
             } catch (e) {
               mapDbErrors(e);
@@ -197,6 +205,7 @@ export function registerTaskInsert(server: McpServer): void {
                   | "verified"
                   | "done"
                   | "archived";
+                raw_markdown?: string;
               }
             | undefined,
         );

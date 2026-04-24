@@ -86,6 +86,14 @@ export interface TaskInsertInput {
   depends_on?: string[];
   related?: string[];
   status?: TaskRowDB["status"];
+  /**
+   * Verbatim BACKLOG.md row block (checklist line + sub-bullets) for the
+   * issue. Persisted to `ia_tasks.raw_markdown` (migration 0017) so the
+   * Step 5 generator can emit byte-identical BACKLOG.md output without
+   * reconstructing prose from structured fields. Pass omit/null to leave
+   * the column untouched (generator falls back to structured fields).
+   */
+  raw_markdown?: string | null;
 }
 
 export interface TaskInsertResult {
@@ -126,8 +134,8 @@ export async function mutateTaskInsert(
 
     const ins = await c.query<{ created_at: string }>(
       `INSERT INTO ia_tasks (task_id, prefix, slug, stage_id, title, status,
-                             priority, type, notes, body)
-         VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10)
+                             priority, type, notes, body, raw_markdown)
+         VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10, $11)
        RETURNING created_at`,
       [
         task_id,
@@ -140,6 +148,7 @@ export async function mutateTaskInsert(
         input.type ?? null,
         input.notes ?? null,
         body,
+        input.raw_markdown ?? null,
       ],
     );
 
