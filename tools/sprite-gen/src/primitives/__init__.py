@@ -22,6 +22,8 @@ from .iso_cube import iso_cube
 from .iso_grass_tuft import iso_grass_tuft
 from .iso_ground_diamond import iso_ground_diamond
 from .iso_ground_noise import iso_ground_noise
+from .iso_path import iso_path
+from .iso_pavement_patch import iso_pavement_patch
 from .iso_pool import iso_pool
 from .iso_prism import iso_prism
 from .iso_stepped_foundation import iso_stepped_foundation
@@ -34,6 +36,8 @@ __all__ = [
     "iso_grass_tuft",
     "iso_ground_diamond",
     "iso_ground_noise",
+    "iso_path",
+    "iso_pavement_patch",
     "iso_pool",
     "iso_prism",
     "iso_stepped_foundation",
