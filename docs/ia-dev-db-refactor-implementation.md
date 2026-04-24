@@ -122,15 +122,21 @@ slices_via: none
 
 **Findings (implementer fills):**
 
-```
-- Script path + npm target:
-- Rows imported per table:
-- Parse errors encountered + resolution:
-- Idempotency strategy chosen:
-- Import wall-clock time:
-- Data gaps discovered:
-- Surprises:
-```
+- **Script path + npm target:** `tools/mcp-ia-server/scripts/ia-db-import.ts` + `npm run ia:db-import`. Location chosen to share `loadAllYamlIssues` + `ParsedBacklogIssue` parser with existing MCP server — no re-implementation of yaml decoding. DB URL resolver inlined (mirrors `tools/postgres-ia/resolve-database-url.mjs`).
+- **Rows imported per table:** 20 `ia_master_plans` + 254 `ia_stages` + 872 `ia_tasks` + 1346 `ia_task_deps`. `ia_task_spec_history` / `ia_task_commits` / `ia_stage_verifications` / `ia_ship_stage_journal` / `ia_fix_plan_tuples` wiped to zero (start clean for Step 4+). Task total matches filesystem sum exactly (166 open yaml + 706 archive yaml = 872).
+- **Parse errors encountered + resolution:** 0 yaml parse errors. 0 master-plan parse errors. Stage header regex `^###\s+Stage\s+(.+?)\s*(?:—|-)\s*(.+?)\s*$` captures ids including freeform suffixes (`6 addendum`, `9 addendum`) without schema loss.
+- **Idempotency strategy chosen:** Full TRUNCATE-and-reinsert in a single transaction (`SET CONSTRAINTS ALL DEFERRED` + DELETE in FK-safe order + re-INSERT). Chosen over ON CONFLICT DO UPDATE because at this pre-cutover stage filesystem is still authoritative + DB is a snapshot; per-row reconciliation complexity deferred to Step 4 mutation tools. Two back-to-back runs produced identical row counts + zero errors.
+- **Import wall-clock time:** 0.71s–0.74s on local Postgres 15 (port 5434). Dominated by 872 × insert round-trips; single-connection per-row INSERT is acceptable at this scale. If future re-imports grow ≫1s, batch via `unnest` or `COPY FROM STDIN`.
+- **Data gaps discovered:**
+  1. **11 dropped dep edges** — 3 dangling target ids referenced in yaml but absent from both open + archive sets: `TECH-432` (4 refs), `FEAT-37` (1 ref), `TECH-358` (6 refs across depends_on + related). Historical backlog churn — ids deleted without pruning referrers. Logged + dropped (not inserted) to keep FK constraint holding. Not blocking; Step 4 tools can enforce referential integrity at mutation time.
+  2. **Orphan plan slugs** — yaml `parent_plan` fields reference master-plan files that aren't on disk. Script creates placeholder rows with `title=slug` + `source_spec_path=null` so FK holds. Current dataset produced 0 orphan plans; safety net kept for future runs.
+  3. **Stage placeholders** — yaml `stage:` values not matching any master-plan header also get placeholder rows with `title=null`. Current dataset produced 0 such stages (all yaml-referenced stages exist in their parent plan's headers).
+- **Surprises:**
+  1. `body_tsv` populates correctly via the STORED generated column — no explicit index writes in the import path. GIN index rebuild happens inline with inserts; 872-row backfill took <1s.
+  2. Smoke query `SELECT task_id FROM ia_tasks WHERE body_tsv @@ to_tsquery('english', 'heightmap')` returned 29 hits including `TECH-15 geography initialization performance`, `TECH-18 IA migration to PostgreSQL`, `TECH-251 Opus 4.7 adoption`, `BUG-48 minimap staleness` — full-text search confirmed functional without manual tokenizer setup.
+  3. `setval(seq, max(current, observed), true)` advances the sequence so next `nextval` returns `observed+1` — aligns with `reserve-id.sh` semantics (next-reserved-id is counter+1). Seed state preserved across re-runs.
+  4. `ia_project_spec_journal` (migration 0007, owned by role `javier`) was untouched by this import — it remains under Step 11's responsibility (daily snapshot + history merge). Noted from Step 1 Findings §3; no cross-owner privilege issue surfaced because import only touches `ia_*` tables owned by `postgres`.
+  5. Stage row count (254) > master-plan header count because several plans (e.g. `sprite-gen-master-plan.md` with 7 stages; `unity-agent-bridge-master-plan.md` with 12) contribute multiple stage rows each. Distribution: 20 plans × avg 12.7 stages.
 
 **Commit:** `feat(ia-dev-db): step 2 — one-shot import script (yaml + master-plan + spec body → DB)`
 
@@ -527,7 +533,7 @@ slices_via: none
 | Step | Status | Started | Done | Commit | Notes |
 |------|--------|---------|------|--------|-------|
 | 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
-| 2 — Import script | pending | — | — | — | — |
+| 2 — Import script | done | 2026-04-24 | 2026-04-24 | `pending` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
 | 3 — Read MCP tools | pending | — | — | — | — |
 | 4 — Write MCP tools | pending | — | — | — | — |
 | 5 — BACKLOG.md generator | pending | — | — | — | — |

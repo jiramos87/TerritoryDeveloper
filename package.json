@@ -33,6 +33,7 @@
     "test:scripts": "npx tsx --test tools/scripts/__tests__/extract-cd-tokens.test.ts && npx tsx --test web/lib/catalog/stable-json-stringify.test.ts",
     "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
+    "ia:db-import": "npx tsx tools/mcp-ia-server/scripts/ia-db-import.ts",
     "db:setup-local": "bash tools/scripts/setup-territory-ia-postgres.sh",
     "db:seed:glossary": "npm --prefix tools/postgres-ia run seed:glossary",
     "db:glossary": "npm --prefix tools/postgres-ia run glossary-by-key --",
