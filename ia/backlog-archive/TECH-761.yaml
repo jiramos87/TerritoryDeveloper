@@ -2,7 +2,7 @@ id: TECH-761
 type: tech
 title: "Play Mode smoke checklist"
 priority: medium
-status: open
+status: closed
 section: "grid-asset-visual-registry stage-3.2"
 spec: "ia/projects/TECH-761.md"
 files:

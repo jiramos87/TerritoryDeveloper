@@ -2,9 +2,8 @@ id: "TECH-564"
 type: TECH
 title: "Bridge response contract tests"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-564.md"
 files:
   - Assets/Tests/EditMode/
   - tools/mcp-ia-server/tests/
@@ -20,5 +19,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   Bridge response contract tests — Assert completed / failed response shapes for bridge exports.

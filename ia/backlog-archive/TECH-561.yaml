@@ -2,9 +2,8 @@ id: "TECH-561"
 type: TECH
 title: "Menu parameterized entry points"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-561.md"
 files:
   - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
   - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs
@@ -20,5 +19,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   Menu parameterized entry points — Refactor menu classes for bridge-callable parameterized Export methods.

@@ -2,9 +2,8 @@ id: "TECH-563"
 type: TECH
 title: "Play Mode + grid gate errors"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-563.md"
 files:
   - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
   - Assets/Scripts/Managers/GameManagers/GridManager.cs
@@ -21,5 +20,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   Play Mode + grid gate errors — Add precondition gates for Play-only bridge exports.

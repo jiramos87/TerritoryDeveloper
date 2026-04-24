@@ -1,6 +1,6 @@
 # Unity IDE Agent Bridge — Master Plan (Post–Phase 1 program)
 
-> **Status:** In Progress — Step 1
+> **Status:** In Progress — Step 2
 >
 > **Scope:** Tiered hardening + transport + optional depth on top of shipped **Postgres** **`agent_bridge_job`** + **`unity_bridge_command`** / **`unity_bridge_get`** + **`AgentBridgeCommandRunner`** (`docs/unity-ide-agent-bridge-analysis.md` **Design Expansion**). **Out of program:** headless CI, `-batchmode` / Test Framework as delivery goals, file-only queue replacing **`agent_bridge_job`**, rewrite of **`ia/specs/unity-development-context.md`** §10 JSON contracts. Optional deferrals → recommend companion `docs/unity-agent-bridge-post-mvp-extensions.md` (not authored by this pass).
 >
@@ -34,9 +34,9 @@
 
 ### Step 1 — Hardening: parameterized exports + MCP sugar + skills
 
-**Status:** In Progress — Stage 1.1 (Pass 2 tail)
+**Status:** Final
 
-**Backlog state (Step 1):** 18 filed — Stage 1.1 TECH-559..564 still open in backlog until Stage-scoped `/closeout`; TECH-571–TECH-576 (Stage 1.2) + TECH-587–TECH-592 (Stage 1.3) archived
+**Backlog state (Step 1):** 18 filed — Stage 1.1 TECH-559..564 archived; TECH-571–TECH-576 (Stage 1.2) + TECH-587–TECH-592 (Stage 1.3) archived
 
 **Objectives:** Align **`AgentBridgeCommandRunner`** + **`[MenuItem]`** exports with bounded **`params`** (cell chunk bounds, sorting seeds, optional agent-context seeds) per **`unity-development-context`** §10. Add thin **`unity_export_*`** MCP wrappers where token cost warrants. Ship **`.claude/skills/debug-sorting-order`** recipe (bridge + **`spec_section`** **`geo`** §7). Confirm **Close Dev Loop** / registry supersession narrative in durable docs.
 
@@ -67,7 +67,7 @@
 
 #### Stage 1.1 — Parameterized Editor bridge + menu dispatch
 
-**Status:** In Progress — Pass 2 tail (TECH-559..564 open in backlog until `/closeout`)
+**Status:** Final
 
 **Objectives:** Extend **`AgentBridgeCommandRunner`** + menu exports so MCP **`request.params`** drives bounded export parameters without duplicating export bodies. Harden **`failed`** status when Play Mode / grid preconditions fail (**invariant #5** on any new cell reads).
 
@@ -87,12 +87,12 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Pass 2 pending | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
-| T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Pass 2 pending | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
-| T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Pass 2 pending | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
-| T1.1.4 | Menu regression pass | 2 | **TECH-562** | Pass 2 pending | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
-| T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Pass 2 pending | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
-| T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Pass 2 pending | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
+| T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Done (archived) | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
+| T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Done (archived) | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
+| T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Done (archived) | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
+| T1.1.4 | Menu regression pass | 2 | **TECH-562** | Done (archived) | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
+| T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Done (archived) | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
+| T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Done (archived) | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
 
 ### §Stage File Plan
 
@@ -282,6 +282,168 @@
 ### §Plan Fix — PASS (no drift)
 
 > plan-review exit 0 — all 6 Task specs aligned. No tuples emitted. Downstream pipeline continue.
+
+---
+
+#### §Stage Closeout Plan
+
+<!-- mechanicalization_score: overall=fully_mechanical; unresolved_anchors=0; conditional_ops=0; free_text_ops=0; assessed=2026-04-24 -->
+
+> stage-closeout-plan — 6 Tasks (0 shared migration ops + 24 per-Task ops = 24 tuples total). Spawn `plan-applier` Mode stage-closeout `ia/projects/unity-agent-bridge-master-plan.md 1.1`.
+
+```yaml
+# No shared migration ops — no new glossary rows, no rule edits, no doc paragraph edits cited by ≥2 Tasks.
+
+# Per-Task ops — TECH-559 (T1.1.1)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-559.yaml
+  target_anchor: "id: \"TECH-559\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-559.md
+  target_anchor: "file:TECH-559.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.1"
+  payload: |
+    | T1.1.1 | Runner params DTO + dispatch | 1 | **TECH-559** | Done (archived) | Extend **`AgentBridgeCommandRunner`** (and shared DTOs) to deserialize **`params`** for **`export_cell_chunk`** (**`origin_*`**, **`width`**, **`height`**), **`export_sorting_debug`** / **`export_agent_context`** optional **`seed_cell`**; route to menu statics without new **`gridArray`** reads (**invariant #5**). |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-559.yaml
+  target_anchor: "TECH-559"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-560 (T1.1.2)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-560.yaml
+  target_anchor: "id: \"TECH-560\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-560.md
+  target_anchor: "file:TECH-560.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.2"
+  payload: |
+    | T1.1.2 | MCP Zod alignment for new params | 1 | **TECH-560** | Done (archived) | Update **`tools/mcp-ia-server`** **`unity_bridge_command`** / job **`request`** Zod so enqueued rows match Unity DTOs; add fixture or unit test for param round-trip. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-560.yaml
+  target_anchor: "TECH-560"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-561 (T1.1.3)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-561.yaml
+  target_anchor: "id: \"TECH-561\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-561.md
+  target_anchor: "file:TECH-561.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.3"
+  payload: |
+    | T1.1.3 | Menu parameterized entry points | 2 | **TECH-561** | Done (archived) | Refactor **`AgentDiagnosticsReportsMenu`** + **`InterchangeJsonReportsMenu`** so bridge calls **`Export*`** methods with explicit parameter structs; preserve existing **`MenuItem`** behavior via defaults. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-561.yaml
+  target_anchor: "TECH-561"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-562 (T1.1.4)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-562.yaml
+  target_anchor: "id: \"TECH-562\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-562.md
+  target_anchor: "file:TECH-562.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.4"
+  payload: |
+    | T1.1.4 | Menu regression pass | 2 | **TECH-562** | Done (archived) | Manual or automated check: **Territory Developer → Reports** still runs for all §10 items; no duplicate file writes; **`TryPersistReport`** paths unchanged for registry exports. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-562.yaml
+  target_anchor: "TECH-562"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-563 (T1.1.5)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-563.yaml
+  target_anchor: "id: \"TECH-563\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-563.md
+  target_anchor: "file:TECH-563.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.5"
+  payload: |
+    | T1.1.5 | Play Mode + grid gate errors | 3 | **TECH-563** | Done (archived) | Before Play-only exports, verify **`GridManager.isInitialized`** (and documented **`TerrainManager`** needs); return **`failed`** + human-readable **`error`** field; align with analysis §8.3 risk table. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-563.yaml
+  target_anchor: "TECH-563"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+
+# Per-Task ops — TECH-564 (T1.1.6)
+- operation: archive_record
+  target_path: ia/backlog-archive/TECH-564.yaml
+  target_anchor: "id: \"TECH-564\""
+  payload:
+    completed: "2026-04-24"
+
+- operation: delete_file
+  target_path: ia/projects/TECH-564.md
+  target_anchor: "file:TECH-564.md"
+  payload: null
+
+- operation: replace_section
+  target_path: ia/projects/unity-agent-bridge-master-plan.md
+  target_anchor: "task_key:T1.1.6"
+  payload: |
+    | T1.1.6 | Bridge response contract tests | 3 | **TECH-564** | Done (archived) | Add EditMode or MCP-side tests asserting **`completed`** / **`failed`** shapes for **`export_cell_chunk`** + sorting debug when grid absent — snapshot keys only, not full JSON bodies. |
+
+- operation: digest_emit
+  target_path: ia/backlog-archive/TECH-564.yaml
+  target_anchor: "TECH-564"
+  payload:
+    tool: stage_closeout_digest
+    mode: per_task
+```
 
 ---
 

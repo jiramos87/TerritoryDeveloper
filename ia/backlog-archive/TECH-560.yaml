@@ -2,9 +2,8 @@ id: "TECH-560"
 type: TECH
 title: "MCP Zod alignment for new params"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-560.md"
 files:
   - tools/mcp-ia-server/src/
 notes: |
@@ -19,5 +18,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   MCP Zod alignment for new params — Update Zod schemas to match Unity DTO param shapes.

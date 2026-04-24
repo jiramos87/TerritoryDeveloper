@@ -2,7 +2,7 @@ id: TECH-757
 type: tech
 title: "Wire ghost preview to validator"
 priority: high
-status: open
+status: closed
 section: "grid-asset-visual-registry stage-3.2"
 spec: "ia/projects/TECH-757.md"
 files:

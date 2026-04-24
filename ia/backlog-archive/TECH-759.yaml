@@ -2,7 +2,7 @@ id: TECH-759
 type: tech
 title: "Invalid tint path"
 priority: medium
-status: open
+status: closed
 section: "grid-asset-visual-registry stage-3.2"
 spec: "ia/projects/TECH-759.md"
 files:

@@ -2,9 +2,8 @@ id: "TECH-559"
 type: TECH
 title: "Runner params DTO + dispatch"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-559.md"
 files:
   - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
   - Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs
@@ -22,5 +21,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   Runner params DTO + dispatch — Extend AgentBridgeCommandRunner + shared DTOs to deserialize params for export kinds.

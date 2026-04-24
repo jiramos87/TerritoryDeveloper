@@ -2,9 +2,8 @@ id: "TECH-562"
 type: TECH
 title: "Menu regression pass"
 priority: medium
-status: open
+status: closed
 section: "Unity IDE Agent Bridge"
-spec: "ia/projects/TECH-562.md"
 files:
   - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
   - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs
@@ -21,5 +20,6 @@ depends_on: []
 depends_on_raw: ""
 related: []
 created: "2026-04-20"
+completed: "2026-04-24"
 raw_markdown: |
   Menu regression pass — Verify Reports menu items still work after parameterized refactor.

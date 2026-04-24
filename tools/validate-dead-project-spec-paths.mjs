@@ -101,7 +101,53 @@ function scanNonBacklogFile(filePath, repoRoot, hits) {
   const text = fs.readFileSync(filePath, "utf8");
   const lines = text.split(/\r?\n/);
 
+  // Skip plan sections (§Plan Fix, §Code Fix Plan, §Stage Closeout Plan) in master plans
+  // since they document tuples to apply and reference files that may be deleted post-closeout.
+  const isMasterPlan = filePath.includes("master-plan");
+  const inPlanSection = new Array(lines.length).fill(false);
+  if (isMasterPlan) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const planMatch = /^(#+)\s+§(Plan Fix|Code Fix Plan|Stage Closeout Plan|Plan Review)/.exec(
+        line
+      );
+      if (planMatch) {
+        // Found a plan section; determine its depth
+        const sectionLevel = planMatch[1].length;
+        inPlanSection[i] = true;
+
+        // Mark all subsequent lines as in this section until we hit a heading of equal or higher level
+        // (accounting for code blocks, which may contain text that looks like headings).
+        let inCodeBlock = false;
+        for (let j = i + 1; j < lines.length; j++) {
+          const nextLine = lines[j];
+
+          // Toggle code block state on triple backticks
+          if (/^```/.test(nextLine)) {
+            inCodeBlock = !inCodeBlock;
+          }
+
+          // Only consider headings outside code blocks
+          if (!inCodeBlock) {
+            const headingMatch = /^(#+)\s+/.exec(nextLine);
+            if (headingMatch) {
+              const nextLevel = headingMatch[1].length;
+              if (nextLevel <= sectionLevel) {
+                // Equal or higher level heading found; stop this section
+                break;
+              }
+            }
+          }
+          inPlanSection[j] = true;
+        }
+      }
+    }
+  }
+
   for (let i = 0; i < lines.length; i++) {
+    // Skip lines inside plan sections
+    if (inPlanSection[i]) continue;
+
     const line = lines[i];
     let m;
     PROJECT_SPEC_PATH_RE.lastIndex = 0;
