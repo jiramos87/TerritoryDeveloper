@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (57)
+## Tools (69)
 
 | Tool | Description |
 |------|-------------|
@@ -101,6 +101,21 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`unity_callers_of`** | Static callers scan for a given C# method name across `Assets/Scripts/`. |
 | **`unity_subscribers_of`** | Static subscribers scan for a given C# event name across `Assets/Scripts/`. |
 | **`unity_bridge_lease`** | Acquire / release the Unity bridge single-agent lease (companion to `unity_bridge_command`). Coordinates concurrent agents on one Unity instance. |
+
+### DB-backed read tools (Step 3 of `ia-dev-db-refactor`)
+
+| Tool | Purpose |
+|------|---------|
+| **`task_state`** | Metadata + status + commits + deps for one task id from `ia_tasks`. Returns typed `task_not_found` on miss. |
+| **`stage_state`** | Progress + blocker count + next-pending row for one `(slug, stage_id)` from `ia_stages` + `ia_tasks`. |
+| **`master_plan_state`** | Rollup counts across stages of one master-plan `slug` from `ia_master_plans` + children. |
+| **`task_spec_body`** | Full body markdown for one task id from `ia_tasks.body`. |
+| **`task_spec_section`** | Single-section slice for `(task_id, section)`. Pure markdown slicer (`sliceSection`) — case-insensitive heading match, stops at next same-or-shallower heading. |
+| **`task_spec_search`** | Body search over `ia_tasks`. `fts` (default) = `plainto_tsquery` + `ts_rank` + `ts_headline`. `trgm` = fuzzy `similarity` over `title` (threshold 0.1, scoped via `SET LOCAL`). Optional `status` filter. |
+| **`stage_bundle`** | Composite: stage state + narrative slices (stage block + task headings) in one payload. |
+| **`task_bundle`** | Composite: task state + body slices. |
+
+All 8 read tools hit `ia_*` tables via a singleton `pg.Pool`. Pool guarded by `poolOrThrow()` which throws `IaDbUnavailableError` when the DB is offline. Trigram searches require migration `0016_ia_tasks_title_trgm.sql` (GIN `title gin_trgm_ops` index).
 
 ### Plan-Digest tool family (Q12 2026-04-22)
 

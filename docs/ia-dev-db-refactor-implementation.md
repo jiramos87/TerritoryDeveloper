@@ -181,16 +181,80 @@ slices_via: none
 - `spec_section` reimplementation: does it read body from DB + regex-extract section? Or does it also persist per-section?
 - Caching strategy for hot queries (prepared statements? in-memory LRU?).
 
-**Findings (implementer fills):**
+**Findings:**
 
 ```
-- Tools registered (names):
-- Tools reimplemented (names):
-- Connection pool config (size, idle timeout):
-- Query latency p50 / p95 on representative ops:
-- Section-slicing strategy:
-- Error handling convention:
-- Surprises:
+- Tools registered (names): task_state, stage_state, master_plan_state, task_spec_body,
+  task_spec_section, task_spec_search, stage_bundle, task_bundle (8 new) —
+  registered in src/server-registrations.ts via registerIaDbReadTools(server)
+  under the IA-core bucket. Query layer at src/ia-db/queries.ts; tool wiring at
+  src/tools/ia-db-reads.ts. snake_case names chosen to match existing MCP
+  surface (vs existing backlog_issue, spec_section conventions).
+
+- Tools reimplemented (names): None. Existing tools (backlog_issue, spec_section,
+  etc.) left intact to avoid cross-step coupling. Re-implementation deferred to
+  Step 4/5 once write-side guarantees land.
+
+- Connection pool config (size, idle timeout): Singleton pg.Pool via
+  src/ia-db/pool.ts — uses `pg` defaults (max=10, idle=10s) layered on the
+  resolved IA DATABASE_URL from src/ia-db/resolve-database-url.ts. Guarded
+  by poolOrThrow() which throws IaDbUnavailableError when DB is offline.
+
+- Query latency p50 / p95 on representative ops (live smoke against populated DB):
+  - task_state(TECH-767):      134ms cold / 9ms warm
+  - stage_state(sprite-gen, 7): 9ms
+  - master_plan_state(sprite-gen): 11ms
+  - task_spec_body(TECH-767):  1ms
+  - task_spec_section(TECH-767, "Implementation Plan"): 10ms
+  - task_spec_search 'decoration' (fts):  55ms (returns 20 hits with ts_headline)
+  - task_spec_search 'heightmap' (trgm):  289ms (title-scoped; see note below)
+  - stage_bundle(sprite-gen, 7): 38ms
+  - task_bundle(TECH-767):       23ms
+  All within interactive budget (<300ms). FTS dominant cost; trgm pays for
+  GIN index scan + similarity() on every candidate.
+
+- Section-slicing strategy: Pure markdown slicer `sliceSection(body, section)`
+  exported from queries.ts (unit-tested in tests/ia-db/queries.test.ts).
+  Finds heading case-insensitively, slices through the line before the next
+  heading of same-or-shallower level. No per-section DB persist — body is
+  loaded once then sliced in-process. Keeps DB schema minimal; CPU cost
+  negligible for typical spec sizes.
+
+- Error handling convention: `IaDbUnavailableError` thrown by `poolOrThrow()`
+  when DB cannot connect; `task_not_found` / `stage_not_found` /
+  `master_plan_not_found` returned as typed null-result rows that tool wrappers
+  surface as structured errors. All tools pass through `wrapTool` +
+  `runWithToolTiming` for uniform instrumentation.
+
+- Trigram re-targeting: initial plan put `%` operator on ia_tasks.body —
+  live smoke returned 0 hits because whole-body trgm similarity stays below
+  the 0.3 default for realistic query/body length gaps. Re-targeted trgm to
+  `ia_tasks.title` (shorter strings, typo-tolerant lookup is the real use
+  case), added migration `db/migrations/0016_ia_tasks_title_trgm.sql` with
+  GIN index on `title gin_trgm_ops`, and scoped threshold to 0.1 via
+  `SET LOCAL pg_trgm.similarity_threshold` inside explicit BEGIN/COMMIT.
+  FTS branch still covers body search.
+
+- Importer linkage fix: Step 2 importer left `ia_tasks.slug` + `stage_id` NULL
+  for ~all newer tasks because their yaml lacks `parent_plan` + `stage` fields
+  (newer convention carries `section: "Stage 7 — ..."` only). Added two
+  fallbacks in scripts/ia-db-import.ts: `deriveParentPlanFromBody` parses the
+  spec frontmatter for `parent_plan:`; `deriveStageFromSection` extracts the
+  stage id from `section:`. Re-import raised stage count 254 → 260 and
+  populated task↔stage joins — without this, stage_state returned 0 tasks
+  for Stage 7.
+
+- Unit-test coverage: tests/ia-db/queries.test.ts covers sliceSection —
+  7 cases (empty, missing, EOF-terminated, sibling-terminated, nested
+  subheadings preserved, case-insensitive, CRLF). Pure-function extraction
+  chosen so test suite does NOT require live DB.
+
+- Surprises: (1) whole-body trgm is effectively dead at default thresholds —
+  title is the right scope. (2) Newer task yaml schema lost parent_plan/stage
+  fields; body frontmatter is now the only reliable parent pointer — import
+  must derive, cannot trust yaml alone. (3) StageBundleDB extends StageStateDB
+  (flat root, not nested) — first smoke round hit `undefined.stage_id` until
+  the bundle wrapper was fixed to read root fields.
 ```
 
 **Commit:** `feat(ia-dev-db): step 3 — read MCP tools (DB-backed state queries + full-text search)`
@@ -534,7 +598,7 @@ slices_via: none
 |------|--------|---------|------|--------|-------|
 | 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
 | 2 — Import script | done | 2026-04-24 | 2026-04-24 | `b274063` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
-| 3 — Read MCP tools | pending | — | — | — | — |
+| 3 — Read MCP tools | done | 2026-04-24 | 2026-04-24 | `pending-sha` | 8 DB-backed read tools wired through registerIaDbReadTools; sliceSection pure fn + unit tests; trgm retargeted body→title + migration 0016; importer linkage fix (parent_plan from frontmatter + stage from section) raised stages 254→260 |
 | 4 — Write MCP tools | pending | — | — | — | — |
 | 5 — BACKLOG.md generator | pending | — | — | — | — |
 | 6 — stage-file skill | pending | — | — | — | — |
@@ -576,3 +640,4 @@ Implementers append entries here as discoveries surface that do NOT belong to a 
 ## 4. Change log
 
 - **2026-04-24** — Doc seeded on `feature/ia-dev-db-refactor` branch cut from `main @ 1563765`. All 12 steps outlined with Goal / Inputs / Outputs / Acceptance / Voids / Findings / Commit. Running log + status table initialized empty. Operating model: pure sequential, implementer fills voids + findings, no master-plan ceremony.
+- **2026-04-24** — Step 3 landed: 8 DB-backed MCP read tools (`task_state`, `stage_state`, `master_plan_state`, `task_spec_body`, `task_spec_section`, `task_spec_search`, `stage_bundle`, `task_bundle`) + pure `sliceSection` fn with unit tests + trigram re-targeted to `ia_tasks.title` (migration `0016_ia_tasks_title_trgm.sql`) + importer linkage fallbacks (`deriveParentPlanFromBody` + `deriveStageFromSection`) raising stages 254→260. All acceptance checks green, latencies <300ms.

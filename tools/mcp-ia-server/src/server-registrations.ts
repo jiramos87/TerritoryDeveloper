@@ -61,6 +61,7 @@ import {
   registerCatalogPoolList,
   registerCatalogPoolUpsert,
 } from "./tools/catalog-pool-tools.js";
+import { registerIaDbReadTools } from "./tools/ia-db-reads.js";
 
 // Bridge + compute tools
 import {
@@ -90,7 +91,10 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
  * master-plan-locate, master-plan-next-pending, plan-apply-validate,
  * runtime_state, plan-digest-verify-paths/resolve-anchor/render-literal/
  * scan-for-picks/lint/gate-author-helper/compile-stage-doc,
- * catalog_list/get/upsert, catalog_pool_list/get/upsert.
+ * catalog_list/get/upsert, catalog_pool_list/get/upsert,
+ * task_state, stage_state, master_plan_state, task_spec_body,
+ * task_spec_section, task_spec_search, stage_bundle, task_bundle
+ * (8 DB-backed reads — Step 3 of ia-dev-db-refactor).
  */
 export function registerIaCoreTools(server: McpServer, registry: Registry): void {
   registerListSpecs(server, registry);
@@ -135,6 +139,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCatalogPoolList(server);
   registerCatalogPoolGet(server);
   registerCatalogPoolUpsert(server);
+  registerIaDbReadTools(server);
 }
 
 /**

@@ -137,6 +137,35 @@ function deriveSlugFromParentPlan(
   return m ? m[1] : null;
 }
 
+/**
+ * Parse spec frontmatter for `parent_plan:` when yaml record lacks it.
+ * Returns the raw path string (unquoted) or null. Body has already been
+ * loaded, so this is a cheap regex pass over the first ~500 chars.
+ */
+function deriveParentPlanFromBody(body: string): string | null {
+  if (!body) return null;
+  const head = body.slice(0, 2000);
+  if (!head.startsWith("---")) return null;
+  const fmEnd = head.indexOf("\n---", 4);
+  if (fmEnd < 0) return null;
+  const fm = head.slice(0, fmEnd);
+  const m = fm.match(/^parent_plan:\s*["']?([^"'\n]+?)["']?\s*$/m);
+  return m ? m[1]!.trim() : null;
+}
+
+/**
+ * Derive a `stage_id` from a yaml `section:` string of the form
+ * `"Stage 7 — ..."` or `"Stage 3.2 — ..."` or `"Stage 7 addendum — ..."`.
+ * Returns the bare id (e.g. `"7"`, `"3.2"`, `"7 addendum"`) or null.
+ */
+function deriveStageFromSection(
+  section: string | null | undefined,
+): string | null {
+  if (!section) return null;
+  const m = section.match(/^Stage\s+([\w][\w.\s-]*?)\s+[—\-–]/);
+  return m ? m[1]!.trim() : null;
+}
+
 function statusFromYaml(s: string): "pending" | "archived" {
   // Yaml `closed` → archived; everything else starts as pending.
   // Step 4 mutation tools manage the finer lifecycle states
@@ -225,8 +254,11 @@ async function main() {
   }
 
   for (const iss of allIssues) {
-    const slug = deriveSlugFromParentPlan(iss.parent_plan);
-    const stage_id = iss.stage ?? null;
+    const body = loadTaskBody(iss.issue_id);
+    const slug =
+      deriveSlugFromParentPlan(iss.parent_plan) ??
+      deriveSlugFromParentPlan(deriveParentPlanFromBody(body));
+    const stage_id = iss.stage ?? deriveStageFromSection(iss.backlog_section);
     if (!slug || !stage_id) continue;
     const key = `${slug}::${stage_id}`;
     if (!stageMap.has(key)) {
@@ -246,7 +278,10 @@ async function main() {
   const planSlugs = new Set(plans.map((p) => p.slug));
   const orphanSlugs = new Set<string>();
   for (const iss of allIssues) {
-    const slug = deriveSlugFromParentPlan(iss.parent_plan);
+    const body = loadTaskBody(iss.issue_id);
+    const slug =
+      deriveSlugFromParentPlan(iss.parent_plan) ??
+      deriveSlugFromParentPlan(deriveParentPlanFromBody(body));
     if (slug && !planSlugs.has(slug)) orphanSlugs.add(slug);
   }
 
@@ -316,8 +351,10 @@ async function main() {
 
     const status = statusFromYaml(iss.status);
     const body = loadTaskBody(iss.issue_id);
-    const slug = deriveSlugFromParentPlan(iss.parent_plan);
-    const stage_id = iss.stage ?? null;
+    const slug =
+      deriveSlugFromParentPlan(iss.parent_plan) ??
+      deriveSlugFromParentPlan(deriveParentPlanFromBody(body));
+    const stage_id = iss.stage ?? deriveStageFromSection(iss.backlog_section);
     // Only populate FK cols if the stage exists.
     const stageKey = slug && stage_id ? `${slug}::${stage_id}` : null;
     const hasStage = stageKey !== null && stageMap.has(stageKey);
