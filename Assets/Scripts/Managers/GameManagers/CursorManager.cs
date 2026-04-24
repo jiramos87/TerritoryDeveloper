@@ -39,6 +39,8 @@ public class CursorManager : MonoBehaviour
     private PreviewTintState _lastTintState = PreviewTintState.None;
     private Color _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
     private static readonly Color PreviewTintGreen = new Color(0.4f, 1f, 0.4f, 0.5f);
+    private static readonly Color PreviewTintRed = new Color(1f, 0.4f, 0.4f, 0.5f);
+    public event Action<PlacementFailReason> PlacementReasonChanged;
 
     void Start()
     {
@@ -258,11 +260,22 @@ public class CursorManager : MonoBehaviour
 
         if (result.IsAllowed)
         {
-            if (_lastTintState == PreviewTintState.Valid) return;
-            renderer.color = PreviewTintGreen;
-            _lastTintState = PreviewTintState.Valid;
+            if (_lastTintState != PreviewTintState.Valid)
+            {
+                renderer.color = PreviewTintGreen;
+                _lastTintState = PreviewTintState.Valid;
+            }
         }
-        // Invalid branch authored in TECH-759.
+        else
+        {
+            if (_lastTintState != PreviewTintState.Invalid)
+            {
+                renderer.color = PreviewTintRed;
+                _lastTintState = PreviewTintState.Invalid;
+            }
+        }
+
+        PlacementReasonChanged?.Invoke(result.Reason);
     }
 
     private Texture2D GetScaledBulldozerTexture()
@@ -326,6 +339,7 @@ public class CursorManager : MonoBehaviour
     private void OnDestroy()
     {
         PlacementResultChanged = null;
+        PlacementReasonChanged = null;
     }
 }
 }

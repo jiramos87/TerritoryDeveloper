@@ -28,6 +28,15 @@ namespace Territory.Tests.EditMode.GridAsset
         public void ValidResult_Idempotent_OneColorWritePerTransition() { Assert.Inconclusive("authored in /implement (TECH-758)"); }
 
         [Test]
+        public void InvalidResult_AppliesRedTint_PreservesSortingOrder() { Assert.Inconclusive("authored in /implement (TECH-759)"); }
+
+        [Test]
+        public void InvalidResult_Idempotent_OneColorWritePerTransition() { Assert.Inconclusive("authored in /implement (TECH-759)"); }
+
+        [Test]
+        public void PlacementReasonChanged_ForwardsAllSixEnumValues() { Assert.Inconclusive("authored in /implement (TECH-759)"); }
+
+        [Test]
         public void OnDestroy_ClearsSubscribers_NoStaleFanout() { Assert.Inconclusive("authored in /implement"); }
     }
 }
