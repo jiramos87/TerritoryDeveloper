@@ -66,6 +66,35 @@ from .spec import (
 # ---------------------------------------------------------------------------
 
 
+from .placement import place as _place_decorations
+from .primitives import (
+    iso_bush,
+    iso_fence,
+    iso_grass_tuft,
+    iso_path,
+    iso_pavement_patch,
+    iso_pool,
+    iso_tree_deciduous,
+    iso_tree_fir,
+)
+
+
+_DECORATION_DISPATCH = {
+    "iso_bush": iso_bush,
+    "iso_fence": iso_fence,
+    "iso_grass_tuft": iso_grass_tuft,
+    "iso_path": iso_path,
+    "iso_pavement_patch": iso_pavement_patch,
+    "iso_pool": iso_pool,
+    "iso_tree_deciduous": iso_tree_deciduous,
+    "iso_tree_fir": iso_tree_fir,
+}
+
+
+class DecorationScopeError(ValueError):
+    """Raised when decoration primitive exceeds footprint scope (e.g. iso_pool on 1x1)."""
+
+
 class UnknownPrimitiveError(ValueError):
     """Raised when a composition entry `type:` is not in the dispatch dict."""
 
@@ -256,8 +285,45 @@ def _ground_material(graw) -> str | None:
     return None
 
 
+def _apply_decorations(canvas, spec: dict, palette: dict) -> None:
+    """Dispatch spec['decorations'] onto canvas via _DECORATION_DISPATCH.
+
+    Pre-condition: 1x1 + iso_pool scope gate already passed.
+    Called between ground-diamond render and building composition.
+    """
+    decorations = spec.get("decorations", []) or []
+    if not decorations:
+        return
+    footprint = tuple(spec.get("footprint", [1, 1]))
+    seed = int(spec.get("seed", 0))
+    placed = _place_decorations(decorations, footprint, seed)
+    for primitive_name, x_px, y_px, kwargs in placed:
+        fn = _DECORATION_DISPATCH.get(primitive_name)
+        if fn is None:
+            raise UnknownPrimitiveError(
+                f"Unknown decoration primitive: {primitive_name!r}"
+            )
+        fn(canvas, x_px, y_px, palette=palette, **kwargs)
+
+
+def _scope_gate_decorations(spec: dict) -> None:
+    """Raise DecorationScopeError on 1x1 + iso_pool before any render pass."""
+    footprint = tuple(spec.get("footprint", [1, 1]))
+    decorations = spec.get("decorations", []) or []
+    if footprint == (1, 1):
+        for deco in decorations:
+            if deco.get("primitive") == "iso_pool":
+                raise DecorationScopeError(
+                    "iso_pool requires footprint >= 2x2"
+                )
+
+
 def compose_sprite(spec: dict) -> Image.Image:
     """Compose a sprite from an archetype spec dict.
+
+    Decoration pipeline (TECH-769): scope-gate spec['decorations'] at entry
+    (raises DecorationScopeError on 1x1 + iso_pool), then apply via
+    _apply_decorations between ground-diamond render and building pass.
 
     Derives canvas dimensions from the spec's ``footprint`` and ``composition``
     entries, builds an RGBA Pillow canvas, iterates the composition list in
@@ -297,6 +363,7 @@ def compose_sprite(spec: dict) -> Image.Image:
         UnknownPrimitiveError: If a composition entry's ``type:`` is not in the dispatch dict.
         SlopeKeyError:        If ``spec["terrain"]`` is not a recognised slope id.
     """
+    _scope_gate_decorations(spec)
     fx, fy = spec["footprint"]
     composition = composition_entries(spec)
     composition = _expand_level_entries(composition, spec)
@@ -424,6 +491,8 @@ def compose_sprite(spec: dict) -> Image.Image:
             material=foundation_material,
             palette=palette,
         )
+
+    _apply_decorations(canvas, spec, palette)
 
     # --- Iterate composition in order (later entries on top) ---
     for entry in composition:
