@@ -1,0 +1,28 @@
+id: TECH-759
+type: tech
+title: "Invalid tint path"
+priority: medium
+status: open
+section: "grid-asset-visual-registry stage-3.2"
+spec: "ia/projects/TECH-759.md"
+files:
+  - "Assets/Scripts/Managers/GameManagers/CursorManager.cs"
+notes: |
+  Red tint + reason enum propagation to UI layer (TECH-760 consumer). Same tint utility
+  reuse as TECH-758; preserve `sortingOrder`; no new `Collider2D`.
+acceptance: |
+  - Red tint on invalid result using same utility as valid path.
+  - `PlacementFailReason` enum value forwarded to UI / tooltip consumer.
+  - `sortingOrder` preserved (invariant with TECH-758).
+  - No new `Collider2D` on world tiles.
+depends_on:
+  - TECH-688
+  - TECH-689
+depends_on_raw: "TECH-688, TECH-689"
+related:
+  - TECH-757
+  - TECH-758
+  - TECH-760
+  - TECH-761
+created: 2026-04-23
+raw_markdown: ""

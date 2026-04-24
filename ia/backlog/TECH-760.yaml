@@ -1,0 +1,28 @@
+id: TECH-760
+type: tech
+title: "Tooltip reason string"
+priority: medium
+status: open
+section: "grid-asset-visual-registry stage-3.2"
+spec: "ia/projects/TECH-760.md"
+files:
+  - "Assets/Scripts/Managers/GameManagers/UIManager.cs"
+notes: |
+  `UIManager` or local tooltip controller maps `PlacementFailReason` enum → human-readable
+  string. Table-driven map; no switch sprawl. Consumer of TECH-759 enum forward.
+acceptance: |
+  - Table-driven enum → string map (one entry per `PlacementFailReason`); no nested switch.
+  - Renders via existing `UIManager` tooltip surface pattern (no new tooltip prefab if avoidable).
+  - Empty / None reason → tooltip hidden.
+  - Localization hook-point reserved (string keys not hard-coded user strings if
+    localization pattern exists).
+depends_on:
+  - TECH-689
+depends_on_raw: "TECH-689"
+related:
+  - TECH-757
+  - TECH-758
+  - TECH-759
+  - TECH-761
+created: 2026-04-23
+raw_markdown: ""
