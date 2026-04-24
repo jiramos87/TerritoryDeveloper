@@ -533,7 +533,7 @@ slices_via: none
 | Step | Status | Started | Done | Commit | Notes |
 |------|--------|---------|------|--------|-------|
 | 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
-| 2 — Import script | done | 2026-04-24 | 2026-04-24 | `pending` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
+| 2 — Import script | done | 2026-04-24 | 2026-04-24 | `b274063` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
 | 3 — Read MCP tools | pending | — | — | — | — |
 | 4 — Write MCP tools | pending | — | — | — | — |
 | 5 — BACKLOG.md generator | pending | — | — | — | — |
