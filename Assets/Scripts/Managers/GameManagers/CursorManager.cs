@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Territory.Core;
@@ -19,6 +20,13 @@ public class CursorManager : MonoBehaviour
     public Vector2 hotSpot;
     private GameObject previewInstance;
     public GridManager gridManager;
+    [SerializeField] private PlacementValidator placementValidator;
+    public event Action<PlacementResult> PlacementResultChanged;
+    private int _lastCellX = int.MinValue;
+    private int _lastCellY = int.MinValue;
+    private int _currentAssetId;
+    private int _currentRotation;
+    private Zone.ZoneType _currentZoneType = Zone.ZoneType.None;
     private GameObject currentRoadGhostPrefab;
     private Texture2D activeCursorTexture;
     private Vector2 activeCursorHotSpot;
@@ -35,6 +43,8 @@ public class CursorManager : MonoBehaviour
         isOverUI = false;
         cachedMainCamera = Camera.main;
         cachedUIManager = FindObjectOfType<UIManager>();
+        if (placementValidator == null)
+            placementValidator = FindObjectOfType<PlacementValidator>();
         Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
     }
 
@@ -128,6 +138,8 @@ public class CursorManager : MonoBehaviour
             if (mouseCell == null)
             {
                 previewInstance.SetActive(false);
+                _lastCellX = int.MinValue;
+                _lastCellY = int.MinValue;
                 UpdateCursorForUIHover();
                 return;
             }
@@ -164,6 +176,8 @@ public class CursorManager : MonoBehaviour
                 if (cell == null)
                 {
                     previewInstance.SetActive(false);
+                    _lastCellX = int.MinValue;
+                    _lastCellY = int.MinValue;
                 }
                 else
                 {
@@ -172,6 +186,19 @@ public class CursorManager : MonoBehaviour
                     if (selectedBuilding is WaterPlant)
                         newWorldPos.y += gridManager.tileHeight / 4f;
                     previewInstance.transform.position = newWorldPos;
+
+                    if (placementValidator != null && (cell.x != _lastCellX || cell.y != _lastCellY))
+                    {
+                        _lastCellX = cell.x;
+                        _lastCellY = cell.y;
+                        PlacementResult result = placementValidator.CanPlace(
+                            _currentAssetId,
+                            cell.x,
+                            cell.y,
+                            _currentRotation,
+                            _currentZoneType);
+                        PlacementResultChanged?.Invoke(result);
+                    }
                 }
             }
         }
@@ -263,6 +290,13 @@ public class CursorManager : MonoBehaviour
             Destroy(previewInstance);
             previewInstance = null;
         }
+        _lastCellX = int.MinValue;
+        _lastCellY = int.MinValue;
+    }
+
+    private void OnDestroy()
+    {
+        PlacementResultChanged = null;
     }
 }
 }
