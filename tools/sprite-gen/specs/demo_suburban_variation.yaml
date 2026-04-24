@@ -1,0 +1,6 @@
+id: demo_suburban_variation
+preset: suburban_house_with_yard
+seed: 7
+output:
+  name: demo_suburban_variation
+  variants: 6

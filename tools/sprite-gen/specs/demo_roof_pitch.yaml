@@ -1,0 +1,19 @@
+id: demo_roof_pitch
+# Axis 2 calibration sweep — roof pitch tolerance.
+# Four variants, identical footprint + wall + ground. Only roof pitch moves.
+# apply_variant still jitters pitch ±~10% around base → accept that noise.
+# Base sweep: 0.3 / 0.5 / 0.8 / 1.2 via variants.vary roof.pitch value list.
+# NOTE: vary.roof.pitch does NOT plumb through to composition in current
+# codebase (dead path — see calibration doc Axis 2 findings). Using direct
+# per-variant render batches via multiple specs instead until plumb is fixed.
+preset: suburban_house_with_yard
+seed: 42
+output:
+  name: demo_roof_pitch
+  variants: 4
+variants:
+  count: 4
+  seed_scope: geometry
+# apply_variant will still jitter base pitch 0.5 ±~10% across the 4 variants.
+# Purpose: establish the reference band so we know where pitch visual failure
+# begins. Follow-up batches override composition.pitch directly.
