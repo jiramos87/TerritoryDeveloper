@@ -1,0 +1,28 @@
+id: TECH-762
+type: TECH
+title: "`iso_tree_fir` primitive"
+priority: medium
+status: open
+section: "Stage 7 — Decoration primitives — vegetation & yard"
+spec_path: ia/projects/TECH-762.md
+files: []
+notes: |
+  `tools/sprite-gen/src/primitives/iso_tree_fir.py` — pure function `(canvas, x0, y0, scale=1.0, variant=0, palette, **kwargs)`. Draws 2–3 stacked green domes + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`; internal 2–3-level ramp; no outline pass. Visual target: `House1-64.png` + `Forest1-64.png` dense fill per DAS §3.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-763
+  - TECH-764
+  - TECH-770
+acceptance: |
+  - [ ] `iso_tree_fir(canvas, x0, y0, scale, variant, palette)` draws 2–3 stacked green domes on dark shadow base.
+  - [ ] `scale ∈ [0.5, 1.5]` controls dome cluster footprint; pixel positions snap to integer coords.
+  - [ ] Palette key `tree_fir` resolves 3 ramp levels (bright/mid/dark) from the active palette.
+created: 2026-04-24
+raw_markdown: |
+  - [ ] **TECH-762** — `iso_tree_fir` primitive
+    - Type: TECH
+    - Priority: medium
+    - Files: `tools/sprite-gen/src/primitives/iso_tree_fir.py`
+    - Related: **TECH-763**, **TECH-764**, **TECH-770**
+    - Notes: Pure function `(canvas, x0, y0, scale=1.0, variant=0, palette, **kwargs)`. Draws 2–3 stacked green domes + dark-green shadow base; scale 0.5–1.5; palette key `tree_fir`; internal 2–3-level ramp; no outline pass. Visual target: `House1-64.png` + `Forest1-64.png` dense fill per DAS §3.
