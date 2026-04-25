@@ -286,7 +286,7 @@ export function computePlanMetrics(plan: PlanData): PlanMetrics {
  *
  * Stage with no tasks (skeleton): keep parsed status.
  */
-function deriveHierarchyStatus(stages: Stage[]): void {
+export function deriveHierarchyStatus(stages: Stage[]): void {
   for (const stage of stages) {
     if (!stage.tasks.length) continue;
     const statuses = stage.tasks.map(t => t.status);
