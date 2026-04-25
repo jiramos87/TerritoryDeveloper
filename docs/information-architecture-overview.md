@@ -298,7 +298,7 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 | [CLAUDE.md](../CLAUDE.md) | Claude Code project instructions (MCP, skills, rules summary) |
 | [ia/specs/glossary.md](../ia/specs/glossary.md) | Canonical domain term definitions |
 | [ia/specs/REFERENCE-SPEC-STRUCTURE.md](../ia/specs/REFERENCE-SPEC-STRUCTURE.md) | How to author and extend reference specs |
-| [ia/projects/PROJECT-SPEC-STRUCTURE.md](../ia/projects/PROJECT-SPEC-STRUCTURE.md) | How to author project specs; closure checklist |
+| [docs/PROJECT-SPEC-STRUCTURE.md](../docs/PROJECT-SPEC-STRUCTURE.md) | How to author project specs; closure checklist |
 | [ia/rules/agent-router.md](../ia/rules/agent-router.md) | Task → spec routing tables |
 | [ia/rules/invariants.md](../ia/rules/invariants.md) | Universal IA + safety invariants (rules 12–13) + MCP-first directive + hook denylist |
 | [ia/rules/unity-invariants.md](../ia/rules/unity-invariants.md) | Unity C# runtime invariants (rules 1–11); on-demand |

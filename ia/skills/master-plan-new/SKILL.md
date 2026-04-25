@@ -1,5 +1,5 @@
 ---
-purpose: "Use after design-explore has persisted `## Design Expansion` in an exploration doc: decompose Implementation Points into stage/task (2-level hierarchy) and author `ia/projects/{slug}-master-plan.md` as a permanent orchestrator. Canonical shape: `ia/projects/MASTER-PLAN-STRUCTURE.md`."
+purpose: "Use after design-explore has persisted `## Design Expansion` in an exploration doc: decompose Implementation Points into stage/task (2-level hierarchy) and author `ia/projects/{slug}-master-plan.md` as a permanent orchestrator. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`."
 audience: agent
 loaded_by: skill:master-plan-new
 slices_via: router_for_task, spec_sections, invariants_summary
@@ -10,7 +10,7 @@ description: >
   — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL Stages fully decomposed
   into Tasks (2-level hierarchy: `Stage > Task`; Step + Phase layers REMOVED per lifecycle-refactor).
   Tasks seeded `_pending_` for later `stage-file`. Canonical shape authority:
-  `ia/projects/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema,
+  `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema,
   Status enums, flip matrix. Triggers: "/master-plan-new {path}", "turn expanded design into master plan",
   "create orchestrator from exploration", "author master plan from design expansion".
 model: inherit
@@ -22,12 +22,12 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from expansion block (literal `## Design Expansion` or semantic equivalents per Phase 0 table).
 
-**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) — authoritative source for file shape, Stage block subsections, 5-column Task table schema, Status enums, lifecycle flip matrix. This skill authors TO that shape; if this skill drifts, MASTER-PLAN-STRUCTURE.md wins.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative source for file shape, Stage block subsections, 5-column Task table schema, Status enums, lifecycle flip matrix. This skill authors TO that shape; if this skill drifts, MASTER-PLAN-STRUCTURE.md wins.
 
 **Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file-plan`](../stage-file-plan/SKILL.md).
 `design-explore` → `master-plan-new` → `stage-file-plan` + `stage-file-apply` → `plan-author` + `plan-digest` → `spec-implementer` → `/closeout` (Stage-scoped pair).
 
-**Related:** [`design-explore`](../design-explore/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../../projects/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
+**Related:** [`design-explore`](../design-explore/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
 **Shape refs (canonical 2-level examples):** [`blip-master-plan.md`](../../projects/blip-master-plan.md) · [`landmarks-master-plan.md`](../../projects/landmarks-master-plan.md) · [`city-sim-depth-master-plan.md`](../../projects/city-sim-depth-master-plan.md).
 
@@ -72,7 +72,12 @@ Hold in working memory:
 
 ### Phase 1 — Slug + overwrite gate
 
-Resolve `{SLUG}`. Target: `ia/projects/{SLUG}-master-plan.md`. Exists → STOP, ask confirm overwrite or new slug. Fail fast — no MCP yet.
+Resolve `{SLUG}`. Target: DB row `ia_master_plans.slug = {SLUG}`. Probe via `master_plan_render({slug: SLUG})`:
+
+- Returns plan payload → STOP, ask confirm overwrite or new slug.
+- Returns `not_found` → continue. Fail fast — no MCP context load yet.
+
+**Note:** filesystem probe `ia/projects/{SLUG}-master-plan.md` retired. Master plans now persist as DB rows (`ia_master_plans` + `ia_master_plan_change_log` + `ia_stages` + `ia_tasks`). Folder shape `ia/projects/{slug}/index.md` was an intermediate target retired in Step 9.6 — no fs check.
 
 ### Phase 2 — MCP context (Tool recipe) + surface-path pre-check
 
@@ -103,7 +108,7 @@ Author header block per MASTER-PLAN-STRUCTURE.md §2 (canonical fields). Fill pl
 >
 > **Locked decisions (do not reopen in this plan):** {bullet or inline list pulled from exploration — locked MVP decisions / scope boundary. Omit line entirely if exploration carries no locked list}.
 >
-> **Hierarchy rules:** `ia/projects/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage + Task table shape — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
+> **Hierarchy rules:** `docs/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage + Task table shape — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
 >
 > **Read first if landing cold:**
 > - `{DOC_PATH}` — full design + architecture + examples. Design Expansion block is ground truth.
@@ -222,12 +227,12 @@ Insert the canonical tracking legend once under `## Stages` (copy verbatim from 
 ```markdown
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `ia/projects/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
 ```
 
-### Phase 7 — Persist
+### Phase 7 — Persist (DB-only)
 
-Write `ia/projects/{SLUG}-master-plan.md`. Order per MASTER-PLAN-STRUCTURE.md §4:
+Compose markdown in working memory using the canonical order per MASTER-PLAN-STRUCTURE.md §4:
 
 1. **Header block** (Phase 3 output)
 2. `---`
@@ -237,6 +242,14 @@ Write `ia/projects/{SLUG}-master-plan.md`. Order per MASTER-PLAN-STRUCTURE.md §
 6. `---`
 7. `## Orchestration guardrails`
 8. Final `---` separator
+
+**Persist via DB MCP** (post Step 9.6 — no filesystem write):
+
+1. `master_plan_preamble_write({slug: SLUG, preamble: "{everything from Header block through tracking legend}"})` — seeds the plan row + preamble blob.
+2. For each Stage block authored: insert via `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{name}", body: "{full Stage block markdown}"})`.
+3. `master_plan_change_log_append({slug: SLUG, kind: "plan_authored", body: "Authored {N} stages from {DOC_PATH}"})` — audit row.
+
+**MCP gap (followup):** `master_plan_insert` (composite seed: slug + title + preamble + stages[]) and `stage_insert` (single Stage row writer) are not yet wired in `tools/mcp-ia-server/src/tools/master-plan-render-tools.ts`. Until landed, this skill is **blocked** on first invocation post Step 9.6 — log the gap as a Step 9.6 followup finding and STOP. Pre Step 9.6 fallback was filesystem `Write ia/projects/{SLUG}-master-plan.md` (retired).
 
 No `## Deferred decomposition` section — all Stages fully decomposed at author time (refer `master-plan-extend` for new-Stage authoring post-ship).
 
@@ -263,7 +276,7 @@ No `## Deferred decomposition` section — all Stages fully decomposed at author
 - Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/master-plan-extend` so MCP context + cardinality gate + progress regen fire.
 ```
 
-Never overwrite an existing master plan file (Phase 1 gate). Never insert BACKLOG rows (that's `stage-file`). Never reference unfiled issue ids in Depends on — tasks stay `_pending_` until stage-file materializes them.
+Never overwrite an existing master plan DB row (Phase 1 gate). Never insert BACKLOG rows (that's `stage-file`). Never reference unfiled issue ids in Depends on — tasks stay `_pending_` until stage-file materializes them.
 
 ### Phase 7b — Regenerate progress dashboard
 
@@ -305,7 +318,7 @@ Single concise message (caveman) naming:
 ## Guardrails
 
 - IF expansion intent missing from `{DOC_PATH}` (neither literal `## Design Expansion` nor semantic equivalents per Phase 0 table) → STOP, route user to `/design-explore {DOC_PATH}` first.
-- IF `ia/projects/{SLUG}-master-plan.md` already exists → STOP, ask user to confirm overwrite OR pick new slug. Orchestrator docs are permanent; never silently overwrite.
+- IF `master_plan_render({slug: SLUG})` returns a plan payload → STOP, ask user to confirm overwrite OR pick new slug. Orchestrator rows are permanent; never silently overwrite. (Filesystem probe `ia/projects/{SLUG}-master-plan.md` retired in Step 9.6.)
 - IF any Stage has <2 Tasks after Phase 5 → STOP, ask user to split or justify before persisting (Decision Log waiver).
 - IF any Stage has 7+ Tasks after Phase 5 → STOP, suggest split; persist only after user confirms or justifies.
 - IF router returns `no_matching_domain` for a subsystem → note the gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
@@ -327,7 +340,7 @@ Follow ia/skills/master-plan-new/SKILL.md end-to-end. Inputs:
   SLUG: {optional slug override, else inferred from filename stem}
   SCOPE_BOUNDARY_DOC: {optional sibling doc path}
 
-Canonical master-plan shape: ia/projects/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task (no Steps, no Phases). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary); no full spec reads. Cardinality gate requires ≥2 tasks per Stage AND ≤6 tasks per Stage — pause for user confirmation on either violation. All Stages fully decomposed at author time (no skeleton/lazy materialization — use master-plan-extend for post-ship extensions).
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task (no Steps, no Phases). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary); no full spec reads. Cardinality gate requires ≥2 tasks per Stage AND ≤6 tasks per Stage — pause for user confirmation on either violation. All Stages fully decomposed at author time (no skeleton/lazy materialization — use master-plan-extend for post-ship extensions).
 ```
 
 ---
@@ -346,7 +359,7 @@ After persist: recommend first stage to file.
 
 **source:** canonical-structure consolidation (MASTER-PLAN-STRUCTURE.md authored)
 
-**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy with H4 Stages, `**Phases:**` checkbox block, 6-column Task table carrying `Phase` column. Per post-lifecycle-refactor 2-level hierarchy (`ia/rules/project-hierarchy.md`), canonical shape is H3 Stages with 5-column Task table (no Phase column). Rewrote Phase 3 (header: single-level Stage 1.1 status), collapsed Phase 4 (Step decomposition) + Phase 5 (Stage decomposition) → Phase 4 (Stage decomposition directly from Implementation Points), updated Phase 6 tracking legend (canonical Stage enum `Draft | In Review | In Progress | Final`; modern flip matrix citing `plan-author` / `plan-digest` / `spec-implementer` / `plan-applier` Mode stage-closeout), added §Stage Audit subsection to per-stage block template. Cite `ia/projects/MASTER-PLAN-STRUCTURE.md` as authoritative shape source.
+**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy with H4 Stages, `**Phases:**` checkbox block, 6-column Task table carrying `Phase` column. Per post-lifecycle-refactor 2-level hierarchy (`ia/rules/project-hierarchy.md`), canonical shape is H3 Stages with 5-column Task table (no Phase column). Rewrote Phase 3 (header: single-level Stage 1.1 status), collapsed Phase 4 (Step decomposition) + Phase 5 (Stage decomposition) → Phase 4 (Stage decomposition directly from Implementation Points), updated Phase 6 tracking legend (canonical Stage enum `Draft | In Review | In Progress | Final`; modern flip matrix citing `plan-author` / `plan-digest` / `spec-implementer` / `plan-applier` Mode stage-closeout), added §Stage Audit subsection to per-stage block template. Cite `docs/MASTER-PLAN-STRUCTURE.md` as authoritative shape source.
 
 ### 2026-04-18 — wiring-review
 

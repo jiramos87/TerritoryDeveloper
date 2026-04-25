@@ -99,7 +99,7 @@ Source: `docs/lifecycle-refactor-stage-8-dry-run-findings.md` fix table. 12 find
 | Row 1 | `ia/skills/plan-author/SKILL.md` Phase 4 | Load retired-surface tombstones + template-section allowlist + cross-ref task-id resolver | ✅ done — `1c448e4` |
 | Row 2 | `ia/skills/stage-file-apply/` + `project-new-apply/` tails + subagent bodies | Hard rule: N≥2 filed → suggest `/ship-stage`, never `/ship` | ✅ done — `1c448e4` |
 | Row 3 | `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 | Auto-chain boundary decision (F1): chain all the way OR stop at stage-file-apply (Option B — stop at applier tail) | ✅ done — `1c448e4` |
-| Row 7 | `release-rollout-skill-bug-log` helper | Dual-write F1..F12 findings to per-skill Changelog + tracker aggregator (`ia/projects/lifecycle-refactor-rollout-tracker.md`) | ✅ done — `1c448e4` |
+| Row 7 | `release-rollout-skill-bug-log` helper | Dual-write F1..F12 findings to per-skill Changelog + tracker aggregator (`docs/lifecycle-refactor-rollout-tracker.md`) | ✅ done — `1c448e4` |
 
 **Verification:** `npm run validate:all` exit 0 + `/verify-loop --tooling-only` verdict pass.
 
@@ -122,7 +122,7 @@ Each waits for a pickup decision post-M8. Authorship already complete; no code w
 
 | Doc | Size | Intended pickup |
 |---|---|---|
-| `ia/projects/lifecycle-refactor-post-mvp-extensions.md` | 5.6k | `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md ia/projects/lifecycle-refactor-post-mvp-extensions.md` (verify_mode frontmatter; scope variants C-min / C-med / C-full) |
+| `docs/lifecycle-refactor-post-mvp-extensions.md` | 5.6k | `/master-plan-extend ia/projects/lifecycle-refactor-master-plan.md docs/lifecycle-refactor-post-mvp-extensions.md` (verify_mode frontmatter; scope variants C-min / C-med / C-full) |
 | `docs/web-platform-post-mvp-extensions.md` | 87k | `/master-plan-extend ia/projects/web-platform-master-plan.md docs/web-platform-post-mvp-extensions.md` |
 | `docs/session-token-latency-audit-exploration.md` + `docs/session-token-latency-design-review-2026-04-19.md` | 50k + 29k | `/design-explore` continuation OR `/master-plan-new`; depends on scope decision |
 | `docs/ai-mechanics-audit-2026-04-19.md` | 35k | Unscoped — needs `/design-explore` next pass to decide route |

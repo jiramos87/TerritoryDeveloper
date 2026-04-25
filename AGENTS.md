@@ -71,7 +71,7 @@ Project-specific specs for features or complex bugs **in active development** �
 | Aspect | Rule |
 |--------|------|
 | Template | [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md) |
-| Structure | [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) |
+| Structure | [`docs/PROJECT-SPEC-STRUCTURE.md`](docs/PROJECT-SPEC-STRUCTURE.md) |
 | Naming | `{ISSUE_ID}-{description}.md` (e.g. `BUG-37-zone-cleanup.md`); legacy bare `{ISSUE_ID}.md` still accepted |
 | Lifecycle | Create → author → implement → verify → code-review → audit → close (Stage-scoped) |
 | On completion | Lessons-learned migration + spec deletion handled by Stage-scoped `/closeout` pair (`stage-closeout-plan` → `stage-closeout-apply`) |

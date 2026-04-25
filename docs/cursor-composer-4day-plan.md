@@ -19,7 +19,7 @@ slices_via: none
 > **Sources of truth (the "North"):**
 >
 > 1. `ia/projects/full-game-mvp-master-plan.md` — 10 buckets + 1 sibling umbrella.
-> 2. `ia/projects/full-game-mvp-rollout-tracker.md` — per-bucket (a)–(g) lifecycle state.
+> 2. `docs/full-game-mvp-rollout-tracker.md` — per-bucket (a)–(g) lifecycle state.
 > 3. `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — 16 stages MCP reshape; Stages 1–5 Done, 6–16 pending (pure TypeScript surface, ideal Composer 2 fit).
 >
 > **Companion rules:** `docs/agent-lifecycle.md` parallel-work rule. `docs/cursor-agents-skills-mcp-study.md` — Cursor vs Claude Code surface map.
@@ -391,7 +391,7 @@ Composer 2 + Cursor Pro reference (March 2026):
 Internal cross-refs:
 
 - `ia/projects/full-game-mvp-master-plan.md` — umbrella bucket table + tier lanes
-- `ia/projects/full-game-mvp-rollout-tracker.md` — (a)-(g) state per row
+- `docs/full-game-mvp-rollout-tracker.md` — (a)-(g) state per row
 - `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — MCP reshape 16 stages, Stages 1-5 Done, 6-16 pending
 - `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` — MCP design expansion ground truth
 - `docs/cursor-agents-skills-mcp-study.md` — Cursor vs Claude Code surface study

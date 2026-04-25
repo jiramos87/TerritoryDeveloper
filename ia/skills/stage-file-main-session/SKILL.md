@@ -6,10 +6,13 @@ slices_via: none
 name: stage-file-main-session
 description: >
   In-session (no-subagent) wrapper around the /stage-file chain. Read
-  ia/skills/stage-file/SKILL.md (+ stage-file-plan, stage-file-apply) and the
-  phase list in .claude/commands/stage-file.md, then execute the chain
-  inline: planner → applier → plan-author → plan-digest → plan-reviewer →
-  STOP at plan-review PASS. Use MCP, reserve-id, and direct file edits.
+  ia/skills/stage-file/SKILL.md (merged DB-backed single-skill — replaces
+  retired stage-file-plan + stage-file-apply pair since Step 6 of
+  docs/ia-dev-db-refactor-implementation.md, 2026-04-24) and the phase list
+  in .claude/commands/stage-file.md, then execute the chain inline:
+  stage-file → plan-author → plan-digest → plan-reviewer → STOP at
+  plan-review PASS. Use MCP `task_insert` (DB-backed per-prefix id; NO
+  reserve-id.sh / NO yaml writes), manifest append, and direct file edits.
   Never dispatch via Agent/Task tool.
   Triggers: "/stage-file-main-session {master-plan-path} {stage}",
   "execute stage-file in this session", "no-subagent stage-file".
@@ -37,30 +40,31 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_R
 ## Instructions
 
 1. **Load canonical sources end-to-end:**
-   - `ia/skills/stage-file/SKILL.md` (dispatcher shim — mode detection + routing)
-   - `ia/skills/stage-file-plan/SKILL.md` (planner pair-head)
-   - `ia/skills/stage-file-apply/SKILL.md` (applier pair-tail)
-   - `.claude/commands/stage-file.md` (canonical chain: planner → applier → plan-author → plan-digest → plan-reviewer → STOP)
+   - `ia/skills/stage-file/SKILL.md` (merged DB-backed single-skill — 8 phases, replaces retired `-plan` + `-apply` pair)
+   - `.claude/commands/stage-file.md` (canonical chain: stage-file → plan-author → plan-digest → plan-reviewer → STOP)
+
+   Retired pair body archived at `ia/skills/_retired/stage-file-plan/SKILL.md` + `ia/skills/_retired/stage-file-apply/SKILL.md` — do not load unless debugging Step 6 rollback.
 
 2. **Execute the full chain inline** for `{MASTER_PLAN_RELATIVE_PATH}` Stage `{STAGE_ID}`:
-   - Step 1 — planner work (Opus pair-head): `domain-context-load` once, cardinality gate, batch-verify Depends-on/Related via `backlog_issue`, batch-reserve ids via `reserve_backlog_ids`, emit `§Stage File Plan` tuples.
-   - Step 2 — applier work (pair-tail): loop tuples in declared order, compose yaml, `backlog_record_validate`, write `ia/backlog/{id}.yaml`, bootstrap `ia/projects/{id}.md` stubs. Post-loop: `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml`. Atomic task-table flip `_pending_` → `{id}` + `Draft`.
-   - Step 3 — `plan-author` bulk Stage 1×N (populate `§Plan Author` for all N specs).
-   - Step 4 — `plan-digest` bulk Stage 1×N (mechanize `§Plan Digest` + drop `§Plan Author` + compile aggregate doc + `plan_digest_lint` cap=1).
-   - Step 5 — `plan-reviewer`: PASS → Step 6; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
-   - Step 6 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
+   - Step 1 — `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + manifest append (`ia/state/backlog-sections.json`) + `ia/projects/{ISSUE_ID}.md` spec stub from template → Post-loop `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
+   - Step 2 — `plan-author` bulk Stage 1×N (populate `§Plan Author` for all N specs).
+   - Step 3 — `plan-digest` bulk Stage 1×N (mechanize `§Plan Digest` + drop `§Plan Author` + compile aggregate doc + `plan_digest_lint` cap=1).
+   - Step 4 — `plan-reviewer`: PASS → Step 5; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
+   - Step 5 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
+   - **Branch guardrail:** on `feature/ia-dev-db-refactor` the chain stops after Step 1 (Steps 2–4 skipped per `docs/ia-dev-db-refactor-implementation.md §3`).
 
 3. **Tooling:**
-   - territory-ia MCP: `domain-context-load`, `backlog_issue`, `reserve_backlog_ids`, `backlog_record_validate`, `plan_digest_compile_stage_doc`, `plan_digest_lint`, etc.
-   - `bash tools/scripts/reserve-id.sh {PREFIX} {count}` when MCP reservation is unavailable.
-   - Direct file edits (yaml, spec stubs, master-plan task table).
+   - territory-ia MCP: `lifecycle_stage_context`, `backlog_list`, `task_insert`, `backlog_record_validate`, `plan_digest_compile_stage_doc`, `plan_digest_lint`, etc.
+   - `task_insert` MCP owns id assignment (per-prefix DB sequence). Do NOT call `reserve-id.sh` or `reserve_backlog_ids` on DB path.
+   - Direct file edits (manifest `ia/state/backlog-sections.json`, spec stubs under `ia/projects/`, master-plan task table). NO yaml under `ia/backlog/`.
 
 4. **Hard boundaries (from `.claude/commands/stage-file.md` — apply inline):**
    - No Agent/Task dispatch for any chain step.
-   - Batched id reservation only — never per-task.
-   - Declared-order tuple loop — never re-order.
+   - No yaml writes under `ia/backlog/` — DB is source of truth (Step 6 of ia-dev-db-refactor).
+   - No `reserve-id.sh` invocations — `task_insert` MCP assigns ids.
+   - Declared task-table order iterator — never re-order.
    - Atomic task-table flip after all writes — never mid-loop.
-   - Seam #2 gate is `validate:dead-project-specs` + `validate:backlog-yaml` only — no `validate:all`.
+   - Seam #2 gate is `validate:dead-project-specs` only on DB path — no `validate:backlog-yaml`, no `validate:all`.
    - Never hand-edit `ia/state/id-counter.json` or `BACKLOG.md`.
    - Idempotent on re-entry.
    - No auto-commit — user decides.

@@ -2,7 +2,7 @@
  * Release registry — hand-maintained, pure data layer.
  *
  * Canonical source of truth for `children[]`:
- *   ia/projects/full-game-mvp-rollout-tracker.md
+ *   docs/full-game-mvp-rollout-tracker.md
  *
  * DRIFT WARNING: `children[]` is manually synced with the rollout tracker.
  * When rows advance in the rollout tracker, update this file to match.
@@ -28,7 +28,7 @@ export interface Release {
  * All known releases. Single entry for MVP — YAGNI until second release tracker exists.
  *
  * Sync checklist (manual):
- *   1. Open ia/projects/full-game-mvp-rollout-tracker.md
+ *   1. Open docs/full-game-mvp-rollout-tracker.md
  *   2. Verify `children` basenames match authored rows in the tracker
  *   3. utilities / landmarks / distribution intentionally absent (tracker rows 8, 9, 11 — authored later)
  */

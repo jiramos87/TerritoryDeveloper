@@ -1,11 +1,13 @@
 ---
-description: Stage-scoped chain shipper — Pass 1 implement/compile + Pass 2 verify-loop + code-review + audit + closeout. Gates on §Plan Digest readiness (specs must arrive with digest + pre-reviewed from `/stage-file` chain; lazy-migration for legacy §Plan Author). Args: {MASTER_PLAN_PATH} {STAGE_ID}.
-argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--per-task-verify] [--no-resume] [--force-model {model}]"
+description: DB-backed two-pass Stage chain dispatcher — Pass A per-task implement+compile (NO commits) + Pass B per-stage verify-loop + code-review (inline fix per E14) + inline closeout via stage_closeout_apply (per C10) + single stage commit + stage_verification_flip. Gates on §Plan Digest readiness from /stage-authoring. Args: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume].
+argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--no-resume] [--force-model {model}]"
 ---
 
-# /ship-stage — stage-scoped chain dispatcher
+# /ship-stage — DB-backed Stage chain dispatcher
 
-Chain **per-Task implement+compile → Pass 2 verify-loop → code-review → audit → closeout** across every non-Done filed task row of `$ARGUMENTS`. Prerequisite: `/stage-file` chain already populated `§Plan Digest` (after plan-digest) + passed `/plan-review` (else readiness gate stops with handoff; legacy `§Plan Author` only → JIT `plan-digest`).
+Two-pass DB-backed chain over every non-terminal task of `$ARGUMENTS`. **Pass A** = per-task implement → `unity:compile-check` → `task_status_flip(implemented)`; **NO per-task commits** (E13 — single stage-end commit). **Pass B** = per-stage verify-loop on cumulative `git diff HEAD` → code-review (inline fix cap=1 per E14) → audit → per-task `verified→done` flips → inline `stage_closeout_apply` (per C10) → single stage commit `feat({SLUG}-stage-{STAGE_ID_DB})` → per-task `task_commit_record` → `stage_verification_flip(pass)`. Resume gate via `task_state` DB query (no git scan).
+
+Prerequisite: `/stage-authoring` already populated `§Plan Digest` in DB. Missing → readiness gate STOPPED + `/stage-authoring` handoff.
 
 Follow `caveman:caveman` for all your own output and all dispatched subagents. Standard exceptions: code, commits, security/auth, verbatim tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
@@ -13,9 +15,10 @@ Follow `caveman:caveman` for all your own output and all dispatched subagents. S
 
 Parse `$ARGUMENTS` as `{MASTER_PLAN_PATH} {STAGE_ID}`:
 
-- `MASTER_PLAN_PATH` = first token (path to master plan, e.g. `ia/projects/citystats-overhaul-master-plan.md`).
-- `STAGE_ID` = remainder (excluding any flags).
-- If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset (ship-stage subagent uses its frontmatter model).
+- `MASTER_PLAN_PATH` = first token (e.g. `ia/projects/citystats-overhaul-master-plan.md`).
+- `STAGE_ID` = remainder (excluding flags).
+- `--no-resume` flag disables Step 4 resume gate (forensic replay only).
+- If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset (subagent uses frontmatter model).
 
 Verify `{MASTER_PLAN_PATH}` exists (Glob). Extract plan display name from filename. Print context banner:
 
@@ -33,29 +36,44 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 
 > ## Mission
 >
-> Run `ia/skills/ship-stage/SKILL.md` end-to-end on `{MASTER_PLAN_PATH}` Stage `{STAGE_ID}`.
+> Run `ia/skills/ship-stage/SKILL.md` end-to-end on `{MASTER_PLAN_PATH}` Stage `{STAGE_ID}` (with `--no-resume` if present).
 >
 > Follow caveman:caveman. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, chain-level digest JSON, destructive-op confirmations.
 >
-> ## Phase sequence
+> ## Phase sequence (matches SKILL frontmatter `phases:`)
 >
-> 1. Phase 0 — Parse stage task table (narrow regex; fail loud on schema mismatch).
-> 2. Phase 1 — Context load via `domain-context-load` subskill (once per chain).
-> 3. Phase 1.5 — §Plan Digest readiness gate (`ia/skills/ship-stage/SKILL.md` Step 1.5): for each pending spec verify `## §Plan Digest` populated. If missing but `## §Plan Author` populated → auto-invoke `plan-digest` JIT (lazy migration) + emit one-time session warning; resume Pass 1 afterward. Both missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/plan-digest` handoff; no Pass 1.
-> 4. Phase 1.6 — Resume gate (SKILL Step 1.6): `git log --first-parent -400` for `feat(TECH-xxx):` / `fix(TECH-xxx):` per pending Task; skip Pass 1 for satisfied ids; all satisfied → skip Pass 1 → Pass 2 only. Disabled by `--no-resume` or `--per-task-verify`.
-> 5. Phase 2 — Pass 1 per-Task loop: implement (`spec-implementer` work inline) → `unity:compile-check` → atomic commit (resume skips satisfied tasks) (unless `--per-task-verify`, which also runs per-Task verify-loop + code-review in Pass 1).
-> 6. Phase 3 — Pass 2 Stage-end (once after all Pass 1 tasks): full `verify-loop` (Path A+B) on cumulative delta → Stage-level code-review → audit → **closeout** (`stage-closeout-planner` → `plan-applier` Mode stage-closeout). **Closeout is mandatory** when upstream Pass 2 gates pass — do not emit `PASSED` or defer `/closeout` after successful verify + review + audit (see `ia/skills/ship-stage/SKILL.md` **Normative — closeout is part of `PASSED`**).
-> 7. Phase 4 — Chain-level stage digest (JSON header + caveman summary + `chain:` block).
-> 8. Phase 5 — Next-stage resolver (4 cases: filed / pending / skeleton / umbrella-done).
+> 1. Phase 0 — Parse stage (derive `SLUG`, `STAGE_ID_DB`, `SESSION_ID`).
+> 2. Phase 1 — Stage state load via `stage_bundle(slug, stage_id)`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + tasks all terminal.
+> 3. Phase 2 — Context load via `domain-context-load` (once per chain); cache `CHAIN_CONTEXT`.
+> 4. Phase 3 — §Plan Digest readiness gate via `task_spec_section(task_id, "Plan Digest")` per pending task. Missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff. No JIT lazy migration.
+> 5. Phase 4 — Resume gate via `task_state` DB query. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree-clean guard). Disabled by `--no-resume`.
+> 6. Phase 5 — Pass A per-task loop: implement (`spec-implementer` work inline) → `unity:compile-check` + scene-wiring preflight → `task_status_flip(implemented)` + `journal_append`. **NO commits.** Stop on first failure.
+> 7. Phase 6 — Pass B per-stage (runs ONCE): full `verify-loop` (Path A+B) on `git diff HEAD` → code-review on Stage diff (inline fix per E14; cap=1) → per-task `task_status_flip(verified)` then `task_status_flip(done)`.
+> 8. Phase 7 — Inline closeout: `stage_closeout_apply(slug, stage_id)` (DB-backed per C10) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `_closed/`.
+> 9. Phase 8 — Stage commit + verification record: single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` (covers all Pass A + code-review fixes + closeout mv per E13) → capture `STAGE_COMMIT_SHA` → per-task `task_commit_record(task_id, commit_sha, "feat", ...)` → `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")` (E11 history-preserving INSERT).
+> 10. Phase 9 — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
+> 11. Phase 10 — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`. Skeleton stages → `STOPPED — skeleton stage encountered`.
+>
+> ## Hard boundaries (critical)
+>
+> - **Pass A NEVER commits per design E13.** Single stage-end commit at Step 8.1 covers everything.
+> - **Code-reviewer applies critical fixes inline via direct Edit/Write per design E14** — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired plan-applier code-fix mode.
+> - **Inline closeout (Step 7) mandatory on green Pass B per design C10.** `stage-closeout-plan` + `stage-closeout-apply` skill pair retired (`ia/skills/_retired/`).
+> - Resume gate queries DB (`task_state`), not git log — pre-DB `feat(id):`/`fix(id):` regex scan retired with Step 8 rewrite.
+> - `SHIP_STAGE {STAGE_ID}: PASSED` is **invalid** until Step 7 closeout + Step 8 commit + verification flip succeed.
 >
 > ## Exit
 >
 > End with one of:
-> - `SHIP_STAGE {STAGE_ID}: PASSED` (**only** after Step 3.5 closeout + validators succeed — not after verify/audit alone)
-> - `SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — {gate}: {reason}`
-> - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for …` (+ `/plan-digest` Next line)
+> - `SHIP_STAGE {STAGE_ID}: PASSED` (only after Step 7 closeout + Step 8 stage commit + `stage_verification_flip` succeed)
+> - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for ...` (+ `/stage-authoring` Next line)
+> - `SHIP_STAGE {STAGE_ID}: STOPPED — stage not found in DB` (+ `/stage-file` Next line)
+> - `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean. ...` (manual-repair directive)
+> - `STOPPED at {ISSUE_ID} — {gate}: {reason}` (Pass A failure; partial chain digest)
 > - `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL`
-> - `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch`
+> - `STAGE_CODE_REVIEW_CRITICAL_TWICE`
+> - `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}`
+> - `SHIP_STAGE {STAGE_ID}: STOPPED at commit — pre-commit hook failed: {reason}`
 
 ---
 
@@ -67,9 +85,10 @@ After dispatch completes (or on stop), emit:
 SHIP-STAGE {STAGE_ID}: {PASSED|STOPPED|STAGE_VERIFY_FAIL}
   master plan : {plan display name} ({MASTER_PLAN_PATH})
   tasks shipped : {count} ({ids})
+  stage commit  : {short_sha} (when PASSED)
   stage verify  : {passed|failed|skipped}
 ```
 
-On `PASSED`: include `Next:` handoff from resolver.
-On `STOPPED`: include `Next: claude-personal "/ship {FAILED_ISSUE_ID}"` after fix.
-On `STAGE_VERIFY_FAIL`: include `Human review required — do NOT resume tasks automatically.`
+On `PASSED`: include `Next:` handoff from Step 10 resolver.
+On `STOPPED`: include `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}"` (resume gate picks up after fix).
+On `STAGE_VERIFY_FAIL`: include `Human review required — worktree stays dirty; do NOT roll back Pass A status flips automatically.`

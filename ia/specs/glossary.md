@@ -16,7 +16,7 @@ Rules: pa=`ia/rules/plan-apply-pair-contract.md`, ph=`ia/rules/project-hierarchy
 
 Skills: rr=`ia/skills/release-rollout/SKILL.md`, ss=`ia/skills/ship-stage/SKILL.md`, rrsbl=`ia/skills/release-rollout-skill-bug-log/SKILL.md`, rre=`ia/skills/release-rollout-enumerate/SKILL.md`, mpe=`ia/skills/master-plan-extend/SKILL.md`.
 
-Projects: ms=`ia/projects/multi-scale-master-plan.md`, ms-post=`ia/projects/multi-scale-post-mvp-expansion.md`, train=`ia/projects/skill-training-master-plan.md`, lifecycle=`ia/projects/lifecycle-refactor-master-plan.md`.
+Projects: ms=`ia/projects/multi-scale-master-plan.md`, ms-post=`docs/multi-scale-post-mvp-expansion.md`, train=`ia/projects/skill-training-master-plan.md`, lifecycle=`ia/projects/lifecycle-refactor-master-plan.md`.
 
 Docs: schemas=`docs/schemas/README.md`, mcp=`docs/mcp-ia-server.md`, lifecycle-doc=`docs/agent-lifecycle.md`, pg-interchange=`docs/postgres-interchange-patterns.md`, pg-setup=`docs/postgres-ia-dev-setup.md`, avpolicy=`docs/agent-led-verification-policy.md`, planned-ideas=`docs/planned-domain-ideas.md`.
 
@@ -234,7 +234,7 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Backlog record | Canonical per-issue YAML at `ia/backlog/{ISSUE_ID}.yaml` (open) or `ia/backlog-archive/{ISSUE_ID}.yaml` (closed). Single source for id, type, title, status, section, spec path. Never hand-edited; mutated only by `reserve-id.sh`, `stage-file`, `project-new`, and the stage-scoped `/closeout` pair. | [AGENTS §7](../../AGENTS.md), [reserve-id.sh](../../tools/scripts/reserve-id.sh), [materialize-backlog.sh](../../tools/scripts/materialize-backlog.sh) |
 | Backlog view | Generated Markdown `BACKLOG.md` (open) and `BACKLOG-ARCHIVE.md` (closed) produced by `materialize-backlog.sh`. Never hand-edited; regenerated after yaml writes. | [AGENTS §7](../../AGENTS.md) |
 | Reference spec | Permanent Markdown under `ia/specs/` defining domain behavior and vocabulary. | [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) |
-| Project spec | Temporary Markdown at `ia/projects/{ISSUE_ID}.md` for an active backlog item. Deleted after verified completion once content migrates to reference specs / glossary / `docs/`. | [PROJECT-SPEC-STRUCTURE.md](../projects/PROJECT-SPEC-STRUCTURE.md) |
+| Project spec | Temporary Markdown at `ia/projects/{ISSUE_ID}.md` for an active backlog item. Deleted after verified completion once content migrates to reference specs / glossary / `docs/`. | [PROJECT-SPEC-STRUCTURE.md](../../docs/PROJECT-SPEC-STRUCTURE.md) |
 | Interchange JSON (artifact) | Tooling/config JSON distinct from player Save data. Payloads carry `artifact` id and optional `schema_version`. Not part of Load pipeline. | arch, schemas, persist |
 | geography_init_params | Interchange artifact for declarative Geography initialization (seed, map, water/rivers/forest). | persist, schemas |
 | scenario_descriptor_v1 | Interchange artifact for assembling test-mode saves from structured intent (map, terrain, water, road-stroke lists). | persist §Load pipeline, schemas, [BUILDER](../../tools/fixtures/scenarios/BUILDER.md) |

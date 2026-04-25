@@ -2,7 +2,7 @@
 
 > **Purpose:** Seed a **standalone master plan** (sibling to sprite-gen, not a sub-step of it) for a **coarse** Unity-side system: bind **Control Panel / toolbar art**, **on-grid visuals**, and **gameplay metadata** (costs, upkeep, and extensible columns) for every **placeable grid asset** that exposes a player-facing control — plus **agent-facing Unity Editor tooling**: extend or wrap the **IDE / Unity bridge mutation** surface so agents can **insert, modify, and wire** in-game **prefabs, buttons, panels, and hooks** that comply with the **game UI design system** (`ia/specs/ui-design-system.md`, UiTheme, flagship controls — **not** the `web/` Next.js stack). **First concrete consumer:** Zone S rows in `Assets/Resources/Economy/zone-sub-types.json` + `ZoneSubTypeRegistry`; the design generalizes to RCI zoning, roads, utilities, landmarks, and future generator-backed buildings.
 >
-> **Related:** `docs/isometric-sprite-generator-exploration.md`, `ia/projects/sprite-gen-master-plan.md` (Bucket 5), `ia/projects/full-game-mvp-master-plan.md`, `ia/projects/full-game-mvp-rollout-tracker.md`, `docs/zone-s-economy-exploration.md`, `ia/specs/economy-system.md`, `ia/specs/ui-design-system.md`, `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs`. *(Supersedes prior filename `docs/zone-s-sprite-registry-baker-exploration.md` — removed; use git history if needed.)*
+> **Related:** `docs/isometric-sprite-generator-exploration.md`, `ia/projects/sprite-gen-master-plan.md` (Bucket 5), `ia/projects/full-game-mvp-master-plan.md`, `docs/full-game-mvp-rollout-tracker.md`, `docs/zone-s-economy-exploration.md`, `ia/specs/economy-system.md`, `ia/specs/ui-design-system.md`, `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs`. *(Supersedes prior filename `docs/zone-s-sprite-registry-baker-exploration.md` — removed; use git history if needed.)*
 
 ---
 
@@ -401,7 +401,7 @@ Non-blocking items carried to the master plan:
 
 **Cross-links:** In Bucket 3 (`zone-s-economy`) and Bucket 5 rows, add **“See also grid-asset-visual-registry”** when registry bake blocks Zone S art completion. In Bucket 6 (`ui-polish`), add **See also** when flagship toolbar tasks need **agent-driven** prefab wiring (§1.4).
 
-### 9.2 `ia/projects/full-game-mvp-rollout-tracker.md`
+### 9.2 `docs/full-game-mvp-rollout-tracker.md`
 
 - Add a **new rollout row** after policy review:
   - **Row slug:** `grid-asset-visual-registry`

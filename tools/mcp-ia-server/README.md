@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (57)
+## Tools (78)
 
 | Tool | Description |
 |------|-------------|
@@ -101,6 +101,37 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`unity_callers_of`** | Static callers scan for a given C# method name across `Assets/Scripts/`. |
 | **`unity_subscribers_of`** | Static subscribers scan for a given C# event name across `Assets/Scripts/`. |
 | **`unity_bridge_lease`** | Acquire / release the Unity bridge single-agent lease (companion to `unity_bridge_command`). Coordinates concurrent agents on one Unity instance. |
+
+### DB-backed read tools (Step 3 of `ia-dev-db-refactor`)
+
+| Tool | Purpose |
+|------|---------|
+| **`task_state`** | Metadata + status + commits + deps for one task id from `ia_tasks`. Returns typed `task_not_found` on miss. |
+| **`stage_state`** | Progress + blocker count + next-pending row for one `(slug, stage_id)` from `ia_stages` + `ia_tasks`. |
+| **`master_plan_state`** | Rollup counts across stages of one master-plan `slug` from `ia_master_plans` + children. |
+| **`task_spec_body`** | Full body markdown for one task id from `ia_tasks.body`. |
+| **`task_spec_section`** | Single-section slice for `(task_id, section)`. Pure markdown slicer (`sliceSection`) — case-insensitive heading match, stops at next same-or-shallower heading. |
+| **`task_spec_search`** | Body search over `ia_tasks`. `fts` (default) = `plainto_tsquery` + `ts_rank` + `ts_headline`. `trgm` = fuzzy `similarity` over `title` (threshold 0.1, scoped via `SET LOCAL`). Optional `status` filter. |
+| **`stage_bundle`** | Composite: stage state + narrative slices (stage block + task headings) in one payload. |
+| **`task_bundle`** | Composite: task state + body slices. |
+
+All 8 read tools hit `ia_*` tables via a singleton `pg.Pool`. Pool guarded by `poolOrThrow()` which throws `IaDbUnavailableError` when the DB is offline. Trigram searches require migration `0016_ia_tasks_title_trgm.sql` (GIN `title gin_trgm_ops` index).
+
+### DB-backed write tools (Step 4 of `ia-dev-db-refactor`)
+
+| Tool | Purpose |
+|------|---------|
+| **`task_insert`** | Reserve monotonic id via per-prefix **DB sequence** (`tech_id_seq` / `feat_id_seq` / `bug_id_seq` / `art_id_seq` / `audio_id_seq`), insert `ia_tasks` row + body + `ia_task_deps` rows in one tx. Replaces `reserve-id.sh` + yaml write + `materialize-backlog.sh`. FK-checks `slug` / `stage_id` / `depends_on` / `related` against `ia_master_plans` / `ia_stages` / `ia_tasks`. |
+| **`task_status_flip`** | Flip one task's status with row-level lock (`SELECT … FOR UPDATE`). Stamps `completed_at` on `done`, `archived_at` on `archived`. Returns `{ task_id, prev_status, new_status }`. Parallel flips on same row serialise. |
+| **`task_spec_section_write`** | Replace (or append) one section of a task body; snapshots prior body into `ia_task_spec_history` first. Pure-markdown slicer matches case-insensitive heading + stops at next same-or-shallower heading. Missing section → appended at end with blank-line separator. |
+| **`task_commit_record`** | Upsert commit row into `ia_task_commits` (`UNIQUE(task_id, commit_sha)`). Re-record updates `commit_kind` + `message`. Replaces yaml-sidecar per-task commit tracking. |
+| **`stage_verification_flip`** | Append stage-verification row (`pass` \| `fail` \| `partial`) to `ia_stage_verifications` (history-preserving — no upsert). Latest row is what `stage_state` surfaces. Used at ship-stage Pass B end. |
+| **`stage_closeout_apply`** | Close a stage: guards every task is already `done` \| `archived`; flips all `done` → `archived` (stamps `archived_at`) + sets stage status → `done`. Rejects with `invalid_input` if any non-terminal tasks remain. |
+| **`journal_append`** | Append discriminated-union event to `ia_ship_stage_journal`. Canonical journal surface for agent runs. Validates `session_id` / `phase` / `payload_kind` non-empty + `payload` is non-null non-array object. Body shape of `payload` is trust-but-document. |
+| **`fix_plan_write`** | Write fix-plan tuples for `(task_id, round)`. Deletes prior **unapplied** tuples for same key first (rewrite semantics), then inserts new tuples with increasing `tuple_index`. Applied tuples (`applied_at IS NOT NULL`) are preserved for 30-day TTL soft-delete. |
+| **`fix_plan_consume`** | Mark all unapplied tuples for `(task_id, round)` as applied (stamps `applied_at = now()`). Idempotent — re-run returns `consumed=0` once all are applied. |
+
+All 9 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`). Pool guarded by `poolOrThrow()` → `IaDbUnavailableError`. Arg-validation failures raised as `IaDbValidationError`. Tool-boundary error contract: `db_unconfigured` (pool missing), `invalid_input` (bad enum / missing fk / empty required field / non-terminal stage closeout), `db_error` (bare exception fallthrough). Round-trip + concurrency coverage: `tests/ia-db/mutations.test.ts`.
 
 ### Plan-Digest tool family (Q12 2026-04-22)
 

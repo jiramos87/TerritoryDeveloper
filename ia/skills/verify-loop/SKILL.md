@@ -323,6 +323,6 @@ none required.
 
 **Rollout row:** m8-retrospective
 
-**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+**Tracker aggregator:** [`docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../../docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---

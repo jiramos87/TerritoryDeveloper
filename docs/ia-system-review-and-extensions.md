@@ -31,7 +31,7 @@ There is **no single document that describes the IA system itself as a coherent 
 - `ia/skills/README.md` (skill conventions)
 - `ARCHITECTURE.md` § Agent information architecture and MCP
 - `ia/specs/REFERENCE-SPEC-STRUCTURE.md` (spec authoring)
-- `ia/projects/PROJECT-SPEC-STRUCTURE.md` (project spec lifecycle)
+- `docs/PROJECT-SPEC-STRUCTURE.md` (project spec lifecycle)
 
 **Recommendation:** A single `docs/information-architecture-overview.md` (~200 lines) that describes:
 

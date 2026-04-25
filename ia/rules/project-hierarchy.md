@@ -11,7 +11,7 @@ alwaysApply: true
 
 Two levels, loosely bound. All orchestrator docs + project specs use this shape.
 
-**Canonical master-plan shape:** [`ia/projects/MASTER-PLAN-STRUCTURE.md`](../projects/MASTER-PLAN-STRUCTURE.md) — file shape, Stage block shape, 5-column Task table schema, Status enums, lifecycle flip matrix. Every authoring skill cites that doc. This file covers the hierarchy + cardinality contract; MASTER-PLAN-STRUCTURE.md covers the written section shape.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../docs/MASTER-PLAN-STRUCTURE.md) — file shape, Stage block shape, 5-column Task table schema, Status enums, lifecycle flip matrix. Every authoring skill cites that doc. This file covers the hierarchy + cardinality contract; MASTER-PLAN-STRUCTURE.md covers the written section shape.
 
 | Level | Definition | Materialization | Lifecycle |
 |-------|-----------|-----------------|-----------|

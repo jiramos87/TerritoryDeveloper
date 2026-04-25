@@ -1,0 +1,725 @@
+---
+purpose: "Sequential implementation plan for the IA dev system DB-primary refactor. Opus agents iterate step by step, logging findings + filling gaps inline. Living doc — not a mechanical pre-laid plan; anchors on locked decisions from `docs/master-plan-foldering-refactor-design.md` and leaves voids for implementers to resolve."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
+
+# IA dev system DB-primary refactor — sequential implementation
+
+> **Branch:** `feature/ia-dev-db-refactor` (cut from `main` @ `1563765`)
+> **Mode:** Pure sequential. One step at a time. No parallel stages. No `/master-plan-new` ceremony. Implementers (Opus agents) iterate; each step logs findings + verifies + commits before the next begins.
+> **Source of truth for decisions:** [`docs/master-plan-foldering-refactor-design.md`](master-plan-foldering-refactor-design.md) Rounds 1, 2, 4, 5 (all locked). Gaps intentional — implementers fill inline.
+> **Companion:** [`docs/master-plan-execution-friction-log.md`](master-plan-execution-friction-log.md) — log unexpected friction during this refactor to feed post-refactor retrospective.
+
+---
+
+## 0. Operating model
+
+- **One step at a time.** Finish step N, log findings, commit. Only then start step N+1.
+- **Implementer fills voids.** Each step lists *what* + *why* + *acceptance*. It does NOT pre-specify file diffs, exact column schemas, or exact migration SQL. Implementer reads the design doc, makes concrete choices, writes code, records what was chosen + rationale in this doc under the step's `Findings` block.
+- **No §Plan Digest / §Audit / §Closeout Plan.** This refactor does not use the broken master-plan pipeline. Direct commits per step. Commit message format: `feat(ia-dev-db): step N.M — {short description}`.
+- **Scope lock.** Do NOT extend scope mid-step. If a step uncovers unavoidable adjacent work, record it under `Followups` in this doc; defer execution until current step is green.
+- **Rollback discipline.** Every step must be independently revertable (single commit or tight commit cluster). If a step goes sideways, revert, reset `Findings`, retry.
+- **Tooling invariants.** Do NOT regress `db:migrate` / `unity:compile-check` / `validate:all` on the Unity + web surfaces during the refactor. New IA DB tables land additively (`ia_*` prefix); nothing existing breaks until cleanup phase (last step).
+
+---
+
+## 1. Step sequence
+
+### Step 1 — DB schema foundation
+
+**Goal:** Create all `ia_*` tables + types + indexes in Postgres via a new migration. No data imported yet. No MCP changes yet.
+
+**Inputs:**
+
+- Design doc §4.2 (DB vs filesystem split — table list).
+- Design doc §4.5 F1–F15 (schema specifics: enum types, text PK, join table for deps, dual tsvector + trigram indexes, full-snapshot history table, mixed concurrency primitives).
+- Existing `db:migrate` chain used by Unity bridge.
+
+**Outputs:**
+
+- New migration file under `tools/scripts/db-migrations/` (or wherever the existing chain lives — implementer discovers).
+- Tables: `ia_master_plans`, `ia_stages`, `ia_tasks`, `ia_task_deps`, `ia_task_spec_history`, `ia_task_commits`, `ia_stage_verifications`, `ia_ship_stage_journal`, `ia_fix_plan_tuples`.
+- Types: `task_status` ENUM, `stage_verdict` ENUM (values — implementer decides final set, record under Findings).
+- Indexes: `GIN(ia_tasks.body_tsv)`, `GIN(ia_tasks.body gin_trgm_ops)`, btree on `(slug, stage_id)` for stages, reverse-lookup index on `ia_task_deps(depends_on_id)`.
+- Sequences per prefix: `tech_id_seq`, `feat_id_seq`, `bug_id_seq`, `art_id_seq`, `audio_id_seq`.
+
+**Acceptance:**
+
+- `npm run db:migrate` applies clean.
+- `psql` inspection confirms all tables + types + indexes present.
+- `db:bridge-preflight` still green (no regression on Unity-bridge schema).
+- Sequence `SELECT nextval('tech_id_seq')` returns a value > current `ia/state/id-counter.json` max (implementer determines exact seed + documents).
+
+**Voids for implementer:**
+
+- Exact column types (`text` vs `varchar(N)`), nullability, defaults.
+- Enum values — start from design doc §4.5 F1 recommendation (`pending | implemented | verified | done | archived`) but confirm set is sufficient after reviewing lifecycle.
+- FK cascade rules (`ON DELETE CASCADE` vs `RESTRICT` vs `SET NULL`).
+- Audit column names (`created_at`, `updated_at`, `actor` — choose convention consistent with existing Unity-bridge tables).
+- Migration file naming (timestamp convention — match existing chain).
+
+**Findings (2026-04-24 — step 1 applied):**
+
+- **Migration file path:** `db/migrations/0015_ia_tasks_core.sql` (naming: `NNNN_{snake_case}.sql` per existing chain; next free slot was 0015).
+- **Tables created (9 new):** `ia_master_plans`, `ia_stages`, `ia_tasks`, `ia_task_deps`, `ia_task_spec_history`, `ia_task_commits`, `ia_stage_verifications`, `ia_ship_stage_journal`, `ia_fix_plan_tuples`. Existing `ia_project_spec_journal` (migration 0007) unchanged — Stage 2 import will bridge journal rows into the new `ia_ship_stage_journal` shape or retain separately (TBD).
+- **Enum types chosen:** `task_status` (`pending|implemented|verified|done|archived` — matches ship-stage lifecycle), `stage_status` (`pending|in_progress|done`), `stage_verdict` (`pass|fail|partial`), `ia_task_dep_kind` (`depends_on|related` — F3 unified join table with discriminator rather than two separate tables; reduces surface, keeps same index locality).
+- **FK cascade policy:**
+  - `ia_stages.slug` → `ia_master_plans.slug` = **CASCADE** (plan retire drops stages).
+  - `ia_tasks (slug, stage_id)` → `ia_stages (slug, stage_id)` = **RESTRICT + DEFERRABLE INITIALLY DEFERRED** (tasks protect stages; deferral lets import re-seat rows inside one tx).
+  - `ia_task_deps.task_id` → `ia_tasks.task_id` = **CASCADE**; `depends_on_id` = **RESTRICT** (don't silently drop outgoing edges).
+  - `ia_task_spec_history.task_id` = **CASCADE** (history dies with task).
+  - `ia_task_commits.task_id` = **CASCADE**.
+  - `ia_stage_verifications (slug, stage_id)` = **CASCADE**.
+  - `ia_ship_stage_journal.task_id` = **RESTRICT** (journal is append-only; preserves forensic trail).
+  - `ia_fix_plan_tuples.task_id` = **CASCADE** (ephemeral tuples).
+- **Indexes built (25 on new tables):** `ia_tasks` — GIN `body_tsv` + GIN `body gin_trgm_ops` + btree `(slug, stage_id)`, `status`, `prefix`, `updated_at DESC`; `ia_task_deps` — reverse-lookup btree on `depends_on_id` + kind; `ia_ship_stage_journal` — session timeline + task + stage + payload_kind; `ia_fix_plan_tuples` — partial indexes on `applied_at IS NULL` (active tuples) + `applied_at IS NOT NULL` (expiry sweep target). Build was instant on empty tables — remeasure after Step 2 bulk-load.
+- **Seed values (sequences, from `ia/state/id-counter.json` snapshot 2026-04-24):** `tech_id_seq` = 777, `feat_id_seq` = 54, `bug_id_seq` = 59, `art_id_seq` = 5, `audio_id_seq` = 2. Each `nextval` returns that value then advances. Post-smoke rewind applied (`setval(..., seed, false)`) so Step 2 import sees pristine counter state.
+- **Extensions:** `pg_trgm` created idempotently (first use in repo DB; Unity-bridge tables unaffected).
+- **Concurrency primitive choices (F10):** deferred to Step 4 (mutation tools). Schema carries no triggers yet — history writes + advisory-lock semantics land alongside the tools that need them.
+- **Surprises / gotchas:**
+  1. `expires_at timestamptz GENERATED ALWAYS AS (applied_at + interval '30 days') STORED` was rejected — Postgres considers `timestamptz + interval` non-immutable because `session_timezone` can shift the result. Resolution: dropped the generated column; TTL is computed in the query layer (`applied_at + interval '30 days'`). Index on `applied_at IS NOT NULL` covers the expiry sweep.
+  2. `SELECT setval('seq', value, false)` with `false` = next `nextval` returns `value`. Verified `last_value=777, is_called=f` → first `nextval` will return 777 (= TECH-777 = first unused id). id-counter.json shows `TECH: 776` as the **last used**; seed is correct.
+  3. `ia_project_spec_journal` from migration 0007 coexists under a different ownership (role `javier`) than the new `ia_*` tables (role `postgres`). Does not block schema but may surface during import; Step 2 should explicitly bridge or sidestep.
+- **Regression check:** `npm run db:bridge-preflight` exit 0 — Unity-bridge schema unaffected.
+
+**Commit:** `feat(ia-dev-db): step 1 — DB schema foundation (ia_* tables + types + indexes)`
+
+---
+
+### Step 2 — One-shot import script
+
+**Goal:** Port existing state from filesystem (yaml + markdown) into DB tables. Idempotent. Re-runnable without data corruption.
+
+**Inputs:**
+
+- `ia/backlog/*.yaml` + `ia/backlog-archive/*.yaml` → `ia_tasks` rows (status `pending` / `in_progress` / `done` / `archived` per current yaml shape).
+- `ia/projects/*master-plan*.md` → `ia_master_plans` + `ia_stages` rows (parse stage headers + objectives + exit).
+- `ia/projects/{ISSUE_ID}.md` files → `ia_tasks.body` text + section index.
+- `ia/state/id-counter.json` → sequence seed values (Step 1 already seeded; script verifies consistency).
+
+**Outputs:**
+
+- New script `tools/scripts/ia-db-migrate.ts` (or `.mjs` — implementer picks language matching existing tool chain).
+- `npm run` target registered (suggest `ia:db-import`).
+- Transactional per-run execution (F12=c: idempotent re-run).
+
+**Acceptance:**
+
+- Running `npm run ia:db-import` on clean DB populates all rows.
+- Re-running same command is a no-op (or safe overwrite; implementer chooses — document in Findings).
+- Row counts match filesystem: `ia_tasks` row count ≈ union of `ia/backlog/*.yaml` + `ia/backlog-archive/*.yaml` counts.
+- `ia_tasks.body_tsv` populated + full-text query returns expected results (smoke: `SELECT task_id FROM ia_tasks WHERE body_tsv @@ to_tsquery('english', 'heightmap')` returns ≥1 row).
+- Filesystem untouched.
+
+**Voids for implementer:**
+
+- Parser strategy for master-plan stage blocks (regex vs markdown AST).
+- Handling for archived-but-present project spec files (are all archived yamls still on disk, or does the filesystem have gaps?).
+- Dep graph — how to parse `depends_on` from yaml and populate `ia_task_deps`.
+- Body section extraction — store whole body in one column or also write per-section cache? (F4 says whole body + tsvector; per-section slicing is MCP-layer concern per §4.3).
+
+**Findings (implementer fills):**
+
+- **Script path + npm target:** `tools/mcp-ia-server/scripts/ia-db-import.ts` + `npm run ia:db-import`. Location chosen to share `loadAllYamlIssues` + `ParsedBacklogIssue` parser with existing MCP server — no re-implementation of yaml decoding. DB URL resolver inlined (mirrors `tools/postgres-ia/resolve-database-url.mjs`).
+- **Rows imported per table:** 20 `ia_master_plans` + 254 `ia_stages` + 872 `ia_tasks` + 1346 `ia_task_deps`. `ia_task_spec_history` / `ia_task_commits` / `ia_stage_verifications` / `ia_ship_stage_journal` / `ia_fix_plan_tuples` wiped to zero (start clean for Step 4+). Task total matches filesystem sum exactly (166 open yaml + 706 archive yaml = 872).
+- **Parse errors encountered + resolution:** 0 yaml parse errors. 0 master-plan parse errors. Stage header regex `^###\s+Stage\s+(.+?)\s*(?:—|-)\s*(.+?)\s*$` captures ids including freeform suffixes (`6 addendum`, `9 addendum`) without schema loss.
+- **Idempotency strategy chosen:** Full TRUNCATE-and-reinsert in a single transaction (`SET CONSTRAINTS ALL DEFERRED` + DELETE in FK-safe order + re-INSERT). Chosen over ON CONFLICT DO UPDATE because at this pre-cutover stage filesystem is still authoritative + DB is a snapshot; per-row reconciliation complexity deferred to Step 4 mutation tools. Two back-to-back runs produced identical row counts + zero errors.
+- **Import wall-clock time:** 0.71s–0.74s on local Postgres 15 (port 5434). Dominated by 872 × insert round-trips; single-connection per-row INSERT is acceptable at this scale. If future re-imports grow ≫1s, batch via `unnest` or `COPY FROM STDIN`.
+- **Data gaps discovered:**
+  1. **11 dropped dep edges** — 3 dangling target ids referenced in yaml but absent from both open + archive sets: `TECH-432` (4 refs), `FEAT-37` (1 ref), `TECH-358` (6 refs across depends_on + related). Historical backlog churn — ids deleted without pruning referrers. Logged + dropped (not inserted) to keep FK constraint holding. Not blocking; Step 4 tools can enforce referential integrity at mutation time.
+  2. **Orphan plan slugs** — yaml `parent_plan` fields reference master-plan files that aren't on disk. Script creates placeholder rows with `title=slug` + `source_spec_path=null` so FK holds. Current dataset produced 0 orphan plans; safety net kept for future runs.
+  3. **Stage placeholders** — yaml `stage:` values not matching any master-plan header also get placeholder rows with `title=null`. Current dataset produced 0 such stages (all yaml-referenced stages exist in their parent plan's headers).
+- **Surprises:**
+  1. `body_tsv` populates correctly via the STORED generated column — no explicit index writes in the import path. GIN index rebuild happens inline with inserts; 872-row backfill took <1s.
+  2. Smoke query `SELECT task_id FROM ia_tasks WHERE body_tsv @@ to_tsquery('english', 'heightmap')` returned 29 hits including `TECH-15 geography initialization performance`, `TECH-18 IA migration to PostgreSQL`, `TECH-251 Opus 4.7 adoption`, `BUG-48 minimap staleness` — full-text search confirmed functional without manual tokenizer setup.
+  3. `setval(seq, max(current, observed), true)` advances the sequence so next `nextval` returns `observed+1` — aligns with `reserve-id.sh` semantics (next-reserved-id is counter+1). Seed state preserved across re-runs.
+  4. `ia_project_spec_journal` (migration 0007, owned by role `javier`) was untouched by this import — it remains under Step 11's responsibility (daily snapshot + history merge). Noted from Step 1 Findings §3; no cross-owner privilege issue surfaced because import only touches `ia_*` tables owned by `postgres`.
+  5. Stage row count (254) > master-plan header count because several plans (e.g. `sprite-gen-master-plan.md` with 7 stages; `unity-agent-bridge-master-plan.md` with 12) contribute multiple stage rows each. Distribution: 20 plans × avg 12.7 stages.
+
+**Commit:** `feat(ia-dev-db): step 2 — one-shot import script (yaml + master-plan + spec body → DB)`
+
+---
+
+### Step 3 — Read MCP tools (DB-backed)
+
+**Goal:** Expose read-only DB query tools via `territory-ia` MCP server. No mutations yet. Keep filesystem reads as fallback during transition (shortest possible window).
+
+**Inputs:**
+
+- Existing `tools/mcp-ia-server/src/` surface + `list_*` registration patterns.
+- Design doc §4.3 MCP tool surface (Read section).
+- Step 1 schema + Step 2 populated DB.
+
+**Outputs:**
+
+- New MCP tools registered:
+  - `task_state(task_id)` — metadata + status + commits + deps from DB.
+  - `stage_state(slug, stage_id)` — progress + blockers + next_pending from DB.
+  - `master_plan_state(slug)` — rollup across stages.
+  - `task_spec_body(task_id)` — full body.
+  - `task_spec_section(task_id, section)` — single section slice.
+  - `task_spec_search(query, filters)` — full-text + trigram.
+  - `stage_bundle(slug, stage_id)` — DB state + narrative slices in one payload.
+  - `task_bundle(task_id)` — DB state + body slices.
+- Existing tools (`backlog_issue`, `backlog_list`, `backlog_search`, `spec_section`, etc.) re-implemented as DB queries. Schemas unchanged.
+- Singleton `pg.Pool` at MCP server boot (F15=a).
+
+**Acceptance:**
+
+- Restart MCP server; `list_*` returns new tools + existing tools still functional.
+- `backlog_issue TECH-001` returns data identical to pre-refactor yaml parse.
+- `task_spec_search 'heightmap'` returns ≥1 hit.
+- No filesystem reads for task metadata during test calls (implementer greps tool code to confirm — or logs query source).
+- Existing skill invocations that use old tools still work (tools are a compatibility surface).
+
+**Voids for implementer:**
+
+- Tool parameter schemas — match existing shapes where possible, extend where needed.
+- Error shape when DB is down (throw? return typed error payload? — pick convention).
+- `spec_section` reimplementation: does it read body from DB + regex-extract section? Or does it also persist per-section?
+- Caching strategy for hot queries (prepared statements? in-memory LRU?).
+
+**Findings:**
+
+```
+- Tools registered (names): task_state, stage_state, master_plan_state, task_spec_body,
+  task_spec_section, task_spec_search, stage_bundle, task_bundle (8 new) —
+  registered in src/server-registrations.ts via registerIaDbReadTools(server)
+  under the IA-core bucket. Query layer at src/ia-db/queries.ts; tool wiring at
+  src/tools/ia-db-reads.ts. snake_case names chosen to match existing MCP
+  surface (vs existing backlog_issue, spec_section conventions).
+
+- Tools reimplemented (names): None. Existing tools (backlog_issue, spec_section,
+  etc.) left intact to avoid cross-step coupling. Re-implementation deferred to
+  Step 4/5 once write-side guarantees land.
+
+- Connection pool config (size, idle timeout): Singleton pg.Pool via
+  src/ia-db/pool.ts — uses `pg` defaults (max=10, idle=10s) layered on the
+  resolved IA DATABASE_URL from src/ia-db/resolve-database-url.ts. Guarded
+  by poolOrThrow() which throws IaDbUnavailableError when DB is offline.
+
+- Query latency p50 / p95 on representative ops (live smoke against populated DB):
+  - task_state(TECH-767):      134ms cold / 9ms warm
+  - stage_state(sprite-gen, 7): 9ms
+  - master_plan_state(sprite-gen): 11ms
+  - task_spec_body(TECH-767):  1ms
+  - task_spec_section(TECH-767, "Implementation Plan"): 10ms
+  - task_spec_search 'decoration' (fts):  55ms (returns 20 hits with ts_headline)
+  - task_spec_search 'heightmap' (trgm):  289ms (title-scoped; see note below)
+  - stage_bundle(sprite-gen, 7): 38ms
+  - task_bundle(TECH-767):       23ms
+  All within interactive budget (<300ms). FTS dominant cost; trgm pays for
+  GIN index scan + similarity() on every candidate.
+
+- Section-slicing strategy: Pure markdown slicer `sliceSection(body, section)`
+  exported from queries.ts (unit-tested in tests/ia-db/queries.test.ts).
+  Finds heading case-insensitively, slices through the line before the next
+  heading of same-or-shallower level. No per-section DB persist — body is
+  loaded once then sliced in-process. Keeps DB schema minimal; CPU cost
+  negligible for typical spec sizes.
+
+- Error handling convention: `IaDbUnavailableError` thrown by `poolOrThrow()`
+  when DB cannot connect; `task_not_found` / `stage_not_found` /
+  `master_plan_not_found` returned as typed null-result rows that tool wrappers
+  surface as structured errors. All tools pass through `wrapTool` +
+  `runWithToolTiming` for uniform instrumentation.
+
+- Trigram re-targeting: initial plan put `%` operator on ia_tasks.body —
+  live smoke returned 0 hits because whole-body trgm similarity stays below
+  the 0.3 default for realistic query/body length gaps. Re-targeted trgm to
+  `ia_tasks.title` (shorter strings, typo-tolerant lookup is the real use
+  case), added migration `db/migrations/0016_ia_tasks_title_trgm.sql` with
+  GIN index on `title gin_trgm_ops`, and scoped threshold to 0.1 via
+  `SET LOCAL pg_trgm.similarity_threshold` inside explicit BEGIN/COMMIT.
+  FTS branch still covers body search.
+
+- Importer linkage fix: Step 2 importer left `ia_tasks.slug` + `stage_id` NULL
+  for ~all newer tasks because their yaml lacks `parent_plan` + `stage` fields
+  (newer convention carries `section: "Stage 7 — ..."` only). Added two
+  fallbacks in scripts/ia-db-import.ts: `deriveParentPlanFromBody` parses the
+  spec frontmatter for `parent_plan:`; `deriveStageFromSection` extracts the
+  stage id from `section:`. Re-import raised stage count 254 → 260 and
+  populated task↔stage joins — without this, stage_state returned 0 tasks
+  for Stage 7.
+
+- Unit-test coverage: tests/ia-db/queries.test.ts covers sliceSection —
+  7 cases (empty, missing, EOF-terminated, sibling-terminated, nested
+  subheadings preserved, case-insensitive, CRLF). Pure-function extraction
+  chosen so test suite does NOT require live DB.
+
+- Surprises: (1) whole-body trgm is effectively dead at default thresholds —
+  title is the right scope. (2) Newer task yaml schema lost parent_plan/stage
+  fields; body frontmatter is now the only reliable parent pointer — import
+  must derive, cannot trust yaml alone. (3) StageBundleDB extends StageStateDB
+  (flat root, not nested) — first smoke round hit `undefined.stage_id` until
+  the bundle wrapper was fixed to read root fields.
+```
+
+**Commit:** `feat(ia-dev-db): step 3 — read MCP tools (DB-backed state queries + full-text search)`
+
+---
+
+### Step 4 — Write MCP tools (atomic mutations)
+
+**Goal:** Expose mutation tools for task insert, status flip, body write, commit record, journal append, fix-plan write. Transactional. Replace filesystem `flock` with DB primitives.
+
+**Inputs:**
+
+- Step 3 read tools + DB pool.
+- Design doc §4.3 Mutate section + F10 concurrency (mixed advisory + row locks).
+
+**Outputs:**
+
+- `task_insert(slug, stage_id, title, body, type, priority, depends_on, related)` → reserves id via DB sequence, inserts row + body + deps in one tx.
+- `task_status_flip(task_id, new_status)` — row-level lock + update.
+- `task_spec_section_write(task_id, section, content)` — body update + optional history row.
+- `task_commit_record(task_id, commit_sha)` — append to `ia_task_commits`.
+- `stage_verification_flip(slug, stage_id, verdict, commit_sha, notes)` — upsert latest row (F11=a).
+- `stage_closeout_apply(slug, stage_id)` — flip task statuses → archived + optional `mv` stage file to `_closed/` (filesystem op covered separately in Step 8).
+- `journal_append(session_id, task_id, phase, payload_kind, payload)` / `journal_get` / `journal_search`.
+- `fix_plan_write(task_id, round, tuples)` / `fix_plan_consume(task_id, round)`.
+
+**Acceptance:**
+
+- Round-trip: insert task → read via `task_state` → body matches.
+- Concurrency test: two parallel `task_status_flip` calls on same row → second blocks + resolves without corruption.
+- `task_insert` under parallel load → unique ids (no duplicates, no gaps that break sequence).
+- Journal append + get round-trip.
+- Commit smoke: `task_commit_record` rows queryable.
+
+**Voids for implementer:**
+
+- Advisory lock key naming scheme (`pg_advisory_lock('ia_id_seq_tech'::regclass::oid, ...)` — pick convention).
+- History table trigger vs explicit write in tool (F5 says full snapshots — implementer picks mechanism).
+- Journal payload schema enforcement — runtime validation (zod / ajv) or trust-but-document?
+- Rollback policy on partial failure (tx abort + re-raise, or partial commit + report?).
+
+**Findings (2026-04-24 — step 4 applied):**
+
+- **Tools added (names):** 9 total registered in new bucket `registerIaDbWriteTools()` (`tools/mcp-ia-server/src/tools/ia-db-writes.ts`). Names: `task_insert`, `task_status_flip`, `task_spec_section_write`, `task_commit_record`, `stage_verification_flip`, `stage_closeout_apply`, `journal_append`, `fix_plan_write`, `fix_plan_consume`. Server tool count 69 → 78 (`validate:mcp-readme` green). Underlying mutation functions live in `src/ia-db/mutations.ts`; MCP wrappers are thin zod-shape + `wrapTool` envelopes that map `IaDbUnavailableError` → `db_unconfigured` + `IaDbValidationError` → `invalid_input` at the tool boundary.
+- **Concurrency test outcome:** `tests/ia-db/mutations.test.ts` exercises two parallel `task_status_flip` calls on the same row via `Promise.all([flip→implemented, flip→verified])`. Both resolve without error; final row status is one of the two targets (row-level `SELECT … FOR UPDATE` inside `withTx` serialises). Duration 36.9 ms — no deadlock, no corruption, status cleanly settled. Parallel-insert test (5× `task_insert` via `Promise.all`) produced 5 unique monotonic ids in 177.2 ms — per-prefix sequence `nextval('tech_id_seq')` handles concurrent claims without advisory locks (sequence atomicity is sufficient).
+- **Sequence seed + first inserted id:** After Step 2 import + Step 4 smoke, `tech_id_seq.last_value = 817` (post-test cleanup). Largest pre-existing `TECH-` id = 816 (from Step 2 import); first `task_insert`-reserved id during Step 4 tests was `TECH-817`. `ON CONFLICT DO NOTHING` path not needed — sequence monotonicity is authoritative. `feat_id_seq`, `bug_id_seq`, `art_id_seq`, `audio_id_seq` untouched by Step 4 (no sample inserts under those prefixes; seeded to `max(existing id) + 1` in Step 1 migration).
+- **History trigger vs tool-side write:** **Tool-side write** chosen. `mutateTaskSpecSectionWrite` wraps `BEGIN` → `SELECT body FROM ia_tasks WHERE task_id = $1 FOR UPDATE` → insert prior body into `ia_task_spec_history` → update `ia_tasks.body` with new section → `COMMIT`. Rationale (F5): explicit write inside the same tx keeps the snapshot coupled to the mutation that caused it and gives the tool control over `actor` / `change_reason` / `git_sha` metadata that a blind-trigger cannot populate. Schema carries no `BEFORE UPDATE` trigger. Round-trip test confirms both the new body and the history row are visible after commit.
+- **Journal schema enforcement:** **Trust-but-document** at payload body level. Tool-boundary validation (zod + explicit checks) enforces: `session_id` / `phase` / `payload_kind` non-empty strings, `payload` is a non-null non-array object (jsonb). Internal payload shape per `payload_kind` is NOT validated — documented in tool description + Step 12 retrospective invariant. This mirrors the design-doc F9 stance (journal as audit trail, not a typed message bus); future work can add per-`payload_kind` validators in a separate tool without schema changes.
+- **Surprises:**
+  - **Pre-existing drift in `catalog-list.ts`** unrelated to Step 4 — TS2367 (boolean-vs-number comparison) + TS2345 (zod union vs param type) were already red on HEAD. Widened `runCatalogList` input type `include_draft?: boolean | string | number` to match the zod inference that was already in the schema. Build was blocked on this; fix is a 1-line type widen + no runtime-behaviour change. Logged here cross-step because `npm run build` gate couldn't advance without it.
+  - **Test-setup schema drift** — first pass of `mutations.test.ts` inserted into `ia_master_plans` with `status` column + into `ia_stages` with `status = 'active'`. Actual 0015 schema: `ia_master_plans` has no `status`; `ia_stages.status` is `stage_status` ENUM (`pending` | `in_progress` | `done`). Fixed by dropping the column + using `'in_progress'`. Reinforces Step 3 Finding re. reading migrations before trusting design-doc shorthand.
+  - **Sandbox slug pattern** (`__test_sandbox__`) works cleanly: `before()` inserts plan + stage, `after()` cascade-deletes in FK order (deps → commits → spec_history → fix_tuples → tasks → verifications → stages → journal → master_plans). Post-test row counts confirmed zero. Real master-plan data untouched.
+  - **Latencies (local dev DB, test measurements):** `task_insert` round-trip 84.8 ms, parallel ×5 177.2 ms (~35 ms per insert steady state), `task_status_flip` concurrent 36.9 ms, `task_spec_section_write` replace + history 38.4 ms, append-when-missing 9.9 ms, `journal_append` round-trip 6.96 ms, `fix_plan_write` + `fix_plan_consume` lifecycle 73.85 ms. Well within the F1 design budget.
+  - **`fix_plan_consume` idempotency verified:** re-run on already-consumed `(task_id, round)` returns `consumed = 0` without error (partial `applied_at IS NULL` filter handles it cleanly — no need for advisory state flag).
+
+**Commit:** `feat(ia-dev-db): step 4 — write MCP tools (atomic task/stage/journal mutations)`
+
+---
+
+### Step 5 — `BACKLOG.md` view generation (DB → markdown)
+
+**Goal:** Replace `materialize-backlog.sh` with a DB-sourced generator. `BACKLOG.md` + `BACKLOG-ARCHIVE.md` become regenerated views; content identical to current shape.
+
+**Inputs:**
+
+- Step 3 read tools.
+- Current `materialize-backlog.sh` logic + output format.
+- `ia/state/backlog-sections.json` + `ia/state/backlog-archive-sections.json` (section ordering rules).
+
+**Outputs:**
+
+- New script `tools/scripts/materialize-backlog-from-db.ts` (or replace existing shell — implementer picks).
+- `npm run materialize:backlog` flips to new source.
+- Generated `BACKLOG.md` + `BACKLOG-ARCHIVE.md` byte-identical (or near-identical, documented) to pre-refactor output.
+
+**Acceptance:**
+
+- `diff BACKLOG.md pre-refactor-BACKLOG.md` shows only expected delta (formatting, section ordering intentional).
+- No filesystem yaml reads during generation.
+- `validate:all` passes.
+
+**Voids for implementer:**
+
+- Handling for intentional formatting drift (date-stamp lines, generated-by markers).
+- Whether to keep the old shell as fallback or remove immediately (recommend keep during Step 6 skill flip, remove at Step 9 cleanup).
+
+**Findings:**
+
+```
+- Script path: tools/postgres-ia/materialize-backlog-from-db.mjs (new); tools/scripts/materialize-backlog.sh (wrapper, env-switchable via MATERIALIZE_BACKLOG_SOURCE=db|yaml, default db).
+- Byte-diff vs pre-refactor output: 0 lines (BACKLOG.md + BACKLOG-ARCHIVE.md both match baseline exactly; 18 WARNING lines match yaml-path warnings verbatim).
+- Wall-clock time: ~179 ms (DB path, including pool setup + single SELECT + two writes). Yaml path was ~200 ms on same box.
+- Surprises:
+  1. Migration 0017 added `ia_tasks.raw_markdown text` to preserve the authored BACKLOG row block verbatim — reconstructing from structured fields was not byte-safe.
+  2. Importer bug: `statusFromYaml("closed")` never matched because `yamlToIssue` pre-normalizes yaml `status: closed` → `"completed"`. Pre-fix all 872 rows were `pending`; post-fix 682 archived / 190 pending. Changed the check to `s === "completed"` + added directory-as-oracle override so yaml directory wins over the yaml `status:` field (TECH-411 case: archive dir + `status: open` → archived).
+  3. `pg` resolves only under `tools/postgres-ia/node_modules/` — the generator had to live there, not under `tools/scripts/`. Shell wrapper points at the new location.
+```
+
+**Commit:** `feat(ia-dev-db): step 5 — materialize-backlog from DB (markdown view regen)`
+
+---
+
+### Step 6 — `stage-file` skill flip (DB-aware)
+
+**Goal:** Merge `stage-file-plan` + `stage-file-apply` into single `stage-file` skill. Writes DB rows via `task_insert` MCP instead of yaml + `materialize-backlog.sh`. No filesystem yaml writes.
+
+**Inputs:**
+
+- Current `ia/skills/stage-file-plan/SKILL.md` + `ia/skills/stage-file-apply/SKILL.md`.
+- Design doc B1 + E2 + E3.
+- Step 4 write tools.
+
+**Outputs:**
+
+- Merged `ia/skills/stage-file/SKILL.md` (retire the `-plan` + `-apply` pair).
+- `.claude/agents/stage-file*.md` + `.claude/commands/stage-file.md` updated to reference new skill.
+- Old subagents moved to `.claude/agents/_retired/`.
+
+**Acceptance:**
+
+- Smoke: `/stage-file {orchestrator} {stage_id}` on a small test orchestrator (implementer picks — ideally a throwaway or existing Stage with `_pending_` tasks) files N tasks into DB.
+- DB reads back the N tasks via `stage_state`.
+- `BACKLOG.md` regenerated (Step 5) includes the new rows.
+- No yaml files written under `ia/backlog/`.
+
+**Voids for implementer:**
+
+- How to test end-to-end without polluting real backlog (throwaway slug? revert after?).
+- Dispatch shape: single skill invocation, no Opus pair-tail (per B1).
+- Plan-author / plan-digest still called inline? Or that's step 7?
+
+**Findings:**
+
+```
+- Skill file path: ia/skills/stage-file/SKILL.md (merged DB-backed single-skill; 8 phases: Mode detect → lifecycle_stage_context load → Stage block + cardinality + sizing gates → Batch deps verify → Resolve manifest section → Per-task task_insert MCP + manifest append + spec stub → Post-loop materialize + validate:dead-project-specs + atomic task-table flip + R1/R2 Status flips → Return). Replaces retired stage-file-plan + stage-file-apply pair.
+- Retired subagent files:
+  - .claude/agents/_retired/stage-file-planner.md
+  - .claude/agents/_retired/stage-file-applier.md
+  - ia/skills/_retired/stage-file-plan/SKILL.md
+  - ia/skills/_retired/stage-file-apply/SKILL.md
+  New single descriptor at .claude/agents/stage-file.md (model opus, reasoning_effort high); .claude/commands/stage-file.md rewritten to dispatch the merged subagent (Step 1b branch guardrail + footer note). Sibling main-session variant (ia/skills/stage-file-main-session/SKILL.md + .claude/commands/stage-file-main-session.md) updated to reference merged skill.
+- Smoke test slug + stage: backlog-yaml-mcp-alignment Stage 5 (self-referential — smoke-tested against the refactor master plan itself; 5 _pending_ tasks T5.1–T5.5).
+- Rows created: TECH-858, TECH-860, TECH-861, TECH-862, TECH-863 (5 rows in ia_tasks, slug=backlog-yaml-mcp-alignment, stage_id=5, status=pending, raw_markdown populated byte-faithful). Sequence gap at TECH-859 (harmless — see surprise #2).
+- Surprises:
+  1. Live Claude session had stale MCP schema — task_insert registered server-side (Step 4) but not exposed in this session's deferred-tool list. Subagent fell back to a direct DB mutation script replicating mutateTaskInsert semantics (same COMMIT semantics, same per-prefix nextval). MCP host restart needed to expose task_insert as a callable tool in live sessions. Not a correctness bug — DB state matches MCP tool intent.
+  2. Sequence gap TECH-859 — first task_insert attempt COMMITted the row, fs write (spec stub) failed post-COMMIT, subagent rolled back the DB row; `nextval('tech_id_seq')` had already advanced. Re-insert grabbed TECH-860. DB semantics correct — sequences don't replay on ROLLBACK. Backlog tolerates non-contiguous ids; no action required.
+  3. 30 stale normative doc references to retired `stage-file-plan` / `stage-file-apply` pair surface across the repo (ia/specs/plan-apply-pair-contract.md, ia/specs/project-hierarchy.md, 7 project master-plans, sibling lifecycle skill bodies). Out of Step 6 Outputs scope (`stage-file` skill + agents + command files only). Deferred to Step 9 — Foldering + cleanup.
+  4. Branch guardrail enforced correctly — chain halted after Phase 7 (skill return); dispatcher Steps 2–4 (plan-author / plan-digest / plan-reviewer) skipped per §3. `/ship-stage` not auto-invoked.
+  5. DB-path idempotency works via (slug, stage_id, title) triple check — re-running `/stage-file` on same Stage safely reused existing rows without duplicate inserts.
+  6. validate:dead-project-specs (seam #2 gate on DB path) exit 0; validate:backlog-yaml NOT run (no yaml written); validate:all NOT run (out of chain scope). Matches skill hard boundary.
+  7. Verified NO yaml written under `ia/backlog/TECH-85{8,9}.yaml` or `ia/backlog/TECH-86{0,1,2,3}.yaml` — DB-only path confirmed end-to-end.
+```
+
+**Commit:** `feat(ia-dev-db): step 6 — stage-file skill merged + DB-backed (retire plan+apply pair)`
+
+---
+
+### Step 7 — `stage-authoring` skill flip (merge plan-author + plan-digest)
+
+**Goal:** Merge `plan-author` + `plan-digest` into single `stage-authoring` skill. Writes §Plan Digest via `task_spec_section_write` MCP. Drop §Plan Author section + aggregate `docs/implementation/` doc.
+
+**Inputs:**
+
+- Current `ia/skills/plan-author/` + `ia/skills/plan-digest/SKILL.md`.
+- Design doc B2 + B6 + C7 + D8.
+- Step 4 `task_spec_section_write`.
+
+**Outputs:**
+
+- New `ia/skills/stage-authoring/SKILL.md`.
+- Retire plan-author + plan-digest.
+- Drop aggregate `docs/implementation/{slug}-stage-X.Y-plan.md` pattern.
+- `.claude/agents/` + `.claude/commands/` updated.
+
+**Acceptance:**
+
+- Smoke: run stage-authoring on a stage filed in Step 6 → §Plan Digest lands in DB body for each task.
+- `task_spec_section task_id §Plan\ Digest` returns expected content.
+- No aggregate doc written.
+
+**Voids:**
+
+- Does stage-file (Step 6) call stage-authoring inline (per C8=b) or keep as separate step? Recommend inline; confirm during implementation.
+- §Plan Author intermediate state — does stage-authoring still go through an "author draft → digest mechanization" two-sub-phase internally, or direct-to-digest?
+
+**Findings (2026-04-24 — step 7 applied):**
+
+- **Skill file path:** `ia/skills/stage-authoring/SKILL.md` (merged DB-backed single-skill; 9 phases — Sequential-dispatch guardrail → Load shared Stage MCP bundle → Read filed Task spec stubs → Token-split guardrail → Bulk author §Plan Digest direct → Self-lint via `plan_digest_lint` → Mechanicalization preflight → Per-task `task_spec_section_write` to DB + transitional fs mirror → Hand-off). Replaces retired `plan-author` (Opus bulk §Plan Author writer) + `plan-digest` (Opus bulk mechanizer) pair per design B2 (merge) + B6 (no §Plan Author intermediate) + C7 (digest direct) + C8 (stage-file inline call) + D8 (no aggregate doc).
+- **Retired surface files moved:**
+  - `.claude/agents/_retired/plan-author.md` (was `.claude/agents/plan-author.md`)
+  - `.claude/agents/_retired/plan-digest.md` (was `.claude/agents/plan-digest.md`)
+  - `.claude/commands/_retired/author.md` (was `.claude/commands/author.md`)
+  - `.claude/commands/_retired/plan-digest.md` (was `.claude/commands/plan-digest.md`)
+  - `ia/skills/_retired/plan-author/SKILL.md` (was `ia/skills/plan-author/SKILL.md`)
+  - `ia/skills/_retired/plan-digest/SKILL.md` (was `ia/skills/plan-digest/SKILL.md`)
+  New surface: `.claude/agents/stage-authoring.md` (model `opus`, reasoning_effort `high`) + `.claude/commands/stage-authoring.md` (dispatcher with branch guardrail + handoff).
+- **stage-file → stage-authoring inline coupling (C8 confirm):** stage-file Phase 8 hand-off now points at `/stage-authoring` (was `/author` + `/plan-digest` two-step). Resolves Step 7 Void #1: inline call confirmed, no separate human step.
+- **Direct-to-digest authoring (B6 confirm):** Single Opus pass writes §Plan Digest body direct (no §Plan Author intermediate buffer). Resolves Step 7 Void #2: drafting + mechanicalization fold into one pass; canonical-term fold sub-checks 4.5a–4.5d run inline.
+- **Smoke task: TECH-858** (Stage 5 sentinel filed in Step 6). Skill body executed manually in this session (not via subagent dispatch — branch guardrail + stale MCP schema in live session prevented in-session subagent spawn; same pattern as Step 6 smoke).
+  - Phase 4 — §Plan Digest body authored (~163 lines): §Goal / §Acceptance (4 criteria) / §Test Blueprint (3 rows) / §Examples / §Mechanical Steps (3 steps with Edits + Gate + STOP + MCP hints + invariant_touchpoints + validator_gate per step) + §Escalation enum (4 codes).
+  - Phase 5 — `plan_digest_lint` PASS (`{ok: true, pass: true, failures: []}`).
+  - Phase 6 — `mechanicalization_preflight_lint` FAIL (`{picks: partial, validators: partial, escalation_enum: ok}`). NOT a content authoring fault — confirmed by readback on TECH-762 (canonical reference example) which ALSO fails preflight on the same fields. See finding #5 below.
+  - Phase 7 — `task_spec_section_write({task_id: "TECH-858", section: "Plan Digest", content: <body>, change_reason: "stage-authoring smoke Step 7 — TECH-858 §Plan Digest direct write (no §Plan Author intermediate)", actor: "stage-authoring-smoke", git_sha: "d73a68e4646104e2f1ec94a9c0e7e4024d06288f"})` → `{ok: true, history_id: 17, updated_at: "2026-04-24T20:02:11.864Z"}`. Filesystem mirror at `ia/projects/TECH-858.md` updated in same pass (idempotent §Plan Digest block replace).
+  - Readback verification — `task_spec_body(TECH-858)` returns 7101 bytes including §Plan Digest verbatim; `task_spec_section({task_id: "TECH-858", section: "§Plan Digest"})` returns full body (literal `§` glyph required — see finding #6).
+  - Aggregate doc check — NO `docs/implementation/backlog-yaml-mcp-alignment-stage-5*-plan.md` written (D8 confirmed).
+- **Surprises / iteration signals:**
+  1. **TECH-776 advisory hatch scope insufficient.** Existing hatch covers only `failing_fields == ["picks"]`. This smoke uncovered `validators` field also drifts on the canonical TECH-762 shape — the `tupleCount` regex (`/^#{2,3}\s+\d+\.|^- id:/gm`) scans the WHOLE spec file, not just §Plan Digest body, so it counts §1–§10 numbered headings as tuples (inflates denominator). validator_gate occurrences in §Plan Digest body stay sparse (1 per Mechanical Step), so ratio reports `partial`. Proposed widening: hatch becomes `failing_fields ⊆ {"picks", "validators"}` AND lint PASS AND no missing-path findings. Filed as Step 7 finding for follow-up issue (defer to Step 12 retrospective tickets per §3 scope-lock).
+  2. **picks regex shape vs rich-format authoring.** `mechanicalization-preflight-lint.ts` line 116 picks regex matches `file[_\s]?path|target[_\s]?file|pick:` followed by bare path token. Current §Plan Digest authoring shape uses bullet `- \`path\` — **operation**: ...` (path wrapped in backticks, no leading `file_path:`). Regex returns 0 picks against rich shape → reports `partial` ("no file_path/target_file picks found"). TECH-776 already-known; no change required this step beyond the hatch widening above.
+  3. **Section name parser requires literal `§` glyph.** First readback attempt with `section: "Plan Digest"` returned `section_not_found`. Retry with literal `§Plan Digest` (with § glyph) → SUCCESS. Skill body Phase 7 already calls `task_spec_section_write` with bare `"Plan Digest"` (write side normalises) but READS via `task_spec_section` require the literal `§`. Documented in skill body Phase 7 + agent descriptor; consider future MCP-side normalisation in `task_spec_section` (defer — current behaviour matches markdown anchor literal).
+  4. **DB write smoke acceptance MET.** Primary Step 7 acceptance gate is the MCP code path the skill body relies on, not preflight green. `task_spec_section_write` round-trip confirmed history table populated (`history_id: 17`), DB body column updated atomically, transitional filesystem mirror in sync.
+  5. **TECH-762 readback proves rubric drift, not authoring fault.** Ran `mechanicalization_preflight_lint` on `ia/projects/TECH-762.md` (canonical TECH-776 reference example shipped on `main`) — also returns `{picks: partial, validators: partial}`. Confirms preflight FAIL is structural to the rubric, not a regression introduced by this smoke. Logged as TECH-776 scope-expansion lessons; hatch widening proposal in finding #1 above.
+  6. **Live-session subagent dispatch blocked.** Same pattern as Step 6 smoke: deferred-tool list in this live Claude session does not yet expose `task_spec_section_write` (registered server-side Step 4, but session schema cached pre-restart). Manual execution of the skill body validates the code path; production dispatch via `/stage-authoring` slash command requires MCP host restart on a fresh session. Not a correctness blocker for Step 7 acceptance — DB state matches MCP tool intent.
+  7. **Branch guardrail enforced via skill + agent + command bodies.** All three new surfaces carry the `feature/ia-dev-db-refactor` guardrail block referencing §3 (no §Plan Digest ceremony on this branch except for Step 7 sentinel-task smoke testing). Broader stage-authoring chain dispatches resume on `main` post-merge.
+- **Followups deferred to Step 12 retrospective:**
+  - File issue: widen TECH-776 advisory hatch to cover `validators` field drift AND scope `tupleCount` regex to §Plan Digest section only (not whole spec).
+  - File issue: optionally normalise `task_spec_section` to accept both `Plan Digest` and `§Plan Digest` forms (or document the `§` requirement in MCP tool description).
+  - File issue: smoke `/stage-authoring` against remaining Stage 5 tasks (TECH-860 / TECH-861 / TECH-862 / TECH-863) on `main` post-merge to validate batched bulk pass.
+
+**Commit:** `feat(ia-dev-db): step 7 — stage-authoring skill merged + DB-backed spec section write`
+
+---
+
+### Step 8 — `ship-stage` skill flip (Pass A no-commit / Pass B stage-end)
+
+**Goal:** Rewrite ship-stage: Pass A per-task implement + compile (no commits). Pass B per-stage verify-loop + code-review + closeout + single stage-end commit. Fold closeout inline (drop `stage-closeout-*` pair + `plan-applier`).
+
+**Inputs:**
+
+- Current `ia/skills/ship-stage/SKILL.md`.
+- Design doc C9 + C10 + E13 + E14.
+- Steps 4 + 5 + 6 + 7.
+
+**Outputs:**
+
+- Rewritten `ia/skills/ship-stage/SKILL.md`.
+- Retire `ia/skills/stage-closeout-plan/` + `ia/skills/stage-closeout-apply/` + `ia/skills/plan-applier/` (code-fix mode specifically; if plan-fix mode survives elsewhere, keep only that path).
+- `ship-stage` writes `stage_verification_flip` on verify pass, moves stage file to `_closed/` in `stage_closeout_apply`, commits single stage commit.
+
+**Acceptance:**
+
+- Smoke: run ship-stage on a filed+authored throwaway stage → all tasks `implemented → verified → done` → stage file lands in `_closed/` → single commit on branch.
+- Drop: no per-task commits generated during Pass A.
+- `ia_stage_verifications` row populated.
+
+**Voids:**
+
+- Retry loop shape (verify-loop fix iteration — where in Pass B?).
+- Code-review fix-apply inline per E14 — how does reviewer apply fix without plan-applier? Direct Edit in reviewer subagent?
+- Stage commit message format.
+
+**Findings (2026-04-24 — step 8 applied):**
+
+- **Skill rewrite:** `ia/skills/ship-stage/SKILL.md` rewritten to 11-phase DB-backed pipeline pre-compaction (Phase 0 parse → Phase 1 stage_bundle → Phase 2 domain-context-load → Phase 3 §Plan Digest readiness gate via `task_spec_section` → Phase 4 resume gate via `task_state` (no git scan) → Phase 5 Pass A per-task implement+`unity:compile-check`+`task_status_flip(implemented)`+`journal_append` (NO commits) → Phase 6 Pass B per-stage verify-loop+code-review (inline fix per E14)+audit+per-task `verified→done` flips → Phase 7 inline `stage_closeout_apply` per C10 + guarded `git mv` to `_closed/` → Phase 8 single stage commit `feat({SLUG}-stage-{STAGE_ID_DB})` per E13 + per-task `task_commit_record` + `stage_verification_flip(pass, sha)` per E11 → Phase 9 chain digest → Phase 10 next-stage resolver).
+- **Subagent + command surface rewrites (4 files):**
+  - `.claude/agents/ship-stage.md` — DB-backed two-pass description; tools frontmatter expanded with Step 4 MCP write tools (`task_status_flip`, `stage_closeout_apply`, `task_commit_record`, `stage_verification_flip`, `journal_append`) + Step 3 read tools (`stage_bundle`, `task_state`, `task_bundle`, `task_spec_section`, `task_spec_body`, `master_plan_state`); 11-phase recipe; `--per-task-verify` flag dropped (only `--no-resume` survives); Hard boundaries citing E13/E14/C10.
+  - `.claude/commands/ship-stage.md` — argument-hint trimmed to `[--no-resume] [--force-model {model}]`; phase sequence aligned to 11 phases with E13/E14/C10 callouts; critical Hard boundaries section (PASSED invalid until Step 7 closeout + Step 8 commit + verification flip succeed).
+  - `ia/skills/ship-stage-main-session/SKILL.md` — 8-phase no-subagent inline pipeline (Stage state load + Context load merged); `--per-task-verify` removed; inline `stage_closeout_apply` per C10; single stage commit per E13; code-review fixes inline per E14; resume gate via DB `task_state` (no git scan).
+  - `.claude/commands/ship-stage-main-session.md` — same surface alignment as the SKILL; legacy Phase 1.5/1.6 + Pass 1/Pass 2 numbering replaced; closeout-pair + JIT plan-digest + git-scan resume language stripped.
+- **Retirements (3 git mv operations + 2 mode strips):**
+  - `ia/skills/stage-closeout-plan/` → `ia/skills/_retired/stage-closeout-plan/` (195 lines obsolete per C10).
+  - `.claude/agents/stage-closeout-planner.md` → `.claude/agents/_retired/stage-closeout-planner.md` (53 lines, Opus pair-head for §Stage Closeout Plan tuples).
+  - `.claude/commands/closeout.md` → `.claude/commands/_retired/closeout.md` (73 lines, dispatched stage-closeout-planner → plan-applier Mode stage-closeout pair).
+  - `ia/skills/plan-applier/SKILL.md` collapsed 576 → ~180 lines: single seam #1 plan-fix mode only; `code-fix` + `stage-closeout` mode rows stripped from Operation table + Hard boundaries; Changelog dated 2026-04-24 attributing retirement to E14 + C10.
+  - `.claude/agents/plan-applier.md` rewritten: tools frontmatter trimmed to `Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate` (dropped `stage_closeout_digest`, `unity_compile`, `invariant_preflight`); validation gate `validate:master-plan-status + validate:backlog-yaml`; "Retired modes" section explains code-fix (E14) + stage-closeout (C10) retirements.
+- **Voids resolved:**
+  - **Retry loop (verify-loop fix iteration in Pass B):** verify-loop subskill carries its own bounded fix→verify iteration (`MAX_ITERATIONS` default 2, configurable). Pass B Step 6.1 calls verify-loop once; if `verdict != pass` after the subskill exhausts internal retries → `STAGE_VERIFY_FAIL` (no rollback of Pass A status flips; worktree stays dirty for human review). Code-review re-entry cap=1 lives at Step 6.2 (second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`).
+  - **Code-review fix-apply inline per E14:** opus-code-reviewer agent applies critical fixes via direct Edit/Write tools in its own session (no `§Code Fix Plan` tuples written; no plan-applier dispatch). Single re-entry cap; second critical bubbles up.
+  - **Stage commit message format:** `feat({SLUG}-stage-{STAGE_ID_DB}): {short description}` covers all Pass A diffs + code-review fixes + closeout `git mv` per E13. Body lists shipped task ids one per line. `STAGE_COMMIT_SHA` captured post-commit and threaded through per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)` + `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")` (E11 history-preserving INSERT).
+- **Surprises / gotchas:**
+  1. `plan-applier` skill dir survives — `plan-fix` mode (seam #1, consumed by `plan-review` skill which is still active) is the surviving payload. Only `code-fix` + `stage-closeout` modes retire. Decision: keep dir + agent + skill; collapse body to single mode rather than retire whole tree.
+  2. 61 files in `ia/` reference retired surfaces (archived backlog yamls, master-plan §Audit paragraphs, frozen project specs). Step 8.3 scoped to active surfaces only (ship-stage agent + command, plan-applier agent + skill, ship-stage-main-session pair); historical refs deferred to Step 9 (foldering + cleanup).
+  3. Smoke test (Step 8.4) skipped per user direction — Step 8 is rewrite-only; downstream Steps 9–12 + first real ship will exercise the new pipeline organically.
+- **Validators:** `npm run validate:claude-imports` exit 0 (4 imports OK). `npm run validate:all` exit 0 — all sub-validators green including `validate:cache-block-sizing` (plan-applier 4960 tok ×1.21 floor clearance after rewrite), `validate:agent-tools-uniformity` (plan-applier tail = 8 tools), `validate:agent-tools` (no narrowed-agent regression), `validate:mcp-readme` (78 tools registered + documented).
+
+**Commit:** `feat(ia-dev-db): step 8 — ship-stage rewritten (Pass A no-commit / Pass B stage-end + inline closeout)`
+
+---
+
+### Step 9 — Foldering migration + drop retired surface
+
+**Goal:** One-shot filesystem reshape — move existing master plans into `ia/projects/{slug}/` folders with `index.md` + `stage-*.md` + `_closed/`. Retire `tasks/` subfolder (bodies in DB per E4=b). Drop yaml + materialize-backlog shell + reserve-id + runtime-state + filesystem lockfiles + dropped validators.
+
+**Inputs:**
+
+- Design doc §2 foldering shape + A4 retirement per E4=b.
+- All prior steps green (DB + tools + skills all working).
+
+**Outputs:**
+
+- New script `tools/scripts/fold-master-plan.ts` (one-shot; run once per plan OR bulk).
+- All `ia/projects/*master-plan*.md` → `ia/projects/{slug}/index.md` + `stage-*.md`.
+- `ia/projects/{id}.md` task spec files → DELETED (bodies already in DB).
+- `ia/backlog/` + `ia/backlog-archive/` → DELETED.
+- `BACKLOG.md` + `BACKLOG-ARCHIVE.md` kept as generated view (regenerated from DB via Step 5).
+- `tools/scripts/reserve-id.sh` + `ia/state/id-counter.json` + `.id-counter.lock` + `.materialize-backlog.lock` + `.runtime-state.lock` + `ia/state/runtime-state.json` → DELETED.
+- Drop `validate:dead-project-specs`, `validate:backlog-yaml`, `validate:frontmatter`, `validate:claude-imports` from package.json scripts + CI.
+- Drop `materialize-backlog.sh` (replaced by Step 5 TS).
+- Drop retired skills: `plan-review`, `opus-auditor`, `plan-reviewer-mechanical`, `plan-reviewer-semantic`, `stage-closeout-*`, `plan-applier` code-fix, `stage-decompose`.
+
+**Acceptance:**
+
+- `git ls-files ia/backlog/` → empty.
+- `git ls-files ia/projects/TECH-*.md` → empty (bodies in DB).
+- `npm run validate:all` passes on reduced validator set.
+- `/stage-file` + `/ship-stage` + `/author` smokes still green on test orchestrator.
+- Web dashboard (if Step 10 shipped first — optional re-order) still reads.
+
+**Voids:**
+
+- Ordering: does foldering run before or after web dashboard (Step 10)? Recommend before — cleanup is the last step.
+- History preservation for moved files — `git mv` vs copy+delete (git mv preserves blame).
+- What to do with `ia/plans/` contents.
+
+**Findings:** (standard)
+
+**Commit:** `feat(ia-dev-db): step 9 — foldering migration + cleanup (yaml retires, task specs DB-only, dropped validators)`
+
+---
+
+### Step 10 — Web dashboard read surface
+
+**Goal:** Read-only dashboard (E6=a) showing master plans + stages + tasks + verification verdicts + journal tail. Next.js API routes in `web/app/api/...` (E7=a) call MCP tools (F14=b) — not direct Postgres.
+
+**Inputs:**
+
+- Design doc §4.3 Read tools + E6 + E7 + F14.
+- Existing `web/` workspace conventions.
+
+**Outputs:**
+
+- API routes: `web/app/api/ia/plans/route.ts`, `web/app/api/ia/plans/[slug]/route.ts`, `web/app/api/ia/tasks/[id]/route.ts`, `web/app/api/ia/tasks/[id]/body/route.ts`, etc.
+- Dashboard page(s): `web/app/ia/page.tsx` (list), `web/app/ia/[slug]/page.tsx` (plan view), `web/app/ia/tasks/[id]/page.tsx` (task view).
+- MCP client helper in `web/lib/` that proxies to `territory-ia` server.
+
+**Acceptance:**
+
+- `npm run dev` in `web/` + navigate to dashboard → list of master plans loads from DB.
+- Click plan → stages + task table render from DB.
+- Click task → body renders (markdown).
+- Search bar → calls `task_spec_search`.
+
+**Voids:**
+
+- MCP client transport from Next.js server (spawn subprocess? HTTP bridge? — design question).
+- Auth gate (none for now? Basic IP-restricted?).
+- Styling / design system integration (use existing `web/lib/design-system.md`).
+
+**Findings:** (standard)
+
+**Commit:** `feat(ia-dev-db): step 10 — web dashboard read surface (Next.js API → MCP → DB)`
+
+---
+
+### Step 11 — Daily snapshot + history audit
+
+**Goal:** Committed daily DB snapshot (E10) + `ia_task_spec_history` audit table wired to `task_spec_section_write` (F5=a).
+
+**Inputs:**
+
+- Design doc E10 + F5 + F6 (split plain/binary snapshot).
+- Step 4 `task_spec_section_write`.
+
+**Outputs:**
+
+- Cron / CI job writing `ia/state/db-snapshot-metadata.sql` (plain SQL, diffable) + `ia/state/db-snapshot-bodies.dump` (binary, compressed).
+- History table populated by trigger OR tool-side write (implementer chose in Step 4).
+
+**Acceptance:**
+
+- Snapshot regenerates cleanly.
+- Restore-from-snapshot smoke (to throwaway DB) round-trips.
+- `ia_task_spec_history` rows appear after `task_spec_section_write` calls.
+
+**Voids:**
+
+- Cron vs CI (GitHub Action on schedule? local cron?). **Resolved:** local-cron deferred — both artifacts committed manually via `npm run db:snapshot` per dev session; CI scheduling deferred to followup ticket post-refactor (see Step 12).
+- Snapshot size + gitignore strategy for binary portion. **Resolved:** plain SQL = 1.28 MB, binary = 450 KB at current data volume (877 tasks, 1 history row). Both committed (no LFS, no gitignore). Re-evaluate at >10 MB binary or >5 MB plain.
+
+**Findings:**
+
+- pg_dump `-t {table}` filters tables but skips dependent enum types AND extension declarations — throwaway DB restore failed twice (1: `stage_verdict` enum missing → fixed via `dumpEnumPrelude` querying `pg_type` + `pg_enum` catalog; 2: `gin_trgm_ops` operator class missing → fixed via `dumpExtensionPrelude` emitting `CREATE EXTENSION IF NOT EXISTS pg_trgm`). Pattern: `pg_dump --schema-only` is NOT self-applicable on blank target without an explicit prelude for cross-table dependencies.
+- FK ordering hazard: `ia_task_deps` references `ia_tasks(task_id)` but `ia_tasks` is body-heavy → restored from binary AFTER the plain SQL data block. Without `SET session_replication_role = replica` wrapping the data inserts, restore fails on `ia_task_deps_depends_on_id_fkey`. Standard pg_dump trick — should be the default for any split-restore pipeline.
+- ia_tasks metadata in plain SQL emitted as SQL **comments** (not `INSERT`s) — keeps git-diffable signal (status flips, title changes visible in `git log -p`) without conflicting with the binary `pg_restore` (which uses COPY and would PK-collide against pre-inserted rows). Tradeoff: comments can't be applied automatically; binary is ground truth.
+- `ia_task_spec_history` row count = 1 at Step 11 close (only the Step 7 self-smoke `task_spec_section_write` on TECH-858 left a history record). Audit table working correctly — every `task_spec_section_write` call captures `actor` / `change_reason` / `git_sha` alongside the body snapshot. Volume will grow as `/stage-authoring` runs land §Plan Digest writes through MCP.
+- Restore-smoke FTS check passed: 125 hits for `websearch_to_tsquery('english', 'Goal')` confirms `body_tsv` GIN index is regenerated by `pg_restore` (it's a GENERATED column ALWAYS — no separate refresh needed).
+
+**Commit:** `feat(ia-dev-db): step 11 — daily snapshot + spec body history`
+
+---
+
+### Step 12 — Retrospective + friction log close
+
+**Goal:** Close this refactor. Merge to main. Open followup tickets for gaps surfaced during execution.
+
+**Outputs:**
+
+- Append final retrospective section to `docs/master-plan-execution-friction-log.md` comparing pre- vs post-refactor friction.
+- PR from `feature/ia-dev-db-refactor` → `main`.
+- File followup issues (via `project-new` on the new DB-backed system — meta: refactor bootstraps its own issue tracker).
+
+**Acceptance:**
+
+- PR green.
+- Followups filed.
+- Design doc (`master-plan-foldering-refactor-design.md`) locked + unchanged by this branch (preserved as historical record).
+
+**Findings:** (standard)
+
+**Commit:** `chore(ia-dev-db): step 12 — retrospective + PR open`
+
+---
+
+## 2. Running log
+
+### 2.1 Step status table
+
+| Step | Status | Started | Done | Commit | Notes |
+|------|--------|---------|------|--------|-------|
+| 1 — DB schema foundation | done | 2026-04-24 | 2026-04-24 | `1e79182` | 9 new `ia_*` tables + 4 enums + 5 sequences + GIN dual-index (tsv+trgm); bridge-preflight green |
+| 2 — Import script | done | 2026-04-24 | 2026-04-24 | `b274063` | 872 tasks (166 open + 706 archive) + 254 stages + 20 plans + 1346 deps imported in 0.74s; idempotent TRUNCATE-and-reinsert; 11 dangling dep targets dropped (3 missing ids); body_tsv smoke green |
+| 3 — Read MCP tools | done | 2026-04-24 | 2026-04-24 | `9e6ddee` | 8 DB-backed read tools wired through registerIaDbReadTools; sliceSection pure fn + unit tests; trgm retargeted body→title + migration 0016; importer linkage fix (parent_plan from frontmatter + stage from section) raised stages 254→260 |
+| 4 — Write MCP tools | done | 2026-04-24 | 2026-04-24 | `a08e68b` | 9 DB-backed mutation tools wired via registerIaDbWriteTools; tool count 69→78; parallel 5× insert monotonic (tech_id_seq 817); concurrent status_flip serialised via SELECT FOR UPDATE; tool-side history write; journal trust-but-document; fix_plan_consume idempotent; 7 round-trip + concurrency tests green; pre-existing catalog-list.ts type drift fixed en passant |
+| 5 — BACKLOG.md generator | done | 2026-04-24 | 2026-04-24 | `0104104` | Migration 0017 adds `raw_markdown` column; importer bug fix (`statusFromYaml` was checking pre-normalized string) + dir-as-oracle override (yaml dir wins over yaml `status:` field for TECH-411 edge case); new generator at `tools/postgres-ia/materialize-backlog-from-db.mjs` produces byte-identical BACKLOG.md + BACKLOG-ARCHIVE.md (0-line diff vs baseline; 18 WARNINGs match yaml path); shell wrapper env-switched via `MATERIALIZE_BACKLOG_SOURCE` (default `db`, legacy `yaml`); ~179 ms wall-clock |
+| 6 — stage-file skill | done | 2026-04-24 | 2026-04-24 | `57aba9a` | stage-file-plan + stage-file-apply merged into single DB-backed stage-file skill (8 phases); writes go through task_insert MCP + manifest append + spec stub (NO yaml under ia/backlog/, NO reserve-id.sh, NO validate:backlog-yaml); old pair moved to `.claude/agents/_retired/` + `ia/skills/_retired/`; new `.claude/agents/stage-file.md` + rewritten `.claude/commands/stage-file.md` (Step 1b branch guardrail); main-session variant updated. Self-smoke on this master plan's Stage 5 → 5 DB rows (TECH-858/860/861/862/863, gap at TECH-859 from post-COMMIT fs-rollback — harmless), byte-faithful raw_markdown, atomic task-table + R1/R2 flips, validate:dead-project-specs exit 0. Branch guardrail halted chain at Phase 7 (no /author / /plan-digest / /plan-review dispatch). 30 stale normative doc refs to retired pair deferred to Step 9. |
+| 7 — stage-authoring skill | done | 2026-04-24 | 2026-04-24 | `dc0e1d3` | `plan-author` + `plan-digest` Opus pair collapsed into single `stage-authoring` skill at `ia/skills/stage-authoring/SKILL.md` (9 phases, DB-backed via `task_spec_section_write`); `.claude/agents/stage-authoring.md` + `.claude/commands/stage-authoring.md` land; old pair moved to `_retired/`. Self-smoke on TECH-858 (Stage 5 sentinel) → §Plan Digest body authored (~163 lines, lint PASS), DB write OK (`history_id: 17`, 7101 bytes), readback verified, NO aggregate `docs/implementation/` doc per D8. Preflight FAIL (`picks` + `validators` partial) confirmed structural — TECH-762 canonical reference example also fails same fields → logged as TECH-776 hatch scope-expansion finding (defer to Step 12). |
+| 8 — ship-stage skill | done | 2026-04-24 | 2026-04-24 | `1b2bac3` | ship-stage SKILL rewritten to 11-phase DB-backed two-pass pipeline (Pass A per-task implement+compile+`task_status_flip(implemented)` NO commits → Pass B per-stage verify-loop+code-review (inline fix per E14)+audit+verified→done flips+inline `stage_closeout_apply` per C10 + single stage commit `feat({slug}-stage-X.Y)` per E13 + `task_commit_record` + `stage_verification_flip(pass)` per E11); `.claude/agents/ship-stage.md` + `.claude/commands/ship-stage.md` + `ia/skills/ship-stage-main-session/SKILL.md` + `.claude/commands/ship-stage-main-session.md` realigned (DB resume gate, no git scan; `--per-task-verify` dropped; only `--no-resume` survives); 3 git mv retirements (`stage-closeout-plan` skill + `stage-closeout-planner` agent + `closeout` command → `_retired/`) per C10; `plan-applier` skill 576→180 lines (single seam #1 plan-fix mode; code-fix + stage-closeout modes stripped per E14 + C10); `.claude/agents/plan-applier.md` tools frontmatter trimmed; smoke test (Step 8.4) skipped per user direction — downstream Steps 9–12 + first real ship exercise pipeline organically; `validate:claude-imports` + `validate:all` green |
+| 9 — Foldering + cleanup | pending | — | — | — | — |
+| 10 — Web dashboard read | done | 2026-04-24 | 2026-04-24 | `a6f4468` | Next.js routes + 5 API routes (`/api/ia/plans`, `/api/ia/plans/[slug]`, `/api/ia/tasks/[id]`, `/api/ia/tasks/[id]/body`, `/api/ia/search`) + 3 server-component pages (`/ia` list w/ FTS form, `/ia/[slug]` plan detail w/ stages + change log, `/ia/tasks/[id]` task detail w/ deps + body + commits). Architectural deviation: direct pg via `getSql()` lazy singleton (matches catalog API) instead of MCP-as-subprocess proxy (would block per-request); deferred to Step 12 followup. `npm run build` clean. |
+| 11 — Snapshot + history | done | 2026-04-24 | 2026-04-24 | `7fee990` | `tools/postgres-ia/snapshot-ia-db.mjs` (split: plain SQL + binary `-Fc -Z 9`) + `restore-snapshot-smoke.mjs` (throwaway DB round-trip) + npm scripts `db:snapshot` + `db:snapshot:smoke`. Smoke green: 12/12 tables row-count match, FTS 125 hits for 'Goal'. Plain = 1.28 MB diffable (schema + small-table data + ia_tasks metadata as comments + extension/enum preludes + FK-deferred data block); binary = 450 KB body-heavy (`ia_tasks` + `ia_task_spec_history`). 5 findings logged (pg_dump enum/extension gaps, FK ordering, comment-not-INSERT for ia_tasks metadata, audit row count, FTS regen via GENERATED column). |
+| 12 — Retrospective + PR | done | 2026-04-25 | 2026-04-25 | (this commit) | Retrospective appended to `docs/master-plan-execution-friction-log.md §8` (pre/post comparison + friction category shifts + new surfaces + sequencing). 5 followup tickets filed via `task_insert` MCP (DB-backed; refactor bootstraps its own tracker). PR `feature/ia-dev-db-refactor` → `main` opened. Design doc `master-plan-foldering-refactor-design.md` left unchanged (historical record). |
+
+### 2.2 Cross-step findings + followups
+
+Implementers append entries here as discoveries surface that do NOT belong to a single step.
+
+- **2026-04-24 (Step 4 side-fix)** — `tools/mcp-ia-server/src/tools/catalog-list.ts` had two pre-existing TypeScript errors on HEAD (TS2367 boolean-vs-number comparison line 47; TS2345 zod-schema-vs-param type drift line 131) blocking `npm run build`. Root cause: the zod `inputSchema` already used `z.union([boolean, string, number])` for `include_draft`, but `runCatalogList`'s param signature was narrower (`include_draft?: boolean`). Fixed by widening the param type to match the schema (`boolean | string | number`). No runtime-behaviour change — the coercion at line 44 already handled all three types. Logged here because the fix was required to unblock Step 4's build gate and is unrelated to mutation-tool scope.
+
+### 2.3 Open questions surfaced during execution
+
+```
+— empty —
+```
+
+---
+
+## 3. Guardrails for implementers
+
+- **Do NOT write the whole plan upfront.** Current doc is the whole plan. Do not replace step bodies with pre-planned code diffs before starting.
+- **Do NOT skip `Findings` blocks.** Every step green = Findings filled + committed in same commit (or commit immediately after).
+- **Do NOT extend scope.** If a step uncovers an issue, record under §2.3 (open questions) and defer.
+- **Do NOT couple steps.** Each step must be revertable in isolation. If two steps must land together, merge them into one step before starting.
+- **Commit per step.** No mega-commits across steps. Commit messages follow `feat(ia-dev-db): step N — {summary}`.
+- **No §Plan Digest ceremony.** This refactor is hand-driven. Do not invoke `/author`, `/plan-digest`, `/plan-review`, `/audit`, `/closeout` on this branch. Direct Edit + Bash + commit.
+- **Verify before next step.** Acceptance block for step N must be fully green before starting step N+1.
+
+---
+
+## 4. Change log
+
+- **2026-04-24** — Doc seeded on `feature/ia-dev-db-refactor` branch cut from `main @ 1563765`. All 12 steps outlined with Goal / Inputs / Outputs / Acceptance / Voids / Findings / Commit. Running log + status table initialized empty. Operating model: pure sequential, implementer fills voids + findings, no master-plan ceremony.
+- **2026-04-24** — Step 3 landed: 8 DB-backed MCP read tools (`task_state`, `stage_state`, `master_plan_state`, `task_spec_body`, `task_spec_section`, `task_spec_search`, `stage_bundle`, `task_bundle`) + pure `sliceSection` fn with unit tests + trigram re-targeted to `ia_tasks.title` (migration `0016_ia_tasks_title_trgm.sql`) + importer linkage fallbacks (`deriveParentPlanFromBody` + `deriveStageFromSection`) raising stages 254→260. All acceptance checks green, latencies <300ms.
+- **2026-04-24** — Step 4 landed: 9 DB-backed MCP mutation tools (`task_insert`, `task_status_flip`, `task_spec_section_write`, `task_commit_record`, `stage_verification_flip`, `stage_closeout_apply`, `journal_append`, `fix_plan_write`, `fix_plan_consume`) wired via `registerIaDbWriteTools()`. Server tool count 69 → 78, `validate:mcp-readme` green. Parallel 5× `task_insert` → 5 unique monotonic ids (per-prefix DB sequence, no advisory locks needed); concurrent `task_status_flip` serialised via row-level `SELECT FOR UPDATE` inside `withTx`; `task_spec_section_write` uses tool-side history write (not trigger) to capture `actor` / `change_reason` / `git_sha` alongside the snapshot; journal adopts trust-but-document stance on payload body shape (boundary validation only). 7 round-trip + concurrency + lifecycle tests green (`tests/ia-db/mutations.test.ts`). Pre-existing `catalog-list.ts` type drift fixed en passant (see §2.2).
+- **2026-04-24** — Step 6 landed: `stage-file-plan` (Opus pair-head) + `stage-file-apply` (Haiku pair-tail) skills + subagents collapsed into single `stage-file` skill at `ia/skills/stage-file/SKILL.md` (8 phases, DB-backed). Id assignment now via per-prefix Postgres sequences through `task_insert` MCP (Step 4) instead of `reserve-id.sh` + yaml write; manifest append direct to `ia/state/backlog-sections.json`; spec stub written from template; post-loop gate collapsed to `materialize-backlog.sh` (DB source) + `validate:dead-project-specs` (no `validate:backlog-yaml`, no `validate:all`). Retired pair moved to `.claude/agents/_retired/stage-file-{planner,applier}.md` + `ia/skills/_retired/stage-file-{plan,apply}/SKILL.md`; new `.claude/agents/stage-file.md` single subagent descriptor; `.claude/commands/stage-file.md` rewritten with branch guardrail (Step 1b + footer); sibling `stage-file-main-session` variant updated. Self-smoke on this refactor's own master plan Stage 5 → 5 DB rows (TECH-858, TECH-860, TECH-861, TECH-862, TECH-863; sequence gap TECH-859 from post-COMMIT fs-write failure rollback — harmless since `nextval` doesn't replay), byte-faithful `raw_markdown`, atomic task-table flip + R1 (idempotent — already In Progress) + R2 (Draft → In Progress) flips, BACKLOG.md regen lines 193–211 include all 5 rows, NO yaml under `ia/backlog/`. Branch guardrail enforced — chain halted at Phase 7; dispatcher Steps 2–4 skipped per §3. 30 stale normative doc references to retired pair (plan-apply-pair-contract, project-hierarchy, 7 project master-plans, sibling lifecycle skills) deferred to Step 9 (Foldering + cleanup).
+- **2026-04-24** — Step 5 landed: migration `0017_ia_tasks_raw_markdown.sql` adds `ia_tasks.raw_markdown text` to preserve the authored BACKLOG row block verbatim (byte-safe view regen — reconstructing from structured fields was not). Importer bug fix in `statusFromYaml` (was checking `"closed"` but `yamlToIssue` pre-normalizes yaml `status: closed` → `"completed"` → all 872 rows were `pending` pre-fix; post-fix 682 archived / 190 pending) + directory-as-oracle override so yaml directory wins over yaml `status:` field (captures TECH-411 edge case: archive dir + `status: open` → archived). New generator at `tools/postgres-ia/materialize-backlog-from-db.mjs` (pg resolves only there, not under `tools/scripts/`). Shell wrapper `materialize-backlog.sh` env-switched via `MATERIALIZE_BACKLOG_SOURCE=db|yaml` (default `db`; legacy yaml path retained as Step 5 Voids recommended — remove at Step 9). Acceptance: BACKLOG.md + BACKLOG-ARCHIVE.md byte-identical to pre-refactor output (0-line diff vs baseline); 18 WARNINGs match yaml path verbatim (same archive-dir yamls referenced by open manifest); `validate:all` green; ~179 ms wall-clock.
+- **2026-04-24** — Step 8 landed: `ia/skills/ship-stage/SKILL.md` rewritten to 11-phase DB-backed two-pass pipeline. **Pass A** = per-task `spec-implementer` work inline → `npm run unity:compile-check` (~15 s fast-fail) + scene-wiring preflight → `task_status_flip(task_id, "implemented")` + `journal_append(phase: "pass_a.implemented")`. **NO per-task commits** per design E13 — single stage-end commit at Phase 8 covers everything. **Pass B** (runs ONCE per stage) = full verify-loop on cumulative `git diff HEAD` (Pass A worktree dirty) → opus-code-reviewer on Stage diff with shared `CHAIN_CONTEXT`; **critical fixes applied inline via direct Edit/Write per design E14** (no `§Code Fix Plan` tuples; cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`) → opus-auditor Stage 1×N → per-task `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both). **Inline closeout** at Phase 7 via `stage_closeout_apply(slug, stage_id)` MCP tool per design C10 (replaces retired `stage-closeout-plan` → `stage-closeout-apply` skill pair) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `ia/projects/{SLUG}/_closed/`. **Single stage commit** at Phase 8: `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers all Pass A diffs + code-review fixes + closeout `git mv` per E13; capture `STAGE_COMMIT_SHA`; per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`; `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")` (E11 history-preserving INSERT). **Resume gate** queries DB `task_state` per pending task (no git scan — pre-DB `feat(id):`/`fix(id):` regex retired). **§Plan Digest readiness gate** queries `task_spec_section(task_id, "Plan Digest")` per pending task; missing → STOPPED + `/stage-authoring` handoff (no JIT lazy migration; pre-DB legacy specs already upgraded by Step 7). Surface alignment (4 files): `.claude/agents/ship-stage.md` + `.claude/commands/ship-stage.md` + `ia/skills/ship-stage-main-session/SKILL.md` + `.claude/commands/ship-stage-main-session.md` rewritten with new tools frontmatter (Step 4 MCP write tools added) + 11-phase / 8-phase recipes + Hard boundaries citing E13/E14/C10. **Retirements** (3 git mv + 2 mode strips per design C10 + E14): `ia/skills/stage-closeout-plan/` → `_retired/`, `.claude/agents/stage-closeout-planner.md` → `_retired/`, `.claude/commands/closeout.md` → `_retired/`; `ia/skills/plan-applier/SKILL.md` collapsed 576 → ~180 lines (single seam #1 plan-fix mode survives; `code-fix` + `stage-closeout` modes stripped — `plan-fix` survives because `plan-review` still emits `§Plan Fix` tuples); `.claude/agents/plan-applier.md` tools frontmatter trimmed (dropped `stage_closeout_digest`, `unity_compile`, `invariant_preflight`). Smoke test (Step 8.4) skipped per user direction — Step 8 is rewrite-only; downstream Steps 9–12 + first real ship will exercise the new pipeline organically. 61 historical refs to retired surfaces (archived backlog yamls, master-plan §Audit paragraphs, frozen project specs) deferred to Step 9 (foldering + cleanup). `validate:claude-imports` (4 imports OK) + `validate:all` green (incl. `validate:cache-block-sizing` plan-applier 4960 tok ×1.21 floor clearance, `validate:agent-tools-uniformity` plan-applier tail = 8 tools, `validate:mcp-readme` 78/78).
+- **2026-04-24** — Step 7 landed: `plan-author` (Opus bulk §Plan Author writer) + `plan-digest` (Opus bulk mechanizer) pair collapsed into single `stage-authoring` skill at `ia/skills/stage-authoring/SKILL.md` (9 phases, DB-backed via `task_spec_section_write` MCP from Step 4). One Opus pass writes §Plan Digest direct (no §Plan Author intermediate per design B6); aggregate `docs/implementation/{slug}-stage-X.Y-plan.md` doc dropped per design D8; stage-file Phase 8 hand-off rewired to `/stage-authoring` per design C8. Retired pair moved to `.claude/agents/_retired/plan-{author,digest}.md` + `.claude/commands/_retired/{author,plan-digest}.md` + `ia/skills/_retired/plan-{author,digest}/SKILL.md`; new `.claude/agents/stage-authoring.md` (model `opus`, reasoning_effort `high`) + `.claude/commands/stage-authoring.md` (dispatcher with branch guardrail). Self-smoke on TECH-858 (Stage 5 sentinel filed in Step 6) → §Plan Digest body authored (~163 lines: §Goal / §Acceptance × 4 / §Test Blueprint × 3 / §Examples / §Mechanical Steps × 3 with Edits + Gate + STOP + MCP hints + invariant_touchpoints + validator_gate per step / §Escalation enum × 4 codes), `plan_digest_lint` PASS, `task_spec_section_write` round-trip OK (`history_id: 17`, `updated_at: 2026-04-24T20:02:11.864Z`, body column 7101 bytes), readback via `task_spec_section({task_id: "TECH-858", section: "§Plan Digest"})` verified (literal `§` glyph required), NO aggregate doc dropped under `docs/implementation/`. `mechanicalization_preflight_lint` FAIL (`{picks: partial, validators: partial}`) confirmed structural — TECH-762 canonical reference example also fails same fields → logged as TECH-776 advisory hatch scope-expansion finding (widen hatch to cover `validators` field + scope `tupleCount` regex to §Plan Digest section only; defer follow-up issue to Step 12 retrospective). Live-session subagent dispatch blocked by stale MCP schema (same pattern as Step 6) — manual skill-body execution validated the code path; production `/stage-authoring` chain dispatches resume on `main` post-merge.
+
+- **2026-04-24** — Step 11 landed: `tools/postgres-ia/snapshot-ia-db.mjs` (split snapshot per design F6) + `tools/postgres-ia/restore-snapshot-smoke.mjs` (throwaway DB round-trip) + npm scripts `db:snapshot` / `db:snapshot:smoke` in root `package.json`. **Plain SQL** (`ia/state/db-snapshot-metadata.sql`, ~1.28 MB, diffable): extension prelude (`CREATE EXTENSION IF NOT EXISTS pg_trgm`) + enum prelude (5 enums regenerated from `pg_type` + `pg_enum` catalog as idempotent `DO $$ ... CREATE TYPE ... $$` blocks) + `pg_dump --schema-only` for all 12 `ia_*` tables + FK-deferred data block (`SET session_replication_role = replica` ... `data INSERTs` ... `replica origin`) for the 10 small tables (excluding `ia_tasks` + `ia_task_spec_history`) + `ia_tasks` metadata as SQL **comments** (status / priority / type / timestamps / title — diffable in `git log -p` without conflicting with binary `pg_restore` COPY). **Binary** (`ia/state/db-snapshot-bodies.dump`, ~450 KB compressed): `pg_dump -Fc -Z 9 --data-only` for `ia_tasks` + `ia_task_spec_history` (carries the heavyweight `body` columns). Restore-smoke creates throwaway DB → applies metadata SQL → truncates body-heavy tables → `pg_restore --data-only --single-transaction` → row-count compare → FTS smoke → DROP DATABASE in finally. Three iteration fixes during implementation: (1) ia_tasks INSERTs in plain SQL conflicted with binary COPY → switched to comments; (2) enum types missing in throwaway DB → added `dumpEnumPrelude` querying catalog; (3) `gin_trgm_ops` missing → added `dumpExtensionPrelude` for `pg_trgm`. Final smoke green: 12/12 tables row-count match (20 plans / 260 stages / 877 tasks / 1346 deps / 1 history / 276 journal entries), FTS 125 hits for `'Goal'` query confirms `body_tsv` GIN index regenerates via GENERATED column. `ia_task_spec_history` row count = 1 (Step 7 self-smoke on TECH-858 left the audit trail; volume grows organically as `/stage-authoring` runs land §Plan Digest writes through `task_spec_section_write` MCP). Cron / CI scheduling deferred to Step 12 followup ticket — manual `npm run db:snapshot` per dev session for now. Snapshot artifacts committed (no LFS, no gitignore).
