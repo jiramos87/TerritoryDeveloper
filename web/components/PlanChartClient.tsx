@@ -16,7 +16,7 @@ import type { PlanChartProps } from './PlanChart'
 const PlanChart = dynamic(() => import('./PlanChart'), {
   ssr: false,
   loading: () => (
-    <div className="h-[220px] bg-bg-panel animate-pulse rounded" />
+    <div className="h-[260px] bg-bg-panel animate-pulse rounded" />
   ),
 })
 

@@ -655,6 +655,76 @@ export async function mutateMasterPlanPreambleWrite(
   });
 }
 
+export interface MasterPlanDescriptionWriteResult {
+  slug: string;
+  bytes: number;
+  updated_at: string;
+  change_log_entry_id: number | null;
+}
+
+/**
+ * Replace the short product-overview blurb on `ia_master_plans.description`.
+ *
+ * Soft 200-char target — advisory only, not enforced. Mirror of
+ * mutateMasterPlanPreambleWrite. Authored by master-plan-new from the
+ * preamble; replaces the verbose preamble as the primary dashboard subtitle.
+ */
+export async function mutateMasterPlanDescriptionWrite(
+  slug: string,
+  description: string,
+  changeLog?: {
+    kind: string;
+    body: string;
+    actor?: string | null;
+    commit_sha?: string | null;
+  } | null,
+): Promise<MasterPlanDescriptionWriteResult> {
+  const cleanSlug = (slug ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (typeof description !== "string") {
+    throw new IaDbValidationError("description must be a string");
+  }
+  return withTx(async (c) => {
+    const guard = await c.query(
+      `SELECT 1 FROM ia_master_plans WHERE slug = $1 FOR UPDATE`,
+      [cleanSlug],
+    );
+    if (guard.rowCount === 0) {
+      throw new IaDbValidationError(`master plan not found: ${cleanSlug}`);
+    }
+    const upd = await c.query<{ updated_at: string }>(
+      `UPDATE ia_master_plans
+          SET description = $2, updated_at = now()
+        WHERE slug = $1
+       RETURNING updated_at`,
+      [cleanSlug, description],
+    );
+    let entryId: number | null = null;
+    if (changeLog && changeLog.kind && changeLog.body) {
+      const ins = await c.query<{ entry_id: string }>(
+        `INSERT INTO ia_master_plan_change_log
+           (slug, kind, body, actor, commit_sha)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING entry_id::text AS entry_id`,
+        [
+          cleanSlug,
+          changeLog.kind,
+          changeLog.body,
+          changeLog.actor ?? null,
+          changeLog.commit_sha ?? null,
+        ],
+      );
+      entryId = parseInt(ins.rows[0]!.entry_id, 10);
+    }
+    return {
+      slug: cleanSlug,
+      bytes: Buffer.byteLength(description, "utf8"),
+      updated_at: upd.rows[0]!.updated_at,
+      change_log_entry_id: entryId,
+    };
+  });
+}
+
 export async function mutateMasterPlanChangeLogAppend(
   slug: string,
   kind: string,
@@ -711,6 +781,7 @@ export async function mutateMasterPlanInsert(
   slug: string,
   title: string,
   preamble: string | null = null,
+  description: string | null = null,
 ): Promise<MasterPlanInsertResult> {
   const cleanSlug = (slug ?? "").trim();
   const cleanTitle = (title ?? "").trim();
@@ -730,10 +801,10 @@ export async function mutateMasterPlanInsert(
       throw new IaDbValidationError(`master plan already exists: ${cleanSlug}`);
     }
     const ins = await c.query<{ created_at: string; updated_at: string }>(
-      `INSERT INTO ia_master_plans (slug, title, preamble)
-       VALUES ($1, $2, $3)
+      `INSERT INTO ia_master_plans (slug, title, preamble, description)
+       VALUES ($1, $2, $3, $4)
        RETURNING created_at, updated_at`,
-      [cleanSlug, cleanTitle, preamble],
+      [cleanSlug, cleanTitle, preamble, description],
     );
     return {
       slug: cleanSlug,

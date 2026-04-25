@@ -38,6 +38,7 @@ tools_extra:
   - mcp__territory-ia__master_plan_insert
   - mcp__territory-ia__stage_insert
   - mcp__territory-ia__master_plan_preamble_write
+  - mcp__territory-ia__master_plan_description_write
   - mcp__territory-ia__master_plan_change_log_append
 caveman_exceptions:
   - code
@@ -134,9 +135,11 @@ Capture for Phases 3–4:
 
 **Surface-path pre-check** — run `surface-path-precheck` subskill ([`ia/skills/surface-path-precheck/SKILL.md`](../surface-path-precheck/SKILL.md)): pass paths from Architecture / Component map block. Use returned `line_hint` values in stage Relevant surfaces; mark `(new)` for `exists: false` entries. Skip → ghost line numbers downstream.
 
-### Phase 3 — Scope header
+### Phase 3 — Scope header + dashboard description
 
 Author header block per MASTER-PLAN-STRUCTURE.md §2 (canonical fields). Fill placeholders; invariants + surfaces now available from Phase 2:
+
+**Also author** a short product-terminology `description` (≤200 chars soft target — advisory, not enforced) summarizing what the plan delivers + main goals in user-facing product wording. Persisted on `ia_master_plans.description` and rendered as the dashboard subtitle directly under the plan title (replaces the verbose preamble panel). Required for new plans. Compose case-by-case from header block (Scope + Locked decisions) — drop ids / file paths / stage numbers; keep the 1–2-sentence shape a designer/PM can read cold.
 
 ```markdown
 # {Title} — Master Plan ({SCOPE_LABEL})
@@ -288,7 +291,7 @@ Compose markdown in working memory using the canonical order per MASTER-PLAN-STR
 
 **Persist via DB MCP** (no filesystem write):
 
-1. `master_plan_insert({slug: SLUG, title: "{plan title}", preamble: "{everything from Header block through tracking legend}"})` — creates the `ia_master_plans` row + preamble blob.
+1. `master_plan_insert({slug: SLUG, title: "{plan title}", preamble: "{everything from Header block through tracking legend}", description: "{Phase 3 short product description, ≤200 chars}"})` — creates the `ia_master_plans` row + preamble + description (dashboard subtitle). Description required for new plans.
 2. For each Stage block authored: `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{name}", body: "{full Stage block markdown}", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets joined}"})`.
 3. `master_plan_change_log_append({slug: SLUG, kind: "plan_authored", body: "Authored {N} stages from {DOC_PATH}"})` — audit row.
 
@@ -365,6 +368,7 @@ Single concise message (caveman) naming:
 - IF router returns `no_matching_domain` for a subsystem → note the gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
 - IF exploration doc's Non-scope list carries explicit post-MVP items but no companion `docs/{SLUG}-post-mvp-extensions.md` exists → raise recommendation in Phase 8 handoff. Do NOT create the stub.
 - IF authored output carries `### Step N` heading, `**Phases:**` checkbox block, `Phase` column in Task table, or `#### Stage N.M` H4 heading → STOP. Canonical shape is H3 Stages with 5-column Task table (see MASTER-PLAN-STRUCTURE.md §1).
+- IF `description` arg empty / missing on `master_plan_insert` → STOP. Description (≤200 char soft target, product-terminology overview) is required for new plans — it backs the dashboard subtitle.
 - Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
 - Do NOT delete or rename exploration doc. Do NOT edit its expansion block.
 - Do NOT commit — user decides when to commit the new orchestrator.

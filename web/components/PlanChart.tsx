@@ -8,6 +8,7 @@ export interface PlanChartDatum {
   pending: number
   inProgress: number
   done: number
+  skeleton?: boolean
 }
 
 export interface PlanChartProps {
@@ -30,8 +31,8 @@ const LEGEND_LABELS: Record<Key, string> = {
 }
 
 const WIDTH = 480
-const HEIGHT = 220
-const MARGIN = { top: 10, right: 20, bottom: 40, left: 40 }
+const HEIGHT = 260
+const MARGIN = { top: 10, right: 20, bottom: 90, left: 40 }
 
 export default function PlanChart({ data }: PlanChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -78,24 +79,34 @@ export default function PlanChart({ data }: PlanChartProps) {
         const xBar = xGroup + (xInner(key) ?? 0)
         const val = d[key]
         const yTop = y(val)
-        g.append('rect')
+        const rect = g.append('rect')
           .attr('x', xBar)
           .attr('y', yTop)
           .attr('width', xInner.bandwidth())
           .attr('height', innerH - yTop)
           .attr('fill', FILLS[key])
+        if (d.skeleton) {
+          rect
+            .attr('fill-opacity', 0.35)
+            .attr('stroke', FILLS[key])
+            .attr('stroke-dasharray', '2 2')
+        }
       })
     })
 
-    // Phase 1 — axisBottom
+    // Phase 1 — axisBottom (rotated labels for legibility)
     const xAxis = d3.axisBottom(xOuter)
-      .tickFormat(d => (d as string).length > 12 ? (d as string).slice(0, 11) + '\u2026' : d as string)
+      .tickFormat(d => (d as string).length > 24 ? (d as string).slice(0, 23) + '\u2026' : d as string)
 
     g.append('g')
       .attr('transform', `translate(0, ${innerH})`)
       .call(xAxis)
       .selectAll('text')
         .attr('fill', 'var(--color-text-muted)')
+        .attr('transform', 'rotate(-40)')
+        .attr('text-anchor', 'end')
+        .attr('dx', '-0.5em')
+        .attr('dy', '0.25em')
 
     // Phase 1 — axisLeft
     const yAxis = d3.axisLeft(y)

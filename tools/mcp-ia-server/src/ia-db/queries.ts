@@ -80,6 +80,7 @@ export interface StageStateDB extends StageRowDB {
 export interface MasterPlanRowDB {
   slug: string;
   title: string;
+  description: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -249,7 +250,7 @@ export async function queryMasterPlanState(
 ): Promise<MasterPlanStateDB | null> {
   const pool = poolOrThrow();
   const planRes = await pool.query<MasterPlanRowDB>(
-    `SELECT slug, title, created_at, updated_at
+    `SELECT slug, title, description, created_at, updated_at
        FROM ia_master_plans
       WHERE slug = $1`,
     [slug],
@@ -496,6 +497,7 @@ export interface MasterPlanChangeLogRow {
 export interface MasterPlanRenderDB {
   slug: string;
   title: string;
+  description: string | null;
   preamble: string | null;
   stages: StageRenderRowDB[];
   change_log?: MasterPlanChangeLogRow[];
@@ -598,8 +600,12 @@ export async function queryMasterPlanRender(
   opts: { include_change_log?: boolean; change_log_limit?: number } = {},
 ): Promise<MasterPlanRenderDB | null> {
   const pool = poolOrThrow();
-  const pr = await pool.query<{ title: string; preamble: string | null }>(
-    `SELECT title, preamble FROM ia_master_plans WHERE slug = $1`,
+  const pr = await pool.query<{
+    title: string;
+    description: string | null;
+    preamble: string | null;
+  }>(
+    `SELECT title, description, preamble FROM ia_master_plans WHERE slug = $1`,
     [slug],
   );
   if (pr.rowCount === 0) return null;
@@ -663,6 +669,7 @@ export async function queryMasterPlanRender(
   return {
     slug,
     title: plan.title,
+    description: plan.description,
     preamble: plan.preamble,
     stages,
     ...(change_log ? { change_log } : {}),

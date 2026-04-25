@@ -27,6 +27,8 @@ export interface TaskRow {
   issue: string;    // e.g. "TECH-87" or "_pending_"
   status: TaskStatus;
   intent: string;
+  /** Full task body markdown (`ia_tasks.body`) — render-on-expand surface. */
+  body?: string;
 }
 
 export interface Stage {
@@ -46,6 +48,12 @@ export interface PlanData {
   siblingWarnings: string[];   // blockquote lines mentioning sibling orchestrators
   stages: Stage[];
   allTasks: TaskRow[];         // flat list across all stages (convenience)
+  /** Master plan preamble markdown (`ia_master_plans.preamble`) — overview surface. */
+  preamble?: string;
+  /** Short product overview + main goals (`ia_master_plans.description`, ≤200 char soft target). */
+  description?: string;
+  /** Stages without filed tasks (skeletons awaiting `/stage-decompose`). */
+  pendingDecomposeCount?: number;
 }
 
 /** Per-stage task-count breakdown for chart rendering. */
@@ -54,6 +62,8 @@ export interface StageChartBar {
   pending: number;
   inProgress: number;
   done: number;
+  /** Stage has no tasks yet (skeleton awaiting `/stage-decompose`). */
+  skeleton?: boolean;
 }
 
 /** Per-stage done / total counts. */

@@ -1,31 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import type { Stage, TaskRow } from '@/lib/plan-loader-types'
+import type { ReactNode } from 'react'
+import type { Stage } from '@/lib/plan-loader-types'
 import { BadgeChip } from '@/components/BadgeChip'
-import { DataTable } from '@/components/DataTable'
-import type { Column } from '@/components/DataTable'
 import { StatBar } from '@/components/StatBar'
 import { toBadgeStatus } from '@/app/dashboard/_status'
-
-const TASK_COLUMNS: Column<TaskRow>[] = [
-  { key: 'id',     header: 'ID' },
-  { key: 'issue',  header: 'Issue' },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (r) => <BadgeChip status={toBadgeStatus(r.status)} />,
-  },
-  { key: 'intent', header: 'Intent' },
-]
 
 interface Props {
   stage: Stage
   stageDone: number
   stageTotal: number
+  /** Pre-rendered objective markdown (server-side). */
+  objective?: ReactNode | null
+  /** Pre-rendered task rows (server-side, one per stage.tasks entry). */
+  children?: ReactNode
 }
 
-export function CollapsiblePlanStage({ stage, stageDone, stageTotal }: Props) {
+export function CollapsiblePlanStage({
+  stage,
+  stageDone,
+  stageTotal,
+  objective,
+  children,
+}: Props) {
   const [stageOpen, setStageOpen] = useState(false)
 
   const badgeStatus = toBadgeStatus(stage.status)
@@ -53,8 +51,8 @@ export function CollapsiblePlanStage({ stage, stageDone, stageTotal }: Props) {
             </div>
           )}
         </button>
-        {stage.objective && (
-          <p className="text-sm text-text-muted leading-relaxed pl-5">{stage.objective}</p>
+        {objective && (
+          <div className="pl-5 text-text-muted">{objective}</div>
         )}
       </div>
 
@@ -62,11 +60,7 @@ export function CollapsiblePlanStage({ stage, stageDone, stageTotal }: Props) {
         stage.tasks.length === 0 ? (
           <p className="text-text-muted text-sm pl-4 italic opacity-60">Pending decompose</p>
         ) : (
-          <DataTable<TaskRow>
-            columns={TASK_COLUMNS}
-            rows={stage.tasks}
-            getRowKey={(r) => r.id}
-          />
+          <div className="space-y-2">{children}</div>
         )
       )}
     </div>

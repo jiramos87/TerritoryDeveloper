@@ -286,6 +286,7 @@ DB MCP writes only — no filesystem Edits. Operations (in order):
 
 - Touch existing Stage rows in `ia_stages` — not even cosmetic edits.
 - Overwrite top-of-preamble `**Status:**` line — lifecycle skills flip it. (Exception: Phase 6c R6 demote — see below.)
+- Touch `ia_master_plans.description` — preserved across extends. New extension that materially shifts product scope → user invokes `master_plan_description_write` separately.
 - Insert BACKLOG rows. Create task spec stubs. Tasks stay `_pending_` until `stage-file`.
 - Rename or delete `{SOURCE_DOC}`. Do not edit its expansion block.
 - Commit. User decides when.

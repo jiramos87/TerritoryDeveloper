@@ -56,6 +56,8 @@ type DbStageStatus = "pending" | "in_progress" | "done";
 interface MasterPlanDbRow {
   slug: string;
   title: string;
+  preamble: string | null;
+  description: string | null;
 }
 
 interface StageDbRow {
@@ -72,6 +74,7 @@ interface TaskDbRow {
   stage_id: string | null;
   title: string;
   status: DbTaskStatus;
+  body: string | null;
 }
 
 function mapTaskStatus(db: DbTaskStatus): TaskStatus {
@@ -99,15 +102,20 @@ function mapStageStatus(db: DbStageStatus): HierarchyStatus {
   }
 }
 
-function synthOverallStatus(tasks: TaskRow[]): string {
-  if (tasks.length === 0) return "Draft";
+function synthOverallStatus(
+  tasks: TaskRow[],
+  pendingDecomposeCount: number,
+): string {
+  if (tasks.length === 0 && pendingDecomposeCount === 0) return "Draft";
   const isDone = (s: string) => s === "Done" || s === "Done (archived)";
   const isActive = (s: string) => s === "In Progress" || s === "In Review";
-  const allDone = tasks.every((t) => isDone(t.status));
-  if (allDone) return "Final";
+  const allDone = tasks.length > 0 && tasks.every((t) => isDone(t.status));
+  if (allDone) {
+    return pendingDecomposeCount > 0 ? "In Progress" : "Final";
+  }
   const anyActive = tasks.some((t) => isActive(t.status));
   const anyDone = tasks.some((t) => isDone(t.status));
-  if (anyActive || anyDone) return "In Progress";
+  if (anyActive || anyDone || pendingDecomposeCount > 0) return "In Progress";
   return "Draft";
 }
 
@@ -115,7 +123,7 @@ export async function loadDashboardData(): Promise<PlanData[]> {
   const sql = getSql();
 
   const planRows = await sql<MasterPlanDbRow[]>`
-    SELECT slug, title
+    SELECT slug, title, preamble, description
     FROM ia_master_plans
     ORDER BY slug
   `;
@@ -129,7 +137,7 @@ export async function loadDashboardData(): Promise<PlanData[]> {
   `;
 
   const taskRows = await sql<TaskDbRow[]>`
-    SELECT task_id, slug, stage_id, title, status
+    SELECT task_id, slug, stage_id, title, status, body
     FROM ia_tasks
     WHERE slug IS NOT NULL
     ORDER BY slug, stage_id, task_id
@@ -164,6 +172,7 @@ export async function loadDashboardData(): Promise<PlanData[]> {
         issue: t.task_id,
         status: mapTaskStatus(t.status),
         intent: t.title,
+        body: t.body ?? "",
       }));
       return {
         id: s.stage_id,
@@ -178,15 +187,21 @@ export async function loadDashboardData(): Promise<PlanData[]> {
     deriveHierarchyStatus(stages);
 
     const allTasks = stages.flatMap((s) => s.tasks);
+    const pendingDecomposeCount = stages.filter(
+      (s) => s.tasks.length === 0 && s.status !== "Final",
+    ).length;
 
     return {
       title: cleanPlanTitle(p.title),
       filename: `${p.slug}-master-plan.md`,
-      overallStatus: synthOverallStatus(allTasks),
+      overallStatus: synthOverallStatus(allTasks, pendingDecomposeCount),
       overallStatusDetail: "",
       siblingWarnings: [],
       stages,
       allTasks,
+      preamble: p.preamble ?? "",
+      description: p.description ?? "",
+      pendingDecomposeCount,
     };
   });
 }

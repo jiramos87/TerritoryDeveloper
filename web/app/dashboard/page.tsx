@@ -8,8 +8,12 @@ import { FilterChips } from '@/components/FilterChips';
 import type { Chip } from '@/components/FilterChips';
 import { CollapsibleFilterRow } from '@/components/CollapsibleFilterRow';
 import { StatBar } from '@/components/StatBar';
-import PlanChartClient from '@/components/PlanChartClient';
+import { PlanCharts } from '@/components/PlanCharts';
 import { CollapsiblePlanStage } from '@/components/CollapsiblePlanStage';
+import { CollapsibleTask } from '@/components/CollapsibleTask';
+import { Markdown } from '@/lib/markdown/render';
+import { loadGlossaryTerms } from '@/lib/glossary/import';
+import { buildGlossaryIndex } from '@/lib/glossary/index-build';
 import { toBadgeStatus } from './_status';
 import { parseFilterValues, toggleFilterParam } from '@/lib/dashboard/filter-params';
 import { Button } from '@/components/Button';
@@ -117,7 +121,11 @@ export default async function DashboardPage({
     return qs ? `/dashboard?${qs}` : '/dashboard';
   }
 
-  const allPlans = await loadAllPlans();
+  const [allPlans, glossaryTerms] = await Promise.all([
+    loadAllPlans(),
+    loadGlossaryTerms(),
+  ]);
+  const glossary = buildGlossaryIndex(glossaryTerms);
   const plans = filterPlans(allPlans, multi);
 
   const planOptions = Array.from(
@@ -289,14 +297,26 @@ export default async function DashboardPage({
             computePlanMetrics(unfilteredPlan);
           return (
             <Rack key={plan.title} className="space-y-4" label="Master plan">
-              <div className="flex flex-wrap items-center gap-3">
-                <Heading level="h2" className="min-w-0">
-                  {plan.title}
-                </Heading>
-                <BadgeChip status={toBadgeStatus(plan.overallStatus)} />
-                <div className="min-w-[12rem] max-w-[24rem] flex-1">
-                  <StatBar label={statBarLabel} value={completedCount} max={totalCount} />
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Heading level="h2" className="min-w-0">
+                    {plan.title}
+                  </Heading>
+                  <BadgeChip status={toBadgeStatus(plan.overallStatus)} />
+                  <div className="min-w-[12rem] max-w-[24rem] flex-1">
+                    <StatBar label={statBarLabel} value={completedCount} max={totalCount} />
+                  </div>
+                  {plan.pendingDecomposeCount && plan.pendingDecomposeCount > 0 ? (
+                    <span className="font-mono text-xs uppercase tracking-wide text-[var(--ds-raw-amber)]">
+                      {plan.pendingDecomposeCount} pending decompose
+                    </span>
+                  ) : null}
                 </div>
+                {plan.description && plan.description.trim() !== '' && (
+                  <div className="text-[var(--ds-text-meta)]">
+                    <Markdown source={plan.description} glossary={glossary} />
+                  </div>
+                )}
               </div>
               {plan.stages.map((stage) => {
                 const { done: stageDone, total: stageTotal } = stageCounts[stage.id] ?? {
@@ -309,10 +329,27 @@ export default async function DashboardPage({
                     stage={stage}
                     stageDone={stageDone}
                     stageTotal={stageTotal}
-                  />
+                    objective={
+                      stage.objective && stage.objective.trim() !== '' ? (
+                        <Markdown source={stage.objective} glossary={glossary} />
+                      ) : null
+                    }
+                  >
+                    {stage.tasks.map((t) => (
+                      <CollapsibleTask
+                        key={t.id}
+                        task={t}
+                        body={
+                          t.body && t.body.trim() !== '' ? (
+                            <Markdown source={t.body} glossary={glossary} />
+                          ) : null
+                        }
+                      />
+                    ))}
+                  </CollapsiblePlanStage>
                 );
               })}
-              <PlanChartClient data={chartData} />
+              <PlanCharts data={chartData} />
             </Rack>
           );
         })

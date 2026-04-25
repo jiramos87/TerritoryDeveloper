@@ -254,12 +254,16 @@ export function computePlanMetrics(plan: PlanData): PlanMetrics {
   const completedCount = plan.allTasks.filter(t => isTaskDone(t.status)).length;
   const statBarLabel = `${completedCount} / ${totalCount} done`;
 
-  const chartData: StageChartBar[] = plan.stages.map(stage => ({
-    label:      stage.title,
-    pending:    stage.tasks.filter(t => isTaskPending(t.status)).length,
-    inProgress: stage.tasks.filter(t => isTaskActive(t.status)).length,
-    done:       stage.tasks.filter(t => isTaskDone(t.status)).length,
-  }));
+  const chartData: StageChartBar[] = plan.stages.map(stage => {
+    const skeleton = stage.tasks.length === 0;
+    return {
+      label:      stage.title,
+      pending:    skeleton ? 1 : stage.tasks.filter(t => isTaskPending(t.status)).length,
+      inProgress: skeleton ? 0 : stage.tasks.filter(t => isTaskActive(t.status)).length,
+      done:       skeleton ? 0 : stage.tasks.filter(t => isTaskDone(t.status)).length,
+      ...(skeleton ? { skeleton: true } : {}),
+    };
+  });
 
   const stageCounts: Record<string, StageTaskCounts> = {};
   for (const stage of plan.stages) {

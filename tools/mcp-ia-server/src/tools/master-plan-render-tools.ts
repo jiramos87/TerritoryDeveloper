@@ -30,6 +30,7 @@ import {
 import {
   IaDbValidationError,
   mutateMasterPlanChangeLogAppend,
+  mutateMasterPlanDescriptionWrite,
   mutateMasterPlanInsert,
   mutateMasterPlanPreambleWrite,
   mutateStageBodyWrite,
@@ -355,7 +356,7 @@ export function registerMasterPlanInsert(server: McpServer): void {
     "master_plan_insert",
     {
       description:
-        "DB-backed: create one new ia_master_plans row (slug + title + optional preamble). Used by master-plan-new at orchestrator authoring time. Errors on duplicate slug. Slug must be kebab-case.",
+        "DB-backed: create one new ia_master_plans row (slug + title + optional preamble + optional description). Used by master-plan-new at orchestrator authoring time. `description` is the short product overview (≤200 chars soft target) — required by skill convention for new plans. Errors on duplicate slug. Slug must be kebab-case.",
       inputSchema: {
         slug: z.string().describe("Master-plan slug (kebab-case)."),
         title: z.string().describe("Master-plan title (display heading)."),
@@ -363,6 +364,12 @@ export function registerMasterPlanInsert(server: McpServer): void {
           .string()
           .optional()
           .describe("Optional initial preamble markdown."),
+        description: z
+          .string()
+          .optional()
+          .describe(
+            "Short product-terminology overview + main goals (≤200 chars soft target). Required by master-plan-new skill convention.",
+          ),
       },
     },
     async (args) =>
@@ -370,7 +377,12 @@ export function registerMasterPlanInsert(server: McpServer): void {
         const envelope = await wrapTool(
           async (
             input:
-              | { slug?: string; title?: string; preamble?: string }
+              | {
+                  slug?: string;
+                  title?: string;
+                  preamble?: string;
+                  description?: string;
+                }
               | undefined,
           ) => {
             const slug = (input?.slug ?? "").trim();
@@ -386,6 +398,7 @@ export function registerMasterPlanInsert(server: McpServer): void {
                 slug,
                 title,
                 input?.preamble ?? null,
+                input?.description ?? null,
               );
             } catch (e) {
               mapDbErrors(e);
@@ -393,7 +406,110 @@ export function registerMasterPlanInsert(server: McpServer): void {
           },
         )(
           args as
-            | { slug?: string; title?: string; preamble?: string }
+            | {
+                slug?: string;
+                title?: string;
+                preamble?: string;
+                description?: string;
+              }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// master_plan_description_write
+// ---------------------------------------------------------------------------
+
+export function registerMasterPlanDescriptionWrite(server: McpServer): void {
+  server.registerTool(
+    "master_plan_description_write",
+    {
+      description:
+        "DB-backed: replace the short product-overview blurb on `ia_master_plans.description` (≤200 chars soft target — advisory). Authored case-by-case from the preamble; replaces the verbose preamble as the primary dashboard subtitle. Mirror of `master_plan_preamble_write`. Optional `change_log` row appended in the same tx.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug."),
+        description: z
+          .string()
+          .describe(
+            "Short product-terminology overview + main goals (≤200 chars soft target).",
+          ),
+        change_log: z
+          .object({
+            kind: z
+              .string()
+              .describe(
+                "Short tag e.g. `description-author`, `description-rewrite`.",
+              ),
+            body: z.string().describe("Markdown body of the change-log entry."),
+            actor: z.string().optional().describe("Who performed the edit."),
+            commit_sha: z.string().optional().describe("Commit sha (optional)."),
+          })
+          .optional()
+          .describe(
+            "Optional change-log row appended in the same tx for audit trail.",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_description_write", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | {
+                  slug?: string;
+                  description?: string;
+                  change_log?: {
+                    kind?: string;
+                    body?: string;
+                    actor?: string;
+                    commit_sha?: string;
+                  };
+                }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const description = input?.description;
+            if (!slug || typeof description !== "string") {
+              throw {
+                code: "invalid_input",
+                message: "slug and description are required.",
+              };
+            }
+            const cl = input?.change_log;
+            const clArg =
+              cl && cl.kind && cl.body
+                ? {
+                    kind: cl.kind,
+                    body: cl.body,
+                    actor: cl.actor ?? null,
+                    commit_sha: cl.commit_sha ?? null,
+                  }
+                : null;
+            try {
+              return await mutateMasterPlanDescriptionWrite(
+                slug,
+                description,
+                clArg,
+              );
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | {
+                slug?: string;
+                description?: string;
+                change_log?: {
+                  kind?: string;
+                  body?: string;
+                  actor?: string;
+                  commit_sha?: string;
+                };
+              }
             | undefined,
         );
         return jsonResult(envelope);
@@ -632,6 +748,7 @@ export function registerMasterPlanRenderTools(server: McpServer): void {
   registerMasterPlanPreambleWrite(server);
   registerMasterPlanChangeLogAppend(server);
   registerMasterPlanInsert(server);
+  registerMasterPlanDescriptionWrite(server);
   registerStageInsert(server);
   registerStageUpdate(server);
   registerStageBodyWrite(server);
