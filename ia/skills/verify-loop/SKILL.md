@@ -35,7 +35,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Composes:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Step 2) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (Steps 4a/4b) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Step 5) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 6).
 
-**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · Stage-scoped closeout pair: [`stage-closeout-plan`](../stage-closeout-plan/SKILL.md) → [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (absorbs retired `project-stage-close` + `project-spec-close` per M6 collapse).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · Stage closeout runs inline in `/ship-stage` Pass B via `stage_closeout_apply` MCP.
 
 ---
 

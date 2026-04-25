@@ -200,8 +200,7 @@ Skills under [ia/skills/](../ia/skills/) define ordered MCP tool recipes for eac
 | **Orchestrate** | [master-plan-new](../ia/skills/master-plan-new/SKILL.md) | *(skill only)* | glossary_discover → router_for_task → spec_sections → invariants_summary → list_specs |
 | **Bulk-file stage** | [stage-file](../ia/skills/stage-file/SKILL.md) | `/stage-file` | Shared context once → per-task `project-new` delegate |
 | **Create** issue | [project-new](../ia/skills/project-new/SKILL.md) | `/project-new` | glossary_discover → router_for_task → spec_section → backlog_issue |
-| **Refine** spec (Stage 1×N bulk) | [plan-author](../ia/skills/plan-author/SKILL.md) | `/author` | Shared `domain-context-load` once → bulk §Plan Author fill across N specs + canonical-term fold (absorbs retired `project-spec-kickoff` / `spec-kickoff`) |
-| **Digest** spec (Stage 1×N bulk) | [plan-digest](../ia/skills/plan-digest/SKILL.md) | `/plan-digest` | After `plan-author`: mechanize → §Plan Digest + `plan_digest_lint` + optional compiled `docs/implementation/…-plan.md` (§Plan Author dropped; Q5 2026-04-22) |
+| **Author + digest** spec (Stage 1×N bulk) | [stage-authoring](../ia/skills/stage-authoring/SKILL.md) | `/author` | Shared `domain-context-load` once → bulk §Plan Digest direct fill across N Task bodies via `task_spec_section_write` MCP + canonical-term fold + `plan_digest_lint` per Task |
 | **Implement** | [project-spec-implement](../ia/skills/project-spec-implement/SKILL.md) | `/implement` | Per-phase: router → spec_section → glossary → code → compile gate |
 | **Verify (closed-loop)** | [verify-loop](../ia/skills/verify-loop/SKILL.md) | `/verify-loop` | preflight → validate:all → compile gate → Path A/B → evidence → fix iter (≤2) |
 | **Verify (single-pass)** | *(composed)* | `/verify` | `validate:all` + compile gate + Path A OR Path B, read-only |

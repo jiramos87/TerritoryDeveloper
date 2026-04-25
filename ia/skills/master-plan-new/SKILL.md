@@ -24,10 +24,10 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from e
 
 **Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative source for file shape, Stage block subsections, 5-column Task table schema, Status enums, lifecycle flip matrix. This skill authors TO that shape; if this skill drifts, MASTER-PLAN-STRUCTURE.md wins.
 
-**Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file-plan`](../stage-file-plan/SKILL.md).
-`design-explore` → `master-plan-new` → `stage-file-plan` + `stage-file-apply` → `plan-author` + `plan-digest` → `spec-implementer` → `/closeout` (Stage-scoped pair).
+**Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file`](../stage-file/SKILL.md).
+`design-explore` → `master-plan-new` → `stage-file` → `stage-authoring` → `spec-implementer` → `/ship-stage` (inline closeout).
 
-**Related:** [`design-explore`](../design-explore/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
+**Related:** [`design-explore`](../design-explore/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
 **Shape refs (canonical 2-level examples):** [`blip-master-plan.md`](../../projects/blip-master-plan.md) · [`landmarks-master-plan.md`](../../projects/landmarks-master-plan.md) · [`city-sim-depth-master-plan.md`](../../projects/city-sim-depth-master-plan.md).
 
@@ -182,11 +182,11 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 #### §Stage Audit
 
-_pending — populated by `/audit {this-doc} Stage {N}.{M}` when all Tasks reach Done post-verify._
+_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
 
 #### §Stage Closeout Plan
 
-_pending — populated by `/closeout {this-doc} Stage {N}.{M}` planner pass when all Tasks reach `Done`._
+_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task table schema (5 columns, per MASTER-PLAN-STRUCTURE.md §3):**
@@ -204,7 +204,7 @@ _pending — populated by `/closeout {this-doc} Stage {N}.{M}` planner pass when
 **Task sizing heuristic:** Each task = one coherent subsystem slice a Sonnet spec-implementer can execute with ≤2 `spec_section` context reloads. Use this guide when deciding to merge or split:
 
 - **Correct scope:** 2–5 files forming one algorithm layer — e.g., full AHDSR state machine + envelope math together; oscillator bank across all waveforms; one-pole filter + render loop. Tasks at this size keep `spec_section` reloads to ≤2 and produce meaningful per-phase deltas.
-- **Too small (merge):** single file, single function, single constant, single struct with no logic. Merge with an adjacent same-domain task in the same Stage. Rationale: each BACKLOG task generates 4 per-Task orchestration steps inside `/ship-stage` (implement → verify-loop → code-review → audit) plus the upstream `/stage-file` filing + `/author`; single-function tasks multiply that overhead without reducing risk.
+- **Too small (merge):** single file, single function, single constant, single struct with no logic. Merge with an adjacent same-domain task in the same Stage. Rationale: each BACKLOG task generates per-Task orchestration steps inside `/ship-stage` (implement → verify-loop → code-review) plus the upstream `/stage-file` filing + `/stage-authoring`; single-function tasks multiply that overhead without reducing risk.
 - **Too large (split):** touches >3 unrelated subsystems or needs >6 phases of implementation to execute. Split at the seam between subsystem layers — the natural coupling boundary is the right split point.
 
 Apply this check in Phase 5 (cardinality gate) alongside the ≥2 / ≤6 count rule.
@@ -222,12 +222,12 @@ Also covers Phase 4 task sizing: single-file/function/struct tasks → `single_f
 
 ### Phase 6 — Tracking legend
 
-Insert the canonical tracking legend once under `## Stages` (copy verbatim from MASTER-PLAN-STRUCTURE.md §3 or a canonical reference plan like `blip-master-plan.md`). Do not paraphrase — downstream skills (`stage-file-plan`, `stage-file-apply`, `plan-author`, `plan-digest`, `spec-implementer`, `plan-applier` Mode stage-closeout) flip markers based on exact enum values.
+Insert the canonical tracking legend once under `## Stages` (copy verbatim from MASTER-PLAN-STRUCTURE.md §3 or a canonical reference plan like `blip-master-plan.md`). Do not paraphrase — downstream skills (`stage-file`, `stage-authoring`, `spec-implementer`, `/ship-stage` inline closeout) flip markers based on exact enum values.
 
 ```markdown
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-authoring` → `In Review`; `spec-implementer` → `In Progress`; `/ship-stage` inline closeout → `Done (archived)` + Stage `Final` rollup.
 ```
 
 ### Phase 7 — Persist (DB-only)
@@ -260,16 +260,16 @@ No `## Deferred decomposition` section — all Stages fully decomposed at author
 
 **Do:**
 
-- Open one Stage at a time. Next Stage opens only after current Stage's `/closeout` (Stage-scoped pair) runs.
-- Run `claude-personal "/stage-file {this-doc} Stage {N}.{M}"` (routes to `stage-file-plan` + `stage-file-apply` pair) to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
+- Open one Stage at a time. Next Stage opens only after current Stage's `/ship-stage` (inline closeout) lands.
+- Run `claude-personal "/stage-file {this-doc} Stage {N}.{M}"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update Stage `Status` as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc + scope-boundary doc.
-- Keep this orchestrator synced with umbrella issue (if one exists) — per Stage-scoped `/closeout` (pair) umbrella-sync rule.
+- Keep this orchestrator synced with umbrella issue (if one exists) — per `/ship-stage` inline closeout umbrella-sync rule.
 - Extend via `/master-plan-extend {this-doc} {source-doc}` when a new exploration or extensions doc introduces new Stages — do NOT hand-insert Stage blocks.
 
 **Do not:**
 
-- Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal Stage landing triggers a final `Status: Final`; the file stays.
+- Close this orchestrator — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal Stage landing triggers a final `Status: Final`; the file stays.
 - Silently promote post-MVP items into MVP stages — they belong in the scope-boundary doc.
 - Merge partial Stage state — every Stage must land on a green bar.
 - Insert BACKLOG rows directly into this doc — only `stage-file-apply` materializes them.

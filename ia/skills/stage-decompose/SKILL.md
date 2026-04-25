@@ -36,7 +36,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Lifecycle:** AFTER [`master-plan-new`](../master-plan-new/SKILL.md) (or [`master-plan-extend`](../master-plan-extend/SKILL.md)) authors the orchestrator with a skeleton Stage, BEFORE [`stage-file`](../stage-file/SKILL.md) files the tasks. `stage-file` requires `_pending_` tasks — this skill materializes them.
 
 ```
-master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → plan-author → ...
+master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → stage-authoring → ...
 ```
 
 **Note:** Default path is `master-plan-new` fully decomposes ALL Stages at author time (no skeletons). `stage-decompose` is reserved for:
@@ -128,11 +128,11 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 #### §Stage Audit
 
-_pending — populated by `/audit {this-doc} Stage {STAGE_ID}` when all Tasks reach Done post-verify._
+_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
 
 #### §Stage Closeout Plan
 
-_pending — populated by `/closeout {this-doc} Stage {STAGE_ID}` planner pass when all Tasks reach `Done`._
+_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task intent concreteness bar:** cite the thing being shipped — type names, method signatures, file paths, field names. Vague verbs ("add support for X") degrade into useless `stage-file` stubs. Match the bar set in `master-plan-new` Phase 4.
@@ -236,11 +236,11 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 #### §Stage Audit
 
-_pending — populated by `/audit {this-doc} Stage {STAGE_ID}` when all Tasks reach Done post-verify._
+_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
 
 #### §Stage Closeout Plan
 
-_pending — populated by `/closeout {this-doc} Stage {STAGE_ID}` planner pass when all Tasks reach `Done`._
+_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 If the existing skeleton uses retired `#### Stage` H4 → rewrite heading to `### Stage` H3 during fill.

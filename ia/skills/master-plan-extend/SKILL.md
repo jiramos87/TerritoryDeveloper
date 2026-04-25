@@ -25,7 +25,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 **Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative source for file shape, Stage block subsections, 5-column Task table schema, Status enums, lifecycle flip matrix. This skill appends new Stages TO that shape; if this skill drifts, MASTER-PLAN-STRUCTURE.md wins.
 
 **Lifecycle:** AFTER [`master-plan-new`](../master-plan-new/SKILL.md) has authored the orchestrator AND `{SOURCE_DOC}` exists with expansion (or equivalent extensions list). BEFORE [`stage-file`](../stage-file/SKILL.md) of the new stages.
-`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `plan-author` → `plan-digest` → `plan-review` → `spec-implementer` → `verify-loop` → `opus-code-review` → `opus-audit` → Stage-scoped `/closeout` (`stage-closeout-plan` → `plan-applier` Mode stage-closeout). Per canonical rev-3 flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
+`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `stage-authoring` → `plan-reviewer-mechanical` → `plan-reviewer-semantic` → `spec-implementer` → `verify-loop` → `opus-code-review` → `/ship-stage` (inline closeout). Per canonical flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
 
 **Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
@@ -192,11 +192,11 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 #### §Stage Audit
 
-_pending — populated by `/audit {this-doc} Stage {N}.{M}` when all Tasks reach Done post-verify._
+_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
 
 #### §Stage Closeout Plan
 
-_pending — populated by `/closeout {this-doc} Stage {N}.{M}` planner pass when all Tasks reach `Done`._
+_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task table schema (5 columns, canonical per MASTER-PLAN-STRUCTURE.md §3):** `Task | Name | Issue | Status | Intent`. NO `Phase` column. Task id format `T{N}.{M}.{K}`. Status enum `_pending_ → Draft → In Review → In Progress → Done (archived)`.

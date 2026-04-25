@@ -1,14 +1,13 @@
 ---
-purpose: "Sonnet pair-tail: applies §Plan Fix tuples verbatim per plan-apply-pair-contract (seam #1)."
+purpose: "Sonnet pair-tail: applies §Plan Fix tuples verbatim per plan-apply-pair-contract."
 audience: agent
 loaded_by: skill:plan-applier
 slices_via: none
 name: plan-applier
 description: >
-  Sonnet literal-applier for §Plan Fix tuples emitted by `plan-review` Opus pair-head
-  (seam #1). Validation gate: validate:master-plan-status + validate:backlog-yaml.
-  code-fix and stage-closeout modes retired 2026-04-24 in Step 8 of
-  docs/ia-dev-db-refactor-implementation.md (E14 fold inline + C10 inline closeout).
+  Sonnet literal-applier for §Plan Fix tuples emitted by the plan-review pair-head.
+  Validation gate: validate:master-plan-status + validate:backlog-yaml.
+  Single mode — plan-fix only.
   Triggers: "/plan-fix-apply", "plan-applier", "apply §Plan Fix tuples".
 model: inherit
 phases:
@@ -19,20 +18,18 @@ phases:
   - "Return"
 ---
 
-# Plan-applier — Sonnet pair-tail (seam #1)
+# Plan-applier — Sonnet pair-tail
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Sonnet pair-tail for **Plan-Apply pair seam #1**. Reads `§Plan Fix` tuples emitted by `plan-review` Opus pair-head; applies each edit verbatim in declared order; runs validation gate; escalates on anchor ambiguity. Never reorders, merges, or interprets.
+**Role:** Sonnet pair-tail for the Plan-Apply pair. Reads `§Plan Fix` tuples emitted by the plan-review pair-head; applies each edit verbatim in declared order; runs validation gate; escalates on anchor ambiguity. Never reorders, merges, or interprets.
 
-Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #1, §Validation gate, §Escalation rule, §Idempotency requirement.
-Sibling pair-head: [`plan-review/SKILL.md`](../plan-review/SKILL.md).
-
-**Retired modes:** `code-fix` (E14 — `opus-code-reviewer` applies fixes inline via direct Edit/Write; no §Code Fix Plan tuples written) + `stage-closeout` (C10 — closeout folds inline into `ship-stage` SKILL Step 4 via `stage_closeout_apply` MCP tool). Step 8 retirement landed 2026-04-24 in `docs/ia-dev-db-refactor-implementation.md`.
+Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
+Sibling pair-heads: [`plan-review-mechanical/SKILL.md`](../plan-review-mechanical/SKILL.md) + [`plan-review-semantic/SKILL.md`](../plan-review-semantic/SKILL.md).
 
 **Progress stderr:** use skill name `plan-applier` and phase labels from frontmatter `phases:` array.
 
-**MCP `caller_agent`:** pass `plan-review` when mutating backlog or MCP tools — see pair-contract + `tools/mcp-ia-server` caller allowlist.
+**MCP `caller_agent`:** pass `plan-applier` when mutating backlog or MCP tools — see pair-contract + `tools/mcp-ia-server` caller allowlist.
 
 ---
 
@@ -70,7 +67,7 @@ For each tuple in `tuples[]`:
 5. `payload` references glossary term → verify term exists in `ia/specs/glossary.md`. Unknown term → escalate with `{escalation: true, tuple_index: N, reason: "unknown_glossary_term", candidate_matches: []}`.
 6. `operation` enum not recognized → escalate with `{escalation: true, tuple_index: N, reason: "unknown_operation"}`.
 
-All tuples resolved cleanly → proceed to Phase 3. Any escalation → STOP, return escalation payload to Opus pair-head.
+All tuples resolved cleanly → proceed to Phase 3. Any escalation → STOP, return escalation payload to pair-head.
 
 ---
 
@@ -98,7 +95,7 @@ After each tuple: log `applied tuple {N}: {operation} → {target_path}`.
 
 ## Phase 4 — Validate
 
-After all tuples applied, run the seam #1 validation gate (contract §Validation gate):
+After all tuples applied, run the validation gate (contract §Validation gate):
 
 ```sh
 npm run validate:master-plan-status
@@ -107,8 +104,8 @@ npm run validate:backlog-yaml
 
 On non-zero exit from either command:
 - STOP immediately.
-- Return to Opus pair-head: `{exit_code, stderr, failing_tuple_index: <last applied>}`.
-- Opus revises `§Plan Fix`; Sonnet re-applies from scratch (idempotency clause guarantees safety).
+- Return to pair-head: `{exit_code, stderr, failing_tuple_index: <last applied>}`.
+- Pair-head revises `§Plan Fix`; pair-tail re-applies from scratch (idempotency clause guarantees safety).
 
 On clean exit (both exit 0): proceed to Phase 5.
 
@@ -121,7 +118,7 @@ Emit apply summary:
 ```
 plan-applier (plan-fix): {N} tuples applied to Stage {STAGE_ID} in {MASTER_PLAN_PATH}.
 Validation gate: PASS (validate:master-plan-status + validate:backlog-yaml exit 0).
-Returning to plan-review for re-check (optional) or downstream continue.
+Returning to caller for re-check (optional) or downstream continue.
 ```
 
 Return control to caller. Caller (agent or dispatcher) routes:
@@ -132,7 +129,7 @@ Return control to caller. Caller (agent or dispatcher) routes:
 
 ## Escalation rules
 
-Sonnet pair-tail **NEVER guesses** an ambiguous anchor. Immediate return to Opus on any of:
+Sonnet pair-tail **NEVER guesses** an ambiguous anchor. Immediate return to pair-head on any of:
 
 | Trigger | Return shape |
 |---------|-------------|
@@ -143,13 +140,13 @@ Sonnet pair-tail **NEVER guesses** an ambiguous anchor. Immediate return to Opus
 | `operation` not in enum | `{escalation: true, tuple_index, reason: "unknown_operation"}` |
 | Required tuple key missing | `{escalation: true, tuple_index, reason: "malformed_tuple", missing_keys: [...]}` |
 
-Opus re-resolves; never the applier.
+Pair-head re-resolves; never the applier.
 
 ---
 
 ## Idempotency requirement
 
-Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with zero diff. All operation implementations above include idempotency guards. This unblocks Opus revision loops without rollback machinery.
+Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with zero diff. All operation implementations above include idempotency guards. This unblocks pair-head revision loops without rollback machinery.
 
 ---
 
@@ -160,7 +157,7 @@ Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with z
 - Do NOT interpret / merge / collapse tuples.
 - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
 - Do NOT write normative spec prose — only mutations from tuple payloads.
-- Do NOT re-introduce `code-fix` or `stage-closeout` modes — both retired (E14 + C10). `opus-code-reviewer` applies fixes inline; `ship-stage` runs closeout inline via `stage_closeout_apply` MCP tool.
+- Do NOT re-introduce `code-fix` or `stage-closeout` modes. `opus-code-reviewer` applies fixes inline via direct Edit/Write; `ship-stage` runs closeout inline via `stage_closeout_apply` MCP tool.
 - Do NOT `git commit` — user decides.
 
 ---
@@ -168,7 +165,7 @@ Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with z
 ## Cross-references
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
-- [`ia/skills/plan-review/SKILL.md`](../plan-review/SKILL.md) — Opus pair-head.
+- [`ia/skills/plan-review-mechanical/SKILL.md`](../plan-review-mechanical/SKILL.md) + [`ia/skills/plan-review-semantic/SKILL.md`](../plan-review-semantic/SKILL.md) — pair-heads.
 - Glossary term **plan-fix apply** (`ia/specs/glossary.md`).
 
 ---

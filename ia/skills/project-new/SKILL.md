@@ -24,7 +24,7 @@ phases:
 
 No MCP calls from skill body. Follow **Tool recipe** below before editing BACKLOG or creating spec — thin context via `AGENTS.md` step 3 + force-loaded `ia/rules/invariants.md` (MCP-first directive + universal safety).
 
-**vs author:** this skill creates backlog row + spec stub from user prompt. After stub → [`plan-author`](../plan-author/SKILL.md) (N=1 fills §Plan Author — ephemeral) → [`plan-digest`](../plan-digest/SKILL.md) (N=1 mechanizes into §Plan Digest + drops §Plan Author) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → `verify-loop` → `opus-code-review` → `opus-audit` → Stage-scoped `/closeout` (`stage-closeout-plan` → `plan-applier` Mode stage-closeout). Per canonical rev-3 flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
+**vs author:** this skill creates backlog row + spec stub from user prompt. After stub → [`stage-authoring`](../stage-authoring/SKILL.md) (N=1 fills §Plan Digest) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → `verify-loop` → `opus-code-review` → `/ship-stage` (inline closeout). Per canonical flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
 
 **Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) · [`BACKLOG.md`](../../../BACKLOG.md) · [`ia/skills/README.md`](../README.md).
 
@@ -94,7 +94,7 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 4. **Backlog record** — Author the yaml body (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Before writing to disk, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})` and fix any reported schema errors. **MCP unavailable fallback:** skip the validate call; `validate:all` at end catches schema drift. Write the validated yaml to `ia/backlog/{ISSUE_ID}.yaml`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../../docs/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
-7. **Next** — At N=1: `/author --task` then `/plan-digest --task` to fill §Plan Digest (drops ephemeral §Plan Author) before `/implement`.
+7. **Next** — At N=1: `/stage-authoring --task` to fill §Plan Digest before `/implement`.
 
 ## Follow-up
 

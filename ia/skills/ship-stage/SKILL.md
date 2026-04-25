@@ -42,11 +42,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 - [`verify-loop`](../verify-loop/SKILL.md) — internal `MAX_ITERATIONS=2` fix loop (no outer retry here).
 - [`stage-authoring`](../stage-authoring/SKILL.md) — populates §Plan Digest in DB before this skill runs.
 - [`spec-implementer`](../spec-implementer/SKILL.md) — Pass A implement subagent.
-- [`opus-code-reviewer`](../opus-code-reviewer/SKILL.md) — Pass B code-review (inline fix per E14).
+- [`opus-code-reviewer`](../opus-code-reviewer/SKILL.md) — Pass B code-review (inline fix).
 - Scene wiring contract: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
 - Verification policy: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
-
-**Branch guardrail (feature/ia-dev-db-refactor):** Smoke testing of this rewritten skill on a throwaway filed+authored stage is the Step 8 acceptance gate per `docs/ia-dev-db-refactor-implementation.md` §2.1. Broader chain dispatches resume on `main` post-merge.
 
 ## Normative — closeout is part of `PASSED`
 
@@ -132,7 +130,7 @@ SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for
 Next: claude-personal "/stage-authoring {MASTER_PLAN_PATH} Stage {STAGE_ID_DB}"
 ```
 
-**Note:** `/stage-authoring` is the DB-backed single-skill replacement for retired `/author` + `/plan-digest` chain (Step 7). Lazy-migration branch retired — pre-DB legacy specs already upgraded.
+**Note:** `/stage-authoring` is the DB-backed single-skill that populates `§Plan Digest`. Pre-DB legacy specs already upgraded.
 
 ---
 
@@ -302,7 +300,7 @@ master_plan_change_log_append({
 })
 ```
 
-**No filesystem mv** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5. Per-stage spec foldering shape (`ia/projects/{slug}/stage-*.md`) was an intermediate target retired in 9.6 — DB is sole source of truth.
+**No filesystem mv** — DB is sole source of truth for task spec bodies.
 
 Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { archived_task_count }`.
 
@@ -317,7 +315,7 @@ Stage worktree state at this point:
 - Code-review inline fixes (if any iteration ran).
 - DB-only closeout (Step 7) leaves no filesystem diff — only `ia_*` tables mutated.
 
-Single commit covers everything. Format per design E13:
+Single commit covers everything. Format:
 
 ```
 feat({SLUG}-stage-{STAGE_ID_DB}): {short summary from master_plan_title or Stage title}
@@ -366,7 +364,7 @@ stage_verification_flip({
 })
 ```
 
-Per E11: history-preserving INSERT — latest row reflects this run.
+History-preserving INSERT — latest row reflects this run.
 
 Journal: `phase: "stage.commit", payload_kind: "stage_commit", payload: { commit_sha: STAGE_COMMIT_SHA, archived_task_count }`.
 
@@ -441,18 +439,18 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 ## Hard boundaries
 
 - Sequential per-task dispatch only — tasks share files + invariants; no parallel.
-- **Pass A NEVER commits.** No `git commit feat({ISSUE_ID})` per task. Single stage commit at Step 8.1 per design E13.
-- Resume gate (Step 4) queries `task_state` / `stage_bundle` — does NOT git-scan for commit subjects (Pre-DB pattern retired with Step 8 rewrite).
+- **Pass A NEVER commits.** No `git commit feat({ISSUE_ID})` per task. Single stage commit at Step 8.1.
+- Resume gate (Step 4) queries `task_state` / `stage_bundle` — does NOT git-scan for commit subjects.
 - Stop on first Pass A gate failure (compile, scene-wiring, implement); do NOT continue to next task.
 - Do NOT roll back Pass A status flips on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — DB stays at `implemented`; worktree stays dirty; human repairs via re-run after fix.
 - Code-review critical re-entry cap = 1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
-- Code-reviewer applies fixes **inline via direct Edit/Write** per design E14 — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired `plan-applier` code-fix mode.
-- Inline closeout (Step 7) is mandatory on green Pass B — do NOT defer to separate `/closeout` invocation. Stage-closeout-* skill pair retired per design C10.
-- Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes) in ONE commit per design E13. Closeout (Step 7) is DB-only — no filesystem diff.
+- Code-reviewer applies fixes **inline via direct Edit/Write** — do NOT write `§Code Fix Plan` tuples.
+- Inline closeout (Step 7) is mandatory on green Pass B — Stage closeout always runs inline.
+- Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes) in ONE commit. Closeout (Step 7) is DB-only — no filesystem diff.
 - `domain-context-load` fires ONCE at chain start (Step 2); do NOT re-call per task.
-- Do NOT auto-invoke `/stage-authoring`, `/author`, or `/plan-digest` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
-- Do NOT read or edit `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR `ia/projects/{ISSUE_ID}.md` — DB is source of truth post Step 9.6. Closeout writes audit rows via `master_plan_change_log_append`, never `git mv` to `_closed/`.
-- DB is source of truth post-Step-6 of `ia-dev-db-refactor`. Do NOT fall back to filesystem-only operations on `db_unavailable` — escalate to human; halt chain.
+- Do NOT auto-invoke `/stage-authoring` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
+- Do NOT read or edit `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR `ia/projects/{ISSUE_ID}.md` — DB is source of truth. Closeout writes audit rows via `master_plan_change_log_append`, never `git mv` to `_closed/`.
+- DB is source of truth. Do NOT fall back to filesystem-only operations on `db_unavailable` — escalate to human; halt chain.
 
 ---
 

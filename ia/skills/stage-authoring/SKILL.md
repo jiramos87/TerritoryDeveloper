@@ -1,29 +1,22 @@
 ---
-purpose: "DB-backed single-skill stage-authoring: merges retired plan-author + plan-digest into one Opus bulk pass that writes §Plan Digest direct (no §Plan Author intermediate) per task via task_spec_section_write MCP. No aggregate doc."
+purpose: "DB-backed single-skill stage-authoring: one Opus bulk pass writes §Plan Digest direct per task via task_spec_section_write MCP. No aggregate doc."
 audience: agent
 loaded_by: skill:stage-authoring
 slices_via: none
 name: stage-authoring
 description: >
-  DB-backed single-skill stage-authoring — replaces legacy plan-author (Opus
-  bulk §Plan Author writer) + plan-digest (Opus bulk mechanizer) pair (retired
-  2026-04-24 Step 7 of `docs/ia-dev-db-refactor-implementation.md`). One Opus
-  bulk pass authors §Plan Digest direct per filed Task spec stub of one Stage
-  (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential
-  Mechanical Steps with Edits + Gate + STOP + MCP hints + optional Scene
-  Wiring step). NO §Plan Author intermediate per design B6 / C7 (stub →
-  digest direct). Persists each per-Task §Plan Digest body to DB via
-  `task_spec_section_write` MCP. Absorbs canonical-term fold (glossary +
-  retired-surface tombstone + template-section allowlist + cross-ref task-id
-  resolver) into the same bulk pass. Self-lints via `plan_digest_lint`
-  (cap=1 retry). Mechanicalization preflight via
-  `mechanicalization_preflight_lint`. NO aggregate
-  `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` doc per design D8
-  (drops entirely).
+  DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan
+  Digest direct per filed Task spec stub of one Stage (rich format: Goal /
+  Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with
+  Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub →
+  digest direct, no intermediate surface. Persists each per-Task §Plan Digest
+  body to DB via `task_spec_section_write` MCP. Absorbs canonical-term fold
+  (glossary + retired-surface tombstone + template-section allowlist +
+  cross-ref task-id resolver) into the same bulk pass. Self-lints via
+  `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via
+  `mechanicalization_preflight_lint`. No aggregate doc compile.
   Triggers: "/stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}",
-  "stage authoring", "merged plan-author + plan-digest", "stage-scoped digest",
-  "author + digest in one pass", "/author {ORCHESTRATOR_SPEC} {STAGE_ID}"
-  (legacy alias).
+  "stage authoring", "stage-scoped digest", "author stage tasks".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 model: opus
 phases:
@@ -38,17 +31,15 @@ phases:
   - "Hand-off"
 ---
 
-# Stage-authoring skill — DB-backed single-skill (merged plan-author + plan-digest)
+# Stage-authoring skill — DB-backed single-skill
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Single-skill stage-scoped spec-body authoring. Reads filed Task spec stubs of one Stage; writes §Plan Digest **direct** in one Opus bulk pass (no §Plan Author intermediate); persists per-Task body to DB via `task_spec_section_write` MCP. Replaces retired plan-author + plan-digest pair (B2). Drops aggregate `docs/implementation/` compile (D8).
-
-**Step 7 of `docs/ia-dev-db-refactor-implementation.md`** — this skill replaces retired [`plan-author/SKILL.md`](../_retired/plan-author/SKILL.md) + [`plan-digest/SKILL.md`](../_retired/plan-digest/SKILL.md). Design decisions B2 (merge) + B6 (drop §Plan Author surface) + C7 (digest direct, no aggregate) + C8 (stage-file tail calls inline) + D8 (aggregate doc retires) per [`docs/master-plan-foldering-refactor-design.md`](../../../docs/master-plan-foldering-refactor-design.md) §3.4.
+**Role:** Single-skill stage-scoped spec-body authoring. Reads filed Task spec stubs of one Stage; writes §Plan Digest **direct** in one Opus bulk pass; persists per-Task body to DB via `task_spec_section_write` MCP. No aggregate doc compile.
 
 **Contract:** [`ia/rules/plan-digest-contract.md`](../../rules/plan-digest-contract.md) — 9-point rubric, enforced by `plan_digest_lint`.
 
-**Upstream:** `stage-file` (writes N filed spec stubs + DB rows). **Downstream:** `/ship-stage` (N≥2) or `/ship` (N=1). `stage-file` dispatcher calls this skill inline per C8.
+**Upstream:** `stage-file` (writes N filed spec stubs + DB rows). **Downstream:** `/ship-stage` (N≥2) or `/ship` (N=1). `stage-file` dispatcher calls this skill inline.
 
 ---
 
@@ -111,7 +102,7 @@ Count total input tokens: Stage header + N spec stubs + MCP bundle + invariants 
 
 - Under threshold → proceed to Phase 4 with single bulk pass (N Tasks).
 - Over threshold → split into ⌈N/2⌉ bulk sub-passes. Each sub-pass covers ⌈N/2⌉ Tasks; shared context (Stage header + MCP bundle + glossary table) replayed per sub-pass.
-- **Never** regress to per-Task mode — per-Task authoring defeats the bulk intent (R10 regression bar carried from retired plan-author).
+- **Never** regress to per-Task mode — per-Task authoring defeats the bulk intent.
 
 Emit split decision in hand-off summary.
 
@@ -181,7 +172,7 @@ Shape mirrors [`ia/templates/plan-digest-section.md`](../../templates/plan-diges
 **validator_gate:** {npm run validate:all | npm run unity:compile-check | …}
 ```
 
-### 4.2 Authoring rules (absorbed from retired plan-author Phase 3)
+### 4.2 Authoring rules
 
 - **§Goal:** product/domain phrasing per Task intent + Stage Objectives. Glossary terms only (no ad-hoc synonyms).
 - **§Acceptance:** narrower than Stage Exit. Checkbox per concrete deliverable. Derived from §1 Summary + §2.1 Goals + §7 Implementation Plan stub.
@@ -189,7 +180,7 @@ Shape mirrors [`ia/templates/plan-digest-section.md`](../../templates/plan-diges
 - **§Examples:** edge cases + legacy shapes + canonical inputs. Tables or code blocks.
 - **§Mechanical Steps:** sequential checklist of Edit tuples — author in execution order.
 
-### 4.3 Mechanical step rules (absorbed from retired plan-digest Phase 2)
+### 4.3 Mechanical step rules
 
 For each Edit tuple:
 
@@ -229,7 +220,7 @@ Any trigger fires → emit a dedicated **Scene Wiring** mechanical step in §Mec
 
 Place the Scene Wiring step LAST in §Mechanical Steps (after all script + test edits, before closeout) so the gate runs against the final runtime surface.
 
-### 4.5 Canonical-term fold + drift scan (absorbed from retired plan-author Phase 4)
+### 4.5 Canonical-term fold + drift scan
 
 Same Opus pass enforces canonical glossary terms + scans for retired surface refs. Four sub-checks (all four MUST run per Task; emit per-Task counts in hand-off summary).
 
@@ -260,16 +251,16 @@ Plus hard-coded retired slash refs: `/enrich`, `/kickoff`, `/plan-digest`, stand
 
 For each Task body, scan §1 / §4 / §5 / §7 / §8 / §10 prose AND new §Plan Digest sub-sections for any retired surface name. Match must be replaced with the live successor:
 
-| Retired | Live successor | Notes |
-|---------|---------------|-------|
-| `/enrich {id}` / `spec-enrich` | `/stage-authoring --task {ISSUE_ID}` | T7.11 fold |
-| `/kickoff` / `spec-kickoff` / `project-spec-kickoff` | `/stage-authoring` (Stage 1×N) | M6 collapse |
-| `/author {id}` / `plan-author` | `/stage-authoring` | Step 7 merge |
-| `/plan-digest` / `plan-digest` | `/stage-authoring` | Step 7 merge |
-| `project-spec-close` / `project-stage-close` | `/closeout` (folded into ship-stage Pass B per C10) | T7.14 / Step 8 |
-| `stage-file-monolith` / `stage-file-planner` / `stage-file-applier` | `/stage-file` (DB-backed single-skill per Step 6) | Step 6 merge |
-| `project-new-plan` | `/project-new` args-only pair | T7.10 fold |
-| `docs/implementation/{slug}-stage-X.Y-plan.md` ref | drop ref entirely (aggregate doc retires per D8) | Step 7 |
+| Retired | Live successor |
+|---------|---------------|
+| `/enrich {id}` / `spec-enrich` | `/stage-authoring --task {ISSUE_ID}` |
+| `/kickoff` / `spec-kickoff` / `project-spec-kickoff` | `/stage-authoring` (Stage 1×N) |
+| `/author {id}` / `plan-author` | `/stage-authoring` |
+| `/plan-digest` / `plan-digest` | `/stage-authoring` |
+| `project-spec-close` / `project-stage-close` | folded into `/ship-stage` Pass B inline closeout |
+| `stage-file-monolith` / `stage-file-planner` / `stage-file-applier` | `/stage-file` (DB-backed single-skill) |
+| `project-new-plan` | `/project-new` args-only pair |
+| `docs/implementation/{slug}-stage-X.Y-plan.md` ref | drop ref entirely (no aggregate doc) |
 
 Per-Task counter: `n_retired_refs_replaced`.
 
@@ -281,12 +272,12 @@ For each Task body, scan `## ` / `### ` headings. Any heading NOT in canonical-s
 
 | Drifted heading | Canonical replacement |
 |----------------|----------------------|
-| `§Plan Author` (legacy intermediate) | `§Plan Digest` (direct, per B6) |
-| `§Closeout Plan` (per-Task) | folded into ship-stage Pass B per C10 — drop section |
+| `§Plan Author` (legacy intermediate) | `§Plan Digest` (direct) |
+| `§Closeout Plan` (per-Task) | folded into ship-stage Pass B — drop section |
 | `§Audit Plan` | `§Audit` |
 | `§Review` / `§Code Review Plan` | `§Code Review` |
 
-Do NOT delete unknown headings — emit warning in per-Task hand-off entry. If `## §Plan Author` block present → replace entirely with new `## §Plan Digest` body (Step 7 absorbs the surface; §Plan Author retires per B6).
+Do NOT delete unknown headings — emit warning in per-Task hand-off entry. If `## §Plan Author` block present → replace entirely with new `## §Plan Digest` body.
 
 Per-Task counter: `n_section_drift_fixed`.
 
@@ -312,7 +303,7 @@ Aggregate counters per Task:
   stale_task_refs:         [{T_REF}, ...]
 ```
 
-Sub-pass exit gate: if `unresolved_backlog_refs` OR `stale_task_refs` non-empty for ANY Task → tag Stage hand-off summary with `drift_warnings: true`. (No downstream `/plan-review` per design — drift surfaces in hand-off summary only.)
+Sub-pass exit gate: if `unresolved_backlog_refs` OR `stale_task_refs` non-empty for ANY Task → tag Stage hand-off summary with `drift_warnings: true`. Drift surfaces in hand-off summary only.
 
 ---
 
@@ -329,7 +320,7 @@ Extended `plan_digest_lint` rules:
 - Every step touching `Assets/**/*.cs` or runtime files MUST carry non-empty `invariant_touchpoints[]` OR opt-out marker `invariant_touchpoints: none (utility)`. Missing → lint rule 10 failure.
 - Every step MUST carry `validator_gate`. Missing → lint rule 11 failure.
 
-NO aggregate stage doc lint pass — aggregate doc retired per D8.
+No aggregate stage doc lint pass — no aggregate doc.
 
 ---
 
@@ -340,7 +331,7 @@ Run `mechanicalization-preflight` skill over each per-Task §Plan Digest body:
 1. Call `mcp__territory-ia__mechanicalization_preflight_lint({ artifact_path: "{ia/projects/{ISSUE_ID}.md|db:{ISSUE_ID}}", artifact_kind: "plan_digest" })`.
 2. `pass: true` → prepend `mechanicalization_score` YAML header at top of §Plan Digest body per `ia/rules/mechanicalization-contract.md`.
 3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]` for {ISSUE_ID}; do NOT persist artifact.
-4. **Advisory escape hatch (TECH-776 regex drift):** if `pass: false` AND `failing_fields == ["picks"]` AND Phase 5 `plan_digest_lint` was PASS AND no missing-path findings → prepend `mechanicalization_score: advisory_partial; failing_fields: [picks]; reason: preflight-regex-vs-rich-format-drift` header + continue. Tracks structural fix in TECH-776.
+4. **Advisory escape hatch:** if `pass: false` AND `failing_fields == ["picks"]` AND Phase 5 `plan_digest_lint` was PASS AND no missing-path findings → prepend `mechanicalization_score: advisory_partial; failing_fields: [picks]; reason: preflight-regex-vs-rich-format-drift` header + continue.
 
 ---
 
@@ -361,9 +352,9 @@ Returns `{ok: true, version}` (history snapshot row written to `ia_task_spec_his
 Errors:
 - `task_not_found` → escalate (should not happen — Phase 2 verified spec presence).
 - `section_anchor_ambiguous` → escalate; manual edit fallback.
-- `db_unavailable` → escalate; do NOT fall back to filesystem write (DB is source of truth per Step 6+).
+- `db_unavailable` → escalate; do NOT fall back to filesystem write (DB is source of truth).
 
-**No filesystem mirror** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5. DB write is sole persistence.
+**No filesystem mirror** — DB write is sole persistence.
 
 **Idempotency:** if `task_spec_section_write` returns `unchanged: true` (DB body matches new content) → record skip in hand-off counter.
 
@@ -390,7 +381,7 @@ next=stage-authoring-chain-continue
 npm run validate:all
 ```
 
-Non-zero exit → escalate. (Replaces retired plan-author `validate:dead-project-specs` — Step 9 cleanup phase drops the dead-specs validator entirely; until then `validate:all` covers both surfaces.)
+Non-zero exit → escalate.
 
 ### 8.3 Idempotency on re-entry
 
@@ -400,9 +391,9 @@ Non-zero exit → escalate. (Replaces retired plan-author `validate:dead-project
 
 ### 8.4 Next-step
 
-Dispatcher (`/stage-file` per C8) receives this hand-off and continues to:
+Dispatcher (`/stage-file`) receives this hand-off and continues to:
 
-- **N≥2:** `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (runs implement + verify + code-review + closeout per Step 8 ship-stage rewrite).
+- **N≥2:** `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (runs implement + verify + code-review + closeout).
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"`.
 
 When invoked standalone (not via `/stage-file` chain): emit same handoff verbatim.
@@ -411,15 +402,15 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 
 ## Hard boundaries
 
-- Do NOT write `## §Plan Author` section — surface retired per B6.
-- Do NOT compile aggregate `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` — retired per D8.
+- Do NOT write `## §Plan Author` section.
+- Do NOT compile aggregate `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md`.
 - Do NOT write code, run verify, or flip Task status.
 - Do NOT author specs outside target Stage.
 - Do NOT regress to per-Task mode if tokens exceed threshold — split into ⌈N/2⌉ bulk sub-passes.
 - Do NOT resolve picks — `plan_digest_scan_for_picks` is lint-only; leak = abort + handoff to operator.
 - Do NOT call `domain-context-load` per Task — Phase 1 once per Stage.
-- Do NOT skip the Scene Wiring step when triggered — wiring is a Stage deliverable per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md); dropping the step lets Stages ship dead runtime paths (grid-asset-visual-registry 2.2 canonical incident).
-- Do NOT fall back to filesystem-only write on DB unavailable — escalate; DB is source of truth post-Step-6.
+- Do NOT skip the Scene Wiring step when triggered — wiring is a Stage deliverable per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md); dropping the step lets Stages ship dead runtime paths.
+- Do NOT fall back to filesystem-only write on DB unavailable — escalate; DB is source of truth.
 - Do NOT commit — user decides.
 
 ---
@@ -444,12 +435,9 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 - [`ia/rules/mechanicalization-contract.md`](../../rules/mechanicalization-contract.md) — preflight contract.
 - [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — Scene Wiring step trigger checklist.
 - [`ia/templates/plan-digest-section.md`](../../templates/plan-digest-section.md) — §Plan Digest section template fragment.
-- [`ia/skills/stage-file/SKILL.md`](../stage-file/SKILL.md) — upstream (writes N filed spec stubs + DB rows; tail calls this skill inline per C8).
-- [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — downstream (Pass A implement + Pass B verify + closeout per Step 8 rewrite).
+- [`ia/skills/stage-file/SKILL.md`](../stage-file/SKILL.md) — upstream (writes N filed spec stubs + DB rows; tail calls this skill inline).
+- [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — downstream (Pass A implement + Pass B verify + closeout).
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe (fallback when `lifecycle_stage_context` unavailable).
-- [`ia/skills/_retired/plan-author/SKILL.md`](../_retired/plan-author/SKILL.md) — pre-merge upstream half (archived).
-- [`ia/skills/_retired/plan-digest/SKILL.md`](../_retired/plan-digest/SKILL.md) — pre-merge downstream half (archived).
-- [`docs/master-plan-foldering-refactor-design.md`](../../../docs/master-plan-foldering-refactor-design.md) §3.4 — design decisions B2 / B6 / C7 / C8 / D8.
 
 ---
 

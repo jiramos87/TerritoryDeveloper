@@ -28,7 +28,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Opus pair-head per-Task. Runs after `implement` + `verify-loop` complete for the Task. Reads the implementation diff against the spec + invariants + glossary; emits one of three verdicts. Critical verdict triggers sibling pair-tail **`plan-applier`** Mode code-fix.
 
-Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #4, §Escalation rule.
+Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Escalation rule.
 Sibling pair-tail: [`plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Mode **code-fix**.
 
 ---
@@ -230,7 +230,7 @@ Caller routes to `plan-applier` Mode code-fix `{ISSUE_ID}`.
 ## Cross-references
 
 - [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — scene-wiring trigger list + evidence block; feeds Phase 2 critical check.
-- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, seam #4, §Escalation rule.
+- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Escalation rule.
 - [`ia/skills/plan-applier/SKILL.md`](../plan-applier/SKILL.md) — Sonnet pair-tail Mode code-fix.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - [`ia/skills/opus-audit/SKILL.md`](../opus-audit/SKILL.md) — Stage-scoped bulk audit that runs after all per-Task code-reviews pass.

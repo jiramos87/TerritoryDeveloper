@@ -1,6 +1,6 @@
 # Data dashboard — exploration and prerequisite subsystems
 
-> **Open delivery:** [FEAT-51](../BACKLOG.md) — project spec [`ia/projects/FEAT-51.md`](../ia/projects/FEAT-51.md)  
+> **Open delivery:** [FEAT-51](../BACKLOG.md) (project spec body lives in DB-backed `ia_tasks` row post Step 9.5)  
 > **Visual tokens (shipped):** [`ia/specs/ui-design-system.md`](../ia/specs/ui-design-system.md) **§1**, **§5.2** (**`UiTheme`**, **`DefaultUiTheme.asset`**)  
 > **Program trace:** **UI-as-code program** (**glossary**)
 

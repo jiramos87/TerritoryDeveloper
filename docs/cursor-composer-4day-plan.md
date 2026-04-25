@@ -114,7 +114,7 @@ These clear the (g) gate on multiple rollout rows; every closed gate lets Claude
 | 5 | utilities glossary batch | 7 rows: Utility pool, Utility contributor, Utility consumer, Pool status, Freeze flag, EMA warning, Deficit cascade | 1h | 5 |
 | 6 | landmarks glossary batch | 8 rows: landmark, big project, LandmarkProgressionService, BigProjectService, LandmarkPlacementService, LandmarkCatalogStore, LandmarkCatalogRow, tier-defining landmark, intra-tier reward landmark | 1h | 5 |
 | 7 | `ia/specs/economy-system.md` stub | Frontmatter + §1 Purpose + §2 placeholder headings (Zones / Jobs / Budget / Taxation / Save schema). Deep prose deferred. Blocks zone-s-economy (g). | 1-2h | 5 |
-| 8 | `ia/specs/simulation-signals.md` stub | Same pattern. Blocks city-sim-depth (g). Content sourced from `ia/projects/TECH-308.md`. | 1-2h | 5 |
+| 8 | `ia/specs/simulation-signals.md` stub | Same pattern. Blocks city-sim-depth (g). Content sourced from **TECH-308** (see [`BACKLOG.md`](../BACKLOG.md)). | 1-2h | 5 |
 | 9 | `ia/specs/utility-system.md` stub | Same pattern. Blocks utilities (g). | 1-2h | 5 |
 | 10 | `ia/specs/landmarks-system.md` stub | Same pattern. Blocks landmarks (g). | 1-2h | 5 |
 

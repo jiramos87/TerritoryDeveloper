@@ -18,7 +18,7 @@ Exceptions (write normal English):
 3. Security / auth content — credential handling, permission rationale, hook denylist explanations.
 4. Verbatim quotes — user prompts, error messages, stack traces, tool output.
 5. Structured output — JSON Verification blocks, MCP tool payloads.
-6. Destructive-op confirmations — `/closeout` deletes, force-push warnings.
+6. Destructive-op confirmations — `/ship-stage` Pass B spec deletes, force-push warnings.
 7. When the user says "normal" / "stop caveman" / "in Spanish" — overrides for that turn.
 8. Human-polling surfaces — user-gate questions and option labels use product/domain wording (game/feature semantics), not IA/tooling jargon. Caveman terseness still applies; jargon density does not. See [`ia/rules/agent-human-polling.md`](agent-human-polling.md) — fetch via `rule_content agent-human-polling`.
 

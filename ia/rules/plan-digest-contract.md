@@ -27,10 +27,10 @@ A plan is "digested" iff **all 9** hold:
 ## Enforcement
 
 - `plan_digest_lint` runs on every per-Task §Plan Digest slice AND on the aggregate stage doc.
-- `plan-review` runs AFTER `plan-digest` — its drift scan consumes the final §Plan Digest, not §Plan Author.
+- `plan-review` (`plan-reviewer-mechanical` + `plan-reviewer-semantic`) runs AFTER `stage-authoring` — drift scan consumes the final §Plan Digest written directly by `stage-authoring`.
 
 ## Cross-references
 
-- `ia/skills/plan-digest/SKILL.md` — the skill that authors §Plan Digest.
+- `ia/skills/stage-authoring/SKILL.md` — Stage-scoped bulk skill that authors §Plan Digest direct (no §Plan Author intermediate; folded post Step 7 of DB refactor).
 - `ia/templates/plan-digest-section.md` — section shape template.
-- `ia/rules/plan-apply-pair-contract.md` — §Plan Digest is a Stage-scoped non-pair output alongside §Plan Author / §Audit.
+- `ia/rules/plan-apply-pair-contract.md` — §Plan Digest is a Stage-scoped non-pair output alongside §Audit.

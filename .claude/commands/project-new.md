@@ -1,11 +1,11 @@
 ---
-description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head seam #3) → `project-new-applier` (Sonnet pair-tail) → chains `/author --task` then `/plan-digest --task` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
+description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head) → `project-new-applier` (Sonnet pair-tail) → chains `/stage-authoring --task {ISSUE_ID}` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
 argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--priority P1|P2|P3|P4]"
 ---
 
-# /project-new — dispatch seam #3 pair then chain `/author` + `/plan-digest --task`
+# /project-new — dispatch pair then chain `/stage-authoring --task`
 
-Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/author --task {ISSUE_ID}` (N=1) to fill `§Plan Author` + canonical-term fold, then `/plan-digest --task {ISSUE_ID}` to produce `§Plan Digest`.
+Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/stage-authoring --task {ISSUE_ID}` (N=1) to produce `§Plan Digest` directly.
 
 `$ARGUMENTS` carries free-text intent (title + product prompt). Optional `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); planner asks when ambiguous. Optional `--priority {P1|P2|P3|P4}` overrides inference.
 
@@ -34,8 +34,8 @@ Forward via Agent tool with `subagent_type: "project-new-planner"`:
 > - Do NOT reserve id — applier reserves via `reserve-id.sh`.
 > - Do NOT write yaml / spec stubs — applier writes.
 > - Do NOT run `materialize-backlog.sh` / validators — applier runs gate.
-> - Do NOT bulk-file multiple issues — that is `stage-file-planner`.
-> - Do NOT enrich spec body beyond stub seeds — `plan-author` writes spec body at N=1 post-apply.
+> - Do NOT bulk-file multiple issues — that is `stage-file`.
+> - Do NOT enrich spec body beyond stub seeds — `stage-authoring` writes spec body at N=1 post-apply.
 > - Do NOT fabricate Depends-on / Related ids — `backlog_issue` must verify.
 > - Do NOT commit — user decides.
 
@@ -53,17 +53,17 @@ Forward via Agent tool with `subagent_type: "project-new-applier"`:
 >
 > ## Hard boundaries
 >
-> - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `plan-author` writes spec body at N=1.
+> - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `stage-authoring` writes spec body at N=1.
 > - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
 > - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates it.
-> - Do NOT chain to `plan-author` — command dispatcher (Step 3 below) does that.
-> - Do NOT reuse retired ids.
+> - Do NOT chain to `stage-authoring` — command dispatcher (Step 3 below) does that.
+> - Do NOT reuse archived ids.
 > - Do NOT commit — user decides.
 
-## Step 3 — Auto-chain `/author --task {ISSUE_ID}` then `/plan-digest --task {ISSUE_ID}` (N=1 bulk)
+## Step 3 — Auto-chain `/stage-authoring --task {ISSUE_ID}` (N=1 bulk)
 
-On applier success: auto-invoke `/author --task {ISSUE_ID}` (Stage-scoped bulk `plan-author` at N=1 per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold on the one filed spec. Then auto-invoke `/plan-digest --task {ISSUE_ID}` to mechanize into `§Plan Digest` and drop `§Plan Author` (Q5 2026-04-22). Rev 3 single-task path skips `plan-review` at N=1 — next step is `/implement {ISSUE_ID}` directly.
+On applier success: auto-invoke `/stage-authoring --task {ISSUE_ID}` to author `§Plan Digest` directly on the one filed spec (single-pass digest; canonical-term fold; lint + mechanicalization preflight). Single-task path skips `plan-review` at N=1 — next step is `/ship {ISSUE_ID}` directly.
 
 ## Output
 
-Chain summary: ISSUE_ID + priority + validators exit + bulk `/author` summary. Next step: `claude-personal "/ship {ISSUE_ID}"` (implement → verify-loop → code-review → audit → closeout at N=1).
+Chain summary: ISSUE_ID + priority + validators exit + `stage-authoring` summary. Next step: `claude-personal "/ship {ISSUE_ID}"` (implement → verify → close at N=1).

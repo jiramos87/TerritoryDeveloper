@@ -1,5 +1,5 @@
 ---
-purpose: "Opus Stage-scoped bulk audit: one pass reads ALL N Task specs + Stage header; writes ALL N §Audit paragraphs in one synthesis round; feeds stage-closeout-plan."
+purpose: "Opus Stage-scoped bulk audit: one pass reads ALL N Task specs + Stage header; writes ALL N §Audit paragraphs in one synthesis round."
 audience: agent
 loaded_by: skill:opus-audit
 slices_via: none
@@ -9,10 +9,9 @@ description: >
   Single pass reads ALL N Task specs (§Implementation + §Findings + §Verification) +
   Stage header + invariants + glossary snippets (pre-loaded shared Stage MCP bundle);
   writes ALL N §Audit paragraphs in one synthesis round.
-  Does NOT write §Closeout Plan — that is Stage-level work (T7.13 stage-closeout-plan).
+  Does NOT write §Closeout Plan — Stage closeout runs inline via stage_closeout_apply MCP.
   Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out); Stage preflight
-  reads §Findings + §Verification per Task (§Findings populated inline by plan-author;
-  R11 non-empty gate retired per B2 amendment 3).
+  reads §Findings + §Verification per Task.
   Triggers: "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit", "opus audit bulk",
   "run opus audit Stage".
 model: inherit
@@ -28,11 +27,10 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Opus bulk. Invoked **once per Stage** after all Tasks in the Stage reach post-verify Green (implement + verify-loop + opus-code-review + any code-fix loops complete). Single Opus pass over the shared Stage MCP bundle produces one `§Audit` paragraph per Task. Does NOT write `§Closeout Plan` — that belongs to `stage-closeout-plan` (T7.13 / TECH-480). `§Findings` read from spec as populated by `plan-author` Phase 3 inline; no emptiness gate (R11 retired per B2 amendment 3).
+**Role:** Opus bulk. Invoked **once per Stage** after all Tasks in the Stage reach post-verify Green (implement + verify-loop + opus-code-review + any code-fix loops complete). Single Opus pass over the shared Stage MCP bundle produces one `§Audit` paragraph per Task. Does NOT write `§Closeout Plan` — Stage closeout runs inline via `stage_closeout_apply` MCP. `§Findings` read from spec as populated by `stage-authoring` inline.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule.
 This skill is **not a pair-head** — emits `§Audit` section content directly via tuples (no downstream Sonnet applier). Tuples use `replace_section` / `insert_after` operations directly against each `ia/projects/{id}.md`.
-Downstream consumer: [`stage-closeout-plan/SKILL.md`](../stage-closeout-plan/SKILL.md) reads the N `§Audit` paragraphs as raw material.
 
 ---
 
@@ -47,11 +45,11 @@ Downstream consumer: [`stage-closeout-plan/SKILL.md`](../stage-closeout-plan/SKI
 
 ## Phase 0 — Sequential-dispatch guardrail (F3) + Stage preflight
 
-> **Guardrail (F3):** Stage-scoped bulk N→1 dispatches Tasks sequentially. Never spawn concurrent Opus invocations (rev 4 A2 + amendment 2). One Task §Audit paragraph synthesized → next Task — no parallel fan-out.
+> **Guardrail (F3):** Stage-scoped bulk N→1 dispatches Tasks sequentially. Never spawn concurrent Opus invocations. One Task §Audit paragraph synthesized → next Task — no parallel fan-out.
 
 1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` Tasks table.
-2. For each Task row with Status ≠ `Done (archived)`: open `ia/projects/{ISSUE_ID}.md`. Read `## §Findings` heading — note contents (may be empty; §Findings is now populated inline by `plan-author` Phase 3). Collect `§Verification` section for audit synthesis in Phase 2.
-3. Proceed to Phase 1 — no §Findings emptiness gate (R11 gate retired; `plan-author` populates §Findings inline at author time per B2 amendment 3).
+2. For each Task row with Status ≠ `Done (archived)`: open `ia/projects/{ISSUE_ID}.md`. Read `## §Findings` heading — note contents (may be empty; §Findings populated inline by `stage-authoring`). Collect `§Verification` section for audit synthesis in Phase 2.
+3. Proceed to Phase 1 — no §Findings emptiness gate.
 
 ---
 
@@ -121,10 +119,10 @@ Emit summary:
 ```
 opus-audit: Stage {STAGE_ID} — {N} §Audit paragraphs written.
 Tasks audited: {task_ids[]}.
-Downstream: stage-closeout-plan consumes §Audit paragraphs as raw material.
+Downstream: stage_closeout_apply MCP (inline in /ship-stage Pass B) consumes §Audit paragraphs.
 ```
 
-Return: `{stage_id, tasks_audited[], audit_paragraphs_written: N}` → caller routes to `stage-closeout-plan`.
+Return: `{stage_id, tasks_audited[], audit_paragraphs_written: N}`.
 
 ---
 
@@ -132,6 +130,5 @@ Return: `{stage_id, tasks_audited[], audit_paragraphs_written: N}` → caller ro
 
 - [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Escalation rule, §Idempotency requirement.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
-- [`ia/skills/stage-closeout-plan/SKILL.md`](../stage-closeout-plan/SKILL.md) — downstream consumer of §Audit paragraphs.
-- [`ia/skills/opus-code-review/SKILL.md`](../opus-code-review/SKILL.md) — per-Task pair-head that runs before /audit.
+- [`ia/skills/opus-code-review/SKILL.md`](../opus-code-review/SKILL.md) — per-Task pair-head that runs before audit.
 - Glossary term **Opus audit** (`ia/specs/glossary.md`).

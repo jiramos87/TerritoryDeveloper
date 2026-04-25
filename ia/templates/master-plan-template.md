@@ -2,8 +2,8 @@
   Master plan template — canonical structure for `ia/projects/{slug}-master-plan.md`.
 
   Authored by `master-plan-new` (fresh orchestrator) + extended by `master-plan-extend`
-  (new Stages from exploration / extensions doc). Never closeable via `/closeout`
-  (see `ia/rules/orchestrator-vs-spec.md`).
+  (new Stages from exploration / extensions doc). Never closeable — orchestrators are
+  permanent (see `ia/rules/orchestrator-vs-spec.md`).
 
   Placeholders wrapped in `{{...}}` — replace on author. Comments in HTML form get
   stripped by skill authors; keep for template reference only.
@@ -13,13 +13,13 @@
   Task table columns (5): Task · Name · Issue · Status · Intent.
     - Task     = hierarchical id `T{STAGE}.{N}` (e.g. `T1.3`).
     - Name     = short ≤6-word handle (used as BACKLOG row title + spec file name).
-    - Issue    = `_pending_` until `stage-file-apply` fills with `**{PREFIX}-NNN**`.
+    - Issue    = `_pending_` until `stage-file` applier pass fills with `**{PREFIX}-NNN**`.
     - Status   = `_pending_ → Draft → In Review → In Progress → Done (archived)`.
     - Intent   = ≤2 sentences naming concrete deliverable (types / methods / file paths).
 
   Plan-Apply pair sections (per `ia/rules/plan-apply-pair-contract.md`):
-    - `§Stage File Plan` — Opus pair-head writes `{operation, target_path, target_anchor, payload}` tuples per Stage; `stage-file-apply` Sonnet reads + applies.
-    - `§Plan Fix` — Opus `plan-review` writes targeted fix tuples; `plan-fix-apply` Sonnet reads + applies.
+    - `§Stage File Plan` — Opus pair-head writes `{operation, target_path, target_anchor, payload}` tuples per Stage; `stage-file` Sonnet applier pass reads + applies.
+    - `§Plan Fix` — Opus `plan-reviewer-mechanical`+`plan-reviewer-semantic` write targeted fix tuples; `plan-applier` Sonnet Mode plan-fix reads + applies.
 -->
 
 # {{Title}} — Master Plan ({{SCOPE_LABEL}})
@@ -40,7 +40,7 @@
 > **Sibling orchestrators in flight (shared `{{branch-name}}` branch):**
 >
 > - `{{sibling-master-plan.md}}` — {{overlap + collision surface + parallel-work note}}.
-> - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
+> - **Parallel-work rule:** do NOT run `/stage-file` or `/ship-stage` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
 >
 > **Hierarchy rules:** `docs/MASTER-PLAN-STRUCTURE.md` (canonical file + Stage + Task table shape — authoritative). `ia/rules/project-hierarchy.md` (stage > task — 2-level cardinality). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable). `ia/rules/plan-apply-pair-contract.md` (§Plan section shape for pair seams).
 >
@@ -56,7 +56,7 @@
 
 ## Stages
 
-> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file-apply` → task rows gain `Issue` id + `Draft` status; `plan-author` / `plan-digest` → `In Review`; `spec-implementer` → `In Progress`; `plan-applier` Mode stage-closeout → `Done (archived)` + Stage `Final` rollup.
+> **Tracking legend:** Stage `Status:` uses enum `Draft | In Review | In Progress | Final` (per `docs/MASTER-PLAN-STRUCTURE.md` §6.2). Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` applier → task rows gain `Issue` id + `Draft` status; `stage-authoring` → `In Review`; `spec-implementer` (or `/ship-stage` Pass A) → `In Progress`; `/ship-stage` Pass B (`stage_closeout_apply` MCP) → `Done (archived)` + Stage `Final` rollup.
 
 ### Stage {{N}}.{{M}} — {{Stage Name}}
 
@@ -94,27 +94,23 @@
 
 #### §Stage File Plan
 
-> Opus `stage-file-plan` writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file-apply` reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
+> Opus `stage-file` planner writes structured `{operation, target_path, target_anchor, payload}` tuples here per pending Task. Sonnet `stage-file` applier reads tuples and materializes BACKLOG rows + spec stubs. Contract: `ia/rules/plan-apply-pair-contract.md`.
 
 _pending — populated by `/stage-file` planner pass._
 
 #### §Plan Fix
 
-> Opus `plan-review` writes targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
+> Opus `plan-reviewer-mechanical` + `plan-reviewer-semantic` write targeted fix tuples here when a Stage's Task specs need tightening before first `/implement`. Sonnet `plan-applier` Mode plan-fix reads tuples and applies edits. Contract: `ia/rules/plan-apply-pair-contract.md`.
 
 _pending — populated by `/plan-review` when fixes are needed._
 
 #### §Stage Audit
 
-> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `§Stage Closeout Plan` migration tuples downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
+> Opus `opus-audit` writes one `§Audit` paragraph per Task row here (Stage-scoped bulk, non-pair) once every Task reaches Done post-verify. Feeds `/ship-stage` Pass B closeout digest downstream. Contract: `ia/rules/plan-apply-pair-contract.md` Stage-scoped non-pair row.
 
 _pending — populated by `/audit {{this-doc}} Stage {{N}}.{{M}}` when all Tasks reach Done post-verify._
 
-#### §Stage Closeout Plan
-
-> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify (replaces per-Task closeout). Shared migration ops deduped across Tasks (glossary rows / rule edits / doc paragraph edits) + N per-Task ops (`archive_record`, `delete_file`, `replace_section` status flip, `id_purge`, `digest_emit`). Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
-
-_pending — populated by `/closeout {{this-doc}} Stage {{N}}.{{M}}` planner pass when all Tasks reach `Done`._
+<!-- §Stage Closeout Plan section retired — closeout runs inline in `/ship-stage` Pass B via `stage_closeout_apply` MCP (unified shared migrations + N archive/delete/flip/purge ops in one pass). No persisted tuple list needed. -->
 
 <!--
   Repeat `### Stage {{N}}.{{M}}` block per stage. Stages are flat siblings — no Step grouping.
@@ -132,19 +128,19 @@ _pending — populated by `/closeout {{this-doc}} Stage {{N}}.{{M}}` planner pas
 
 **Do:**
 
-- Open one Stage at a time. Next Stage opens only after current Stage's `project-stage-close` runs.
-- Run `/stage-file {{this-doc}} Stage {{N}}.{{M}}` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs (planner→applier pair).
+- Open one Stage at a time. Next Stage opens only after current Stage's `/ship-stage` Pass B closeout runs.
+- Run `/stage-file {{this-doc}} Stage {{N}}.{{M}}` to materialize pending tasks → BACKLOG rows + spec stubs (planner→applier pair).
 - Update Stage `Status` as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc + scope-boundary doc.
-- Keep this orchestrator synced with umbrella issue (if one exists) — per `closeout-apply` skill umbrella-sync rule.
+- Keep this orchestrator synced with umbrella issue (if one exists) — per `/ship-stage` Pass B umbrella-sync rule.
 - Extend via `/master-plan-extend {{this-doc}} {{source-doc}}` when a new exploration or extensions doc introduces new Stages — do NOT hand-insert Stage blocks.
 
 **Do not:**
 
-- Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal Stage landing triggers a final `Status: Final`; the file stays.
+- Close this orchestrator — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal Stage landing triggers a final `Status: Final`; the file stays.
 - Silently promote post-MVP items into MVP stages — they belong in the scope-boundary doc.
 - Merge partial Stage state — every Stage must land on a green bar.
-- Insert BACKLOG rows directly into this doc — only `stage-file-apply` materializes them.
+- Insert BACKLOG rows directly into this doc — only `stage-file` applier materializes them.
 - Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/master-plan-extend` so MCP context + cardinality gate + progress regen fire.
 
 ---

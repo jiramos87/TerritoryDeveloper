@@ -1,6 +1,6 @@
 ---
 name: plan-applier
-description: Use to apply §Plan Fix tuples after Opus pair-head (plan-review) emits them. Triggers — "/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}", "apply plan applier", "pair-tail plan tuples". Sonnet pair-tail for seam #1 (`§Plan Fix`). Reads tuples verbatim; gate = validate:master-plan-status + validate:backlog-yaml. Escalates on anchor ambiguity. Idempotent re-run. Does NOT re-order tuples, interpret payloads, or commit. **code-fix and stage-closeout modes retired 2026-04-24** (Step 8 of `docs/ia-dev-db-refactor-implementation.md` — E14 + C10).
+description: Use to apply §Plan Fix tuples after Opus pair-head (plan-review) emits them. Triggers — "/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}", "apply plan applier", "pair-tail plan tuples". Sonnet pair-tail for `§Plan Fix`. Reads tuples verbatim; gate = validate:master-plan-status + validate:backlog-yaml. Escalates on anchor ambiguity. Idempotent re-run. Does NOT re-order tuples, interpret payloads, or commit.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate
 model: haiku
 ---
@@ -19,7 +19,7 @@ Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering 
 
 Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
 
-Run `ia/skills/plan-applier/SKILL.md` end-to-end on `### §Plan Fix` block under Stage `STAGE_ID` of `MASTER_PLAN_PATH`. Single mode (seam #1) — plan-fix only.
+Run `ia/skills/plan-applier/SKILL.md` end-to-end on `### §Plan Fix` block under Stage `STAGE_ID` of `MASTER_PLAN_PATH`. Single mode — plan-fix only.
 
 Apply tuples verbatim in declared order; one atomic edit per tuple. Validation gate:
 

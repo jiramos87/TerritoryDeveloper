@@ -1,13 +1,11 @@
 ---
-purpose: "DB-backed single-skill stage-file: mode detection + cardinality + sizing gates + per-task task_insert MCP writes + manifest append + spec stub + task-table flip + R1/R2 Status flips. Replaces retired stage-file-plan + stage-file-apply pair."
+purpose: "DB-backed single-skill stage-file: mode detection + cardinality + sizing gates + per-task task_insert MCP writes + manifest append + spec stub + task-table flip + R1/R2 Status flips."
 audience: agent
 loaded_by: skill:stage-file
 slices_via: none
 name: stage-file
 description: >
-  DB-backed single-skill filing — replaces legacy stage-file-plan (Opus pair-head) +
-  stage-file-apply (Sonnet pair-tail) pair (retired 2026-04-24 Step 6 of
-  `docs/ia-dev-db-refactor-implementation.md`). Loads shared Stage MCP bundle once;
+  DB-backed single-skill filing. Loads shared Stage MCP bundle once;
   gates cardinality (≥2 Tasks per Stage) + sizing (H1–H6); batch-verifies Depends-on
   ids via single `backlog_list`; resolves target BACKLOG.md section from master-plan
   H1 title; per-Task writes via `task_insert` MCP tool (DB-backed monotonic id from
@@ -39,10 +37,6 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Role:** Single-skill filing. Reads Stage block; gates cardinality + sizing; writes DB rows via `task_insert` MCP (no yaml); appends manifest entry; bootstraps spec stub; regenerates BACKLOG.md via DB path; flips Status lines.
 
 **Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative. Stage heading H3 `### Stage N.M`; 5-col Task table `| Task | Name | Issue | Status | Intent |` (no Phase column); Task id `T{N}.{M}.{K}`.
-
-**Step 6 of `docs/ia-dev-db-refactor-implementation.md`** — this skill replaces retired [`stage-file-plan/SKILL.md`](../_retired/stage-file-plan/SKILL.md) + [`stage-file-apply/SKILL.md`](../_retired/stage-file-apply/SKILL.md). Seam #2 pair collapsed to single invocation per design doc B1.
-
-Original pre-refactor monolith archived: [`ia/skills/_retired/stage-file-monolith/SKILL.md`](../_retired/stage-file-monolith/SKILL.md).
 
 ---
 
@@ -286,7 +280,7 @@ Compose stub body string from [`ia/templates/project-spec-template.md`](../../te
 - `## 2.1 Goals` → 2–4 bullets derived from Task intent.
 - `## 4.2 Systems map` → file/class list from shared context `router_domains` + `spec_sections`.
 - `## 7. Implementation Plan` → single Phase stub from Task intent.
-- `## §Plan Digest` → `_pending — populated by /plan-digest_`
+- `## §Plan Digest` → `_pending — populated by /stage-authoring_`
 - §Audit / §Code Review / §Code Fix Plan → `_pending_` sentinels.
 
 Persist to DB via `mcp__territory-ia__task_spec_section_write({ task_id: ISSUE_ID, section: "raw_markdown", body: <stub body> })`. **No filesystem write** — flat task specs at `ia/projects/{ISSUE_ID}.md` deleted in Step 9.6.5; DB is sole persistence post Step 9.6. Idempotent — `unchanged: true` return is safe skip.
@@ -376,9 +370,7 @@ Validators: exit 0.
 next=stage-file-chain-continue
 ```
 
-**Current branch (`feature/ia-dev-db-refactor`) guardrail:** `docs/ia-dev-db-refactor-implementation.md §3` — "No §Plan Digest ceremony. Do not invoke /author, /plan-digest, /plan-review on this branch." Smoke runs halt here.
-
-**Downstream chain (other branches / Step 7+):** dispatcher `.claude/commands/stage-file.md` continues to plan-author → plan-digest → plan-review → STOP. Final handoff:
+**Downstream chain:** dispatcher `.claude/commands/stage-file.md` continues to `stage-authoring` → STOP. Final handoff:
 
 - **N≥2:** `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"`

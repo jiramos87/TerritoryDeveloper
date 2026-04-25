@@ -6,10 +6,12 @@
  * Groups pair-seam agents by role (head / tail); asserts each agent in a role group
  * contains at least the canonical baseline tools for that role.
  *
- * Pair-seam agents (per lifecycle-refactor-master-plan Stage 10 T10.4 §4.2):
- *   Pair-heads (Opus):  plan-reviewer, stage-file-planner, opus-code-reviewer,
- *                       stage-closeout-planner, project-new-planner
- *   Pair-tails (Sonnet): plan-applier, stage-file-applier, project-new-applier
+ * Pair-seam agents (post-refactor — retired heads/tails dropped 2026-04-25):
+ *   Pair-heads (Opus):  opus-code-reviewer, project-new-planner
+ *   Pair-tails (Sonnet): plan-applier, project-new-applier
+ *
+ * Retired (no longer present in `.claude/agents/`, tombstones in `_retired/`):
+ *   plan-reviewer, stage-file-planner, stage-closeout-planner, stage-file-applier
  *
  * Canonical baseline (MUST be present in every agent of the role group):
  *   head: Read, Edit, Write, Bash, Grep, Glob,
@@ -42,16 +44,12 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const DEFAULT_AGENTS_DIR = path.join(REPO_ROOT, ".claude", "agents");
 
 const HEAD_AGENTS = new Set([
-  "plan-reviewer",
-  "stage-file-planner",
   "opus-code-reviewer",
-  "stage-closeout-planner",
   "project-new-planner",
 ]);
 
 const TAIL_AGENTS = new Set([
   "plan-applier",
-  "stage-file-applier",
   "project-new-applier",
 ]);
 

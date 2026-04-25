@@ -1,12 +1,12 @@
 ---
 purpose: "Stage sizing gate — 6-heuristic analytic check on a drafted Stage task cluster; gates bulk-verify + bulk-code-review feasibility. Layers on top of cardinality gate (project-hierarchy.md)."
 audience: agent
-loaded_by: skill:stage-decompose, skill:stage-file-plan
+loaded_by: skill:stage-decompose, skill:stage-file
 slices_via: none
 rule_key: stage-sizing-gate
 description: >
   Six-heuristic analytic gate applied to a Stage task cluster post task-sizing (in stage-decompose)
-  and at Phase 0 of stage-file-plan. Any FAIL (or ≥2 WARN) triggers split recommendation:
+  and at Phase 0 of stage-file planner pass. Any FAIL (or ≥2 WARN) triggers split recommendation:
   Stage X.Y → X.Y.A + X.Y.B, reauthor each. Distinct from cardinality gate (task count) and
   lifecycle-refactor F2 sizing gate (cache-block token bytes). LLM-prompt heuristic evaluation —
   no CI validator in v1.
@@ -114,7 +114,7 @@ are NOT subject to retroactive evaluation. Gate verdict = N/A for filed Stages.
 - `ia/rules/project-hierarchy.md` — cardinality gate (task count ≥2 / ≤6); runs BEFORE this gate.
 - `ia/rules/invariants.md` — system invariants #1–#13 referenced in H5 / H6 evaluation.
 - `ia/skills/stage-decompose/SKILL.md` — invokes sizing gate at Phase N (post task-sizing).
-- `ia/skills/stage-file-plan/SKILL.md` — Phase 0 references this gate; halts on FAIL.
+- `ia/skills/stage-file/SKILL.md` — planner Phase 0 references this gate; halts on FAIL.
 - `docs/agent-lifecycle.md` — Hard-rules section cross-ref (single line).
 - `ARCHITECTURE.md` — subsystem layer map used in H1 subsystem count.
 - `docs/stage-scoped-verify-review-findings.md` — motivating findings; thresholds derived from

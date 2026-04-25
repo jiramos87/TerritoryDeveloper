@@ -28,7 +28,7 @@ Run `ia/skills/project-new/SKILL.md` end-to-end research + arg-resolution phases
 2. **Phase 2 — Backlog dep check** — `backlog_issue` for every Depends-on / Related id. Unsatisfied hard dep → align user (wait / remove / downgrade to Related) before handoff.
 3. **Phase 3 — Spec outline** — `list_specs` / `spec_outline` only if `spec:` key unknown. Identify `section:` / priority section per `AGENTS.md`.
 4. **Phase 4 — Resolve args** — Extract `TITLE`, `ISSUE_TYPE`, `PRIORITY` (`P1`–`P4`), optional `NOTES`. Compose stub-body hints (§1 summary seed, §2 goals seed, §4.2 systems map router domains, §7 single-phase sketch, Open Questions from any ambiguity).
-5. **Phase 5 — Hand-off** — Emit caveman summary + args payload for pair-tail. Next: `project-new-applier` reads args verbatim (no tuple list — seam #3 args-only pair per `ia/skills/project-new-apply/SKILL.md`).
+5. **Phase 5 — Hand-off** — Emit caveman summary + args payload for pair-tail. Next: `project-new-applier` reads args verbatim (no tuple list — args-only pair per `ia/skills/project-new-apply/SKILL.md`).
 
 # Hard boundaries
 

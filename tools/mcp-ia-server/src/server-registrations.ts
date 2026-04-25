@@ -52,7 +52,6 @@ import { registerVerifyClassify } from "./tools/verify-classify.js";
 import { registerIssueContextBundle } from "./tools/issue-context-bundle.js";
 import { registerLifecycleStageContext } from "./tools/lifecycle-stage-context.js";
 import { registerPlanDigestGateAuthorHelper } from "./tools/plan-digest-gate-author-helper.js";
-import { registerPlanDigestCompileStageDoc } from "./tools/plan-digest-compile-stage-doc.js";
 import { registerCatalogList } from "./tools/catalog-list.js";
 import { registerCatalogGet } from "./tools/catalog-get.js";
 import { registerCatalogUpsert } from "./tools/catalog-upsert.js";
@@ -143,7 +142,6 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerIssueContextBundle(server, registry);
   registerLifecycleStageContext(server, registry);
   registerPlanDigestGateAuthorHelper(server);
-  registerPlanDigestCompileStageDoc(server);
   registerCatalogList(server);
   registerCatalogGet(server);
   registerCatalogUpsert(server);

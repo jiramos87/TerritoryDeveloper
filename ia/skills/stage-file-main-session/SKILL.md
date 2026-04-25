@@ -1,19 +1,17 @@
 ---
-purpose: "Main-session adapter for /stage-file: executes the full planner → applier → plan-author → plan-digest → plan-reviewer chain inline (no subagents). Use when the caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool."
+purpose: "Main-session adapter for /stage-file: executes the full stage-file → stage-authoring → plan-review chain inline (no subagents). Use when the caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool."
 audience: agent
 loaded_by: skill:stage-file-main-session
 slices_via: none
 name: stage-file-main-session
 description: >
   In-session (no-subagent) wrapper around the /stage-file chain. Read
-  ia/skills/stage-file/SKILL.md (merged DB-backed single-skill — replaces
-  retired stage-file-plan + stage-file-apply pair since Step 6 of
-  docs/ia-dev-db-refactor-implementation.md, 2026-04-24) and the phase list
+  ia/skills/stage-file/SKILL.md (DB-backed single-skill) and the phase list
   in .claude/commands/stage-file.md, then execute the chain inline:
-  stage-file → plan-author → plan-digest → plan-reviewer → STOP at
-  plan-review PASS. Use MCP `task_insert` (DB-backed per-prefix id; NO
-  reserve-id.sh / NO yaml writes), manifest append, and direct file edits.
-  Never dispatch via Agent/Task tool.
+  stage-file → stage-authoring → plan-review → STOP at plan-review PASS.
+  Use MCP `task_insert` (DB-backed per-prefix id; NO reserve-id.sh / NO yaml
+  writes), manifest append, and direct file edits. Never dispatch via
+  Agent/Task tool.
   Triggers: "/stage-file-main-session {master-plan-path} {stage}",
   "execute stage-file in this session", "no-subagent stage-file".
   Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID second.
@@ -40,18 +38,14 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_R
 ## Instructions
 
 1. **Load canonical sources end-to-end:**
-   - `ia/skills/stage-file/SKILL.md` (merged DB-backed single-skill — 8 phases, replaces retired `-plan` + `-apply` pair)
-   - `.claude/commands/stage-file.md` (canonical chain: stage-file → plan-author → plan-digest → plan-reviewer → STOP)
-
-   Retired pair body archived at `ia/skills/_retired/stage-file-plan/SKILL.md` + `ia/skills/_retired/stage-file-apply/SKILL.md` — do not load unless debugging Step 6 rollback.
+   - `ia/skills/stage-file/SKILL.md` (DB-backed single-skill — 8 phases)
+   - `.claude/commands/stage-file.md` (canonical chain: stage-file → stage-authoring → plan-review → STOP)
 
 2. **Execute the full chain inline** for `{MASTER_PLAN_RELATIVE_PATH}` Stage `{STAGE_ID}`:
    - Step 1 — `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + manifest append (`ia/state/backlog-sections.json`) + `ia/projects/{ISSUE_ID}.md` spec stub from template → Post-loop `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
-   - Step 2 — `plan-author` bulk Stage 1×N (populate `§Plan Author` for all N specs).
-   - Step 3 — `plan-digest` bulk Stage 1×N (mechanize `§Plan Digest` + drop `§Plan Author` + compile aggregate doc + `plan_digest_lint` cap=1).
-   - Step 4 — `plan-reviewer`: PASS → Step 5; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
-   - Step 5 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
-   - **Branch guardrail:** on `feature/ia-dev-db-refactor` the chain stops after Step 1 (Steps 2–4 skipped per `docs/ia-dev-db-refactor-implementation.md §3`).
+   - Step 2 — `stage-authoring` bulk Stage 1×N (one Opus pass writes §Plan Digest direct per task via `task_spec_section_write` MCP; self-lints via `plan_digest_lint` cap=1; mechanicalization preflight per task).
+   - Step 3 — `plan-review`: PASS → Step 4; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
+   - Step 4 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
 
 3. **Tooling:**
    - territory-ia MCP: `lifecycle_stage_context`, `backlog_list`, `task_insert`, `backlog_record_validate`, `plan_digest_compile_stage_doc`, `plan_digest_lint`, etc.
@@ -60,11 +54,11 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_R
 
 4. **Hard boundaries (from `.claude/commands/stage-file.md` — apply inline):**
    - No Agent/Task dispatch for any chain step.
-   - No yaml writes under `ia/backlog/` — DB is source of truth (Step 6 of ia-dev-db-refactor).
+   - No yaml writes under `ia/backlog/` — DB is source of truth.
    - No `reserve-id.sh` invocations — `task_insert` MCP assigns ids.
    - Declared task-table order iterator — never re-order.
    - Atomic task-table flip after all writes — never mid-loop.
-   - Seam #2 gate is `validate:dead-project-specs` only on DB path — no `validate:backlog-yaml`, no `validate:all`.
+   - Filing gate is `validate:dead-project-specs` only on DB path — no `validate:backlog-yaml`, no `validate:all`.
    - Never hand-edit `ia/state/id-counter.json` or `BACKLOG.md`.
    - Idempotent on re-entry.
    - No auto-commit — user decides.

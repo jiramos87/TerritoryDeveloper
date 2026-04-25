@@ -140,9 +140,9 @@ task_key: "{{T_KEY}}"
 
 ## §Plan Digest
 
-<!-- Canonical executable plan — `plan-digest` Opus Stage-scoped bulk non-pair. Populated once per Stage after `plan-author` (ephemeral intermediate; dropped by plan-digest in same pass). Enforces 9-point rubric via `plan_digest_lint` MCP tool. Q5 2026-04-22: §Plan Author does NOT survive in committed spec. -->
+<!-- Canonical executable plan — `stage-authoring` Opus Stage-scoped bulk non-pair (§Plan Digest direct, no §Plan Author intermediate). Enforces 9-point rubric via `plan_digest_lint` MCP tool. -->
 
-_pending — populated by `/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}`. Sub-sections: §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps (each step carries Goal / Edits / Gate / STOP / MCP hints). Template: `ia/templates/plan-digest-section.md`._
+_pending — populated by `/stage-authoring {MASTER_PLAN_PATH} {STAGE_ID}`. Sub-sections: §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps (each step carries Goal / Edits / Gate / STOP / MCP hints). Template: `ia/templates/plan-digest-section.md`._
 
 ### §Goal
 
@@ -189,13 +189,13 @@ _pending — populated by `/plan-digest {MASTER_PLAN_PATH} {STAGE_ID}`. Sub-sect
 
 ## §Audit
 
-<!-- Pair-head: `opus-audit` Opus stage (post-verify). Upstream of `stage-closeout-plan` → `stage-closeout-apply` Stage-scoped seam #4 (T7.14). Per-Task `§Closeout Plan` section retired — closeout tuples now live under Stage block `§Stage Closeout Plan` in the master plan. -->
+<!-- Pair-head: `opus-audit` Opus stage (post-verify). Upstream of `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP). Per-Task `§Closeout Plan` section retired — closeout digest written by Pass B in one shot. -->
 
 _pending — populated by `/audit` after `/verify-loop` passes. One paragraph: what shipped, what worked, what to watch._
 
 ## §Code Review
 
-<!-- Pair-head: `opus-code-review` Opus stage. Pair-tail: `code-fix-apply` Sonnet (only when critical). -->
+<!-- Pair-head: `opus-code-review` Opus stage. Pair-tail: `plan-applier` Sonnet Mode code-fix (only when critical). -->
 
 _pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / deferred) | critical (writes `§Code Fix Plan` below)._
 

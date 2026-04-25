@@ -73,17 +73,17 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence (matches SKILL
 # Hard boundaries
 
 - Sequential per-task dispatch only — no parallel.
-- **Pass A NEVER commits.** Per design E13: single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes + closeout mv. Do NOT emit `feat({ISSUE_ID}):` per task.
-- Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan for `feat(id):`/`fix(id):` (pre-DB legacy retired).
+- **Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes + closeout mv. Do NOT emit `feat({ISSUE_ID}):` per task.
+- Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan.
 - Stop on first Pass A gate failure (implement, compile, scene-wiring); do NOT continue to next task.
 - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` or `STAGE_CODE_REVIEW_CRITICAL_TWICE` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
 - Code-review critical re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
-- **Code-reviewer applies fixes inline via direct Edit/Write per design E14.** Do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired `plan-applier` code-fix mode.
-- **Pass B (verify → code-review → audit → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY).
-- **Inline closeout (Step 7) is mandatory on green Pass B per design C10.** Do NOT defer to separate `/closeout` invocation. `stage-closeout-plan` + `stage-closeout-apply` skill pair retired (`ia/skills/_retired/`).
+- **Code-reviewer applies fixes inline via direct Edit/Write.** Do NOT write `§Code Fix Plan` tuples.
+- **Pass B (verify → code-review → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY).
+- **Inline closeout (Step 7) is mandatory on green Pass B.** Do NOT defer to separate closeout invocation.
 - `domain-context-load` fires ONCE at chain start (Phase 2); do NOT re-call per task.
 - Do NOT auto-invoke `/stage-authoring` from inside `/ship-stage` — Phase 3 is a readiness gate only, hands off if missing.
-- Filesystem mv at Step 7.2 is guarded — check `STAGE_SPEC_GLOB` matches before `git mv`; pre-Step-9 foldering may have no per-stage spec file (skip silently).
+- Filesystem mv at Step 7.2 is guarded — check `STAGE_SPEC_GLOB` matches before `git mv`; skip silently when no match.
 - Do NOT bail with "no Task tool in nested context" — execute inline per Execution model directive.
 
 # Output

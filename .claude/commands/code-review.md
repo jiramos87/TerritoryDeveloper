@@ -1,9 +1,9 @@
 ---
-description: Per-Task post-verify code review — dispatches `opus-code-reviewer` (seam #4 pair-head) to scan implementation diff against spec + invariants + glossary. 3 verdict branches — PASS (mini §Code Review report, no tail) / minor (suggestions, no tail) / critical (writes §Code Fix Plan tuples + auto-dispatches `plan-applier` Mode code-fix). Fires per-Task between `/verify-loop` tail and Stage-scoped `/audit`.
+description: Per-Task post-verify code review — dispatches `opus-code-reviewer` (pair-head) to scan implementation diff against spec + invariants + glossary. 3 verdict branches — PASS (mini §Code Review report, no tail) / minor (suggestions, no tail) / critical (writes §Code Fix Plan tuples + auto-dispatches `plan-applier` Mode code-fix). Fires per-Task post-`/verify-loop`.
 argument-hint: "{ISSUE_ID}"
 ---
 
-# /code-review — dispatch seam #4 per-Task pair-head (opus-code-reviewer → plan-applier Mode code-fix on critical)
+# /code-review — dispatch per-Task pair-head (opus-code-reviewer → plan-applier Mode code-fix on critical)
 
 Use `opus-code-reviewer` subagent (`.claude/agents/opus-code-reviewer.md`) to review implementation diff for `{ISSUE_ID}` against spec + invariants + glossary. Runs per-Task after `/implement` + `/verify-loop` reach Green. Three verdict branches — PASS / minor → write `## §Code Review` mini-report, no tail; critical → write `## §Code Fix Plan` tuple list + auto-dispatch **`plan-applier`** Sonnet pair-tail Mode code-fix (applies fix tuples + re-enters verify-loop; 1-retry bound).
 
@@ -40,7 +40,7 @@ On critical verdict: forward via Agent tool with `subagent_type: "plan-applier"`
 >
 > ## Mission
 >
-> Run `ia/skills/plan-applier/SKILL.md` — **Mode: code-fix** for `{ISSUE_ID}`. Read `## §Code Fix Plan` tuples verbatim from `ia/projects/{ISSUE_ID}.md`. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Re-enter `/verify-loop` (seam #4 gate = `npm run verify:local` for C# edits OR `npm run validate:all` for tooling-only). 1-retry bound on verify fail (2 total attempts). Second fail → escalate to Opus pair-head. Idempotent.
+> Run `ia/skills/plan-applier/SKILL.md` — **Mode: code-fix** for `{ISSUE_ID}`. Read `## §Code Fix Plan` tuples verbatim from `ia/projects/{ISSUE_ID}.md`. Resolve every `target_anchor` to single match before applying. Apply tuples in declared order (one atomic edit per tuple). Re-enter `/verify-loop` (gate = `npm run verify:local` for C# edits OR `npm run validate:all` for tooling-only). 1-retry bound on verify fail (2 total attempts). Second fail → escalate to Opus pair-head. Idempotent.
 >
 > ## Hard boundaries
 >
@@ -52,4 +52,4 @@ On critical verdict: forward via Agent tool with `subagent_type: "plan-applier"`
 
 ## Output
 
-Chain summary: `{ISSUE_ID}` verdict + tuple count (if critical) + pair-tail verify exit (if dispatched). PASS / minor → next step: loop to next Stage Task `/code-review {NEXT_ISSUE_ID}` OR Stage-scoped `/audit {MASTER_PLAN_PATH} {STAGE_ID}` (when all Stage Tasks PASS / minor). Critical after pair-tail success → re-run `/code-review {ISSUE_ID}` to confirm PASS.
+Chain summary: `{ISSUE_ID}` verdict + tuple count (if critical) + pair-tail verify exit (if dispatched). PASS / minor → next step: loop to next Stage Task `/code-review {NEXT_ISSUE_ID}` OR `/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID}` Pass B inline closeout (when all Stage Tasks PASS / minor). Critical after pair-tail success → re-run `/code-review {ISSUE_ID}` to confirm PASS.

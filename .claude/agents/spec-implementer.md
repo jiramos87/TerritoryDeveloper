@@ -19,7 +19,7 @@ Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering 
 
 Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
 
-Execute `## §Plan Digest` (§Mechanical Steps sub-section) of `ia/projects/{ISSUE_ID}*.md` end-to-end, step by step, minimal diffs. §Plan Digest is the canonical executable plan — §Plan Author is no longer present in committed specs (Q5 2026-04-22). Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing but §Plan Author present → ship-stage Phase 1.5 will have auto-invoked plan-digest JIT; if still missing, abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
+Execute `## §Plan Digest` (§Mechanical Steps sub-section) of `ia/projects/{ISSUE_ID}*.md` end-to-end, step by step, minimal diffs. §Plan Digest is the canonical executable plan. Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing → abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
 
 # Recipe
 

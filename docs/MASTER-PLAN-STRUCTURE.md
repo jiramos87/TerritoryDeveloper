@@ -81,7 +81,7 @@ ia/projects/{slug}-master-plan.md
 | `Scope` | sentence | Chosen Approach + Non-scope boundary. Reference scope-boundary doc when present. |
 | `Exploration source` | path list | Relative paths under `docs/` or `ia/`. Ground-truth link. |
 | `Locked decisions` | bullets | MVP scope locks / architecture locks lifted from exploration. Do NOT reopen in Stage-level work. |
-| `Sibling orchestrators` | optional | Shared-branch collisions; parallel-work rule (no concurrent `/stage-file` or `/closeout` on siblings). |
+| `Sibling orchestrators` | optional | Shared-branch collisions; parallel-work rule (no concurrent `/stage-file` or `/ship-stage` on siblings). |
 | `Hierarchy rules` | path list | MUST cite this doc first, then `orchestrator-vs-spec.md` + `plan-apply-pair-contract.md`. |
 | `Read first if landing cold` | bullets | 4–6 entries. Must include MCP-first directive + invariant refs flagged by `invariants_summary`. |
 
@@ -136,13 +136,9 @@ _pending — populated by `/stage-file` planner pass._
 
 #### §Plan Fix
 _pending — populated by `/plan-review` when fixes are needed._
-
-#### §Stage Audit
-_pending — populated by `/audit` when all Tasks reach Done post-verify (pre-closeout)._
-
-#### §Stage Closeout Plan
-_pending — populated by `/closeout {MASTER_PLAN_PATH} Stage N.M` when all Tasks reach `Done`._
 ```
+
+> **Closeout subsection removed.** Stage closeout is no longer authored as a `#### §Stage Closeout Plan` subsection in the master plan. Closeout fires inline in `/ship-stage` Pass B via the `stage_closeout_apply` MCP — single call applies shared migration tuples + N archive ops (`ia_tasks.archived_at`) + N status flips + N id-purge ops. Legacy `§Stage Audit` subsection has also been retired from the master plan (opus-auditor was dropped from `/ship-stage` Pass B per `3ac2d6e`).
 
 ### 3.3 Task table — written schema (5 columns, no Phase column)
 
@@ -150,8 +146,8 @@ _pending — populated by `/closeout {MASTER_PLAN_PATH} Stage N.M` when all Task
 |--------|----------|---------------|-----------|-------|
 | `Task` | yes | string `T{N}.{M}.{K}` | `master-plan-new` / `master-plan-extend` / `stage-decompose` | Hierarchical id `T{STAGE_N}.{STAGE_M}.{TASK_K}`. Monotonic within Stage. Never renumbered after filing. |
 | `Name` | yes | string ≤6 words | Author | Short handle. Also used as BACKLOG row title + project-spec file name hint. |
-| `Issue` | yes | `_pending_` OR `**{PREFIX}-NNN**` | `_pending_` at author time; `stage-file-apply` fills with `**TECH-NNN**` (or `BUG-`, `FEAT-`, `ART-`, `AUDIO-`). Bold formatting required. |
-| `Status` | yes | enum | `stage-file-apply` / `plan-author` / `spec-implementer` / `plan-applier` Mode stage-closeout | `_pending_ → Draft → In Review → In Progress → Done (archived)`. See §6.2. |
+| `Issue` | yes | `_pending_` OR `**{PREFIX}-NNN**` | `_pending_` at author time; `stage-file` applier pass fills with `**TECH-NNN**` (or `BUG-`, `FEAT-`, `ART-`, `AUDIO-`). Bold formatting required. |
+| `Status` | yes | enum | `stage-file` applier pass / `stage-authoring` / `spec-implementer` / `/ship-stage` Pass B | `_pending_ → Draft → In Review → In Progress → Done (archived)`. See §6.2. |
 | `Intent` | yes | string ≤2 sentences | Author | Concrete deliverable — cite types / methods / file paths. Avoid vague verbs (`add support for X`, `improve Y`). |
 
 **Column order is fixed.** Do NOT insert extra columns (Priority, Owner, Phase, etc.). Per-Task Priority lives in the BACKLOG yaml, not the master plan table.
@@ -163,16 +159,14 @@ _pending — populated by `/closeout {MASTER_PLAN_PATH} Stage N.M` when all Task
 
 ### 3.4 Stage subsections — purpose + ordering
 
-The four `####` subsections under every Stage are lifecycle pair-seam anchors. Order is canonical (below). Empty subsections carry a `_pending — populated by {skill} {when}_` sentinel line.
+The two `####` subsections under every Stage are lifecycle pair-seam anchors. Order is canonical (below). Empty subsections carry a `_pending — populated by {skill} {when}_` sentinel line.
 
 | # | Subsection | Pair-head (Opus) | Pair-tail (Sonnet) | Purpose |
 |---|-----------|------------------|--------------------|---------|
-| 1 | `#### §Stage File Plan` | `stage-file-plan` | `stage-file-apply` | Seam #2 (`plan-apply-pair-contract.md`). Reserves ids + materializes BACKLOG rows + spec stubs for every pending Task in the Stage. |
-| 2 | `#### §Plan Fix` | `plan-review` | `plan-applier` Mode plan-fix | Seam #1. Stage-wide drift scan after `stage-file-apply`; emits targeted fix tuples before first `/implement`. |
-| 3 | `#### §Stage Audit` | `opus-audit` | *(non-pair — writes directly)* | Bulk-authors one `§Audit` paragraph per Task post-verify. Feeds §Stage Closeout Plan migration tuples. |
-| 4 | `#### §Stage Closeout Plan` | `stage-closeout-plan` | `plan-applier` Mode stage-closeout | Seam #4. Shared migration tuples + N per-Task archive / delete / status-flip / id-purge / digest ops. Fires ONCE per Stage when every Task row is Done. |
+| 1 | `#### §Stage File Plan` | `stage-file` planner pass | `stage-file` applier pass | Seam #2 (`plan-apply-pair-contract.md`). Reserves ids + materializes `ia_tasks` rows + body stubs for every pending Task in the Stage. |
+| 2 | `#### §Plan Fix` | `plan-reviewer-mechanical` + `plan-reviewer-semantic` | `plan-applier` Mode plan-fix | Seam #1. Stage-wide drift scan after `stage-file` applier pass; emits targeted fix tuples before first `/implement`. |
 
-Retired variants (**do NOT reintroduce**): per-Task `§Closeout Plan` inside project specs (collapsed into Stage-scoped §Stage Closeout Plan under `stage-closeout-plan` seam #4). Legacy `§Stage Audit` absence (some plans had only §Stage Closeout Plan) — §Stage Audit is now mandatory pre-closeout.
+Retired variants (**do NOT reintroduce**): `#### §Stage Audit` subsection (opus-auditor pass dropped from `/ship-stage` Pass B per `3ac2d6e`); `#### §Stage Closeout Plan` subsection (collapsed into `/ship-stage` Pass B inline closeout via `stage_closeout_apply` MCP — single call applies shared migration tuples + N archive ops + N status flips + N id-purge ops); per-Task `§Closeout Plan` inside project specs (collapsed into Pass B inline closeout). Closeout is no longer a pair seam.
 
 ---
 
@@ -186,8 +180,6 @@ Retired variants (**do NOT reintroduce**): per-Task `§Closeout Plan` inside pro
    4.1 Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces / Tasks table
    4.2 #### §Stage File Plan
    4.3 #### §Plan Fix
-   4.4 #### §Stage Audit
-   4.5 #### §Stage Closeout Plan
 5. --- separator (after last Stage)
 6. ## Orchestration guardrails  (H2 — single occurrence, terminal)
 ```
@@ -200,11 +192,11 @@ No other H2 headings are permitted between `## Stages` and `## Orchestration gua
 
 | Gate | Rule | Enforced by |
 |------|------|-------------|
-| Hard | ≥2 Tasks per Stage | `master-plan-new` Phase N · `master-plan-extend` Phase N · `stage-decompose` Phase N · `stage-file-plan` re-check |
+| Hard | ≥2 Tasks per Stage | `master-plan-new` Phase N · `master-plan-extend` Phase N · `stage-decompose` Phase N · `stage-file` planner pass re-check |
 | Soft | ≤6 Tasks per Stage | Same skills; warn + recommend split, don't block |
 | Hard | ≥1 Stage per master plan | `master-plan-new` Phase N |
-| Hard | Every Stage has `### Stage File Plan` + `### Plan Fix` + `### Stage Audit` + `### Stage Closeout Plan` subsections (sentinel or populated) | `master-plan-new` / `master-plan-extend` / `stage-decompose` |
-| Hard | Task table has exactly 5 columns (`Task | Name | Issue | Status | Intent`) | Same + `stage-file-plan` parser |
+| Hard | Every Stage has `#### §Stage File Plan` + `#### §Plan Fix` subsections (sentinel or populated) | `master-plan-new` / `master-plan-extend` / `stage-decompose` |
+| Hard | Task table has exactly 5 columns (`Task | Name | Issue | Status | Intent`) | Same + `stage-file` planner pass parser |
 
 ---
 
@@ -220,8 +212,8 @@ Draft | In Review | In Progress — Stage N.M / TECH-XX | Final
 |-------|---------|--------------|
 | `Draft` | Initial — no Task filed yet. | `master-plan-new` writes `Draft`. |
 | `In Review` | Mid-authoring — `master-plan-extend` re-author pass. | `master-plan-extend` Phase 7 (temporary). |
-| `In Progress — Stage N.M / TECH-XX` | ≥1 Task filed; plan actively worked. | `stage-file-apply` R1 flips on first Task ever filed. |
-| `Final` | All Stages are `Final`. | `plan-applier` Mode stage-closeout R5 on last Stage close. |
+| `In Progress — Stage N.M / TECH-XX` | ≥1 Task filed; plan actively worked. | `stage-file` applier pass R1 flips on first Task ever filed. |
+| `Final` | All Stages are `Final`. | `/ship-stage` Pass B inline closeout R5 on last Stage close. |
 
 `master-plan-extend` R6 demotes `Final → In Progress` when new Stages appended to a Final plan.
 
@@ -234,9 +226,9 @@ Draft | In Review | In Progress | Final
 | State | Meaning | Flip trigger |
 |-------|---------|--------------|
 | `Draft` | Authored, no Task filed. | `master-plan-new` / `master-plan-extend` writes `Draft`. |
-| `In Review` | Post-`plan-review` drift scan pending fix-apply. | `plan-review` writes `In Review` when `§Plan Fix` non-empty. |
-| `In Progress` | ≥1 Task filed in this Stage. | `stage-file-apply` R2 flips on first Task filed in the Stage. |
-| `Final` | Every Task row in Stage = `Done`; closeout applied. | `plan-applier` Mode stage-closeout R3 on last Task archived. |
+| `In Review` | Post-`plan-review` drift scan pending fix-apply. | `plan-reviewer-mechanical` + `plan-reviewer-semantic` write `In Review` when `§Plan Fix` non-empty. |
+| `In Progress` | ≥1 Task filed in this Stage. | `stage-file` applier pass R2 flips on first Task filed in the Stage. |
+| `Final` | Every Task row in Stage = `Done`; closeout applied. | `/ship-stage` Pass B inline closeout R3 on last Task archived. |
 
 ### 6.3 Task row `Status`
 
@@ -246,11 +238,11 @@ _pending_ → Draft → In Review → In Progress → Done (archived)
 
 | State | Meaning | Flip trigger |
 |-------|---------|--------------|
-| `_pending_` | Not yet filed — no BACKLOG id. | `master-plan-new` / `master-plan-extend` / `stage-decompose` writes at author time. |
-| `Draft` | BACKLOG yaml + spec stub exist; plan-author not run. | `stage-file-apply` flips on row materialization. |
-| `In Review` | §Plan Author populated → §Plan Digest compiled. | `plan-author` / `plan-digest` write sequence. |
+| `_pending_` | Not yet filed — no `ia_tasks` row. | `master-plan-new` / `master-plan-extend` / `stage-decompose` writes at author time. |
+| `Draft` | `ia_tasks` row + body stub exist; stage-authoring not run. | `stage-file` applier pass flips on row materialization. |
+| `In Review` | §Plan Digest written into Task body. | `stage-authoring` bulk pass. |
 | `In Progress` | `/implement` dispatched. | `spec-implementer` Phase 0. |
-| `Done (archived)` | BACKLOG yaml archived + spec deleted. | `plan-applier` Mode stage-closeout per-Task tuple. |
+| `Done (archived)` | `ia_tasks.archived_at` set; spec deleted. | `/ship-stage` Pass B inline closeout per-Task archive op. |
 
 **Retired values (do NOT reintroduce):** `Skeleton`, `Planned`. Both replaced by `_pending_` + `Draft` post lifecycle-refactor.
 
@@ -265,18 +257,16 @@ One-line binding from skill → structural surface it mutates. Every authoring s
 | `master-plan-new` | Exploration doc §Design Expansion | New master plan file; all Stages + Tasks `_pending_` | §2 (file shape), §3 (Stage block), §6 (Status `Draft`) |
 | `master-plan-extend` | Exploration / extensions doc; existing master plan | Appends new Stage blocks at end | §3, §6 R6 (demote Final → In Progress) |
 | `stage-decompose` | Deferred Stage skeleton in master plan | Expands Stage skeleton into Tasks in-place | §3.3 (Task table), §5 (cardinality) |
-| `stage-file-plan` | Stage block Tasks table `_pending_` rows | `#### §Stage File Plan` tuples | §3.4 subsection #1 |
-| `stage-file-apply` | `§Stage File Plan` tuples | BACKLOG yaml + spec stubs; flips Task `_pending_ → Draft`; Stage `Draft → In Progress` (R2); master plan `Draft → In Progress` (R1) | §6.1 R1, §6.2 R2, §6.3 `_pending_ → Draft` |
-| `plan-author` | Task specs post-filing | `§Plan Author` in each Task spec | Task status `Draft → In Review` (§6.3) |
-| `plan-digest` | `§Plan Author` in each Task spec | `§Plan Digest` in each Task spec; `docs/implementation/{slug}-stage-{ID}-plan.md` | — (intra-spec) |
-| `plan-review` | Stage + all Task specs | `#### §Plan Fix` tuples | §3.4 subsection #2 |
+| `stage-file` planner pass | Stage block Tasks table `_pending_` rows | `#### §Stage File Plan` tuples | §3.4 subsection #1 |
+| `stage-file` applier pass | `§Stage File Plan` tuples | `ia_tasks` rows + body stubs; flips Task `_pending_ → Draft`; Stage `Draft → In Progress` (R2); master plan `Draft → In Progress` (R1) | §6.1 R1, §6.2 R2, §6.3 `_pending_ → Draft` |
+| `stage-authoring` | Task spec stubs post-filing | `§Plan Digest` in each Task body via `task_spec_section_write` MCP | Task status `Draft → In Review` (§6.3) |
+| `plan-reviewer-mechanical` + `plan-reviewer-semantic` | Stage + all Task specs | `#### §Plan Fix` tuples | §3.4 subsection #2 |
 | `plan-applier` Mode plan-fix | `§Plan Fix` tuples | Edits Task specs verbatim | — |
-| `spec-implementer` | Task spec §Plan Digest | Source code + Task spec §7 | Task status `In Review → In Progress` (§6.3) |
-| `opus-code-reviewer` | Task diff vs spec | Task spec §Code Review / `§Code Fix Plan` | — (intra-spec) |
-| `opus-audit` | N Task specs post-verify | `#### §Stage Audit` paragraphs | §3.4 subsection #3 |
-| `stage-closeout-plan` | Stage header + N §Audit + N §Findings | `#### §Stage Closeout Plan` tuples | §3.4 subsection #4 |
-| `plan-applier` Mode stage-closeout | `§Stage Closeout Plan` tuples | Archives BACKLOG yaml; deletes specs; flips Task rows `Done (archived)`; Stage `In Progress → Final` (R3); master plan `In Progress → Final` (R5) | §6.1 R5, §6.2 R3, §6.3 `Done (archived)` |
-| `ship-stage` | Stage block | Dispatches per-Task implement + Stage-end verify + code-review + audit + closeout | — (chain) |
+| `spec-implementer` | Task body §Plan Digest | Source code + Task body | Task status `In Review → In Progress` (§6.3) |
+| `opus-code-reviewer` | Task diff vs spec | Task body §Code Review / `§Code Fix Plan` | — (intra-spec) |
+| `plan-applier` Mode code-fix | `§Code Fix Plan` tuples | Edits source code per tuples | — |
+| `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) | Stage block + N filed Task bodies | Sets `ia_tasks.archived_at`; deletes specs from filesystem mirror; flips Task rows `Done (archived)`; Stage `In Progress → Final` (R3); master plan `In Progress → Final` (R5); shared migration ops + N id-purge ops | §6.1 R5, §6.2 R3, §6.3 `Done (archived)` |
+| `ship-stage` | Stage block | Two-pass orchestrator — Pass A per-Task implement + compile-check + status flip; Pass B per-Stage verify-loop + code-review + inline closeout + single stage commit | — (chain) |
 
 Full seam contract: [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md). Status flip matrix: [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md).
 
@@ -291,7 +281,7 @@ Every master plan terminates with the `## Orchestration guardrails` H2. Canonica
 
 **Do:**
 
-- Open one Stage at a time. Next Stage opens only after current Stage's closeout runs.
+- Open one Stage at a time. Next Stage opens only after current Stage closes via `/ship-stage` Pass B.
 - Run `/stage-file {this-doc} Stage N.M` to materialize `_pending_` Tasks.
 - Update Stage + Task `Status` via lifecycle skills — do NOT edit by hand.
 - Preserve locked decisions. Changes require explicit re-decision + sync edit to exploration + scope-boundary docs.
@@ -299,10 +289,10 @@ Every master plan terminates with the `## Orchestration guardrails` H2. Canonica
 
 **Do not:**
 
-- Close the orchestrator via `/closeout` — orchestrators are permanent (`orchestrator-vs-spec.md`).
+- Close the orchestrator — orchestrators are permanent (`orchestrator-vs-spec.md`). Stage close fires inline in `/ship-stage` Pass B.
 - Silently promote post-MVP items into MVP Stages — they belong in scope-boundary doc.
 - Merge partial Stage state — every Stage lands on a green bar.
-- Insert BACKLOG rows directly into this doc — only `stage-file-apply` materializes them.
+- Insert `ia_tasks` rows directly into this doc — only `stage-file` applier pass materializes them.
 - Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/master-plan-extend`.
 ```
 
@@ -314,12 +304,12 @@ Plans MAY append plan-specific Do/Do-not bullets but MUST preserve the canonical
 
 | Validator | What it checks | When it runs |
 |-----------|----------------|--------------|
-| `npm run validate:master-plan-status` | Header `Status` ↔ Stage `Status` ↔ Task row status ↔ BACKLOG yaml on-disk consistency (R1–R6) | CI + post-`/stage-file` + post-`/closeout` |
-| `npm run validate:backlog-yaml` | BACKLOG yaml schema | CI + post-`/stage-file` |
-| `npm run validate:dead-project-specs` | Orphan `ia/projects/{ISSUE_ID}.md` specs with no yaml | CI + post-`/closeout` |
+| `npm run validate:master-plan-status` | Header `Status` ↔ Stage `Status` ↔ Task row status ↔ `ia_tasks` row consistency (R1–R6) | CI + post-`/stage-file` + post-`/ship-stage` Pass B |
+| `npm run validate:backlog-yaml` | BACKLOG yaml schema (legacy artifacts only) | CI + post-`/stage-file` |
+| `npm run validate:dead-project-specs` | Orphan `ia/projects/{ISSUE_ID}.md` filesystem mirrors with no `ia_tasks` row | CI + post-`/ship-stage` Pass B |
 | `npm run validate:all` | Aggregate — runs all of the above | CI + every Stage seam closure |
 
-Any structural drift (Step heading, Phase column, H4 Stage, missing §Stage Audit subsection) surfaces as `validate:master-plan-status` non-zero exit.
+Any structural drift (Step heading, Phase column, H4 Stage, retired `§Stage Audit` / `§Stage Closeout Plan` subsection reintroduced) surfaces as `validate:master-plan-status` non-zero exit.
 
 ---
 
@@ -327,11 +317,26 @@ Any structural drift (Step heading, Phase column, H4 Stage, missing §Stage Audi
 
 - [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) — hierarchy table, cardinality rationale, lazy materialization, learnings-flow-backward, ephemeral spec lifecycle.
 - [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md) — orchestrator vs project-spec distinction + full Status flip matrix R1–R6.
-- [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) — `§Plan` tuple shape + 4 pair seams + validators + escalation rule + idempotency.
+- [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) — `§Plan` tuple shape + 3 pair seams (plan-review, stage-file, code-review) + validators + escalation rule + idempotency. Closeout no longer a pair seam (folded into `/ship-stage` Pass B inline).
 - [`ia/templates/master-plan-template.md`](../templates/master-plan-template.md) — seed fixture for `master-plan-new` (conforms to this doc).
 - [`ia/templates/project-spec-template.md`](../templates/project-spec-template.md) — per-issue spec shape (NOT master-plan; sibling doc).
 
 ## 11. Changelog
+
+### 2026-04-25 — DB-primary refactor + skill-files-audit retirement scrub
+
+Major rewrite reflecting DB-primary refactor (Postgres `ia_*` schema source of truth post Step 6/9.x) + Phase A retirement scrub. Changes:
+
+- **§3.2 sentinel block** — removed `#### §Stage Audit` and `#### §Stage Closeout Plan` sentinel subsections; explanatory note added.
+- **§3.3 Task table** — `stage-file-apply` → `stage-file applier pass`; closeout owner → `/ship-stage Pass B inline closeout`.
+- **§3.4 pair table** — reduced from 4 rows to 2 (kept §Stage File Plan + §Plan Fix; dropped §Stage Audit + §Stage Closeout Plan).
+- **§4 section ordering** — removed 4.4 §Stage Audit + 4.5 §Stage Closeout Plan.
+- **§5 cardinality** — Stage subsection requirement reduced to §Stage File Plan + §Plan Fix.
+- **§6 Status flip owners** — `stage-file applier pass` (R1, R2), `stage-authoring bulk pass` (Task In Review), `/ship-stage Pass B inline closeout` (R3, R5, Task Done archive).
+- **§7 lifecycle skill flip matrix** — collapsed plan-author + plan-digest → `stage-authoring`; collapsed stage-file-plan + stage-file-apply → `stage-file planner pass + applier pass`; dropped stage-closeout-plan + plan-applier Mode stage-closeout rows; added single `/ship-stage Pass B inline closeout (stage_closeout_apply MCP)` row; renamed `plan-review` → `plan-reviewer-mechanical + plan-reviewer-semantic`; added `plan-applier Mode code-fix` row.
+- **§8 guardrails** — orchestrators permanent; Stage close fires inline in `/ship-stage` Pass B; `BACKLOG rows` → `ia_tasks rows`.
+- **§9 validators** — `validate:dead-project-specs` checks orphan filesystem mirrors; structural drift includes retired §Stage Audit / §Stage Closeout Plan reintroduction.
+- **§10 cross-ref** — `4 pair seams` → `3 pair seams (plan-review, stage-file, code-review)`; closeout no longer a pair seam.
 
 ### 2026-04-24 — Initial
 

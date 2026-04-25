@@ -1,9 +1,9 @@
 ---
-description: Drift-scan a Stage's §Plan Digest sections + master-plan Stage block. Dispatches `plan-reviewer-mechanical` (Haiku) → `plan-reviewer-semantic` (Sonnet) → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage after `/plan-digest` and before per-Task `/implement` loop.
+description: Drift-scan a Stage's §Plan Digest sections + master-plan Stage block. Dispatches `plan-reviewer-mechanical` → `plan-reviewer-semantic` → `plan-applier` Mode plan-fix if drift found. PASS verdict → no applier dispatched. Fires once per Stage after `/stage-authoring` and before `/ship-stage`.
 argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
-# /plan-review — dispatch seam #1 pair (plan-review → plan-applier Mode plan-fix)
+# /plan-review — dispatch plan-review pair (mechanical → semantic) + plan-applier on drift
 
 Use `plan-reviewer-mechanical` → `plan-reviewer-semantic` subagents to scan Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}` for drift. On drift → writes `§Plan Fix` tuple list + auto-dispatches **`plan-applier`** (Sonnet pair-tail, Mode plan-fix).
 
@@ -47,7 +47,7 @@ Forward via Agent tool with `subagent_type: "plan-reviewer-semantic"`, passing S
 
 Combined verdict: PASS only when both mechanical and semantic PASS. Fix → proceed to Step 3.
 
-## Step 3 — Dispatch `plan-applier` (Sonnet pair-tail, Mode plan-fix) — conditional
+## Step 3 — Dispatch `plan-applier` (Mode plan-fix) — conditional
 
 On fix verdict from either Step 1 or Step 2: forward via Agent tool with `subagent_type: "plan-applier"`:
 
@@ -60,10 +60,10 @@ On fix verdict from either Step 1 or Step 2: forward via Agent tool with `subage
 > ## Hard boundaries
 >
 > - Do NOT re-review drift — read tuples verbatim.
-> - Do NOT run `validate:all` — seam #1 gate only.
+> - Do NOT run `validate:all` — plan-review gate only.
 > - Do NOT reorder tuples.
 > - Do NOT commit.
 
 ## Output
 
-Chain summary: verdict + drift count (if any) + tuples applied + validator exit. Next step: per-Task `/ship {ISSUE_ID}` loop across Stage tasks → Stage-end `/audit` + `/closeout`.
+Chain summary: verdict + drift count (if any) + tuples applied + validator exit. Next step: `/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID}` (Pass A implement + Pass B verify + inline closeout).

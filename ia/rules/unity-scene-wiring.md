@@ -96,8 +96,7 @@ Missing block when a trigger fired = `critical` verdict on Stage code review.
 
 | Skill | Responsibility |
 |-------|---------------|
-| [`plan-author`](../skills/plan-author/SKILL.md) | Detect wiring triggers from Task scope; author `§Scene Wiring` sub-section inside `§Plan Author` with target scene, parent, fields, fallback notes. |
-| [`plan-digest`](../skills/plan-digest/SKILL.md) | When `§Plan Author` carries `§Scene Wiring`, emit a **Scene Wiring** mechanical step in `§Plan Digest §Mechanical Steps` with `unity_bridge_command` tuples (or YAML-edit tuples) + `npm run unity:compile-check` gate + evidence block as `after:` literal. |
+| [`stage-authoring`](../skills/stage-authoring/SKILL.md) | Detect wiring triggers from Task scope; emit a **Scene Wiring** mechanical step in `§Plan Digest §Mechanical Steps` with `unity_bridge_command` tuples (or YAML-edit tuples) + `npm run unity:compile-check` gate + evidence block as `after:` literal (target scene, parent, fields, fallback notes). |
 | [`project-spec-implement`](../skills/project-spec-implement/SKILL.md) | Execute the Scene Wiring step during Task implement; Task exit fails if the scene file was not edited when triggers fired. |
 | [`ship-stage`](../skills/ship-stage/SKILL.md) | Pass 2 cumulative diff must include a `.unity` edit per triggered Stage; Step 3.2 code-review acceptance reference checks the evidence block. |
 | [`opus-code-review`](../skills/opus-code-review/SKILL.md) | `critical` verdict when a Stage trigger fired but no `.unity` edit (or no prefab placement) is in the cumulative diff. |
@@ -127,6 +126,6 @@ Missing block when a trigger fired = `critical` verdict on Stage code review.
 
 **Symptom:** `grid-asset-visual-registry` Stage 2.2 shipped `GridAssetCatalog` scripts + tests + closeout, emitted `SHIP_STAGE 2.2: PASSED`, but the runtime path was inert because no agent wired the catalog into `MainScene.unity`. Human caught the gap on the next turn.
 
-**Root cause:** No skill owned scene wiring. `plan-author` / `plan-digest` did not author a wiring step; `project-spec-implement` had no Task-exit check for `.unity` edits; `opus-code-review` did not flag missing scene wiring as critical; `/ship-stage` Pass 2 acceptance reference did not require the evidence block.
+**Root cause:** No skill owned scene wiring. `stage-authoring` (and predecessor pair `plan-author` / `plan-digest`) did not author a wiring step; `project-spec-implement` had no Task-exit check for `.unity` edits; `opus-code-review` did not flag missing scene wiring as critical; `/ship-stage` Pass 2 acceptance reference did not require the evidence block.
 
 **Fix:** This rule + cross-references added to the five skills above. Every lifecycle surface now knows the trigger → scene wiring → evidence flow. `grid-asset-visual-registry` Stage 2.2 follow-up commit `7143d72` (`fix(unity): add GridAssetCatalog to MainScene under Game Managers`) is the canonical example.

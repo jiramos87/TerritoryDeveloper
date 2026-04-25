@@ -16,7 +16,7 @@ Two levels, loosely bound. All orchestrator docs + project specs use this shape.
 | Level | Definition | Materialization | Lifecycle |
 |-------|-----------|-----------------|-----------|
 | **Stage** | Shippable compilable increment (merged PRs) authored as a `### Stage N.M` block in a master plan; carries Exit + Tasks subsections | Authored at `master-plan-new` time; refined later by `master-plan-extend` / `stage-decompose` | Permanent in orchestrator; flips `Draft → In Review → In Progress → Final` over its lifetime |
-| **Task** | Atomic unit; 1 BACKLOG row + 1 `ia/projects/{ISSUE_ID}.md` spec | Defined as `_pending_` row in Stage Tasks table; lazy-materialized to BACKLOG row + spec stub by `stage-file-apply` when parent Stage opens | Spec deleted on issue close per `closeout-apply`; BACKLOG row archived |
+| **Task** | Atomic unit; 1 `ia_tasks` row (DB) + body via `task_spec_body` MCP | Defined as `_pending_` row in Stage Tasks table; lazy-materialized to `ia_tasks` row + body stub by `stage-file` applier pass when parent Stage opens | Body archived (`ia_tasks.archived_at` set) on issue close via `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) |
 
 ## Stage/Task cardinality gate
 
@@ -25,17 +25,17 @@ Two levels, loosely bound. All orchestrator docs + project specs use this shape.
 
 **Why:** Stage = the unit verified end-to-end (Path A + batched Path B in `/ship-stage`); Task = one BACKLOG row + one project spec, independently implementable and closeable. Decomposing each Stage into ≥2 Tasks surfaces hidden coupling early and keeps individual PRs small. Single-Task Stages collapse Stage and Task semantics — they exist only when no further atomic split makes sense.
 
-**Enforcement:** `master-plan-new` Phase 6 + `master-plan-extend` Phase 5 + `stage-decompose` Phase 3 fail when a Stage carries <2 Tasks without a Decision Log waiver. `stage-file-plan` re-checks before authoring `§Stage File Plan`.
+**Enforcement:** `master-plan-new` Phase 6 + `master-plan-extend` Phase 5 + `stage-decompose` Phase 3 fail when a Stage carries <2 Tasks without a Decision Log waiver. `stage-file` planner re-checks before authoring `§Stage File Plan`.
 
 ## Learnings flow backward
 
-Task close → Stage `§Audit` migration anchors → glossary / reference spec / docs (per `plan-applier` Mode stage-closeout). Stage close → master-plan rollup + cross-Stage decision log entries via the Stage-scoped `/closeout` pair (`stage-closeout-plan` → `plan-applier` Mode stage-closeout), which absorbs the retired per-Task `project-stage-close` + `project-spec-close` path (T7.14 / M6 collapse).
+Task close → Stage `§Audit` migration anchors → glossary / reference spec / docs (per `/ship-stage` Pass B inline closeout via `stage_closeout_apply` MCP). Stage close → master-plan rollup + cross-Stage decision log entries via `/ship-stage` Pass B inline closeout (single MCP call, shared migration tuples + N archive/delete/flip/purge ops), which absorbs the retired per-Task `project-stage-close` + `project-spec-close` path (T7.14 / M6 collapse).
 
 ## Lazy materialization
 
 - Stage blocks are authored ahead of time in master plans (no skeleton lazy-creation; `master-plan-new` decomposes ALL Stages at author time).
-- Tasks materialize lazily — the `_pending_` row stays in the master plan until `stage-file-plan` (Opus) writes the `§Stage File Plan` tuples and `stage-file-apply` (Sonnet) reserves ids + writes BACKLOG rows + spec stubs.
-- Do NOT pre-create `ia/projects/{ISSUE_ID}.md` stubs for future Tasks — only `stage-file-apply` materializes them.
+- Tasks materialize lazily — the `_pending_` row stays in the master plan until `stage-file` planner pass (Opus) writes the `§Stage File Plan` tuples and `stage-file` applier pass (Sonnet) reserves ids + writes `ia_tasks` rows + body stubs (DB-backed post Step 6/9.x refactor).
+- Do NOT pre-create `ia_tasks` rows for future Tasks — only `stage-file` applier pass materializes them.
 
 ## Ephemeral spec lifecycle
 

@@ -1,14 +1,13 @@
 ---
-purpose: "§Plan Digest section template fragment for ia/projects task specs (plan-digest pass)."
+purpose: "§Plan Digest section template fragment for task specs (stage-authoring pass)."
 audience: agent
 loaded_by: ondemand
 slices_via: none
 ---
 
 <!--
-  §Plan Digest section template. Opus-authored per Task spec during Stage-scoped plan-digest pass.
-  Placement: between §10 Lessons Learned and §Open Questions in ia/projects/{ISSUE_ID}.md.
-  Replaces §Plan Author in the final spec (Q5 2026-04-22). §Plan Author is ephemeral intermediate.
+  §Plan Digest section template. Opus-authored per Task spec during Stage-scoped `stage-authoring` pass.
+  Direct §Plan Digest authoring (no §Plan Author intermediate — folded post-Step-7).
 -->
 
 ## §Plan Digest

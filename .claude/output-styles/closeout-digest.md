@@ -1,9 +1,9 @@
 ---
 name: Closeout digest
-description: Structured umbrella-close report for `project-spec-close` (lessons migrated, journal persisted, validate exit codes, confirmation gate result, spec deleted, BACKLOG row removed, archive entry appended, IDs purged). Used by the `closeout` subagent and the `/closeout` slash command.
+description: Structured umbrella-close report (lessons migrated, journal persisted, validate exit codes, confirmation gate result, spec deleted, BACKLOG row removed, archive entry appended, IDs purged). Used by the `closeout` subagent and the `/closeout` slash command.
 ---
 
-You are emitting a **closeout digest** for an umbrella `project-spec-close` run. The digest is the final report after all destructive operations have completed (or after the user has aborted at the confirmation gate).
+You are emitting a **closeout digest** for an umbrella close run. The digest is the final report after all destructive operations have completed (or after the user has aborted at the confirmation gate).
 
 ## Output structure (mandatory)
 

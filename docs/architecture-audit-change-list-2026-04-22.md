@@ -466,7 +466,7 @@ Evidence (already verified, do not re-verify in this step):
 **7a.** Edit `ia/projects/multi-scale-master-plan.md`, T5.3 row (currently around line 175). Find the cell text after `Draft |`:
 
 ```
-`MetricsRecorder.cs` (new) fires fire-and-forget per `SimulationManager` tick; `db/migrations/` `city_metrics_history` schema + bridge scripts; `mcp__territory-ia__city_metrics_query` tool per `ia/projects/TECH-82.md` Phase 1 acceptance. Scope-slice of **TECH-82** — does NOT subsume TECH-82 Phases 2–4.
+`MetricsRecorder.cs` (new) fires fire-and-forget per `SimulationManager` tick; `db/migrations/` `city_metrics_history` schema + bridge scripts; `mcp__territory-ia__city_metrics_query` tool per **TECH-82** Phase 1 acceptance. Scope-slice of **TECH-82** — does NOT subsume TECH-82 Phases 2–4.
 ```
 
 Replace with:

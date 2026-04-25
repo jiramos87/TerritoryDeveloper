@@ -17,7 +17,7 @@ Scope: every moment an agent, subagent, skill, or slash command pauses execution
 - **Option labels** describe the outcome the player/designer will observe ("Roads route around existing landmarks" beats "Approach B — landmark-first ordering in stage 1.2").
 - **Ids, paths, cell coordinates, yaml filenames, skeleton-step numbers** go on a trailing `Context:` line — never inside the question text or labels.
 - **Zero code identifiers** in question text: no class names, method signatures, MCP tool names, C# types, Unity-specific internals. Those are implementation details the agent resolves on its own.
-- **Game-design vocabulary only** when the gate is about a feature tradeoff. IA/tooling vocabulary is allowed only when the gate is itself about IA/tooling (e.g. `/closeout` spec deletion confirmation — see exceptions).
+- **Game-design vocabulary only** when the gate is about a feature tradeoff. IA/tooling vocabulary is allowed only when the gate is itself about IA/tooling (e.g. `/ship-stage` Pass B spec deletion confirmation — see exceptions).
 
 ## Why
 
@@ -45,7 +45,7 @@ Also: cold-pasted polls (via subagent handoff, session resume) must be decidable
 
 These gates are themselves about tooling, not game tradeoffs:
 
-1. **Destructive-op confirmations** — `/closeout` delete prompts (must name exact spec path + id), force-push warnings.
+1. **Destructive-op confirmations** — `/ship-stage` Pass B delete prompts (must name exact spec id), force-push warnings.
 2. **Verification block failures** — need exact ids, file paths, line numbers for debugging.
 3. **Bridge / compile error reports** — stack traces, class / method names are the payload.
 4. **MCP tool / server misconfiguration prompts** — naming the failing tool is the point.

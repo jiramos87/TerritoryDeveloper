@@ -447,6 +447,9 @@ function collectPlanFiles() {
     }
     return [abs];
   }
+  if (!fs.existsSync(PLANS_DIR)) {
+    return [];
+  }
   return fs
     .readdirSync(PLANS_DIR)
     .filter((f) => f.includes("master-plan") && f.endsWith(".md"))

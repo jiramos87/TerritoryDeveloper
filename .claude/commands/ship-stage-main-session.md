@@ -1,5 +1,5 @@
 ---
-description: No-subagent variant of /ship-stage. Executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → DB resume gate → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix per E14) + verified→done flips + inline stage_closeout_apply per C10 + single stage commit per E13 + stage_verification_flip) inline. Wraps ia/skills/ship-stage-main-session. Closeout mandatory on green.
+description: No-subagent variant of /ship-stage. Executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → DB resume gate → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix) + verified→done flips + inline stage_closeout_apply + single stage commit + stage_verification_flip) inline. Wraps ia/skills/ship-stage-main-session. Closeout mandatory on green.
 argument-hint: "{MASTER_PLAN_RELATIVE_PATH} {STAGE_ID} [--no-resume]"
 ---
 
@@ -37,7 +37,7 @@ SHIP-STAGE (main-session) {STAGE_ID} — {plan display name}
 
 Read `ia/skills/ship-stage-main-session/SKILL.md` end-to-end. Then read the canonical sources it references:
 
-- `ia/skills/ship-stage/SKILL.md` (full 11-phase DB-backed pipeline — Pass A no-commit + Pass B inline closeout per E13/E14/C10)
+- `ia/skills/ship-stage/SKILL.md` (full 11-phase DB-backed pipeline — Pass A no-commit + Pass B inline closeout)
 - `.claude/commands/ship-stage.md` (canonical phase list + exit codes)
 
 ## Step 2 — Execute the chain inline
@@ -50,26 +50,26 @@ Phases (matches `ia/skills/ship-stage-main-session/SKILL.md` frontmatter `phases
 2. **Phase 1** — Stage state load via `stage_bundle(slug, stage_id)` → `master_plan_title`, `stage`, `tasks`, `status_counts`, `next_pending`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + tasks all terminal.
 3. **Phase 2** — Context load via `domain-context-load` once; cache `CHAIN_CONTEXT`.
 4. **Phase 3** — §Plan Digest readiness gate via `task_spec_section(task_id, "Plan Digest")` per pending task. Missing/empty → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff. **No JIT lazy migration** (pre-DB legacy specs already upgraded).
-5. **Phase 4** — Resume gate via `task_state` DB query per pending task. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree dirty required; clean → STOPPED). Disabled by `--no-resume`. **No git scan** (pre-DB `feat(id):`/`fix(id):` regex retired).
+5. **Phase 4** — Resume gate via `task_state` DB query per pending task. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree dirty required; clean → STOPPED). Disabled by `--no-resume`. **No git scan.**
 6. **Phase 5 — Pass A per-task loop** (sequential, fail-fast, **NO commits**):
    - `spec-implementer` work inline — read `§Plan Digest` via `task_spec_section`, apply edits in declared order, resolve anchors via `plan_digest_resolve_anchor`.
    - `npm run unity:compile-check` (~15 s fast-fail) + scene-wiring preflight when §Plan Digest carries Scene Wiring step.
    - `task_status_flip(task_id, "implemented")` + `journal_append(phase: "pass_a.implemented")`.
-   - **NO per-task commits** (E13 — single stage commit at Phase 8).
+   - **NO per-task commits** (single stage commit at Phase 8).
 7. **Phase 6 — Pass B per-stage** (runs ONCE):
    - **6.1 verify-loop** — full Path A + Path B on cumulative `git diff HEAD` (Pass A worktree dirty). `verdict == pass` required; fail → `STAGE_VERIFY_FAIL` + chain digest, no rollback, worktree stays dirty.
-   - **6.2 code-review** — opus-code-reviewer work inline on Stage diff with shared `CHAIN_CONTEXT`. **On critical: apply fixes inline via direct Edit/Write per design E14** — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired plan-applier code-fix mode. Re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
+   - **6.2 code-review** — opus-code-reviewer work inline on Stage diff with shared `CHAIN_CONTEXT`. **On critical: apply fixes inline via direct Edit/Write** — do NOT write `§Code Fix Plan` tuples. Re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
    - **6.3 per-task verified→done flips** — for each task in `STAGE_TASK_IDS` (skip if already terminal): `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both).
-8. **Phase 7 — Inline closeout (DB + filesystem)** — `stage_closeout_apply(slug, stage_id)` (DB-backed per design C10; replaces retired `stage-closeout-plan` → `stage-closeout-apply` skill pair) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `ia/projects/{SLUG}/_closed/` (skip silently if no match — pre-Step-9 foldering).
-9. **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL changes (Pass A diffs + code-review fixes + closeout mv per E13). Capture `STAGE_COMMIT_SHA`. Per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`. `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")` (E11 history-preserving INSERT).
+8. **Phase 7 — Inline closeout (DB + filesystem)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `ia/projects/{SLUG}/_closed/` (skip silently if no match).
+9. **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL changes (Pass A diffs + code-review fixes + closeout mv). Capture `STAGE_COMMIT_SHA`. Per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`. `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")`.
 10. **Phase 9** — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
 11. **Phase 10** — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`. Skeleton stages → `STOPPED — skeleton stage encountered`.
 
 ## Hard boundaries (critical)
 
-- **Pass A NEVER commits per design E13.** Single stage-end commit at Phase 8 covers everything.
-- **Code-reviewer applies critical fixes inline via direct Edit/Write per design E14** — do NOT write `§Code Fix Plan` tuples; do NOT dispatch retired plan-applier code-fix mode.
-- **Inline closeout (Phase 7) mandatory on green Pass B per design C10.** `stage-closeout-plan` + `stage-closeout-apply` skill pair retired (`ia/skills/_retired/`). Never defer to separate `/closeout` invocation.
+- **Pass A NEVER commits.** Single stage-end commit at Phase 8 covers everything.
+- **Code-reviewer applies critical fixes inline via direct Edit/Write** — do NOT write `§Code Fix Plan` tuples.
+- **Inline closeout (Phase 7) mandatory on green Pass B.** Never defer to separate closeout invocation.
 - Resume gate queries DB (`task_state`) only — no git scan.
 - `SHIP_STAGE {STAGE_ID}: PASSED` is **invalid** until Phase 7 closeout + Phase 8 commit + verification flip succeed.
 - Append `--no-resume` only on explicit user request.

@@ -23,9 +23,9 @@
 
 **Existing filed specs that touch bridge (Draft — do NOT reopen or block on):**
 
-- `ia/projects/TECH-83.md` — Agent-driven simulation parameter tuning; names `AgentBridgeCommandRunner.cs` as new bridge-command target. Bridge-adjacent consumer, not the program itself.
-- `ia/projects/TECH-78.md` — Skill chaining engine (`suggest_skill_chain` MCP tool). Agent-tooling sibling.
-- `ia/projects/TECH-251.md` — Opus 4.7 adoption across agent lifecycle; touches `ide-bridge-evidence` skill.
+- **TECH-83** (see [`BACKLOG.md`](../BACKLOG.md)) — Agent-driven simulation parameter tuning; names `AgentBridgeCommandRunner.cs` as new bridge-command target. Bridge-adjacent consumer, not the program itself.
+- **TECH-78** (see [`BACKLOG.md`](../BACKLOG.md)) — Skill chaining engine (`suggest_skill_chain` MCP tool). Agent-tooling sibling.
+- **TECH-251** (see [`BACKLOG.md`](../BACKLOG.md)) — Opus 4.7 adoption across agent lifecycle; touches `ide-bridge-evidence` skill.
 
 ---
 
@@ -140,7 +140,7 @@ Expected entry/exit points for Glob `(new)` marking:
 - Do NOT re-scope Phase 1 (file-based bridge MVP) — shipped per §8.1.
 - Do NOT introduce `-batchmode` / headless CI scope — §4.1 + §11 explicit.
 - Do NOT file a GitHub issue via `gh` — backlog is in-repo (`BACKLOG.md`).
-- Do NOT touch `ia/projects/TECH-83.md`, `TECH-78.md`, `TECH-251.md` — adjacent specs, separate ownership.
+- Do NOT touch **TECH-83**, **TECH-78**, **TECH-251** (see [`BACKLOG.md`](../BACKLOG.md)) — adjacent specs, separate ownership.
 - Do NOT hand-author the orchestrator `.md` file directly — `/master-plan-new` owns authoring.
 - Do NOT hand-author a `## Design Expansion` block on the analysis doc — use `/design-explore` if Phase 0 rejects §10 as semantic equivalent.
 - Do NOT commit the orchestrator for the user — user reviews and decides on commit.

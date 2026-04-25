@@ -29,7 +29,7 @@ alwaysApply: true
 - Validate before mutating shared state (BACKLOG, master plans, id counter).
 - Never hand-edit `ia/state/id-counter.json` or `id:` field — always through `reserve-id.sh`.
 - When skill chain files a BACKLOG issue: verify yaml + spec stub + BACKLOG row all three exist.
-- After `/closeout`: flip master plan task row Done before re-running `validate:all`.
+- After `/ship-stage` Pass B closeout: master-plan Stage rollup + Task row flips run inline via `stage_closeout_apply` MCP — no manual edits.
 
 ## Spec authoring + validators
 

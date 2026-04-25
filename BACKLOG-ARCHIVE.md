@@ -1686,7 +1686,6 @@
 - [x] **TECH-304** — Add `ColumnarStatsStore` — ring-buffer store keyed by `StatKey` (Stage 1.1 T1.1.2) (2026-04-21)
   - Type: infrastructure / read-model store
   - Files: `Assets/Scripts/Managers/GameManagers/ColumnarStatsStore.cs` (new); references `Assets/Scripts/Managers/GameManagers/StatKey.cs`, `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs`
-  - Spec: `ia/projects/TECH-304.md`
   - Notes: Plain C# class (no MonoBehaviour): parallel `float[]` ring buffers keyed by `StatKey`; `int RingCapacity` default 256. `Publish(StatKey, float delta)` accumulates, `Set(StatKey, float)` overwrites, `FlushToSeries()` writes running value to ring + resets accumulator, `GetScalar` / `GetSeries` readers. Composed into `CityStatsFacade` (Stage 1.2) + region/country facades (Stage 3.1). Invariants #4 #6 respected.
   - Acceptance: `ColumnarStatsStore.cs` compiles; ring capacity default 256; methods match Stage 1.1 Exit; no Unity dependency; `npm run unity:compile-check` clean; `npm run validate:all` clean.
   - Depends on: TECH-303 (StatKey enum)
@@ -1694,7 +1693,6 @@
 - [x] **TECH-303** — Add `IStatsReadModel` + `StatKey` — typed read-model contract (Stage 1.1 T1.1.1) (2026-04-21)
   - Type: infrastructure / read-model types
   - Files: `Assets/Scripts/Managers/UnitManagers/IStatsReadModel.cs` (new), `Assets/Scripts/Managers/GameManagers/StatKey.cs` (new); references `Assets/Scripts/Managers/UnitManagers/ICityStats.cs`, `Assets/Scripts/Managers/GameManagers/CityStats.cs`
-  - Spec: `ia/projects/TECH-303.md`
   - Notes: Define typed pull contract + metric id enum before any MonoBehaviour work. `IStatsReadModel.cs` declares `GetScalar(StatKey) → float`, `GetSeries(StatKey, int windowTicks) → float[]`, `EnumerateRows(string dimension, Predicate<object> filter) → IEnumerable<object>`. `StatKey.cs` enum covers every current `CityStats` public field + stubs `RegionPopulation` / `CountryPopulation`. No runtime wiring. Tier D execution gate — filing now for IA alignment per full-game-mvp Bucket 8.
   - Acceptance: Both files compile; `StatKey` enum entry per current `CityStats` public field + Region/Country stubs; no runtime references yet; `npm run unity:compile-check` clean; `npm run validate:all` clean.
   - Depends on: none
@@ -2352,8 +2350,8 @@
 
 - [x] **TECH-63** — **Spec pipeline** layer **C**: Cursor **Skills** + **project spec** template (**test contracts**, workflow steps) (2026-04-04)
   - Type: documentation / agent enablement (**Cursor Skill** + template edits)
-  - Files: `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-implementation-validation/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/project-new/SKILL.md`; `ia/templates/project-spec-template.md`; `docs/PROJECT-SPEC-STRUCTURE.md`; `ia/skills/README.md`; [`AGENTS.md`](AGENTS.md)
-  - Spec: (removed after closure — **glossary** **territory-ia spec-pipeline layer C (TECH-63)**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`docs/PROJECT-SPEC-STRUCTURE.md`](docs/PROJECT-SPEC-STRUCTURE.md) **§7b**; [`ia/skills/README.md`](ia/skills/README.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-62**; this row)
+  - Files: `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-implementation-validation/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `ia/skills/project-new/SKILL.md`; `ia/templates/project-spec-template.md`; `ia/projects/PROJECT-SPEC-STRUCTURE.md`; `ia/skills/README.md`; [`AGENTS.md`](AGENTS.md)
+  - Spec: (removed after closure — **glossary** **territory-ia spec-pipeline layer C (TECH-63)**; **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) **§7b**; [`ia/skills/README.md`](ia/skills/README.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-62**; this row)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`## 7b. Test Contracts`** in template; **Skills** — **`depends_on_status`** preflight, **`router_for_task`** **`files`**, **Impact preflight**, **Phase exit** / **rollback**; **`AGENTS.md`** **§7b** pointer. **Does not** extend **`project_spec_closeout_digest`** for **§7b** — follow-up **BACKLOG** row if machine-read **test contracts** is required.
   - Depends on: **TECH-62** **§ Completed** (soft)
 
@@ -2396,7 +2394,7 @@
 
 - [x] **TECH-58** — **Agent closeout efficiency:** **project-spec-close** (**MCP** + **Node**) (2026-04-03)
   - Type: tooling / agent enablement
-  - Files: `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`; `tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts`, `spec-sections.ts`; `tools/mcp-ia-server/src/tools/spec-section.ts` (shared extract); `tools/mcp-ia-server/scripts/project-spec-closeout-report.ts`, `project-spec-dependents.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/closeout-parse.test.ts`, `tests/tools/spec-section-batch.test.ts`; root `package.json` (`closeout:*`); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`ARCHITECTURE.md`](ARCHITECTURE.md); `AGENTS.md`; `ia/rules/agent-router.md`, `mcp-ia-default.md`; [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md); [`docs/PROJECT-SPEC-STRUCTURE.md`](docs/PROJECT-SPEC-STRUCTURE.md); [`ia/specs/glossary.md`](ia/specs/glossary.md) — **project-spec-close** / **IA index manifest** / **Reference spec** rows; `tools/mcp-ia-server/src/index.ts` (v0.4.3)
+  - Files: `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`; `tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts`, `spec-sections.ts`; `tools/mcp-ia-server/src/tools/spec-section.ts` (shared extract); `tools/mcp-ia-server/scripts/project-spec-closeout-report.ts`, `project-spec-dependents.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/closeout-parse.test.ts`, `tests/tools/spec-section-batch.test.ts`; root `package.json` (`closeout:*`); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`ARCHITECTURE.md`](ARCHITECTURE.md); `AGENTS.md`; `ia/rules/agent-router.md`, `mcp-ia-default.md`; [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md); [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md); [`ia/specs/glossary.md`](ia/specs/glossary.md) — **project-spec-close** / **IA index manifest** / **Reference spec** rows; `tools/mcp-ia-server/src/index.ts` (v0.4.3)
   - Spec: (removed after closure — [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows** + **Tools**; **glossary** **project-spec-close**; **project-spec-close** **`SKILL.md`**; **PROJECT-SPEC-STRUCTURE** **Lessons learned (TECH-58 closure)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
   - Notes: **Completed (verified — `/project-spec-close` + `project-implementation-validation`):** **`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:worksheet`** / **`closeout:dependents`** / **`closeout:verify`**; shared parser for future **TECH-48**. **TECH-51** closeout ordering unchanged. **`npm run verify`** / **`test:ia`** green.
   - Depends on: none (soft: **TECH-48**, **TECH-30**, **TECH-18**)
@@ -2466,7 +2464,7 @@
 
 - [x] **TECH-50** — **Doc hygiene:** **cascade** references when **project specs** close; **dead links**; **BACKLOG** as durable anchor (2026-04-03)
   - Type: tooling / doc hygiene / agent enablement
-  - Files: `tools/validate-dead-project-spec-paths.mjs`; repo root `package.json` (`validate:dead-project-specs`); `.github/workflows/ia-tools.yml`; `docs/PROJECT-SPEC-STRUCTURE.md`; `AGENTS.md`; `docs/mcp-ia-server.md`; `docs/agent-tooling-verification-priority-tasks.md`; `tools/mcp-ia-server/README.md` (pointer only)
+  - Files: `tools/validate-dead-project-spec-paths.mjs`; repo root `package.json` (`validate:dead-project-specs`); `.github/workflows/ia-tools.yml`; `ia/projects/PROJECT-SPEC-STRUCTURE.md`; `AGENTS.md`; `docs/mcp-ia-server.md`; `docs/agent-tooling-verification-priority-tasks.md`; `tools/mcp-ia-server/README.md` (pointer only)
   - Spec: (removed after closure — **PROJECT-SPEC-STRUCTURE** closeout + **Lessons learned (TECH-50 closure)**; **`docs/mcp-ia-server.md`** **Project spec path hygiene**; this row)
   - Notes: **Completed (verified per user):** `npm run validate:dead-project-specs` + CI gate; **BACKLOG** checks strict **`Spec:`** lines on open rows only; **BACKLOG-ARCHIVE.md** excluded; advisory `--advisory` / `CI_DEAD_SPEC_ADVISORY=1`. **Lessons:** See **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-50 closure)**. **Deferred:** optional **territory-ia** MCP tool; shared **Node** module with **TECH-30**.
   - Depends on: none (soft: **TECH-30** — merge or share implementation)
@@ -2474,7 +2472,7 @@
 
 - [x] **TECH-51** — **Cursor Skill:** **`project-spec-close`** — full **issue** / **project spec** closure workflow (IA, lessons, **BACKLOG**, cascade) (2026-04-03)
   - Type: documentation / agent enablement (**Cursor Skill** + process)
-  - Files: `ia/skills/project-spec-close/SKILL.md`; `ia/skills/README.md`; `ia/skills/project-spec-kickoff/SKILL.md`; `ia/skills/project-spec-implement/SKILL.md`; `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md` §4.4; `docs/mcp-ia-server.md`; `ia/specs/glossary.md` — **Documentation**; `docs/PROJECT-SPEC-STRUCTURE.md`
+  - Files: `ia/skills/project-spec-close/SKILL.md`; `ia/skills/README.md`; `ia/skills/project-spec-kickoff/SKILL.md`; `ia/skills/project-spec-implement/SKILL.md`; `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md` §4.4; `docs/mcp-ia-server.md`; `ia/specs/glossary.md` — **Documentation**; `ia/projects/PROJECT-SPEC-STRUCTURE.md`
   - Spec: (removed after closure — **`ia/skills/project-spec-close/SKILL.md`**; **PROJECT-SPEC-STRUCTURE** **Closeout checklist** + **Lessons learned (TECH-51 closure)**; **glossary** **Project spec** / **project-spec-close**; this row)
   - Notes: **Completed (verified per user — `/project-spec-close`):** **IA persistence checklist** + ordered **Tool recipe (territory-ia)**; **persist IA → delete project spec → `validate:dead-project-specs` → BACKLOG Completed** (user-confirmed). **Decisions:** no duplicate **TECH-50** scanner in the skill; composite **closeout_preflight** MCP deferred (**TECH-48** / follow-up). **Related:** **TECH-52** completed — optional **`project-implementation-validation`** before closeout cascade when IA-heavy.
   - Depends on: none (soft: **TECH-50**, **TECH-57**, **TECH-49**)
@@ -2517,7 +2515,6 @@
 - [x] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2) (2026-04-18)
   - Type: audio / DSP + IA
   - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipLfoTests.cs` (new), `ia/specs/glossary.md`, `ia/specs/audio-blip.md`
-  - Spec: `ia/projects/TECH-288.md`
   - Notes: LFO output dispatch in `BlipVoice.Render` — per-sample `switch` on `BlipLfoKind` (Sine `Math.Sin(phase)`; Triangle `2/π·Math.Asin(Math.Sin(phase))`; Square `Math.Sign(Math.Sin(phase))`; S&H re-sample on phase wrap). Scale by `depth`; `SmoothOnePole` on routed target. Routes: Pitch adds cents before jitter; Gain multiplies `gainMult`; FilterCutoff offsets `cutoffHz` before α compute; Pan offsets stereo pre-split. Mirror into deterministic + live branches (Stage 5.1 precedent). New `BlipLfoTests`: sine 1 s @ 48 kHz rate 5 Hz → zero-crossing count matches ±1; monotonic rise (0..π/2) + fall (π/2..π). 3 glossary rows: **Blip LFO** (§4.1), **Param smoothing** (§3.2), **Blip LUT pool** (§5.1) + `ia/specs/audio-blip.md §4.1` cross-ref for `lfo0/lfo1` authoring fields. Closes Stage 5.3.
   - Acceptance: routing + waveform dispatch wired in both branches; `SmoothOnePole` applied per route target; `BlipLfoTests` green; MVP `BlipGoldenFixtureTests` still bit-exact (empty-LFO unaffected); `BlipNoAllocTests` still green; 3 glossary rows present; `audio-blip.md §4.1` updated; `npm run unity:compile-check` green; `npm run validate:all` exit 0; `npm run unity:testmode-batch` green.
   - Depends on: **TECH-285**, **TECH-286**, **TECH-287**.
@@ -2525,7 +2522,6 @@
 - [x] **TECH-287** — `SmoothOnePole` helper + LFO per-sample advance (Stage 5.3 Phase 2) (2026-04-18)
   - Type: audio / DSP
   - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
-  - Spec: `ia/projects/TECH-287.md`
   - Notes: `public static float SmoothOnePole(ref float z, float target, float coef)` on `BlipVoice`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop (20 ms param-smoothing τ). Pre-compute `double lfoPhaseInc0/1 = TwoPi * rateHz / sampleRate` (avoid per-sample div). Per-sample advance + wrap in both deterministic + live branches: `state.lfoPhase0 += lfoPhaseInc0; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi;` — mirror for slot 1. Phases spin unrouted here — waveform dispatch + routing land TECH-288.
   - Acceptance: `SmoothOnePole` static present; coef + phase-inc pre-compute outside loop; per-sample advance mirrored into both branches; MVP goldens bit-exact (phase advance alone inert); zero-alloc preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
   - Depends on: **TECH-285**, **TECH-286**.
@@ -2533,7 +2529,6 @@
 - [x] **TECH-285** — LFO types + `BlipPatch`/`BlipPatchFlat` extension (Stage 5.3 Phase 1) (2026-04-18)
   - Type: audio / data model
   - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
-  - Spec: `ia/projects/TECH-285.md`
   - Notes: `BlipLfoKind` enum (Off=0 / Sine=1 / Triangle=2 / Square=3 / SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0 / Gain=1 / FilterCutoff=2 / Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. Pure data-model scaffold — no kernel logic (advance TECH-287, routing TECH-288).
   - Acceptance: enums + structs present; `BlipPatch.lfo0/lfo1` serialized + clamp; `BlipPatchFlat` blittable w/ new fields; `npm run unity:compile-check` green; `npm run validate:all` exit 0; existing `BlipGoldenFixtureTests` + `BlipNoAllocTests` still green.
   - Depends on: none (Stage 5.2 closed).
@@ -2541,7 +2536,6 @@
 - [x] **TECH-413** — Implement `master_plan_locate` MCP tool (Stage 4.1 Phase 1) (2026-04-18)
   - Type: mcp / tooling
   - Files: `tools/mcp-ia-server/src/tools/master-plan-locate.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`
-  - Spec: `ia/projects/TECH-413.md`
   - Notes: New MCP tool. Input `{ issue_id }`. Load yaml; read `parent_plan` + `task_key`; grep plan for `^\| ${task_key} \|` row. Returns `{ plan, step, stage, phase, task_key, row_line, row_raw }`. Errors on missing-fields / plan-path-absent / task_key-drift. Register in `index.ts`. Schema-cache restart after add.
   - Acceptance: tool registered + responds for fixture v2 yaml; error cases handled; typecheck + `validate:all` green.
   - Depends on: **TECH-364** (yaml read path), **TECH-365** (writer path)
@@ -2750,7 +2744,7 @@
 
 - [x] **TECH-71** — **IA project spec journal**: Postgres **Decision Log** / **Lessons learned** + MCP tools + **Skills** hooks (2026-04-11)
   - Type: tooling / agent workflow / Postgres dev surface
-  - Files: `db/migrations/0007_ia_project_spec_journal.sql`; [`config/postgres-dev.json`](config/postgres-dev.json); [`config/README.md`](config/README.md); `tools/postgres-ia/resolve-database-url.mjs`; `tools/mcp-ia-server/src/ia-db/` (incl. `journal-repo.ts`, `pool.ts`, `resolve-database-url.ts`); `tools/mcp-ia-server/src/tools/project-spec-journal.ts`; `tools/mcp-ia-server/scripts/persist-project-spec-journal.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/ia-db/`; `tools/mcp-ia-server/package.json`; [`docs/PROJECT-SPEC-STRUCTURE.md`](docs/PROJECT-SPEC-STRUCTURE.md); [`.env.example`](.env.example); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`tools/postgres-ia/README.md`](tools/postgres-ia/README.md); [`ia/specs/glossary.md`](ia/specs/glossary.md); [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md); [`ia/skills/project-new/SKILL.md`](ia/skills/project-new/SKILL.md); [`ia/skills/project-spec-kickoff/SKILL.md`](ia/skills/project-spec-kickoff/SKILL.md); [`ia/rules/agent-router.md`](ia/rules/agent-router.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); root [`package.json`](package.json)
+  - Files: `db/migrations/0007_ia_project_spec_journal.sql`; [`config/postgres-dev.json`](config/postgres-dev.json); [`config/README.md`](config/README.md); `tools/postgres-ia/resolve-database-url.mjs`; `tools/mcp-ia-server/src/ia-db/` (incl. `journal-repo.ts`, `pool.ts`, `resolve-database-url.ts`); `tools/mcp-ia-server/src/tools/project-spec-journal.ts`; `tools/mcp-ia-server/scripts/persist-project-spec-journal.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/ia-db/`; `tools/mcp-ia-server/package.json`; [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md); [`.env.example`](.env.example); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`tools/postgres-ia/README.md`](tools/postgres-ia/README.md); [`ia/specs/glossary.md`](ia/specs/glossary.md); [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md); [`ia/skills/project-new/SKILL.md`](ia/skills/project-new/SKILL.md); [`ia/skills/project-spec-kickoff/SKILL.md`](ia/skills/project-spec-kickoff/SKILL.md); [`ia/rules/agent-router.md`](ia/rules/agent-router.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); root [`package.json`](package.json)
   - Spec: (removed after closure — **glossary** **IA project spec journal**; [`config/README.md`](config/README.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) **territory-ia** tool list + **Postgres** dev surfaces; **this row**)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`ia_project_spec_journal`** + MCP **`project_spec_journal_*`**; **Skills** **J1** + optional **project-new** / **project-spec-kickoff** journal search; committed dev URI **`config/postgres-dev.json`** + **`resolve-database-url`** (**postgres-ia** + **mcp-ia-server**); **`npm run db:persist-project-journal`** at closeout.
   - Depends on: none (soft: **TECH-24** for parser policy when extending closeout parser)
@@ -2819,7 +2813,7 @@
 - [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
   - Type: bug
   - Files: `TerrainManager.cs` (`RestoreTerrainForCell` — **BUG-37**: skip `PlaceFlatTerrain` / slope rebuild when `GridManager.IsCellOccupiedByBuilding`; sync **HeightMap** / **cell** height + transform first); `RoadManager.cs`, `PathTerraformPlan.cs` (call path unchanged)
-  - Spec: `ia/projects/BUG-37.md`; `ia/specs/isometric-geography-system.md` §14 (manual **streets**)
+; `ia/specs/isometric-geography-system.md` §14 (manual **streets**)
   - Notes: **Completed (verified per user):** Commit/AUTO `PathTerraformPlan.Apply` Phase 2/3 was refreshing **Moore** neighbors and stacking **grass** under **RCI** **buildings** / footprint **cells** (preview skipped **Apply**, so only commit showed the bug). **Fix:** preserve development by returning after height/sync when the **cell** is **building**-occupied. **Follow-up:** **BUG-52** if **AUTO** zoning shows persistent **grass** buffers beside new **streets** (investigate correlation).
   - Depends on: none
 

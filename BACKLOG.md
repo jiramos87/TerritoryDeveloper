@@ -25,14 +25,12 @@
 - [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)
   - Type: tooling / research
   - Files: `tools/` or Unity Editor batch; parameters from **FEAT-43** / **FEAT-36** notes as inputs
-  - Spec: `ia/projects/TECH-32.md`
   - Notes: Compare full **UrbanCentroidService** recompute every tick vs throttled/approximate strategies; report desync or behavior risk vs glossary **sim §Rings**. Non-player-facing evidence for tuning. `docs/agent-tooling-verification-priority-tasks.md` task 24. **Order:** Prefer running against **TECH-38** **UrbanGrowthRingMath** / harness **JSON** once **Phase B** exists; until then, baseline against current **MonoBehaviour** code.
   - Depends on: none (coordinates with **FEAT-43**; soft: **TECH-38** for **pure** module parity)
 
 - [ ] **TECH-35** — Research spike: property-based / random mutation **invariant** fuzzing (optional)
   - Type: research / test harness
   - Files: TBD test assembly or `tools/` prototype
-  - Spec: `ia/projects/TECH-35.md`
   - Notes: High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds. **Order:** Easiest once **TECH-38** exposes stable **pure** surfaces + documented **RNG** derivation.
   - Depends on: none (soft: **TECH-38**)
 
@@ -67,26 +65,22 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 - [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
   - Type: infrastructure / tooling
   - Files: All `ia/specs/*.md`, `ia/rules/agent-router.md`, `ia/rules/invariants.md`, `ARCHITECTURE.md`; MCP server (file-backed **territory-ia** — shipped, see archive); schema / migrations / seed from IA **Postgres** milestone (archive); `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-18.md`
   - Notes: **Goal:** After file-backed MCP and IA **Postgres** tables, **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** — same tool contracts where possible, swapping implementation to query the IA database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.md`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.md` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section`** after **unity-development-context** spec, etc.): see `ia/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
   - Depends on: none (soft: MCP baseline + IA **Postgres** milestone — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 - [ ] **TECH-15** — New Game / **geography initialization** performance
   - Type: performance / optimization
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
-  - Spec: `ia/projects/TECH-15.md`
   - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. **Priority:** Land the **Editor/batch JSON profiler** under `tools/reports/` (see spec) *before* or in parallel with deep optimization — agents need **measurable** phase breakdowns. **Related:** **Load Game** / **water map** persist work is archived — this issue targets **geography initialization** cost only. **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 3, 22).
 
 - [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
   - Type: performance / optimization
   - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
-  - Spec: `ia/projects/TECH-16.md`
   - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
 
 - [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
   - Type: tooling
   - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
-  - Spec: `ia/projects/TECH-33.md`
   - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **toolbar** layout work. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
   - Depends on: none
 
@@ -134,21 +128,18 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 - [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`
   - Type: tooling / doc hygiene
   - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
-  - Spec: `ia/projects/TECH-30.md`
   - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md` (open rows) or `BACKLOG-ARCHIVE.md` when cited as historical. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** `npm run validate:dead-project-specs` (repo-wide missing `ia/projects/*.md` paths) — shipped; coordinate shared **Node** helpers when implementing **TECH-30**.
   - Depends on: none
 
 - [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
   - Type: tooling / CI
   - Files: `tools/` (Node or shell), checked-in ordered manifest (derived from `ia/specs/simulation-system.md` **Tick execution order**), optional `.github/workflows/`; `SimulationManager.cs` as truth source to diff
-  - Spec: `ia/projects/TECH-29.md`
   - Notes: Fail CI (or print advisory) when `ProcessSimulationTick` step order diverges from manifest without matching spec update. `docs/agent-tooling-verification-priority-tasks.md` task 5. Phase labels should stay aligned with **TECH-16** harness.
   - Depends on: **TECH-16** (stable spec-labeled phase names in harness — soft dependency for naming parity)
 
 - [ ] **TECH-31** — **Agent scenario generator** (**test mode**, **32×32** **test map**, loadable **save**-shaped scenarios, MCP tool)
   - Type: tooling / test infrastructure
   - Files: `tools/`, `tools/fixtures/scenarios/`, `tools/scripts/unity-testmode-batch.sh`, `tools/scripts/unity-quit-project.sh` (or agreed `Assets/` test paths), Unity test assembly or Editor scripts, scenario descriptors + committed save artifacts; `GameSaveManager` / **`GameSaveData`** integration (**persistence-system**); bridge- or export-friendly hooks (glossary **IDE agent bridge**); `tools/mcp-ia-server/src/` (final phase MCP tool); `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-31.md`
   - Notes: **Program tracker** (stages, progress, lessons): [`projects/TECH-31-agent-scenario-generator-program.md`](projects/TECH-31-agent-scenario-generator-program.md) — **31a** → **31a2** → **31a3** → **31b** → **31c** → **31d** → **31e**. **Shipped through 31d (2026-04-10):** includes everything through **31c** (see prior archive notes) plus **TECH-82** Phase 1: Postgres **`city_metrics_history`**, Unity **`MetricsRecorder`**, **territory-ia** **`city_metrics_query`**, **test mode** **`scenario_id`** correlation — **glossary** **City metrics history**, [`ia/projects/TECH-82.md`](ia/projects/TECH-82.md), [`tools/fixtures/scenarios/README.md`](tools/fixtures/scenarios/README.md) (**optional Postgres** section), **agent-test-mode-verify** skill. **Remaining:** **31e** = **territory-ia** **MCP** scenario resolver tool + **`docs/mcp-ia-server.md`**. **Cursor stub** (Open Questions + aggregate test contracts): `ia/projects/TECH-31.md`. **Agent-facing** intent → **`GameSaveData`-compatible** artifact + **scenario id** (**kebab-case**); **32×32** **test mode**; bounded **simulation**; **UTF** / **`debug_context_bundle`** / golden JSON; optional **glossary** **City metrics history** when **Postgres** is configured. **Core builder** validation per stub **Open Questions**; **minimal UI** (**TEST-MODE**); release builds cannot enable **test mode**. Keep expected values aligned across stub **Test contracts**, **31c** normative table, committed **`agent-testmode-golden-*.json`**, and **Acceptance** below. `docs/agent-tooling-verification-priority-tasks.md`. **Acceptance roll-up:** full **Acceptance** line is the **issue closeout** bar; **31e** (**MCP** scenario tool) still required before removing this row (**TECH-82** Phases 2–4 remain on the **TECH-82** backlog row).
   - Acceptance: at least one automated Unity run (**Edit Mode** or **Play Mode**) on a clean tree with a committed scenario; documented **test mode** launch (**scenario id** or path, **32×32**); builder docs for **AUTO** and at least one non-**AUTO** pattern; **close-dev-loop** and **TECH-82** **city history** composition documented (**close-dev-loop** + Path A/B driver matrix: **31c** + stub; **city history**: **31d** / **TECH-82**); **`npm run unity:compile-check`** after tooling changes; **MCP** tool registered and described in **`docs/mcp-ia-server.md`** (**31e**); project stub **Test contracts** + **31c** normative table list chosen batch driver, args, **CI** simulation tick bound, and optional golden assert; optional **BUG-52** **Notes** link when first **AUTO** scenario lands
   - Depends on: **TECH-82** (soft: Phase 1 **metrics** for time-series **city history** verification; load/build milestones may ship first using **save** + **`debug_context_bundle`** only). Soft: stable bridge **`kind`** values and export shapes (**unity-development-context**, **close-dev-loop** skill). Soft: **TECH-15** / **TECH-16** for **UTF**/**batchmode** vs bridge and harness labels when defining **CI** vs dev drivers.
@@ -156,21 +147,18 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 - [ ] **TECH-34** — Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks
   - Type: tooling / IA
   - Files: `tools/` (Node or C# extractor), output e.g. `tools/mcp-ia-server/data/gridmanager-regions.json`; `GridManager.cs`
-  - Spec: `ia/projects/TECH-34.md`
   - Notes: Supports **TECH-01** extraction planning and optional future MCP `gridmanager_region_map`. `docs/agent-tooling-verification-priority-tasks.md` task 28. Coordinate MCP registration with **TECH-18** when applicable.
   - Depends on: none (MCP wiring: **TECH-18**)
 
 - [ ] **TECH-27** — **BACKLOG.md** glossary alignment pass (**Depends on** / **Spec** / **Files** / **Notes**)
   - Type: documentation / IA hygiene
   - Files: `BACKLOG.md`, `ia/specs/glossary.md`, optional `tools/` link-check script
-  - Spec: `ia/projects/TECH-27.md`
   - Notes: Audit open issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from **`ia/specs/glossary.md`** and linked **reference specs** where practical—improves **`backlog_issue`** usefulness and cross-agent consistency. **Optional automation:** script verifying glossary “Spec” column paths (and optional heading anchors) exist (`docs/agent-tooling-verification-priority-tasks.md` task 10). Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
 - [ ] **TECH-26** — Repo scripts / CI: mechanical checks (**FindObjectOfType** in **Update**; optional **`gridArray`** gate)
   - Type: tooling / CI
   - Files: new script under `tools/` (Node or shell), optional CI workflow; align wording with `ia/rules/invariants.md`
-  - Spec: `ia/projects/TECH-26.md`
   - Notes: Implement scanner for **`FindObjectOfType`** inside **`Update`/`LateUpdate`/`FixedUpdate`** (supports **BUG-14** prevention) and optional **`rg`** gate blocking new **`gridArray`/`cellArray`** use outside **`GridManager`** (**TECH-04**). **Phase 2:** hot-path static scan manifest from `ARCHITECTURE.md` / managers-reference to prioritize files in AUTO or per-frame paths (`docs/agent-tooling-verification-priority-tasks.md` tasks 1, 6). Priority order: `docs/agent-tooling-verification-priority-tasks.md`. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
@@ -227,7 +215,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (new tool + ingest); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-77.md`
   - Notes: Single `ia_search(query, scope?)` MCP tool backed by Postgres FTS that returns ranked results across glossary, spec sections, invariants, rules, backlog issues, and journal entries. Extends the `body_tsv` GIN pattern from `ia_project_spec_journal`. Does not replace existing precise tools (`spec_section`, `glossary_lookup`).
   - Acceptance: `ia_search` registered; searches across all IA surfaces with source attribution; `npm run verify` green
   - Depends on: none
@@ -235,7 +222,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-78** — **Skill chaining engine** (`suggest_skill_chain` MCP tool)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (new tool + SKILL.md parser); `ia/skills/*/SKILL.md` (read-only); `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-78.md`
   - Notes: MCP tool that reads all SKILL.md files, matches trigger conditions against a task description, and returns an ordered skill chain with pre-populated MCP tool call sequences. Understands skill lifecycle dependencies (kickoff → implement → close-dev-loop → close). When given an `issue_id`, enriches the chain with `backlog_issue` data.
   - Acceptance: `suggest_skill_chain` registered; returns correct chains for known task descriptions; `npm run verify` green
   - Depends on: none
@@ -243,7 +229,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-79** — **Agent memory across sessions** (persistent agent context)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (logging middleware + new tool); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-79.md`
   - Notes: Log MCP tool calls per issue in `agent_session_log` Postgres table. New `ia_recommend(issue_id?, domain?)` MCP tool uses historical patterns to recommend spec sections, glossary terms, and tool sequences. Fire-and-forget logging — never blocks tool responses.
   - Acceptance: tool calls transparently logged; `ia_recommend` returns recommendations based on historical data; graceful `db_unconfigured` degradation
   - Depends on: none
@@ -251,7 +236,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-80** — **Bidirectional IA**: agents propose **glossary** additions and flag **spec** ambiguity
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (3 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-80.md`
   - Notes: `suggest_ia_improvement(kind, content, context?)` for agents to propose glossary additions, flag spec ambiguity, or suggest invariant additions. `ia_suggestions_pending` and `ia_suggestion_resolve` for human review lifecycle (`proposed` → `accepted` / `rejected`). Human review mandatory.
   - Acceptance: three tools registered; full lifecycle (propose → list → resolve) works; `npm run verify` green
   - Depends on: none
@@ -259,7 +243,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-81** — **Knowledge graph**: evolve IA from document retrieval to entity-relationship model
   - Type: tooling / agent enablement (long-term)
   - Files: `tools/mcp-ia-server/src/` (graph ingest + 2 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-81.md`
   - Notes: Postgres-backed entity-relationship graph (managers, data structures, invariants, glossary terms, spec sections as nodes; "depends on"/"modifies"/"validates" as edges). `dependency_chain(entity)` and `impact_analysis(entity)` MCP tools for transitive queries. Ingest from glossary cross-references, ARCHITECTURE.md dependencies, invariant entity mentions, spec cross-links.
   - Acceptance: graph tables populated from current IA; `dependency_chain` and `impact_analysis` return correct transitive relationships; visualization JSON export
   - Depends on: none (soft: TECH-77 for FTS infrastructure; TECH-79 for usage-based edge enrichment)
@@ -267,7 +250,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-82** — **Entity model** for gameplay database (time-series, events, snapshots, building identity)
   - Type: tooling / gameplay infrastructure
   - Files: `db/migrations/`; new C# `MetricsRecorder` helper; `tools/postgres-ia/` (bridge scripts); `tools/mcp-ia-server/src/` (query tools); `docs/postgres-ia-dev-setup.md`; `SimulationManager.cs`, `EconomyManager.cs`, `ZoneManager.cs` (integration hooks)
-  - Spec: `ia/projects/TECH-82.md`
   - Notes: Four phases: (1) `city_metrics_history` — per-tick city metric snapshots for FEAT-51 dashboard and **TECH-31** **test mode** **city history** assertions — **program stage 31d** in [`projects/TECH-31-agent-scenario-generator-program.md`](projects/TECH-31-agent-scenario-generator-program.md) tracks ordering vs **TECH-31** **31a**–**31c**. (2) `city_events` — financial event sourcing for **monthly maintenance** and other treasury movements (see **glossary** **Monthly maintenance**). (3) `grid_snapshots` — periodic grid state for diffing/analysis. (4) `buildings` table — individual building identity for FEAT-08 density evolution. All fire-and-forget; game fully playable without Postgres. Scenarios remain **save**-authoritative; DB rows are observability, not the scenario file.
   - Acceptance: Phase 1 at minimum: metrics recorded per tick, MCP query tool returns time-series; game playable without DB
   - Depends on: none (soft: FEAT-51 as primary consumer of Phase 1; **TECH-31** for **scenario** run correlation / **test mode** recording expectations; Phase 2 aligns with **EconomyManager** chokepoints; FEAT-08 for Phase 4)
@@ -275,7 +257,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-83** — **Agent-driven simulation parameter tuning**
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (3 new tools); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (new bridge commands); `db/migrations/` (experiment results); `docs/mcp-ia-server.md`
-  - Spec: `ia/projects/TECH-83.md`
   - Notes: MCP tools to read (`sim_params_read`), modify (`sim_params_write`), and evaluate (`sim_experiment`) simulation parameters at runtime. Agents can A/B test parameter changes (growth budget, demand rates, ring fractions) by running N ticks and measuring outcomes. State snapshot/restore for experiment isolation. Results persisted in Postgres.
   - Acceptance: parameter catalog complete; write→read roundtrip works; experiment runs N ticks and returns metric comparison; game state restored after experiment
   - Depends on: none (soft: TECH-82 Phase 1 for richer metric collection)
@@ -283,7 +264,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-552** — **Unity Agent Bridge** program — file-based command queue + MCP tools for agent-triggered exports
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (existing `unity_bridge_command` / `unity_bridge_get` + sugar wrappers); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (existing; extended); `.claude/skills/` (new Cursor skills per analysis doc §6); `docs/mcp-ia-server.md` (tool docs); `ia/skills/ide-bridge-evidence/SKILL.md` (evidence contract)
-  - Spec: `ia/projects/unity-agent-bridge-master-plan.md`
   - Notes: Phase 1 (file-based command queue + `unity_bridge_command` / `unity_bridge_get`) already shipped per analysis doc §8.1. Program tracks analysis doc §10 tiers B (hardening — parameterized exports, sugar tools, Cursor skills), C (HTTP transport, log streaming, screenshot automation), D (deterministic replay, visual diff). Explicitly excludes `-batchmode` / headless CI per analysis doc §4.1 + §11.
   - Acceptance: master plan authored at `ia/projects/unity-agent-bridge-master-plan.md` with ≥3 Steps landing on green-bar boundaries; at minimum Step 1 = analysis §10-B hardening; each stage has 2–6 tasks per phase (cardinality gate); all analysis doc §10 items mapped into a step OR explicitly deferred to post-MVP extensions doc.
   - Depends on: none hard. Soft: existing `unity_bridge_command` MCP tool contract (do not break); `ia/specs/unity-development-context.md` §10 Reports contract alignment.
@@ -292,7 +272,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-322** — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)
   - Type: tech (IA infrastructure / lifecycle tooling)
   - Files: `.claude/commands/ship-stage.md` (new), `.claude/agents/ship-stage.md` (new), `ia/skills/ship-stage/SKILL.md` (new), `.claude/agents/verify-loop.md`, `ia/skills/verify-loop/SKILL.md`, `docs/agent-lifecycle.md`, `ia/rules/agent-lifecycle.md`, `CLAUDE.md`, `AGENTS.md`, `ia/specs/glossary.md`; design source `docs/ship-stage-exploration.md`
-  - Spec: `ia/projects/TECH-322.md`
   - Notes: New `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` dispatcher — chains `spec-kickoff → spec-implementer → verify-loop → closeout` across every filed task row of one Stage X.Y in a master plan. **Approach B** per `/design-explore` interview (Q1=B stateful chain w/ cached MCP context; Q2=A resolved-as-none-needed — per-spec `project-stage-close` unchanged + chain-level stage digest NEW; Q3=A auto-resolve next-stage across 4 cases; Q4=C hybrid verify — per-task Path A fail-fast, batched Path B at stage end via `--skip-path-b`; Q5=C hybrid parser — narrow regex v1 + follow-up MCP `spec_stage_table` slice). Hard-depends on TECH-302 Stage 2 (`domain-context-load` + `term-anchor-verify` shared subskills). `/ship-step` + `/ship-plan` deferred. Tooling only — no runtime C# invariants.
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
@@ -304,7 +283,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)
   - Type: feature / UX + **simulation** observability
   - Files: [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md) (mechanisms and dependency graph); [`ia/projects/FEAT-51.md`](ia/projects/FEAT-51.md); `ia/specs/ui-design-system.md` (**modal**, **scroll**, **UiTheme**); `ia/specs/simulation-system.md` (**simulation tick** sampling — read-only); `ia/specs/persistence-system.md` (if **Save**/**Load** of history); `Assets/Scripts/Managers/GameManagers/` (**CityStats**, **EconomyManager**, **DemandManager**, **StatisticsManager**, **TimeManager**); new **UI** prefabs / partials as implemented
-  - Spec: `ia/projects/FEAT-51.md`
   - Spec sections: `ia/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns, **§5.3** polish patterns; `ia/specs/simulation-system.md`; `ia/specs/persistence-system.md` (optional persistence); [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md)
   - Notes: Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**`ui-design-system.md`**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
   - Acceptance: per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
@@ -314,7 +292,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-72** — **HUD** / **uGUI** scene hygiene for agents (**UI** inventory alignment)
   - Type: code health / **UI**-as-code enablement
   - Files: `Assets/Scenes/MainScene.unity`; `Assets/Scenes/MainMenu.unity` (if matching issues appear); `UIManager.cs` + **`UIManager.*.cs`** partials; `CityStatsUIController.cs`; **`ProposalUIController.cs`**, **`UrbanizationProposalManager.cs`** (if removing obsolete **Proposal** chrome); `ia/specs/ui-design-system.md` — **§1.3.1**; `docs/reports/ui-inventory-as-built-baseline.json` (refresh after scene edits)
-  - Spec: `ia/projects/TECH-72.md`
   - Spec sections: `ia/specs/ui-design-system.md` — **§1.3.1** **HUD and uGUI hygiene**; `ia/specs/unity-development-context.md` **§10** when re-exporting **UI** inventory
   - Notes: Remediate **as-built** drift flagged against **Postgres** **`editor_export_ui_inventory`** **id** **8** / committed baseline: **`CommercialTaxText `** trailing space; **`RoadGrowthLabel (1)`** auto-rename; **`Canvas/DataPanelButtons/NewGameButton`** name collision vs **MainMenu**; **`GameManager`** on **`LoadGameMenuPanel`** root; **`StatsPanel`** **UIDocument** + **uGUI** boundary documentation; **`NotificationPanel`** **TMP** + legacy mix policy; **`ProposalUI`** vs glossary **Urbanization proposal** (**obsolete**)—confirm inert then remove or disconnect. **No** **simulation** rule changes. **Id policy:** **TECH-60** is **archived** for the **spec pipeline program** — do not reuse; this row uses the next **TECH** id (**TECH-72** after **TECH-71** in archive).
   - Acceptance: per `ia/projects/TECH-72.md` **§8**; baseline JSON re-exported after scene changes; **§1.3.1** violations in scope either fixed or explicitly documented in spec **Decision Log**
@@ -324,7 +301,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-309** — **StudioRackBlock schema** — extend UiTheme token ring w/ studio-rack block
   - Type: technical / UI infrastructure
   - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`
-  - Spec: `ia/projects/TECH-309.md`
   - Notes: Add `[Serializable] class StudioRackBlock` to `UiTheme.cs` w/ studio-rack fields: `ledHues` (`Color[]`), `vuGradientStops` (`Gradient`), `knobDetentColor` (`Color`), `faderTrackGradient` (`Gradient`), `oscilloscopeTrace` (`Color`), `oscilloscopeGlowColor` (`Color`), `shadowDepthStops` (`float[3]`), `glowRadius` (`float`), `glowColor` (`Color`), `sparklePalette` (`Color[]`). Expose via `public StudioRackBlock studioRack` on `UiTheme`. Additive only — existing fields untouched. Serializable defaults inert (asset defaults land in TECH-311). Stage 1.1 T1.1.1 of `ia/projects/ui-polish-master-plan.md`. Foundation for all downstream rings.
   - Acceptance: `StudioRackBlock` nested class present w/ all 10 named fields; `UiTheme.studioRack` exposed; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
   - Depends on: none (stage-internal: TECH-311 consumes these fields as asset defaults)
@@ -332,7 +308,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-310** — **MotionBlock schema + curves** — extend UiTheme w/ semantic motion block
   - Type: technical / UI infrastructure
   - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`
-  - Spec: `ia/projects/TECH-310.md`
   - Notes: Add `[Serializable] class MotionBlock` to `UiTheme.cs` w/ semantic motion fields: `moneyTick`, `alertPulse`, `needleAttack`, `needleRelease`, `sparkleDuration`, `panelElevate`. Each a `[Serializable] struct MotionEntry { float durationSeconds; AnimationCurve easing; }`. Expose via `public MotionBlock motion` on `UiTheme`. Additive only. Consumer rings (primitives Step 2, studio controls Step 3, juice Step 4) read duration + easing from these entries — no hard-coded values downstream. Stage 1.1 T1.1.2 of `ia/projects/ui-polish-master-plan.md`.
   - Acceptance: `MotionBlock` + `MotionEntry` types present; `UiTheme.motion` exposed w/ 6 semantic entries; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
   - Depends on: none (stage-internal: TECH-311 consumes these entries as asset defaults)
@@ -340,7 +315,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-311** — **DefaultUiTheme.asset defaults** — populate studio-rack + motion Inspector values
   - Type: technical / UI asset authoring
   - Files: `Assets/UI/Theme/DefaultUiTheme.asset`
-  - Spec: `ia/projects/TECH-311.md`
   - Notes: Populate `Assets/UI/Theme/DefaultUiTheme.asset` Inspector values for every new `studioRack` + `motion` field per `ia/specs/ui-design-system.md §7.1` dark-first palette. LED hues: green / amber / red triad. VU gradient: green → amber → red. Motion defaults: `moneyTick.durationSeconds = 0.28f`; `needleAttack = 0.08f`; `needleRelease = 0.40f`; `alertPulse`, `sparkleDuration`, `panelElevate` per exploration §Design Expansion. Stage 1.1 T1.1.3 of `ia/projects/ui-polish-master-plan.md`. Consumes schema from TECH-309 + TECH-310.
   - Acceptance: Every `studioRack` + `motion` field on `DefaultUiTheme.asset` has non-default Inspector value matching §7.1 dark-first palette; LED hues triad present; VU gradient correct; motion durations per above; `npm run validate:all` green.
   - Depends on: TECH-309 (StudioRackBlock schema); TECH-310 (MotionBlock schema)
@@ -348,7 +322,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-312** — **ui-design-system §1 + §1.5 token catalog** — normative studio-rack + motion rows
   - Type: documentation / reference spec
   - Files: `ia/specs/ui-design-system.md`
-  - Spec: `ia/projects/TECH-312.md`
   - Notes: Extend `ia/specs/ui-design-system.md` §1 (palette / spacing) w/ studio-rack token names + role. Extend §1.5 (motion) w/ motion token catalog. Every field in `StudioRackBlock` + `MotionBlock` cited normatively. Normative token names match `UiTheme` field names exactly (consumer rings read these by name). Link from §2 to anchor primitives-to-tokens mapping. Stage 1.1 T1.1.4 of `ia/projects/ui-polish-master-plan.md`. Source of record = `docs/ui-polish-exploration.md` §Design Expansion.
   - Acceptance: §1 extended w/ studio-rack token catalog subsection; §1.5 extended w/ motion token catalog; every `StudioRackBlock` + `MotionBlock` field present normatively; §2 anchor link added; `npm run validate:all` green.
   - Depends on: TECH-309 (StudioRackBlock schema — spec rows match field names); TECH-310 (MotionBlock schema)
@@ -356,7 +329,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-313** — **Glossary rows** — UiTheme token ring / Studio-rack token / Motion token
   - Type: documentation / glossary
   - Files: `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-313.md`
   - Notes: Add three rows to `ia/specs/glossary.md`: `UiTheme token ring` (extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). Each row cites `ia/specs/ui-design-system.md` §1 / §1.5 per terminology-consistency rule. Stage 1.1 T1.1.5 of `ia/projects/ui-polish-master-plan.md`. Locks vocabulary downstream steps reference.
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
@@ -368,7 +340,6 @@ Transform economy from "money goes up forever" → genuine city-builder sim w/ t
 - [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
   - Type: feature (new system)
   - Files: new `ServiceCoverageManager.cs`; `CityStats.cs`; `DemandManager.cs`; `GridManager.cs`; `GridPathfinder.cs`; `MiniMapController.cs`
-  - Spec: `ia/projects/FEAT-52.md`
   - Notes: Generic **service coverage** system: each service **building** has a coverage **radius** computed from the **road network**. **Cells** within coverage receive **happiness** and **desirability** bonuses; **cells** outside suffer penalties. Coverage gaps visible on **minimap** as danger zones. Framework for FEAT-11 (education), FEAT-12 (police), FEAT-13 (fire). Ships with at least one concrete service type (fire station).
   - Acceptance: per `ia/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
   - Depends on: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
@@ -376,7 +347,6 @@ Transform economy from "money goes up forever" → genuine city-builder sim w/ t
 - [ ] **FEAT-53** — **District / neighborhood** system
   - Type: feature (new system)
   - Files: new `DistrictManager.cs`; `Cell.cs` / `CellData.cs`; `CityStats.cs`; `EconomyManager.cs`; `MiniMapController.cs`; `UIManager.cs`; `GameSaveManager.cs`
-  - Spec: `ia/projects/FEAT-53.md`
   - Notes: Player-defined **districts** (contiguous **cell** regions with name and color). Per-**district** statistics: **population**, **happiness**, **zone** distribution, **density**, **tax** revenue. Optional per-**district** **tax** policy overrides. **Minimap** district overlay. Coordinates with FEAT-47 (**multipolar** **urban centroids**) — each **urban pole** naturally becomes a **district**.
   - Acceptance: per `ia/projects/FEAT-53.md` §8; districts persist across save/load; per-district stats and tax overrides functional; minimap district layer
   - Depends on: none (soft: FEAT-47 for multipolar coordination; **tax→demand** loop shipped — **managers-reference** **Demand (R / C / I)**)
@@ -420,7 +390,6 @@ Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-
 - [ ] **TECH-347** — BuildInfo ScriptableObject type (Stage 1.1 T1.1.1)
   - Type: feature
   - Files: `Assets/Scripts/Runtime/Distribution/BuildInfo.cs`
-  - Spec: `ia/projects/TECH-347.md`
   - Notes: Author BuildInfo SO per Design Expansion IP-3 — `[CreateAssetMenu]`, private serialized `version` / `gitSha` / `buildTimestamp` w/ defaults, public getters, editor-gated `WriteFields` under `#if UNITY_EDITOR`. Inert data model.
   - Acceptance: compiles; menu populates; `WriteFields` gated; `unity:compile-check` green.
   - Depends on: none
@@ -429,7 +398,6 @@ Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-
 - [ ] **TECH-348** — BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)
   - Type: feature
   - Files: `Assets/Resources/BuildInfo.asset`, `Assets/Resources/BuildInfo.asset.meta`
-  - Spec: `ia/projects/TECH-348.md`
   - Notes: Create `.asset` via Territory/BuildInfo menu (from T1.1.1 `[CreateAssetMenu]`); commit `.asset` + `.meta`; verify `Resources.Load<BuildInfo>("BuildInfo")` non-null. Defaults stay until Stage 1.2 writer stamps.
   - Acceptance: asset + meta committed; `Resources.Load` non-null; defaults match; `unity:compile-check` green.
   - Depends on: TECH-347
@@ -438,7 +406,6 @@ Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-
 - [ ] **TECH-349** — SemverCompare helper + EditMode truth-table tests (Stage 1.1 T1.1.3)
   - Type: feature
   - Files: `Assets/Scripts/Runtime/Distribution/SemverCompare.cs`, `Assets/Tests/EditMode/Distribution/SemverCompareTests.cs`
-  - Spec: `ia/projects/TECH-349.md`
   - Notes: Author static `Compare(string, string) → int` per IP-8 subset (MAJOR.MINOR.PATCH + optional `-PRERELEASE`). No external lib. Truth-table ≥6 cases — equal, major >, minor >, patch >, prerelease ordering, malformed → 0 fallback.
   - Acceptance: `Compare` handles M.m.p + prerelease; ≥6 EditMode cases green; malformed → 0; `unity:compile-check` + EditMode green.
   - Depends on: none
@@ -447,7 +414,6 @@ Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-
 - [ ] **TECH-350** — Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)
   - Type: documentation
   - Files: `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-350.md`
   - Notes: Append rows — **BuildInfo ScriptableObject**, **Release manifest (`latest.json`)**, **Update notifier**, **Unsigned installer tier**. Forward-ref Stage 2.1 / 2.2 / 2.3. Follow `ia/rules/terminology-consistency-authoring.md`.
   - Acceptance: four rows in alpha order; spec refs + forward-refs present; `validate:all` green.
   - Depends on: TECH-347
@@ -468,7 +434,6 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 - [ ] **TECH-305** — Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
   - Type: infrastructure / simulation signal types
   - Files: `Assets/Scripts/Simulation/Signals/SimulationSignal.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalProducer.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalConsumer.cs` (new)
-  - Spec: `ia/projects/TECH-305.md`
   - Notes: `SimulationSignal` enum w/ exactly 12 locked entries — `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`. `ISignalProducer.EmitSignals(SignalFieldRegistry)` + `ISignalConsumer.ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)` interfaces. Type surface only — no runtime wiring. City-sim depth Bucket 2 foundation.
   - Acceptance: All 3 files compile; enum has exactly 12 entries; interfaces match spec; `npm run unity:compile-check` clean; `npm run validate:all` clean.
   - Depends on: none
@@ -476,7 +441,6 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 - [ ] **TECH-306** — Add `SignalField` + `SignalMetadataRegistry` ScriptableObject (Stage 1.1 T1.1.2)
   - Type: infrastructure / simulation signal types
   - Files: `Assets/Scripts/Simulation/Signals/SignalField.cs` (new), `Assets/Scripts/Simulation/Signals/SignalMetadataRegistry.cs` (new); consumes `Assets/Scripts/Simulation/Signals/SimulationSignal.cs`
-  - Spec: `ia/projects/TECH-306.md`
   - Notes: `SignalField` — `float[,]` backing store; `Get`/`Set`/`Add`/`Snapshot`; clamp floor 0 on all writes. `SignalMetadataRegistry` SO — per-signal `diffusionRadius`, `decayPerStep`, `Vector2 anisotropy`, `rollupRule (Mean/P90)`. Consumes TECH-305 enum.
   - Acceptance: Both compile; floor clamp verified; `Snapshot()` returns independent copy; `npm run unity:compile-check` clean; `npm run validate:all` clean.
   - Depends on: TECH-305 (SimulationSignal enum)
@@ -484,7 +448,6 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 - [ ] **TECH-307** — Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)
   - Type: infrastructure / simulation signal MonoBehaviour
   - Files: `Assets/Scripts/Simulation/Signals/SignalFieldRegistry.cs` (new); consumes `SignalField.cs`, `SimulationSignal.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`
-  - Spec: `ia/projects/TECH-307.md`
   - Notes: MonoBehaviour; allocates one `SignalField` per `SimulationSignal` in `Awake` sized from `GridManager.gridWidth`/`gridHeight`; `GetField(SimulationSignal)` accessor; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback (invariant #4); resize method for map reload. Invariant #3 (no hot-path `FindObjectOfType`) + #6 (new MonoBehaviour, not added to `GridManager`).
   - Acceptance: Compiles; 12 fields allocated in Awake; `GetField` works; fallback present; no hot-path `FindObjectOfType`; `npm run unity:compile-check` + `validate:all` clean.
   - Depends on: TECH-305 (enum), TECH-306 (SignalField + SignalMetadataRegistry)
@@ -492,7 +455,6 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 - [ ] **TECH-308** — Author `ia/specs/simulation-signals.md` reference spec (Stage 1.1 T1.1.4)
   - Type: reference spec / simulation signal contract
   - Files: `ia/specs/simulation-signals.md` (new), `ia/specs/simulation-system.md` (link update), `ia/specs/glossary.md` (new rows)
-  - Spec: `ia/projects/TECH-308.md`
   - Notes: Signal inventory (12 entries: source / sink / rollup rule / cadence), diffusion physics (separable Gaussian, anisotropy, decay, clamp-floor-0), `ISignalProducer`/`ISignalConsumer` contract, rollup rule table (P90 for Crime + TrafficLevel; mean for rest), spec-gap closure note. Link from `ia/specs/simulation-system.md` §Tick execution order. Invariant #12 (permanent domain).
   - Acceptance: New spec present w/ 5 sections; 12 signal rows; rollup table correct; cross-link added; glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-305 (enum), TECH-306 (SignalField + registry types)
@@ -506,7 +468,6 @@ Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master
 - [ ] **TECH-331** — Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)
   - Type: infrastructure / data model
   - Files: `Assets/Scripts/Data/Utilities/UtilityKind.cs` (new), `ScaleTag.cs` (new), `PoolStatus.cs` (new)
-  - Spec: `ia/projects/TECH-331.md`
   - Notes: Three plain enums w/ XML doc per value. No runtime refs yet. Stage 1.1 Phase 1 of utilities-master-plan.
   - Acceptance: files compile clean via `unity:compile-check`; `validate:all` green.
   - Related: TECH-332, TECH-333, TECH-334
@@ -514,7 +475,6 @@ Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master
 - [ ] **TECH-332** — Add `PoolState` struct (Stage 1.1 T1.1.2)
   - Type: infrastructure / data model
   - Files: `Assets/Scripts/Data/Utilities/PoolState.cs` (new)
-  - Spec: `ia/projects/TECH-332.md`
   - Notes: Blittable struct (`net`, `ema`, `status`, two hysteresis counters). Default → Healthy + zeros. Stage 1.1 Phase 1.
   - Acceptance: compiles clean; blittable; `validate:all` green.
   - Depends on: TECH-331 (PoolStatus enum — hard gate)
@@ -523,7 +483,6 @@ Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master
 - [ ] **TECH-333** — Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)
   - Type: infrastructure / data model
   - Files: `Assets/Scripts/Data/Utilities/IUtilityContributor.cs` (new), `IUtilityConsumer.cs` (new)
-  - Spec: `ia/projects/TECH-333.md`
   - Notes: Two read-only interfaces — Kind, rate, Scale. Consumed by service + registry in later stages. Stage 1.1 Phase 2.
   - Acceptance: compile clean; XML doc; `validate:all` green.
   - Depends on: TECH-331 (enums — hard gate)
@@ -532,7 +491,6 @@ Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master
 - [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 T1.1.4)
   - Type: infrastructure / build
   - Files: `Assets/Scripts/Data/Utilities/Utilities.asmdef` (new, if used)
-  - Spec: `ia/projects/TECH-334.md`
   - Notes: Asmdef wiring OR confirm main-asm inclusion. Closes Stage 1.1 exit criteria. Stage 1.1 Phase 2.
   - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
   - Depends on: TECH-331, TECH-332, TECH-333 (all types exist — hard gate)
@@ -626,14 +584,12 @@ Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-
 - [ ] **TECH-316** — **Music** — Add Blip-Music mixer group (Stage 1.1 Phase 1)
   - Type: audio / mixer asset
   - Files: `Assets/Audio/BlipMixer.mixer`
-  - Spec: `ia/projects/TECH-316.md`
   - Notes: Stage 1.1 Phase 1 T1.1.1 of music-player orchestrator. Extend `BlipMixer.mixer` — add `Blip-Music` group under Master. Do NOT touch existing Blip-UI/World/Ambient groups.
   - Acceptance: New `Blip-Music` group visible under Master in Audio Mixer window; existing groups untouched.
 
 - [ ] **TECH-317** — **Music** — Expose MusicVolume + MasterVolume params (Stage 1.1 Phase 1)
   - Type: audio / mixer asset
   - Files: `Assets/Audio/BlipMixer.mixer`
-  - Spec: `ia/projects/TECH-317.md`
   - Notes: Stage 1.1 Phase 1 T1.1.2 of music-player orchestrator. Expose `MusicVolume` (→ Blip-Music) + `MasterVolume` (→ Master) dB params. Defaults 0 dB. `SfxVolume` untouched.
   - Acceptance: Exposed Parameters panel shows 3 entries: `MasterVolume`, `MusicVolume`, `SfxVolume`. Bindings correct.
   - Depends on: TECH-316 (Blip-Music group must exist before exposing MusicVolume param)
@@ -641,14 +597,12 @@ Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-
 - [ ] **TECH-318** — **Music** — Author MusicBootstrap constants (Stage 1.1 Phase 2)
   - Type: audio / C#
   - Files: `Assets/Scripts/Audio/Music/MusicBootstrap.cs`
-  - Spec: `ia/projects/TECH-318.md`
   - Notes: Stage 1.1 Phase 2 T1.1.3 of music-player orchestrator. 7 string consts (Master/Music volume params + keys; last-track id key; enabled key; first-run done key) + 2 default floats. No re-declaration of Blip `SfxVolume*` keys.
   - Acceptance: Consts compile; no key collision w/ Blip; `npm run unity:compile-check` green.
 
 - [ ] **TECH-319** — **Music** — MusicBootstrap.Awake shape (Stage 1.1 Phase 2)
   - Type: audio / C#
   - Files: `Assets/Scripts/Audio/Music/MusicBootstrap.cs`
-  - Spec: `ia/projects/TECH-319.md`
   - Notes: Stage 1.1 Phase 2 T1.1.4 of music-player orchestrator. MB scaffold mirror of `BlipBootstrap.cs`. `Instance` accessor, `DontDestroyOnLoad` Awake, PlayerPrefs → mixer SetFloat binding for Master + Music params. Invariant #4 — Inspector-placed.
   - Acceptance: Compiles; Awake binds 2 mixer params headless; null-mixer warn present; OnDestroy clears Instance.
   - Depends on: TECH-317 (mixer params must exist before SetFloat calls bind); TECH-318 (consts authored first)
@@ -656,7 +610,6 @@ Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-
 - [ ] **TECH-320** — **Music** — MusicBootstrap prefab creation (Stage 1.1 Phase 3)
   - Type: audio / prefab
   - Files: `Assets/Prefabs/Audio/MusicBootstrap.prefab`
-  - Spec: `ia/projects/TECH-320.md`
   - Notes: Stage 1.1 Phase 3 T1.1.5 of music-player orchestrator. New prefab w/ `MusicBootstrap` component; Inspector wires `blipMixer` → `BlipMixer.mixer`. No scene diff yet.
   - Acceptance: `.prefab` + `.meta` committed; Inspector ref wired.
   - Depends on: TECH-319 (MusicBootstrap component must exist before prefab can attach it)
@@ -664,7 +617,6 @@ Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-
 - [ ] **TECH-321** — **Music** — MainMenu scene placement + compile verify (Stage 1.1 Phase 3)
   - Type: audio / scene
   - Files: `Assets/Scenes/MainMenu.unity`
-  - Spec: `ia/projects/TECH-321.md`
   - Notes: Stage 1.1 Phase 3 T1.1.6 of music-player orchestrator. Place `MusicBootstrap.prefab` at `MainMenu.unity` root (sibling to `BlipBootstrap`). Compile verify + manual smoke — `Instance != null`, no null-mixer warn.
   - Acceptance: Scene diff committed; `unity:compile-check` green; smoke passes; invariant #4 satisfied.
   - Depends on: TECH-320 (prefab must exist before scene placement)
@@ -749,7 +701,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)
   - Type: bug
   - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on **simulation tick**), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the **simulation tick** or a shared event
-  - Spec: `ia/projects/BUG-48.md`
   - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first (see project spec; measurement tooling **task 8** in `docs/agent-tooling-verification-priority-tasks.md`). Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** water layer alignment shipped in archive; **FEAT-42** (optional **HeightMap** layer).
   - Depends on: none
 
@@ -766,7 +717,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **FEAT-03** — **Forest (coverage)** mode hold-to-place
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`
-  - Spec: `ia/projects/FEAT-03.md`
   - Notes: Currently requires click per **cell**. Allow continuous drag.
 
 - [ ] **FEAT-04** — Random **forest (coverage)** spray tool
@@ -782,7 +732,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-251** — Adopt Claude Opus 4.7 across agent lifecycle
   - Type: tech (agent tooling / IA)
   - Files: `.claude/agents/*.md` (11 subagents), `.claude/commands/*.md`, `.claude/output-styles/{verification-report,closeout-digest}.md`, `ia/skills/{master-plan-new,stage-decompose,project-spec-implement,project-spec-kickoff,verify-loop,close-dev-loop,ide-bridge-evidence}/SKILL.md`, `CLAUDE.md` §1 + §3, `docs/agent-led-verification-policy.md`, `ia/rules/agent-lifecycle.md`
-  - Spec: `ia/projects/TECH-251.md`
   - Notes: Opus 4.7 released 2026-04-16. Pricing flat ($5/$25 per 1M). Gains: +13% coding bench, 3× Rakuten-SWE-Bench prod task resolution, +10% review recall, -21% OfficeQA Pro errors, vision up to 2576px, loop resistance + tool-failure recovery + output self-verification. New `xhigh` effort level + `/ultrareview` slash cmd. Stricter literal instruction following — prompts may need retune. Tokenizer produces 1.0–1.35× more tokens. Model id `claude-opus-4-7`. **Scope:** smoke-test gate on one low-blast flow; doc drift fixes (`CLAUDE.md` §3 says verify-loop = Sonnet but frontmatter = Opus; "10 native subagents" vs 11 actual); wire `/ultrareview` into `/verify-loop` terminal step; adopt `xhigh` for `closeout` + `master-plan-new`; prompt retune pass on skill bodies with soft instructions; `spec-implementer` Opus 4.7 opt-in behind effort flag (default Sonnet); vision evidence extension in `ide-bridge-evidence`; 2-week cost monitoring window. **Out of scope:** global bulk frontmatter bump (alias `model: opus` auto-upgrades); 4.7 file-system memory API wiring; task budgets GA. Alias resolution at dispatch makes blanket version pin unnecessary — only pin versioned `claude-opus-4-7` where early lock-in required.
   - Acceptance: Smoke-test gate passes on pilot flow w/ caveman preamble + cardinality hints intact; `CLAUDE.md` §3 model column matches `.claude/agents/*.md` frontmatter + subagent count (11 not 10); `/ultrareview` terminal step wired into `/verify-loop`; `xhigh` effort applied to `closeout` + `master-plan-new`; skill body retune pass landed for `master-plan-new` + `stage-decompose` + `project-spec-implement`; `spec-implementer` 4.7 opt-in flag documented + default Sonnet preserved; `ide-bridge-evidence` SKILL captures 2576px evidence; 2-week cost log surfaces per-agent token deltas
   - Depends on: none
@@ -792,7 +741,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-13** — Remove obsolete **urbanization proposal** system (dead code, UI, models)
   - Type: refactor (cleanup)
   - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, **save data** if any
-  - Spec: `ia/projects/TECH-13.md`
   - Notes: The **urbanization proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / **urban growth rings** for **AUTO** roads and zoning. This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no **save data** breakage). Supersedes older proposal bugs — see archive.
 
 - [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
@@ -803,19 +751,16 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
   - Type: refactor
   - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`
-  - Spec: `ia/projects/TECH-02.md`
   - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
 
 - [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
   - Type: refactor
   - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
-  - Spec: `ia/projects/TECH-03.md`
   - Notes: **Building** costs, economic balance, **height generation** parameters, **sorting order** offsets (**type offsets**, **DEPTH_MULTIPLIER**, **HEIGHT_MULTIPLIER**), **pathfinding cost model** weights, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
 - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
   - Type: refactor
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
-  - Spec: `ia/projects/TECH-05.md`
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 *(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** + **TECH-552** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
@@ -840,7 +785,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-14** — Remove residual placeholder / test scripts
   - Type: refactor (cleanup)
   - Files: `CityManager.cs` (namespace-only stub), `TestScript.cs` (compile smoke test)
-  - Spec: `ia/projects/TECH-14.md`
   - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
 
 - [ ] **FEAT-11** — Education level / Schools

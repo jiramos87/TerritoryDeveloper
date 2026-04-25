@@ -6,9 +6,9 @@ slices_via: none
 ---
 # Project spec review — paste prompt (no Cursor Skill frontmatter)
 
-For chats where Cursor Skills not loaded. Authoritative MCP tool order: **[`ia/skills/project-spec-kickoff/SKILL.md`](../skills/project-spec-kickoff/SKILL.md)** (see **Tool recipe (territory-ia)**).
+For chats where Cursor Skills not loaded. Authoritative MCP tool order: **[`ia/skills/stage-authoring/SKILL.md`](../skills/stage-authoring/SKILL.md)** (see **Tool recipe (territory-ia)**).
 
-Replace `{SPEC_PATH}` with project spec (e.g. `ia/projects/FEAT-49.md`).
+Replace `{SPEC_PATH}` with project spec (e.g. ref `BACKLOG.md` row by issue id — flat task specs phased out post DB-primary refactor).
 
 ---
 
@@ -16,7 +16,7 @@ Review `@{SPEC_PATH}`. Ensure canonical glossary + reference-spec terms.
 Analyze goals; avoid negative impact on current subsystems unless spec accepts tradeoffs.
 Make `## 7. Implementation Plan` more concrete.
 
-Follow **Tool recipe (territory-ia)** in `ia/skills/project-spec-kickoff/SKILL.md` (order: `backlog_issue` → `invariants_summary` → `router_for_task` → `spec_section` → `glossary_discover` with **keywords as array** → `glossary_lookup` → `spec_outline` / `list_specs` if needed).
+Follow **Tool recipe (territory-ia)** in `ia/skills/stage-authoring/SKILL.md` (order: `backlog_issue` → `invariants_summary` → `router_for_task` → `spec_section` → `glossary_discover` with **keywords as array** → `glossary_lookup` → `spec_outline` / `list_specs` if needed).
 
 Material edits → update related IA: linked project specs, glossary rows, reference spec sections.
 

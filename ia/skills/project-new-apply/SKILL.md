@@ -1,15 +1,15 @@
 ---
-purpose: "Sonnet pair-tail: reads /project-new command args directly; reserves id + writes yaml + spec stub; runs materialize + validate:dead-project-specs; hands off to plan-author at N=1."
+purpose: "Sonnet pair-tail: reads /project-new command args directly; reserves id + writes yaml + spec stub; runs materialize + validate:dead-project-specs; hands off to stage-authoring at N=1."
 audience: agent
 loaded_by: skill:project-new-apply
 slices_via: none
 name: project-new-apply
 description: >
-  Sonnet pair-tail skill (seam #3). Reads args directly from /project-new command (no
+  Sonnet pair-tail skill. Reads args directly from /project-new command (no
   §Project-New Plan pair-head read). Runs reserve-id.sh, writes ia/backlog/{id}.yaml,
   writes ia/projects/{id}.md stub from project-spec-template, runs materialize-backlog.sh
   + validate:dead-project-specs. Single-issue path — no tuple iteration, no task-table flip.
-  Hands off to plan-author at N=1 for spec-body authoring (TECH-478 / T7.11).
+  Hands off to stage-authoring at N=1 for spec-body authoring.
   Triggers: "project-new-apply", "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}",
   "apply project new", "pair-tail project new", "materialize single issue".
   Argument order (explicit): TITLE first, ISSUE_TYPE second, PRIORITY third, NOTES optional.
@@ -26,7 +26,7 @@ phases:
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Sonnet pair-tail (seam #3). Reads `/project-new` command args verbatim (no Opus pair-head, no tuple list); reserves id, writes yaml, writes spec stub, materializes + validates. Never authors §1/§2/§4/§5/§7 beyond skeleton — plan-author writes spec body at N=1.
+**Role:** Sonnet pair-tail. Reads `/project-new` command args verbatim (no Opus pair-head, no tuple list); reserves id, writes yaml, writes spec stub, materializes + validates. Never authors §1/§2/§4/§5/§7 beyond skeleton — stage-authoring writes spec body at N=1.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Validation gate, §Escalation rule, §Idempotency requirement.
 
@@ -109,9 +109,9 @@ Bootstrap from `ia/templates/project-spec-template.md`. Populate:
 - `> **Status:** Draft`.
 - `> **Created:** {TODAY}`.
 - `> **Last updated:** {TODAY}`.
-- `## 1. Summary` — single skeleton paragraph: `{TITLE} — implementation TBD. Spec body authored by plan-author at N=1.`
-- `## 7. Implementation Plan` — placeholder line: `_pending — plan-author writes phases at N=1._`
-- Leave `§Plan Digest` (and any `§Plan Author` if present) at template defaults — `plan-author` → `plan-digest` chain fills executable digest at N=1.
+- `## 1. Summary` — single skeleton paragraph: `{TITLE} — implementation TBD. Spec body authored by stage-authoring at N=1.`
+- `## 7. Implementation Plan` — placeholder line: `_pending — stage-authoring writes phases at N=1._`
+- Leave `§Plan Digest` at template default — `stage-authoring` fills executable digest at N=1.
 - Leave all other template sections at their default placeholder text.
 
 Do NOT run `validate:dead-project-specs` here — runs in Phase 5.
@@ -138,12 +138,11 @@ Idempotency: overwrite if file exists.
    project-new-apply done. ISSUE_ID={ISSUE_ID}
    Filed: {ISSUE_ID} — {TITLE}
    Validators: exit 0.
-   Next: claude-personal "/author --task {ISSUE_ID}"
-   Then: claude-personal "/plan-digest --task {ISSUE_ID}"
+   Next: claude-personal "/stage-authoring --task {ISSUE_ID}"
    Then: claude-personal "/ship {ISSUE_ID}"
    ```
 
-   Hard rule: `plan-author` → `plan-digest` **before** `/ship` (populate `§Plan Digest`); `/ship` does not run those subagents — parity with `ia/skills/ship-stage/SKILL.md` Step 1.5 gate on stubs. Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
+   Hard rule: `stage-authoring` **before** `/ship` (populate `§Plan Digest`); `/ship` does not run authoring. Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
 
 ---
 
@@ -163,10 +162,10 @@ Sonnet pair-tail NEVER guesses. Immediate escalation triggers:
 
 ## Hard boundaries
 
-- Do NOT author §1/§2/§4/§5/§7 beyond skeleton — plan-author (TECH-478) writes spec body.
+- Do NOT author §1/§2/§4/§5/§7 beyond skeleton — stage-authoring writes spec body.
 - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
 - Do NOT edit `BACKLOG.md` directly — materialize-backlog.sh regenerates it.
-- Do NOT auto-invoke plan-author or plan-digest — applier stops at tail; handoff points user to `/author --task` then `/plan-digest --task` then `/ship`.
+- Do NOT auto-invoke stage-authoring — applier stops at tail; handoff points user to `/stage-authoring --task` then `/ship`.
 - Do NOT read `§Project-New Plan` tuples — this skill has no pair-head; reads args verbatim.
 - Do NOT update any orchestrator task table — single-issue path has no master-plan row.
 

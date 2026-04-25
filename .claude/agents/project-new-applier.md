@@ -27,14 +27,14 @@ Run `ia/skills/project-new-apply/SKILL.md` end-to-end for one new single-issue B
 2. **Phase 2 — Reserve id** — `bash tools/scripts/reserve-id.sh {PREFIX}` → capture stdout as `ISSUE_ID`. Non-zero exit or `flock` timeout → escalate. Idempotency: existing `ia/backlog/{ISSUE_ID}.yaml` with matching `title:` → reuse.
 3. **Phase 3 — Write `ia/backlog/{ISSUE_ID}.yaml`** — Compose yaml body (id, type, title, priority, status=open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Call `mcp__territory-ia__backlog_record_validate` pre-write; fix schema errors. Write to disk. Do NOT edit `BACKLOG.md` directly.
 4. **Phase 4 — Write `ia/projects/{ISSUE_ID}.md` stub** — Bootstrap from `ia/templates/project-spec-template.md`. Frontmatter: `purpose` (1-line summary), `audience: both`, `loaded_by: ondemand`, `slices_via: none`. `> **Status:** Draft`, `> **Created:** {TODAY}`, `> **Last updated:** {TODAY}`. §1 Summary skeleton (`{TITLE} — implementation TBD. Spec body authored by plan-author at N=1.`). §7 placeholder (`_pending — plan-author writes phases at N=1._`). Do NOT populate `§Plan Digest` here — `plan-digest` runs after `/author`. Do NOT run validator here.
-5. **Phase 5 — Post-write: materialize + validate + handoff** — `bash tools/scripts/materialize-backlog.sh` (non-zero → escalate); `npm run validate:dead-project-specs` (non-zero → escalate with exit code + stderr). Emit handoff: `project-new-apply done. ISSUE_ID={ISSUE_ID} Filed: {ISSUE_ID} — {TITLE} Validators: exit 0. Next: claude-personal "/author --task {ISSUE_ID}"` then `plan-digest` (subagent, `--task {ISSUE_ID}`) then `claude-personal "/ship {ISSUE_ID}"`. Hard rule: `/author` + `plan-digest` before `/ship` (gate: populated `§Plan Digest`). Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
+5. **Phase 5 — Post-write: materialize + validate + handoff** — `bash tools/scripts/materialize-backlog.sh` (non-zero → escalate); `npm run validate:dead-project-specs` (non-zero → escalate with exit code + stderr). Emit handoff: `project-new-apply done. ISSUE_ID={ISSUE_ID} Filed: {ISSUE_ID} — {TITLE} Validators: exit 0. Next: claude-personal "/stage-authoring --task {ISSUE_ID}"` then `claude-personal "/ship {ISSUE_ID}"`. Hard rule: `/stage-authoring` before `/ship` (gate: populated `§Plan Digest`). Anchor: `docs/agent-lifecycle.md` (single-task path after `/project-new`).
 
 # Hard boundaries
 
-- Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `plan-author` (TECH-478) writes spec body at N=1.
+- Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `stage-authoring` writes spec body at N=1.
 - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
 - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates it.
-- Do NOT auto-invoke `plan-author` or `plan-digest` — applier stops at tail; user runs `/author --task` then `plan-digest` before `/ship` (aligns `ship` / `ship-stage` Step 1.5 gate: `§Plan Digest`).
+- Do NOT auto-invoke `stage-authoring` — applier stops at tail; user runs `/stage-authoring --task` before `/ship` (gate: populated `§Plan Digest`).
 - Do NOT read `§Project-New Plan` tuples — no pair-head tuple list; reads args verbatim.
 - Do NOT update any orchestrator task table — single-issue path has no master-plan row.
 - Do NOT commit — user decides.

@@ -24,14 +24,15 @@ A `§Plan` payload = ordered list of tuples. One tuple = one atomic edit. Keys:
 
 Tuples execute in declared order. Sonnet pair-tail does NOT reorder, merge, or interpret — applies verbatim.
 
-## Pair seams (4)
+## Pair seams (3)
 
 | # | Pair-head (Opus) | §Plan section | Pair-tail (Sonnet) | Scope |
 |---|------------------|---------------|--------------------|-------|
-| 1 | `plan-review` | `§Plan Fix` (under Stage block in master plan) | `plan-applier` (Mode **plan-fix**) | Stage planning seam — review all Tasks of a Stage + master-plan header + invariants; emit fix tuples. Retired alias: ~~`plan-fix-apply`~~ (TECH-506). |
-| 2 | `stage-file-plan` | `§Stage File Plan` (under Stage block in master plan) | `stage-file-apply` | Stage materialization seam — reserve ids + author backlog yaml + project-spec stubs for all Tasks of one Stage. |
-| 3 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `plan-applier` (Mode **code-fix**) | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. Retired alias: ~~`code-fix-apply`~~ (TECH-506). |
-| 4 | `stage-closeout-plan` | `§Stage Closeout Plan` (under Stage block in master plan) | `plan-applier` (Mode **stage-closeout**) | Stage closeout seam — shared migration tuples + N BACKLOG archive ops + N spec deletes + N status flips; Stage-scoped, fires once per Stage (not per Task). Rolls up Stage Status → Final via R5. Retired alias: ~~`stage-closeout-apply`~~ (TECH-506). |
+| 1 | `plan-reviewer-mechanical` + `plan-reviewer-semantic` | `§Plan Fix` (under Stage block in master plan) | `plan-applier` (Mode **plan-fix**) | Stage planning seam — review all Tasks of a Stage + master-plan header + invariants; mechanical pair-head emits structural fix tuples, semantic pair-head emits goal/intent fix tuples. Retired alias: ~~`plan-fix-apply`~~ (TECH-506). |
+| 2 | `stage-file` planner pass | `§Stage File Plan` (under Stage block in master plan) | `stage-file` applier pass | Stage materialization seam — reserve ids + write `ia_tasks` rows + author task-body stubs for all Tasks of one Stage (DB-backed post Step 6/9.x refactor). |
+| 3 | `code-review` | `§Code Fix Plan` (in DB-backed task body via `task_spec_section`) | `plan-applier` (Mode **code-fix**) | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. Retired alias: ~~`code-fix-apply`~~ (TECH-506). |
+
+**Stage closeout** (former seam #4) is no longer a pair seam. Closeout runs inline in `/ship-stage` Pass B via `stage_closeout_apply` MCP — single call applies shared migration tuples + N archive ops + N status flips + N id-purge ops in one pass. Rolls up Stage Status → Final via R5. No persisted `§Plan` tuple list; no Sonnet pair-tail. Retired aliases: ~~`stage-closeout-plan`~~, ~~`stage-closeout-apply`~~, ~~`plan-applier` Mode stage-closeout~~ (TECH-506 collapse).
 
 ## Stage-scoped non-pair stages
 
@@ -39,9 +40,8 @@ Some Opus Stage-scoped stages have no Sonnet pair-tail — one Opus bulk call wr
 
 | Stage | Opus output | Scope | Notes |
 |-------|-------------|-------|-------|
-| `plan-author` | `§Plan Author` section (4 sub-sections) per Task spec — **ephemeral** (dropped by `plan-digest`) | Bulk authoring across N Task specs of a Stage in one Opus pass | Non-pair. Absorbs retired `spec-enrich` canonical-term fold. Fires after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. §Plan Author is intermediate — `plan-digest` consumes + drops it in the same write pass (Q5 2026-04-22). |
-| `plan-digest` | `§Plan Digest` section (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps) per Task spec + aggregate at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` | Mechanizes §Plan Author across N Task specs of a Stage in one Opus pass | Non-pair (Q1 revised 2026-04-22: always-on). Runs after `plan-author`, before `plan-reviewer`. 9-point rubric enforced externally via `plan_digest_lint`; cap=1 retry; second failure escalates to user. Two modes: `stage` (live) + `audit` (flag-gated scaffold on `PLAN_DIGEST_AUDIT_MODE=1`). |
-| `opus-audit` | `§Audit` paragraph per Task spec | Bulk post-verify audit across N Task specs of a Stage in one Opus pass | Non-pair. Feeds `stage-closeout-plan` (seam #4 head) at Stage end. |
+| `stage-authoring` | `§Plan Digest` section (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps) per Task spec — DB sole source via `task_spec_section_write` MCP | Bulk authoring across N Task specs of a Stage in one Opus pass — direct §Plan Digest (no §Plan Author intermediate) | Non-pair. Absorbs canonical-term fold. Fires after `stage-file` applier pass (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. 9-point `plan_digest_lint` rubric runs per Task; cap=1 retry; second failure escalates. |
+| `opus-audit` | `§Audit` paragraph per Task spec | Bulk post-verify audit across N Task specs of a Stage in one Opus pass | Non-pair. Feeds `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) at Stage end. |
 
 ## Tier 2 bundle reuse
 
@@ -49,11 +49,10 @@ One `cache_block` is assembled per Stage by `domain-context-load` Phase N and st
 
 | Surface | Invoke once per Stage | Reuse `cache_block` |
 |---------|-----------------------|---------------------|
-| `stage-file-plan` Phase 0 | Yes — Stage-start | All Tasks in Phase 3/4 |
-| `plan-author` Phase 0 | Yes — Stage-start | All N specs authored in bulk |
-| `plan-digest` Phase 0 | No — reuses cache_block from `plan-author` / orchestrator | All N specs digested in bulk |
+| `stage-file` planner Phase 0 | Yes — Stage-start | All Tasks in Phase 3/4 |
+| `stage-authoring` Phase 0 | Yes — Stage-start | All N specs authored + digested in bulk |
 | `opus-audit` Phase 0 | Yes — Stage-start | All N audit paragraphs |
-| `stage-closeout-plan` Phase 0 | Yes — Stage-start | All closeout tuples |
+| `/ship-stage` Pass B (`stage_closeout_apply` MCP) | Inline (no separate Phase 0) | Single MCP call covers all closeout ops |
 
 `cache_block` shape: `{content: string, cache_control: {"type":"ephemeral","ttl":"1h"}, token_estimate: number}`.
 
@@ -64,7 +63,7 @@ One `cache_block` is assembled per Stage by `domain-context-load` Phase N and st
 
 ## Seam #2 — `§Stage File Plan` tuple shape (extended)
 
-Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape. The `stage-file-apply` pair-tail reads these fields directly; the generic `operation` / `target_path` / `target_anchor` / `payload` keys are NOT used for seam #2.
+Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape. The `stage-file` applier pass reads these fields directly; the generic `operation` / `target_path` / `target_anchor` / `payload` keys are NOT used for seam #2.
 
 | Key | Type | Rules |
 |-----|------|-------|
@@ -76,7 +75,7 @@ Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape.
 | `related` | string[] | Sibling task ids within same Stage. May be empty. |
 | `stub_body` | object | Sub-fields: `summary` (§1), `goals` (§2.1), `systems_map` (§4.2), `impl_plan_sketch` (§7). Applier writes these into spec stub verbatim. |
 
-Pair skills: [`stage-file-plan/SKILL.md`](../skills/stage-file-plan/SKILL.md) (head) · [`stage-file-apply/SKILL.md`](../skills/stage-file-apply/SKILL.md) (tail) · [`stage-compress/SKILL.md`](../skills/stage-compress/SKILL.md) (Compress mode cold path).
+Pair skills: [`stage-file/SKILL.md`](../skills/stage-file/SKILL.md) (merged planner + applier passes — DB-backed post Step 6 collapse).
 
 ## Validation gate
 
@@ -86,7 +85,8 @@ After applying all tuples, Sonnet pair-tail MUST run the validator appropriate t
 |------|-----------|
 | 1, 2 | `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` |
 | 3 | `npm run verify:local` (or stage-appropriate Path A) |
-| 4 | `bash tools/scripts/materialize-backlog.sh` + `npm run validate:all` (see [`plan-applier/SKILL.md`](../skills/plan-applier/SKILL.md) Mode stage-closeout) |
+
+Stage closeout (former seam #4) runs `npm run validate:all` inline within `/ship-stage` Pass B after `stage_closeout_apply` MCP returns — see [`ship-stage/SKILL.md`](../skills/ship-stage/SKILL.md).
 
 On non-zero exit: pair-tail STOPS, returns control to Opus pair-head with `{exit_code, stderr, failing_tuple_index}`. Opus revises the `§Plan`; Sonnet re-applies from scratch (idempotency clause guarantees safety).
 
@@ -118,7 +118,6 @@ Re-running an applied `§Plan` from scratch = exit 0 + zero diff. This unblocks 
 - `ia/rules/project-hierarchy.md` — Stage/Task lifecycle the pair seams operate on.
 - `ia/rules/orchestrator-vs-spec.md` — status flip matrix; pair-tails (esp. seam 2) flip status per R1/R2.
 - `ia/templates/project-spec-template.md` — defines §Plan Digest / §Audit / §Code Review / §Code Fix Plan section anchors.
-- `ia/templates/master-plan-template.md` — defines §Stage File Plan / §Plan Fix / §Stage Closeout Plan section anchors.
-- `ia/skills/plan-author/SKILL.md` — Stage-scoped bulk non-pair (fold of retired spec-enrich).
-- `ia/skills/plan-digest/SKILL.md` — Stage-scoped bulk non-pair; mechanizes §Plan Author into §Plan Digest (Q1 revised 2026-04-22 always-on).
+- `ia/templates/master-plan-template.md` — defines §Stage File Plan / §Plan Fix / §Stage Audit section anchors (§Stage Closeout Plan retired — closeout inline in `/ship-stage` Pass B).
+- `ia/skills/stage-authoring/SKILL.md` — Stage-scoped bulk non-pair; authors §Plan Digest direct (absorbed retired `plan-author` + `plan-digest` pair + `spec-enrich` canonical-term fold).
 - `ia/rules/plan-digest-contract.md` — 9-point rubric enforced by `plan_digest_lint`.

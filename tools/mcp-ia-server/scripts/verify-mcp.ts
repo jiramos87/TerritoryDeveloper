@@ -107,7 +107,6 @@ async function main(): Promise<void> {
     "plan_digest_scan_for_picks",
     "plan_digest_lint",
     "plan_digest_gate_author_helper",
-    "plan_digest_compile_stage_doc",
     "project_spec_journal_search",
     "project_spec_journal_get",
     "project_spec_journal_update",

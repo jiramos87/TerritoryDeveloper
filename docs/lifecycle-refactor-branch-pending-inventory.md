@@ -45,7 +45,7 @@ State captured at 2026-04-19 via `git status --short`. Commits as part of Stage 
 | Stage 8 closeout residue | `ia/backlog-archive/TECH-485.yaml`, `TECH-486.yaml`, `TECH-487.yaml`, `TECH-488.yaml` | Archived dry-run task records | Commit during Stage 9 ship |
 | Stage 8 artifacts | `docs/progress.html`, `ia/state/lifecycle-refactor-migration.json`, `ia/state/id-counter.json`, `ia/projects/lifecycle-refactor-master-plan.md` | Post-T8.4 M7 flip + progress regen + Stage 9/10 plan append | Commit during Stage 9 ship |
 | Stage 9 filed stubs | `ia/backlog/TECH-489..493.yaml` (5) + `ia/projects/TECH-489..492.md` (4) | Stage 9 tasks already filed via stage-file | Commit during Stage 9 ship |
-| Stage 9 stub gap | `ia/projects/TECH-493.md` (missing — yaml exists, spec stub not created) | Follow-up stub for ship-stage chain-journal | Create stub during Stage 9 T9.1 or treat as out-of-plan |
+| Stage 9 stub gap | **TECH-493** spec stub (post Step 9.5 flat specs deleted; DB-backed `ia_tasks` row source of truth) | Follow-up stub for ship-stage chain-journal | Create stub during Stage 9 T9.1 or treat as out-of-plan |
 | New doc | `docs/lifecycle-refactor-stage-8-dry-run-findings.md` | 12 findings + fix table + dispatch prompt | Commit during Stage 9 ship |
 | New doc | `docs/lifecycle-refactor-branch-pending-inventory.md` (this file) | Branch-pending tracker | Commit during Stage 9 ship |
 

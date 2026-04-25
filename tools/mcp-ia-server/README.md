@@ -130,6 +130,10 @@ All 8 read tools hit `ia_*` tables via a singleton `pg.Pool`. Pool guarded by `p
 | **`journal_append`** | Append discriminated-union event to `ia_ship_stage_journal`. Canonical journal surface for agent runs. Validates `session_id` / `phase` / `payload_kind` non-empty + `payload` is non-null non-array object. Body shape of `payload` is trust-but-document. |
 | **`fix_plan_write`** | Write fix-plan tuples for `(task_id, round)`. Deletes prior **unapplied** tuples for same key first (rewrite semantics), then inserts new tuples with increasing `tuple_index`. Applied tuples (`applied_at IS NOT NULL`) are preserved for 30-day TTL soft-delete. |
 | **`fix_plan_consume`** | Mark all unapplied tuples for `(task_id, round)` as applied (stamps `applied_at = now()`). Idempotent — re-run returns `consumed=0` once all are applied. |
+| **`master_plan_render`** | DB-backed: return master plan preamble (verbatim) + per-stage rendered markdown blocks (heading + status + objective + exit + tasks). Replaces filesystem reads of `ia/projects/{slug}/index.md` and `stage-X.Y-*.md`. Optional `include_change_log` adds latest N change log entries (DESC by ts). |
+| **`stage_render`** | DB-backed: render one stage block as markdown (heading + status + objective + exit + tasks table) plus structured fields. Replaces filesystem reads of `ia/projects/{slug}/stage-X.Y-*.md`. |
+| **`master_plan_preamble_write`** | DB-backed: replace the verbatim preamble blob for a master plan (everything-above-`## Stages`). Optional `change_log` arg appends a structured history row in the same tx. Replaces direct edits to `ia/projects/{slug}/index.md`. |
+| **`master_plan_change_log_append`** | DB-backed: append one append-only history row to `ia_master_plan_change_log`. Replaces manual edits to the `Change log` sections previously scattered through index.md / stage-*.md files. |
 
 All 9 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`). Pool guarded by `poolOrThrow()` → `IaDbUnavailableError`. Arg-validation failures raised as `IaDbValidationError`. Tool-boundary error contract: `db_unconfigured` (pool missing), `invalid_input` (bad enum / missing fk / empty required field / non-terminal stage closeout), `db_error` (bare exception fallthrough). Round-trip + concurrency coverage: `tests/ia-db/mutations.test.ts`.
 
@@ -143,13 +147,12 @@ All 9 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`). 
 | **`plan_digest_scan_for_picks`** | Lint-only hand-wavy-phrase detector | ≤20 findings |
 | **`plan_digest_lint`** | 9-point rubric gate (`ia/rules/plan-digest-contract.md`) | ≤20 failures |
 | **`plan_digest_gate_author_helper`** | Canonical gate-command suggester per edit tuple | 1 line |
-| **`plan_digest_compile_stage_doc`** | Stitch per-Task §Plan Digest slices into `docs/implementation/<slug>-stage-<id>-plan.md` | Compiled doc size |
 | **`mechanicalization_preflight_lint`** | Score a pair-head artifact for mechanicalization (anchors, picks, invariants, validators, escalation). Returns `{pass, score, findings}` | ≤10 findings |
 | **`verify_classify`** | Classify a verify-loop command failure by exit code + stderr into a named enum with `suggested_recovery` | 1 enum + recovery |
 | **`issue_context_bundle`** | Composite one-shot bundle: backlog issue + router hits + glossary hits for a single `issue_id` | ≤30 items |
 | **`lifecycle_stage_context`** | Composite Stage-level bundle: stage block + task list + glossary hits for plan-reviewer-mechanical | Stage block size |
 
-All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative. Mode `audit` of `plan_digest_compile_stage_doc` is flag-gated on `PLAN_DIGEST_AUDIT_MODE=1` (scaffold, not wired into any chain).
+All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative.
 
 **Examples (conceptual):**
 
