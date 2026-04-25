@@ -209,3 +209,59 @@ ia/projects/{slug}-master-plan/
 - Token capture recipes: [`docs/chain-execution-token-analysis.md`](chain-execution-token-analysis.md).
 - Canonical optimization roadmap: [`docs/lifecycle-token-optimization-audit.md`](lifecycle-token-optimization-audit.md).
 - Canonical master-plan shape: [`docs/MASTER-PLAN-STRUCTURE.md`](../docs/MASTER-PLAN-STRUCTURE.md).
+
+
+---
+
+## 8. IA dev DB-primary refactor — closing retrospective (2026-04-25)
+
+The `feature/ia-dev-db-refactor` branch (12 steps, design `docs/master-plan-foldering-refactor-design.md` → implementation `docs/ia-dev-db-refactor-implementation.md`) flips the IA system from filesystem-primary (yaml under `ia/backlog/` + flat task specs under `ia/projects/`) to **Postgres-primary** (`ia_*` schema; specs persist in `ia_tasks.body` with `body_tsv` GIN index; backlog views regen from DB; flat specs deleted). This section closes the friction signal that drove the refactor.
+
+### 8.1 Pre- vs post-refactor comparison
+
+| Surface | Pre-refactor (filesystem-primary) | Post-refactor (DB-primary) |
+|---|---|---|
+| **Source of truth** | `ia/backlog/{ID}.yaml` + `ia/projects/{ID}.md` (flat) + `ia/projects/{slug}-master-plan.md` | `ia_tasks` row (id + body) + `ia_master_plans` + `ia_stages` |
+| **Id assignment** | `tools/scripts/reserve-id.sh` + `flock` on `id-counter.json` | Per-prefix Postgres sequences via `task_insert` MCP |
+| **BACKLOG.md regen** | `materialize-backlog.sh` parses yaml | `materialize-backlog-from-db.mjs` reads `raw_markdown` column (byte-faithful) |
+| **Spec authoring** | `plan-author` (Opus bulk) → `plan-digest` (Opus mechanizer) Sonnet pair-tail | `stage-authoring` single Opus pass writes §Plan Digest direct via `task_spec_section_write` MCP |
+| **Stage closeout** | `stage-closeout-planner` (Opus) → `stage-closeout-applier` (Sonnet) pair | `stage_closeout_apply` MCP tool inline in `ship-stage` Phase 7 |
+| **Per-task commits** | One `feat({id}):` commit per task in Pass A | Single stage commit `feat({slug}-stage-X.Y):` covers all tasks (E13) |
+| **Resume gate** | git scan for `feat(id):` / `fix(id):` regex | DB query on `task_state` + `task_status` enum |
+| **History audit** | None — overwriting a spec lost prior content | `ia_task_spec_history` row per `task_spec_section_write` (actor / change_reason / git_sha) |
+| **FTS over specs** | `grep -r ia/projects/` | `task_spec_search` MCP using `body_tsv` GIN + `websearch_to_tsquery` + `ts_headline` |
+| **Web dashboard** | None | Next.js `/ia` routes + 5 API routes + 3 server-component pages |
+| **Snapshot strategy** | None (yaml + .md were the snapshot) | Daily split: 1.28 MB diffable plain SQL + 450 KB compressed binary |
+
+### 8.2 Friction categories — what shrank, what shifted
+
+- **`staleness` (was top category)** — refactor eliminates two stale-spec failure modes: (1) yaml `id:` field drift vs filename — now structurally impossible (DB sequence + PK); (2) BACKLOG.md row vs spec-body skew — collapsed by `raw_markdown` round-trip + `materialize-backlog-from-db.mjs` byte-faithful regen.
+- **`digest-miss`** — `stage-authoring` skill collapses the two-step author→digest into one Opus pass (B6); §Plan Digest is now the only authored section per design D8. Aggregate `docs/implementation/{slug}-stage-X.Y-plan.md` doc dropped (was duplication source).
+- **`token-bloat`** — flat task specs (~600+ lines each at peak) now live in `ia_tasks.body` and load on demand via `task_spec_section` slice. ~137 flat specs deleted in Step 9.5; project folders deleted in Step 9.6.11.
+- **`pair-tail-thrash` (NEW shifted category)** — three retired pair-tail seams (`stage-closeout-applier`, `code-fix-applier`, `plan-fix-applier`) collapsed into single `plan-applier` skill (576 → ~180 lines, single seam #1 plan-fix mode survives — `plan-review` still emits §Plan Fix tuples). Two seams (`stage-closeout-applier`, `code-fix-applier`) absorbed inline by `ship-stage` per E14 (critical fix in place, cap=1) + C10 (`stage_closeout_apply` MCP).
+- **`commit-noise` (NEW shifted category)** — per-task commit ceremony retired (E13). Stage-end single commit covers Pass A diffs + code-review fixes + closeout `git mv`. Reduces ~5–10× commit volume per stage.
+
+### 8.3 New friction surfaces introduced (followup work)
+
+- **`validate:dead-project-specs` red after Step 9.5 flat-spec deletion** — durable docs (`docs/implementation/grid-asset-visual-registry-stage-3.3-plan.md`, `docs/architecture-audit-change-list-2026-04-22.md`, `docs/unity-agent-bridge-master-plan-handoff.md`, BACKLOG.md row anchor lines for closed-but-not-archived issues) reference deleted flat specs. Refactor branch ships with this gate red; repaint paths to BACKLOG.md by id or restore archive shape. Followup ticket filed.
+- **Web dashboard architectural deviation** — Step 10 spec called for Next.js routes proxying through MCP read tools. Subprocess spawn per request would block; chose direct pg via `getSql()` lazy singleton matching existing catalog API pattern. MCP-as-HTTP-bridge or per-request worker pool deferred to followup.
+- **Snapshot scheduling not automated** — `npm run db:snapshot` runs manually per dev session. Local cron vs GitHub Actions schedule deferred to followup ticket; binary size budget revisit at >10 MB triggers LFS decision.
+- **`mechanicalization_preflight_lint` advisory hatch scope** — Step 7 self-smoke surfaced TECH-776 hatch scope-expansion: hatch covers `picks` field but not `validators` field; `tupleCount` regex matches across whole spec body, not §Plan Digest section only. Logged in Step 7 commit, deferred here.
+- **MCP schema staleness during live-session subagent dispatch** — Steps 6 + 7 self-smokes blocked dispatching subagents that referenced new MCP tools (server caches schema at session start). Production runs after MCP-host restart will work; documented in invariants. Pattern to watch: any future MCP tool added to a skill that's invoked by an in-flight subagent in the same session.
+
+### 8.4 What this enables
+
+- **Live dashboard** — `/ia` renders plan progress + change log + FTS over spec bodies in real time (no static-site regen step).
+- **Body history audit** — every `task_spec_section_write` snapshots prior body with `actor` / `change_reason` / `git_sha`. Enables retroactive "who changed §Plan Digest of TECH-X and why" queries.
+- **Concurrency-safe id assignment** — parallel `task_insert` calls hit per-prefix DB sequence, no advisory lock dance.
+- **Single-commit stage flow** — fewer commits to scan for ship history; resume gate is a DB query, not git archaeology.
+- **Lighter spec footprint** — flat specs (~137) gone; `ia/projects/` is an empty parent dir at this point. New specs land directly in DB via `task_insert` body field.
+
+### 8.5 Sequencing for the next quarter
+
+1. **Snapshot CI cadence** — file ticket: GitHub Action on schedule (daily) commits `ia/state/db-snapshot-*.{sql,dump}` to `chore/db-snapshot-{date}` branch + opens PR for review (or auto-merges if smoke green).
+2. **`validate:dead-project-specs` repaint** — file ticket: rewrite stale durable doc references to BACKLOG.md anchor lines or DB-id-only refs.
+3. **Web dashboard MCP transport revisit** — file ticket: evaluate per-request MCP HTTP bridge vs in-process MCP client for Next.js routes.
+4. **`mechanicalization_preflight_lint` hatch scope-expansion** — file ticket (TECH-776 follow-up): widen hatch to cover `validators` field + scope `tupleCount` regex to §Plan Digest section only.
+5. **Per-prefix sequence drift audit** — `tech_id_seq` advanced from 817 to ~880 during refactor; sequence gaps from rollback (e.g. TECH-859 lost in Step 6 self-smoke) are fine — `nextval` doesn't replay. Periodic audit script to confirm no id collisions.
+
