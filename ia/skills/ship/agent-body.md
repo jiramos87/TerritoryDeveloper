@@ -1,22 +1,3 @@
----
-name: ship
-description: Standalone single-task ship pipeline. Four mechanical steps in order: (1) author §Plan Digest via stage-authoring --task, (2) implement via spec-implementer, (3) verify-loop with MAX_ITERATIONS=2, (4) close via DB status walk (pending → implemented → verified → done → archived). Standalone-tasks only — task must have master_plan_id IS NULL. No code review. No audit. No commit. No master-plan handoff. Stage-attached tasks must use /ship-stage instead. Triggers: "/ship {ISSUE_ID}", "ship task", "ship standalone". Argument: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9).
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__task_state, mcp__territory-ia__task_bundle, mcp__territory-ia__task_spec_body, mcp__territory-ia__task_spec_section, mcp__territory-ia__task_spec_section_write, mcp__territory-ia__task_status_flip, mcp__territory-ia__lifecycle_stage_context, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__plan_digest_resolve_anchor, mcp__territory-ia__plan_digest_render_literal, mcp__territory-ia__plan_digest_scan_for_picks, mcp__territory-ia__plan_digest_lint, mcp__territory-ia__plan_digest_gate_author_helper, mcp__territory-ia__mechanicalization_preflight_lint, mcp__territory-ia__unity_compile, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__verify_classify, mcp__territory-ia__journal_append
-model: opus
-reasoning_effort: high
----
-
-## Stable prefix (Tier 1 cache)
-
-> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
-
-@ia/skills/_preamble/stable-block.md
-
-Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
-
-@.claude/agents/_preamble/agent-boot.md
-<!-- skill-tools:body-override -->
-
 # Mission
 
 Run [`ia/skills/ship/SKILL.md`](../../ia/skills/ship/SKILL.md) end-to-end for `$ARGUMENTS`. Single-task standalone ship pipeline: author digest → implement → verify-loop → close (DB status walk). 6 phases (Resolve task + standalone gate → Author §Plan Digest → Implement → Verify-loop → Close → Hand-off).

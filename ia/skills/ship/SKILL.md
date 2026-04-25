@@ -1,9 +1,9 @@
 ---
+name: ship
 purpose: "Single-task standalone ship pipeline. Four mechanical steps: author digest → implement → verify-loop → close. No master plan, no code review, no audit, no commit."
 audience: agent
 loaded_by: skill:ship
 slices_via: none
-name: ship
 description: >
   Standalone single-task ship pipeline. Four mechanical steps in order:
   (1) author §Plan Digest via stage-authoring --task, (2) implement via
@@ -21,6 +21,61 @@ phases:
   - "Verify-loop"
   - "Close (DB status walk)"
   - "Hand-off"
+triggers:
+  - "/ship {ISSUE_ID}"
+  - "ship task"
+  - "ship standalone"
+argument_hint: "{ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9)"
+model: opus
+reasoning_effort: high
+tools_role: standalone-pipeline
+tools_extra:
+  - mcp__territory-ia__backlog_issue
+  - mcp__territory-ia__task_state
+  - mcp__territory-ia__task_bundle
+  - mcp__territory-ia__task_spec_body
+  - mcp__territory-ia__task_spec_section
+  - mcp__territory-ia__task_spec_section_write
+  - mcp__territory-ia__task_status_flip
+  - mcp__territory-ia__lifecycle_stage_context
+  - mcp__territory-ia__router_for_task
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__spec_section
+  - mcp__territory-ia__spec_sections
+  - mcp__territory-ia__list_rules
+  - mcp__territory-ia__rule_content
+  - mcp__territory-ia__invariants_summary
+  - mcp__territory-ia__invariant_preflight
+  - mcp__territory-ia__glossary_discover
+  - mcp__territory-ia__glossary_lookup
+  - mcp__territory-ia__plan_digest_verify_paths
+  - mcp__territory-ia__plan_digest_resolve_anchor
+  - mcp__territory-ia__plan_digest_render_literal
+  - mcp__territory-ia__plan_digest_scan_for_picks
+  - mcp__territory-ia__plan_digest_lint
+  - mcp__territory-ia__plan_digest_gate_author_helper
+  - mcp__territory-ia__mechanicalization_preflight_lint
+  - mcp__territory-ia__unity_compile
+  - mcp__territory-ia__unity_bridge_command
+  - mcp__territory-ia__unity_bridge_get
+  - mcp__territory-ia__findobjectoftype_scan
+  - mcp__territory-ia__verify_classify
+  - mcp__territory-ia__journal_append
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - destructive-op confirmations
+hard_boundaries:
+  - "Standalone-tasks only — stage-attached → /ship-stage handoff"
+  - "No code review / audit / commit / master-plan task-row sync"
+  - "MAX_ITERATIONS=2 for verify-loop (locked)"
+  - "Sequential phase dispatch — no parallel"
+  - "Idempotent on re-entry — Phase 1 readiness skip + Phase 4 status-walk no-ops"
+  - "DB-only closeout — no filesystem ops, no stage_closeout_apply"
+caller_agent: ship
 ---
 
 # Ship skill — single-task standalone pipeline
