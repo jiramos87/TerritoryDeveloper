@@ -13,7 +13,7 @@ model: haiku
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
-Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in `ia/skills/plan-applier/SKILL.md` frontmatter `phases:`, write one stderr line `⟦PROGRESS⟧ plan-applier {phase_index}/{phase_total} — {phase_name}`.
+@.claude/agents/_preamble/agent-boot.md
 
 # Mission
 

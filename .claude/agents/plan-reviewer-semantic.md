@@ -7,6 +7,8 @@ model: sonnet
 
 Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads.
 
+@.claude/agents/_preamble/agent-boot.md
+
 # Mission
 
 Run semantic drift scan (checks 1–2) from `ia/skills/plan-review-semantic/SKILL.md` over Stage Task specs. Reads `plan-reviewer-mechanical` output bundle as input context. Emits `§Plan Fix — SEMANTIC` tuple appendix per `ia/rules/plan-apply-pair-contract.md`.

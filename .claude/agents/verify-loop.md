@@ -10,7 +10,7 @@ Follow `caveman:caveman` for the markdown summary after the JSON Verification bl
 
 Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.
 
-Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+@.claude/agents/_preamble/agent-boot.md
 
 # Mission
 

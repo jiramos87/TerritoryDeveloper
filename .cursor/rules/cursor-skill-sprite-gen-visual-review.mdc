@@ -1,0 +1,8 @@
+---
+description: "Regenerate sprite-gen PNG variants from a spec under `tools/sprite-gen/specs/` (or a preset via a spec that references it), auto-review each PNG in-agent for tile-diamond containment + visible variation, and hand off to a human verification gate with absolute paths + per-variant verdict. Triggers: \"sprite-gen visual review\", \"/sprite-gen-review {spec-id}\", \"review sprite variants\", \"verify building inside tile\", \"check vary block output\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/sprite-gen-visual-review/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

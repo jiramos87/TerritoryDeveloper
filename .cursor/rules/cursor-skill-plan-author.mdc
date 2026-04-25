@@ -1,8 +1,0 @@
----
-description: "Opus Stage-scoped bulk spec-body authoring stage. Invoked once per Stage after `stage-file-apply` writes N spec stubs (multi-task path), or once at N=1 after `project-new-apply` (single-task path). Reads ALL N spec stubs + Stage header + shared MCP bundle + invariants + pre-loaded glossary in one bulk pass; writes ALL N §Plan Author sections (4 sub-sections each) in one Opus round. Canonical-term fold absorbs retired spec-enrich. Non-pair — no Sonnet tail. Triggers: \"/author {MASTER_PLAN_PATH} {STAGE_ID}\", \"plan author\", \"stage bulk spec enrich\", \"author stage task specs\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/plan-author/SKILL.md
-
-When this skill invokes MCP tools, follow its Tool recipe order exactly.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

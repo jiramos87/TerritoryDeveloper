@@ -1,5 +1,5 @@
 ---
-description: "Unified Sonnet literal-applier replacing retired plan-fix-apply, code-fix-apply, stage-closeout-apply. Dispatch by invocation mode: (1) §Plan Fix under master-plan Stage — validate:master-plan-status + validate:backlog-yaml; (2) §Code Fix Plan in Task spec — verify:local or validate:all + 1-retry bound; (3) §Stage Closeout Plan — materialize-backlog + validate:all + R5 rollup. Triggers: \"/plan-fix-apply\", \"/code-fix-apply\", \"/closeout\" tail halves, \"plan-applier\", \"apply §Plan tuples\"."
+description: "Sonnet literal-applier for §Plan Fix tuples emitted by the plan-review pair-head. Validation gate: validate:master-plan-status + validate:backlog-yaml. Single mode — plan-fix only. Triggers: \"/plan-fix-apply\", \"plan-applier\", \"apply §Plan Fix tuples\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/plan-applier/SKILL.md

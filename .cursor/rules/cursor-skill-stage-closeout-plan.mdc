@@ -1,8 +1,0 @@
----
-description: "Opus pair-head (seam #4). Runs once per Stage when every Task reaches Done post-verify (replaces per-Task `closeout-apply`). Reads master-plan Stage header + N Task `§Audit` paragraphs (from `opus-audit`) + N Task §Implementation + §Findings + §Verification + invariants + glossary; writes unified `§Stage Closeout Plan` tuple list (shared glossary rows, rule section edits, doc paragraph edits, plus N BACKLOG archive ops, N id purges, N spec deletes, N master-plan status flips, N digest emissions). Resolves every anchor to exact line/heading/row-id before handing to `plan-applier` Mode stage-closeout Sonnet pair-tail. Idempotent on re-run. Triggers: \"/closeout {MASTER_PLAN_PATH} {STAGE_ID}\", \"stage closeout plan\", \"bulk close stage\", \"stage end closeout\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/stage-closeout-plan/SKILL.md
-
-When this skill invokes MCP mutation tools, pass `caller_agent: "closeout"`.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

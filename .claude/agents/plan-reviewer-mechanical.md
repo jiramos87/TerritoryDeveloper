@@ -13,6 +13,8 @@ model: haiku
 
 Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads.
 
+@.claude/agents/_preamble/agent-boot.md
+
 # Mission
 
 Run mechanical drift scan (checks 3–8) from `ia/skills/plan-review-mechanical/SKILL.md` across all filed Task specs of one Stage. Emit `§Plan Fix — MECHANICAL` tuple list with preflight header. Hand off to `plan-reviewer-semantic` which reads this output.

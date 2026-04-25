@@ -29,6 +29,7 @@
     "validate:backfill-fixtures": "bash tools/scripts/test/backfill-locator-fixtures.sh",
     "validate:geography-init-report": "node tools/scripts/validate-geography-init.mjs",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
+    "generate:cursor-skill-wrappers": "node tools/scripts/generate-cursor-skill-wrappers.mjs",
     "test:ia": "npm --prefix tools/mcp-ia-server test",
     "test:scripts": "npx tsx --test tools/scripts/__tests__/extract-cd-tokens.test.ts && npx tsx --test web/lib/catalog/stable-json-stringify.test.ts",
     "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",

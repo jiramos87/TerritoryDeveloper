@@ -1,8 +1,0 @@
----
-description: "Opus pair-head skill. Loads shared Stage MCP bundle once via domain-context-load; reads the target Stage block from the master plan; gates cardinality; batch-verifies all Depends-on ids via a single backlog_list filter call; emits a structured §Stage File Plan tuple list under the Stage block — one tuple per _pending_ Task. Each tuple carries {reserved_id, title, priority, notes, depends_on, related, stub_body}. Pair-tail stage-file-apply reads and materializes tuples without re-querying MCP. Triggers: \"stage-file-plan\", \"/stage-file-plan {ORCHESTRATOR_SPEC} {STAGE_ID}\", \"file stage plan\", \"stage plan planner\", \"emit stage file tuples\". Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second."
-alwaysApply: false
----
-Read and follow: @ia/skills/stage-file-plan/SKILL.md
-
-When this skill invokes MCP tools, follow its Tool recipe order exactly.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

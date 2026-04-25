@@ -13,6 +13,7 @@ const callerAgentMap = new Map([
   ["project-new", "project-new"],
   ["stage-closeout-plan", "closeout"],
   ["plan-applier", "closeout"],
+  ["ship", "ship"],
   ["ship-stage", "ship-stage"],
   ["release-rollout", "release-rollout"],
   ["release-rollout-track", "release-rollout-track"],

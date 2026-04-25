@@ -288,3 +288,109 @@ B3 locked. Sequence after Phase A `validate:all` green:
 | 2026-04-25 | (uncommitted) | Templates (`master-plan-template.md`, `project-spec-template.md`, `project-spec-review-prompt.md`, `plan-digest-section.md`, `frontmatter-schema.md`) | Phase A Step 4 — closeout pair refs → `/ship-stage` Pass B inline; `project-spec-kickoff` → `stage-authoring`; `stage-file-apply` → `stage-file` applier pass; `§Stage Closeout Plan` block tombstoned in master-plan template (HTML comment); tracking legend rewritten to map skills → status flips. |
 | 2026-04-25 | (uncommitted) | Rules (`agent-principles.md`, `agent-output-caveman.md`, `agent-output-caveman-authoring.md`, `agent-human-polling.md`, `unity-scene-wiring.md`, `project-hierarchy.md`, `orchestrator-vs-spec.md`, `plan-digest-contract.md`, `plan-apply-pair-contract.md`, `stage-sizing-gate.md`) | Phase A Step 5 — closeout-pair refs → `/ship-stage` Pass B inline; `stage-file-apply`/`stage-file-plan` → `stage-file` applier/planner pass; `plan-author`+`plan-digest` rows folded into `stage-authoring` row in pair contract (dropped seam #4 entirely — closeout no longer a pair seam); `closeout-apply` → DB-backed `ia_tasks.archived_at` via `stage_closeout_apply` MCP; `spec-enricher` (kickoff) → `stage-authoring`; status-flip matrix updated to drop `plan-applier` Mode stage-closeout. |
 | 2026-04-25 | (uncommitted) | Workflow + structure docs (`docs/MASTER-PLAN-STRUCTURE.md`, `docs/agent-lifecycle.md`) | Phase A Step 6 — major rewrite. MASTER-PLAN: §3.2 dropped §Stage Audit + §Stage Closeout Plan sentinels; §3.3/§3.4 pair table reduced 4→2 rows; §4 dropped 4.4/4.5; §5 cardinality reduced; §6 status flip owners updated to `stage-file applier pass` / `stage-authoring bulk pass` / `/ship-stage Pass B inline closeout`; §7 lifecycle skill flip matrix collapsed plan-author+plan-digest → `stage-authoring`; §8 guardrails (orchestrators permanent; close inline); §9 validators flag retired subsection reintroduction; §10 cross-ref `4 pair seams` → `3 pair seams`; §11 changelog appended (rev 4 entry). LIFECYCLE: rev 4 header; §1 redrew flow diagram (stage-file planner+applier pass + stage-authoring bulk; ship-stage Pass A/B); §2 seam matrix rows 3,4,5,6,7,8,9,C,C1 rewrote; retired seams paragraph; §2a R1–R6 (dropped R11 audit); §3 handoff contract 9 rows; §4 decision tree (`/ship-stage` answer + `/ship` answer); §6 close seam rewritten ("Pass B inline closeout only"); §7 Crashed-ship-stage recovery (was Crashed-closeout — DB resume gate via `task_state` no flock); §5 row 8 "§Findings legacy /audit R11 retired". |
+| 2026-04-25 | `95eb243` | Phase A bulk scrub | 140 files / +822 / −13639. `_retired/` deleted, all live refs scrubbed. `validate:all` green. |
+| 2026-04-25 | `dc7d72c` | Phase B `/ship` skill | New `.claude/commands/ship.md` + `.claude/agents/ship.md` + `ia/skills/ship/SKILL.md` (4 mechanical steps, standalone-only). |
+| 2026-04-25 | (uncommitted) | `docs/audit/skill-files-audit.md` | Phase C registered — prose duplication audit across 4 layers (command + agent + skill + cursor). |
+
+---
+
+## Phase C — Prose duplication audit (cross-harness)
+
+Triggered 2026-04-25 by user: *"audit for prose repetition in .claude/agents, .claude/commands and ia/skills … cursor also has definitions, both claude and cursor need to have the same skills."*
+
+### C1 Layer relationship
+
+| Layer | Path | Role |
+|---|---|---|
+| 1 | `.claude/commands/{cmd}.md` | Slash-command entry. Single Agent dispatch + locked-design notes. |
+| 2 | `.claude/agents/{name}.md` | Subagent definition (frontmatter `tools` + `model` + `reasoning_effort`) + recipe wrapper. |
+| 3 | `ia/skills/{slug}/SKILL.md` | Canonical, harness-agnostic body. Phase sequence + gates + exit lines. |
+| 4 | `.cursor/rules/cursor-skill-{slug}.mdc` | Cursor mirror (hand-maintained `.mdc`, NOT auto-generated from layer 3). |
+
+Counts: 23 commands · 23 agents · 44 skills (incl. utility skills) · 45 cursor rules.
+
+### C2 Duplication quantified (3 representative families)
+
+| Family | command | agent | skill | total | overlap blocks |
+|---|---|---|---|---|---|
+| `ship` | 49 | 88 | 182 | 319 | Hard boundaries (cmd 42–49 / agent 65–77 / skill 154–166 ≈ 95% match) · Phase sequence (agent 39–44 / skill 44–61 ≈ 80% match) |
+| `verify-loop` | 102 | 79 | 328 | 509 | Caveman directive (3 layers verbatim) · Pre-matrix mode gate (agent 23 / skill 86–95 ≈ 100% logic) |
+| `stage-authoring` | 59 | 76 | 454 | 589 | Inputs table · Phase outline · Hard boundaries |
+
+### C3 Boilerplate repetition (across all 23 agents)
+
+| Block | Agents containing | Lines each | Total dup |
+|---|---|---|---|
+| Caveman directive verbatim | 23/23 | ~2 | ~46 |
+| Stable prefix block (`@ia/skills/_preamble/stable-block.md`) | ~9/23 | ~4 | ~36 |
+| Progress emission block | ~20/23 | ~3 | ~60 |
+| Mission cite of SKILL.md | 23/23 | ~2 | ~46 |
+| Hard boundaries (~60–70% overlap with skill body) | ~15/23 | ~10 | ~150 |
+
+Average agent file: **35–40 preamble lines** before substantive prose.
+
+### C4 Stale Cursor mirrors (5 retired skills still present)
+
+| Cursor rule | Canonical skill dir | Status |
+|---|---|---|
+| `cursor-skill-plan-author.mdc` | `ia/skills/plan-author/` | **GONE** — folded into `stage-authoring` |
+| `cursor-skill-plan-digest.mdc` | `ia/skills/plan-digest/` | **GONE** — folded into `stage-authoring` |
+| `cursor-skill-stage-file-plan.mdc` | `ia/skills/stage-file-plan/` | **GONE** — folded into `stage-file` planner pass |
+| `cursor-skill-stage-file-apply.mdc` | `ia/skills/stage-file-apply/` | **GONE** — folded into `stage-file` applier pass |
+| `cursor-skill-stage-closeout-plan.mdc` | `ia/skills/stage-closeout-plan/` | **GONE** — closeout inline in `/ship-stage` Pass B |
+
+Phase A scrubbed Claude side; Cursor mirror missed.
+
+### C5 Cursor mirror missing for new `/ship`
+
+`.cursor/rules/cursor-skill-ship.mdc` does not exist. Phase B Claude work landed; Cursor parity gap.
+
+### C6 Why so many files per skill (current rationale)
+
+- **Layer 1 (command)** — Claude Code requires `.claude/commands/{cmd}.md` for slash-command registration. Cursor uses `.cursor/rules/*.mdc` instead.
+- **Layer 2 (agent)** — Claude Code requires `.claude/agents/{name}.md` for `subagent_type` dispatch. Cursor has no equivalent (uses tool-prompt flow).
+- **Layer 3 (skill)** — `ia/skills/{slug}/SKILL.md` is the harness-agnostic canonical body. Both Claude + Cursor are supposed to read this for phase logic.
+- **Layer 4 (cursor mirror)** — `.cursor/rules/cursor-skill-{slug}.mdc` should be a thin pointer (`@ia/skills/{slug}/SKILL.md` reference) but in practice **duplicates skill body inline**.
+
+Net: layers 1–2 are harness-mandated entry-points; layers 3–4 should collapse to a single canonical with cursor as auto-generated thin wrapper.
+
+---
+
+## Phase C — Improvement proposals (locked priorities)
+
+| # | Action | Impact | Effort |
+|---|---|---|---|
+| 1 | Delete 5 stale cursor rules (`plan-author`, `plan-digest`, `stage-file-plan`, `stage-file-apply`, `stage-closeout-plan`) | Removes Phase A drift gap | 5 file deletes + grep gate |
+| 2 | Author missing `cursor-skill-ship.mdc` (Phase B parity) | Closes Claude/Cursor gap | 1 file write |
+| 3 | Move "Hard boundaries" prose to SKILL.md only — strip from command + agent layers; replace with 1-line cross-ref | ~150 lines deduped across ~15 families | ~3 hr |
+| 4 | Extract agent preamble (caveman + cache-control + progress-emit) to `.claude/agents/_preamble/agent-boot.md` `@-import` | ~140 lines deduped across 23 agents | ~1 hr |
+| 5 | Auto-generate `cursor-skill-{slug}.mdc` from SKILL.md frontmatter via `npm run generate:cursor-skills` | 35 hand-maintained mirrors → 0 | ~2 hr |
+| 6 | Thin agent body to: frontmatter + `@-import` agent-boot + Execution Model paragraph + `@ia/skills/{slug}/SKILL.md` cross-ref | ship.md agent 88→18 lines example | ~4 hr |
+
+**Net savings:** ~300–400 prose lines deduplicated. **Maintenance shift:** SKILL.md becomes single canonical; commands/agents/cursor reduce to thin entry-points.
+
+### C7 Phase C decisions (proposed — pending user lock)
+
+- **D7 — Cursor mirror auto-generation policy.** Cursor `.mdc` should not duplicate skill body; should `@-import` SKILL.md or be auto-generated. Pending decision.
+- **D8 — Hard boundaries source of truth.** SKILL.md only; commands + agents cross-reference. Pending decision.
+- **D9 — Agent preamble extraction.** Single shared `agent-boot.md` import vs verbatim copy in each agent. Pending decision.
+
+User to lock #1–6 priority + D7–D9 before execution.
+
+---
+
+## Findings log (continued)
+
+### F4 — 5 stale cursor mirrors point at retired skills (2026-04-25)
+
+`.cursor/rules/cursor-skill-{plan-author,plan-digest,stage-file-plan,stage-file-apply,stage-closeout-plan}.mdc` survived Phase A. Canonical `ia/skills/{slug}/` directories deleted; cursor mirror not scrubbed. See C4 table.
+
+### F5 — Cursor mirror missing for new `/ship` skill (2026-04-25)
+
+Phase B `dc7d72c` landed Claude side (`.claude/commands/ship.md` + `.claude/agents/ship.md` + `ia/skills/ship/SKILL.md`). Cursor `.mdc` companion not authored. See C5.
+
+### F6 — ~300–400 lines prose duplication across 4 layers (2026-04-25)
+
+Quantified in C2 (3 representative families) + C3 (boilerplate repetition across 23 agents). Hard boundaries / caveman directive / phase outlines / cache preamble repeat 60–100% verbatim across command + agent + skill + cursor. See C3 table for line counts.
+
+---

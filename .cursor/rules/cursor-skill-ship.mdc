@@ -1,0 +1,8 @@
+---
+description: "Standalone single-task ship pipeline. Four mechanical steps in order: (1) author §Plan Digest via stage-authoring --task, (2) implement via spec-implementer, (3) verify-loop with MAX_ITERATIONS=2, (4) close via DB status walk (pending → implemented → verified → done → archived). Standalone-tasks only — task must have master_plan_id IS NULL. No code review. No audit. No commit. No master-plan handoff. Stage-attached tasks must use /ship-stage instead. Triggers: \"/ship {ISSUE_ID}\", \"ship task\", \"ship standalone\". Argument: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9)."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ship/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "ship"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

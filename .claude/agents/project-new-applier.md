@@ -13,7 +13,7 @@ model: haiku
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + project-spec stub prose (acceptance + Notes caveman; row structure + bolded glossary terms verbatim per `agent-output-caveman-authoring`). Anchor: `ia/rules/agent-output-caveman.md`.
 
-Progress emission: `@ia/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+@.claude/agents/_preamble/agent-boot.md
 
 # Mission
 

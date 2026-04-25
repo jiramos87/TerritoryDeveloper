@@ -1,0 +1,8 @@
+---
+description: "In-session (no-subagent) wrapper around the /stage-file chain. Read ia/skills/stage-file/SKILL.md (DB-backed single-skill) and the phase list in .claude/commands/stage-file.md, then execute the chain inline: stage-file → stage-authoring → plan-review → STOP at plan-review PASS. Use MCP `task_insert` (DB-backed per-prefix id; NO reserve-id.sh / NO yaml writes), manifest append, and direct file edits. Never dispatch via Agent/Task tool. Triggers: \"/stage-file-main-session {master-plan-path} {stage}\", \"execute stage-file in this session\", \"no-subagent stage-file\". Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID second."
+alwaysApply: false
+---
+Read and follow: @ia/skills/stage-file-main-session/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
