@@ -1,9 +1,20 @@
 ---
-description: No-subagent variant of /ship-stage. Executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → DB resume gate → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix) + verified→done flips + inline stage_closeout_apply + single stage commit + stage_verification_flip) inline. Wraps ia/skills/ship-stage-main-session. Closeout mandatory on green.
+description: In-session (no-subagent) wrapper around the /ship-stage chain. Read ia/skills/ship-stage/SKILL.md end-to-end and .claude/commands/ship-stage.md for the canonical pipeline, then execute inline: stage_bundle load → domain-context-load → §Plan Digest readiness gate (task_spec_section per task; missing → /stage-authoring handoff) → resume gate via task_state DB query (no git scan) → Pass A per task (spec-implementer work in-repo → npm run unity:compile-check + scene-wiring preflight → task_status_flip(implemented); NO commits — single stage commit at Phase 8) → Pass B per stage (verify-loop on git diff HEAD → code-review with inline fix cap=1 → per-task task_status_flip(verified) then task_status_flip(done)) → inline stage_closeout_apply + guarded git mv → single stage commit feat({SLUG}-stage-{STAGE_ID_DB}) → per-task task_commit_record → stage_verification_flip(pass, commit_sha). Closeout is MANDATORY on green — do not emit PASSED or defer closeout. Use territory-ia MCP and bash per the skill; never dispatch via Agent/Task tool. Triggers: "/ship-stage-main-session {master-plan-path} {stage}", "execute ship-stage in this session", "no-subagent ship-stage". Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID second, optional flag --no-resume third.
 argument-hint: "{MASTER_PLAN_RELATIVE_PATH} {STAGE_ID} [--no-resume]"
 ---
 
-# /ship-stage-main-session — no-subagent `/ship-stage`
+# /ship-stage-main-session — Main-session adapter for /ship-stage: executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → resume gate via task_state → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix) + verified→done flips + inline stage_closeout_apply + single stage commit + stage_verification_flip) inline (no subagents). Use when caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool.
+
+Drive `$ARGUMENTS` via the [`ship-stage-main-session`](../agents/ship-stage-main-session.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /ship-stage-main-session {master-plan-path} {stage}
+- execute ship-stage in this session
+- no-subagent ship-stage
+<!-- skill-tools:body-override -->
 
 Execute the full `/ship-stage` chain for `$ARGUMENTS` **inline in this session**. Do **not** use the Agent/Task tool for any step.
 

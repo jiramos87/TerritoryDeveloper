@@ -1,22 +1,40 @@
 ---
-purpose: "Run the shared MCP context recipe (glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary) and return a structured payload including a Tier 2 per-Stage ephemeral cache block. Single source for the recipe shared by 8+ lifecycle skills."
-audience: agent
-loaded_by: skill:domain-context-load
-slices_via: glossary_discover, glossary_lookup, router_for_task, spec_sections, invariants_summary
 name: domain-context-load
-description: >
-  Sonnet subskill. Executes the canonical MCP context recipe
-  (glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary)
-  and returns a structured payload `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}`.
-  Phase N (final concat + cache emit) assembles all MCP output into a single Tier 2 ephemeral
-  cache block with `cache_control: {"type":"ephemeral","ttl":"1h"}`. Called once per Stage;
-  all Tasks reuse `cache_block` without re-fetching.
-  Flags: `brownfield_flag` (skip router + spec_sections + invariants on greenfield);
-  `tooling_only_flag` (skip invariants regardless of brownfield). Replaces ~8 copies of the same
-  recipe across lifecycle skills; single place to tune keyword strategy or add new MCP steps.
-  Triggers: "domain context load", "run MCP context recipe", "glossary router invariants load",
-  "domain-context-load subskill", "shared MCP recipe".
+purpose: >-
+  Run the shared MCP context recipe (glossary_discover → glossary_lookup → router_for_task →
+  spec_sections → invariants_summary) and return a structured payload including a Tier 2 per-Stage
+  ephemeral cache block. Single source for the recipe shared by 8+ lifecycle skills.
+audience: agent
+loaded_by: "skill:domain-context-load"
+slices_via: glossary_discover, glossary_lookup, router_for_task, spec_sections, invariants_summary
+description: >-
+  Sonnet subskill. Executes the canonical MCP context recipe (glossary_discover → glossary_lookup →
+  router_for_task → spec_sections → invariants_summary) and returns a structured payload
+  `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}`. Phase N (final concat
+  + cache emit) assembles all MCP output into a single Tier 2 ephemeral cache block with
+  `cache_control: {"type":"ephemeral","ttl":"1h"}`. Called once per Stage; all Tasks reuse
+  `cache_block` without re-fetching. Flags: `brownfield_flag` (skip router + spec_sections +
+  invariants on greenfield); `tooling_only_flag` (skip invariants regardless of brownfield). Replaces
+  ~8 copies of the same recipe across lifecycle skills; single place to tune keyword strategy or add
+  new MCP steps. Triggers: "domain context load", "run MCP context recipe", "glossary router
+  invariants load", "domain-context-load subskill", "shared MCP recipe".
+phases: []
+triggers:
+  - domain context load
+  - run MCP context recipe
+  - glossary router invariants load
+  - domain-context-load subskill
+  - shared MCP recipe
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Domain context load — shared MCP recipe subskill

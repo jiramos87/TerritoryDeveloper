@@ -1,14 +1,21 @@
 ---
 name: master-plan-new
-description: Use to author DB-backed master plan orchestrator (`ia_master_plans` row + `ia_stages` rows) from an exploration doc that already carries a persisted `## Design Expansion` block (or semantic equivalent). Triggers — "/master-plan-new {path}", "turn expanded design into master plan", "create orchestrator from exploration", "author master plan from design expansion", "new multi-step plan from docs/{slug}.md". 2-level hierarchy Stage > Task (no Steps, no Phases). Tasks seeded `_pending_` — does NOT create BACKLOG rows (that is `stage-file`) and does NOT invoke `project-new`. DB persistence via `master_plan_preamble_write` (preamble) + `stage_insert` (per Stage) + `master_plan_change_log_append` (audit row). No filesystem write under `ia/projects/{slug}-master-plan.md` post Step 9.6 — DB is sole source of truth.
-tools: Read, Edit, Write, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__master_plan_render, mcp__territory-ia__stage_render, mcp__territory-ia__master_plan_preamble_write, mcp__territory-ia__master_plan_change_log_append, mcp__territory-ia__master_plan_locate
-model: opus
+description: Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work needs a multi-stage plan rather than a single BACKLOG issue. Produces `ia/projects/{slug}-master-plan.md` — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL Stages fully decomposed into Tasks (2-level hierarchy: `Stage > Task`; Step + Phase layers REMOVED per lifecycle-refactor). Tasks seeded `_pending_` for later `stage-file`. Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema, Status enums, flip matrix. Triggers: "/master-plan-new {path}", "turn expanded design into master plan", "create orchestrator from exploration", "author master plan from design expansion".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__spec_outline, mcp__territory-ia__list_specs, mcp__territory-ia__master_plan_render, mcp__territory-ia__stage_render, mcp__territory-ia__master_plan_preamble_write, mcp__territory-ia__master_plan_change_log_append
+model: inherit
 reasoning_effort: high
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc, orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field). Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

@@ -1,9 +1,34 @@
 ---
 name: plan-review-mechanical
-description: Run mechanical drift scan (checks 3–8) across Stage Task specs. Emits §Plan Fix — MECHANICAL tuple list per plan-apply-pair-contract.
-phases: [load_context, check_3_anchors, check_4_paths, check_5_gates, check_6_invariants, check_7_glossary, check_8_schema, emit_tuples]
-tools: [Read, Grep, Glob, mcp__territory-ia__spec_section, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariant_preflight, mcp__territory-ia__master_plan_locate, mcp__territory-ia__mechanicalization_preflight_lint]
+purpose: >-
+  Run mechanical drift scan (checks 3–8) across Stage Task specs. Emits §Plan Fix — MECHANICAL tuple
+  list per plan-apply-pair-contract.
+audience: agent
 loaded_by: ondemand
+slices_via: none
+description: >-
+  Run mechanical drift scan (checks 3–8) across Stage Task specs. Emits §Plan Fix — MECHANICAL tuple
+  list per plan-apply-pair-contract.
+phases:
+  - load_context
+  - check_3_anchors
+  - check_4_paths
+  - check_5_gates
+  - check_6_invariants
+  - check_7_glossary
+  - check_8_schema
+  - emit_tuples
+triggers: []
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Mission

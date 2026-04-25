@@ -1,15 +1,34 @@
 ---
-purpose: "Agent-led diagnosis when isometric sorting order looks wrong: bridge exports vs geography spec §7 authority."
-audience: agent
-loaded_by: skill:debug-sorting-order
-slices_via: spec_section
 name: debug-sorting-order
-description: >
+purpose: >-
+  Agent-led diagnosis when isometric sorting order looks wrong: bridge exports vs geography spec §7
+  authority.
+audience: agent
+loaded_by: "skill:debug-sorting-order"
+slices_via: spec_section
+description: >-
   Debug isometric sorting order using IDE agent bridge export sugar (unity_export_sorting_debug,
   unity_export_cell_chunk) and territory-ia spec_section geo §7. Triggers: "sorting order wrong",
-  "sortingOrder debug", "isometric draw order", "compare sorting to spec §7", "Moore neighbor sorting".
-  Prerequisites: DATABASE_URL, migration 0008, Unity Editor on REPO_ROOT, db:bridge-preflight green.
+  "sortingOrder debug", "isometric draw order", "compare sorting to spec §7", "Moore neighbor
+  sorting". Prerequisites: DATABASE_URL, migration 0008, Unity Editor on REPO_ROOT,
+  db:bridge-preflight green.
+phases: []
+triggers:
+  - sorting order wrong
+  - sortingOrder debug
+  - isometric draw order
+  - compare sorting to spec §7
+  - Moore neighbor sorting
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Debug sorting order — bridge exports + geography §7

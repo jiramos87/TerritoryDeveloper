@@ -1,19 +1,59 @@
 ---
-purpose: "Extend an existing `ia/projects/{slug}-master-plan.md` with new Stages sourced from an exploration or extensions doc. Appends — never rewrites existing Stages. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`."
-audience: agent
-loaded_by: skill:master-plan-extend
-slices_via: router_for_task, spec_sections, invariants_summary, glossary_discover, glossary_lookup
 name: master-plan-extend
-description: >
+purpose: >-
+  Extend an existing `ia/projects/{slug}-master-plan.md` with new Stages sourced from an exploration
+  or extensions doc. Appends — never rewrites existing Stages. Canonical shape:
+  `docs/MASTER-PLAN-STRUCTURE.md`.
+audience: agent
+loaded_by: "skill:master-plan-extend"
+slices_via: router_for_task, spec_sections, invariants_summary, glossary_discover, glossary_lookup
+description: >-
   Use when an existing master plan orchestrator needs new Stages sourced from an exploration doc (with
-  persisted `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`) that was
-  deferred at original author time. Appends new Stage blocks in place — never rewrites existing Stages,
-  never overwrites headers, never inserts BACKLOG rows. Fully decomposes every new Stage (Task table) at
-  author time — no skeletons. 2-level hierarchy `Stage > Task` (Step + Phase layers removed per
-  lifecycle-refactor). Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers:
+  persisted `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`) that
+  was deferred at original author time. Appends new Stage blocks in place — never rewrites existing
+  Stages, never overwrites headers, never inserts BACKLOG rows. Fully decomposes every new Stage (Task
+  table) at author time — no skeletons. 2-level hierarchy `Stage > Task` (Step + Phase layers removed
+  per lifecycle-refactor). Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers:
   "/master-plan-extend {plan} {source}", "extend master plan from exploration", "add new stages to
   orchestrator", "append from extensions doc", "pull deferred stage into master plan".
+phases: []
+triggers:
+  - /master-plan-extend {plan} {source}
+  - extend master plan from exploration
+  - add new stages to orchestrator
+  - append from extensions doc
+  - pull deferred stage into master plan
+argument_hint: >-
+  {ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC] (e.g.
+  ia/projects/blip-master-plan.md docs/blip-post-mvp-extensions.md)
 model: inherit
+reasoning_effort: high
+tools_role: pair-head
+tools_extra:
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__master_plan_preamble_write
+  - mcp__territory-ia__master_plan_change_log_append
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - Mermaid / diagram blocks persisted to the doc
+  - orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field)
+hard_boundaries:
+  - IF `{ORCHESTRATOR_SPEC}` does not exist → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
+  - IF `{ORCHESTRATOR_SPEC}` shape check fails (missing header / Steps / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
+  - IF `{SOURCE_DOC}` missing expansion + phased skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
+  - IF `START_STEP_NUMBER` ≤ last existing step number → STOP. Overwriting existing Steps requires a fresh revision cycle, not this skill.
+  - IF proposed new step duplicates an existing step name / objective → STOP (Phase 1 duplication gate). Ask rename / drop / confirm intentional overlap.
+  - IF any new stage phase has <2 tasks after Phase 6 → STOP. Ask split or justify before persisting.
+  - IF any new stage phase has 7+ tasks after Phase 6 → STOP. Suggest split; persist only after user confirms or justifies.
+  - "IF router returns `no_matching_domain` for a new subsystem → note gap in \"Relevant surfaces\" as `{domain} — no router match; load by path: {file}`, continue."
+caller_agent: master-plan-extend
 ---
 
 # Master plan — extend orchestrator with new stages from exploration / extensions doc

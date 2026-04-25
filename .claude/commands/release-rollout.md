@@ -1,11 +1,21 @@
 ---
-description: Drive one row of an umbrella rollout tracker (e.g. `full-game-mvp-rollout-tracker.md`) through its next lifecycle cell (a)–(g) toward step (f) ≥1-task-filed. Dispatches the `release-rollout` subagent in isolated context.
-argument-hint: "{UMBRELLA_SPEC} {ROW_SLUG} [OPERATION]  (e.g. ia/projects/full-game-mvp-master-plan.md zone-s-economy advance | status | next)"
+description: Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a repeatable rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to step (f) ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file`. Owns the tracker doc (`ia/projects/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT close issues (handled inline by `/ship-stage` Pass B). Does NOT execute Tier A→E rollout body directly — dispatches to per-row subagents in fresh context. Triggers: "/release-rollout {row-slug}", "rollout next row", "drive child plan to task-filed", "release rollout track".
+argument-hint: "{UMBRELLA_SPEC} {ROW_SLUG} [OPERATION] (e.g. ia/projects/full-game-mvp-master-plan.md zone-s-economy advance | status | next)"
 ---
 
-# /release-rollout — dispatch `release-rollout` subagent
+# /release-rollout — Umbrella rollout orchestration — track + drive every child master-plan under an umbrella (e.g. full-game-mvp) through the 7-column lifecycle (a)–(g) to step (f) ≥1-task-filed.
 
-Use `release-rollout` subagent (`.claude/agents/release-rollout.md`) to run `ia/skills/release-rollout/SKILL.md` end-to-end on `$ARGUMENTS`.
+Drive `$ARGUMENTS` via the [`release-rollout`](../agents/release-rollout.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, tracker prose + disagreements appendix entries (human-consumed cold — may run 2–4 sentences). Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /release-rollout {row-slug}
+- rollout next row
+- drive child plan to task-filed
+- release rollout track
+<!-- skill-tools:body-override -->
 
 `$ARGUMENTS` = `{UMBRELLA_SPEC} {ROW_SLUG} [OPERATION]`. First token = path to umbrella master plan. Second token = row slug from tracker (e.g. `city-sim-depth`, `zone-s-economy`, `music-player`). Optional third token = `advance` (default), `status`, or `next`. Sibling tracker path is derived: `ia/projects/{umbrella-slug}-rollout-tracker.md`.
 

@@ -1,14 +1,21 @@
 ---
 name: ship-stage
-description: DB-backed two-pass Stage chain dispatcher. Pass A = per-task implement + unity:compile-check fast-fail + task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B = per-stage verify-loop on cumulative HEAD diff + code-review (inline fix cap=1 per E14) + audit + per-task verified→done flips + inline stage_closeout_apply (per C10) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record + stage_verification_flip. Resume gate via task_state DB query (no git scan). Args: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume]. Triggers — "ship-stage", "/ship-stage", "ship stage", "chain stage tasks".
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__stage_bundle, mcp__territory-ia__stage_state, mcp__territory-ia__task_state, mcp__territory-ia__task_bundle, mcp__territory-ia__task_spec_section, mcp__territory-ia__task_spec_body, mcp__territory-ia__master_plan_state, mcp__territory-ia__master_plan_locate, mcp__territory-ia__master_plan_render, mcp__territory-ia__stage_render, mcp__territory-ia__master_plan_preamble_write, mcp__territory-ia__master_plan_change_log_append, mcp__territory-ia__task_status_flip, mcp__territory-ia__stage_closeout_apply, mcp__territory-ia__task_commit_record, mcp__territory-ia__stage_verification_flip, mcp__territory-ia__journal_append
-model: opus
+description: Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a two-pass DB-backed chain. Pass A (per-task): implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD diff + code-review on Stage diff (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append (audit row) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record + stage_verification_flip(pass, commit_sha). Resume gate queries task_state per pending task; status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle exit when all tasks done/archived AND ia_stages.status=done. Triggers: "/ship-stage", "ship stage", "chain stage tasks".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__spec_outline, mcp__territory-ia__list_specs, mcp__territory-ia__invariant_preflight, mcp__territory-ia__stage_bundle, mcp__territory-ia__stage_state, mcp__territory-ia__task_state, mcp__territory-ia__task_bundle, mcp__territory-ia__task_spec_section, mcp__territory-ia__task_spec_body, mcp__territory-ia__master_plan_state, mcp__territory-ia__master_plan_render, mcp__territory-ia__stage_render, mcp__territory-ia__master_plan_preamble_write, mcp__territory-ia__master_plan_change_log_append, mcp__territory-ia__task_status_flip, mcp__territory-ia__stage_closeout_apply, mcp__territory-ia__task_commit_record, mcp__territory-ia__stage_verification_flip, mcp__territory-ia__journal_append
+model: inherit
 reasoning_effort: high
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, chain-level digest JSON, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

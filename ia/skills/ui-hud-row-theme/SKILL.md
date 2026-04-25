@@ -1,11 +1,24 @@
 ---
+name: ui-hud-row-theme
 purpose: Add or adjust a HUD/menu row using UiTheme and the UI design system.
 audience: agent
-loaded_by: skill:ui-hud-row-theme
+loaded_by: "skill:ui-hud-row-theme"
 slices_via: none
-name: ui-hud-row-theme
-description: Add or adjust a HUD/menu row using UiTheme and the UI design system. Use when touching MainMenu strip, shared colors, or font sizes for new uGUI rows.
+description: >-
+  Add or adjust a HUD/menu row using UiTheme and the UI design system. Use when touching MainMenu
+  strip, shared colors, or font sizes for new uGUI rows.
+phases: []
+triggers: []
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # UI row + theme

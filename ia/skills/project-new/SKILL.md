@@ -1,23 +1,42 @@
 ---
-purpose: "Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id, row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and Depends on /…"
-audience: agent
-loaded_by: skill:project-new
-slices_via: none
 name: project-new
-description: >
+purpose: >-
   Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id,
-  row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template,
-  and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
-  "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec",
-  "add issue to backlog from description".
-model: inherit
+  row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and
+  Depends on /…
+audience: agent
+loaded_by: "skill:project-new"
+slices_via: none
+description: >-
+  Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id,
+  row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and
+  Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
+  "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec", "add
+  issue to backlog from description".
 phases:
-  - "Context load"
-  - "Backlog dep check"
-  - "Spec outline"
-  - "Reserve id"
-  - "Write yaml + spec"
-  - "Materialize backlog"
+  - Context load
+  - Backlog dep check
+  - Spec outline
+  - Reserve id
+  - Write yaml + spec
+  - Materialize backlog
+triggers:
+  - /project-new
+  - new backlog issue
+  - create TECH-xx from prompt
+  - bootstrap project spec
+  - add issue to backlog from description
+argument_hint: {free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--priority P1|P2|P3|P4]
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # New backlog issue and project spec bootstrap

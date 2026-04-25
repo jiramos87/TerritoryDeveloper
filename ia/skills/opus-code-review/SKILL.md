@@ -1,25 +1,39 @@
 ---
-purpose: "Opus per-Task pair-head: reads diff vs spec + invariants + glossary; outcomes PASS / minor / critical; critical branch writes §Code Fix Plan tuples."
-audience: agent
-loaded_by: skill:opus-code-review
-slices_via: invariants_summary, glossary_lookup, glossary_discover
 name: opus-code-review
-description: >
-  Opus pair-head skill. Runs per-Task after implement + verify-loop completes.
-  Reads implementation diff vs ia/projects/{id}.md §Implementation Plan + invariants
-  subset + glossary bundle (Stage-level if called inside chain).
-  Three verdict branches: (a) PASS → mini-report, no tail;
-  (b) minor → suggest fix-in-place or deferred issue, no tail;
-  (c) critical → writes §Code Fix Plan tuples → triggers `plan-applier` Mode code-fix.
-  Triggers: "/code-review {ISSUE_ID}", "opus code review", "code review task",
-  "post-verify code review".
-model: inherit
+purpose: >-
+  Opus per-Task pair-head: reads diff vs spec + invariants + glossary; outcomes PASS / minor /
+  critical; critical branch writes §Code Fix Plan tuples.
+audience: agent
+loaded_by: "skill:opus-code-review"
+slices_via: invariants_summary, glossary_lookup, glossary_discover
+description: >-
+  Opus pair-head skill. Runs per-Task after implement + verify-loop completes. Reads implementation
+  diff vs ia/projects/{id}.md §Implementation Plan + invariants subset + glossary bundle (Stage-level
+  if called inside chain). Three verdict branches: (a) PASS → mini-report, no tail; (b) minor →
+  suggest fix-in-place or deferred issue, no tail; (c) critical → writes §Code Fix Plan tuples →
+  triggers `plan-applier` Mode code-fix. Triggers: "/code-review {ISSUE_ID}", "opus code review",
+  "code review task", "post-verify code review".
 phases:
-  - "Load diff + context"
-  - "Verdict branch"
-  - "Write §Code Fix Plan (critical only)"
-  - "emit_preflight_header_if_code_fix_plan"
-  - "Hand-off"
+  - Load diff + context
+  - Verdict branch
+  - Write §Code Fix Plan (critical only)
+  - emit_preflight_header_if_code_fix_plan
+  - Hand-off
+triggers:
+  - /code-review {ISSUE_ID}
+  - opus code review
+  - code review task
+  - post-verify code review
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Opus-code-review skill (per-Task pair-head)

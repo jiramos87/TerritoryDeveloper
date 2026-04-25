@@ -1,40 +1,54 @@
 ---
-purpose: "Main-session adapter for /ship-stage: executes the full DB-backed two-pass chain (stage_bundle → §Plan Digest gate → resume gate via task_state → Pass A per-task implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop + code-review (inline fix) + verified→done flips + inline stage_closeout_apply + single stage commit + stage_verification_flip) inline (no subagents). Use when caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool."
-audience: agent
-loaded_by: skill:ship-stage-main-session
-slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
 name: ship-stage-main-session
-description: >
-  In-session (no-subagent) wrapper around the /ship-stage chain. Read
-  ia/skills/ship-stage/SKILL.md end-to-end and .claude/commands/ship-stage.md
-  for the canonical pipeline, then execute inline:
-  stage_bundle load → domain-context-load → §Plan Digest readiness gate
-  (task_spec_section per task; missing → /stage-authoring handoff) →
-  resume gate via task_state DB query (no git scan) → Pass A per task
-  (spec-implementer work in-repo → npm run unity:compile-check + scene-wiring
-  preflight → task_status_flip(implemented); NO commits — single stage
-  commit at Phase 8) → Pass B per stage (verify-loop on
-  git diff HEAD → code-review with inline fix cap=1 →
-  per-task task_status_flip(verified) then task_status_flip(done)) →
-  inline stage_closeout_apply + guarded git mv → single stage
-  commit feat({SLUG}-stage-{STAGE_ID_DB}) → per-task task_commit_record →
-  stage_verification_flip(pass, commit_sha). Closeout is MANDATORY on
-  green — do not emit PASSED or defer closeout. Use territory-ia MCP and
-  bash per the skill; never dispatch via Agent/Task tool.
-  Triggers: "/ship-stage-main-session {master-plan-path} {stage}",
-  "execute ship-stage in this session", "no-subagent ship-stage".
-  Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID
-  second, optional flag --no-resume third.
-model: inherit
+purpose: >-
+  Main-session adapter for /ship-stage: executes the full DB-backed two-pass chain (stage_bundle →
+  §Plan Digest gate → resume gate via task_state → Pass A per-task
+  implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop +
+  code-review (inline fix) + verified→done flips + inline stage_closeout_apply + single stage commit +
+  stage_verification_flip) inline (no subagents). Use when caller agent (Cursor Composer-2 / Claude
+  Code main session) must do the work itself rather than dispatch via Agent/Task tool.
+audience: agent
+loaded_by: "skill:ship-stage-main-session"
+slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
+description: >-
+  In-session (no-subagent) wrapper around the /ship-stage chain. Read ia/skills/ship-stage/SKILL.md
+  end-to-end and .claude/commands/ship-stage.md for the canonical pipeline, then execute inline:
+  stage_bundle load → domain-context-load → §Plan Digest readiness gate (task_spec_section per task;
+  missing → /stage-authoring handoff) → resume gate via task_state DB query (no git scan) → Pass A per
+  task (spec-implementer work in-repo → npm run unity:compile-check + scene-wiring preflight →
+  task_status_flip(implemented); NO commits — single stage commit at Phase 8) → Pass B per stage
+  (verify-loop on git diff HEAD → code-review with inline fix cap=1 → per-task
+  task_status_flip(verified) then task_status_flip(done)) → inline stage_closeout_apply + guarded git
+  mv → single stage commit feat({SLUG}-stage-{STAGE_ID_DB}) → per-task task_commit_record →
+  stage_verification_flip(pass, commit_sha). Closeout is MANDATORY on green — do not emit PASSED or
+  defer closeout. Use territory-ia MCP and bash per the skill; never dispatch via Agent/Task tool.
+  Triggers: "/ship-stage-main-session {master-plan-path} {stage}", "execute ship-stage in this
+  session", "no-subagent ship-stage". Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first,
+  STAGE_ID second, optional flag --no-resume third.
 phases:
-  - "Load canonical skill + command"
-  - "Stage state load + context load"
-  - "§Plan Digest readiness gate"
-  - "Resume gate (DB task_state)"
-  - "Pass A per-task (implement + compile + task_status_flip; NO commits)"
-  - "Pass B per-stage (verify + code-review + verified→done flips)"
-  - "Inline closeout (stage_closeout_apply + guarded git mv)"
-  - "Stage commit + per-task commit record + stage_verification_flip"
+  - Load canonical skill + command
+  - Stage state load + context load
+  - §Plan Digest readiness gate
+  - Resume gate (DB task_state)
+  - Pass A per-task (implement + compile + task_status_flip; NO commits)
+  - Pass B per-stage (verify + code-review + verified→done flips)
+  - Inline closeout (stage_closeout_apply + guarded git mv)
+  - Stage commit + per-task commit record + stage_verification_flip
+triggers:
+  - /ship-stage-main-session {master-plan-path} {stage}
+  - execute ship-stage in this session
+  - no-subagent ship-stage
+argument_hint: {MASTER_PLAN_RELATIVE_PATH} {STAGE_ID} [--no-resume]
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # ship-stage-main-session — no-subagent `/ship-stage`

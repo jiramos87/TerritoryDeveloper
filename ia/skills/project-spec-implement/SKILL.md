@@ -1,21 +1,37 @@
 ---
-purpose: "Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases), after the spec is ready—not for spec review."
-audience: agent
-loaded_by: skill:project-spec-implement
-slices_via: none
 name: project-spec-implement
-description: >
+purpose: >-
   Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
-  after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project spec",
-  "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
-model: inherit
+  after the spec is ready—not for spec review.
+audience: agent
+loaded_by: "skill:project-spec-implement"
+slices_via: none
+description: >-
+  Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
+  after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project
+  spec", "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
 phases:
-  - "Parse target"
-  - "Pull backlog issue"
-  - "Orchestrator sync"
-  - "Context load"
-  - "Implement"
-  - "Task exit"
+  - Parse target
+  - Pull backlog issue
+  - Orchestrator sync
+  - Context load
+  - Implement
+  - Task exit
+triggers:
+  - implement project spec
+  - execute project spec
+  - follow Implementation Plan
+  - ship spec phases
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Project spec implementation (execution)

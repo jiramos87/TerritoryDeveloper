@@ -1,25 +1,42 @@
 ---
-purpose: "Compress mode: audits Draft tasks in a Stage against sizing heuristic; proposes merge groups; harvests + closes source specs; creates consolidated issues. Cold path — only for already-filed stages with over-granular Draft tasks."
-audience: agent
-loaded_by: skill:stage-compress
-slices_via: none
 name: stage-compress
-description: >
-  Compress mode cold path (extracted from legacy stage-file). Merges over-granular Draft
-  tasks into consolidated issues before kickoff. Operates only on Draft status rows.
-  Never touches In Review, In Progress, or Done tasks. User must confirm merge plan before
-  any destructive action (harvest + close source specs). Mode-detection contract: stage-file
-  dispatcher routes here when 0 _pending_ tasks + ≥1 Draft tasks in Stage.
-  Triggers: "stage-compress", "/stage-compress {ORCHESTRATOR_SPEC} {STAGE_ID}",
-  "compress stage", "merge draft tasks", "consolidate stage tasks".
-  Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
-model: inherit
+purpose: >-
+  Compress mode: audits Draft tasks in a Stage against sizing heuristic; proposes merge groups;
+  harvests + closes source specs; creates consolidated issues. Cold path — only for already-filed
+  stages with over-granular Draft tasks.
+audience: agent
+loaded_by: "skill:stage-compress"
+slices_via: none
+description: >-
+  Compress mode cold path (extracted from legacy stage-file). Merges over-granular Draft tasks into
+  consolidated issues before kickoff. Operates only on Draft status rows. Never touches In Review, In
+  Progress, or Done tasks. User must confirm merge plan before any destructive action (harvest + close
+  source specs). Mode-detection contract: stage-file dispatcher routes here when 0 _pending_ tasks +
+  ≥1 Draft tasks in Stage. Triggers: "stage-compress", "/stage-compress {ORCHESTRATOR_SPEC}
+  {STAGE_ID}", "compress stage", "merge draft tasks", "consolidate stage tasks". Argument order
+  (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 phases:
-  - "Load tool recipe"
-  - "Scope audit"
-  - "Propose merge plan"
-  - "Execute merges"
-  - "Post-compress validation"
+  - Load tool recipe
+  - Scope audit
+  - Propose merge plan
+  - Execute merges
+  - Post-compress validation
+triggers:
+  - stage-compress
+  - /stage-compress {ORCHESTRATOR_SPEC} {STAGE_ID}
+  - compress stage
+  - merge draft tasks
+  - consolidate stage tasks
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Stage-compress skill (Compress mode)

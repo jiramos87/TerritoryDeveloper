@@ -1,16 +1,35 @@
 ---
-purpose: "Regenerate sprite-gen PNG variants from a spec or preset, auto-review each PNG in-agent (tile-diamond containment + visible variation), then hand off to a human verification gate with absolute paths and a caveman verdict table."
-audience: agent
-loaded_by: skill:sprite-gen-visual-review
-slices_via: none
 name: sprite-gen-visual-review
-description: >
-  Regenerate sprite-gen PNG variants from a spec under `tools/sprite-gen/specs/` (or a preset
-  via a spec that references it), auto-review each PNG in-agent for tile-diamond containment +
-  visible variation, and hand off to a human verification gate with absolute paths + per-variant
-  verdict. Triggers: "sprite-gen visual review", "/sprite-gen-review {spec-id}",
-  "review sprite variants", "verify building inside tile", "check vary block output".
+purpose: >-
+  Regenerate sprite-gen PNG variants from a spec or preset, auto-review each PNG in-agent
+  (tile-diamond containment + visible variation), then hand off to a human verification gate with
+  absolute paths and a caveman verdict table.
+audience: agent
+loaded_by: "skill:sprite-gen-visual-review"
+slices_via: none
+description: >-
+  Regenerate sprite-gen PNG variants from a spec under `tools/sprite-gen/specs/` (or a preset via a
+  spec that references it), auto-review each PNG in-agent for tile-diamond containment + visible
+  variation, and hand off to a human verification gate with absolute paths + per-variant verdict.
+  Triggers: "sprite-gen visual review", "/sprite-gen-review {spec-id}", "review sprite variants",
+  "verify building inside tile", "check vary block output".
+phases: []
+triggers:
+  - sprite-gen visual review
+  - /sprite-gen-review {spec-id}
+  - review sprite variants
+  - verify building inside tile
+  - check vary block output
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 Start: read the spec file under `tools/sprite-gen/specs/{SPEC_ID}.yaml` + the referenced preset under `tools/sprite-gen/presets/{PRESET}.yaml` (if any). Target output: `tools/sprite-gen/out/{spec.output.name}_v{NN}.png`.

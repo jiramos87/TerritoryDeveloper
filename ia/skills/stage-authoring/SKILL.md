@@ -1,34 +1,74 @@
 ---
-purpose: "DB-backed single-skill stage-authoring: one Opus bulk pass writes §Plan Digest direct per task via task_spec_section_write MCP. No aggregate doc."
-audience: agent
-loaded_by: skill:stage-authoring
-slices_via: none
 name: stage-authoring
-description: >
-  DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan
-  Digest direct per filed Task spec stub of one Stage (rich format: Goal /
-  Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with
-  Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub →
-  digest direct, no intermediate surface. Persists each per-Task §Plan Digest
-  body to DB via `task_spec_section_write` MCP. Absorbs canonical-term fold
-  (glossary + retired-surface tombstone + template-section allowlist +
-  cross-ref task-id resolver) into the same bulk pass. Self-lints via
+purpose: >-
+  DB-backed single-skill stage-authoring: one Opus bulk pass writes §Plan Digest direct per task via
+  task_spec_section_write MCP. No aggregate doc.
+audience: agent
+loaded_by: "skill:stage-authoring"
+slices_via: none
+description: >-
+  DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan Digest direct per filed
+  Task spec stub of one Stage (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential
+  Mechanical Steps with Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub → digest
+  direct, no intermediate surface. Persists each per-Task §Plan Digest body to DB via
+  `task_spec_section_write` MCP. Absorbs canonical-term fold (glossary + retired-surface tombstone +
+  template-section allowlist + cross-ref task-id resolver) into the same bulk pass. Self-lints via
   `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via
-  `mechanicalization_preflight_lint`. No aggregate doc compile.
-  Triggers: "/stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}",
-  "stage authoring", "stage-scoped digest", "author stage tasks".
+  `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring
+  {ORCHESTRATOR_SPEC} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks".
   Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
-model: opus
 phases:
-  - "Sequential-dispatch guardrail"
-  - "Load shared Stage MCP bundle"
-  - "Read filed Task spec stubs"
-  - "Token-split guardrail"
-  - "Bulk author §Plan Digest (direct, no §Plan Author)"
-  - "Self-lint via plan_digest_lint"
-  - "Mechanicalization preflight"
-  - "Per-task task_spec_section_write to DB"
-  - "Hand-off"
+  - Sequential-dispatch guardrail
+  - Load shared Stage MCP bundle
+  - Read filed Task spec stubs
+  - Token-split guardrail
+  - Bulk author §Plan Digest (direct, no §Plan Author)
+  - Self-lint via plan_digest_lint
+  - Mechanicalization preflight
+  - Per-task task_spec_section_write to DB
+  - Hand-off
+triggers:
+  - /stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}
+  - stage authoring
+  - stage-scoped digest
+  - author stage tasks
+argument_hint: {master-plan-path} Stage {X.Y} [--task {ISSUE_ID}] [--force-model {model}]
+model: opus
+reasoning_effort: high
+tools_role: pair-head
+tools_extra:
+  - mcp__territory-ia__lifecycle_stage_context
+  - mcp__territory-ia__task_spec_body
+  - mcp__territory-ia__task_spec_section
+  - mcp__territory-ia__task_spec_section_write
+  - mcp__territory-ia__task_state
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__invariant_preflight
+  - mcp__territory-ia__plan_digest_verify_paths
+  - mcp__territory-ia__plan_digest_resolve_anchor
+  - mcp__territory-ia__plan_digest_render_literal
+  - mcp__territory-ia__plan_digest_scan_for_picks
+  - mcp__territory-ia__plan_digest_lint
+  - mcp__territory-ia__plan_digest_gate_author_helper
+  - mcp__territory-ia__mechanicalization_preflight_lint
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - BACKLOG row text + spec stub prose (Notes + acceptance caveman; row structure verbatim per agent-output-caveman-authoring)
+hard_boundaries:
+  - "Do NOT write `## §Plan Author` section."
+  - Do NOT compile aggregate `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` doc.
+  - Do NOT write code, run verify, or flip Task status.
+  - Do NOT author specs outside target Stage.
+  - Do NOT regress to per-Task mode on token overflow — split into ⌈N/2⌉ bulk sub-passes.
+  - Do NOT resolve picks — `plan_digest_scan_for_picks` is lint-only; leak = abort + handoff.
+  - Do NOT call `lifecycle_stage_context` / `domain-context-load` per Task — Phase 1 once per Stage.
+  - Do NOT skip the Scene Wiring step when triggered (new MonoBehaviour / `[SerializeField]` / scene prefab / `UnityEvent`) — per `ia/rules/unity-scene-wiring.md`.
+caller_agent: stage-authoring
 ---
 
 # Stage-authoring skill — DB-backed single-skill

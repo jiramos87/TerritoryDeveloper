@@ -17,6 +17,8 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 @.claude/agents/_preamble/agent-boot.md
 <!-- skill-tools:body-override -->
 
+<!-- skill-tools:body-override -->
+
 # Mission
 
 Run [`ia/skills/ship/SKILL.md`](../../ia/skills/ship/SKILL.md) end-to-end for `$ARGUMENTS`. Single-task standalone ship pipeline: author digest → implement → verify-loop → close (DB status walk). 6 phases (Resolve task + standalone gate → Author §Plan Digest → Implement → Verify-loop → Close → Hand-off).

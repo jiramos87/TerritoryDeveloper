@@ -85,30 +85,34 @@ export function lint(options: LintOptions = {}): LintReport {
 }
 
 function runChecks(slug: string, fm: SkillFrontmatter, findings: LintFinding[]): void {
-  // Check 4: Tool list ⊇ baseline (warning in MVP; error after lockdown)
-  const baseline = TOOL_ROLE_BASELINES[fm.tools_role] ?? [];
-  const resolved = new Set(resolveTools(fm.tools_role, fm.tools_extra));
-  const missing = baseline.filter((t) => !resolved.has(t));
-  if (missing.length > 0) {
-    findings.push({
-      slug,
-      check: "tools-baseline",
-      severity: "warning",
-      message: `tools_role=${fm.tools_role} missing baseline: ${missing.join(", ")}`,
-    });
-  }
-  if (fm.tools_role === "custom" && fm.tools_extra.length === 0) {
-    findings.push({
-      slug,
-      check: "tools-baseline",
-      severity: "warning",
-      message: "tools_role=custom requires non-empty tools_extra (set tools_role+tools_extra to silence)",
-    });
-  }
-
   const agentPath = path.join(REPO_ROOT, ".claude", "agents", `${fm.name}.md`);
   const commandPath = path.join(REPO_ROOT, ".claude", "commands", `${fm.name}.md`);
   const cursorPath = path.join(REPO_ROOT, ".cursor", "rules", `cursor-skill-${fm.name}.mdc`);
+
+  // Surfaceless subskill: no agent file → tools list moot. Skip tools-baseline.
+  const hasAgentSurface = fs.existsSync(agentPath);
+  if (hasAgentSurface) {
+    // Check 4: Tool list ⊇ baseline (warning in MVP; error after lockdown)
+    const baseline = TOOL_ROLE_BASELINES[fm.tools_role] ?? [];
+    const resolved = new Set(resolveTools(fm.tools_role, fm.tools_extra));
+    const missing = baseline.filter((t) => !resolved.has(t));
+    if (missing.length > 0) {
+      findings.push({
+        slug,
+        check: "tools-baseline",
+        severity: "warning",
+        message: `tools_role=${fm.tools_role} missing baseline: ${missing.join(", ")}`,
+      });
+    }
+    if (fm.tools_role === "custom" && fm.tools_extra.length === 0) {
+      findings.push({
+        slug,
+        check: "tools-baseline",
+        severity: "warning",
+        message: "tools_role=custom requires non-empty tools_extra (set tools_role+tools_extra to silence)",
+      });
+    }
+  }
 
   // Check 2: description parity
   if (fs.existsSync(agentPath)) {
@@ -141,7 +145,8 @@ function runChecks(slug: string, fm: SkillFrontmatter, findings: LintFinding[]):
     if (!fs.existsSync(filePath)) continue;
     const text = fs.readFileSync(filePath, "utf8");
     for (const retired of RETIRED_SKILL_NAMES) {
-      const re = new RegExp(`\\b${retired}\\b`);
+      // Trailing (?!-) excludes hyphen continuation: `plan-reviewer` must NOT match `plan-reviewer-mechanical` (split successor, current).
+      const re = new RegExp(`\\b${retired}\\b(?!-)`);
       if (re.test(text)) {
         findings.push({
           slug,

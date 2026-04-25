@@ -7,6 +7,7 @@ import { type SkillFrontmatter, REPO_ROOT, listSkillSlugs, readSkillFrontmatter 
 import { renderAgent } from "./render-agent.js";
 import { renderCommand } from "./render-command.js";
 import { renderCursor } from "./render-cursor.js";
+import { resolveTools } from "./tool-roles.js";
 
 export interface SyncOptions {
   apply: boolean;
@@ -37,23 +38,32 @@ export function syncSlug(slug: string, options: SyncOptions): SyncResult {
   const fm = readSkillFrontmatter(slug);
   const files: SyncFileResult[] = [];
 
+  // Surfaceless skill = empty tools list (custom + no extras). No agent / command / cursor wrappers.
+  // Preserves single source of truth: skills opt out of surfaces by leaving tools_extra empty.
+  const tools = resolveTools(fm.tools_role, fm.tools_extra);
+  const hasSurface = tools.length > 0;
+
+  const agentPath = path.join(REPO_ROOT, ".claude", "agents", `${fm.name}.md`);
+  const commandPath = path.join(REPO_ROOT, ".claude", "commands", `${fm.name}.md`);
+  const cursorPath = path.join(REPO_ROOT, ".cursor", "rules", `cursor-skill-${fm.name}.mdc`);
+
   const targets: Array<{
     filePath: string;
     expected: string;
-  }> = [
-    {
-      filePath: path.join(REPO_ROOT, ".claude", "agents", `${fm.name}.md`),
-      expected: renderAgent(fm),
-    },
-    {
-      filePath: path.join(REPO_ROOT, ".claude", "commands", `${fm.name}.md`),
-      expected: renderCommand(fm),
-    },
-    {
-      filePath: path.join(REPO_ROOT, ".cursor", "rules", `cursor-skill-${fm.name}.mdc`),
-      expected: renderCursor(fm),
-    },
-  ];
+  }> = [];
+
+  if (hasSurface) {
+    targets.push({ filePath: agentPath, expected: renderAgent(fm) });
+    targets.push({ filePath: commandPath, expected: renderCommand(fm) });
+  } else if (fs.existsSync(commandPath)) {
+    // Surfaceless-with-command-file pattern (orchestrator/dispatcher skills): render command only.
+    // Body override under ia/skills/{slug}/command-body.md carries the actual dispatch body.
+    targets.push({ filePath: commandPath, expected: renderCommand(fm) });
+  }
+  // Cursor mirror always rendered when SKILL.md exists (mirrors agent or command body)
+  if (hasSurface || fs.existsSync(cursorPath)) {
+    targets.push({ filePath: cursorPath, expected: renderCursor(fm) });
+  }
 
   let driftCount = 0;
   for (const { filePath, expected } of targets) {

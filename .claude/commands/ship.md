@@ -16,6 +16,8 @@ Follow `caveman:caveman` for all output. Standard exceptions: code, commits, sec
 - ship standalone
 <!-- skill-tools:body-override -->
 
+<!-- skill-tools:body-override -->
+
 **Scope:** Standalone tasks only (`master_plan_id IS NULL` in `ia_tasks`). Stage-attached tasks STOP at Phase 0 with `/ship-stage` handoff.
 
 **Related:**

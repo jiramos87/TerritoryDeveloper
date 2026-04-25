@@ -4,5 +4,5 @@ alwaysApply: false
 ---
 Read and follow: @ia/skills/plan-applier/SKILL.md
 
-When this skill invokes MCP mutation tools, pass `caller_agent: "closeout"`.
+When this skill invokes MCP mutation tools, pass `caller_agent: "plan-applier"`.
 If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

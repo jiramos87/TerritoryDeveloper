@@ -1,17 +1,34 @@
 ---
-purpose: "Check phase → task cardinality in a stage: flag phases_lt_2, phases_gt_6, single-file tasks, >3-subsystem tasks. Return structured verdict + pause-or-proceed."
-audience: agent
-loaded_by: skill:cardinality-gate-check
-slices_via: none
 name: cardinality-gate-check
-description: >
+purpose: >-
+  Check phase → task cardinality in a stage: flag phases_lt_2, phases_gt_6, single-file tasks,
+  >3-subsystem tasks. Return structured verdict + pause-or-proceed.
+audience: agent
+loaded_by: "skill:cardinality-gate-check"
+slices_via: none
+description: >-
   Sonnet subskill. Given a phase→tasks map from a stage being authored or filed, returns
-  `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}` and a
-  pause-or-proceed signal. Centralizes the cardinality rule from `ia/rules/project-hierarchy.md`
-  (≥2 tasks/phase, ≤6 soft) so all master-plan authoring + stage-file skills agree on the same
-  gate. Triggers: "cardinality gate", "check phase task counts", "cardinality-gate-check subskill",
-  "phase cardinality validation".
+  `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}` and a pause-or-proceed
+  signal. Centralizes the cardinality rule from `ia/rules/project-hierarchy.md` (≥2 tasks/phase, ≤6
+  soft) so all master-plan authoring + stage-file skills agree on the same gate. Triggers:
+  "cardinality gate", "check phase task counts", "cardinality-gate-check subskill", "phase cardinality
+  validation".
+phases: []
+triggers:
+  - cardinality gate
+  - check phase task counts
+  - cardinality-gate-check subskill
+  - phase cardinality validation
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Cardinality gate check — Sonnet subskill

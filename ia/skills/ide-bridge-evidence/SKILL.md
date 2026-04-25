@@ -1,16 +1,40 @@
 ---
-purpose: Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia unity_bridge_command for issue acceptance or debugging.
-audience: agent
-loaded_by: skill:ide-bridge-evidence
-slices_via: none
 name: ide-bridge-evidence
-description: >
+purpose: >-
   Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia
-  unity_bridge_command for issue acceptance or debugging. Requires Postgres agent_bridge_job (migration 0008),
-  DATABASE_URL, and Unity Editor on REPO_ROOT with AgentBridgeCommandRunner. Triggers: "bridge screenshot",
-  "get unity logs from MCP", "capture_screenshot include_ui", "enter_play_mode", "exit_play_mode",
-  "get_play_mode_status", "get_compilation_status", "unity_compile", "debug_context_bundle", "IDE agent bridge evidence".
+  unity_bridge_command for issue acceptance or debugging.
+audience: agent
+loaded_by: "skill:ide-bridge-evidence"
+slices_via: none
+description: >-
+  Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia
+  unity_bridge_command for issue acceptance or debugging. Requires Postgres agent_bridge_job
+  (migration 0008), DATABASE_URL, and Unity Editor on REPO_ROOT with AgentBridgeCommandRunner.
+  Triggers: "bridge screenshot", "get unity logs from MCP", "capture_screenshot include_ui",
+  "enter_play_mode", "exit_play_mode", "get_play_mode_status", "get_compilation_status",
+  "unity_compile", "debug_context_bundle", "IDE agent bridge evidence".
+phases: []
+triggers:
+  - bridge screenshot
+  - get unity logs from MCP
+  - capture_screenshot include_ui
+  - enter_play_mode
+  - exit_play_mode
+  - get_play_mode_status
+  - get_compilation_status
+  - unity_compile
+  - debug_context_bundle
+  - IDE agent bridge evidence
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # IDE agent bridge — Play Mode evidence (logs + screenshots)

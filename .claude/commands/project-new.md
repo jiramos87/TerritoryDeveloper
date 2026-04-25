@@ -1,9 +1,22 @@
 ---
-description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head) → `project-new-applier` (Sonnet pair-tail) → chains `/stage-authoring --task {ISSUE_ID}` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
+description: Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id, row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers: "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec", "add issue to backlog from description".
 argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--priority P1|P2|P3|P4]"
 ---
 
-# /project-new — dispatch pair then chain `/stage-authoring --task`
+# /project-new — Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id, row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and Depends on /…
+
+Drive `$ARGUMENTS` via the [`project-new`](../agents/project-new.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /project-new
+- new backlog issue
+- create TECH-xx from prompt
+- bootstrap project spec
+- add issue to backlog from description
+<!-- skill-tools:body-override -->
 
 Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/stage-authoring --task {ISSUE_ID}` (N=1) to produce `§Plan Digest` directly.
 

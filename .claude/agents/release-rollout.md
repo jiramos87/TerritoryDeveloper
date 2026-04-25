@@ -1,14 +1,21 @@
 ---
 name: release-rollout
-description: Use to drive one row of an umbrella rollout tracker (e.g. `full-game-mvp-rollout-tracker.md`) through the next lifecycle cell (a)–(g) toward step (f) ≥1-task-filed. Dispatches per-row handoffs to `/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` in fresh context. Invokes helpers `release-rollout-enumerate` (tracker seed), `release-rollout-track` (cell flip), `release-rollout-skill-bug-log` (skill gap log). Triggers — "/release-rollout {row-slug}", "advance rollout row", "rollout next row", "drive child plan to task-filed", "seed tracker". Does NOT close issues (= `/closeout`). Does NOT author child master-plans directly — delegates to lifecycle subagents.
-tools: Agent, Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_search, mcp__territory-ia__list_specs, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary
-model: opus
+description: Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a repeatable rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to step (f) ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file`. Owns the tracker doc (`ia/projects/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT close issues (handled inline by `/ship-stage` Pass B). Does NOT execute Tier A→E rollout body directly — dispatches to per-row subagents in fresh context. Triggers: "/release-rollout {row-slug}", "rollout next row", "drive child plan to task-filed", "release rollout track".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, Agent, mcp__territory-ia__backlog_search, mcp__territory-ia__list_specs, mcp__territory-ia__spec_outline
+model: inherit
 reasoning_effort: high
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, tracker prose + disagreements appendix entries (human-consumed cold — may run 2–4 sentences). Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

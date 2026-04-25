@@ -1,11 +1,21 @@
 ---
-description: Bulk-author §Plan Digest direct (no §Plan Author intermediate) across ALL N filed Task spec stubs of one Stage in a single Opus pass + persist per-Task body to DB via task_spec_section_write MCP. Dispatches the `stage-authoring` subagent (single-skill, DB-backed). Standalone re-author path; auto-invoked inline by `/stage-file` chain Step 2.
+description: DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan Digest direct per filed Task spec stub of one Stage (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub → digest direct, no intermediate surface. Persists each per-Task §Plan Digest body to DB via `task_spec_section_write` MCP. Absorbs canonical-term fold (glossary + retired-surface tombstone + template-section allowlist + cross-ref task-id resolver) into the same bulk pass. Self-lints via `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks". Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 argument-hint: "{master-plan-path} Stage {X.Y} [--task {ISSUE_ID}] [--force-model {model}]"
 ---
 
-# /stage-authoring — dispatch `stage-authoring` subagent
+# /stage-authoring — DB-backed single-skill stage-authoring: one Opus bulk pass writes §Plan Digest direct per task via task_spec_section_write MCP. No aggregate doc.
 
-Use `stage-authoring` (DB-backed single-skill) to bulk-author §Plan Digest direct + persist per-Task body to DB via `task_spec_section_write` MCP for `$ARGUMENTS`. Standalone re-author entry point; `/stage-file` chain calls this skill inline.
+Drive `$ARGUMENTS` via the [`stage-authoring`](../agents/stage-authoring.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose (Notes + acceptance caveman; row structure verbatim per agent-output-caveman-authoring). Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}
+- stage authoring
+- stage-scoped digest
+- author stage tasks
+<!-- skill-tools:body-override -->
 
 ## Argument parsing
 

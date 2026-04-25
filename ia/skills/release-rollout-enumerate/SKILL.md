@@ -1,10 +1,13 @@
 ---
-purpose: "Seed the rollout tracker doc (`ia/projects/{umbrella-slug}-rollout-tracker.md`) from the umbrella master-plan's bucket table. One row per child master-plan. Pre-fills cells (a)–(g) from repo reality."
-audience: agent
-loaded_by: skill:release-rollout-enumerate
-slices_via: list_specs, spec_outline, spec_sections
 name: release-rollout-enumerate
-description: >
+purpose: >-
+  Seed the rollout tracker doc (`ia/projects/{umbrella-slug}-rollout-tracker.md`) from the umbrella
+  master-plan's bucket table. One row per child master-plan. Pre-fills cells (a)–(g) from repo
+  reality.
+audience: agent
+loaded_by: "skill:release-rollout-enumerate"
+slices_via: list_specs, spec_outline, spec_sections
+description: >-
   Use when an umbrella master-plan needs its rollout tracker seeded from the bucket table. Creates
   `ia/projects/{umbrella-slug}-rollout-tracker.md` with one row per bucket + sibling. Pre-fills cells
   (a)–(g) based on repo reality at baseline SHA (exploration-doc presence, child master-plan presence,
@@ -12,7 +15,22 @@ description: >
   Disagreements appendix. Does NOT decide scope (umbrella owns). Does NOT create child master-plans (=
   `/master-plan-new`). Triggers: "enumerate rollout", "seed tracker", "release-rollout-enumerate
   {umbrella}", "bootstrap tracker from master plan".
+phases: []
+triggers:
+  - enumerate rollout
+  - seed tracker
+  - release-rollout-enumerate {umbrella}
+  - bootstrap tracker from master plan
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Release rollout — enumerate (seed tracker)

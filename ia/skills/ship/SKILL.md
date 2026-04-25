@@ -1,31 +1,30 @@
 ---
 name: ship
-purpose: "Single-task standalone ship pipeline. Four mechanical steps: author digest → implement → verify-loop → close. No master plan, no code review, no audit, no commit."
+purpose: >-
+  Single-task standalone ship pipeline. Four mechanical steps: author digest → implement → verify-loop
+  → close. No master plan, no code review, no audit, no commit.
 audience: agent
-loaded_by: skill:ship
+loaded_by: "skill:ship"
 slices_via: none
-description: >
-  Standalone single-task ship pipeline. Four mechanical steps in order:
-  (1) author §Plan Digest via stage-authoring --task, (2) implement via
-  spec-implementer, (3) verify-loop with MAX_ITERATIONS=2, (4) close via
-  DB status walk (pending → implemented → verified → done → archived).
-  Standalone-tasks only — task must have master_plan_id IS NULL. No code
-  review. No audit. No commit. No master-plan handoff. Stage-attached
-  tasks must use /ship-stage instead.
-  Triggers: "/ship {ISSUE_ID}", "ship task", "ship standalone".
-  Argument: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9).
+description: >-
+  Standalone single-task ship pipeline. Four mechanical steps in order: (1) author §Plan Digest via
+  stage-authoring --task, (2) implement via spec-implementer, (3) verify-loop with MAX_ITERATIONS=2,
+  (4) close via DB status walk (pending → implemented → verified → done → archived). Standalone-tasks
+  only — task must have master_plan_id IS NULL. No code review. No audit. No commit. No master-plan
+  handoff. Stage-attached tasks must use /ship-stage instead. Triggers: "/ship {ISSUE_ID}", "ship
+  task", "ship standalone". Argument: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9).
 phases:
-  - "Resolve task + standalone gate"
-  - "Author §Plan Digest"
-  - "Implement"
-  - "Verify-loop"
-  - "Close (DB status walk)"
-  - "Hand-off"
+  - Resolve task + standalone gate
+  - Author §Plan Digest
+  - Implement
+  - Verify-loop
+  - Close (DB status walk)
+  - Hand-off
 triggers:
-  - "/ship {ISSUE_ID}"
-  - "ship task"
-  - "ship standalone"
-argument_hint: "{ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9)"
+  - /ship {ISSUE_ID}
+  - ship task
+  - ship standalone
+argument_hint: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9)
 model: opus
 reasoning_effort: high
 tools_role: standalone-pipeline
@@ -69,12 +68,12 @@ caveman_exceptions:
   - structured MCP payloads
   - destructive-op confirmations
 hard_boundaries:
-  - "Standalone-tasks only — stage-attached → /ship-stage handoff"
-  - "No code review / audit / commit / master-plan task-row sync"
-  - "MAX_ITERATIONS=2 for verify-loop (locked)"
-  - "Sequential phase dispatch — no parallel"
-  - "Idempotent on re-entry — Phase 1 readiness skip + Phase 4 status-walk no-ops"
-  - "DB-only closeout — no filesystem ops, no stage_closeout_apply"
+  - Standalone-tasks only — stage-attached → /ship-stage handoff
+  - No code review / audit / commit / master-plan task-row sync
+  - MAX_ITERATIONS=2 for verify-loop (locked)
+  - Sequential phase dispatch — no parallel
+  - Idempotent on re-entry — Phase 1 readiness skip + Phase 4 status-walk no-ops
+  - DB-only closeout — no filesystem ops, no stage_closeout_apply
 caller_agent: ship
 ---
 

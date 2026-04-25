@@ -1,16 +1,28 @@
 ---
-purpose: "Read one tracker row and return {target_col, hard_gate, chain_ready, next_action}. Sonnet subskill: pure row-state derivation. Called from release-rollout Phase 1."
-audience: agent
-loaded_by: skill:rollout-row-state
-slices_via: none
 name: rollout-row-state
-description: >
-  Sonnet subskill. Reads one row from a rollout tracker doc and derives the next cell to
-  tick plus hard-gate flags. Output: {target_col, hard_gate, chain_ready, next_action}.
-  Offloads row-state classification from Opus release-rollout Phase 1. No reasoning —
-  deterministic predicate over column glyphs. Triggers: called internally by release-rollout
-  Phase 1.
+purpose: >-
+  Read one tracker row and return {target_col, hard_gate, chain_ready, next_action}. Sonnet subskill:
+  pure row-state derivation. Called from release-rollout Phase 1.
+audience: agent
+loaded_by: "skill:rollout-row-state"
+slices_via: none
+description: >-
+  Sonnet subskill. Reads one row from a rollout tracker doc and derives the next cell to tick plus
+  hard-gate flags. Output: {target_col, hard_gate, chain_ready, next_action}. Offloads row-state
+  classification from Opus release-rollout Phase 1. No reasoning — deterministic predicate over column
+  glyphs. Triggers: called internally by release-rollout Phase 1.
+phases: []
+triggers: []
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Rollout row state (row-state classifier)

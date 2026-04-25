@@ -4,5 +4,5 @@ alwaysApply: false
 ---
 Read and follow: @ia/skills/stage-authoring/SKILL.md
 
-When this skill invokes MCP tools, follow its Tool recipe order exactly.
+When this skill invokes MCP mutation tools, pass `caller_agent: "stage-authoring"`.
 If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

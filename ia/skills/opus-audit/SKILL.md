@@ -1,26 +1,40 @@
 ---
-purpose: "Opus Stage-scoped bulk audit: one pass reads ALL N Task specs + Stage header; writes ALL N §Audit paragraphs in one synthesis round."
-audience: agent
-loaded_by: skill:opus-audit
-slices_via: none
 name: opus-audit
-description: >
-  Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green.
-  Single pass reads ALL N Task specs (§Implementation + §Findings + §Verification) +
-  Stage header + invariants + glossary snippets (pre-loaded shared Stage MCP bundle);
-  writes ALL N §Audit paragraphs in one synthesis round.
-  Does NOT write §Closeout Plan — Stage closeout runs inline via stage_closeout_apply MCP.
-  Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out); Stage preflight
-  reads §Findings + §Verification per Task.
-  Triggers: "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit", "opus audit bulk",
-  "run opus audit Stage".
-model: inherit
+purpose: >-
+  Opus Stage-scoped bulk audit: one pass reads ALL N Task specs + Stage header; writes ALL N §Audit
+  paragraphs in one synthesis round.
+audience: agent
+loaded_by: "skill:opus-audit"
+slices_via: none
+description: >-
+  Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green. Single pass reads
+  ALL N Task specs (§Implementation + §Findings + §Verification) + Stage header + invariants +
+  glossary snippets (pre-loaded shared Stage MCP bundle); writes ALL N §Audit paragraphs in one
+  synthesis round. Does NOT write §Closeout Plan — Stage closeout runs inline via stage_closeout_apply
+  MCP. Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out); Stage preflight reads
+  §Findings + §Verification per Task. Triggers: "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit",
+  "opus audit bulk", "run opus audit Stage".
 phases:
-  - "Sequential-dispatch guardrail + Stage preflight"
-  - "Load Stage MCP bundle"
-  - "Synthesize N §Audit paragraphs"
-  - "Write tuples"
-  - "Hand-off"
+  - Sequential-dispatch guardrail + Stage preflight
+  - Load Stage MCP bundle
+  - Synthesize N §Audit paragraphs
+  - Write tuples
+  - Hand-off
+triggers:
+  - /audit {MASTER_PLAN_PATH} {STAGE_ID}
+  - stage audit
+  - opus audit bulk
+  - run opus audit Stage
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Opus-audit skill (Stage-scoped bulk)

@@ -1,30 +1,59 @@
 ---
-purpose: "Expand a deferred skeleton Stage in an existing orchestrator master plan into a full Task table (5-column canonical). Edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`."
-audience: agent
-loaded_by: skill:stage-decompose
-slices_via: glossary_discover, glossary_lookup, router_for_task, invariants_summary, spec_sections
 name: stage-decompose
-description: >
+purpose: >-
+  Expand a deferred skeleton Stage in an existing orchestrator master plan into a full Task table
+  (5-column canonical). Edits the master plan in-place. Does NOT create BACKLOG rows — that is
+  stage-file. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`.
+audience: agent
+loaded_by: "skill:stage-decompose"
+slices_via: glossary_discover, glossary_lookup, router_for_task, invariants_summary, spec_sections
+description: >-
   Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing
   2-level master plan into its Task table + 4 canonical subsections (§Stage File Plan · §Plan Fix ·
   §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred
   decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections.
   Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage
   into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that).
-  2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical
-  shape authority: `docs/MASTER-PLAN-STRUCTURE.md`.
-  Triggers: "/stage-decompose {path} Stage 2.3", "decompose stage 2.3", "expand stage skeleton",
-  "materialize deferred stage", "decompose before stage-file".
-model: inherit
+  2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical shape
+  authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {path} Stage 2.3",
+  "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before
+  stage-file".
 phases:
-  - "Load + validate"
-  - "MCP context"
-  - "Task decomposition"
-  - "Cardinality gate"
-  - "Sizing-gate evaluation"
-  - "Persist"
-  - "Progress regen"
-  - "Handoff"
+  - Load + validate
+  - MCP context
+  - Task decomposition
+  - Cardinality gate
+  - Sizing-gate evaluation
+  - Persist
+  - Progress regen
+  - Handoff
+triggers:
+  - /stage-decompose {path} Stage 2.3
+  - decompose stage 2.3
+  - expand stage skeleton
+  - materialize deferred stage
+  - decompose before stage-file
+argument_hint: {orchestrator-spec-path} Step {N}
+model: inherit
+reasoning_effort: high
+tools_role: planner
+tools_extra:
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries:
+  - Do NOT decompose Step 1 — master-plan-new owns that.
+  - Do NOT create BACKLOG rows or `ia/projects/{ISSUE_ID}.md` stubs — stage-file does that.
+  - Do NOT decompose steps beyond `STEP_ID` — lazy materialization.
+  - Do NOT overwrite a step with an existing task table without explicit user confirmation.
+  - Do NOT persist if any phase has <2 tasks without user confirmation.
+  - Do NOT commit — user decides.
+caller_agent: stage-decompose
 ---
 
 # Stage decompose — expand skeleton Stage in existing master plan

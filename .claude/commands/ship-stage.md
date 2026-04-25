@@ -1,9 +1,20 @@
 ---
-description: DB-backed two-pass Stage chain dispatcher — Pass A per-task implement+compile (NO commits) + Pass B per-stage verify-loop + code-review (inline fix) + inline closeout via stage_closeout_apply + single stage commit + stage_verification_flip. Gates on §Plan Digest readiness from /stage-authoring. Args: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume].
+description: Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a two-pass DB-backed chain. Pass A (per-task): implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD diff + code-review on Stage diff (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append (audit row) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record + stage_verification_flip(pass, commit_sha). Resume gate queries task_state per pending task; status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle exit when all tasks done/archived AND ia_stages.status=done. Triggers: "/ship-stage", "ship stage", "chain stage tasks".
 argument-hint: "{MASTER_PLAN_PATH} {STAGE_ID} [--no-resume] [--force-model {model}]"
 ---
 
-# /ship-stage — DB-backed Stage chain dispatcher
+# /ship-stage — Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + single stage-end commit + per-task task_commit_record + stage_verification_flip. Resume gate via task_state status query (no git scan).
+
+Drive `$ARGUMENTS` via the [`ship-stage`](../agents/ship-stage.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, chain-level digest JSON, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /ship-stage
+- ship stage
+- chain stage tasks
+<!-- skill-tools:body-override -->
 
 Two-pass DB-backed chain over every non-terminal task of `$ARGUMENTS`. **Pass A** = per-task implement → `unity:compile-check` → `task_status_flip(implemented)`; **NO per-task commits** (single stage-end commit covers everything). **Pass B** = per-stage verify-loop on cumulative `git diff HEAD` → code-review (inline fix cap=1) → per-task `verified→done` flips → inline `stage_closeout_apply` → single stage commit `feat({SLUG}-stage-{STAGE_ID_DB})` → per-task `task_commit_record` → `stage_verification_flip(pass)`. Resume gate via `task_state` DB query (no git scan).
 

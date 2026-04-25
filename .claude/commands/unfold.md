@@ -1,9 +1,25 @@
 ---
-description: Meta-tool. Unfold a composite slash-command invocation into one self-contained decision-tree markdown plan any agent (or human) can execute without the skill runtime. Dispatches the `unfold` subagent; read-only, NO execution, NO source edits, NO git commits.
+description: Linearize composite-skill invocation (e.g. `/ship-stage {PLAN} {STAGE}`) into one laid-out markdown plan — decision-tree shape, explicit `on_success` / `on_failure` edges, positional args substituted literally, runtime-only values as `${placeholder}`. Parses `.claude/commands/{cmd}.md` → `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`, walks phase sequence, inlines direct subagents, summarizes nested skills past `--depth`. Emits plan to `ia/plans/{cmd-slug}-{arg-slug}-unfold.md`. Use before a risky composite run to preview, after editing a skill to diff drift, or to hand a fresh agent a single executable plan without the skill runtime. Triggers — "unfold", "/unfold", "flatten skill", "precompile skill", "linearize skill", "turn skill into plan", "preview composite skill", "dry-run skill plan".
 argument-hint: "{TARGET_COMMAND} {TARGET_ARGS...} [--out PATH] [--depth N] [--format md|yaml]"
 ---
 
-# /unfold — dispatch `unfold` subagent
+# /unfold — Meta-tool. Read composite slash-command invocation, trace subagent + skill chain, emit one self-contained decision-tree plan with explicit on_success / on_failure edges. Runtime-only values emitted as placeholders. Read-only; NO execution, NO source edits, NO git commits.
+
+Drive `$ARGUMENTS` via the [`unfold`](../agents/unfold.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, emitted plan markdown, verbatim subagent-prompt quotes, verbatim tool output, plan-header YAML, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- unfold
+- /unfold
+- flatten skill
+- precompile skill
+- linearize skill
+- turn skill into plan
+- preview composite skill
+- dry-run skill plan
+<!-- skill-tools:body-override -->
 
 Translate `{TARGET_COMMAND} {TARGET_ARGS...}` into ONE laid-out markdown plan — decision-tree shape, explicit `on_success` / `on_failure` edges, positional args substituted literally, runtime-only values as `${placeholder}`. Output: `ia/plans/{cmd-slug}-{arg-slug}-unfold.md` (override via `--out`).
 

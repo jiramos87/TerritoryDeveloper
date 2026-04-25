@@ -1,17 +1,34 @@
 ---
-purpose: "Glob every Architecture-block entry/exit path; return [{path, exists, line_hint}] with `(new)` markers for greenfield paths. Prevents ghost line-number citations downstream."
-audience: agent
-loaded_by: skill:surface-path-precheck
-slices_via: none
 name: surface-path-precheck
-description: >
+purpose: >-
+  Glob every Architecture-block entry/exit path; return [{path, exists, line_hint}] with `(new)`
+  markers for greenfield paths. Prevents ghost line-number citations downstream.
+audience: agent
+loaded_by: "skill:surface-path-precheck"
+slices_via: none
+description: >-
   Sonnet subskill. Given a list of file/directory paths extracted from an Architecture or
-  Component-map block, Globs each path and returns a structured result with `exists` flag and
-  `(new)` marker for non-existent paths. Centralizes the Glob-then-classify loop shared by
-  master-plan-new, master-plan-extend, and stage-decompose so ghost line numbers cannot
-  propagate downstream. Triggers: "surface path precheck", "glob architecture paths",
-  "surface-path-precheck subskill", "check path existence from architecture block".
+  Component-map block, Globs each path and returns a structured result with `exists` flag and `(new)`
+  marker for non-existent paths. Centralizes the Glob-then-classify loop shared by master-plan-new,
+  master-plan-extend, and stage-decompose so ghost line numbers cannot propagate downstream. Triggers:
+  "surface path precheck", "glob architecture paths", "surface-path-precheck subskill", "check path
+  existence from architecture block".
+phases: []
+triggers:
+  - surface path precheck
+  - glob architecture paths
+  - surface-path-precheck subskill
+  - check path existence from architecture block
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Surface path pre-check — Sonnet subskill

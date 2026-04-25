@@ -1,18 +1,42 @@
 ---
-purpose: "Log a skill bug / gap encountered during rollout. Dual-write: per-skill `## Changelog` section (source of truth) + tracker Skill Iteration Log aggregator row (rollup). Used when a lifecycle skill misbehaves mid-rollout."
-audience: agent
-loaded_by: skill:release-rollout-skill-bug-log
-slices_via: list_rules, rule_content
 name: release-rollout-skill-bug-log
-description: >
+purpose: >-
+  Log a skill bug / gap encountered during rollout. Dual-write: per-skill `## Changelog` section
+  (source of truth) + tracker Skill Iteration Log aggregator row (rollup). Used when a lifecycle skill
+  misbehaves mid-rollout.
+audience: agent
+loaded_by: "skill:release-rollout-skill-bug-log"
+slices_via: list_rules, rule_content
+description: >-
   Use when a lifecycle skill (`design-explore`, `master-plan-new`, `master-plan-extend`,
   `stage-decompose`, `stage-file`) misbehaves during rollout — misses a guardrail, misroutes a Phase,
-  fails a pre-condition check, produces invalid output shape. Dual-writes the bug + fix to the per-skill
-  `## Changelog` section (authoritative source) + appends an aggregator row to the tracker's Skill
-  Iteration Log table (rollup, cross-referenced). Does NOT fix the skill (= hand-edit by user or
+  fails a pre-condition check, produces invalid output shape. Dual-writes the bug + fix to the
+  per-skill `## Changelog` section (authoritative source) + appends an aggregator row to the tracker's
+  Skill Iteration Log table (rollup, cross-referenced). Does NOT fix the skill (= hand-edit by user or
   targeted patch via a fresh subagent). Triggers: "log skill bug", "release-rollout-skill-bug-log",
   "skill iteration log entry".
+phases: []
+triggers:
+  - log skill bug
+  - release-rollout-skill-bug-log
+  - skill iteration log entry
 model: inherit
+tools_role: lifecycle-helper
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries:
+  - IF `ia/skills/{SKILL_NAME}/SKILL.md` missing → STOP.
+  - IF `BUG_SUMMARY` or `BUG_DETAIL` missing → STOP.
+  - IF `FIX_STATUS = applied` but `FIX_SHA` absent → STOP.
+  - Do NOT fix the skill.
+  - Do NOT touch other skills.
+  - Do NOT commit.
+caller_agent: release-rollout-skill-bug-log
 ---
 
 # Release rollout — skill bug log (dual-write)

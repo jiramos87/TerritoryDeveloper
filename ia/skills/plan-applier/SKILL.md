@@ -1,21 +1,41 @@
 ---
+name: plan-applier
 purpose: "Sonnet pair-tail: applies §Plan Fix tuples verbatim per plan-apply-pair-contract."
 audience: agent
-loaded_by: skill:plan-applier
+loaded_by: "skill:plan-applier"
 slices_via: none
-name: plan-applier
-description: >
-  Sonnet literal-applier for §Plan Fix tuples emitted by the plan-review pair-head.
-  Validation gate: validate:master-plan-status + validate:backlog-yaml.
-  Single mode — plan-fix only.
-  Triggers: "/plan-fix-apply", "plan-applier", "apply §Plan Fix tuples".
-model: inherit
+description: >-
+  Sonnet literal-applier for §Plan Fix tuples emitted by the plan-review pair-head. Validation gate:
+  validate:master-plan-status + validate:backlog-yaml. Single mode — plan-fix only. Triggers:
+  "/plan-fix-apply", "plan-applier", "apply §Plan Fix tuples".
 phases:
-  - "Read §Plan Fix"
-  - "Resolve anchors"
-  - "Apply tuples"
-  - "Validate"
-  - "Return"
+  - Read §Plan Fix
+  - Resolve anchors
+  - Apply tuples
+  - Validate
+  - Return
+triggers:
+  - /plan-fix-apply
+  - plan-applier
+  - apply §Plan Fix tuples
+model: inherit
+tools_role: pair-tail
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries:
+  - Do NOT re-query MCP for anchor resolution — planner resolved anchors; tuples authoritative.
+  - Do NOT re-order tuples — declared order only.
+  - Do NOT interpret / merge / collapse tuples.
+  - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
+  - Do NOT write normative spec prose — only mutations from tuple payloads.
+  - Do NOT re-introduce code-fix or stage-closeout modes — both retired (E14 + C10).
+  - Do NOT `git commit` — user decides.
+caller_agent: plan-applier
 ---
 
 # Plan-applier — Sonnet pair-tail

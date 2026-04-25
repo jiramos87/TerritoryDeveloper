@@ -1,17 +1,34 @@
 ---
-purpose: "Drive one sprite-gen calibration axis cycle end-to-end — probe specs → render → inspect → agent visual → user verdict → data/code/spec fix loop → docs append → axis-scoped commit."
-audience: agent
-loaded_by: skill:sprite-gen-calibrate-axis
-slices_via: none
 name: sprite-gen-calibrate-axis
-description: >
-  Drive a single sprite-gen calibration axis through the full cycle — author probe specs
-  under `tools/sprite-gen/specs/`, render + mechanically inspect, agent visual pass, human
-  verdict gate, dead-plumb / data / code fix loop, docs append to
-  `docs/sprite-gen-calibration.md`, axis-scoped commit. Triggers:
-  "/sprite-gen-calibrate-axis {AXIS}", "calibrate axis <name>", "run calibration axis",
-  "next axis".
+purpose: >-
+  Drive one sprite-gen calibration axis cycle end-to-end — probe specs → render → inspect → agent
+  visual → user verdict → data/code/spec fix loop → docs append → axis-scoped commit.
+audience: agent
+loaded_by: "skill:sprite-gen-calibrate-axis"
+slices_via: none
+description: >-
+  Drive a single sprite-gen calibration axis through the full cycle — author probe specs under
+  `tools/sprite-gen/specs/`, render + mechanically inspect, agent visual pass, human verdict gate,
+  dead-plumb / data / code fix loop, docs append to `docs/sprite-gen-calibration.md`, axis-scoped
+  commit. Triggers: "/sprite-gen-calibrate-axis {AXIS}", "calibrate axis <name>", "run calibration
+  axis", "next axis".
+phases: []
+triggers:
+  - /sprite-gen-calibrate-axis {AXIS}
+  - calibrate axis <name>
+  - run calibration axis
+  - next axis
+argument_hint: <AXIS_NAME> [VALUES] [VARIANT_COUNT]
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Sprite-gen calibrate axis

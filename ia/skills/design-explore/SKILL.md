@@ -1,17 +1,54 @@
 ---
-purpose: "Use before a master plan or backlog issue exists: survey approaches in an exploration doc, select one, expand with architecture + subsystem impact + implementation points + examples, review with a subagent, and persist back to the same doc."
-audience: agent
-loaded_by: skill:design-explore
-slices_via: router_for_task, spec_sections, invariants_summary
 name: design-explore
-description: >
-  Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined,
-  detailed, reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare
-  approaches → select → expand → architecture → subsystem impact → implementation points →
-  examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration",
-  "design review [doc]", "turn this exploration into a design", "compare and select approach",
-  "take this exploration doc to a master plan".
+purpose: >-
+  Use before a master plan or backlog issue exists: survey approaches in an exploration doc, select
+  one, expand with architecture + subsystem impact + implementation points + examples, review with a
+  subagent, and persist back to the same doc.
+audience: agent
+loaded_by: "skill:design-explore"
+slices_via: router_for_task, spec_sections, invariants_summary
+description: >-
+  Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined, detailed,
+  reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare approaches → select →
+  expand → architecture → subsystem impact → implementation points → examples → subagent review →
+  persist. Triggers: "/design-explore [path]", "expand exploration", "design review [doc]", "turn this
+  exploration into a design", "compare and select approach", "take this exploration doc to a master
+  plan".
+phases: []
+triggers:
+  - /design-explore [path]
+  - expand exploration
+  - design review [doc]
+  - turn this exploration into a design
+  - compare and select approach
+  - take this exploration doc to a master plan
+argument_hint: >-
+  {DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR
+  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)
 model: inherit
+reasoning_effort: high
+tools_role: planner
+tools_extra:
+  - Agent
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - Mermaid / diagram blocks persisted to the doc
+hard_boundaries:
+  - IF approach not confirmed after Phase 2 → STOP, ask user. Do NOT guess.
+  - IF subagent review returns BLOCKING items → resolve, re-run Phase 8, then persist.
+  - IF `{DOC_PATH}` unreadable → stop, report path error.
+  - IF touched subsystem spec unavailable via MCP → note gap in Subsystem Impact, continue.
+  - "Do NOT overwrite Problem / Approaches surveyed / Recommendation / Open questions — only write the `## Design Expansion` block."
+  - Do NOT create master plan (`ia/projects/{slug}-master-plan.md`), BACKLOG row, or invoke `project-new` — user triggers next step after review.
+  - Do NOT commit — user decides when.
+  - Do NOT load whole reference specs when `spec_section` / `spec_sections` slices cover it.
+caller_agent: design-explore
 ---
 
 # Design exploration — expand, review, persist

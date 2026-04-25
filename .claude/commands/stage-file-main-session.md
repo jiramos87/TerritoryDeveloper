@@ -1,9 +1,20 @@
 ---
-description: No-subagent variant of /stage-file. Executes the stage-file (merged DB-backed single-skill) → stage-authoring → plan-reviewer-mechanical → plan-reviewer-semantic chain inline in the current Claude Code session (no Agent/Task dispatch). Wraps ia/skills/stage-file-main-session.
+description: In-session (no-subagent) wrapper around the /stage-file chain. Read ia/skills/stage-file/SKILL.md (DB-backed single-skill) and the phase list in .claude/commands/stage-file.md, then execute the chain inline: stage-file → stage-authoring → plan-review → STOP at plan-review PASS. Use MCP `task_insert` (DB-backed per-prefix id; NO reserve-id.sh / NO yaml writes), manifest append, and direct file edits. Never dispatch via Agent/Task tool. Triggers: "/stage-file-main-session {master-plan-path} {stage}", "execute stage-file in this session", "no-subagent stage-file". Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID second.
 argument-hint: "{MASTER_PLAN_RELATIVE_PATH} {STAGE_ID}"
 ---
 
-# /stage-file-main-session — no-subagent `/stage-file`
+# /stage-file-main-session — Main-session adapter for /stage-file: executes the full stage-file → stage-authoring → plan-review chain inline (no subagents). Use when the caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool.
+
+Drive `$ARGUMENTS` via the [`stage-file-main-session`](../agents/stage-file-main-session.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /stage-file-main-session {master-plan-path} {stage}
+- execute stage-file in this session
+- no-subagent stage-file
+<!-- skill-tools:body-override -->
 
 Execute the full `/stage-file` chain for `$ARGUMENTS` **inline in this session**. Do **not** use the Agent/Task tool for any step.
 

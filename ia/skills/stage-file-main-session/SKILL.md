@@ -1,25 +1,39 @@
 ---
-purpose: "Main-session adapter for /stage-file: executes the full stage-file → stage-authoring → plan-review chain inline (no subagents). Use when the caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather than dispatch via Agent/Task tool."
-audience: agent
-loaded_by: skill:stage-file-main-session
-slices_via: none
 name: stage-file-main-session
-description: >
-  In-session (no-subagent) wrapper around the /stage-file chain. Read
-  ia/skills/stage-file/SKILL.md (DB-backed single-skill) and the phase list
-  in .claude/commands/stage-file.md, then execute the chain inline:
-  stage-file → stage-authoring → plan-review → STOP at plan-review PASS.
-  Use MCP `task_insert` (DB-backed per-prefix id; NO reserve-id.sh / NO yaml
-  writes), manifest append, and direct file edits. Never dispatch via
-  Agent/Task tool.
-  Triggers: "/stage-file-main-session {master-plan-path} {stage}",
-  "execute stage-file in this session", "no-subagent stage-file".
+purpose: >-
+  Main-session adapter for /stage-file: executes the full stage-file → stage-authoring → plan-review
+  chain inline (no subagents). Use when the caller agent (Cursor Composer-2 / Claude Code main
+  session) must do the work itself rather than dispatch via Agent/Task tool.
+audience: agent
+loaded_by: "skill:stage-file-main-session"
+slices_via: none
+description: >-
+  In-session (no-subagent) wrapper around the /stage-file chain. Read ia/skills/stage-file/SKILL.md
+  (DB-backed single-skill) and the phase list in .claude/commands/stage-file.md, then execute the
+  chain inline: stage-file → stage-authoring → plan-review → STOP at plan-review PASS. Use MCP
+  `task_insert` (DB-backed per-prefix id; NO reserve-id.sh / NO yaml writes), manifest append, and
+  direct file edits. Never dispatch via Agent/Task tool. Triggers: "/stage-file-main-session
+  {master-plan-path} {stage}", "execute stage-file in this session", "no-subagent stage-file".
   Argument order (explicit): MASTER_PLAN_RELATIVE_PATH first, STAGE_ID second.
-model: inherit
 phases:
-  - "Load canonical skill + command"
-  - "Execute chain inline"
-  - "STOP at plan-review PASS"
+  - Load canonical skill + command
+  - Execute chain inline
+  - STOP at plan-review PASS
+triggers:
+  - /stage-file-main-session {master-plan-path} {stage}
+  - execute stage-file in this session
+  - no-subagent stage-file
+argument_hint: {MASTER_PLAN_RELATIVE_PATH} {STAGE_ID}
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # stage-file-main-session — no-subagent `/stage-file`

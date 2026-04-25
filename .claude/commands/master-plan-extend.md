@@ -1,11 +1,22 @@
 ---
-description: Extend existing `ia/projects/{slug}-master-plan.md` orchestrator with new Steps sourced from an exploration doc (with persisted `## Design Expansion`) OR an extensions doc (`{slug}-post-mvp-extensions.md`). Dispatches the `master-plan-extend` subagent in isolated context.
-argument-hint: "{ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC]  (e.g. ia/projects/blip-master-plan.md docs/blip-post-mvp-extensions.md)"
+description: Use when an existing master plan orchestrator needs new Stages sourced from an exploration doc (with persisted `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`) that was deferred at original author time. Appends new Stage blocks in place — never rewrites existing Stages, never overwrites headers, never inserts BACKLOG rows. Fully decomposes every new Stage (Task table) at author time — no skeletons. 2-level hierarchy `Stage > Task` (Step + Phase layers removed per lifecycle-refactor). Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/master-plan-extend {plan} {source}", "extend master plan from exploration", "add new stages to orchestrator", "append from extensions doc", "pull deferred stage into master plan".
+argument-hint: "{ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC] (e.g. ia/projects/blip-master-plan.md docs/blip-post-mvp-extensions.md)"
 ---
 
-# /master-plan-extend — dispatch `master-plan-extend` subagent
+# /master-plan-extend — Extend an existing `ia/projects/{slug}-master-plan.md` with new Stages sourced from an exploration or extensions doc. Appends — never rewrites existing Stages. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`.
 
-Use `master-plan-extend` subagent (`.claude/agents/master-plan-extend.md`) to run `ia/skills/master-plan-extend/SKILL.md` end-to-end on `$ARGUMENTS`.
+Drive `$ARGUMENTS` via the [`master-plan-extend`](../agents/master-plan-extend.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc, orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field). Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /master-plan-extend {plan} {source}
+- extend master plan from exploration
+- add new stages to orchestrator
+- append from extensions doc
+- pull deferred stage into master plan
+<!-- skill-tools:body-override -->
 
 `$ARGUMENTS` = `{ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC]`. First token = path to existing master plan (must exist; must match orchestrator shape). Second token = path to exploration doc with persisted `## Design Expansion` (or semantic equivalent) OR extensions doc listing deferred Steps. Optional third token = `START_STEP_NUMBER` integer override (gated `>` last existing step; default = last + 1). Optional fourth token = scope-boundary doc path.
 

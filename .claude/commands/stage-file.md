@@ -1,11 +1,24 @@
 ---
-description: Bulk-file all pending tasks of one orchestrator Stage as DB rows + project spec stubs + §Plan Digest populated + plan-review PASS. Dispatches `stage-file` (merged single-skill, DB-backed) → `stage-authoring` (bulk Stage 1×N — replaces retired `plan-author` + `plan-digest` chain) → `plan-reviewer-mechanical` (Sonnet pair-head A) → `plan-reviewer-semantic` (Opus pair-head B) (→ `plan-applier` Mode plan-fix on critical, re-entry cap=1) → STOP. Handoff: `/ship-stage` (N≥2) OR `/ship` (N=1).
+description: DB-backed single-skill filing. Loads shared Stage MCP bundle once; gates cardinality (≥2 Tasks per Stage) + sizing (H1–H6); batch-verifies Depends-on ids via single `backlog_list`; resolves target BACKLOG.md section from master-plan H1 title; per-Task writes via `task_insert` MCP tool (DB-backed monotonic id from per-prefix sequence — no reserve-id.sh); appends manifest entry to `ia/state/backlog-sections.json`; bootstraps `ia/projects/{ISSUE_ID}.md` spec stub from template; runs `materialize-backlog.sh` (DB source default) + `validate:dead-project-specs`; atomic task-table flip + R1/R2 Status flips. No yaml file written under `ia/backlog/`. Triggers: "/stage-file {orchestrator-path} Stage 1.2", "file stage tasks", "bulk create stage issues", "create backlog rows for Stage X.Y", "bootstrap issues for pending stage tasks", "compress stage tasks", "merge draft tasks". Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 argument-hint: "{master-plan-path} Stage {X.Y} [--force-model {model}]"
 ---
 
-# /stage-file — dispatch seam #2 chain (stage-file → stage-authoring → review-mechanical → review-semantic → STOP)
+# /stage-file — DB-backed single-skill stage-file: mode detection + cardinality + sizing gates + per-task task_insert MCP writes + manifest append + spec stub + task-table flip + R1/R2 Status flips.
 
-Use `stage-file` (DB-backed single-skill) → `stage-authoring` (bulk 1×N digest, absorbs retired plan-author + plan-digest) → `plan-reviewer-mechanical` → `plan-reviewer-semantic` (→ `plan-applier` Mode plan-fix on critical) to bulk-file + author-digest + review all `_pending_` tasks of `$ARGUMENTS` in ONE command. Chain STOPS at plan-review PASS (or cap=1 critical-twice). **Next:** `/ship-stage` (N≥2 — runs implement + verify + code-review + inline closeout) OR `/ship` (N=1).
+Drive `$ARGUMENTS` via the [`stage-file`](../agents/stage-file.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose (Notes + acceptance caveman; row structure verbatim per agent-output-caveman-authoring). Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /stage-file {orchestrator-path} Stage 1.2
+- file stage tasks
+- bulk create stage issues
+- create backlog rows for Stage X.Y
+- bootstrap issues for pending stage tasks
+- compress stage tasks
+- merge draft tasks
+<!-- skill-tools:body-override -->
 
 ## Argument parsing
 

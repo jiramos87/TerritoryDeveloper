@@ -1,30 +1,72 @@
 ---
-purpose: "Single integrated closed-loop verification recipe orchestrating bridge preflight, Node CI-parity checks, compile gate, agent test mode batch, IDE bridge Play Mode evidence, and bounded fix→verify iteration. Replaces ad-hoc choreography across the 5 underlying skills."
-audience: agent
-loaded_by: skill:verify-loop
-slices_via: invariants_summary, router_for_task
 name: verify-loop
-description: >
+purpose: >-
+  Single integrated closed-loop verification recipe orchestrating bridge preflight, Node CI-parity
+  checks, compile gate, agent test mode batch, IDE bridge Play Mode evidence, and bounded fix→verify
+  iteration. Replaces ad-hoc choreography across the 5 underlying skills.
+audience: agent
+loaded_by: "skill:verify-loop"
+slices_via: invariants_summary, router_for_task
+description: >-
   Use after substantive implementation (per task or per stage / spec close-out) when one canonical
   closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all →
   compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode
-  evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers
-  to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation,
-  agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill
-  is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
-  "post-task verification", "integrated verification", "fix-verify iteration", "run the full
-  verify chain", "agent-led verification end-to-end".
-model: inherit
+  evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers to
+  the 5 underlying skills (bridge-environment-preflight, project-implementation-validation,
+  agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill is
+  the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
+  "post-task verification", "integrated verification", "fix-verify iteration", "run the full verify
+  chain", "agent-led verification end-to-end".
 phases:
-  - "Bridge preflight"
-  - "Compile gate"
-  - "Node CI-parity checks"
-  - "Full local chain"
-  - "Path A test mode"
-  - "Path B bridge hybrid"
-  - "Play Mode evidence"
-  - "Fix iteration"
-  - "Verification block"
+  - Bridge preflight
+  - Compile gate
+  - Node CI-parity checks
+  - Full local chain
+  - Path A test mode
+  - Path B bridge hybrid
+  - Play Mode evidence
+  - Fix iteration
+  - Verification block
+triggers:
+  - /verify-loop
+  - closed-loop verification
+  - post-task verification
+  - integrated verification
+  - fix-verify iteration
+  - run the full verify chain
+  - agent-led verification end-to-end
+argument_hint: >-
+  [ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N] [--tooling-only]
+  [--force-model {model}]
+model: inherit
+reasoning_effort: medium
+tools_role: planner
+tools_extra:
+  - mcp__territory-ia__invariant_preflight
+  - mcp__territory-ia__unity_bridge_command
+  - mcp__territory-ia__unity_bridge_get
+  - mcp__territory-ia__unity_compile
+  - mcp__territory-ia__findobjectoftype_scan
+  - mcp__territory-ia__runtime_state
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured JSON Verification header (must parse as JSON, exempt from caveman)
+  - MCP unity_bridge_command payloads
+  - batch report JSON contents
+  - screenshot / log artifact paths
+hard_boundaries:
+  - Do NOT restate verification policy (timeout escalation, Path A lock release, Path B preflight). `docs/agent-led-verification-policy.md` is single canonical source.
+  - Do NOT modify code outside Step 6 fix-iteration scope. No refactors, no scope creep, no unrelated cleanups.
+  - Do NOT skip Path A / Path B for convenience — verification policy requires attempting both when tools allow.
+  - Do NOT exceed `MAX_ITERATIONS` (default 2). Escalate to human after cap.
+  - "Do NOT skip Path B \"because slow\". `timeout_ms: 40000` initial; escalate per policy (`unity:ensure-editor` → 60 s retry, ceiling 120 s)."
+  - Do NOT bypass failures with `--no-verify`. Diagnose root cause, surface in JSON `verdict`.
+  - "Do NOT touch stale `Temp/UnityLockfile` recovery without trying once: `rm -f Temp/UnityLockfile` + re-run when verify-local fails on stale lock."
+  - Do NOT alter `.claude/settings.json` permissions or hooks.
+caller_agent: verify-loop
 ---
 
 # Verify loop — integrated closed-loop verification

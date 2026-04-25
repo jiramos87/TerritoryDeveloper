@@ -1,13 +1,20 @@
 ---
 name: release-rollout-skill-bug-log
-description: Use to log a skill bug or gap encountered during rollout. Dual-writes to per-skill Changelog section (source of truth) + tracker Skill Iteration Log aggregator row. Inputs — SKILL_NAME, TRACKER_SPEC, ROW_SLUG, BUG_SUMMARY, BUG_DETAIL, FIX_STATUS, FIX_SHA. Does NOT fix the skill. Triggers — "log skill bug", "release-rollout-skill-bug-log", "skill iteration log entry". Does NOT commit.
+description: Use when a lifecycle skill (`design-explore`, `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`) misbehaves during rollout — misses a guardrail, misroutes a Phase, fails a pre-condition check, produces invalid output shape. Dual-writes the bug + fix to the per-skill `## Changelog` section (authoritative source) + appends an aggregator row to the tracker's Skill Iteration Log table (rollup, cross-referenced). Does NOT fix the skill (= hand-edit by user or targeted patch via a fresh subagent). Triggers: "log skill bug", "release-rollout-skill-bug-log", "skill iteration log entry".
 tools: Read, Edit, Glob
-model: haiku
+model: inherit
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

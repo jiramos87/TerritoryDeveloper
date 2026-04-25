@@ -1,21 +1,53 @@
 ---
-purpose: "Meta-tool. Read composite slash-command invocation, trace subagent + skill chain, emit one self-contained decision-tree plan with explicit on_success / on_failure edges. Runtime-only values emitted as placeholders. Read-only; NO execution, NO source edits, NO git commits."
-audience: agent
-loaded_by: skill:unfold
-slices_via: none
 name: unfold
-description: >
-  Linearize composite-skill invocation (e.g. `/ship-stage {PLAN} {STAGE}`) into one
-  laid-out markdown plan — decision-tree shape, explicit `on_success` / `on_failure`
-  edges, positional args substituted literally, runtime-only values as `${placeholder}`.
-  Parses `.claude/commands/{cmd}.md` → `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`,
-  walks phase sequence, inlines direct subagents, summarizes nested skills past `--depth`.
-  Emits plan to `ia/plans/{cmd-slug}-{arg-slug}-unfold.md`. Use before a risky composite
-  run to preview, after editing a skill to diff drift, or to hand a fresh agent a single
-  executable plan without the skill runtime. Triggers — "unfold", "/unfold",
-  "flatten skill", "precompile skill", "linearize skill", "turn skill into plan",
-  "preview composite skill", "dry-run skill plan".
+purpose: >-
+  Meta-tool. Read composite slash-command invocation, trace subagent + skill chain, emit one
+  self-contained decision-tree plan with explicit on_success / on_failure edges. Runtime-only values
+  emitted as placeholders. Read-only; NO execution, NO source edits, NO git commits.
+audience: agent
+loaded_by: "skill:unfold"
+slices_via: none
+description: >-
+  Linearize composite-skill invocation (e.g. `/ship-stage {PLAN} {STAGE}`) into one laid-out markdown
+  plan — decision-tree shape, explicit `on_success` / `on_failure` edges, positional args substituted
+  literally, runtime-only values as `${placeholder}`. Parses `.claude/commands/{cmd}.md` →
+  `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`, walks phase sequence, inlines direct
+  subagents, summarizes nested skills past `--depth`. Emits plan to
+  `ia/plans/{cmd-slug}-{arg-slug}-unfold.md`. Use before a risky composite run to preview, after
+  editing a skill to diff drift, or to hand a fresh agent a single executable plan without the skill
+  runtime. Triggers — "unfold", "/unfold", "flatten skill", "precompile skill", "linearize skill",
+  "turn skill into plan", "preview composite skill", "dry-run skill plan".
+phases: []
+triggers:
+  - unfold
+  - /unfold
+  - flatten skill
+  - precompile skill
+  - linearize skill
+  - turn skill into plan
+  - preview composite skill
+  - dry-run skill plan
+argument_hint: {TARGET_COMMAND} {TARGET_ARGS...} [--out PATH] [--depth N] [--format md|yaml]
 model: inherit
+tools_role: standalone-pipeline
+tools_extra: []
+caveman_exceptions:
+  - code
+  - emitted plan markdown
+  - verbatim subagent-prompt quotes
+  - verbatim tool output
+  - plan-header YAML
+  - destructive-op confirmations
+hard_boundaries:
+  - IF `TARGET_COMMAND` missing / empty → STOP immediately; report input absent.
+  - IF `.claude/commands/{CMD}.md` not found → STOP; report command not found.
+  - IF `--depth` not integer ≥ 0 → STOP. `--depth` > 3 → clamp to 3 + note in plan header.
+  - Do NOT modify source command / subagent / skill files — unfold is strictly read-only.
+  - "Do NOT dispatch subagents — pure parse + emit; `tools:` excludes `Agent` by design."
+  - Do NOT commit — user decides git state.
+  - Do NOT execute the emitted plan — handoff terminal command is a suggestion for the user.
+  - Runtime-only values (`{FAILED_ISSUE_ID}`, `{PR_NUMBER}`, `$LAST_COMMIT_SHA`, etc.) → always placeholders. No guessing.
+caller_agent: unfold
 ---
 
 # unfold — skill linearizer (meta-tool)

@@ -1,13 +1,20 @@
 ---
 name: skill-train
-description: Use on demand to retrospect a lifecycle skill's accumulated friction signal. Reads ia/skills/{SKILL_NAME}/SKILL.md §Changelog since last train-proposed marker (or --since / --all override), aggregates recurring friction types at threshold (default 2), synthesizes unified-diff patch proposal targeting Phase sequence / Guardrails / Seed prompt sections, writes proposal file, appends pointer entry. No auto-apply; no commit. Triggers — "skill-train", "train skill", "retrospect skill", "skill friction analysis", "skill improvement proposal".
+description: Use on demand to retrospect a lifecycle skill's accumulated friction signal. Reads `ia/skills/{SKILL_NAME}/SKILL.md` §Changelog since last `source: train-proposed` entry (or `--since {YYYY-MM-DD}`), groups entries by `friction_types[]` value, filters to recurrence ≥ threshold (default 2), synthesizes unified-diff proposal targeting Phase sequence / Guardrails / Seed prompt sections, writes proposal file, appends pointer entry. Triggers: "skill-train", "train skill", "retrospect skill", "skill friction analysis", "skill improvement proposal".
 tools: Read, Edit, Glob, Write
-model: opus
+model: inherit
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

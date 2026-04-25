@@ -1,16 +1,34 @@
 ---
-purpose: "Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle at seed cells, compile gate (get_compilation_status / unity_compile, npm run unity:compile-check, or get_console_logs),…"
-audience: agent
-loaded_by: skill:close-dev-loop
-slices_via: none
 name: close-dev-loop
-description: >
-  Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle at
-  seed cells, compile gate (get_compilation_status / unity_compile, npm run unity:compile-check, or
-  get_console_logs), diff anomaly counts, structured verdict. Requires Postgres agent_bridge_job (0008),
-  DATABASE_URL, Unity Editor on REPO_ROOT, shipped IDE agent bridge kinds. Triggers: "close dev loop",
-  "verify fix in play mode", "agent-driven QA", "closed-loop verification".
+purpose: >-
+  Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle
+  at seed cells, compile gate (get_compilation_status / unity_compile, npm run unity:compile-check, or
+  get_console_logs),…
+audience: agent
+loaded_by: "skill:close-dev-loop"
+slices_via: none
+description: >-
+  Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle
+  at seed cells, compile gate (get_compilation_status / unity_compile, npm run unity:compile-check, or
+  get_console_logs), diff anomaly counts, structured verdict. Requires Postgres agent_bridge_job
+  (0008), DATABASE_URL, Unity Editor on REPO_ROOT, shipped IDE agent bridge kinds. Triggers: "close
+  dev loop", "verify fix in play mode", "agent-driven QA", "closed-loop verification".
+phases: []
+triggers:
+  - close dev loop
+  - verify fix in play mode
+  - agent-driven QA
+  - closed-loop verification
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Close Dev Loop — fix → verify → report (IDE agent bridge)

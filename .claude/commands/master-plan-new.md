@@ -1,11 +1,21 @@
 ---
-description: Author `ia/projects/{slug}-master-plan.md` orchestrator from an exploration doc carrying a persisted `## Design Expansion` (or semantic equivalent). Dispatches the `master-plan-new` subagent against `{DOC_PATH}` in isolated context.
-argument-hint: "{DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC]  (e.g. docs/foo-exploration.md foo docs/foo-post-mvp-extensions.md)"
+description: Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work needs a multi-stage plan rather than a single BACKLOG issue. Produces `ia/projects/{slug}-master-plan.md` — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL Stages fully decomposed into Tasks (2-level hierarchy: `Stage > Task`; Step + Phase layers REMOVED per lifecycle-refactor). Tasks seeded `_pending_` for later `stage-file`. Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema, Status enums, flip matrix. Triggers: "/master-plan-new {path}", "turn expanded design into master plan", "create orchestrator from exploration", "author master plan from design expansion".
+argument-hint: "{DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC] (e.g. docs/foo-exploration.md foo docs/foo-post-mvp-extensions.md)"
 ---
 
-# /master-plan-new — dispatch `master-plan-new` subagent
+# /master-plan-new — Use after design-explore has persisted `## Design Expansion` in an exploration doc: decompose Implementation Points into stage/task (2-level hierarchy) and author `ia/projects/{slug}-master-plan.md` as a permanent orchestrator. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`.
 
-Use `master-plan-new` subagent (`.claude/agents/master-plan-new.md`) to run `ia/skills/master-plan-new/SKILL.md` end-to-end on `$ARGUMENTS`.
+Drive `$ARGUMENTS` via the [`master-plan-new`](../agents/master-plan-new.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc, orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field). Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /master-plan-new {path}
+- turn expanded design into master plan
+- create orchestrator from exploration
+- author master plan from design expansion
+<!-- skill-tools:body-override -->
 
 `$ARGUMENTS` = `{DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC]`. First token = path to exploration `.md` with persisted `## Design Expansion` (or semantic equivalent). Optional second token = slug override (kebab-case stem for `ia/projects/{SLUG}-master-plan.md`; defaults to exploration doc filename stem stripped of `-exploration` / `-design` suffix). Optional third token = scope-boundary doc path (e.g. `docs/{SLUG}-post-mvp-extensions.md`).
 

@@ -1,15 +1,33 @@
 ---
-purpose: Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or unity_compile.
-audience: agent
-loaded_by: skill:bridge-environment-preflight
-slices_via: none
 name: bridge-environment-preflight
-description: >
-  Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or unity_compile.
-  Run npm run db:bridge-preflight; interpret exit codes; bounded repair (one attempt per failure class).
-  Triggers: "bridge preflight", "postgres ready for bridge", "dev environment check", "agent_bridge_job check",
-  "before unity_bridge_command".
+purpose: >-
+  Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or
+  unity_compile.
+audience: agent
+loaded_by: "skill:bridge-environment-preflight"
+slices_via: none
+description: >-
+  Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or
+  unity_compile. Run npm run db:bridge-preflight; interpret exit codes; bounded repair (one attempt
+  per failure class). Triggers: "bridge preflight", "postgres ready for bridge", "dev environment
+  check", "agent_bridge_job check", "before unity_bridge_command".
+phases: []
+triggers:
+  - bridge preflight
+  - postgres ready for bridge
+  - dev environment check
+  - agent_bridge_job check
+  - before unity_bridge_command
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Bridge environment preflight — Postgres + IDE agent bridge readiness

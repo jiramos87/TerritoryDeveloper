@@ -1,8 +1,8 @@
 ---
 name: plan-applier
-description: Use to apply §Plan Fix tuples after Opus pair-head (plan-review) emits them. Triggers — "/plan-fix-apply {MASTER_PLAN_PATH} {STAGE_ID}", "apply plan applier", "pair-tail plan tuples". Sonnet pair-tail for `§Plan Fix`. Reads tuples verbatim; gate = validate:master-plan-status + validate:backlog-yaml. Escalates on anchor ambiguity. Idempotent re-run. Does NOT re-order tuples, interpret payloads, or commit.
+description: Sonnet literal-applier for §Plan Fix tuples emitted by the plan-review pair-head. Validation gate: validate:master-plan-status + validate:backlog-yaml. Single mode — plan-fix only. Triggers: "/plan-fix-apply", "plan-applier", "apply §Plan Fix tuples".
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate
-model: haiku
+model: inherit
 ---
 
 ## Stable prefix (Tier 1 cache)
@@ -14,6 +14,7 @@ model: haiku
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

@@ -1,13 +1,20 @@
 ---
 name: unfold
-description: Meta-tool. Read composite slash-command invocation, trace subagent + skill chain, emit one self-contained decision-tree plan markdown (explicit on_success / on_failure edges, literal arg substitution, runtime-only values as `${placeholder}`). Parses `.claude/commands/{cmd}.md` → `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`; walks phase sequence; inlines direct subagents; summarizes nested past `--depth` (default 1, cap 3). Emits plan to `ia/plans/{cmd-slug}-{arg-slug}-unfold.md` (override via `--out`). Read-only — NO execution, NO source edits, NO git commits. Triggers — "unfold", "/unfold", "flatten skill", "precompile skill", "linearize skill", "turn skill into plan", "preview composite skill", "dry-run skill plan". Args: {TARGET_COMMAND} {TARGET_ARGS...} [--out PATH] [--depth N] [--format md|yaml].
+description: Linearize composite-skill invocation (e.g. `/ship-stage {PLAN} {STAGE}`) into one laid-out markdown plan — decision-tree shape, explicit `on_success` / `on_failure` edges, positional args substituted literally, runtime-only values as `${placeholder}`. Parses `.claude/commands/{cmd}.md` → `.claude/agents/{name}.md` → `ia/skills/{slug}/SKILL.md`, walks phase sequence, inlines direct subagents, summarizes nested skills past `--depth`. Emits plan to `ia/plans/{cmd-slug}-{arg-slug}-unfold.md`. Use before a risky composite run to preview, after editing a skill to diff drift, or to hand a fresh agent a single executable plan without the skill runtime. Triggers — "unfold", "/unfold", "flatten skill", "precompile skill", "linearize skill", "turn skill into plan", "preview composite skill", "dry-run skill plan".
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: sonnet
+model: inherit
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, emitted plan markdown, verbatim subagent-prompt quotes, verbatim tool output, plan-header YAML, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

@@ -1,9 +1,33 @@
 ---
 name: mechanicalization-preflight
-description: Compute mechanicalization_score header for pair-head artifacts before tail dispatch. Triggers — imported by pair-head skills; not user-invoked.
-phases: [load, score_anchors, score_picks, score_invariants, score_validators, score_escalation, emit_header]
-tools: [Read, Grep, Glob, Edit, mcp__territory-ia__mechanicalization_preflight_lint, mcp__territory-ia__plan_digest_resolve_anchor]
+purpose: >-
+  Compute mechanicalization_score header for pair-head artifacts before tail dispatch. Triggers —
+  imported by pair-head skills; not user-invoked.
+audience: agent
 loaded_by: ondemand
+slices_via: none
+description: >-
+  Compute mechanicalization_score header for pair-head artifacts before tail dispatch. Triggers —
+  imported by pair-head skills; not user-invoked.
+phases:
+  - load
+  - score_anchors
+  - score_picks
+  - score_invariants
+  - score_validators
+  - score_escalation
+  - emit_header
+triggers: []
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Mission

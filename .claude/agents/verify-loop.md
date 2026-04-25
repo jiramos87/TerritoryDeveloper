@@ -1,16 +1,21 @@
 ---
 name: verify-loop
-description: Use to run the full integrated closed-loop verification on current branch state — orchestrates bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → structured JSON Verification block + caveman summary. Triggers — "verify-loop", "/verify-loop", "closed-loop verification", "post-phase verification", "integrated verification", "fix-verify iteration", "run the full verify chain", "agent-led verification end-to-end". Wraps `ia/skills/verify-loop/SKILL.md` which composes 5 underlying skills (`bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`). Distinct from `/verify` (lightweight single-pass `verifier`); `/verify-loop` includes fix iteration. Does NOT enrich specs (= `spec-kickoff`), implement code (= `spec-implementer`), or close issues (= `closeout`). Optional flag: `--skip-path-b` — when set, Path B (IDE bridge hybrid) is skipped; Path A compile gate still runs; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain orchestrator for batched stage-boundary Path B. Optional flag: `--tooling-only` — when set, the pre-matrix mode gate bypasses Decision matrix entirely; skill asserts no `Assets|Packages|ProjectSettings` paths are dirty then runs only Step 2 (`npm run validate:all`) + Step 7 (Verification block); JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use only for pure tooling surface refactors (MCP TypeScript / web Next.js / skills-agents-commands markdown / docs / scripts). Never on mixed diffs.
-tools: Bash, Read, Edit, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__unity_compile, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__runtime_state
-model: sonnet
+description: Use after substantive implementation (per task or per stage / spec close-out) when one canonical closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all → compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation, agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification", "post-task verification", "integrated verification", "fix-verify iteration", "run the full verify chain", "agent-led verification end-to-end".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariant_preflight, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__unity_compile, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__runtime_state
+model: inherit
 reasoning_effort: medium
 ---
 
-Follow `caveman:caveman` for the markdown summary after the JSON Verification block header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON, exempt from caveman), MCP `unity_bridge_command` payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
+## Stable prefix (Tier 1 cache)
 
-Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
+
+Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured JSON Verification header (must parse as JSON, exempt from caveman), MCP unity_bridge_command payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

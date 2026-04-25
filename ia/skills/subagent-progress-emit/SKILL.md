@@ -1,18 +1,30 @@
 ---
-purpose: "Cross-cutting progress-marker preamble — every lifecycle SKILL.md declares a top-level `phases:` YAML array; on entering Phase N, subagent emits one stderr line in the canonical shape so the parent agent (and user terminal) see realtime progress without log-file polling or MCP round-trip."
+name: subagent-progress-emit
+purpose: >-
+  Cross-cutting progress-marker preamble — every lifecycle SKILL.md declares a top-level `phases:`
+  YAML array; on entering Phase N, subagent emits one stderr line in the canonical shape so the parent
+  agent (and user terminal) see realtime progress without log-file polling or MCP round-trip.
 audience: agent
 loaded_by: always
 slices_via: none
-name: subagent-progress-emit
-description: >
-  Defines canonical stderr progress-marker shape and the `phases:` frontmatter
-  convention. @-loaded once by every `.claude/agents/*.md` common preamble so
-  the emission contract is uniform across the surface. Non-lifecycle one-shot
-  skills (glossary patchers, view regenerators) are exempt from both the
-  frontmatter convention and the emission contract. Never introduces MCP
-  round-trips or log-file polling.
-model: inherit
+description: >-
+  Defines canonical stderr progress-marker shape and the `phases:` frontmatter convention. @-loaded
+  once by every `.claude/agents/*.md` common preamble so the emission contract is uniform across the
+  surface. Non-lifecycle one-shot skills (glossary patchers, view regenerators) are exempt from both
+  the frontmatter convention and the emission contract. Never introduces MCP round-trips or log-file
+  polling.
 phases: []
+triggers: []
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Subagent progress emit

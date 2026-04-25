@@ -1,11 +1,22 @@
 ---
-description: Expand a deferred skeleton step in an existing master plan into stages → phases → tasks (in-place). Dispatches the `stage-decompose` subagent. Does NOT create BACKLOG rows — follow with /stage-file.
+description: Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing 2-level master plan into its Task table + 4 canonical subsections (§Stage File Plan · §Plan Fix · §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections. Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that). 2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {path} Stage 2.3", "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before stage-file".
 argument-hint: "{orchestrator-spec-path} Step {N}"
 ---
 
-# /stage-decompose — dispatch `stage-decompose` subagent
+# /stage-decompose — Expand a deferred skeleton Stage in an existing orchestrator master plan into a full Task table (5-column canonical). Edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`.
 
-Use `stage-decompose` subagent (`.claude/agents/stage-decompose.md`) to expand the deferred skeleton step for `$ARGUMENTS`.
+Drive `$ARGUMENTS` via the [`stage-decompose`](../agents/stage-decompose.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /stage-decompose {path} Stage 2.3
+- decompose stage 2.3
+- expand stage skeleton
+- materialize deferred stage
+- decompose before stage-file
+<!-- skill-tools:body-override -->
 
 ## Subagent prompt (forward verbatim)
 

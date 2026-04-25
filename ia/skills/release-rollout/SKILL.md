@@ -1,20 +1,57 @@
 ---
-purpose: "Umbrella rollout orchestration — track + drive every child master-plan under an umbrella (e.g. full-game-mvp) through the 7-column lifecycle (a)–(g) to step (f) ≥1-task-filed."
-audience: agent
-loaded_by: skill:release-rollout
-slices_via: backlog_issue, backlog_search, list_specs, spec_outline, router_for_task, glossary_discover, glossary_lookup, rule_content
 name: release-rollout
-description: >
-  Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a repeatable
-  rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to step (f)
-  ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`,
+purpose: >-
+  Umbrella rollout orchestration — track + drive every child master-plan under an umbrella (e.g.
+  full-game-mvp) through the 7-column lifecycle (a)–(g) to step (f) ≥1-task-filed.
+audience: agent
+loaded_by: "skill:release-rollout"
+slices_via: >-
+  backlog_issue, backlog_search, list_specs, spec_outline, router_for_task, glossary_discover,
+  glossary_lookup, rule_content
+description: >-
+  Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a
+  repeatable rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to
+  step (f) ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`,
   `/master-plan-extend`, `/stage-decompose`, `/stage-file`. Owns the tracker doc
   (`ia/projects/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills
-  (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT close
-  issues (handled inline by `/ship-stage` Pass B). Does NOT execute Tier A→E rollout body directly — dispatches to per-row
-  subagents in fresh context. Triggers: "/release-rollout {row-slug}", "rollout next row",
-  "drive child plan to task-filed", "release rollout track".
+  (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT
+  close issues (handled inline by `/ship-stage` Pass B). Does NOT execute Tier A→E rollout body
+  directly — dispatches to per-row subagents in fresh context. Triggers: "/release-rollout
+  {row-slug}", "rollout next row", "drive child plan to task-filed", "release rollout track".
+phases: []
+triggers:
+  - /release-rollout {row-slug}
+  - rollout next row
+  - drive child plan to task-filed
+  - release rollout track
+argument_hint: >-
+  {UMBRELLA_SPEC} {ROW_SLUG} [OPERATION] (e.g. ia/projects/full-game-mvp-master-plan.md zone-s-economy
+  advance | status | next)
 model: inherit
+reasoning_effort: high
+tools_role: planner
+tools_extra:
+  - Agent
+  - mcp__territory-ia__backlog_search
+  - mcp__territory-ia__list_specs
+  - mcp__territory-ia__spec_outline
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - tracker prose + disagreements appendix entries (human-consumed cold — may run 2–4 sentences)
+hard_boundaries:
+  - IF `{TRACKER_SPEC}` missing → STOP. Route to `release-rollout-enumerate`.
+  - IF `{UMBRELLA_SPEC}` missing → STOP. Route to `/master-plan-new`.
+  - IF `ROW_SLUG` not in tracker → STOP. Ask user pick or enumerate.
+  - IF row marker `⚠️` → STOP. Surface Disagreements appendix entry.
+  - IF column (b) = `❓` → STOP. Surface equivalence question.
+  - IF (g) align gate fails with (e) target → write skill-bug-log entry; do NOT tick (e).
+  - IF parallel-work conflict → STOP. Emit Tier-ordered alt row.
+  - IF subagent returns failure/blocker → STOP. Surface blocker to user; do NOT chain further.
+caller_agent: release-rollout
 ---
 
 # Release rollout — umbrella orchestration skill

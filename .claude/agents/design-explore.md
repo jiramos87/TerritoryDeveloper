@@ -1,14 +1,21 @@
 ---
 name: design-explore
-description: Use to move an exploration doc (under `docs/`) from fuzzy survey to defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Triggers — "/design-explore {path}", "expand exploration", "design review {doc}", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan". Runs skill phases: compare approaches → select (user gate) → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist back to same doc. Fires BEFORE master plan / `project-new`. Does NOT create BACKLOG rows or master plans — next-step handoff only. **Gap-analysis mode:** when `DOC_PATH` is already a locked design with no Approaches list, pass `--against {REFERENCE_DOC}` (path to an umbrella orchestrator or master plan) to run gap analysis instead of approach comparison. Gaps persist under `## Design Expansion — {context}` and feed `/master-plan-extend`. Without `--against`, the skill stops and offers options when it detects a locked doc.
-tools: Read, Edit, Write, Grep, Glob, Agent, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup
-model: opus
-reasoning_effort: xhigh
+description: Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare approaches → select → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration", "design review [doc]", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, Agent, mcp__territory-ia__spec_outline, mcp__territory-ia__list_specs
+model: inherit
+reasoning_effort: high
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

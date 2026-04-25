@@ -1,18 +1,35 @@
 ---
-purpose: "Run `npm run progress` from repo root — regenerate docs/progress.html. Non-blocking: failure logs exit code but does NOT halt caller."
-audience: agent
-loaded_by: skill:progress-regen
-slices_via: none
 name: progress-regen
-description: >
-  Bash wrapper subskill. Runs `npm run progress` from repo root and logs the exit code.
-  Non-blocking contract: caller continues regardless of exit code. No LLM model needed — pure
-  shell. Invoked as an inline subskill by master-plan-new, master-plan-extend, stage-decompose,
-  stage-file, and plan-applier Mode stage-closeout (retired project-spec-close + project-stage-close folded
-  into Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously
-  appeared inline. Triggers: "regen progress", "regenerate progress dashboard",
-  "npm run progress wrapper", "progress-regen subskill".
+purpose: >-
+  Run `npm run progress` from repo root — regenerate docs/progress.html. Non-blocking: failure logs
+  exit code but does NOT halt caller.
+audience: agent
+loaded_by: "skill:progress-regen"
+slices_via: none
+description: >-
+  Bash wrapper subskill. Runs `npm run progress` from repo root and logs the exit code. Non-blocking
+  contract: caller continues regardless of exit code. No LLM model needed — pure shell. Invoked as an
+  inline subskill by master-plan-new, master-plan-extend, stage-decompose, stage-file, and
+  plan-applier Mode stage-closeout (retired project-spec-close + project-stage-close folded into
+  Stage-scoped closeout pair per M6 collapse) wherever `npm run progress` previously appeared inline.
+  Triggers: "regen progress", "regenerate progress dashboard", "npm run progress wrapper",
+  "progress-regen subskill".
+phases: []
+triggers:
+  - regen progress
+  - regenerate progress dashboard
+  - npm run progress wrapper
+  - progress-regen subskill
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Progress regen — Bash wrapper subskill

@@ -1,11 +1,22 @@
 ---
-description: Retrospective friction analysis for a lifecycle skill. Dispatches the `skill-train` subagent to read §Changelog, aggregate recurring friction at threshold, and write a unified-diff patch proposal. User-gated — no auto-apply, no commit.
+description: Use on demand to retrospect a lifecycle skill's accumulated friction signal. Reads `ia/skills/{SKILL_NAME}/SKILL.md` §Changelog since last `source: train-proposed` entry (or `--since {YYYY-MM-DD}`), groups entries by `friction_types[]` value, filters to recurrence ≥ threshold (default 2), synthesizes unified-diff proposal targeting Phase sequence / Guardrails / Seed prompt sections, writes proposal file, appends pointer entry. Triggers: "skill-train", "train skill", "retrospect skill", "skill friction analysis", "skill improvement proposal".
 argument-hint: "{SKILL_NAME} [--since YYYY-MM-DD] [--all] [--threshold N]"
 ---
 
-# /skill-train — dispatch `skill-train` subagent
+# /skill-train — Retrospective consumer skill. Reads target skill's Per-skill Changelog since last `source: train-proposed` entry, aggregates recurring friction (≥ threshold), writes patch proposal (skill) as unified-diff file. User-gated; no auto-apply.
 
-Use `skill-train` subagent (`.claude/agents/skill-train.md`) to run a retrospective friction analysis on `$ARGUMENTS`. Reads `ia/skills/{SKILL_NAME}/SKILL.md` §Changelog, aggregates recurring friction types at threshold (default 2), produces a unified-diff patch proposal targeting Phase sequence / Guardrails / Seed prompt sections. No auto-apply; no commit.
+Drive `$ARGUMENTS` via the [`skill-train`](../agents/skill-train.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- skill-train
+- train skill
+- retrospect skill
+- skill friction analysis
+- skill improvement proposal
+<!-- skill-tools:body-override -->
 
 ## Subagent prompt (forward verbatim)
 

@@ -1,18 +1,44 @@
 ---
-purpose: "Retrospective consumer skill. Reads target skill's Per-skill Changelog since last `source: train-proposed` entry, aggregates recurring friction (≥ threshold), writes patch proposal (skill) as unified-diff file. User-gated; no auto-apply."
-audience: agent
-loaded_by: skill:skill-train
-slices_via: none
 name: skill-train
-description: >
+purpose: >-
+  Retrospective consumer skill. Reads target skill's Per-skill Changelog since last `source:
+  train-proposed` entry, aggregates recurring friction (≥ threshold), writes patch proposal (skill) as
+  unified-diff file. User-gated; no auto-apply.
+audience: agent
+loaded_by: "skill:skill-train"
+slices_via: none
+description: >-
   Use on demand to retrospect a lifecycle skill's accumulated friction signal. Reads
-  `ia/skills/{SKILL_NAME}/SKILL.md` §Changelog since last `source: train-proposed` entry
-  (or `--since {YYYY-MM-DD}`), groups entries by `friction_types[]` value, filters to
-  recurrence ≥ threshold (default 2), synthesizes unified-diff proposal targeting Phase
-  sequence / Guardrails / Seed prompt sections, writes proposal file, appends pointer entry.
-  Triggers: "skill-train", "train skill", "retrospect skill", "skill friction analysis",
-  "skill improvement proposal".
+  `ia/skills/{SKILL_NAME}/SKILL.md` §Changelog since last `source: train-proposed` entry (or `--since
+  {YYYY-MM-DD}`), groups entries by `friction_types[]` value, filters to recurrence ≥ threshold
+  (default 2), synthesizes unified-diff proposal targeting Phase sequence / Guardrails / Seed prompt
+  sections, writes proposal file, appends pointer entry. Triggers: "skill-train", "train skill",
+  "retrospect skill", "skill friction analysis", "skill improvement proposal".
+phases: []
+triggers:
+  - skill-train
+  - train skill
+  - retrospect skill
+  - skill friction analysis
+  - skill improvement proposal
+argument_hint: {SKILL_NAME} [--since YYYY-MM-DD] [--all] [--threshold N]
 model: inherit
+tools_role: lifecycle-helper
+tools_extra:
+  - Write
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries:
+  - IF `SKILL_NAME` missing or empty → STOP immediately; report input absent.
+  - IF `ia/skills/{SKILL_NAME}/SKILL.md` not found → STOP; report skill not found.
+  - Do NOT auto-apply the patch proposal — proposal is review-only; user applies manually.
+  - Do NOT commit — user decides git state.
+  - Do NOT touch other skills' SKILL.md — scope is `{SKILL_NAME}` only.
+caller_agent: skill-train
 ---
 
 # skill-train — retrospective consumer

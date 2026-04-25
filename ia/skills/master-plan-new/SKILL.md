@@ -1,19 +1,60 @@
 ---
-purpose: "Use after design-explore has persisted `## Design Expansion` in an exploration doc: decompose Implementation Points into stage/task (2-level hierarchy) and author `ia/projects/{slug}-master-plan.md` as a permanent orchestrator. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`."
-audience: agent
-loaded_by: skill:master-plan-new
-slices_via: router_for_task, spec_sections, invariants_summary
 name: master-plan-new
-description: >
-  Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work
-  needs a multi-stage plan rather than a single BACKLOG issue. Produces `ia/projects/{slug}-master-plan.md`
-  — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL Stages fully decomposed
-  into Tasks (2-level hierarchy: `Stage > Task`; Step + Phase layers REMOVED per lifecycle-refactor).
-  Tasks seeded `_pending_` for later `stage-file`. Canonical shape authority:
-  `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema,
-  Status enums, flip matrix. Triggers: "/master-plan-new {path}", "turn expanded design into master plan",
-  "create orchestrator from exploration", "author master plan from design expansion".
+purpose: >-
+  Use after design-explore has persisted `## Design Expansion` in an exploration doc: decompose
+  Implementation Points into stage/task (2-level hierarchy) and author
+  `ia/projects/{slug}-master-plan.md` as a permanent orchestrator. Canonical shape:
+  `docs/MASTER-PLAN-STRUCTURE.md`.
+audience: agent
+loaded_by: "skill:master-plan-new"
+slices_via: router_for_task, spec_sections, invariants_summary
+description: >-
+  Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the
+  work needs a multi-stage plan rather than a single BACKLOG issue. Produces
+  `ia/projects/{slug}-master-plan.md` — an orchestrator doc (NOT closeable, NEVER deleted by
+  automation) with ALL Stages fully decomposed into Tasks (2-level hierarchy: `Stage > Task`; Step +
+  Phase layers REMOVED per lifecycle-refactor). Tasks seeded `_pending_` for later `stage-file`.
+  Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column
+  Task table schema, Status enums, flip matrix. Triggers: "/master-plan-new {path}", "turn expanded
+  design into master plan", "create orchestrator from exploration", "author master plan from design
+  expansion".
+phases: []
+triggers:
+  - /master-plan-new {path}
+  - turn expanded design into master plan
+  - create orchestrator from exploration
+  - author master plan from design expansion
+argument_hint: >-
+  {DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC] (e.g. docs/foo-exploration.md foo
+  docs/foo-post-mvp-extensions.md)
 model: inherit
+reasoning_effort: high
+tools_role: pair-head
+tools_extra:
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__master_plan_preamble_write
+  - mcp__territory-ia__master_plan_change_log_append
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - Mermaid / diagram blocks persisted to the doc
+  - orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field)
+hard_boundaries:
+  - "IF expansion intent missing from `{DOC_PATH}` (neither literal `## Design Expansion` nor semantic equivalents per Phase 0 table) → STOP, route user to `/design-explore {DOC_PATH}` first."
+  - IF `ia/projects/{SLUG}-master-plan.md` already exists → STOP, ask user to confirm overwrite OR pick new slug. Orchestrator docs are permanent; never silently overwrite.
+  - IF any stage phase has <2 tasks after Phase 6 → STOP, ask user to split or justify before persisting.
+  - IF any stage phase has 7+ tasks after Phase 6 → STOP, suggest split; persist only after user confirms or justifies.
+  - "IF router returns `no_matching_domain` for a subsystem → note the gap in \"Relevant surfaces\" as `{domain} — no router match; load by path: {file}`, continue."
+  - IF exploration doc's Non-scope list carries explicit post-MVP items but no companion `docs/{SLUG}-post-mvp-extensions.md` exists → raise recommendation in Phase 9 handoff. Do NOT create the stub — separate task.
+  - Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
+  - Do NOT delete or rename exploration doc. Do NOT edit its expansion block.
+caller_agent: master-plan-new
 ---
 
 # Master plan — author orchestrator doc from expanded exploration

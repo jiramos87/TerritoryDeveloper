@@ -1,11 +1,23 @@
 ---
-description: Expand an exploration doc into a reviewed, persisted design (pre-master-plan). Dispatches the `design-explore` subagent against `{DOC_PATH}` in isolated context.
-argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}]  (e.g. docs/foo.md C  OR  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
+description: Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare approaches → select → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration", "design review [doc]", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan".
+argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
 ---
 
-# /design-explore — dispatch `design-explore` subagent
+# /design-explore — Use before a master plan or backlog issue exists: survey approaches in an exploration doc, select one, expand with architecture + subsystem impact + implementation points + examples, review with a subagent, and persist back to the same doc.
 
-Use `design-explore` subagent (`.claude/agents/design-explore.md`) to run `ia/skills/design-explore/SKILL.md` end-to-end on `$ARGUMENTS`.
+Drive `$ARGUMENTS` via the [`design-explore`](../agents/design-explore.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /design-explore [path]
+- expand exploration
+- design review [doc]
+- turn this exploration into a design
+- compare and select approach
+- take this exploration doc to a master plan
+<!-- skill-tools:body-override -->
 
 `$ARGUMENTS` = `{DOC_PATH} [APPROACH_HINT] [--against {REFERENCE_DOC}] [--force-model {model}]`. First token = path to exploration `.md`. Optional second token = approach id (e.g. `C`) to skip Phase 2 gate. Optional `--against {REFERENCE_DOC}` = path to an umbrella orchestrator or master plan — activates **gap-analysis mode** when `DOC_PATH` is a locked design with no Approaches list. Optional `--force-model {model}` (valid: `sonnet`, `opus`, `haiku`): store as `FORCE_MODEL` and pass to the Agent dispatch + embed as `FORCE_MODEL_OVERRIDE` in the subagent prompt so Phase 8's Plan subagent inherits it. Absent or invalid → `FORCE_MODEL` unset.
 

@@ -1,10 +1,13 @@
 ---
-purpose: "Update tracker cells after a downstream subagent (design-explore / master-plan-new / master-plan-extend / stage-decompose / stage-file) returns success. Mechanical cell flip + ticket append + change log entry. No decisions."
-audience: agent
-loaded_by: skill:release-rollout-track
-slices_via: backlog_issue, backlog_search, glossary_lookup, router_for_task, spec_section
 name: release-rollout-track
-description: >
+purpose: >-
+  Update tracker cells after a downstream subagent (design-explore / master-plan-new /
+  master-plan-extend / stage-decompose / stage-file) returns success. Mechanical cell flip + ticket
+  append + change log entry. No decisions.
+audience: agent
+loaded_by: "skill:release-rollout-track"
+slices_via: backlog_issue, backlog_search, glossary_lookup, router_for_task, spec_section
+description: >-
   Use AFTER a downstream subagent returns success from `/design-explore`, `/master-plan-new`,
   `/master-plan-extend`, `/stage-decompose`, or `/stage-file` to flip the corresponding tracker cell
   `— → ◐` or `◐ → ✓`, append the completion ticket (SHA / doc path / issue id), and add a Change log
@@ -12,7 +15,29 @@ description: >
   column (g) align gate. Does NOT decide cell targets (umbrella skill owns). Does NOT dispatch
   subagents (= umbrella skill). Triggers: "track cell flip", "update tracker after stage-file",
   "release-rollout-track {row-slug} {col} {ticket}".
+phases: []
+triggers:
+  - track cell flip
+  - update tracker after stage-file
+  - release-rollout-track {row-slug} {col} {ticket}
 model: inherit
+tools_role: planner
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries:
+  - IF row not in tracker → STOP.
+  - IF `TARGET_COL` invalid → STOP.
+  - IF `NEW_MARKER` invalid glyph → STOP.
+  - IF (g) align verify fails AND `TARGET_COL = (e)` → STOP. Fall back to (g) = `—` + skill bug log entry. Do NOT tick (e).
+  - Do NOT touch other rows.
+  - Do NOT edit Disagreements appendix.
+  - Do NOT commit.
+caller_agent: release-rollout-track
 ---
 
 # Release rollout — track (cell updater)

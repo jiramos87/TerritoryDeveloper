@@ -1,16 +1,38 @@
 ---
-purpose: Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec paths, MCP package tests, JSON fixtures, IA index drift.
-audience: agent
-loaded_by: skill:project-implementation-validation
-slices_via: none
 name: project-implementation-validation
-description: >
-  Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec
-  paths, MCP package tests, JSON fixtures, IA index drift. Root: npm run validate:all (includes compute-lib build + steps 1–4).
-  Full local chain (Unity/Postgres when applicable): npm run verify:local (alias: verify:post-implementation).
-  Triggers: "post-implementation validation", "run npm checks after backlog work", "validate fixtures", "IA tools parity",
-  "MCP tests", "generate:ia-indexes --check", "validate:all", "verify:local".
+purpose: >-
+  Use after substantive implementation when you need repo Node checks aligned with CI: dead project
+  spec paths, MCP package tests, JSON fixtures, IA index drift.
+audience: agent
+loaded_by: "skill:project-implementation-validation"
+slices_via: none
+description: >-
+  Use after substantive implementation when you need repo Node checks aligned with CI: dead project
+  spec paths, MCP package tests, JSON fixtures, IA index drift. Root: npm run validate:all (includes
+  compute-lib build + steps 1–4). Full local chain (Unity/Postgres when applicable): npm run
+  verify:local (alias: verify:post-implementation). Triggers: "post-implementation validation", "run
+  npm checks after backlog work", "validate fixtures", "IA tools parity", "MCP tests",
+  "generate:ia-indexes --check", "validate:all", "verify:local".
+phases: []
+triggers:
+  - post-implementation validation
+  - run npm checks after backlog work
+  - validate fixtures
+  - IA tools parity
+  - MCP tests
+  - "generate:ia-indexes --check"
+  - "validate:all"
+  - "verify:local"
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Project implementation validation (post-implementation checks)

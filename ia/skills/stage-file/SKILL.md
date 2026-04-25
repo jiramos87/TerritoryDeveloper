@@ -1,33 +1,75 @@
 ---
-purpose: "DB-backed single-skill stage-file: mode detection + cardinality + sizing gates + per-task task_insert MCP writes + manifest append + spec stub + task-table flip + R1/R2 Status flips."
-audience: agent
-loaded_by: skill:stage-file
-slices_via: none
 name: stage-file
-description: >
-  DB-backed single-skill filing. Loads shared Stage MCP bundle once;
-  gates cardinality (≥2 Tasks per Stage) + sizing (H1–H6); batch-verifies Depends-on
-  ids via single `backlog_list`; resolves target BACKLOG.md section from master-plan
-  H1 title; per-Task writes via `task_insert` MCP tool (DB-backed monotonic id from
-  per-prefix sequence — no reserve-id.sh); appends manifest entry to
-  `ia/state/backlog-sections.json`; bootstraps `ia/projects/{ISSUE_ID}.md` spec stub
-  from template; runs `materialize-backlog.sh` (DB source default) +
-  `validate:dead-project-specs`; atomic task-table flip + R1/R2 Status flips.
-  No yaml file written under `ia/backlog/`.
-  Triggers: "/stage-file {orchestrator-path} Stage 1.2", "file stage tasks",
-  "bulk create stage issues", "create backlog rows for Stage X.Y",
-  "bootstrap issues for pending stage tasks", "compress stage tasks", "merge draft tasks".
-  Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
-model: opus
+purpose: >-
+  DB-backed single-skill stage-file: mode detection + cardinality + sizing gates + per-task
+  task_insert MCP writes + manifest append + spec stub + task-table flip + R1/R2 Status flips.
+audience: agent
+loaded_by: "skill:stage-file"
+slices_via: none
+description: >-
+  DB-backed single-skill filing. Loads shared Stage MCP bundle once; gates cardinality (≥2 Tasks per
+  Stage) + sizing (H1–H6); batch-verifies Depends-on ids via single `backlog_list`; resolves target
+  BACKLOG.md section from master-plan H1 title; per-Task writes via `task_insert` MCP tool (DB-backed
+  monotonic id from per-prefix sequence — no reserve-id.sh); appends manifest entry to
+  `ia/state/backlog-sections.json`; bootstraps `ia/projects/{ISSUE_ID}.md` spec stub from template;
+  runs `materialize-backlog.sh` (DB source default) + `validate:dead-project-specs`; atomic task-table
+  flip + R1/R2 Status flips. No yaml file written under `ia/backlog/`. Triggers: "/stage-file
+  {orchestrator-path} Stage 1.2", "file stage tasks", "bulk create stage issues", "create backlog rows
+  for Stage X.Y", "bootstrap issues for pending stage tasks", "compress stage tasks", "merge draft
+  tasks". Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 phases:
-  - "Mode detection"
-  - "Load shared Stage MCP bundle"
-  - "Read Stage block + cardinality + sizing gates"
-  - "Batch Depends-on verification"
-  - "Resolve target manifest section"
-  - "Per-task iterator (task_insert + spec stub + manifest append)"
+  - Mode detection
+  - Load shared Stage MCP bundle
+  - Read Stage block + cardinality + sizing gates
+  - Batch Depends-on verification
+  - Resolve target manifest section
+  - Per-task iterator (task_insert + spec stub + manifest append)
   - "Post-loop: materialize + validate + task-table + R1/R2 flips"
-  - "Return to dispatcher"
+  - Return to dispatcher
+triggers:
+  - /stage-file {orchestrator-path} Stage 1.2
+  - file stage tasks
+  - bulk create stage issues
+  - create backlog rows for Stage X.Y
+  - bootstrap issues for pending stage tasks
+  - compress stage tasks
+  - merge draft tasks
+argument_hint: {master-plan-path} Stage {X.Y} [--force-model {model}]
+model: opus
+reasoning_effort: high
+tools_role: pair-head
+tools_extra:
+  - mcp__territory-ia__backlog_list
+  - mcp__territory-ia__backlog_record_validate
+  - mcp__territory-ia__backlog_search
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+  - mcp__territory-ia__invariant_preflight
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__master_plan_preamble_write
+  - mcp__territory-ia__master_plan_change_log_append
+  - mcp__territory-ia__task_insert
+  - mcp__territory-ia__task_spec_section_write
+  - mcp__territory-ia__lifecycle_stage_context
+  - mcp__territory-ia__mechanicalization_preflight_lint
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - BACKLOG row text + spec stub prose (Notes + acceptance caveman; row structure verbatim per agent-output-caveman-authoring)
+hard_boundaries:
+  - Do NOT write yaml under `ia/backlog/` — DB is source of truth (Step 6 of ia-dev-db-refactor).
+  - Do NOT call `reserve-id.sh` — per-prefix DB sequences own id assignment via `task_insert` MCP.
+  - Do NOT re-query `backlog_issue` per Task — Phase 3 batch-verified.
+  - Do NOT reorder Tasks — apply in task-table order.
+  - Do NOT update task-table mid-loop — atomic Edit after Phase 6.1+6.2 exit 0.
+  - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates from DB + manifest.
+  - "Do NOT run `validate:backlog-yaml` — no yaml written on DB path."
+  - "Do NOT run `validate:all` — gate is `validate:dead-project-specs` only."
+caller_agent: stage-file
 ---
 
 # Stage-file skill — DB-backed single-skill

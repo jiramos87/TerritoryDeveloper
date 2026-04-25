@@ -1,11 +1,24 @@
 ---
-description: Run the full integrated closed-loop verification on current branch — bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → extended JSON Verification block + caveman summary. Dispatches the `verify-loop` subagent. Distinct from `/verify` (lightweight single-pass `verifier`, no fix iteration).
+description: Use after substantive implementation (per task or per stage / spec close-out) when one canonical closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all → compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation, agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification", "post-task verification", "integrated verification", "fix-verify iteration", "run the full verify chain", "agent-led verification end-to-end".
 argument-hint: "[ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N] [--tooling-only] [--force-model {model}]"
 ---
 
-# /verify-loop — dispatch `verify-loop` subagent
+# /verify-loop — Single integrated closed-loop verification recipe orchestrating bridge preflight, Node CI-parity checks, compile gate, agent test mode batch, IDE bridge Play Mode evidence, and bounded fix→verify iteration. Replaces ad-hoc choreography across the 5 underlying skills.
 
-Use `verify-loop` subagent (`.claude/agents/verify-loop.md`) to orchestrate the integrated closed-loop verification recipe in `ia/skills/verify-loop/SKILL.md`. Composes 5 underlying skills (`bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`).
+Drive `$ARGUMENTS` via the [`verify-loop`](../agents/verify-loop.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured JSON Verification header (must parse as JSON, exempt from caveman), MCP unity_bridge_command payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /verify-loop
+- closed-loop verification
+- post-task verification
+- integrated verification
+- fix-verify iteration
+- run the full verify chain
+- agent-led verification end-to-end
+<!-- skill-tools:body-override -->
 
 `$ARGUMENTS` carries optional inputs: leading `ISSUE_ID` (active BACKLOG id), `--scenario {SCENARIO_ID}` (Path A / Path B gate; default `reference-flat-32x32`), `--seed-cells x,y[,x,y...]` (Path B `debug_context_bundle` seeds), `--max-iterations N` (fix loop cap; default 2), `--tooling-only` (pre-matrix bypass for pure tooling refactors — skill §"Pre-matrix mode gate" asserts no `Assets|Packages|ProjectSettings` dirty paths then runs Step 2 + Step 7 only). All optional — subagent infers from git diff + active spec §7b / §8 when omitted.
 

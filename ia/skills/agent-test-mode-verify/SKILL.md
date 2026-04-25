@@ -1,17 +1,35 @@
 ---
-purpose: "Run after project-spec-implement (or standalone) when agent-led test mode verification is required: gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge hybrid with…"
-audience: agent
-loaded_by: skill:agent-test-mode-verify
-slices_via: none
 name: agent-test-mode-verify
-description: >
+purpose: >-
   Run after project-spec-implement (or standalone) when agent-led test mode verification is required:
-  gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge hybrid
-  with runtime_state / queue file), bounded iterate with validate:all / compile gates, structured handoff for
-  human normal-game QA. Triggers: "agent test mode loop", "verify in test mode without opening Unity",
-  "batchmode scenario check", "post-implement Play Mode suite". Design trace: projects/TECH-31a3-agent-test-mode-verify-skill.md
-  (TECH-31 stage 31a3).
+  gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge
+  hybrid with…
+audience: agent
+loaded_by: "skill:agent-test-mode-verify"
+slices_via: none
+description: >-
+  Run after project-spec-implement (or standalone) when agent-led test mode verification is required:
+  gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge
+  hybrid with runtime_state / queue file), bounded iterate with validate:all / compile gates,
+  structured handoff for human normal-game QA. Triggers: "agent test mode loop", "verify in test mode
+  without opening Unity", "batchmode scenario check", "post-implement Play Mode suite". Design trace:
+  projects/TECH-31a3-agent-test-mode-verify-skill.md (TECH-31 stage 31a3).
+phases: []
+triggers:
+  - agent test mode loop
+  - verify in test mode without opening Unity
+  - batchmode scenario check
+  - post-implement Play Mode suite
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 Start: fetch `mcp__territory-ia__runtime_state` (fallback: read `ia/state/runtime-state.json`) to honor last verify / bridge state + queued scenario.

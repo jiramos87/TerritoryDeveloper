@@ -1,18 +1,35 @@
 ---
-purpose: "Per English term: call glossary_lookup + router_for_task + spec_section; return {anchored, missing} for each. Codifies the Alignment gate (column g) anchor check."
-audience: agent
-loaded_by: skill:term-anchor-verify
-slices_via: glossary_lookup, router_for_task, spec_section
 name: term-anchor-verify
-description: >
-  Sonnet subskill. Given a list of English domain terms, calls `glossary_lookup` +
-  `router_for_task` + `spec_section` for each; returns per-term `{anchored: bool, missing:
-  [glossary|router|spec]}`. Codifies the Alignment gate (column g) check from
-  `release-rollout` Phase 3 + `release-rollout-track` Phase 1. Centralizes the pass/fail
-  classifier so all callers agree on the same anchor contract. Triggers: "term anchor verify",
-  "alignment gate check", "verify glossary anchor", "term-anchor-verify subskill",
-  "column g anchor check".
+purpose: >-
+  Per English term: call glossary_lookup + router_for_task + spec_section; return {anchored, missing}
+  for each. Codifies the Alignment gate (column g) anchor check.
+audience: agent
+loaded_by: "skill:term-anchor-verify"
+slices_via: glossary_lookup, router_for_task, spec_section
+description: >-
+  Sonnet subskill. Given a list of English domain terms, calls `glossary_lookup` + `router_for_task` +
+  `spec_section` for each; returns per-term `{anchored: bool, missing: [glossary|router|spec]}`.
+  Codifies the Alignment gate (column g) check from `release-rollout` Phase 3 +
+  `release-rollout-track` Phase 1. Centralizes the pass/fail classifier so all callers agree on the
+  same anchor contract. Triggers: "term anchor verify", "alignment gate check", "verify glossary
+  anchor", "term-anchor-verify subskill", "column g anchor check".
+phases: []
+triggers:
+  - term anchor verify
+  - alignment gate check
+  - verify glossary anchor
+  - term-anchor-verify subskill
+  - column g anchor check
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Term anchor verify — Alignment gate subskill

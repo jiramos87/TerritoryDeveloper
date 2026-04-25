@@ -1,16 +1,29 @@
 ---
-purpose: "Per-row Glob/Grep repo reality sweep returning a pre-fill glyph map {(a)–(f)} for one tracker row. Sonnet subskill: templated classification, no reasoning. Called from release-rollout-enumerate Phase 1."
-audience: agent
-loaded_by: skill:release-rollout-repo-sweep
-slices_via: none
 name: release-rollout-repo-sweep
-description: >
-  Sonnet subskill. Per-row Glob/Grep sweep for one tracker row slug. Returns a structured
-  glyph map for columns (a)–(f) plus optional disagreement flags. Offloads filesystem
-  classification from Opus release-rollout-enumerate Phase 1. No reasoning — pure
-  predicate-per-column classification. Triggers: called internally by release-rollout-enumerate
-  Phase 1 (one invocation per tracker row).
+purpose: >-
+  Per-row Glob/Grep repo reality sweep returning a pre-fill glyph map {(a)–(f)} for one tracker row.
+  Sonnet subskill: templated classification, no reasoning. Called from release-rollout-enumerate Phase
+  1.
+audience: agent
+loaded_by: "skill:release-rollout-repo-sweep"
+slices_via: none
+description: >-
+  Sonnet subskill. Per-row Glob/Grep sweep for one tracker row slug. Returns a structured glyph map
+  for columns (a)–(f) plus optional disagreement flags. Offloads filesystem classification from Opus
+  release-rollout-enumerate Phase 1. No reasoning — pure predicate-per-column classification.
+  Triggers: called internally by release-rollout-enumerate Phase 1 (one invocation per tracker row).
+phases: []
+triggers: []
 model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Release rollout — repo sweep (per-row Glob/Grep classifier)

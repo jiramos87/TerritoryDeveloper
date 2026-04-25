@@ -1,9 +1,30 @@
 ---
 name: plan-review-semantic
-description: Run semantic drift scan (checks 1–2) across Stage Task specs. Reads plan-reviewer-mechanical output. Emits §Plan Fix — SEMANTIC tuple appendix per plan-apply-pair-contract.
-phases: [read_mechanical_output, check_1_goal_intent, check_2_completeness, emit_tuples]
-tools: [Read, Grep, Glob, mcp__territory-ia__spec_section, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task]
+purpose: >-
+  Run semantic drift scan (checks 1–2) across Stage Task specs. Reads plan-reviewer-mechanical output.
+  Emits §Plan Fix — SEMANTIC tuple appendix per plan-apply-pair-contract.
+audience: agent
 loaded_by: ondemand
+slices_via: none
+description: >-
+  Run semantic drift scan (checks 1–2) across Stage Task specs. Reads plan-reviewer-mechanical output.
+  Emits §Plan Fix — SEMANTIC tuple appendix per plan-apply-pair-contract.
+phases:
+  - read_mechanical_output
+  - check_1_goal_intent
+  - check_2_completeness
+  - emit_tuples
+triggers: []
+model: inherit
+tools_role: custom
+tools_extra: []
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+hard_boundaries: []
 ---
 
 # Mission

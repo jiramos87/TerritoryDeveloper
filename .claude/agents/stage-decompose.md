@@ -1,14 +1,21 @@
 ---
 name: stage-decompose
-description: Use to expand one deferred skeleton step (Steps 2+ in an existing orchestrator master plan) into stages → phases → tasks in-place. Triggers — "/stage-decompose {path} Step 2", "decompose step 2", "expand step skeleton", "materialize deferred step", "decompose before stage-file". Reads Exit criteria + Deferred decomposition hints, runs MCP context (glossary / router / invariants / spec_sections), applies cardinality + task-sizing rules, edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup
-model: opus
+description: Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing 2-level master plan into its Task table + 4 canonical subsections (§Stage File Plan · §Plan Fix · §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections. Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that). 2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {path} Stage 2.3", "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before stage-file".
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__spec_outline, mcp__territory-ia__list_specs
+model: inherit
 reasoning_effort: high
 ---
+
+## Stable prefix (Tier 1 cache)
+
+> `cache_control: {"type":"ephemeral","ttl":"1h"}` — per `docs/prompt-caching-mechanics.md` §3 Tier 1.
+
+@ia/skills/_preamble/stable-block.md
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 
 @.claude/agents/_preamble/agent-boot.md
+<!-- skill-tools:body-override -->
 
 # Mission
 

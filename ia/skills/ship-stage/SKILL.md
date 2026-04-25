@@ -1,35 +1,83 @@
 ---
-purpose: "Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + single stage-end commit + per-task task_commit_record + stage_verification_flip. Resume gate via task_state status query (no git scan)."
-audience: agent
-loaded_by: skill:ship-stage
-slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
 name: ship-stage
-description: >
-  Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a
-  two-pass DB-backed chain. Pass A (per-task): implement + unity:compile-check
-  fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A
-  leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD
-  diff + code-review on Stage diff (inline fix cap=1) + per-task
-  task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append
-  (audit row) + single stage commit feat({slug}-stage-X.Y) +
-  per-task task_commit_record + stage_verification_flip(pass, commit_sha).
-  Resume gate queries task_state per pending task; status='implemented' skips
-  Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle
-  exit when all tasks done/archived AND ia_stages.status=done.
-  Triggers: "/ship-stage", "ship stage", "chain stage tasks".
-model: inherit
+purpose: >-
+  Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate +
+  task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review
+  (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + single
+  stage-end commit + per-task task_commit_record + stage_verification_flip. Resume gate via task_state
+  status query (no git scan).
+audience: agent
+loaded_by: "skill:ship-stage"
+slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
+description: >-
+  Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a two-pass DB-backed
+  chain. Pass A (per-task): implement + unity:compile-check fast-fail gate +
+  task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B
+  (per-stage): verify-loop on cumulative HEAD diff + code-review on Stage diff (inline fix cap=1) +
+  per-task task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append
+  (audit row) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record +
+  stage_verification_flip(pass, commit_sha). Resume gate queries task_state per pending task;
+  status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle
+  exit when all tasks done/archived AND ia_stages.status=done. Triggers: "/ship-stage", "ship stage",
+  "chain stage tasks".
 phases:
-  - "Parse stage"
-  - "Stage state load"
-  - "Context load"
-  - "Plan Digest readiness gate"
-  - "Resume gate"
-  - "Pass A per-task (implement + compile + status flip)"
-  - "Pass B per-stage (verify + code-review)"
-  - "Inline closeout (DB-only)"
-  - "Stage commit + verification record"
-  - "Chain digest"
-  - "Next-stage resolver"
+  - Parse stage
+  - Stage state load
+  - Context load
+  - Plan Digest readiness gate
+  - Resume gate
+  - Pass A per-task (implement + compile + status flip)
+  - Pass B per-stage (verify + code-review)
+  - Inline closeout (DB-only)
+  - Stage commit + verification record
+  - Chain digest
+  - Next-stage resolver
+triggers:
+  - /ship-stage
+  - ship stage
+  - chain stage tasks
+argument_hint: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume] [--force-model {model}]
+model: inherit
+reasoning_effort: high
+tools_role: pair-head
+tools_extra:
+  - mcp__territory-ia__spec_outline
+  - mcp__territory-ia__list_specs
+  - mcp__territory-ia__invariant_preflight
+  - mcp__territory-ia__stage_bundle
+  - mcp__territory-ia__stage_state
+  - mcp__territory-ia__task_state
+  - mcp__territory-ia__task_bundle
+  - mcp__territory-ia__task_spec_section
+  - mcp__territory-ia__task_spec_body
+  - mcp__territory-ia__master_plan_state
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__master_plan_preamble_write
+  - mcp__territory-ia__master_plan_change_log_append
+  - mcp__territory-ia__task_status_flip
+  - mcp__territory-ia__stage_closeout_apply
+  - mcp__territory-ia__task_commit_record
+  - mcp__territory-ia__stage_verification_flip
+  - mcp__territory-ia__journal_append
+caveman_exceptions:
+  - code
+  - commits
+  - security/auth
+  - verbatim error/tool output
+  - structured MCP payloads
+  - chain-level digest JSON
+  - destructive-op confirmations
+hard_boundaries:
+  - Sequential per-task dispatch only — no parallel.
+  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes + closeout mv. Do NOT emit `feat({ISSUE_ID}):` per task."
+  - Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan.
+  - Stop on first Pass A gate failure (implement, compile, scene-wiring); do NOT continue to next task.
+  - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` or `STAGE_CODE_REVIEW_CRITICAL_TWICE` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
+  - Code-review critical re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
+  - "**Code-reviewer applies fixes inline via direct Edit/Write.** Do NOT write `§Code Fix Plan` tuples."
+  - "**Pass B (verify → code-review → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY)."
+caller_agent: ship-stage
 ---
 
 # Ship-stage — DB-backed two-pass chain dispatcher

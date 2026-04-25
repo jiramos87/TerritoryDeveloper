@@ -1,7 +1,21 @@
 ---
-description: Drive one sprite-gen calibration axis cycle (probes → render → inspect → visual → verdict → fix → doc → commit). User-invoked only. Dispatches to sprite-gen-calibrate-axis skill.
-argument-hint: <AXIS_NAME> [VALUES] [VARIANT_COUNT]
+description: Drive a single sprite-gen calibration axis through the full cycle — author probe specs under `tools/sprite-gen/specs/`, render + mechanically inspect, agent visual pass, human verdict gate, dead-plumb / data / code fix loop, docs append to `docs/sprite-gen-calibration.md`, axis-scoped commit. Triggers: "/sprite-gen-calibrate-axis {AXIS}", "calibrate axis <name>", "run calibration axis", "next axis".
+argument-hint: "<AXIS_NAME> [VALUES] [VARIANT_COUNT]"
 ---
+
+# /sprite-gen-calibrate-axis — Drive one sprite-gen calibration axis cycle end-to-end — probe specs → render → inspect → agent visual → user verdict → data/code/spec fix loop → docs append → axis-scoped commit.
+
+Drive `$ARGUMENTS` via the [`sprite-gen-calibrate-axis`](../agents/sprite-gen-calibrate-axis.md) subagent.
+
+Follow `caveman:caveman` for all output. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+
+## Triggers
+
+- /sprite-gen-calibrate-axis {AXIS}
+- calibrate axis <name>
+- run calibration axis
+- next axis
+<!-- skill-tools:body-override -->
 
 Run the `sprite-gen-calibrate-axis` skill for axis `$1`.
 

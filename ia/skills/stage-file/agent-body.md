@@ -1,0 +1,54 @@
+# Mission
+
+Run [`ia/skills/stage-file/SKILL.md`](../../ia/skills/stage-file/SKILL.md) end-to-end for target Stage. Single-skill DB-backed filing — no pair-head / pair-tail split. 8 phases (Mode detection → Load Stage MCP bundle → Stage block + gates → Batch deps verify → Manifest section resolve → Per-task iterator via `task_insert` MCP → Post-loop materialize + validate + flips → Return).
+
+# Recipe
+
+1. **Parse args** — 1st = `ORCHESTRATOR_SPEC` (explicit path, e.g. `ia/projects/backlog-yaml-mcp-alignment-master-plan.md`); 2nd = `STAGE_ID` (e.g. `5` or `Stage 5` or `7.2`); optional 3rd = `ISSUE_PREFIX` (`TECH` / `FEAT` / `BUG` / `ART` / `AUDIO`, default `TECH`).
+2. **Phase 0 — Mode detection** — Scan Stage task table before any action. File / Compress / Mixed / No-op routes per SKILL.md §Phase 0.
+3. **Phase 1 — Load Stage MCP bundle** — Single `mcp__territory-ia__lifecycle_stage_context` call (fallback `domain-context-load`). Do NOT re-run per Task.
+4. **Phase 2 — Stage block + gates** — Read `### Stage {STAGE_ID}` (H3 canonical; H4 legacy warn). Collect `_pending_` rows in table order. Run cardinality gate + sizing gate H1–H6. FAIL → HALT + `/stage-decompose` handoff.
+5. **Phase 3 — Batch deps verify** — One `backlog_list({ids: [union]})` call. Unresolvable → HALT.
+6. **Phase 4 — Resolve target manifest section** — Slug heuristic vs `ia/state/backlog-sections.json`; ambiguous → user prompt.
+7. **Phase 5 — Per-task iterator** — For each `_pending_` Task: compose `task_insert` args + `raw_markdown` (Pass A null + Pass B backfill per SKILL.md §5.1a); call MCP; append manifest entry; write `ia/projects/{ISSUE_ID}.md` spec stub from template; record for post-loop.
+8. **Phase 6 — Post-loop: materialize + validate + flips** — `bash tools/scripts/materialize-backlog.sh` (DB source default) + `npm run validate:dead-project-specs` + atomic task-table Edit + R2 Stage Status flip + R1 plan-top Status flip + non-blocking `npm run progress`.
+9. **Phase 7 — Return to dispatcher** — Single caveman block with STAGE_ID / FILED / SKIPPED / ids / section / validators / `next=stage-file-chain-continue`.
+
+# Hard boundaries
+
+- Do NOT write yaml under `ia/backlog/` — DB is source of truth (Step 6 of ia-dev-db-refactor).
+- Do NOT call `reserve-id.sh` — per-prefix DB sequences own id assignment via `task_insert` MCP.
+- Do NOT re-query `backlog_issue` per Task — Phase 3 batch-verified.
+- Do NOT reorder Tasks — apply in task-table order.
+- Do NOT update task-table mid-loop — atomic Edit after Phase 6.1+6.2 exit 0.
+- Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates from DB + manifest.
+- Do NOT run `validate:backlog-yaml` — no yaml written on DB path.
+- Do NOT run `validate:all` — gate is `validate:dead-project-specs` only.
+- Do NOT emit user-facing `/ship-stage` or `/ship` handoff — dispatcher owns post-chain handoff.
+- Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
+- Do NOT `rm -rf` or delete any existing file.
+- Do NOT commit — user decides.
+
+# Escalation shape
+
+`{escalation: true, phase: N, reason: "...", candidate_matches?: [...], stderr?: "..."}` — returned to dispatcher. See SKILL.md §Escalation rules for full trigger list (cardinality pause, sizing FAIL, dep not found, task_insert unique/sequence, manifest ambiguous, materialize non-zero, validator non-zero, R2 self-check miss).
+
+# Branch guardrail
+
+Current branch `feature/ia-dev-db-refactor` — `docs/ia-dev-db-refactor-implementation.md §3`: "No §Plan Digest ceremony. Do not invoke /author, /plan-digest, /plan-review on this branch." Smoke halts at Phase 7; dispatcher Steps 3–5 skipped.
+
+# Output
+
+Single caveman block returned to `/stage-file` dispatcher (not user). Shape:
+
+```
+stage-file done. STAGE_ID={STAGE_ID} FILED={N} SKIPPED={K}
+Filed: {ISSUE_ID_1} — {title_1}
+       {ISSUE_ID_2} — {title_2}
+       ...
+Section: {TARGET_SECTION_HEADER}
+Validators: exit 0.
+next=stage-file-chain-continue
+```
+
+On escalation: JSON `{escalation: true, phase, reason, ...}` payload.
