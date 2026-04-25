@@ -91,3 +91,6 @@ mono_crash.*
 # Agent telemetry — raw captures excluded, summaries tracked
 .claude/telemetry/*.jsonl
 !.claude/telemetry/*-summary.json
+
+# Local-only mutable state — DB snapshots, scratch dumps. Reproducible from db:snapshot:freeze.
+var/
