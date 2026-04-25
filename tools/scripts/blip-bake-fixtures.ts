@@ -150,22 +150,25 @@ function sampleOsc(
   if (sampleRate <= 0) return 0;
 
   // detune: effective freq = freq * 2^(cents/1200)
+  // Mirrors C#: pitchMult/effectiveFreq are double; phase advance is double.
   const pitchMult = Math.pow(2.0, osc.detuneCents / 1200.0);
   const effectiveFreq = osc.frequencyHz * pitchMult;
 
-  // Phase advance in radians; wrap at 2π
+  // Phase advance in radians; wrap at 2π (double)
   phaseRef.v += TWO_PI * effectiveFreq / sampleRate;
   if (phaseRef.v >= TWO_PI) phaseRef.v -= TWO_PI;
 
   const phase = phaseRef.v;
 
+  // Each per-kind branch returns (float)result to mirror C# float32 cast.
+  // Math.fround forces IEEE-754 single-precision quantization.
   switch (osc.waveform) {
     case BlipWaveform.Sine:
-      return Math.sin(phase);
+      return Math.fround(Math.sin(phase));
 
     case BlipWaveform.Triangle: {
       const p = phase / TWO_PI;
-      return 4.0 * Math.abs(p - 0.5) - 1.0;
+      return Math.fround(4.0 * Math.abs(p - 0.5) - 1.0);
     }
 
     case BlipWaveform.Square: {
@@ -183,9 +186,8 @@ function sampleOsc(
       // xorshift32 step on rngState; map to [-1, 1]
       rngRef.v = xorshift32(rngRef.v);
       // C#: (int)rngState * (1f / int.MaxValue)
-      // int.MaxValue = 2147483647; cast uint to signed int via >>> 0 then |0
       const signed = rngRef.v | 0; // reinterpret as int32
-      return signed * (1.0 / 2147483647.0);
+      return Math.fround(signed * Math.fround(1.0 / 2147483647.0));
     }
 
     default:
@@ -247,10 +249,13 @@ function computeLevel(
   stageDurationSamples: number,
   releaseStartLevel: number,
 ): number {
+  // Mirrors C# BlipEnvelopeStepper.ComputeLevel: returns float (single precision).
+  // Math.fround applied at each return to match C# float32 quantization.
+
   // Flat-level stages
   if (stage === BlipEnvStage.Idle)    return 0;
   if (stage === BlipEnvStage.Hold)    return 1;
-  if (stage === BlipEnvStage.Sustain) return env.sustainLevel;
+  if (stage === BlipEnvStage.Sustain) return Math.fround(env.sustainLevel);
 
   // Ramping stages
   let start: number, target: number, shape: BlipEnvShape;
@@ -265,17 +270,17 @@ function computeLevel(
       return 0;
   }
 
-  if (stageDurationSamples <= 0) return target;
+  if (stageDurationSamples <= 0) return Math.fround(target);
 
   if (shape === BlipEnvShape.Linear) {
-    let t = samplesElapsed / stageDurationSamples;
+    let t = Math.fround(samplesElapsed / stageDurationSamples);
     if (t < 0) t = 0;
     if (t > 1) t = 1;
-    return start + (target - start) * t;
+    return Math.fround(start + (target - start) * t);
   } else {
     // Exponential: target + (start - target) * exp(-t / tau), tau = stageDur/4
     const tau = stageDurationSamples / 4.0;
-    return target + (start - target) * Math.exp(-samplesElapsed / tau);
+    return Math.fround(target + (start - target) * Math.fround(Math.exp(-samplesElapsed / tau)));
   }
 }
 
@@ -334,9 +339,10 @@ function renderPatch(patch: BlipPatchDef, sampleRate: number): Float32Array {
   const oscCount = Math.min(patch.oscillators.length, 3);
 
   // --- Filter coefficient (pre-compute once) ---
+  // C#: alpha is float; cast (float)Math.Exp(...). Mirror via Math.fround.
   let alpha: number;
   if (patch.filter.kind === BlipFilterKind.LowPass) {
-    alpha = 1.0 - Math.exp(-TWO_PI * patch.filter.cutoffHz / sampleRate);
+    alpha = Math.fround(1.0 - Math.fround(Math.exp(-TWO_PI * patch.filter.cutoffHz / sampleRate)));
     if (alpha < 0) alpha = 0;
     if (alpha > 1) alpha = 1;
   } else {
@@ -367,7 +373,8 @@ function renderPatch(patch: BlipPatchDef, sampleRate: number): Float32Array {
   const panOffset = sampleJitter(rngRef, patch.panJitter);
   state.rngState  = rngRef.v;
 
-  const gainMult = Math.pow(10.0, db / 20.0); // db=0 → gainMult=1
+  // C#: gainMult = (float)Math.Pow(10.0, db / 20.0). Mirror via Math.fround.
+  const gainMult = Math.fround(Math.pow(10.0, db / 20.0));
 
   // Option B: fold pitchCents into per-slot local copies
   const loc: BlipOscillatorDef[] = [];
@@ -387,11 +394,13 @@ function renderPatch(patch: BlipPatchDef, sampleRate: number): Float32Array {
   const rng      = { v: state.rngState };
 
   // --- Per-sample loop ---
+  // C# arithmetic chain runs at float32 precision throughout
+  // (oscSum, envLevel, gainMult, x, filterZ1 all float). Mirror with Math.fround.
   for (let i = 0; i < sampleCount; i++) {
     let oscSum = 0.0;
-    if (oscCount > 0) oscSum += loc[0].gain * sampleOsc(loc[0], sampleRate, phaseRef[0], rng);
-    if (oscCount > 1) oscSum += loc[1].gain * sampleOsc(loc[1], sampleRate, phaseRef[1], rng);
-    if (oscCount > 2) oscSum += loc[2].gain * sampleOsc(loc[2], sampleRate, phaseRef[2], rng);
+    if (oscCount > 0) oscSum = Math.fround(oscSum + Math.fround(loc[0].gain * sampleOsc(loc[0], sampleRate, phaseRef[0], rng)));
+    if (oscCount > 1) oscSum = Math.fround(oscSum + Math.fround(loc[1].gain * sampleOsc(loc[1], sampleRate, phaseRef[1], rng)));
+    if (oscCount > 2) oscSum = Math.fround(oscSum + Math.fround(loc[2].gain * sampleOsc(loc[2], sampleRate, phaseRef[2], rng)));
 
     const stageBefore = state.envStage;
     advanceEnvelope(state, patch.envelope, patch.durationSeconds, sampleRate, i);
@@ -416,8 +425,11 @@ function renderPatch(patch: BlipPatchDef, sampleRate: number): Float32Array {
       releaseStartLevel,
     );
 
-    const x = oscSum * state.envLevel * gainMult;
-    state.filterZ1 += alpha * (x - state.filterZ1);
+    // C#: x = oscSum * state.envLevel * gainMult * gainModMult (all float32).
+    // gainModMult = 1f when no LFO Gain route, so we mirror with bare 1.0 multiply.
+    const x = Math.fround(Math.fround(Math.fround(oscSum * state.envLevel) * gainMult) * 1.0);
+    // C#: state.filterZ1 += alphaThis * (x - state.filterZ1) — float32.
+    state.filterZ1 = Math.fround(state.filterZ1 + Math.fround(alpha * Math.fround(x - state.filterZ1)));
     buffer[i] = state.filterZ1;
   }
 
@@ -525,6 +537,19 @@ function computePatchHash(patch: BlipPatchDef): number {
   h = feedBool(h, patch.deterministic);
   h = feedFloat(h, patch.durationSeconds);
   h = feedBool(h, patch.useLutOscillators);
+
+  // 9. FX chain (append-only; never reorder preceding sections).
+  // MVP fixtures use empty FX chain → fxN = 0 only.
+  h = feedInt(h, 0);
+
+  // 10. LFO slots (append-only; TECH-285). MVP fixtures use zero LFOs →
+  // lfo0/lfo1 default(BlipLfo) = { kind: 0, rateHz: 0, depth: 0, route: 0 }.
+  for (let lfo = 0; lfo < 2; lfo++) {
+    h = feedEnum(h, 0); // kind
+    h = feedFloat(h, 0); // rateHz
+    h = feedFloat(h, 0); // depth
+    h = feedEnum(h, 0); // route
+  }
 
   // Cast to int32 (same as C# (int)h)
   const u = Number(h);

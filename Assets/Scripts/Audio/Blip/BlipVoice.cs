@@ -127,6 +127,29 @@ namespace Territory.Audio
             }
 
             // -----------------------------------------------------------------
+            // TECH-435 — Biquad BP coefficient pre-compute (outside sample loop)
+            // -----------------------------------------------------------------
+            // RBJ constant-skirt-gain BP cookbook. One Math.Sin + one Math.Cos
+            // per Render (NOT per sample). a1n/a2n/b0n consumed by per-sample
+            // BP kernel (TECH-436). When kind != BandPass these stay 0 and the
+            // BP branch is dead; LP / None paths unchanged.
+            float a1n = 0f, a2n = 0f, b0n = 0f;
+            if (patch.filter.kind == BlipFilterKind.BandPass)
+            {
+                double w0    = TwoPi * patch.filter.cutoffHz / sampleRate;
+                double cosW0 = Math.Cos(w0);
+                double sinW0 = Math.Sin(w0);
+                double q     = patch.filter.resonanceQ;
+                if (q < 0.0001) q = 0.0001;       // guard: clamp upstream is [0.1, 20]
+                double alphaB = sinW0 / (2.0 * q);
+                double a0     = 1.0 + alphaB;
+                double inv    = 1.0 / a0;
+                b0n = (float)(alphaB * inv);
+                a1n = (float)((-2.0 * cosW0) * inv);
+                a2n = (float)((1.0 - alphaB) * inv);
+            }
+
+            // -----------------------------------------------------------------
             // TECH-121 Phase 1 — Pre-compute per-invocation envelope budgets
             // -----------------------------------------------------------------
             // Stage sample budgets computed once so the per-sample loop avoids
@@ -382,8 +405,19 @@ namespace Territory.Audio
                     // Update pan offset on state (consumed by BlipBaker mixer).
                     state.panOffset = panOffset + panModOffset;
 
-                    state.filterZ1 += alphaThis * (x - state.filterZ1);
-                    buffer[offset + i] += state.filterZ1;
+                    if (patch.filter.kind == BlipFilterKind.BandPass)
+                    {
+                        float v = x - a1n * state.biquadZ1 - a2n * state.biquadZ2;
+                        float y = b0n * v - b0n * state.biquadZ2;
+                        state.biquadZ2 = state.biquadZ1;
+                        state.biquadZ1 = v;
+                        buffer[offset + i] += y;
+                    }
+                    else
+                    {
+                        state.filterZ1 += alphaThis * (x - state.filterZ1);
+                        buffer[offset + i] += state.filterZ1;
+                    }
                 }
             }
             else
@@ -608,8 +642,19 @@ namespace Territory.Audio
                     // Update pan offset on state (consumed by BlipBaker mixer).
                     state.panOffset = panOffset + panModOffset;
 
-                    state.filterZ1 += alphaThis * (x - state.filterZ1);
-                    buffer[offset + i] += state.filterZ1;
+                    if (patch.filter.kind == BlipFilterKind.BandPass)
+                    {
+                        float v = x - a1n * state.biquadZ1 - a2n * state.biquadZ2;
+                        float y = b0n * v - b0n * state.biquadZ2;
+                        state.biquadZ2 = state.biquadZ1;
+                        state.biquadZ1 = v;
+                        buffer[offset + i] += y;
+                    }
+                    else
+                    {
+                        state.filterZ1 += alphaThis * (x - state.filterZ1);
+                        buffer[offset + i] += state.filterZ1;
+                    }
                 }
             }
         }

@@ -205,6 +205,9 @@ namespace Territory.Audio
             lfo0.rateHz = Mathf.Max(0f, lfo0.rateHz);
             lfo1.rateHz = Mathf.Max(0f, lfo1.rateHz);
 
+            // Biquad BP resonance Q clamp (TECH-434). Must clamp BEFORE patchHash recompute.
+            filter.resonanceQ = Mathf.Clamp(filter.resonanceQ, 0.1f, 20f);
+
             patchHash = BlipPatchHash.Compute(this);
         }
 

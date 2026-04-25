@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-23T22:21:27.459Z",
+  "last_generated": "2026-04-25T22:49:25.824Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -479,37 +479,37 @@
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 216
+          "line_start": 219
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 230
+          "line_start": 233
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 269
+          "line_start": 272
         },
         {
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 293
+          "line_start": 296
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 301
+          "line_start": 304
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 315
+          "line_start": 318
         }
       ]
     },

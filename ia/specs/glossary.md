@@ -201,8 +201,11 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Term | Definition | Spec |
 |------|-----------|------|
 | Bake-to-clip | On-demand render of `BlipPatchFlat` → `AudioClip` via `BlipBaker.BakeOrGet`. LRU-cached by `(patchHash, variantIndex)` under 4 MB. | audio §5.1, §7 |
+| Biquad band-pass | DF-II transposed BP filter (`BlipFilterKind.BandPass`); RBJ constant-skirt-gain form. Coefficients `a1n / a2n / b0n` pre-computed once per `BlipVoice.Render` from `cutoffHz` + `resonanceQ`; per-sample kernel reads/writes `state.biquadZ1 / biquadZ2`. | audio §3.2, §4.2 |
 | Blip bootstrap | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on Awake. Hosts Catalog / Player / MixerRouter / Cooldown. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag. Boot-time reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted. `BlipVolumeController` (on `OptionsPanel`) primes slider/toggle from PlayerPrefs on `OnEnable`. | audio §5.1, §5.2 |
 | Blip cooldown | Minimum ms between same-BlipId plays; per-patch `cooldownMs` enforced by `BlipCooldownRegistry` queried from `BlipEngine` before dispatch. | audio §5.5 |
+| Blip delay pool | `BlipDelayPool` `ArrayPool<float>`-backed delay-buffer lessor owned by `BlipCatalog`; per-call `Lease(sampleRate, maxDelayMs)` used by Comb / Allpass / Chorus / Flanger FX kernels; pre-leased outside the NoAlloc measurement window. | audio §5.1 |
+| Blip FX chain | Up to 4 `BlipFxSlot` slots per `BlipPatch` (BitCrush / RingMod / SoftClip / DcBlocker / Comb / Allpass / Chorus / Flanger); switch-dispatched in `BlipFxChain.ProcessFx` per sample. Slot-N state (`dcZ1_N`, `dcY1_N`, `ringModPhase_N`, `delayWritePos_N`) lives on `BlipVoiceState`. | audio §3.2, §5.1 |
 | Blip LFO | `BlipLfoKind` waveform oscillator (Off / Sine / Triangle / Square / SampleAndHold) per `BlipPatch`; sample-rate run, scaled by depth, routed via `BlipLfoRoute`; output smoothed by `SmoothOnePole` (τ ≈ 20 ms). | audio §4.1 |
 | Blip LUT pool | `BlipLutPool` plain-class `ArrayPool<float>` stub owned by `BlipCatalog`; reserved for wavetable LUT caching; no kernel wired yet. | audio §5.1 |
 | Blip mixer group | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param. | audio §5.4 |

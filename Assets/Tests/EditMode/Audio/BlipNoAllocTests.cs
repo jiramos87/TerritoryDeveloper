@@ -121,6 +121,114 @@ namespace Territory.Tests.EditMode.Audio
         }
 
         // -----------------------------------------------------------------------
+        // Render_WithBiquadBP_ZeroManagedAlloc
+        // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// After 3 warm-up renders with a Biquad BP patch (cutoffHz = 1000, Q = 2),
+        /// 10 measured renders must produce ≤ 0 managed bytes per call.
+        /// Exercises the new DF-II transposed BP kernel in <see cref="BlipVoice.Render"/>.
+        /// </summary>
+        [Test]
+        public void Render_WithBiquadBP_ZeroManagedAlloc()
+        {
+            BlipPatchFlat patch = BuildBiquadBpPatch();
+
+            var buf   = new float[SampleRate];
+            var state = default(BlipVoiceState);
+
+            // --- Warm-up ---
+            for (int i = 0; i < WarmupCount; i++)
+            {
+                state = default(BlipVoiceState);
+                BlipVoice.Render(buf, 0, buf.Length, SampleRate, in patch, 0, ref state);
+            }
+
+            // --- Measure ---
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < MeasureCount; i++)
+            {
+                state = default(BlipVoiceState);
+                BlipVoice.Render(buf, 0, buf.Length, SampleRate, in patch, 0, ref state);
+            }
+            long delta = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            long deltaPerCall = delta / MeasureCount;
+
+            Assert.That(deltaPerCall, Is.LessThanOrEqualTo(0L),
+                $"Managed alloc in BP steady state: total={delta} bytes over {MeasureCount} renders, " +
+                $"{deltaPerCall} bytes/call. " +
+                "Inspect for boxing inside the BP kernel branch in BlipVoice.Render. " +
+                $"First rendered sample (non-zero check): {buf[1]:G6}.");
+        }
+
+        // -----------------------------------------------------------------------
+        // BuildBiquadBpPatch — flat patch with BandPass filter (cutoffHz=1000, Q=2)
+        // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// Creates a <see cref="BlipPatch"/> with the same base settings as
+        /// <see cref="BuildPatch"/> but with a Biquad BandPass filter:
+        ///   filter.kind = BandPass, cutoffHz = 1000 Hz, resonanceQ = 2.
+        /// Used by <see cref="Render_WithBiquadBP_ZeroManagedAlloc"/>.
+        /// </summary>
+        private BlipPatchFlat BuildBiquadBpPatch()
+        {
+            var so = ScriptableObject.CreateInstance<BlipPatch>();
+            _createdSo = so;
+
+            const BindingFlags privInst = BindingFlags.NonPublic | BindingFlags.Instance;
+
+            // --- Oscillator (sine, 440 Hz) ---
+            var osc = new BlipOscillator
+            {
+                waveform    = BlipWaveform.Sine,
+                frequencyHz = 440f,
+                detuneCents = 0f,
+                pulseDuty   = 0.5f,
+                gain        = 1f,
+            };
+            SetField(so, "oscillators", new BlipOscillator[] { osc }, privInst);
+
+            // --- Envelope: A=50/H=0/D=100/S=0.5/R=50 ms ---
+            var env = new BlipEnvelope
+            {
+                attackMs     = 50f,
+                attackShape  = BlipEnvShape.Linear,
+                holdMs       = 0f,
+                decayMs      = 100f,
+                decayShape   = BlipEnvShape.Linear,
+                sustainLevel = 0.5f,
+                releaseMs    = 50f,
+                releaseShape = BlipEnvShape.Linear,
+            };
+            SetField(so, "envelope", env, privInst);
+
+            // --- Filter: BandPass, 1000 Hz, Q = 2 ---
+            var flt = new BlipFilter
+            {
+                kind       = BlipFilterKind.BandPass,
+                cutoffHz   = 1000f,
+                resonanceQ = 2f,
+            };
+            SetField(so, "filter", flt, privInst);
+
+            // --- Determinism + jitter ---
+            SetField(so, "deterministic",    true,  privInst);
+            SetField(so, "variantCount",     1,     privInst);
+            SetField(so, "voiceLimit",       1,     privInst);
+            SetField(so, "durationSeconds",  1f,    privInst);
+            SetField(so, "pitchJitterCents", 10f,   privInst);
+            SetField(so, "gainJitterDb",      2f,   privInst);
+            SetField(so, "panJitter",         0.2f, privInst);
+
+            // Force OnValidate (clamps resonanceQ + recomputes patchHash).
+            InvokeOnValidate(so, privInst);
+
+            return BlipPatchFlat.FromSO(so);
+        }
+
+        // -----------------------------------------------------------------------
         // Render_WithChorus_ZeroManagedAlloc
         // -----------------------------------------------------------------------
 

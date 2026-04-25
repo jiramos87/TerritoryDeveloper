@@ -125,14 +125,18 @@ namespace Territory.Audio
         /// <summary>Static cutoff frequency in Hz.</summary>
         public readonly float cutoffHz;
 
+        /// <summary>Resonance Q for BandPass filter (clamped upstream by BlipPatch.OnValidate). Ignored by None / LowPass.</summary>
+        public readonly float resonanceQ;
+
         /// <summary>
         /// Constructs a <see cref="BlipFilterFlat"/> by copying scalars from <paramref name="src"/>.
         /// Blittable contract: all fields are value types.
         /// </summary>
         public BlipFilterFlat(in BlipFilter src)
         {
-            kind     = src.kind;
-            cutoffHz = src.cutoffHz;
+            kind       = src.kind;
+            cutoffHz   = src.cutoffHz;
+            resonanceQ = src.resonanceQ;
         }
     }
 

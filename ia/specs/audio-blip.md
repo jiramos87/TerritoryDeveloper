@@ -137,7 +137,7 @@ Full field list + `AnimationCurve` details: [`docs/blip-procedural-sfx-explorati
 
 ### 4.2 OnValidate clamps
 
-`BlipPatch.OnValidate` enforces: `attackMs`, `holdMs`, `decayMs`, `releaseMs` all ≥ 1 ms. Prevents zero-duration stage divide-by-zero in envelope τ. Decision locked 2026-04-13.
+`BlipPatch.OnValidate` enforces: `attackMs`, `holdMs`, `decayMs`, `releaseMs` all ≥ 1 ms. Prevents zero-duration stage divide-by-zero in envelope τ. Decision locked 2026-04-13. `filter.resonanceQ` clamped to `[0.1, 20]` for `BlipFilterKind.BandPass` (DF-II transposed BP — see glossary **Biquad band-pass**); `BlipFilterKind.None` and `BlipFilterKind.LowPass` ignore `resonanceQ`.
 
 ### 4.3 patchHash policy
 

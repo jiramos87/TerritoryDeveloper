@@ -1,9 +1,9 @@
 {
   "id": "EcoMoneySpent",
   "variant": 0,
-  "patchHash": -1201062348,
+  "patchHash": -1225803916,
   "sampleRate": 48000,
   "sampleCount": 48000,
-  "sumAbsHash": 600.1695345274484,
+  "sumAbsHash": 600.16955453035553,
   "zeroCrossings": 400
 }

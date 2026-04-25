@@ -43,6 +43,12 @@ namespace Territory.Audio
         /// <summary>One-pole low-pass filter delay memory (z-1 state).</summary>
         public float filterZ1;
 
+        /// <summary>Biquad band-pass DF-II transposed delay memory z-1 (sample n-1). Read+written by BlipVoice.Render BP kernel branch.</summary>
+        public float biquadZ1;
+
+        /// <summary>Biquad band-pass DF-II transposed delay memory z-2 (sample n-2). Read+written by BlipVoice.Render BP kernel branch.</summary>
+        public float biquadZ2;
+
         /// <summary>
         /// xorshift32 RNG state — used for noise + per-invocation jitter.
         /// Caller seeds before first <see cref="BlipVoice.Render"/> call (voice-hash of patch id + voice slot).

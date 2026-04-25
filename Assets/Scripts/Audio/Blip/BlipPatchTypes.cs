@@ -19,8 +19,9 @@ namespace Territory.Audio
     // -------------------------------------------------------------------------
     public enum BlipFilterKind
     {
-        None    = 0,
-        LowPass = 1,
+        None     = 0,
+        LowPass  = 1,
+        BandPass = 2,
     }
 
     // -------------------------------------------------------------------------
@@ -157,6 +158,9 @@ namespace Territory.Audio
 
         /// <summary>Static cutoff frequency in Hz.</summary>
         public float cutoffHz;
+
+        /// <summary>Resonance Q for BandPass filter; clamped to [0.1, 20] by BlipPatch.OnValidate. Ignored by None / LowPass.</summary>
+        public float resonanceQ;
     }
 
     // -------------------------------------------------------------------------
