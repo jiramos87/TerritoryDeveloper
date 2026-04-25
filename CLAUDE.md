@@ -33,8 +33,8 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 ## 4. Claude-native surface
 
 - **Hooks.** `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash PreToolUse denylist — see force-loaded `invariants.md`. Do NOT strip `defaultMode: "acceptEdits"` or split the `mcp__territory-ia__*` wildcard.
-- **Subagents.** `.claude/agents/*.md`. Seam → subagent map: `docs/agent-lifecycle.md §2`. Retired: `.claude/agents/_retired/`.
-- **Slash commands.** `.claude/commands/*.md` dispatch to `.claude/agents/{name}.md`. Retired: `.claude/commands/_retired/`.
+- **Subagents.** `.claude/agents/*.md` — **GENERATED** from `ia/skills/{slug}/SKILL.md` frontmatter via `tools/scripts/skill-tools/`. Edit SKILL.md (frontmatter + optional `agent-body.md`), then `npm run skill:sync:all`. Direct edits caught by `npm run validate:skill-drift` (in `validate:all`). Seam → subagent map: `docs/agent-lifecycle.md §2`. Retired: `.claude/agents/_retired/`.
+- **Slash commands.** `.claude/commands/*.md` — **GENERATED** from same SKILL.md pipeline. Edit SKILL.md (frontmatter + optional `command-body.md`), then `npm run skill:sync:all`. Retired: `.claude/commands/_retired/`.
 - **Output styles.** `.claude/output-styles/*.md` — `verification-report`, `closeout-digest`.
 - **Skill preamble.** Shared Tier 1 cache block: `ia/skills/_preamble/stable-block.md`. Order fixed (F5 invalidation cascade). Subagent cache floors validated by `npm run validate:cache-block-sizing`.
 - **Project MEMORY.** `MEMORY.md` at repo root; on-demand only (not force-loaded). Promote entries to `.claude/memory/{slug}.md` once past ~10 lines.

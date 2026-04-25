@@ -66,22 +66,22 @@ Cross-cutting:
 Run from repo root:
 
 ```bash
-node tools/scripts/generate-cursor-skill-wrappers.mjs
+npm run skill:sync:all
 node tools/scripts/generate-cursor-caller-cheatsheet.mjs
 ```
 
 Output:
 
-- wrappers under `.cursor/rules/cursor-skill-*.mdc`
+- agent + command + cursor wrappers regenerated from `ia/skills/{slug}/SKILL.md` frontmatter (4-surface canonical pipeline; `tools/scripts/skill-tools/`)
 - caller mapping file `.cursor/rules/cursor-caller-agent-cheatsheet.mdc`
 
-Both scripts are idempotent.
+Both are idempotent.
 
 ## Adding a new skill
 
-1. Add `ia/skills/<new-skill>/SKILL.md` with frontmatter `name` and `description`.
-2. Regenerate wrappers:
-   - `node tools/scripts/generate-cursor-skill-wrappers.mjs`
+1. Add `ia/skills/<new-skill>/SKILL.md` with canonical frontmatter (`name`, `description`, `tools_role`, `tools_extra`, `phases`, …) per `tools/scripts/skill-tools/frontmatter.ts`.
+2. Regenerate all four surfaces (agent + command + cursor + lint):
+   - `npm run skill:sync:all`
 3. If skill touches MCP mutation/authorship tools:
    - add/confirm caller mapping in `tools/mcp-ia-server/src/auth/caller-allowlist.ts`
    - regenerate caller cheatsheet

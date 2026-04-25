@@ -66,6 +66,10 @@
           {
             "type": "command",
             "command": "if [ \"${SKILL_TRAIN_LINT}\" = \"1\" ]; then bash /Users/javier/bacayo-studio/territory-developer/tools/scripts/caveman-lint.sh; fi; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/skill-surface-guard.sh"
           }
         ]
       }

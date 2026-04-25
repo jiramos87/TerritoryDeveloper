@@ -1,6 +1,5 @@
 // Render .cursor/rules/cursor-skill-{slug}.mdc from canonical SKILL.md frontmatter.
-// Output matches existing tools/scripts/generate-cursor-skill-wrappers.mjs byte-for-byte
-// so the migration from the legacy generator is a no-op diff.
+// Source of truth for cursor wrapper output; legacy generate-cursor-skill-wrappers.mjs retired.
 
 import { type SkillFrontmatter, collapseDescription } from "./frontmatter.js";
 
