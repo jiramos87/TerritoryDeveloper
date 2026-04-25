@@ -46,6 +46,8 @@
     "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts",
     "db:bridge-preflight": "npx tsx tools/mcp-ia-server/scripts/bridge-preflight.ts",
     "db:bridge-playmode-smoke": "npm --prefix tools/mcp-ia-server run bridge-playmode-smoke --",
+    "db:snapshot": "node tools/postgres-ia/snapshot-ia-db.mjs",
+    "db:snapshot:smoke": "node tools/postgres-ia/restore-snapshot-smoke.mjs",
     "unity:ensure-editor": "bash tools/scripts/ensure-unity-editor.sh",
     "unity:compile-check": "bash tools/scripts/unity-compile-check.sh",
     "unity:test-editmode": "bash tools/scripts/unity-run-tests.sh --platform editmode --quit-editor-first",
