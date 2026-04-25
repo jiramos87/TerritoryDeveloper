@@ -10,7 +10,7 @@ Run `ia/skills/stage-decompose/SKILL.md` end-to-end on target Stage. Expand the 
 4. **Task decomposition (Phase 2)** — 2–6 Tasks. Ordering: scaffolding → data model → runtime → integration+tests. 5-column Task table (no Phase column) with `_pending_` Issue + Status. Task intent must cite concrete types / methods / paths. Apply sizing heuristic (2–5 files = correct; ≤1 file = merge; >3 subsystems = split).
 5. **Cardinality gate (Phase 3)** — ≥2 Tasks/Stage (hard), ≤6 soft. 1-Task → warn + pause. 7+ → warn + pause. Single-file Tasks → warn + pause. Proceed only after user confirms.
 6. **Sizing-gate eval (Phase 3.5)** — H1–H6 per `ia/rules/stage-sizing-gate.md`. PASS / WARN-gate / FAIL outcomes.
-7. **Persist (Phase 4)** — Call `stage_body_write(slug, stage_id, body_md)` with full Task table + 4 pending subsections (§Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Preserve `Status: Draft`. Tasks `_pending_`. Backlog state: 0 filed.
+7. **Persist (Phase 4)** — Call `stage_body_write({slug, stage_id, body})` with full Task table + 4 pending subsections (§Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Preserve `Status: Draft`. Tasks `_pending_`. Backlog state: 0 filed.
 8. **Progress regen (Phase 5)** — `npm run progress`. Log exit; non-zero does NOT block.
 9. **Handoff (Phase 6)** — Report: Stage {STAGE_ID} decomposed (N Tasks). Invariants flagged. Cardinality + sizing gate outcomes. Next: `/stage-file {SLUG} Stage {STAGE_ID}` when prior Stage closes.
 

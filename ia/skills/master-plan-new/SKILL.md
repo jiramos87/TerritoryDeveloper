@@ -35,6 +35,8 @@ tools_extra:
   - mcp__territory-ia__list_specs
   - mcp__territory-ia__master_plan_render
   - mcp__territory-ia__stage_render
+  - mcp__territory-ia__master_plan_insert
+  - mcp__territory-ia__stage_insert
   - mcp__territory-ia__master_plan_preamble_write
   - mcp__territory-ia__master_plan_change_log_append
 caveman_exceptions:

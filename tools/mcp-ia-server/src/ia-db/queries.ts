@@ -479,6 +479,7 @@ export interface StageRenderRowDB {
   status: StageRowDB["status"];
   objective: string | null;
   exit_criteria: string | null;
+  body: string;
   tasks: StageTaskSummary[];
   rendered: string;
 }
@@ -500,8 +501,26 @@ export interface MasterPlanRenderDB {
   change_log?: MasterPlanChangeLogRow[];
 }
 
-/** Render a single stage block as markdown — heading + status + objective + exit + tasks table. */
+/**
+ * Render a single stage block as markdown.
+ *
+ * Two paths:
+ *
+ * 1. **Body-blob path** (preferred) — when `stage.body` is non-empty, return
+ *    the verbatim blob authored by `stage_body_write` (canonical Stage block
+ *    per `docs/MASTER-PLAN-STRUCTURE.md`: Notes / Backlog state / Art /
+ *    Relevant surfaces / 5-col Task table / 4 §subsections).
+ * 2. **Synthesis fallback** — for legacy rows with `body = ''`, synthesize a
+ *    minimal block from structured fields (heading + status + objective +
+ *    exit + 3-col task table joined from `ia_tasks`).
+ *
+ * Plan-authoring skills (master-plan-new, stage-decompose, master-plan-extend)
+ * persist via the body blob; renderers read either shape transparently.
+ */
 export function renderStageBlock(stage: Omit<StageRenderRowDB, "rendered">): string {
+  if (stage.body && stage.body.trim().length > 0) {
+    return stage.body.replace(/\n+$/, "");
+  }
   const lines: string[] = [];
   const titlePart = stage.title ? ` — ${stage.title}` : "";
   lines.push(`### Stage ${stage.stage_id}${titlePart}`);
@@ -543,9 +562,10 @@ export async function queryStageRender(
     title: string | null;
     objective: string | null;
     exit_criteria: string | null;
+    body: string;
     status: StageRowDB["status"];
   }>(
-    `SELECT title, objective, exit_criteria, status
+    `SELECT title, objective, exit_criteria, body, status
        FROM ia_stages
       WHERE slug = $1 AND stage_id = $2`,
     [slug, stage_id],
@@ -566,6 +586,7 @@ export async function queryStageRender(
     status: stage.status,
     objective: stage.objective,
     exit_criteria: stage.exit_criteria,
+    body: stage.body ?? "",
     tasks: tr.rows,
   };
   return { ...base, rendered: renderStageBlock(base) };
@@ -590,8 +611,9 @@ export async function queryMasterPlanRender(
     status: StageRowDB["status"];
     objective: string | null;
     exit_criteria: string | null;
+    body: string;
   }>(
-    `SELECT stage_id, title, status, objective, exit_criteria
+    `SELECT stage_id, title, status, objective, exit_criteria, body
        FROM ia_stages
       WHERE slug = $1
       ORDER BY stage_id`,
@@ -627,6 +649,7 @@ export async function queryMasterPlanRender(
       status: s.status,
       objective: s.objective,
       exit_criteria: s.exit_criteria,
+      body: s.body ?? "",
       tasks: tasksByStage.get(s.stage_id) ?? [],
     };
     return { ...base, rendered: renderStageBlock(base) };

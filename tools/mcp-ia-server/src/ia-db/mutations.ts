@@ -750,6 +750,7 @@ export interface StageInsertInput {
   title?: string | null;
   objective?: string | null;
   exit_criteria?: string | null;
+  body?: string | null;
   status?: "pending" | "in_progress" | "done";
 }
 
@@ -795,8 +796,8 @@ export async function mutateStageInsert(
       );
     }
     const ins = await c.query<{ created_at: string; updated_at: string }>(
-      `INSERT INTO ia_stages (slug, stage_id, title, objective, exit_criteria, status)
-       VALUES ($1, $2, $3, $4, $5, $6::stage_status)
+      `INSERT INTO ia_stages (slug, stage_id, title, objective, exit_criteria, body, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::stage_status)
        RETURNING created_at, updated_at`,
       [
         cleanSlug,
@@ -804,6 +805,7 @@ export async function mutateStageInsert(
         input.title ?? null,
         input.objective ?? null,
         input.exit_criteria ?? null,
+        input.body ?? "",
         status,
       ],
     );
@@ -883,6 +885,56 @@ export async function mutateStageUpdate(
       slug: cleanSlug,
       stage_id: cleanStageId,
       updated_fields: fields,
+      updated_at: upd.rows[0]!.updated_at,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// stage_body_write
+// (Mirror of mutateMasterPlanPreambleWrite for ia_stages.body.)
+// ---------------------------------------------------------------------------
+
+export interface StageBodyWriteResult {
+  slug: string;
+  stage_id: string;
+  bytes: number;
+  updated_at: string;
+}
+
+export async function mutateStageBodyWrite(
+  slug: string,
+  stage_id: string,
+  body: string,
+): Promise<StageBodyWriteResult> {
+  const cleanSlug = (slug ?? "").trim();
+  const cleanStageId = (stage_id ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (!cleanStageId) throw new IaDbValidationError("stage_id is required");
+  if (typeof body !== "string") {
+    throw new IaDbValidationError("body must be a string");
+  }
+  return withTx(async (c) => {
+    const guard = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
+      [cleanSlug, cleanStageId],
+    );
+    if (guard.rowCount === 0) {
+      throw new IaDbValidationError(
+        `stage not found: ${cleanSlug}/${cleanStageId}`,
+      );
+    }
+    const upd = await c.query<{ updated_at: string }>(
+      `UPDATE ia_stages
+          SET body = $3, updated_at = now()
+        WHERE slug = $1 AND stage_id = $2
+       RETURNING updated_at`,
+      [cleanSlug, cleanStageId, body],
+    );
+    return {
+      slug: cleanSlug,
+      stage_id: cleanStageId,
+      bytes: Buffer.byteLength(body, "utf8"),
       updated_at: upd.rows[0]!.updated_at,
     };
   });

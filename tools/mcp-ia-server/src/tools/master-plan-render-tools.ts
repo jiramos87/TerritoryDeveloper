@@ -32,6 +32,7 @@ import {
   mutateMasterPlanChangeLogAppend,
   mutateMasterPlanInsert,
   mutateMasterPlanPreambleWrite,
+  mutateStageBodyWrite,
   mutateStageInsert,
   mutateStageUpdate,
 } from "../ia-db/mutations.js";
@@ -409,7 +410,7 @@ export function registerStageInsert(server: McpServer): void {
     "stage_insert",
     {
       description:
-        "DB-backed: create one new ia_stages row under an existing master plan. Stage_id must match N or N.M (e.g. `5` or `5.4`). Title/objective/exit_criteria optional at insert; back-fill via stage_update.",
+        "DB-backed: create one new ia_stages row under an existing master plan. Stage_id must match N or N.M (e.g. `5` or `5.4`). Title/objective/exit_criteria/body optional at insert; back-fill via stage_update + stage_body_write. `body` carries the full canonical Stage block markdown (see `docs/MASTER-PLAN-STRUCTURE.md`).",
       inputSchema: {
         slug: z.string().describe("Master-plan slug (must exist)."),
         stage_id: z.string().describe("Stage id e.g. `5` or `5.4`."),
@@ -419,6 +420,12 @@ export function registerStageInsert(server: McpServer): void {
           .string()
           .optional()
           .describe("Stage exit criteria prose."),
+        body: z
+          .string()
+          .optional()
+          .describe(
+            "Optional full Stage block markdown blob (canonical shape per `docs/MASTER-PLAN-STRUCTURE.md`).",
+          ),
         status: z
           .enum(["pending", "in_progress", "done"])
           .optional()
@@ -436,6 +443,7 @@ export function registerStageInsert(server: McpServer): void {
                   title?: string;
                   objective?: string;
                   exit_criteria?: string;
+                  body?: string;
                   status?: "pending" | "in_progress" | "done";
                 }
               | undefined,
@@ -455,6 +463,7 @@ export function registerStageInsert(server: McpServer): void {
                 title: input?.title ?? null,
                 objective: input?.objective ?? null,
                 exit_criteria: input?.exit_criteria ?? null,
+                body: input?.body ?? null,
                 status: input?.status,
               });
             } catch (e) {
@@ -469,6 +478,7 @@ export function registerStageInsert(server: McpServer): void {
                 title?: string;
                 objective?: string;
                 exit_criteria?: string;
+                body?: string;
                 status?: "pending" | "in_progress" | "done";
               }
             | undefined,
@@ -559,6 +569,59 @@ export function registerStageUpdate(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// stage_body_write
+// ---------------------------------------------------------------------------
+
+export function registerStageBodyWrite(server: McpServer): void {
+  server.registerTool(
+    "stage_body_write",
+    {
+      description:
+        "DB-backed: replace the verbatim Stage block body blob (canonical shape per `docs/MASTER-PLAN-STRUCTURE.md` — Notes / Backlog state / Art / Relevant surfaces / 5-col Task table / §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Mirror of `master_plan_preamble_write`. Used by `master-plan-new` Phase 7, `stage-decompose` Phase 4, `master-plan-extend`, `stage_closeout_apply`. Renderer `stage_render` returns body verbatim when non-empty; falls back to structured-field synthesis otherwise.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug."),
+        stage_id: z.string().describe("Stage id e.g. `5.4`."),
+        body: z
+          .string()
+          .describe(
+            "Full Stage block markdown (everything below the `### Stage X.Y — Name` heading through the last subsection).",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("stage_body_write", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | { slug?: string; stage_id?: string; body?: string }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            const body = input?.body;
+            if (!slug || !stage_id || typeof body !== "string") {
+              throw {
+                code: "invalid_input",
+                message: "slug, stage_id, and body are required.",
+              };
+            }
+            try {
+              return await mutateStageBodyWrite(slug, stage_id, body);
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | { slug?: string; stage_id?: string; body?: string }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
@@ -571,4 +634,5 @@ export function registerMasterPlanRenderTools(server: McpServer): void {
   registerMasterPlanInsert(server);
   registerStageInsert(server);
   registerStageUpdate(server);
+  registerStageBodyWrite(server);
 }

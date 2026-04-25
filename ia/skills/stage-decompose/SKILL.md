@@ -39,6 +39,10 @@ tools_role: planner
 tools_extra:
   - mcp__territory-ia__spec_outline
   - mcp__territory-ia__list_specs
+  - mcp__territory-ia__master_plan_render
+  - mcp__territory-ia__stage_render
+  - mcp__territory-ia__stage_body_write
+  - mcp__territory-ia__master_plan_change_log_append
 caveman_exceptions:
   - code
   - commits
@@ -215,7 +219,7 @@ Outcome: {PASS | WARN-gate | FAIL}
 
 ### Phase 4 — Persist (DB write)
 
-Call `mcp__territory-ia__stage_body_write({slug: SLUG, stage_id: STAGE_ID, body_md: <new body>})`:
+Call `mcp__territory-ia__stage_body_write({slug: SLUG, stage_id: STAGE_ID, body: <new body>})`:
 
 **4a — Compose new Stage body:**
 
