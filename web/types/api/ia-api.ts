@@ -16,7 +16,6 @@ export type IaErrorBody = {
 export type MasterPlanRow = {
   slug: string;
   title: string;
-  source_spec_path: string | null;
   created_at: string;
   updated_at: string;
   stage_count: number;
@@ -31,7 +30,6 @@ export type StageRow = {
   objective: string | null;
   exit_criteria: string | null;
   status: "pending" | "in_progress" | "done";
-  source_file_path: string | null;
   created_at: string;
   updated_at: string;
   task_count: number;

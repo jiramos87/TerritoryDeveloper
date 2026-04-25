@@ -1,39 +1,22 @@
 /**
- * MCP tool: stage_closeout_digest — structured extract from `ia/projects/{ISSUE_ID}[-{description}].md`.
- *
- * Per-Task digest emitter invoked N times by `plan-applier` Mode stage-closeout Sonnet pair-tail (one
- * call per Task of the closing Stage). Applier aggregates N per-Task digests into one
- * Stage-level closeout summary emitted at end of Stage.
- *
- * Renamed from `project_spec_closeout_digest` (lifecycle-refactor T7.14) when the per-Task
- * closeout was collapsed into Stage-scoped closeout per `ia/rules/plan-apply-pair-contract.md`
- * seam #4.
+ * MCP tool: stage_closeout_digest — structured extract from a Task spec body in
+ * `ia_task_specs.body_md` (DB-backed). Per-Task digest emitter invoked N times by
+ * stage closeout (one call per Task of the closing Stage). Applier aggregates
+ * N per-Task digests into one Stage-level closeout summary emitted at end of Stage.
  */
 
-import fs from "node:fs";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
-import {
-  buildProjectSpecCloseoutDigest,
-  resolveProjectSpecFile,
-} from "../parser/project-spec-closeout-parse.js";
+import { buildProjectSpecCloseoutDigest } from "../parser/project-spec-closeout-parse.js";
+import { queryTaskBody } from "../ia-db/queries.js";
+import { normalizeIssueId } from "../parser/project-spec-closeout-parse.js";
 import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   issue_id: z
     .string()
-    .optional()
-    .describe(
-      "Backlog id (e.g. BUG-12 / FEAT-7 / TECH-11). Exactly one of `issue_id` or `spec_path` required.",
-    ),
-  spec_path: z
-    .string()
-    .optional()
-    .describe(
-      "Repo-relative path under `ia/projects/`. Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (descriptive suffix). Exactly one of `issue_id` or `spec_path` required.",
-    ),
+    .describe("Backlog id (e.g. BUG-12 / FEAT-7 / TECH-11). Task spec body fetched from DB."),
 };
 
 function jsonResult(payload: unknown) {
@@ -55,41 +38,31 @@ export function registerStageCloseoutDigest(server: McpServer): void {
     "stage_closeout_digest",
     {
       description:
-        "Parse one temporary project spec under `ia/projects/` for **plan-applier** Mode stage-closeout (Sonnet pair-tail, seam #4). Returns H2 sections (Summary, Lessons Learned, Decision Log, §Audit, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Called N times per closing Stage (one per Task); applier aggregates into one Stage-level digest. Filenames may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md`. Does not edit files or author normative spec prose. Requires exactly one of `issue_id` or `spec_path`.",
+        "Parse one Task spec body from DB-backed `ia_task_specs.body_md` for stage-closeout. Returns H2 sections (Summary, Lessons Learned, Decision Log, §Audit, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Called N times per closing Stage (one per Task); applier aggregates into one Stage-level digest. Does not edit files or author normative spec prose.",
       inputSchema: inputShape,
     },
     async (args) =>
       runWithToolTiming("stage_closeout_digest", async () => {
         const envelope = await wrapTool(
-          async (input: { issue_id?: string; spec_path?: string }) => {
-            const repoRoot = resolveRepoRoot();
-            const resolved = resolveProjectSpecFile(repoRoot, {
-              issue_id: input.issue_id,
-              spec_path: input.spec_path,
-            });
-            if (!resolved.ok) {
-              throw { code: "invalid_input" as const, message: resolved.message };
-            }
-
-            let markdown: string;
-            try {
-              markdown = fs.readFileSync(resolved.absPath, "utf8");
-            } catch (e) {
-              const msg = e instanceof Error ? e.message : String(e);
+          async (input: { issue_id?: string }) => {
+            const rawId = (input.issue_id ?? "").trim();
+            if (!rawId) {
               throw {
-                code: "internal_error" as const,
-                message: `Could not read project spec: ${msg}`,
-                details: { spec_path: resolved.relPosix },
+                code: "invalid_input" as const,
+                message: "`issue_id` is required.",
               };
             }
-
-            return buildProjectSpecCloseoutDigest(
-              markdown,
-              resolved.relPosix,
-              resolved.issue_id,
-            );
+            const issueId = normalizeIssueId(rawId);
+            const markdown = await queryTaskBody(issueId);
+            if (markdown == null) {
+              throw {
+                code: "task_not_found" as const,
+                message: `No task spec body for '${issueId}' in ia_task_specs.`,
+              };
+            }
+            return buildProjectSpecCloseoutDigest(markdown, issueId);
           },
-        )(args as { issue_id?: string; spec_path?: string });
+        )(args as { issue_id?: string });
         return jsonResult(envelope);
       }),
   );

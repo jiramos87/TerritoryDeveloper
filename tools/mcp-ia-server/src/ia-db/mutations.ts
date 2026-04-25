@@ -695,6 +695,199 @@ export async function mutateMasterPlanChangeLogAppend(
   });
 }
 
+// ---------------------------------------------------------------------------
+// master_plan_insert / stage_insert / stage_update
+// (Wave 1.5 backfill — author master plans + stages DB-side post-refactor.)
+// ---------------------------------------------------------------------------
+
+export interface MasterPlanInsertResult {
+  slug: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function mutateMasterPlanInsert(
+  slug: string,
+  title: string,
+  preamble: string | null = null,
+): Promise<MasterPlanInsertResult> {
+  const cleanSlug = (slug ?? "").trim();
+  const cleanTitle = (title ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (!cleanTitle) throw new IaDbValidationError("title is required");
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(cleanSlug)) {
+    throw new IaDbValidationError(
+      `slug must be kebab-case [a-z0-9-]: ${cleanSlug}`,
+    );
+  }
+  return withTx(async (c) => {
+    const exists = await c.query(
+      `SELECT 1 FROM ia_master_plans WHERE slug = $1`,
+      [cleanSlug],
+    );
+    if ((exists.rowCount ?? 0) > 0) {
+      throw new IaDbValidationError(`master plan already exists: ${cleanSlug}`);
+    }
+    const ins = await c.query<{ created_at: string; updated_at: string }>(
+      `INSERT INTO ia_master_plans (slug, title, preamble)
+       VALUES ($1, $2, $3)
+       RETURNING created_at, updated_at`,
+      [cleanSlug, cleanTitle, preamble],
+    );
+    return {
+      slug: cleanSlug,
+      title: cleanTitle,
+      created_at: ins.rows[0]!.created_at,
+      updated_at: ins.rows[0]!.updated_at,
+    };
+  });
+}
+
+export interface StageInsertInput {
+  slug: string;
+  stage_id: string;
+  title?: string | null;
+  objective?: string | null;
+  exit_criteria?: string | null;
+  status?: "pending" | "in_progress" | "done";
+}
+
+export interface StageInsertResult {
+  slug: string;
+  stage_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function mutateStageInsert(
+  input: StageInsertInput,
+): Promise<StageInsertResult> {
+  const cleanSlug = (input.slug ?? "").trim();
+  const cleanStageId = (input.stage_id ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (!cleanStageId) throw new IaDbValidationError("stage_id is required");
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(cleanStageId)) {
+    throw new IaDbValidationError(
+      `stage_id must match N or N.M (e.g. "5" or "5.4"): ${cleanStageId}`,
+    );
+  }
+  const status = input.status ?? "pending";
+  if (!["pending", "in_progress", "done"].includes(status)) {
+    throw new IaDbValidationError(`invalid status: ${status}`);
+  }
+  return withTx(async (c) => {
+    const planGuard = await c.query(
+      `SELECT 1 FROM ia_master_plans WHERE slug = $1`,
+      [cleanSlug],
+    );
+    if (planGuard.rowCount === 0) {
+      throw new IaDbValidationError(`master plan not found: ${cleanSlug}`);
+    }
+    const exists = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+    if ((exists.rowCount ?? 0) > 0) {
+      throw new IaDbValidationError(
+        `stage already exists: ${cleanSlug}/${cleanStageId}`,
+      );
+    }
+    const ins = await c.query<{ created_at: string; updated_at: string }>(
+      `INSERT INTO ia_stages (slug, stage_id, title, objective, exit_criteria, status)
+       VALUES ($1, $2, $3, $4, $5, $6::stage_status)
+       RETURNING created_at, updated_at`,
+      [
+        cleanSlug,
+        cleanStageId,
+        input.title ?? null,
+        input.objective ?? null,
+        input.exit_criteria ?? null,
+        status,
+      ],
+    );
+    return {
+      slug: cleanSlug,
+      stage_id: cleanStageId,
+      status,
+      created_at: ins.rows[0]!.created_at,
+      updated_at: ins.rows[0]!.updated_at,
+    };
+  });
+}
+
+export interface StageUpdateInput {
+  slug: string;
+  stage_id: string;
+  title?: string | null;
+  objective?: string | null;
+  exit_criteria?: string | null;
+}
+
+export interface StageUpdateResult {
+  slug: string;
+  stage_id: string;
+  updated_fields: string[];
+  updated_at: string;
+}
+
+export async function mutateStageUpdate(
+  input: StageUpdateInput,
+): Promise<StageUpdateResult> {
+  const cleanSlug = (input.slug ?? "").trim();
+  const cleanStageId = (input.stage_id ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (!cleanStageId) throw new IaDbValidationError("stage_id is required");
+  const fields: string[] = [];
+  const values: unknown[] = [cleanSlug, cleanStageId];
+  const sets: string[] = [];
+  if (input.title !== undefined) {
+    sets.push(`title = $${values.length + 1}`);
+    values.push(input.title);
+    fields.push("title");
+  }
+  if (input.objective !== undefined) {
+    sets.push(`objective = $${values.length + 1}`);
+    values.push(input.objective);
+    fields.push("objective");
+  }
+  if (input.exit_criteria !== undefined) {
+    sets.push(`exit_criteria = $${values.length + 1}`);
+    values.push(input.exit_criteria);
+    fields.push("exit_criteria");
+  }
+  if (sets.length === 0) {
+    throw new IaDbValidationError(
+      "at least one of title/objective/exit_criteria must be provided",
+    );
+  }
+  return withTx(async (c) => {
+    const guard = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
+      [cleanSlug, cleanStageId],
+    );
+    if (guard.rowCount === 0) {
+      throw new IaDbValidationError(
+        `stage not found: ${cleanSlug}/${cleanStageId}`,
+      );
+    }
+    const upd = await c.query<{ updated_at: string }>(
+      `UPDATE ia_stages
+          SET ${sets.join(", ")}, updated_at = now()
+        WHERE slug = $1 AND stage_id = $2
+       RETURNING updated_at`,
+      values,
+    );
+    return {
+      slug: cleanSlug,
+      stage_id: cleanStageId,
+      updated_fields: fields,
+      updated_at: upd.rows[0]!.updated_at,
+    };
+  });
+}
+
 // Re-export read helper so tools can round-trip without two imports.
 export { queryTaskBody, queryTaskState };
 export type { TaskStateDB };

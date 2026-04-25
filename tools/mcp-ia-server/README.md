@@ -93,7 +93,6 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`reserve_backlog_ids`** | Reserve monotonic ids for one or more prefixes via the on-disk counter (`ia/state/id-counter.json`) under `flock`. Used before writing new yaml. |
 | **`runtime_state`** | Read or merge-write **`ia/state/runtime-state.json`** (per-clone gitignored state: last verify / bridge preflight / queued scenario id) under flock. |
 | **`rule_section`** | Return a single Cursor rule (`.mdc`) heading section. Companion to **`rule_content`** for progressive disclosure. |
-| **`parent_plan_validate`** | Validate `parent_plan` locator fields on one or more backlog yaml records (schema v2). Used by `validate:parent-plan-locator`. |
 | **`plan_apply_validate`** | Validate a Plan-Apply tuple payload against the pair contract before the Sonnet pair-tail applies it. |
 | **`master_plan_locate`** | Reverse-lookup: reads yaml `parent_plan` + `task_key` → returns `{ plan, step, stage, phase, task_key, row_line, row_raw }` for the matching master-plan row. |
 | **`master_plan_next_pending`** | Given a master plan path, return the next non-Done task row (honors Done / archived / pending states). |
@@ -134,8 +133,11 @@ All 8 read tools hit `ia_*` tables via a singleton `pg.Pool`. Pool guarded by `p
 | **`stage_render`** | DB-backed: render one stage block as markdown (heading + status + objective + exit + tasks table) plus structured fields. Replaces filesystem reads of `ia/projects/{slug}/stage-X.Y-*.md`. |
 | **`master_plan_preamble_write`** | DB-backed: replace the verbatim preamble blob for a master plan (everything-above-`## Stages`). Optional `change_log` arg appends a structured history row in the same tx. Replaces direct edits to `ia/projects/{slug}/index.md`. |
 | **`master_plan_change_log_append`** | DB-backed: append one append-only history row to `ia_master_plan_change_log`. Replaces manual edits to the `Change log` sections previously scattered through index.md / stage-*.md files. |
+| **`master_plan_insert`** | DB-backed: insert a new `ia_master_plans` row. Validates kebab-case `slug` (`/^[a-z0-9][a-z0-9-]*$/`). Errors `invalid_input` on duplicate slug. Optional `preamble` populated atomically. |
+| **`stage_insert`** | DB-backed: insert a new `ia_stages` row under existing master plan. Validates `stage_id` pattern `/^[0-9]+(\.[0-9]+)?$/`. FK-checks parent `slug`. Optional `title` / `objective` / `exit_criteria` / `status` (default `pending`). |
+| **`stage_update`** | DB-backed: partial update of structured `ia_stages` fields (`title` / `objective` / `exit_criteria`). FOR UPDATE lock; `null` clears, `undefined` skips. Returns `updated_fields[]`. Status flips remain controlled via `task_status_flip` + `stage_closeout_apply`. |
 
-All 9 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`). Pool guarded by `poolOrThrow()` → `IaDbUnavailableError`. Arg-validation failures raised as `IaDbValidationError`. Tool-boundary error contract: `db_unconfigured` (pool missing), `invalid_input` (bad enum / missing fk / empty required field / non-terminal stage closeout), `db_error` (bare exception fallthrough). Round-trip + concurrency coverage: `tests/ia-db/mutations.test.ts`.
+All 12 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`). Pool guarded by `poolOrThrow()` → `IaDbUnavailableError`. Arg-validation failures raised as `IaDbValidationError`. Tool-boundary error contract: `db_unconfigured` (pool missing), `invalid_input` (bad enum / missing fk / empty required field / non-terminal stage closeout), `db_error` (bare exception fallthrough). Round-trip + concurrency coverage: `tests/ia-db/mutations.test.ts`.
 
 ### Plan-Digest tool family (Q12 2026-04-22)
 

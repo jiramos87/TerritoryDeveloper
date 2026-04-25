@@ -13,11 +13,10 @@ description: >-
   §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred
   decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections.
   Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage
-  into the existing orchestrator doc in-place. Does NOT create BACKLOG rows (stage-file does that).
-  2-level hierarchy Stage > Task (Step + Phase layers removed per lifecycle-refactor). Canonical shape
-  authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {path} Stage 2.3",
-  "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before
-  stage-file".
+  into the existing master plan (`ia_stages` row) via DB MCP. Does NOT create BACKLOG rows (stage-file
+  does that). 2-level hierarchy Stage > Task. Canonical shape authority:
+  `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {SLUG} Stage 2.3", "decompose stage
+  2.3", "expand stage skeleton", "materialize deferred stage", "decompose before stage-file".
 phases:
   - Load + validate
   - MCP context
@@ -28,12 +27,12 @@ phases:
   - Progress regen
   - Handoff
 triggers:
-  - /stage-decompose {path} Stage 2.3
+  - /stage-decompose {SLUG} Stage 2.3
   - decompose stage 2.3
   - expand stage skeleton
   - materialize deferred stage
   - decompose before stage-file
-argument_hint: {orchestrator-spec-path} Step {N}
+argument_hint: {slug} Stage {N.M}
 model: inherit
 reasoning_effort: high
 tools_role: planner
@@ -47,11 +46,11 @@ caveman_exceptions:
   - verbatim error/tool output
   - structured MCP payloads
 hard_boundaries:
-  - Do NOT decompose Step 1 — master-plan-new owns that.
-  - Do NOT create BACKLOG rows or `ia/projects/{ISSUE_ID}.md` stubs — stage-file does that.
-  - Do NOT decompose steps beyond `STEP_ID` — lazy materialization.
-  - Do NOT overwrite a step with an existing task table without explicit user confirmation.
-  - Do NOT persist if any phase has <2 tasks without user confirmation.
+  - Do NOT decompose stages already authored in master-plan-new.
+  - Do NOT create BACKLOG rows or task spec stubs — stage-file does that.
+  - Do NOT decompose stages beyond `STAGE_ID` — lazy materialization.
+  - Do NOT overwrite a Stage body with an existing task table without explicit user confirmation.
+  - Do NOT persist if Stage has <2 tasks without user confirmation.
   - Do NOT commit — user decides.
 caller_agent: stage-decompose
 ---
@@ -68,9 +67,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → stage-authoring → ...
 ```
 
-**Note:** Default path is `master-plan-new` fully decomposes ALL Stages at author time (no skeletons). `stage-decompose` is reserved for:
-- Rare cases where a Stage was intentionally left as skeleton (Objectives + Exit only) pending downstream design clarity.
-- Old pre-lifecycle-refactor plans whose Stages carry `**Stages:** _TBD_` or `decomposition deferred` markers that need forward migration.
+**Note:** Default path is `master-plan-new` fully decomposes ALL Stages at author time (no skeletons). `stage-decompose` is reserved for rare cases where a Stage was intentionally left as skeleton (Objectives + Exit only) pending downstream design clarity.
 
 **Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
@@ -80,8 +77,8 @@ master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → 
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `ORCHESTRATOR_SPEC` | **1st arg** (explicit path) or Glob resolve | Path to `ia/projects/{slug}-master-plan.md`. Glob fallback only when exactly one `*-master-plan.md` exists — otherwise ask user. |
-| `STAGE_ID` | **2nd arg** | `N.M` format (e.g. `2.3` or `Stage 2.3`). Points at an existing `### Stage {STAGE_ID}` block that lacks a Task table. |
+| `SLUG` | **1st arg** | Bare master-plan slug (e.g. `blip`). DB-first via `master_plan_state(slug=SLUG)`. Missing → STOP + `/master-plan-new` handoff. |
+| `STAGE_ID` | **2nd arg** | `N.M` format (e.g. `2.3` or `Stage 2.3`). Points at an existing `ia_stages` row that lacks a Task table in its body. |
 
 ---
 
@@ -89,18 +86,17 @@ master-plan-new → [stage-decompose (deferred Stages only)] → stage-file → 
 
 ### Phase 0 — Load + validate
 
-Read `ORCHESTRATOR_SPEC`. Find the `### Stage {STAGE_ID}` block (H3 canonical; accept `#### Stage` H4 as legacy drift but flag for re-author).
+Call `mcp__territory-ia__stage_render({slug: SLUG, stage_id: STAGE_ID})`. Body returned = Stage block markdown.
 
 **Confirm it is a skeleton** — look for any of:
 
-- `Status: Draft (decomposition deferred …)` in the Stage block.
 - `**Tasks:** _TBD_` placeholder line.
 - No task table present under the Stage.
 - Stage carries Objectives + Exit criteria but its body ends before a Tasks table.
 
 If Stage already has a complete Task table → **STOP**. Report current decomposition state; ask user to confirm intentional overwrite before continuing.
 
-If `STAGE_ID` does not match any `### Stage` heading in orchestrator → **STOP**. Report available stage IDs.
+If `STAGE_ID` does not match any stage in `master_plan_state(slug=SLUG)` → **STOP**. Report available stage IDs.
 
 Hold in working memory:
 
@@ -217,13 +213,13 @@ Outcome: {PASS | WARN-gate | FAIL}
 
 ---
 
-### Phase 4 — Persist (in-place edit)
+### Phase 4 — Persist (DB write)
 
-Edit `ORCHESTRATOR_SPEC` in atomic operations:
+Call `mcp__territory-ia__stage_body_write({slug: SLUG, stage_id: STAGE_ID, body_md: <new body>})`:
 
-**4a — Fill skeleton Stage body:**
+**4a — Compose new Stage body:**
 
-Find the `### Stage {STAGE_ID}` block. Preserve existing header fields (Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces — only augment Relevant surfaces with MCP-routed refs from Phase 1 if useful). Append the Task table + 4 pending subsections authored in Phase 2.
+Preserve existing header fields (Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces — only augment Relevant surfaces with MCP-routed refs from Phase 1 if useful). Append the Task table + 4 pending subsections authored in Phase 2.
 
 Expected final block shape (per MASTER-PLAN-STRUCTURE.md §3):
 
@@ -272,21 +268,9 @@ _pending — populated by Stage audit pass when all Tasks reach Done post-verify
 _pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
-If the existing skeleton uses retired `#### Stage` H4 → rewrite heading to `### Stage` H3 during fill.
+**4b — Status line (idempotent):**
 
-**4b — Update `## Deferred decomposition` section (if present):**
-
-If orchestrator carries a `## Deferred decomposition` section (legacy), find the bullet for `Stage {STAGE_ID}`. Replace with:
-
-```markdown
-- **Stage {STAGE_ID} — {Name}:** decomposed {YYYY-MM-DD}. Tasks: {N} (`_pending_`).
-```
-
-If no such section exists (canonical new plans don't emit it), skip 4b.
-
-**4c — Status line (idempotent):**
-
-Ensure the Stage's `**Status:**` line reads `Draft` (not `Skeleton` / `Draft (decomposition deferred…)` — those are retired markers). Rewrite if needed. Do NOT flip to `In Progress` — that is `stage-file-apply`'s responsibility (R2). Do NOT touch plan top-of-file `> **Status:**` — `stage-file-apply` owns that flip (R1).
+Ensure the Stage's `**Status:**` line reads `Draft`. Do NOT flip to `In Progress` — that is `stage-file`'s responsibility (R2). Do NOT touch plan-top Status — `stage-file` owns that flip (R1).
 
 ### Phase 5 — Progress regen
 
@@ -296,11 +280,10 @@ Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress
 
 Single concise caveman message:
 
-- `{ORCHESTRATOR_SPEC}` edited — Stage {STAGE_ID} decomposed: {N} tasks (all `_pending_`).
+- `{SLUG}` Stage {STAGE_ID} decomposed: {N} tasks (all `_pending_`).
 - Invariant numbers flagged (if any).
 - Cardinality + sizing gates: violations resolved / justified.
-- Deferred decomposition entry updated (if section existed).
-- Next step: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` when prior Stage closes.
+- Next step: `claude-personal "/stage-file {SLUG} Stage {STAGE_ID}"` when prior Stage closes.
 
 ---
 
@@ -320,17 +303,16 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 
 ## Guardrails
 
-- IF `STAGE_ID` does not match any `### Stage` heading → STOP. Report available stage IDs.
+- IF `STAGE_ID` does not match any stage in `master_plan_state(slug=SLUG)` → STOP. Report available stage IDs.
 - IF target Stage already has a complete Task table → STOP, ask user to confirm overwrite before proceeding.
 - IF target Stage is `In Review`, `In Progress`, or `Final` → STOP. Mutating an advanced Stage requires revision cycle, not this skill.
 - IF cardinality gate finds <2 tasks → STOP, pause for user confirmation or fix.
 - IF cardinality gate finds 7+ tasks → STOP, suggest split; persist only after user confirms.
 - IF any task covers only 1 file / 1 function with no logic → warn + pause.
 - IF any task spans >3 unrelated subsystems → warn + pause.
-- IF authored output carries 6-column Task table with `Phase` column, `**Phases:**` checkbox list, or `#### Stage` H4 heading → STOP, re-author per canonical 5-column / H3 shape.
-- Do NOT create `BACKLOG.md` rows. Do NOT create `ia/projects/{ISSUE_ID}.md` stubs. Tasks stay `_pending_` — `stage-file` materializes them.
+- IF authored output carries 6-column Task table with `Phase` column or `**Phases:**` checkbox list → STOP, re-author per canonical 5-column shape.
+- Do NOT create `BACKLOG.md` rows. Do NOT create task spec stubs. Tasks stay `_pending_` — `stage-file` materializes them.
 - Do NOT decompose other Stages beyond `STAGE_ID` — only the target Stage is expanded.
-- Do NOT delete or rename the orchestrator doc.
 - Do NOT commit — user decides when to commit.
 
 ---
@@ -341,10 +323,10 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 Run the stage-decompose workflow.
 
 Follow ia/skills/stage-decompose/SKILL.md end-to-end. Inputs:
-  ORCHESTRATOR_SPEC: {path to *-master-plan.md}
+  SLUG: {bare master-plan slug, e.g. blip}
   STAGE_ID: {N.M, e.g. 2.3}
 
-Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 4 pending subsections). 2-level hierarchy Stage > Task (no Steps, no Phases).
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 4 pending subsections). 2-level hierarchy Stage > Task.
 Phase 1 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary).
 Cardinality gate requires ≥2 tasks per Stage AND ≤6 soft — pause for user confirmation on either violation.
 Only the target STAGE_ID is decomposed; all other deferred Stages remain as skeletons.
@@ -354,12 +336,5 @@ Only the target STAGE_ID is decomposed; all other deferred Stages remain as skel
 
 ## Next step
 
-After persist: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` — but ONLY after the prior Stage reaches `Final`.
+After persist: `claude-personal "/stage-file {SLUG} Stage {STAGE_ID}"` — but ONLY after the prior Stage reaches `Final`.
 
-## Changelog
-
-### 2026-04-24 — lifecycle-refactor alignment
-
-**source:** canonical-structure consolidation (MASTER-PLAN-STRUCTURE.md authored)
-
-**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy. Decomposed deferred `### Step N` blocks into H4 Stages with `**Phases:**` checkbox list + 6-column Task table carrying `Phase` column; also flipped Step header `Skeleton → Planned` (R7 — now retired per orchestrator-vs-spec.md). Per post-lifecycle-refactor 2-level hierarchy, this skill now operates on deferred `### Stage N.M` skeletons (H3, no Step wrapper), fills in the 5-column Task table + 4 pending subsections (§Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan), and leaves Status flipping to downstream skills (`stage-file-apply` owns R1 + R2). Cite `docs/MASTER-PLAN-STRUCTURE.md` as authoritative shape source. Input rename `STEP_ID → STAGE_ID` (N.M format).

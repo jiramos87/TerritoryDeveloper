@@ -26,7 +26,6 @@ export async function listMasterPlans(): Promise<MasterPlanRow[]> {
     {
       slug: string;
       title: string;
-      source_spec_path: string | null;
       created_at: Date;
       updated_at: Date;
       stage_count: string;
@@ -37,7 +36,6 @@ export async function listMasterPlans(): Promise<MasterPlanRow[]> {
     SELECT
       p.slug,
       p.title,
-      p.source_spec_path,
       p.created_at,
       p.updated_at,
       coalesce(s.stage_count, 0) AS stage_count,
@@ -60,7 +58,6 @@ export async function listMasterPlans(): Promise<MasterPlanRow[]> {
   return rows.map((r) => ({
     slug: r.slug,
     title: r.title,
-    source_spec_path: r.source_spec_path,
     created_at: r.created_at.toISOString(),
     updated_at: r.updated_at.toISOString(),
     stage_count: Number(r.stage_count),
@@ -74,13 +71,12 @@ export async function getMasterPlan(slug: string): Promise<PlanDetail | null> {
     {
       slug: string;
       title: string;
-      source_spec_path: string | null;
       preamble: string | null;
       created_at: Date;
       updated_at: Date;
     }[]
   >`
-    SELECT slug, title, source_spec_path, preamble, created_at, updated_at
+    SELECT slug, title, preamble, created_at, updated_at
     FROM ia_master_plans WHERE slug = ${slug}
   `;
   if (planRows.length === 0) return null;
@@ -94,12 +90,11 @@ export async function getMasterPlan(slug: string): Promise<PlanDetail | null> {
       objective: string | null;
       exit_criteria: string | null;
       status: "pending" | "in_progress" | "done";
-      source_file_path: string | null;
       created_at: Date;
       updated_at: Date;
     }[]
   >`
-    SELECT slug, stage_id, title, objective, exit_criteria, status, source_file_path, created_at, updated_at
+    SELECT slug, stage_id, title, objective, exit_criteria, status, created_at, updated_at
     FROM ia_stages WHERE slug = ${slug}
     ORDER BY stage_id
   `;
@@ -174,7 +169,6 @@ export async function getMasterPlan(slug: string): Promise<PlanDetail | null> {
       objective: s.objective,
       exit_criteria: s.exit_criteria,
       status: s.status,
-      source_file_path: s.source_file_path,
       created_at: s.created_at.toISOString(),
       updated_at: s.updated_at.toISOString(),
       task_count: tasks.length,
@@ -199,7 +193,6 @@ export async function getMasterPlan(slug: string): Promise<PlanDetail | null> {
   const planRow: MasterPlanRow = {
     slug: plan.slug,
     title: plan.title,
-    source_spec_path: plan.source_spec_path,
     created_at: plan.created_at.toISOString(),
     updated_at: plan.updated_at.toISOString(),
     stage_count: stageRows.length,
@@ -332,7 +325,6 @@ export async function getStageRow(slug: string, stageId: string): Promise<StageR
       objective: string | null;
       exit_criteria: string | null;
       status: "pending" | "in_progress" | "done";
-      source_file_path: string | null;
       created_at: Date;
       updated_at: Date;
       task_count: string;
@@ -341,7 +333,7 @@ export async function getStageRow(slug: string, stageId: string): Promise<StageR
   >`
     SELECT
       s.slug, s.stage_id, s.title, s.objective, s.exit_criteria, s.status,
-      s.source_file_path, s.created_at, s.updated_at,
+      s.created_at, s.updated_at,
       coalesce(t.task_count, 0) AS task_count,
       coalesce(t.task_done_count, 0) AS task_done_count
     FROM ia_stages s
@@ -362,7 +354,6 @@ export async function getStageRow(slug: string, stageId: string): Promise<StageR
     objective: r.objective,
     exit_criteria: r.exit_criteria,
     status: r.status,
-    source_file_path: r.source_file_path,
     created_at: r.created_at.toISOString(),
     updated_at: r.updated_at.toISOString(),
     task_count: Number(r.task_count),

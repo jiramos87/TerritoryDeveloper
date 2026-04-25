@@ -87,7 +87,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
    - Search body for `subagent_type: "{NAME}"` — primary resolution.
    - Fallback: `.claude/agents/{NAME}.md` direct reference.
    - None found → mark command inline-only; Phase 1 skipped; command body IS the plan source.
-5. Extract `argument-hint` template for arg-name inference (e.g. `{MASTER_PLAN_PATH} {STAGE_ID}`).
+5. Extract `argument-hint` template for arg-name inference (e.g. `{SLUG} {STAGE_ID}`).
 
 ### Phase 1 — Load subagent + skill
 
@@ -104,7 +104,7 @@ For each phase in SKILL.md (or subagent body fallback):
 
 1. Extract phase name, numbered step list, conditional markers: `if`, `when`, `on`, `unless`, `STOP`, `STOPPED`, `skip`, `fail`, `→`, `non-populated →`, `missing →`, `absent →`.
 2. Identify nested dispatches (sub-skills, sub-commands, inline chains). If `--depth > 0` remaining: recurse Phase 0–2 on each. Else: summarize as `see {skill_path} — not inlined (depth cap)`.
-3. Substitute `argument-hint` placeholders (`{MASTER_PLAN_PATH}`, `{STAGE_ID}`, `{ISSUE_ID}`, etc.) with literal `TARGET_ARGS` tokens in positional order.
+3. Substitute `argument-hint` placeholders (`{SLUG}`, `{STAGE_ID}`, `{ISSUE_ID}`, etc.) with literal `TARGET_ARGS` tokens in positional order.
 4. Runtime-only values (e.g. `{FAILED_ISSUE_ID}`, `{PR_NUMBER}`, `$LAST_COMMIT_SHA`, `{ISSUE_ID_LIST}`, `{OUT_PATH}`) → emit as `${var}` placeholder; append one line to placeholder registry with source reference.
 
 ### Phase 3 — Emit plan

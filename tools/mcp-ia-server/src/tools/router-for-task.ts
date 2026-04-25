@@ -198,7 +198,7 @@ export function inferDomainHintsFromPath(filePath: string): string[] {
       "Unity / MonoBehaviour / Inspector wiring, Script Execution Order, 2D renderer `sortingOrder` / layers (not isometric stacking rules), Editor `tools/reports/` exports",
     );
   }
-  if (/mcp-ia-server|backlog-parser|validate-dead-project-spec-paths/i.test(p)) {
+  if (/mcp-ia-server|backlog-parser/i.test(p)) {
     hints.add("Backlog / issues");
   }
   if (/glossary\.md|\/glossary/i.test(p)) {

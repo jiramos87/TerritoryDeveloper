@@ -63,7 +63,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Known pain points:** Scroll wheel over UI lists also moving **camera** (fixed — see **§3.5**); **`FindObjectOfType`** in hot paths (**BUG-14**); happiness / stats display inconsistencies (**BACKLOG**).
 
-**Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **BACKLOG** **`Spec:`** edits under `ia/projects/`, run `npm run validate:dead-project-specs` (repo root). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
+**Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
 ---
 

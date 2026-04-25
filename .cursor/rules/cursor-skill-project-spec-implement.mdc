@@ -1,5 +1,5 @@
 ---
-description: "Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases), after the spec is ready—not for spec review. Triggers: \"implement project spec\", \"execute project spec\", \"follow Implementation Plan\", \"ship spec phases\", implement BUG-/FEAT-/TECH- project spec."
+description: "Use when executing the §Plan Digest of a Task spec stored in the DB (`ia_task_specs.body_md`), after `/stage-authoring` has populated mechanical steps. Triggers: \"implement task spec\", \"execute mechanical steps\", \"ship task plan digest\", implement BUG-/FEAT-/TECH- task."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/project-spec-implement/SKILL.md

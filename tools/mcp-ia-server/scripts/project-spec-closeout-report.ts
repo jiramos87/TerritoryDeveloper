@@ -1,19 +1,19 @@
 #!/usr/bin/env npx tsx
 /**
- * Emit a closeout worksheet (Markdown or JSON) from a project spec — TECH-58.
+ * Emit a closeout worksheet (Markdown or JSON) from a Task spec body in
+ * `ia_task_specs.body_md` (DB-backed).
  * Usage: npx tsx scripts/project-spec-closeout-report.ts --issue FEAT-49 [--json]
- *     or npx tsx scripts/project-spec-closeout-report.ts --path ia/projects/FEAT-49.md [--json]
  */
 
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveRepoRoot } from "../src/config.js";
 import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
 import {
   buildProjectSpecCloseoutDigest,
-  resolveProjectSpecFile,
+  normalizeIssueId,
 } from "../src/parser/project-spec-closeout-parse.js";
+import { queryTaskBody } from "../src/ia-db/queries.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 loadRepoDotenvIfNotCi(resolveRepoRoot());
@@ -23,26 +23,22 @@ if (!process.env.REPO_ROOT) {
 
 function parseArgs(argv: string[]): {
   issue_id?: string;
-  spec_path?: string;
   json: boolean;
 } {
   let issue_id: string | undefined;
-  let spec_path: string | undefined;
   let json = false;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--json") json = true;
     else if (a === "--issue" && argv[i + 1]) issue_id = argv[++i];
-    else if (a === "--path" && argv[i + 1]) spec_path = argv[++i];
   }
-  return { issue_id, spec_path, json };
+  return { issue_id, json };
 }
 
 function worksheetMarkdown(d: ReturnType<typeof buildProjectSpecCloseoutDigest>): string {
   const lines: string[] = [];
   lines.push(`# Closeout worksheet — ${d.issue_id ?? "unknown"}`);
   lines.push("");
-  lines.push(`- **Spec path:** \`${d.spec_path}\``);
   lines.push(`- **Cited issue ids:** ${d.cited_issue_ids.join(", ") || "(none)"}`);
   lines.push(
     `- **Suggested \`glossary_discover\` keywords (English):** ${JSON.stringify(d.suggested_english_keywords)}`,
@@ -74,36 +70,21 @@ function worksheetMarkdown(d: ReturnType<typeof buildProjectSpecCloseoutDigest>)
   return lines.join("\n");
 }
 
-function main(): void {
-  const { issue_id, spec_path, json } = parseArgs(process.argv.slice(2));
-  if (!issue_id && !spec_path) {
-    console.error(
-      "Usage: project-spec-closeout-report.ts --issue FEAT-49 [--json]\n" +
-        "    or project-spec-closeout-report.ts --path ia/projects/FEAT-49.md [--json]",
-    );
+async function main(): Promise<void> {
+  const { issue_id, json } = parseArgs(process.argv.slice(2));
+  if (!issue_id) {
+    console.error("Usage: project-spec-closeout-report.ts --issue FEAT-49 [--json]");
     process.exit(1);
   }
 
-  const repoRoot = resolveRepoRoot();
-  const resolved = resolveProjectSpecFile(repoRoot, { issue_id, spec_path });
-  if (!resolved.ok) {
-    console.error(resolved.message);
+  const issueId = normalizeIssueId(issue_id);
+  const markdown = await queryTaskBody(issueId);
+  if (markdown == null) {
+    console.error(`No task spec body for '${issueId}' in ia_task_specs.`);
     process.exit(1);
   }
 
-  let markdown: string;
-  try {
-    markdown = fs.readFileSync(resolved.absPath, "utf8");
-  } catch (e) {
-    console.error(e instanceof Error ? e.message : e);
-    process.exit(1);
-  }
-
-  const digest = buildProjectSpecCloseoutDigest(
-    markdown,
-    resolved.relPosix,
-    resolved.issue_id,
-  );
+  const digest = buildProjectSpecCloseoutDigest(markdown, issueId);
 
   if (json) {
     console.log(JSON.stringify(digest, null, 2));
@@ -112,4 +93,7 @@ function main(): void {
   }
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

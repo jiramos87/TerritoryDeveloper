@@ -2,10 +2,8 @@
  * MCP tools: project_spec_journal_* — Postgres journal for Decision Log + Lessons learned (glossary **IA project spec journal**).
  */
 
-import fs from "node:fs";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { resolveRepoRoot } from "../config.js";
 import {
   getProjectSpecJournalEntry,
   persistProjectSpecJournal,
@@ -16,8 +14,9 @@ import {
   type JournalEntryKind,
 } from "../ia-db/journal-repo.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
+import { queryTaskBody } from "../ia-db/queries.js";
 import { runWithToolTiming } from "../instrumentation.js";
-import { resolveProjectSpecFile } from "../parser/project-spec-closeout-parse.js";
+import { normalizeIssueId } from "../parser/project-spec-closeout-parse.js";
 import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 
 function jsonResult(payload: unknown) {
@@ -38,20 +37,11 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     "project_spec_journal_persist",
     {
       description:
-        "Append **Decision Log** and **Lessons learned** bodies from a project spec under `ia/projects/{ISSUE_ID}[-{description}].md` into **Postgres** table `ia_project_spec_journal` (requires `DATABASE_URL` or committed `config/postgres-dev.json` when not in CI). Use during **project-spec-close** (umbrella close) **before** deleting the spec, or during **project-stage-close** to capture per-stage progress. Inserts one row per non-empty section. Idempotent re-runs append additional rows.",
+        "Append **Decision Log** and **Lessons learned** sections from a task spec body (DB-backed `ia_task_specs.body_md`) into **Postgres** table `ia_project_spec_journal` (requires `DATABASE_URL` or committed `config/postgres-dev.json` when not in CI). Use during umbrella close or per-stage progress capture. Inserts one row per non-empty section. Idempotent re-runs append additional rows.",
       inputSchema: {
         issue_id: z
           .string()
-          .optional()
-          .describe(
-            "Backlog id. Exactly one of `issue_id` or `spec_path` required.",
-          ),
-        spec_path: z
-          .string()
-          .optional()
-          .describe(
-            "Repo-relative path under `ia/projects/`. Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (descriptive suffix). Exactly one of `issue_id` or `spec_path` required.",
-          ),
+          .describe("Backlog id (e.g. TECH-776) — task spec body fetched from DB."),
         git_sha: z
           .string()
           .optional()
@@ -65,32 +55,26 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
           if (!pool) throw dbUnconfiguredError();
           const a = input as {
             issue_id?: string;
-            spec_path?: string;
             git_sha?: string;
           };
-          const repoRoot = resolveRepoRoot();
-          const resolved = resolveProjectSpecFile(repoRoot, {
-            issue_id: a.issue_id,
-            spec_path: a.spec_path,
-          });
-          if (!resolved.ok) {
-            throw { code: "invalid_input" as const, message: resolved.message };
-          }
-          let markdown: string;
-          try {
-            markdown = fs.readFileSync(resolved.absPath, "utf8");
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
+          const rawId = (a.issue_id ?? "").trim();
+          if (!rawId) {
             throw {
-              code: "internal_error" as const,
-              message: msg,
-              details: { spec_path: resolved.relPosix },
+              code: "invalid_input" as const,
+              message: "`issue_id` is required.",
+            };
+          }
+          const issueId = normalizeIssueId(rawId);
+          const markdown = await queryTaskBody(issueId);
+          if (markdown == null) {
+            throw {
+              code: "task_not_found" as const,
+              message: `No task spec body for '${issueId}' in ia_task_specs.`,
             };
           }
           const result = await persistProjectSpecJournal(pool, {
             markdown,
-            specPathPosix: resolved.relPosix,
-            issueId: resolved.issue_id,
+            issueId,
             gitSha: a.git_sha ?? null,
           });
           return result;

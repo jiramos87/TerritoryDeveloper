@@ -1,63 +1,65 @@
 # Mission
 
-Extend an existing master plan at `{ORCHESTRATOR_SPEC}` with new Steps sourced from `{SOURCE_DOC}`. Appends new `### Step {N}` blocks after the last existing step, fully decomposed (stages → phases → tasks). Syncs header metadata (Last updated, Exploration source, Locked decisions, invariant numbers). Never touches existing Step blocks. Tasks seeded `_pending_`. Does NOT insert BACKLOG rows. Does NOT create `ia/projects/{ISSUE_ID}.md` specs. Next step = `/stage-file` against the first new stage.
+Extend an existing master plan (slug `{SLUG}`) with new Stages sourced from `{SOURCE_DOC}`. Appends new Stage rows to `ia_stages`, fully decomposed (5-column Task table). Syncs preamble metadata via `master_plan_preamble_write` (Last updated, Exploration source, Locked decisions, invariant numbers). Never touches existing Stage rows. Tasks seeded `_pending_`. Does NOT insert BACKLOG rows. Does NOT create task spec stubs. Next step = `/stage-file` against the first new Stage.
 
 # Recipe
 
 Follow `ia/skills/master-plan-extend/SKILL.md` end-to-end. Phase sequence (gated):
 
-0. **Load + validate** — Read `{ORCHESTRATOR_SPEC}`. Confirm orchestrator shape (header + `## Steps` + tracking legend + `## Orchestration guardrails`). Read `{SOURCE_DOC}`. Confirm expansion intent present (literal `## Design Expansion` OR semantic equivalents: Decision / Architecture / Subsystem Impact / Roadmap / Deferred steps / Extensions). Missing orchestrator shape → STOP, route user to `/master-plan-new {SOURCE_DOC}`. Missing source expansion intent → STOP, route user to `/design-explore {SOURCE_DOC}`.
-1. **Start-number resolution + duplication gate** — Compute `START_STEP_NUMBER` (user override gated `>` last existing; default = last + 1). For each proposed new step, scan existing `### Step {N} — {Name}` blocks. Name collision OR >50% objective token overlap → STOP, ask rename / drop / confirm intentional overlap.
-2. **MCP context + surface-path pre-check** — Run **Tool recipe** (below). Greenfield skips `router_for_task` / `spec_sections` / `invariants_summary`. Tooling-only plans skip `invariants_summary`. Glob every entry/exit point from source-doc Architecture — mark `(new)` for non-existent paths.
-3. **New-step proposal + user confirm** — Emit caveman one-liner outline per proposed new step (`Step {N} — {Name} — {one-line objective} — {est stages}`). Pause for user confirm on ordering / names / scope boundary BEFORE full decomposition. Re-emit until confirmed.
-4. **Step decomposition (new steps only)** — Per confirmed new step, author Step block shape matching `ia/templates/master-plan-template.md` (Status / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces). All new steps decomposed in full — no skeletons. Step {START} cites Step {START-1} (last existing step) as prior-step handoff in Relevant surfaces.
-5. **Stage decomposition (new steps only)** — Per new step, 2–4 stages each landing on green-bar boundary. Reuse Phase 2 MCP output. Apply `ia/skills/stage-decompose/SKILL.md` Phase 2 rules. Stage ordering heuristic: scaffolding → data model → runtime logic → integration + tests (unless source doc declares different dep chain). 6-column task table (`Task | Name | Phase | Issue | Status | Intent`) matching template.
-6. **Cardinality gate (new stages only)** — ≥2 tasks AND ≤6 tasks per phase. Phase with 1 → warn + pause. Phase with 0 → strip OR add. Phase with 7+ → warn + suggest split. Apply task sizing heuristic (merge 1-file / 1-function tasks; split >3-subsystem tasks). Do NOT re-gate existing stages.
-7. **Persist in place** — Edit `{ORCHESTRATOR_SPEC}`. (a) Header sync — update `**Last updated:** {YYYY-MM-DD}`, append `{SOURCE_DOC}` to `**Exploration source:**` + Read-first if absent, merge new Locked decisions, merge new invariant numbers into Read-first. (b) Insert new `### Step {START}`..`### Step {END}` blocks in order immediately before the closing `---` separator that precedes `## Orchestration guardrails`. (c) Do NOT modify `## Orchestration guardrails` unless source doc introduces new guardrail category.
-7b. **Regenerate progress dashboard** — `npm run progress` (repo root). Regenerates `docs/progress.html` to reflect new step / stage / task counts. Log exit code; failure does NOT block Phase 8.
-8. **Handoff** — Single concise caveman message: `{ORCHESTRATOR_SPEC}` extended — `+N steps · +M stages · +P phases · +Q tasks`; new Step range `{START}..{END}`; source doc referenced in header; Locked decisions delta; invariants flagged; cardinality gate outcome; duplication gate outcome; next step `/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1`.
+0. **Load + validate** — Resolve `{SLUG}` from user prompt. Call `master_plan_render({slug: SLUG})`. `not_found` → STOP, route user to `/master-plan-new {SOURCE_DOC}`. Validate rendered preamble shape (Stages + tracking legend + Orchestration guardrails). Read `{SOURCE_DOC}` (filesystem). Confirm expansion intent present (literal `## Design Expansion` OR semantic equivalents: Decision / Architecture / Subsystem Impact / Roadmap / Deferred Stages / Extensions). Missing source expansion intent → STOP, route user to `/design-explore {SOURCE_DOC}`.
+1. **Start-number resolution + duplication gate** — Compute `START_STAGE_NUMBER` (`N.M`). User override gated against existing `(N, M)` pairs (collision → STOP). Default = next free `N.M` in last cluster OR `(max_N + 1, 1)` for new cluster. Duplication gate: scan proposed new Stage names vs existing rendered Stage blocks. Apply playbook: Draft unpersisted Stage → merge; In Review+ → STOP and ask rename/drop/revision-cycle; near-overlap with distinct scope → proceed with note.
+2. **MCP context + surface-path pre-check** — Run **Tool recipe** (below) via `domain-context-load` subskill. Greenfield skips `router_for_task` / `spec_sections` / `invariants_summary`. Tooling-only plans skip `invariants_summary`. Surface-path pre-check via `surface-path-precheck` subskill — mark `(new)` for non-existent paths.
+3. **New-stage proposal + digest** — Emit caveman one-liner outline per proposed new Stage (`Stage {N}.{M} — {Name} — {one-line objective} — {est 2–6 tasks}`). Subagent single-shot — emit digest, do NOT pause; proceed directly to Phase 4. Caller re-fires with revised scope if unhappy.
+4. **Stage decomposition (new Stages only)** — Per new Stage, author canonical Stage block per MASTER-PLAN-STRUCTURE.md §3 (Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces / 5-column Task table + 4 pending subsections §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). All new Stages decomposed in full — no skeletons. Reuse Phase 2 MCP output. Stage ordering heuristic: scaffolding → data model → runtime logic → integration + tests (unless source doc declares different dep chain). Task id format `T{N}.{M}.{K}`.
+5. **Cardinality gate (new Stages only)** — `cardinality-gate-check` subskill. Rule: ≥2 Tasks/Stage hard, ≤6 Tasks/Stage soft. Violations pause for user. Do NOT re-gate existing Stages.
+6. **Persist (DB-only)** — Operations in order:
+   - `master_plan_preamble_write({slug: SLUG, preamble: <merged preamble>})` — header sync (Last updated, Exploration source append, Locked decisions merge, invariant numbers merge).
+   - Per new Stage: `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: <Stage block markdown>, objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets}"})`.
+   - `master_plan_change_log_append({slug: SLUG, kind: "plan_extended", body: "Extended via {SOURCE_DOC} — +N stages ({START}.{M_first}..{END}.{M_last}), +M tasks"})`.
+6b. **Regenerate progress dashboard** — `npm run progress` (repo root). Failure does NOT block Phase 6c.
+6c. **R6 demote (Final → In Progress)** — If rendered preamble top Status was `Final` AND new Stages appended ≥1: re-fetch via `master_plan_render`, rewrite Status to `In Progress — Stage {N_first_new}.{M_first_new} pending (extensions appended)`, land via second `master_plan_preamble_write`. Idempotent.
+7. **Handoff + umbrella flip (if applicable)** — Single concise caveman message: `{SLUG}` extended — `+N stages · +M tasks`; new Stage range `{START}.{M_first}..{END}.{M_last}`; source doc referenced; Locked decisions delta; invariants flagged; cardinality + duplication gate outcomes; next step `/stage-file {SLUG} Stage {START}.{M_first}`. Umbrella child-row flip via `master_plan_render({slug: UMBRELLA_SLUG})` + `master_plan_preamble_write` + `master_plan_change_log_append({kind: "child_extended"})`.
 
 # Tool recipe (Phase 2 only)
 
-**Primary:** `mcp__territory-ia__orchestrator_snapshot({ slug })` (composite bundle — pending registration; loads orchestrator + rollout tracker + exploration doc + glossary anchors in one call). Brownfield only; greenfield skips.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
 
-**Bash fallback (MCP unavailable or tool not yet registered):** Same branching as `master-plan-new` Phase 2.
+- `keywords`: English tokens from source-doc Chosen Approach + Subsystem Impact + Architecture component names.
+- `brownfield_flag`: `true` for greenfield (new subsystem, no existing code paths touched). `false` for brownfield. If source-doc references any `Assets/**` path (even future target), treat as brownfield.
+- `tooling_only_flag`: `true` for tooling/pipeline-only plans.
 
-1. **`mcp__territory-ia__glossary_discover`** — `keywords` JSON array: English tokens from source-doc Chosen Approach + Subsystem Impact + Architecture component names. Greenfield + brownfield.
-2. **`mcp__territory-ia__glossary_lookup`** — high-confidence terms from discover. Hold canonical names for prose in Phases 4–5. Greenfield + brownfield.
-3. **`mcp__territory-ia__router_for_task`** — 1–3 domains matching `ia/rules/agent-router.md` vocabulary; derive from source-doc Subsystem Impact entries. Brownfield only.
-4. **`mcp__territory-ia__spec_sections`** — sections implied by routed subsystems; set `max_chars`. No full spec reads. Fill each new step / stage "Relevant surfaces". Brownfield only.
-5. **`mcp__territory-ia__invariants_summary`** — when source-doc Subsystem Impact flags runtime C# / Unity subsystems. Capture invariant numbers for header sync + per-new-stage guardrails. Brownfield (runtime C#) only.
-6. **`mcp__territory-ia__list_specs`** / **`mcp__territory-ia__spec_outline`** — brownfield fallback only.
+Capture for Phases 3–4: `glossary_anchors` → canonical names; `spec_sections` → §"Relevant surfaces"; `invariants` → preamble Read-first merge + per-new-stage guardrails.
 
-**Surface-path pre-check (Glob, Phase 2 sub-step — greenfield + brownfield):** per entry / exit point in source-doc Architecture / Component map, Glob existing paths. Existing → note line refs. New directory / file intent → mark `(new)`. Ambiguous → Grep for plausible type names; fall back to `(new)` if no hit.
+Run `list_specs` / `spec_outline` only if a routed domain references a spec whose sections weren't returned. Brownfield fallback.
+
+Surface-path pre-check via `surface-path-precheck` subskill on Architecture / Component map paths.
 
 # Hard boundaries
 
-- IF `{ORCHESTRATOR_SPEC}` does not exist → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
-- IF `{ORCHESTRATOR_SPEC}` shape check fails (missing header / Steps / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
-- IF `{SOURCE_DOC}` missing expansion + phased skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
-- IF `START_STEP_NUMBER` ≤ last existing step number → STOP. Overwriting existing Steps requires a fresh revision cycle, not this skill.
-- IF proposed new step duplicates an existing step name / objective → STOP (Phase 1 duplication gate). Ask rename / drop / confirm intentional overlap.
-- IF any new stage phase has <2 tasks after Phase 6 → STOP. Ask split or justify before persisting.
-- IF any new stage phase has 7+ tasks after Phase 6 → STOP. Suggest split; persist only after user confirms or justifies.
+- IF `master_plan_render({slug: SLUG})` returns `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
+- IF rendered preamble shape check fails (missing Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
+- IF `{SOURCE_DOC}` missing expansion + staged skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
+- IF `START_STAGE_NUMBER` collides with an existing `N.M` pair → STOP. Overwriting existing Stages requires a fresh revision cycle, not this skill.
+- IF proposed new Stage duplicates an existing Stage name / objective → apply Phase 1 resolution playbook (Draft unpersisted → merge; In Review+ → STOP; distinct scope → note).
+- IF any new Stage has <2 Tasks after Phase 5 → STOP. Ask split or justify before persisting.
+- IF any new Stage has 7+ Tasks after Phase 5 → STOP. Suggest split; persist only after user confirms or justifies.
 - IF router returns `no_matching_domain` for a new subsystem → note gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
 - IF source doc introduces a locked decision that contradicts an existing Locked decision → STOP. Contradictions require explicit re-decision + edit to original exploration doc.
-- Do NOT touch existing `### Step 1..(START-1)` blocks — not even cosmetic edits.
-- Do NOT overwrite orchestrator header `**Status:**` line — lifecycle skills flip it.
-- Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_`.
+- Do NOT touch existing Stage rows in `ia_stages` — not even cosmetic edits.
+- Do NOT overwrite top-of-preamble `**Status:**` line — lifecycle skills flip it. (Exception: Phase 6c R6 demote.)
+- Do NOT insert BACKLOG rows. Do NOT create task spec stubs. Tasks stay `_pending_` — `stage-file` materializes them.
 - Do NOT delete or rename `{SOURCE_DOC}`. Do NOT edit its expansion / extensions block.
-- Do NOT commit — user decides when to commit the extended orchestrator.
-- Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
+- Do NOT commit — user decides when.
 
 # Output
 
 Single concise caveman message:
 
-1. `{ORCHESTRATOR_SPEC}` extended — `+N steps · +M stages · +P phases · +Q tasks`. New Step range `{START}..{END}`.
-2. Source doc referenced in header Exploration source / Read-first list.
+1. `{SLUG}` extended — `+N stages · +M tasks`. New Stage range `{START}.{M_first}..{END}.{M_last}`.
+2. Source doc referenced in preamble Exploration source / Read-first list.
 3. Locked decisions delta: `{count}` new locks appended OR `none`.
 4. Invariants flagged by number + which new stages they gate.
 5. Cardinality gate: resolved splits / justifications captured.
 6. Duplication gate outcome.
-7. Next step: `/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1` to file first new stage's pending tasks as BACKLOG rows + project-spec stubs.
+7. Umbrella child-row flip (when applicable) — `{UMBRELLA_SLUG}` child `{SLUG}` → In Progress.
+8. Next step: `/stage-file {SLUG} Stage {START}.{M_first}` to file first new stage's pending tasks as BACKLOG rows + task spec stubs.

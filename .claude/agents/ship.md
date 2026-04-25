@@ -59,7 +59,7 @@ Follow `ia/skills/ship/SKILL.md` end-to-end. Phase sequence (matches SKILL front
 - `SHIP {ISSUE_ID}: PASSED — {title}` — all 4 steps complete; Phase 5 emitted.
 - `SHIP {ISSUE_ID}: ALREADY_CLOSED ({status})` — Phase 0 terminal-status idle exit.
 - `SHIP {ISSUE_ID}: STOPPED — task not found in DB` — Phase 0 lookup miss.
-- `SHIP {ISSUE_ID}: STOPPED — task is stage-attached (slug={slug}, stage={stage_id}). Next: /ship-stage ia/projects/{slug}-master-plan.md Stage {stage_id}` — Phase 0 standalone gate failure.
+- `SHIP {ISSUE_ID}: STOPPED — task is stage-attached (slug={slug}, stage={stage_id}). Next: /ship-stage {slug} {stage_id}` — Phase 0 standalone gate failure.
 - `SHIP {ISSUE_ID}: STOPPED at author — {reason}` — Phase 1 lint/preflight fail or DB write fail.
 - `SHIP {ISSUE_ID}: STOPPED at implement — {reason}` — Phase 2 mechanical step / verify failure.
 - `SHIP {ISSUE_ID}: STOPPED at verify — verdict: {verdict}` — Phase 3 verdict ≠ pass.

@@ -6,19 +6,19 @@ Follow `caveman:caveman` for all your own output and all dispatched subagents. S
 
 ## Step 0 — Context resolution (before dispatch)
 
-Parse `$ARGUMENTS` as `{MASTER_PLAN_PATH} {STAGE_ID}`:
+Parse `$ARGUMENTS` as `{SLUG} {STAGE_ID}`:
 
-- `MASTER_PLAN_PATH` = first token (e.g. `ia/projects/citystats-overhaul-master-plan.md`).
+- `SLUG` = first token (e.g. `blip`, `citystats-overhaul`).
 - `STAGE_ID` = remainder (excluding flags).
 - `--no-resume` flag disables Step 4 resume gate (forensic replay only).
 - If `--force-model {model}` present: extract `{model}` (valid: `sonnet`, `opus`, `haiku`); store as `FORCE_MODEL`. Absent or invalid → `FORCE_MODEL` unset (subagent uses frontmatter model).
 
-Verify `{MASTER_PLAN_PATH}` exists (Glob). Extract plan display name from filename. Print context banner:
+Verify slug exists via `master_plan_state(slug=SLUG)`. Missing → STOPPED + `Next: claude-personal "/master-plan-new ..."` handoff. Capture `master_plan_title` from MCP result. Print context banner:
 
 ```
-SHIP-STAGE {STAGE_ID} — {plan display name}
-  master plan : {MASTER_PLAN_PATH}
-  stage       : {STAGE_ID}
+SHIP-STAGE {STAGE_ID} — {master_plan_title}
+  slug   : {SLUG}
+  stage  : {STAGE_ID}
 ```
 
 ---
@@ -29,7 +29,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 
 > ## Mission
 >
-> Run `ia/skills/ship-stage/SKILL.md` end-to-end on `{MASTER_PLAN_PATH}` Stage `{STAGE_ID}` (with `--no-resume` if present).
+> Run `ia/skills/ship-stage/SKILL.md` end-to-end on slug `{SLUG}` Stage `{STAGE_ID}` (with `--no-resume` if present).
 >
 > Follow caveman:caveman. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, chain-level digest JSON, destructive-op confirmations.
 >
@@ -42,8 +42,8 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 > 5. Phase 4 — Resume gate via `task_state` DB query. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree-clean guard). Disabled by `--no-resume`.
 > 6. Phase 5 — Pass A per-task loop: implement (`spec-implementer` work inline) → `unity:compile-check` + scene-wiring preflight → `task_status_flip(implemented)` + `journal_append`. **NO commits.** Stop on first failure.
 > 7. Phase 6 — Pass B per-stage (runs ONCE): full `verify-loop` (Path A+B) on `git diff HEAD` → code-review on Stage diff (inline fix; cap=1) → per-task `task_status_flip(verified)` then `task_status_flip(done)`.
-> 8. Phase 7 — Inline closeout: `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + guarded `git mv` of `ia/projects/{SLUG}/stage-{STAGE_ID_DB}-*.md` → `_closed/`.
-> 9. Phase 8 — Stage commit + verification record: single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` (covers all Pass A + code-review fixes + closeout mv) → capture `STAGE_COMMIT_SHA` → per-task `task_commit_record(task_id, commit_sha, "feat", ...)` → `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")`.
+> 8. Phase 7 — Inline closeout: `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `master_plan_change_log_append` audit row. DB-only — no filesystem mv.
+> 9. Phase 8 — Stage commit + verification record: single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` (covers all Pass A + code-review fixes) → capture `STAGE_COMMIT_SHA` → per-task `task_commit_record(task_id, commit_sha, "feat", ...)` → `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")`.
 > 10. Phase 9 — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
 > 11. Phase 10 — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → `/closeout {UMBRELLA_ISSUE_ID}`. Skeleton stages → `STOPPED — skeleton stage encountered`.
 >
@@ -53,6 +53,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 > - **Code-reviewer applies critical fixes inline via direct Edit/Write** — do NOT write `§Code Fix Plan` tuples.
 > - **Inline closeout (Step 7) mandatory on green Pass B.**
 > - Resume gate queries DB (`task_state`), not git log.
+> - DB is sole source of truth — no `ia/projects/**` reads or writes.
 > - `SHIP_STAGE {STAGE_ID}: PASSED` is **invalid** until Step 7 closeout + Step 8 commit + verification flip succeed.
 >
 > ## Exit
@@ -76,12 +77,12 @@ After dispatch completes (or on stop), emit:
 
 ```
 SHIP-STAGE {STAGE_ID}: {PASSED|STOPPED|STAGE_VERIFY_FAIL}
-  master plan : {plan display name} ({MASTER_PLAN_PATH})
+  slug          : {SLUG} ({master_plan_title})
   tasks shipped : {count} ({ids})
   stage commit  : {short_sha} (when PASSED)
   stage verify  : {passed|failed|skipped}
 ```
 
 On `PASSED`: include `Next:` handoff from Step 10 resolver.
-On `STOPPED`: include `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}"` (resume gate picks up after fix).
+On `STOPPED`: include `Next: claude-personal "/ship-stage {SLUG} {STAGE_ID}"` (resume gate picks up after fix).
 On `STAGE_VERIFY_FAIL`: include `Human review required — worktree stays dirty; do NOT roll back Pass A status flips automatically.`

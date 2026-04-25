@@ -1,20 +1,19 @@
 ---
 name: master-plan-extend
 purpose: >-
-  Extend an existing `ia/projects/{slug}-master-plan.md` with new Stages sourced from an exploration
-  or extensions doc. Appends — never rewrites existing Stages. Canonical shape:
+  Extend an existing master plan (`ia_master_plans` row) with new Stages sourced from an exploration
+  or extensions doc. Appends to `ia_stages` — never rewrites existing Stages. Canonical shape:
   `docs/MASTER-PLAN-STRUCTURE.md`.
 audience: agent
 loaded_by: "skill:master-plan-extend"
 slices_via: router_for_task, spec_sections, invariants_summary, glossary_discover, glossary_lookup
 description: >-
-  Use when an existing master plan orchestrator needs new Stages sourced from an exploration doc (with
-  persisted `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`) that
-  was deferred at original author time. Appends new Stage blocks in place — never rewrites existing
-  Stages, never overwrites headers, never inserts BACKLOG rows. Fully decomposes every new Stage (Task
-  table) at author time — no skeletons. 2-level hierarchy `Stage > Task` (Step + Phase layers removed
-  per lifecycle-refactor). Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers:
-  "/master-plan-extend {plan} {source}", "extend master plan from exploration", "add new stages to
+  Use when an existing master plan needs new Stages sourced from an exploration doc (with persisted
+  `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`). Appends new
+  Stage rows to `ia_stages` — never rewrites existing Stages, never overwrites headers, never inserts
+  BACKLOG rows. Fully decomposes every new Stage (Task table) at author time — no skeletons. 2-level
+  hierarchy `Stage > Task`. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers:
+  "/master-plan-extend {slug} {source}", "extend master plan from exploration", "add new stages to
   orchestrator", "append from extensions doc", "pull deferred stage into master plan".
 phases: []
 triggers:
@@ -24,8 +23,8 @@ triggers:
   - append from extensions doc
   - pull deferred stage into master plan
 argument_hint: >-
-  {ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC] (e.g.
-  ia/projects/blip-master-plan.md docs/blip-post-mvp-extensions.md)
+  {SLUG} {SOURCE_DOC} [START_STAGE_NUMBER] [SCOPE_BOUNDARY_DOC] (e.g.
+  blip docs/blip-post-mvp-extensions.md)
 model: inherit
 reasoning_effort: high
 tools_role: pair-head
@@ -34,6 +33,7 @@ tools_extra:
   - mcp__territory-ia__list_specs
   - mcp__territory-ia__master_plan_render
   - mcp__territory-ia__stage_render
+  - mcp__territory-ia__stage_insert
   - mcp__territory-ia__master_plan_preamble_write
   - mcp__territory-ia__master_plan_change_log_append
 caveman_exceptions:
@@ -45,13 +45,13 @@ caveman_exceptions:
   - Mermaid / diagram blocks persisted to the doc
   - orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field)
 hard_boundaries:
-  - IF `{ORCHESTRATOR_SPEC}` does not exist → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
-  - IF `{ORCHESTRATOR_SPEC}` shape check fails (missing header / Steps / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
-  - IF `{SOURCE_DOC}` missing expansion + phased skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
-  - IF `START_STEP_NUMBER` ≤ last existing step number → STOP. Overwriting existing Steps requires a fresh revision cycle, not this skill.
-  - IF proposed new step duplicates an existing step name / objective → STOP (Phase 1 duplication gate). Ask rename / drop / confirm intentional overlap.
-  - IF any new stage phase has <2 tasks after Phase 6 → STOP. Ask split or justify before persisting.
-  - IF any new stage phase has 7+ tasks after Phase 6 → STOP. Suggest split; persist only after user confirms or justifies.
+  - IF `master_plan_render({slug})` returns `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
+  - IF rendered preamble shape check fails (missing Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
+  - IF `{SOURCE_DOC}` missing expansion + staged skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
+  - IF `START_STAGE_NUMBER` collides with an existing `N.M` pair → STOP. Overwriting existing Stages requires a fresh revision cycle, not this skill.
+  - IF proposed new Stage duplicates an existing Stage name / objective → apply Phase 1 resolution playbook (Draft unpersisted → merge; In Review+ → STOP and ask rename/drop/revision-cycle).
+  - IF any new Stage has <2 Tasks after Phase 5 → STOP. Ask split or justify before persisting.
+  - IF any new Stage has 7+ Tasks after Phase 5 → STOP. Suggest split; persist only after user confirms or justifies.
   - "IF router returns `no_matching_domain` for a new subsystem → note gap in \"Relevant surfaces\" as `{domain} — no router match; load by path: {file}`, continue."
 caller_agent: master-plan-extend
 ---
@@ -65,7 +65,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 **Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) — authoritative source for file shape, Stage block subsections, 5-column Task table schema, Status enums, lifecycle flip matrix. This skill appends new Stages TO that shape; if this skill drifts, MASTER-PLAN-STRUCTURE.md wins.
 
 **Lifecycle:** AFTER [`master-plan-new`](../master-plan-new/SKILL.md) has authored the orchestrator AND `{SOURCE_DOC}` exists with expansion (or equivalent extensions list). BEFORE [`stage-file`](../stage-file/SKILL.md) of the new stages.
-`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `stage-authoring` → `plan-reviewer-mechanical` → `plan-reviewer-semantic` → `spec-implementer` → `verify-loop` → `opus-code-review` → `/ship-stage` (inline closeout). Per canonical flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
+`design-explore` → `master-plan-new` → `master-plan-extend` (this skill) → `stage-file` → `stage-authoring` → `project-spec-implement` → `verify-loop` → `opus-code-review` → `/ship-stage` (inline closeout). Per canonical flow in [`docs/agent-lifecycle.md`](../../../docs/agent-lifecycle.md).
 
 **Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
@@ -77,7 +77,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `ORCHESTRATOR_SPEC` | User prompt | SLUG carrier. Accepts repo-relative path forms `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` (legacy filesystem shapes — files no longer exist post Step 9.6; only basename parses to derive `{slug}`). DB-first via `master_plan_render(slug)` — must return existing plan payload. Must match orchestrator shape (header block + `## Stages` + tracking legend + `## Orchestration guardrails`). |
+| `SLUG` | User prompt | Bare master plan slug (e.g. `blip`). DB-first via `master_plan_render({slug})` — must return existing plan payload. Rendered preamble must match orchestrator shape (`## Stages` + tracking legend + `## Orchestration guardrails`). |
 | `SOURCE_DOC` | User prompt | Path to exploration doc (carries `## Design Expansion` or semantic equivalent) OR extensions doc (`{slug}-post-mvp-extensions.md` listing deferred Stages) — required. Must carry at least one Implementation Point / Roadmap entry not already represented in orchestrator. |
 | `SOURCE_SECTION` | User prompt | Optional. When `SOURCE_DOC` is an umbrella multi-bucket exploration (e.g. `full-game-mvp-exploration.md`), specify the bucket heading or section slug (e.g. `Bucket 7 — Audio polish & Blip`). Phase 0 + Phase 2 load only that subsection + its Implementation Points block; remaining buckets ignored to prevent token blow-up and wrong-bucket bleed. |
 | `START_STAGE_NUMBER` | User prompt | Optional `N.M` override. Default: next free `N.M` after last existing Stage (e.g. last = Stage 3.2 → new Stages start at Stage 3.3, or Stage 4.1 for new top-level cluster — see Phase 1). Extend appends — never overwrites existing Stages. |
@@ -89,9 +89,9 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 
 ### Phase 0 — Load + validate
 
-Derive `{SLUG}` from `{ORCHESTRATOR_SPEC}` basename (strip `-master-plan.md` OR `/index.md` suffix — both legacy filesystem shapes). Call `master_plan_render({slug: SLUG})` to fetch DB-backed plan payload (preamble + Stage inventory + Tasks). `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
+Resolve `{SLUG}` from user prompt (bare slug, e.g. `blip`). Call `master_plan_render({slug: SLUG})` to fetch the plan payload (preamble + Stage inventory + Tasks). `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
 
-If `SOURCE_SECTION` provided, note it for Phase 2 scoping. The rendered payload is the source of truth — no filesystem read of `{ORCHESTRATOR_SPEC}` (file no longer exists post Step 9.6).
+If `SOURCE_SECTION` provided, note it for Phase 2 scoping. The rendered payload is the sole source of truth — DB-backed `ia_master_plans` + `ia_stages` + `ia_tasks`.
 
 **Hard-required in rendered preamble (STOP if missing):**
 
@@ -103,13 +103,10 @@ If `SOURCE_SECTION` provided, note it for Phase 2 scoping. The rendered payload 
 
 - `**Last updated:** {YYYY-MM-DD}` absent → insert under the orchestrator title block (before `**Status:**` or first header field); set to today's date.
 - `**Locked decisions (do not reopen in this plan):**` absent → insert as empty bullet-list field in header block.
-- `**Hierarchy rules:**` line references old 3-level `step > stage > phase > task` phrasing → replace with canonical line citing `docs/MASTER-PLAN-STRUCTURE.md` first (see MASTER-PLAN-STRUCTURE.md §2).
 
 Header-repair lands via `master_plan_preamble_write` in Phase 6 — collect deltas here, apply atomically with Stage inserts.
 
 Missing hard-required shape in rendered preamble → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
-
-**Retired-surface detection (soft warn, do NOT STOP):** If preamble carries any `### Step N` block, `**Phases:**` checkbox list, or 6-column Task table with `Phase` column → emit warning in handoff recommending migration to canonical 2-level shape. Do NOT auto-migrate (structural rewrite — user decides). New Stages authored by this skill use canonical shape regardless of legacy drift in existing blocks.
 
 Read `{SOURCE_DOC}` (filesystem — exploration / extensions docs remain on disk). If `SOURCE_SECTION` provided, load only that section + its Implementation Points / Roadmap sub-block; ignore remaining sections. Confirm expansion intent present — literal `## Design Expansion` OR semantic equivalents:
 
@@ -279,9 +276,7 @@ DB MCP writes only — no filesystem Edits. Operations (in order):
    - Call `master_plan_preamble_write({slug: SLUG, preamble: <new preamble string>})`.
 
 2. **Stage block insertion (per new Stage):** For each new `Stage {START}.{M_first}` ... `Stage {END}.{M_last}` block from Phase 4:
-   - Call `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: "<full Stage block markdown>"})`.
-
-   **MCP gap:** `stage_insert` not yet wired (Step 9.6.8 only landed `master_plan_render` / `stage_render` / `master_plan_preamble_write` / `master_plan_change_log_append`). Skill blocked on this gap — add to Step 9.6 followup tracker. Workaround until wired: emit Stage block markdown in handoff, ask user to insert manually via SQL.
+   - Call `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: "<full Stage block markdown>", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets}"})`.
 
 3. **Change-log audit row:** Call `master_plan_change_log_append({slug: SLUG, kind: "plan_extended", body: "Extended via {SOURCE_DOC} — +N stages ({START}.{M_first}..{END}.{M_last}), +M tasks"})`.
 
@@ -289,10 +284,9 @@ DB MCP writes only — no filesystem Edits. Operations (in order):
 
 **Do NOT:**
 
-- Touch existing Stage rows in `ia_stages` — not even cosmetic edits (retired-surface warnings go in handoff, not auto-fix).
+- Touch existing Stage rows in `ia_stages` — not even cosmetic edits.
 - Overwrite top-of-preamble `**Status:**` line — lifecycle skills flip it. (Exception: Phase 6c R6 demote — see below.)
-- Insert BACKLOG rows. Create flat `ia/projects/{ISSUE_ID}.md` stubs. Tasks stay `_pending_`.
-- Read or write `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` — DB is sole source of truth post Step 9.6.
+- Insert BACKLOG rows. Create task spec stubs. Tasks stay `_pending_` until `stage-file`.
 - Rename or delete `{SOURCE_DOC}`. Do not edit its expansion block.
 - Commit. User decides when.
 
@@ -313,18 +307,17 @@ After persisting new Stage blocks, check the rendered preamble `> **Status:**` l
 
 Single concise message (caveman) naming:
 
-- `{ORCHESTRATOR_SPEC}` extended — `+N stages · +M tasks`. New Stage range `{START}.{M_first}..{END}.{M_last}`.
+- `{SLUG}` extended — `+N stages · +M tasks`. New Stage range `{START}.{M_first}..{END}.{M_last}`.
 - Source doc referenced in header Exploration source / Read-first.
 - Locked decisions delta: `{count}` new locks appended OR `none`.
 - Invariants flagged by number + which new stages they gate.
 - Cardinality gate: resolved splits / justifications captured.
 - Duplication gate: clean OR `{count}` near-duplicates resolved (renamed / merged / dropped).
-- Retired-surface warnings (if detected in Phase 0): list legacy blocks (`### Step N`, `**Phases:**`, Phase column) + recommend future migration to canonical shape.
-- Next step: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {START}.{M_first}"` to file the first new stage's pending tasks as BACKLOG rows + project-spec stubs.
+- Next step: `claude-personal "/stage-file {SLUG} Stage {START}.{M_first}"` to file the first new stage's pending tasks as BACKLOG rows + task spec stubs.
 
-**Umbrella flip (if applicable):** If `{ORCHESTRATOR_SPEC}` is a child orchestrator under an umbrella plan (detected by: umbrella's Stage/bucket table references `{slug}-master-plan.md`, OR user provides umbrella path):
+**Umbrella flip (if applicable):** If `{SLUG}` is a child orchestrator under an umbrella plan (user supplies umbrella slug, OR the umbrella's preamble Stage/bucket table references `{SLUG}`):
 
-- Derive `{UMBRELLA_SLUG}` from umbrella path basename. Call `master_plan_render({slug: UMBRELLA_SLUG})` to fetch umbrella preamble.
+- Call `master_plan_render({slug: UMBRELLA_SLUG})` to fetch umbrella preamble.
 - Find child row in umbrella's table where Status = `Planned` or blank.
 - Build new umbrella preamble: flip child row Status → `In Progress`. Land via `master_plan_preamble_write({slug: UMBRELLA_SLUG, preamble: <updated>})`.
 - Call `master_plan_change_log_append({slug: UMBRELLA_SLUG, kind: "child_extended", body: "{SLUG} extended via {SOURCE_DOC}; status → In Progress."})`.
@@ -351,18 +344,17 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 ## Guardrails
 
 - IF `master_plan_render({slug: SLUG})` returns `not_found` → STOP. Route user to `/master-plan-new {SOURCE_DOC}` (fresh orchestrator).
-- IF rendered preamble shape check fails (missing header / Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
+- IF rendered preamble shape check fails (missing Stages / legend / guardrails) → STOP. Report malformed orchestrator; do not attempt auto-heal.
 - IF `{SOURCE_DOC}` missing expansion + staged skeleton intent → STOP. Route user to `/design-explore {SOURCE_DOC}` first.
 - IF `START_STAGE_NUMBER` collides with an existing `N.M` pair → STOP. Overwriting existing Stages requires a fresh revision cycle, not this skill.
 - IF proposed new stage duplicates an existing stage name / objective → apply Phase 1 resolution playbook: Draft unpersisted Stage → merge; In Review+ → STOP and ask rename/drop/revision-cycle; near-overlap with distinct scope → proceed with note.
 - IF any new Stage has <2 Tasks after Phase 5 → STOP. Ask split or justify before persisting.
 - IF any new Stage has 7+ Tasks after Phase 5 → STOP. Suggest split; persist only after user confirms or justifies.
 - IF router returns `no_matching_domain` for a new subsystem → note gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
-- IF source doc introduces a locked decision that contradicts an existing Locked decision in `{ORCHESTRATOR_SPEC}` → STOP. Contradictions require explicit re-decision + edit to original exploration doc — not appendable via this skill.
-- IF authored new Stage block uses `#### Stage` H4 heading, `**Phases:**` checkbox list, or 6-column Task table with `Phase` column → STOP and re-author. Those are RETIRED surfaces (see MASTER-PLAN-STRUCTURE.md §1).
-- Do NOT touch existing Stage rows in `ia_stages` (even to clean retired-surface drift — route user to a separate migration task).
-- Do NOT read or write `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR flat `ia/projects/{ISSUE_ID}.md` — DB is sole source of truth post Step 9.6.
-- Do NOT insert BACKLOG rows. Do NOT create flat `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
+- IF source doc introduces a locked decision that contradicts an existing Locked decision in the rendered preamble → STOP. Contradictions require explicit re-decision + edit to original exploration doc — not appendable via this skill.
+- IF authored new Stage block uses `#### Stage` H4 heading or 6-column Task table with `Phase` column → STOP and re-author per canonical shape (MASTER-PLAN-STRUCTURE.md §1).
+- Do NOT touch existing Stage rows in `ia_stages`.
+- Do NOT insert BACKLOG rows. Do NOT create task spec stubs. Tasks stay `_pending_` — `stage-file` materializes them later.
 - Do NOT delete or rename `{SOURCE_DOC}`. Do NOT edit its expansion / extensions block.
 - Do NOT commit — user decides when.
 
@@ -371,16 +363,16 @@ Also run **`list_specs`** / **`spec_outline`** only if a routed domain reference
 ## Seed prompt
 
 ```markdown
-Run the master-plan-extend workflow against {ORCHESTRATOR_SPEC} using {SOURCE_DOC}.
+Run the master-plan-extend workflow against {SLUG} using {SOURCE_DOC}.
 
 Follow ia/skills/master-plan-extend/SKILL.md end-to-end. Inputs:
-  ORCHESTRATOR_SPEC: {path to existing master plan}
+  SLUG: {bare master plan slug, e.g. blip}
   SOURCE_DOC: {path to exploration or extensions doc}
   SOURCE_SECTION: {optional — bucket/section heading if SOURCE_DOC is multi-bucket umbrella}
   START_STAGE_NUMBER: {optional N.M override, else inferred}
   SCOPE_BOUNDARY_DOC: {optional sibling doc}
 
-Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task (no Steps, no Phases). Phase 0 validates orchestrator shape; inserts missing Last-updated / Locked-decisions / Hierarchy-rules header fields (no STOP); loads only SOURCE_SECTION from SOURCE_DOC if provided; soft-warns on retired-surface drift (Step / Phases / Phase-col) in existing blocks but does NOT auto-migrate. Phase 1 computes start N.M + runs duplication gate (playbook: Draft unpersisted → merge; In Review+ → STOP; distinct scope → note). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary UNLESS Assets/** paths detected); no full spec reads. Phase 3 emits planned-stages digest — do NOT pause; proceed to Phase 4 immediately. Phase 4 fully decomposes every new Stage (5-col Task table + 4 pending subsections §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Phase 5 cardinality gate: ≥2 tasks per Stage AND ≤6 tasks per Stage — pause on violation. Phase 6 persists in place — header sync idempotent; insert new Stage blocks before final `---` + `## Orchestration guardrails`; NEVER touch existing Stages. Phase 6c R6 demotes top Status Final → In Progress when new Stages appended. Phase 7 handoff includes umbrella child-row flip if applicable.
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task. Phase 0 fetches plan via master_plan_render(slug) and validates rendered preamble shape; inserts missing Last-updated / Locked-decisions header fields (no STOP); loads only SOURCE_SECTION from SOURCE_DOC if provided. Phase 1 computes start N.M + runs duplication gate (playbook: Draft unpersisted → merge; In Review+ → STOP; distinct scope → note). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary UNLESS Assets/** paths detected); no full spec reads. Phase 3 emits planned-stages digest — do NOT pause; proceed to Phase 4 immediately. Phase 4 fully decomposes every new Stage (5-col Task table + 4 pending subsections §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Phase 5 cardinality gate: ≥2 tasks per Stage AND ≤6 tasks per Stage — pause on violation. Phase 6 persists via DB MCP — master_plan_preamble_write (header sync) + stage_insert per new Stage + master_plan_change_log_append (audit row); NEVER touch existing Stages. Phase 6c R6 demotes top Status Final → In Progress when new Stages appended. Phase 7 handoff includes umbrella child-row flip if applicable.
 ```
 
 ---
@@ -389,31 +381,6 @@ Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage bl
 
 After persist: recommend first new stage to file.
 
-`claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {START}.{M_first}"` — new stages are already fully decomposed; file in order.
-
----
-
-## Changelog
-
-### 2026-04-24 — lifecycle-refactor alignment
-
-**source:** canonical-structure consolidation (MASTER-PLAN-STRUCTURE.md authored)
-
-**deviation:** skill described 3-level Step > Stage > Phase > Task hierarchy. Extended plans by appending `### Step {N}` blocks with H4 Stages, `**Phases:**` checkbox list, 6-column Task table carrying `Phase` column. Per post-lifecycle-refactor 2-level hierarchy (`ia/rules/project-hierarchy.md`), canonical shape is H3 Stages with 5-column Task table (no Phase column). Rewrote Phase 0 (retired-surface soft-warn + Hierarchy-rules header-repair), Phase 1 (compute `START_STAGE_NUMBER` N.M instead of `START_STEP_NUMBER`; duplication gate now Draft unpersisted / In Review+ branches), collapsed Phase 4 (Step decomposition) + Phase 5 (Stage decomposition) → single Phase 4 (Stage decomposition directly from Implementation Points; 4 pending subsections incl. §Stage Audit), Phase 6c R6 flip now `Final → In Progress — Stage {N_first_new}.{M_first_new}`. Cite `docs/MASTER-PLAN-STRUCTURE.md` as authoritative shape source.
-
-### 2026-04-17 — 6-gap audit patches (release-rollout bootstrap)
-
-**Status:** applied — `9822c08`
-
-**Scope:** Gaps surfaced during `full-game-mvp` rollout dry-run. Six fixes landed:
-
-**Fix #1 — First-run guardrail (header-repair without STOP).** Phase 0 "Insert-if-missing" sub-step injects absent header fields BEFORE continuing validation.
-**Fix #2 — Phase 6 header sync idempotence.** Per-field Grep → Edit-if-exists else inject.
-**Fix #3 — Partial section load for multi-bucket source docs.** Added `SOURCE_SECTION` input.
-**Fix #4 — Phase 3 re-fire protection (subagent single-shot).** Emits planned-stages digest; does NOT pause.
-**Fix #5 — Umbrella row-flip on child extend.** Phase 7 detects umbrella parentage, flips child row, appends Change log.
-**Fix #6 — Duplication gate resolution playbook.** Three-branch playbook (merge / STOP / distinct-scope).
-
-**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log-aggregator`](../../../docs/full-game-mvp-rollout-tracker.md).
+`claude-personal "/stage-file {SLUG} Stage {START}.{M_first}"` — new stages are already fully decomposed; file in order.
 
 ---

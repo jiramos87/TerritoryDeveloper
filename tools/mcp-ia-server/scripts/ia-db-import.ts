@@ -63,7 +63,6 @@ function resolveDatabaseUrl(): string {
 interface ParsedMasterPlan {
   slug: string;
   title: string;
-  sourcePath: string;
   stages: ParsedStage[];
 }
 
@@ -74,7 +73,6 @@ interface ParsedStage {
 
 function parseMasterPlanFile(absPath: string): ParsedMasterPlan {
   const base = path.basename(absPath).replace(/-master-plan\.md$/, "");
-  const relPath = path.relative(REPO_ROOT, absPath);
 
   const text = fs.readFileSync(absPath, "utf8");
   const lines = text.split(/\r?\n/);
@@ -102,7 +100,7 @@ function parseMasterPlanFile(absPath: string): ParsedMasterPlan {
     stages.push({ stage_id, title: m[2].trim() || null });
   }
 
-  return { slug: base, title, sourcePath: relPath, stages };
+  return { slug: base, title, stages };
 }
 
 function scanMasterPlans(): ParsedMasterPlan[] {
@@ -245,7 +243,6 @@ async function main() {
       slug: string;
       stage_id: string;
       title: string | null;
-      source_file_path: string | null;
     }
   >();
 
@@ -256,7 +253,6 @@ async function main() {
         slug: p.slug,
         stage_id: s.stage_id,
         title: s.title,
-        source_file_path: p.sourcePath,
       });
     }
   }
@@ -270,14 +266,10 @@ async function main() {
     if (!slug || !stage_id) continue;
     const key = `${slug}::${stage_id}`;
     if (!stageMap.has(key)) {
-      // Yaml references a stage we didn't find in any master plan header.
-      // Create a placeholder row so the FK can hold.
-      const owningPlan = plans.find((p) => p.slug === slug);
       stageMap.set(key, {
         slug,
         stage_id,
         title: null,
-        source_file_path: owningPlan?.sourcePath ?? null,
       });
     }
   }
@@ -298,13 +290,11 @@ async function main() {
   const planRows = plans.map((p) => ({
     slug: p.slug,
     title: p.title,
-    source_spec_path: p.sourcePath,
   }));
   for (const orphanSlug of orphanSlugs) {
     planRows.push({
       slug: orphanSlug,
       title: orphanSlug,
-      source_spec_path: null as unknown as string, // allowed: column is nullable
     });
   }
 
@@ -458,18 +448,18 @@ async function main() {
     // Insert master plans.
     for (const p of planRows) {
       await client.query(
-        `INSERT INTO ia_master_plans (slug, title, source_spec_path)
-         VALUES ($1, $2, $3)`,
-        [p.slug, p.title, p.source_spec_path],
+        `INSERT INTO ia_master_plans (slug, title)
+         VALUES ($1, $2)`,
+        [p.slug, p.title],
       );
     }
 
     // Insert stages.
     for (const s of stageRows) {
       await client.query(
-        `INSERT INTO ia_stages (slug, stage_id, title, source_file_path)
-         VALUES ($1, $2, $3, $4)`,
-        [s.slug, s.stage_id, s.title, s.source_file_path],
+        `INSERT INTO ia_stages (slug, stage_id, title)
+         VALUES ($1, $2, $3)`,
+        [s.slug, s.stage_id, s.title],
       );
     }
 

@@ -30,7 +30,6 @@ import { registerRuleContent, registerRuleSection } from "./tools/rule-content.j
 import { registerBacklogIssue } from "./tools/backlog-issue.js";
 import { registerBacklogList } from "./tools/backlog-list.js";
 import { registerBacklogRecordValidate } from "./tools/backlog-record-validate.js";
-import { registerParentPlanValidate } from "./tools/parent-plan-validate.js";
 import { registerReserveBacklogIds } from "./tools/reserve-backlog-ids.js";
 import { registerSpecSections } from "./tools/spec-sections.js";
 import { registerStageCloseoutDigest } from "./tools/stage-closeout-digest.js";
@@ -87,7 +86,7 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
  * ≥30 tools: list-specs, spec-outline, spec-section, spec-sections, glossary
  * lookup/discover, router-for-task, invariants-summary, list-rules,
  * rule-content/section, backlog-issue/list/search/record-validate,
- * parent-plan-validate, reserve-backlog-ids, stage-closeout-digest,
+ * reserve-backlog-ids, stage-closeout-digest,
  * project-spec-journal (2), invariant-preflight, csharp-class-summary,
  * master-plan-locate, master-plan-next-pending, plan-apply-validate,
  * runtime_state, plan-digest-verify-paths/resolve-anchor/render-literal/
@@ -119,7 +118,6 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerRuleSection(server, registry);
   registerBacklogIssue(server);
   registerBacklogRecordValidate(server);
-  registerParentPlanValidate(server);
   registerReserveBacklogIds(server);
   registerSpecSections(server, registry);
   registerStageCloseoutDigest(server);

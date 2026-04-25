@@ -1,27 +1,27 @@
 ---
 name: opus-audit
 purpose: >-
-  Opus Stage-scoped bulk audit: one pass reads ALL N Task specs + Stage header; writes ALL N §Audit
-  paragraphs in one synthesis round.
+  Opus Stage-scoped bulk audit (DB-backed). Single pass reads ALL N Task §Plan Digest
+  + §Verification + §Code Review from DB; writes ALL N §Audit paragraphs in one synthesis round.
 audience: agent
 loaded_by: "skill:opus-audit"
-slices_via: none
+slices_via: stage_bundle, task_spec_section, domain-context-load
 description: >-
-  Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green. Single pass reads
-  ALL N Task specs (§Implementation + §Findings + §Verification) + Stage header + invariants +
-  glossary snippets (pre-loaded shared Stage MCP bundle); writes ALL N §Audit paragraphs in one
-  synthesis round. Does NOT write §Closeout Plan — Stage closeout runs inline via stage_closeout_apply
-  MCP. Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out); Stage preflight reads
-  §Findings + §Verification per Task. Triggers: "/audit {MASTER_PLAN_PATH} {STAGE_ID}", "stage audit",
-  "opus audit bulk", "run opus audit Stage".
+  Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green. Single Opus pass
+  reads ALL N Task spec sections (§Plan Digest + §Verification + §Code Review) + Stage header +
+  shared Stage MCP bundle (glossary / router / invariants); writes ALL N §Audit paragraphs in one
+  synthesis round via `task_spec_section_write`. Does NOT write §Closeout Plan — Stage closeout runs
+  inline via `stage_closeout_apply` MCP. Phase 0 guardrail: F3 sequential-dispatch (no concurrent
+  Opus fan-out). Triggers: "/audit {SLUG} {STAGE_ID}", "stage audit", "opus audit bulk".
 phases:
   - Sequential-dispatch guardrail + Stage preflight
   - Load Stage MCP bundle
+  - Read ALL N Task specs
   - Synthesize N §Audit paragraphs
-  - Write tuples
+  - Persist §Audit per Task
   - Hand-off
 triggers:
-  - /audit {MASTER_PLAN_PATH} {STAGE_ID}
+  - /audit
   - stage audit
   - opus audit bulk
   - run opus audit Stage
@@ -37,14 +37,13 @@ caveman_exceptions:
 hard_boundaries: []
 ---
 
-# Opus-audit skill (Stage-scoped bulk)
+# Opus-audit skill (Stage-scoped bulk, DB-backed)
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Opus bulk. Invoked **once per Stage** after all Tasks in the Stage reach post-verify Green (implement + verify-loop + opus-code-review + any code-fix loops complete). Single Opus pass over the shared Stage MCP bundle produces one `§Audit` paragraph per Task. Does NOT write `§Closeout Plan` — Stage closeout runs inline via `stage_closeout_apply` MCP. `§Findings` read from spec as populated by `stage-authoring` inline.
+**Role:** Opus bulk. Invoked **once per Stage** after all Tasks in the Stage reach post-verify Green (implement + verify-loop + opus-code-review complete). Single Opus pass over the shared Stage MCP bundle produces one `§Audit` paragraph per Task. Does NOT write `§Closeout Plan` — Stage closeout runs inline via `stage_closeout_apply` MCP.
 
-Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule.
-This skill is **not a pair-head** — emits `§Audit` section content directly via tuples (no downstream Sonnet applier). Tuples use `replace_section` / `insert_after` operations directly against each `ia/projects/{id}.md`.
+DB is sole source of truth for task spec sections. Reads via `task_spec_section`; writes via `task_spec_section_write`. No filesystem spec read/write. No tuple emission.
 
 ---
 
@@ -52,39 +51,39 @@ This skill is **not a pair-head** — emits `§Audit` section content directly v
 
 | Param | Source | Notes |
 |-------|--------|-------|
-| `MASTER_PLAN_PATH` | 1st arg | Repo-relative path to master plan (e.g. `ia/projects/lifecycle-refactor-master-plan.md`). |
+| `SLUG` | 1st arg | Master plan slug (bare token, e.g. `blip`). |
 | `STAGE_ID` | 2nd arg | Stage identifier (e.g. `7.4`). |
+| `STAGE_MCP_BUNDLE` | optional | Pre-loaded `domain-context-load` payload from caller. Avoids re-query when called inside chain. |
 
 ---
 
 ## Phase 0 — Sequential-dispatch guardrail (F3) + Stage preflight
 
-> **Guardrail (F3):** Stage-scoped bulk N→1 dispatches Tasks sequentially. Never spawn concurrent Opus invocations. One Task §Audit paragraph synthesized → next Task — no parallel fan-out.
+> **Guardrail (F3):** Stage-scoped bulk N→1 synthesizes Tasks sequentially within one Opus pass. Never spawn concurrent Opus invocations. One Task §Audit paragraph at a time — no parallel fan-out.
 
-1. Read `MASTER_PLAN_PATH` Stage `STAGE_ID` Tasks table.
-2. For each Task row with Status ≠ `Done (archived)`: open `ia/projects/{ISSUE_ID}.md`. Read `## §Findings` heading — note contents (may be empty; §Findings populated inline by `stage-authoring`). Collect `§Verification` section for audit synthesis in Phase 2.
-3. Proceed to Phase 1 — no §Findings emptiness gate.
+1. `mcp__territory-ia__stage_bundle({slug: "{SLUG}", stage_id: "{STAGE_ID}"})` → returns `{stage, tasks}`.
+2. Filter Tasks where `status ∈ {verified, done}` (post-verify Green). Skip `archived`. Halt if any Task `status ∈ {pending, implemented}` → `STOPPED — Task {id} not yet verified`.
+3. Hold `task_ids[]` for Phase 2.
 
 ---
 
 ## Phase 1 — Load Stage MCP bundle
 
-Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)).
-Inputs: `keywords: ["audit", "stage", "lifecycle", "closeout", "findings"]`, `brownfield_flag: false`, `tooling_only_flag: false`, `context_label: "opus-audit Stage {STAGE_ID}"`.
+When `STAGE_MCP_BUNDLE` provided by caller: use directly. Otherwise run [`domain-context-load`](../domain-context-load/SKILL.md):
+Inputs: `keywords: ["audit", "stage", "closeout", "findings"]`, `brownfield_flag: false`, `tooling_only_flag: false`, `context_label: "opus-audit Stage {STAGE_ID}"`.
 
-Single call — do NOT re-query glossary / router / invariants per-Task. Use returned `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}` across all N Task reads. `cache_block` is the Tier 2 per-Stage ephemeral bundle; reuse without re-fetch per `ia/rules/plan-apply-pair-contract.md` §Tier 2 bundle reuse.
+Single call — do NOT re-query glossary / router / invariants per-Task. Use returned `{glossary_anchors, router_domains, spec_sections, invariants, cache_block}` across all N Task reads.
 
 ---
 
 ## Phase 2 — Read ALL N Task specs
 
-For each Task in Stage `STAGE_ID` (Status ≠ `Done (archived)`):
+For each `{TASK_ID}` in `task_ids[]`:
 
-1. Read `ia/projects/{ISSUE_ID}.md` sections:
-   - `## 7. Implementation Plan` (or `## §Implementation`) — what was planned.
-   - `## §Findings` — what verify-loop found.
-   - `## §Verification` — what was verified and how.
-2. Hold all N payloads in memory as `task_reads[{id, impl, findings, verification}]`.
+1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Plan Digest"})` → §Goal / §Acceptance / §Mechanical Steps (what was planned).
+2. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Verification"})` → what verify-loop confirmed.
+3. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Code Review"})` → review verdict + any caveats.
+4. Hold all N payloads in memory as `task_reads[{id, plan_digest, verification, code_review}]`.
 
 ---
 
@@ -92,57 +91,58 @@ For each Task in Stage `STAGE_ID` (Status ≠ `Done (archived)`):
 
 Single synthesis round over all N `task_reads`. For each Task, produce one paragraph:
 
-> **§Audit** prose = "What was built" (from impl plan) + "What worked / what the verify loop confirmed" (from §Findings + §Verification) + "What to watch" (any caveats, deferred issues, glossary terms introduced). Consistent voice across all N paragraphs. No per-Task MCP re-queries.
+> **§Audit** prose = "What was built" (from §Plan Digest §Goal + §Mechanical Steps) + "What the verify loop confirmed" (from §Verification) + "What review caught" (from §Code Review verdict + findings) + "What to watch" (caveats, deferred issues, glossary terms introduced). Consistent voice across all N paragraphs. No per-Task MCP re-queries.
 
-Collect into `audit_paragraphs[{id, paragraph}]`.
+Collect into `audit_paragraphs[{task_id, paragraph}]`.
 
 ---
 
-## Phase 4 — Write tuples
+## Phase 4 — Persist §Audit per Task
 
-Emit one `replace_section` / `insert_after` tuple per Task. Target_anchor = `## §Audit` heading in `ia/projects/{id}.md`.
+For each `{TASK_ID, paragraph}` in `audit_paragraphs`:
 
-```yaml
-- operation: replace_section
-  target_path: ia/projects/{ISSUE_ID}.md
-  target_anchor: "## §Audit"
-  payload: |
-    ## §Audit
-
-    {paragraph text}
-
-- operation: insert_after
-  target_path: ia/projects/{ISSUE_ID}.md
-  target_anchor: "## §Verification"
-  payload: |
-    ## §Audit
-
-    {paragraph text}
+```
+mcp__territory-ia__task_spec_section_write({
+  task_id: "{TASK_ID}",
+  section: "Audit",
+  body: "{paragraph}"
+})
 ```
 
-Rule: if `## §Audit` heading already present → use `replace_section`. If absent → use `insert_after` anchored at `## §Verification`. Resolve anchor to single match per contract §Escalation rule before emitting tuple.
-
-Apply tuples directly (this skill is not a pair-head; no downstream Sonnet applier for §Audit writes).
+DB sole persistence — no filesystem write. No tuple emission. No pair-applier dispatch.
 
 ---
 
 ## Phase 5 — Hand-off
 
-Emit summary:
+Emit caveman summary:
 
 ```
 opus-audit: Stage {STAGE_ID} — {N} §Audit paragraphs written.
 Tasks audited: {task_ids[]}.
-Downstream: stage_closeout_apply MCP (inline in /ship-stage Pass B) consumes §Audit paragraphs.
+DB writes: {N} task_spec_section_write OK.
+Downstream: stage_closeout_apply MCP (inline in /ship-stage Pass B) consumes §Audit.
 ```
 
 Return: `{stage_id, tasks_audited[], audit_paragraphs_written: N}`.
 
 ---
 
+## Hard boundaries
+
+- Do NOT read or write task spec body from filesystem — DB only via `task_spec_section` / `task_spec_section_write`.
+- Do NOT emit `§Plan` tuples — direct DB writes only.
+- Do NOT spawn pair-tail applier — opus-audit is single-skill.
+- Do NOT re-query `domain-context-load` — use `STAGE_MCP_BUNDLE` payload from caller when provided.
+- Do NOT write §Closeout Plan — `stage_closeout_apply` MCP handles closeout inline in `/ship-stage` Pass B.
+- Do NOT flip `task_status` — caller owns flips.
+- Do NOT commit — caller emits the single stage commit.
+
+---
+
 ## Cross-references
 
-- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Escalation rule, §Idempotency requirement.
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
-- [`ia/skills/opus-code-review/SKILL.md`](../opus-code-review/SKILL.md) — per-Task pair-head that runs before audit.
+- [`ia/skills/opus-code-review/SKILL.md`](../opus-code-review/SKILL.md) — per-Stage code review (runs before audit).
+- [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — caller; owns closeout via `stage_closeout_apply`.
 - Glossary term **Opus audit** (`ia/specs/glossary.md`).

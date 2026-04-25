@@ -10,7 +10,7 @@
  * Exit 0 on success; non-zero on error.
  */
 
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseMasterPlan } from './parse.mjs';
@@ -35,7 +35,10 @@ const outPath = resolve(getArg('--out', join(REPO_ROOT, 'docs', 'progress.html')
 // ─── Main ──────────────────────────────────────────────────────────────────
 
 try {
-  // Glob: find all *master-plan*.md files in plansDir
+  if (!existsSync(plansDir)) {
+    console.log(`[progress-tracker] No filesystem plans dir at ${plansDir} — DB-backed master plans; skipping HTML render.`);
+    process.exit(0);
+  }
   const allFiles = readdirSync(plansDir);
   const planFiles = allFiles
     .filter(f => f.includes('master-plan') && f.endsWith('.md'))

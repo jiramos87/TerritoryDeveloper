@@ -45,7 +45,7 @@ hard_boundaries:
   - IF `{DOC_PATH}` unreadable → stop, report path error.
   - IF touched subsystem spec unavailable via MCP → note gap in Subsystem Impact, continue.
   - "Do NOT overwrite Problem / Approaches surveyed / Recommendation / Open questions — only write the `## Design Expansion` block."
-  - Do NOT create master plan (`ia/projects/{slug}-master-plan.md`), BACKLOG row, or invoke `project-new` — user triggers next step after review.
+  - Do NOT create master plan, BACKLOG row, or invoke `project-new` — user triggers next step after review.
   - Do NOT commit — user decides when.
   - Do NOT load whole reference specs when `spec_section` / `spec_sections` slices cover it.
 caller_agent: design-explore
@@ -58,9 +58,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 No MCP calls from skill body. Follow **Tool recipe** below (Phase 5 only) — all other phases derive from the exploration doc itself.
 
 **Position in lifecycle:** fires _before_ master plan creation or `project-new`.  
-`design-explore` → master plan (`ia/projects/{slug}-master-plan.md`) → `stage-file-plan` + `stage-file-apply` → `project-new` → `project-spec-implement`.
+`design-explore` → `master-plan-new` → `stage-file` → `stage-authoring` → `project-spec-implement`.
 
-**Related:** [`project-new`](../project-new/SKILL.md) · [`stage-file-plan`](../stage-file-plan/SKILL.md) · [`stage-file-apply`](../stage-file-apply/SKILL.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`project-new`](../project-new/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/skills/README.md`](../README.md).
 
 ---
 
@@ -332,7 +332,7 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 After persist: if expansion validates, propose one of:
 
 - **Standard mode** — `claude-personal "/master-plan-new {DOC_PATH}"` (multi-stage) or `claude-personal "/project-new ..."` (single issue)
-- **Gap-analysis mode** — `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"` to absorb the filled gaps into the existing plan
+- **Gap-analysis mode** — `claude-personal "/master-plan-extend {SLUG} {DOC_PATH}"` to absorb the filled gaps into the existing plan
 
 ---
 
@@ -341,7 +341,3 @@ After persist: if expansion validates, propose one of:
 Pick-prevention is layered across design-explore → stage-authoring. This skill is the upstream-most layer: poll the human question-by-question (one open question per turn, never a batch) until every decision is locked in the design doc BEFORE the master plan is compiled. Result: by the time `stage-authoring` runs, zero picks remain; by the time §Plan Digest lint-scans for picks (`plan_digest_scan_for_picks`), leaks are exceptional. Leak = abort chain + route back to `/design-explore` (not a silent deferral).
 
 See `ia/rules/plan-digest-contract.md` rubric point 1 (zero open picks) and `ia/skills/stage-authoring/SKILL.md` lint gate.
-
----
-
-## Changelog

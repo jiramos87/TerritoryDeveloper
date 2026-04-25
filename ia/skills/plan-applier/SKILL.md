@@ -33,7 +33,7 @@ hard_boundaries:
   - Do NOT interpret / merge / collapse tuples.
   - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
   - Do NOT write normative spec prose — only mutations from tuple payloads.
-  - Do NOT re-introduce code-fix or stage-closeout modes — both retired (E14 + C10).
+  - Do NOT re-introduce code-fix or stage-closeout modes — opus-code-reviewer applies fixes inline; ship-stage runs closeout inline via `stage_closeout_apply` MCP.
   - Do NOT `git commit` — user decides.
 caller_agent: plan-applier
 ---
@@ -57,7 +57,7 @@ Sibling pair-heads: [`plan-review-mechanical/SKILL.md`](../plan-review-mechanica
 
 | Param | Source | Notes |
 |-------|--------|-------|
-| `MASTER_PLAN_PATH` | 1st arg | Repo-relative path to master plan (e.g. `ia/projects/lifecycle-refactor-master-plan.md`). |
+| `SLUG` | 1st arg | Bare master-plan slug (e.g. `lifecycle-refactor`). |
 | `STAGE_ID` | 2nd arg | Stage identifier (e.g. `7.1`). |
 
 ---
@@ -177,7 +177,7 @@ Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with z
 - Do NOT interpret / merge / collapse tuples.
 - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
 - Do NOT write normative spec prose — only mutations from tuple payloads.
-- Do NOT re-introduce `code-fix` or `stage-closeout` modes. `opus-code-reviewer` applies fixes inline via direct Edit/Write; `ship-stage` runs closeout inline via `stage_closeout_apply` MCP tool.
+- Do NOT re-introduce `code-fix` or `stage-closeout` modes — `opus-code-reviewer` applies fixes inline via direct Edit/Write; `ship-stage` runs closeout inline via `stage_closeout_apply` MCP tool.
 - Do NOT `git commit` — user decides.
 
 ---
@@ -190,6 +190,3 @@ Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with z
 
 ---
 
-## Changelog
-
-- **2026-04-24** — Stripped `code-fix` + `stage-closeout` modes. Single-mode pair-tail for seam #1 (`§Plan Fix`) only. Reasons: E14 — `opus-code-reviewer` applies critical fixes inline via direct Edit/Write tools instead of writing `§Code Fix Plan` tuples; C10 — `ship-stage` SKILL Step 4 runs closeout inline via `stage_closeout_apply` MCP tool (DB-backed) instead of dispatching `stage-closeout-planner` → `plan-applier` Mode stage-closeout pair. Retired skill dirs: `ia/skills/_retired/stage-closeout-plan/` + `ia/skills/_retired/stage-closeout-apply/` (already retired) + `ia/skills/_retired/code-fix-apply/` (already retired). Authority: Step 8 of `docs/ia-dev-db-refactor-implementation.md` §2.1 + §3.

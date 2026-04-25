@@ -37,12 +37,6 @@ export default async function PlanDetailPage({ params }: { params: Params }) {
         <h1 className="text-xl font-bold">{plan.title}</h1>
         <p className="mt-1 text-xs text-neutral-500">
           {plan.slug} · {plan.task_done_count}/{plan.task_count} tasks ({pct}%) · {plan.stage_count} stages
-          {plan.source_spec_path && (
-            <>
-              {" · "}
-              <code>{plan.source_spec_path}</code>
-            </>
-          )}
         </p>
       </header>
 

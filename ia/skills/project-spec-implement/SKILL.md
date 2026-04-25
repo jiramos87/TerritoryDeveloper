@@ -1,27 +1,31 @@
 ---
 name: project-spec-implement
 purpose: >-
-  Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
-  after the spec is ready—not for spec review.
+  Use when executing the §Plan Digest of a Task spec (DB-backed) — minimal-diff implementation
+  of authored Mechanical Steps, post `/stage-authoring`.
 audience: agent
 loaded_by: "skill:project-spec-implement"
 slices_via: none
 description: >-
-  Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
-  after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project
-  spec", "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
+  Use when executing the §Plan Digest of a Task spec stored in the DB (`ia_task_specs.body_md`),
+  after `/stage-authoring` has populated mechanical steps. Triggers: "implement task spec",
+  "execute mechanical steps", "ship task plan digest", implement BUG-/FEAT-/TECH- task.
 phases:
-  - Parse target
-  - Pull backlog issue
-  - Orchestrator sync
+  - Parse task id
+  - Pull task bundle
+  - Read §Plan Digest
   - Context load
-  - Implement
+  - Execute Mechanical Steps
+  - Compile gate
+  - Scene wiring gate
   - Task exit
 triggers:
-  - implement project spec
-  - execute project spec
-  - follow Implementation Plan
-  - ship spec phases
+  - implement task spec
+  - execute mechanical steps
+  - ship task plan digest
+  - implement BUG-
+  - implement FEAT-
+  - implement TECH-
 model: inherit
 tools_role: custom
 tools_extra: []
@@ -34,85 +38,51 @@ caveman_exceptions:
 hard_boundaries: []
 ---
 
-# Project spec implementation (execution)
+# Task spec implementation (execution)
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md) (loaded by parent context or agent def).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-No MCP calls from skill body. Follow **Tool recipe** below — context as slices, not whole specs.
+DB is sole source of truth for task specs (`ia_task_specs.body_md`). Read via `task_bundle` / `task_spec_section`. No filesystem spec read.
 
-**Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all`, `verify:local`) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Play Mode logs/screenshots) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (fix→verify with `debug_context_bundle`) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (batchmode/bridge after Load pipeline work) · Stage-scoped `/closeout` (closeout/IA persist/delete/archive/id purge). Verification: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). Scene wiring: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — Task-exit gate (step 10).
+**Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all`, `verify:local`) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Play Mode logs/screenshots) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (fix→verify) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (batchmode/bridge) · `/ship-stage` Pass A (caller in stage chain). Verification: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). Scene wiring: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
+
+## Inputs
+
+| Param | Source | Notes |
+|-------|--------|-------|
+| `ISSUE_ID` | 1st arg | Task issue id (e.g. `TECH-471`). Status flips happen in caller (`ship-stage`), not here. |
+| `STAGE_MCP_BUNDLE` | optional | Pre-loaded `domain-context-load` payload from caller chain. Avoids re-query when called inside `/ship-stage` chain. |
 
 ## When to use
 
-- **Kickoff** → spec needs editorial work, Open Questions, glossary alignment.
-- **This skill** → execute `## 7. Implementation Plan` in order, minimal diffs.
-- **Close** → after verified: migrate lessons, delete spec, archive row, purge ids.
-
-## Orchestrator navigation
-
-Orchestrator docs (`*master-plan*`, `step-*-*.md`, `stage-*-*.md`): navigate per `ia/rules/project-hierarchy.md`. Orchestrators define skeleton; implementation in child project specs. Do not execute orchestrator exit criteria directly — create child specs first.
-
-Default: spec Status Final or In Review with game-logic Open Questions resolved. Draft/unresolved → state risk, prefer kickoff first.
-
-## Seed prompt (parameterize)
-
-Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line (`ia/projects/{ISSUE_ID}.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
-
-```markdown
-Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.
-Use **territory-ia** in the sequence defined in **project-spec-implement**’s "Tool recipe (territory-ia)" (backlog_issue → domain-context-load once at Stage open → spec_section as needed per task).
-Honor **invariants** and **AGENTS.md** **Pre-commit Checklist**. If a task touches **roads**, **water / HeightMap**, or **new managers**, follow the domain handoff to any shipped domain skills on [`BACKLOG.md`](../../../BACKLOG.md).
-Update the project spec **Decision Log** / **Issues Found** when you discover gaps; do not change agreed game behavior without spec owner alignment.
-```
+`/ship-stage` Pass A invokes this skill once per non-terminal Task in a Stage. §Plan Digest must already exist in DB (authored by `/stage-authoring`); missing → caller halts at readiness gate.
 
 ## Stage MCP bundle contract
 
-Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
+Stage opener (`ship-stage` Phase 2) calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope and passed in as `STAGE_MCP_BUNDLE`. Implementer reads from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` per Task.
 
 ## Tool recipe (territory-ia)
 
-**Composite-first call (MCP available):**
-
-1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
-2. Call `mcp__territory-ia__issue_context_bundle({ issue_id: "{ISSUE_ID}" })` — first MCP call; returns `{ issue, depends_chain, routed_specs, invariant_guardrails, recent_journal }` in one bundle. Replaces steps 2+2b+3 below. Check `depends_chain` for hard-dep unsatisfied; use `routed_specs` for domain context; use `invariant_guardrails` for impl guardrails.
-3. **Orchestrator sync** — from bundle `issue.spec` + `issue.notes`: `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table. If row found: flip `In Review → In Progress` (or `Draft → In Progress` if kickoff was skipped). Update top-of-file `> **Status:**` pointer to reflect active task. No orchestrator found → log one-line note; continue.
-4. **Task intent** — State which checkboxes in scope; list files/classes from plan + bundle `issue.files`.
-5. **Domain routing** — Use `routed_specs` from bundle. If additional ad-hoc lookup needed: `router_for_task` once, then cache; do NOT repeat per task.
-6. **`spec_section`** — Only sections the task needs; set `max_chars`. Use bundle `routed_specs` first. No full `ia/specs/*.md` unless `spec_outline` forces it.
-7. **Implement** — Minimal diff. Obey invariants/guardrails from bundle `invariant_guardrails`: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no GridManager bloat.
-8. **Optional deep guardrails** — `list_rules` / `rule_content` if bundle `invariant_guardrails` insufficient.
-9. **Task exit** — Re-read §8 Acceptance + §7b Test Contracts. Run AGENTS.md Pre-commit Checklist. If §7b lists bridge checks + session has territory-ia + Postgres + Unity on REPO_ROOT → optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). If task touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON → run [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all` / `verify:local`). When spec/user calls for agent-led test mode → optionally [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) after validate:all/compile gates. Record surprises in §9 Issues Found.
-10. **Scene-wiring gate (MANDATORY per `ia/rules/unity-scene-wiring.md`)** — if §Plan Digest carries a **Scene Wiring** mechanical step OR the Task scope fires any trigger (new runtime MonoBehaviour, new `[SerializeField]`, new StreamingAssets consumer, new prefab at scene boot, new scene-level `UnityEvent`): execute the wiring step in-band. Prefer `unity_bridge_command` kinds (`open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`); fall back to text-edit of `Assets/Scenes/{SCENE}.unity` when bridge unavailable. **Task exit fails** when triggers fired but `git diff --name-only` contains no `Assets/Scenes/*.unity` edit (or no new prefab placement). Emit the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) in §8 Acceptance before declaring Task complete.
-
-### Bash fallback (MCP unavailable)
-
-Run in order (once per Stage, not per task).
-
-1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
-2. **`backlog_issue`** — Pull Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied (`satisfied: false`, `soft_only: false`) → **stop** unless user overrides.
-2b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table. If row found: flip `In Review → In Progress` (or `Draft → In Progress` if kickoff was skipped). Update top-of-file `> **Status:**` pointer to reflect active task. No orchestrator found → log one-line note; continue.
-3. **`domain-context-load`** — Run [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) once at Stage open. Inputs: `keywords` from spec domain + Files; `tooling_only_flag = true` for pure doc/IA stages; `brownfield_flag = false` for runtime C# stages. Use returned payload for all steps below — do NOT re-query within Stage.
-4. **Task intent** — State which checkboxes in scope; list files/classes from plan + backlog Files.
-5. **Domain routing** — Use `router_domains` from `domain-context-load` payload. If additional ad-hoc lookup needed: `router_for_task` once, then cache; do NOT repeat per task.
-6. **`spec_section`** — Only sections the task needs; set `max_chars`. Use `spec_sections` from payload first. No full `ia/specs/*.md` unless `spec_outline` forces it.
-7. **Implement** — Minimal diff. Obey invariants/guardrails: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no GridManager bloat.
-8. **Optional deep guardrails** — `list_rules` / `rule_content` if payload `invariants` insufficient.
-9. **Task exit** — Re-read §8 Acceptance + §7b Test Contracts. Run AGENTS.md Pre-commit Checklist. If §7b lists bridge checks + session has territory-ia + Postgres + Unity on REPO_ROOT → optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). If task touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON → run [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all` / `verify:local`). When spec/user calls for agent-led test mode → optionally [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) after validate:all/compile gates. Record surprises in §9 Issues Found.
-10. **Scene-wiring gate (MANDATORY per `ia/rules/unity-scene-wiring.md`)** — same contract as the MCP path step 10 above: when §Plan Digest carries **Scene Wiring** OR Task scope fires a trigger, execute the wiring (bridge-preferred, text-edit fallback) and emit the evidence block before declaring Task complete. Missing `Assets/Scenes/*.unity` edit under fired triggers = Task exit failure.
-
-### Stage rollback
-
-Verification fails → revert task commits (`git revert`/`git stash`), document in §9, re-run after root cause fix.
+1. **Parse target** — Resolve `ISSUE_ID` from input. Caller passes the id directly; do NOT extract from filesystem header.
+2. **`task_bundle`** — `mcp__territory-ia__task_bundle({task_id: "{ISSUE_ID}"})` returns `{task, master_plan, stage, depends_chain, recent_journal, invariant_guardrails, files}`. Hard dep unsatisfied (`satisfied: false`, `soft_only: false`) → halt; surface to caller.
+3. **Read §Plan Digest** — `mcp__territory-ia__task_spec_section({task_id: "{ISSUE_ID}", section: "Plan Digest"})` → returns §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps. Mechanical Steps carry literal Edit tuples (`operation`, `target_path`, `before_string`, `after_string`, `invariant_touchpoints`, `validator_gate`) plus optional Scene Wiring step.
+4. **Domain routing** — Use `STAGE_MCP_BUNDLE.router_domains` when supplied. If absent: `router_for_task` once, cached for the Task. No per-step re-query.
+5. **`spec_section` (optional)** — Only when §Plan Digest cites a domain spec ID and the `STAGE_MCP_BUNDLE.spec_sections` payload lacks coverage. Set `max_chars`. No full `ia/specs/*.md` reads.
+6. **Execute Mechanical Steps** — Apply each Edit tuple verbatim, in order. Minimal diff. English comments / logs. After every Edit, run the inline `validator_gate` (per-step). Obey `invariant_touchpoints` from `task_bundle.invariant_guardrails`: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no `GridManager` bloat, no new singletons, no `FindObjectOfType` in per-frame.
+7. **Compile gate** — After all Edit tuples applied: `mcp__territory-ia__unity_compile()` (alias `unity_bridge_command get_compilation_status`) when Editor open; else `npm run unity:compile-check`. Errors → fix in-place; do NOT proceed to verification with broken build. Caller (`ship-stage` Pass A) treats compile failure as fast-fail gate.
+8. **Optional deep guardrails** — `list_rules` / `rule_content` only if `task_bundle.invariant_guardrails` insufficient.
+9. **Scene-wiring gate (MANDATORY per `ia/rules/unity-scene-wiring.md`)** — If §Plan Digest carries a **Scene Wiring** mechanical step OR the diff fires any trigger (new runtime MonoBehaviour, new `[SerializeField]`, new StreamingAssets consumer, new prefab at scene boot, new scene-level `UnityEvent`): execute the wiring step in-band. Prefer `unity_bridge_command` kinds (`open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`); fall back to text-edit of `Assets/Scenes/{SCENE}.unity` when bridge unavailable. **Task exit fails** when triggers fired but `git diff --name-only` contains no `Assets/Scenes/*.unity` edit (or no new prefab placement). Emit the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) for caller to surface.
+10. **Task exit** — Re-read §Acceptance + §Test Blueprint from §Plan Digest. Confirm every acceptance row has matching diff or test artifact. When §Test Blueprint lists bridge checks AND session has territory-ia + Postgres + Unity on REPO_ROOT: optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). When task touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON: run [`project-implementation-validation`](../project-implementation-validation/SKILL.md). Caller (`ship-stage` Pass A) handles `task_status_flip(implemented)` + `journal_append` after Task exit clean — do NOT flip status here.
 
 ### Editor / agent diagnostics
 
-Sorting, grid sampling, Edit vs Play Mode → `unity-development-context` §10 (Territory Developer → Reports → `tools/reports/`). Attach paths in chat; artifacts gitignored.
+Sorting, grid sampling, Edit vs Play Mode → `unity-development-context` §10 (Reports → `tools/reports/`). Attach paths in chat; artifacts gitignored.
 
 ### Branching (minimum set)
 
 - **Roads/streets/interstate/bridge/wet run** → roads-system + isometric-geography-system via `router_for_task` + `spec_section`.
 - **Water/HeightMap/shore/river/lake/water map** → water-terrain-system + relevant geo sections.
-- **JSON/schema/DTO/interchange** (Save-adjacent) → persistence-system (Load pipeline, Save data); do not change on-disk Save data unless issue requires; cross-check JSON interchange program notes.
+- **JSON/schema/DTO/interchange** (Save-adjacent) → persistence-system; do not change on-disk Save data unless §Plan Digest requires.
 
 ## Domain skill handoff
 
@@ -121,14 +91,16 @@ When work enters these areas, open corresponding skill (when shipped on BACKLOG.
 - Terrain / water / shore / HeightMap
 - New MonoBehaviour manager / service
 
-## Spec maintenance
+## Hard boundaries
 
-- Non-obvious scope/product choices → §6 Decision Log.
-- Defects/surprises → §9 Issues Found.
-- Code would change agreed game behavior → stop; update spec or ask owner.
+- Do NOT read task spec body from filesystem — DB only via `task_bundle` / `task_spec_section`.
+- Do NOT flip `task_status` here — caller owns flips (`task_status_flip(implemented)`).
+- Do NOT re-query `domain-context-load` per Task — use `STAGE_MCP_BUNDLE` payload from caller.
+- Do NOT change agreed game behavior without spec owner alignment — surface as anomaly to caller.
+- Do NOT skip Scene-wiring gate when triggers fired — `Assets/Scenes/*.unity` edit + evidence block are mandatory.
+- Do NOT commit — caller (`ship-stage` Pass B) emits the single stage commit.
+- Do NOT delete task specs, archive rows, or purge ids — closeout territory.
 
 ## Completion
 
-Map work to §8 Acceptance + backlog Acceptance. Do not archive (remove BACKLOG, append BACKLOG-ARCHIVE, id purge) without explicit user confirmation.
-
-IA-heavy diff (MCP, fixtures, glossary/reference spec sources for indexes) → run/document [`project-implementation-validation`](../project-implementation-validation/SKILL.md) so CI-aligned Node checks not skipped.
+Emit caveman summary back to caller: `{ISSUE_ID}: §Plan Digest executed ({n_steps} mechanical steps applied); compile=PASS; scene_wiring={ran|n/a}; ready_for_status_flip.` On anomaly, emit `STOPPED at step {N}: {reason}` and let caller decide.

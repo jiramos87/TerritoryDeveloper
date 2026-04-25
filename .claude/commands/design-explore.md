@@ -90,4 +90,4 @@ Forward via Agent tool with `subagent_type: "design-explore"` (when `FORCE_MODEL
 >
 > ## Output
 >
-> Single concise caveman message: doc path + mode (standard: approach id; gap-analysis: gap count confirmed), phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (standard: `claude-personal "/master-plan-new {DOC_PATH}"` or `"/project-new ..."`; gap-analysis: `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"`).
+> Single concise caveman message: doc path + mode (standard: approach id; gap-analysis: gap count confirmed), phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (standard: `claude-personal "/master-plan-new {DOC_PATH}"` or `"/project-new ..."`; gap-analysis: `claude-personal "/master-plan-extend {SLUG} {DOC_PATH}"`).

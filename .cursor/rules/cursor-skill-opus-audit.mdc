@@ -1,5 +1,5 @@
 ---
-description: "Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green. Single pass reads ALL N Task specs (§Implementation + §Findings + §Verification) + Stage header + invariants + glossary snippets (pre-loaded shared Stage MCP bundle); writes ALL N §Audit paragraphs in one synthesis round. Does NOT write §Closeout Plan — Stage closeout runs inline via stage_closeout_apply MCP. Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out); Stage preflight reads §Findings + §Verification per Task. Triggers: \"/audit {MASTER_PLAN_PATH} {STAGE_ID}\", \"stage audit\", \"opus audit bulk\", \"run opus audit Stage\"."
+description: "Opus bulk skill. Invoked once per Stage after all Tasks reach post-verify Green. Single Opus pass reads ALL N Task spec sections (§Plan Digest + §Verification + §Code Review) + Stage header + shared Stage MCP bundle (glossary / router / invariants); writes ALL N §Audit paragraphs in one synthesis round via `task_spec_section_write`. Does NOT write §Closeout Plan — Stage closeout runs inline via `stage_closeout_apply` MCP. Phase 0 guardrail: F3 sequential-dispatch (no concurrent Opus fan-out). Triggers: \"/audit {SLUG} {STAGE_ID}\", \"stage audit\", \"opus audit bulk\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/opus-audit/SKILL.md

@@ -102,7 +102,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 3. Standalone gate: `slug == null AND stage_id == null` → continue. Stage-attached → STOP:
    ```
    SHIP {ISSUE_ID}: STOPPED — task is stage-attached (slug={slug}, stage={stage_id}).
-   Next: /ship-stage ia/projects/{slug}-master-plan.md Stage {stage_id}
+   Next: /ship-stage {slug} {stage_id}
    ```
 4. Terminal-status idle exit: `status ∈ {done, archived}` → emit summary `SHIP {ISSUE_ID}: ALREADY_CLOSED ({status})` + Phase 5 handoff (no work).
 5. Print banner:
@@ -182,7 +182,7 @@ Walk the `ia_tasks.status` enum to terminal in three calls:
 
 Each call is idempotent (re-entering on already-final state is a no-op transition guarded by enum walk). Failure on any flip → STOP `SHIP {ISSUE_ID}: STOPPED at close — {reason}`.
 
-**No filesystem ops.** Backlog yaml + spec markdown deleted in Step 9.6 / 9.5; DB is sole source of truth.
+**No filesystem ops.** DB is sole source of truth.
 
 **No commit.** User decides when to commit (locked answer 5).
 

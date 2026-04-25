@@ -60,6 +60,7 @@ fi
 run_step npm run unity:compile-check
 run_step npm run unity:test-editmode
 run_step npm run db:migrate
+run_step npm run validate:catalog-spine
 run_step npm run db:bridge-preflight
 
 if [[ "$(uname -s)" != "Darwin" ]]; then

@@ -97,7 +97,7 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 | `SEED_CELLS` | Spec §7b OR repro | 1–3 `"x,y"` for Path B `debug_context_bundle` + `close-dev-loop` |
 | `MAX_ITERATIONS` | Default 2 | Fix→verify cycles before escalation |
 | `--skip-path-b` | Flag (default off) | When set: Path A compile gate runs; Path B (IDE bridge hybrid, Step 4b) is skipped; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain for batched stage-boundary Path B. NOT surfaced on `/verify` (single-pass, no batching consumer). |
-| `--tooling-only` | Flag (default off) | When set: Decision matrix bypassed; Steps 0, 1, 3, 4a, 4b, 5, 6 all skipped up-front; only Step 2 (Node CI-parity) + Step 7 (Verification block) run. JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use ONLY when current git diff is pure tooling surface (MCP TypeScript under `tools/mcp-ia-server/`, web Next.js under `web/`, skills / agents / commands markdown under `ia/skills/` + `.claude/`, docs under `docs/` + `ia/rules/` + `ia/specs/`, scripts under `tools/scripts/`) — never when `Assets/**`, `Packages/**`, or `ProjectSettings/**` are dirty. Precondition guard: skill asserts no Unity-surface paths in `git status` before bypass; fails loud if asserted. Designed for lifecycle-refactor work (orchestrator: `ia/projects/lifecycle-refactor-master-plan.md`) and similar tooling-only umbrellas. |
+| `--tooling-only` | Flag (default off) | When set: Decision matrix bypassed; Steps 0, 1, 3, 4a, 4b, 5, 6 all skipped up-front; only Step 2 (Node CI-parity) + Step 7 (Verification block) run. JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use ONLY when current git diff is pure tooling surface (MCP TypeScript under `tools/mcp-ia-server/`, web Next.js under `web/`, skills / agents / commands markdown under `ia/skills/` + `.claude/`, docs under `docs/` + `ia/rules/` + `ia/specs/`, scripts under `tools/scripts/`) — never when `Assets/**`, `Packages/**`, or `ProjectSettings/**` are dirty. Precondition guard: skill asserts no Unity-surface paths in `git status` before bypass; fails loud if asserted. |
 
 ---
 
@@ -345,26 +345,3 @@ Emit Verification block per docs/agent-led-verification-policy.md (JSON header +
 - **Artifacts:** newest `agent-testmode-batch-*.json`; bridge `bundle` + screenshot paths; `validate:all` log if failure.
 - **Iterations:** consumed / max (e.g. `1 / 2`).
 - **Human ask:** confirm in normal game (no test-mode flags); approve PR / next stage / umbrella close.
-
----
-
-## Changelog
-
-### 2026-04-19 — Out-of-scope test-failure attribution worked correctly (F10 positive signal)
-
-**Status:** observed (no fix required)
-
-**Symptom:**
-M8 dry-run verify surfaced 10× `BlipGoldenFixtureTests` + 3× `TreasuryFloorClampServiceTests` failures during lifecycle-refactor Stage 8 ship. Agent correctly attributed Blip failures → `ia/projects/blip-master-plan.md`; Zone-S failures → `ia/projects/zone-s-economy-master-plan.md`; escalated per T8.4 bounded-fix rule instead of attempting remediation.
-
-**Root cause:**
-Positive signal — issue-attribution discipline (`ia/rules/agent-tooling-hints.md` — verify id open in `BACKLOG.md` before naming owner) held under load. Bounded-fix escalation rule fired correctly.
-
-**Fix:**
-none required.
-
-**Rollout row:** m8-retrospective
-
-**Tracker aggregator:** [`docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../../docs/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
-
----

@@ -9,7 +9,6 @@ import {
   extractCitedIssueIds,
   extractProjectSpecSections,
   parseIssueIdFromSpecHeader,
-  resolveProjectSpecFile,
   sectionKeyFromH2Title,
   splitProjectSpecH2Sections,
 } from "../../src/parser/project-spec-closeout-parse.js";
@@ -66,45 +65,12 @@ describe("project-spec-closeout-parse", () => {
     assert.ok(ids.includes("FEAT-02"));
   });
 
-  it("builds digest with spec_path", () => {
-    const d = buildProjectSpecCloseoutDigest(
-      SAMPLE,
-      "ia/projects/TECH-99.md",
-      null,
-    );
+  it("builds digest from markdown body", () => {
+    const d = buildProjectSpecCloseoutDigest(SAMPLE, null);
     assert.equal(d.schema_version, 1);
     assert.equal(d.issue_id, "TECH-99");
-    assert.equal(d.spec_path, "ia/projects/TECH-99.md");
     assert.ok(d.suggested_english_keywords.length > 0);
     assert.ok(d.checklist_hints?.G1?.length);
-  });
-
-  it("resolveProjectSpecFile accepts issue_id only", () => {
-    const r = resolveProjectSpecFile("/repo", { issue_id: "tech-75" });
-    assert.equal(r.ok, true);
-    if (r.ok) {
-      assert.match(r.absPath, /TECH-75\.md$/);
-      // /repo is fake here, so neither lookup hits and the default applies.
-      assert.equal(r.relPosix, "ia/projects/TECH-75.md");
-    }
-  });
-
-  it("resolveProjectSpecFile accepts ia/projects descriptive spec_path", () => {
-    const r = resolveProjectSpecFile("/repo", {
-      spec_path: "ia/projects/TECH-99-descriptive-name.md",
-    });
-    assert.equal(r.ok, true);
-    if (r.ok) {
-      assert.equal(r.relPosix, "ia/projects/TECH-99-descriptive-name.md");
-      assert.equal(r.issue_id, "TECH-99");
-    }
-  });
-
-  it("resolveProjectSpecFile rejects traversal", () => {
-    const r = resolveProjectSpecFile("/repo", {
-      spec_path: "ia/projects/../secrets.md",
-    });
-    assert.equal(r.ok, false);
   });
 
   it("splitProjectSpecH2Sections keeps body under headings", () => {

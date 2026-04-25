@@ -3,13 +3,6 @@ purpose: "{ISSUE_ID} — {Title}."
 audience: both
 loaded_by: ondemand
 slices_via: none
-# Parent-plan locator mirror (2-field rule):
-#   - Only `parent_plan` + `task_key` live in frontmatter.
-#   - task_key format: ^T\d+\.\d+(\.\d+)?$  (e.g. T3.2.1)
-#   - step / stage / phase derived at read time via task_key parser — NOT stored as frontmatter rows.
-#   - Lazy rollout: /kickoff populates these for new specs; existing ia/projects/*.md left untouched.
-parent_plan: "{{PARENT_PLAN_PATH}}"
-task_key: "{{T_KEY}}"
 ---
 # {ISSUE_ID} — {Title}
 

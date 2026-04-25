@@ -108,7 +108,6 @@ export type PersistJournalResult =
   | {
       ok: true;
       backlog_issue_id: string;
-      source_spec_path: string;
       inserted: JournalEntryKind[];
       skipped_empty: JournalEntryKind[];
       git_sha: string | null;
@@ -122,7 +121,6 @@ export async function persistProjectSpecJournal(
   pool: Pool,
   params: {
     markdown: string;
-    specPathPosix: string;
     issueId: string;
     gitSha?: string | null;
   },
@@ -131,7 +129,6 @@ export async function persistProjectSpecJournal(
   const sections = extractProjectSpecSections(params.markdown);
   const digest = buildProjectSpecCloseoutDigest(
     params.markdown,
-    params.specPathPosix,
     issue,
   );
   const baseKeywords = mergeJournalKeywords(
@@ -166,7 +163,6 @@ export async function persistProjectSpecJournal(
     return {
       ok: true,
       backlog_issue_id: issue,
-      source_spec_path: params.specPathPosix.split("\\").join("/"),
       inserted: [],
       skipped_empty,
       git_sha: params.gitSha ?? null,
@@ -179,14 +175,13 @@ export async function persistProjectSpecJournal(
     for (const row of toInsert) {
       await client.query(
         `INSERT INTO ia_project_spec_journal
-          (backlog_issue_id, entry_kind, body_markdown, keywords, source_spec_path, git_sha)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+          (backlog_issue_id, entry_kind, body_markdown, keywords, git_sha)
+         VALUES ($1, $2, $3, $4, $5)`,
         [
           issue,
           row.kind,
           row.body,
           row.keywords,
-          params.specPathPosix.split("\\").join("/"),
           params.gitSha ?? null,
         ],
       );
@@ -195,7 +190,6 @@ export async function persistProjectSpecJournal(
     return {
       ok: true,
       backlog_issue_id: issue,
-      source_spec_path: params.specPathPosix.split("\\").join("/"),
       inserted,
       skipped_empty,
       git_sha: params.gitSha ?? null,
@@ -339,7 +333,6 @@ export type JournalRowFull = {
   entry_kind: JournalEntryKind;
   body_markdown: string;
   keywords: string[];
-  source_spec_path: string;
   recorded_at: string;
   git_sha: string | null;
 };
@@ -355,7 +348,7 @@ export async function getProjectSpecJournalEntry(
   try {
     const { rows } = await client.query(
       `SELECT id, backlog_issue_id, entry_kind, body_markdown, keywords,
-              source_spec_path, recorded_at, git_sha
+              recorded_at, git_sha
        FROM ia_project_spec_journal WHERE id = $1`,
       [id],
     );
@@ -369,7 +362,6 @@ export async function getProjectSpecJournalEntry(
       entry_kind: r.entry_kind as JournalEntryKind,
       body_markdown: String(r.body_markdown ?? ""),
       keywords: Array.isArray(r.keywords) ? (r.keywords as string[]) : [],
-      source_spec_path: String(r.source_spec_path ?? ""),
       recorded_at:
         r.recorded_at instanceof Date
           ? r.recorded_at.toISOString()
@@ -416,7 +408,7 @@ export async function updateProjectSpecJournalEntry(
          SET body_markdown = $2, keywords = $3
          WHERE id = $1
          RETURNING id, backlog_issue_id, entry_kind, body_markdown, keywords,
-                   source_spec_path, recorded_at, git_sha`,
+                   recorded_at, git_sha`,
         [id, body, params.keywords],
       );
       if (rows.length === 0) {
@@ -430,7 +422,7 @@ export async function updateProjectSpecJournalEntry(
        SET body_markdown = $2
        WHERE id = $1
        RETURNING id, backlog_issue_id, entry_kind, body_markdown, keywords,
-                 source_spec_path, recorded_at, git_sha`,
+                 recorded_at, git_sha`,
       [id, body],
     );
     if (rows.length === 0) {
@@ -452,7 +444,6 @@ function mapReturningRow(r: Record<string, unknown>): JournalRowFull {
     entry_kind: r.entry_kind as JournalEntryKind,
     body_markdown: String(r.body_markdown ?? ""),
     keywords: Array.isArray(r.keywords) ? (r.keywords as string[]) : [],
-    source_spec_path: String(r.source_spec_path ?? ""),
     recorded_at:
       r.recorded_at instanceof Date
         ? r.recorded_at.toISOString()

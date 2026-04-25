@@ -6,13 +6,13 @@ Distinct from `/verify`: `/verify` runs the lightweight `verifier` subagent (sin
 
 If `$ARGUMENTS` contains a leading ISSUE_ID (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`), resolve and print before dispatching:
 
-1. Glob `ia/projects/*-master-plan.md` → grep each for the ISSUE_ID → identify owning master plan.
+1. `mcp__territory-ia__task_bundle({task_id: "{ISSUE_ID}"})` → returns `{task, master_plan, stage, ...}`. Owning plan = `master_plan.slug` (null when standalone).
 2. Print:
    ```
-   VERIFY-LOOP {ISSUE_ID} — {issue title from BACKLOG.md}
-     master plan : {Plan Name} (ia/projects/{master-plan-filename})
+   VERIFY-LOOP {ISSUE_ID} — {task.title}
+     master plan : {master_plan.title} ({master_plan.slug})
    ```
-   If no master plan found: `master plan: (none — standalone issue)`. If no ISSUE_ID in args, skip banner.
+   If `master_plan` null: `master plan: (none — standalone issue)`. If no ISSUE_ID in args, skip banner.
 
 ## Subagent prompt (forward verbatim)
 

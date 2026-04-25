@@ -133,7 +133,6 @@ Some lessons.
 test("buildProjectSpecCloseoutDigest populates 4 new sections when present", () => {
   const digest = buildProjectSpecCloseoutDigest(
     FIXTURE_WITH_NEW_SECTIONS,
-    "ia/projects/TECH-1.md",
     "TECH-1",
   );
   assert.ok(digest.sections.audit && digest.sections.audit.length > 0, "audit should be non-empty");
@@ -160,7 +159,6 @@ Nothing yet.
 test("buildProjectSpecCloseoutDigest returns undefined/absent for missing new sections", () => {
   const digest = buildProjectSpecCloseoutDigest(
     FIXTURE_WITHOUT_NEW_SECTIONS,
-    "ia/projects/TECH-2.md",
     "TECH-2",
   );
   // Missing sections should be absent (undefined) — not error, consistent with existing behavior

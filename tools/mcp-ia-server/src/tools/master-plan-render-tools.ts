@@ -30,7 +30,10 @@ import {
 import {
   IaDbValidationError,
   mutateMasterPlanChangeLogAppend,
+  mutateMasterPlanInsert,
   mutateMasterPlanPreambleWrite,
+  mutateStageInsert,
+  mutateStageUpdate,
 } from "../ia-db/mutations.js";
 
 // ---------------------------------------------------------------------------
@@ -343,13 +346,229 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// master_plan_insert
+// ---------------------------------------------------------------------------
+
+export function registerMasterPlanInsert(server: McpServer): void {
+  server.registerTool(
+    "master_plan_insert",
+    {
+      description:
+        "DB-backed: create one new ia_master_plans row (slug + title + optional preamble). Used by master-plan-new at orchestrator authoring time. Errors on duplicate slug. Slug must be kebab-case.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug (kebab-case)."),
+        title: z.string().describe("Master-plan title (display heading)."),
+        preamble: z
+          .string()
+          .optional()
+          .describe("Optional initial preamble markdown."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_insert", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | { slug?: string; title?: string; preamble?: string }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const title = (input?.title ?? "").trim();
+            if (!slug || !title) {
+              throw {
+                code: "invalid_input",
+                message: "slug and title are required.",
+              };
+            }
+            try {
+              return await mutateMasterPlanInsert(
+                slug,
+                title,
+                input?.preamble ?? null,
+              );
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | { slug?: string; title?: string; preamble?: string }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// stage_insert
+// ---------------------------------------------------------------------------
+
+export function registerStageInsert(server: McpServer): void {
+  server.registerTool(
+    "stage_insert",
+    {
+      description:
+        "DB-backed: create one new ia_stages row under an existing master plan. Stage_id must match N or N.M (e.g. `5` or `5.4`). Title/objective/exit_criteria optional at insert; back-fill via stage_update.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug (must exist)."),
+        stage_id: z.string().describe("Stage id e.g. `5` or `5.4`."),
+        title: z.string().optional().describe("Stage title."),
+        objective: z.string().optional().describe("Stage objective prose."),
+        exit_criteria: z
+          .string()
+          .optional()
+          .describe("Stage exit criteria prose."),
+        status: z
+          .enum(["pending", "in_progress", "done"])
+          .optional()
+          .describe("Initial status (default `pending`)."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("stage_insert", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | {
+                  slug?: string;
+                  stage_id?: string;
+                  title?: string;
+                  objective?: string;
+                  exit_criteria?: string;
+                  status?: "pending" | "in_progress" | "done";
+                }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            if (!slug || !stage_id) {
+              throw {
+                code: "invalid_input",
+                message: "slug and stage_id are required.",
+              };
+            }
+            try {
+              return await mutateStageInsert({
+                slug,
+                stage_id,
+                title: input?.title ?? null,
+                objective: input?.objective ?? null,
+                exit_criteria: input?.exit_criteria ?? null,
+                status: input?.status,
+              });
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | {
+                slug?: string;
+                stage_id?: string;
+                title?: string;
+                objective?: string;
+                exit_criteria?: string;
+                status?: "pending" | "in_progress" | "done";
+              }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// stage_update
+// ---------------------------------------------------------------------------
+
+export function registerStageUpdate(server: McpServer): void {
+  server.registerTool(
+    "stage_update",
+    {
+      description:
+        "DB-backed: update structured stage fields (title / objective / exit_criteria) on an existing ia_stages row. Pass any subset; pass null to clear a field. Status transitions go through task_status_flip + stage_closeout_apply, not this tool.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug."),
+        stage_id: z.string().describe("Stage id e.g. `5.4`."),
+        title: z
+          .string()
+          .nullable()
+          .optional()
+          .describe("Stage title (null clears)."),
+        objective: z
+          .string()
+          .nullable()
+          .optional()
+          .describe("Objective prose (null clears)."),
+        exit_criteria: z
+          .string()
+          .nullable()
+          .optional()
+          .describe("Exit criteria prose (null clears)."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("stage_update", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | {
+                  slug?: string;
+                  stage_id?: string;
+                  title?: string | null;
+                  objective?: string | null;
+                  exit_criteria?: string | null;
+                }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            if (!slug || !stage_id) {
+              throw {
+                code: "invalid_input",
+                message: "slug and stage_id are required.",
+              };
+            }
+            try {
+              return await mutateStageUpdate({
+                slug,
+                stage_id,
+                title: input?.title,
+                objective: input?.objective,
+                exit_criteria: input?.exit_criteria,
+              });
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | {
+                slug?: string;
+                stage_id?: string;
+                title?: string | null;
+                objective?: string | null;
+                exit_criteria?: string | null;
+              }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
-/** Register all 4 master-plan render + change-log tools on the IA core bucket. */
+/** Register all master-plan render + change-log + author-side tools on the IA core bucket. */
 export function registerMasterPlanRenderTools(server: McpServer): void {
   registerMasterPlanRender(server);
   registerStageRender(server);
   registerMasterPlanPreambleWrite(server);
   registerMasterPlanChangeLogAppend(server);
+  registerMasterPlanInsert(server);
+  registerStageInsert(server);
+  registerStageUpdate(server);
 }

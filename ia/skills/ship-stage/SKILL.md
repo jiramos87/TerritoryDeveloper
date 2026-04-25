@@ -36,7 +36,7 @@ triggers:
   - /ship-stage
   - ship stage
   - chain stage tasks
-argument_hint: {MASTER_PLAN_PATH} {STAGE_ID} [--no-resume] [--force-model {model}]
+argument_hint: "{SLUG} {STAGE_ID} [--no-resume] [--force-model {model}]"
 model: inherit
 reasoning_effort: high
 tools_role: pair-head
@@ -70,7 +70,7 @@ caveman_exceptions:
   - destructive-op confirmations
 hard_boundaries:
   - Sequential per-task dispatch only — no parallel.
-  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes + closeout mv. Do NOT emit `feat({ISSUE_ID}):` per task."
+  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes. Do NOT emit `feat({ISSUE_ID}):` per task."
   - Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan.
   - Stop on first Pass A gate failure (implement, compile, scene-wiring); do NOT continue to next task.
   - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` or `STAGE_CODE_REVIEW_CRITICAL_TWICE` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
@@ -84,19 +84,19 @@ caller_agent: ship-stage
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md). H3 `### Stage X.Y` heading; 5-col task table `Task | Name | Issue | Status | Intent`; 2-level Stage > Task hierarchy.
+**Canonical master-plan shape:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md). DB-backed (`ia_master_plans` / `ia_stages` / `ia_tasks`); 2-level Stage > Task hierarchy.
 
 **Related:**
 - [`verify-loop`](../verify-loop/SKILL.md) — internal `MAX_ITERATIONS=2` fix loop (no outer retry here).
 - [`stage-authoring`](../stage-authoring/SKILL.md) — populates §Plan Digest in DB before this skill runs.
-- [`spec-implementer`](../spec-implementer/SKILL.md) — Pass A implement subagent.
-- [`opus-code-reviewer`](../opus-code-reviewer/SKILL.md) — Pass B code-review (inline fix).
+- [`project-spec-implement`](../project-spec-implement/SKILL.md) — Pass A implement subagent.
+- [`opus-code-review`](../opus-code-review/SKILL.md) — Pass B code-review (inline fix).
 - Scene wiring contract: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
 - Verification policy: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
 ## Normative — closeout is part of `PASSED`
 
-When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not critical second time), the chain **must** run **Step 4 inline closeout** in the **same** invocation. Do **not**:
+When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not critical second time), the chain **must** run **Step 7 inline closeout** in the **same** invocation. Do **not**:
 
 - Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify or code-review alone.
 - Tell the operator to run a separate `/closeout` later.
@@ -109,8 +109,8 @@ When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `MASTER_PLAN_PATH` | User prompt | Repo-relative `ia/projects/{slug}-master-plan.md`. Slug = basename minus `-master-plan.md`. |
-| `STAGE_ID` | User prompt | Stage identifier as in master plan header. Accept `Stage 1.1`, `1.1`, `Stage 1`, `1`. Strip `Stage ` prefix when calling DB MCP. |
+| `SLUG` | User prompt | Master-plan slug (e.g. `blip`, `citystats-overhaul`). Validated via `master_plan_state(slug)`. |
+| `STAGE_ID` | User prompt | Stage identifier as in master plan. Accept `Stage 1.1`, `1.1`, `Stage 1`, `1`. Strip `Stage ` prefix when calling DB MCP. |
 | `--no-resume` | Optional flag | Disables Step 4 resume gate; every task with status≠done gets fresh Pass A. Use for forensic replay or worktree reset recovery. |
 
 **Dispatch-shape agnostic:** identical behavior whether invoked as Task-dispatched subagent or inline by orchestrator.
@@ -119,10 +119,9 @@ When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not
 
 ## Step 0 — Parse stage
 
-1. Parse `MASTER_PLAN_PATH` + `STAGE_ID` from `$ARGUMENTS`. Missing either → STOPPED + usage.
-2. Derive `SLUG` = basename of `MASTER_PLAN_PATH` minus `-master-plan.md` (e.g. `ia/projects/citystats-overhaul-master-plan.md` → `citystats-overhaul`).
-3. Normalize `STAGE_ID_DB` = `STAGE_ID` minus optional `Stage ` prefix (e.g. `Stage 1.1` → `1.1`).
-4. Store `SESSION_ID` = `ship-stage-{SLUG}-{STAGE_ID_DB}-{ISO8601_compact}` for `journal_append` calls.
+1. Parse `SLUG` + `STAGE_ID` from `$ARGUMENTS`. Missing either → STOPPED + usage.
+2. Normalize `STAGE_ID_DB` = `STAGE_ID` minus optional `Stage ` prefix (e.g. `Stage 1.1` → `1.1`).
+3. Store `SESSION_ID` = `ship-stage-{SLUG}-{STAGE_ID_DB}-{ISO8601_compact}` for `journal_append` calls.
 
 ---
 
@@ -136,10 +135,10 @@ Call `stage_bundle(slug=SLUG, stage_id=STAGE_ID_DB)`. Returns:
 - `next_pending`
 - `latest_verification`
 
-**Stale-DB guard:** if call returns `not_found` for the stage → STOPPED + `Next: claude-personal "/stage-file {MASTER_PLAN_PATH} {STAGE_ID}"` (stage not yet filed in DB).
+**Stale-DB guard:** if call returns `not_found` for the slug → STOPPED + `Next: claude-personal "/master-plan-new ..."` (slug not in DB; author master plan first). If slug exists but stage missing → STOPPED + `Next: claude-personal "/stage-file {SLUG} {STAGE_ID}"` (stage not yet filed in DB).
 
 **Branches:**
-- `stage.status == "done"` AND all `tasks.status ∈ {done, archived}` → idle exit `SHIP_STAGE {STAGE_ID}: all tasks already done. No work needed.` + Step 7 next-stage resolver.
+- `stage.status == "done"` AND all `tasks.status ∈ {done, archived}` → idle exit `SHIP_STAGE {STAGE_ID}: all tasks already done. No work needed.` + Step 10 next-stage resolver.
 - Else → continue.
 
 Define:
@@ -158,7 +157,7 @@ tooling_only_flag: <auto-detect per heuristic below; default false>
 context_label: "{SLUG} {STAGE_ID_DB}"
 ```
 
-**`tooling_only_flag` heuristic:** flip to `true` when `MASTER_PLAN_PATH` matches `/mcp-lifecycle-tools|ia-infrastructure|tooling|bridge-environment|backlog-yaml-mcp|ia-dev-db/` OR stage touches only `tools/**`, `ia/**`, `.claude/**`, `docs/**`, `web/**` (no `Assets/**/*.cs`).
+**`tooling_only_flag` heuristic:** flip to `true` when `SLUG` matches `/mcp-lifecycle-tools|ia-infrastructure|tooling|bridge-environment|backlog-yaml-mcp|ia-dev-db/` OR stage touches only `tools/**`, `ia/**`, `.claude/**`, `docs/**`, `web/**` (no `Assets/**/*.cs`).
 
 Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to per-task `spec-implementer` + Stage-scoped `opus-code-reviewer`.
 
@@ -175,10 +174,8 @@ For each task in `PENDING_TASKS`:
 **If ANY missing:** STOPPED. Emit:
 ```
 SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}
-Next: claude-personal "/stage-authoring {MASTER_PLAN_PATH} Stage {STAGE_ID_DB}"
+Next: claude-personal "/stage-authoring {SLUG} Stage {STAGE_ID_DB}"
 ```
-
-**Note:** `/stage-authoring` is the DB-backed single-skill that populates `§Plan Digest`. Pre-DB legacy specs already upgraded.
 
 ---
 
@@ -224,7 +221,7 @@ Dispatch `spec-implementer` subagent (Sonnet):
 
 > Mission: Execute §Plan Digest §Mechanical Steps for `{CURRENT_TASK_ID}` end-to-end. Read §Plan Digest via `task_spec_section(task_id, "Plan Digest")`. Pre-loaded context: {CHAIN_CONTEXT}. **Do NOT commit.** End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
 
-**Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → STOPPED + partial chain digest + `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID_DB}"` (re-enter after fix; resume gate picks up where loop stopped).
+**Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → STOPPED + partial chain digest + `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID_DB}"` (re-enter after fix; resume gate picks up where loop stopped).
 
 ### Step 5.2 — Compile gate + scene-wiring preflight
 
@@ -242,7 +239,7 @@ STOPPED at {CURRENT_TASK_ID} — scene_wiring: §Plan Digest Scene Wiring step f
 STOPPED at {CURRENT_TASK_ID} — compile_gate: {reason}
 ```
 
-Partial chain digest. `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID_DB}"` after fix.
+Partial chain digest. `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID_DB}"` after fix.
 
 ### Step 5.3 — Status flip (NO commit)
 
@@ -298,7 +295,7 @@ journal_append({ phase: "pass_b.verify", payload_kind: "verify_result", payload:
 
 Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
 
-> Mission: Run code-review on Stage diff = `git diff HEAD`. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. All N §Plan Digest sections from `task_spec_section(task_id, "Plan Digest")` are the acceptance reference. Scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). Emit verdict (PASS / minor / critical). **On critical: apply fixes inline via direct Edit/Write tools — do NOT write `§Code Fix Plan` tuples + do NOT dispatch plan-applier (E14 retired the code-fix mode).**
+> Mission: Run code-review on Stage diff = `git diff HEAD`. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. All N §Plan Digest sections from `task_spec_section(task_id, "Plan Digest")` are the acceptance reference. Scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). Emit verdict (PASS / minor / critical). **On critical: apply fixes inline via direct Edit/Write tools — do NOT write `§Code Fix Plan` tuples + do NOT dispatch plan-applier.**
 
 **Verdict PASS / minor:** continue to Step 6.3.
 
@@ -348,7 +345,7 @@ master_plan_change_log_append({
 })
 ```
 
-**No filesystem mv** — DB is sole source of truth for task spec bodies.
+DB is sole source of truth for task spec bodies — no filesystem mv.
 
 Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { archived_task_count }`.
 
@@ -356,7 +353,7 @@ Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { a
 
 ## Step 8 — Stage commit + verification record
 
-### Step 8.1 — Stage commit (single, covers all Pass A + closeout changes)
+### Step 8.1 — Stage commit (single, covers all Pass A + code-review fixes)
 
 Stage worktree state at this point:
 - All Pass A implementation changes (uncommitted — never committed in Pass A).
@@ -427,7 +424,6 @@ Emit one chain-level stage digest at chain end (success or STOPPED).
 ```json
 {
   "chain_stage_digest": true,
-  "master_plan": "{MASTER_PLAN_PATH}",
   "slug": "{SLUG}",
   "stage_id": "{STAGE_ID_DB}",
   "session_id": "{SESSION_ID}",
@@ -439,7 +435,7 @@ Emit one chain-level stage digest at chain end (success or STOPPED).
   "next_handoff": {
     "case": "filed|pending|skeleton|umbrella-done|stopped|stage_verify_fail",
     "command": "/ship-stage|/stage-file|/closeout",
-    "args": "ia/projects/{slug}-master-plan.md Stage X.Y",
+    "args": "{SLUG} Stage X.Y",
     "shell": "claude-personal \"...\""
   }
 }
@@ -456,10 +452,10 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 **3 cases (priority order):**
 
 1. **Next filed stage** — next stage with ≥1 task `status ∈ {pending, implemented}` (real ids, not `_pending_`):
-   → `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage X.Y"`
+   → `Next: claude-personal "/ship-stage {SLUG} Stage X.Y"`
 
 2. **Next pending stage** — next stage where tasks are `_pending_` (not yet filed in DB):
-   → `Next: claude-personal "/stage-file {MASTER_PLAN_PATH} Stage X.Y"`
+   → `Next: claude-personal "/stage-file {SLUG} Stage X.Y"`
 
 3. **Umbrella done** — no more stages:
    → `Next: claude-personal "/closeout {UMBRELLA_ISSUE_ID}"` if identifiable from master plan header. Else `All stages done — umbrella close pending.`
@@ -474,7 +470,7 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - **Readiness gate fail:** `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff.
 - **Stale-DB stage not found:** `SHIP_STAGE {STAGE_ID}: STOPPED — stage not found in DB` + `/stage-file` handoff.
 - **PASS_B_ONLY worktree-clean inconsistency:** `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean. DB says implemented but disk has nothing.` + manual repair directive.
-- **Pass A implement failure:** `STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID_DB}"` after fix.
+- **Pass A implement failure:** `STOPPED at {ISSUE_ID} — implement: {reason}` + partial chain digest + `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID_DB}"` after fix.
 - **Pass A compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest + same `/ship-stage` re-entry.
 - **Pass A scene-wiring failure:** `STOPPED at {ISSUE_ID} — scene_wiring: ...` + same `/ship-stage` re-entry after wiring.
 - **Pass B verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive. Worktree stays dirty.
@@ -497,7 +493,7 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes) in ONE commit. Closeout (Step 7) is DB-only — no filesystem diff.
 - `domain-context-load` fires ONCE at chain start (Step 2); do NOT re-call per task.
 - Do NOT auto-invoke `/stage-authoring` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
-- Do NOT read or edit `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` OR `ia/projects/{slug}/stage-*.md` OR `ia/projects/{ISSUE_ID}.md` — DB is source of truth. Closeout writes audit rows via `master_plan_change_log_append`, never `git mv` to `_closed/`.
+- DB is sole source of truth for master plans, stages, tasks, and task spec bodies. All reads go through MCP (`master_plan_state`, `stage_bundle`, `task_state`, `task_spec_section`, `task_spec_body`); all writes go through MCP (`task_status_flip`, `stage_closeout_apply`, `master_plan_change_log_append`, `task_commit_record`, `stage_verification_flip`). Do NOT read or edit any `ia/projects/**` markdown.
 - DB is source of truth. Do NOT fall back to filesystem-only operations on `db_unavailable` — escalate to human; halt chain.
 
 ---
@@ -506,8 +502,7 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 
 | Key | Default / meaning |
 |-----|-------------------|
-| `{MASTER_PLAN_PATH}` | Repo-relative path to master plan (e.g. `ia/projects/citystats-overhaul-master-plan.md`) |
-| `{SLUG}` | basename of `MASTER_PLAN_PATH` minus `-master-plan.md` |
+| `{SLUG}` | Master-plan slug (e.g. `blip`, `citystats-overhaul`) |
 | `{STAGE_ID}` | Stage identifier as user typed (e.g. `Stage 1.1`) |
 | `{STAGE_ID_DB}` | `STAGE_ID` minus `Stage ` prefix (DB-canonical, e.g. `1.1`) |
 | `{SESSION_ID}` | `ship-stage-{SLUG}-{STAGE_ID_DB}-{ISO8601_compact}` |
@@ -522,30 +517,3 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 ## Open Questions
 
 - Crash-survivable session journal: `journal_append` writes to `ia_ship_stage_journal` table — survives process crash. Resume on re-invocation reads journal by `session_id` to detect mid-Pass-B state (e.g. verify done but status-flip not). Currently Step 6 re-runs as a unit; finer sub-step resume deferred.
-
----
-
-## Changelog
-
-### 2026-04-24 — Step 8 of `ia-dev-db-refactor`: Pass A no-commit + Pass B inline closeout (DB-backed)
-
-**Status:** applied (smoke pending)
-
-**Symptom:**
-Pre-Step-8 ship-stage made per-task commits in Pass A, then ran Stage closeout via `stage-closeout-planner` → `plan-applier` Mode stage-closeout pair. N+1 commits per stage (N task commits + 1 closeout commit). Resume gate scanned `git log --first-parent` for `feat({ISSUE_ID}):` / `fix({ISSUE_ID}):` subjects. Closeout pair wrote `§Stage Closeout Plan` tuples + applied them via plan-applier.
-
-**Fix per design C9 / C10 / E11 / E13 / E14:**
-- **Pass A (per-task):** implement + `unity:compile-check` + `task_status_flip(implemented)`. NO commit.
-- **Pass B (per-stage):** `verify-loop` on cumulative HEAD diff + `opus-code-reviewer` (inline Edit/Write fix cap=1, no `§Code Fix Plan` tuples) + per-task `task_status_flip(verified→done)`.
-- **Inline closeout:** `stage_closeout_apply` (DB) + `master_plan_change_log_append` audit row. Drops `stage-closeout-plan` + `stage-closeout-apply` skills + `plan-applier` code-fix mode + `stage-closeout-planner` agent. No filesystem mv post Step 9.6 (folder shape retired; flat task specs deleted).
-- **Stage commit:** single `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covering all Pass A diffs + code-review fixes (E13). Closeout is DB-only.
-- **Per-task commit record:** `task_commit_record(task_id, STAGE_COMMIT_SHA, "feat")` per task (shared sha; idempotent per UNIQUE).
-- **Stage verification:** `stage_verification_flip(slug, stage_id, "pass", STAGE_COMMIT_SHA)` (E11 history-preserving).
-- **Resume gate:** `task_state.status == "implemented"` query replaces git scan. PASS_B_ONLY when all `PENDING_TASKS` are `implemented`. Worktree-clean inconsistency check at PASS_B_ONLY entry.
-- **Drop:** `--per-task-verify` flag (legacy rollback for pre-DB), Step 1.6 git scan, lazy-migration `§Plan Author → §Plan Digest` branch, `Step 1.5` reference to `plan-author` / `plan-review`.
-
-**Acceptance gate:** smoke run on filed+authored throwaway stage on `feature/ia-dev-db-refactor` branch. All tasks `implemented → verified → done`; `ia_master_plan_change_log` carries `stage_closed` audit row; single `feat({slug}-stage-X.Y):` commit on branch; no per-task commits during Pass A; `ia_stage_verifications` row populated.
-
-**Rollout row:** ia-dev-db-refactor-step-8
-
----

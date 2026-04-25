@@ -1,12 +1,9 @@
 /**
- * DB read queries for the IA tables (Step 3 of ia-dev-db-refactor).
+ * DB read queries for the IA tables.
  *
- * All queries hit the shared pool from `./pool.ts`. Filesystem is never
- * touched here — body text is stored in `ia_tasks.body`, full-text search
- * via `ia_tasks.body_tsv` (GIN), trigram via `ia_tasks.body gin_trgm_ops`.
- *
- * Source of truth for decisions: docs/ia-dev-db-refactor-implementation.md
- * §Step 3. Related skill: N/A (tools consumed by read MCP surfaces).
+ * All queries hit the shared pool from `./pool.ts`. Body text is stored in
+ * `ia_tasks.body`, full-text search via `ia_tasks.body_tsv` (GIN), trigram
+ * via `ia_tasks.body gin_trgm_ops`.
  */
 
 import type pg from "pg";
@@ -58,7 +55,6 @@ export interface StageRowDB {
   objective: string | null;
   exit_criteria: string | null;
   status: "pending" | "in_progress" | "done";
-  source_file_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -84,7 +80,6 @@ export interface StageStateDB extends StageRowDB {
 export interface MasterPlanRowDB {
   slug: string;
   title: string;
-  source_spec_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -203,7 +198,7 @@ export async function queryStageState(
   const pool = poolOrThrow();
   const stageRes = await pool.query<StageRowDB>(
     `SELECT slug, stage_id, title, objective, exit_criteria, status,
-            source_file_path, created_at, updated_at
+            created_at, updated_at
        FROM ia_stages
       WHERE slug = $1 AND stage_id = $2`,
     [slug, stage_id],
@@ -254,7 +249,7 @@ export async function queryMasterPlanState(
 ): Promise<MasterPlanStateDB | null> {
   const pool = poolOrThrow();
   const planRes = await pool.query<MasterPlanRowDB>(
-    `SELECT slug, title, source_spec_path, created_at, updated_at
+    `SELECT slug, title, created_at, updated_at
        FROM ia_master_plans
       WHERE slug = $1`,
     [slug],
@@ -471,10 +466,9 @@ export async function queryStageBundle(
 }
 
 // ---------------------------------------------------------------------------
-// Master-plan + stage RENDER surfaces (Step 9.6.8 — Option A DB pivot).
+// Master-plan + stage RENDER surfaces.
 //
-// Reconstruct the verbatim markdown that used to live under
-// `ia/projects/{slug}/{index.md, stage-X.Y-*.md}` from structured columns
+// Render canonical master-plan + stage markdown views from structured columns
 // (preamble + objective + exit_criteria + tasks) and the change log table.
 // ---------------------------------------------------------------------------
 
@@ -701,7 +695,7 @@ export async function queryTaskBundle(
     const pool = poolOrThrow();
     const sr = await pool.query<StageRowDB>(
       `SELECT slug, stage_id, title, objective, exit_criteria, status,
-              source_file_path, created_at, updated_at
+              created_at, updated_at
          FROM ia_stages
         WHERE slug = $1 AND stage_id = $2`,
       [task.slug, task.stage_id],

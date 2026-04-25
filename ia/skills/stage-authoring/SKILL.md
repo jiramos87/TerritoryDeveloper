@@ -15,8 +15,8 @@ description: >-
   template-section allowlist + cross-ref task-id resolver) into the same bulk pass. Self-lints via
   `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via
   `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring
-  {ORCHESTRATOR_SPEC} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks".
-  Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
+  {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks".
+  Argument order (explicit): SLUG first, STAGE_ID second.
 phases:
   - Sequential-dispatch guardrail
   - Load shared Stage MCP bundle
@@ -28,11 +28,11 @@ phases:
   - Per-task task_spec_section_write to DB
   - Hand-off
 triggers:
-  - /stage-authoring {ORCHESTRATOR_SPEC} {STAGE_ID}
+  - /stage-authoring {SLUG} {STAGE_ID}
   - stage authoring
   - stage-scoped digest
   - author stage tasks
-argument_hint: {master-plan-path} Stage {X.Y} [--task {ISSUE_ID}] [--force-model {model}]
+argument_hint: {slug} Stage {X.Y} [--task {ISSUE_ID}] [--force-model {model}]
 model: opus
 reasoning_effort: high
 tools_role: pair-head
@@ -87,7 +87,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 | Param | Source | Notes |
 |-------|--------|-------|
-| `ORCHESTRATOR_SPEC` | 1st arg | SLUG carrier. Accepts repo-relative path forms `ia/projects/{slug}-master-plan.md` OR `ia/projects/{slug}/index.md` (legacy filesystem shapes — files no longer exist post Step 9.6; basename parses to derive `{slug}`). DB-first via `master_plan_render` / `stage_render`. |
+| `SLUG` | 1st arg | Bare master-plan slug (e.g. `blip`). DB-first via `master_plan_render` / `stage_render`. |
 | `STAGE_ID` | 2nd arg | e.g. `5` or `Stage 5` or `7.2`. |
 | `--task {ISSUE_ID}` | optional | Single-spec re-author escape hatch (bulk pass of N=1). |
 
@@ -107,7 +107,7 @@ Call **once** at Stage open:
 
 ```
 mcp__territory-ia__lifecycle_stage_context({
-  master_plan_path: "{ORCHESTRATOR_SPEC}",
+  slug: "{SLUG}",
   stage_id: "{STAGE_ID}"
 })
 ```
@@ -127,8 +127,8 @@ If composite unavailable → fall back to [`domain-context-load`](../domain-cont
 
 ## Phase 2 — Read filed Task spec stubs
 
-1. Derive `SLUG` from `ORCHESTRATOR_SPEC` arg (basename strip `-master-plan.md` OR `/index.md`). Use `lifecycle_stage_context` (Phase 1) `stage_header` payload OR call `mcp__territory-ia__stage_render({ slug, stage_id })` to fetch Stage block. Parse Task-table rows with Status ∈ {Draft, In Review, In Progress} AND filed `{ISSUE_ID}` (non-`_pending_` Issue column). Master plan body lives in DB post Step 9.6 — no filesystem read.
-2. For each Task: read body via `mcp__territory-ia__task_spec_body({ task_id: "{ISSUE_ID}" })`. DB is source of truth post Step 9.6 — no `ia/projects/{ISSUE_ID}.md` filesystem fallback (flat task specs deleted in Step 9.6.5).
+1. `SLUG` already provided as 1st arg. Use `lifecycle_stage_context` (Phase 1) `stage_header` payload OR call `mcp__territory-ia__stage_render({ slug, stage_id })` to fetch Stage block. Parse Task-table rows with Status ∈ {Draft, In Review, In Progress} AND filed `{ISSUE_ID}` (non-`_pending_` Issue column). Master plan body lives in DB.
+2. For each Task: read body via `mcp__territory-ia__task_spec_body({ task_id: "{ISSUE_ID}" })`. DB is sole source of truth — no filesystem fallback.
 3. Verify each spec carries §1 Summary + §2.1 Goals + §7 Implementation Plan + `## §Plan Digest _pending — populated by /stage-authoring_` sentinel (or §Plan Digest already populated → idempotent skip per Phase 8.3).
 4. Collect into `task_specs[] = [{task_id, body, source: "db"}]`.
 
@@ -326,7 +326,7 @@ Per-Task counter: `n_section_drift_fixed`.
 For each Task body, scan all prose for two id classes:
 
 1. **BACKLOG ids**: pattern `\b(BUG|FEAT|TECH|ART|AUDIO)-\d+\b`. Resolve via `mcp__territory-ia__task_state({ task_id })` (DB-backed; covers open + archived). Unresolved → add to per-Task warning list `unresolved_backlog_refs[]`.
-2. **Task-key refs**: pattern `\bT\d+\.\d+(\.\d+)?\b` (e.g. `T8.3`). Resolve via owning master plan task-table (read once per Stage from `MASTER_PLAN_PATH`). Unresolved → emit drift entry + add comment `<!-- WARN: stale task-ref {T_REF} — verify against {MASTER_PLAN_PATH} -->` next to the offending line. Auto-rewrite ONLY when ref clearly maps to a single live task (Opus judgment).
+2. **Task-key refs**: pattern `\bT\d+\.\d+(\.\d+)?\b` (e.g. `T8.3`). Resolve via owning master plan task-table (Phase 1 `stage_header` / `master_plan_render(slug)`). Unresolved → emit drift entry + add comment `<!-- WARN: stale task-ref {T_REF} — verify against master plan slug={SLUG} -->` next to the offending line. Auto-rewrite ONLY when ref clearly maps to a single live task (Opus judgment).
 
 Per-Task counters: `n_unresolved_backlog_refs`, `n_stale_task_refs`.
 
@@ -368,7 +368,7 @@ No aggregate stage doc lint pass — no aggregate doc.
 
 Run `mechanicalization-preflight` skill over each per-Task §Plan Digest body:
 
-1. Call `mcp__territory-ia__mechanicalization_preflight_lint({ artifact_path: "{ia/projects/{ISSUE_ID}.md|db:{ISSUE_ID}}", artifact_kind: "plan_digest" })`.
+1. Call `mcp__territory-ia__mechanicalization_preflight_lint({ artifact_path: "db:{ISSUE_ID}", artifact_kind: "plan_digest" })`.
 2. `pass: true` → prepend `mechanicalization_score` YAML header at top of §Plan Digest body per `ia/rules/mechanicalization-contract.md`.
 3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]` for {ISSUE_ID}; do NOT persist artifact.
 4. **Advisory escape hatch:** if `pass: false` AND `failing_fields == ["picks"]` AND Phase 5 `plan_digest_lint` was PASS AND no missing-path findings → prepend `mechanicalization_score: advisory_partial; failing_fields: [picks]; reason: preflight-regex-vs-rich-format-drift` header + continue.
@@ -433,7 +433,7 @@ Non-zero exit → escalate.
 
 Dispatcher (`/stage-file`) receives this hand-off and continues to:
 
-- **N≥2:** `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (runs implement + verify + code-review + closeout).
+- **N≥2:** `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID}"` (runs implement + verify + code-review + closeout).
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"`.
 
 When invoked standalone (not via `/stage-file` chain): emit same handoff verbatim.
@@ -479,16 +479,3 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 - [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — downstream (Pass A implement + Pass B verify + closeout).
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe (fallback when `lifecycle_stage_context` unavailable).
 
----
-
-## Changelog
-
-### 2026-04-24 — Step 7 merge: stage-authoring single-skill (retire plan-author + plan-digest pair)
-
-**Status:** applied
-
-**Symptom:** Pre-merge two-skill chain (`plan-author` Opus bulk → `plan-digest` Opus bulk) wrote `§Plan Author` intermediate then mechanized into `§Plan Digest`, with `§Plan Author` ephemeral + dropped. Two Opus passes per Stage. Aggregate doc compiled at `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` per pass. DB-primary refactor (Step 7 of `docs/ia-dev-db-refactor-implementation.md`) requires direct stub → digest write via `task_spec_section_write` MCP + drops aggregate doc per design D8.
-
-**Fix:** Collapsed pair into single skill per design B2 + C7. One Opus bulk pass authors §Plan Digest direct (no §Plan Author intermediate per B6). Persists per-Task body to DB via `task_spec_section_write` MCP (Step 4 mutation surface). Absorbs retired plan-author Phase 4 canonical-term fold (4a glossary + 4b retired-surface tombstone + 4c template-section allowlist + 4d cross-ref resolver) into the same bulk pass. Inherits retired plan-digest mechanical-step rules (invariant_touchpoints + validator_gate + STOP + MCP hints + Scene Wiring step). Self-lints via `plan_digest_lint` (cap=1 retry per Task). Mechanicalization preflight via `mechanicalization_preflight_lint` per Task. Drops aggregate `docs/implementation/{slug}-stage-{STAGE_ID}-plan.md` doc per design D8. Pre-merge skill bodies archived at `ia/skills/_retired/plan-author/SKILL.md` + `ia/skills/_retired/plan-digest/SKILL.md`.
-
-**Rollout row:** ia-dev-db-refactor Step 7

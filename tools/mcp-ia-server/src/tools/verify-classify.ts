@@ -17,7 +17,6 @@ type VerifyFailure =
   | "COMPILE_ERROR"
   | "SCHEMA_DRIFT"
   | "BACKLOG_YAML_INVALID"
-  | "DEAD_PROJECT_SPEC"
   | "DB_UNCONFIGURED"
   | "UNKNOWN";
 
@@ -93,16 +92,6 @@ function classify(
       failure_enum: "BACKLOG_YAML_INVALID",
       suggested_recovery: {
         action: "surface stderr; fix backlog yaml before retry",
-        retry: false,
-      },
-    };
-  }
-
-  if (/validate:dead-project-specs/.test(stderr) || /validate:dead-project-specs/.test(stdout)) {
-    return {
-      failure_enum: "DEAD_PROJECT_SPEC",
-      suggested_recovery: {
-        action: "surface stderr; fix dead project spec reference before retry",
         retry: false,
       },
     };

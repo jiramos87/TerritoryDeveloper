@@ -1,10 +1,7 @@
 /**
- * Parse temporary project specs (`ia/projects/{ISSUE_ID}[-{description}].md`)
- * for closeout / agent workflows.
+ * Parse Task spec bodies (DB-backed `ia_task_specs.body_md`) for closeout /
+ * agent workflows.
  */
-
-import fs from "node:fs";
-import path from "node:path";
 
 /** Backlog issue id pattern (aligned with BACKLOG convention). */
 export const PROJECT_SPEC_ISSUE_ID_RE =
@@ -102,7 +99,6 @@ export type ChecklistHints = Partial<
 export type ProjectSpecCloseoutDigest = {
   schema_version: 1;
   issue_id: string | null;
-  spec_path: string;
   sections: Partial<Record<ProjectSpecSectionKey, string>>;
   cited_issue_ids: string[];
   suggested_english_keywords: string[];
@@ -329,11 +325,10 @@ export function extractProjectSpecSections(
 }
 
 /**
- * Full v1 digest from markdown + resolved relative spec path.
+ * Full v1 digest from markdown.
  */
 export function buildProjectSpecCloseoutDigest(
   markdown: string,
-  specPathPosix: string,
   issueIdOverride: string | null,
 ): ProjectSpecCloseoutDigest {
   const sections = extractProjectSpecSections(markdown);
@@ -349,7 +344,6 @@ export function buildProjectSpecCloseoutDigest(
   return {
     schema_version: 1,
     issue_id,
-    spec_path: specPathPosix.split(path.sep).join("/"),
     sections,
     cited_issue_ids: cited,
     suggested_english_keywords: keywords,
@@ -367,132 +361,20 @@ export type ResolveProjectSpecPathResult =
   | { ok: false; error: string; message: string };
 
 /**
- * Resolve and validate a project spec path under `repoRoot` with no `..` traversal.
+ * @deprecated DB-backed task spec body is the source of truth — fetch via
+ * `queryTaskBody(issueId)` instead. Filesystem `ia/projects/` no longer exists.
  *
- * Accepts:
- *   - `spec_path` repo-relative under `ia/projects/`. Filename may be
- *     `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (descriptive suffix).
- *   - `issue_id` only — resolution order:
- *       1. `ia/projects/{ISSUE_ID}.md`
- *       2. `ia/projects/{ISSUE_ID}-{description}.md` (first descriptive match by sort)
- *       3. Default to `ia/projects/{ISSUE_ID}.md` so the caller's read produces ENOENT.
+ * Retained as a no-op tombstone for legacy callers; always returns `invalid_arguments`.
  */
 export function resolveProjectSpecFile(
-  repoRoot: string,
-  params: { issue_id?: string; spec_path?: string },
+  _repoRoot: string,
+  _params: { issue_id?: string; spec_path?: string },
 ): ResolveProjectSpecPathResult {
-  const hasIssue = params.issue_id != null && String(params.issue_id).trim() !== "";
-  const hasPath = params.spec_path != null && String(params.spec_path).trim() !== "";
-
-  if (hasIssue === hasPath) {
-    if (!hasIssue) {
-      return {
-        ok: false,
-        error: "invalid_arguments",
-        message:
-          "Provide exactly one of `issue_id` or `spec_path` (repo-relative `ia/projects/{ISSUE_ID}[-{description}].md`).",
-      };
-    }
-  }
-
-  let relPosix: string;
-  let issue_id: string;
-
-  if (hasPath) {
-    let p = String(params.spec_path).trim().split(path.sep).join("/");
-    if (p.includes("..")) {
-      return {
-        ok: false,
-        error: "invalid_path",
-        message: "`spec_path` must not contain `..`.",
-      };
-    }
-    if (!p.startsWith("ia/")) {
-      p = path.posix.join("ia/projects", path.basename(p));
-    }
-    if (!PROJECT_SPEC_REL_PATH_RE.test(p)) {
-      return {
-        ok: false,
-        error: "invalid_path",
-        message:
-          "`spec_path` must match `ia/projects/{BUG|FEAT|TECH|ART|AUDIO}-<n>[suffix][-{description}].md`.",
-      };
-    }
-    relPosix = p;
-    const base = path.posix.basename(p, ".md");
-    const derived = issueIdFromProjectSpecBasename(base);
-    if (!derived) {
-      return {
-        ok: false,
-        error: "invalid_path",
-        message: "Could not derive a valid `issue_id` from `spec_path`.",
-      };
-    }
-    issue_id = derived;
-    if (hasIssue) {
-      const other = normalizeIssueId(String(params.issue_id).trim());
-      if (other !== issue_id) {
-        return {
-          ok: false,
-          error: "mismatch",
-          message: `\`issue_id\` (${other}) does not match \`spec_path\` (${issue_id}).`,
-        };
-      }
-    }
-  } else {
-    issue_id = normalizeIssueId(String(params.issue_id).trim());
-    if (!PROJECT_SPEC_ISSUE_ID_RE.test(issue_id)) {
-      return {
-        ok: false,
-        error: "invalid_issue_id",
-        message:
-          "`issue_id` must match `BUG-|FEAT-|TECH-|ART-|AUDIO-` + digits + optional letter suffix.",
-      };
-    }
-
-    const tryAbs = (rel: string) =>
-      path.resolve(repoRoot, ...rel.split("/"));
-
-    relPosix = `ia/projects/${issue_id}.md`;
-    if (!fs.existsSync(tryAbs(relPosix))) {
-      let pickedDescriptive: string | null = null;
-      try {
-        const iaProjectsDir = path.join(repoRoot, "ia", "projects");
-        if (fs.existsSync(iaProjectsDir)) {
-          const prefix = `${issue_id}-`;
-          const entries = fs
-            .readdirSync(iaProjectsDir)
-            .filter(
-              (n) =>
-                n.startsWith(prefix) &&
-                n.endsWith(".md") &&
-                PROJECT_SPEC_REL_PATH_RE.test(`ia/projects/${n}`),
-            )
-            .sort();
-          if (entries.length > 0) {
-            pickedDescriptive = entries[0];
-          }
-        }
-      } catch {
-        // ignore directory read failures — fall through to legacy/default
-      }
-
-      if (pickedDescriptive) {
-        relPosix = `ia/projects/${pickedDescriptive}`;
-      }
-      // else: keep the default `ia/projects/{ID}.md`; the caller's read will ENOENT honestly.
-    }
-  }
-
-  const absPath = path.resolve(repoRoot, ...relPosix.split("/"));
-  const resolvedRoot = path.resolve(repoRoot);
-  if (!absPath.startsWith(resolvedRoot + path.sep) && absPath !== resolvedRoot) {
-    return {
-      ok: false,
-      error: "invalid_path",
-      message: "Resolved path escapes repository root.",
-    };
-  }
-
-  return { ok: true, absPath, relPosix, issue_id };
+  return {
+    ok: false,
+    error: "deprecated",
+    message:
+      "resolveProjectSpecFile is deprecated; fetch task body via queryTaskBody(issueId) (DB-backed).",
+  };
 }
+

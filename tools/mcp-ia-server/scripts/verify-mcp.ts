@@ -598,18 +598,13 @@ async function main(): Promise<void> {
       name: "stage_closeout_digest",
       arguments: { issue_id: "FEAT-49" },
     }),
-  ) as { schema_version?: number; spec_path?: string; error?: string };
+  ) as { schema_version?: number; error?: string };
   if (digest.error) {
     throw new Error(
       `stage_closeout_digest: ${(digest as { message?: string }).message ?? digest.error}`,
     );
   }
   if (digest.schema_version !== 1) throw new Error("stage_closeout_digest schema_version 1 expected");
-  if (digest.spec_path !== "ia/projects/FEAT-49.md") {
-    throw new Error(
-      `stage_closeout_digest spec_path mismatch: expected ia/projects/FEAT-49.md, got ${digest.spec_path}`,
-    );
-  }
 
   const journalSearch = parseJsonFromToolResult(
     await client.callTool({

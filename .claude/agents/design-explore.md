@@ -64,7 +64,7 @@ Skip `invariants_summary` for tooling/pipeline-only designs that touch no runtim
 - IF `{DOC_PATH}` unreadable → stop, report path error.
 - IF touched subsystem spec unavailable via MCP → note gap in Subsystem Impact, continue.
 - Do NOT overwrite Problem / Approaches surveyed / Recommendation / Open questions — only write the `## Design Expansion` block.
-- Do NOT create master plan (`ia/projects/{slug}-master-plan.md`), BACKLOG row, or invoke `project-new` — user triggers next step after review.
+- Do NOT create master plan, BACKLOG row, or invoke `project-new` — user triggers next step after review.
 - Do NOT commit — user decides when.
 - Do NOT load whole reference specs when `spec_section` / `spec_sections` slices cover it.
 - Do NOT skip `invariants_summary` when runtime C#/Unity subsystems touched.
@@ -82,4 +82,4 @@ Single concise caveman message:
 3. Subsystem impact summary (count touched, invariants flagged by number).
 4. Review results (BLOCKING resolved count, NON-BLOCKING carried into Review Notes).
 5. Persist diff summary (sections written / updated, line delta).
-6. Next step — standard: `master plan` or `project-new`; gap-analysis: `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"`.
+6. Next step — standard: `master plan` or `project-new`; gap-analysis: `claude-personal "/master-plan-extend {SLUG} {DOC_PATH}"`.
