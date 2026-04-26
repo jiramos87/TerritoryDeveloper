@@ -1,5 +1,6 @@
 using UnityEngine;
 using Territory.Economy;
+using Territory.Simulation.Signals;
 
 namespace Territory.Simulation
 {
@@ -19,6 +20,7 @@ public class SimulationManager : MonoBehaviour
     public AutoResourcePlanner autoResourcePlanner;
     public UrbanizationProposalManager urbanizationProposalManager;
     public UrbanCentroidService urbanCentroidService;
+    [SerializeField] private SignalTickScheduler signalTickScheduler;
 
     void Start()
     {
@@ -36,6 +38,8 @@ public class SimulationManager : MonoBehaviour
             urbanizationProposalManager = FindObjectOfType<UrbanizationProposalManager>();
         if (urbanCentroidService == null)
             urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
+        if (signalTickScheduler == null)
+            signalTickScheduler = FindObjectOfType<SignalTickScheduler>();
 
         if (autoRoadBuilder != null && autoZoningManager != null)
         {
@@ -77,6 +81,9 @@ public class SimulationManager : MonoBehaviour
 
             if (urbanCentroidService != null)
                 urbanCentroidService.RecalculateFromGrid();
+
+            if (signalTickScheduler != null)
+                signalTickScheduler.Tick(1f);
 
             if (autoRoadBuilder != null)
                 autoRoadBuilder.ProcessTick();
