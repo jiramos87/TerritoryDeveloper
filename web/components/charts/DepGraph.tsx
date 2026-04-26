@@ -24,32 +24,9 @@ export interface DepGraphProps {
   height?: number;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  done: 'var(--ds-raw-green)',
-  archived: 'var(--ds-raw-green)',
-  verified: 'var(--ds-raw-green)',
-  implemented: 'var(--ds-raw-amber)',
-  pending: 'var(--ds-text-meta)',
-};
-
-// Stage palette — first dotted-decimal segment of stage_id buckets the hue.
-const STAGE_PALETTE = [
-  '#5fb3d9', '#d97f5f', '#a06fd9', '#5fd97f', '#d9d65f',
-  '#d95f9b', '#5fd9d2', '#d9b35f', '#9bd95f', '#5f7fd9',
-];
-
-function stageBucket(stage: string | null | undefined): number {
-  if (!stage) return -1;
-  const head = stage.split('.')[0];
-  const n = Number(head);
-  return Number.isFinite(n) ? n : -1;
-}
-
-function stageColor(stage: string | null | undefined): string {
-  const b = stageBucket(stage);
-  if (b < 0) return 'var(--ds-text-meta)';
-  return STAGE_PALETTE[b % STAGE_PALETTE.length];
-}
+const NODE_FILL = 'var(--ds-raw-blue)';
+const NODE_FILL_EXTERNAL = 'var(--ds-raw-amber)';
+const EDGE_COLOR = '#7fa3c4';
 
 export default function DepGraph({ nodes, links, width = 960, height = 540 }: DepGraphProps) {
   const ref = useRef<SVGSVGElement>(null);
@@ -59,7 +36,7 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
     const svg = d3.select(ref.current);
     svg.selectAll('*').remove();
 
-    // Compute connected-node set so isolated nodes can be faded.
+    // Connected-node set so isolated nodes can be faded.
     const connected = new Set<string>();
     for (const l of links) {
       connected.add(typeof l.source === 'string' ? l.source : l.source.id);
@@ -67,7 +44,7 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
     }
     const isConnected = (d: DepNode) => connected.has(d.id);
 
-    // Scale virtual canvas with node count so dense graphs (80+) are not crushed.
+    // Virtual canvas scales with node count so dense graphs are not crushed.
     const area = Math.max(width * height, nodes.length * 3500);
     const aspect = width / height;
     const innerH = Math.sqrt(area / aspect);
@@ -81,93 +58,79 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
       .style('max-height', `${height}px`)
       .style('cursor', 'grab');
 
-    // Arrow marker for depends_on direction.
+    // Tiny arrow marker for depends_on direction.
     const defs = svg.append('defs');
     defs
       .append('marker')
       .attr('id', 'dep-arrow')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 14)
+      .attr('viewBox', '0 -4 8 8')
+      .attr('refX', 10)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 5)
+      .attr('markerHeight', 5)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-4L10,0L0,4')
-      .attr('fill', 'var(--ds-raw-blue)');
+      .attr('d', 'M0,-3L8,0L0,3')
+      .attr('fill', EDGE_COLOR);
 
     const root = svg.append('g').attr('class', 'zoom-root');
 
-    const linkDist = nodes.length > 40 ? 22 : 60;
-    const charge = nodes.length > 40 ? -35 : -180;
-    const collideR = nodes.length > 40 ? 14 : 20;
-    const nodeR = nodes.length > 40 ? 4 : 7;
-    const nodeRext = nodes.length > 40 ? 5 : 9;
-    const fontSize = nodes.length > 40 ? 8 : 10;
+    const linkDist = nodes.length > 40 ? 60 : 80;
+    const charge = nodes.length > 40 ? -120 : -200;
+    const collideR = nodes.length > 40 ? 18 : 24;
+    const nodeR = nodes.length > 40 ? 5 : 7;
+    const nodeRext = nodes.length > 40 ? 6 : 9;
+    const fontSize = nodes.length > 40 ? 9 : 10;
 
-    // Stage-radial: bucket nodes around concentric ring per stage_id head.
-    const stageBuckets = Array.from(
-      new Set(nodes.map((n) => stageBucket(n.stage))),
-    ).sort((a, b) => a - b);
-    const stageIndex = new Map(stageBuckets.map((b, i) => [b, i]));
-    const ringStep = Math.min(innerW, innerH) / (stageBuckets.length + 2) / 2;
+    // Sim mutates these copies in place — render selections must reference the
+    // SAME arrays (otherwise forceLink resolves source/target on the copy but
+    // the rendered `<line>` data still holds the original string ids → NaN).
+    const simNodes: DepNode[] = nodes.map((n) => ({ ...n }));
+    const simLinks: DepLink[] = links.map((l) => ({ ...l }));
 
     const sim = d3
-      .forceSimulation<DepNode>(nodes.map((n) => ({ ...n })))
+      .forceSimulation<DepNode>(simNodes)
       .force(
         'link',
         d3
-          .forceLink<DepNode, DepLink>(links.map((l) => ({ ...l })))
+          .forceLink<DepNode, DepLink>(simLinks)
           .id((d) => d.id)
           .distance(linkDist)
-          .strength(0.6),
+          .strength(0.7),
       )
       .force('charge', d3.forceManyBody().strength(charge))
       .force('center', d3.forceCenter(innerW / 2, innerH / 2))
-      .force(
-        'radial',
-        d3
-          .forceRadial<DepNode>(
-            (d) => ((stageIndex.get(stageBucket(d.stage)) ?? 0) + 1) * ringStep,
-            innerW / 2,
-            innerH / 2,
-          )
-          .strength(0.25),
-      )
+      .force('x', d3.forceX(innerW / 2).strength(0.04))
+      .force('y', d3.forceY(innerH / 2).strength(0.04))
       .force('collision', d3.forceCollide<DepNode>().radius(collideR));
 
     const link = root
       .append('g')
-      .attr('stroke-opacity', 0.85)
       .selectAll('line')
-      .data(links)
+      .data(simLinks)
       .enter()
       .append('line')
-      .attr('stroke', (d) =>
-        d.kind === 'depends_on' ? 'var(--ds-raw-blue)' : 'var(--ds-text-meta)',
-      )
+      .attr('stroke', EDGE_COLOR)
+      .attr('stroke-opacity', 0.9)
       .attr('stroke-width', 1.6)
+      .attr('vector-effect', 'non-scaling-stroke')
       .attr('stroke-dasharray', (d) => (d.kind === 'related' ? '4 3' : null))
       .attr('marker-end', (d) => (d.kind === 'depends_on' ? 'url(#dep-arrow)' : null));
 
     const node = root
       .append('g')
       .selectAll<SVGGElement, DepNode>('g')
-      .data(sim.nodes())
+      .data(simNodes)
       .enter()
       .append('g')
-      .attr('opacity', (d) => (isConnected(d) ? 1 : 0.28));
+      .attr('opacity', (d) => (isConnected(d) ? 1 : 0.25));
 
     node
       .append('circle')
       .attr('r', (d) => (d.external ? nodeRext : nodeR))
-      .attr('fill', (d) => stageColor(d.stage))
-      .attr('stroke', (d) =>
-        d.external
-          ? 'var(--ds-raw-amber)'
-          : STATUS_COLOR[d.status] ?? 'var(--ds-bg-panel)',
-      )
-      .attr('stroke-width', (d) => (d.external ? 2 : 1.5));
+      .attr('fill', (d) => (d.external ? NODE_FILL_EXTERNAL : NODE_FILL))
+      .attr('stroke', 'var(--ds-bg-panel)')
+      .attr('stroke-width', 1.5);
 
     node
       .append('title')
@@ -178,7 +141,7 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
 
     node
       .append('text')
-      .attr('dx', nodeR + 3)
+      .attr('dx', (d) => (d.external ? nodeRext : nodeR) + 4)
       .attr('dy', 4)
       .attr('font-family', 'var(--font-mono, ui-monospace)')
       .attr('font-size', `${fontSize}px`)
@@ -210,11 +173,13 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
       const bbox = (root.node() as SVGGElement | null)?.getBBox();
       if (!bbox || bbox.width === 0) return;
       const pad = 16;
-      const scale = Math.min(
+      const fitScale = Math.min(
         innerW / (bbox.width + pad * 2),
         innerH / (bbox.height + pad * 2),
         1,
       );
+      // Don't zoom out further than 0.6 — beyond that edges + labels become illegible.
+      const scale = Math.max(fitScale, 0.6);
       const tx = innerW / 2 - scale * (bbox.x + bbox.width / 2);
       const ty = innerH / 2 - scale * (bbox.y + bbox.height / 2);
       svg
@@ -229,48 +194,5 @@ export default function DepGraph({ nodes, links, width = 960, height = 540 }: De
   }, [nodes, links, width, height]);
 
   if (nodes.length === 0) return <p className="text-text-muted text-sm">No dependencies</p>;
-
-  // Legend mirrors STAGE_PALETTE buckets actually present in the graph.
-  const presentBuckets = Array.from(
-    new Set(nodes.map((n) => stageBucket(n.stage))),
-  ).sort((a, b) => a - b);
-
-  return (
-    <div className="space-y-2">
-      <svg ref={ref} />
-      <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-[var(--ds-text-meta)]">
-        <span className="flex items-center gap-1">
-          <svg width="22" height="8">
-            <line x1="0" y1="4" x2="18" y2="4" stroke="var(--ds-raw-blue)" strokeWidth="1.6" markerEnd="url(#dep-arrow)" />
-          </svg>
-          depends on →
-        </span>
-        <span className="flex items-center gap-1">
-          <svg width="22" height="8">
-            <line x1="0" y1="4" x2="22" y2="4" stroke="var(--ds-text-meta)" strokeWidth="1.6" strokeDasharray="4 3" />
-          </svg>
-          related
-        </span>
-        <span className="flex items-center gap-1">
-          <span
-            className="inline-block h-2.5 w-2.5 rounded-full border-2"
-            style={{ borderColor: 'var(--ds-raw-amber)', background: 'var(--ds-text-meta)' }}
-          />
-          cross-plan
-        </span>
-        <span className="opacity-70">isolated nodes faded</span>
-        {presentBuckets
-          .filter((b) => b >= 0)
-          .map((b) => (
-            <span key={b} className="flex items-center gap-1">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
-                style={{ background: STAGE_PALETTE[b % STAGE_PALETTE.length] }}
-              />
-              stage {b}.x
-            </span>
-          ))}
-      </div>
-    </div>
-  );
+  return <svg ref={ref} />;
 }
