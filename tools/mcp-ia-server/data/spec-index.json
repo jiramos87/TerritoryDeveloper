@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-25T22:49:25.824Z",
+  "last_generated": "2026-04-26T17:08:35.656Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -461,55 +461,55 @@
           "section_id": "city-systems",
           "title": "City systems",
           "depth": 2,
-          "line_start": 166
+          "line_start": 174
         },
         {
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 188
+          "line_start": 196
         },
         {
           "section_id": "audio",
           "title": "Audio",
           "depth": 2,
-          "line_start": 199
+          "line_start": 207
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 219
+          "line_start": 227
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 233
+          "line_start": 241
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 272
+          "line_start": 280
         },
         {
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 296
+          "line_start": 304
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 304
+          "line_start": 312
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 318
+          "line_start": 326
         }
       ]
     },
@@ -1300,6 +1300,60 @@
       ]
     },
     {
+      "key": "simulation-signals",
+      "path": "ia/specs/simulation-signals.md",
+      "sections": [
+        {
+          "section_id": "simulation-signals-reference-spec",
+          "title": "Simulation Signals — Reference Spec",
+          "depth": 1,
+          "line_start": 7
+        },
+        {
+          "section_id": "purpose-and-scope",
+          "title": "Purpose and scope",
+          "depth": 2,
+          "line_start": 11
+        },
+        {
+          "section_id": "signal-inventory",
+          "title": "Signal inventory",
+          "depth": 2,
+          "line_start": 36
+        },
+        {
+          "section_id": "diffusion-physics-contract",
+          "title": "Diffusion physics contract",
+          "depth": 2,
+          "line_start": 55
+        },
+        {
+          "section_id": "interface-contract",
+          "title": "Interface contract",
+          "depth": 2,
+          "line_start": 65
+        },
+        {
+          "section_id": "rollup-rule-table",
+          "title": "Rollup rule table",
+          "depth": 2,
+          "line_start": 90
+        },
+        {
+          "section_id": "tick-phase-insertion",
+          "title": "Tick phase insertion",
+          "depth": 2,
+          "line_start": 111
+        },
+        {
+          "section_id": "spec-gap-closure-note",
+          "title": "Spec-gap closure note",
+          "depth": 2,
+          "line_start": 122
+        }
+      ]
+    },
+    {
       "key": "simulation-system",
       "path": "ia/specs/simulation-system.md",
       "sections": [
@@ -1319,43 +1373,43 @@
           "section_id": "urban-centroid-and-growth-rings",
           "title": "Urban centroid and growth rings",
           "depth": 3,
-          "line_start": 21
+          "line_start": 23
         },
         {
           "section_id": "system-dependencies",
           "title": "System dependencies",
           "depth": 2,
-          "line_start": 27
+          "line_start": 29
         },
         {
           "section_id": "road-reservation-for-auto-zoning",
           "title": "Road reservation for AUTO zoning",
           "depth": 2,
-          "line_start": 38
+          "line_start": 40
         },
         {
           "section_id": "auto-street-placement-rules",
           "title": "AUTO street placement rules",
           "depth": 2,
-          "line_start": 44
+          "line_start": 46
         },
         {
           "section_id": "obsolete-system-urbanizationproposal",
           "title": "Obsolete system — UrbanizationProposal",
           "depth": 2,
-          "line_start": 50
+          "line_start": 52
         },
         {
           "section_id": "key-files",
           "title": "Key files",
           "depth": 2,
-          "line_start": 56
+          "line_start": 58
         },
         {
           "section_id": "calendar-and-monthly-economy",
           "title": "Calendar and monthly economy",
           "depth": 2,
-          "line_start": 70
+          "line_start": 72
         }
       ]
     },

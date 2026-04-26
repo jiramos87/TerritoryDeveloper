@@ -10,7 +10,7 @@ slices_via: glossary_lookup
 
 ## Abbreviations
 
-Specs (relative to `ia/specs/`): geo=`isometric-geography-system.md`, roads=`roads-system.md`, water=`water-terrain-system.md`, sim=`simulation-system.md`, persist=`persistence-system.md`, mgrs=`managers-reference.md`, ui=`ui-design-system.md`, udev=`unity-development-context.md`, arch=`ARCHITECTURE.md`, audio=`audio-blip.md`, econ=`economy-system.md`.
+Specs (relative to `ia/specs/`): geo=`isometric-geography-system.md`, roads=`roads-system.md`, water=`water-terrain-system.md`, sim=`simulation-system.md`, sim-signals=`simulation-signals.md`, persist=`persistence-system.md`, mgrs=`managers-reference.md`, ui=`ui-design-system.md`, udev=`unity-development-context.md`, arch=`ARCHITECTURE.md`, audio=`audio-blip.md`, econ=`economy-system.md`.
 
 Rules: pa=`ia/rules/plan-apply-pair-contract.md`, ph=`ia/rules/project-hierarchy.md`, ovs=`ia/rules/orchestrator-vs-spec.md`, inv=`ia/rules/invariants.md`, rs=`ia/rules/runtime-state.md`.
 
@@ -162,6 +162,14 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Growth budget | Per-category cap on AUTO spend per tick. Pool from `GrowthBudgetManager` using projected net monthly cash flow (tax base − monthly maintenance) when positive, else treasury (`CityStats`). | sim, mgrs §Demand |
 | Urban centroid | Statistical center of mass of development, biases growth rings. `UrbanCentroidService` computes centroid + ring metrics. | sim, sim §Rings |
 | Urban growth rings | Distance bands from the centroid — AUTO weights where roads and zones expand (denser near core). Recalculated each tick before AUTO runs. | sim §Rings |
+| SimulationSignal | Locked 12-entry enum for city-sim depth: pollution (air / land / water), crime, services (police, fire, education, health, parks), traffic, waste pressure, land value. Ordinal-stable; indexes `SignalMetadataRegistry` entries. | sim-signals |
+| SignalField | Per-signal `float[,]` grid sized to `GridManager` dims; clamp-floor-0 invariant on every write; `Snapshot()` returns deep-copy buffer for diffusion ping-pong. | sim-signals |
+| SignalFieldRegistry | Per-scene MonoBehaviour owning one `SignalField` per `SimulationSignal`; allocates in `Awake` from `GridManager.width/height`; `ResizeForMap` reallocates on map reload. | sim-signals |
+| SignalMetadataRegistry | ScriptableObject keyed by `SimulationSignal` ordinal — per-signal `diffusionRadius`, `decayPerStep`, `Vector2 anisotropy`, `RollupRule`. | sim-signals |
+| DiffusionKernel | Stage 1.2 system applying separable horizontal + vertical Gaussian (per-axis sigma from anisotropy) plus `decayPerStep` to each `SignalField` once per tick. | sim-signals |
+| SignalTickScheduler | Stage 1.2 driver running the signal phase: producers → diffusion → district rollup → consumers, once per `SimulationManager.ProcessSimulationTick`. | sim-signals |
+| DistrictSignalCache | Stage 1.3 district aggregator keyed by signal × district; populated per `RollupRule`. Stage 1.1 ships a placeholder class only. | sim-signals |
+| Rollup rule | Per-signal aggregation in `DistrictSignalCache` — `Mean` for steady-exposure signals, `P90` for hot-spot signals (`Crime`, `TrafficLevel`). | sim-signals |
 
 ## City systems
 

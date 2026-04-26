@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-25T22:49:26.047Z",
+  "last_generated": "2026-04-26T17:08:35.779Z",
   "graph": {
     "A* search": {
       "related": [
@@ -639,6 +639,11 @@
           "section_title": "AUTO simulation pathfinding (spec §13.9)"
         },
         {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
           "spec": "simulation-system",
           "section_id": "key-files",
           "section_title": "Key files"
@@ -1151,6 +1156,21 @@
           "spec": "roads-system",
           "section_id": "key-files",
           "section_title": "Key files"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "diffusion-physics-contract",
+          "section_title": "Diffusion physics contract"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "rollup-rule-table",
+          "section_title": "Rollup rule table"
         },
         {
           "spec": "simulation-system",
@@ -1807,6 +1827,22 @@
         }
       ]
     },
+    "DiffusionKernel": {
+      "related": [
+        "DistrictSignalCache",
+        "Pollution",
+        "Rollup rule",
+        "SignalField",
+        "SignalFieldRegistry"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        }
+      ]
+    },
     "Direction convention": {
       "related": [
         "Cell",
@@ -1820,6 +1856,32 @@
           "spec": "isometric-geography-system",
           "section_id": "1",
           "section_title": "1. Isometric Grid Fundamentals"
+        }
+      ]
+    },
+    "DistrictSignalCache": {
+      "related": [
+        "Phase",
+        "Pollution",
+        "SignalFieldRegistry",
+        "SignalTickScheduler",
+        "Stage"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "interface-contract",
+          "section_title": "Interface contract"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "rollup-rule-table",
+          "section_title": "Rollup rule table"
         }
       ]
     },
@@ -2215,8 +2277,8 @@
         "Monthly maintenance",
         "Tax base",
         "Building",
-        "Zone",
-        "Cell"
+        "Pollution",
+        "Zone"
       ],
       "cited_in": [
         {
@@ -3272,7 +3334,7 @@
         "Tax base",
         "Zone",
         "Happiness",
-        "Cell"
+        "Pollution"
       ],
       "cited_in": [
         {
@@ -3613,11 +3675,11 @@
     },
     "Phase": {
       "related": [
-        "Interstate",
         "Cell",
+        "Interstate",
+        "Stage",
         "Gate",
-        "Road validation pipeline",
-        "Building"
+        "Road validation pipeline"
       ],
       "cited_in": [
         {
@@ -3684,6 +3746,26 @@
           "spec": "roads-system",
           "section_id": "auto-simulation-pathfinding-spec-13-9",
           "section_title": "AUTO simulation pathfinding (spec §13.9)"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "interface-contract",
+          "section_title": "Interface contract"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "rollup-rule-table",
+          "section_title": "Rollup rule table"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "tick-phase-insertion",
+          "section_title": "Tick phase insertion"
+        },
+        {
+          "spec": "simulation-system",
+          "section_id": "tick-execution-order",
+          "section_title": "Tick execution order"
         },
         {
           "spec": "simulation-system",
@@ -3790,11 +3872,11 @@
     },
     "Pollution": {
       "related": [
-        "Happiness",
-        "Building",
         "Cell",
+        "Building",
+        "Happiness",
         "Monthly maintenance",
-        "RCI"
+        "Tax base"
       ],
       "cited_in": [
         {
@@ -3811,6 +3893,21 @@
           "spec": "managers-reference",
           "section_id": "world-features",
           "section_title": "World features"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "signal-inventory",
+          "section_title": "Signal inventory"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "rollup-rule-table",
+          "section_title": "Rollup rule table"
         },
         {
           "spec": "simulation-system",
@@ -3984,6 +4081,11 @@
           "spec": "reference-spec-structure",
           "section_id": "terminology",
           "section_title": "Terminology"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "spec-gap-closure-note",
+          "section_title": "Spec-gap closure note"
         },
         {
           "spec": "ui-design-system",
@@ -4459,6 +4561,22 @@
       ],
       "cited_in": []
     },
+    "Rollup rule": {
+      "related": [
+        "DiffusionKernel",
+        "DistrictSignalCache",
+        "Pollution",
+        "SignalField",
+        "SignalFieldRegistry"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        }
+      ]
+    },
     "runtime-state": {
       "related": [
         "Stage",
@@ -4679,6 +4797,105 @@
         }
       ]
     },
+    "SignalField": {
+      "related": [
+        "SignalMetadataRegistry",
+        "Cell",
+        "DiffusionKernel",
+        "DistrictSignalCache",
+        "Pollution"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "diffusion-physics-contract",
+          "section_title": "Diffusion physics contract"
+        }
+      ]
+    },
+    "SignalFieldRegistry": {
+      "related": [
+        "DistrictSignalCache",
+        "SignalTickScheduler",
+        "Stage",
+        "DiffusionKernel",
+        "Phase"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "interface-contract",
+          "section_title": "Interface contract"
+        }
+      ]
+    },
+    "SignalMetadataRegistry": {
+      "related": [
+        "Pollution",
+        "SignalField",
+        "SimulationSignal",
+        "Cell",
+        "DiffusionKernel"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "signal-inventory",
+          "section_title": "Signal inventory"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "diffusion-physics-contract",
+          "section_title": "Diffusion physics contract"
+        }
+      ]
+    },
+    "SignalTickScheduler": {
+      "related": [
+        "Phase",
+        "Stage",
+        "DistrictSignalCache",
+        "SignalFieldRegistry",
+        "Tick execution order"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "interface-contract",
+          "section_title": "Interface contract"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "tick-phase-insertion",
+          "section_title": "Tick phase insertion"
+        },
+        {
+          "spec": "simulation-system",
+          "section_id": "tick-execution-order",
+          "section_title": "Tick execution order"
+        }
+      ]
+    },
     "Simulation scale": {
       "related": [
         "Active scale",
@@ -4692,16 +4909,37 @@
     "Simulation tick": {
       "related": [
         "AUTO systems",
+        "DiffusionKernel",
+        "DistrictSignalCache",
         "Growth budget",
-        "Monthly maintenance",
-        "Tax base",
-        "Tick execution order"
+        "Monthly maintenance"
       ],
       "cited_in": [
         {
           "spec": "game-overview",
           "section_id": "scales",
           "section_title": "Scales"
+        }
+      ]
+    },
+    "SimulationSignal": {
+      "related": [
+        "Pollution",
+        "SignalMetadataRegistry",
+        "DiffusionKernel",
+        "DistrictSignalCache",
+        "Rollup rule"
+      ],
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "signal-inventory",
+          "section_title": "Signal inventory"
         }
       ]
     },
@@ -4955,9 +5193,9 @@
       "related": [
         "Phase",
         "Cell",
-        "Biquad band-pass",
-        "Blip LFO",
-        "Gate"
+        "SignalTickScheduler",
+        "DistrictSignalCache",
+        "SignalFieldRegistry"
       ],
       "cited_in": [
         {
@@ -5004,6 +5242,21 @@
           "spec": "audio-blip",
           "section_id": "10",
           "section_title": "10. Cross-refs"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "interface-contract",
+          "section_title": "Interface contract"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "tick-phase-insertion",
+          "section_title": "Tick phase insertion"
         },
         {
           "spec": "web-ui-design-system",
@@ -5119,9 +5372,9 @@
       "related": [
         "Monthly maintenance",
         "Building",
+        "Pollution",
         "Zone",
-        "Cell",
-        "Growth budget"
+        "Cell"
       ],
       "cited_in": [
         {
@@ -5184,13 +5437,24 @@
     },
     "Tick execution order": {
       "related": [
-        "AUTO systems",
-        "Growth budget",
-        "Monthly maintenance",
-        "Simulation tick",
-        "Tax base"
+        "SignalTickScheduler",
+        "Stage",
+        "DiffusionKernel",
+        "DistrictSignalCache",
+        "Phase"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "simulation-signals",
+          "section_id": "purpose-and-scope",
+          "section_title": "Purpose and scope"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "tick-phase-insertion",
+          "section_title": "Tick phase insertion"
+        }
+      ]
     },
     "Tile dimensions": {
       "related": [
@@ -5308,10 +5572,10 @@
     "Urban centroid": {
       "related": [
         "AUTO systems",
+        "Phase",
         "Building",
         "Cell",
-        "Growth budget",
-        "Interstate"
+        "Growth budget"
       ],
       "cited_in": [
         {
@@ -5343,11 +5607,11 @@
     },
     "Urban growth rings": {
       "related": [
+        "Phase",
+        "Stage",
         "Urban centroid",
         "AUTO systems",
-        "Gate",
-        "Growth budget",
-        "Monthly maintenance"
+        "DiffusionKernel"
       ],
       "cited_in": []
     },

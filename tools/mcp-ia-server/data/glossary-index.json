@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-25T22:49:25.835Z",
+  "last_generated": "2026-04-26T17:08:35.660Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -354,6 +354,38 @@
     "Urban growth rings": {
       "spec_key": "simulation-system",
       "anchor": "rings"
+    },
+    "SimulationSignal": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "SignalField": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "SignalFieldRegistry": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "SignalMetadataRegistry": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "DiffusionKernel": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "SignalTickScheduler": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "DistrictSignalCache": {
+      "spec_key": "sim-signals",
+      "anchor": ""
+    },
+    "Rollup rule": {
+      "spec_key": "sim-signals",
+      "anchor": ""
     },
     "Demand (R / C / I)": {
       "spec_key": "managers-reference",

@@ -18,6 +18,8 @@ slices_via: spec_section
 4. `AutoZoningManager` — zones cells adjacent to **streets**/**interstates**
 5. `AutoResourcePlanner` — plans resource buildings (water, power)
 
+City-sim depth Bucket 2 inserts a **signal phase** between steps 2 and 3 (producers → separable Gaussian diffusion → district rollup → consumers, run by `SignalTickScheduler`). Contract + 12-entry inventory + rollup taxonomy live in [`simulation-signals.md`](simulation-signals.md).
+
 ### Urban centroid and growth rings
 
 > **Glossary index:** `glossary.md` cites this subsection as **sim §Rings**.
