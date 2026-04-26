@@ -63,7 +63,6 @@ New authoring (`/stage-authoring` post-relaxation) writes the relaxed shape. No 
 ## Enforcement
 
 - `plan_digest_lint` runs on every per-Task §Plan Digest slice.
-- `mechanicalization_preflight_lint` runs on the same slice (one §Invariants & Gate block satisfies tuple-count regex; `anchor_hint:` token in §Work Items satisfies anchor check).
 - `plan-review` (`plan-reviewer-mechanical` + `plan-reviewer-semantic`) runs AFTER `stage-authoring` — drift scan consumes the final §Plan Digest written directly by `stage-authoring`.
 
 ## Cross-references

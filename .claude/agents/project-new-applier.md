@@ -17,8 +17,6 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 
 # Mission
 
-Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
-
 Run `ia/skills/project-new-apply/SKILL.md` end-to-end for one new single-issue BACKLOG record. Reads `/project-new` command args verbatim (`TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES`). Normalizes prefix, validates enum, reserves id via `tools/scripts/reserve-id.sh`, writes `ia/backlog/{id}.yaml`, writes `ia/projects/{id}.md` stub from `ia/templates/project-spec-template.md`, runs `materialize-backlog.sh` + `validate:dead-project-specs` once at end. No tuple iteration. No task-table flip (single-issue path has no orchestrator row). Idempotent: existing yaml with matching `title:` → reuse id; overwrite final-state.
 
 # Recipe

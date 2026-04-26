@@ -96,7 +96,7 @@ Verify §Plan Digest field names match schema in `ia/rules/plan-digest-contract.
 
 ## Phase 8 — emit_tuples
 
-Collect all failures → emit `§Plan Fix — MECHANICAL` tuple list per `ia/rules/plan-apply-pair-contract.md`. Call `mechanicalization_preflight_lint` over the emitted output; prepend `mechanicalization_score` header.
+Collect all failures → emit `§Plan Fix — MECHANICAL` tuple list per `ia/rules/plan-apply-pair-contract.md`.
 
 If zero failures → emit `PASS — no mechanical drift found (checks 3–8)`.
 
@@ -104,9 +104,6 @@ If zero failures → emit `PASS — no mechanical drift found (checks 3–8)`.
 
 ```markdown
 ## §Plan Fix — MECHANICAL (Stage {STAGE_ID})
-
-mechanicalization_score:
-  ...
 
 - id: fix-{N}
   check: {3|4|5|6|7|8}

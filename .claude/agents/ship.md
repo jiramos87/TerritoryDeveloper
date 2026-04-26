@@ -1,7 +1,7 @@
 ---
 name: ship
 description: Standalone single-task ship pipeline. Four mechanical steps in order: (1) author §Plan Digest via stage-authoring --task, (2) implement via spec-implementer, (3) verify-loop with MAX_ITERATIONS=2, (4) close via DB status walk (pending → implemented → verified → done → archived). Standalone-tasks only — task must have master_plan_id IS NULL. No code review. No audit. No commit. No master-plan handoff. Stage-attached tasks must use /ship-stage instead. Triggers: "/ship {ISSUE_ID}", "ship task", "ship standalone". Argument: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9).
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__task_state, mcp__territory-ia__task_bundle, mcp__territory-ia__task_spec_body, mcp__territory-ia__task_spec_section, mcp__territory-ia__task_spec_section_write, mcp__territory-ia__task_status_flip, mcp__territory-ia__lifecycle_stage_context, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__plan_digest_resolve_anchor, mcp__territory-ia__plan_digest_render_literal, mcp__territory-ia__plan_digest_scan_for_picks, mcp__territory-ia__plan_digest_lint, mcp__territory-ia__plan_digest_gate_author_helper, mcp__territory-ia__mechanicalization_preflight_lint, mcp__territory-ia__unity_compile, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__verify_classify, mcp__territory-ia__journal_append
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__task_state, mcp__territory-ia__task_bundle, mcp__territory-ia__task_spec_body, mcp__territory-ia__task_spec_section, mcp__territory-ia__task_spec_section_write, mcp__territory-ia__task_status_flip, mcp__territory-ia__lifecycle_stage_context, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__plan_digest_resolve_anchor, mcp__territory-ia__plan_digest_render_literal, mcp__territory-ia__plan_digest_scan_for_picks, mcp__territory-ia__plan_digest_lint, mcp__territory-ia__plan_digest_gate_author_helper, mcp__territory-ia__unity_compile, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__verify_classify, mcp__territory-ia__journal_append
 model: opus
 reasoning_effort: high
 ---
@@ -40,7 +40,7 @@ This subagent's `tools:` frontmatter intentionally omits `Agent` / `Task` — ca
 Follow `ia/skills/ship/SKILL.md` end-to-end. Phase sequence (matches SKILL frontmatter `phases:`):
 
 1. **Phase 0 — Resolve task + standalone gate** — `task_state(ISSUE_ID)` → confirm `slug == null AND stage_id == null`. Stage-attached → STOP + `/ship-stage` handoff. Terminal status (done/archived) → idle exit `ALREADY_CLOSED`.
-2. **Phase 1 — Author §Plan Digest** — Idempotent readiness check via `task_spec_section(task_id, "§Plan Digest")`. Empty/missing → execute `ia/skills/stage-authoring/SKILL.md` inline with `--task ISSUE_ID` flag (bulk pass of N=1: load shared MCP bundle once, bulk author §Plan Digest direct, `plan_digest_lint` cap=1, `mechanicalization_preflight_lint`, `task_spec_section_write` to DB). Populated → skip.
+2. **Phase 1 — Author §Plan Digest** — Idempotent readiness check via `task_spec_section(task_id, "§Plan Digest")`. Empty/missing → execute `ia/skills/stage-authoring/SKILL.md` inline with `--task ISSUE_ID` flag (bulk pass of N=1: load shared MCP bundle once, bulk author §Plan Digest direct, `plan_digest_lint` cap=1, `task_spec_section_write` to DB). Populated → skip.
 3. **Phase 2 — Implement** — Execute `ia/skills/project-spec-implement/SKILL.md` inline. DB-first reads via `task_spec_body` + `backlog_issue` + `router_for_task`. Minimal diffs. Per-phase verify per agent-led policy. On completion: `task_status_flip(ISSUE_ID, "implemented")`. NO commit.
 4. **Phase 3 — Verify-loop** — Execute `ia/skills/verify-loop/SKILL.md` inline. `MAX_ITERATIONS=2` (locked). `--tooling-only` when `git diff HEAD` shows zero `Assets|Packages|ProjectSettings` paths. Verdict `pass` required.
 5. **Phase 4 — Close (DB status walk)** — Three sequential `task_status_flip` calls: `verified` → `done` → `archived`. Each idempotent. Sets `completed_at` on `done`, `archived_at` on `archived`. NO filesystem ops. NO commit.
@@ -60,7 +60,7 @@ Follow `ia/skills/ship/SKILL.md` end-to-end. Phase sequence (matches SKILL front
 - `SHIP {ISSUE_ID}: ALREADY_CLOSED ({status})` — Phase 0 terminal-status idle exit.
 - `SHIP {ISSUE_ID}: STOPPED — task not found in DB` — Phase 0 lookup miss.
 - `SHIP {ISSUE_ID}: STOPPED — task is stage-attached (slug={slug}, stage={stage_id}). Next: /ship-stage {slug} {stage_id}` — Phase 0 standalone gate failure.
-- `SHIP {ISSUE_ID}: STOPPED at author — {reason}` — Phase 1 lint/preflight fail or DB write fail.
+- `SHIP {ISSUE_ID}: STOPPED at author — {reason}` — Phase 1 lint fail or DB write fail.
 - `SHIP {ISSUE_ID}: STOPPED at implement — {reason}` — Phase 2 mechanical step / verify failure.
 - `SHIP {ISSUE_ID}: STOPPED at verify — verdict: {verdict}` — Phase 3 verdict ≠ pass.
 - `SHIP {ISSUE_ID}: STOPPED at close — {reason}` — Phase 4 status-flip failure.
@@ -83,7 +83,7 @@ Follow `ia/skills/ship/SKILL.md` end-to-end. Phase sequence (matches SKILL front
 # Output
 
 Phase 0: banner + standalone gate result.
-Phase 1: readiness skip OR author summary (lint PASS, preflight PASS, DB write count).
+Phase 1: readiness skip OR author summary (lint PASS, DB write count).
 Phase 2: per-mechanical-step gate line + final `IMPLEMENT_DONE` + status flip ack.
 Phase 3: verify-loop JSON header + caveman summary.
 Phase 4: 3-line status walk acks.

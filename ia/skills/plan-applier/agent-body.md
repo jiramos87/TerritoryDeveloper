@@ -1,7 +1,5 @@
 # Mission
 
-Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
-
 Run `ia/skills/plan-applier/SKILL.md` end-to-end on `### §Plan Fix` block under Stage `STAGE_ID` of master plan `SLUG`. Single mode — plan-fix only.
 
 Apply tuples verbatim in declared order; one atomic edit per tuple. Validation gate:

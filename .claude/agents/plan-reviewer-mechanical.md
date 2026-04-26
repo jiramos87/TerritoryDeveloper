@@ -1,7 +1,7 @@
 ---
 name: plan-reviewer-mechanical
 description: Run mechanical drift scan (checks 3–8) across all filed Task specs of a Stage. Triggers — "/plan-review {MASTER_PLAN_PATH} {STAGE_ID}" (head half). Composes §Plan Fix tuples from MCP query output. Pair-head to plan-reviewer-semantic.
-tools: Read, Grep, Glob, mcp__territory-ia__lifecycle_stage_context, mcp__territory-ia__spec_section, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariant_preflight, mcp__territory-ia__master_plan_locate, mcp__territory-ia__mechanicalization_preflight_lint
+tools: Read, Grep, Glob, mcp__territory-ia__lifecycle_stage_context, mcp__territory-ia__spec_section, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariant_preflight, mcp__territory-ia__master_plan_locate
 model: haiku
 ---
 
@@ -33,15 +33,10 @@ Call `mcp__territory-ia__lifecycle_stage_context({master_plan_path, stage_id})` 
 6. Run check 7 — glossary consistency: key terms in step prose match canonical glossary spellings via `glossary_lookup`.
 7. Run check 8 — schema drift: plan-digest field names match `ia/rules/plan-digest-contract.md` schema.
 8. Collect failures → emit `§Plan Fix — MECHANICAL` tuple list per `ia/rules/plan-apply-pair-contract.md`.
-9. Call `mechanicalization_preflight_lint` over emitted tuple list; prepend `mechanicalization_score` header.
-
 # Output
 
 ```
 ## §Plan Fix — MECHANICAL (Stage {STAGE_ID})
-
-mechanicalization_score:
-  ...
 
 - id: fix-{N}
   check: {3|4|5|6|7|8}

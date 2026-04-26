@@ -55,7 +55,7 @@ Forward via Agent tool with `subagent_type: "project-new-applier"`:
 
 ## Step 3 — Auto-chain `/stage-authoring --task {ISSUE_ID}` (N=1 bulk)
 
-On applier success: auto-invoke `/stage-authoring --task {ISSUE_ID}` to author `§Plan Digest` directly on the one filed spec (single-pass digest; canonical-term fold; lint + mechanicalization preflight). Single-task path skips `plan-review` at N=1 — next step is `/ship {ISSUE_ID}` directly.
+On applier success: auto-invoke `/stage-authoring --task {ISSUE_ID}` to author `§Plan Digest` directly on the one filed spec (single-pass digest; canonical-term fold; lint via `plan_digest_lint`). Single-task path skips `plan-review` at N=1 — next step is `/ship {ISSUE_ID}` directly.
 
 ## Output
 

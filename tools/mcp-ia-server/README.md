@@ -151,7 +151,6 @@ All 14 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`).
 | **`plan_digest_scan_for_picks`** | Lint-only hand-wavy-phrase detector | ≤20 findings |
 | **`plan_digest_lint`** | 9-point rubric gate (`ia/rules/plan-digest-contract.md`) | ≤20 failures |
 | **`plan_digest_gate_author_helper`** | Canonical gate-command suggester per edit tuple | 1 line |
-| **`mechanicalization_preflight_lint`** | Score a pair-head artifact for mechanicalization (anchors, picks, invariants, validators, escalation). Returns `{pass, score, findings}` | ≤10 findings |
 | **`verify_classify`** | Classify a verify-loop command failure by exit code + stderr into a named enum with `suggested_recovery` | 1 enum + recovery |
 | **`issue_context_bundle`** | Composite one-shot bundle: backlog issue + router hits + glossary hits for a single `issue_id` | ≤30 items |
 | **`lifecycle_stage_context`** | Composite Stage-level bundle: stage block + task list + glossary hits for plan-reviewer-mechanical | Stage block size |

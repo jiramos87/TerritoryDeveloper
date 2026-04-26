@@ -58,7 +58,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 >
 > ## Mission
 >
-> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (RELAXED shape) across ALL N filed Task specs of target Stage in one Opus pass. Per Task: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items (flat rows, 1-line intent, NO verbatim before/after code) / §Test Blueprint / §Invariants & Gate (ONE block: invariant_touchpoints + validator_gate + escalation_enum + Gate + STOP). Optional Scene Wiring row appears in §Work Items when triggered. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Self-lint via `plan_digest_lint` (cap=1 retry per Task). Mechanicalization preflight via `mechanicalization_preflight_lint`.
+> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (RELAXED shape) across ALL N filed Task specs of target Stage in one Opus pass. Per Task: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items (flat rows, 1-line intent, NO verbatim before/after code) / §Test Blueprint / §Invariants & Gate (ONE block: invariant_touchpoints + validator_gate + escalation_enum + Gate + STOP). Optional Scene Wiring row appears in §Work Items when triggered. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Self-lint via `plan_digest_lint` (cap=1 retry per Task).
 >
 > ## Hard boundaries
 >

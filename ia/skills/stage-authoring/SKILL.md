@@ -12,8 +12,8 @@ description: >-
   §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — intent over
   verbatim code). Stub → digest direct, no intermediate surface. Persists each per-Task §Plan
   Digest body to DB via `task_spec_section_write` MCP. Glossary alignment + retired-surface scan
-  narrowed to §Plan Digest body only. Self-lints via `plan_digest_lint` (cap=1 retry).
-  Mechanicalization preflight via `mechanicalization_preflight_lint`. No aggregate doc compile.
+  narrowed to §Plan Digest body only. Self-lints via `plan_digest_lint` (cap=1 retry). No
+  aggregate doc compile.
   Triggers: "/stage-authoring {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest",
   "author stage tasks". Argument order (explicit): SLUG first, STAGE_ID second.
 phases:
@@ -23,7 +23,6 @@ phases:
   - Token-split guardrail
   - Bulk author §Plan Digest (relaxed shape, direct)
   - Self-lint via plan_digest_lint
-  - Mechanicalization preflight
   - Per-task task_spec_section_write to DB
   - Hand-off
 triggers:
@@ -47,7 +46,6 @@ tools_extra:
   - mcp__territory-ia__plan_digest_verify_paths
   - mcp__territory-ia__plan_digest_scan_for_picks
   - mcp__territory-ia__plan_digest_lint
-  - mcp__territory-ia__mechanicalization_preflight_lint
 caveman_exceptions:
   - code
   - commits
@@ -291,20 +289,9 @@ No aggregate stage doc lint pass — no aggregate doc.
 
 ---
 
-## Phase 6 — Mechanicalization preflight
+## Phase 6 — Per-task task_spec_section_write to DB
 
-Run `mechanicalization-preflight` skill over each per-Task §Plan Digest body:
-
-1. Call `mcp__territory-ia__mechanicalization_preflight_lint({ artifact_path: "db:{ISSUE_ID}", artifact_kind: "plan_digest" })`.
-2. `pass: true` → prepend `mechanicalization_score` YAML header at top of §Plan Digest body per `ia/rules/mechanicalization-contract.md`.
-3. `pass: false` → halt with `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]` for {ISSUE_ID}; do NOT persist artifact.
-4. **Advisory escape hatch:** if `pass: false` AND `failing_fields == ["picks"]` AND Phase 5 `plan_digest_lint` was PASS AND no missing-path findings → prepend `mechanicalization_score: advisory_partial; failing_fields: [picks]; reason: preflight-regex-vs-rich-format-drift` header + continue.
-
----
-
-## Phase 7 — Per-task task_spec_section_write to DB
-
-For each Task with §Plan Digest body finalized + lint PASS + preflight PASS:
+For each Task with §Plan Digest body finalized + lint PASS:
 
 ```
 mcp__territory-ia__task_spec_section_write({
@@ -327,14 +314,14 @@ Errors:
 
 ---
 
-## Phase 8 — Hand-off
+## Phase 7 — Hand-off
 
-### 8.1 Emit hand-off summary
+### 7.1 Emit hand-off summary
 
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; lint=PASS; preflight=PASS.
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; lint=PASS.
   {ISSUE_ID_2}: …
   …
 drift_warnings: {true|false}
@@ -342,7 +329,7 @@ DB writes: {N} task_spec_section_write OK; {K} unchanged.
 next=stage-authoring-chain-continue
 ```
 
-### 8.2 Validate
+### 7.2 Validate
 
 ```bash
 npm run validate:all
@@ -350,13 +337,13 @@ npm run validate:all
 
 Non-zero exit → escalate.
 
-### 8.3 Idempotency on re-entry
+### 7.3 Idempotency on re-entry
 
 - §Plan Digest already populated (relaxed `§Work Items` OR legacy `§Mechanical Steps` sub-heading) AND DB body matches AND lint PASS → record `skipped (already authored)`; no new `task_spec_section_write` call. Do NOT migrate legacy bodies to relaxed shape — leave as-is; downstream implementer reads both.
 - §Plan Digest empty / sentinel `_pending — populated by /stage-authoring_` → fresh authoring pass per Phase 4 (writes relaxed shape).
 - §Plan Digest populated but lint FAIL → re-author per Phase 4 (cap=1 per Task), writing relaxed shape.
 
-### 8.4 Next-step
+### 7.4 Next-step
 
 Dispatcher (`/stage-file`) receives this hand-off and continues to:
 
@@ -389,17 +376,15 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 | Task spec missing for filed `{ISSUE_ID}` (Phase 2) | `STOPPED — task spec missing for {ISSUE_ID}`; route caller to `/stage-file`. |
 | Token-split sub-pass count > N (Phase 3) | Surface counter; user confirms split or aborts. |
 | `plan_digest_lint` PASS=false twice for any Task (Phase 5) | `STOPPED — plan-digest lint critical twice for {ISSUE_ID}`; surface first 5 failures. |
-| `mechanicalization_preflight_lint` PASS=false (Phase 6) outside advisory hatch | `STOPPED — mechanicalization_score: {overall}; failing_fields: [...]` for {ISSUE_ID}. |
-| `task_spec_section_write` `task_not_found` / `section_anchor_ambiguous` (Phase 7) | Escalate; manual edit fallback. |
-| `task_spec_section_write` `db_unavailable` (Phase 7) | Escalate; do NOT silently fall back to filesystem. |
-| Phase 8.2 `validate:all` non-zero | Escalate post-loop; emit stderr. |
+| `task_spec_section_write` `task_not_found` / `section_anchor_ambiguous` (Phase 6) | Escalate; manual edit fallback. |
+| `task_spec_section_write` `db_unavailable` (Phase 6) | Escalate; do NOT silently fall back to filesystem. |
+| Phase 7.2 `validate:all` non-zero | Escalate post-loop; emit stderr. |
 
 ---
 
 ## Cross-references
 
 - [`ia/rules/plan-digest-contract.md`](../../rules/plan-digest-contract.md) — 9-point rubric enforced by `plan_digest_lint`.
-- [`ia/rules/mechanicalization-contract.md`](../../rules/mechanicalization-contract.md) — preflight contract.
 - [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — Scene Wiring step trigger checklist.
 - [`ia/templates/plan-digest-section.md`](../../templates/plan-digest-section.md) — §Plan Digest section template fragment.
 - [`ia/skills/stage-file/SKILL.md`](../stage-file/SKILL.md) — upstream (writes N filed spec stubs + DB rows; tail calls this skill inline).

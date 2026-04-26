@@ -19,7 +19,7 @@ Forward via Agent tool with `subagent_type: "plan-reviewer-mechanical"`:
 >
 > ## Mission
 >
-> Run `ia/skills/plan-review-mechanical/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Checks 3–8: anchor uniqueness, path existence, gate completeness, invariant coverage, glossary consistency, schema drift. Zero drift → PASS sentinel. Drift → write `§Plan Fix — MECHANICAL` tuple list per `ia/rules/plan-apply-pair-contract.md`. Emit `mechanicalization_score` header.
+> Run `ia/skills/plan-review-mechanical/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Checks 3–8: anchor uniqueness, path existence, gate completeness, invariant coverage, glossary consistency, schema drift. Zero drift → PASS sentinel. Drift → write `§Plan Fix — MECHANICAL` tuple list per `ia/rules/plan-apply-pair-contract.md`.
 >
 > ## Hard boundaries
 >

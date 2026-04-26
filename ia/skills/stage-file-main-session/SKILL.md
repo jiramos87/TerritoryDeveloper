@@ -57,7 +57,7 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_R
 
 2. **Execute the full chain inline** for `{MASTER_PLAN_RELATIVE_PATH}` Stage `{STAGE_ID}`:
    - Step 1 — `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + manifest append (`ia/state/backlog-sections.json`) + `ia/projects/{ISSUE_ID}.md` spec stub from template → Post-loop `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
-   - Step 2 — `stage-authoring` bulk Stage 1×N (one Opus pass writes §Plan Digest direct per task via `task_spec_section_write` MCP; self-lints via `plan_digest_lint` cap=1; mechanicalization preflight per task).
+   - Step 2 — `stage-authoring` bulk Stage 1×N (one Opus pass writes §Plan Digest direct per task via `task_spec_section_write` MCP; self-lints via `plan_digest_lint` cap=1).
    - Step 3 — `plan-review`: PASS → Step 4; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
    - Step 4 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
 

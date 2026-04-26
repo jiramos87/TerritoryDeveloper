@@ -34,12 +34,12 @@ Read `ia/skills/stage-file-main-session/SKILL.md` end-to-end. Then read the cano
 
 ## Step 2 — Execute the chain inline
 
-Perform every step from `.claude/commands/stage-file.md` **yourself**, in this session, using territory-ia MCP (`lifecycle_stage_context`, `backlog_list`, `task_insert`, `task_spec_section_write`, `plan_digest_lint`, `mechanicalization_preflight_lint`) + direct file edits (manifest `ia/state/backlog-sections.json` + spec stubs under `ia/projects/` + master-plan task table). Do **not** write yaml under `ia/backlog/`, do **not** call `reserve-id.sh`, do **not** dispatch any subagent (`stage-file`, `stage-authoring`, `plan-reviewer-mechanical`, `plan-reviewer-semantic`, `plan-applier`).
+Perform every step from `.claude/commands/stage-file.md` **yourself**, in this session, using territory-ia MCP (`lifecycle_stage_context`, `backlog_list`, `task_insert`, `task_spec_section_write`, `plan_digest_lint`) + direct file edits (manifest `ia/state/backlog-sections.json` + spec stubs under `ia/projects/` + master-plan task table). Do **not** write yaml under `ia/backlog/`, do **not** call `reserve-id.sh`, do **not** dispatch any subagent (`stage-file`, `stage-authoring`, `plan-reviewer-mechanical`, `plan-reviewer-semantic`, `plan-applier`).
 
 Chain:
 
 1. `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section (slug heuristic / user prompt) → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + manifest append + spec stub from template → Post-loop `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
-2. `stage-authoring` bulk Stage 1×N — direct `§Plan Digest` author (no §Plan Author intermediate); per-Task body persisted via `task_spec_section_write` + transitional filesystem mirror; lint via `plan_digest_lint` (cap=1 retry per Task); mechanicalization preflight via `mechanicalization_preflight_lint`.
+2. `stage-authoring` bulk Stage 1×N — direct `§Plan Digest` author (no §Plan Author intermediate); per-Task body persisted via `task_spec_section_write` + transitional filesystem mirror; lint via `plan_digest_lint` (cap=1 retry per Task).
 3. `plan-reviewer-mechanical` (checks 3–8 — Sonnet pair-head A) → mechanical-tuple-list.
 4. `plan-reviewer-semantic` (checks 1–2 — Opus pair-head B) → SEMANTIC tuple appendix. PASS → STOP; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
 5. STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.

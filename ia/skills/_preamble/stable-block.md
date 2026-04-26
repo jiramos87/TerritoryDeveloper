@@ -17,7 +17,6 @@ cache_control: ephemeral_1h
 @ia/rules/agent-output-caveman.md
 @ia/rules/project-hierarchy.md
 @ia/rules/orchestrator-vs-spec.md
-@ia/rules/mechanicalization-contract.md
 
 ---
 

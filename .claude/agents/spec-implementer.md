@@ -17,8 +17,6 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 
 # Mission
 
-Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
-
 Execute `## §Plan Digest` of the Task spec (DB-backed via `task_spec_section`) end-to-end, minimal diffs. §Plan Digest is the canonical executable plan. Detect shape: relaxed (§Work Items rows = 1-line intent + ONE §Invariants & Gate block) OR legacy (§Mechanical Steps with verbatim Edit tuples + per-step gates). Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing → abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
 
 # Recipe

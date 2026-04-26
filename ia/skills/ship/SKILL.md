@@ -53,7 +53,6 @@ tools_extra:
   - mcp__territory-ia__plan_digest_scan_for_picks
   - mcp__territory-ia__plan_digest_lint
   - mcp__territory-ia__plan_digest_gate_author_helper
-  - mcp__territory-ia__mechanicalization_preflight_lint
   - mcp__territory-ia__unity_compile
   - mcp__territory-ia__unity_bridge_command
   - mcp__territory-ia__unity_bridge_get
@@ -121,10 +120,10 @@ Idempotent readiness check first: `task_spec_section({task_id, section: "§Plan 
 
 Otherwise execute `ia/skills/stage-authoring/SKILL.md` end-to-end with `--task {ISSUE_ID}` flag (bulk pass of N=1). Steps reused verbatim:
 
-- Phase 0–8 of stage-authoring run inline (sequential-dispatch guardrail trivially satisfied; load shared MCP bundle for the single task; bulk author §Plan Digest direct; self-lint via `plan_digest_lint` cap=1; mechanicalization preflight; `task_spec_section_write({task_id, section: "§Plan Digest", body})`).
+- Phase 0–7 of stage-authoring run inline (sequential-dispatch guardrail trivially satisfied; load shared MCP bundle for the single task; bulk author §Plan Digest direct; self-lint via `plan_digest_lint` cap=1; `task_spec_section_write({task_id, section: "§Plan Digest", body})`).
 - Aggregate-doc compile is OUT OF SCOPE (retired). DB sole source.
 
-**Gate:** §Plan Digest written to DB, `plan_digest_lint` PASS, `mechanicalization_preflight_lint` PASS (or TECH-776 advisory hatch on `picks`-only failure). Failure → STOP:
+**Gate:** §Plan Digest written to DB, `plan_digest_lint` PASS. Failure → STOP:
 
 ```
 SHIP {ISSUE_ID}: STOPPED at author — {reason}

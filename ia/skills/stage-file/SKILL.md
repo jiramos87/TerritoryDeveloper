@@ -52,7 +52,6 @@ tools_extra:
   - mcp__territory-ia__task_insert
   - mcp__territory-ia__task_spec_section_write
   - mcp__territory-ia__lifecycle_stage_context
-  - mcp__territory-ia__mechanicalization_preflight_lint
 caveman_exceptions:
   - code
   - commits
