@@ -3,8 +3,8 @@ import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
 import { catalogJsonError, responseFromPostgresError } from "@/lib/catalog/catalog-api-errors";
 import type { CatalogPatchAssetBody } from "@/types/api/catalog-api";
 import { patchCatalogAsset } from "@/lib/catalog/patch-asset";
-
 export const dynamic = "force-dynamic";
+export const routeMeta = { GET: { requires: 'catalog.entity.create' }, PATCH: { requires: 'catalog.entity.edit' } } as const;
 
 type Ctx = { params: Promise<{ id: string }> };
 

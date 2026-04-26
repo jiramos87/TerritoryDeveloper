@@ -3,8 +3,8 @@ import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
 import { computeCatalogAssetPreview } from "@/lib/catalog/preview-diff";
 import { catalogJsonError, responseFromPostgresError } from "@/lib/catalog/catalog-api-errors";
 import type { CatalogPreviewDiffRequest } from "@/types/api/catalog-api";
-
 export const dynamic = "force-dynamic";
+export const routeMeta = { POST: { requires: 'render.run' } } as const;
 
 /**
  * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `POST /api/catalog/preview-diff` (read-only; no `INSERT`/`UPDATE`).

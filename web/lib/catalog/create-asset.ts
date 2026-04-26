@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db/client";
+import type { Sql } from "postgres";
 import type { CatalogCreateAssetBody } from "@/types/api/catalog-api";
 import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
 import { type CatalogSpriteSlot, type CatalogAssetStatus } from "@/types/api/catalog-enums";
@@ -54,10 +55,11 @@ export function validateCreateBody(body: unknown): string | null {
 
 export async function createCatalogAssetTransaction(
   body: CatalogCreateAssetBody,
+  externalTx?: Sql,
 ): Promise<string> {
   const valid = validateCreateBody(body);
   if (valid) throw new Error(`validation: ${valid}`);
-  const sql = getSql();
+  const sql = externalTx ?? getSql();
   const fpw = body.footprint_w ?? 1;
   const fph = body.footprint_h ?? 1;
   const hasButton = body.has_button ?? true;
@@ -77,7 +79,7 @@ export async function createCatalogAssetTransaction(
     throw new Error("validation: cost_catalog_row_id must be a numeric id");
   }
 
-  return await sql.begin(async (tx) => {
+  const runInserts = async (tx: Sql): Promise<string> => {
     const [row] = await tx`
       insert into catalog_asset (
         category, slug, display_name, status, replaced_by,
@@ -124,9 +126,17 @@ export async function createCatalogAssetTransaction(
       `;
     }
     return assetIdStr;
-  });
+  };
+
+  // If caller already owns a tx, run inline (no nested begin). Otherwise wrap.
+  if (externalTx) {
+    return await runInserts(externalTx);
+  }
+  return await (sql as Sql).begin(async (tx) => runInserts(tx as unknown as Sql)) as unknown as string;
 }
 
-export async function getCreatedResponse(id: string) {
-  return loadCatalogAssetById(id);
+export async function getCreatedResponse(id: string, externalTx?: Sql) {
+  // TECH-1351: when wrapped by `withAudit`, read-after-create must run inside
+  // the same tx so the just-inserted row is visible before commit.
+  return loadCatalogAssetById(id, externalTx ? { tx: externalTx } : {});
 }

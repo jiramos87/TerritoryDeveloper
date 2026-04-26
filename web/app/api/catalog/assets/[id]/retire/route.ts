@@ -3,8 +3,8 @@ import { getSql } from "@/lib/db/client";
 import { loadCatalogAssetById } from "@/lib/catalog/fetch-asset-composite";
 import { catalogJsonError, responseFromPostgresError } from "@/lib/catalog/catalog-api-errors";
 import type { CatalogRetireBody } from "@/types/api/catalog-api";
-
 export const dynamic = "force-dynamic";
+export const routeMeta = { POST: { requires: 'catalog.entity.retire' } } as const;
 
 type Ctx = { params: Promise<{ id: string }> };
 

@@ -28,6 +28,7 @@ export type RackProps = {
   tone?: ConsoleChromeTone;
   padding?: ConsoleChromePadding;
   className?: string;
+  id?: string;
   children?: ReactNode;
 };
 
@@ -36,12 +37,14 @@ export function Rack({
   tone = 'default',
   padding = 'md',
   className = '',
+  id,
   children,
 }: RackProps): ReactNode {
   const p = RACK_PADDING[padding];
   const t = RACK_TONE[tone];
   return (
     <div
+      id={id}
       className={`relative rounded-[var(--ds-cd-radius-md)] border border-black ${t} ${p} ${className}`.trim()}
     >
       <span className={`${SCREW} left-1.5 top-1.5`} aria-hidden />

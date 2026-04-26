@@ -9,8 +9,9 @@ import {
   getCreatedResponse,
   validateCreateBody,
 } from "@/lib/catalog/create-asset";
-
+import { withAudit } from "@/lib/audit/with-audit";
 export const dynamic = "force-dynamic";
+export const routeMeta = { GET: { requires: 'catalog.entity.create' }, POST: { requires: 'catalog.entity.create' } } as const;
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -65,28 +66,42 @@ export async function GET(request: NextRequest) {
 
 /**
  * @see `ia/rules/web-backend-logic.md#error-response-envelope` — `POST /api/catalog/assets`
+ *
+ * Wrapped with `withAudit` (TECH-1351) — emits `catalog.asset.create` audit
+ * row inside the same tx as the mutation. Response envelope per DEC-A48:
+ *   `{ ok: true, data, audit_id }`.
  */
-export async function POST(request: NextRequest) {
+const wrappedPost = withAudit<unknown>(async (request, { emit, sql }) => {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return catalogJsonError(400, "bad_request", "Invalid JSON body");
+    throw new Error("validation: Invalid JSON body");
   }
   const v = validateCreateBody(body);
-  if (v) {
-    return catalogJsonError(400, "bad_request", v);
+  if (v) throw new Error(`validation: ${v}`);
+  const id = await createCatalogAssetTransaction(body as CatalogCreateAssetBody, sql);
+  await emit("catalog.asset.create", "catalog_asset", id, {
+    slug: (body as CatalogCreateAssetBody).slug,
+  });
+  const dto = await getCreatedResponse(id, sql);
+  if (dto === "badid" || dto === "notfound") {
+    throw new Error("internal: Read-after-create failed");
   }
+  return { status: 201, data: dto };
+});
+
+export async function POST(request: NextRequest) {
   try {
-    const id = await createCatalogAssetTransaction(body as CatalogCreateAssetBody);
-    const out = await getCreatedResponse(id);
-    if (out === "badid" || out === "notfound") {
-      return catalogJsonError(500, "internal", "Read-after-create failed", { logContext: "post" });
-    }
-    return NextResponse.json(out, { status: 201 });
+    return await wrappedPost(request);
   } catch (e) {
     if (e instanceof Error && e.message?.startsWith("validation:")) {
       return catalogJsonError(400, "bad_request", e.message.replace(/^validation:\s*/i, ""));
+    }
+    if (e instanceof Error && e.message?.startsWith("internal:")) {
+      return catalogJsonError(500, "internal", e.message.replace(/^internal:\s*/i, ""), {
+        logContext: "post",
+      });
     }
     if (e instanceof Error && e.message === "DATABASE_URL not set — required for DB access.") {
       return catalogJsonError(500, "internal", "Database not configured", { logContext: "post" });

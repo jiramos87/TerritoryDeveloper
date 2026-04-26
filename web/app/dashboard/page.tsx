@@ -9,6 +9,8 @@ import type { Chip } from '@/components/FilterChips';
 import { CollapsibleFilterRow } from '@/components/CollapsibleFilterRow';
 import { StatBar } from '@/components/StatBar';
 import { PlanCharts } from '@/components/PlanCharts';
+import { ReleaseCharts } from '@/components/ReleaseCharts';
+import { buildReleaseChartData } from '@/lib/ia/release-data';
 import { CollapsiblePlanStage } from '@/components/CollapsiblePlanStage';
 import { CollapsibleTask } from '@/components/CollapsibleTask';
 import { Markdown } from '@/lib/markdown/render';
@@ -16,21 +18,17 @@ import { loadGlossaryTerms } from '@/lib/glossary/import';
 import { buildGlossaryIndex } from '@/lib/glossary/index-build';
 import { toBadgeStatus } from './_status';
 import { parseFilterValues, toggleFilterParam } from '@/lib/dashboard/filter-params';
+import { toPlanSlug } from '@/lib/dashboard/plan-slug';
 import { Button } from '@/components/Button';
 import { Heading } from '@/components/type/Heading';
 import {
   Bezel,
-  HeatCell,
   Rack,
   Screen,
   Sparkline,
 } from '@/components/console';
-import { CD_WEEK_DENSITY } from '@/lib/cd-week-density';
 
-/** Derive a URL slug from a plan title (lowercase, hyphens). */
-function toSlug(title: string): string {
-  return title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-}
+const toSlug = toPlanSlug;
 
 type MultiParams = { plan: string[]; status: string[] };
 
@@ -150,6 +148,7 @@ export default async function DashboardPage({
 
   const allTasks = allPlans.flatMap((p) => p.allTasks);
   const counts = aggregateTaskCounts(allTasks);
+  const releaseChartData = buildReleaseChartData(allPlans);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
@@ -226,43 +225,10 @@ export default async function DashboardPage({
         </Rack>
       </div>
 
-      <Rack className="mb-2" label="Density // 7 stages × 12 weeks">
+      <Rack className="mb-2" label="Release // MVP completion">
         <Bezel>
-          <div className="px-1 py-1.5">
-            {CD_WEEK_DENSITY.map((row) => (
-              <div
-                key={row.stage}
-                className="mb-0.5 grid items-center gap-1 [grid-template-columns:minmax(100px,220px)_repeat(12,minmax(0,1fr))] min-[600px]:[grid-template-columns:220px_repeat(12,minmax(0,1fr))]"
-              >
-                <span
-                  className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] tracking-wide text-[var(--ds-text-meta)]"
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  {row.stage}
-                </span>
-                {row.cells.map((n, i) => (
-                  <HeatCell
-                    key={i}
-                    n={n}
-                    label={`${row.stage} · wk ${i + 1} · ${n} tasks`}
-                  />
-                ))}
-              </div>
-            ))}
-            <div
-              className="mt-1.5 grid items-center gap-1 [grid-template-columns:minmax(100px,220px)_repeat(12,minmax(0,1fr))] min-[600px]:[grid-template-columns:220px_repeat(12,minmax(0,1fr))]"
-            >
-              <span />
-              {Array.from({ length: 12 }, (_, i) => (
-                <span
-                  key={i}
-                  className="text-center font-mono text-[9px] tracking-wide text-[var(--ds-text-meta)]"
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  W{String(i + 1).padStart(2, '0')}
-                </span>
-              ))}
-            </div>
+          <div className="px-2 py-3">
+            <ReleaseCharts data={releaseChartData} />
           </div>
         </Bezel>
       </Rack>
@@ -295,8 +261,15 @@ export default async function DashboardPage({
           const unfilteredPlan = allPlans.find((p) => p.title === plan.title) ?? plan;
           const { completedCount, totalCount, statBarLabel, chartData, stageCounts } =
             computePlanMetrics(unfilteredPlan);
+          const planSlug = toSlug(plan.title);
+          const detailHref = `/dashboard/plan/${planSlug}`;
           return (
-            <Rack key={plan.title} className="space-y-4" label="Master plan">
+            <Rack
+              key={plan.title}
+              id={`plan-${planSlug}`}
+              className="space-y-4 scroll-mt-4"
+              label="Master plan"
+            >
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-3">
                   <Heading level="h2" className="min-w-0">
@@ -311,6 +284,9 @@ export default async function DashboardPage({
                       {plan.pendingDecomposeCount} pending decompose
                     </span>
                   ) : null}
+                  <Button variant="ghost" size="sm" href={detailHref}>
+                    Detail →
+                  </Button>
                 </div>
                 {plan.description && plan.description.trim() !== '' && (
                   <div className="text-[var(--ds-text-meta)]">
@@ -349,7 +325,7 @@ export default async function DashboardPage({
                   </CollapsiblePlanStage>
                 );
               })}
-              <PlanCharts data={chartData} />
+              <PlanCharts data={chartData} detailHref={detailHref} />
             </Rack>
           );
         })

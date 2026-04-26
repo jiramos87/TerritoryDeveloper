@@ -9,6 +9,10 @@ export interface PlanChartDatum {
   inProgress: number
   done: number
   skeleton?: boolean
+  /** Optional anchor slug — when set, chart marks become interactive (`#plan-{slug}` scroll). */
+  slug?: string
+  /** Optional human-readable status (e.g. "In Progress" / "Final") — shown in ring tooltip. */
+  status?: string
 }
 
 export interface PlanChartProps {
@@ -98,15 +102,28 @@ export default function PlanChart({ data }: PlanChartProps) {
     const xAxis = d3.axisBottom(xOuter)
       .tickFormat(d => (d as string).length > 24 ? (d as string).slice(0, 23) + '\u2026' : d as string)
 
-    g.append('g')
+    const xAxisG = g.append('g')
       .attr('transform', `translate(0, ${innerH})`)
       .call(xAxis)
-      .selectAll('text')
-        .attr('fill', 'var(--color-text-muted)')
-        .attr('transform', 'rotate(-40)')
-        .attr('text-anchor', 'end')
-        .attr('dx', '-0.5em')
-        .attr('dy', '0.25em')
+    xAxisG.selectAll('text')
+      .attr('fill', 'var(--color-text-muted)')
+      .attr('transform', 'rotate(-40)')
+      .attr('text-anchor', 'end')
+      .attr('dx', '-0.5em')
+      .attr('dy', '0.25em')
+
+    // Click-to-scroll: when datum carries a slug, x-axis label navigates to `#plan-{slug}`.
+    const slugByLabel = new Map(data.map(d => [d.label, d.slug]))
+    xAxisG.selectAll<SVGTextElement, string>('text')
+      .style('cursor', d => (slugByLabel.get(d) ? 'pointer' : 'default'))
+      .style('text-decoration', d => (slugByLabel.get(d) ? 'underline' : 'none'))
+      .on('click', (_event, d) => {
+        const slug = slugByLabel.get(d)
+        if (!slug) return
+        document
+          .getElementById(`plan-${slug}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
 
     // Phase 1 — axisLeft
     const yAxis = d3.axisLeft(y)

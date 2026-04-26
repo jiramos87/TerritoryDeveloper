@@ -890,6 +890,30 @@
           "id": "TECH-633",
           "checklist_line": "- [ ] **TECH-633** — **design-system.md §7 CD appendix** (web-platform Stage 24 T24.4)",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1349",
+          "checklist_line": "- [ ] **TECH-1349** — **Users + capability migration** (asset-pipeline Stage 2.1 T2.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1350",
+          "checklist_line": "- [ ] **TECH-1350** — **NextAuth + middleware wiring** (asset-pipeline Stage 2.1 T2.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1351",
+          "checklist_line": "- [ ] **TECH-1351** — **Audit log emitter + library** (asset-pipeline Stage 2.1 T2.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1352",
+          "checklist_line": "- [ ] **TECH-1352** — **validate:capability-coverage validator** (asset-pipeline Stage 2.1 T2.1.4)",
+          "trailing_blanks": 1
         }
       ]
     },

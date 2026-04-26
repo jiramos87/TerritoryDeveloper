@@ -1,3 +1,4 @@
+import type { Sql } from "postgres";
 import { getSql } from "@/lib/db/client";
 import type { CatalogAssetByIdResult } from "@/types/api/catalog-asset-by-id";
 import {
@@ -10,15 +11,18 @@ import {
 /**
  * @see `ia/projects/TECH-641.md` — one round-trip for bindings + sprite rows, plus economy row.
  * Asset row + economy + slots use separate queries; slots query is one join (no N+1).
+ *
+ * Optional `externalTx` (TECH-1351) — read-after-create inside the same tx as the
+ * mutation so `withAudit` can build the response composite before commit.
  */
 export async function loadCatalogAssetById(
   idParam: string,
-  opts: { includeRetired?: boolean } = {},
+  opts: { includeRetired?: boolean; tx?: Sql } = {},
 ): Promise<CatalogAssetByIdResult | "notfound" | "badid"> {
   if (!/^\d{1,32}$/.test(idParam)) return "badid";
   const idNum = Number(idParam);
   if (!Number.isSafeInteger(idNum) || idNum < 1) return "badid";
-  const sql = getSql();
+  const sql = opts.tx ?? getSql();
   const ar = opts.includeRetired
     ? await sql`select * from catalog_asset where id = ${idNum} limit 1`
     : await sql`select * from catalog_asset where id = ${idNum} and status != 'retired' limit 1`;

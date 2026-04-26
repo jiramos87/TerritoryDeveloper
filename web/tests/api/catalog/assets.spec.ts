@@ -87,8 +87,15 @@ describe("catalog api happy path (published only)", () => {
     };
     const res = await invokeRoute(listPost, "POST", "/api/catalog/assets", body);
     expect(res.status).toBe(201);
-    const out = (await res.json()) as { asset: { id: string } };
-    expect(out.asset.id).toMatch(/^\d+$/);
+    // TECH-1351: POST envelope now wrapped via `withAudit` → `{ ok, data, audit_id }`.
+    const out = (await res.json()) as {
+      ok: true;
+      data: { asset: { id: string } };
+      audit_id: string;
+    };
+    expect(out.ok).toBe(true);
+    expect(out.data.asset.id).toMatch(/^\d+$/);
+    expect(out.audit_id).toMatch(/^\d+$/);
   });
 
   test("catalog_patch_returns_200_composite", async () => {

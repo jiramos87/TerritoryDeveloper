@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { BadgeChip, type Status } from '@/components/BadgeChip';
 import { ConsoleMediaShowcase } from '@/components/dev/ConsoleMediaShowcase';
 import { ConsoleChromeShowcase } from '@/components/console/ConsoleChromeShowcase';
-import { HeatCell, Rack } from '@/components/console';
+import { Bezel, HeatCell, Rack } from '@/components/console';
+import { CD_WEEK_DENSITY } from '@/lib/cd-week-density';
 import { Surface } from '@/components/surface/Surface';
 import { Heading, type HeadingLevel } from '@/components/type/Heading';
 import { Prose } from '@/components/type/Prose';
@@ -200,6 +201,46 @@ export default function DesignSystemShowcasePage() {
               ))}
               <span className="ml-3 font-mono text-[10px] text-text-muted">CD density buckets</span>
             </div>
+          </Rack>
+          <Rack label="Density heatmap (CD parity — 7 stages × 12 weeks)">
+            <Bezel>
+              <div className="px-1 py-1.5">
+                {CD_WEEK_DENSITY.map((row) => (
+                  <div
+                    key={row.stage}
+                    className="mb-0.5 grid items-center gap-1 [grid-template-columns:minmax(100px,220px)_repeat(12,minmax(0,1fr))] min-[600px]:[grid-template-columns:220px_repeat(12,minmax(0,1fr))]"
+                  >
+                    <span
+                      className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[10px] tracking-wide text-[var(--ds-text-meta)]"
+                      style={{ letterSpacing: '0.05em' }}
+                    >
+                      {row.stage}
+                    </span>
+                    {row.cells.map((n, i) => (
+                      <HeatCell
+                        key={i}
+                        n={n}
+                        label={`${row.stage} · wk ${i + 1} · ${n} tasks`}
+                      />
+                    ))}
+                  </div>
+                ))}
+                <div
+                  className="mt-1.5 grid items-center gap-1 [grid-template-columns:minmax(100px,220px)_repeat(12,minmax(0,1fr))] min-[600px]:[grid-template-columns:220px_repeat(12,minmax(0,1fr))]"
+                >
+                  <span />
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <span
+                      key={i}
+                      className="text-center font-mono text-[9px] tracking-wide text-[var(--ds-text-meta)]"
+                      style={{ letterSpacing: '0.05em' }}
+                    >
+                      W{String(i + 1).padStart(2, '0')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Bezel>
           </Rack>
           <Rack label="Motion stops (CD parity)">
             <p className="mb-3 text-sm text-text-muted">

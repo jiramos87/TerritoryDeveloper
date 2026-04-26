@@ -6,7 +6,7 @@ import type { PlanRingChartProps } from './PlanRingChart'
 const PlanRingChart = dynamic(() => import('./PlanRingChart'), {
   ssr: false,
   loading: () => (
-    <div className="h-[220px] w-[220px] animate-pulse rounded-full bg-bg-panel" />
+    <div className="h-[232px] w-[232px] animate-pulse rounded-full bg-bg-panel" />
   ),
 })
 

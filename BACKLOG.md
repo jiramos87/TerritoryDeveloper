@@ -663,6 +663,22 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 ### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
 
+- [ ] **TECH-1349** — **Users + capability migration** (asset-pipeline Stage 2.1 T2.1.1)
+  - Acceptance — migration applies clean; seeds admin / author / viewer + capability rows per DEC-A33; `npm run db:migrate` exit 0.
+  - Spec — [`ia/projects/TECH-1349.md`](ia/projects/TECH-1349.md)
+
+- [ ] **TECH-1350** — **NextAuth + middleware wiring** (asset-pipeline Stage 2.1 T2.1.2)
+  - Acceptance — every `/api/catalog/*` declares `requires`; forbidden envelope shape matches DEC-A48; dev-cookie fallback works locally.
+  - Spec — [`ia/projects/TECH-1350.md`](ia/projects/TECH-1350.md)
+
+- [ ] **TECH-1351** — **Audit log emitter + library** (asset-pipeline Stage 2.1 T2.1.3)
+  - Acceptance — every mutating route emits one audit_log row; response envelope carries `audit_id` per DEC-A48.
+  - Spec — [`ia/projects/TECH-1351.md`](ia/projects/TECH-1351.md)
+
+- [ ] **TECH-1352** — **validate:capability-coverage validator** (asset-pipeline Stage 2.1 T2.1.4)
+  - Acceptance — validator asserts every route's `requires` exists in `capability` table; wired into `validate:all`; exit clean on green tree.
+  - Spec — [`ia/projects/TECH-1352.md`](ia/projects/TECH-1352.md)
+
 ## High Priority
 
 <!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->
