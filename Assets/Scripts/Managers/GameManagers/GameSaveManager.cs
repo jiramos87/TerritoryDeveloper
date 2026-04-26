@@ -8,6 +8,7 @@ using Territory.Timing;
 using Territory.Roads;
 using Territory.Geography;
 using Territory.Simulation;
+using Territory.Simulation.Signals;
 using Territory.Terrain;
 using Territory.UI;
 using Territory.Audio;
@@ -133,6 +134,10 @@ public class GameSaveManager : MonoBehaviour
         WaterManager waterManagerForSave = FindObjectOfType<WaterManager>();
         if (waterManagerForSave != null && waterManagerForSave.GetWaterMap() != null)
             saveData.waterMapData = waterManagerForSave.GetWaterMap().GetSerializableData();
+        DistrictManager districtManagerForSave = FindObjectOfType<DistrictManager>();
+        saveData.districtMap = (districtManagerForSave != null && districtManagerForSave.Map != null)
+            ? districtManagerForSave.Map.GetSerializableData()
+            : null;
         saveData.cityStats = cityStats.GetCityStatsData();
         saveData.isConnectedToInterstate = interstateManager != null && interstateManager.IsConnectedToInterstate;
         RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
@@ -247,6 +252,15 @@ public class GameSaveManager : MonoBehaviour
             if (waterManager != null)
                 waterManager.MigrateWaterBodyIdsAfterGridRestore();
 
+            DistrictManager districtManagerForLoad = FindObjectOfType<DistrictManager>();
+            if (districtManagerForLoad != null)
+            {
+                if (saveData.districtMap != null && districtManagerForLoad.Map != null)
+                    districtManagerForLoad.Map.RestoreFromSerializableData(saveData.districtMap);
+                else
+                    districtManagerForLoad.Rebuild();
+            }
+
             if (miniMapController != null)
                 miniMapController.RebuildTexture();
 
@@ -295,6 +309,7 @@ public class GameSaveManager : MonoBehaviour
     /// Run post-deserialize, pre-restore. Idempotent — safe to call on already-migrated data.
     /// Schema 0 → 1: allocate placeholder GUIDs for missing <c>regionId</c> / <c>countryId</c>.
     /// Schema 3 → 4: seed <c>stateServiceZones</c> empty + <c>budgetAllocation</c> equal-envelope default.
+    /// Schema 4 → 5: <c>districtMap</c> left untouched (null stays null — <see cref="LoadGame"/> falls back to <c>DistrictManager.Rebuild()</c>; non-null payload preserved byte-identical).
     /// </summary>
     static void MigrateLoadedSaveData(GameSaveData data)
     {
@@ -419,6 +434,8 @@ public class GameSaveData
     public int gridHeight;
     /// <summary>Serialized <see cref="Territory.Terrain.WaterMap"/> state. Null → legacy saves.</summary>
     public WaterMapData waterMapData;
+    /// <summary>Serialized <see cref="Territory.Simulation.Signals.DistrictMap"/> state. Null → schema ≤ 4 saves; <see cref="LoadGame"/> falls back to <c>DistrictManager.Rebuild()</c>. Added schema 5.</summary>
+    public DistrictMapData districtMap;
     public bool isConnectedToInterstate;
     public RegionalMap regionalMap;
 
@@ -434,8 +451,9 @@ public class GameSaveData
     /// Schema 3 adds <c>neighborCityBindings</c> (interstate border exit bindings).
     /// Schema 4 adds <c>budgetAllocation</c> + <c>stateServiceZones</c> (envelope budget + state-service zone registry — Stage 1.3 Phase 3)
     /// + <c>bondRegistry</c> (bond ledger active bonds — Stage 4).
+    /// Schema 5 adds <c>districtMap</c> (Stage 3 District layer — per-cell <see cref="DistrictMap"/> ordinal round-trip).
     /// </summary>
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 
     /// <summary>
     /// Neighbor-city stubs at this city's interstate map borders.

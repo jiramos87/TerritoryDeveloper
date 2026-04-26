@@ -4,16 +4,18 @@ using UnityEngine;
 
 namespace Territory.Simulation.Signals
 {
-    /// <summary>Per-tick orchestrator for the city-sim depth signal phase: producers → diffusion → rollup-stub → consumers. Inspector-resolved deps; no <c>FindObjectOfType</c> in <see cref="Tick"/>. See <c>simulation-signals.md</c> §Interface contract.</summary>
+    /// <summary>Per-tick orchestrator for the city-sim depth signal phase: district rebuild → producers → diffusion → district rollup → consumers. Inspector-resolved deps; no <c>FindObjectOfType</c> in <see cref="Tick"/>. See <c>simulation-signals.md</c> §Interface contract.</summary>
     public class SignalTickScheduler : MonoBehaviour
     {
         [SerializeField] private SignalFieldRegistry registry;
         [SerializeField] private SignalMetadataRegistry metadata;
+        [SerializeField] private DistrictManager districtManager;
         [SerializeField] private List<MonoBehaviour> producerList = new List<MonoBehaviour>();
         [SerializeField] private List<MonoBehaviour> consumerList = new List<MonoBehaviour>();
 
         private List<ISignalProducer> _producers = new List<ISignalProducer>();
         private List<ISignalConsumer> _consumers = new List<ISignalConsumer>();
+        private DistrictSignalCache _cache;
         private static readonly int SignalCount = Enum.GetValues(typeof(SimulationSignal)).Length;
 
         private void Awake()
@@ -23,10 +25,20 @@ namespace Territory.Simulation.Signals
                 registry = FindObjectOfType<SignalFieldRegistry>();
             }
 
+            if (districtManager == null)
+            {
+                districtManager = FindObjectOfType<DistrictManager>();
+            }
+
             if (metadata == null)
             {
                 Debug.LogError("SignalTickScheduler.metadata not assigned — must be Inspector-set (ScriptableObject asset). Aborting setup.");
                 return;
+            }
+
+            if (_cache == null)
+            {
+                _cache = new DistrictSignalCache();
             }
 
             _producers.Clear();
@@ -58,12 +70,18 @@ namespace Territory.Simulation.Signals
             }
         }
 
-        /// <summary>Run one signal-phase tick: producers emit, diffusion runs over every signal field, rollup deferred to Stage 3, consumers read post-diffusion state.</summary>
+        /// <summary>Run one signal-phase tick: district rebuild → producers emit → diffusion over every signal field → <see cref="DistrictAggregator"/> rollup → consumers read post-rollup state.</summary>
         public void Tick(float deltaSeconds)
         {
             if (registry == null || metadata == null)
             {
                 return;
+            }
+
+            // Phase 0 — DistrictMap rebuild (refresh per-cell district ids before producers run).
+            if (districtManager != null)
+            {
+                districtManager.Rebuild();
             }
 
             // Phase 1 — producers.
@@ -81,12 +99,16 @@ namespace Territory.Simulation.Signals
                 DiffusionKernel.Apply(field, meta);
             }
 
-            // Phase 3 — DistrictAggregator (DistrictSignalCache aggregator lands in Stage 3 — no-op until then).
+            // Phase 3 — DistrictAggregator: roll signal fields into per-district mean / P90 cache.
+            if (districtManager != null && districtManager.Map != null)
+            {
+                DistrictAggregator.Aggregate(registry, districtManager.Map, metadata, _cache);
+            }
 
-            // Phase 4 — consumers (cache stays null until Stage 3).
+            // Phase 4 — consumers (cache populated when district manager wired; empty Clear-state otherwise).
             for (int i = 0; i < _consumers.Count; i++)
             {
-                _consumers[i].ConsumeSignals(registry, null);
+                _consumers[i].ConsumeSignals(registry, _cache);
             }
         }
     }
