@@ -12,7 +12,7 @@ Run [`ia/skills/stage-authoring/SKILL.md`](../../ia/skills/stage-authoring/SKILL
 6. **Phase 4 — Bulk author §Plan Digest (relaxed shape, direct)** — Single Opus call returns map `{ISSUE_ID → §Plan Digest body}`. Each body in RELAXED shape: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate. §Work Items = flat list of `{repo-relative-path}: {1-line intent}` rows — NO verbatim before/after code. §Invariants & Gate = ONE block per digest carrying `invariant_touchpoints`, `validator_gate`, `escalation_enum`, **Gate:** + **STOP:**. Scene Wiring (when triggered per `ia/rules/unity-scene-wiring.md`) appears as a single §Work Items row prefixed `(Scene Wiring)`. Same pass runs canonical-term fold sub-check 4.5a (glossary alignment in digest body only) + 4.5b (retired-surface tombstone scan in digest body only — load `ia/skills/_retired/`, `.claude/agents/_retired/`, `.claude/commands/_retired/` once per Stage). 4.5c (template-section allowlist) + 4.5d (cross-ref task-id resolver) + 4.5e (stage-level summary) DROPPED — DB writes its own template; cross-refs resolve at implement time.
 7. **Phase 5 — Self-lint via plan_digest_lint** — Per-Task call `plan_digest_lint({content})`. PASS=true → continue. PASS=false → revise + re-run once (cap=1). Second failure → halt.
 8. **Phase 6 — Per-task task_spec_section_write to DB** — For each Task: `task_spec_section_write({task_id, section: "§Plan Digest", body})`. DB sole persistence — no filesystem mirror. `db_unavailable` → escalate.
-9. **Phase 7 — Hand-off** — Emit caveman summary (per-Task §Plan Digest counts + fold counters + lint verdicts + DB write counts + `drift_warnings` flag). Run `npm run validate:all`. Idempotent on re-entry.
+9. **Phase 7 — Hand-off** — Emit caveman summary (per-Task §Plan Digest counts + fold counters + lint verdicts + DB write counts + `drift_warnings` flag). Run narrow gate `npm run validate:master-plan-status` only — NOT `validate:all`. Per-Task `plan_digest_lint` (Phase 5) is the per-spec gate; `validate:all` chains 20 sub-validators (Jest, builds, fixtures, web, mcp tooling) that touch surfaces stage-authoring did not modify. Heavy chain belongs in `/ship-stage` Pass B. Idempotent on re-entry.
 
 # Hard boundaries
 
@@ -33,7 +33,7 @@ Run [`ia/skills/stage-authoring/SKILL.md`](../../ia/skills/stage-authoring/SKILL
 
 # Escalation shape
 
-`{escalation: true, phase: N, reason: "...", task_id?: "...", failing_fields?: [...], stderr?: "..."}` — returned to dispatcher. See SKILL.md §Escalation rules for full trigger list (task spec missing, token-split overflow, plan_digest_lint critical twice, task_spec_section_write task_not_found / section_anchor_ambiguous / db_unavailable, validate:all non-zero).
+`{escalation: true, phase: N, reason: "...", task_id?: "...", failing_fields?: [...], stderr?: "..."}` — returned to dispatcher. See SKILL.md §Escalation rules for full trigger list (task spec missing, token-split overflow, plan_digest_lint critical twice, task_spec_section_write task_not_found / section_anchor_ambiguous / db_unavailable, validate:master-plan-status non-zero).
 
 # Output
 

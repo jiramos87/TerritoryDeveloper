@@ -28,7 +28,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 > - Do NOT edit `ia/specs/glossary.md` — propose candidates in §Open Questions only.
 > - Do NOT commit — user decides.
 
-`stage-authoring` must return success + N specs with §Plan Digest written to DB + lint PASS + `validate:all` exit 0 before chain success. Escalation → abort with handoff `/stage-authoring {SLUG} {STAGE_ID}` for re-run after manual fix.
+`stage-authoring` must return success + N specs with §Plan Digest written to DB + lint PASS + `validate:master-plan-status` exit 0 before chain success. Heavy `validate:all` is NOT run here — chains Jest, builds, fixtures, web, mcp tooling, telemetry, etc. that touch surfaces stage-authoring did not modify. Heavy gate belongs in `/ship-stage` Pass B (post-implementation). Escalation → abort with handoff `/stage-authoring {SLUG} {STAGE_ID}` for re-run after manual fix.
 
 ## Output
 

@@ -331,11 +331,17 @@ next=stage-authoring-chain-continue
 
 ### 7.2 Validate
 
+Stage-authoring writes only `§Plan Digest` bodies via `task_spec_section_write` MCP (DB rows). Per-Task `plan_digest_lint` already runs in Phase 4 — that is the per-spec integrity gate.
+
+Run only the narrow gate that covers cross-Task / master-plan rollup drift:
+
 ```bash
-npm run validate:all
+npm run validate:master-plan-status
 ```
 
 Non-zero exit → escalate.
+
+Do NOT run `validate:all` here — chains 20 sub-validators (Jest `test:ia`, `compute-lib:build`, fixtures, web, mcp tooling, telemetry, runtime-state, cache-block, skill-drift, …) that touch surfaces stage-authoring did not modify. Heavy chain belongs in `/ship-stage` Pass B (post-implementation), not in plan-only DB writes.
 
 ### 7.3 Idempotency on re-entry
 
@@ -378,7 +384,7 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 | `plan_digest_lint` PASS=false twice for any Task (Phase 5) | `STOPPED — plan-digest lint critical twice for {ISSUE_ID}`; surface first 5 failures. |
 | `task_spec_section_write` `task_not_found` / `section_anchor_ambiguous` (Phase 6) | Escalate; manual edit fallback. |
 | `task_spec_section_write` `db_unavailable` (Phase 6) | Escalate; do NOT silently fall back to filesystem. |
-| Phase 7.2 `validate:all` non-zero | Escalate post-loop; emit stderr. |
+| Phase 7.2 `validate:master-plan-status` non-zero | Escalate post-loop; emit stderr. |
 
 ---
 
