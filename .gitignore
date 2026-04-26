@@ -94,3 +94,7 @@ mono_crash.*
 
 # Local-only mutable state — DB snapshots, scratch dumps. Reproducible from db:snapshot:freeze.
 var/
+
+var/blobs/
+
+!var/blobs/.gitkeep

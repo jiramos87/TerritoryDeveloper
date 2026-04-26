@@ -30,6 +30,10 @@ Repo `.claude/settings.json` disables **vercel@claude-plugins-official** so Clau
 | Linting | ESLint (eslint-config-next) |
 | Deploy | Vercel (free tier) |
 
+## BLOB_ROOT env var (DEC-A25 swap point)
+
+`web/lib/blob-resolver.ts` translates `gen://{run_id}/{variant_idx}` URIs to local paths. The blob root is taken from `BLOB_ROOT` (env) when set, otherwise the repo-local `var/blobs/` dir. Future hosted blob stores swap in via this single env-var flip — no other module edits required (DEC-A25). Run `bash tools/scripts/bootstrap-blob-root.sh` once to create the local dir + `.gitignore` rules.
+
 ## Local dev
 
 ```bash

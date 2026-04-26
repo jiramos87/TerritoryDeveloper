@@ -1013,6 +1013,7 @@ CREATE INDEX catalog_snapshot_tags_gin ON catalog_snapshot USING GIN (tags);
 - GC policy (deferred, schema-forward): `render_run` table tracks `last_referenced_at`; sweep job deletes blobs unreferenced for N days. Not built in MVP — disk is cheap on dev machine.
 - Sprite-gen Python tool writes via blob root env var (`BLOB_ROOT=/abs/path/var/blobs`), not hardcoded `out/` dir. CLI default falls back to `tools/sprite-gen/out/` only when env unset (back-compat).
 - Validation: `validate:blob-roots` (new) asserts every `gen://` URI in `catalog_sprite` resolves to existing file in `var/blobs/`.
+- BlobResolver implementations (TECH-1435): TS — `web/lib/blob-resolver.ts`; Python — `tools/sprite-gen/src/blob_resolver.py`. Both read `BLOB_ROOT` env var; fall back to repo-local `var/blobs/`. Bootstrap: `tools/scripts/bootstrap-blob-root.sh`.
 
 ### DEC-A24: Slug rules — **B) Strict format, frozen after first publish**
 

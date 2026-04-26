@@ -39,6 +39,41 @@ pip install -r requirements.txt
 - Art / calibration source: `docs/sprite-gen-art-design-system.md` (DAS)
 - User-facing field reference: `docs/sprite-gen-usage.md` (ground, `footprint_ratio`, `levels`, R11 `building` block)
 
+## Run as service
+
+`tools/sprite-gen` also runs as a long-lived FastAPI service (DEC-A3) so the
+web Authoring Console can drive render/promote without shelling out.
+
+```bash
+# Boot FastAPI on 127.0.0.1:8765 (default port)
+python -m src serve
+
+# Override port (env, takes precedence)
+SPRITE_GEN_PORT=9001 python -m src serve
+```
+
+Endpoints (TECH-1433 scope — typed Pydantic bodies arrive in TECH-1434):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/list-archetypes` | List archetype slugs from `specs/` |
+| GET | `/list-palettes` | List palette ids from `palettes/` |
+| POST | `/render` | Run compose pipeline; emit variants under `BLOB_ROOT` |
+| POST | `/promote` | Promote a `gen://` blob to a target slug |
+| GET | `/healthz` | Liveness probe (dev convenience) |
+
+Render output root: honours `BLOB_ROOT` env var when set; otherwise falls
+back to the legacy `tools/sprite-gen/out/` dir until TECH-1435 wires the
+canonical `var/blobs/` swap point (DEC-A25).
+
+## BLOB_ROOT env var (DEC-A25 swap point)
+
+`BLOB_ROOT` overrides the canonical blob root used by the service render
+output and (post-TECH-1435) the `BlobResolver` lookup path. Default: a
+repo-local `var/blobs/` root resolved relative to the repo root. Future
+hosted blob stores swap in via this single env-var flip — no module edits
+required.
+
 ## Status
 
 `out/` is gitignored — rendered sprites are ephemeral until promoted.

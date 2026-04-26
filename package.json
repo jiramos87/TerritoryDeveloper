@@ -9,9 +9,11 @@
   "scripts": {
     "compute-lib:build": "npm --prefix tools/compute-lib run build",
     "validate:runtime-state": "node tools/scripts/validate-runtime-state.mjs",
-    "validate:all": "npm run validate:master-plan-status && npm run validate:backlog-yaml && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run validate:backfill-fixtures && npm run generate:ia-indexes -- --check && npm run validate:web:conditional && npm run validate:telemetry-schema && npm run validate:runtime-state && npm run validate:cache-block-sizing && npm run validate:claude-imports && npm run validate:capability-coverage && npm run validate:agent-tools-uniformity && npm run validate:agent-tools && npm run validate:skill-drift && npm run validate:mcp-readme && npm run validate:mcp-descriptor-prose",
+    "validate:all": "npm run validate:master-plan-status && npm run validate:backlog-yaml && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run validate:backfill-fixtures && npm run generate:ia-indexes -- --check && npm run validate:web:conditional && npm run validate:telemetry-schema && npm run validate:runtime-state && npm run validate:cache-block-sizing && npm run validate:claude-imports && npm run validate:capability-coverage && npm run validate:sprite-gen-schema && npm run validate:blob-roots && npm run validate:agent-tools-uniformity && npm run validate:agent-tools && npm run validate:skill-drift && npm run validate:mcp-readme && npm run validate:mcp-descriptor-prose",
     "validate:claude-imports": "npx tsx tools/scripts/validate-claude-imports.ts",
     "validate:capability-coverage": "npx tsx tools/scripts/validate-capability-coverage.ts",
+    "validate:sprite-gen-schema": "npx tsx tools/scripts/validate-sprite-gen-schema.ts",
+    "validate:blob-roots": "npx tsx tools/scripts/validate/validate-blob-roots.ts",
     "validate:mcp-readme": "node tools/scripts/validate-mcp-readme.mjs",
     "validate:mcp-descriptor-prose": "node tools/scripts/validate-mcp-descriptor-prose.mjs",
     "validate:cache-block-sizing": "npx tsx tools/scripts/validate-cache-block-sizing.ts",

@@ -1,0 +1,71 @@
+{
+  "_groups_order": ["render", "promote"],
+  "render": {
+    "archetype": {
+      "control": "select",
+      "group": "render",
+      "label": "Archetype",
+      "source_endpoint": "/list-archetypes"
+    },
+    "terrain": {
+      "control": "select",
+      "group": "render",
+      "label": "Terrain override",
+      "options": [
+        "flat",
+        "N", "S", "E", "W",
+        "NE", "NW", "SE", "SW",
+        "NE-up", "NW-up", "SE-up", "SW-up",
+        "NE-bay", "NW-bay", "NW-bay-2", "SE-bay", "SW-bay"
+      ]
+    },
+    "layered": {
+      "control": "toggle",
+      "group": "render",
+      "label": "Co-emit layered .aseprite"
+    },
+    "params": {
+      "control": "json",
+      "group": "render",
+      "label": "Inline spec overrides"
+    }
+  },
+  "promote": {
+    "source_uri": {
+      "control": "text",
+      "group": "promote",
+      "label": "Source gen:// URI"
+    },
+    "src": {
+      "control": "text",
+      "group": "promote",
+      "label": "Source local path (CLI)"
+    },
+    "dest_name": {
+      "control": "text",
+      "group": "promote",
+      "label": "Destination slug"
+    },
+    "slug": {
+      "control": "text",
+      "group": "promote",
+      "label": "Destination slug (web alias)"
+    },
+    "edit": {
+      "control": "toggle",
+      "group": "promote",
+      "label": "Flatten .aseprite (--edit)"
+    },
+    "no_push": {
+      "control": "toggle",
+      "group": "promote",
+      "label": "Skip catalog push (--no-push)"
+    },
+    "archetype": {
+      "control": "select",
+      "group": "promote",
+      "label": "Archetype tag",
+      "source_endpoint": "/list-archetypes"
+    }
+  }
+}
