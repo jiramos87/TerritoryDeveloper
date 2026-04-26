@@ -36,7 +36,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 >
 > ## Mission
 >
-> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (no §Plan Author intermediate) across ALL N filed Task specs of target Stage in one Opus pass. Per Task: Goal / Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with Edits + Gate + STOP + MCP hints + invariant_touchpoints + validator_gate + optional Scene Wiring step. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Self-lint via `plan_digest_lint` (cap=1 retry per Task). Mechanicalization preflight via `mechanicalization_preflight_lint`.
+> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (RELAXED shape) across ALL N filed Task specs of target Stage in one Opus pass. Per Task: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items (flat rows, 1-line intent, NO verbatim before/after code) / §Test Blueprint / §Invariants & Gate (ONE block: invariant_touchpoints + validator_gate + escalation_enum + Gate + STOP). Optional Scene Wiring row appears in §Work Items when triggered. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Self-lint via `plan_digest_lint` (cap=1 retry per Task). Mechanicalization preflight via `mechanicalization_preflight_lint`.
 >
 > ## Hard boundaries
 >
@@ -46,74 +46,17 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 > - Do NOT write task spec bodies to filesystem — DB only via `task_spec_section_write`.
 > - Idempotent on re-entry: skip Tasks whose `§Plan Digest` is already populated AND lint passes.
 
-`stage-authoring` must return success + N specs with populated `§Plan Digest` + lint PASS before Step 3. Failure → abort chain with handoff `/stage-authoring {SLUG} {STAGE_ID}`.
+`stage-authoring` must return success + N specs with populated `§Plan Digest` + lint PASS before chain stops. Failure → abort chain with handoff `/stage-authoring {SLUG} {STAGE_ID}`.
 
-## Step 3 — Dispatch `plan-reviewer-mechanical` (Sonnet pair-head A)
+## Step 3 — Boundary stop (NO auto-chain to ship-stage)
 
-Forward via Agent tool with `subagent_type: "plan-reviewer-mechanical"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
-
-> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
->
-> ## Mission
->
-> Run mechanical drift scan (checks 3–8) across N Task specs of Stage `{STAGE_ID}` of `{SLUG}`. Compose `§Plan Fix` tuples from MCP query output (`lifecycle_stage_context`, `spec_section`, `glossary_*`, `invariant_preflight`, `master_plan_locate`, `mechanicalization_preflight_lint`).
->
-> ## Hard boundaries
->
-> - Do NOT mutate Task specs directly.
-> - Do NOT run semantic checks 1–2 — those belong to pair-head B (`plan-reviewer-semantic`).
-> - Do NOT commit.
-
-Mechanical pass must return mechanical-tuple-list (possibly empty) before Step 3b.
-
-## Step 3b — Dispatch `plan-reviewer-semantic` (Opus pair-head B)
-
-Forward via Agent tool with `subagent_type: "plan-reviewer-semantic"` (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`):
-
-> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
->
-> ## Mission
->
-> Run semantic drift scan (checks 1 goal–intent, 2 impl-plan completeness) over Stage `{STAGE_ID}` of `{SLUG}`. Read mechanical pass output as input bundle. Emit `§Plan Fix — SEMANTIC` tuple appendix under Stage block per `ia/rules/plan-apply-pair-contract.md`.
->
-> ## Hard boundaries
->
-> - Do NOT mutate Task specs directly — critical → emit tuples + hand off to `plan-applier` Mode plan-fix.
-> - Do NOT edit master-plan task table.
-> - Do NOT run validators.
-> - Do NOT commit.
-
-Branching:
-
-- **PASS** (no critical tuples from either pair-head) → continue to Step 4 (STOP).
-- **critical** (tuples written) → dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail) to apply tuples verbatim; re-dispatch `plan-reviewer-mechanical` + `plan-reviewer-semantic`. Re-entry cap = 1. Second critical → abort chain with `STOPPED at plan-review — STAGE_PLAN_REVIEW_CRITICAL_TWICE` + handoff `/plan-review {SLUG} {STAGE_ID}` for human review.
-
-### Step 3c — Dispatch `plan-applier` Mode plan-fix (Sonnet pair-tail; only on critical) (when `FORCE_MODEL` set: pass `model: "{FORCE_MODEL}"`)
-
-> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
->
-> ## Mission
->
-> Run `ia/skills/plan-applier/SKILL.md` — Mode plan-fix on Stage `{STAGE_ID}` of `{SLUG}`. Read `§Plan Fix` tuples verbatim (mechanical + semantic appendix). Apply in declared order. Run `npm run validate:master-plan-status` gate after all edits. Idempotent.
->
-> ## Hard boundaries
->
-> - Do NOT re-query MCP for anchor resolution.
-> - Do NOT re-order tuples or interpret payloads.
-> - Do NOT write normative prose.
-> - Do NOT commit.
-
-After applier success → re-dispatch Step 3 + Step 3b.
-
-## Step 4 — Boundary stop (NO auto-chain to ship-stage)
-
-`/stage-file` STOPS at plan-review PASS. Do NOT auto-invoke `/ship-stage`. User decides when to ship.
+`/stage-file` STOPS at `stage-authoring` lint PASS. Do NOT auto-invoke `/ship-stage`. User decides when to ship.
 
 Rationale: preserve explicit user gate between authoring and shipping; user can inspect populated specs before shipping.
 
 ## Output
 
-Chain completion summary: tasks filed ids + `§Plan Digest` populated per spec (after stage-authoring) + plan-review PASS + validators ok + next-step proposal. Emit exactly:
+Chain completion summary: tasks filed ids + `§Plan Digest` populated per spec (after stage-authoring) + validators ok + next-step proposal. Emit exactly:
 
 - **N≥2:** `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID}"` — runs implement + verify + code-review + inline closeout.
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"` — single-task path (no ship-stage).

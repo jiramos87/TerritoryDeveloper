@@ -80,7 +80,7 @@ Single call — do NOT re-query glossary / router / invariants per-Task. Use ret
 
 For each `{TASK_ID}` in `task_ids[]`:
 
-1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Plan Digest"})` → §Goal / §Acceptance / §Mechanical Steps (what was planned).
+1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "§Plan Digest"})` → §Goal + §Acceptance + (§Work Items relaxed shape OR §Mechanical Steps legacy shape) — what was planned. Literal `§` prefix required (see [`plan-digest-contract.md` §Section heading literal](../../rules/plan-digest-contract.md)).
 2. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Verification"})` → what verify-loop confirmed.
 3. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Code Review"})` → review verdict + any caveats.
 4. Hold all N payloads in memory as `task_reads[{id, plan_digest, verification, code_review}]`.
@@ -91,7 +91,7 @@ For each `{TASK_ID}` in `task_ids[]`:
 
 Single synthesis round over all N `task_reads`. For each Task, produce one paragraph:
 
-> **§Audit** prose = "What was built" (from §Plan Digest §Goal + §Mechanical Steps) + "What the verify loop confirmed" (from §Verification) + "What review caught" (from §Code Review verdict + findings) + "What to watch" (caveats, deferred issues, glossary terms introduced). Consistent voice across all N paragraphs. No per-Task MCP re-queries.
+> **§Audit** prose = "What was built" (from §Plan Digest §Goal + §Work Items / §Mechanical Steps depending on shape) + "What the verify loop confirmed" (from §Verification) + "What review caught" (from §Code Review verdict + findings) + "What to watch" (caveats, deferred issues, glossary terms introduced). Consistent voice across all N paragraphs. No per-Task MCP re-queries.
 
 Collect into `audit_paragraphs[{task_id, paragraph}]`.
 

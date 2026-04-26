@@ -19,13 +19,13 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 
 Read `mechanicalization_score` header from input artifact. If `overall != fully_mechanical` → emit `{escalation: true, reason: "mechanicalization_score: {overall}", failing_fields: [...]}` and exit.
 
-Execute `## §Plan Digest` (§Mechanical Steps sub-section) of `ia/projects/{ISSUE_ID}*.md` end-to-end, step by step, minimal diffs. §Plan Digest is the canonical executable plan. Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing → abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
+Execute `## §Plan Digest` of the Task spec (DB-backed via `task_spec_section`) end-to-end, minimal diffs. §Plan Digest is the canonical executable plan. Detect shape: relaxed (§Work Items rows = 1-line intent + ONE §Invariants & Gate block) OR legacy (§Mechanical Steps with verbatim Edit tuples + per-step gates). Read spec first, then implement. Verification per agent-led policy after each substantive change. If §Plan Digest missing → abort with `SPEC_NOT_DIGESTED: {ISSUE_ID}`.
 
 # Recipe
 
 Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Phase loop:
 
-1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §Plan Digest (§Mechanical Steps), §9 Issues Found, §10 Lessons Learned. Start at first unticked step.
+1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §Plan Digest (relaxed §Work Items OR legacy §Mechanical Steps), §9 Issues Found, §10 Lessons Learned. Start at first unticked step.
 1b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for ISSUE_ID in task table. Flip `In Review → In Progress` (or `Draft → In Progress` if kickoff skipped) in Status column. Update top-of-file `> **Status:**` pointer. No match → log one line; continue.
 2. **MCP context per phase** — `mcp__territory-ia__issue_context_bundle({ issue_id })` (composite bundle — pending registration; replaces sequential `backlog_issue` → `router_for_task` → `glossary_discover` → `spec_section` chain). Invariants flow through `plan-digest` tuple `invariant_touchpoints` fields — query via those fields, not a separate invariant tool call. Never load whole `ia/specs/*.md` when slices suffice.
 

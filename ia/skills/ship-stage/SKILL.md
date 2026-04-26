@@ -166,8 +166,8 @@ Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as
 ## Step 3 — §Plan Digest readiness gate
 
 For each task in `PENDING_TASKS`:
-- Call `task_spec_section(task_id, "Plan Digest")`.
-- Treat as **digested** when section exists AND content is non-empty AND no line matches `_pending` case-insensitively AND sub-headings `§Goal`, `§Acceptance`, `§Mechanical Steps` present.
+- Call `task_spec_section(task_id, "§Plan Digest")` (literal `§` prefix — see [`plan-digest-contract.md` §Section heading literal](../../rules/plan-digest-contract.md)).
+- Treat as **digested** when section exists AND content is non-empty AND no line matches `_pending` case-insensitively AND sub-headings `§Goal` + `§Acceptance` + (`§Work Items` OR `§Mechanical Steps`) present. Both digest shapes (relaxed §Work Items / legacy §Mechanical Steps) are valid; implementer detects shape per `ia/skills/project-spec-implement/SKILL.md` step 3.
 
 **If ALL digested:** continue to Step 4.
 
@@ -219,7 +219,7 @@ CURRENT_TASK_ID = task.task_id
 
 Dispatch `spec-implementer` subagent (Sonnet):
 
-> Mission: Execute §Plan Digest §Mechanical Steps for `{CURRENT_TASK_ID}` end-to-end. Read §Plan Digest via `task_spec_section(task_id, "Plan Digest")`. Pre-loaded context: {CHAIN_CONTEXT}. **Do NOT commit.** End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
+> Mission: Execute §Plan Digest for `{CURRENT_TASK_ID}` end-to-end. Read §Plan Digest via `task_spec_section(task_id, "§Plan Digest")`. Detect shape per `ia/skills/project-spec-implement/SKILL.md` step 3 — relaxed (`§Work Items` present) → locate anchors against HEAD + apply minimal diffs + run single `validator_gate` from `§Invariants & Gate`. Legacy (`§Mechanical Steps` present) → apply each Edit tuple verbatim with per-step gates. Pre-loaded context: {CHAIN_CONTEXT}. **Do NOT commit.** End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
 
 **Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → STOPPED + partial chain digest + `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID_DB}"` (re-enter after fix; resume gate picks up where loop stopped).
 
@@ -227,7 +227,7 @@ Dispatch `spec-implementer` subagent (Sonnet):
 
 Run `npm run unity:compile-check` (~15 s).
 
-**Scene-wiring preflight:** if §Plan Digest carries a Scene Wiring step, confirm worktree diff includes an edit to `Assets/Scenes/*.unity` OR adds a prefab under `Assets/Prefabs/**`. Use `git diff --name-only` (no commit yet — diff is unstaged worktree changes). Missing wiring under fired trigger → STOPPED:
+**Scene-wiring preflight:** if §Plan Digest carries a Scene Wiring entry (legacy: dedicated mechanical step; relaxed: §Work Items row prefixed `(Scene Wiring)`), confirm worktree diff includes an edit to `Assets/Scenes/*.unity` OR adds a prefab under `Assets/Prefabs/**`. Use `git diff --name-only` (no commit yet — diff is unstaged worktree changes). Missing wiring under fired trigger → STOPPED:
 
 ```
 STOPPED at {CURRENT_TASK_ID} — scene_wiring: §Plan Digest Scene Wiring step fired but no Assets/Scenes/*.unity edit in worktree
@@ -295,7 +295,7 @@ journal_append({ phase: "pass_b.verify", payload_kind: "verify_result", payload:
 
 Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
 
-> Mission: Run code-review on Stage diff = `git diff HEAD`. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. All N §Plan Digest sections from `task_spec_section(task_id, "Plan Digest")` are the acceptance reference. Scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). Emit verdict (PASS / minor / critical). **On critical: apply fixes inline via direct Edit/Write tools — do NOT write `§Code Fix Plan` tuples + do NOT dispatch plan-applier.**
+> Mission: Run code-review on Stage diff = `git diff HEAD`. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. All N §Plan Digest sections from `task_spec_section(task_id, "§Plan Digest")` are the acceptance reference. Scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). Emit verdict (PASS / minor / critical). **On critical: apply fixes inline via direct Edit/Write tools — do NOT write `§Code Fix Plan` tuples + do NOT dispatch plan-applier.**
 
 **Verdict PASS / minor:** continue to Step 6.3.
 

@@ -75,7 +75,7 @@ DB is sole source of truth for task spec sections. Reads via `task_spec_section`
 
 For each Task `{TASK_ID}` in `stage_bundle.tasks` (status ∈ {`implemented`, `verified`}):
 
-1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "Plan Digest"})` → §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps.
+1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "§Plan Digest"})` → relaxed shape (§Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate) OR legacy shape (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps). Detect by sub-heading presence. Literal `§` prefix required (see [`plan-digest-contract.md` §Section heading literal](../../rules/plan-digest-contract.md)).
 2. Aggregate `{TASK_ID → §Plan Digest}` map. Combined acceptance = union of all per-Task §Acceptance rows.
 
 Single bundle covers all N Tasks. Context overhead = O(1) per Stage via `STAGE_MCP_BUNDLE`.
@@ -89,14 +89,14 @@ Run review against checks below over the full Stage diff. Collect findings by se
 | Check | Severity |
 |-------|----------|
 | Combined §Acceptance rows (all Tasks) met by Stage diff | critical if not met |
-| §Mechanical Steps executed (no step silently skipped) | critical if step missing |
+| Digest body fully applied — relaxed shape: every §Work Items row has a matching diff entry; legacy shape: every §Mechanical Steps step executed (no step silently skipped) | critical if row/step missing |
 | Invariants respected in changed C# (or N/A if tooling-only) | critical if violated |
 | Glossary terms spelled canonically in changed docs | minor |
 | No adjacent refactors beyond Stage scope | minor |
 | Cross-ref links resolve | minor |
 | Frontmatter `phases:` present on new SKILL.md files | minor |
 | No new singletons; no `FindObjectOfType` in per-frame (C# only) | critical if violated |
-| **Scene wiring** — Task whose §Plan Digest carries a **Scene Wiring** mechanical step OR whose diff fires any trigger in [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) (new runtime MonoBehaviour / new `[SerializeField]` / new StreamingAssets consumer / new prefab at scene boot / new scene-level `UnityEvent`) has a matching `Assets/Scenes/*.unity` edit in the Stage diff AND the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) was emitted by `spec-implementer` | **critical if trigger fired but no `.unity` / prefab edit, or evidence block absent** |
+| **Scene wiring** — Task whose §Plan Digest carries a **Scene Wiring** entry (legacy: dedicated mechanical step; relaxed: §Work Items row prefixed `(Scene Wiring)`) OR whose diff fires any trigger in [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) (new runtime MonoBehaviour / new `[SerializeField]` / new StreamingAssets consumer / new prefab at scene boot / new scene-level `UnityEvent`) has a matching `Assets/Scenes/*.unity` edit in the Stage diff AND the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) was emitted by `spec-implementer` | **critical if trigger fired but no `.unity` / prefab edit, or evidence block absent** |
 
 **Determine verdict:**
 - Zero findings → **PASS**.

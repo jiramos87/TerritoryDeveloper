@@ -117,7 +117,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ## Phase 1 — Author §Plan Digest
 
-Idempotent readiness check first: `task_spec_section({task_id, section: "§Plan Digest"})`. Body present + non-empty + sub-headings (`### §Goal`, `### §Acceptance`, `### §Mechanical Steps`) populated → skip authoring.
+Idempotent readiness check first: `task_spec_section({task_id, section: "§Plan Digest"})`. Body present + non-empty + sub-headings `### §Goal` + `### §Acceptance` + (`### §Work Items` OR `### §Mechanical Steps`) populated → skip authoring. Both digest shapes (relaxed §Work Items / legacy §Mechanical Steps) are valid.
 
 Otherwise execute `ia/skills/stage-authoring/SKILL.md` end-to-end with `--task {ISSUE_ID}` flag (bulk pass of N=1). Steps reused verbatim:
 

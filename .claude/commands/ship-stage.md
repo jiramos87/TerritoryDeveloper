@@ -56,7 +56,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 > 1. Phase 0 — Parse stage (derive `SLUG`, `STAGE_ID_DB`, `SESSION_ID`).
 > 2. Phase 1 — Stage state load via `stage_bundle(slug, stage_id)`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + tasks all terminal.
 > 3. Phase 2 — Context load via `domain-context-load` (once per chain); cache `CHAIN_CONTEXT`.
-> 4. Phase 3 — §Plan Digest readiness gate via `task_spec_section(task_id, "Plan Digest")` per pending task. Missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff. No JIT lazy migration.
+> 4. Phase 3 — §Plan Digest readiness gate via `task_spec_section(task_id, "§Plan Digest")` per pending task (literal `§` prefix; bare `"Plan Digest"` returns `section_not_found`). Missing → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff. No JIT lazy migration.
 > 5. Phase 4 — Resume gate via `task_state` DB query. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (worktree-clean guard). Disabled by `--no-resume`.
 > 6. Phase 5 — Pass A per-task loop: implement (`spec-implementer` work inline) → `unity:compile-check` + scene-wiring preflight → `task_status_flip(implemented)` + `journal_append`. **NO commits.** Stop on first failure.
 > 7. Phase 6 — Pass B per-stage (runs ONCE): full `verify-loop` (Path A+B) on `git diff HEAD` → code-review on Stage diff (inline fix; cap=1) → per-task `task_status_flip(verified)` then `task_status_flip(done)`.

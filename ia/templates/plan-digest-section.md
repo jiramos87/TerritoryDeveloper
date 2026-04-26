@@ -1,13 +1,20 @@
 ---
-purpose: "§Plan Digest section template fragment for task specs (stage-authoring pass)."
+purpose: "§Plan Digest section template fragment for task specs (stage-authoring pass). Relaxed shape — intent over verbatim code."
 audience: agent
 loaded_by: ondemand
 slices_via: none
 ---
 
 <!--
-  §Plan Digest section template. Opus-authored per Task spec during Stage-scoped `stage-authoring` pass.
-  Direct §Plan Digest authoring (no §Plan Author intermediate — folded post-Step-7).
+  §Plan Digest section template — RELAXED shape.
+
+  Authoring rule: digester resolves picks, paths, names, and design intent — does NOT lay down
+  verbatim code. Implementer locates exact byte positions against current HEAD and decides
+  operation type, helper extraction, micro-edit sequencing, and test input shape.
+
+  Backwards compat: legacy digests with `§Mechanical Steps` (verbose Edit tuples + before/after
+  blocks) remain valid and continue to ship via `/ship-stage` Pass A unchanged. New authoring
+  uses the shape below.
 -->
 
 ## §Plan Digest
@@ -18,46 +25,62 @@ slices_via: none
 
 ### §Acceptance
 
-<!-- Checkbox list — refined per-Task acceptance. Narrower than Stage Exit. -->
+<!-- Sharp behavior contract. Each row = one observable behavior code-review + verify-loop will gate on. -->
 
-- [ ] …
+- [ ] {observable behavior 1}
+- [ ] {observable behavior 2}
+
+### §Pending Decisions
+
+<!-- Picks RESOLVED by the digester. Each row = a design pivot the implementer would otherwise
+     have to negotiate. Capture the choice + rationale; do NOT include code. -->
+
+- {decision name}: {choice chosen} — rationale: {why}
+- {path or symbol name}: {resolved value}
+
+### §Implementer Latitude
+
+<!-- Picks DEFERRED to the implementer. Each row = an explicit freedom + the constraint that
+     bounds it (invariant id or §Acceptance row). Empty list = digest is fully prescriptive. -->
+
+- {area}: implementer chooses freely (constraint: {invariant id or §Acceptance row})
+- {area}: implementer chooses freely (constraint: …)
+
+### §Work Items
+
+<!-- Flat list of file targets + 1-line intent. NO verbatim before/after code blocks. NO
+     numbered steps. Implementer sequences and locates anchors against current HEAD. -->
+
+**Edits:** (intent only — implementer locates anchors against current HEAD)
+
+- `{repo-relative-path}`: {what changes + why, 1 line}
+- `{repo-relative-path}`: {what changes + why, 1 line}
+- (Scene Wiring) `Assets/Scenes/{scene}.unity`: wire `{ComponentName}` per `ia/rules/unity-scene-wiring.md` — only when triggers fire (new MonoBehaviour / `[SerializeField]` / scene prefab / scene `UnityEvent`).
 
 ### §Test Blueprint
 
-<!-- Structured tuples consumed by /implement + /verify-loop. -->
+<!-- Test INTENTS only — implementer designs inputs, expected values, and picks harness from
+     {node, unity-batch, bridge, manual}. -->
 
-| test_name | inputs | expected | harness |
-|-----------|--------|----------|---------|
+- {test_name}: assert {behavior in glossary terms}
+- {test_name}: assert {…}
 
-### §Examples
+### §Invariants & Gate
 
-<!-- Concrete inputs/outputs + edge cases. Tables or code blocks. -->
+<!-- ONE block per digest (not per step). Implementer runs the gate after applying all work
+     items. STOP route is the single escalation contract. -->
 
-### §Mechanical Steps
+invariant_touchpoints:
+  - id: {invariant_id}
+    expected: pass | unchanged | none
 
-<!-- Sequential, pre-decided. Each step carries: Goal / Edits (before+after strings) / Gate / STOP / MCP hints. -->
+validator_gate: {npm run validate:all | npm run unity:compile-check | …}
 
-#### Step 1 — {name}
-
-**Goal:** …
-
-**Edits:**
-- `{repo-relative-path}` — **before**:
-  ```
-  …
-  ```
-  **after**:
-  ```
-  …
-  ```
+escalation_enum: STOP-on-anchor-mismatch | STOP-on-acceptance-unmet | STOP-on-invariant-regression | STOP-on-validator-fail
 
 **Gate:**
 ```bash
-…
+{single command line — typically npm run unity:compile-check && npm run validate:all}
 ```
 
-**STOP:** …
-
-**MCP hints:** `plan_digest_resolve_anchor`, `{other}` …
-
-#### Step 2 — …
+**STOP:** anchor_hint mismatch (HEAD diverged from §Pending Decisions assumption) OR §Acceptance row unmet OR invariant regression OR validator_gate non-zero → escalate to caller; do NOT silently adapt.

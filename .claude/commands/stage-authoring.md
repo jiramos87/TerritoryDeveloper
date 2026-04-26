@@ -1,5 +1,5 @@
 ---
-description: DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan Digest direct per filed Task spec stub of one Stage (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential Mechanical Steps with Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub → digest direct, no intermediate surface. Persists each per-Task §Plan Digest body to DB via `task_spec_section_write` MCP. Absorbs canonical-term fold (glossary + retired-surface tombstone + template-section allowlist + cross-ref task-id resolver) into the same bulk pass. Self-lints via `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks". Argument order (explicit): SLUG first, STAGE_ID second.
+description: DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan Digest direct per filed Task spec stub of one Stage (RELAXED shape: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — intent over verbatim code). Stub → digest direct, no intermediate surface. Persists each per-Task §Plan Digest body to DB via `task_spec_section_write` MCP. Glossary alignment + retired-surface scan narrowed to §Plan Digest body only. Self-lints via `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks". Argument order (explicit): SLUG first, STAGE_ID second.
 argument-hint: "{slug} Stage {X.Y} [--task {ISSUE_ID}] [--force-model {model}]"
 ---
 
@@ -31,7 +31,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 >
 > ## Mission
 >
-> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}` (single-spec re-author when `--task {ISSUE_ID}` present). 9 phases: Sequential-dispatch guardrail → Load shared Stage MCP bundle (`lifecycle_stage_context`) → Read filed Task spec stubs (DB via `task_spec_body`) → Token-split guardrail → Bulk author §Plan Digest direct (single Opus pass; §Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps with Edits + Gate + STOP + MCP hints + invariant_touchpoints + validator_gate + optional Scene Wiring step + canonical-term fold) → Self-lint via `plan_digest_lint` (cap=1 retry per Task) → Mechanicalization preflight via `mechanicalization_preflight_lint` → Per-task `task_spec_section_write` to DB (DB sole persistence — no filesystem mirror) → Hand-off.
+> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}` (single-spec re-author when `--task {ISSUE_ID}` present). 9 phases: Sequential-dispatch guardrail → Load shared Stage MCP bundle (`lifecycle_stage_context`) → Read filed Task spec stubs (DB via `task_spec_body`) → Token-split guardrail → Bulk author §Plan Digest direct (RELAXED shape, single Opus pass; §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — flat work-item rows with 1-line intent, ONE invariants & gate block, optional Scene Wiring row when triggered, canonical-term fold on digest body only) → Self-lint via `plan_digest_lint` (cap=1 retry per Task) → Mechanicalization preflight via `mechanicalization_preflight_lint` → Per-task `task_spec_section_write` to DB (DB sole persistence — no filesystem mirror) → Hand-off.
 >
 > ## Hard boundaries
 >
@@ -56,7 +56,7 @@ Single caveman block from subagent. Shape:
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_steps} mechanical steps, {n_acceptance} acceptance criteria, {n_tests} test rows); fold: {n_term_replacements}/{n_retired_refs_replaced}/{n_section_drift_fixed}; lint=PASS; preflight=PASS.
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_acceptance} acceptance, {n_tests} test rows); fold: {n_term_replacements}/{n_retired_refs_replaced}; lint=PASS; preflight=PASS.
   {ISSUE_ID_2}: ...
 drift_warnings: {true|false}
 DB writes: {N} task_spec_section_write OK; {K} unchanged.

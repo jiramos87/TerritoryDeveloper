@@ -8,21 +8,20 @@ loaded_by: "skill:stage-authoring"
 slices_via: none
 description: >-
   DB-backed single-skill stage-authoring. One Opus bulk pass authors §Plan Digest direct per filed
-  Task spec stub of one Stage (rich format: Goal / Acceptance / Test Blueprint / Examples / sequential
-  Mechanical Steps with Edits + Gate + STOP + MCP hints + optional Scene Wiring step). Stub → digest
-  direct, no intermediate surface. Persists each per-Task §Plan Digest body to DB via
-  `task_spec_section_write` MCP. Absorbs canonical-term fold (glossary + retired-surface tombstone +
-  template-section allowlist + cross-ref task-id resolver) into the same bulk pass. Self-lints via
-  `plan_digest_lint` (cap=1 retry). Mechanicalization preflight via
-  `mechanicalization_preflight_lint`. No aggregate doc compile. Triggers: "/stage-authoring
-  {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest", "author stage tasks".
-  Argument order (explicit): SLUG first, STAGE_ID second.
+  Task spec stub of one Stage (RELAXED shape: §Goal / §Acceptance / §Pending Decisions /
+  §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — intent over
+  verbatim code). Stub → digest direct, no intermediate surface. Persists each per-Task §Plan
+  Digest body to DB via `task_spec_section_write` MCP. Glossary alignment + retired-surface scan
+  narrowed to §Plan Digest body only. Self-lints via `plan_digest_lint` (cap=1 retry).
+  Mechanicalization preflight via `mechanicalization_preflight_lint`. No aggregate doc compile.
+  Triggers: "/stage-authoring {SLUG} {STAGE_ID}", "stage authoring", "stage-scoped digest",
+  "author stage tasks". Argument order (explicit): SLUG first, STAGE_ID second.
 phases:
   - Sequential-dispatch guardrail
   - Load shared Stage MCP bundle
   - Read filed Task spec stubs
   - Token-split guardrail
-  - Bulk author §Plan Digest (direct, no §Plan Author)
+  - Bulk author §Plan Digest (relaxed shape, direct)
   - Self-lint via plan_digest_lint
   - Mechanicalization preflight
   - Per-task task_spec_section_write to DB
@@ -46,11 +45,8 @@ tools_extra:
   - mcp__territory-ia__stage_render
   - mcp__territory-ia__invariant_preflight
   - mcp__territory-ia__plan_digest_verify_paths
-  - mcp__territory-ia__plan_digest_resolve_anchor
-  - mcp__territory-ia__plan_digest_render_literal
   - mcp__territory-ia__plan_digest_scan_for_picks
   - mcp__territory-ia__plan_digest_lint
-  - mcp__territory-ia__plan_digest_gate_author_helper
   - mcp__territory-ia__mechanicalization_preflight_lint
 caveman_exceptions:
   - code
@@ -129,7 +125,7 @@ If composite unavailable → fall back to [`domain-context-load`](../domain-cont
 
 1. `SLUG` already provided as 1st arg. Use `lifecycle_stage_context` (Phase 1) `stage_header` payload OR call `mcp__territory-ia__stage_render({ slug, stage_id })` to fetch Stage block. Parse Task-table rows with Status ∈ {Draft, In Review, In Progress} AND filed `{ISSUE_ID}` (non-`_pending_` Issue column). Master plan body lives in DB.
 2. For each Task: read body via `mcp__territory-ia__task_spec_body({ task_id: "{ISSUE_ID}" })`. DB is sole source of truth — no filesystem fallback.
-3. Verify each spec carries §1 Summary + §2.1 Goals + §7 Implementation Plan + `## §Plan Digest _pending — populated by /stage-authoring_` sentinel (or §Plan Digest already populated → idempotent skip per Phase 8.3).
+3. Verify each spec carries §1 Summary + §2.1 Goals + §7 Implementation Plan + `## §Plan Digest _pending — populated by /stage-authoring_` sentinel (or §Plan Digest already populated → idempotent skip per Phase 8.3). Idempotent skip applies to BOTH legacy (`§Mechanical Steps`) AND relaxed (`§Work Items`) sub-headings — do NOT re-author either shape.
 4. Collect into `task_specs[] = [{task_id, body, source: "db"}]`.
 
 Missing spec body in DB → abort with `STOPPED — task spec body missing for {ISSUE_ID}`. Re-route caller to `/stage-file` to file the stub first.
@@ -148,7 +144,7 @@ Emit split decision in hand-off summary.
 
 ---
 
-## Phase 4 — Bulk author §Plan Digest (direct, no §Plan Author)
+## Phase 4 — Bulk author §Plan Digest (relaxed shape, direct)
 
 Single Opus call returns a map `{ISSUE_ID → §Plan Digest body}`. For each Task spec:
 
@@ -165,81 +161,68 @@ Shape mirrors [`ia/templates/plan-digest-section.md`](../../templates/plan-diges
 
 ### §Acceptance
 
-<!-- Checkbox list — refined per-Task acceptance. Narrower than Stage Exit. -->
+- [ ] {observable behavior 1}
+- [ ] {observable behavior 2}
 
-- [ ] …
+### §Pending Decisions
+
+- {decision name}: {choice chosen} — rationale: {why}
+- {path or symbol name}: {resolved value}
+
+### §Implementer Latitude
+
+- {area}: implementer chooses freely (constraint: {invariant id or §Acceptance row})
+
+### §Work Items
+
+**Edits:** (intent only — implementer locates anchors against current HEAD)
+
+- `{repo-relative-path}`: {1-line what + why}
+- (Scene Wiring) `Assets/Scenes/{scene}.unity`: wire `{ComponentName}` per `ia/rules/unity-scene-wiring.md` — only when triggers fire.
 
 ### §Test Blueprint
 
-| test_name | inputs | expected | harness |
-|-----------|--------|----------|---------|
-| {name} | {inputs} | {expected} | {node \| unity-batch \| bridge \| manual} |
+- {test_name}: assert {behavior in glossary terms}
 
-### §Examples
+### §Invariants & Gate
 
-<!-- Concrete inputs/outputs + edge cases. Tables or code blocks. -->
+invariant_touchpoints:
+  - id: {invariant_id}
+    expected: pass | unchanged | none
 
-### §Mechanical Steps
+validator_gate: {npm run validate:all | npm run unity:compile-check | …}
 
-#### Step 1 — {name}
-
-**Goal:** …
-
-**Edits:**
-- `{repo-relative-path}` — **before**:
-  ```
-  …
-  ```
-  **after**:
-  ```
-  …
-  ```
+escalation_enum: STOP-on-anchor-mismatch | STOP-on-acceptance-unmet | STOP-on-invariant-regression | STOP-on-validator-fail
 
 **Gate:**
 ```bash
-…
+{single command line}
 ```
 
-**STOP:** …
-
-**MCP hints:** `plan_digest_resolve_anchor`, `{other}`
-
-**invariant_touchpoints:**
-  - id: {invariant_id}
-    gate: {MCP call or grep pattern}
-    expected: pass | unchanged | none
-
-**validator_gate:** {npm run validate:all | npm run unity:compile-check | …}
+**STOP:** anchor_hint mismatch OR §Acceptance row unmet OR invariant regression OR validator_gate non-zero → escalate to caller; do NOT silently adapt.
 ```
 
 ### 4.2 Authoring rules
 
-- **§Goal:** product/domain phrasing per Task intent + Stage Objectives. Glossary terms only (no ad-hoc synonyms).
-- **§Acceptance:** narrower than Stage Exit. Checkbox per concrete deliverable. Derived from §1 Summary + §2.1 Goals + §7 Implementation Plan stub.
-- **§Test Blueprint:** structured tuple table consumed by `/implement` + `/verify-loop`. One row per test. Harness column constrained to {`node`, `unity-batch`, `bridge`, `manual`}.
-- **§Examples:** edge cases + legacy shapes + canonical inputs. Tables or code blocks.
-- **§Mechanical Steps:** sequential checklist of Edit tuples — author in execution order.
+- **§Goal:** product/domain phrasing per Task intent + Stage Objectives. Glossary terms only.
+- **§Acceptance:** sharp behavior contract. Each row = one observable behavior code-review + verify-loop will gate on. Derived from §1 Summary + §2.1 Goals + §7 Implementation Plan stub.
+- **§Pending Decisions:** every non-trivial pick the implementer would otherwise face (helper choice, name, type, path, behavior pivot). Resolved here, not deferred.
+- **§Implementer Latitude:** picks deferred to implementer. Each row MUST cite its bounding constraint (invariant id or §Acceptance row). Empty list = digest is fully prescriptive on design surface.
+- **§Work Items:** flat list of file targets + 1-line intent. NO verbatim before/after code blocks. NO numbered steps. Implementer sequences.
+- **§Test Blueprint:** test intents only. Implementer designs inputs / expected / picks harness from {`node`, `unity-batch`, `bridge`, `manual`}.
+- **§Invariants & Gate:** ONE block per digest. Per-step variants forbidden — implementer applies all work items then runs the single gate.
 
-### 4.3 Mechanical step rules
+### 4.3 Work-item authoring rules
 
-For each Edit tuple:
+For each row in §Work Items:
 
-1. Translate authoring narrative into `(operation, target_path, before_string, after_string, invariant_touchpoints, validator_gate)`. Use `plan_digest_verify_paths` to confirm every target exists; use `plan_digest_resolve_anchor` to confirm every `before_string` is unique.
-2. Required tuple fields:
-   ```yaml
-   invariant_touchpoints:
-     - id: string
-       gate: string   # MCP call or grep pattern
-       expected: "pass" | "unchanged" | "none"
-   validator_gate: string   # npm run validate:all | npm run unity:compile-check | ...
-   ```
-   If step has no runtime impact, `invariant_touchpoints: none (utility)` replaces the array.
-3. Render exact literals for code blocks via `plan_digest_render_literal` when the digest must quote a file literally.
-4. For each step, ask `plan_digest_gate_author_helper({operation, file, before, after})` for the canonical gate command + expectation; embed verbatim.
-5. Author STOP clause per step (what edit to re-open, or which upstream surface to escalate to).
-6. Author Implementer MCP-tool hints per step (subset of `backlog_issue`, `glossary_lookup`, `invariant_preflight`, `plan_digest_resolve_anchor`, `unity_bridge_command`, etc.) — mechanical list, not narrative.
+1. Confirm `{path}` exists on HEAD via `plan_digest_verify_paths` (creates exempted — flag with `(create)` prefix in the intent line).
+2. Write a one-line intent: `{path}: {what changes + why}`. NO before/after code blocks. NO anchor literals. The implementer locates the exact byte position.
+3. Do NOT prescribe operation type (edit/create/delete) unless ambiguous — implementer decides from intent + HEAD state. Use `(create)` / `(delete)` prefixes only when intent doesn't make it self-evident.
+4. Do NOT call `plan_digest_render_literal` or `plan_digest_resolve_anchor` — those are legacy verbatim-rendering helpers, retired in the relaxed shape.
+5. Glossary terms only — no ad-hoc synonyms.
 
-### 4.4 Scene Wiring step (mandatory when triggered)
+### 4.4 Scene Wiring entry (mandatory when triggered)
 
 Trigger detection (at author time): scan Task scope for
 - (a) a new `class X : MonoBehaviour` under `Assets/Scripts/**/*.cs` that exposes `[SerializeField]` / `UnityEvent` / reads StreamingAssets, OR
@@ -247,103 +230,47 @@ Trigger detection (at author time): scan Task scope for
 - (c) a new prefab expected at scene boot, OR
 - (d) a new `UnityEvent` wired from the Inspector.
 
-Zero triggers → omit Scene Wiring step entirely.
+Zero triggers → omit Scene Wiring entry.
 
-Any trigger fires → emit a dedicated **Scene Wiring** mechanical step in §Mechanical Steps. Shape per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md):
+Any trigger fires → emit a SINGLE Scene Wiring row in §Work Items (last entry, after script + test work items):
 
-- **Goal:** wire `{ComponentName}` into `Assets/Scenes/{SCENE}.unity` under `{parent_object}` with all `[SerializeField]` fields populated per spec.
-- **Edits:** prefer `unity_bridge_command` kinds in sequence `open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`. Text-edit fallback only when bridge unavailable — include verbatim YAML before/after blocks for the `.unity` hunk.
-- **Gate:** `npm run unity:compile-check` exits 0.
-- **STOP:** scene file edit must appear in `git diff`; if absent after gate → re-open the Scene Wiring step, do NOT close the Task.
-- **MCP hints:** `unity_bridge_command` (preferred), `find_gameobject` to confirm parent, `get_compilation_status` as compile gate when the Editor holds the project lock.
-- **Evidence (required verbatim in `after:` literal or §Acceptance):** scene/parent/component/serialized_fields/unity_events/compile_check block per the scene-wiring rule.
-
-Place the Scene Wiring step LAST in §Mechanical Steps (after all script + test edits, before closeout) so the gate runs against the final runtime surface.
-
-### 4.5 Canonical-term fold + drift scan
-
-Same Opus pass enforces canonical glossary terms + scans for retired surface refs. Four sub-checks (all four MUST run per Task; emit per-Task counts in hand-off summary).
-
-#### 4.5a Glossary fold
-
-For each Task body, enforce canonical glossary terms across §1 Summary, §4 Current State, §5 Proposed Design, §7 Implementation Plan AND the new §Plan Digest body.
-
-Rules:
-- Every domain term must match `ia/specs/glossary.md` spelling exactly.
-- Ad-hoc synonyms → replace with canonical term inline.
-- Term not in glossary → add to `§Open Questions` as candidate row (do NOT edit glossary from this skill).
-
-Per-Task counter: `n_term_replacements`.
-
-#### 4.5b Retired-surface tombstone scan
-
-Load tombstone list from disk (one-shot per Stage):
-
-```bash
-ls -1 ia/skills/_retired/
-ls -1 .claude/agents/_retired/
-ls -1 .claude/commands/_retired/
+```
+- (Scene Wiring) `Assets/Scenes/{SCENE}.unity`: wire `{ComponentName}` under `{parent_object}` per ia/rules/unity-scene-wiring.md — populate [SerializeField] fields per §Pending Decisions; prefer unity_bridge_command sequence (open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene); text-edit fallback when bridge unavailable.
 ```
 
-Build retired-name set: skill basenames (e.g. `plan-author`, `plan-digest`, `project-spec-kickoff`, `project-spec-close`, `project-stage-close`, `project-new-plan`, `stage-file-monolith`), agent basenames (e.g. `spec-kickoff`, `closeout`, `project-new`, `stage-file-planner`, `stage-file-applier`), command basenames (e.g. `kickoff`).
+Decisions about parent object, serialized field values, and prefab references go in §Pending Decisions (not in the Work Items row). Evidence requirements (scene/parent/component/serialized_fields/unity_events/compile_check) are inherited from `ia/rules/unity-scene-wiring.md` — implementer emits the evidence block; digester does not pre-render it.
 
-Plus hard-coded retired slash refs: `/enrich`, `/kickoff`, `/plan-digest`, standalone `/author` when paired with `--mode digest` (any case).
+`/ship-stage` Pass A scene-wiring preflight detects the `(Scene Wiring)` prefix in §Work Items (or the legacy `Scene Wiring` step in §Mechanical Steps for backwards compat) and gates the worktree diff for `Assets/Scenes/*.unity` edits.
 
-For each Task body, scan §1 / §4 / §5 / §7 / §8 / §10 prose AND new §Plan Digest sub-sections for any retired surface name. Match must be replaced with the live successor:
+### 4.5 Canonical-term scan (narrowed)
+
+Same Opus pass enforces canonical glossary terms within the new §Plan Digest body ONLY. Do NOT scan §1 / §4 / §5 / §7 / §8 / §10 — those sections are upstream responsibility (`/stage-file` + spec stub author) and re-scanning them every digest pass is wasted work.
+
+#### 4.5a Glossary alignment (digest body only)
+
+For each new §Plan Digest body, every domain term MUST match `ia/specs/glossary.md` spelling exactly. Ad-hoc synonyms → replace with canonical term inline. Term not in glossary → leave as-is + emit warning in hand-off (do NOT edit glossary from this skill, do NOT add §Open Questions row from this pass).
+
+#### 4.5b Retired-surface scan (digest body only)
+
+Hard-coded retired surface names that must NOT appear in the new §Plan Digest body:
 
 | Retired | Live successor |
 |---------|---------------|
-| `/enrich {id}` / `spec-enrich` | `/stage-authoring --task {ISSUE_ID}` |
-| `/kickoff` / `spec-kickoff` / `project-spec-kickoff` | `/stage-authoring` (Stage 1×N) |
+| `/enrich` / `spec-enrich` | `/stage-authoring --task {ISSUE_ID}` |
+| `/kickoff` / `spec-kickoff` | `/stage-authoring` (Stage 1×N) |
 | `/author {id}` / `plan-author` | `/stage-authoring` |
 | `/plan-digest` / `plan-digest` | `/stage-authoring` |
 | `project-spec-close` / `project-stage-close` | folded into `/ship-stage` Pass B inline closeout |
-| `stage-file-monolith` / `stage-file-planner` / `stage-file-applier` | `/stage-file` (DB-backed single-skill) |
-| `project-new-plan` | `/project-new` args-only pair |
-| `docs/implementation/{slug}-stage-X.Y-plan.md` ref | drop ref entirely (no aggregate doc) |
+| `stage-file-monolith` / `stage-file-planner` / `stage-file-applier` | `/stage-file` |
+| `project-new-plan` | `/project-new` |
+| `docs/implementation/{slug}-stage-X.Y-plan.md` ref | drop entirely |
+| `§Mechanical Steps` (heading) | `§Work Items` (in newly-authored bodies; legacy bodies untouched) |
 
-Per-Task counter: `n_retired_refs_replaced`.
+Match → replace inline. Per-Task counter: `n_retired_refs_replaced` (digest-body only).
 
-#### 4.5c Template-section allowlist
+The fuller fold (§1/§4/§5/§7/§8/§10 scan, template-section allowlist, cross-ref task-id resolver across the whole spec) is RETIRED from this skill — those sections are not authored here, so re-scanning is overhead. Spec-wide drift surfaces at code-review time on the Stage diff (`opus-code-reviewer` Phase 2/3); no separate plan-review pass.
 
-Read `ia/templates/project-spec-template.md` once per Stage. Extract every `## ` and `### ` heading line — call this the **canonical-section-set**.
-
-For each Task body, scan `## ` / `### ` headings. Any heading NOT in canonical-section-set = drift. Common drifts:
-
-| Drifted heading | Canonical replacement |
-|----------------|----------------------|
-| `§Plan Author` (legacy intermediate) | `§Plan Digest` (direct) |
-| `§Closeout Plan` (per-Task) | folded into ship-stage Pass B — drop section |
-| `§Audit Plan` | `§Audit` |
-| `§Review` / `§Code Review Plan` | `§Code Review` |
-
-Do NOT delete unknown headings — emit warning in per-Task hand-off entry. If `## §Plan Author` block present → replace entirely with new `## §Plan Digest` body.
-
-Per-Task counter: `n_section_drift_fixed`.
-
-#### 4.5d Cross-ref task-id resolver
-
-For each Task body, scan all prose for two id classes:
-
-1. **BACKLOG ids**: pattern `\b(BUG|FEAT|TECH|ART|AUDIO)-\d+\b`. Resolve via `mcp__territory-ia__task_state({ task_id })` (DB-backed; covers open + archived). Unresolved → add to per-Task warning list `unresolved_backlog_refs[]`.
-2. **Task-key refs**: pattern `\bT\d+\.\d+(\.\d+)?\b` (e.g. `T8.3`). Resolve via owning master plan task-table (Phase 1 `stage_header` / `master_plan_render(slug)`). Unresolved → emit drift entry + add comment `<!-- WARN: stale task-ref {T_REF} — verify against master plan slug={SLUG} -->` next to the offending line. Auto-rewrite ONLY when ref clearly maps to a single live task (Opus judgment).
-
-Per-Task counters: `n_unresolved_backlog_refs`, `n_stale_task_refs`.
-
-#### 4.5e Stage-level summary
-
-Aggregate counters per Task:
-
-```
-{ISSUE_ID}:
-  glossary_replacements: {n_term_replacements}
-  retired_refs_replaced: {n_retired_refs_replaced}
-  section_drift_fixed:   {n_section_drift_fixed}
-  unresolved_backlog_refs: [{id}, ...]
-  stale_task_refs:         [{T_REF}, ...]
-```
-
-Sub-pass exit gate: if `unresolved_backlog_refs` OR `stale_task_refs` non-empty for ANY Task → tag Stage hand-off summary with `drift_warnings: true`. Drift surfaces in hand-off summary only.
+Per-Task counters retained for hand-off: `n_term_replacements` (digest body only), `n_retired_refs_replaced` (digest body only). All other counters dropped.
 
 ---
 
@@ -407,7 +334,7 @@ Errors:
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_steps} mechanical steps, {n_acceptance} acceptance criteria, {n_tests} test rows); fold: {n_term_replacements}/{n_retired_refs_replaced}/{n_section_drift_fixed}; lint=PASS; preflight=PASS.
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; lint=PASS; preflight=PASS.
   {ISSUE_ID_2}: …
   …
 drift_warnings: {true|false}
@@ -425,9 +352,9 @@ Non-zero exit → escalate.
 
 ### 8.3 Idempotency on re-entry
 
-- §Plan Digest already populated AND DB body matches AND lint PASS → record `skipped (already authored)`; no new `task_spec_section_write` call.
-- §Plan Digest empty / sentinel `_pending — populated by /stage-authoring_` → fresh authoring pass per Phase 4.
-- §Plan Digest populated but lint FAIL → re-author per Phase 4 (cap=1 per Task).
+- §Plan Digest already populated (relaxed `§Work Items` OR legacy `§Mechanical Steps` sub-heading) AND DB body matches AND lint PASS → record `skipped (already authored)`; no new `task_spec_section_write` call. Do NOT migrate legacy bodies to relaxed shape — leave as-is; downstream implementer reads both.
+- §Plan Digest empty / sentinel `_pending — populated by /stage-authoring_` → fresh authoring pass per Phase 4 (writes relaxed shape).
+- §Plan Digest populated but lint FAIL → re-author per Phase 4 (cap=1 per Task), writing relaxed shape.
 
 ### 8.4 Next-step
 

@@ -76,7 +76,7 @@ Missing either positional → print usage + abort: `/ship-stage-main-session {SL
    - **Phase 0 — Parse stage** — derive `SLUG`, `STAGE_ID_DB`, `SESSION_ID`.
    - **Phase 1 — Stage state load** — `stage_bundle(slug, stage_id)` → `master_plan_title`, `stage`, `tasks`, `status_counts`, `next_pending`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + tasks all terminal.
    - **Phase 2 — Context load** — `domain-context-load` once; cache `CHAIN_CONTEXT`.
-   - **Phase 3 — §Plan Digest readiness gate** — `task_spec_section(task_id, "Plan Digest")` per pending task. Missing/empty → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff.
+   - **Phase 3 — §Plan Digest readiness gate** — `task_spec_section(task_id, "§Plan Digest")` per pending task (literal `§` prefix; bare `"Plan Digest"` returns `section_not_found`). Missing/empty → `STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` + `/stage-authoring` handoff.
    - **Phase 4 — Resume gate** — `task_state` DB query per pending task. `pending` → Pass A required; `implemented` → skip Pass A. All implemented + stage not done → `PASS_B_ONLY` (verify worktree dirty; clean → STOPPED). Disabled by `--no-resume`.
    - **Phase 5 — Pass A per-task loop** (sequential, fail-fast, NO commits):
      1. spec-implementer work inline — read `§Plan Digest` via `task_spec_section`, apply edits in declared order, resolve anchors via `plan_digest_resolve_anchor`.
