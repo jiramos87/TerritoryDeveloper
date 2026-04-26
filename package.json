@@ -74,7 +74,8 @@
     "progress": "node tools/progress-tracker/index.mjs",
     "deploy:web": "bash tools/scripts/vercel-deploy.sh",
     "deploy:web:preview": "bash tools/scripts/vercel-deploy.sh --preview",
-    "validate:e2e": "npm --prefix web run test:e2e:ci"
+    "validate:e2e": "npm --prefix web run test:e2e:ci",
+    "render:worker": "npx tsx tools/scripts/render-worker.ts"
   },
   "engines": {
     "node": ">=20.6"

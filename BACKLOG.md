@@ -375,11 +375,43 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 ## Multi-scale simulation lane
 
-Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 = neighbor-city stub + interstate-border semantics — filed below.
+Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 = neighbor-city stub + interstate-border semantics — filed below. Step 2 = City MVP close. Stage 4 = bug stabilization — archived. Stage 5 = tick performance + metrics foundation — filed below (TECH-1471..TECH-1474).
 
 ### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 
 _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 5 — City MVP close / Tick performance + metrics foundation
+
+- [ ] **TECH-1471** — Profiler audit + city tick hotspot doc (multi-scale Stage 5 T5.1)
+  - **Files:** `Assets/Scripts/Managers/GameManagers/SimulationManager.cs`, `docs/city-tick-perf-notes.md` (new)
+  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.1
+  - **Notes:** Run Unity Profiler against fresh city save (post-BUG-55 / BUG-14 baseline). Author `docs/city-tick-perf-notes.md` (new) — capture top-5 GC alloc hotspots + ms/tick baseline at 10/30/60Hz tick rates + CPU sample tree ≥3 levels deep under `SimulationManager.ProcessSimulationTick`. Output drives T5.2 patch list + T5.4 budget threshold.
+  - **Acceptance:** `docs/city-tick-perf-notes.md` exists w/ top-5 GC alloc hotspots ranked + ms/tick baseline @ 10/30/60Hz + CPU sample tree ≥3 levels deep under `ProcessSimulationTick`. Profiler `.data` file path referenced in doc.
+  - **Type:** Code Health / performance
+
+- [ ] **TECH-1472** — Top-allocator patches per profiler audit (multi-scale Stage 5 T5.2)
+  - **Files:** sites surfaced by T5.1 (TBD per profiler output), `docs/city-tick-perf-notes.md` (delta append)
+  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.2
+  - **Depends on:** TECH-1471 (T5.1 hotspot doc)
+  - **Notes:** Patch top-3 GC allocators surfaced in T5.1 outside BUG-55 / BUG-14 scope. Typical fixes: cached enumerators, struct-vs-class, list pooling, `StringBuilder` reuse. For any hotspot deemed acceptable, append `// hotspot acceptable — see docs/city-tick-perf-notes.md` at the call site. Re-profile delta into the doc.
+  - **Acceptance:** Top-3 hotspots from T5.1 either patched (alloc bytes/tick reduced ≥50% per site) OR carry `// hotspot acceptable — see docs/city-tick-perf-notes.md` comment. Re-profile delta appended to `docs/city-tick-perf-notes.md`. `unity:compile-check` passes. Invariant #3 not regressed (TECH-26 scanner clean).
+  - **Type:** Code Health / performance
+
+- [ ] **TECH-1473** — MetricsRecorder Postgres-off verify (multi-scale Stage 5 T5.3)
+  - **Files:** `Assets/Scripts/Managers/GameManagers/MetricsRecorder.cs` (try/catch guard if absent), `tools/scripts/test-mode-scenarios/` (2 new Path A scenarios)
+  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.3
+  - **Notes:** Two Path A scenarios under `tools/scripts/test-mode-scenarios/` — (a) Postgres up — assert `city_metrics_history` rows accumulate per tick via `mcp__territory-ia__city_metrics_query`; (b) Postgres down (kill 5434) — assert 60-tick run logs zero exceptions, FPS unaffected, fire-and-forget writes swallowed. Add `try/catch` guard in `MetricsRecorder.cs` if absent.
+  - **Acceptance:** Path A scenario (a) passes — `city_metrics_history` row count > 0 after 60 ticks via `city_metrics_query`. Path A scenario (b) passes — Postgres down (port 5434 killed), 60-tick run logs zero `NpgsqlException` / `SocketException`, FPS delta vs scenario (a) ≤ 5%. `try/catch` guard present in `MetricsRecorder.cs` write path.
+  - **Type:** infrastructure / observability
+
+- [ ] **TECH-1474** — EditMode TickBudgetTests fixture + baseline snapshot (multi-scale Stage 5 T5.4)
+  - **Files:** `Assets/Tests/EditMode/TickBudgetTests.cs` (new), `Assets/Tests/EditMode/Fixtures/tick-budget.json` (new)
+  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.4
+  - **Depends on:** TECH-1471 (baseline ms/tick), TECH-1472 (post-patch ms/tick)
+  - **Notes:** New `Assets/Tests/EditMode/TickBudgetTests.cs` NUnit fixture invoking `SimulationManager.ProcessSimulationTick` in isolation under `System.Diagnostics.Stopwatch`. Assert single-tick wall time ≤ {threshold from T5.1/T5.2 baseline + 20% margin}. Persist baseline to `Assets/Tests/EditMode/Fixtures/tick-budget.json` for Step 3 parity harness regression check.
+  - **Acceptance:** `TickBudgetTests.cs` exists w/ NUnit `[Test]` invoking `ProcessSimulationTick` under `Stopwatch`. Threshold = T5.2 post-patch ms/tick × 1.20 (20% margin). `tick-budget.json` persists `{baseline_ms, threshold_ms, tick_rate_hz, captured_at, git_sha}`. `unity:testmode-batch` runs fixture; passes locally.
+  - **Type:** test / infrastructure
 
 ## Distribution program — Full-Game MVP Bucket 10
 
@@ -431,33 +463,8 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 
 ### Stage 1.1 — Signal Contract Primitives
 
-- [ ] **TECH-305** — Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
-  - Type: infrastructure / simulation signal types
-  - Files: `Assets/Scripts/Simulation/Signals/SimulationSignal.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalProducer.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalConsumer.cs` (new)
-  - Notes: `SimulationSignal` enum w/ exactly 12 locked entries — `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`. `ISignalProducer.EmitSignals(SignalFieldRegistry)` + `ISignalConsumer.ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)` interfaces. Type surface only — no runtime wiring. City-sim depth Bucket 2 foundation.
-  - Acceptance: All 3 files compile; enum has exactly 12 entries; interfaces match spec; `npm run unity:compile-check` clean; `npm run validate:all` clean.
-  - Depends on: none
 
-- [ ] **TECH-306** — Add `SignalField` + `SignalMetadataRegistry` ScriptableObject (Stage 1.1 T1.1.2)
-  - Type: infrastructure / simulation signal types
-  - Files: `Assets/Scripts/Simulation/Signals/SignalField.cs` (new), `Assets/Scripts/Simulation/Signals/SignalMetadataRegistry.cs` (new); consumes `Assets/Scripts/Simulation/Signals/SimulationSignal.cs`
-  - Notes: `SignalField` — `float[,]` backing store; `Get`/`Set`/`Add`/`Snapshot`; clamp floor 0 on all writes. `SignalMetadataRegistry` SO — per-signal `diffusionRadius`, `decayPerStep`, `Vector2 anisotropy`, `rollupRule (Mean/P90)`. Consumes TECH-305 enum.
-  - Acceptance: Both compile; floor clamp verified; `Snapshot()` returns independent copy; `npm run unity:compile-check` clean; `npm run validate:all` clean.
-  - Depends on: TECH-305 (SimulationSignal enum)
 
-- [ ] **TECH-307** — Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)
-  - Type: infrastructure / simulation signal MonoBehaviour
-  - Files: `Assets/Scripts/Simulation/Signals/SignalFieldRegistry.cs` (new); consumes `SignalField.cs`, `SimulationSignal.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`
-  - Notes: MonoBehaviour; allocates one `SignalField` per `SimulationSignal` in `Awake` sized from `GridManager.gridWidth`/`gridHeight`; `GetField(SimulationSignal)` accessor; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback (invariant #4); resize method for map reload. Invariant #3 (no hot-path `FindObjectOfType`) + #6 (new MonoBehaviour, not added to `GridManager`).
-  - Acceptance: Compiles; 12 fields allocated in Awake; `GetField` works; fallback present; no hot-path `FindObjectOfType`; `npm run unity:compile-check` + `validate:all` clean.
-  - Depends on: TECH-305 (enum), TECH-306 (SignalField + SignalMetadataRegistry)
-
-- [ ] **TECH-308** — Author `ia/specs/simulation-signals.md` reference spec (Stage 1.1 T1.1.4)
-  - Type: reference spec / simulation signal contract
-  - Files: `ia/specs/simulation-signals.md` (new), `ia/specs/simulation-system.md` (link update), `ia/specs/glossary.md` (new rows)
-  - Notes: Signal inventory (12 entries: source / sink / rollup rule / cadence), diffusion physics (separable Gaussian, anisotropy, decay, clamp-floor-0), `ISignalProducer`/`ISignalConsumer` contract, rollup rule table (P90 for Crime + TrafficLevel; mean for rest), spec-gap closure note. Link from `ia/specs/simulation-system.md` §Tick execution order. Invariant #12 (permanent domain).
-  - Acceptance: New spec present w/ 5 sections; 12 signal rows; rollup table correct; cross-link added; glossary updated; `npm run validate:all` clean.
-  - Depends on: TECH-305 (enum), TECH-306 (SignalField + registry types)
 
 ## Utilities program
 
@@ -663,21 +670,25 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 ### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
 
-- [ ] **TECH-1349** — **Users + capability migration** (asset-pipeline Stage 2.1 T2.1.1)
-  - Acceptance — migration applies clean; seeds admin / author / viewer + capability rows per DEC-A33; `npm run db:migrate` exit 0.
-  - Spec — [`ia/projects/TECH-1349.md`](ia/projects/TECH-1349.md)
+- [ ] **TECH-1467** — **job_queue + render_run migration** (asset-pipeline Stage 4.1 T4.1.1)
 
-- [ ] **TECH-1350** — **NextAuth + middleware wiring** (asset-pipeline Stage 2.1 T2.1.2)
-  - Acceptance — every `/api/catalog/*` declares `requires`; forbidden envelope shape matches DEC-A48; dev-cookie fallback works locally.
-  - Spec — [`ia/projects/TECH-1350.md`](ia/projects/TECH-1350.md)
+- [ ] **TECH-1468** — **Render worker process** (asset-pipeline Stage 4.1 T4.1.2)
 
-- [ ] **TECH-1351** — **Audit log emitter + library** (asset-pipeline Stage 2.1 T2.1.3)
-  - Acceptance — every mutating route emits one audit_log row; response envelope carries `audit_id` per DEC-A48.
-  - Spec — [`ia/projects/TECH-1351.md`](ia/projects/TECH-1351.md)
+- [ ] **TECH-1469** — **Render API routes** (asset-pipeline Stage 4.1 T4.1.3)
 
-- [ ] **TECH-1352** — **validate:capability-coverage validator** (asset-pipeline Stage 2.1 T2.1.4)
-  - Acceptance — validator asserts every route's `requires` exists in `capability` table; wired into `validate:all`; exit clean on green tree.
-  - Spec — [`ia/projects/TECH-1352.md`](ia/projects/TECH-1352.md)
+- [ ] **TECH-1470** — **Replay + identical re-render endpoints** (asset-pipeline Stage 4.1 T4.1.4)
+
+- [ ] **TECH-1585** — **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)
+
+- [ ] **TECH-1586** — **Replaced-by chain resolver helper** (asset-pipeline Stage 19.2 T19.2.2)
+
+- [ ] **TECH-1587** — **Missing-asset placeholder + audit_log emit + dev/ship split** (asset-pipeline Stage 19.2 T19.2.3)
+
+- [ ] **TECH-1591** — **wire_asset_from_catalog bridge command** (asset-pipeline Stage 19.3 T19.3.1)
+
+- [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
+
+- [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
 
 ## High Priority
 

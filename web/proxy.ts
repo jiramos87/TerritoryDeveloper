@@ -11,7 +11,7 @@ import { forbiddenEnvelope } from '@/lib/auth/route-meta';
  * DEC-A33 capability matrix + DEC-A48 forbidden envelope contract.
  */
 
-export const config = { matcher: ['/api/catalog/:path*'] };
+export const config = { matcher: ['/api/catalog/:path*', '/api/render/:path*'] };
 
 type ResolvedUser = { id: string; role: string } | null;
 

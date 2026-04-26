@@ -141,10 +141,10 @@ async function main(): Promise<number> {
     const abs = path.resolve(fixtureDir);
     files = await glob("**/*.ts", { cwd: abs, absolute: true });
   } else {
-    files = await glob("web/app/api/catalog/**/route.ts", {
-      cwd: REPO_ROOT,
-      absolute: true,
-    });
+    files = await glob(
+      ["web/app/api/catalog/**/route.ts", "web/app/api/render/**/route.ts"],
+      { cwd: REPO_ROOT, absolute: true },
+    );
   }
   for (const file of files) {
     let handlers: Map<Verb, string | null>;
