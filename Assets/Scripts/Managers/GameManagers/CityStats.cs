@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections.Generic;
 using Territory.Timing;
 using Territory.Terrain;
@@ -6,6 +7,8 @@ using Territory.Forests;
 using Territory.Buildings;
 using Territory.Core;
 using Territory.Zones;
+using Territory.Simulation;
+using Territory.Simulation.Signals;
 
 namespace Territory.Economy
 {
@@ -20,6 +23,8 @@ public class CityStats : MonoBehaviour, ICityStats
     public TimeManager timeManager;
     public WaterManager waterManager;
     public ForestManager forestManager;
+    [SerializeField] private HappinessComposer happinessComposer;
+    [SerializeField] private SignalFieldRegistry signalFieldRegistry;
     private EmploymentManager _employmentManager;
     private EconomyManager _economyManager;
     private StatisticsManager _statisticsManager;
@@ -31,8 +36,26 @@ public class CityStats : MonoBehaviour, ICityStats
     public int population;
     public int money;
 
-    public float happiness = 50f;
-    public float pollution;
+    // Stage 4 facade migration — happiness + pollution scalars now delegate to the
+    // signal layer (HappinessComposer / SignalFieldRegistry). Backing fields keep
+    // [SerializeField] + [FormerlySerializedAs] so legacy save-load round-trips
+    // continue to populate the same Inspector slot. Setter still writes the backing
+    // field for save-restore + reset paths (RestoreCityStatsData / ResetCityStats).
+    [SerializeField] [FormerlySerializedAs("happiness")] private float _happiness = 50f;
+    [SerializeField] [FormerlySerializedAs("pollution")] private float _pollution;
+
+    public float happiness
+    {
+        get { return happinessComposer != null ? happinessComposer.Current : _happiness; }
+        set { _happiness = value; }
+    }
+
+    public float pollution
+    {
+        get { return signalFieldRegistry != null ? ComputePollutionMean() : _pollution; }
+        set { _pollution = value; }
+    }
+
     public int residentialZoneCount;
 
     public int residentialBuildingCount;
@@ -129,6 +152,11 @@ public class CityStats : MonoBehaviour, ICityStats
             budgetAllocationService = FindObjectOfType<BudgetAllocationService>();
         if (bondLedgerService == null)
             bondLedgerService = FindObjectOfType<BondLedgerService>();
+        // Stage 4 facade refs — Inspector primary, FindObjectOfType fallback per invariant #4.
+        if (happinessComposer == null)
+            happinessComposer = FindObjectOfType<HappinessComposer>();
+        if (signalFieldRegistry == null)
+            signalFieldRegistry = FindObjectOfType<SignalFieldRegistry>();
     }
 
     /// <summary>
@@ -762,9 +790,8 @@ public class CityStats : MonoBehaviour, ICityStats
         // Update forest statistics
         UpdateForestStatistics();
 
-        // Recalculate pollution then happiness (order matters: pollution feeds into happiness)
-        RecalculatePollution();
-        RecalculateHappiness();
+        // Stage 4 — pollution + happiness now driven by SignalTickScheduler (producers + HappinessComposer);
+        // RecalculatePollution() / RecalculateHappiness() bodies migrated to no-ops + facade getters above.
 
         // Demand uses same-tick happiness targets and tax rates (see EmploymentManager.RefreshRCIDemandAfterDailyStats)
         if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
@@ -778,8 +805,9 @@ public class CityStats : MonoBehaviour, ICityStats
     /// </summary>
     public void RefreshHappinessAfterPolicyChange()
     {
-        RecalculatePollution();
-        RecalculateHappiness();
+        // Stage 4 — pollution + happiness now driven by SignalTickScheduler; facade getters
+        // surface the post-tick value. RecalculatePollution / RecalculateHappiness retained
+        // as no-op shims for any external caller that still invokes them.
         if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
     }
 
@@ -891,17 +919,38 @@ public class CityStats : MonoBehaviour, ICityStats
     /// </summary>
     public void RecalculatePollution()
     {
-        float rawPollution =
-            industrialHeavyBuildingCount * POLLUTION_INDUSTRIAL_HEAVY +
-            industrialMediumBuildingCount * POLLUTION_INDUSTRIAL_MEDIUM +
-            industrialLightBuildingCount * POLLUTION_INDUSTRIAL_LIGHT;
+        // Migrated to ForestPollutionSink + IndustrialPollutionProducer + PowerPlantPollutionProducer (Stage 4).
+        // SignalTickScheduler drives the per-tick recompute via the producer/diffusion pipeline; the
+        // pollution getter now reads the per-cell mean of SimulationSignal.PollutionAir.
+    }
 
-        // All power plants currently use nuclear; add per-type when more types ship
-        int nuclearCount = powerPlants.Count;
-        rawPollution += nuclearCount * POLLUTION_NUCLEAR;
-
-        float forestAbsorption = Mathf.Min(forestCellCount * FOREST_ABSORPTION_RATE, rawPollution);
-        pollution = Mathf.Max(rawPollution - forestAbsorption, 0f);
+    /// <summary>Mean of non-zero cells in the PollutionAir signal field; Stage 4 facade for the legacy `pollution` scalar.</summary>
+    private float ComputePollutionMean()
+    {
+        if (signalFieldRegistry == null)
+            return _pollution;
+        SignalField field = signalFieldRegistry.GetField(SimulationSignal.PollutionAir);
+        if (field == null)
+            return _pollution;
+        int width = field.Width;
+        int height = field.Height;
+        if (width <= 0 || height <= 0)
+            return 0f;
+        float sum = 0f;
+        int nonZero = 0;
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                float cell = field.Get(x, y);
+                if (Mathf.Abs(cell) > Mathf.Epsilon)
+                {
+                    sum += cell;
+                    nonZero++;
+                }
+            }
+        }
+        return nonZero > 0 ? sum / nonZero : 0f;
     }
 
     /// <summary>
@@ -959,11 +1008,10 @@ public class CityStats : MonoBehaviour, ICityStats
     /// </summary>
     public void RecalculateHappiness()
     {
-        float targetHappiness = ComputeTargetHappiness();
-
-        // Convergence rate scales with population (larger cities change more slowly)
-        float convergenceRate = BASE_CONVERGENCE_RATE / (1f + population / POPULATION_SCALE_FACTOR);
-        happiness = Mathf.Lerp(happiness, targetHappiness, convergenceRate);
+        // Migrated to HappinessComposer (Stage 4).
+        // SignalTickScheduler drives per-tick happiness convergence; the happiness getter now
+        // reads HappinessComposer.Current. ComputeTargetHappiness retained because
+        // GetHappinessDemandMultiplier (below) still uses the immediate target.
     }
 
     /// <summary>Happiness normalized 0–1 for UI/diagnostics (current converged value).</summary>
