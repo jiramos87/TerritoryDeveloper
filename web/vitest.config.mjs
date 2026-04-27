@@ -14,7 +14,7 @@ export default defineConfig({
   test: {
     // Run only __tests__ unit tests + catalog API integration specs (not playwright e2e).
     include: [
-      'lib/__tests__/**/*.test.ts',
+      'lib/**/__tests__/**/*.test.ts',
       'components/**/__tests__/**/*.test.tsx',
       'tests/api/**/*.spec.ts',
       'tests/api/auth/**/*.smoke.spec.ts',

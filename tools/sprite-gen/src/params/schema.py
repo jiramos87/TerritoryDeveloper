@@ -64,6 +64,31 @@ class RenderParams(BaseModel):
     )
 
 
+class AudioRenderParams(BaseModel):
+    """Body model for `POST /render-audio` (TECH-1957 / Stage 9.1).
+
+    Drives :func:`tools.sprite-gen.src.audio_synth.synth_audio`. ``params``
+    carries archetype-specific knobs (e.g. envelope ADSR, cutoff_hz) and
+    is opaque to the schema validator — the synth function dispatches on
+    ``archetype_id``.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    archetype_id: str = Field(
+        ...,
+        description="Audio archetype slug (e.g. ui_click_v1).",
+    )
+    archetype_version_id: Optional[str] = Field(
+        default=None,
+        description="Optional archetype version pin (DEC-A17). Echoed back in the response for traceability.",
+    )
+    params: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Archetype param overrides (envelope, cutoff, gain, …).",
+    )
+
+
 class PromoteParams(BaseModel):
     """Body model for `POST /promote`."""
 

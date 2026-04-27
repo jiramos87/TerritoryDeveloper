@@ -42,8 +42,9 @@ const KIND_TO_DETAIL: Record<string, string> = {
   sprite: 'sprite_detail',
   asset: 'asset_detail',
   pool: 'pool_detail',
-  // 'button' / 'panel' / 'token' / 'archetype' / 'audio' detail tables land
-  // in later stages — ignore until a row of that kind exists.
+  audio: 'audio_detail',
+  // 'button' / 'panel' / 'token' / 'archetype' detail tables land in later
+  // stages — ignore until a row of that kind exists.
 };
 
 interface Failure {
@@ -70,6 +71,7 @@ async function preflight(client: Client): Promise<void> {
     'economy_detail',
     'pool_detail',
     'pool_member',
+    'audio_detail',
   ];
   const missing: string[] = [];
   for (const t of required) {

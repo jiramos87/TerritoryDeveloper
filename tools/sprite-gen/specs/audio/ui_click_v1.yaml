@@ -1,0 +1,38 @@
+# ui_click_v1 — MVP audio archetype (TECH-1957 / asset-pipeline Stage 9.1).
+#
+# Short noise burst + ADSR envelope + lowpass filter; deterministic via
+# sha256(archetype_id + canonical-JSON params) → numpy default_rng. See
+# `tools/sprite-gen/src/audio_synth.py` for the synth implementation.
+#
+# Schema (informational — `synth_audio` reads params dict directly):
+#   duration_ms     (int)   default 80
+#   attack_ms       (float) default 1.0
+#   decay_ms        (float) default 20.0
+#   sustain_level   (float) default 0.5
+#   release_ms      (float) default 30.0
+#   cutoff_hz       (float) default 2400.0
+#   gain            (float) default 0.6
+#
+# Loudness target window (DEC-A30): integrated LUFS in [-23, -14]; peak ≤ -1 dB.
+archetype_id: ui_click_v1
+kind: audio
+description: |
+  Generic UI click for catalog interactions — short noise burst with fast
+  attack and lowpass-filtered tail. Stage 9.1 MVP (`/render-audio`
+  end-to-end) — additional archetypes land in later stages.
+default_params:
+  duration_ms: 80
+  attack_ms: 1.0
+  decay_ms: 20.0
+  sustain_level: 0.5
+  release_ms: 30.0
+  cutoff_hz: 2400.0
+  gain: 0.6
+loudness_target:
+  integrated_lufs:
+    min: -23.0
+    max: -14.0
+  peak_db_max: -1.0
+sample_rate: 48000
+channels: 1
+container: ogg-vorbis

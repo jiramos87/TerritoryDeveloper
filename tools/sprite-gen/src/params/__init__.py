@@ -7,6 +7,6 @@ depending on the internal module layout.
 
 from __future__ import annotations
 
-from .schema import PromoteParams, RenderParams
+from .schema import AudioRenderParams, PromoteParams, RenderParams
 
-__all__ = ["RenderParams", "PromoteParams"]
+__all__ = ["RenderParams", "PromoteParams", "AudioRenderParams"]

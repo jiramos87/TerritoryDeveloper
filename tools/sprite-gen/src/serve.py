@@ -32,8 +32,10 @@ import sys
 from pathlib import Path
 from typing import Any, Optional
 
+from .audio_synth import synth_audio, write_manifest
+from .blob_resolver import BlobResolver
 from .compose import compose_sprite, sample_variant
-from .params import PromoteParams, RenderParams
+from .params import AudioRenderParams, PromoteParams, RenderParams
 from .spec import SpecValidationError, load_spec
 
 # ---------------------------------------------------------------------------
@@ -202,6 +204,64 @@ def create_app() -> Any:
 
         fingerprint = f"{archetype}:{run_id}"
         return {"run_id": run_id, "fingerprint": fingerprint, "variants": variants}
+
+    @app.post("/render-audio")
+    def render_audio(body: AudioRenderParams) -> dict[str, Any]:
+        """Run the audio synth pipeline for an audio archetype.
+
+        Body validated against AudioRenderParams (TECH-1957 typed contract).
+        Dispatches to :func:`audio_synth.synth_audio`, writes a manifest
+        sidecar (DEC-A26), and returns the rendered run id + output URI(s)
+        + measured loudness.
+
+        Returns:
+            {
+              run_id, archetype_id, archetype_version_id,
+              output_uris: ["gen://{run_id}/0"],
+              measured: {duration_ms, sample_rate, channels,
+                         loudness_lufs, peak_db, fingerprint}
+            }
+        """
+        archetype_id = body.archetype_id
+        params = body.params or {}
+
+        run_id = _new_run_id()
+        blob_root = _resolve_blob_root()
+        resolver = BlobResolver(blob_root=blob_root)
+
+        try:
+            result = synth_audio(
+                archetype_id=archetype_id,
+                params=params,
+                run_id=run_id,
+                variant_idx=0,
+                blob_resolver=resolver,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+        write_manifest(
+            blob_resolver=resolver,
+            run_id=run_id,
+            archetype_id=archetype_id,
+            params=params,
+            result=result,
+        )
+
+        return {
+            "run_id": run_id,
+            "archetype_id": archetype_id,
+            "archetype_version_id": body.archetype_version_id,
+            "output_uris": [result.source_uri],
+            "measured": {
+                "duration_ms": result.duration_ms,
+                "sample_rate": result.sample_rate,
+                "channels": result.channels,
+                "loudness_lufs": result.loudness_lufs,
+                "peak_db": result.peak_db,
+                "fingerprint": result.fingerprint,
+            },
+        }
 
     @app.post("/promote")
     def promote_endpoint(body: PromoteParams) -> dict[str, Any]:
