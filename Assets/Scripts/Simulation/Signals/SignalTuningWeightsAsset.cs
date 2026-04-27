@@ -61,6 +61,14 @@ namespace Territory.Simulation.Signals
         [SerializeField] private float servicePoliceConsumerScale = 0.4f;
         [SerializeField] private float crimeHotspotThreshold = 15f;
 
+        // --- Stage 9.A — Service{Fire,Education,Health} tuning fields (TECH-2079). Six new fields appended contiguously per sizing-gate H6 (single SO edit per Stage). ---
+        [SerializeField] private float serviceFireCoverage = 5f;
+        [SerializeField] private float serviceFireConsumerScale = 0.4f;
+        [SerializeField] private float serviceEducationCoverage = 5f;
+        [SerializeField] private float serviceEducationConsumerScale = 0.4f;
+        [SerializeField] private float serviceHealthCoverage = 5f;
+        [SerializeField] private float serviceHealthConsumerScale = 0.4f;
+
         /// <summary>Default happiness baseline (50f) — initial value of <see cref="HappinessComposer.Current"/>.</summary>
         public float HappinessBaseline => happinessBaseline;
         /// <summary>Employment weight (30f).</summary>
@@ -134,6 +142,19 @@ namespace Territory.Simulation.Signals
         /// <summary>Stage 8 — <c>CrimeHotspotEventEmitter</c> P90 threshold per district (15.0f); strict <c>&gt;</c> emits.</summary>
         public float CrimeHotspotThreshold => crimeHotspotThreshold;
 
+        /// <summary>Stage 9.A — <c>ServiceFireProducer</c> coverage value emitted at fire-equipped state-service cells (5.0f).</summary>
+        public float ServiceFireCoverage => serviceFireCoverage;
+        /// <summary>Stage 9.A — <c>ServiceFireConsumer</c> per-cell scale (0.4f); reserved for downstream demand-model wiring (Bucket 3).</summary>
+        public float ServiceFireConsumerScale => serviceFireConsumerScale;
+        /// <summary>Stage 9.A — <c>ServiceEducationProducer</c> coverage value emitted at education-equipped state-service cells (5.0f).</summary>
+        public float ServiceEducationCoverage => serviceEducationCoverage;
+        /// <summary>Stage 9.A — <c>ServiceEducationConsumer</c> per-cell scale (0.4f); reserved for downstream demand-model wiring (Bucket 3).</summary>
+        public float ServiceEducationConsumerScale => serviceEducationConsumerScale;
+        /// <summary>Stage 9.A — <c>ServiceHealthProducer</c> coverage value emitted at health-equipped state-service cells (5.0f).</summary>
+        public float ServiceHealthCoverage => serviceHealthCoverage;
+        /// <summary>Stage 9.A — <c>ServiceHealthConsumer</c> per-cell scale (0.4f); reserved for downstream demand-model wiring (Bucket 3).</summary>
+        public float ServiceHealthConsumerScale => serviceHealthConsumerScale;
+
         /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6). Stage 7 fields additive — older saves without them round-trip via JsonUtility default-zero on missing JSON keys; restore path then reapplies asset-default during <see cref="RestoreFromData"/> when zero (see Stage 7 round-trip semantics).</summary>
         public SignalTuningWeightsData CaptureSnapshot()
         {
@@ -172,6 +193,12 @@ namespace Territory.Simulation.Signals
                 servicePoliceCoverage = servicePoliceCoverage,
                 servicePoliceConsumerScale = servicePoliceConsumerScale,
                 crimeHotspotThreshold = crimeHotspotThreshold,
+                serviceFireCoverage = serviceFireCoverage,
+                serviceFireConsumerScale = serviceFireConsumerScale,
+                serviceEducationCoverage = serviceEducationCoverage,
+                serviceEducationConsumerScale = serviceEducationConsumerScale,
+                serviceHealthCoverage = serviceHealthCoverage,
+                serviceHealthConsumerScale = serviceHealthConsumerScale,
             };
         }
 
@@ -215,6 +242,12 @@ namespace Territory.Simulation.Signals
             servicePoliceCoverage = data.servicePoliceCoverage;
             servicePoliceConsumerScale = data.servicePoliceConsumerScale;
             crimeHotspotThreshold = data.crimeHotspotThreshold;
+            serviceFireCoverage = data.serviceFireCoverage;
+            serviceFireConsumerScale = data.serviceFireConsumerScale;
+            serviceEducationCoverage = data.serviceEducationCoverage;
+            serviceEducationConsumerScale = data.serviceEducationConsumerScale;
+            serviceHealthCoverage = data.serviceHealthCoverage;
+            serviceHealthConsumerScale = data.serviceHealthConsumerScale;
         }
     }
 
@@ -264,5 +297,12 @@ namespace Territory.Simulation.Signals
         public float servicePoliceCoverage;
         public float servicePoliceConsumerScale;
         public float crimeHotspotThreshold;
+        // Stage 9.A — TECH-2079 Service{Fire,Education,Health} producer/consumer tuning fields.
+        public float serviceFireCoverage;
+        public float serviceFireConsumerScale;
+        public float serviceEducationCoverage;
+        public float serviceEducationConsumerScale;
+        public float serviceHealthCoverage;
+        public float serviceHealthConsumerScale;
     }
 }

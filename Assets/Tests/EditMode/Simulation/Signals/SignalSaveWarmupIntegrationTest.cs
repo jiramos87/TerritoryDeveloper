@@ -125,8 +125,10 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             // adds 11 fields (3 PollutionLand + 3 PollutionWater + 4 LandValue + 1 income multiplier) → 28 total.
             // Stage 8 (TECH-1953) adds 5 CrimeSystem fields (crimeBase, crimeDensityWeight,
             // servicePoliceCoverage, servicePoliceConsumerScale, crimeHotspotThreshold) → 33 total.
+            // Stage 9.A (TECH-2079) adds 6 service-tuning fields (serviceFire/Education/Health
+            // Coverage + ConsumerScale pairs) → 39 total.
             FieldInfo[] fields = typeof(SignalTuningWeightsData).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            Assert.AreEqual(33, fields.Length, "SignalTuningWeightsData field count drift — expected 33 (Stage 6 17 + Stage 7 11 + Stage 8 5)");
+            Assert.AreEqual(39, fields.Length, "SignalTuningWeightsData field count drift — expected 39 (Stage 6 17 + Stage 7 11 + Stage 8 5 + Stage 9.A 6)");
             for (int i = 0; i < fields.Length; i++)
             {
                 float a = (float)fields[i].GetValue(payload);
