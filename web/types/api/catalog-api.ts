@@ -246,3 +246,160 @@ export interface CatalogPoolCreateBody {
     owner_category?: string | null;
   };
 }
+
+/**
+ * Button binding (TECH-1885 / Stage 8.1) — DEC-A7 hybrid binding model.
+ * 6 sprite slots + 4 token slots + size_variant + action_id + enable_predicate_json.
+ */
+export interface CatalogButtonDetail {
+  sprite_idle_entity_id: string | null;
+  sprite_hover_entity_id: string | null;
+  sprite_pressed_entity_id: string | null;
+  sprite_disabled_entity_id: string | null;
+  sprite_icon_entity_id: string | null;
+  sprite_badge_entity_id: string | null;
+  token_palette_entity_id: string | null;
+  token_frame_style_entity_id: string | null;
+  token_font_entity_id: string | null;
+  token_illumination_entity_id: string | null;
+  size_variant: string;
+  action_id: string;
+  enable_predicate_json: Record<string, unknown>;
+}
+
+export interface CatalogButtonDto {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  button_detail: CatalogButtonDetail | null;
+  /** Resolved entity rows for the 10 ref slots, keyed by column name. */
+  slot_resolutions: Record<string, EntityRefSearchRow | null>;
+}
+
+export interface CatalogButtonCreateBody {
+  slug: string;
+  display_name: string;
+  tags?: string[];
+  button_detail?: Partial<CatalogButtonDetail>;
+}
+
+export interface CatalogButtonPatchBody {
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  button_detail?: Partial<CatalogButtonDetail>;
+}
+
+/**
+ * Panel detail (TECH-1887 / Stage 8.1) — DEC-A27 slot-composition model.
+ * Archetype declares `slots_schema` on `entity_version.params_json`; panel
+ * binds children into named slots via `panel_child` rows.
+ */
+export type CatalogPanelChildKind =
+  | "button"
+  | "panel"
+  | "label"
+  | "spacer"
+  | "audio"
+  | "sprite"
+  | "label_inline";
+
+export interface CatalogPanelChildDto {
+  /** Optional — NULL allowed per DEC-A27 for spacer / label_inline. */
+  child_entity_id: string | null;
+  child_kind: CatalogPanelChildKind;
+  slot_name: string;
+  order_idx: number;
+  params_json: Record<string, unknown>;
+  /** Resolved child catalog row for picker hydration (null when inline-only or unresolvable). */
+  resolved: EntityRefSearchRow | null;
+}
+
+export interface CatalogPanelSlotSchemaEntry {
+  accepts_kind: string[];
+  min?: number;
+  max?: number;
+}
+
+export interface CatalogPanelDetail {
+  archetype_entity_id: string | null;
+  background_sprite_entity_id: string | null;
+  palette_entity_id: string | null;
+  frame_style_entity_id: string | null;
+  layout_template: "vstack" | "hstack" | "grid" | "free";
+  modal: boolean;
+  /** Cached copy of archetype `slots_schema` for the bound version. Read-only. */
+  slots_schema: Record<string, CatalogPanelSlotSchemaEntry> | null;
+}
+
+export interface CatalogPanelDto {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  panel_detail: CatalogPanelDetail | null;
+  /** Slot-grouped children, one entry per declared slot in archetype order. */
+  slots: Array<{
+    name: string;
+    schema: CatalogPanelSlotSchemaEntry | null;
+    children: CatalogPanelChildDto[];
+  }>;
+  /** Optional archetype resolution row (when archetype_entity_id is set). */
+  archetype_resolution: EntityRefSearchRow | null;
+}
+
+export interface CatalogPanelCreateBody {
+  slug: string;
+  display_name: string;
+  tags?: string[];
+  panel_detail?: Partial<{
+    archetype_entity_id: string | null;
+    background_sprite_entity_id: string | null;
+    palette_entity_id: string | null;
+    frame_style_entity_id: string | null;
+    layout_template: "vstack" | "hstack" | "grid" | "free";
+    modal: boolean;
+  }>;
+}
+
+export interface CatalogPanelPatchBody {
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  panel_detail?: Partial<{
+    archetype_entity_id: string | null;
+    background_sprite_entity_id: string | null;
+    palette_entity_id: string | null;
+    frame_style_entity_id: string | null;
+    layout_template: "vstack" | "hstack" | "grid" | "free";
+    modal: boolean;
+  }>;
+}
+
+/**
+ * Replace-tree request body for `POST /api/catalog/panels/[slug]/children`
+ * (TECH-1887). Server validates slot.accepts + slot count + no panel cycle
+ * inside SERIALIZABLE tx, then deletes-and-reinserts atomically (DEC-A43).
+ */
+export interface CatalogPanelChildSetBody {
+  /** Optimistic-lock fingerprint per DEC-A38; compared against panel `catalog_entity.updated_at`. */
+  updated_at: string;
+  /** When true, snapshot child_version_id from each child entity's published version (DEC-A22). */
+  publish?: boolean;
+  slots: Array<{
+    name: string;
+    children: Array<{
+      child_entity_id?: string | null;
+      child_kind: CatalogPanelChildKind;
+      order_idx: number;
+      params_json?: Record<string, unknown>;
+    }>;
+  }>;
+}
