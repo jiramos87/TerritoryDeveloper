@@ -12,6 +12,16 @@ slices_via: none
   verbatim code. Implementer locates exact byte positions against current HEAD and decides
   operation type, helper extraction, micro-edit sequencing, and test input shape.
 
+  Per-section soft byte caps (warn-only — emit `n_section_overrun` counter; do NOT abort):
+    §Goal               ≤ 400 B
+    §Acceptance         ≤ 1500 B
+    §Pending Decisions  ≤ 1500 B
+    §Implementer Lat.   ≤  800 B
+    §Work Items         ≤ 2000 B
+    §Test Blueprint     ≤ 1000 B
+    §Invariants & Gate  ≤  800 B
+    total target        ≈ 8 KB
+
   Backwards compat: legacy digests with `§Mechanical Steps` (verbose Edit tuples + before/after
   blocks) remain valid and continue to ship via `/ship-stage` Pass A unchanged. New authoring
   uses the shape below.
@@ -21,11 +31,11 @@ slices_via: none
 
 ### §Goal
 
-<!-- 1–2 sentences — task outcome in product / domain terms. Glossary-aligned. -->
+<!-- 1–2 sentences — task outcome in product / domain terms. Glossary-aligned. Soft cap ≤400 B. -->
 
 ### §Acceptance
 
-<!-- Sharp behavior contract. Each row = one observable behavior code-review + verify-loop will gate on. -->
+<!-- Sharp behavior contract. Each row = one observable behavior code-review + verify-loop will gate on. Soft cap ≤1500 B. -->
 
 - [ ] {observable behavior 1}
 - [ ] {observable behavior 2}
@@ -33,7 +43,7 @@ slices_via: none
 ### §Pending Decisions
 
 <!-- Picks RESOLVED by the digester. Each row = a design pivot the implementer would otherwise
-     have to negotiate. Capture the choice + rationale; do NOT include code. -->
+     have to negotiate. Capture the choice + rationale; do NOT include code. Soft cap ≤1500 B. -->
 
 - {decision name}: {choice chosen} — rationale: {why}
 - {path or symbol name}: {resolved value}
@@ -41,7 +51,7 @@ slices_via: none
 ### §Implementer Latitude
 
 <!-- Picks DEFERRED to the implementer. Each row = an explicit freedom + the constraint that
-     bounds it (invariant id or §Acceptance row). Empty list = digest is fully prescriptive. -->
+     bounds it (invariant id or §Acceptance row). Empty list = digest is fully prescriptive. Soft cap ≤800 B. -->
 
 - {area}: implementer chooses freely (constraint: {invariant id or §Acceptance row})
 - {area}: implementer chooses freely (constraint: …)
@@ -49,7 +59,7 @@ slices_via: none
 ### §Work Items
 
 <!-- Flat list of file targets + 1-line intent. NO verbatim before/after code blocks. NO
-     numbered steps. Implementer sequences and locates anchors against current HEAD. -->
+     numbered steps. Implementer sequences and locates anchors against current HEAD. Soft cap ≤2000 B. -->
 
 **Edits:** (intent only — implementer locates anchors against current HEAD)
 
@@ -60,7 +70,7 @@ slices_via: none
 ### §Test Blueprint
 
 <!-- Test INTENTS only — implementer designs inputs, expected values, and picks harness from
-     {node, unity-batch, bridge, manual}. -->
+     {node, unity-batch, bridge, manual}. Soft cap ≤1000 B. -->
 
 - {test_name}: assert {behavior in glossary terms}
 - {test_name}: assert {…}
@@ -68,7 +78,7 @@ slices_via: none
 ### §Invariants & Gate
 
 <!-- ONE block per digest (not per step). Implementer runs the gate after applying all work
-     items. STOP route is the single escalation contract. -->
+     items. STOP route is the single escalation contract. Soft cap ≤800 B. -->
 
 invariant_touchpoints:
   - id: {invariant_id}

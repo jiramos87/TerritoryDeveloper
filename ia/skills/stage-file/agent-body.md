@@ -11,7 +11,7 @@ Run [`ia/skills/stage-file/SKILL.md`](../../ia/skills/stage-file/SKILL.md) end-t
 5. **Phase 3 — Batch deps verify** — One `backlog_list({ids: [union]})` call. Unresolvable → HALT.
 6. **Phase 4 — Resolve target manifest section** — Slug heuristic vs `ia/state/backlog-sections.json`; ambiguous → user prompt.
 7. **Phase 5 — Per-task iterator** — For each `_pending_` Task: compose `task_insert` args + `raw_markdown` (Pass A null + Pass B backfill per SKILL.md §5.1a); call MCP; append manifest entry; persist spec stub body to DB via `task_spec_section_write`; record for post-loop.
-8. **Phase 6 — Post-loop: materialize + validate + flips** — `bash tools/scripts/materialize-backlog.sh` (DB source default) + `npm run validate:dead-project-specs` + atomic task-table Edit + R2 Stage Status flip + R1 plan-top Status flip + non-blocking `npm run progress`.
+8. **Phase 6 — Post-loop: materialize + validate + flips** — Short-circuit when `filed_tasks.length === 0` (every Task hit idempotent skip → zero new DB rows AND zero manifest appends): SKIP `materialize-backlog.sh` + `validate:dead-project-specs`; emit `materialize=skipped (no-op)`. Otherwise: `bash tools/scripts/materialize-backlog.sh` (DB source default) + `npm run validate:dead-project-specs`. Then atomic task-table Edit + R2 Stage Status flip + R1 plan-top Status flip + non-blocking `npm run progress`.
 9. **Phase 7 — Return to dispatcher** — Single caveman block with STAGE_ID / FILED / SKIPPED / ids / section / validators / `next=stage-file-chain-continue`.
 
 # Hard boundaries
@@ -44,6 +44,7 @@ Filed: {ISSUE_ID_1} — {title_1}
        {ISSUE_ID_2} — {title_2}
        ...
 Section: {TARGET_SECTION_HEADER}
+Materialize: {ran|skipped (no-op)}
 Validators: exit 0.
 next=stage-file-chain-continue
 ```

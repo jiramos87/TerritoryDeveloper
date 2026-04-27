@@ -12,7 +12,7 @@ Forward via Agent tool with `subagent_type: "stage-file"` (when `FORCE_MODEL` se
 >
 > ## Mission
 >
-> Run `ia/skills/stage-file/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. 8 phases: Mode detection → Load Stage MCP bundle once (`lifecycle_stage_context`) → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG.md manifest section (slug heuristic / user prompt) → Per-task iterator via `task_insert` MCP (DB-backed per-prefix monotonic id; NO yaml, NO `reserve-id.sh`) + manifest append (`ia/state/backlog-sections.json`) + spec stub body persisted via `task_spec_section_write` MCP → Post-loop `materialize-backlog.sh` (DB source default) + `validate:dead-project-specs` + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip → Return.
+> Run `ia/skills/stage-file/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. 8 phases: Mode detection → Load Stage MCP bundle once (`lifecycle_stage_context`) → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG.md manifest section (slug heuristic / user prompt) → Per-task iterator via `task_insert` MCP (DB-backed per-prefix monotonic id; NO yaml, NO `reserve-id.sh`) + manifest append (`ia/state/backlog-sections.json`) + spec stub body persisted via `task_spec_section_write` MCP → Post-loop: short-circuit on `filed_tasks.length === 0` (skip materialize + validate); else `materialize-backlog.sh` (DB source default) + `validate:dead-project-specs` + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip → Return.
 >
 > ## Hard boundaries
 >
@@ -36,7 +36,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 >
 > ## Mission
 >
-> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (RELAXED shape) across ALL N filed Task specs of target Stage in one Opus pass. Per Task: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items (flat rows, 1-line intent, NO verbatim before/after code) / §Test Blueprint / §Invariants & Gate (ONE block: invariant_touchpoints + validator_gate + escalation_enum + Gate + STOP). Optional Scene Wiring row appears in §Work Items when triggered. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Self-lint via `plan_digest_lint` (cap=1 retry per Task).
+> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}`. Bulk-author `§Plan Digest` direct (RELAXED shape) across ALL N filed Task specs of target Stage in one Opus pass. Authoring prompt embeds the 10-point rubric verbatim as hard constraints (9 contract rules + per-section soft byte caps) — NO post-author `plan_digest_lint` MCP call, NO retry loop. Per Task: §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items (flat rows, 1-line intent, NO verbatim before/after code) / §Test Blueprint / §Invariants & Gate (ONE block: invariant_touchpoints + validator_gate + escalation_enum + Gate + STOP). Optional Scene Wiring row appears in §Work Items when triggered. Persist body via `task_spec_section_write` MCP (DB sole source of truth — no filesystem mirror). Per-section overruns counted as `n_section_overrun` (warn-only).
 >
 > ## Hard boundaries
 >
@@ -44,13 +44,14 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 > - Do NOT author specs outside target Stage.
 > - Do NOT commit.
 > - Do NOT write task spec bodies to filesystem — DB only via `task_spec_section_write`.
-> - Idempotent on re-entry: skip Tasks whose `§Plan Digest` is already populated AND lint passes.
+> - Do NOT call `plan_digest_lint` MCP — rubric is enforced in-prompt only.
+> - Idempotent on re-entry: skip Tasks whose `§Plan Digest` is already populated.
 
-`stage-authoring` must return success + N specs with populated `§Plan Digest` + lint PASS before chain stops. Failure → abort chain with handoff `/stage-authoring {SLUG} {STAGE_ID}`.
+`stage-authoring` must return success + N specs with populated `§Plan Digest` + `validate:master-plan-status` exit 0 before chain stops. Failure → abort chain with handoff `/stage-authoring {SLUG} {STAGE_ID}`.
 
 ## Step 3 — Boundary stop (NO auto-chain to ship-stage)
 
-`/stage-file` STOPS at `stage-authoring` lint PASS. Do NOT auto-invoke `/ship-stage`. User decides when to ship.
+`/stage-file` STOPS at `stage-authoring` success. Do NOT auto-invoke `/ship-stage`. User decides when to ship.
 
 Rationale: preserve explicit user gate between authoring and shipping; user can inspect populated specs before shipping.
 
@@ -61,4 +62,4 @@ Chain completion summary: tasks filed ids + `§Plan Digest` populated per spec (
 - **N≥2:** `Next: claude-personal "/ship-stage {SLUG} Stage {STAGE_ID}"` — runs implement + verify + code-review + inline closeout.
 - **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"` — single-task path (no ship-stage).
 
-Hard rule: `/ship-stage` is multi-task only — for N=1 use `/ship`. `/ship-stage` readiness gate is idempotent on populated `§Plan Digest`, so re-invocation on partial-failure recovery is safe.
+Hard rule: `/ship-stage` is multi-task only — for N=1 use `/ship`. `/ship-stage` readiness gate is idempotent on populated `§Plan Digest` (DB-resident), so re-invocation on partial-failure recovery is safe.

@@ -332,6 +332,10 @@ Run after all Tasks processed.
 
 ### 6.1 Materialize BACKLOG.md
 
+**Short-circuit on no-op:** if `filed_tasks.length === 0` (every Task hit the idempotent `task_insert` skip path in Phase 5.2 — zero new DB rows AND zero manifest appends in Phase 5.3) → SKIP `materialize-backlog.sh` + Phase 6.2 `validate:dead-project-specs`. Emit `materialize=skipped (no-op)` in Phase 7 report. Continue to Phase 6.3.
+
+Otherwise:
+
 ```bash
 bash tools/scripts/materialize-backlog.sh
 ```
@@ -344,7 +348,7 @@ DB source is default (Step 5). Non-zero exit → escalate `{reason: "materialize
 npm run validate:dead-project-specs
 ```
 
-Non-zero exit → escalate. `validate:backlog-yaml` **skipped** — no yaml written on DB path.
+Non-zero exit → escalate. `validate:backlog-yaml` **skipped** — no yaml written on DB path. Skipped entirely when Phase 6.1 short-circuits on no-op.
 
 ### 6.3 Task-table flip — auto-handled by DB
 
@@ -401,6 +405,7 @@ Filed: {ISSUE_ID_1} — {title_1}
        {ISSUE_ID_2} — {title_2}
        ...
 Section: {TARGET_SECTION_HEADER}
+Materialize: {ran|skipped (no-op)}
 Validators: exit 0.
 next=stage-file-chain-continue
 ```

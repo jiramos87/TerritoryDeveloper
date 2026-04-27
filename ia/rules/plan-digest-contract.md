@@ -1,18 +1,18 @@
 ---
-purpose: "Canonical 9-point rubric for §Plan Digest. Enforced by plan_digest_lint MCP tool. Relaxed shape — intent over verbatim code."
+purpose: "Canonical 10-point rubric for §Plan Digest (9 contract + per-section soft caps). Injected verbatim into stage-authoring Opus prompt as hard constraints. Relaxed shape — intent over verbatim code."
 audience: agent
 loaded_by: ondemand
 slices_via: none
 alwaysApply: false
 ---
 
-# Plan-Digest Contract — 9-point rubric (relaxed shape)
+# Plan-Digest Contract — 10-point rubric (relaxed shape, rubric-in-prompt)
 
 Applies to every §Plan Digest section (per-Task) authored by `/stage-authoring`.
 
 The digester's job is to resolve **decisions** — picks, paths, names, design pivots — and to pin **behavior** — §Acceptance + §Test Blueprint intents. The implementer's job is to translate decisions into byte-level edits against current HEAD. Verbatim before/after code blocks are NOT a digest deliverable.
 
-A plan is "digested" iff **all 9** hold:
+A plan is "digested" iff rules **1–9** hold (hard); rule **10** is soft (warn-only):
 
 1. **Zero open picks.** No "user decides", "user picks", "likely", "probably", "we could", "might", "consider", "TBD", "up to you", "your call". Resolved picks live in §Pending Decisions; deferred picks live in §Implementer Latitude.
 2. **Every path verified against HEAD.** Repo-relative paths under §Work Items resolve via `plan_digest_verify_paths`. Creates exempted (target path may not yet exist).
@@ -23,8 +23,9 @@ A plan is "digested" iff **all 9** hold:
 7. **Scope-narrow §Acceptance.** Each row is one observable behavior — concrete, glossary-aligned, gate-able by code-review or verify-loop. No vague "improve X" / "polish Y".
 8. **Meta-stripped.** No audit history, no user-pick prose, no "human only" asides, no migration narrative, no aggregate-doc references.
 9. **Single STOP route.** §Invariants & Gate carries one **STOP:** clause naming the escalation triggers (anchor mismatch / acceptance unmet / invariant regression / validator fail). Per-step STOP forbidden.
+10. **Per-section soft byte caps (warn-only).** §Goal ≤400 B · §Acceptance ≤1500 B · §Pending Decisions ≤1500 B · §Implementer Latitude ≤800 B · §Work Items ≤2000 B · §Test Blueprint ≤1000 B · §Invariants & Gate ≤800 B; total target ≈8 KB. Overrun → emit `n_section_overrun` counter in handoff; do NOT abort.
 
-`plan_digest_lint` returns `{pass: boolean, failures: [{rule: 1..9, where, detail}]}`. Digester cap = 1 retry; second failure → abort chain + surface first failures verbatim.
+Rubric is injected verbatim into the `/stage-authoring` Phase 4 Opus authoring prompt as hard constraints. NO post-author `plan_digest_lint` MCP call. NO retry loop. Author measures byte length per sub-section after composition; overruns recorded as warnings, chain proceeds.
 
 ## Section heading literal — `§Plan Digest`
 
@@ -56,14 +57,12 @@ Legacy digests with `### §Mechanical Steps` (numbered steps + per-step Edit tup
 
 New authoring (`/stage-authoring` post-relaxation) writes the relaxed shape. No migration of existing DB rows.
 
-## Lint surface
-
-`plan_digest_lint` enforces marker presence + path existence + pick-word absence — it does NOT inspect code-block content or per-step structure. Both shapes (legacy + relaxed) PASS the same lint when markers (`**Edits:**`, `**Gate:**`, `**STOP:**`) appear at least once in the body.
-
 ## Enforcement
 
-- `plan_digest_lint` runs on every per-Task §Plan Digest slice.
-- `plan-review` (`plan-reviewer-mechanical` + `plan-reviewer-semantic`) runs AFTER `stage-authoring` — drift scan consumes the final §Plan Digest written directly by `stage-authoring`.
+- Rubric is injected verbatim into the `/stage-authoring` Phase 4 Opus authoring prompt as hard constraints.
+- NO post-author `plan_digest_lint` MCP call. NO retry loop.
+- Author self-measures byte length per sub-section after composition; overruns recorded as `n_section_overrun` warnings in handoff; chain proceeds.
+- Pick-word scan + path verification happen in-prompt under rules 1–2; no separate lint pass.
 
 ## Cross-references
 
