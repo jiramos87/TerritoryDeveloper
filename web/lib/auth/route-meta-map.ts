@@ -3,8 +3,11 @@ const map: Record<string, Record<string, { requires: string }>> = {
   '/api/catalog/assets/[id]':             { GET: { requires: 'catalog.entity.create' }, PATCH: { requires: 'catalog.entity.edit' } },
   '/api/catalog/assets/[id]/retire':      { POST: { requires: 'catalog.entity.retire' } },
   '/api/catalog/preview-diff':            { POST: { requires: 'render.run' } },
+  '/api/catalog/sprites':                 { GET: { requires: 'catalog.entity.create' }, POST: { requires: 'catalog.entity.create' } },
+  '/api/catalog/sprites/[slug]':          { GET: { requires: 'catalog.entity.create' }, PATCH: { requires: 'catalog.entity.edit' }, DELETE: { requires: 'catalog.entity.retire' } },
+  '/api/catalog/sprites/[slug]/promote':  { POST: { requires: 'catalog.entity.publish' } },
   '/api/render/runs':                     { POST: { requires: 'render.run' } },
-  '/api/render/runs/[job_id]':            { GET: { requires: 'audit.read' } },
+  '/api/render/runs/[run_id]':            { GET: { requires: 'audit.read' }, PATCH: { requires: 'render.run' } },
   '/api/render/runs/[run_id]/replay':     { POST: { requires: 'render.run' } },
   '/api/render/runs/[run_id]/identical':  { POST: { requires: 'render.run' } },
 };

@@ -1,6 +1,6 @@
 // TECH-1469 — render queue API integration tests.
 //
-// Covers POST /api/render/runs and GET /api/render/runs/[job_id].
+// Covers POST /api/render/runs and GET /api/render/runs/[run_id].
 // Direct-invoke harness (no dev server); DB-backed (requires migrations
 // 0026 + 0027 applied). Capability gate is enforced upstream by `proxy.ts`
 // — these specs stub `getSessionUser` to a seeded test user and verify the
@@ -54,9 +54,9 @@ async function postRun(
 }
 
 async function getRun(job_id: string): Promise<Response> {
-  const { GET } = await import("@/app/api/render/runs/[job_id]/route");
+  const { GET } = await import("@/app/api/render/runs/[run_id]/route");
   return invokeRender(GET, "GET", `/api/render/runs/${job_id}`, {
-    params: { job_id },
+    params: { run_id: job_id },
   });
 }
 
@@ -149,7 +149,7 @@ describe("POST /api/render/runs (TECH-1469)", () => {
   });
 });
 
-describe("GET /api/render/runs/[job_id] (TECH-1469)", () => {
+describe("GET /api/render/runs/[run_id] (TECH-1469)", () => {
   test("get_unknown_404: returns not_found envelope", async () => {
     const fake = "deadbeef-dead-4ead-8ead-deadbeefdead";
     const res = await getRun(fake);

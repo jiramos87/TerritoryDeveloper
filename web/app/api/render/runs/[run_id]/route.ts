@@ -22,12 +22,16 @@
  * Capability: `audit.read` (gated upstream by `proxy.ts`).
  */
 import { type NextRequest, NextResponse } from "next/server";
+import { withAudit } from "@/lib/audit/with-audit";
 import { getSql } from "@/lib/db/client";
 import { renderError } from "@/lib/render/envelope";
 import { RENDER_QUEUE_KIND } from "@/lib/render/enqueue";
 
 export const dynamic = "force-dynamic";
-export const routeMeta = { GET: { requires: "audit.read" } } as const;
+export const routeMeta = {
+  GET: { requires: "audit.read" },
+  PATCH: { requires: "render.run" },
+} as const;
 
 type Ctx = { params: Promise<{ run_id: string }> };
 
@@ -126,5 +130,92 @@ export async function GET(_request: NextRequest, ctx: Ctx) {
   } catch (e) {
     console.error("[render-api] GET /api/render/runs/[run_id] failed", e);
     return renderError(500, "internal", "Failed to read render job");
+  }
+}
+
+/**
+ * PATCH /api/render/runs/[run_id] — update `variant_disposition_json` (DEC-A41).
+ *
+ * Body: `{ variant_disposition_json: Record<string, "kept"|"discarded"|"saved"> }`
+ *
+ * Merges the supplied keys into the existing `render_run.variant_disposition_json`
+ * column (jsonb concat). Used by the Stage 6.1 variant-grid Discard action.
+ *
+ * Capability: `render.run` (gated upstream by `proxy.ts`).
+ *
+ * Audit: emits `render.run.disposition_updated` with `{ run_id, disposition }`.
+ */
+type DispositionMap = Record<string, "kept" | "discarded" | "saved">;
+
+const VALID_DISPOSITIONS = ["kept", "discarded", "saved"] as const;
+
+function validateDispositionBody(body: unknown): { details: string[] } | DispositionMap {
+  if (body === null || typeof body !== "object") return { details: ["body must be an object"] };
+  const obj = body as Record<string, unknown>;
+  const dm = obj.variant_disposition_json;
+  if (dm === null || typeof dm !== "object" || Array.isArray(dm)) {
+    return { details: ["variant_disposition_json must be an object"] };
+  }
+  const out: DispositionMap = {};
+  for (const [k, v] of Object.entries(dm as Record<string, unknown>)) {
+    if (!/^v?\d+$/.test(k)) return { details: [`invalid variant key: ${k}`] };
+    if (typeof v !== "string" || !VALID_DISPOSITIONS.includes(v as DispositionMap[string])) {
+      return { details: [`invalid disposition for ${k}: ${String(v)}`] };
+    }
+    out[k] = v as DispositionMap[string];
+  }
+  if (Object.keys(out).length === 0) return { details: ["variant_disposition_json must be non-empty"] };
+  return out;
+}
+
+type PatchResponse = { run_id: string; variant_disposition_json: DispositionMap };
+
+export async function PATCH(request: NextRequest, ctx: Ctx) {
+  const { run_id } = await ctx.params;
+  if (!UUID_RE.test(run_id)) {
+    return renderError(400, "validation", "run_id must be a UUID", {
+      details: ["run_id format invalid"],
+    });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return renderError(400, "validation", "Body must be valid JSON");
+  }
+  const v = validateDispositionBody(body);
+  if ("details" in v) {
+    return renderError(400, "validation", "Invalid request body", { details: v.details });
+  }
+  const incoming = v;
+
+  const wrapped = withAudit<PatchResponse>(async (_request, { emit, sql }) => {
+    const rows = await sql`
+      update render_run
+         set variant_disposition_json = variant_disposition_json || ${sql.json(incoming)}::jsonb
+       where run_id = ${run_id}::uuid
+       returning run_id::text as run_id, variant_disposition_json
+    `;
+    const updated = (rows as unknown as Array<{ run_id: string; variant_disposition_json: DispositionMap }>)[0];
+    if (!updated) throw new Error("not_found: render_run not found");
+    await emit("render.run.disposition_updated", "render_run", updated.run_id, {
+      run_id: updated.run_id,
+      disposition: incoming,
+    });
+    return {
+      status: 200,
+      data: { run_id: updated.run_id, variant_disposition_json: updated.variant_disposition_json },
+    };
+  });
+
+  try {
+    return await wrapped(request);
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("not_found:")) {
+      return renderError(404, "not_found", "Render run not found");
+    }
+    console.error("[render-api] PATCH /api/render/runs/[run_id] failed", e);
+    return renderError(500, "internal", "Failed to update render run");
   }
 }
