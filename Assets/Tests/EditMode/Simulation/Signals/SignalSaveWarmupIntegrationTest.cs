@@ -123,8 +123,10 @@ namespace Territory.Tests.EditMode.Simulation.Signals
 
             // Iterate all fields reflectively — fail-fast on drift. Stage 7 (TECH-1889/1890/1891/1892)
             // adds 11 fields (3 PollutionLand + 3 PollutionWater + 4 LandValue + 1 income multiplier) → 28 total.
+            // Stage 8 (TECH-1953) adds 5 CrimeSystem fields (crimeBase, crimeDensityWeight,
+            // servicePoliceCoverage, servicePoliceConsumerScale, crimeHotspotThreshold) → 33 total.
             FieldInfo[] fields = typeof(SignalTuningWeightsData).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            Assert.AreEqual(28, fields.Length, "SignalTuningWeightsData field count drift — expected 28 (Stage 6 17 + Stage 7 11)");
+            Assert.AreEqual(33, fields.Length, "SignalTuningWeightsData field count drift — expected 33 (Stage 6 17 + Stage 7 11 + Stage 8 5)");
             for (int i = 0; i < fields.Length; i++)
             {
                 float a = (float)fields[i].GetValue(payload);

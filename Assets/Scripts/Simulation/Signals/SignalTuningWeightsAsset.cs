@@ -54,6 +54,13 @@ namespace Territory.Simulation.Signals
         // --- Stage 7 — EconomyManager tax-base land-value bonus (TECH-1892). At LandValue mean 100 → +50% income. ---
         [SerializeField] private float landValueIncomeMultiplier = 0.005f;
 
+        // --- Stage 8 — CrimeSystem tuning fields (TECH-1953). Five new fields appended contiguously per stage-authoring sizing-gate H6. ---
+        [SerializeField] private float crimeBase = 1f;
+        [SerializeField] private float crimeDensityWeight = 2f;
+        [SerializeField] private float servicePoliceCoverage = 5f;
+        [SerializeField] private float servicePoliceConsumerScale = 0.4f;
+        [SerializeField] private float crimeHotspotThreshold = 15f;
+
         /// <summary>Default happiness baseline (50f) — initial value of <see cref="HappinessComposer.Current"/>.</summary>
         public float HappinessBaseline => happinessBaseline;
         /// <summary>Employment weight (30f).</summary>
@@ -116,6 +123,17 @@ namespace Territory.Simulation.Signals
         /// <summary>Stage 7 — EconomyManager projected-income land-value bonus multiplier (0.005f). At cityLandValueMean=100 → +50% bonus.</summary>
         public float LandValueIncomeMultiplier => landValueIncomeMultiplier;
 
+        /// <summary>Stage 8 — <see cref="Producers.CrimeProducer"/> baseline crime emitted at every cell (1.0f).</summary>
+        public float CrimeBase => crimeBase;
+        /// <summary>Stage 8 — <see cref="Producers.CrimeProducer"/> per-residential-density-tier weight (2.0f); ResidentialHeavy contributes 3× this.</summary>
+        public float CrimeDensityWeight => crimeDensityWeight;
+        /// <summary>Stage 8 — <c>ServicePoliceProducer</c> coverage value emitted at police-equipped state-service cells (5.0f).</summary>
+        public float ServicePoliceCoverage => servicePoliceCoverage;
+        /// <summary>Stage 8 — <c>ServicePoliceConsumer</c> per-cell crime-reduction multiplier (0.4f); applied as <c>-scale * policeField.Get(x,y)</c>.</summary>
+        public float ServicePoliceConsumerScale => servicePoliceConsumerScale;
+        /// <summary>Stage 8 — <c>CrimeHotspotEventEmitter</c> P90 threshold per district (15.0f); strict <c>&gt;</c> emits.</summary>
+        public float CrimeHotspotThreshold => crimeHotspotThreshold;
+
         /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6). Stage 7 fields additive — older saves without them round-trip via JsonUtility default-zero on missing JSON keys; restore path then reapplies asset-default during <see cref="RestoreFromData"/> when zero (see Stage 7 round-trip semantics).</summary>
         public SignalTuningWeightsData CaptureSnapshot()
         {
@@ -149,6 +167,11 @@ namespace Territory.Simulation.Signals
                 landValueIndustrialPenalty = landValueIndustrialPenalty,
                 landValueDensityBonus = landValueDensityBonus,
                 landValueIncomeMultiplier = landValueIncomeMultiplier,
+                crimeBase = crimeBase,
+                crimeDensityWeight = crimeDensityWeight,
+                servicePoliceCoverage = servicePoliceCoverage,
+                servicePoliceConsumerScale = servicePoliceConsumerScale,
+                crimeHotspotThreshold = crimeHotspotThreshold,
             };
         }
 
@@ -187,6 +210,11 @@ namespace Territory.Simulation.Signals
             landValueIndustrialPenalty = data.landValueIndustrialPenalty;
             landValueDensityBonus = data.landValueDensityBonus;
             landValueIncomeMultiplier = data.landValueIncomeMultiplier;
+            crimeBase = data.crimeBase;
+            crimeDensityWeight = data.crimeDensityWeight;
+            servicePoliceCoverage = data.servicePoliceCoverage;
+            servicePoliceConsumerScale = data.servicePoliceConsumerScale;
+            crimeHotspotThreshold = data.crimeHotspotThreshold;
         }
     }
 
@@ -230,5 +258,11 @@ namespace Territory.Simulation.Signals
         public float landValueDensityBonus;
         // Stage 7 — TECH-1892 EconomyManager tax-base land-value bonus multiplier.
         public float landValueIncomeMultiplier;
+        // Stage 8 — TECH-1953 CrimeSystem tuning fields (CrimeProducer + ServicePoliceProducer/Consumer + CrimeHotspotEventEmitter).
+        public float crimeBase;
+        public float crimeDensityWeight;
+        public float servicePoliceCoverage;
+        public float servicePoliceConsumerScale;
+        public float crimeHotspotThreshold;
     }
 }
