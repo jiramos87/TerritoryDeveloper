@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Territory.Core;
 using Territory.Forests;
@@ -101,16 +102,27 @@ public class DemandManager : MonoBehaviour
     [Range(0f, 0.6f)]
     public float taxDemandPenaltyAtMax = 0.35f;
 
+    [Header("Parent stub integration")]
+    [SerializeField] private GridManager _gridManager;
+
     private EmploymentManager employmentManager;
     private CityStats cityStats;
     private EconomyManager economyManager;
     private ForestManager forestManager;
-    private GridManager gridManager;
 
     // Track previous values to detect new buildings
     private int previousResidentialBuildings = 0;
     private int previousCommercialBuildings = 0;
     private int previousIndustrialBuildings = 0;
+
+    private void Awake()
+    {
+        // Cache GridManager in Awake (invariant #3) via [SerializeField] + FindObjectOfType
+        // fallback (invariant #4). Awake guarantees the reference exists before any
+        // Update / external caller queries GetExternalDemandModifier.
+        if (_gridManager == null)
+            _gridManager = FindObjectOfType<GridManager>();
+    }
 
     void Start()
     {
@@ -119,7 +131,6 @@ public class DemandManager : MonoBehaviour
         cityStats = FindObjectOfType<CityStats>();
         economyManager = FindObjectOfType<EconomyManager>();
         forestManager = FindObjectOfType<ForestManager>();
-        gridManager = FindObjectOfType<GridManager>();
         buildingTracker = new BuildingTracker();
     }
 
@@ -186,6 +197,50 @@ public class DemandManager : MonoBehaviour
         UpdateIndustrialDemand();
         ApplySectorTaxPressure();
         ApplyHappinessModifier();
+        ApplyExternalDemandModifier();
+    }
+
+    /// <summary>
+    /// External demand modifier (Stage 7 — placeholder).
+    /// Multiplies each R/C/I demand channel by <see cref="GetExternalDemandModifier"/>
+    /// once per <see cref="UpdateRCIDemand"/> invocation. Step 3 will swap the
+    /// placeholder formula for a population-weighted neighbor-trade contribution.
+    /// </summary>
+    private void ApplyExternalDemandModifier()
+    {
+        float multiplier = GetExternalDemandModifier();
+        residentialDemand.demandLevel *= multiplier;
+        commercialDemand.demandLevel *= multiplier;
+        industrialDemand.demandLevel *= multiplier;
+
+        residentialDemand.demandLevel = Mathf.Clamp(residentialDemand.demandLevel, -100f, 100f);
+        commercialDemand.demandLevel = Mathf.Clamp(commercialDemand.demandLevel, -100f, 100f);
+        industrialDemand.demandLevel = Mathf.Clamp(industrialDemand.demandLevel, -100f, 100f);
+    }
+
+    /// <summary>
+    /// Stage 7 placeholder modifier: <c>1.0f + 0.05f * stubCount</c>, where
+    /// <c>stubCount</c> is the number of non-null
+    /// <see cref="GridManager.GetNeighborStub(BorderSide)"/> results across all
+    /// <see cref="BorderSide"/> values. Returns <c>1.0f</c> (neutral) when the
+    /// cached <see cref="GridManager"/> is missing so the demand pipeline stays
+    /// non-destructive in dev when stubs are not yet seeded.
+    /// </summary>
+    public float GetExternalDemandModifier()
+    {
+        if (_gridManager == null)
+        {
+            Debug.LogWarning("DemandManager: GridManager missing for external modifier");
+            return 1.0f;
+        }
+
+        int stubCount = 0;
+        foreach (BorderSide side in Enum.GetValues(typeof(BorderSide)))
+        {
+            if (_gridManager.GetNeighborStub(side).HasValue)
+                stubCount++;
+        }
+        return 1.0f + 0.05f * stubCount;
     }
 
     /// <summary>Reduce sector demand when sector tax rate above comfort threshold.</summary>
@@ -348,8 +403,8 @@ public class DemandManager : MonoBehaviour
     /// <summary>Demand bonus for specific cell based on its desirability.</summary>
     public float GetCellDesirabilityBonus(int x, int y)
     {
-        if (gridManager == null) return 0f;
-        CityCell cellComponent = gridManager.GetCell(x, y);
+        if (_gridManager == null) return 0f;
+        CityCell cellComponent = _gridManager.GetCell(x, y);
         if (cellComponent != null)
             return cellComponent.desirability * desirabilityDemandMultiplier;
         return 0f;
