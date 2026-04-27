@@ -100,3 +100,149 @@ export interface CatalogPreviewDiffRequest {
   asset_id: string;
   patch: Record<string, unknown>;
 }
+
+/**
+ * Row shape returned by `GET /api/catalog/entities` for `<EntityRefPicker>` (TECH-1787).
+ * Mirrors `catalog_entity` columns needed for the picker dropdown + badge resolution.
+ */
+export interface EntityRefSearchRow {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  kind: string;
+  current_published_version_id: string | null;
+  retired_at: string | null;
+}
+
+export interface EntityRefPickerProps {
+  accepts_kind: string[];
+  value: EntityRefSearchRow | null;
+  valueId?: string | null;
+  onChange: (entityId: string | null, row: EntityRefSearchRow | null) => void;
+  label?: string;
+  disabled?: boolean;
+  testId?: string;
+}
+
+/**
+ * Asset detail composite envelope returned by `GET /api/catalog/assets/[slug]`
+ * for the spine-aware Stage 7.1 surface (TECH-1786). Bridges `catalog_entity`
+ * + `asset_detail` + `economy_detail` + memberships and primary subtype
+ * (TECH-1789).
+ */
+export interface CatalogAssetSpineDto {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  asset_detail: {
+    category: string;
+    footprint_w: number;
+    footprint_h: number;
+    placement_mode: string | null;
+    unlocks_after: string | null;
+    has_button: boolean;
+    world_sprite_entity_id: string | null;
+    button_target_sprite_entity_id: string | null;
+    button_pressed_sprite_entity_id: string | null;
+    button_disabled_sprite_entity_id: string | null;
+    button_hover_sprite_entity_id: string | null;
+    primary_subtype_pool_id: string | null;
+  } | null;
+  economy_detail: {
+    base_cost_cents: number;
+    monthly_upkeep_cents: number;
+    demolition_refund_pct: number;
+    construction_ticks: number;
+  } | null;
+  /** Resolved sprite-slot rows for picker hydration (DEC-A22). */
+  sprite_slot_resolutions: Record<string, EntityRefSearchRow | null>;
+  /** Subtype membership pool rows (TECH-1789). */
+  subtype_memberships: EntityRefSearchRow[];
+}
+
+export interface CatalogAssetSpinePatchBody {
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  asset_detail?: Partial<{
+    category: string;
+    footprint_w: number;
+    footprint_h: number;
+    placement_mode: string | null;
+    unlocks_after: string | null;
+    has_button: boolean;
+    world_sprite_entity_id: string | null;
+    button_target_sprite_entity_id: string | null;
+    button_pressed_sprite_entity_id: string | null;
+    button_disabled_sprite_entity_id: string | null;
+    button_hover_sprite_entity_id: string | null;
+    primary_subtype_pool_id: string | null;
+  }>;
+  economy_detail?: Partial<{
+    base_cost_cents: number;
+    monthly_upkeep_cents: number;
+    demolition_refund_pct: number;
+    construction_ticks: number;
+  }>;
+  /** TECH-1789 — diff-style membership update; server applies in single tx. */
+  subtype_membership?: {
+    added: string[];
+    removed: string[];
+  };
+}
+
+export interface CatalogPoolMemberSpineRow {
+  asset_entity_id: string;
+  slug: string;
+  display_name: string;
+  weight: number;
+  conditions_json: Record<string, unknown>;
+}
+
+export interface CatalogPoolDto {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  pool_detail: {
+    primary_subtype: string | null;
+    owner_category: string | null;
+  } | null;
+  members: CatalogPoolMemberSpineRow[];
+  /** TECH-1789 — count of asset_detail rows whose primary_subtype_pool_id = this pool. */
+  primary_tagged_by_count: number;
+}
+
+export interface CatalogPoolPatchBody {
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  pool_detail?: Partial<{
+    primary_subtype: string | null;
+    owner_category: string | null;
+  }>;
+  /** Member upsert + delete (single-tx server diff). */
+  members?: Array<{
+    asset_entity_id: string;
+    weight: number;
+    conditions_json?: Record<string, unknown>;
+  }>;
+  removed_member_entity_ids?: string[];
+}
+
+export interface CatalogPoolCreateBody {
+  slug: string;
+  display_name: string;
+  tags?: string[];
+  pool_detail?: {
+    primary_subtype?: string | null;
+    owner_category?: string | null;
+  };
+}

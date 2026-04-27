@@ -383,35 +383,15 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 5 — City MVP close / Tick performance + metrics foundation
 
-- [ ] **TECH-1471** — Profiler audit + city tick hotspot doc (multi-scale Stage 5 T5.1)
-  - **Files:** `Assets/Scripts/Managers/GameManagers/SimulationManager.cs`, `docs/city-tick-perf-notes.md` (new)
-  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.1
-  - **Notes:** Run Unity Profiler against fresh city save (post-BUG-55 / BUG-14 baseline). Author `docs/city-tick-perf-notes.md` (new) — capture top-5 GC alloc hotspots + ms/tick baseline at 10/30/60Hz tick rates + CPU sample tree ≥3 levels deep under `SimulationManager.ProcessSimulationTick`. Output drives T5.2 patch list + T5.4 budget threshold.
-  - **Acceptance:** `docs/city-tick-perf-notes.md` exists w/ top-5 GC alloc hotspots ranked + ms/tick baseline @ 10/30/60Hz + CPU sample tree ≥3 levels deep under `ProcessSimulationTick`. Profiler `.data` file path referenced in doc.
-  - **Type:** Code Health / performance
+### Stage 6 — City MVP close / City readability dashboard
 
-- [ ] **TECH-1472** — Top-allocator patches per profiler audit (multi-scale Stage 5 T5.2)
-  - **Files:** sites surfaced by T5.1 (TBD per profiler output), `docs/city-tick-perf-notes.md` (delta append)
-  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.2
-  - **Depends on:** TECH-1471 (T5.1 hotspot doc)
-  - **Notes:** Patch top-3 GC allocators surfaced in T5.1 outside BUG-55 / BUG-14 scope. Typical fixes: cached enumerators, struct-vs-class, list pooling, `StringBuilder` reuse. For any hotspot deemed acceptable, append `// hotspot acceptable — see docs/city-tick-perf-notes.md` at the call site. Re-profile delta into the doc.
-  - **Acceptance:** Top-3 hotspots from T5.1 either patched (alloc bytes/tick reduced ≥50% per site) OR carry `// hotspot acceptable — see docs/city-tick-perf-notes.md` comment. Re-profile delta appended to `docs/city-tick-perf-notes.md`. `unity:compile-check` passes. Invariant #3 not regressed (TECH-26 scanner clean).
-  - **Type:** Code Health / performance
-
-- [ ] **TECH-1473** — MetricsRecorder Postgres-off verify (multi-scale Stage 5 T5.3)
-  - **Files:** `Assets/Scripts/Managers/GameManagers/MetricsRecorder.cs` (try/catch guard if absent), `tools/scripts/test-mode-scenarios/` (2 new Path A scenarios)
-  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.3
-  - **Notes:** Two Path A scenarios under `tools/scripts/test-mode-scenarios/` — (a) Postgres up — assert `city_metrics_history` rows accumulate per tick via `mcp__territory-ia__city_metrics_query`; (b) Postgres down (kill 5434) — assert 60-tick run logs zero exceptions, FPS unaffected, fire-and-forget writes swallowed. Add `try/catch` guard in `MetricsRecorder.cs` if absent.
-  - **Acceptance:** Path A scenario (a) passes — `city_metrics_history` row count > 0 after 60 ticks via `city_metrics_query`. Path A scenario (b) passes — Postgres down (port 5434 killed), 60-tick run logs zero `NpgsqlException` / `SocketException`, FPS delta vs scenario (a) ≤ 5%. `try/catch` guard present in `MetricsRecorder.cs` write path.
-  - **Type:** infrastructure / observability
-
-- [ ] **TECH-1474** — EditMode TickBudgetTests fixture + baseline snapshot (multi-scale Stage 5 T5.4)
-  - **Files:** `Assets/Tests/EditMode/TickBudgetTests.cs` (new), `Assets/Tests/EditMode/Fixtures/tick-budget.json` (new)
-  - **Spec:** `ia/projects/multi-scale-master-plan.md` Stage 5 T5.4
-  - **Depends on:** TECH-1471 (baseline ms/tick), TECH-1472 (post-patch ms/tick)
-  - **Notes:** New `Assets/Tests/EditMode/TickBudgetTests.cs` NUnit fixture invoking `SimulationManager.ProcessSimulationTick` in isolation under `System.Diagnostics.Stopwatch`. Assert single-tick wall time ≤ {threshold from T5.1/T5.2 baseline + 20% margin}. Persist baseline to `Assets/Tests/EditMode/Fixtures/tick-budget.json` for Step 3 parity harness regression check.
-  - **Acceptance:** `TickBudgetTests.cs` exists w/ NUnit `[Test]` invoking `ProcessSimulationTick` under `Stopwatch`. Threshold = T5.2 post-patch ms/tick × 1.20 (20% margin). `tick-budget.json` persists `{baseline_ms, threshold_ms, tick_rate_hz, captured_at, git_sha}`. `unity:testmode-batch` runs fixture; passes locally.
-  - **Type:** test / infrastructure
+- [ ] **TECH-1804** — Seed chart token rows in catalog spine (multi-scale Stage 6 T6.1)
+  - Type: infrastructure / catalog spine seed
+  - Files: tools/migrations/seed-chart-tokens.mjs, ia/specs/ui-design-system.md (§tokens)
+  - Notes: Insert 5 chart token rows into catalog spine via `catalog_upsert` MCP — `chart.line_color` / `chart.axis_color` / `chart.background` (kind=`palette`), `chart.label_font` (kind=`font_face`), `chart.card_frame` (kind=`frame_style`). Bind to active `catalog_snapshot` per DEC-A6/A7. Idempotent migration script under `tools/migrations/`; verify via `catalog_get` round-trip. No code touches `Assets/`. Unblocks T6.2 (FEAT-51 chart engine) — slugs consumed by `TokenCatalog.GetPalette` / `GetFont` / `GetFrame` per DEC-A14.
+  - Acceptance: 5 chart token rows present in active `catalog_snapshot`; `catalog_get` round-trip returns each row; idempotent migration script under `tools/migrations/`; no `Assets/` touch.
+  - Depends on: none
+  - Related: FEAT-51
 
 ## Distribution program — Full-Game MVP Bucket 10
 
@@ -463,8 +443,13 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
 
 ### Stage 1.1 — Signal Contract Primitives
 
+- [ ] **TECH-1790 — SignalWarmupPass class + idempotency test** — Author Assets/Scripts/Simulation/Signals/SignalWarmupPass.cs exposing Run(SignalFieldRegistry, DistrictManager, SignalTickScheduler, int ticks = 5) — pre-roll N ticks via existing SignalTickScheduler.Tick orchestration; ship Assets/Tests/EditMode/Simulation/Signals/SignalWarmupPassIdempotencyTest.cs asserting two consecutive Run() invocations produce byte-identical SignalField cell arrays across all 12 signals (city-sim-depth Stage 6 T6.1).
 
+- [ ] **TECH-1791 — SignalTuningWeightsAsset SO + composer wiring** — Add Assets/Scripts/Simulation/Signals/SignalTuningWeightsAsset.cs ScriptableObject mirroring HappinessComposer + DesirabilityComposer const weights; author Assets/ScriptableObjects/SignalTuningWeights.asset with literal defaults; replace consts in HappinessComposer.cs + DesirabilityComposer.cs with [SerializeField] weights reads; HappinessComposerParityTest + DesirabilityComposerParityTest stay green (city-sim-depth Stage 6 T6.2).
 
+- [ ] **TECH-1792 — GameSaveManager schema v6 — tuning weights + warmup hook** — In Assets/Scripts/Managers/GameManagers/GameSaveManager.cs bump GameSaveData.CurrentSchemaVersion 5→6; add tuningWeights snapshot field; extend MigrateSave with 5→6 case (null tuningWeights → asset defaults intact); after grid restore + DistrictManager.Rebuild fallback invoke SignalWarmupPass.Run before first tick (city-sim-depth Stage 6 T6.3 — sizing waiver per stage-decompose Phase 3.5).
+
+- [ ] **TECH-1793 — Save round-trip + warmup integration test** — Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs — v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).
 
 ## Utilities program
 
@@ -670,14 +655,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 ### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
 
-- [ ] **TECH-1467** — **job_queue + render_run migration** (asset-pipeline Stage 4.1 T4.1.1)
-
-- [ ] **TECH-1468** — **Render worker process** (asset-pipeline Stage 4.1 T4.1.2)
-
-- [ ] **TECH-1469** — **Render API routes** (asset-pipeline Stage 4.1 T4.1.3)
-
-- [ ] **TECH-1470** — **Replay + identical re-render endpoints** (asset-pipeline Stage 4.1 T4.1.4)
-
 - [ ] **TECH-1585** — **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)
 
 - [ ] **TECH-1586** — **Replaced-by chain resolver helper** (asset-pipeline Stage 19.2 T19.2.2)
@@ -689,6 +666,22 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
+
+- [ ] **TECH-1786** — **Asset CRUD + slot binding UI** (asset-pipeline Stage 7.1 T7.1.1)
+  - Acceptance — `/catalog/assets` list + detail render; slot pickers filter by `accepts_kind`; CRUD routes mirror sprite shape.
+  - Spec — [`ia/projects/TECH-1786.md`](ia/projects/TECH-1786.md)
+
+- [ ] **TECH-1787** — **EntityRefPicker shared component** (asset-pipeline Stage 7.1 T7.1.2)
+  - Acceptance — Component renders kind-filtered options; unresolved `version_pin` shows red badge; reusable across panels, buttons, audio.
+  - Spec — [`ia/projects/TECH-1787.md`](ia/projects/TECH-1787.md)
+
+- [ ] **TECH-1788** — **Pool CRUD + member editor** (asset-pipeline Stage 7.1 T7.1.3)
+  - Acceptance — `/catalog/pools` list + detail with member + weight + conditions editor; predicate vocab dropdown drives `conditions_json`.
+  - Spec — [`ia/projects/TECH-1788.md`](ia/projects/TECH-1788.md)
+
+- [ ] **TECH-1789** — **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)
+  - Acceptance — Multi-select writes `pool_member` rows in single tx; primary-subtype refused when not in membership; pool detail shows primary-tagged-by-N badge.
+  - Spec — [`ia/projects/TECH-1789.md`](ia/projects/TECH-1789.md)
 
 ## High Priority
 

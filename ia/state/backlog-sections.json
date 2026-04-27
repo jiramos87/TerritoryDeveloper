@@ -470,6 +470,19 @@
           "id": "TECH-1474",
           "checklist_line": "- [ ] **TECH-1474** — EditMode TickBudgetTests fixture + baseline snapshot (multi-scale Stage 5 T5.4)",
           "trailing_blanks": 1
+        },
+        {
+          "type": "prose",
+          "lines": [
+            "### Stage 6 — City MVP close / City readability dashboard",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1804",
+          "checklist_line": "- [ ] **TECH-1804** — Seed chart token rows in catalog spine (multi-scale Stage 6 T6.1)",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -580,6 +593,114 @@
           "type": "issue",
           "id": "TECH-1590",
           "checklist_line": "- [ ] **TECH-1590** — SimulationManager wiring + tick smoke test (Stage 2 T2.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1618",
+          "checklist_line": "- [ ] **TECH-1618 — DistrictMap data model + DistrictSignalCache real type** — Author DistrictMap plain C# class + DistrictMapData serializable + replace empty DistrictSignalCache.cs with real Get/GetAll/Set/Clear API.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1619",
+          "checklist_line": "- [ ] **TECH-1619 — DistrictManager MonoBehaviour + tick Phase 0 hook** — Author DistrictManager MonoBehaviour + add SignalTickScheduler hook calling Rebuild() at top of Tick.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1621",
+          "checklist_line": "- [ ] **TECH-1621 — DistrictAggregator + scheduler wiring + EditMode aggregator tests** — Author DistrictAggregator static class + wire into SignalTickScheduler post-diffusion + ship aggregator EditMode tests.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1620",
+          "checklist_line": "- [ ] **TECH-1620 — GameSaveManager schema v5 — DistrictMap save/load + round-trip test** — Bump GameSaveData schema 4-to-5 + add districtMap field + capture/restore via DistrictManager + ship round-trip test.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1676",
+          "checklist_line": "- [ ] **TECH-1676 — HappinessComposer consumer** — Author Assets/Scripts/Simulation/HappinessComposer.cs MonoBehaviour implementing ISignalConsumer; ports ComputeTargetHappiness with PollutionAir read via DistrictSignalCache mean.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1677",
+          "checklist_line": "- [ ] **TECH-1677 — PollutionAir producers + sink** — Author IndustrialPollutionProducer + PowerPlantPollutionProducer + ForestPollutionSink under Assets/Scripts/Simulation/Signals/Producers/.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1678",
+          "checklist_line": "- [ ] **TECH-1678 — Scene wiring + scheduler registration** — Wire 4 new MonoBehaviours into MainScene.unity Inspector + append to SignalTickScheduler producer/consumer lists via unity_bridge_command.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1679",
+          "checklist_line": "- [ ] **TECH-1679 — CityStats facade migration** — Migrate CityStats.happiness + CityStats.pollution getters to delegate to HappinessComposer + SignalFieldRegistry; remove inline RecalculatePollution/RecalculateHappiness call sites.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1680",
+          "checklist_line": "- [ ] **TECH-1680 — HappinessComposer parity test** — Ship HappinessComposerParityTest EditMode TestFixture; assert ≤5-point delta vs legacy + no NaN/Infinity + non-negative PollutionAir cells.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1711",
+          "checklist_line": "- [ ] **TECH-1711 — DesirabilityComposer consumer** — Author Assets/Scripts/Simulation/DesirabilityComposer.cs MonoBehaviour implementing ISignalConsumer; reads LandValue + PollutionAir + ServiceParks via SignalFieldRegistry; per-cell Mathf.Clamp01 store in float[] _cellDesirability with public CellValue(x,y) reader.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1712",
+          "checklist_line": "- [ ] **TECH-1712 — FEAT-43 toggle wiring** — Add useSignalDesirability bool + DesirabilityComposer Inspector ref to AutoZoningManager + IsSignalDesirabilityEnabled getter; replace ZoneManager.AverageSectionDesirability c.desirability read with composer-conditional read at line 1096; default off for risk-free rollback.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1713",
+          "checklist_line": "- [ ] **TECH-1713 — Scene wiring + scheduler registration** — Wire DesirabilityComposer into MainScene.unity Inspector via unity_bridge_command attach_component + append to SignalTickScheduler.consumerList + set AutoZoningManager + ZoneManager Inspector refs + save_scene; useSignalDesirability stays false-by-default.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1714",
+          "checklist_line": "- [ ] **TECH-1714 — Step 4 shell MonoBehaviours** — Author ConstructionStageController.cs + DensityEvolutionTicker.cs shell MonoBehaviours under Assets/Scripts/Simulation/ with no-op SetDesirabilitySource stubs + DesirabilityComposer Inspector refs + Awake fallback + empty Update; wire both into MainScene.unity via unity_bridge_command + save_scene.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1725",
+          "checklist_line": "- [ ] **TECH-1725 — DesirabilityComposer parity test** — Ship Assets/Tests/EditMode/Simulation/Signals/DesirabilityComposerParityTest.cs TestFixture; 30-tick warmup asserts CellValue in [0,1] + no NaN/Infinity + toggle-off legacy parity within 1e-5 + toggle-on composer parity within 1e-5 on 5-cell section.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1790",
+          "checklist_line": "- [ ] **TECH-1790 — SignalWarmupPass class + idempotency test** — Author Assets/Scripts/Simulation/Signals/SignalWarmupPass.cs exposing Run(SignalFieldRegistry, DistrictManager, SignalTickScheduler, int ticks = 5) — pre-roll N ticks via existing SignalTickScheduler.Tick orchestration; ship Assets/Tests/EditMode/Simulation/Signals/SignalWarmupPassIdempotencyTest.cs asserting two consecutive Run() invocations produce byte-identical SignalField cell arrays across all 12 signals (city-sim-depth Stage 6 T6.1).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1791",
+          "checklist_line": "- [ ] **TECH-1791 — SignalTuningWeightsAsset SO + composer wiring** — Add Assets/Scripts/Simulation/Signals/SignalTuningWeightsAsset.cs ScriptableObject mirroring HappinessComposer + DesirabilityComposer const weights; author Assets/ScriptableObjects/SignalTuningWeights.asset with literal defaults; replace consts in HappinessComposer.cs + DesirabilityComposer.cs with [SerializeField] weights reads; HappinessComposerParityTest + DesirabilityComposerParityTest stay green (city-sim-depth Stage 6 T6.2).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1792",
+          "checklist_line": "- [ ] **TECH-1792 — GameSaveManager schema v6 — tuning weights + warmup hook** — In Assets/Scripts/Managers/GameManagers/GameSaveManager.cs bump GameSaveData.CurrentSchemaVersion 5→6; add tuningWeights snapshot field; extend MigrateSave with 5→6 case (null tuningWeights → asset defaults intact); after grid restore + DistrictManager.Rebuild fallback invoke SignalWarmupPass.Run before first tick (city-sim-depth Stage 6 T6.3 — sizing waiver per stage-decompose Phase 3.5).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1793",
+          "checklist_line": "- [ ] **TECH-1793 — Save round-trip + warmup integration test** — Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs — v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).",
           "trailing_blanks": 1
         }
       ]
@@ -1009,6 +1130,30 @@
         },
         {
           "type": "issue",
+          "id": "TECH-1614",
+          "checklist_line": "- [ ] **TECH-1614** — **/catalog SPA shell + sidebar nav** (asset-pipeline Stage 5.1 T5.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1615",
+          "checklist_line": "- [ ] **TECH-1615** — **Shared list+detail layout + edit tabs** (asset-pipeline Stage 5.1 T5.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1616",
+          "checklist_line": "- [ ] **TECH-1616** — **Optimistic concurrency middleware + 409 handler** (asset-pipeline Stage 5.1 T5.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1617",
+          "checklist_line": "- [ ] **TECH-1617** — **Error envelope renderer** (asset-pipeline Stage 5.1 T5.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
           "id": "TECH-1585",
           "checklist_line": "- [ ] **TECH-1585** — **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)",
           "trailing_blanks": 1
@@ -1041,6 +1186,54 @@
           "type": "issue",
           "id": "TECH-1593",
           "checklist_line": "- [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1672",
+          "checklist_line": "- [ ] **TECH-1672** — **Sprite list + detail pages** (asset-pipeline Stage 6.1 T6.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1673",
+          "checklist_line": "- [ ] **TECH-1673** — **ArchetypeParamsForm shared component** (asset-pipeline Stage 6.1 T6.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1674",
+          "checklist_line": "- [ ] **TECH-1674** — **Render form + variant grid + Save flows** (asset-pipeline Stage 6.1 T6.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1675",
+          "checklist_line": "- [ ] **TECH-1675** — **Sprite CRUD API routes + promote** (asset-pipeline Stage 6.1 T6.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1786",
+          "checklist_line": "- [ ] **TECH-1786** — **Asset CRUD + slot binding UI** (asset-pipeline Stage 7.1 T7.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1787",
+          "checklist_line": "- [ ] **TECH-1787** — **EntityRefPicker shared component** (asset-pipeline Stage 7.1 T7.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1788",
+          "checklist_line": "- [ ] **TECH-1788** — **Pool CRUD + member editor** (asset-pipeline Stage 7.1 T7.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-1789",
+          "checklist_line": "- [ ] **TECH-1789** — **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)",
           "trailing_blanks": 1
         }
       ]
