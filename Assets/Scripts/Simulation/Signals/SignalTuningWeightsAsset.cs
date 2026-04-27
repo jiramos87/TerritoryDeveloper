@@ -69,6 +69,11 @@ namespace Territory.Simulation.Signals
         [SerializeField] private float serviceHealthCoverage = 5f;
         [SerializeField] private float serviceHealthConsumerScale = 0.4f;
 
+        // --- Stage 9.B — TrafficProducer + TrafficLevelConsumer tuning fields (TECH-2136). Three new fields appended contiguously per sizing-gate H6 (single SO edit per Stage). ---
+        [SerializeField] private float trafficBase = 0.5f;
+        [SerializeField] private float trafficRoadwayDensityWeight = 1.0f;
+        [SerializeField] private float trafficLevelConsumerScale = 0.3f;
+
         /// <summary>Default happiness baseline (50f) — initial value of <see cref="HappinessComposer.Current"/>.</summary>
         public float HappinessBaseline => happinessBaseline;
         /// <summary>Employment weight (30f).</summary>
@@ -155,6 +160,13 @@ namespace Territory.Simulation.Signals
         /// <summary>Stage 9.A — <c>ServiceHealthConsumer</c> per-cell scale (0.4f); reserved for downstream demand-model wiring (Bucket 3).</summary>
         public float ServiceHealthConsumerScale => serviceHealthConsumerScale;
 
+        /// <summary>Stage 9.B — <c>TrafficProducer</c> baseline traffic emitted at every road cell (0.5f).</summary>
+        public float TrafficBase => trafficBase;
+        /// <summary>Stage 9.B — <c>TrafficProducer</c> per-Moore-neighbor RCI density weight (1.0f); per-road-cell value = <c>TrafficBase + TrafficRoadwayDensityWeight × MooreNeighborRciCount</c>.</summary>
+        public float TrafficRoadwayDensityWeight => trafficRoadwayDensityWeight;
+        /// <summary>Stage 9.B — <c>TrafficLevelConsumer</c> per-cell scale (0.3f); reserved for downstream demand-model wiring (Bucket 3 RCI demand parity).</summary>
+        public float TrafficLevelConsumerScale => trafficLevelConsumerScale;
+
         /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6). Stage 7 fields additive — older saves without them round-trip via JsonUtility default-zero on missing JSON keys; restore path then reapplies asset-default during <see cref="RestoreFromData"/> when zero (see Stage 7 round-trip semantics).</summary>
         public SignalTuningWeightsData CaptureSnapshot()
         {
@@ -199,6 +211,9 @@ namespace Territory.Simulation.Signals
                 serviceEducationConsumerScale = serviceEducationConsumerScale,
                 serviceHealthCoverage = serviceHealthCoverage,
                 serviceHealthConsumerScale = serviceHealthConsumerScale,
+                trafficBase = trafficBase,
+                trafficRoadwayDensityWeight = trafficRoadwayDensityWeight,
+                trafficLevelConsumerScale = trafficLevelConsumerScale,
             };
         }
 
@@ -248,6 +263,9 @@ namespace Territory.Simulation.Signals
             serviceEducationConsumerScale = data.serviceEducationConsumerScale;
             serviceHealthCoverage = data.serviceHealthCoverage;
             serviceHealthConsumerScale = data.serviceHealthConsumerScale;
+            trafficBase = data.trafficBase;
+            trafficRoadwayDensityWeight = data.trafficRoadwayDensityWeight;
+            trafficLevelConsumerScale = data.trafficLevelConsumerScale;
         }
     }
 
@@ -304,5 +322,9 @@ namespace Territory.Simulation.Signals
         public float serviceEducationConsumerScale;
         public float serviceHealthCoverage;
         public float serviceHealthConsumerScale;
+        // Stage 9.B — TECH-2136 TrafficProducer + TrafficLevelConsumer tuning fields.
+        public float trafficBase;
+        public float trafficRoadwayDensityWeight;
+        public float trafficLevelConsumerScale;
     }
 }
