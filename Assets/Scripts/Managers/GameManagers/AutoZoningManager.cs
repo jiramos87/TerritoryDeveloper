@@ -27,6 +27,16 @@ public class AutoZoningManager : MonoBehaviour
     /// <summary>Safety cap per tick; actual limit driven by growth budget. Kept high so budget controls volume.</summary>
     private const int MaxZonedCellsPerTickSafetyCap = 300;
 
+    [Header("FEAT-43 Signal Desirability Toggle")]
+    [SerializeField] private bool useSignalDesirability = false;
+    [SerializeField] private DesirabilityComposer desirabilityComposer;
+
+    /// <summary>True when both <c>useSignalDesirability</c> is set and a non-null <see cref="DesirabilityComposer"/> ref is wired (null-safe).</summary>
+    public bool IsSignalDesirabilityEnabled => useSignalDesirability && desirabilityComposer != null;
+
+    /// <summary>The wired <see cref="DesirabilityComposer"/> instance (may be null if Inspector slot empty + no fallback resolved).</summary>
+    public DesirabilityComposer DesirabilityComposer => desirabilityComposer;
+
     string SimDateStr()
     {
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
@@ -41,6 +51,7 @@ public class AutoZoningManager : MonoBehaviour
         if (demandManager == null) demandManager = FindObjectOfType<DemandManager>();
         if (autoRoadBuilder == null) autoRoadBuilder = FindObjectOfType<AutoRoadBuilder>();
         if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
+        if (desirabilityComposer == null) desirabilityComposer = FindObjectOfType<DesirabilityComposer>();
 
         if (zoneManager != null)
             zoneManager.onUrbanCellChanged += OnUrbanCellChanged;

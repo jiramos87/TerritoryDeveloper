@@ -1053,10 +1053,12 @@ MonoBehaviour:
   timeManager: {fileID: 1231479808}
   waterManager: {fileID: 1132506491}
   forestManager: {fileID: 1916953178}
+  happinessComposer: {fileID: 0}
+  signalFieldRegistry: {fileID: 0}
   population: 0
   money: 0
-  happiness: 0
-  pollution: 0
+  _happiness: 0
+  _pollution: 0
   residentialZoneCount: 0
   residentialBuildingCount: 0
   commercialZoneCount: 0
@@ -9584,6 +9586,9 @@ Transform:
   - {fileID: 8200000002}
   - {fileID: 8300000002}
   - {fileID: 8400000002}
+  - {fileID: 1444527628}
+  - {fileID: 1018279265}
+  - {fileID: 1181578562}
   m_Father: {fileID: 1745906816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &938977936
@@ -9922,6 +9927,8 @@ MonoBehaviour:
   baseSpawnWeight: 1
   minDesirabilityThreshold: 2
   lowDesirabilityPenalty: 0.1
+  autoZoningManager: {fileID: 2140155702}
+  desirabilityComposer: {fileID: 1444527627}
 --- !u!1 &961170524
 GameObject:
   m_ObjectHideFlags: 0
@@ -10321,6 +10328,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1008787585}
   m_CullTransparentMesh: 1
+--- !u!1 &1018279264
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1018279265}
+  - component: {fileID: 1018279266}
+  m_Layer: 0
+  m_Name: ConstructionStageController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1018279265
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018279264}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1018279266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018279264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a4376ae1574f4e74964b345ca742cb6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  desirabilityComposer: {fileID: 1444527627}
 --- !u!1 &1019490897
 GameObject:
   m_ObjectHideFlags: 0
@@ -12278,6 +12330,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1172538463}
   m_CullTransparentMesh: 1
+--- !u!1 &1181578561
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1181578562}
+  - component: {fileID: 1181578563}
+  m_Layer: 0
+  m_Name: DensityEvolutionTicker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1181578562
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1181578561}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1181578563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1181578561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f56f9c61186d41229f1472f80e46214, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  desirabilityComposer: {fileID: 1444527627}
 --- !u!1 &1186442058
 GameObject:
   m_ObjectHideFlags: 0
@@ -13408,10 +13505,12 @@ MonoBehaviour:
   timeManager: {fileID: 1231479808}
   waterManager: {fileID: 1132506491}
   forestManager: {fileID: 1916953178}
+  happinessComposer: {fileID: 0}
+  signalFieldRegistry: {fileID: 0}
   population: 0
   money: 0
-  happiness: 0
-  pollution: 0
+  _happiness: 0
+  _pollution: 0
   residentialZoneCount: 0
   residentialBuildingCount: 0
   commercialZoneCount: 0
@@ -15255,6 +15354,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1429590094}
   m_CullTransparentMesh: 1
+--- !u!1 &1444527626
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1444527628}
+  - component: {fileID: 1444527627}
+  m_Layer: 0
+  m_Name: DesirabilityComposer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1444527627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1444527626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 100bcd7be70f64b2b961e579f438ffe7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
+  districtManager: {fileID: 7000000022}
+--- !u!4 &1444527628
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1444527626}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1515061134
 GameObject:
   m_ObjectHideFlags: 0
@@ -22278,6 +22423,8 @@ MonoBehaviour:
   autoRoadBuilder: {fileID: 913510114}
   urbanCentroidService: {fileID: 1144256721}
   maxZonedCellsPerTick: 32
+  useSignalDesirability: 0
+  desirabilityComposer: {fileID: 1444527627}
 --- !u!1 &2144173133
 GameObject:
   m_ObjectHideFlags: 0
@@ -22591,8 +22738,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 306c475481abe447f8ea88c110cba71a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   grid: {fileID: 1880690383}
 --- !u!1 &7000000010
 GameObject:
@@ -22636,8 +22783,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 343c4a219488c4dfb683c9237d907fd8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   registry: {fileID: 7000000003}
   metadata: {fileID: 11400000, guid: dc32ab48fef72404c8cca1d893251b7c, type: 2}
   districtManager: {fileID: 7000000022}
@@ -22647,6 +22794,7 @@ MonoBehaviour:
   - {fileID: 8400000003}
   consumerList:
   - {fileID: 8100000003}
+  - {fileID: 1444527627}
 --- !u!1 &7000000020
 GameObject:
   m_ObjectHideFlags: 0
@@ -22689,8 +22837,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 599eac65ac6ba41699eb38f367e229d9, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   centroid: {fileID: 1144256721}
   grid: {fileID: 1880690383}
 --- !u!1 &8100000001
@@ -22735,8 +22883,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a43f0629be26d41269bbbcbae89f04a4, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   cityStats: {fileID: 72477285}
   employmentManager: {fileID: 1688708272}
   economyManager: {fileID: 678270592}
@@ -22784,8 +22932,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b74ffc2afce442959f1d32adf2e5538, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   gridManager: {fileID: 1880690383}
 --- !u!1 &8300000001
 GameObject:
@@ -22829,8 +22977,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59edcbf12f4c648f7aaab984e8926ab5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   gridManager: {fileID: 1880690383}
 --- !u!1 &8400000001
 GameObject:
@@ -22874,8 +23022,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 571f732a1e1cb41a79d3a40e0773b0c8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   forestManager: {fileID: 1916953178}
   gridManager: {fileID: 1880690383}
 --- !u!1660057539 &9223372036854775807

@@ -8,6 +8,7 @@ using Territory.Economy;
 using Territory.UI;
 using Territory.Terrain;
 using Territory.Buildings;
+using Territory.Simulation;
 
 namespace Territory.Zones
 {
@@ -115,6 +116,10 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     [SerializeField] private float minDesirabilityThreshold = 2.0f;
     [SerializeField] private float lowDesirabilityPenalty = 0.1f;
 
+    [Header("FEAT-43 Signal Desirability Source")]
+    [SerializeField] private AutoZoningManager autoZoningManager;
+    [SerializeField] private DesirabilityComposer desirabilityComposer;
+
     private const int MaxRoadDistanceForSpawning = 3;
 
     /// <summary>Invoked when urban cell (zoning) added or removed. Args: (position, isAdded). Not invoked on zoning→building conversion.</summary>
@@ -130,6 +135,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     void Awake()
     {
         InitializeZonePrefabs();
+        if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
+        if (desirabilityComposer == null) desirabilityComposer = FindObjectOfType<DesirabilityComposer>();
     }
 
     /// <summary>
@@ -1088,12 +1095,23 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     private float AverageSectionDesirability(List<Vector2> section)
     {
         if (section == null || section.Count == 0 || gridManager == null) return 0f;
+        bool useSignal = autoZoningManager != null && autoZoningManager.IsSignalDesirabilityEnabled;
         float total = 0f;
         for (int i = 0; i < section.Count; i++)
         {
-            CityCell c = gridManager.GetCell((int)section[i].x, (int)section[i].y);
-            if (c != null)
-                total += c.desirability;
+            int sx = (int)section[i].x;
+            int sy = (int)section[i].y;
+            float v;
+            if (useSignal)
+            {
+                v = autoZoningManager.DesirabilityComposer.CellValue(sx, sy);
+            }
+            else
+            {
+                CityCell c = gridManager.GetCell(sx, sy);
+                v = c != null ? c.desirability : 0f;
+            }
+            total += v;
         }
         return total / section.Count;
     }
