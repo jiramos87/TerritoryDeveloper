@@ -225,14 +225,6 @@ _pending — populated by `/stage-file` planner pass._
 #### §Plan Fix
 
 _pending — populated by `/plan-review` when fixes are needed._
-
-#### §Stage Audit
-
-_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
-
-#### §Stage Closeout Plan
-
-_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task table schema (5 columns, per MASTER-PLAN-STRUCTURE.md §3):**
@@ -283,7 +275,7 @@ Compose markdown in working memory using the canonical order per MASTER-PLAN-STR
 1. **Header block** (Phase 3 output)
 2. `---`
 3. `## Stages` + tracking legend (Phase 6)
-4. `### Stage 1.1` (full Task table + 4 subsections §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan)
+4. `### Stage 1.1` (full Task table + 2 subsections §Stage File Plan / §Plan Fix)
 5. `### Stage 1.2` (same shape) · ... · `### Stage N.M`
 6. `---`
 7. `## Orchestration guardrails`

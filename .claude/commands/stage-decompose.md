@@ -1,5 +1,5 @@
 ---
-description: Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing 2-level master plan into its Task table + 4 canonical subsections (§Stage File Plan · §Plan Fix · §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections. Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage into the existing master plan (`ia_stages` row) via DB MCP. Does NOT create BACKLOG rows (stage-file does that). 2-level hierarchy Stage > Task. Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {SLUG} Stage 2.3", "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before stage-file".
+description: Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing 2-level master plan into its Task table + 2 canonical subsections (§Stage File Plan · §Plan Fix). Source material: Stage's Exit criteria + Deferred decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections. Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage into the existing master plan (`ia_stages` row) via DB MCP. Does NOT create BACKLOG rows (stage-file does that). 2-level hierarchy Stage > Task. Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: "/stage-decompose {SLUG} Stage 2.3", "decompose stage 2.3", "expand stage skeleton", "materialize deferred stage", "decompose before stage-file".
 argument-hint: "{slug} Stage {N.M}"
 ---
 
@@ -41,7 +41,7 @@ Forward via Agent tool with `subagent_type: "stage-decompose"`:
 > 3. **Phase 2** — Decompose into 2–6 Tasks (ordering: scaffolding → data model → runtime → integration+tests). Per Task: 5-column row with `_pending_` Issue + Status. Task intent cites concrete types/methods/paths. Sizing: 2–5 files = correct; ≤1 file = merge; >3 subsystems = split.
 > 4. **Phase 3** — Cardinality gate: ≥2 Tasks/Stage (1 → warn + pause); ≤6 soft (7+ → warn + pause). Single-file/function tasks → warn + pause. Proceed only after user confirms.
 > 5. **Phase 3.5** — Sizing-gate eval (H1–H6 per `ia/rules/stage-sizing-gate.md`).
-> 6. **Phase 4** — Call `stage_body_write({slug, stage_id, body})` with full Task table + 4 pending subsections (§Stage File Plan · §Plan Fix · §Stage Audit · §Stage Closeout Plan); preserve Status `Draft`.
+> 6. **Phase 4** — Call `stage_body_write({slug, stage_id, body})` with full Task table + 2 pending subsections (§Stage File Plan · §Plan Fix); preserve Status `Draft`.
 > 7. **Phase 5** — `npm run progress`. Log exit; non-zero does NOT block.
 >
 > ## Hard boundaries

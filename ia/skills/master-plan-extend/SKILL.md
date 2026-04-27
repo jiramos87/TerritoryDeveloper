@@ -226,14 +226,6 @@ _pending — populated by `/stage-file` planner pass._
 #### §Plan Fix
 
 _pending — populated by `/plan-review` when fixes are needed._
-
-#### §Stage Audit
-
-_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
-
-#### §Stage Closeout Plan
-
-_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task table schema (5 columns, canonical per MASTER-PLAN-STRUCTURE.md §3):** `Task | Name | Issue | Status | Intent`. NO `Phase` column. Task id format `T{N}.{M}.{K}`. Status enum `_pending_ → Draft → In Review → In Progress → Done (archived)`.
@@ -373,7 +365,7 @@ Follow ia/skills/master-plan-extend/SKILL.md end-to-end. Inputs:
   START_STAGE_NUMBER: {optional N.M override, else inferred}
   SCOPE_BOUNDARY_DOC: {optional sibling doc}
 
-Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task. Phase 0 fetches plan via master_plan_render(slug) and validates rendered preamble shape; inserts missing Last-updated / Locked-decisions header fields (no STOP); loads only SOURCE_SECTION from SOURCE_DOC if provided. Phase 1 computes start N.M + runs duplication gate (playbook: Draft unpersisted → merge; In Review+ → STOP; distinct scope → note). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary UNLESS Assets/** paths detected); no full spec reads. Phase 3 emits planned-stages digest — do NOT pause; proceed to Phase 4 immediately. Phase 4 fully decomposes every new Stage (5-col Task table + 4 pending subsections §Stage File Plan / §Plan Fix / §Stage Audit / §Stage Closeout Plan). Phase 5 cardinality gate: ≥2 tasks per Stage AND ≤6 tasks per Stage — pause on violation. Phase 6 persists via DB MCP — master_plan_preamble_write (header sync) + stage_insert per new Stage + master_plan_change_log_append (audit row); NEVER touch existing Stages. Phase 6c R6 demotes top Status Final → In Progress when new Stages appended. Phase 7 handoff includes umbrella child-row flip if applicable.
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (file shape, Stage block, 5-col Task table, Status enums). 2-level hierarchy Stage > Task. Phase 0 fetches plan via master_plan_render(slug) and validates rendered preamble shape; inserts missing Last-updated / Locked-decisions header fields (no STOP); loads only SOURCE_SECTION from SOURCE_DOC if provided. Phase 1 computes start N.M + runs duplication gate (playbook: Draft unpersisted → merge; In Review+ → STOP; distinct scope → note). Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary UNLESS Assets/** paths detected); no full spec reads. Phase 3 emits planned-stages digest — do NOT pause; proceed to Phase 4 immediately. Phase 4 fully decomposes every new Stage (5-col Task table + 2 pending subsections §Stage File Plan / §Plan Fix). Phase 5 cardinality gate: ≥2 tasks per Stage AND ≤6 tasks per Stage — pause on violation. Phase 6 persists via DB MCP — master_plan_preamble_write (header sync) + stage_insert per new Stage + master_plan_change_log_append (audit row); NEVER touch existing Stages. Phase 6c R6 demotes top Status Final → In Progress when new Stages appended. Phase 7 handoff includes umbrella child-row flip if applicable.
 ```
 
 ---

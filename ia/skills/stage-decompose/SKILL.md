@@ -9,8 +9,8 @@ loaded_by: "skill:stage-decompose"
 slices_via: glossary_discover, glossary_lookup, router_for_task, invariants_summary, spec_sections
 description: >-
   Expand one skeleton Stage (Stages that carry Objectives + Exit but no Task table) in an existing
-  2-level master plan into its Task table + 4 canonical subsections (§Stage File Plan · §Plan Fix ·
-  §Stage Audit · §Stage Closeout Plan). Source material: Stage's Exit criteria + Deferred
+  2-level master plan into its Task table + 2 canonical subsections (§Stage File Plan · §Plan Fix).
+  Source material: Stage's Exit criteria + Deferred
   decomposition hints + Relevant surfaces. MCP context: glossary, router, invariants, spec_sections.
   Applies the same cardinality + task-sizing rules as master-plan-new. Persists the decomposed Stage
   into the existing master plan (`ia_stages` row) via DB MCP. Does NOT create BACKLOG rows (stage-file
@@ -144,7 +144,7 @@ Author the Task table (5 columns canonical per MASTER-PLAN-STRUCTURE.md §3 — 
 | T{STAGE_N}.{STAGE_M}.3 | {short name} | _pending_ | _pending_ | {...} |
 ```
 
-Also author the 4 pending subsections (per MASTER-PLAN-STRUCTURE.md §3):
+Also author the 2 pending subsections (per MASTER-PLAN-STRUCTURE.md §3 — §Stage Audit + §Stage Closeout Plan retired; opus-auditor dropped from `/ship-stage` Pass B; closeout fires inline via `stage_closeout_apply` MCP):
 
 ```markdown
 #### §Stage File Plan
@@ -154,14 +154,6 @@ _pending — populated by `/stage-file` planner pass._
 #### §Plan Fix
 
 _pending — populated by `/plan-review` when fixes are needed._
-
-#### §Stage Audit
-
-_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
-
-#### §Stage Closeout Plan
-
-_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **Task intent concreteness bar:** cite the thing being shipped — type names, method signatures, file paths, field names. Vague verbs ("add support for X") degrade into useless `stage-file` stubs. Match the bar set in `master-plan-new` Phase 4.
@@ -223,7 +215,7 @@ Call `mcp__territory-ia__stage_body_write({slug: SLUG, stage_id: STAGE_ID, body:
 
 **4a — Compose new Stage body:**
 
-Preserve existing header fields (Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces — only augment Relevant surfaces with MCP-routed refs from Phase 1 if useful). Append the Task table + 4 pending subsections authored in Phase 2.
+Preserve existing header fields (Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces — only augment Relevant surfaces with MCP-routed refs from Phase 1 if useful). Append the Task table + 2 pending subsections authored in Phase 2.
 
 Expected final block shape (per MASTER-PLAN-STRUCTURE.md §3):
 
@@ -262,14 +254,6 @@ _pending — populated by `/stage-file` planner pass._
 #### §Plan Fix
 
 _pending — populated by `/plan-review` when fixes are needed._
-
-#### §Stage Audit
-
-_pending — populated by Stage audit pass when all Tasks reach Done post-verify._
-
-#### §Stage Closeout Plan
-
-_pending — populated inline by `/ship-stage` Pass B `stage_closeout_apply` when all Tasks reach `Done`._
 ```
 
 **4b — Status line (idempotent):**
@@ -330,7 +314,7 @@ Follow ia/skills/stage-decompose/SKILL.md end-to-end. Inputs:
   SLUG: {bare master-plan slug, e.g. blip}
   STAGE_ID: {N.M, e.g. 2.3}
 
-Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 4 pending subsections). 2-level hierarchy Stage > Task.
+Canonical master-plan shape: docs/MASTER-PLAN-STRUCTURE.md (Stage block, 5-col Task table, 2 pending subsections — §Stage File Plan + §Plan Fix; §Stage Audit + §Stage Closeout Plan retired). 2-level hierarchy Stage > Task.
 Phase 1 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec_sections / invariants_summary).
 Cardinality gate requires ≥2 tasks per Stage AND ≤6 soft — pause for user confirmation on either violation.
 Only the target STAGE_ID is decomposed; all other deferred Stages remain as skeletons.

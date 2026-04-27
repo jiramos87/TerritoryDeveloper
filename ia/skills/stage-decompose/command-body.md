@@ -21,7 +21,7 @@ Forward via Agent tool with `subagent_type: "stage-decompose"`:
 > 3. **Phase 2** — Decompose into 2–6 Tasks (ordering: scaffolding → data model → runtime → integration+tests). Per Task: 5-column row with `_pending_` Issue + Status. Task intent cites concrete types/methods/paths. Sizing: 2–5 files = correct; ≤1 file = merge; >3 subsystems = split.
 > 4. **Phase 3** — Cardinality gate: ≥2 Tasks/Stage (1 → warn + pause); ≤6 soft (7+ → warn + pause). Single-file/function tasks → warn + pause. Proceed only after user confirms.
 > 5. **Phase 3.5** — Sizing-gate eval (H1–H6 per `ia/rules/stage-sizing-gate.md`).
-> 6. **Phase 4** — Call `stage_body_write({slug, stage_id, body})` with full Task table + 4 pending subsections (§Stage File Plan · §Plan Fix · §Stage Audit · §Stage Closeout Plan); preserve Status `Draft`.
+> 6. **Phase 4** — Call `stage_body_write({slug, stage_id, body})` with full Task table + 2 pending subsections (§Stage File Plan · §Plan Fix); preserve Status `Draft`.
 > 7. **Phase 5** — `npm run progress`. Log exit; non-zero does NOT block.
 >
 > ## Hard boundaries
