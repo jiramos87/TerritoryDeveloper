@@ -823,6 +823,14 @@ export interface StageInsertInput {
   exit_criteria?: string | null;
   body?: string | null;
   status?: "pending" | "in_progress" | "done";
+  /**
+   * Optional list of `arch_surfaces.slug` values to link this Stage to in
+   * the `stage_arch_surfaces` join table (DEC-A12 — link-table storage
+   * shape, normalized + indexable). Each slug must already exist in
+   * `arch_surfaces` (Invariant #12 — linker MUST NOT auto-create surfaces).
+   * Empty / null = no surface links (cross-cutting tooling Stages).
+   */
+  arch_surfaces?: string[] | null;
 }
 
 export interface StageInsertResult {
@@ -880,6 +888,39 @@ export async function mutateStageInsert(
         status,
       ],
     );
+
+    // ---- arch_surfaces link table (DEC-A12) ------------------------------
+    // Normalize, dedupe, pre-validate against arch_surfaces table, then
+    // bulk-insert into stage_arch_surfaces inside the same tx. Invariant
+    // #12 — linker MUST NOT auto-create surfaces; unknown slugs reject.
+    const archInput = input.arch_surfaces ?? null;
+    if (archInput && archInput.length > 0) {
+      const surfaces = [
+        ...new Set(
+          archInput.map((s) => (s ?? "").trim()).filter((s) => s.length > 0),
+        ),
+      ];
+      if (surfaces.length > 0) {
+        const existsRes = await c.query<{ slug: string }>(
+          `SELECT slug FROM arch_surfaces WHERE slug = ANY($1::text[])`,
+          [surfaces],
+        );
+        const found = new Set(existsRes.rows.map((r) => r.slug));
+        const missing = surfaces.filter((s) => !found.has(s));
+        if (missing.length > 0) {
+          throw new IaDbValidationError(
+            `unknown arch_surfaces slugs: ${missing.join(", ")} — Invariant #12 forbids auto-create`,
+          );
+        }
+        await c.query(
+          `INSERT INTO stage_arch_surfaces (slug, stage_id, surface_slug)
+             SELECT $1, $2, unnest($3::text[])
+           ON CONFLICT (slug, stage_id, surface_slug) DO NOTHING`,
+          [cleanSlug, cleanStageId, surfaces],
+        );
+      }
+    }
+
     return {
       slug: cleanSlug,
       stage_id: cleanStageId,

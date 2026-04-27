@@ -118,6 +118,8 @@ Every Stage block under `## Stages` is an H3 heading + the subsection sequence b
 
 **Art:** {None / list from Design Expansion}
 
+**Arch surfaces:** {comma-separated `arch_surfaces.slug` list — e.g. `layers/system-layers, decisions/dec-a12` — OR literal `none` for cross-cutting tooling Stages}
+
 **Relevant surfaces (load when stage opens):**
 - {exploration doc refs + sections}
 - {MCP-routed spec refs}
@@ -152,6 +154,25 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 **Column order is fixed.** Do NOT insert extra columns (Priority, Owner, Phase, etc.). Per-Task Priority lives in the BACKLOG yaml, not the master plan table.
 
+#### 3.3a Stage-level `arch_surfaces[]` (DEC-A12)
+
+Stage-level architecture-surface declaration — links each Stage to ≥1 `arch_surfaces.slug` row through the `stage_arch_surfaces` join table. Cross-cutting tooling Stages (build scripts, validators with no surface anchor) declare literal `none`. Backfill driver: `npm run backfill:arch-surfaces`. Lint gate: `npm run validate:arch-coherence`.
+
+| Field | Type | Validation | FK semantics | Empty marker | Required |
+|---|---|---|---|---|---|
+| `arch_surfaces` | `text[]` (JSON-side) → `stage_arch_surfaces` rows DB-side | each entry MUST exist in `arch_surfaces.slug` (Invariant #12 — no auto-create) | composite FK `(slug, stage_id)` → `ia_stages`; `surface_slug` → `arch_surfaces.slug` | literal `none` (whole-Stage marker, not array element) | yes |
+
+**Example:**
+
+```markdown
+**Arch surfaces:** layers/system-layers, decisions/dec-a12
+```
+
+**MCP write:** `stage_insert(slug, stage_id, ..., arch_surfaces: ["layers/system-layers", "decisions/dec-a12"])`. Unknown slug → `IaDbValidationError: unknown arch_surfaces slugs: ... — Invariant #12 forbids auto-create`.
+
+**MCP read:** `stage_render` / `master_plan_render` emit `arch_surfaces: string[]` per Stage block (sorted ascending by slug for stable downstream output).
+
+
 **Cardinality:**
 
 - **Hard ≥2 Tasks per Stage.** Single-task Stage requires a Decision Log waiver in master-plan header `Locked decisions` block.
@@ -177,7 +198,7 @@ Retired variants (**do NOT reintroduce**): `#### §Stage Audit` subsection (opus
 2. --- separator
 3. ## Stages  (umbrella H2 — single occurrence)
 4. ### Stage 1.1 — ...  (H3 — repeat per Stage)
-   4.1 Status / Notes / Backlog state / Objectives / Exit criteria / Art / Relevant surfaces / Tasks table
+   4.1 Status / Notes / Backlog state / Objectives / Exit criteria / Art / Arch surfaces / Relevant surfaces / Tasks table
    4.2 #### §Stage File Plan
    4.3 #### §Plan Fix
 5. --- separator (after last Stage)

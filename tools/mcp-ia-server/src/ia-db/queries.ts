@@ -482,6 +482,13 @@ export interface StageRenderRowDB {
   exit_criteria: string | null;
   body: string;
   tasks: StageTaskSummary[];
+  /**
+   * Stage-level architecture surface slugs (DEC-A12) — joined from the
+   * `stage_arch_surfaces` link table. Empty array = no surfaces declared
+   * (cross-cutting tooling Stage). Sorted ascending by slug for stable
+   * downstream rendering.
+   */
+  arch_surfaces: string[];
   rendered: string;
 }
 
@@ -581,6 +588,13 @@ export async function queryStageRender(
       ORDER BY task_id`,
     [slug, stage_id],
   );
+  const ar = await pool.query<{ surface_slug: string }>(
+    `SELECT surface_slug
+       FROM stage_arch_surfaces
+      WHERE slug = $1 AND stage_id = $2
+      ORDER BY surface_slug`,
+    [slug, stage_id],
+  );
   const base = {
     slug,
     stage_id,
@@ -590,6 +604,7 @@ export async function queryStageRender(
     exit_criteria: stage.exit_criteria,
     body: stage.body ?? "",
     tasks: tr.rows,
+    arch_surfaces: ar.rows.map((r) => r.surface_slug),
   };
   return { ...base, rendered: renderStageBlock(base) };
 }
@@ -647,6 +662,22 @@ export async function queryMasterPlanRender(
     }
     bucket.push({ task_id: t.task_id, title: t.title, status: t.status, priority: t.priority });
   }
+  const ar = await pool.query<{ stage_id: string; surface_slug: string }>(
+    `SELECT stage_id, surface_slug
+       FROM stage_arch_surfaces
+      WHERE slug = $1
+      ORDER BY stage_id, surface_slug`,
+    [slug],
+  );
+  const archByStage = new Map<string, string[]>();
+  for (const a of ar.rows) {
+    let bucket = archByStage.get(a.stage_id);
+    if (!bucket) {
+      bucket = [];
+      archByStage.set(a.stage_id, bucket);
+    }
+    bucket.push(a.surface_slug);
+  }
   const stages: StageRenderRowDB[] = sr.rows.map((s) => {
     const base = {
       slug,
@@ -657,6 +688,7 @@ export async function queryMasterPlanRender(
       exit_criteria: s.exit_criteria,
       body: s.body ?? "",
       tasks: tasksByStage.get(s.stage_id) ?? [],
+      arch_surfaces: archByStage.get(s.stage_id) ?? [],
     };
     return { ...base, rendered: renderStageBlock(base) };
   });

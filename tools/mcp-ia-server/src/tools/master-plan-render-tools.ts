@@ -526,7 +526,7 @@ export function registerStageInsert(server: McpServer): void {
     "stage_insert",
     {
       description:
-        "DB-backed: create one new ia_stages row under an existing master plan. Stage_id must match N or N.M (e.g. `5` or `5.4`). Title/objective/exit_criteria/body optional at insert; back-fill via stage_update + stage_body_write. `body` carries the full canonical Stage block markdown (see `docs/MASTER-PLAN-STRUCTURE.md`).",
+        "DB-backed: create one new ia_stages row under an existing master plan. Stage_id must match N or N.M (e.g. `5` or `5.4`). Title/objective/exit_criteria/body optional at insert; back-fill via stage_update + stage_body_write. `body` carries the full canonical Stage block markdown (see `docs/MASTER-PLAN-STRUCTURE.md`). Optional `arch_surfaces[]` links the Stage to existing `arch_surfaces.slug` rows via `stage_arch_surfaces` (DEC-A12). Unknown slugs reject — Invariant #12.",
       inputSchema: {
         slug: z.string().describe("Master-plan slug (must exist)."),
         stage_id: z.string().describe("Stage id e.g. `5` or `5.4`."),
@@ -546,6 +546,12 @@ export function registerStageInsert(server: McpServer): void {
           .enum(["pending", "in_progress", "done"])
           .optional()
           .describe("Initial status (default `pending`)."),
+        arch_surfaces: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Optional list of `arch_surfaces.slug` values to link via `stage_arch_surfaces` (DEC-A12). Unknown slugs reject (Invariant #12 — no auto-create).",
+          ),
       },
     },
     async (args) =>
@@ -561,6 +567,7 @@ export function registerStageInsert(server: McpServer): void {
                   exit_criteria?: string;
                   body?: string;
                   status?: "pending" | "in_progress" | "done";
+                  arch_surfaces?: string[];
                 }
               | undefined,
           ) => {
@@ -581,6 +588,7 @@ export function registerStageInsert(server: McpServer): void {
                 exit_criteria: input?.exit_criteria ?? null,
                 body: input?.body ?? null,
                 status: input?.status,
+                arch_surfaces: input?.arch_surfaces ?? null,
               });
             } catch (e) {
               mapDbErrors(e);
@@ -596,6 +604,7 @@ export function registerStageInsert(server: McpServer): void {
                 exit_criteria?: string;
                 body?: string;
                 status?: "pending" | "in_progress" | "done";
+                arch_surfaces?: string[];
               }
             | undefined,
         );
