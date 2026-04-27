@@ -320,6 +320,55 @@
       ]
     },
     {
+      "header": "## Architecture coherence program",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "**Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2443",
+          "checklist_line": "- [ ] **TECH-2443** — **arch_decision_get + arch_decision_list MCP tools** — read-side decision lookup + listing (Stage 1.3 T1.3.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2444",
+          "checklist_line": "- [ ] **TECH-2444** — **arch_surface_resolve MCP tool** — resolve Stage/Task → arch surfaces via `stage_arch_surfaces.surface_slug` join (Stage 1.3 T1.3.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2445",
+          "checklist_line": "- [ ] **TECH-2445** — **arch_drift_scan MCP tool** — compare Stage `arch_surfaces[]` vs `arch_changelog` since last pending flip (Stage 1.3 T1.3.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2446",
+          "checklist_line": "- [ ] **TECH-2446** — **arch_changelog_since MCP tool** — ordered changelog entries since ts/commit-sha (Stage 1.3 T1.3.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2447",
+          "checklist_line": "- [ ] **TECH-2447** — **arch-drift-scan skill** — SKILL.md + command-body + agent-body w/ AskUserQuestion polling (Stage 1.3 T1.3.5)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2448",
+          "checklist_line": "- [ ] **TECH-2448** — **Skill sync + generated arch-drift-scan surfaces** — `npm run skill:sync:all` + validate:skill-drift (Stage 1.3 T1.3.6)",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## UI-as-code program (exploration)",
       "items": [
         {
@@ -701,6 +750,18 @@
           "type": "issue",
           "id": "TECH-1793",
           "checklist_line": "- [ ] **TECH-1793 — Save round-trip + warmup integration test** — Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs — v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2411",
+          "checklist_line": "- [ ] **TECH-2411 — ConstructionCurveTable SO + stage machine + per-tick advance** — Author NEW Assets/Scripts/Simulation/ConstructionCurveTable.cs ScriptableObject (12 rows R/C/I/S × Light/Medium/Heavy) + Resources/Construction/ConstructionCurveTable.asset companion + ConstructionStageController.cs ProcessTick() body wiring DesirabilityComposer.CellValue + curve-table lookup; effectiveTime = baseTime / (0.5 + Mathf.Clamp01(desirability)) with per-stage advance at effectiveTime/4 days (4-stage progression 0→3); append runtime fields constructionStage + constructionDayAccumulator to CityCell.cs (NOT persisted this Stage); wire SimulationManager.ProcessSimulationTick after signalTickScheduler.Tick and before autoRoadBuilder.ProcessTick (city-sim-depth Stage 10 T10.1).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2412",
+          "checklist_line": "- [ ] **TECH-2412 — ZoneManager placement hook + sprite swap + EditMode parity test** — Add public BeginConstruction(CityCell pivotCell, Zone.ZoneType zoneType) entry to ConstructionStageController.cs (sets pivot stage 0 + invokes OnStageBoundary); implement OnStageBoundary sprite swap with Resources fallback chain (zone-specific → placeholder → graceful skip); hook ZoneManager.PlaceZoneBuilding at line ~1265 (pivot-cell only per pivot-cell-and-multi-cell-buildings spec); author Assets/Tests/EditMode/Simulation/ConstructionStageControllerTest.cs — 5 tests: parity (R-medium, desirability=0.6), edge-low (desirability=0), edge-high (desirability=1), sprite-fallback graceful, multi-cell pivot-only (city-sim-depth Stage 10 T10.2).",
           "trailing_blanks": 1
         }
       ]
@@ -1234,6 +1295,30 @@
           "type": "issue",
           "id": "TECH-1789",
           "checklist_line": "- [ ] **TECH-1789** — **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2459",
+          "checklist_line": "- [ ] **TECH-2459** — **Archetype CRUD + version pinning** (asset-pipeline Stage 11.1 T11.1.T1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2460",
+          "checklist_line": "- [ ] **TECH-2460** — **Schema editor UI** (asset-pipeline Stage 11.1 T11.1.T2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2461",
+          "checklist_line": "- [ ] **TECH-2461** — **Migration hint authoring** (asset-pipeline Stage 11.1 T11.1.T3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2462",
+          "checklist_line": "- [ ] **TECH-2462** — **Migration runner + per-entity upgrade flow** (asset-pipeline Stage 11.1 T11.1.T4)",
           "trailing_blanks": 1
         }
       ]

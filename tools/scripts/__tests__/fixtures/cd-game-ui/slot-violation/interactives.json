@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "build-knob",
+    "kind": "knob",
+    "detail": { "min": 0, "max": 10, "step": 1 }
+  },
+  {
+    "slug": "speed-fader",
+    "kind": "fader",
+    "detail": { "min": 0, "max": 3, "step": 1 }
+  }
+]

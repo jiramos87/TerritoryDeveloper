@@ -1,0 +1,40 @@
+/* Happy-path CD bundle — minimal tokens for transcribe smoke. */
+
+:root.palette-canvas {
+  --ramp-0: #0a0e1a;
+  --ramp-1: #1a2540;
+  --ramp-2: #2a3a5e;
+}
+
+:root.palette-accent {
+  --ramp-0: #4a7bc8;
+  --ramp-1: #6a9be8;
+}
+
+:root.frame_style-panel {
+  --edge: single;
+  --inner-shadow-alpha: 0.4;
+}
+
+:root.font_face-display {
+  --family: 'Inter';
+  --weight: 600;
+}
+
+:root.motion_curve-spring-soft {
+  --kind: spring;
+  --stiffness: 220;
+  --damping: 18;
+}
+
+:root.motion_curve-ease-quick {
+  --kind: cubic-bezier;
+  --c1: 0.4, 0.0;
+  --c2: 0.2, 1.0;
+  --duration-ms: 180;
+}
+
+:root.illumination-led-green {
+  --color: #4afc8a;
+  --halo-radius-px: 6;
+}

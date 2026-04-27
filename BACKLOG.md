@@ -276,6 +276,34 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
+## Architecture coherence program
+
+**Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
+
+- [ ] **TECH-2443** — **arch_decision_get + arch_decision_list MCP tools** — read-side decision lookup + listing (Stage 1.3 T1.3.1)
+  - Acceptance — Both tools registered in tools/mcp-ia-server/src/index.ts w/ Zod schemas; visible to MCP host after restart.
+  - Spec — [`ia/projects/TECH-2443.md`](ia/projects/TECH-2443.md)
+
+- [ ] **TECH-2444** — **arch_surface_resolve MCP tool** — resolve Stage/Task → arch surfaces via `stage_arch_surfaces.surface_slug` join (Stage 1.3 T1.3.2)
+  - Acceptance — Joins stage_arch_surfaces.surface_slug → arch_surfaces.slug (composite-PK shape per migration 0036); Zod schemas + registered.
+  - Spec — [`ia/projects/TECH-2444.md`](ia/projects/TECH-2444.md)
+
+- [ ] **TECH-2445** — **arch_drift_scan MCP tool** — compare Stage `arch_surfaces[]` vs `arch_changelog` since last pending flip (Stage 1.3 T1.3.3)
+  - Acceptance — Returns {affected_stages: [{stage_id, drifted_surfaces, suggested_questions}]}; Zod schemas + registered.
+  - Spec — [`ia/projects/TECH-2445.md`](ia/projects/TECH-2445.md)
+
+- [ ] **TECH-2446** — **arch_changelog_since MCP tool** — ordered changelog entries since ts/commit-sha (Stage 1.3 T1.3.4)
+  - Acceptance — Zod schemas + registered; commit-sha lookup wired via git log.
+  - Spec — [`ia/projects/TECH-2446.md`](ia/projects/TECH-2446.md)
+
+- [ ] **TECH-2447** — **arch-drift-scan skill** — SKILL.md + command-body + agent-body w/ AskUserQuestion polling (Stage 1.3 T1.3.5)
+  - Acceptance — Phases: load plan → call arch_drift_scan MCP → render drift report → AskUserQuestion poll per affected Stage → master_plan_change_log_append kind=arch_drift_scan.
+  - Spec — [`ia/projects/TECH-2447.md`](ia/projects/TECH-2447.md)
+
+- [ ] **TECH-2448** — **Skill sync + generated arch-drift-scan surfaces** — `npm run skill:sync:all` + validate:skill-drift (Stage 1.3 T1.3.6)
+  - Acceptance — Generated files match SKILL.md frontmatter; npm run validate:skill-drift green.
+  - Spec — [`ia/projects/TECH-2448.md`](ia/projects/TECH-2448.md)
+
 ## UI-as-code program (exploration)
 
 **Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD** / **menus** / **panels** / **toolbars** — make **UI** composable from **IDE** (Cursor) + **AI agents**. Shipped: **reference spec** (**`ui-design-system.md`**), **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export + spec prose **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json). **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — new **BACKLOG** row if product wants it.
@@ -442,14 +470,6 @@ Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citysta
 Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-depth-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 2 of full-game-mvp umbrella. Shared 12-signal simulation contract + district aggregation + `HappinessComposer` / `DesirabilityComposer` migration + 7 new simulation sub-surfaces + signal overlays + HUD/district panel parity. Step 1 = Signal Layer Foundation. Stage 1.1 opened 2026-04-17 — 4 tasks filed below (TECH-305..TECH-308: `SimulationSignal` enum + producer/consumer interfaces + `SignalField` + `SignalMetadataRegistry` SO + `SignalFieldRegistry` MonoBehaviour + `ia/specs/simulation-signals.md` reference spec).
 
 ### Stage 1.1 — Signal Contract Primitives
-
-- [ ] **TECH-1790 — SignalWarmupPass class + idempotency test** — Author Assets/Scripts/Simulation/Signals/SignalWarmupPass.cs exposing Run(SignalFieldRegistry, DistrictManager, SignalTickScheduler, int ticks = 5) — pre-roll N ticks via existing SignalTickScheduler.Tick orchestration; ship Assets/Tests/EditMode/Simulation/Signals/SignalWarmupPassIdempotencyTest.cs asserting two consecutive Run() invocations produce byte-identical SignalField cell arrays across all 12 signals (city-sim-depth Stage 6 T6.1).
-
-- [ ] **TECH-1791 — SignalTuningWeightsAsset SO + composer wiring** — Add Assets/Scripts/Simulation/Signals/SignalTuningWeightsAsset.cs ScriptableObject mirroring HappinessComposer + DesirabilityComposer const weights; author Assets/ScriptableObjects/SignalTuningWeights.asset with literal defaults; replace consts in HappinessComposer.cs + DesirabilityComposer.cs with [SerializeField] weights reads; HappinessComposerParityTest + DesirabilityComposerParityTest stay green (city-sim-depth Stage 6 T6.2).
-
-- [ ] **TECH-1792 — GameSaveManager schema v6 — tuning weights + warmup hook** — In Assets/Scripts/Managers/GameManagers/GameSaveManager.cs bump GameSaveData.CurrentSchemaVersion 5→6; add tuningWeights snapshot field; extend MigrateSave with 5→6 case (null tuningWeights → asset defaults intact); after grid restore + DistrictManager.Rebuild fallback invoke SignalWarmupPass.Run before first tick (city-sim-depth Stage 6 T6.3 — sizing waiver per stage-decompose Phase 3.5).
-
-- [ ] **TECH-1793 — Save round-trip + warmup integration test** — Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs — v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).
 
 ## Utilities program
 
@@ -667,21 +687,9 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
 
-- [ ] **TECH-1786** — **Asset CRUD + slot binding UI** (asset-pipeline Stage 7.1 T7.1.1)
-  - Acceptance — `/catalog/assets` list + detail render; slot pickers filter by `accepts_kind`; CRUD routes mirror sprite shape.
-  - Spec — [`ia/projects/TECH-1786.md`](ia/projects/TECH-1786.md)
 
-- [ ] **TECH-1787** — **EntityRefPicker shared component** (asset-pipeline Stage 7.1 T7.1.2)
-  - Acceptance — Component renders kind-filtered options; unresolved `version_pin` shows red badge; reusable across panels, buttons, audio.
-  - Spec — [`ia/projects/TECH-1787.md`](ia/projects/TECH-1787.md)
 
-- [ ] **TECH-1788** — **Pool CRUD + member editor** (asset-pipeline Stage 7.1 T7.1.3)
-  - Acceptance — `/catalog/pools` list + detail with member + weight + conditions editor; predicate vocab dropdown drives `conditions_json`.
-  - Spec — [`ia/projects/TECH-1788.md`](ia/projects/TECH-1788.md)
 
-- [ ] **TECH-1789** — **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)
-  - Acceptance — Multi-select writes `pool_member` rows in single tx; primary-subtype refused when not in membership; pool detail shows primary-tagged-by-N badge.
-  - Spec — [`ia/projects/TECH-1789.md`](ia/projects/TECH-1789.md)
 
 ## High Priority
 

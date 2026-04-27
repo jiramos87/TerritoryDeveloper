@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "build-knob",
+    "kind": "knob",
+    "detail": { "min": 0, "max": 10, "step": 1 }
+  },
+  {
+    "slug": "speed-fader",
+    "kind": "fader",
+    "detail": { "min": 0, "max": 3, "step": 1 }
+  },
+  {
+    "slug": "pop-readout",
+    "kind": "segmented-readout",
+    "detail": { "digits": 6 }
+  },
+  {
+    "slug": "money-readout",
+    "kind": "segmented-readout",
+    "detail": { "digits": 8 }
+  }
+]

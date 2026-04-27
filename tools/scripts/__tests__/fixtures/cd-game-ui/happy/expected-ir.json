@@ -1,0 +1,132 @@
+{
+  "tokens": {
+    "palette": [
+      {
+        "slug": "canvas",
+        "ramp": [
+          "#0a0e1a",
+          "#1a2540",
+          "#2a3a5e"
+        ]
+      },
+      {
+        "slug": "accent",
+        "ramp": [
+          "#4a7bc8",
+          "#6a9be8"
+        ]
+      }
+    ],
+    "frame_style": [
+      {
+        "slug": "panel",
+        "edge": "single",
+        "innerShadowAlpha": 0.4
+      }
+    ],
+    "font_face": [
+      {
+        "slug": "display",
+        "family": "Inter",
+        "weight": 600
+      }
+    ],
+    "motion_curve": [
+      {
+        "slug": "spring-soft",
+        "kind": "spring",
+        "stiffness": 220,
+        "damping": 18
+      },
+      {
+        "slug": "ease-quick",
+        "kind": "cubic-bezier",
+        "c1": [
+          0.4,
+          0
+        ],
+        "c2": [
+          0.2,
+          1
+        ],
+        "durationMs": 180
+      }
+    ],
+    "illumination": [
+      {
+        "slug": "led-green",
+        "color": "#4afc8a",
+        "haloRadiusPx": 6
+      }
+    ]
+  },
+  "panels": [
+    {
+      "slug": "toolbar",
+      "archetype": "ThemedPanel",
+      "slots": [
+        {
+          "name": "controls",
+          "accepts": [
+            "build-knob",
+            "speed-fader"
+          ],
+          "children": [
+            "build-knob",
+            "speed-fader"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "city-stats",
+      "archetype": "ThemedPanel",
+      "slots": [
+        {
+          "name": "readouts",
+          "accepts": [
+            "pop-readout",
+            "money-readout"
+          ],
+          "children": [
+            "pop-readout"
+          ]
+        }
+      ]
+    }
+  ],
+  "interactives": [
+    {
+      "slug": "build-knob",
+      "kind": "knob",
+      "detail": {
+        "min": 0,
+        "max": 10,
+        "step": 1
+      }
+    },
+    {
+      "slug": "speed-fader",
+      "kind": "fader",
+      "detail": {
+        "min": 0,
+        "max": 3,
+        "step": 1
+      }
+    },
+    {
+      "slug": "pop-readout",
+      "kind": "segmented-readout",
+      "detail": {
+        "digits": 6
+      }
+    },
+    {
+      "slug": "money-readout",
+      "kind": "segmented-readout",
+      "detail": {
+        "digits": 8
+      }
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+[
+  {
+    "slug": "hud-bar",
+    "archetype": "hud-bar",
+    "slots": [
+      {
+        "name": "left",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["illuminated-button", "illuminated-button", "illuminated-button"]
+      },
+      {
+        "name": "center",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": []
+      },
+      {
+        "name": "right",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "segmented-readout",
+          "vu-meter",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "info-panel",
+    "archetype": "info-panel",
+    "slots": [
+      {
+        "name": "master",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["fader", "segmented-readout"]
+      },
+      {
+        "name": "bus-bay",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "fader",
+          "fader",
+          "fader",
+          "fader",
+          "segmented-readout",
+          "segmented-readout",
+          "segmented-readout",
+          "segmented-readout"
+        ]
+      },
+      {
+        "name": "trim-bay",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "knob",
+          "knob",
+          "knob",
+          "segmented-readout",
+          "segmented-readout",
+          "segmented-readout"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "pause",
+    "archetype": "pause",
+    "slots": [
+      {
+        "name": "actions",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "settings",
+    "archetype": "settings",
+    "slots": [
+      {
+        "name": "audio-rack",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "fader",
+          "fader",
+          "fader",
+          "segmented-readout",
+          "segmented-readout",
+          "segmented-readout"
+        ]
+      },
+      {
+        "name": "toggles",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      },
+      {
+        "name": "footer",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "save-load",
+    "archetype": "save-load",
+    "slots": [
+      {
+        "name": "slots",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "segmented-readout",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "segmented-readout",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "segmented-readout",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "segmented-readout",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      },
+      {
+        "name": "footer",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["illuminated-button", "illuminated-button"]
+      }
+    ]
+  },
+  {
+    "slug": "new-game",
+    "archetype": "new-game",
+    "slots": [
+      {
+        "name": "power-stack",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "tooltip",
+    "archetype": "tooltip",
+    "slots": [
+      {
+        "name": "body",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["segmented-readout", "segmented-readout", "vu-meter"]
+      }
+    ]
+  },
+  {
+    "slug": "toolbar",
+    "archetype": "toolbar",
+    "slots": [
+      {
+        "name": "tool-grid",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      },
+      {
+        "name": "subtype-row",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["illuminated-button", "illuminated-button"]
+      }
+    ]
+  },
+  {
+    "slug": "city-stats",
+    "archetype": "city-stats",
+    "slots": [
+      {
+        "name": "row-list",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout",
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout",
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout",
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout",
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout",
+          "illuminated-button",
+          "vu-meter",
+          "segmented-readout"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "onboarding",
+    "archetype": "onboarding",
+    "slots": [
+      {
+        "name": "step-rack",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      },
+      {
+        "name": "meter-bay",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": ["vu-meter", "segmented-readout"]
+      },
+      {
+        "name": "actions",
+        "accepts": ["knob", "fader", "vu-meter", "illuminated-button", "segmented-readout"],
+        "children": [
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button",
+          "illuminated-button"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,827 @@
+{
+  "tokens": {
+    "palette": [
+      {
+        "slug": "chassis-graphite",
+        "ramp": [
+          "#0a0c0d",
+          "#131618",
+          "#1c2024",
+          "#262b30",
+          "#34393f",
+          "#4a4f55"
+        ]
+      },
+      {
+        "slug": "faceplate-bronze",
+        "ramp": [
+          "#1a1410",
+          "#2b211a",
+          "#3d2f24",
+          "#5a4632",
+          "#8a6a48",
+          "#b8915c"
+        ]
+      },
+      {
+        "slug": "knob-cream",
+        "ramp": [
+          "#f4ead4",
+          "#e6d8b4",
+          "#c8b78e",
+          "#9a8a64",
+          "#6b5e3f"
+        ]
+      },
+      {
+        "slug": "led-amber",
+        "ramp": [
+          "#4a2e08",
+          "#8a5610",
+          "#d48a1c",
+          "#ffb742",
+          "#ffd58a"
+        ]
+      },
+      {
+        "slug": "led-cyan",
+        "ramp": [
+          "#062a30",
+          "#0a5a66",
+          "#2ab8c8",
+          "#6df0ff",
+          "#b8f8ff"
+        ]
+      },
+      {
+        "slug": "led-grass",
+        "ramp": [
+          "#082a10",
+          "#1a6628",
+          "#3ec05a",
+          "#74ff8a",
+          "#b8ffc4"
+        ]
+      },
+      {
+        "slug": "led-ruby",
+        "ramp": [
+          "#34060a",
+          "#7a1418",
+          "#d83040",
+          "#ff5560",
+          "#ffb0b8"
+        ]
+      },
+      {
+        "slug": "silkscreen",
+        "ramp": [
+          "#1a1611",
+          "#5d5848",
+          "#8e8772",
+          "#d8cfb6"
+        ]
+      }
+    ],
+    "frame_style": [
+      {
+        "slug": "thin",
+        "edge": "thin",
+        "innerShadowAlpha": 0
+      },
+      {
+        "slug": "bezel",
+        "edge": "bezel",
+        "innerShadowAlpha": 0.85
+      },
+      {
+        "slug": "rail",
+        "edge": "rail",
+        "innerShadowAlpha": 0.5
+      },
+      {
+        "slug": "chassis",
+        "edge": "chassis",
+        "innerShadowAlpha": 0.85
+      }
+    ],
+    "font_face": [
+      {
+        "slug": "faceplate",
+        "family": "Helvetica Neue",
+        "weight": 500
+      },
+      {
+        "slug": "silkscreen",
+        "family": "Helvetica Neue",
+        "weight": 600
+      },
+      {
+        "slug": "segmented",
+        "family": "Menlo",
+        "weight": 700
+      },
+      {
+        "slug": "engraved",
+        "family": "Helvetica Neue",
+        "weight": 600
+      }
+    ],
+    "motion_curve": [
+      {
+        "slug": "detent-click",
+        "kind": "cubic-bezier",
+        "c1": [
+          0.85,
+          0
+        ],
+        "c2": [
+          0.15,
+          1
+        ],
+        "durationMs": 120
+      },
+      {
+        "slug": "fader-glide",
+        "kind": "cubic-bezier",
+        "c1": [
+          0.32,
+          0
+        ],
+        "c2": [
+          0.16,
+          1
+        ],
+        "durationMs": 200
+      },
+      {
+        "slug": "vu-attack",
+        "kind": "cubic-bezier",
+        "c1": [
+          0,
+          0.65
+        ],
+        "c2": [
+          0.35,
+          1
+        ],
+        "durationMs": 80
+      },
+      {
+        "slug": "vu-release",
+        "kind": "cubic-bezier",
+        "c1": [
+          0.6,
+          0
+        ],
+        "c2": [
+          0.7,
+          1
+        ],
+        "durationMs": 200
+      },
+      {
+        "slug": "lamp-warm",
+        "kind": "cubic-bezier",
+        "c1": [
+          0.4,
+          0
+        ],
+        "c2": [
+          0.6,
+          1
+        ],
+        "durationMs": 120
+      }
+    ],
+    "illumination": [
+      {
+        "slug": "amber",
+        "color": "#ffb742",
+        "haloRadiusPx": 12
+      },
+      {
+        "slug": "cyan",
+        "color": "#6df0ff",
+        "haloRadiusPx": 12
+      },
+      {
+        "slug": "grass",
+        "color": "#74ff8a",
+        "haloRadiusPx": 12
+      },
+      {
+        "slug": "ruby",
+        "color": "#ff5560",
+        "haloRadiusPx": 14
+      }
+    ]
+  },
+  "panels": [
+    {
+      "slug": "hud-bar",
+      "archetype": "hud-bar",
+      "slots": [
+        {
+          "name": "left",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "center",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": []
+        },
+        {
+          "name": "right",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "segmented-readout",
+            "vu-meter",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "info-panel",
+      "archetype": "info-panel",
+      "slots": [
+        {
+          "name": "master",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "fader",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "bus-bay",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "fader",
+            "fader",
+            "fader",
+            "fader",
+            "segmented-readout",
+            "segmented-readout",
+            "segmented-readout",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "trim-bay",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "knob",
+            "knob",
+            "knob",
+            "segmented-readout",
+            "segmented-readout",
+            "segmented-readout"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "pause",
+      "archetype": "pause",
+      "slots": [
+        {
+          "name": "actions",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "settings",
+      "archetype": "settings",
+      "slots": [
+        {
+          "name": "audio-rack",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "fader",
+            "fader",
+            "fader",
+            "segmented-readout",
+            "segmented-readout",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "toggles",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "footer",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "save-load",
+      "archetype": "save-load",
+      "slots": [
+        {
+          "name": "slots",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "segmented-readout",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "segmented-readout",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "segmented-readout",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "segmented-readout",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "footer",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "new-game",
+      "archetype": "new-game",
+      "slots": [
+        {
+          "name": "power-stack",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "tooltip",
+      "archetype": "tooltip",
+      "slots": [
+        {
+          "name": "body",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "segmented-readout",
+            "segmented-readout",
+            "vu-meter"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "toolbar",
+      "archetype": "toolbar",
+      "slots": [
+        {
+          "name": "tool-grid",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "subtype-row",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "city-stats",
+      "archetype": "city-stats",
+      "slots": [
+        {
+          "name": "row-list",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout",
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout",
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout",
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout",
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout",
+            "illuminated-button",
+            "vu-meter",
+            "segmented-readout"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "onboarding",
+      "archetype": "onboarding",
+      "slots": [
+        {
+          "name": "step-rack",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "meter-bay",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "vu-meter",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "actions",
+          "accepts": [
+            "knob",
+            "fader",
+            "vu-meter",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    }
+  ],
+  "interactives": [
+    {
+      "slug": "knob",
+      "kind": "knob",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "rotation_samples": {
+          "sm": -60,
+          "md": -30,
+          "lg": 20,
+          "alert": 45
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "fader",
+      "kind": "fader",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "orientations": [
+          "vertical",
+          "horizontal"
+        ],
+        "value_samples": {
+          "sm": 40,
+          "md": 55,
+          "lg": 70,
+          "horizontal_primary": 60,
+          "horizontal_neutral": 40,
+          "horizontal_alert": 85
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_orientation": "vertical"
+      }
+    },
+    {
+      "slug": "vu-meter",
+      "kind": "vu-meter",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "orientations": [
+          "horizontal",
+          "vertical"
+        ],
+        "segment_samples": {
+          "sm": {
+            "segments": 12,
+            "lit": 8
+          },
+          "md": {
+            "segments": 16,
+            "lit": 11
+          },
+          "lg": {
+            "segments": 20,
+            "lit": 14
+          }
+        },
+        "tone_lit_samples": {
+          "primary": 12,
+          "neutral": 8,
+          "alert": 15
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_orientation": "horizontal"
+      }
+    },
+    {
+      "slug": "illuminated-button",
+      "kind": "illuminated-button",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "lit_modes": [
+          "unlit",
+          "lit"
+        ],
+        "label_samples": {
+          "sm": "SM",
+          "md": "MEDIUM",
+          "lg": "LARGE BUTTON",
+          "primary": "PLAY",
+          "neutral": "SYNC",
+          "alert": "MUTE"
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_lit": false
+      }
+    },
+    {
+      "slug": "segmented-readout",
+      "kind": "segmented-readout",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "digit_samples": {
+          "sm": 3,
+          "md": 7,
+          "lg": 9
+        },
+        "value_samples": {
+          "sm": "50",
+          "md": "20,000",
+          "lg": "1,200,000",
+          "primary": "$20,000",
+          "neutral": "50/100",
+          "alert": "-3,420"
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_digits": 7
+      }
+    }
+  ]
+}

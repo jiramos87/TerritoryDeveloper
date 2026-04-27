@@ -1,0 +1,109 @@
+[
+  {
+    "slug": "knob",
+    "kind": "knob",
+    "detail": {
+      "states": ["default", "hover", "focus", "pressed", "disabled"],
+      "sizes": ["sm", "md", "lg"],
+      "tones": ["primary", "neutral", "alert"],
+      "rotation_samples": {
+        "sm": -60,
+        "md": -30,
+        "lg": 20,
+        "alert": 45
+      },
+      "default_size": "md",
+      "default_tone": "primary"
+    }
+  },
+  {
+    "slug": "fader",
+    "kind": "fader",
+    "detail": {
+      "states": ["default", "hover", "focus", "pressed", "disabled"],
+      "sizes": ["sm", "md", "lg"],
+      "tones": ["primary", "neutral", "alert"],
+      "orientations": ["vertical", "horizontal"],
+      "value_samples": {
+        "sm": 40,
+        "md": 55,
+        "lg": 70,
+        "horizontal_primary": 60,
+        "horizontal_neutral": 40,
+        "horizontal_alert": 85
+      },
+      "default_size": "md",
+      "default_tone": "primary",
+      "default_orientation": "vertical"
+    }
+  },
+  {
+    "slug": "vu-meter",
+    "kind": "vu-meter",
+    "detail": {
+      "states": ["default", "hover", "focus", "pressed", "disabled"],
+      "sizes": ["sm", "md", "lg"],
+      "tones": ["primary", "neutral", "alert"],
+      "orientations": ["horizontal", "vertical"],
+      "segment_samples": {
+        "sm": { "segments": 12, "lit": 8 },
+        "md": { "segments": 16, "lit": 11 },
+        "lg": { "segments": 20, "lit": 14 }
+      },
+      "tone_lit_samples": {
+        "primary": 12,
+        "neutral": 8,
+        "alert": 15
+      },
+      "default_size": "md",
+      "default_tone": "primary",
+      "default_orientation": "horizontal"
+    }
+  },
+  {
+    "slug": "illuminated-button",
+    "kind": "illuminated-button",
+    "detail": {
+      "states": ["default", "hover", "focus", "pressed", "disabled"],
+      "sizes": ["sm", "md", "lg"],
+      "tones": ["primary", "neutral", "alert"],
+      "lit_modes": ["unlit", "lit"],
+      "label_samples": {
+        "sm": "SM",
+        "md": "MEDIUM",
+        "lg": "LARGE BUTTON",
+        "primary": "PLAY",
+        "neutral": "SYNC",
+        "alert": "MUTE"
+      },
+      "default_size": "md",
+      "default_tone": "primary",
+      "default_lit": false
+    }
+  },
+  {
+    "slug": "segmented-readout",
+    "kind": "segmented-readout",
+    "detail": {
+      "states": ["default", "hover", "focus", "pressed", "disabled"],
+      "sizes": ["sm", "md", "lg"],
+      "tones": ["primary", "neutral", "alert"],
+      "digit_samples": {
+        "sm": 3,
+        "md": 7,
+        "lg": 9
+      },
+      "value_samples": {
+        "sm": "50",
+        "md": "20,000",
+        "lg": "1,200,000",
+        "primary": "$20,000",
+        "neutral": "50/100",
+        "alert": "-3,420"
+      },
+      "default_size": "md",
+      "default_tone": "primary",
+      "default_digits": 7
+    }
+  }
+]

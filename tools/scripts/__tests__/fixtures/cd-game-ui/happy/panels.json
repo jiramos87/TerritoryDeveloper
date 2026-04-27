@@ -1,0 +1,24 @@
+[
+  {
+    "slug": "toolbar",
+    "archetype": "ThemedPanel",
+    "slots": [
+      {
+        "name": "controls",
+        "accepts": ["build-knob", "speed-fader"],
+        "children": ["build-knob", "speed-fader"]
+      }
+    ]
+  },
+  {
+    "slug": "city-stats",
+    "archetype": "ThemedPanel",
+    "slots": [
+      {
+        "name": "readouts",
+        "accepts": ["pop-readout", "money-readout"],
+        "children": ["pop-readout"]
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "slug": "toolbar",
+    "archetype": "ThemedPanel",
+    "slots": [
+      {
+        "name": "controls",
+        "accepts": ["build-knob"],
+        "children": ["build-knob", "speed-fader"]
+      }
+    ]
+  }
+]
