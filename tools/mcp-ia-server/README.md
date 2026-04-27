@@ -155,6 +155,16 @@ All 14 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`).
 | **`issue_context_bundle`** | Composite one-shot bundle: backlog issue + router hits + glossary hits for a single `issue_id` | ≤30 items |
 | **`lifecycle_stage_context`** | Composite Stage-level bundle: stage block + task list + glossary hits for plan-reviewer-mechanical | Stage block size |
 
+### Architecture-coherence tool family (Stage 1.3 of `architecture-coherence-system`)
+
+| Tool | Purpose |
+|------|---------|
+| **`arch_decision_get`** | Fetch one architecture decision by `slug` from `arch_decisions` (id, title, status, rationale, alternatives, superseded_by, surface_slug). Joins `arch_surfaces` to derive `surface_slug` from `surface_id` FK. Throws `decision_not_found` on miss. |
+| **`arch_decision_list`** | List `arch_decisions` rows ordered by `slug ASC`. Optional filters: `status` (e.g. `active` / `superseded`), `surface_slug` (returns only decisions tied to that surface). |
+| **`arch_surface_resolve`** | XOR input: `stage_id` (resolves via `ia_stages` + `stage_arch_surfaces` link) OR `task_id` (resolves through parent stage). Returns `surfaces[]` with `slug` / `kind` / `spec_path` / `spec_section`. Throws `task_not_found` / `stage_not_found` on miss. |
+| **`arch_drift_scan`** | Per master-plan slug: walks `stage_arch_surfaces` declarations and compares against `arch_changelog` entries written after each Stage's `_pending_` flip (cutoff = `last_pending_flip_ts ?? plan_created_at`). Returns `[{ stage_id, drifted_surfaces, changelog_kind, question }]`. Question shape varies by kind (decide → re-plan, supersede → pivot, edit → re-validate). Empty array = no drift. |
+| **`arch_changelog_since`** | XOR input: `since_ts` (ISO timestamp) OR `since_commit` (sha resolved via `git log -1 --format=%cI`). Returns `arch_changelog` entries newer than cutoff. Injectable `resolveSha` for unit tests. |
+
 All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative.
 
 **Examples (conceptual):**

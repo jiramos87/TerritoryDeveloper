@@ -1,0 +1,8 @@
+---
+description: "Use when the user runs /arch-drift-scan {slug?} to check whether open master plans have drifted from arch_changelog entries written after each Stage was filed. Phases: load plan → call arch_drift_scan → render drift report → AskUserQuestion polling per affected Stage → master_plan_change_log_append per resolution. Triggers: \"/arch-drift-scan\", \"drift scan\", \"architecture drift\". No plan rewrite — change-log only."
+alwaysApply: false
+---
+Read and follow: @ia/skills/arch-drift-scan/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "arch-drift-scan"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
