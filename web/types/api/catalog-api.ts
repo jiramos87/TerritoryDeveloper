@@ -501,3 +501,73 @@ export interface CatalogTokenPatchBody {
     semantic_target_entity_id: string | null;
   }>;
 }
+
+// ─── Stage 11.1 — Archetype authoring (TECH-2459 + TECH-2461 + TECH-2462) ───
+
+/** Sub-kind classifier stored on archetype `entity_version.params_json.kind_tag`. */
+export type CatalogArchetypeKindTag =
+  | "sprite"
+  | "asset"
+  | "button"
+  | "panel"
+  | "audio"
+  | "pool"
+  | "token";
+
+export interface CatalogArchetypeVersion {
+  version_id: string;
+  entity_id: string;
+  version_number: number;
+  status: "draft" | "published";
+  params_json: Record<string, unknown>;
+  migration_hint_json: Record<string, unknown> | null;
+  parent_version_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CatalogArchetypeVersionWithPinCount extends CatalogArchetypeVersion {
+  pinned_entity_count: number;
+}
+
+export interface CatalogArchetype {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  current_version: CatalogArchetypeVersion | null;
+}
+
+export interface CatalogArchetypeCreateBody {
+  slug: string;
+  display_name: string;
+  tags?: string[];
+  initial_params?: Record<string, unknown>;
+  kind_tag?: CatalogArchetypeKindTag | string;
+}
+
+export interface CatalogArchetypePatchBody {
+  /** Optimistic-lock fingerprint per DEC-A38; compared against `catalog_entity.updated_at`. */
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  /** Slug PATCH rejected once any version is published (slug freeze). */
+  slug?: string;
+}
+
+/** Hint shape stored on `entity_version.migration_hint_json`. */
+export interface CatalogMigrationHint {
+  rename?: Array<{ from: string; to: string }>;
+  default?: Array<{ slug: string; value: unknown }>;
+  drop?: Array<{ slug: string }>;
+}
+
+export interface CatalogArchetypeVersionPatchBody {
+  updated_at: string;
+  params_json: Record<string, unknown>;
+  /** Pass `null` to clear; omit to leave unchanged. */
+  migration_hint_json?: CatalogMigrationHint | null;
+}
