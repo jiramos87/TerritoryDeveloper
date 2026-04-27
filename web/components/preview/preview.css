@@ -1,0 +1,123 @@
+/**
+ * Preview component scoped CSS (TECH-2094 / Stage 10.1).
+ *
+ * Structural-fidelity layout — same DOM ordering as in-game UI but driven by
+ * `var(--token-*)` custom properties resolved at the preview root. State
+ * surfacing (hover/pressed/disabled) uses pseudo + ARIA selectors so no React
+ * state mirrors the Unity discrete-state shader.
+ *
+ * @see ia/projects/asset-pipeline/stage-10.1 — TECH-2094 §Plan Digest
+ */
+
+.entity-preview-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-sm);
+  padding: var(--ds-spacing-md);
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 6px;
+  background: var(--ds-bg-panel);
+  font-family: var(--token-font-family, var(--ds-font-family));
+}
+
+.entity-preview-header {
+  font-size: var(--text-xs);
+  color: var(--ds-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ------------------------- ButtonPreview ------------------------- */
+
+.button-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--token-spacing, 8px);
+  padding: var(--token-spacing-y, 6px) var(--token-spacing-x, 12px);
+  background: var(--token-palette-bg, #2c2c2c);
+  color: var(--token-palette-fg, #ffffff);
+  border: 1px solid var(--token-frame-border, transparent);
+  border-radius: var(--token-frame-radius, 4px);
+  transition: all var(--token-motion-duration, 150ms) var(--token-motion-curve, ease-out);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.button-preview:hover .button-preview-slot--hover { display: block; }
+.button-preview:hover .button-preview-slot--idle { display: none; }
+.button-preview:active .button-preview-slot--pressed { display: block; }
+.button-preview:active .button-preview-slot--idle,
+.button-preview:active .button-preview-slot--hover { display: none; }
+.button-preview[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.button-preview[aria-disabled="true"] .button-preview-slot--disabled { display: block; }
+.button-preview[aria-disabled="true"] .button-preview-slot--idle,
+.button-preview[aria-disabled="true"] .button-preview-slot--hover,
+.button-preview[aria-disabled="true"] .button-preview-slot--pressed { display: none; }
+
+.button-preview-slot--idle { display: block; }
+.button-preview-slot--hover,
+.button-preview-slot--pressed,
+.button-preview-slot--disabled { display: none; }
+
+.button-preview-slot--icon,
+.button-preview-slot--badge { display: inline-block; }
+
+.button-preview-slot {
+  width: 16px;
+  height: 16px;
+  background: var(--token-slot-fill, transparent);
+}
+
+/* ------------------------- PanelPreview ------------------------- */
+
+.panel-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--token-spacing, 8px);
+  padding: var(--token-spacing, 8px);
+  border: 1px solid var(--token-frame-border, var(--ds-border-subtle));
+  background: var(--token-palette-bg, var(--ds-bg-canvas));
+  color: var(--token-palette-fg, var(--ds-text-primary));
+  border-radius: var(--token-frame-radius, 4px);
+}
+
+.panel-preview-slot-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--token-spacing, 8px);
+}
+
+.panel-preview-slot-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--token-spacing-sm, 4px);
+  min-width: 96px;
+  border-left: 1px dashed var(--ds-border-subtle);
+  padding-left: var(--token-spacing-sm, 4px);
+}
+
+.panel-preview-slot-column:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.panel-preview-slot-label {
+  font-size: var(--text-xs);
+  color: var(--ds-text-muted);
+}
+
+.panel-preview-child {
+  font-size: var(--text-xs);
+  padding: 2px 4px;
+  background: var(--ds-bg-panel);
+  border-radius: 2px;
+}
+
+.panel-preview-recursion-cap {
+  font-size: var(--text-xs);
+  color: var(--ds-text-accent-warning);
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import EntityPreview from "@/components/preview/EntityPreview";
 import EntityRefPicker, { type EntityRefRow } from "@/components/catalog/EntityRefPicker";
 import { SIZE_VARIANTS, type SizeVariant } from "@/lib/catalog/button-enums";
 import type {
@@ -251,6 +252,12 @@ export default function ButtonDetailClient({ slug }: { slug: string }) {
         </p>
       ) : null}
 
+      <EntityPreview
+        kind="button"
+        label={displayName || button.slug}
+        spriteSlots={buildSpriteSlots(slotResolutions)}
+      />
+
       <label className="flex flex-col gap-[var(--ds-spacing-xs)]">
         <span className="text-[var(--ds-text-muted)]">Display name</span>
         <input
@@ -367,6 +374,33 @@ function emptySlotRows(): Record<SlotCol, EntityRefRow | null> {
     token_font_entity_id: null,
     token_illumination_entity_id: null,
   };
+}
+
+/**
+ * Adapter: derive ButtonPreview spriteSlots map from slot-resolution rows.
+ * URL is synthesized as `/sprites/{slug}.png` — Stage 10.1 ships pure-DOM previews
+ * (no pixel-diff golden); the URL surfaces in DOM as `data-sprite-url` for future
+ * golden tests once a thumbnail endpoint exists.
+ */
+function buildSpriteSlots(
+  rows: Record<SlotCol, EntityRefRow | null>,
+): { idle?: { slug: string; url: string }; hover?: { slug: string; url: string }; pressed?: { slug: string; url: string }; disabled?: { slug: string; url: string }; icon?: { slug: string; url: string }; badge?: { slug: string; url: string } } {
+  const out: Record<string, { slug: string; url: string }> = {};
+  const map: Array<[SpriteSlotCol, "idle" | "hover" | "pressed" | "disabled" | "icon" | "badge"]> = [
+    ["sprite_idle_entity_id", "idle"],
+    ["sprite_hover_entity_id", "hover"],
+    ["sprite_pressed_entity_id", "pressed"],
+    ["sprite_disabled_entity_id", "disabled"],
+    ["sprite_icon_entity_id", "icon"],
+    ["sprite_badge_entity_id", "badge"],
+  ];
+  for (const [col, key] of map) {
+    const row = rows[col];
+    if (row) {
+      out[key] = { slug: row.slug, url: `/sprites/${row.slug}.png` };
+    }
+  }
+  return out;
 }
 
 function slotCols(): SlotCol[] {

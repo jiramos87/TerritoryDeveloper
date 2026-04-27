@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import AssetEditForm from "@/components/catalog/AssetEditForm";
 import EntityEditTabs, { type TabKey } from "@/components/catalog/EntityEditTabs";
+import EntityPreview from "@/components/preview/EntityPreview";
 import type { CatalogAssetSpineDto, CatalogAssetSpinePatchBody } from "@/types/api/catalog-api";
 
 /**
@@ -63,6 +64,7 @@ export default function AssetDetail({ asset, initialTab, onSave, saveError }: As
           </span>
         ) : null}
       </header>
+      <EntityPreview kind="button" label={asset.display_name} />
       <EntityEditTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-27T00:00:00.000Z",
+  "tokens": [
+    {
+      "slug": "color-primary",
+      "token_kind": "color",
+      "color": { "hex": "#3366ff", "h": 0.0, "s": 0.0, "l": 0.0 },
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": null
+    },
+    {
+      "slug": "type-body",
+      "token_kind": "type-scale",
+      "color": null,
+      "type_scale": { "font_family": "Inter", "size_px": 14.0, "line_height": 1.4 },
+      "motion": null,
+      "spacing": null,
+      "semantic": null
+    },
+    {
+      "slug": "motion-fast",
+      "token_kind": "motion",
+      "color": null,
+      "type_scale": null,
+      "motion": { "curve": "ease-out", "duration_ms": 150.0, "cubic_bezier": [] },
+      "spacing": null,
+      "semantic": null
+    },
+    {
+      "slug": "spacing-md",
+      "token_kind": "spacing",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": { "px": 8.0 },
+      "semantic": null
+    },
+    {
+      "slug": "semantic-accent",
+      "token_kind": "semantic",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": { "target_slug": "semantic-accent-mid", "token_role": "" }
+    },
+    {
+      "slug": "semantic-accent-mid",
+      "token_kind": "semantic",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": { "target_slug": "semantic-accent-terminal", "token_role": "" }
+    },
+    {
+      "slug": "semantic-accent-terminal",
+      "token_kind": "semantic",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": { "target_slug": "", "token_role": "accent" }
+    },
+    {
+      "slug": "loop-a",
+      "token_kind": "semantic",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": { "target_slug": "loop-b", "token_role": "" }
+    },
+    {
+      "slug": "loop-b",
+      "token_kind": "semantic",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": null,
+      "semantic": { "target_slug": "loop-a", "token_role": "" }
+    }
+  ]
+}

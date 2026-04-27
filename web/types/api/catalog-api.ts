@@ -403,3 +403,101 @@ export interface CatalogPanelChildSetBody {
     }>;
   }>;
 }
+
+/**
+ * Token catalog (TECH-2092 / Stage 10.1) — DEC-A44 5-kind token model.
+ * Bridges `catalog_entity` (kind='token') + `token_detail` row carrying
+ * `token_kind` + `value_json` + optional `semantic_target_entity_id` (FK,
+ * required iff kind='semantic'). Per-kind value shapes validated by
+ * `web/lib/catalog/token-detail-schema.ts`.
+ */
+export type CatalogTokenKind =
+  | "color"
+  | "type-scale"
+  | "motion"
+  | "spacing"
+  | "semantic";
+
+/** Color value: discriminated union of hex string OR HSL triple. */
+export type CatalogTokenColorValue =
+  | { hex: string }
+  | { h: number; s: number; l: number };
+
+export interface CatalogTokenTypeScaleValue {
+  font_family: string;
+  size_px: number;
+  line_height: number;
+}
+
+export type CatalogTokenMotionCurve =
+  | "linear"
+  | "ease-in"
+  | "ease-out"
+  | "ease-in-out"
+  | "cubic-bezier";
+
+export interface CatalogTokenMotionValue {
+  curve: CatalogTokenMotionCurve;
+  duration_ms: number;
+  /** Optional 4-tuple of finite numbers; required when curve='cubic-bezier'. */
+  cubic_bezier?: [number, number, number, number] | null;
+}
+
+export interface CatalogTokenSpacingValue {
+  px: number;
+}
+
+export interface CatalogTokenSemanticValue {
+  token_role: string;
+}
+
+/** Discriminated union of value_json bodies; caller narrows by `token_kind`. */
+export type CatalogTokenValueJson =
+  | CatalogTokenColorValue
+  | CatalogTokenTypeScaleValue
+  | CatalogTokenMotionValue
+  | CatalogTokenSpacingValue
+  | CatalogTokenSemanticValue;
+
+export interface CatalogTokenDetail {
+  token_kind: CatalogTokenKind;
+  value_json: Record<string, unknown>;
+  /** FK to another `catalog_entity` (kind='token'); required iff kind='semantic'. */
+  semantic_target_entity_id: string | null;
+}
+
+export interface CatalogTokenDto {
+  entity_id: string;
+  slug: string;
+  display_name: string;
+  tags: string[];
+  retired_at: string | null;
+  current_published_version_id: string | null;
+  updated_at: string;
+  token_detail: CatalogTokenDetail | null;
+  /** Resolved row for `semantic_target_entity_id` (null when kind!=semantic). */
+  semantic_target_resolution: EntityRefSearchRow | null;
+}
+
+export interface CatalogTokenCreateBody {
+  slug: string;
+  display_name: string;
+  tags?: string[];
+  token_detail: {
+    token_kind: CatalogTokenKind;
+    value_json: Record<string, unknown>;
+    semantic_target_entity_id?: string | null;
+  };
+}
+
+export interface CatalogTokenPatchBody {
+  /** Optimistic-lock fingerprint per DEC-A38; compared against `catalog_entity.updated_at`. */
+  updated_at: string;
+  display_name?: string;
+  tags?: string[];
+  token_detail?: Partial<{
+    token_kind: CatalogTokenKind;
+    value_json: Record<string, unknown>;
+    semantic_target_entity_id: string | null;
+  }>;
+}

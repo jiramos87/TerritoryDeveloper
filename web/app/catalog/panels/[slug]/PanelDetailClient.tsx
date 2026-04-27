@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import PanelSlotColumn from "@/components/catalog/PanelSlotColumn";
 import { type PanelChildRowState } from "@/components/catalog/PanelChildRow";
 import type { EntityRefRow } from "@/components/catalog/EntityRefPicker";
+import EntityPreview from "@/components/preview/EntityPreview";
+import type { PanelPreviewChild, PanelPreviewSlotDef } from "@/components/preview/PanelPreview";
 import { slotOrder } from "@/lib/catalog/panel-slots-schema";
 import type {
   CatalogPanelChildKind,
@@ -290,6 +292,13 @@ export default function PanelDetailClient({ slug }: { slug: string }) {
         </p>
       ) : null}
 
+      <EntityPreview
+        kind="panel"
+        display_name={panel.display_name}
+        slots={buildPanelPreviewSlots(slots)}
+        panelChildren={buildPanelPreviewChildren(slots)}
+      />
+
       <div
         data-testid="panel-detail-slots"
         className="flex gap-[var(--ds-spacing-md)] overflow-x-auto"
@@ -318,4 +327,30 @@ export default function PanelDetailClient({ slug }: { slug: string }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Adapter: archetype-declared slots → PanelPreview slot definitions.
+ */
+function buildPanelPreviewSlots(slots: SlotState[]): PanelPreviewSlotDef[] {
+  return slots.map((s) => ({ slot: s.name, label: s.name }));
+}
+
+/**
+ * Adapter: flatten current slot/children state into PanelPreviewChild rows.
+ * Stage 10.1 preview is one-level structural — nested panel children resolve
+ * via display_name only; deeper structure waits for Stage 10.2.
+ */
+function buildPanelPreviewChildren(slots: SlotState[]): PanelPreviewChild[] {
+  const out: PanelPreviewChild[] = [];
+  for (const s of slots) {
+    for (const c of s.children) {
+      out.push({
+        slot: s.name,
+        order_idx: c.order_idx,
+        display_name: c.resolved?.display_name ?? c.child_entity_id ?? "(empty)",
+      });
+    }
+  }
+  return out;
 }

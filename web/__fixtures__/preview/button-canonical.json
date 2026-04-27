@@ -1,0 +1,23 @@
+{
+  "_comment": "TECH-2094 / Stage 10.1 — canonical button preview fixture. Stable test input for SSR shape + ripple tests; Stage 10.1 ships pure-DOM previews (no pixel-diff golden yet).",
+  "kind": "button",
+  "label": "Submit",
+  "tokens": {
+    "token-palette-bg": "#3366cc",
+    "token-palette-fg": "#ffffff",
+    "token-frame-radius": "4px",
+    "token-spacing": "8px",
+    "token-spacing-x": "12px",
+    "token-spacing-y": "6px",
+    "token-motion-duration": "150ms",
+    "token-motion-curve": "ease-out"
+  },
+  "spriteSlots": {
+    "idle": { "slug": "btn_idle_canonical", "url": "/sprites/btn_idle_canonical.png" },
+    "hover": { "slug": "btn_hover_canonical", "url": "/sprites/btn_hover_canonical.png" },
+    "pressed": { "slug": "btn_pressed_canonical", "url": "/sprites/btn_pressed_canonical.png" },
+    "disabled": { "slug": "btn_disabled_canonical", "url": "/sprites/btn_disabled_canonical.png" },
+    "icon": { "slug": "btn_icon_canonical", "url": "/sprites/btn_icon_canonical.png" },
+    "badge": { "slug": "btn_badge_canonical", "url": "/sprites/btn_badge_canonical.png" }
+  }
+}
