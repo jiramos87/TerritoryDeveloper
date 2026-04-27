@@ -74,6 +74,13 @@ namespace Territory.Simulation.Signals
         [SerializeField] private float trafficRoadwayDensityWeight = 1.0f;
         [SerializeField] private float trafficLevelConsumerScale = 0.3f;
 
+        // --- Stage 9.C — WasteProducer + SanitationConsumer tuning fields (TECH-2200 / TECH-2204). Five new fields appended contiguously per sizing-gate H6 (single SO edit per Stage). ---
+        [SerializeField] private float wasteBase = 0.5f;
+        [SerializeField] private float wasteResidentialDensityWeight = 1.0f;
+        [SerializeField] private float wasteCommercialDensityWeight = 1.5f;
+        [SerializeField] private float wasteIndustrialDensityWeight = 2.0f;
+        [SerializeField] private float sanitationConsumerScale = 0.4f;
+
         /// <summary>Default happiness baseline (50f) — initial value of <see cref="HappinessComposer.Current"/>.</summary>
         public float HappinessBaseline => happinessBaseline;
         /// <summary>Employment weight (30f).</summary>
@@ -167,6 +174,17 @@ namespace Territory.Simulation.Signals
         /// <summary>Stage 9.B — <c>TrafficLevelConsumer</c> per-cell scale (0.3f); reserved for downstream demand-model wiring (Bucket 3 RCI demand parity).</summary>
         public float TrafficLevelConsumerScale => trafficLevelConsumerScale;
 
+        /// <summary>Stage 9.C — <c>WasteProducer</c> baseline waste emitted at every RCI cell (0.5f).</summary>
+        public float WasteBase => wasteBase;
+        /// <summary>Stage 9.C — <c>WasteProducer</c> per-residential-density-tier weight (1.0f); ResidentialHeavy contributes 3× this.</summary>
+        public float WasteResidentialDensityWeight => wasteResidentialDensityWeight;
+        /// <summary>Stage 9.C — <c>WasteProducer</c> per-commercial-density-tier weight (1.5f); commercial generates more waste per density tier than residential.</summary>
+        public float WasteCommercialDensityWeight => wasteCommercialDensityWeight;
+        /// <summary>Stage 9.C — <c>WasteProducer</c> per-industrial-density-tier weight (2.0f); industrial heaviest waste contribution.</summary>
+        public float WasteIndustrialDensityWeight => wasteIndustrialDensityWeight;
+        /// <summary>Stage 9.C — <c>SanitationConsumer</c> per-Moore-neighbor waste-reduction multiplier (0.4f); applied as <c>-scale × 1.0f</c> per neighbor (proxy emission strength = 1.0 since sanitation has no own SignalField yet — Bucket 6 follow-up).</summary>
+        public float SanitationConsumerScale => sanitationConsumerScale;
+
         /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6). Stage 7 fields additive — older saves without them round-trip via JsonUtility default-zero on missing JSON keys; restore path then reapplies asset-default during <see cref="RestoreFromData"/> when zero (see Stage 7 round-trip semantics).</summary>
         public SignalTuningWeightsData CaptureSnapshot()
         {
@@ -214,6 +232,11 @@ namespace Territory.Simulation.Signals
                 trafficBase = trafficBase,
                 trafficRoadwayDensityWeight = trafficRoadwayDensityWeight,
                 trafficLevelConsumerScale = trafficLevelConsumerScale,
+                wasteBase = wasteBase,
+                wasteResidentialDensityWeight = wasteResidentialDensityWeight,
+                wasteCommercialDensityWeight = wasteCommercialDensityWeight,
+                wasteIndustrialDensityWeight = wasteIndustrialDensityWeight,
+                sanitationConsumerScale = sanitationConsumerScale,
             };
         }
 
@@ -266,6 +289,11 @@ namespace Territory.Simulation.Signals
             trafficBase = data.trafficBase;
             trafficRoadwayDensityWeight = data.trafficRoadwayDensityWeight;
             trafficLevelConsumerScale = data.trafficLevelConsumerScale;
+            wasteBase = data.wasteBase;
+            wasteResidentialDensityWeight = data.wasteResidentialDensityWeight;
+            wasteCommercialDensityWeight = data.wasteCommercialDensityWeight;
+            wasteIndustrialDensityWeight = data.wasteIndustrialDensityWeight;
+            sanitationConsumerScale = data.sanitationConsumerScale;
         }
     }
 
@@ -326,5 +354,11 @@ namespace Territory.Simulation.Signals
         public float trafficBase;
         public float trafficRoadwayDensityWeight;
         public float trafficLevelConsumerScale;
+        // Stage 9.C — TECH-2200 / TECH-2204 WasteProducer + SanitationConsumer tuning fields.
+        public float wasteBase;
+        public float wasteResidentialDensityWeight;
+        public float wasteCommercialDensityWeight;
+        public float wasteIndustrialDensityWeight;
+        public float sanitationConsumerScale;
     }
 }

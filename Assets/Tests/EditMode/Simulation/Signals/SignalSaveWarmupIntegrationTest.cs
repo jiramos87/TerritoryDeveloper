@@ -129,8 +129,11 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             // Coverage + ConsumerScale pairs) → 39 total.
             // Stage 9.B (TECH-2136) adds 3 traffic-tuning fields (trafficBase,
             // trafficRoadwayDensityWeight, trafficLevelConsumerScale) → 42 total.
+            // Stage 9.C (TECH-2200 / TECH-2204) adds 5 waste-tuning fields (wasteBase,
+            // wasteResidentialDensityWeight, wasteCommercialDensityWeight,
+            // wasteIndustrialDensityWeight, sanitationConsumerScale) → 47 total.
             FieldInfo[] fields = typeof(SignalTuningWeightsData).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            Assert.AreEqual(42, fields.Length, "SignalTuningWeightsData field count drift — expected 42 (Stage 6 17 + Stage 7 11 + Stage 8 5 + Stage 9.A 6 + Stage 9.B 3)");
+            Assert.AreEqual(47, fields.Length, "SignalTuningWeightsData field count drift — expected 47 (Stage 6 17 + Stage 7 11 + Stage 8 5 + Stage 9.A 6 + Stage 9.B 3 + Stage 9.C 5)");
             for (int i = 0; i < fields.Length; i++)
             {
                 float a = (float)fields[i].GetValue(payload);
