@@ -71,4 +71,4 @@ All `/api/catalog/*` routes emit errors via `web/lib/catalog/catalog-api-errors.
 ## Relation to other rules
 
 - Caveman / English boundary: `ia/rules/agent-output-caveman.md` §exceptions — user-facing copy under `web/content/**` + page-body strings stay full English.
-- Web orchestrator (permanent master plan): `ia/projects/web-platform-master-plan.md`.
+- Web orchestrator (permanent master plan): DB-backed slug `web-platform` — render via `mcp__territory-ia__master_plan_render({slug: "web-platform"})`.

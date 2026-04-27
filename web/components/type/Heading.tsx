@@ -54,7 +54,7 @@ export interface HeadingProps {
  * `--ds-font-size-…` token from `levelToTextClass` (do not put glob/wildcard syntax in
  * JSDoc backticks: Tailwind content scan treats them as class candidates).
  * @see `web/lib/design-system.md` section 5 (component map).
- * Spec: `ia/projects/web-platform-master-plan.md` Stage 23 T23.1.
+ * Spec: DB-backed master plan slug `web-platform` Stage 23 T23.1.
  */
 export function Heading({ level, children, weight, className }: HeadingProps) {
   const Tag = levelToTag[level];

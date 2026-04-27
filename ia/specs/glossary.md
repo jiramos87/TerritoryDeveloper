@@ -16,7 +16,7 @@ Rules: pa=`ia/rules/plan-apply-pair-contract.md`, ph=`ia/rules/project-hierarchy
 
 Skills: rr=`ia/skills/release-rollout/SKILL.md`, ss=`ia/skills/ship-stage/SKILL.md`, rrsbl=`ia/skills/release-rollout-skill-bug-log/SKILL.md`, rre=`ia/skills/release-rollout-enumerate/SKILL.md`, mpe=`ia/skills/master-plan-extend/SKILL.md`.
 
-Projects: ms=`ia/projects/multi-scale-master-plan.md`, ms-post=`docs/multi-scale-post-mvp-expansion.md`, train=`ia/projects/skill-training-master-plan.md`, lifecycle=`ia/projects/lifecycle-refactor-master-plan.md`.
+Master plans (DB-backed; render via `master_plan_render({slug})`): ms=`multi-scale`, train=`skill-training`, lifecycle=`lifecycle-refactor`. Sibling docs: ms-post=`docs/multi-scale-post-mvp-expansion.md`.
 
 Docs: schemas=`docs/schemas/README.md`, mcp=`docs/mcp-ia-server.md`, lifecycle-doc=`docs/agent-lifecycle.md`, pg-interchange=`docs/postgres-interchange-patterns.md`, pg-setup=`docs/postgres-ia-dev-setup.md`, avpolicy=`docs/agent-led-verification-policy.md`, planned-ideas=`docs/planned-domain-ideas.md`.
 
@@ -264,7 +264,7 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Opus code review | Opus pair-head reading diff vs spec + invariants + glossary; emits PASS, minor notes, or `§Code Fix Plan` tuples. Seam #4; tail = code-fix apply. | pa |
 | code-fix apply | Sonnet tail reading `§Code Fix Plan` tuples, applying fixes to source, re-entering `/verify-loop`. Validation gate: `verify:local`. | pa |
 | closeout apply | Sonnet tail reading `§Closeout Plan` tuples + migrating canonical knowledge to glossary / specs / rules / docs + archiving BACKLOG row + deleting spec + persisting journal. Validation gate: `validate:all`. | pa |
-| Rollout tracker | Sibling living doc `ia/projects/{umbrella-slug}-rollout-tracker.md` pairing with an umbrella orchestrator that has ≥3 child master-plans / buckets. Tracks each child through the rollout lifecycle in a matrix row. Seeded once by release-rollout-enumerate; advanced row-by-row via `/release-rollout`. | rr, rre |
+| Rollout tracker | Living tracker doc `docs/{umbrella-slug}-rollout-tracker.md` pairing with an umbrella DB-backed master plan (slug) that has ≥3 child plans / buckets. Tracks each child through the rollout lifecycle in a matrix row. Seeded once by release-rollout-enumerate; advanced row-by-row via `/release-rollout`. | rr, rre |
 | Rollout lifecycle | 7-column matrix per child master-plan: (a) enumerate → (b) explore → (c) plan → (d) stage-present → (e) stage-decomposed → (f) task-filed → (g) align. Handoff target to single-issue flow = column (f) ≥1 task filed. Cell glyphs: `✓` done / `◐` partial / `—` not started / `❓` ambiguous / `⚠️` disagreement w/ umbrella. | rr |
 | Alignment gate | Column (g) of rollout lifecycle. Per new domain entity requires: glossary row present + `ia/specs/*.md` section anchor + MCP (`router_for_task` / `spec_section`) resolves. Gates only (e) → (f) handoff on new-entity introduction; does not block (a)–(d) / (f) for pre-aligned rows. Failure → (g) marked `—` + skill-bug entry, never silent skip. | rr |
 | Skill Iteration Log | Aggregator section `## Skill Iteration Log` in a rollout tracker. One row per skill-bug; cross-references per-skill `## Changelog` anchor. Dual-written by release-rollout-skill-bug-log with the owning skill's changelog entry. | rrsbl |

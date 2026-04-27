@@ -16,7 +16,7 @@ slices_via: spec_section
 
 **Non-goals (MVP):** music, dialogue, dynamic tension mix, VoIP, streamed ambience, live DSP, FX chain, LFOs, biquad filter, bit-exact LUT oscillators, custom editor window.
 
-**Lifecycle:** exploration (`docs/blip-procedural-sfx-exploration.md`, 2026-04-13) → shipped (Step 1–3, blip-master-plan.md) → regression-gated (golden fixtures Stage 3.4) → spec-promoted here (2026-04-16).
+**Lifecycle:** exploration (`docs/blip-procedural-sfx-exploration.md`, 2026-04-13) → shipped (Step 1–3, DB-backed master plan slug `blip`) → regression-gated (golden fixtures Stage 3.4) → spec-promoted here (2026-04-16).
 
 For post-MVP deferred work see [`docs/blip-post-mvp-extensions.md`](../../docs/blip-post-mvp-extensions.md).
 
@@ -247,7 +247,7 @@ Rationale: byte equality impractical across platforms; sum-of-abs tolerance + fi
 
 ## 8. Post-MVP extensions pointer
 
-Post-MVP deferred work tracked in [`docs/blip-post-mvp-extensions.md`](../../docs/blip-post-mvp-extensions.md). Four selected post-MVP steps from `ia/projects/blip-master-plan.md`:
+Post-MVP deferred work tracked in [`docs/blip-post-mvp-extensions.md`](../../docs/blip-post-mvp-extensions.md). Four selected post-MVP steps from the DB-backed `blip` master plan (render via `master_plan_render({slug: "blip"})`):
 
 - **Step 4** — Settings UI + SFX volume slider + mute toggle.
 - **Step 5** — DSP kernel v2: FX chain, LFOs, biquad BP, param smoothing.
@@ -271,6 +271,6 @@ The following invariants apply to all Blip subsystem code. Violations = reject i
 
 - [`ia/specs/glossary.md`](glossary.md) — Audio block; term rows for **Bake-to-clip**, **Blip bootstrap**, **Blip cooldown**, **Blip mixer group**, **Blip patch**, **Blip patch flat**, **Blip variant**, **Patch flatten**, **patch hash**.
 - [`ia/rules/invariants.md`](../rules/invariants.md) — invariants #3 (no `FindObjectOfType` per-frame) and #4 (no new singletons).
-- [`ia/projects/blip-master-plan.md`](../projects/blip-master-plan.md) — orchestrator; lifecycle / stage history only.
+- DB-backed master plan slug `blip` — orchestrator; lifecycle / stage history. Render via `master_plan_render({slug: "blip"})`.
 - [`docs/blip-procedural-sfx-exploration.md`](../../docs/blip-procedural-sfx-exploration.md) — detailed recipes (§9), locked decisions (§13), post-MVP sketches (§10–§12, §15). Historical implementer reference; superseded by this spec for canonical architecture.
 - [`docs/blip-post-mvp-extensions.md`](../../docs/blip-post-mvp-extensions.md) — deferred scope boundary for all post-v1 work.

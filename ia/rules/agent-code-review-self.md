@@ -26,7 +26,7 @@ Use when reviewing a branch you authored (or when the user asks for the same com
 
 1. `ia/skills/*/SKILL.md` — contract drift (id reservation, locks, batch vs single).
 2. `ia/rules/*.md` — invariant drift (especially `HeightMap`, `GridManager`, roads, monotonic ids).
-3. `ia/projects/*-master-plan.md` + `ia/projects/*-rollout-tracker.md` — orchestrator vs tracker; permanent-doc violations.
+3. DB-backed master plans (`ia_master_plans` rows; render via `master_plan_render({slug})`) + tracker docs (`docs/*-rollout-tracker.md`) — orchestrator vs tracker; permanent-doc violations.
 4. `docs/*-exploration.md` — locked decisions vs live code; duplicate ownership of the same subsystem across docs.
 5. `tools/mcp-ia-server/src/**` — swallowed errors, schema-cache drift, hand-rolled parsers vs emitters.
 6. `tools/scripts/*.sh` — `flock` on paths that mutate `ia/state/` or materialize `BACKLOG.md`.

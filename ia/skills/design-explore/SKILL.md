@@ -24,7 +24,7 @@ triggers:
   - take this exploration doc to a master plan
 argument_hint: >-
   {DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR
-  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)
+  docs/foo.md --against docs/full-game-mvp-exploration.md)
 model: inherit
 reasoning_effort: high
 tools_role: planner
@@ -295,7 +295,7 @@ Run Phases 3–8 as defined in standard mode, but scoped to the confirmed gaps:
 
 ### Phase 9g — Persist (gap-analysis variant)
 
-Derive a context title from `AGAINST_DOC` filename slug (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`).
+Derive a context title from `AGAINST_DOC` filename slug (e.g. `full-game-mvp-exploration.md` → `## Design Expansion — MVP Alignment`). When `AGAINST_DOC` is a master-plan slug instead of a doc path, use the slug directly (e.g. `full-game-mvp` → `## Design Expansion — MVP Alignment`).
 
 - If an existing `## Design Expansion` block is present → append the new named section **after** it, separated by `---`. Do NOT overwrite the existing block.
 - If no `## Design Expansion` block exists → append after `---` following the last existing section.

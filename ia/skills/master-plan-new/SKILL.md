@@ -73,7 +73,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from e
 
 **Related:** [`design-explore`](../design-explore/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
-**Shape refs (canonical 2-level examples):** [`blip-master-plan.md`](../../projects/blip-master-plan.md) · [`landmarks-master-plan.md`](../../projects/landmarks-master-plan.md) · [`city-sim-depth-master-plan.md`](../../projects/city-sim-depth-master-plan.md).
+**Shape ref:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) is the sole authority. Render any existing DB-backed orchestrator via `mcp__territory-ia__master_plan_render({slug})` if a working example is needed — no filesystem `.md` exemplars (master plans are DB rows).
 
 ---
 
@@ -260,7 +260,7 @@ Also covers Phase 4 task sizing: single-file/function/struct tasks → `single_f
 
 ### Phase 6 — Tracking legend
 
-Insert the canonical tracking legend once under `## Stages` (copy verbatim from MASTER-PLAN-STRUCTURE.md §3 or a canonical reference plan like `blip-master-plan.md`). Do not paraphrase — downstream skills (`stage-file`, `stage-authoring`, `spec-implementer`, `/ship-stage` inline closeout) flip markers based on exact enum values.
+Insert the canonical tracking legend once under `## Stages` (copy verbatim from MASTER-PLAN-STRUCTURE.md §3). Do not paraphrase — downstream skills (`stage-file`, `stage-authoring`, `spec-implementer`, `/ship-stage` inline closeout) flip markers based on exact enum values.
 
 ```markdown
 ## Stages

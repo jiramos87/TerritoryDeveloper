@@ -1,5 +1,7 @@
-# UI Polish — Exploration (stub)
+# UI Polish — Exploration (RETIRED 2026-04-27)
 
+> **RETIRED — superseded by [`docs/game-ui-design-system-exploration.md`](game-ui-design-system-exploration.md).** Bucket 6 (UI Polish) subsumed into the new `game-ui-design-system` bucket — Approach 4 (CD Pilot Bundle → catalog tokens + panels + interactives → Unity rings) replaces Approach E ring stack and absorbs every UI Polish surface (HUD migration, info panels, notifications, settings, save/load, pause, graphs shell, new-game setup, overlay toggle, onboarding, glossary, tooltips, loading screens, splash). CityStats handoff contract migrates verbatim to the new exploration's `## Design Expansion` block. Original content preserved below for history — do NOT seed `/master-plan-new` from this doc.
+>
 > Pre-plan exploration stub for Bucket 6 of the polished-ambitious MVP (per `docs/full-game-mvp-exploration.md` + `ia/projects/full-game-mvp-master-plan.md`). Seeds a future `/design-explore` pass that expands Approaches + Architecture + Subsystem impact + Implementation points. **Scope is the full in-game UI surface for beta — UiTheme pass, HUD, info panels, notifications, settings, save/load, pause, graphs panel, new-game setup, overlays toggle, icons, loading screens, splash, tooltips, in-game glossary, guided first scenario. NOT CityStats overhaul (Bucket 8 — separate bucket with data-parity contract), NOT UI SFX hook wiring (Bucket 7), NOT sprite / icon asset production (Bucket 5 — this bucket consumes those assets). Those land in sibling buckets.**
 
 ---

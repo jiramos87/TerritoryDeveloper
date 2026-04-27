@@ -7,7 +7,7 @@ description: "Game vision, multi-scale identity, and core design principles."
 ---
 # Game Overview — Territory Developer
 
-> Canonical game identity and design principles. For runtime architecture, see `ARCHITECTURE.md`. For project structure and workflow, see `AGENTS.md`. For the multi-scale MVP plan, see `ia/projects/multi-scale-master-plan.md`.
+> Canonical game identity and design principles. For runtime architecture, see `ARCHITECTURE.md`. For project structure and workflow, see `AGENTS.md`. For the multi-scale MVP plan, render the DB-backed master plan slug `multi-scale` via `mcp__territory-ia__master_plan_render({slug: "multi-scale"})`.
 
 ## Vision
 

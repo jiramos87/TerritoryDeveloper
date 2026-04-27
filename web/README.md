@@ -159,7 +159,7 @@ Key fields (full schema: `web/lib/plan-loader-types.ts`):
 
 ### Glob pattern
 
-Files matched: `ia/projects/*master-plan*.md` from repo root. This is a substring match (`includes('master-plan')`) so both `web-platform-master-plan.md` and `blip-master-plan.md` are included.
+Plans loaded from DB-backed `ia_master_plans` rows (rendered via `mcp__territory-ia__master_plan_render({slug})`); no filesystem `.md` master-plan files. Slug list discovered from the `ia_master_plans` table.
 
 ### RSC consumption pattern
 
@@ -531,5 +531,5 @@ This downloads Chromium + system deps (~200 MB). Reason it is opt-in and NOT wir
 
 - Repo root `CLAUDE.md` §Web — workspace pointer + dev commands + caveman boundary
 - Repo root `AGENTS.md` §Web — agent onboarding for web surface
-- `ia/projects/web-platform-master-plan.md` — orchestrator (permanent)
+- DB-backed master plan slug `web-platform` — orchestrator (permanent); render via `mcp__territory-ia__master_plan_render({slug: "web-platform"})`
 - `ia/rules/agent-output-caveman.md` — caveman rule + exceptions

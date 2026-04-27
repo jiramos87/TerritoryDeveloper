@@ -26,7 +26,7 @@ Follow `ia/skills/design-explore/SKILL.md` end-to-end. Phase sequence (gated):
 2g. **Confirm gate** — Present gap table. PAUSE — ask user to confirm gaps or trim before expanding.
 3–7. **Expand gaps** — same as standard Phases 3–7, scoped to confirmed gaps. Phase 4 Architecture only if gaps introduce new components. Phase 6 one checklist block per gap.
 8. **Subagent review** — same prompt template.
-9g. **Persist** — derive context title from `AGAINST_DOC` slug (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`). Append as new named section after any existing `## Design Expansion` block (never overwrite it). Never overwrite Problem / Approaches surveyed / Recommendation / Open questions.
+9g. **Persist** — derive context title from `AGAINST_DOC` slug (e.g. `full-game-mvp-exploration.md` → `## Design Expansion — MVP Alignment`; bare master-plan slug `full-game-mvp` → same). Append as new named section after any existing `## Design Expansion` block (never overwrite it). Never overwrite Problem / Approaches surveyed / Recommendation / Open questions.
 
 # Tool recipe (Phase 5 only)
 

@@ -69,7 +69,7 @@ No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from t
 
 **Related:** [`master-plan-new`](../master-plan-new/SKILL.md) · [`stage-decompose`](../stage-decompose/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
-**Shape refs:** [`ia/templates/master-plan-template.md`](../../templates/master-plan-template.md) · [`blip-master-plan.md`](../../projects/blip-master-plan.md) · [`landmarks-master-plan.md`](../../projects/landmarks-master-plan.md).
+**Shape refs:** [`docs/MASTER-PLAN-STRUCTURE.md`](../../../docs/MASTER-PLAN-STRUCTURE.md) (authoritative file shape) · [`ia/templates/master-plan-template.md`](../../templates/master-plan-template.md) (preamble/stage-block templates consumed by `master_plan_preamble_write` / `stage_insert` MCP). No filesystem `.md` exemplars — render any existing DB-backed plan via `mcp__territory-ia__master_plan_render({slug})` for a live shape example.
 
 ---
 

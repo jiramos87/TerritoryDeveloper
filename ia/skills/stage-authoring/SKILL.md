@@ -202,7 +202,7 @@ escalation_enum: STOP-on-anchor-mismatch | STOP-on-acceptance-unmet | STOP-on-in
 
 - **§Goal:** product/domain phrasing per Task intent + Stage Objectives. Glossary terms only.
 - **§Acceptance:** sharp behavior contract. Each row = one observable behavior code-review + verify-loop will gate on. Derived from §1 Summary + §2.1 Goals + §7 Implementation Plan stub.
-- **§Pending Decisions:** every non-trivial pick the implementer would otherwise face (helper choice, name, type, path, behavior pivot). Resolved here, not deferred.
+- **§Pending Decisions:** every non-trivial pick the implementer would otherwise face (helper choice, name, type, path, behavior pivot). EVERY ROW LOCKED — format `{decision name}: {choice chosen} — rationale: {why}`. Forbidden row shapes: question form (`?`, `which?`), `TBD`, `see spec X`, `defer to implementer`, `pick A or B`, `unresolved`, `open question`. The digester picks using domain signal (Stage Objectives + Exit + glossary + invariants + spec sections + sibling Tasks) and best-judgment defaults (least-surprising / minimal-mechanism / consistent-with-prior-Stage). Genuinely unsignalled pick AND unsafe to default → escalate via `escalation_enum: decision_required` in §Invariants & Gate + halt the authoring pass with `STOPPED — decision_required: {decision name}`. Do NOT leave the row in §Pending Decisions as an open question.
 - **§Implementer Latitude:** picks deferred to implementer. Each row MUST cite its bounding constraint (invariant id or §Acceptance row). Empty list = digest is fully prescriptive on design surface.
 - **§Work Items:** flat list of file targets + 1-line intent. NO verbatim before/after code blocks. NO numbered steps. Implementer sequences.
 - **§Test Blueprint:** test intents only. Implementer designs inputs / expected / picks harness from {`node`, `unity-batch`, `bridge`, `manual`}.
@@ -279,7 +279,7 @@ HARD CONSTRAINTS — every Task §Plan Digest body MUST satisfy:
 
 1. §Goal present — 1–2 sentences in product/domain terms; glossary-aligned.
 2. §Acceptance present — every row = one observable behavior; checkbox shape.
-3. §Pending Decisions present — every non-trivial pick resolved (no deferred picks).
+3. §Pending Decisions present — EVERY row LOCKED with `{decision}: {choice} — rationale: {why}` shape. Forbidden: question form, `TBD`, `see spec`, `defer to implementer`, `pick A or B`, `unresolved`, `open`. Genuinely cannot pick AND unsafe to default → halt with `STOPPED — decision_required: {decision name}` + set `escalation_enum: decision_required`. Never leave a row as an open question.
 4. §Implementer Latitude present — each row cites bounding constraint (invariant id or §Acceptance row); empty list OK.
 5. §Work Items present — flat list of `{path}: {1-line intent}`; NO before/after code blocks; NO numbered steps.
 6. §Test Blueprint present — test intents only (no inputs/expected/harness picks).
@@ -329,7 +329,7 @@ Errors:
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}.
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions_locked} decisions LOCKED, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}; n_unresolved_decisions=0 (must be 0 — non-zero → halt).
   {ISSUE_ID_2}: …
   …
 drift_warnings: {true|false}
@@ -391,6 +391,7 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 | `task_spec_section_write` `task_not_found` / `section_anchor_ambiguous` (Phase 5) | Escalate; manual edit fallback. |
 | `task_spec_section_write` `db_unavailable` (Phase 5) | Escalate; do NOT silently fall back to filesystem. |
 | Phase 6.2 `validate:master-plan-status` non-zero | Escalate post-loop; emit stderr. |
+| Phase 4 `decision_required` (zero domain signal AND unsafe to default) | Halt with `STOPPED — decision_required: {decision name}`; set `escalation_enum: decision_required` in §Invariants & Gate; do NOT persist body for that Task. Surface decision name + Task id to caller. |
 
 ---
 

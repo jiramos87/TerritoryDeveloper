@@ -7,17 +7,17 @@ alwaysApply: true
 
 Use this rule when a message starts with one of:
 
-- `/stage-file-main-session <MASTER_PLAN_RELATIVE_PATH> <STAGE_ID>`
-- `/ship-stage-main-session <MASTER_PLAN_RELATIVE_PATH> <STAGE_ID> [--no-resume | --per-task-verify]`
+- `/stage-file-main-session <MASTER_PLAN_SLUG> <STAGE_ID>`
+- `/ship-stage-main-session <MASTER_PLAN_SLUG> <STAGE_ID> [--no-resume | --per-task-verify]`
 
-Where `<MASTER_PLAN_RELATIVE_PATH>` is resolved relative to the territory-developer repo root (e.g. `ia/projects/web-platform-master-plan.md`).
+Where `<MASTER_PLAN_SLUG>` is the bare slug of the DB-backed master plan (e.g. `web-platform`). Resolves via `mcp__territory-ia__master_plan_render({slug: MASTER_PLAN_SLUG})` — no filesystem `.md` master-plan file.
 
 ## Routing
 
 1. Read the matching wrapper skill file end-to-end:
    - `ia/skills/stage-file-main-session/SKILL.md`
    - `ia/skills/ship-stage-main-session/SKILL.md`
-2. Substitute positional args into `{MASTER_PLAN_RELATIVE_PATH}` and `{STAGE_ID}` (and optional flags).
+2. Substitute positional args into `{MASTER_PLAN_SLUG}` and `{STAGE_ID}` (and optional flags).
 3. Execute the wrapper skill literally, including every **"do not spawn subagents"** / **"do not use the Agent/Task tool"** clause.
 4. Do **not** summarize, paraphrase, or condense the skill body — follow it step-by-step.
 5. If the wrapper skill file is missing, stop and tell the user which path is missing. Do **not** fall back to the bare `/stage-file` or `/ship-stage` skill silently.

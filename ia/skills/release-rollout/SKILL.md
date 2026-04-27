@@ -9,11 +9,11 @@ slices_via: >-
   backlog_issue, backlog_search, list_specs, spec_outline, router_for_task, glossary_discover,
   glossary_lookup, rule_content
 description: >-
-  Use when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) needs a
+  Use when a multi-bucket umbrella master-plan (DB-backed, e.g. slug `full-game-mvp`) needs a
   repeatable rollout process that drives each child orchestrator through the lifecycle (a)–(g) up to
   step (f) ≥1-task-filed. Orchestrates per-row handoffs to `/design-explore`, `/master-plan-new`,
   `/master-plan-extend`, `/stage-decompose`, `/stage-file`. Owns the tracker doc
-  (`ia/projects/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills
+  (`docs/{umbrella-slug}-rollout-tracker.md`) + invokes helper skills
   (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). Does NOT
   close issues (handled inline by `/ship-stage` Pass B). Does NOT execute Tier A→E rollout body
   directly — dispatches to per-row subagents in fresh context. Triggers: "/release-rollout
@@ -25,7 +25,7 @@ triggers:
   - drive child plan to task-filed
   - release rollout track
 argument_hint: >-
-  {UMBRELLA_SPEC} {ROW_SLUG} [OPERATION] (e.g. ia/projects/full-game-mvp-master-plan.md zone-s-economy
+  {UMBRELLA_SLUG} {ROW_SLUG} [OPERATION] (e.g. full-game-mvp zone-s-economy
   advance | status | next)
 model: inherit
 reasoning_effort: high
@@ -44,7 +44,7 @@ caveman_exceptions:
   - tracker prose + disagreements appendix entries (human-consumed cold — may run 2–4 sentences)
 hard_boundaries:
   - IF `{TRACKER_SPEC}` missing → STOP. Route to `release-rollout-enumerate`.
-  - IF `{UMBRELLA_SPEC}` missing → STOP. Route to `/master-plan-new`.
+  - IF `{UMBRELLA_SLUG}` resolves to no `ia_master_plans` row → STOP. Route to `/master-plan-new`.
   - IF `ROW_SLUG` not in tracker → STOP. Ask user pick or enumerate.
   - IF row marker `⚠️` → STOP. Surface Disagreements appendix entry.
   - IF column (b) = `❓` → STOP. Surface equivalence question.
@@ -60,7 +60,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 No MCP from skill body beyond the Tool recipe below.
 
-**Lifecycle:** AFTER an umbrella `ia/projects/{umbrella-slug}-master-plan.md` is authored AND the sibling tracker `ia/projects/{umbrella-slug}-rollout-tracker.md` is seeded (by `release-rollout-enumerate`). BEFORE per-row `/design-explore` / `/master-plan-new` / `/master-plan-extend` / `/stage-decompose` / `/stage-file`. Drives rollout until every row reaches column (f) `✓`.
+**Lifecycle:** AFTER an umbrella DB-backed master plan (slug `{umbrella-slug}`, row in `ia_master_plans`) is authored AND the tracker `docs/{umbrella-slug}-rollout-tracker.md` is seeded (by `release-rollout-enumerate`). BEFORE per-row `/design-explore` / `/master-plan-new` / `/master-plan-extend` / `/stage-decompose` / `/stage-file`. Drives rollout until every row reaches column (f) `✓`.
 
 `design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file` → `stage-authoring` → `plan-review` (→ `plan-applier` on critical, cap=1) → `project-new` → `/ship-stage` (inline closeout). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
 
@@ -74,8 +74,8 @@ No MCP from skill body beyond the Tool recipe below.
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `UMBRELLA_SPEC` | User prompt | Path to `ia/projects/{slug}-master-plan.md`. Required. Must exist + match orchestrator shape + carry a bucket-table section (one row per child plan). |
-| `TRACKER_SPEC` | Derived | `ia/projects/{slug}-rollout-tracker.md`. Required. Must exist (seeded by `release-rollout-enumerate`). Missing → STOP, route to enumerate skill. |
+| `UMBRELLA_SLUG` | User prompt | Bare slug of DB-backed umbrella master plan (e.g. `full-game-mvp`). Required. Must resolve via `mcp__territory-ia__master_plan_render({slug})` + carry a bucket-table section in description (one row per child plan). |
+| `TRACKER_SPEC` | Derived | `docs/{umbrella-slug}-rollout-tracker.md`. Required. Must exist (seeded by `release-rollout-enumerate`). Missing → STOP, route to enumerate skill. |
 | `ROW_SLUG` | User prompt | Optional — specific row to advance (e.g. `city-sim-depth`, `zone-s-economy`). If absent, umbrella picks next row per Tier ordering + parallel-work rule. |
 | `OPERATION` | User prompt | Optional mode — `advance` (default: tick next cell for ROW_SLUG), `status` (read-only snapshot), `next` (return Tier-ordered next-row recommendation). |
 
@@ -85,7 +85,7 @@ No MCP from skill body beyond the Tool recipe below.
 
 ### Phase 0 — Load + validate
 
-1. Read `{UMBRELLA_SPEC}`. Confirm orchestrator shape + bucket-table section present.
+1. Resolve `{UMBRELLA_SLUG}` via `mcp__territory-ia__master_plan_render({slug: UMBRELLA_SLUG})`. Confirm row exists + description carries bucket-table section.
 2. Read `{TRACKER_SPEC}`. Missing → STOP, route to `release-rollout-enumerate`.
 3. If `ROW_SLUG` provided → locate matching row. Missing row → STOP, ask user to pick from tracker OR seed via enumerate.
 4. If `OPERATION = status` → skip to Phase 5 (read-only snapshot).
@@ -103,7 +103,7 @@ Apply hard gates from returned result:
 - `target_col = "(g)"` → route to Phase 3 (align-gate sub-step) before (e) can be ticked.
 - `target_col = "terminal"` → row done. Skip to Phase 6 (next-row recommendation).
 
-Output from subskill: target column + next action (e.g. `target_col = (d); next_action = stage-decompose ia/projects/city-sim-depth-master-plan.md Step 1`).
+Output from subskill: target column + next action (e.g. `target_col = (d); next_action = stage-decompose city-sim-depth Stage 1.1` — slug-keyed, DB-backed).
 
 ### Phase 2 — MCP context (Tool recipe)
 
@@ -143,14 +143,14 @@ Run `term-anchor-verify` subskill ([`ia/skills/term-anchor-verify/SKILL.md`](../
 | (a) | Invoke `release-rollout-enumerate` helper skill | No |
 | (b) INCOMPLETE | PAUSE + product-language interview → Agent `design-explore` subagent | YES — interview |
 | (b) COMPLETE | Agent `master-plan-new` subagent → auto-chain to (f) | No |
-| (b) LOCKED + `--against` | Agent `design-explore --against {UMBRELLA_SPEC}` subagent | No |
+| (b) LOCKED + `--against` | Agent `design-explore --against {umbrella-exploration-doc}` subagent (umbrella exploration `.md` under `docs/`, derived from `UMBRELLA_SLUG`) | No |
 | (c) NEW | Agent `master-plan-new` subagent | No |
 | (c) EXTEND | Agent `master-plan-extend` subagent | No |
 | (d)/(e) | Agent `stage-decompose` subagent | No |
 | (f) | Sequential chain: `stage-file` → `stage-authoring` → `plan-reviewer-mechanical` → `plan-reviewer-semantic` (→ `plan-applier` Mode plan-fix on critical, cap=1), each step via Agent tool in order. Stage resolved from child plan first Stage. | No |
 | (g) | Inline glossary_discover + spec authoring; no subagent | Only if MCP fails |
 
-All `{slug}` / `{N}` / `{M}` / `{UMBRELLA_SPEC}` values MUST be resolved from tracker + child plan before dispatch — never use un-substituted placeholders.
+All `{slug}` / `{N}` / `{M}` / `{UMBRELLA_SLUG}` values MUST be resolved from tracker + child plan before dispatch — never use un-substituted placeholders.
 
 `OPERATION = next` → emit Tier-ordered next-row recommendation only. No dispatch.
 
@@ -211,8 +211,8 @@ Skip recipe entirely if `OPERATION = status`.
 
 ## Guardrails
 
-- IF `{TRACKER_SPEC}` does not exist → STOP. Route to `release-rollout-enumerate {UMBRELLA_SPEC}`.
-- IF `{UMBRELLA_SPEC}` does not exist → STOP. Route to `/master-plan-new` against the umbrella exploration doc.
+- IF `{TRACKER_SPEC}` does not exist → STOP. Route to `release-rollout-enumerate {UMBRELLA_SLUG}`.
+- IF `{UMBRELLA_SLUG}` resolves to no `ia_master_plans` row (verify via `master_plan_render`) → STOP. Route to `/master-plan-new` against the umbrella exploration doc.
 - IF `ROW_SLUG` not found in tracker → STOP. Ask user to pick from tracker OR seed via enumerate.
 - IF row marker = `⚠️` (active disagreement) → STOP. Surface Disagreements appendix entry; route to user pick. Question stem + option labels use product/domain wording (game/feature semantics), not row slugs or cell coords — Ids and tracker cells go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 - IF column (b) = `❓` on a row (design-expansion equivalence gate) → STOP. Surface equivalence question; route to user pick. Same polling-wording rule applies.
@@ -227,18 +227,18 @@ Skip recipe entirely if `OPERATION = status`.
 - Do NOT touch other rows' cells when advancing one row.
 - Do NOT commit — user decides when to commit tracker updates.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
-- IF emitting next-row recommendation → wrap as `claude-personal "/release-rollout {UMBRELLA_SPEC} {next-row}"` with ALL placeholders resolved. See `docs/agent-lifecycle.md` §10.
+- IF emitting next-row recommendation → wrap as `claude-personal "/release-rollout {UMBRELLA_SLUG} {next-row}"` with ALL placeholders resolved. See `docs/agent-lifecycle.md` §10.
 
 ---
 
 ## Seed prompt
 
 ```markdown
-Run the release-rollout workflow against {UMBRELLA_SPEC} and {TRACKER_SPEC}.
+Run the release-rollout workflow against {UMBRELLA_SLUG} and {TRACKER_SPEC}.
 
 Follow ia/skills/release-rollout/SKILL.md end-to-end. Inputs:
-  UMBRELLA_SPEC: {path to umbrella master plan}
-  TRACKER_SPEC: {path to rollout tracker — usually sibling}
+  UMBRELLA_SLUG: {bare slug of DB-backed umbrella master plan, e.g. full-game-mvp}
+  TRACKER_SPEC: {path to rollout tracker doc, e.g. docs/{umbrella-slug}-rollout-tracker.md}
   ROW_SLUG: {optional — specific row to advance}
   OPERATION: {advance | status | next} (default: advance)
 
@@ -259,7 +259,7 @@ Do NOT close issues (handled inline by `/ship-stage` Pass B). Do NOT commit. Do 
 
 ## Next step
 
-After (f) ✓ + tracker update → Phase 6 emits Tier-ordered next-row recommendation. User runs `claude-personal "/release-rollout {UMBRELLA_SPEC} {next-row}"` (resolve `{next-row}` from pick) OR confirms umbrella complete (every row column (f) `✓`). Agent does NOT auto-start the next row — user picks when to continue.
+After (f) ✓ + tracker update → Phase 6 emits Tier-ordered next-row recommendation. User runs `claude-personal "/release-rollout {UMBRELLA_SLUG} {next-row}"` (resolve `{next-row}` from pick) OR confirms umbrella complete (every row column (f) `✓`). Agent does NOT auto-start the next row — user picks when to continue.
 
 Umbrella-complete state = rollout terminal. Does NOT close umbrella master-plan (permanent per `ia/rules/orchestrator-vs-spec.md`). Does NOT delete tracker (permanent sibling).
 

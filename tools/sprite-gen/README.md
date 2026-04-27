@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 ## Documentation
 
-- Orchestrator master plan: `ia/projects/sprite-gen-master-plan.md`
+- Orchestrator: DB-backed master plan slug `sprite-gen` — render via `mcp__territory-ia__master_plan_render({slug: "sprite-gen"})`
 - Exploration / design rationale: `docs/isometric-sprite-generator-exploration.md`
 - Art / calibration source: `docs/sprite-gen-art-design-system.md` (DAS)
 - User-facing field reference: `docs/sprite-gen-usage.md` (ground, `footprint_ratio`, `levels`, R11 `building` block)

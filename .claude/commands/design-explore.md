@@ -1,6 +1,6 @@
 ---
 description: Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare approaches → select → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration", "design review [doc]", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan".
-argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
+argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR docs/foo.md --against docs/full-game-mvp-exploration.md)"
 ---
 
 # /design-explore — Use before a master plan or backlog issue exists: survey approaches in an exploration doc, select one, expand with architecture + subsystem impact + implementation points + examples, review with a subagent, and persist back to the same doc.
@@ -62,7 +62,7 @@ Forward via Agent tool with `subagent_type: "design-explore"` (when `FORCE_MODEL
 > 2g. Confirm gate — present gap table. PAUSE — ask user to confirm/trim gaps before expanding.
 > 3–7. Expand gaps — same as standard Phases 3–7, scoped to confirmed gaps. Skip Phase 4 if no new components introduced.
 > 8. Subagent review — same prompt template.
-> 9g. Persist — derive context title from `AGAINST_DOC` filename (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`). Append as new named section after any existing `## Design Expansion` block; never overwrite it or original sections.
+> 9g. Persist — derive context title from `AGAINST_DOC` filename (e.g. `full-game-mvp-exploration.md` → `## Design Expansion — MVP Alignment`; bare master-plan slug `full-game-mvp` → same). Append as new named section after any existing `## Design Expansion` block; never overwrite it or original sections.
 >
 > ## Tool recipe — Phase 5 only
 >

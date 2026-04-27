@@ -25,13 +25,14 @@ description: >-
 phases:
   - Parse stage
   - Stage state load
+  - Baseline worktree snapshot (chain-scope guard)
   - Context load
   - Plan Digest readiness gate
   - Resume gate
   - Pass A per-task (implement + compile + status flip)
   - Pass B per-stage (verify + verified→done flips)
   - Inline closeout (DB-only)
-  - Stage commit + verification record
+  - Stage commit (chain-scope delta only) + verification record
   - Chain digest
   - Next-stage resolver
 triggers:
@@ -72,12 +73,13 @@ caveman_exceptions:
   - destructive-op confirmations
 hard_boundaries:
   - Sequential per-task dispatch only — no parallel.
-  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs. Do NOT emit `feat({ISSUE_ID}):` per task."
+  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs (chain-scope only). Do NOT emit `feat({ISSUE_ID}):` per task."
   - Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan.
   - Stop on first Pass A gate failure (implement, compile, scene-wiring); do NOT continue to next task.
   - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
   - "**No code-review in this chain.** Verify-loop + validation are the gate; standalone `/code-review` is a separate out-of-band seam (lifecycle row 9)."
   - "**Pass B (verify → verified→done flips → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY)."
+  - "**Stage commit at Step 8.1 stages ONLY chain-scope paths (delta vs `BASELINE_DIRTY` from Step 1.5).** NEVER `git add -A` / `git add .` / blanket-stage. Pre-existing dirty files stay in worktree, untouched."
 caller_agent: ship-stage
 ---
 
@@ -148,6 +150,27 @@ Define:
 
 ---
 
+## Step 1.5 — Baseline worktree snapshot (chain-scope guard)
+
+**Purpose:** capture pre-existing dirty paths so Step 8.1 commits ONLY files mutated during this chain. Prevents sweeping unrelated work streams (sibling master plans, in-flight refactors, untracked artifacts) into the stage commit.
+
+Run `git status --porcelain` once at chain entry. Parse each line as `{XY} {path}` where `XY` = 2-char status flags (e.g. ` M`, `??`, `MM`, `A `). Build set:
+
+```
+BASELINE_DIRTY = { "{XY}{NUL}{path}" } for every line in `git status --porcelain` output
+```
+
+Store as chain-scope variable. Read-only — never mutated after Step 1.5.
+
+**Special handling for `??` (untracked):** include in BASELINE_DIRTY verbatim. If the chain later modifies an untracked file (e.g. adds it via implement), the path will still match `BASELINE_DIRTY` → excluded from stage commit. This is correct — untracked files predating the chain are NOT chain-owned.
+
+Journal:
+```
+journal_append({ phase: "chain.baseline", payload_kind: "baseline_snapshot", payload: { entries: BASELINE_DIRTY.size } })
+```
+
+---
+
 ## Step 2 — Context load
 
 Run [`domain-context-load`](../domain-context-load/SKILL.md) once for the stage domain:
@@ -200,7 +223,16 @@ SHIP_STAGE resume: Pass A status scan — pending: [{ids}] ; implemented: [{ids}
 - Some true, some false → **Partial Pass A**. Step 5 loop skips already-implemented tasks.
 - All false (`PENDING_TASKS` all `implemented`) → **PASS_B_ONLY**. Skip Step 5. Jump to Step 6. Emit `SHIP_STAGE resume: all pending tasks status=implemented — entering Pass B`.
 
-**Worktree state guard:** when entering PASS_B_ONLY, run `git status --porcelain`. If empty → STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean. DB says implemented but disk has nothing. Manual repair: re-run Pass A or task_status_flip back to pending.` Otherwise continue.
+**Worktree state guard (baseline-delta):** when entering PASS_B_ONLY, compute current dirty set:
+
+```
+CURRENT_DIRTY = { "{XY}{NUL}{path}" } for every line in `git status --porcelain` output
+STAGE_TOUCHED = paths where (XY+path tuple) ∈ CURRENT_DIRTY AND (XY+path tuple) ∉ BASELINE_DIRTY
+```
+
+Also fold in **state changes** to baseline paths: if a path appeared in BASELINE_DIRTY with flags `XY₀` and now appears with flags `XY₁ ≠ XY₀` (e.g. baseline ` M`, current `MM` — staged additional changes), include in `STAGE_TOUCHED` (the chain mutated it further).
+
+If `STAGE_TOUCHED` is empty → STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean (no chain-scope changes vs baseline). DB says implemented but disk has nothing for this chain. Manual repair: re-run Pass A or task_status_flip back to pending.` Otherwise continue.
 
 ---
 
@@ -335,15 +367,27 @@ Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { a
 
 ## Step 8 — Stage commit + verification record
 
-### Step 8.1 — Stage commit (single, covers all Pass A diffs)
+### Step 8.1 — Stage commit (single, covers chain-scope diff only)
 
 Stage worktree state at this point:
 - All Pass A implementation changes (uncommitted — never committed in Pass A).
 - DB-only closeout (Step 7) leaves no filesystem diff — only `ia_*` tables mutated.
+- May ALSO carry pre-existing dirty paths from sibling work streams (captured in `BASELINE_DIRTY` at Step 1.5).
 
-**Resume note:** if `git diff HEAD` is empty (PASS_B_ONLY where all Pass A diffs already committed in a prior run AND no new edits this run), skip the commit + reuse the latest existing stage commit sha (`git rev-parse HEAD`). Otherwise create a fresh commit per below.
+**Chain-scope delta computation (mandatory):**
 
-Single commit covers everything. Format:
+```
+CURRENT_DIRTY = { "{XY}{NUL}{path}" } for every line in `git status --porcelain` output
+STAGE_TOUCHED_PATHS = sorted unique set of paths where:
+  (a) path appears in CURRENT_DIRTY with flags XY₁ AND
+      (path was absent from BASELINE_DIRTY OR appeared with different flags XY₀ ≠ XY₁)
+```
+
+`STAGE_TOUCHED_PATHS` is the ONLY set staged for this commit. Paths in BASELINE_DIRTY whose flags are unchanged stay in the worktree, untouched by this commit.
+
+**Resume note:** if `STAGE_TOUCHED_PATHS` is empty (PASS_B_ONLY where all Pass A diffs already committed in a prior run AND no new edits this run), skip the commit + reuse the latest existing stage commit sha (`git rev-parse HEAD`). Otherwise create a fresh commit per below.
+
+Single commit covers everything chain-scoped. Format:
 
 ```
 feat({SLUG}-stage-{STAGE_ID_DB}): {short summary from master_plan_title or Stage title}
@@ -355,12 +399,20 @@ Pass B: verify-loop pass
 Closeout: {archived_task_count} tasks archived; ia_stages.status=done
 ```
 
-Stage worktree:
-1. `git add -A` (stages all Pass A diffs).
-2. `git commit -m "$(cat <<'EOF' ... EOF)"` (HEREDOC to preserve formatting).
-3. Capture commit sha: `STAGE_COMMIT_SHA=$(git rev-parse HEAD)`.
+Stage worktree (delta-only staging):
 
-**Hook failure:** if commit fails (pre-commit hook red), do NOT amend or retry blindly. Investigate, fix, re-stage, create NEW commit. Capture new sha.
+1. **Stage chain-scope paths only:**
+   ```
+   git add -- <STAGE_TOUCHED_PATHS>
+   ```
+   Pass paths as explicit arguments; never use `git add -A`, `git add .`, or any blanket-stage form. If `STAGE_TOUCHED_PATHS` is large, batch via repeated `git add --` calls (no shell expansion glob).
+2. **Verify staged scope** — run `git diff --cached --name-only` and assert the result equals `STAGE_TOUCHED_PATHS` (no overlap with BASELINE_DIRTY-unchanged paths). Mismatch → STOPPED `SHIP_STAGE {STAGE_ID}: STOPPED at commit — staged scope drift: expected {N}, got {M}. Refusing contamination.` (do NOT commit; human investigates).
+3. **Create commit:** `git commit -m "$(cat <<'EOF' ... EOF)"` (HEREDOC to preserve formatting).
+4. Capture commit sha: `STAGE_COMMIT_SHA=$(git rev-parse HEAD)`.
+
+**Hook failure:** if commit fails (pre-commit hook red), do NOT amend or retry blindly. Investigate, fix, re-stage chain-scope paths only, create NEW commit. Capture new sha.
+
+**Rationale:** ship-stage may run on a worktree that already carries unrelated dirty changes (sibling master plans in flight, in-progress refactors, manual edits, untracked artifacts). Blanket-staging via `git add -A` would sweep all of those into the stage commit, contaminating its scope. Chain-scope delta vs `BASELINE_DIRTY` keeps the commit honest: it lands ONLY what this chain produced.
 
 ### Step 8.2 — Per-task commit record
 
@@ -417,7 +469,7 @@ Emit one chain-level stage digest at chain end (success or STOPPED).
   "archived_task_count": N,
   "next_handoff": {
     "case": "filed|pending|skeleton|umbrella-done|stopped|stage_verify_fail",
-    "command": "/ship-stage|/stage-file|/closeout",
+    "command": "/ship-stage|/stage-file|/stage-decompose|/closeout",
     "args": "{SLUG} Stage X.Y",
     "shell": "claude-personal \"...\""
   }
@@ -430,20 +482,23 @@ Caveman summary follows JSON: tasks shipped, stage commit sha (short), verify ou
 
 ## Step 10 — Next-stage resolver
 
-Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
+Re-call `master_plan_state(slug=SLUG)`. Sort stages by **numeric tuple `(major, minor)`** parsed from `stage_id` (e.g. `8.1` → `(8,1)`, `19.2` → `(19,2)`). Iterate forward starting from the first stage with `(major, minor) > current STAGE_ID_DB`. Pick the **first** stage matching one of the 4 cases below — do NOT skip skeletons or pending stages to grab a later filed stage. `stage-decompose` + `stage-file` are part of the standard incremental flow.
 
-**3 cases (priority order):**
+**4 cases (sequential — first stage in numeric order wins, regardless of case):**
 
-1. **Next filed stage** — next stage with ≥1 task `status ∈ {pending, implemented}` (real ids, not `_pending_`):
+1. **Filed stage** — stage with ≥1 task `status ∈ {pending, implemented}` (real ids, not `_pending_`):
    → `Next: claude-personal "/ship-stage {SLUG} Stage X.Y"`
 
-2. **Next pending stage** — next stage where tasks are `_pending_` (not yet filed in DB):
+2. **Pending stage** — stage where tasks are `_pending_` placeholders (decomposed but not yet filed in DB):
    → `Next: claude-personal "/stage-file {SLUG} Stage X.Y"`
 
-3. **Umbrella done** — no more stages:
+3. **Skeleton stage** — stage with no tasks at all (Objectives + Exit only, decomposition deferred):
+   → `Next: claude-personal "/stage-decompose {SLUG} Stage X.Y"`
+
+4. **Umbrella done** — no more stages after current:
    → `Next: claude-personal "/closeout {UMBRELLA_ISSUE_ID}"` if identifiable from master plan header. Else `All stages done — umbrella close pending.`
 
-**Skeleton stages** (no tasks at all) are author-time gaps; surface as `STOPPED — skeleton stage encountered: Stage X.Y. Author tasks via stage-authoring or extend master plan.`
+**Forbidden:** skipping a skeleton or pending stage in favor of a later filed stage. Sequential ordering preserves the user's authored progression.
 
 ---
 
@@ -471,7 +526,7 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - Do NOT roll back Pass A status flips on STAGE_VERIFY_FAIL — DB stays at `implemented`; worktree stays dirty; human repairs via re-run after fix.
 - **No code-review in this chain.** Verify-loop + validation are the gate. Operator may invoke standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9) before re-running ship-stage; resume path will create a new stage commit if review fixes added new diff.
 - Inline closeout (Step 7) is mandatory on green Pass B — Stage closeout always runs inline.
-- Stage commit at Step 8.1 covers ALL Pass A changes in ONE commit. Closeout (Step 7) is DB-only — no filesystem diff.
+- **Stage commit at Step 8.1 stages ONLY chain-scope paths** (delta vs `BASELINE_DIRTY` snapshot taken at Step 1.5). NEVER use `git add -A` / `git add .` / any blanket-stage form. Pre-existing dirty files (sibling work streams, in-flight refactors, untracked artifacts) stay in the worktree, untouched by the stage commit. Closeout (Step 7) is DB-only — no filesystem diff.
 - `domain-context-load` fires ONCE at chain start (Step 2); do NOT re-call per task.
 - Do NOT auto-invoke `/stage-authoring` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
 - DB is sole source of truth for master plans, stages, tasks, and task spec bodies. All reads go through MCP (`master_plan_state`, `stage_bundle`, `task_state`, `task_spec_section`, `task_spec_body`); all writes go through MCP (`task_status_flip`, `stage_closeout_apply`, `master_plan_change_log_append`, `task_commit_record`, `stage_verification_flip`). Do NOT read or edit any `ia/projects/**` markdown.
@@ -491,6 +546,8 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 | `{STAGE_TASK_IDS}` | All task ids in stage (Step 1 result) |
 | `{PENDING_TASKS}` | Tasks with `status ∈ {pending, implemented}` (drives Pass A + Pass B scope) |
 | `{CHAIN_CONTEXT}` | `domain-context-load` payload `{glossary_anchors, router_domains, spec_sections, invariants}` |
+| `{BASELINE_DIRTY}` | Pre-chain `git status --porcelain` snapshot captured at Step 1.5; chain-scope guard for Step 8.1 commit scope |
+| `{STAGE_TOUCHED_PATHS}` | Step 8.1 chain-scope delta = `CURRENT_DIRTY - BASELINE_DIRTY`; the ONLY paths staged in the stage commit |
 | `{STAGE_COMMIT_SHA}` | Captured `git rev-parse HEAD` after Step 8.1 commit |
 
 ---

@@ -41,7 +41,7 @@ Forward via Agent tool with `subagent_type: "design-explore"` (when `FORCE_MODEL
 > 2g. Confirm gate — present gap table. PAUSE — ask user to confirm/trim gaps before expanding.
 > 3–7. Expand gaps — same as standard Phases 3–7, scoped to confirmed gaps. Skip Phase 4 if no new components introduced.
 > 8. Subagent review — same prompt template.
-> 9g. Persist — derive context title from `AGAINST_DOC` filename (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`). Append as new named section after any existing `## Design Expansion` block; never overwrite it or original sections.
+> 9g. Persist — derive context title from `AGAINST_DOC` filename (e.g. `full-game-mvp-exploration.md` → `## Design Expansion — MVP Alignment`; bare master-plan slug `full-game-mvp` → same). Append as new named section after any existing `## Design Expansion` block; never overwrite it or original sections.
 >
 > ## Tool recipe — Phase 5 only
 >

@@ -12,7 +12,7 @@ Forward via Agent tool with `subagent_type: "stage-authoring"` (when `FORCE_MODE
 >
 > ## Mission
 >
-> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}` (single-spec re-author when `--task {ISSUE_ID}` present). 7 phases: Sequential-dispatch guardrail → Load shared Stage MCP bundle (`lifecycle_stage_context`) → Read filed Task spec stubs (DB via `task_spec_body`) → Token-split guardrail → Bulk author §Plan Digest direct (RELAXED shape, single Opus pass, rubric-in-prompt; §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — 10-point rubric injected verbatim into prompt as hard constraints, NO post-author lint MCP call, NO retry; per-section soft byte caps emit `n_section_overrun` warnings) → Per-task `task_spec_section_write` to DB (DB sole persistence — no filesystem mirror) → Hand-off.
+> Run `ia/skills/stage-authoring/SKILL.md` end-to-end on Stage `{STAGE_ID}` of slug `{SLUG}` (single-spec re-author when `--task {ISSUE_ID}` present). 7 phases: Sequential-dispatch guardrail → Load shared Stage MCP bundle (`lifecycle_stage_context`) → Read filed Task spec stubs (DB via `task_spec_body`) → Token-split guardrail → Bulk author §Plan Digest direct (RELAXED shape, single Opus pass, rubric-in-prompt; §Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate — 10-point rubric injected verbatim into prompt as hard constraints, NO post-author lint MCP call, NO retry; per-section soft byte caps emit `n_section_overrun` warnings). §Pending Decisions: EVERY ROW LOCKED with `{decision}: {choice} — rationale: {why}` shape (forbidden: question form, `TBD`, `see spec X`, `defer to implementer`, `pick A or B`, `unresolved`, `open question`); genuinely unsignalled pick AND unsafe to default → halt with `STOPPED — decision_required: {decision name}`. → Per-task `task_spec_section_write` to DB (DB sole persistence — no filesystem mirror) → Hand-off.
 >
 > ## Hard boundaries
 >
@@ -37,7 +37,7 @@ Single caveman block from subagent. Shape:
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_decisions} pending decisions, {n_latitude} latitude rows, {n_acceptance} acceptance, {n_tests} test rows); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}.
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_decisions_locked} decisions LOCKED, {n_latitude} latitude rows, {n_acceptance} acceptance, {n_tests} test rows); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}; n_unresolved_decisions=0.
   {ISSUE_ID_2}: ...
 drift_warnings: {true|false}
 DB writes: {N} task_spec_section_write OK; {K} unchanged.

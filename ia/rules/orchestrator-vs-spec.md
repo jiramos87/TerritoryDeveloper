@@ -11,7 +11,7 @@ alwaysApply: true
 
 ## Orchestrator document
 
-- **Permanent** coordination doc tracking multi-stage plan (e.g. `ia/projects/multi-scale-master-plan.md`).
+- **Permanent** coordination doc — DB-backed row in `ia_master_plans` (e.g. slug `multi-scale`), rendered via `mcp__territory-ia__master_plan_render({slug})`. No filesystem `.md` master-plan files.
 - Owns Stage skeleton; child Tasks materialize lazily beneath via `stage-file` applier pass.
 - **NOT closeable** via `/ship-stage` Pass B inline closeout. Never deleted by automation.
 - Status enum: `Draft | In Review | In Progress — Stage {N.M} / TECH-XX | Final`.
