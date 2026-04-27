@@ -121,9 +121,10 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             Assert.AreEqual(GameSaveData.CurrentSchemaVersion, restored.schemaVersion, "schemaVersion not preserved at current version");
             Assert.IsNotNull(restored.tuningWeights, "tuningWeights dropped during round-trip");
 
-            // Iterate all 17 fields reflectively — fail-fast on any drift.
+            // Iterate all fields reflectively — fail-fast on drift. Stage 7 (TECH-1889/1890/1891/1892)
+            // adds 11 fields (3 PollutionLand + 3 PollutionWater + 4 LandValue + 1 income multiplier) → 28 total.
             FieldInfo[] fields = typeof(SignalTuningWeightsData).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            Assert.AreEqual(17, fields.Length, "SignalTuningWeightsData field count drift — expected 17");
+            Assert.AreEqual(28, fields.Length, "SignalTuningWeightsData field count drift — expected 28 (Stage 6 17 + Stage 7 11)");
             for (int i = 0; i < fields.Length; i++)
             {
                 float a = (float)fields[i].GetValue(payload);

@@ -25,6 +25,7 @@ public class CityStats : MonoBehaviour, ICityStats
     public ForestManager forestManager;
     [SerializeField] private HappinessComposer happinessComposer;
     [SerializeField] private SignalFieldRegistry signalFieldRegistry;
+    [SerializeField] private SignalTickScheduler signalTickScheduler;
     private EmploymentManager _employmentManager;
     private EconomyManager _economyManager;
     private StatisticsManager _statisticsManager;
@@ -63,6 +64,9 @@ public class CityStats : MonoBehaviour, ICityStats
     public int commercialBuildingCount;
     public int industrialZoneCount;
     public int industrialBuildingCount;
+
+    /// <summary>Stage 7 (TECH-1892) — daily-refreshed mean of <see cref="SimulationSignal.LandValue"/> across all districts. Populated by <see cref="RefreshEconomyReadModel"/> via <see cref="SignalTickScheduler"/>.<see cref="SignalTickScheduler.Cache"/>.MeanForSignal. <c>0f</c> when scheduler/cache absent or no district has emitted yet (no NaN propagation downstream).</summary>
+    public float cityLandValueMean;
 
     public int residentialLightBuildingCount;
     public int residentialLightZoningCount;
@@ -157,6 +161,8 @@ public class CityStats : MonoBehaviour, ICityStats
             happinessComposer = FindObjectOfType<HappinessComposer>();
         if (signalFieldRegistry == null)
             signalFieldRegistry = FindObjectOfType<SignalFieldRegistry>();
+        if (signalTickScheduler == null)
+            signalTickScheduler = FindObjectOfType<SignalTickScheduler>();
     }
 
     /// <summary>
@@ -189,6 +195,17 @@ public class CityStats : MonoBehaviour, ICityStats
                     monthlyBondRepayment += b.monthlyRepayment;
                 }
             }
+        }
+
+        // Stage 7 (TECH-1892) — refresh per-tick mean LandValue from district cache.
+        // Empty cache or absent scheduler → 0f (no NaN propagation into EconomyManager bonus).
+        if (signalTickScheduler != null && signalTickScheduler.Cache != null)
+        {
+            cityLandValueMean = signalTickScheduler.Cache.MeanForSignal(SimulationSignal.LandValue);
+        }
+        else
+        {
+            cityLandValueMean = 0f;
         }
     }
 

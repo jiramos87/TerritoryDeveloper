@@ -18,6 +18,9 @@ namespace Territory.Simulation.Signals
         private DistrictSignalCache _cache;
         private static readonly int SignalCount = Enum.GetValues(typeof(SimulationSignal)).Length;
 
+        /// <summary>Stage 7 (TECH-1892) — read-only accessor exposing the per-tick <see cref="DistrictSignalCache"/> for downstream read-models (e.g. <c>CityStats.cityLandValueMean</c>). Null until <see cref="Awake"/> completes.</summary>
+        public DistrictSignalCache Cache => _cache;
+
         private void Awake()
         {
             if (registry == null)

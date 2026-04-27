@@ -42,5 +42,35 @@ namespace Territory.Simulation.Signals
         {
             values.Clear();
         }
+
+        /// <summary>
+        /// Stage 7 (TECH-1892) — arithmetic mean of <paramref name="signal"/> across all districts that
+        /// have a recorded value. NaN entries (per <see cref="Get"/> miss) are excluded from the mean.
+        /// Empty cache (no district has the signal) returns <c>0f</c> — NOT NaN — so downstream consumers
+        /// like <c>CityStats.cityLandValueMean</c> can multiply safely without NaN propagation.
+        /// </summary>
+        public float MeanForSignal(SimulationSignal signal)
+        {
+            float sum = 0f;
+            int count = 0;
+            foreach (var kv in values)
+            {
+                if (kv.Key.signal != signal)
+                {
+                    continue;
+                }
+                if (float.IsNaN(kv.Value) || float.IsInfinity(kv.Value))
+                {
+                    continue;
+                }
+                sum += kv.Value;
+                count++;
+            }
+            if (count == 0)
+            {
+                return 0f;
+            }
+            return sum / count;
+        }
     }
 }

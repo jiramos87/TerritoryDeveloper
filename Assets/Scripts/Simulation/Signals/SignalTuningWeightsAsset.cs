@@ -35,6 +35,25 @@ namespace Territory.Simulation.Signals
         [SerializeField] private float pollutionPenalty = 0.5f;
         [SerializeField] private float normalizationCap = 100f;
 
+        // --- Stage 7 — PollutionLand producer tier weights (TECH-1889). ---
+        [SerializeField] private float pollutionLandHeavy = 2.5f;
+        [SerializeField] private float pollutionLandMedium = 1.5f;
+        [SerializeField] private float pollutionLandLight = 0.5f;
+
+        // --- Stage 7 — PollutionWater producer tier weights (TECH-1890). Heavier than land — water spillover physics. ---
+        [SerializeField] private float pollutionWaterHeavy = 3.0f;
+        [SerializeField] private float pollutionWaterMedium = 1.5f;
+        [SerializeField] private float pollutionWaterLight = 0.5f;
+
+        // --- Stage 7 — LandValue composite producer (TECH-1891). ---
+        [SerializeField] private float landValueBase = 10f;
+        [SerializeField] private float landValueParkBonus = 2.0f;
+        [SerializeField] private float landValueIndustrialPenalty = 1.5f;
+        [SerializeField] private float landValueDensityBonus = 1.0f;
+
+        // --- Stage 7 — EconomyManager tax-base land-value bonus (TECH-1892). At LandValue mean 100 → +50% income. ---
+        [SerializeField] private float landValueIncomeMultiplier = 0.005f;
+
         /// <summary>Default happiness baseline (50f) — initial value of <see cref="HappinessComposer.Current"/>.</summary>
         public float HappinessBaseline => happinessBaseline;
         /// <summary>Employment weight (30f).</summary>
@@ -71,7 +90,33 @@ namespace Territory.Simulation.Signals
         /// <summary>Desirability normalization cap (100f).</summary>
         public float NormalizationCap => normalizationCap;
 
-        /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6).</summary>
+        /// <summary>Stage 7 — IndustrialHeavyBuilding land-pollution emit weight (2.5f).</summary>
+        public float PollutionLandHeavy => pollutionLandHeavy;
+        /// <summary>Stage 7 — IndustrialMediumBuilding land-pollution emit weight (1.5f).</summary>
+        public float PollutionLandMedium => pollutionLandMedium;
+        /// <summary>Stage 7 — IndustrialLightBuilding land-pollution emit weight (0.5f).</summary>
+        public float PollutionLandLight => pollutionLandLight;
+
+        /// <summary>Stage 7 — IndustrialHeavyBuilding water-pollution emit weight (3.0f) when Moore-adjacent to open water.</summary>
+        public float PollutionWaterHeavy => pollutionWaterHeavy;
+        /// <summary>Stage 7 — IndustrialMediumBuilding water-pollution emit weight (1.5f) when Moore-adjacent to open water.</summary>
+        public float PollutionWaterMedium => pollutionWaterMedium;
+        /// <summary>Stage 7 — IndustrialLightBuilding water-pollution emit weight (0.5f) when Moore-adjacent to open water.</summary>
+        public float PollutionWaterLight => pollutionWaterLight;
+
+        /// <summary>Stage 7 — LandValue composite baseline (10f) — emitted at every cell.</summary>
+        public float LandValueBase => landValueBase;
+        /// <summary>Stage 7 — LandValue per-Moore-neighbor park bonus multiplier (2.0f).</summary>
+        public float LandValueParkBonus => landValueParkBonus;
+        /// <summary>Stage 7 — LandValue per-Moore-neighbor industrial penalty multiplier (1.5f).</summary>
+        public float LandValueIndustrialPenalty => landValueIndustrialPenalty;
+        /// <summary>Stage 7 — LandValue per-residential-density-tier bonus multiplier (1.0f).</summary>
+        public float LandValueDensityBonus => landValueDensityBonus;
+
+        /// <summary>Stage 7 — EconomyManager projected-income land-value bonus multiplier (0.005f). At cityLandValueMean=100 → +50% bonus.</summary>
+        public float LandValueIncomeMultiplier => landValueIncomeMultiplier;
+
+        /// <summary>Capture current field state into a serializable snapshot for <c>GameSaveData.tuningWeights</c> (schema 6). Stage 7 fields additive — older saves without them round-trip via JsonUtility default-zero on missing JSON keys; restore path then reapplies asset-default during <see cref="RestoreFromData"/> when zero (see Stage 7 round-trip semantics).</summary>
         public SignalTuningWeightsData CaptureSnapshot()
         {
             return new SignalTuningWeightsData
@@ -93,6 +138,17 @@ namespace Territory.Simulation.Signals
                 parksBonus = parksBonus,
                 pollutionPenalty = pollutionPenalty,
                 normalizationCap = normalizationCap,
+                pollutionLandHeavy = pollutionLandHeavy,
+                pollutionLandMedium = pollutionLandMedium,
+                pollutionLandLight = pollutionLandLight,
+                pollutionWaterHeavy = pollutionWaterHeavy,
+                pollutionWaterMedium = pollutionWaterMedium,
+                pollutionWaterLight = pollutionWaterLight,
+                landValueBase = landValueBase,
+                landValueParkBonus = landValueParkBonus,
+                landValueIndustrialPenalty = landValueIndustrialPenalty,
+                landValueDensityBonus = landValueDensityBonus,
+                landValueIncomeMultiplier = landValueIncomeMultiplier,
             };
         }
 
@@ -120,6 +176,17 @@ namespace Territory.Simulation.Signals
             parksBonus = data.parksBonus;
             pollutionPenalty = data.pollutionPenalty;
             normalizationCap = data.normalizationCap;
+            pollutionLandHeavy = data.pollutionLandHeavy;
+            pollutionLandMedium = data.pollutionLandMedium;
+            pollutionLandLight = data.pollutionLandLight;
+            pollutionWaterHeavy = data.pollutionWaterHeavy;
+            pollutionWaterMedium = data.pollutionWaterMedium;
+            pollutionWaterLight = data.pollutionWaterLight;
+            landValueBase = data.landValueBase;
+            landValueParkBonus = data.landValueParkBonus;
+            landValueIndustrialPenalty = data.landValueIndustrialPenalty;
+            landValueDensityBonus = data.landValueDensityBonus;
+            landValueIncomeMultiplier = data.landValueIncomeMultiplier;
         }
     }
 
@@ -148,5 +215,20 @@ namespace Territory.Simulation.Signals
         public float parksBonus;
         public float pollutionPenalty;
         public float normalizationCap;
+        // Stage 7 — TECH-1889 PollutionLand producer tier weights.
+        public float pollutionLandHeavy;
+        public float pollutionLandMedium;
+        public float pollutionLandLight;
+        // Stage 7 — TECH-1890 PollutionWater producer tier weights.
+        public float pollutionWaterHeavy;
+        public float pollutionWaterMedium;
+        public float pollutionWaterLight;
+        // Stage 7 — TECH-1891 LandValue composite producer constants.
+        public float landValueBase;
+        public float landValueParkBonus;
+        public float landValueIndustrialPenalty;
+        public float landValueDensityBonus;
+        // Stage 7 — TECH-1892 EconomyManager tax-base land-value bonus multiplier.
+        public float landValueIncomeMultiplier;
     }
 }

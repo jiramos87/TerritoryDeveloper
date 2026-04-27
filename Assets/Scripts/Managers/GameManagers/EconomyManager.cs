@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Territory.Audio;
+using Territory.Simulation.Signals;
 using Territory.Zones;
 using Territory.UI;
 using Territory.Timing;
@@ -35,6 +36,13 @@ public class EconomyManager : MonoBehaviour
     /// Tick-integrated in Stage 4 (TECH-531) for monthly repayment processing.
     /// </summary>
     [SerializeField] private BondLedgerService bondLedger;
+
+    /// <summary>
+    /// Stage 7 (TECH-1892) — signal tuning weights asset; consulted at <see cref="GetProjectedMonthlyIncome"/>
+    /// for the per-tick land-value tax-base bonus multiplier (<see cref="SignalTuningWeightsAsset.LandValueIncomeMultiplier"/>).
+    /// Inspector-wired primary; Resources fallback under <c>Resources/SignalTuningWeights</c>.
+    /// </summary>
+    [SerializeField] private SignalTuningWeightsAsset tuningWeights;
 
     [Header("Monthly maintenance")]
     [Tooltip("Upkeep charged per road cell (ZoneType.Road) on the first day of each month, after tax collection.")]
@@ -72,6 +80,9 @@ public class EconomyManager : MonoBehaviour
             bondLedger = FindObjectOfType<BondLedgerService>();
         if (bondLedger == null)
             Debug.LogWarning("EconomyManager: BondLedgerService not found. Attach it to the EconomyManager GameObject in the scene.");
+        if (tuningWeights == null)
+            tuningWeights = Resources.Load<SignalTuningWeightsAsset>("SignalTuningWeights");
+        // Soft warn — if asset is absent, GetProjectedMonthlyIncome falls back to no land-value bonus.
     }
 
     void Start()
@@ -700,7 +711,27 @@ public class EconomyManager : MonoBehaviour
         int projectedCommercialIncome = cityStats.commercialBuildingCount * commercialIncomeTax;
         int projectedIndustrialIncome = cityStats.industrialBuildingCount * industrialIncomeTax;
 
-        return projectedResidentialIncome + projectedCommercialIncome + projectedIndustrialIncome;
+        int baseSum = projectedResidentialIncome + projectedCommercialIncome + projectedIndustrialIncome;
+
+        // Stage 7 (TECH-1892) — apply per-tick land-value tax-base bonus.
+        // Multiplier = 1f + cityLandValueMean * LandValueIncomeMultiplier.
+        // At cityLandValueMean=100 (default cap) and LandValueIncomeMultiplier=0.005 → +50% bonus.
+        // Asset absent or NaN-guard tripped → no bonus (multiplier=1f), preserving legacy behaviour.
+        if (tuningWeights == null)
+        {
+            return baseSum;
+        }
+        float landValueMean = cityStats.cityLandValueMean;
+        if (float.IsNaN(landValueMean) || float.IsInfinity(landValueMean) || landValueMean < 0f)
+        {
+            return baseSum;
+        }
+        float multiplier = 1f + landValueMean * tuningWeights.LandValueIncomeMultiplier;
+        if (multiplier < 0f)
+        {
+            multiplier = 0f;
+        }
+        return Mathf.RoundToInt(baseSum * multiplier);
     }
 
     /// <summary>
