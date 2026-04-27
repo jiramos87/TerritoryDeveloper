@@ -33,8 +33,8 @@ cache_control: ephemeral_1h
 > water = `water-terrain-system.md`, sim = `simulation-system.md`, persist = `persistence-system.md`,
 > mgrs = `managers-reference.md` — **§Zones**, **§Demand**, **§World**, **§Notifications**;
 > **geo §14.5** = road stroke, lip, grass, Chebyshev, etc.; **sim §Rings** = centroid + growth rings;
-> ui = `ui-design-system.md`; unity-dev = `unity-development-context.md`; `ARCHITECTURE.md` = layer
-> map and init order (no § numbers).
+> ui = `ui-design-system.md`; unity-dev = `unity-development-context.md`; arch = `ia/specs/architecture/`
+> (`layers.md`, `data-flows.md`, `interchange.md`, `decisions.md`).
 
 > **Authorship rule (per-term tables excluded from Tier 1):** full glossary rows live in
 > `ia/specs/glossary.md`; they are Tier 2 scope (per-Stage subset via `glossary_discover`). Tier 1

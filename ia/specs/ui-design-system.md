@@ -43,7 +43,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Stack:** **Unity UI (uGUI)** — **Canvas**, **Graphic** (**Image**, **Text** / **TMP**, etc.), **EventSystem**. Primary orchestrator: **`UIManager`** (`Territory.UI`) — **`partial`** across **`UIManager.cs`** (fields, lifecycle) + **`UIManager.PopupStack.cs`**, **`UIManager.Hud.cs`**, **`UIManager.Toolbar.cs`**, **`UIManager.Utilities.cs`**. **`CursorManager`**, **`GameNotificationManager`**, and **UnitControllers** handle focused interactions.
 
-**Architectural placement** (see also **`ARCHITECTURE.md`**): **UI layer** — **`UIManager`**, **`CursorManager`**, **`GameNotificationManager`**, controllers. **Input** — **`GridManager`** and others gate world input when the pointer is over UI (**`IsPointerOverGameObject`**); scroll vs camera is a recurring UX area (**BACKLOG**).
+**Architectural placement** (see also **`ia/specs/architecture/layers.md`**): **UI layer** — **`UIManager`**, **`CursorManager`**, **`GameNotificationManager`**, controllers. **Input** — **`GridManager`** and others gate world input when the pointer is over UI (**`IsPointerOverGameObject`**); scroll vs camera is a recurring UX area (**BACKLOG**).
 
 **Primary entry points**
 

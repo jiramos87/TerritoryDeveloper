@@ -41,7 +41,7 @@ citing the heuristic id (H1–H6).
 
 | ID | Heuristic | PASS | WARN | FAIL | Estimation source |
 |----|-----------|------|------|------|-------------------|
-| H1 | **Subsystem cohesion** — count of distinct top-level subsystems touched by the Stage task cluster (per `ARCHITECTURE.md` layer map: `Assets/Scripts/Managers/`, `ia/skills/`, `ia/rules/`, `tools/scripts/`, `web/`, `Assets/Art/`, etc.) | ≤2 subsystems | 3 subsystems | ≥4 subsystems | Union of `files:` fields across task yaml or Stage task Intent column |
+| H1 | **Subsystem cohesion** — count of distinct top-level subsystems touched by the Stage task cluster (per `ia/specs/architecture/layers.md` layer map: `Assets/Scripts/Managers/`, `ia/skills/`, `ia/rules/`, `tools/scripts/`, `web/`, `Assets/Art/`, etc.) | ≤2 subsystems | 3 subsystems | ≥4 subsystems | Union of `files:` fields across task yaml or Stage task Intent column |
 | H2 | **Verify-path overlap** — Path A (compile / Node validators) vs Path B (bridge Play Mode) scenarios shared across tasks | All tasks share same verify path (all Path A or all Path B) | Tasks split across Path A + Path B but Path B cluster ≤1 task | Path B cluster ≥2 tasks within Stage | Task Intent + `ia/backlog/{id}.yaml` `files:` subsystem prefix |
 | H3 | **Diff LOC budget** — estimated cumulative LOC diff across all Stage tasks | ≤800 LOC / ≤25 files | 801–1200 LOC or 26–40 files | ≥1201 LOC or ≥41 files | Union of `files:` lists across backlog yaml records; NOT live diff |
 | H4 | **Depends-on DAG linearity** — task dependency graph shape within the Stage | Linear chain or independent (no declared `depends_on` within Stage) | ≤1 fan-out node (one task depended on by 2) | Fan-out ≥2 or DAG depth ≥3 | `depends_on:` fields in task yaml; empty DAG = PASS by default |
@@ -116,6 +116,6 @@ are NOT subject to retroactive evaluation. Gate verdict = N/A for filed Stages.
 - `ia/skills/stage-decompose/SKILL.md` — invokes sizing gate at Phase N (post task-sizing).
 - `ia/skills/stage-file/SKILL.md` — planner Phase 0 references this gate; halts on FAIL.
 - `docs/agent-lifecycle.md` — Hard-rules section cross-ref (single line).
-- `ARCHITECTURE.md` — subsystem layer map used in H1 subsystem count.
+- `ia/specs/architecture/layers.md` — subsystem layer map used in H1 subsystem count.
 - `docs/stage-scoped-verify-review-findings.md` — motivating findings; thresholds derived from
   empirical Stage observations logged there.

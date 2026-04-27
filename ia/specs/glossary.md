@@ -10,7 +10,7 @@ slices_via: glossary_lookup
 
 ## Abbreviations
 
-Specs (relative to `ia/specs/`): geo=`isometric-geography-system.md`, roads=`roads-system.md`, water=`water-terrain-system.md`, sim=`simulation-system.md`, sim-signals=`simulation-signals.md`, persist=`persistence-system.md`, mgrs=`managers-reference.md`, ui=`ui-design-system.md`, udev=`unity-development-context.md`, arch=`ARCHITECTURE.md`, audio=`audio-blip.md`, econ=`economy-system.md`.
+Specs (relative to `ia/specs/`): geo=`isometric-geography-system.md`, roads=`roads-system.md`, water=`water-terrain-system.md`, sim=`simulation-system.md`, sim-signals=`simulation-signals.md`, persist=`persistence-system.md`, mgrs=`managers-reference.md`, ui=`ui-design-system.md`, udev=`unity-development-context.md`, arch=`architecture/` (sub-specs: `layers.md`, `data-flows.md`, `interchange.md`, `decisions.md`), audio=`audio-blip.md`, econ=`economy-system.md`.
 
 Rules: pa=`ia/rules/plan-apply-pair-contract.md`, ph=`ia/rules/project-hierarchy.md`, ovs=`ia/rules/orchestrator-vs-spec.md`, inv=`ia/rules/invariants.md`, rs=`ia/rules/runtime-state.md`.
 

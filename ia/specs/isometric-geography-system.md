@@ -6,7 +6,7 @@ slices_via: spec_section
 ---
 # Isometric Geography System — Technical Specification
 
-> **Canonical spec** for isometric geography (single source of truth). See `ARCHITECTURE.md` for init order and persistence.
+> **Canonical spec** for isometric geography (single source of truth). See `ia/specs/architecture/data-flows.md` for init order and persistence.
 
 ## 0. Canonical scope and doc hierarchy
 

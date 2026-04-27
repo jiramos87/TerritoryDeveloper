@@ -70,7 +70,7 @@ Run from repo root. Script names match [`package.json`](../../../package.json) +
 
 **Single command (steps 0–4):** `npm run validate:all`. Does not run `npm ci`; install deps first if build/test fails.
 
-**Full local chain:** `npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → [`post-implementation-verify.sh`](../../../tools/scripts/post-implementation-verify.sh) with `--skip-node-checks`: Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke` (optional `seed_cell`). Requires Postgres, `.env`/`config/postgres-dev.json`, macOS Accessibility for save/quit automation. `unity:compile-check` sources `.env`/`.env.local` — do not skip because `$UNITY_EDITOR_PATH` empty in shell. Reference: [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) Local verification.
+**Full local chain:** `npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → [`post-implementation-verify.sh`](../../../tools/scripts/post-implementation-verify.sh) with `--skip-node-checks`: Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke` (optional `seed_cell`). Requires Postgres, `.env`/`config/postgres-dev.json`, macOS Accessibility for save/quit automation. `unity:compile-check` sources `.env`/`.env.local` — do not skip because `$UNITY_EDITOR_PATH` empty in shell. Reference: [`ia/specs/architecture/interchange.md`](../../specs/architecture/interchange.md) Local verification.
 
 ## Verification block
 

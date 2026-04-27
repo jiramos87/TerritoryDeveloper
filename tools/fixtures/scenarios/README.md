@@ -189,7 +189,7 @@ Keep **`--simulation-ticks`** **`N`** in sync with golden filenames and any Post
 |--------|----------------|-------|
 | Editor Play Mode + CLI args or **queue file** | No | Queue file + **`enter_play_mode`** suits agents without Hub CLI. |
 | **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | Optional | Load smoke + optional **`ProcessSimulationTick`** loop + optional **golden** JSON; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). With **`DATABASE_URL`**, optional per-tick **`city_metrics_history`** rows (**`city_metrics_query`**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
-| **`verify:local`** / bridge smoke | Yes (when used) | Full dev chain; see **`ARCHITECTURE.md`** — **Local verification**. |
+| **`verify:local`** / bridge smoke | Yes (when used) | Full dev chain; see **`ia/specs/architecture/interchange.md`** — **Local verification**. |
 
 ## Regenerating `reference-flat-32x32`
 

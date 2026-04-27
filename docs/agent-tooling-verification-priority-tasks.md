@@ -6,7 +6,7 @@
 
 **Audience:** Developers and Cursor agents planning tooling, **CI**, **MCP**, and **Unity Editor** utilities.
 
-**Related:** [`docs/mcp-ia-server.md`](mcp-ia-server.md), [`AGENTS.md`](../AGENTS.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md) (**Local verification** — **`npm run verify:local`**), [`projects/agent-friendly-tasks-with-territory-ia-context.md`](../projects/agent-friendly-tasks-with-territory-ia-context.md), [`ia/rules/agent-router.md`](../ia/rules/agent-router.md).
+**Related:** [`docs/mcp-ia-server.md`](mcp-ia-server.md), [`AGENTS.md`](../AGENTS.md), [`ia/specs/architecture/interchange.md`](../ia/specs/architecture/interchange.md) (**Local verification** — **`npm run verify:local`**), [`projects/agent-friendly-tasks-with-territory-ia-context.md`](../projects/agent-friendly-tasks-with-territory-ia-context.md), [`ia/rules/agent-router.md`](../ia/rules/agent-router.md).
 
 **territory-ia:** Use **`router_for_task`**, **`spec_outline`**, **`spec_section`**, **`glossary_discover`**, **`invariants_summary`**, and **`backlog_issue`** when scoping tasks that touch simulation, roads, water, sorting, or invariants — keep script/MCP **outputs** aligned with the same vocabulary.
 

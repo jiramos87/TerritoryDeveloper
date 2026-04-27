@@ -41,7 +41,7 @@ Task close → Stage `§Audit` migration anchors → glossary / reference spec /
 
 Project specs are temporary scaffolding for one Issue lifecycle. After implementation:
 
-- Migrate canonical knowledge → `ia/specs/glossary.md`, reference specs under `ia/specs/`, `ARCHITECTURE.md`, rules under `ia/rules/`, `docs/` (per `§Closeout Plan` tuples authored by `opus-audit`).
+- Migrate canonical knowledge → `ia/specs/glossary.md`, reference specs under `ia/specs/` (incl. `ia/specs/architecture/`), rules under `ia/rules/`, `docs/` (per `§Closeout Plan` tuples authored by `opus-audit`).
 - Persist verbose Decision Log + Lessons Learned → Postgres journal (`project_spec_journal_persist`).
 - Delete `ia/projects/{ISSUE_ID}.md`. Only canonical docs survive.
 

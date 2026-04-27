@@ -39,7 +39,7 @@ ia/projects/                              → temporary project specs (deleted o
 ia/rules/project-hierarchy.md             → step/stage/phase/task execution hierarchy
 ia/rules/orchestrator-vs-spec.md          → orchestrator vs project spec distinction
 ia/templates/                             → project spec template + frontmatter schema
-ARCHITECTURE.md                           → runtime layers, dependency map, Local verification
+ia/specs/architecture/                    → layers / data-flows / interchange / decisions (root ARCHITECTURE.md = index stub)
 BACKLOG.md / BACKLOG-ARCHIVE.md           → issue tracking (root)
 CLAUDE.md / AGENTS.md                     → host entry points (root)
 MEMORY.md                                 → project-level architectural memory (root)

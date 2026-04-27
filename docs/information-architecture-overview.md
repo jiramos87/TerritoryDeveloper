@@ -10,7 +10,7 @@ This file is the **canonical narrative** for the **Information Architecture** **
 |-------|------------------|
 | **This overview** | Layer diagram (§2), lifecycle (§3), MCP map (§6) |
 | **[`AGENTS.md`](../AGENTS.md)** | Agent workflow, checklist, links into rules and skills |
-| **[`ARCHITECTURE.md`](../ARCHITECTURE.md)** | Runtime dependency map + **Local verification** |
+| **[`ia/specs/architecture/`](../ia/specs/architecture/)** | Runtime layers + dep map (`layers.md`), data flows (`data-flows.md`), MCP / interchange / Local verification (`interchange.md`), decisions (`decisions.md`). Root `ARCHITECTURE.md` = 14-line index stub. |
 | **[`ia/rules/`](../ia/rules/)** | Always-on and globs rules (guardrails, MCP defaults) |
 | **[`ia/skills/`](../ia/skills/)** | Ordered recipes (implement, validate, bridge, test mode) |
 | **[`tools/mcp-ia-server/`](../tools/mcp-ia-server/)** | **territory-ia** tool implementations |
@@ -176,7 +176,7 @@ The **territory-ia** MCP server ([tools/mcp-ia-server/](../tools/mcp-ia-server/)
 | Category | Tools | Data source |
 |----------|-------|-------------|
 | **Backlog** | `backlog_issue` | BACKLOG.md / BACKLOG-ARCHIVE.md |
-| **Specs** | `list_specs`, `spec_outline`, `spec_section`, `spec_sections` | ia/specs/, ia/rules/, AGENTS.md, ARCHITECTURE.md |
+| **Specs** | `list_specs`, `spec_outline`, `spec_section`, `spec_sections` | ia/specs/ (incl. ia/specs/architecture/), ia/rules/, AGENTS.md, ARCHITECTURE.md (index stub) |
 | **Glossary** | `glossary_discover`, `glossary_lookup` | glossary.md |
 | **Routing/Rules** | `router_for_task`, `invariants_summary`, `list_rules`, `rule_content` | agent-router.md, invariants.md, ia/rules/*.md |
 | **Project specs** | `project_spec_closeout_digest` | ia/projects/{ISSUE_ID}.md |
@@ -291,7 +291,7 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 | Document | Purpose |
 |----------|---------|
 | [AGENTS.md](../AGENTS.md) | Agent workflow policies, documentation hierarchy, backlog conventions, pre-commit checklist |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) | System layers, dependency map, data flows, init order, architectural decisions |
+| [ia/specs/architecture/](../ia/specs/architecture/) | System layers + dependency map (`layers.md`), data flows + init order (`data-flows.md`), agent IA + MCP + JSON interchange + Local verification (`interchange.md`), DEC-A1..N decisions (`decisions.md`). Root [ARCHITECTURE.md](../ARCHITECTURE.md) = 14-line index stub. |
 | [BACKLOG.md](../BACKLOG.md) | Single source of truth for project issues |
 | [BACKLOG-ARCHIVE.md](../BACKLOG-ARCHIVE.md) | Closed issues with date and trace |
 | [CLAUDE.md](../CLAUDE.md) | Claude Code project instructions (MCP, skills, rules summary) |

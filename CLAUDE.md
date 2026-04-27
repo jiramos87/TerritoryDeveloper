@@ -7,7 +7,7 @@
 
 ## 1. What this repo is
 
-Unity 2D isometric city builder + Markdown IA (`ia/{specs,rules,skills,projects,templates}`) + project-scoped MCP server (`territory-ia`, `.mcp.json`). Cross-harness workflow: **`AGENTS.md`**. Runtime layers + dep map: `ARCHITECTURE.md`. This file = Claude Code deltas only; everything not Claude-specific lives in `AGENTS.md`.
+Unity 2D isometric city builder + Markdown IA (`ia/{specs,rules,skills,projects,templates}`) + project-scoped MCP server (`territory-ia`, `.mcp.json`). Cross-harness workflow: **`AGENTS.md`**. Runtime layers + dep map: `ia/specs/architecture/layers.md`. Decisions: `ia/specs/architecture/decisions.md`. Root `ARCHITECTURE.md` = index stub. This file = Claude Code deltas only; everything not Claude-specific lives in `AGENTS.md`.
 
 ## 2. MCP first
 
@@ -17,6 +17,10 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 
 | Trigger | Read |
 |---|---|
+| Architecture — system layers / dependency map | `ia/specs/architecture/layers.md` (MCP `spec_section architecture/layers`) |
+| Architecture — data flows / init order / persistence | `ia/specs/architecture/data-flows.md` |
+| Architecture — agent IA / MCP / JSON interchange / bridge | `ia/specs/architecture/interchange.md` |
+| Architecture — decisions + trade-offs (DEC-A1..N) | `ia/specs/architecture/decisions.md` (DB: `arch_decisions` table) |
 | Unity C# / `GridManager` / `HeightMap` / roads / water / cliffs | `ia/rules/unity-invariants.md` (MCP `rule_content unity-invariants`; `invariants_summary` auto-merges with universal) |
 | Lifecycle commands — `/stage-file`, `/ship-stage`, `/stage-authoring`, `/plan-review`, `/audit`, `/implement`, `/verify-loop` | `docs/agent-lifecycle.md` §1 (flow) + §2 (seam → surface matrix) |
 | Meta / preview composite-skill behavior — `/unfold {TARGET_COMMAND} {ARGS...}` | `ia/skills/unfold/SKILL.md` (+ `docs/agent-lifecycle.md` §2 Row M) — emits decision-tree plan under `ia/plans/`; read-only, NO execution |
@@ -45,7 +49,7 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 |---|---|
 | `npm run validate:all` | After IA / MCP / fixture / index / rules edits (same chain CI runs) |
 | `npm run unity:compile-check` | After C# edits. `$UNITY_EDITOR_PATH` loaded by the script itself — do NOT skip. |
-| `npm run verify:local` (alias `verify:post-implementation`) | Full local chain: `validate:all` + compile-check + `db:migrate` + `db:bridge-preflight` + Editor save/quit + `db:bridge-playmode-smoke`. See `ARCHITECTURE.md` (**Local verification**). |
+| `npm run verify:local` (alias `verify:post-implementation`) | Full local chain: `validate:all` + compile-check + `db:migrate` + `db:bridge-preflight` + Editor save/quit + `db:bridge-playmode-smoke`. See `ia/specs/architecture/interchange.md` (**Local verification**). |
 | `npm run validate:claude-imports` | Assert every `@`-import in this file exists + stays within line budget. Drift gate. |
 
 Further commands (`validate:frontmatter`, `validate:cache-block-sizing`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` + relevant skill bodies.

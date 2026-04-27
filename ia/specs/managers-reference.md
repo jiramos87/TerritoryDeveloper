@@ -7,7 +7,7 @@ slices_via: spec_section
 # Managers & Services — Reference
 
 > Complete reference of all managers and helper services: responsibilities, dependencies, and patterns.
-> For the full dependency map, see `ARCHITECTURE.md`.
+> For the full dependency map, see `ia/specs/architecture/layers.md`.
 
 ## Manager Responsibilities
 
@@ -108,7 +108,7 @@ On each in-game **day**, after employment and pollution updates, `CityStats` com
 
 **Monthly maintenance** — On calendar day 1 (via `TimeManager` → `EconomyManager.ProcessDailyEconomy` → `ProcessMonthlyEconomy`), after monthly **tax base** income is credited, `EconomyManager` charges **street** upkeep from `CityStats.roadCount` and **utility building** upkeep from `CityStats.GetRegisteredPowerPlantCount()` (v1: **power plants** only). Successful payment posts an informational **game notification** with a category breakdown; if the treasury cannot afford the full amount, no debit occurs and a **game notification** error explains the shortfall. Tunable per-road and per-plant costs live on `EconomyManager`. **Growth budget** projections subtract this maintenance from projected tax when computing net monthly cash flow.
 
-**Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
+**Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ia/specs/architecture/data-flows.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
 
 ## World features
 

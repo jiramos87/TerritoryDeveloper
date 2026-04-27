@@ -38,7 +38,10 @@ Read only task-relevant specs. Use table to navigate.
 | XML doc style (C#) | `ia/rules/xml-doc-caveman.md` | Caveman Full style for `/// <summary>` / `<param>` / `<returns>` / `<exception>` / `<remarks>` |
 | Domain terms | `ia/specs/glossary.md` | Quick definitions |
 | Backlog / issues | `BACKLOG.md` (only if task involves issue) | — |
-| Full dependency map | `ARCHITECTURE.md` | System layers, dep table |
+| Full dependency map | `ia/specs/architecture/layers.md` | System layers, dep table |
+| Data flows / init order / persistence | `ia/specs/architecture/data-flows.md` | Initialization, simulation, persistence |
+| Agent IA / MCP / JSON interchange / bridge | `ia/specs/architecture/interchange.md` | Agent IA, MCP, B1/B3/P5, local verification |
+| Architecture decisions (DEC-A1..N) | `ia/specs/architecture/decisions.md` | Table-driven decisions + trade-offs |
 
 ## Canonical geography spec
 
