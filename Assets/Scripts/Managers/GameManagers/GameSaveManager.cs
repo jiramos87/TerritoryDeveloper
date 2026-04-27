@@ -138,6 +138,15 @@ public class GameSaveManager : MonoBehaviour
         saveData.districtMap = (districtManagerForSave != null && districtManagerForSave.Map != null)
             ? districtManagerForSave.Map.GetSerializableData()
             : null;
+        // Stage 6 — capture SignalTuningWeightsAsset snapshot from the active HappinessComposer's wired asset.
+        // Composer is the canonical scene-side holder of the SO ref (single source of truth).
+        HappinessComposer happinessComposerForSave = FindObjectOfType<HappinessComposer>();
+        SignalTuningWeightsAsset weightsAssetForSave = happinessComposerForSave != null
+            ? happinessComposerForSave.Weights
+            : null;
+        saveData.tuningWeights = weightsAssetForSave != null
+            ? weightsAssetForSave.CaptureSnapshot()
+            : null;
         saveData.cityStats = cityStats.GetCityStatsData();
         saveData.isConnectedToInterstate = interstateManager != null && interstateManager.IsConnectedToInterstate;
         RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
@@ -261,6 +270,26 @@ public class GameSaveManager : MonoBehaviour
                     districtManagerForLoad.Rebuild();
             }
 
+            // Stage 6 — restore SignalTuningWeightsAsset snapshot onto live asset (if save carries one),
+            // then warm up the signal layer so HappinessComposer / DesirabilityComposer have converged
+            // diffusion + district rollups before the first user-initiated tick.
+            HappinessComposer happinessComposerForLoad = FindObjectOfType<HappinessComposer>();
+            SignalTuningWeightsAsset weightsAssetForLoad = happinessComposerForLoad != null
+                ? happinessComposerForLoad.Weights
+                : null;
+            if (weightsAssetForLoad != null && saveData.tuningWeights != null)
+                weightsAssetForLoad.RestoreFromData(saveData.tuningWeights);
+            SignalFieldRegistry signalRegistryForLoad = FindObjectOfType<SignalFieldRegistry>();
+            SignalTickScheduler signalSchedulerForLoad = FindObjectOfType<SignalTickScheduler>();
+            if (signalRegistryForLoad != null && signalSchedulerForLoad != null)
+            {
+                SignalWarmupPass.Run(signalRegistryForLoad, districtManagerForLoad, signalSchedulerForLoad);
+            }
+            else
+            {
+                Debug.LogWarning("[GameSaveManager] LoadGame: SignalFieldRegistry or SignalTickScheduler missing — skipping SignalWarmupPass.Run().");
+            }
+
             if (miniMapController != null)
                 miniMapController.RebuildTexture();
 
@@ -310,6 +339,7 @@ public class GameSaveManager : MonoBehaviour
     /// Schema 0 → 1: allocate placeholder GUIDs for missing <c>regionId</c> / <c>countryId</c>.
     /// Schema 3 → 4: seed <c>stateServiceZones</c> empty + <c>budgetAllocation</c> equal-envelope default.
     /// Schema 4 → 5: <c>districtMap</c> left untouched (null stays null — <see cref="LoadGame"/> falls back to <c>DistrictManager.Rebuild()</c>; non-null payload preserved byte-identical).
+    /// Schema 5 → 6: <c>tuningWeights</c> left untouched (null stays null — <see cref="LoadGame"/> leaves the live <see cref="Territory.Simulation.Signals.SignalTuningWeightsAsset"/> defaults intact; non-null payload restored via <see cref="Territory.Simulation.Signals.SignalTuningWeightsAsset.RestoreFromData"/>).
     /// </summary>
     static void MigrateLoadedSaveData(GameSaveData data)
     {
@@ -332,6 +362,12 @@ public class GameSaveManager : MonoBehaviour
             data.budgetAllocation = BudgetAllocationData.Default(DEFAULT_S_CAP);
         if (data.bondRegistry == null)
             data.bondRegistry = new List<BondData>();
+        // Schema 5 → 6: tuningWeights null on legacy ≤ 5 saves — leave null so LoadGame preserves the
+        // live SignalTuningWeightsAsset defaults (RestoreFromData is a no-op on null payload).
+        if (data.tuningWeights == null)
+        {
+            // intentional no-op — backward-compat sentinel.
+        }
         data.schemaVersion = GameSaveData.CurrentSchemaVersion;
 
         if (string.IsNullOrEmpty(data.regionId) || string.IsNullOrEmpty(data.countryId))
@@ -436,6 +472,8 @@ public class GameSaveData
     public WaterMapData waterMapData;
     /// <summary>Serialized <see cref="Territory.Simulation.Signals.DistrictMap"/> state. Null → schema ≤ 4 saves; <see cref="LoadGame"/> falls back to <c>DistrictManager.Rebuild()</c>. Added schema 5.</summary>
     public DistrictMapData districtMap;
+    /// <summary>Serialized <see cref="Territory.Simulation.Signals.SignalTuningWeightsAsset"/> field snapshot. Null → schema ≤ 5 saves; <see cref="LoadGame"/> leaves the live asset's defaults intact. Added schema 6.</summary>
+    public SignalTuningWeightsData tuningWeights;
     public bool isConnectedToInterstate;
     public RegionalMap regionalMap;
 
@@ -452,8 +490,10 @@ public class GameSaveData
     /// Schema 4 adds <c>budgetAllocation</c> + <c>stateServiceZones</c> (envelope budget + state-service zone registry — Stage 1.3 Phase 3)
     /// + <c>bondRegistry</c> (bond ledger active bonds — Stage 4).
     /// Schema 5 adds <c>districtMap</c> (Stage 3 District layer — per-cell <see cref="DistrictMap"/> ordinal round-trip).
+    /// Schema 6 adds <c>tuningWeights</c> (Stage 6 — <see cref="Territory.Simulation.Signals.SignalTuningWeightsAsset"/> snapshot)
+    /// + post-load <see cref="Territory.Simulation.Signals.SignalWarmupPass.Run"/> invocation in <see cref="GameSaveManager.LoadGame"/>.
     /// </summary>
-    public const int CurrentSchemaVersion = 5;
+    public const int CurrentSchemaVersion = 6;
 
     /// <summary>
     /// Neighbor-city stubs at this city's interstate map borders.

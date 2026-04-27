@@ -9,20 +9,17 @@ namespace Territory.Simulation
     /// desirability scalar in <c>[0,1]</c> from <see cref="SimulationSignal.LandValue"/>
     /// rollup plus a <see cref="SimulationSignal.ServiceParks"/> bonus minus a
     /// <see cref="SimulationSignal.PollutionAir"/> penalty, normalized by
-    /// <see cref="NORMALIZATION_CAP"/> and clamped at the composer boundary per
-    /// <c>ia/specs/simulation-signals.md</c> diffusion physics contract Example 3.
+    /// <see cref="SignalTuningWeightsAsset.NormalizationCap"/> and clamped at the composer
+    /// boundary per <c>ia/specs/simulation-signals.md</c> diffusion physics contract Example 3.
     /// FEAT-43 toggle wires this composer into <c>ZoneManager.AverageSectionDesirability</c>
-    /// via <c>AutoZoningManager.useSignalDesirability</c>.
+    /// via <c>AutoZoningManager.useSignalDesirability</c>. Stage 6 externalizes formula
+    /// constants to <see cref="SignalTuningWeightsAsset"/>.
     /// </summary>
     public class DesirabilityComposer : MonoBehaviour, ISignalConsumer
     {
         [SerializeField] private GridManager gridManager;
         [SerializeField] private DistrictManager districtManager;
-
-        // Composer formula constants — fixed per Stage 5 §Plan Digest.
-        private const float PARKS_BONUS = 0.3f;
-        private const float POLLUTION_PENALTY = 0.5f;
-        private const float NORMALIZATION_CAP = 100f;
+        [SerializeField] private SignalTuningWeightsAsset weights;
 
         private float[] _cellDesirability;
         private int _width;
@@ -38,6 +35,14 @@ namespace Territory.Simulation
             {
                 districtManager = FindObjectOfType<DistrictManager>();
             }
+            if (weights == null)
+            {
+                weights = Resources.Load<SignalTuningWeightsAsset>("SignalTuningWeights");
+                if (weights == null)
+                {
+                    Debug.LogError("DesirabilityComposer.weights unresolved — SignalTuningWeightsAsset missing under Resources/ and no Inspector wiring. ConsumeSignals will no-op.");
+                }
+            }
         }
 
         private void Start()
@@ -47,10 +52,10 @@ namespace Territory.Simulation
             _cellDesirability = new float[_width * _height];
         }
 
-        /// <summary>Per-cell composer body. Reads <see cref="SimulationSignal.LandValue"/> + <see cref="SimulationSignal.ServiceParks"/> + <see cref="SimulationSignal.PollutionAir"/> from the registry; writes <c>Mathf.Clamp01((land + parks * PARKS_BONUS - air * POLLUTION_PENALTY) / NORMALIZATION_CAP)</c> per cell with NaN-guard.</summary>
+        /// <summary>Per-cell composer body. Reads <see cref="SimulationSignal.LandValue"/> + <see cref="SimulationSignal.ServiceParks"/> + <see cref="SimulationSignal.PollutionAir"/> from the registry; writes <c>Mathf.Clamp01((land + parks * weights.ParksBonus - air * weights.PollutionPenalty) / weights.NormalizationCap)</c> per cell with NaN-guard.</summary>
         public void ConsumeSignals(SignalFieldRegistry registry, DistrictSignalCache cache)
         {
-            if (registry == null || _cellDesirability == null)
+            if (registry == null || _cellDesirability == null || weights == null)
             {
                 return;
             }
@@ -63,6 +68,10 @@ namespace Territory.Simulation
             {
                 return;
             }
+
+            float parksBonus = weights.ParksBonus;
+            float pollutionPenalty = weights.PollutionPenalty;
+            float normalizationCap = weights.NormalizationCap;
 
             for (int y = 0; y < _height; y++)
             {
@@ -78,7 +87,7 @@ namespace Territory.Simulation
                         continue;
                     }
 
-                    float raw = (landRaw + parksRaw * PARKS_BONUS - airRaw * POLLUTION_PENALTY) / NORMALIZATION_CAP;
+                    float raw = (landRaw + parksRaw * parksBonus - airRaw * pollutionPenalty) / normalizationCap;
                     if (float.IsNaN(raw) || float.IsInfinity(raw))
                     {
                         _cellDesirability[y * _width + x] = 0f;

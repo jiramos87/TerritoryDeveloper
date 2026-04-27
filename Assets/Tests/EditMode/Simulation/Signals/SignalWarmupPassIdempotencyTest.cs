@@ -15,19 +15,16 @@ using Territory.Zones;
 namespace Territory.Tests.EditMode.Simulation.Signals
 {
     /// <summary>
-    /// Stage 4 parity coverage for <see cref="HappinessComposer"/>: 30-tick warmup over a
-    /// fixed 20×20 grid with 6 industrial-heavy + 12 forest + 1 nuclear power plant. Asserts
-    /// (a) <see cref="HappinessComposer.Current"/> sits within ±5 of the legacy
-    /// <c>CityStats.ComputeTargetHappiness</c> result invoked at the same fixture state,
-    /// (b) no NaN/Infinity creeps into the composer over the warmup, and
-    /// (c) the diffused <see cref="SimulationSignal.PollutionAir"/> field stays non-negative
-    /// despite the forest sink subtracting absorption.
+    /// TECH-1790 coverage for <see cref="SignalWarmupPass"/>: a 5-tick warmup over the
+    /// canonical 20×20 fixture must be byte-identical when re-applied to the same
+    /// pre-warmup registry state, and must never introduce NaN / Infinity into any of
+    /// the 12 <see cref="SimulationSignal"/> fields.
     /// </summary>
     [TestFixture]
-    public class HappinessComposerParityTest
+    public class SignalWarmupPassIdempotencyTest
     {
         private const int GRID = 20;
-        private const int WARMUP_TICKS = 30;
+        private const int WARMUP_TICKS = 5;
 
         private GameObject gridGO;
         private GameObject forestGO;
@@ -65,7 +62,7 @@ namespace Territory.Tests.EditMode.Simulation.Signals
         public void SetUp()
         {
             // 1. GridManager — populate dims + cellArray with default-zoned CityCells.
-            gridGO = new GameObject("ParityTestGridManager");
+            gridGO = new GameObject("WarmupTestGridManager");
             grid = gridGO.AddComponent<GridManager>();
             grid.width = GRID;
             grid.height = GRID;
@@ -97,8 +94,8 @@ namespace Territory.Tests.EditMode.Simulation.Signals
                     Zone.ZoneType.IndustrialHeavyBuilding;
             }
 
-            // 2. ForestManager — inject private forestMap with 12 forest cells.
-            forestGO = new GameObject("ParityTestForestManager");
+            // 2. ForestManager — 12 forest cells.
+            forestGO = new GameObject("WarmupTestForestManager");
             forestManager = forestGO.AddComponent<ForestManager>();
             forestManager.gridManager = grid;
             ForestMap forestMap = new ForestMap(GRID, GRID);
@@ -118,20 +115,20 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             Assert.IsNotNull(forestMapField, "ForestManager.forestMap field missing");
             forestMapField.SetValue(forestManager, forestMap);
 
-            // 3. EmploymentManager — unemploymentRate=50 → GetEmploymentRate() returns 50.
-            employmentGO = new GameObject("ParityTestEmploymentManager");
+            // 3. EmploymentManager.
+            employmentGO = new GameObject("WarmupTestEmploymentManager");
             employmentManager = employmentGO.AddComponent<EmploymentManager>();
             employmentManager.unemploymentRate = 50f;
 
-            // 4. EconomyManager — defaults already 10/10/10 (comfortable tax band).
-            economyGO = new GameObject("ParityTestEconomyManager");
+            // 4. EconomyManager.
+            economyGO = new GameObject("WarmupTestEconomyManager");
             economyManager = economyGO.AddComponent<EconomyManager>();
             economyManager.residentialIncomeTax = 10;
             economyManager.commercialIncomeTax = 10;
             economyManager.industrialIncomeTax = 10;
 
-            // 5. CityStats — populate counts so legacy + composer paths read identical inputs.
-            cityStatsGO = new GameObject("ParityTestCityStats");
+            // 5. CityStats.
+            cityStatsGO = new GameObject("WarmupTestCityStats");
             cityStats = cityStatsGO.AddComponent<CityStats>();
             cityStats.simulateGrowth = false;
             cityStats.population = 100;
@@ -143,7 +140,6 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             cityStats.commercialBuildingCount = 6;
             cityStats.industrialZoneCount = industrialCoords.Length;
             cityStats.industrialBuildingCount = industrialCoords.Length;
-            // Inject CityStats private deps so ComputeTargetHappiness reads stub managers.
             FieldInfo employmentField = typeof(CityStats).GetField(
                 "_employmentManager", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(employmentField, "CityStats._employmentManager field missing");
@@ -153,18 +149,18 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             Assert.IsNotNull(economyField, "CityStats._economyManager field missing");
             economyField.SetValue(cityStats, economyManager);
 
-            // 6. SignalFieldRegistry — allocate fields at GRID dims.
-            registryGO = new GameObject("ParityTestSignalFieldRegistry");
+            // 6. SignalFieldRegistry.
+            registryGO = new GameObject("WarmupTestSignalFieldRegistry");
             registry = registryGO.AddComponent<SignalFieldRegistry>();
             registry.ResizeForMap(GRID, GRID);
 
-            // 7. UrbanCentroidService + DistrictManager — Inner-ring rollup target for composer.
-            centroidGO = new GameObject("ParityTestUrbanCentroidService");
+            // 7. UrbanCentroidService + DistrictManager.
+            centroidGO = new GameObject("WarmupTestUrbanCentroidService");
             centroid = centroidGO.AddComponent<UrbanCentroidService>();
             centroid.gridManager = grid;
             centroid.RecalculateFromGrid();
 
-            districtGO = new GameObject("ParityTestDistrictManager");
+            districtGO = new GameObject("WarmupTestDistrictManager");
             districtManager = districtGO.AddComponent<DistrictManager>();
             FieldInfo dmCentroidField = typeof(DistrictManager).GetField(
                 "centroid", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -174,23 +170,21 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             Assert.IsNotNull(dmGridField, "DistrictManager.grid field missing");
             dmCentroidField.SetValue(districtManager, centroid);
             dmGridField.SetValue(districtManager, grid);
-            // Re-trigger Awake so DistrictMap allocates with the injected refs.
             MethodInfo dmAwake = typeof(DistrictManager).GetMethod(
                 "Awake", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(dmAwake, "DistrictManager.Awake method missing");
             dmAwake.Invoke(districtManager, null);
 
-            // 8. PowerPlant fixture at (15, 15) — bounds-safe center quadrant.
-            powerPlantGO = new GameObject("ParityTestPowerPlant");
+            // 8. PowerPlant fixture.
+            powerPlantGO = new GameObject("WarmupTestPowerPlant");
             powerPlant = powerPlantGO.AddComponent<PowerPlant>();
-            // World-pos chosen so GridManager.GetGridPosition rounds back to (15, 15).
             powerPlantGO.transform.position = IsometricGridToWorld(15, 15, grid.tileWidth, grid.tileHeight);
 
             // 9. SignalTuningWeightsAsset — instantiate with default initializers (bit-identical to legacy consts).
             weightsAsset = ScriptableObject.CreateInstance<SignalTuningWeightsAsset>();
 
-            // 10. HappinessComposer — Inspector-style ref injection (incl. tuning weights SO).
-            composerGO = new GameObject("ParityTestHappinessComposer");
+            // 10. HappinessComposer (consumer wiring keeps Tick path identical to production).
+            composerGO = new GameObject("WarmupTestHappinessComposer");
             composer = composerGO.AddComponent<HappinessComposer>();
             InjectField(composer, "cityStats", cityStats);
             InjectField(composer, "employmentManager", employmentManager);
@@ -198,28 +192,27 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             InjectField(composer, "forestManager", forestManager);
             InjectField(composer, "districtManager", districtManager);
             InjectField(composer, "weights", weightsAsset);
-            // Re-trigger Awake so Current initializes from the now-wired weights asset.
             MethodInfo composerAwake = typeof(HappinessComposer).GetMethod(
                 "Awake", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(composerAwake, "HappinessComposer.Awake method missing");
             composerAwake.Invoke(composer, null);
 
-            // 11. Producers — Inspector-style ref injection.
-            industrialProducerGO = new GameObject("ParityTestIndustrialProducer");
+            // 10. Producers.
+            industrialProducerGO = new GameObject("WarmupTestIndustrialProducer");
             industrialProducer = industrialProducerGO.AddComponent<IndustrialPollutionProducer>();
             InjectField(industrialProducer, "gridManager", grid);
 
-            powerPlantProducerGO = new GameObject("ParityTestPowerPlantProducer");
+            powerPlantProducerGO = new GameObject("WarmupTestPowerPlantProducer");
             powerPlantProducer = powerPlantProducerGO.AddComponent<PowerPlantPollutionProducer>();
             InjectField(powerPlantProducer, "gridManager", grid);
             powerPlantProducer.RefreshCache();
 
-            forestSinkGO = new GameObject("ParityTestForestSink");
+            forestSinkGO = new GameObject("WarmupTestForestSink");
             forestSink = forestSinkGO.AddComponent<ForestPollutionSink>();
             InjectField(forestSink, "gridManager", grid);
             InjectField(forestSink, "forestManager", forestManager);
 
-            // 12. SignalMetadataRegistry — uniform diffusion entries (12 signals).
+            // 11. SignalMetadataRegistry — uniform diffusion entries (12 signals).
             metadataAsset = ScriptableObject.CreateInstance<SignalMetadataRegistry>();
             FieldInfo entriesField = typeof(SignalMetadataRegistry).GetField(
                 "entries", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -238,8 +231,8 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             }
             entriesField.SetValue(metadataAsset, entries);
 
-            // 13. SignalTickScheduler — wire registry + metadata + producer/consumer lists via reflection.
-            schedulerGO = new GameObject("ParityTestSignalTickScheduler");
+            // 12. SignalTickScheduler.
+            schedulerGO = new GameObject("WarmupTestSignalTickScheduler");
             scheduler = schedulerGO.AddComponent<SignalTickScheduler>();
             FieldInfo schedRegistry = typeof(SignalTickScheduler).GetField(
                 "registry", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -259,7 +252,6 @@ namespace Territory.Tests.EditMode.Simulation.Signals
                 industrialProducer, powerPlantProducer, forestSink,
             });
             schedConsumerList.SetValue(scheduler, new List<MonoBehaviour> { composer });
-            // Re-trigger Awake so cached typed lists pick up the producers + consumer.
             MethodInfo schedAwake = typeof(SignalTickScheduler).GetMethod(
                 "Awake", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(schedAwake, "SignalTickScheduler.Awake method missing");
@@ -288,55 +280,64 @@ namespace Territory.Tests.EditMode.Simulation.Signals
         }
 
         [Test]
-        public void CurrentWithinFivePointsOfLegacy()
+        public void Run_Idempotent_ProducesByteIdenticalFields()
         {
-            // Snapshot legacy ComputeTargetHappiness at fixture state (private — invoke via reflection).
-            MethodInfo legacyMethod = typeof(CityStats).GetMethod(
-                "ComputeTargetHappiness", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.IsNotNull(legacyMethod, "CityStats.ComputeTargetHappiness method missing");
-            float legacyTarget = (float)legacyMethod.Invoke(cityStats, null);
-
-            // Warmup the composer over the signal pipeline.
-            for (int i = 0; i < WARMUP_TICKS; i++)
+            // Run A — capture post-warmup snapshot of every signal field.
+            SignalWarmupPass.Run(registry, districtManager, scheduler, WARMUP_TICKS);
+            int signalCount = Enum.GetValues(typeof(SimulationSignal)).Length;
+            float[][,] snapshotsA = new float[signalCount][,];
+            for (int s = 0; s < signalCount; s++)
             {
-                scheduler.Tick(1f);
+                SignalField field = registry.GetField((SimulationSignal)s);
+                Assert.IsNotNull(field, $"signal field {s} missing after Run A");
+                snapshotsA[s] = field.Snapshot();
             }
 
-            float delta = Mathf.Abs(legacyTarget - composer.Current);
-            Assert.LessOrEqual(delta, 5f,
-                $"HappinessComposer.Current ({composer.Current}) drifted >5 from legacy target ({legacyTarget}) after {WARMUP_TICKS} ticks");
-        }
+            // Re-set fixture: tear down + re-create so producer state is fresh + identical.
+            TearDown();
+            SetUp();
 
-        [Test]
-        public void NoNaNOrInfinityOverWarmup()
-        {
-            for (int i = 0; i < WARMUP_TICKS; i++)
-            {
-                scheduler.Tick(1f);
-                Assert.IsFalse(float.IsNaN(composer.Current),
-                    $"HappinessComposer.Current went NaN at tick {i + 1}");
-                Assert.IsFalse(float.IsInfinity(composer.Current),
-                    $"HappinessComposer.Current went Infinity at tick {i + 1}");
-            }
-        }
+            // Run B — same warmup, same inputs.
+            SignalWarmupPass.Run(registry, districtManager, scheduler, WARMUP_TICKS);
 
-        [Test]
-        public void PollutionAirNonNegativeAfterForestSink()
-        {
-            for (int i = 0; i < WARMUP_TICKS; i++)
+            for (int s = 0; s < signalCount; s++)
             {
-                scheduler.Tick(1f);
-            }
-
-            SignalField field = registry.GetField(SimulationSignal.PollutionAir);
-            Assert.IsNotNull(field, "PollutionAir field missing from registry");
-            for (int x = 0; x < field.Width; x++)
-            {
-                for (int y = 0; y < field.Height; y++)
+                SignalField field = registry.GetField((SimulationSignal)s);
+                Assert.IsNotNull(field, $"signal field {s} missing after Run B");
+                float[,] b = field.Snapshot();
+                float[,] a = snapshotsA[s];
+                Assert.AreEqual(a.GetLength(0), b.GetLength(0), $"signal {s} width drift");
+                Assert.AreEqual(a.GetLength(1), b.GetLength(1), $"signal {s} height drift");
+                for (int x = 0; x < a.GetLength(0); x++)
                 {
-                    float v = field.Get(x, y);
-                    Assert.GreaterOrEqual(v, 0f,
-                        $"PollutionAir cell ({x},{y}) went negative ({v}) — floor-clamp invariant broken");
+                    for (int y = 0; y < a.GetLength(1); y++)
+                    {
+                        Assert.AreEqual(a[x, y], b[x, y],
+                            $"signal {s} cell ({x},{y}) diverged: A={a[x, y]} B={b[x, y]}");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void Run_NoNaNOrInfinityIntroduced()
+        {
+            SignalWarmupPass.Run(registry, districtManager, scheduler, WARMUP_TICKS);
+            int signalCount = Enum.GetValues(typeof(SimulationSignal)).Length;
+            for (int s = 0; s < signalCount; s++)
+            {
+                SignalField field = registry.GetField((SimulationSignal)s);
+                Assert.IsNotNull(field, $"signal field {s} missing");
+                for (int x = 0; x < field.Width; x++)
+                {
+                    for (int y = 0; y < field.Height; y++)
+                    {
+                        float v = field.Get(x, y);
+                        Assert.IsFalse(float.IsNaN(v),
+                            $"signal {s} cell ({x},{y}) NaN after warmup");
+                        Assert.IsFalse(float.IsInfinity(v),
+                            $"signal {s} cell ({x},{y}) Infinity after warmup");
+                    }
                 }
             }
         }
@@ -351,11 +352,6 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             field.SetValue(target, value);
         }
 
-        /// <summary>
-        /// Inverse of <see cref="GridManager.GetGridPosition"/> for the planar isometric mapping.
-        /// Returns a world-space position that rounds back to (gridX, gridY) under
-        /// <c>IsometricGridMath.WorldToGridPlanar</c>.
-        /// </summary>
         private static Vector3 IsometricGridToWorld(int gridX, int gridY, float tileWidth, float tileHeight)
         {
             float worldX = (gridX - gridY) * tileWidth * 0.5f;

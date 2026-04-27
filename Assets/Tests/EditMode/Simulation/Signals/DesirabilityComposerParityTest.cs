@@ -62,6 +62,7 @@ namespace Territory.Tests.EditMode.Simulation.Signals
         private SignalTickScheduler scheduler;
         private AutoZoningManager autoZoningManager;
         private ZoneManager zoneManager;
+        private SignalTuningWeightsAsset weightsAsset;
 
         // Industrial cells emit PollutionAir.
         private static readonly int[][] IndustrialCoords = new int[][]
@@ -130,11 +131,13 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             Assert.IsNotNull(dmAwake, "DistrictManager.Awake method missing");
             dmAwake.Invoke(districtManager, null);
 
-            // 4. DesirabilityComposer — Inspector-style ref injection + force Start to alloc cells.
+            // 4. DesirabilityComposer — Inspector-style ref injection (incl. tuning weights SO) + force Start to alloc cells.
+            weightsAsset = ScriptableObject.CreateInstance<SignalTuningWeightsAsset>();
             composerGO = new GameObject("ParityTestDesirabilityComposer");
             composer = composerGO.AddComponent<DesirabilityComposer>();
             InjectField(composer, "gridManager", grid);
             InjectField(composer, "districtManager", districtManager);
+            InjectField(composer, "weights", weightsAsset);
             MethodInfo composerStart = typeof(DesirabilityComposer).GetMethod(
                 "Start", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(composerStart, "DesirabilityComposer.Start method missing");
@@ -224,6 +227,7 @@ namespace Territory.Tests.EditMode.Simulation.Signals
             if (registryGO != null) Object.DestroyImmediate(registryGO);
             if (gridGO != null) Object.DestroyImmediate(gridGO);
             if (metadataAsset != null) Object.DestroyImmediate(metadataAsset);
+            if (weightsAsset != null) Object.DestroyImmediate(weightsAsset);
         }
 
         [Test]

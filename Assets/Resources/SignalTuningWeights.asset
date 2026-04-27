@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b578a09a9b714da7abc6b939c584202, type: 3}
+  m_Name: SignalTuningWeights
+  m_EditorClassIdentifier:
+  happinessBaseline: 50
+  weightEmployment: 30
+  weightServices: 20
+  weightForest: 10
+  weightPollution: 10
+  weightTax: 27
+  weightDev: 12
+  baseConvergenceRate: 0.15
+  populationScaleFactor: 500
+  comfortableTaxRate: 10
+  maxTaxRateForScale: 50
+  pollutionCap: 200
+  maxForestBonus: 60
+  serviceCoverageStub: 0.4
+  parksBonus: 0.3
+  pollutionPenalty: 0.5
+  normalizationCap: 100
