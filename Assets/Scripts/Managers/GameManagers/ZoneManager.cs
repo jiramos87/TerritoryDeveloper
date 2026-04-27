@@ -120,6 +120,9 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     [SerializeField] private AutoZoningManager autoZoningManager;
     [SerializeField] private DesirabilityComposer desirabilityComposer;
 
+    [Header("Stage 10 — Construction Stage Hook (city-sim-depth)")]
+    [SerializeField] private ConstructionStageController constructionStageController;
+
     private const int MaxRoadDistanceForSpawning = 3;
 
     /// <summary>Invoked when urban cell (zoning) added or removed. Args: (position, isAdded). Not invoked on zoning→building conversion.</summary>
@@ -137,6 +140,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         InitializeZonePrefabs();
         if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
         if (desirabilityComposer == null) desirabilityComposer = FindObjectOfType<DesirabilityComposer>();
+        if (constructionStageController == null) constructionStageController = FindObjectOfType<ConstructionStageController>();
     }
 
     /// <summary>
@@ -1289,6 +1293,12 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
         GameObject firstPositionGridCell = gridManager.GetGridCell(firstPos);
         gridManager.GetCell((int)firstPos.x, (int)firstPos.y).isPivot = true;
+
+        // Stage 10 (city-sim-depth) — pivot-cell-only construction-stage entry per
+        // ia/specs/managers-reference.md §Pivot cell and multi-cell buildings.
+        constructionStageController?.BeginConstruction(
+            gridManager.GetCell((int)firstPos.x, (int)firstPos.y),
+            selectedZoneType);
 
         PlaceZoneBuildingTile(prefab, firstPositionGridCell, buildingSize);
 

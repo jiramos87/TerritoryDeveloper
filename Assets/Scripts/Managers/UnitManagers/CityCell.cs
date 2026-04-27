@@ -64,6 +64,23 @@ public class CityCell : CellBase
     [Header("Zone Properties")]
     public Zone.ZoneType zoneType;
 
+    /// <summary>
+    /// Stage 10 (city-sim-depth) — pivot-cell construction stage 0..3 driven by
+    /// <see cref="Territory.Simulation.ConstructionStageController"/>. Runtime-only;
+    /// NOT persisted to <see cref="CellData"/> this Stage. Re-enters stage 0 on load
+    /// until persistence-Stage wires it.
+    /// </summary>
+    [Header("Construction Stage Properties — Stage 10 runtime-only (not in CellData)")]
+    public int constructionStage;
+
+    /// <summary>
+    /// Stage 10 (city-sim-depth) — per-pivot accumulator (in-game days) used by
+    /// <see cref="Territory.Simulation.ConstructionStageController.ProcessTick"/> to
+    /// time per-stage advances at <c>effectiveTime / 4f</c>. Resets to 0 on each
+    /// stage boundary. Runtime-only; NOT persisted to <see cref="CellData"/>.
+    /// </summary>
+    public float constructionDayAccumulator;
+
     [Header("Water Properties")]
     public WaterBodyType waterBodyType = WaterBodyType.None;
 

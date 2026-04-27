@@ -21,6 +21,7 @@ public class SimulationManager : MonoBehaviour
     public UrbanizationProposalManager urbanizationProposalManager;
     public UrbanCentroidService urbanCentroidService;
     [SerializeField] private SignalTickScheduler signalTickScheduler;
+    [SerializeField] private ConstructionStageController constructionStageController;
 
     void Start()
     {
@@ -40,6 +41,8 @@ public class SimulationManager : MonoBehaviour
             urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
         if (signalTickScheduler == null)
             signalTickScheduler = FindObjectOfType<SignalTickScheduler>();
+        if (constructionStageController == null)
+            constructionStageController = FindObjectOfType<ConstructionStageController>();
 
         if (autoRoadBuilder != null && autoZoningManager != null)
         {
@@ -84,6 +87,10 @@ public class SimulationManager : MonoBehaviour
 
             if (signalTickScheduler != null)
                 signalTickScheduler.Tick(1f);
+
+            // Stage 10 (city-sim-depth) — pull-model construction-stage tick.
+            if (constructionStageController != null)
+                constructionStageController.ProcessTick();
 
             if (autoRoadBuilder != null)
                 autoRoadBuilder.ProcessTick();
