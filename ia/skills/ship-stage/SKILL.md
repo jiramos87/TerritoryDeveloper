@@ -2,10 +2,10 @@
 name: ship-stage
 purpose: >-
   Two-pass DB-backed Stage chain. Pass A = per-task implement + unity:compile-check fast-fail gate +
-  task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + code-review
-  (inline fix cap=1) + per-task task_status_flip(verified→done) + stage_closeout_apply + single
-  stage-end commit + per-task task_commit_record + stage_verification_flip. Resume gate via task_state
-  status query (no git scan).
+  task_status_flip(implemented). NO per-task commits. Pass B = per-stage verify-loop + per-task
+  task_status_flip(verified→done) + stage_closeout_apply + single stage-end commit + per-task
+  task_commit_record + stage_verification_flip. Resume gate via task_state status query (no git
+  scan).
 audience: agent
 loaded_by: "skill:ship-stage"
 slices_via: stage_bundle, task_state, task_spec_section, glossary_lookup, invariants_summary
@@ -13,13 +13,15 @@ description: >-
   Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a two-pass DB-backed
   chain. Pass A (per-task): implement + unity:compile-check fast-fail gate +
   task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B
-  (per-stage): verify-loop on cumulative HEAD diff + code-review on Stage diff (inline fix cap=1) +
-  per-task task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append
-  (audit row) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record +
-  stage_verification_flip(pass, commit_sha). Resume gate queries task_state per pending task;
-  status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not done. Idle
-  exit when all tasks done/archived AND ia_stages.status=done. Triggers: "/ship-stage", "ship stage",
-  "chain stage tasks".
+  (per-stage): verify-loop on cumulative HEAD diff + per-task task_status_flip(verified→done) +
+  stage_closeout_apply + master_plan_change_log_append (audit row) + single stage commit
+  feat({slug}-stage-X.Y) + per-task task_commit_record + stage_verification_flip(pass, commit_sha).
+  Code-review intentionally NOT part of this chain — verify-loop + validation are the gate;
+  standalone /code-review remains available out-of-band. Resume gate queries task_state per pending
+  task; status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not
+  done. On resume with new diff a fresh stage commit is created. Idle exit when all tasks
+  done/archived AND ia_stages.status=done. Triggers: "/ship-stage", "ship stage", "chain stage
+  tasks".
 phases:
   - Parse stage
   - Stage state load
@@ -27,7 +29,7 @@ phases:
   - Plan Digest readiness gate
   - Resume gate
   - Pass A per-task (implement + compile + status flip)
-  - Pass B per-stage (verify + code-review)
+  - Pass B per-stage (verify + verified→done flips)
   - Inline closeout (DB-only)
   - Stage commit + verification record
   - Chain digest
@@ -70,13 +72,12 @@ caveman_exceptions:
   - destructive-op confirmations
 hard_boundaries:
   - Sequential per-task dispatch only — no parallel.
-  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs + code-review fixes. Do NOT emit `feat({ISSUE_ID}):` per task."
+  - "**Pass A NEVER commits.** Single stage-end commit at Step 8.1 covers all Pass A diffs. Do NOT emit `feat({ISSUE_ID}):` per task."
   - Resume gate (Phase 4) queries DB via `task_state` / `stage_bundle` only. Do NOT git-scan.
   - Stop on first Pass A gate failure (implement, compile, scene-wiring); do NOT continue to next task.
-  - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` or `STAGE_CODE_REVIEW_CRITICAL_TWICE` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
-  - Code-review critical re-entry cap=1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
-  - "**Code-reviewer applies fixes inline via direct Edit/Write.** Do NOT write `§Code Fix Plan` tuples."
-  - "**Pass B (verify → code-review → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY)."
+  - Do NOT rollback Pass A status flips on `STAGE_VERIFY_FAIL` — DB stays `implemented`; worktree stays dirty; human repairs via re-run.
+  - "**No code-review in this chain.** Verify-loop + validation are the gate; standalone `/code-review` is a separate out-of-band seam (lifecycle row 9)."
+  - "**Pass B (verify → verified→done flips → closeout → commit → verification record) is MANDATORY. `PASSED` is forbidden until Step 8 commit + verification flip succeed.** Applies on resume path too (PASS_B_ONLY)."
 caller_agent: ship-stage
 ---
 
@@ -90,15 +91,15 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 - [`verify-loop`](../verify-loop/SKILL.md) — internal `MAX_ITERATIONS=2` fix loop (no outer retry here).
 - [`stage-authoring`](../stage-authoring/SKILL.md) — populates §Plan Digest in DB before this skill runs.
 - [`project-spec-implement`](../project-spec-implement/SKILL.md) — Pass A implement subagent.
-- [`opus-code-review`](../opus-code-review/SKILL.md) — Pass B code-review (inline fix).
+- [`opus-code-review`](../opus-code-review/SKILL.md) — **NOT chained here**; standalone seam invoked out-of-band via `/code-review {ISSUE_ID}` per Task when the operator wants it.
 - Scene wiring contract: [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md).
 - Verification policy: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
 ## Normative — closeout is part of `PASSED`
 
-When Pass B upstream gates succeed (verify-loop `verdict: pass`; code-review not critical second time), the chain **must** run **Step 7 inline closeout** in the **same** invocation. Do **not**:
+When Pass B verify-loop succeeds (`verdict: pass`), the chain **must** run **Step 7 inline closeout** in the **same** invocation. Do **not**:
 
-- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify or code-review alone.
+- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify alone.
 - Tell the operator to run a separate `/closeout` later.
 
 `SHIP_STAGE {STAGE_ID}: PASSED` is valid **only** after `stage_closeout_apply` succeeded + stage commit landed + `stage_verification_flip(pass, commit_sha)` recorded.
@@ -143,7 +144,7 @@ Call `stage_bundle(slug=SLUG, stage_id=STAGE_ID_DB)`. Returns:
 
 Define:
 - `PENDING_TASKS` = tasks with `status ∈ {pending, implemented}` (drives Pass A + Pass B).
-- `STAGE_TASK_IDS` = all task ids in `tasks` (full Stage scope for code-review + closeout).
+- `STAGE_TASK_IDS` = all task ids in `tasks` (full Stage scope for closeout).
 
 ---
 
@@ -159,7 +160,7 @@ context_label: "{SLUG} {STAGE_ID_DB}"
 
 **`tooling_only_flag` heuristic:** flip to `true` when `SLUG` matches `/mcp-lifecycle-tools|ia-infrastructure|tooling|bridge-environment|backlog-yaml-mcp|ia-dev-db/` OR stage touches only `tools/**`, `ia/**`, `.claude/**`, `docs/**`, `web/**` (no `Assets/**/*.cs`).
 
-Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to per-task `spec-implementer` + Stage-scoped `opus-code-reviewer`.
+Store payload `{glossary_anchors, router_domains, spec_sections, invariants}` as `CHAIN_CONTEXT`. Pass to per-task `spec-implementer` work.
 
 ---
 
@@ -266,7 +267,7 @@ Continue to next task.
 
 ## Step 6 — Pass B: per-stage bulk (runs ONCE)
 
-**Order is fixed:** 6.1 verify → 6.2 code-review (inline fix cap=1) → 6.3 status flip done.
+**Order is fixed:** 6.1 verify → 6.3 status flip done. **Code-review is NOT part of this chain** — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band.
 
 ### Step 6.1 — Verify-loop on cumulative HEAD diff
 
@@ -289,25 +290,6 @@ Chain digest with `stage_verify: failed` + escalation object mirroring inner ver
 Journal:
 ```
 journal_append({ phase: "pass_b.verify", payload_kind: "verify_result", payload: { verdict: "pass" } })
-```
-
-### Step 6.2 — Code-review on Stage-level diff (inline fix cap=1)
-
-Dispatch `opus-code-reviewer` subagent (Opus) with Stage diff + shared context:
-
-> Mission: Run code-review on Stage diff = `git diff HEAD`. STAGE_MCP_BUNDLE: {CHAIN_CONTEXT}. All N §Plan Digest sections from `task_spec_section(task_id, "§Plan Digest")` are the acceptance reference. Scene-wiring check per [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md). Emit verdict (PASS / minor / critical). **On critical: apply fixes inline via direct Edit/Write tools — do NOT write `§Code Fix Plan` tuples + do NOT dispatch plan-applier.**
-
-**Verdict PASS / minor:** continue to Step 6.3.
-
-**Verdict critical (first time):**
-1. Reviewer applied inline fixes (per mission). Worktree carries new diff.
-2. Re-enter Step 6.1 verify-loop (cap = 1).
-3. Re-run Step 6.2 code-review.
-4. Second critical → STOPPED `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest. Human review required. Worktree stays dirty.
-
-Journal each iteration:
-```
-journal_append({ phase: "pass_b.code_review", payload_kind: "review_verdict", payload: { verdict, iteration } })
 ```
 
 ### Step 6.3 — Per-task status flip (verified → done)
@@ -353,12 +335,13 @@ Journal: `phase: "closeout.apply", payload_kind: "closeout_result", payload: { a
 
 ## Step 8 — Stage commit + verification record
 
-### Step 8.1 — Stage commit (single, covers all Pass A + code-review fixes)
+### Step 8.1 — Stage commit (single, covers all Pass A diffs)
 
 Stage worktree state at this point:
 - All Pass A implementation changes (uncommitted — never committed in Pass A).
-- Code-review inline fixes (if any iteration ran).
 - DB-only closeout (Step 7) leaves no filesystem diff — only `ia_*` tables mutated.
+
+**Resume note:** if `git diff HEAD` is empty (PASS_B_ONLY where all Pass A diffs already committed in a prior run AND no new edits this run), skip the commit + reuse the latest existing stage commit sha (`git rev-parse HEAD`). Otherwise create a fresh commit per below.
 
 Single commit covers everything. Format:
 
@@ -368,12 +351,12 @@ feat({SLUG}-stage-{STAGE_ID_DB}): {short summary from master_plan_title or Stage
 Stage {STAGE_ID_DB} — {N} tasks: {comma-separated STAGE_TASK_IDS}
 
 Pass A: implement + compile (all tasks)
-Pass B: verify-loop pass + code-review {PASS|minor}
+Pass B: verify-loop pass
 Closeout: {archived_task_count} tasks archived; ia_stages.status=done
 ```
 
 Stage worktree:
-1. `git add -A` (stages all Pass A diffs + any code-review fixes).
+1. `git add -A` (stages all Pass A diffs).
 2. `git commit -m "$(cat <<'EOF' ... EOF)"` (HEREDOC to preserve formatting).
 3. Capture commit sha: `STAGE_COMMIT_SHA=$(git rev-parse HEAD)`.
 
@@ -474,7 +457,6 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - **Pass A compile failure:** `STOPPED at {ISSUE_ID} — compile_gate: {reason}` + partial chain digest + same `/ship-stage` re-entry.
 - **Pass A scene-wiring failure:** `STOPPED at {ISSUE_ID} — scene_wiring: ...` + same `/ship-stage` re-entry after wiring.
 - **Pass B verify failure:** `SHIP_STAGE {STAGE_ID}: STAGE_VERIFY_FAIL` + chain digest with `stage_verify: failed` + human review directive. Worktree stays dirty.
-- **Pass B code-review critical twice:** `STAGE_CODE_REVIEW_CRITICAL_TWICE` + chain digest + human review required.
 - **Closeout failure:** `SHIP_STAGE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}` + chain digest + DB-drift repair directive.
 - **Stage commit failure:** `SHIP_STAGE {STAGE_ID}: STOPPED at commit — pre-commit hook failed: {reason}` + chain digest + repair directive (do NOT amend; investigate hook).
 
@@ -486,11 +468,10 @@ Re-call `master_plan_state(slug=SLUG)`. Scan stages after `STAGE_ID_DB`:
 - **Pass A NEVER commits.** No `git commit feat({ISSUE_ID})` per task. Single stage commit at Step 8.1.
 - Resume gate (Step 4) queries `task_state` / `stage_bundle` — does NOT git-scan for commit subjects.
 - Stop on first Pass A gate failure (compile, scene-wiring, implement); do NOT continue to next task.
-- Do NOT roll back Pass A status flips on STAGE_VERIFY_FAIL or STAGE_CODE_REVIEW_CRITICAL_TWICE — DB stays at `implemented`; worktree stays dirty; human repairs via re-run after fix.
-- Code-review critical re-entry cap = 1; second critical → `STAGE_CODE_REVIEW_CRITICAL_TWICE`.
-- Code-reviewer applies fixes **inline via direct Edit/Write** — do NOT write `§Code Fix Plan` tuples.
+- Do NOT roll back Pass A status flips on STAGE_VERIFY_FAIL — DB stays at `implemented`; worktree stays dirty; human repairs via re-run after fix.
+- **No code-review in this chain.** Verify-loop + validation are the gate. Operator may invoke standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9) before re-running ship-stage; resume path will create a new stage commit if review fixes added new diff.
 - Inline closeout (Step 7) is mandatory on green Pass B — Stage closeout always runs inline.
-- Stage commit at Step 8.1 covers ALL changes (Pass A + code-review fixes) in ONE commit. Closeout (Step 7) is DB-only — no filesystem diff.
+- Stage commit at Step 8.1 covers ALL Pass A changes in ONE commit. Closeout (Step 7) is DB-only — no filesystem diff.
 - `domain-context-load` fires ONCE at chain start (Step 2); do NOT re-call per task.
 - Do NOT auto-invoke `/stage-authoring` from inside `/ship-stage` — Step 3 is a readiness gate only, hands off if missing.
 - DB is sole source of truth for master plans, stages, tasks, and task spec bodies. All reads go through MCP (`master_plan_state`, `stage_bundle`, `task_state`, `task_spec_section`, `task_spec_body`); all writes go through MCP (`task_status_flip`, `stage_closeout_apply`, `master_plan_change_log_append`, `task_commit_record`, `stage_verification_flip`). Do NOT read or edit any `ia/projects/**` markdown.

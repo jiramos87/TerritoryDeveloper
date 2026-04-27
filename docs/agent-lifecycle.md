@@ -24,11 +24,10 @@ exploration         orchestration         /stage-file chain                     
   Expansion block     -plan.md             │ → plan-reviewer-mechanical   │            │  + task_status_flip(implemented)│
                       (permanent)          │ → plan-reviewer-semantic     │            │ Pass B per-Stage:               │
                                            │    (→ plan-applier Mode      │            │  /verify-loop (A+B cumulative)  │
-                                           │     plan-fix on critical,    │            │  + /code-review                 │
-                                           │     cap=1)                   │            │  + inline closeout              │
-                                           │ → STOP                       │            │    (stage_closeout_apply MCP)   │
-                                           └──────────────────────────────┘            │  + single stage commit          │
-                                                                                       └─────────────────────────────────┘
+                                           │     plan-fix on critical,    │            │  + inline closeout              │
+                                           │     cap=1)                   │            │    (stage_closeout_apply MCP)   │
+                                           │ → STOP                       │            │  + single stage commit          │
+                                           └──────────────────────────────┘            └─────────────────────────────────┘
 ```
 
 `/ship-stage` is idempotent on `task_state` DB query — re-invocation on partially-done stages resumes from the first non-implemented Task. All chained seams (`/implement`, `/verify-loop`, `/code-review`) remain valid as standalone surfaces for ad-hoc / recovery use.
@@ -44,7 +43,7 @@ Single-task path (standalone issue, no master plan, N=1):
 
 `/ship` chains the per-Task seams plan + implement + verify + close in one invocation for one issue id — a single-task analogue of `/ship-stage`. Closeout fires inline via `stage_closeout_apply` MCP (no separate `/closeout` seam). Standalone single-issue specs are archived by `/ship` itself or batched later by an owning Stage's `/ship-stage` Pass B.
 
-Stage-scoped batching: `stage-authoring` fires ONCE per Stage (bulk Stage 1×N — single Opus pass over shared MCP bundle, writes §Plan Digest direct). Per-Task seams inside `/ship-stage` = `/implement`, then per-Stage `/verify-loop` + `/code-review` + inline closeout. Retired surfaces (do NOT invoke; tombstones live under `ia/skills/_retired/` + `.claude/agents/_retired/` + `.claude/commands/_retired/`): `spec-enrich`, `spec-kickoff` / `project-spec-kickoff` / `/kickoff`, `plan-author`, `plan-digest`, `plan-reviewer` (split into mechanical + semantic), `project-stage-close`, per-Task `project-spec-close`, `stage-closeout-plan`, `plan-applier` Mode stage-closeout, `opus-auditor` (dropped from `/ship-stage` Pass B per `3ac2d6e`), `/audit`, `/closeout`. All folded into `stage-authoring` (plan-author + plan-digest + spec-kickoff merge) or `/ship-stage` Pass B inline closeout (closeout chain merge).
+Stage-scoped batching: `stage-authoring` fires ONCE per Stage (bulk Stage 1×N — single Opus pass over shared MCP bundle, writes §Plan Digest direct). Per-Task seams inside `/ship-stage` = `/implement`, then per-Stage `/verify-loop` + inline closeout. Standalone `/code-review` remains a separate out-of-band seam (lifecycle row 9) — operator may run it per Task before re-running `/ship-stage`; resume path will create a new stage commit if review fixes added new diff. Retired surfaces (do NOT invoke; tombstones live under `ia/skills/_retired/` + `.claude/agents/_retired/` + `.claude/commands/_retired/`): `spec-enrich`, `spec-kickoff` / `project-spec-kickoff` / `/kickoff`, `plan-author`, `plan-digest`, `plan-reviewer` (split into mechanical + semantic), `project-stage-close`, per-Task `project-spec-close`, `stage-closeout-plan`, `plan-applier` Mode stage-closeout, `opus-auditor` (dropped from `/ship-stage` Pass B per `3ac2d6e`), `/audit`, `/closeout`. All folded into `stage-authoring` (plan-author + plan-digest + spec-kickoff merge) or `/ship-stage` Pass B inline closeout (closeout chain merge).
 
 Ad-hoc lanes (invoked outside the main flow, not ordered):
 
@@ -57,7 +56,7 @@ Umbrella-level driver (sits ABOVE the single-issue flow, dispatches INTO it):
 
 Stage-scoped chain driver (handoff from `/stage-file` after `stage-authoring` + `plan-reviewer-mechanical` + `plan-reviewer-semantic` complete):
 
-- `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` — DB-backed two-pass orchestrator. Pass A = per-Task `/implement` + `unity:compile-check` fast-fail + `task_status_flip(implemented)` (no per-task commits — Pass A leaves a dirty worktree). Pass B = per-Stage `/verify-loop` on cumulative HEAD diff + `/code-review` (inline fix cap=1) + per-Task verified→done flips + inline closeout via `stage_closeout_apply` MCP (single call: shared migration tuples + N archive ops + N status flips + N id-purge ops) + single stage commit `feat({slug}-stage-X.Y)` + per-task `task_commit_record` + `stage_verification_flip`. Resume gate via `task_state` DB query (no git scan). Args: `{MASTER_PLAN_PATH} {STAGE_ID} [--no-resume]`.
+- `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` — DB-backed two-pass orchestrator. Pass A = per-Task `/implement` + `unity:compile-check` fast-fail + `task_status_flip(implemented)` (no per-task commits — Pass A leaves a dirty worktree). Pass B = per-Stage `/verify-loop` on cumulative HEAD diff + per-Task verified→done flips + inline closeout via `stage_closeout_apply` MCP (single call: shared migration tuples + N archive ops + N status flips + N id-purge ops) + single stage commit `feat({slug}-stage-X.Y)` (or reused sha on empty resume diff) + per-task `task_commit_record` + `stage_verification_flip`. No code-review in chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9). Resume gate via `task_state` DB query (no git scan). Args: `{MASTER_PLAN_PATH} {STAGE_ID} [--no-resume]`.
 
 ---
 
@@ -77,8 +76,8 @@ Stage-scoped chain driver (handoff from `/stage-file` after `stage-authoring` + 
 | 8 | Verify (closed-loop) | `/verify-loop {ISSUE_ID}` | `verify-loop.md` | `verify-loop/` | Sonnet | JSON Verification block + caveman summary; bounded fix iteration (`MAX_ITERATIONS=2`); writes `§Findings` | `/code-review {ISSUE_ID}` |
 | 8a | Verify (single-pass) | `/verify` | `verifier.md` | *(composes `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`)* | Sonnet | JSON Verification block (no fix iteration) | same handoff shape as `/verify-loop` |
 | 8b | Test-mode ad-hoc | `/testmode {SCENARIO_ID}` | `test-mode-loop.md` | `agent-test-mode-verify/` | Sonnet | `tools/reports/agent-testmode-batch-*.json` | any verify seam |
-| 9 | Code review (pair seam #3 head, per-Task) | `/code-review {ISSUE_ID}` | `opus-code-reviewer.md` → `plan-applier.md` Mode code-fix | `opus-code-review/` → `plan-applier/` Mode code-fix | Opus → Sonnet | Verdict PASS/minor → `§Code Review` mini-report; critical → `§Code Fix Plan` tuples applied + re-enter `/verify-loop` | next Stage Task `/code-review` or `/ship-stage` Pass B inline closeout |
-| C | Stage-scoped chain ship | `/ship-stage {PATH} {STAGE}` | `ship-stage.md` | `ship-stage/` | Opus | DB-backed two-pass — Pass A per-Task `/implement` + compile gate + `task_status_flip(implemented)`; Pass B per-Stage `/verify-loop` (cumulative diff) + `/code-review` (inline fix cap=1) + per-Task verified→done flips + inline closeout (`stage_closeout_apply` MCP) + single stage commit + `task_commit_record` + `stage_verification_flip` | next filed Stage or plan-level Final |
+| 9 | Code review (out-of-band per-Task, NOT chained from `/ship-stage`) | `/code-review {ISSUE_ID}` | `opus-code-reviewer.md` → `plan-applier.md` Mode code-fix | `opus-code-review/` → `plan-applier/` Mode code-fix | Opus → Sonnet | Verdict PASS/minor → `§Code Review` mini-report; critical → `§Code Fix Plan` tuples applied + re-enter `/verify-loop` | operator-driven; re-run `/ship-stage` afterwards if review fixes added new diff |
+| C | Stage-scoped chain ship | `/ship-stage {PATH} {STAGE}` | `ship-stage.md` | `ship-stage/` | Opus | DB-backed two-pass — Pass A per-Task `/implement` + compile gate + `task_status_flip(implemented)`; Pass B per-Stage `/verify-loop` (cumulative diff) + per-Task verified→done flips + inline closeout (`stage_closeout_apply` MCP) + single stage commit + `task_commit_record` + `stage_verification_flip` (no code-review in chain — see row 9) | next filed Stage or plan-level Final |
 | C1 | Single-Task chain ship | `/ship {ISSUE_ID}` | `ship.md` | `ship/` | Opus | Plan → implement → verify → close for one `ISSUE_ID`; PASSED summary + next-handoff resolver. Inline closeout via `stage_closeout_apply` MCP (no separate `/closeout` seam). | Standalone issue: terminal (committed + closed); master-plan-owned: next Task or Stage close |
 | U | Rollout umbrella | `/release-rollout {UMBRELLA_SPEC} {ROW_SLUG}` | `release-rollout.md` | `release-rollout/` (+ `-enumerate`, `-track`, `-skill-bug-log` helpers) | Opus | Tracker cell flipped + ticket + Change log row + next-row recommendation | Dispatches into seams 1 / 2 / 2a / 2b / 3 per target cell |
 | R | Retrospective (skill training) | `/skill-train {SKILL_NAME}` | `skill-train.md` | `skill-train/` | Opus | `ia/skills/{SKILL_NAME}/train-proposal-{YYYY-MM-DD}.md` — unified-diff patch proposal | — (retrospective only — no auto-apply) |
@@ -117,8 +116,8 @@ Every seam owes the next one a concrete artifact. Missing artifact = the next se
 | `/author` | Each Task body §Plan Digest populated (mechanical form, written direct via `task_spec_section_write` MCP) + canonical-term fold + `plan_digest_lint` pass | `/plan-review` (N>1) or `/implement` / `/ship` (N=1) | `/plan-review` refuses when any §Plan Digest missing/invalid; `/implement` refuses when digest still `_pending_` |
 | `/plan-review` | Drift scan PASS sentinel OR `§Plan Fix` tuples applied to N Task bodies; master-plan Stage block synced; glossary / invariants aligned | per-Task `/implement` loop | `/implement` refuses if drift verdict still `fix` + tuples unapplied |
 | `/implement` | Phase code applied, compile clean, Task body Decision Log / Issues Found / Lessons appended per phase | `/verify-loop` | `/verify-loop` refuses when compile gate fails (Step 1) |
-| `/verify-loop` | JSON Verification block with `verdict: pass` + `§Findings` non-empty in Task body | `/code-review` | `/code-review` refuses when `§Findings` empty or verify verdict non-pass |
-| `/code-review` | Per-Task `§Code Review` mini-report verdict PASS/minor (critical verdict triggers `plan-applier` Mode code-fix + re-enter `/verify-loop` → re-run `/code-review`) | next Stage Task `/code-review` OR `/ship-stage` Pass B inline closeout | Pass B inline closeout refuses if any Task `§Code Review` verdict still critical + unresolved |
+| `/verify-loop` | JSON Verification block with `verdict: pass` + `§Findings` non-empty in Task body | `/ship-stage` Pass B inline closeout (in chain) OR standalone `/code-review` (out-of-band) | `/code-review` refuses when `§Findings` empty or verify verdict non-pass |
+| `/code-review` (out-of-band) | Per-Task `§Code Review` mini-report verdict PASS/minor (critical verdict triggers `plan-applier` Mode code-fix + re-enter `/verify-loop` → re-run `/code-review`) | re-run `/ship-stage` if review fixes added new diff | — (operator-driven; not chained from `/ship-stage`) |
 | `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) | Single MCP call: shared migration ops deduped + N per-Task archive (`ia_tasks.archived_at`) / status-flip / id-purge ops; Stage / Plan Status rolled up per R3 / R5; `materialize-backlog.sh` + `validate:all` run once at end | next Stage OR plan-level Final | — (terminal per Stage) |
 
 Verification policy contract: [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md). Pair contract: [`ia/rules/plan-apply-pair-contract.md`](../ia/rules/plan-apply-pair-contract.md).
@@ -137,7 +136,7 @@ Design persisted, single issue is enough?                             → /proje
 Orchestrator exists, new exploration / extensions doc adds Stages?    → /master-plan-extend
 Orchestrator exists, a skeleton Stage needs decomposition?            → /stage-decompose
 Orchestrator exists, a stage is ready to materialize?                 → /stage-file
-Stage filed (N≥2) + stage-authoring + plan-review complete, ship Stage? → /ship-stage  (Pass A implement + Pass B verify + code-review + inline closeout + commit)
+Stage filed (N≥2) + stage-authoring + plan-review complete, ship Stage? → /ship-stage  (Pass A implement + Pass B verify + inline closeout + commit; code-review separate out-of-band)
 Single task (N=1) authored, drive end-to-end for one ISSUE_ID?        → /ship {ISSUE_ID}  (plan → implement → verify → close inline)
 Stage filed ad-hoc (N=1) or recovery authoring?                       → /author --task (standalone — writes §Plan Digest direct)
 Authored spec needs drift scan standalone?                            → /plan-review (standalone recovery; chained inside /stage-file by default)
@@ -145,7 +144,7 @@ Spec fully authored, ready to ship code?                              → /imple
 Phase just landed, want a quick sanity pass?                          → /verify
 Phase / stage / spec done, need full closed-loop + fix iter?          → /verify-loop
 Bridge / batch evidence needed in isolation?                          → /testmode
-Task verify green, need post-verify code review?                      → /code-review
+Task verify green, want optional post-verify code review (out-of-band)? → /code-review
 Multi-task Stage with ≥1 non-Done row, drive all end-to-end?          → /ship-stage
 Umbrella master-plan with rollout tracker, advance one row?           → /release-rollout {UMBRELLA_SPEC} {ROW_SLUG}
 Skill showing recurring friction, want retrospective patch proposal?  → /skill-train {SKILL_NAME}
@@ -160,9 +159,9 @@ Skill showing recurring friction, want retrospective patch proposal?  → /skill
 | Scope | Single pass | Closed-loop (7 steps) |
 | Code edits | None (read-only reporter) | Narrow: Step 6 fix iteration only |
 | Fix iteration | — | Bounded `MAX_ITERATIONS` (default 2) |
-| Writes §Findings? | No | Yes (Task body §Findings — feeds `/code-review`; legacy `/audit` R11 gate retired with opus-auditor per `3ac2d6e`) |
+| Writes §Findings? | No | Yes (Task body §Findings — feeds out-of-band `/code-review`; legacy `/audit` R11 gate retired with opus-auditor per `3ac2d6e`) |
 | Output style | `verification-report` (JSON + caveman) | Same shape + `fix_iterations` / `verdict` / `human_ask` fields |
-| When | Between phases, pre-PR sanity check | Pre-`/code-review`, pre-Stage-close, pre-umbrella-close |
+| When | Between phases, pre-PR sanity check | Pre-`/ship-stage` Pass B, pre-Stage-close, pre-umbrella-close (optional pre-`/code-review` out-of-band) |
 | Composes | `validate:all` + compile gate + Path A OR Path B | `bridge-environment-preflight` + `project-implementation-validation` + `agent-test-mode-verify` + `ide-bridge-evidence` + `close-dev-loop` |
 
 Both defer to the single canonical policy [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md) for timeout escalation, Path A lock release, and Path B preflight. Neither agent restates the policy.
@@ -173,7 +172,7 @@ Both defer to the single canonical policy [`docs/agent-led-verification-policy.m
 
 | Aspect | `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) |
 |--------|------------------------------------------------------------------|
-| Fires | Once per Stage inside Pass B, after `/verify-loop` + `/code-review` complete + per-Task verified→done flips |
+| Fires | Once per Stage inside Pass B, after `/verify-loop` complete + per-Task verified→done flips (no chained code-review — see row 9) |
 | Touches | Single MCP call applies: N per-Task `ia_tasks.archived_at` set + spec filesystem-mirror deleted + master-plan Task row flipped `Done → Done (archived)` + id purged from durable docs/code. Shared: Stage / Plan Status rolled up per R3 / R5; `materialize-backlog.sh` + `validate:all` run once at end. |
 | Deletes spec? | Yes — filesystem-mirror spec files deleted after lessons migration to canonical IA. DB row preserved with `archived_at` timestamp. |
 | Touches BACKLOG? | Yes — `materialize-backlog.sh` regenerates legacy view (`BACKLOG.md` derived from DB post Step 9.6). |
