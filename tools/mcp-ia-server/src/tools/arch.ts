@@ -611,13 +611,227 @@ export function registerArchChangelogSince(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// arch_decision_write (Stage 1.4 / TECH-2563 — design-explore Architecture
+// Decision phase write surface).
+// ---------------------------------------------------------------------------
+
+const archDecisionWriteInputSchema = z.object({
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^DEC-A\d+$/, "slug must match pattern DEC-A{N}")
+    .describe("Decision slug (DEC-A{N}, kebab title separately)."),
+  title: z.string().min(1).describe("Decision title (kebab-case)."),
+  rationale: z
+    .string()
+    .min(1)
+    .max(250)
+    .describe("Rationale ≤250 chars per DEC-A17 row budget."),
+  alternatives: z
+    .string()
+    .max(250)
+    .optional()
+    .describe("Alternatives considered (≤3 entries, semicolon-separated)."),
+  surface_slugs: z
+    .array(z.string().min(1))
+    .optional()
+    .describe(
+      "Affected `arch_surfaces.slug` list. First slug is stored as `surface_id` FK; remainder logged in body for now.",
+    ),
+  status: z.enum(["active", "superseded"]).default("active"),
+});
+
+export async function runArchDecisionWrite(
+  pool: Pool,
+  input: {
+    slug?: string;
+    title?: string;
+    rationale?: string;
+    alternatives?: string;
+    surface_slugs?: string[];
+    status?: "active" | "superseded";
+  },
+): Promise<{ slug: string; id: number; status: string }> {
+  const slug = (input.slug ?? "").trim();
+  const title = (input.title ?? "").trim();
+  const rationale = (input.rationale ?? "").trim();
+  if (!slug || !title || !rationale) {
+    throw {
+      code: "invalid_input" as const,
+      message: "slug, title, rationale are required.",
+    };
+  }
+  const status = input.status ?? "active";
+  const alternatives = input.alternatives ?? null;
+  const firstSurfaceSlug = input.surface_slugs?.[0] ?? null;
+  let surfaceId: number | null = null;
+  if (firstSurfaceSlug) {
+    const sRes = await pool.query(
+      `SELECT id FROM arch_surfaces WHERE slug = $1 LIMIT 1`,
+      [firstSurfaceSlug],
+    );
+    if (sRes.rowCount === 0) {
+      throw {
+        code: "surface_not_found" as const,
+        message: `arch_surfaces row '${firstSurfaceSlug}' does not exist (invariant #12 — never auto-create).`,
+        details: { surface_slug: firstSurfaceSlug },
+      };
+    }
+    surfaceId = sRes.rows[0].id;
+  }
+  const ins = await pool.query(
+    `INSERT INTO arch_decisions (slug, title, status, rationale, alternatives, surface_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (slug) DO UPDATE SET
+       title = EXCLUDED.title,
+       status = EXCLUDED.status,
+       rationale = EXCLUDED.rationale,
+       alternatives = EXCLUDED.alternatives,
+       surface_id = EXCLUDED.surface_id
+     RETURNING id, status`,
+    [slug, title, status, rationale, alternatives, surfaceId],
+  );
+  return { slug, id: ins.rows[0].id, status: ins.rows[0].status };
+}
+
+export function registerArchDecisionWrite(server: McpServer): void {
+  server.registerTool(
+    "arch_decision_write",
+    {
+      title: "arch_decision_write",
+      description:
+        "DB-backed: INSERT (or upsert by slug) one arch_decisions row. Stage 1.4 / TECH-2563 design-explore Architecture Decision phase write surface. UNIQUE(slug). Resolves first `surface_slugs[]` entry to `surface_id` FK; rejects unmapped slugs (invariant #12 — never auto-create surfaces).",
+      inputSchema: archDecisionWriteInputSchema.shape,
+    },
+    wrapTool(
+      "arch_decision_write",
+      async (args) => {
+        const envelope = await (async (rawInput: unknown) => {
+          const parsed = archDecisionWriteInputSchema.safeParse(rawInput);
+          if (!parsed.success) {
+            throw {
+              code: "invalid_input" as const,
+              message: parsed.error.issues.map((i) => i.message).join("; "),
+            };
+          }
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          return await runWithToolTiming("arch_decision_write", async () => {
+            return await runArchDecisionWrite(pool, parsed.data);
+          });
+        })(args);
+        return jsonResult(envelope);
+      },
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// arch_changelog_append (Stage 1.4 / TECH-2563).
+// ---------------------------------------------------------------------------
+
+const archChangelogAppendInputSchema = z.object({
+  kind: z
+    .enum([
+      "edit",
+      "decide",
+      "supersede",
+      "spec_edit_commit",
+      "design_explore_decision",
+    ])
+    .describe("Audit row kind."),
+  surface_slug: z.string().optional(),
+  decision_slug: z.string().optional(),
+  commit_sha: z.string().optional(),
+  spec_path: z.string().optional(),
+  body: z.string().optional(),
+});
+
+export async function runArchChangelogAppend(
+  pool: Pool,
+  input: {
+    kind?:
+      | "edit"
+      | "decide"
+      | "supersede"
+      | "spec_edit_commit"
+      | "design_explore_decision";
+    surface_slug?: string;
+    decision_slug?: string;
+    commit_sha?: string;
+    spec_path?: string;
+    body?: string;
+  },
+): Promise<{ id: number; created_at: string; deduped: boolean }> {
+  if (!input.kind) {
+    throw { code: "invalid_input" as const, message: "kind is required." };
+  }
+  const ins = await pool.query(
+    `INSERT INTO arch_changelog (kind, surface_slug, decision_slug, commit_sha, spec_path, body)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (commit_sha, spec_path) WHERE commit_sha IS NOT NULL AND spec_path IS NOT NULL
+     DO NOTHING
+     RETURNING id, created_at::text AS created_at`,
+    [
+      input.kind,
+      input.surface_slug ?? null,
+      input.decision_slug ?? null,
+      input.commit_sha ?? null,
+      input.spec_path ?? null,
+      input.body ?? null,
+    ],
+  );
+  if (ins.rowCount === 0) {
+    return { id: -1, created_at: "", deduped: true };
+  }
+  return {
+    id: ins.rows[0].id,
+    created_at: ins.rows[0].created_at,
+    deduped: false,
+  };
+}
+
+export function registerArchChangelogAppend(server: McpServer): void {
+  server.registerTool(
+    "arch_changelog_append",
+    {
+      title: "arch_changelog_append",
+      description:
+        "DB-backed: INSERT one arch_changelog row. Stage 1.4 / TECH-2563. Idempotent on (commit_sha, spec_path) via UNIQUE partial index (migration 0038); returns `deduped: true` when row already exists. kind: edit | decide | supersede | spec_edit_commit | design_explore_decision.",
+      inputSchema: archChangelogAppendInputSchema.shape,
+    },
+    wrapTool(
+      "arch_changelog_append",
+      async (args) => {
+        const envelope = await (async (rawInput: unknown) => {
+          const parsed = archChangelogAppendInputSchema.safeParse(rawInput);
+          if (!parsed.success) {
+            throw {
+              code: "invalid_input" as const,
+              message: parsed.error.issues.map((i) => i.message).join("; "),
+            };
+          }
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          return await runWithToolTiming("arch_changelog_append", async () => {
+            return await runArchChangelogAppend(pool, parsed.data);
+          });
+        })(args);
+        return jsonResult(envelope);
+      },
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Aggregate registration helper.
 // ---------------------------------------------------------------------------
 
 /**
- * Register all five Stage 1.3 architecture-coherence MCP tools on the given
- * server: arch_decision_get, arch_decision_list, arch_surface_resolve,
- * arch_drift_scan, arch_changelog_since.
+ * Register all seven architecture-coherence MCP tools on the given server:
+ * Stage 1.3 read tools (arch_decision_get, arch_decision_list,
+ * arch_surface_resolve, arch_drift_scan, arch_changelog_since) +
+ * Stage 1.4 write tools (arch_decision_write, arch_changelog_append).
  */
 export function registerArchTools(server: McpServer): void {
   registerArchDecisionGet(server);
@@ -625,4 +839,6 @@ export function registerArchTools(server: McpServer): void {
   registerArchSurfaceResolve(server);
   registerArchDriftScan(server);
   registerArchChangelogSince(server);
+  registerArchDecisionWrite(server);
+  registerArchChangelogAppend(server);
 }

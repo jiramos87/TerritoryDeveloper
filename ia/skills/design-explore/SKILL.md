@@ -138,6 +138,29 @@ Otherwise: present comparison table + leading candidate → **pause, ask user to
 
 **Polling wording** (strict): question stem + each option label describe player/designer-visible outcome, not approach codenames or stage numbers. Ids and doc paths go on a trailing `Context:` line, not inside the question. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 
+### Phase 2.5 — Architecture Decision (DEC-A15 lock)
+
+Per DEC-A15 (`arch-authoring-via-design-explore`): if the selected approach touches `arch_surfaces` (architectural inventory), lock a `arch_decisions` row + audit trail before architecture diagram render in Phase 4.
+
+**Skip-clause:** phase no-ops when Phase 5 subsystem-impact returns zero `arch_surfaces[]` hits. Heuristic: any selected component whose spec home falls under `ia/specs/architecture/**` OR matches an existing `arch_surfaces.spec_path` row triggers the phase. Code-only / UI-only / tooling-only explorations skip this phase silently.
+
+**Polling shape (4 sequential AskUserQuestion turns — one question per turn per `agent-human-polling.md`):**
+
+1. **Decision slug** — kebab-case, prefixed `DEC-A{N}` where `{N}` = next free in `arch_decisions`. Designer/player wording in question stem ("How should we name this design choice?"); slug rendered in option label.
+2. **Rationale** — ≤250 chars (DEC-A17 row budget). Single short paragraph explaining trade-off rationale.
+3. **Alternatives considered** — ≤3 entries, semicolon-separated. Names of approaches NOT chosen + why.
+4. **Affected `arch_surfaces[]`** — list of slugs from `arch_surfaces` (e.g. `layers/full-dependency-map`, `interchange/agent-ia`). Implementer derives candidate list from Phase 3 component → spec_path mapping; user confirms / trims via multi-select.
+
+**MCP writes (after polling):**
+
+1. `arch_decision_write({ slug, title, rationale, alternatives, surface_slugs[], status: 'active' })` — INSERT row into `arch_decisions` (status=active).
+2. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug, body, commit_sha: null })` — INSERT audit row.
+3. `arch_drift_scan({ open_plans_only: true })` — scan every open master plan for drift vs new arch state. Returns `{ drift_per_plan: [...] }`.
+
+**Drift report render target:** append to exploration doc under sibling section `### Architecture Decision` (peer of `### Architecture` block authored in Phase 4 → §Persist). Block contains: decision row summary + rendered drift report (per-plan breakdown).
+
+**Stop condition:** if any of the 3 MCP writes fails → stop, surface error, do NOT continue to Phase 3 / 4. User must reconcile DB state before re-running.
+
 ### Phase 3 — Expand
 
 Detail the selected approach:
@@ -224,6 +247,9 @@ Sections to write (in order):
 
 ### Chosen Approach
 {approach id + name + one-paragraph rationale referencing Phase 1 criteria}
+
+### Architecture Decision
+{Phase 2.5 output — DEC-A{N} row summary (slug + rationale + alternatives + surface_slugs) + rendered drift report from `arch_drift_scan`. Skip block when phase 2.5 skip-clause fires (no arch_surfaces hits).}
 
 ### Architecture
 {Phase 4 diagram(s) + entry/exit point description}

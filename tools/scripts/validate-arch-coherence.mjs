@@ -31,6 +31,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { execSync } from "node:child_process";
 import { resolveDatabaseUrl } from "../postgres-ia/resolve-database-url.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -330,6 +331,131 @@ try {
 }
 
 let violations = 0;
+
+// ---------------------------------------------------------------------------
+// Pre-flight: appendChangelogForRecentCommits.
+//
+// Stage 1.4 / TECH-2564 — walk `git log` since last `arch_changelog.commit_sha`
+// cursor, emit one `arch_changelog` row per (commit_sha, spec_path) for every
+// touched `ia/specs/architecture/**` path. INSERT…ON CONFLICT DO NOTHING via
+// the UNIQUE index added in migration 0038 (commit_sha, spec_path partial).
+//
+// Resolves `surface_slug` via `arch_surfaces.spec_path` lookup; logs NULL when
+// path lacks a surface row (invariant #12 — never auto-create surfaces).
+//
+// Graceful on dirty git state / missing repo / shallow log: catches errors
+// and prints diagnostic, never aborts the validator.
+// ---------------------------------------------------------------------------
+
+async function appendChangelogForRecentCommits() {
+  let cursorSha = null;
+  try {
+    const cur = await client.query(
+      `SELECT commit_sha
+         FROM arch_changelog
+        WHERE kind = 'spec_edit_commit' AND commit_sha IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 1`,
+    );
+    cursorSha = cur.rows[0]?.commit_sha ?? null;
+  } catch (err) {
+    console.error(
+      `[arch-coherence] changelog-append: cursor query failed (${err.message}); skipping pre-flight`,
+    );
+    return;
+  }
+
+  // git log range: cursorSha..HEAD if cursor exists, else last 50 commits.
+  const range = cursorSha ? `${cursorSha}..HEAD` : `HEAD~50..HEAD`;
+  let logOutput;
+  try {
+    logOutput = execSync(
+      `git log ${range} --name-only --pretty=format:'COMMIT:%H' -- 'ia/specs/architecture/**'`,
+      { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+  } catch (err) {
+    // Cursor sha may have been rewritten / shallow clone — fall back to HEAD~50.
+    if (cursorSha) {
+      try {
+        logOutput = execSync(
+          `git log HEAD~50..HEAD --name-only --pretty=format:'COMMIT:%H' -- 'ia/specs/architecture/**'`,
+          {
+            cwd: REPO_ROOT,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        );
+      } catch (err2) {
+        console.error(
+          `[arch-coherence] changelog-append: git log fallback failed (${err2.message}); skipping`,
+        );
+        return;
+      }
+    } else {
+      console.error(
+        `[arch-coherence] changelog-append: git log failed (${err.message}); skipping`,
+      );
+      return;
+    }
+  }
+
+  // Parse: alternating COMMIT:<sha> + path lines.
+  const pairs = []; // {commit_sha, spec_path}[]
+  let currentSha = null;
+  for (const rawLine of logOutput.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (line.startsWith("COMMIT:")) {
+      currentSha = line.slice("COMMIT:".length).trim();
+      continue;
+    }
+    if (currentSha && line.startsWith("ia/specs/architecture/")) {
+      pairs.push({ commit_sha: currentSha, spec_path: line });
+    }
+  }
+
+  if (pairs.length === 0) {
+    return; // No-op: no recent arch commits or no new ones since cursor.
+  }
+
+  // Surface-slug lookup map.
+  const surfacesRes = await client.query(
+    `SELECT slug, spec_path FROM arch_surfaces`,
+  );
+  const surfaceBySpecPath = new Map();
+  for (const r of surfacesRes.rows) {
+    if (!surfaceBySpecPath.has(r.spec_path)) {
+      surfaceBySpecPath.set(r.spec_path, r.slug);
+    }
+  }
+
+  let inserted = 0;
+  for (const p of pairs) {
+    const surfaceSlug = surfaceBySpecPath.get(p.spec_path) ?? null;
+    const ins = await client.query(
+      `INSERT INTO arch_changelog (kind, commit_sha, spec_path, surface_slug, body)
+       VALUES ('spec_edit_commit', $1, $2, $3, $4)
+       ON CONFLICT (commit_sha, spec_path) WHERE commit_sha IS NOT NULL AND spec_path IS NOT NULL
+       DO NOTHING
+       RETURNING id`,
+      [
+        p.commit_sha,
+        p.spec_path,
+        surfaceSlug,
+        `auto: spec_edit_commit ${p.spec_path}`,
+      ],
+    );
+    if (ins.rowCount > 0) inserted += 1;
+  }
+
+  if (inserted > 0) {
+    console.log(
+      `[arch-coherence] changelog-append: ${inserted} row(s) inserted across ${pairs.length} touched path(s)`,
+    );
+  }
+}
+
+await appendChangelogForRecentCommits();
 
 // ---------------------------------------------------------------------------
 // Check 1: orphan_surface_slug.

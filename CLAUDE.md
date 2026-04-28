@@ -17,6 +17,7 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 
 | Trigger | Read |
 |---|---|
+| Architecture — sub-spec roles + lifecycle index | `ia/specs/architecture/README.md` |
 | Architecture — system layers / dependency map | `ia/specs/architecture/layers.md` (MCP `spec_section architecture/layers`) |
 | Architecture — data flows / init order / persistence | `ia/specs/architecture/data-flows.md` |
 | Architecture — agent IA / MCP / JSON interchange / bridge | `ia/specs/architecture/interchange.md` |
