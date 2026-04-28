@@ -71,6 +71,8 @@ const unityBridgeCommandInputShape = {
       "delete_asset",
       // Catch-all
       "execute_menu_item",
+      // ── Game UI bake (Stage 2) ───────────────────────────────────────────
+      "bake_ui_from_ir",
     ])
     .default("export_agent_context")
     .describe(
@@ -295,6 +297,19 @@ const unityBridgeCommandInputShape = {
     .string()
     .optional()
     .describe("execute_menu_item: Unity Editor menu path (e.g. 'Assets/Refresh'). Unresolved path → menu_not_found."),
+  // ── Game UI bake (Stage 2) ─────────────────────────────────────────────
+  ir_path: z
+    .string()
+    .optional()
+    .describe("bake_ui_from_ir: repo-relative path to IR JSON from transcribe:cd-game-ui."),
+  out_dir: z
+    .string()
+    .optional()
+    .describe("bake_ui_from_ir: repo-relative output dir for placeholder prefabs (default 'Assets/UI/Prefabs/Generated')."),
+  theme_so: z
+    .string()
+    .optional()
+    .describe("bake_ui_from_ir: repo-relative path to UiTheme ScriptableObject asset (default 'Assets/UI/Theme/DefaultUiTheme.asset')."),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */
@@ -611,6 +626,16 @@ function buildRequestEnvelope(
   }
   if (input.kind === "execute_menu_item") {
     return { ...base, params: { menu_path: input.menu_path ?? "" } };
+  }
+  if (input.kind === "bake_ui_from_ir") {
+    return {
+      ...base,
+      params: {
+        ir_path: input.ir_path ?? "",
+        out_dir: input.out_dir ?? "",
+        theme_so: input.theme_so ?? "",
+      },
+    };
   }
   return { ...base, params: {} };
 }

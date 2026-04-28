@@ -99,6 +99,11 @@ public static partial class AgentBridgeCommandRunner
                 RunExecuteMenuItem(repoRoot, commandId, requestJson);
                 return true;
 
+            // ── Game UI bake (Stage 2) ───────────────────────────────────
+            case "bake_ui_from_ir":
+                RunBakeUiFromIr(repoRoot, commandId, requestJson);
+                return true;
+
             default:
                 return false;
         }
@@ -864,6 +869,53 @@ public static partial class AgentBridgeCommandRunner
         CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
     }
 
+    // ── Game UI bake (Stage 2) ───────────────────────────────────────────────
+
+    static void RunBakeUiFromIr(string repoRoot, string commandId, string requestJson)
+    {
+        if (!AssertEditMode(out string modeErr)) { TryFinalizeFailed(repoRoot, commandId, modeErr); return; }
+        if (!TryParseMutationParams<BakeUiFromIrParamsDto>(requestJson, out var dto, out string parseErr)) { TryFinalizeFailed(repoRoot, commandId, parseErr); return; }
+
+        if (string.IsNullOrWhiteSpace(dto.ir_path)) { TryFinalizeFailed(repoRoot, commandId, "missing_arg:ir_path"); return; }
+        if (string.IsNullOrWhiteSpace(dto.out_dir)) { TryFinalizeFailed(repoRoot, commandId, "missing_arg:out_dir"); return; }
+        if (string.IsNullOrWhiteSpace(dto.theme_so)) { TryFinalizeFailed(repoRoot, commandId, "missing_arg:theme_so"); return; }
+
+        var bakeArgs = new Territory.Editor.Bridge.UiBakeHandler.BakeArgs
+        {
+            ir_path = dto.ir_path,
+            out_dir = dto.out_dir,
+            theme_so = dto.theme_so,
+        };
+
+        Territory.Editor.Bridge.UiBakeHandler.BakeResult result;
+        try
+        {
+            result = Territory.Editor.Bridge.UiBakeHandler.Bake(bakeArgs);
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"bake_threw:{ex.GetType().Name}:{ex.Message}");
+            return;
+        }
+
+        if (result == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, "bake_null_result");
+            return;
+        }
+
+        if (result.error != null)
+        {
+            string detail = $"{result.error.error}:{result.error.details}@{result.error.path}";
+            TryFinalizeFailed(repoRoot, commandId, detail);
+            return;
+        }
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "bake_ui_from_ir");
+        resp.mutation_result = $"{{\"ir_path\":\"{EscapeJsonString(dto.ir_path)}\",\"theme_so\":\"{EscapeJsonString(dto.theme_so)}\",\"out_dir\":\"{EscapeJsonString(dto.out_dir)}\"}}";
+        CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     static bool TryParseMutationParams<TDto>(string requestJson, out TDto dto, out string error)
@@ -1148,4 +1200,17 @@ class MoveAssetParamsDto
 class DeleteAssetParamsDto
 {
     public string asset_path;
+}
+
+// Game UI bake (Stage 2)
+
+[Serializable]
+class BakeUiFromIrParamsDto
+{
+    /// <summary>Absolute or repo-relative path to IR JSON produced by Stage 1 transcribe.</summary>
+    public string ir_path;
+    /// <summary>Output dir for generated placeholder prefabs (T2.4 fills body).</summary>
+    public string out_dir;
+    /// <summary>Asset path to UiTheme ScriptableObject (e.g. "Assets/UI/Theme/DefaultUiTheme.asset").</summary>
+    public string theme_so;
 }
