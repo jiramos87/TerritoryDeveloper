@@ -280,16 +280,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
 
-- [ ] **TECH-2563** — **Design-explore arch phase** — insert `Architecture Decision` phase between `Select Approach` + `Expand`; polls decision/rationale/alternatives/affected-surfaces; writes `arch_decisions` + `arch_changelog`; calls `arch_drift_scan`; appends drift report (Stage 1.4 T1.4.1)
-
-- [ ] **TECH-2564** — **Post-write changelog hook** — commit touching `ia/specs/architecture/**` appends `arch_changelog` row; PostToolUse hook OR `validate:arch-coherence` rebuild; idempotent (Stage 1.4 T1.4.2)
-
-- [ ] **TECH-2565** — **validate:all integration + CI** — wire `validate:arch-coherence` into `validate:all` chain in `package.json`; CI green (Stage 1.4 T1.4.3)
-
-- [ ] **TECH-2566** — **Final ARCHITECTURE.md retirement** — confirm root `ARCHITECTURE.md` index-only (≤30 lines); audit `CLAUDE.md` §3 + `AGENTS.md` arch pointers (Stage 1.4 T1.4.4)
-
-- [ ] **TECH-2567** — **Sub-spec README** — `ia/specs/architecture/README.md` (1 page) — sub-spec roles + lifecycle + cross-refs (Stage 1.4 T1.4.5)
-
 ## UI-as-code program (exploration)
 
 **Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD** / **menus** / **panels** / **toolbars** — make **UI** composable from **IDE** (Cursor) + **AI agents**. Shipped: **reference spec** (**`ui-design-system.md`**), **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export + spec prose **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json). **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — new **BACKLOG** row if product wants it.
@@ -347,25 +337,29 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-2582 — Game UI Stage 2 T2.1 — UiTheme dict caches extension** — Extend `Assets/Scripts/Managers/GameManagers/UiTheme.cs` with dict-shaped token caches keyed by slug (palette / frame_style / font_face / motion_curve / illumination).
-  - Acceptance — `UiTheme.cs` carries new dict caches alongside legacy flat-Color fields; `npm run unity:compile-check` exits 0.
-  - Spec — [`ia/projects/TECH-2582.md`](ia/projects/TECH-2582.md)
+- [ ] **TECH-2853 — Game UI Stage 5 T5.1 — JuiceBase + motion curve eval** — New `Assets/Scripts/UI/Juice/JuiceBase.cs` abstract MonoBehaviour. UiTheme cached ref in Awake per invariant #3 (no per-frame FindObjectOfType). `[SerializeField] string curveSlug` field. Helper `EvaluateCurve(t)` reads motion_curve spec from UiTheme dict cache (spring stiffness/damping OR animation curve sample).
+  - Acceptance — see `ia/projects/TECH-2853.md` §8
+  - Spec — [`ia/projects/TECH-2853.md`](ia/projects/TECH-2853.md)
 
-- [ ] **TECH-2583 — Game UI Stage 2 T2.2 — IR JSON DTOs + bridge handler skeleton** — New `Assets/Editor/Bridge/UiBakeHandler.cs` with `[Serializable]` IR DTOs + `JsonUtility.FromJson` parse + slot accept-rule guard.
-  - Acceptance — `UiBakeHandler` parses Stage 1 IR JSON; slot violation rejected with structured error payload; zero prefabs written on rejection.
-  - Spec — [`ia/projects/TECH-2583.md`](ia/projects/TECH-2583.md)
+- [ ] **TECH-2854 — Game UI Stage 5 T5.2 — NeedleBallistics + OscilloscopeSweep** — Two readout-driving juice components extending JuiceBase. NeedleBallistics: spring sim per motion_curve, attack/release ms read from VUMeterDetail. OscilloscopeSweep: ring buffer sample driver per OscilloscopeDetail.sweepRateHz. Both `[RequireComponent]` parent StudioControl. UiTheme cached in Awake (invariant #3).
+  - Acceptance — see `ia/projects/TECH-2854.md` §8
+  - Spec — [`ia/projects/TECH-2854.md`](ia/projects/TECH-2854.md)
 
-- [ ] **TECH-2584 — Game UI Stage 2 T2.3 — bridge mutation kind registration** — Add `bake_ui_from_ir` switch case in `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs` (sibling partial per guardrail #10).
-  - Acceptance — `unity_bridge_command bake_ui_from_ir` callable; dispatches to `UiBakeHandler.Bake(args)`.
-  - Spec — [`ia/projects/TECH-2584.md`](ia/projects/TECH-2584.md)
+- [ ] **TECH-2855 — Game UI Stage 5 T5.3 — TweenCounter + PulseOnEvent** — Two event-driven juice components extending JuiceBase. TweenCounter: int-to-int tween per motion_curve drives SegmentedReadout digit value. PulseOnEvent: UnityEvent listener tweens illumination alpha (illumination token slug); attaches by default to IlluminatedButton.OnClick. UiTheme cached in Awake (invariant #3).
+  - Acceptance — see `ia/projects/TECH-2855.md` §8
+  - Spec — [`ia/projects/TECH-2855.md`](ia/projects/TECH-2855.md)
 
-- [ ] **TECH-2585 — Game UI Stage 2 T2.4 — token bake into UiTheme.asset** — `UiBakeHandler.Bake` populates `UiTheme.asset` dict caches deterministically from IR `tokens` block.
-  - Acceptance — `UiTheme.asset` updated on bake; idempotent; placeholder prefabs written under `Assets/UI/Prefabs/Generated/`.
-  - Spec — [`ia/projects/TECH-2585.md`](ia/projects/TECH-2585.md)
+- [ ] **TECH-2856 — Game UI Stage 5 T5.4 — ShadowDepth + SparkleBurst** — Two surface-decorating juice components extending JuiceBase. ShadowDepth: drop-shadow Image child whose offset/blur driven by motion_curve on hover (attaches to ThemedPanel). SparkleBurst: particle emit on UnityEvent (attaches to IlluminatedButton on success events). UiTheme cached in Awake (invariant #3).
+  - Acceptance — see `ia/projects/TECH-2856.md` §8
+  - Spec — [`ia/projects/TECH-2856.md`](ia/projects/TECH-2856.md)
 
-- [ ] **TECH-2586 — Game UI Stage 2 T2.5 — bake script + smoke test** — Wire `unity:bake-ui` script in `package.json`; smoke test runs against Stage 1 IR JSON.
-  - Acceptance — `npm run unity:bake-ui` exits 0 on Stage 1 IR; `UiTheme.asset` updated; placeholder prefabs created.
-  - Spec — [`ia/projects/TECH-2586.md`](ia/projects/TECH-2586.md)
+- [ ] **TECH-2857 — Game UI Stage 5 T5.5 — bake-time juice attachment** — Extend `UiBakeHandler` bake pass with per-kind default juice attachment table (vu-meter → NeedleBallistics, oscilloscope → OscilloscopeSweep, illuminated-button → PulseOnEvent on click) + IR `juice[]` block override (post-MVP IR extension). Idempotent re-bake — juice components appended to existing prefab without dup.
+  - Acceptance — see `ia/projects/TECH-2857.md` §8
+  - Spec — [`ia/projects/TECH-2857.md`](ia/projects/TECH-2857.md)
+
+- [ ] **TECH-2858 — Game UI Stage 5 T5.6 — JuiceLayer PlayMode smoke** — PlayMode test under `Assets/Scripts/Tests/UI/Juice/` — drive VUMeter target value, assert NeedleBallistics ramps via spring; click IlluminatedButton, assert PulseOnEvent fires + illumination alpha tween runs. Smoke runs via `npm run unity:testmode-batch`.
+  - Acceptance — see `ia/projects/TECH-2858.md` §8
+  - Spec — [`ia/projects/TECH-2858.md`](ia/projects/TECH-2858.md)
 
 ## Economic depth lane
 
@@ -692,22 +686,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
-
-- [ ] **TECH-2568** — **Layer 1 lint runner + non-audio rule seed** (asset-pipeline Stage 12.1 T12.1.T1)
-  - Acceptance — `runLayer1` returns aggregated `LintResult[]` from all enabled rules per kind; non-audio rule seed migration applied; existing audio Layer 1 path unchanged.
-  - Spec — [`ia/projects/TECH-2568.md`](ia/projects/TECH-2568.md)
-
-- [ ] **TECH-2569** — **Layer 2 cross-entity lint runner** (asset-pipeline Stage 12.1 T12.1.T2)
-  - Acceptance — `runLayer2` returns `LintResult[]`; aggregator combines L1 + L2 into `{ block, warn, info }` shape; unresolved ref → `block`, orphan candidate → `warn`.
-  - Spec — [`ia/projects/TECH-2569.md`](ia/projects/TECH-2569.md)
-
-- [ ] **TECH-2570** — **PublishDialog reusable UI + warn justification** (asset-pipeline Stage 12.1 T12.1.T3)
-  - Acceptance — block row present → submit disabled; warn row present → non-empty justification gates submit; component reusable across all 8 kinds via typed props.
-  - Spec — [`ia/projects/TECH-2570.md`](ia/projects/TECH-2570.md)
-
-- [ ] **TECH-2571** — **Generic publish API + entity_version freeze** (asset-pipeline Stage 12.1 T12.1.T4)
-  - Acceptance — POST → runs L1 + L2; 409 on `block`; 200 + frozen versionId on pass; `audit_log` entry written with lint summary + justification; mirrors Stage 11.1 archetype route pattern.
-  - Spec — [`ia/projects/TECH-2571.md`](ia/projects/TECH-2571.md)
 
 ## High Priority
 

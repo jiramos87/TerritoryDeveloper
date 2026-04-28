@@ -33,6 +33,7 @@ import {
 } from "@/lib/catalog/catalog-api-errors";
 import { aggregateLintResults, runLayer2 } from "@/lib/lint/cross-entity";
 import { runLayer1 } from "@/lib/lint/runner";
+import { enqueueSnapshotRebuild } from "@/lib/snapshot/enqueue";
 
 export const dynamic = "force-dynamic";
 export const routeMeta = {
@@ -179,6 +180,15 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               slug_frozen_at = coalesce(slug_frozen_at, now())
           where id = ${idNum}
         `;
+        // TECH-2674 — auto-enqueue snapshot rebuild after every successful
+        // publish freeze. Runs inside the same tx as `entity_version` freeze
+        // + audit emit so any rollback drops the queued job too.
+        await enqueueSnapshotRebuild(sql, {
+          trigger: "publish",
+          source_kind: kind,
+          source_entity_id: id,
+          source_version_id: versionId,
+        });
         await emit(
           `catalog.${kind}.publish`,
           "entity_version",

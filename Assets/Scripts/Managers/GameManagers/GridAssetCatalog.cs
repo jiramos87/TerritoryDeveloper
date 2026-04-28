@@ -6,8 +6,8 @@ using UnityEngine.Events;
 public partial class GridAssetCatalog
 {
     [Header("Snapshot")]
-    [Tooltip("Path under Application.streamingAssetsPath (e.g. catalog/grid-asset-catalog-snapshot.json).")]
-    [SerializeField] private string _streamingRelativePath = "catalog/grid-asset-catalog-snapshot.json";
+    [Tooltip("Legacy v1 single-file path under Application.streamingAssetsPath. Superseded by per-kind exports under catalog/ + CatalogLoader (Stage 13.1, TECH-2675); leave empty unless reviving v1 in a fixture scene.")]
+    [SerializeField] private string _streamingRelativePath = string.Empty;
 
     [Header("Events")]
     [SerializeField] private UnityEvent _onCatalogReloaded = new UnityEvent();

@@ -9,7 +9,7 @@ namespace Territory.UI
     /// <summary>
     /// Token catalog binder (TECH-2095 / asset-pipeline Stage 10.1).
     /// <para>
-    /// Loads the per-kind token snapshot at <c>StreamingAssets/catalog/token-catalog-snapshot.json</c>
+    /// Loads the legacy per-kind token snapshot at <c>StreamingAssets/catalog/</c>
     /// at <see cref="Awake"/>, indexes rows by <c>slug</c> for the five DEC-A44 kinds
     /// (color / type-scale / motion / spacing / semantic), and exposes typed
     /// <c>TryGet*</c> accessors plus a depth-capped semantic alias resolver.
@@ -34,8 +34,8 @@ namespace Territory.UI
         public const int SemanticDepthCap = 6;
 
         [Header("Snapshot")]
-        [Tooltip("Path under Application.streamingAssetsPath (e.g. catalog/token-catalog-snapshot.json).")]
-        [SerializeField] private string _streamingRelativePath = "catalog/token-catalog-snapshot.json";
+        [Tooltip("Legacy v1 path under Application.streamingAssetsPath. Superseded by per-kind exports under catalog/ + CatalogLoader (Stage 13.1, TECH-2675); leave empty unless reviving v1 in a fixture scene.")]
+        [SerializeField] private string _streamingRelativePath = string.Empty;
 
         [Header("Events")]
         [SerializeField] private UnityEvent _onCatalogReloaded = new UnityEvent();
