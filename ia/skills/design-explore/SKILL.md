@@ -110,8 +110,10 @@ If the doc is a stub (no Design Expansion), run a short interview to surface hid
 **Interview rules (strict):**
 - Ask **ONE question per turn. Stop. Wait for the user's answer** before asking the next.
 - Do NOT present a numbered list. Do NOT say "here are my questions".
+- **Plain-language preface (mandatory)** — 1–2 sentences before option list explaining WHAT is being decided + WHY it matters in product/dev-flow terms. No jargon-only polls.
+- **Recommendation (mandatory)** — every poll ends with a `Recommended:` line picking one option + 1-line rationale (speed / token cost / robustness / blast radius / unblock value). User can override; never absent. Anchor: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 - Pull from: (1) open questions already listed in the doc, (2) up to 3 inferred questions about scope boundaries, blocking constraints, or priority trade-offs not covered by existing answers.
-- Max 5 questions total. Stop early if earlier answers already cover remaining questions.
+- Max 5 questions total — but extend if user explicitly requests more product-scope coverage. Stop early if earlier answers already cover remaining questions.
 - After the last answer: emit a one-paragraph summary of what you learned, then proceed to Phase 1 without another confirmation prompt.
 
 Start with the single most important unknown — typically a scope boundary, blocking constraint the approaches don't address, or a stakeholder priority the doc leaves ambiguous.
@@ -136,7 +138,7 @@ proceed with it, state choice explicitly.
 
 Otherwise: present comparison table + leading candidate → **pause, ask user to confirm or override before continuing**.
 
-**Polling wording** (strict): question stem + each option label describe player/designer-visible outcome, not approach codenames or stage numbers. Ids and doc paths go on a trailing `Context:` line, not inside the question. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+**Polling wording** (strict): question stem + each option label describe player/designer-visible outcome, not approach codenames or stage numbers. Ids and doc paths go on a trailing `Context:` line, not inside the question. **Plain-language preface + `Recommended:` line are mandatory** (1–2 sentence framing before options + recommended pick with rationale after). Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 
 ### Phase 2.5 — Architecture Decision (DEC-A15 lock)
 
@@ -144,7 +146,7 @@ Per DEC-A15 (`arch-authoring-via-design-explore`): if the selected approach touc
 
 **Skip-clause:** phase no-ops when Phase 5 subsystem-impact returns zero `arch_surfaces[]` hits. Heuristic: any selected component whose spec home falls under `ia/specs/architecture/**` OR matches an existing `arch_surfaces.spec_path` row triggers the phase. Code-only / UI-only / tooling-only explorations skip this phase silently.
 
-**Polling shape (4 sequential AskUserQuestion turns — one question per turn per `agent-human-polling.md`):**
+**Polling shape (4 sequential AskUserQuestion turns — one question per turn per `agent-human-polling.md`; each poll carries plain-language preface + `Recommended:` line per the same rule):**
 
 1. **Decision slug** — kebab-case, prefixed `DEC-A{N}` where `{N}` = next free in `arch_decisions`. Designer/player wording in question stem ("How should we name this design choice?"); slug rendered in option label.
 2. **Rationale** — ≤250 chars (DEC-A17 row budget). Single short paragraph explaining trade-off rationale.

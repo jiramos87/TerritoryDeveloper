@@ -337,29 +337,21 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-2853 — Game UI Stage 5 T5.1 — JuiceBase + motion curve eval** — New `Assets/Scripts/UI/Juice/JuiceBase.cs` abstract MonoBehaviour. UiTheme cached ref in Awake per invariant #3 (no per-frame FindObjectOfType). `[SerializeField] string curveSlug` field. Helper `EvaluateCurve(t)` reads motion_curve spec from UiTheme dict cache (spring stiffness/damping OR animation curve sample).
-  - Acceptance — see `ia/projects/TECH-2853.md` §8
-  - Spec — [`ia/projects/TECH-2853.md`](ia/projects/TECH-2853.md)
+- [ ] **TECH-2899 — HudBar IR + bake (Stage 6 T6.1)** — Confirm Stage 1 IR `panels[].slug == "hud-bar"` slot accept-rules cover money/pop/happiness/speed children. Re-run `npm run unity:bake-ui`; bake driver emits `Assets/UI/Prefabs/Generated/HudBar.prefab` + StudioControl variant prefabs (`SegmentedReadout_money.prefab`, `SegmentedReadout_pop.prefab`, `VUMeter_happiness.prefab`, `IlluminatedButton_speed1x.prefab`).
+  - Acceptance — Re-run `npm run unity:bake-ui`; bake driver emits `Assets/UI/Prefabs/Generated/HudBar.prefab` + StudioControl variant prefabs (`SegmentedReadout_money.prefab`, `SegmentedReadout_pop.prefab`, `VUMeter_happiness.prefab`, `IlluminatedButton_speed1x.prefab`).
+  - Spec — [`ia/projects/TECH-2899.md`](ia/projects/TECH-2899.md)
 
-- [ ] **TECH-2854 — Game UI Stage 5 T5.2 — NeedleBallistics + OscilloscopeSweep** — Two readout-driving juice components extending JuiceBase. NeedleBallistics: spring sim per motion_curve, attack/release ms read from VUMeterDetail. OscilloscopeSweep: ring buffer sample driver per OscilloscopeDetail.sweepRateHz. Both `[RequireComponent]` parent StudioControl. UiTheme cached in Awake (invariant #3).
-  - Acceptance — see `ia/projects/TECH-2854.md` §8
-  - Spec — [`ia/projects/TECH-2854.md`](ia/projects/TECH-2854.md)
+- [ ] **TECH-2900 — HudBarDataAdapter MonoBehaviour (Stage 6 T6.2)** — New `Assets/Scripts/UI/HUD/HudBarDataAdapter.cs` bridges sim manager refs (CityFinanceManager, PopulationManager, HappinessService, GameSpeedManager) → baked StudioControl SO refs. Awake-caches all manager + UiTheme refs via `[SerializeField] + FindObjectOfType` fallback per invariants #3 + #4; per-frame consumer ticks gated on producer `IsInitialized` per guardrail #14.
+  - Acceptance — Awake-caches all manager + UiTheme refs via `[SerializeField] + FindObjectOfType` fallback per invariants #3 + #4; per-frame consumer ticks gated on producer `IsInitialized` per guardrail #14.
+  - Spec — [`ia/projects/TECH-2900.md`](ia/projects/TECH-2900.md)
 
-- [ ] **TECH-2855 — Game UI Stage 5 T5.3 — TweenCounter + PulseOnEvent** — Two event-driven juice components extending JuiceBase. TweenCounter: int-to-int tween per motion_curve drives SegmentedReadout digit value. PulseOnEvent: UnityEvent listener tweens illumination alpha (illumination token slug); attaches by default to IlluminatedButton.OnClick. UiTheme cached in Awake (invariant #3).
-  - Acceptance — see `ia/projects/TECH-2855.md` §8
-  - Spec — [`ia/projects/TECH-2855.md`](ia/projects/TECH-2855.md)
+- [ ] **TECH-2901 — HudBar scene wiring + legacy decommission (Stage 6 T6.3)** — Place `HudBar.prefab` instance under `Game Managers` parent in `MainScene.unity` via `unity_bridge_command instantiate_prefab` + `set_gameobject_parent` + `attach_component` + `assign_serialized_field`. Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.
+  - Acceptance — Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.
+  - Spec — [`ia/projects/TECH-2901.md`](ia/projects/TECH-2901.md)
 
-- [ ] **TECH-2856 — Game UI Stage 5 T5.4 — ShadowDepth + SparkleBurst** — Two surface-decorating juice components extending JuiceBase. ShadowDepth: drop-shadow Image child whose offset/blur driven by motion_curve on hover (attaches to ThemedPanel). SparkleBurst: particle emit on UnityEvent (attaches to IlluminatedButton on success events). UiTheme cached in Awake (invariant #3).
-  - Acceptance — see `ia/projects/TECH-2856.md` §8
-  - Spec — [`ia/projects/TECH-2856.md`](ia/projects/TECH-2856.md)
-
-- [ ] **TECH-2857 — Game UI Stage 5 T5.5 — bake-time juice attachment** — Extend `UiBakeHandler` bake pass with per-kind default juice attachment table (vu-meter → NeedleBallistics, oscilloscope → OscilloscopeSweep, illuminated-button → PulseOnEvent on click) + IR `juice[]` block override (post-MVP IR extension). Idempotent re-bake — juice components appended to existing prefab without dup.
-  - Acceptance — see `ia/projects/TECH-2857.md` §8
-  - Spec — [`ia/projects/TECH-2857.md`](ia/projects/TECH-2857.md)
-
-- [ ] **TECH-2858 — Game UI Stage 5 T5.6 — JuiceLayer PlayMode smoke** — PlayMode test under `Assets/Scripts/Tests/UI/Juice/` — drive VUMeter target value, assert NeedleBallistics ramps via spring; click IlluminatedButton, assert PulseOnEvent fires + illumination alpha tween runs. Smoke runs via `npm run unity:testmode-batch`.
-  - Acceptance — see `ia/projects/TECH-2858.md` §8
-  - Spec — [`ia/projects/TECH-2858.md`](ia/projects/TECH-2858.md)
+- [ ] **TECH-2902 — HUD parity PlayMode test (Stage 6 T6.4)** — PlayMode test under `Assets/Scripts/Tests/UI/HUD/` — load fixture save, advance simulation N ticks, assert new HUD readouts match legacy fixture values within tolerance. Speed-change toggle asserts IlluminatedButton state mirrors `GameSpeedManager.CurrentSpeed`; smoke via `npm run unity:testmode-batch`; Stage 6 gate `npm run verify:local` exits 0.
+  - Acceptance — Speed-change toggle asserts IlluminatedButton state mirrors `GameSpeedManager.CurrentSpeed`; smoke via `npm run unity:testmode-batch`; Stage 6 gate `npm run verify:local` exits 0.
+  - Spec — [`ia/projects/TECH-2902.md`](ia/projects/TECH-2902.md)
 
 ## Economic depth lane
 

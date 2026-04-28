@@ -907,6 +907,9 @@
           "lg": 20,
           "alert": 45
         },
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
         "default_size": "md",
         "default_tone": "primary"
       }
@@ -944,6 +947,9 @@
           "horizontal_neutral": 40,
           "horizontal_alert": 85
         },
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
         "default_size": "md",
         "default_tone": "primary",
         "default_orientation": "vertical"
@@ -993,6 +999,9 @@
           "neutral": 8,
           "alert": 15
         },
+        "attackMs": 10,
+        "releaseMs": 300,
+        "range": 1.0,
         "default_size": "md",
         "default_tone": "primary",
         "default_orientation": "horizontal"
@@ -1033,7 +1042,8 @@
         },
         "default_size": "md",
         "default_tone": "primary",
-        "default_lit": false
+        "default_lit": false,
+        "illuminationSlug": "amber"
       }
     },
     {
@@ -1072,7 +1082,8 @@
         },
         "default_size": "md",
         "default_tone": "primary",
-        "default_digits": 7
+        "default_digits": 7,
+        "digits": 7
       }
     },
     {
@@ -1105,6 +1116,9 @@
           "x": 8,
           "y": 4
         },
+        "sampleCount": 256,
+        "sweepRateHz": 60,
+        "range": 1.0,
         "default_size": "md",
         "default_tone": "primary"
       }
@@ -1145,7 +1159,8 @@
           }
         },
         "default_size": "md",
-        "default_tone": "primary"
+        "default_tone": "primary",
+        "detents": 12
       }
     },
     {
@@ -1176,7 +1191,8 @@
         ],
         "default_size": "md",
         "default_tone": "primary",
-        "default_lit": true
+        "default_lit": true,
+        "illuminationSlug": "amber"
       }
     }
   ]

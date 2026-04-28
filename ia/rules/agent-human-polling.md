@@ -15,6 +15,8 @@ Scope: every moment an agent, subagent, skill, or slash command pauses execution
 
 - **Question stem** leads with the user-visible effect on the game or feature ("When the player's police budget runs out, should new stations be blocked or just warned?").
 - **Option labels** describe the outcome the player/designer will observe ("Roads route around existing landmarks" beats "Approach B — landmark-first ordering in stage 1.2").
+- **Plain-language preface (mandatory).** Before option list, emit 1–2 short sentences explaining WHAT is being decided + WHY it matters in product/dev-flow terms. Skip only when stem itself already carries full plain-language framing. No jargon-only polls.
+- **Recommendation (mandatory).** After option list, emit a `Recommended:` line picking one option + a 1-line rationale tied to the user's priorities (speed / token cost / robustness / blast radius / unblock value). Recommendation is non-binding — user can override — but never absent.
 - **Ids, paths, cell coordinates, yaml filenames, skeleton-step numbers** go on a trailing `Context:` line — never inside the question text or labels.
 - **Zero code identifiers** in question text: no class names, method signatures, MCP tool names, C# types, Unity-specific internals. Those are implementation details the agent resolves on its own.
 - **Game-design vocabulary only** when the gate is about a feature tradeoff. IA/tooling vocabulary is allowed only when the gate is itself about IA/tooling (e.g. `/ship-stage` Pass B spec deletion confirmation — see exceptions).
@@ -40,6 +42,7 @@ Also: cold-pasted polls (via subagent handoff, session resume) must be decidable
 | "Cardinality gate failed on Stage 2.1 — pause, split, merge, or justify?" | "Stage has 6 tasks — user-visible checkpoints still feel like one chunk. Split into two releasable slices or ship as one?" |
 | "Row `zone-s-economy` at cell (b) marker ⚠ — resolve disagreement?" | "Zone-S economy design disagrees with umbrella on tax ordering — pick: monthly tick first, or player-triggered first?" |
 | "`BudgetAllocationService.TryDraw()` should check treasury floor?" | "When the player's budget runs out, should new buildings be blocked entirely, or just warned?" |
+| "Pick a/b/c." (no preface, no recommendation) | "Decides where the warning shows up during decomposition. Surface choice = how soon you act on it. (a) terminal block / (b) plan health rollup / (c) backlog row. **Recommended: (a)** — fastest feedback at author time." |
 
 ## Exceptions — technical wording allowed
 
