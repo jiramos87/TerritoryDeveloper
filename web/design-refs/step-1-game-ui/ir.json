@@ -625,6 +625,258 @@
           ]
         }
       ]
+    },
+    {
+      "slug": "building-info",
+      "archetype": "building-info",
+      "slots": [
+        {
+          "name": "header",
+          "accepts": [
+            "led",
+            "segmented-readout",
+            "illuminated-button"
+          ],
+          "children": [
+            "led"
+          ]
+        },
+        {
+          "name": "vitals",
+          "accepts": [
+            "vu-meter",
+            "segmented-readout"
+          ],
+          "children": [
+            "vu-meter",
+            "segmented-readout",
+            "vu-meter",
+            "segmented-readout",
+            "vu-meter",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "trend",
+          "accepts": [
+            "oscilloscope",
+            "segmented-readout"
+          ],
+          "children": [
+            "oscilloscope"
+          ]
+        },
+        {
+          "name": "controls",
+          "accepts": [
+            "illuminated-button",
+            "detent-ring"
+          ],
+          "children": [
+            "illuminated-button",
+            "detent-ring",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "zone-overlay",
+      "archetype": "zone-overlay",
+      "slots": [
+        {
+          "name": "overlay-select",
+          "accepts": [
+            "detent-ring",
+            "illuminated-button"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "legend",
+          "accepts": [
+            "segmented-readout",
+            "vu-meter"
+          ],
+          "children": [
+            "segmented-readout",
+            "vu-meter",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "tools",
+          "accepts": [
+            "illuminated-button"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "stats",
+          "accepts": [
+            "segmented-readout",
+            "led"
+          ],
+          "children": [
+            "led",
+            "segmented-readout"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "time-controls",
+      "archetype": "time-controls",
+      "slots": [
+        {
+          "name": "clock",
+          "accepts": [
+            "segmented-readout"
+          ],
+          "children": [
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "speed-select",
+          "accepts": [
+            "detent-ring"
+          ],
+          "children": [
+            "detent-ring"
+          ]
+        },
+        {
+          "name": "transport",
+          "accepts": [
+            "illuminated-button"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "status",
+          "accepts": [
+            "led"
+          ],
+          "children": [
+            "led",
+            "led"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "alerts-panel",
+      "archetype": "alerts-panel",
+      "slots": [
+        {
+          "name": "summary",
+          "accepts": [
+            "led",
+            "segmented-readout"
+          ],
+          "children": [
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout"
+          ]
+        },
+        {
+          "name": "filters",
+          "accepts": [
+            "illuminated-button"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "feed",
+          "accepts": [
+            "led",
+            "illuminated-button",
+            "segmented-readout"
+          ],
+          "children": [
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout",
+            "led",
+            "segmented-readout"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "mini-map",
+      "archetype": "mini-map",
+      "slots": [
+        {
+          "name": "viewport",
+          "accepts": [],
+          "children": []
+        },
+        {
+          "name": "controls",
+          "accepts": [
+            "illuminated-button"
+          ],
+          "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button"
+          ]
+        },
+        {
+          "name": "scale-select",
+          "accepts": [
+            "detent-ring",
+            "illuminated-button"
+          ],
+          "children": [
+            "detent-ring"
+          ]
+        },
+        {
+          "name": "coords",
+          "accepts": [
+            "segmented-readout"
+          ],
+          "children": [
+            "segmented-readout"
+          ]
+        }
+      ]
     }
   ],
   "interactives": [
@@ -821,6 +1073,110 @@
         "default_size": "md",
         "default_tone": "primary",
         "default_digits": 7
+      }
+    },
+    {
+      "slug": "oscilloscope",
+      "kind": "oscilloscope",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "trace_samples": {
+          "sm": "M0,28 Q12,0 24,28 T48,28 T72,28 T96,28",
+          "md": "M0,90 L40,80 L80,30 L100,15 L130,40 L192,75",
+          "lg": "M0,140 L60,120 L100,40 L160,60 L220,150 L320,90"
+        },
+        "graticule_divisions": {
+          "x": 8,
+          "y": 4
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "detent-ring",
+      "kind": "detent-ring",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "detent_samples": {
+          "sm": {
+            "detents": 8,
+            "current": 3
+          },
+          "md": {
+            "detents": 12,
+            "current": 7
+          },
+          "lg": {
+            "detents": 16,
+            "current": 11
+          }
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "led",
+      "kind": "led",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert",
+          "success"
+        ],
+        "lit_modes": [
+          "unlit",
+          "lit"
+        ],
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_lit": true
       }
     }
   ]

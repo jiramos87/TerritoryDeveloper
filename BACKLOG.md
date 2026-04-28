@@ -280,29 +280,15 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
 
-- [ ] **TECH-2443** — **arch_decision_get + arch_decision_list MCP tools** — read-side decision lookup + listing (Stage 1.3 T1.3.1)
-  - Acceptance — Both tools registered in tools/mcp-ia-server/src/index.ts w/ Zod schemas; visible to MCP host after restart.
-  - Spec — [`ia/projects/TECH-2443.md`](ia/projects/TECH-2443.md)
+- [ ] **TECH-2563** — **Design-explore arch phase** — insert `Architecture Decision` phase between `Select Approach` + `Expand`; polls decision/rationale/alternatives/affected-surfaces; writes `arch_decisions` + `arch_changelog`; calls `arch_drift_scan`; appends drift report (Stage 1.4 T1.4.1)
 
-- [ ] **TECH-2444** — **arch_surface_resolve MCP tool** — resolve Stage/Task → arch surfaces via `stage_arch_surfaces.surface_slug` join (Stage 1.3 T1.3.2)
-  - Acceptance — Joins stage_arch_surfaces.surface_slug → arch_surfaces.slug (composite-PK shape per migration 0036); Zod schemas + registered.
-  - Spec — [`ia/projects/TECH-2444.md`](ia/projects/TECH-2444.md)
+- [ ] **TECH-2564** — **Post-write changelog hook** — commit touching `ia/specs/architecture/**` appends `arch_changelog` row; PostToolUse hook OR `validate:arch-coherence` rebuild; idempotent (Stage 1.4 T1.4.2)
 
-- [ ] **TECH-2445** — **arch_drift_scan MCP tool** — compare Stage `arch_surfaces[]` vs `arch_changelog` since last pending flip (Stage 1.3 T1.3.3)
-  - Acceptance — Returns {affected_stages: [{stage_id, drifted_surfaces, suggested_questions}]}; Zod schemas + registered.
-  - Spec — [`ia/projects/TECH-2445.md`](ia/projects/TECH-2445.md)
+- [ ] **TECH-2565** — **validate:all integration + CI** — wire `validate:arch-coherence` into `validate:all` chain in `package.json`; CI green (Stage 1.4 T1.4.3)
 
-- [ ] **TECH-2446** — **arch_changelog_since MCP tool** — ordered changelog entries since ts/commit-sha (Stage 1.3 T1.3.4)
-  - Acceptance — Zod schemas + registered; commit-sha lookup wired via git log.
-  - Spec — [`ia/projects/TECH-2446.md`](ia/projects/TECH-2446.md)
+- [ ] **TECH-2566** — **Final ARCHITECTURE.md retirement** — confirm root `ARCHITECTURE.md` index-only (≤30 lines); audit `CLAUDE.md` §3 + `AGENTS.md` arch pointers (Stage 1.4 T1.4.4)
 
-- [ ] **TECH-2447** — **arch-drift-scan skill** — SKILL.md + command-body + agent-body w/ AskUserQuestion polling (Stage 1.3 T1.3.5)
-  - Acceptance — Phases: load plan → call arch_drift_scan MCP → render drift report → AskUserQuestion poll per affected Stage → master_plan_change_log_append kind=arch_drift_scan.
-  - Spec — [`ia/projects/TECH-2447.md`](ia/projects/TECH-2447.md)
-
-- [ ] **TECH-2448** — **Skill sync + generated arch-drift-scan surfaces** — `npm run skill:sync:all` + validate:skill-drift (Stage 1.3 T1.3.6)
-  - Acceptance — Generated files match SKILL.md frontmatter; npm run validate:skill-drift green.
-  - Spec — [`ia/projects/TECH-2448.md`](ia/projects/TECH-2448.md)
+- [ ] **TECH-2567** — **Sub-spec README** — `ia/specs/architecture/README.md` (1 page) — sub-spec roles + lifecycle + cross-refs (Stage 1.4 T1.4.5)
 
 ## UI-as-code program (exploration)
 
@@ -360,6 +346,26 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Notes: Add three rows to `ia/specs/glossary.md`: `UiTheme token ring` (extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). Each row cites `ia/specs/ui-design-system.md` §1 / §1.5 per terminology-consistency rule. Stage 1.1 T1.1.5 of `ia/projects/ui-polish-master-plan.md`. Locks vocabulary downstream steps reference.
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
+
+- [ ] **TECH-2582 — Game UI Stage 2 T2.1 — UiTheme dict caches extension** — Extend `Assets/Scripts/Managers/GameManagers/UiTheme.cs` with dict-shaped token caches keyed by slug (palette / frame_style / font_face / motion_curve / illumination).
+  - Acceptance — `UiTheme.cs` carries new dict caches alongside legacy flat-Color fields; `npm run unity:compile-check` exits 0.
+  - Spec — [`ia/projects/TECH-2582.md`](ia/projects/TECH-2582.md)
+
+- [ ] **TECH-2583 — Game UI Stage 2 T2.2 — IR JSON DTOs + bridge handler skeleton** — New `Assets/Editor/Bridge/UiBakeHandler.cs` with `[Serializable]` IR DTOs + `JsonUtility.FromJson` parse + slot accept-rule guard.
+  - Acceptance — `UiBakeHandler` parses Stage 1 IR JSON; slot violation rejected with structured error payload; zero prefabs written on rejection.
+  - Spec — [`ia/projects/TECH-2583.md`](ia/projects/TECH-2583.md)
+
+- [ ] **TECH-2584 — Game UI Stage 2 T2.3 — bridge mutation kind registration** — Add `bake_ui_from_ir` switch case in `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs` (sibling partial per guardrail #10).
+  - Acceptance — `unity_bridge_command bake_ui_from_ir` callable; dispatches to `UiBakeHandler.Bake(args)`.
+  - Spec — [`ia/projects/TECH-2584.md`](ia/projects/TECH-2584.md)
+
+- [ ] **TECH-2585 — Game UI Stage 2 T2.4 — token bake into UiTheme.asset** — `UiBakeHandler.Bake` populates `UiTheme.asset` dict caches deterministically from IR `tokens` block.
+  - Acceptance — `UiTheme.asset` updated on bake; idempotent; placeholder prefabs written under `Assets/UI/Prefabs/Generated/`.
+  - Spec — [`ia/projects/TECH-2585.md`](ia/projects/TECH-2585.md)
+
+- [ ] **TECH-2586 — Game UI Stage 2 T2.5 — bake script + smoke test** — Wire `unity:bake-ui` script in `package.json`; smoke test runs against Stage 1 IR JSON.
+  - Acceptance — `npm run unity:bake-ui` exits 0 on Stage 1 IR; `UiTheme.asset` updated; placeholder prefabs created.
+  - Spec — [`ia/projects/TECH-2586.md`](ia/projects/TECH-2586.md)
 
 ## Economic depth lane
 
@@ -687,9 +693,21 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
 
+- [ ] **TECH-2568** — **Layer 1 lint runner + non-audio rule seed** (asset-pipeline Stage 12.1 T12.1.T1)
+  - Acceptance — `runLayer1` returns aggregated `LintResult[]` from all enabled rules per kind; non-audio rule seed migration applied; existing audio Layer 1 path unchanged.
+  - Spec — [`ia/projects/TECH-2568.md`](ia/projects/TECH-2568.md)
 
+- [ ] **TECH-2569** — **Layer 2 cross-entity lint runner** (asset-pipeline Stage 12.1 T12.1.T2)
+  - Acceptance — `runLayer2` returns `LintResult[]`; aggregator combines L1 + L2 into `{ block, warn, info }` shape; unresolved ref → `block`, orphan candidate → `warn`.
+  - Spec — [`ia/projects/TECH-2569.md`](ia/projects/TECH-2569.md)
 
+- [ ] **TECH-2570** — **PublishDialog reusable UI + warn justification** (asset-pipeline Stage 12.1 T12.1.T3)
+  - Acceptance — block row present → submit disabled; warn row present → non-empty justification gates submit; component reusable across all 8 kinds via typed props.
+  - Spec — [`ia/projects/TECH-2570.md`](ia/projects/TECH-2570.md)
 
+- [ ] **TECH-2571** — **Generic publish API + entity_version freeze** (asset-pipeline Stage 12.1 T12.1.T4)
+  - Acceptance — POST → runs L1 + L2; 409 on `block`; 200 + frozen versionId on pass; `audit_log` entry written with lint summary + justification; mirrors Stage 11.1 archetype route pattern.
+  - Spec — [`ia/projects/TECH-2571.md`](ia/projects/TECH-2571.md)
 
 ## High Priority
 

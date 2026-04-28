@@ -1,14 +1,14 @@
 {
   "preamble": [
-    "# Backlog — Territory Developer",
+    "# Backlog \u2014 Territory Developer",
     "",
-    "> Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.",
+    "> Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work \u2192 [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.",
     ">",
-    "> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § Sprite gen lane → § Web platform lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.",
+    "> **Lane order (highest first):** \u00a7 Compute-lib program \u2192 \u00a7 Agent \u2194 Unity & MCP context lane \u2192 \u00a7 IA evolution lane \u2192 \u00a7 UI-as-code program \u2192 \u00a7 Economic depth lane \u2192 \u00a7 Gameplay & simulation lane \u2192 \u00a7 Multi-scale simulation lane \u2192 \u00a7 Blip audio program \u2192 \u00a7 Sprite gen lane \u2192 \u00a7 Web platform lane \u2192 \u00a7 High / \u00a7 Medium / \u00a7 Code Health / \u00a7 Low. **Gameplay blockers** in \u00a7 High Priority stay **interrupt** work \u2014 stop play / corrupt saves.",
     ">",
-    "> **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).",
+    "> **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) \u00b7 **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) \u00b7 **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).",
     ">",
-    "> **Active programs:** **§ Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) · **§ IA evolution lane** TECH-77–TECH-83 + TECH-552 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md); bridge program [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md)) · **§ UI-as-code program** open FEAT-51 · **§ Economic depth lane** FEAT-52 → FEAT-53 → FEAT-09 (economy, services, districts; monthly maintenance, tax→demand feedback, happiness + pollution shipped) · **§ Gameplay & simulation lane** player-facing AUTO / density.",
+    "> **Active programs:** **\u00a7 Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) \u00b7 **\u00a7 IA evolution lane** TECH-77\u2013TECH-83 + TECH-552 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge \u2014 [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md); bridge program [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md)) \u00b7 **\u00a7 UI-as-code program** open FEAT-51 \u00b7 **\u00a7 Economic depth lane** FEAT-52 \u2192 FEAT-53 \u2192 FEAT-09 (economy, services, districts; monthly maintenance, tax\u2192demand feedback, happiness + pollution shipped) \u00b7 **\u00a7 Gameplay & simulation lane** player-facing AUTO / density.",
     "",
     "---",
     ""
@@ -21,233 +21,233 @@
           "type": "prose",
           "lines": [
             "",
-            "**Dependency order.** Pilot compute-lib + World ↔ Grid MCP shipped ([`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary `territory-compute-lib`). TECH-39 (computational MCP suite) closed (glossary `Computational MCP tools (TECH-39)`). **TECH-38** (C# pure modules + harnesses) extends `Utilities/Compute/` + `tools/reports/`. Research **TECH-32** + **TECH-35** marked `Depends on: none` but run after TECH-38 surfaces exist (compare vs UrbanGrowthRingMath / RNG notes).",
+            "**Dependency order.** Pilot compute-lib + World \u2194 Grid MCP shipped ([`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary `territory-compute-lib`). TECH-39 (computational MCP suite) closed (glossary `Computational MCP tools (TECH-39)`). **TECH-38** (C# pure modules + harnesses) extends `Utilities/Compute/` + `tools/reports/`. Research **TECH-32** + **TECH-35** marked `Depends on: none` but run after TECH-38 surfaces exist (compare vs UrbanGrowthRingMath / RNG notes).",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-38",
-          "checklist_line": "- [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)",
+          "checklist_line": "- [ ] **TECH-38** \u2014 **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-32",
-          "checklist_line": "- [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)",
+          "checklist_line": "- [ ] **TECH-32** \u2014 **Urban growth rings** / centroid recompute what-if (research tooling)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-35",
-          "checklist_line": "- [ ] **TECH-35** — Research spike: property-based / random mutation **invariant** fuzzing (optional)",
+          "checklist_line": "- [ ] **TECH-35** \u2014 Research spike: property-based / random mutation **invariant** fuzzing (optional)",
           "trailing_blanks": 1
         }
       ]
     },
     {
-      "header": "## Agent ↔ Unity & MCP context lane",
+      "header": "## Agent \u2194 Unity & MCP context lane",
       "items": [
         {
           "type": "prose",
           "lines": [
             "",
-            "Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane order: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `ia/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.",
+            "Ordered for **closed-loop agent \u2194 Unity** \u2014 **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** \u2014 [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane order: **JSON / reports** plumbing \u2192 **MCP platform** \u2192 **agent workflow & CI helpers** \u2192 **research tooling**. (**\u00a7 Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `ia/projects/*.md`); **TECH-38** + archived **TECH-39** (**\u00a7 Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-53",
-          "checklist_line": "- [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)",
+          "checklist_line": "- [ ] **TECH-53** \u2014 **Schema validation history** (Postgres extension **E2** track)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-54",
-          "checklist_line": "- [ ] **TECH-54** — **Agent patch proposal staging** (Postgres extension **E3** track)",
+          "checklist_line": "- [ ] **TECH-54** \u2014 **Agent patch proposal staging** (Postgres extension **E3** track)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-43",
-          "checklist_line": "- [ ] **TECH-43** — Append-only **JSON** line **event log** (telemetry / sim anomalies) — **backlog placeholder**",
+          "checklist_line": "- [ ] **TECH-43** \u2014 Append-only **JSON** line **event log** (telemetry / sim anomalies) \u2014 **backlog placeholder**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-18",
-          "checklist_line": "- [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)",
+          "checklist_line": "- [ ] **TECH-18** \u2014 Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-15",
-          "checklist_line": "- [ ] **TECH-15** — New Game / **geography initialization** performance",
+          "checklist_line": "- [ ] **TECH-15** \u2014 New Game / **geography initialization** performance",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-16",
-          "checklist_line": "- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)",
+          "checklist_line": "- [ ] **TECH-16** \u2014 **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-33",
-          "checklist_line": "- [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing",
+          "checklist_line": "- [ ] **TECH-33** \u2014 Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-23",
-          "checklist_line": "- [ ] **TECH-23** — Agent workflow: MCP **invariant preflight** for issue kickoff",
+          "checklist_line": "- [ ] **TECH-23** \u2014 Agent workflow: MCP **invariant preflight** for issue kickoff",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-45",
-          "checklist_line": "- [ ] **TECH-45** — **Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)",
+          "checklist_line": "- [ ] **TECH-45** \u2014 **Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-46",
-          "checklist_line": "- [ ] **TECH-46** — **Cursor Skill:** **terrain** / **HeightMap** / **water** / **shore** edit guardrails",
+          "checklist_line": "- [ ] **TECH-46** \u2014 **Cursor Skill:** **terrain** / **HeightMap** / **water** / **shore** edit guardrails",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-47",
-          "checklist_line": "- [ ] **TECH-47** — **Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern",
+          "checklist_line": "- [ ] **TECH-47** \u2014 **Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-48",
-          "checklist_line": "- [ ] **TECH-48** — **territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)",
+          "checklist_line": "- [ ] **TECH-48** \u2014 **territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-24",
-          "checklist_line": "- [ ] **TECH-24** — territory-ia MCP: parser regression policy (tests/fixtures when parsers change)",
+          "checklist_line": "- [ ] **TECH-24** \u2014 territory-ia MCP: parser regression policy (tests/fixtures when parsers change)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-30",
-          "checklist_line": "- [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`",
+          "checklist_line": "- [ ] **TECH-30** \u2014 Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-29",
-          "checklist_line": "- [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector",
+          "checklist_line": "- [ ] **TECH-29** \u2014 CI / script: **simulation tick** call-order drift detector",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-31",
-          "checklist_line": "- [ ] **TECH-31** — **Agent scenario generator** (**test mode**, **32×32** **test map**, loadable **save**-shaped scenarios, MCP tool)",
+          "checklist_line": "- [ ] **TECH-31** \u2014 **Agent scenario generator** (**test mode**, **32\u00d732** **test map**, loadable **save**-shaped scenarios, MCP tool)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-34",
-          "checklist_line": "- [ ] **TECH-34** — Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks",
+          "checklist_line": "- [ ] **TECH-34** \u2014 Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-27",
-          "checklist_line": "- [ ] **TECH-27** — **BACKLOG.md** glossary alignment pass (**Depends on** / **Spec** / **Files** / **Notes**)",
+          "checklist_line": "- [ ] **TECH-27** \u2014 **BACKLOG.md** glossary alignment pass (**Depends on** / **Spec** / **Files** / **Notes**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-26",
-          "checklist_line": "- [ ] **TECH-26** — Repo scripts / CI: mechanical checks (**FindObjectOfType** in **Update**; optional **`gridArray`** gate)",
+          "checklist_line": "- [ ] **TECH-26** \u2014 Repo scripts / CI: mechanical checks (**FindObjectOfType** in **Update**; optional **`gridArray`** gate)",
           "trailing_blanks": 1
         }
       ]
     },
     {
-      "header": "## Backlog YAML ↔ MCP alignment program",
+      "header": "## Backlog YAML \u2194 MCP alignment program",
       "items": [
         {
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/backlog-yaml-mcp-alignment-master-plan.md`](projects/backlog-yaml-mcp-alignment-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Aligns **MCP territory-ia** parser + tool surface + validator + skill docs w/ per-issue yaml backlog refactor. Step 1 = HIGH band (IP1–IP5). Stage 1.1 closed 2026-04-17 (TECH-295..TECH-301 all archived — type extension + loader field mapping + soft-dep marker preservation + `proposed_solution` decision + MCP payload surfacing + round-trip test). Stage 1.2 opened 2026-04-17 — 7 tasks filed below (TECH-323..TECH-329: shared lint core + `backlog_record_validate` + `reserve_backlog_ids` + concurrency test + `backlog_list` + filter tests). Step 2 = MEDIUM/LOW band (IP6–IP9); file rows when Stage 1.x → `In Progress`.",
+            "Orchestrator: [`ia/projects/backlog-yaml-mcp-alignment-master-plan.md`](projects/backlog-yaml-mcp-alignment-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Aligns **MCP territory-ia** parser + tool surface + validator + skill docs w/ per-issue yaml backlog refactor. Step 1 = HIGH band (IP1\u2013IP5). Stage 1.1 closed 2026-04-17 (TECH-295..TECH-301 all archived \u2014 type extension + loader field mapping + soft-dep marker preservation + `proposed_solution` decision + MCP payload surfacing + round-trip test). Stage 1.2 opened 2026-04-17 \u2014 7 tasks filed below (TECH-323..TECH-329: shared lint core + `backlog_record_validate` + `reserve_backlog_ids` + concurrency test + `backlog_list` + filter tests). Step 2 = MEDIUM/LOW band (IP6\u2013IP9); file rows when Stage 1.x \u2192 `In Progress`.",
             "",
-            "### Stage 1.1 — Types + yaml loader (IP1 + IP2)",
+            "### Stage 1.1 \u2014 Types + yaml loader (IP1 + IP2)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.2 — MCP tools batch 1 (IP3 + IP4 + IP5)",
+            "### Stage 1.2 \u2014 MCP tools batch 1 (IP3 + IP4 + IP5)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 3.2 — Template frontmatter + backfill script",
+            "### Stage 3.2 \u2014 Template frontmatter + backfill script",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-858",
-          "checklist_line": "- [ ] **TECH-858 — Cross-check `related` ids exist** — In `tools/validate-backlog-yaml.mjs`, after loading both dirs, iterate records + assert every id in `related: []` exists in the combined set (open + archive).",
+          "checklist_line": "- [ ] **TECH-858 \u2014 Cross-check `related` ids exist** \u2014 In `tools/validate-backlog-yaml.mjs`, after loading both dirs, iterate records + assert every id in `related: []` exists in the combined set (open + archive).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-860",
-          "checklist_line": "- [ ] **TECH-860 — Fixtures for `related` existence check** — Add to `tools/scripts/test-fixtures/` — `related-exists-pass/` (two records, one refers to the other), `related-exists-fail/` (record refers to nonexistent id).",
+          "checklist_line": "- [ ] **TECH-860 \u2014 Fixtures for `related` existence check** \u2014 Add to `tools/scripts/test-fixtures/` \u2014 `related-exists-pass/` (two records, one refers to the other), `related-exists-fail/` (record refers to nonexistent id).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-861",
-          "checklist_line": "- [ ] **TECH-861 — Enforce `depends_on_raw` non-empty** — In `validate-backlog-yaml.mjs`, reject records where `depends_on: []` is non-empty AND `depends_on_raw` is empty / missing.",
+          "checklist_line": "- [ ] **TECH-861 \u2014 Enforce `depends_on_raw` non-empty** \u2014 In `validate-backlog-yaml.mjs`, reject records where `depends_on: []` is non-empty AND `depends_on_raw` is empty / missing.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-862",
-          "checklist_line": "- [ ] **TECH-862 — Warn on `depends_on_raw` drift** — Warning (not error) when `depends_on_raw` mentions an id not present in `depends_on: []`.",
+          "checklist_line": "- [ ] **TECH-862 \u2014 Warn on `depends_on_raw` drift** \u2014 Warning (not error) when `depends_on_raw` mentions an id not present in `depends_on: []`.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-863",
-          "checklist_line": "- [ ] **TECH-863 — Fixtures for `depends_on_raw` checks** — Add fixtures — `depends-raw-pass/`, `depends-raw-empty-fail/`, `depends-raw-drift-warn/`.",
+          "checklist_line": "- [ ] **TECH-863 \u2014 Fixtures for `depends_on_raw` checks** \u2014 Add fixtures \u2014 `depends-raw-pass/`, `depends-raw-empty-fail/`, `depends-raw-drift-warn/`.",
           "trailing_blanks": 1
         }
       ]
     },
     {
-      "header": "## MCP lifecycle tools — Opus 4.7 audit program",
+      "header": "## MCP lifecycle tools \u2014 Opus 4.7 audit program",
       "items": [
         {
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`](projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Reshapes 32-tool MCP surface from 4.6-era sequential-call shape to 4.7-era composite-bundle + structured-envelope architecture. Step 1 closed — Stage 1.1 + Stage 1.2 archived (glossary bulk-`terms`, structured `invariants_summary`, v0.6.0 release). Step 2 In Progress — Stage 2.1 archived (TECH-388..TECH-391: envelope + caller allowlist + unit tests). Stage 2.2 opened 2026-04-18 — 8 tasks filed below (TECH-398..TECH-405: wrap all 32 handlers in `wrapTool` by family — spec / rule+router / glossary / invariant / backlog / DB-coupled / bridge / Unity analysis). Step 2 exit ships as breaking release v1.0.0.",
+            "Orchestrator: [`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`](projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Reshapes 32-tool MCP surface from 4.6-era sequential-call shape to 4.7-era composite-bundle + structured-envelope architecture. Step 1 closed \u2014 Stage 1.1 + Stage 1.2 archived (glossary bulk-`terms`, structured `invariants_summary`, v0.6.0 release). Step 2 In Progress \u2014 Stage 2.1 archived (TECH-388..TECH-391: envelope + caller allowlist + unit tests). Stage 2.2 opened 2026-04-18 \u2014 8 tasks filed below (TECH-398..TECH-405: wrap all 32 handlers in `wrapTool` by family \u2014 spec / rule+router / glossary / invariant / backlog / DB-coupled / bridge / Unity analysis). Step 2 exit ships as breaking release v1.0.0.",
             "",
-            "### Stage 2.1 — Envelope Infrastructure + Auth",
+            "### Stage 2.1 \u2014 Envelope Infrastructure + Auth",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 2.2 — Rewrite 32 Tool Handlers",
+            "### Stage 2.2 \u2014 Rewrite 32 Tool Handlers",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-400",
-          "checklist_line": "- [ ] **TECH-400** — **MCP** — wrap glossary tools in envelope (Stage 2.2 T2.2.3)",
+          "checklist_line": "- [ ] **TECH-400** \u2014 **MCP** \u2014 wrap glossary tools in envelope (Stage 2.2 T2.2.3)",
           "trailing_blanks": 1
         }
       ]
@@ -259,62 +259,62 @@
           "type": "prose",
           "lines": [
             "",
-            "Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **TECH-552** (Unity Agent Bridge program — MCP + Editor queue hardening / transport / depth tiers per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §10). **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).",
+            "Evolve **Information Architecture** from doc retrieval \u2192 learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term \u2014 benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **TECH-552** (Unity Agent Bridge program \u2014 MCP + Editor queue hardening / transport / depth tiers per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) \u00a710). **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-77",
-          "checklist_line": "- [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)",
+          "checklist_line": "- [ ] **TECH-77** \u2014 **Unified semantic search** across all IA surfaces (FTS in Postgres)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-78",
-          "checklist_line": "- [ ] **TECH-78** — **Skill chaining engine** (`suggest_skill_chain` MCP tool)",
+          "checklist_line": "- [ ] **TECH-78** \u2014 **Skill chaining engine** (`suggest_skill_chain` MCP tool)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-79",
-          "checklist_line": "- [ ] **TECH-79** — **Agent memory across sessions** (persistent agent context)",
+          "checklist_line": "- [ ] **TECH-79** \u2014 **Agent memory across sessions** (persistent agent context)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-80",
-          "checklist_line": "- [ ] **TECH-80** — **Bidirectional IA**: agents propose **glossary** additions and flag **spec** ambiguity",
+          "checklist_line": "- [ ] **TECH-80** \u2014 **Bidirectional IA**: agents propose **glossary** additions and flag **spec** ambiguity",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-81",
-          "checklist_line": "- [ ] **TECH-81** — **Knowledge graph**: evolve IA from document retrieval to entity-relationship model",
+          "checklist_line": "- [ ] **TECH-81** \u2014 **Knowledge graph**: evolve IA from document retrieval to entity-relationship model",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-82",
-          "checklist_line": "- [ ] **TECH-82** — **Entity model** for gameplay database (time-series, events, snapshots, building identity)",
+          "checklist_line": "- [ ] **TECH-82** \u2014 **Entity model** for gameplay database (time-series, events, snapshots, building identity)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-83",
-          "checklist_line": "- [ ] **TECH-83** — **Agent-driven simulation parameter tuning**",
+          "checklist_line": "- [ ] **TECH-83** \u2014 **Agent-driven simulation parameter tuning**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-552",
-          "checklist_line": "- [ ] **TECH-552** — **Unity Agent Bridge** program — file-based command queue + MCP tools for agent-triggered exports",
+          "checklist_line": "- [ ] **TECH-552** \u2014 **Unity Agent Bridge** program \u2014 file-based command queue + MCP tools for agent-triggered exports",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-322",
-          "checklist_line": "- [ ] **TECH-322** — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)",
+          "checklist_line": "- [ ] **TECH-322** \u2014 Ship-stage chain shipper \u2014 stateful subagent + skill + command (Approach B)",
           "trailing_blanks": 1
         }
       ]
@@ -326,44 +326,74 @@
           "type": "prose",
           "lines": [
             "",
-            "**Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.",
+            "**Master plan:** `architecture-coherence-system` \u2014 split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-2443",
-          "checklist_line": "- [ ] **TECH-2443** — **arch_decision_get + arch_decision_list MCP tools** — read-side decision lookup + listing (Stage 1.3 T1.3.1)",
+          "checklist_line": "- [ ] **TECH-2443** \u2014 **arch_decision_get + arch_decision_list MCP tools** \u2014 read-side decision lookup + listing (Stage 1.3 T1.3.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2444",
-          "checklist_line": "- [ ] **TECH-2444** — **arch_surface_resolve MCP tool** — resolve Stage/Task → arch surfaces via `stage_arch_surfaces.surface_slug` join (Stage 1.3 T1.3.2)",
+          "checklist_line": "- [ ] **TECH-2444** \u2014 **arch_surface_resolve MCP tool** \u2014 resolve Stage/Task \u2192 arch surfaces via `stage_arch_surfaces.surface_slug` join (Stage 1.3 T1.3.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2445",
-          "checklist_line": "- [ ] **TECH-2445** — **arch_drift_scan MCP tool** — compare Stage `arch_surfaces[]` vs `arch_changelog` since last pending flip (Stage 1.3 T1.3.3)",
+          "checklist_line": "- [ ] **TECH-2445** \u2014 **arch_drift_scan MCP tool** \u2014 compare Stage `arch_surfaces[]` vs `arch_changelog` since last pending flip (Stage 1.3 T1.3.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2446",
-          "checklist_line": "- [ ] **TECH-2446** — **arch_changelog_since MCP tool** — ordered changelog entries since ts/commit-sha (Stage 1.3 T1.3.4)",
+          "checklist_line": "- [ ] **TECH-2446** \u2014 **arch_changelog_since MCP tool** \u2014 ordered changelog entries since ts/commit-sha (Stage 1.3 T1.3.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2447",
-          "checklist_line": "- [ ] **TECH-2447** — **arch-drift-scan skill** — SKILL.md + command-body + agent-body w/ AskUserQuestion polling (Stage 1.3 T1.3.5)",
+          "checklist_line": "- [ ] **TECH-2447** \u2014 **arch-drift-scan skill** \u2014 SKILL.md + command-body + agent-body w/ AskUserQuestion polling (Stage 1.3 T1.3.5)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2448",
-          "checklist_line": "- [ ] **TECH-2448** — **Skill sync + generated arch-drift-scan surfaces** — `npm run skill:sync:all` + validate:skill-drift (Stage 1.3 T1.3.6)",
+          "checklist_line": "- [ ] **TECH-2448** \u2014 **Skill sync + generated arch-drift-scan surfaces** \u2014 `npm run skill:sync:all` + validate:skill-drift (Stage 1.3 T1.3.6)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2563",
+          "checklist_line": "- [ ] **TECH-2563** \u2014 **Design-explore arch phase** \u2014 insert `Architecture Decision` phase between `Select Approach` + `Expand`; polls decision/rationale/alternatives/affected-surfaces; writes `arch_decisions` + `arch_changelog`; calls `arch_drift_scan`; appends drift report (Stage 1.4 T1.4.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2564",
+          "checklist_line": "- [ ] **TECH-2564** \u2014 **Post-write changelog hook** \u2014 commit touching `ia/specs/architecture/**` appends `arch_changelog` row; PostToolUse hook OR `validate:arch-coherence` rebuild; idempotent (Stage 1.4 T1.4.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2565",
+          "checklist_line": "- [ ] **TECH-2565** \u2014 **validate:all integration + CI** \u2014 wire `validate:arch-coherence` into `validate:all` chain in `package.json`; CI green (Stage 1.4 T1.4.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2566",
+          "checklist_line": "- [ ] **TECH-2566** \u2014 **Final ARCHITECTURE.md retirement** \u2014 confirm root `ARCHITECTURE.md` index-only (\u226430 lines); audit `CLAUDE.md` \u00a73 + `AGENTS.md` arch pointers (Stage 1.4 T1.4.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2567",
+          "checklist_line": "- [ ] **TECH-2567** \u2014 **Sub-spec README** \u2014 `ia/specs/architecture/README.md` (1 page) \u2014 sub-spec roles + lifecycle + cross-refs (Stage 1.4 T1.4.5)",
           "trailing_blanks": 1
         }
       ]
@@ -375,50 +405,80 @@
           "type": "prose",
           "lines": [
             "",
-            "**Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD** / **menus** / **panels** / **toolbars** — make **UI** composable from **IDE** (Cursor) + **AI agents**. Shipped: **reference spec** (**`ui-design-system.md`**), **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export + spec prose **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json). **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — new **BACKLOG** row if product wants it.",
+            "**Charter (\u00a7 Completed \u2014 [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD** / **menus** / **panels** / **toolbars** \u2014 make **UI** composable from **IDE** (Cursor) + **AI agents**. Shipped: **reference spec** (**`ui-design-system.md`**), **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **\u00a710**), **Cursor Skills**, optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export + spec prose **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json). **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** \u2014 new **BACKLOG** row if product wants it.",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "FEAT-51",
-          "checklist_line": "- [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)",
+          "checklist_line": "- [ ] **FEAT-51** \u2014 **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-72",
-          "checklist_line": "- [ ] **TECH-72** — **HUD** / **uGUI** scene hygiene for agents (**UI** inventory alignment)",
+          "checklist_line": "- [ ] **TECH-72** \u2014 **HUD** / **uGUI** scene hygiene for agents (**UI** inventory alignment)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-309",
-          "checklist_line": "- [ ] **TECH-309** — **StudioRackBlock schema** — extend UiTheme token ring w/ studio-rack block",
+          "checklist_line": "- [ ] **TECH-309** \u2014 **StudioRackBlock schema** \u2014 extend UiTheme token ring w/ studio-rack block",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-310",
-          "checklist_line": "- [ ] **TECH-310** — **MotionBlock schema + curves** — extend UiTheme w/ semantic motion block",
+          "checklist_line": "- [ ] **TECH-310** \u2014 **MotionBlock schema + curves** \u2014 extend UiTheme w/ semantic motion block",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-311",
-          "checklist_line": "- [ ] **TECH-311** — **DefaultUiTheme.asset defaults** — populate studio-rack + motion Inspector values",
+          "checklist_line": "- [ ] **TECH-311** \u2014 **DefaultUiTheme.asset defaults** \u2014 populate studio-rack + motion Inspector values",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-312",
-          "checklist_line": "- [ ] **TECH-312** — **ui-design-system §1 + §1.5 token catalog** — normative studio-rack + motion rows",
+          "checklist_line": "- [ ] **TECH-312** \u2014 **ui-design-system \u00a71 + \u00a71.5 token catalog** \u2014 normative studio-rack + motion rows",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-313",
-          "checklist_line": "- [ ] **TECH-313** — **Glossary rows** — UiTheme token ring / Studio-rack token / Motion token",
+          "checklist_line": "- [ ] **TECH-313** \u2014 **Glossary rows** \u2014 UiTheme token ring / Studio-rack token / Motion token",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2582",
+          "checklist_line": "- [ ] **TECH-2582 \u2014 Game UI Stage 2 T2.1 \u2014 UiTheme dict caches extension** \u2014 Extend `Assets/Scripts/Managers/GameManagers/UiTheme.cs` with dict-shaped token caches keyed by slug (palette / frame_style / font_face / motion_curve / illumination).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2583",
+          "checklist_line": "- [ ] **TECH-2583 \u2014 Game UI Stage 2 T2.2 \u2014 IR JSON DTOs + bridge handler skeleton** \u2014 New `Assets/Editor/Bridge/UiBakeHandler.cs` with `[Serializable]` IR DTOs + `JsonUtility.FromJson` parse + slot accept-rule guard.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2584",
+          "checklist_line": "- [ ] **TECH-2584 \u2014 Game UI Stage 2 T2.3 \u2014 bridge mutation kind registration** \u2014 Add `bake_ui_from_ir` switch case in `Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs` (sibling partial per guardrail #10).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2585",
+          "checklist_line": "- [ ] **TECH-2585 \u2014 Game UI Stage 2 T2.4 \u2014 token bake into UiTheme.asset** \u2014 `UiBakeHandler.Bake` populates `UiTheme.asset` dict caches deterministically from IR `tokens` block.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2586",
+          "checklist_line": "- [ ] **TECH-2586 \u2014 Game UI Stage 2 T2.5 \u2014 bake script + smoke test** \u2014 Wire `unity:bake-ui` script in `package.json`; smoke test runs against Stage 1 IR JSON.",
           "trailing_blanks": 1
         }
       ]
@@ -430,26 +490,26 @@
           "type": "prose",
           "lines": [
             "",
-            "Transform economy from \"money goes up forever\" → genuine city-builder sim w/ tension, feedback loops, player-visible consequences. **Sequential dependency order:** dynamic happiness (done — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **tax→demand feedback** (shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) + **FEAT-53** (districts) extend spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.",
+            "Transform economy from \"money goes up forever\" \u2192 genuine city-builder sim w/ tension, feedback loops, player-visible consequences. **Sequential dependency order:** dynamic happiness (done \u2014 [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) \u2192 **monthly maintenance** (shipped \u2014 **glossary** **Monthly maintenance**) \u2192 **tax\u2192demand feedback** (shipped \u2014 **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) \u2192 **FEAT-09** (trade/production \u2014 deep economy, moved from \u00a7 Low Priority). **FEAT-52** (city services coverage) + **FEAT-53** (districts) extend spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) \u00a74.",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "FEAT-52",
-          "checklist_line": "- [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)",
+          "checklist_line": "- [ ] **FEAT-52** \u2014 **City services coverage** model (fire, police, education, health)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-53",
-          "checklist_line": "- [ ] **FEAT-53** — **District / neighborhood** system",
+          "checklist_line": "- [ ] **FEAT-53** \u2014 **District / neighborhood** system",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-09",
-          "checklist_line": "- [ ] **FEAT-09** — Trade / Production / Salaries (deep economy)",
+          "checklist_line": "- [ ] **FEAT-09** \u2014 Trade / Production / Salaries (deep economy)",
           "trailing_blanks": 1
         }
       ]
@@ -461,20 +521,20 @@
           "type": "prose",
           "lines": [
             "",
-            "Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone density** depth. **Economic** issues → **§ Economic depth lane** above. **§ High Priority** still holds map/render/save **interrupt** bugs.",
+            "Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone density** depth. **Economic** issues \u2192 **\u00a7 Economic depth lane** above. **\u00a7 High Priority** still holds map/render/save **interrupt** bugs.",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "FEAT-43",
-          "checklist_line": "- [ ] **FEAT-43** — **Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center → edge gradient",
+          "checklist_line": "- [ ] **FEAT-43** \u2014 **Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center \u2192 edge gradient",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-08",
-          "checklist_line": "- [ ] **FEAT-08** — **Zone density** and **desirability** simulation: evolution to larger **buildings**",
+          "checklist_line": "- [ ] **FEAT-08** \u2014 **Zone density** and **desirability** simulation: evolution to larger **buildings**",
           "trailing_blanks": 1
         }
       ]
@@ -486,90 +546,90 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 = neighbor-city stub + interstate-border semantics — filed below. Step 2 = City MVP close. Stage 4 = bug stabilization — archived. Stage 5 = tick performance + metrics foundation — filed below (TECH-1471..TECH-1474).",
+            "Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields \u2014 archived. Stage 1.2 = cell-type split \u2014 archived. Stage 1.3 = neighbor-city stub + interstate-border semantics \u2014 filed below. Step 2 = City MVP close. Stage 4 = bug stabilization \u2014 archived. Stage 5 = tick performance + metrics foundation \u2014 filed below (TECH-1471..TECH-1474).",
             "",
-            "### Stage 1.3 — Neighbor-city stub + interstate-border semantics",
+            "### Stage 1.3 \u2014 Neighbor-city stub + interstate-border semantics",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 5 — City MVP close / Tick performance + metrics foundation",
+            "### Stage 5 \u2014 City MVP close / Tick performance + metrics foundation",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-1471",
-          "checklist_line": "- [ ] **TECH-1471** — Profiler audit + city tick hotspot doc (multi-scale Stage 5 T5.1)",
+          "checklist_line": "- [ ] **TECH-1471** \u2014 Profiler audit + city tick hotspot doc (multi-scale Stage 5 T5.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1472",
-          "checklist_line": "- [ ] **TECH-1472** — Top-allocator patches per profiler audit (multi-scale Stage 5 T5.2)",
+          "checklist_line": "- [ ] **TECH-1472** \u2014 Top-allocator patches per profiler audit (multi-scale Stage 5 T5.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1473",
-          "checklist_line": "- [ ] **TECH-1473** — MetricsRecorder Postgres-off verify (multi-scale Stage 5 T5.3)",
+          "checklist_line": "- [ ] **TECH-1473** \u2014 MetricsRecorder Postgres-off verify (multi-scale Stage 5 T5.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1474",
-          "checklist_line": "- [ ] **TECH-1474** — EditMode TickBudgetTests fixture + baseline snapshot (multi-scale Stage 5 T5.4)",
+          "checklist_line": "- [ ] **TECH-1474** \u2014 EditMode TickBudgetTests fixture + baseline snapshot (multi-scale Stage 5 T5.4)",
           "trailing_blanks": 1
         },
         {
           "type": "prose",
           "lines": [
-            "### Stage 6 — City MVP close / City readability dashboard",
+            "### Stage 6 \u2014 City MVP close / City readability dashboard",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-1804",
-          "checklist_line": "- [ ] **TECH-1804** — Seed chart token rows in catalog spine (multi-scale Stage 6 T6.1)",
+          "checklist_line": "- [ ] **TECH-1804** \u2014 Seed chart token rows in catalog spine (multi-scale Stage 6 T6.1)",
           "trailing_blanks": 1
         }
       ]
     },
     {
-      "header": "## Distribution program — Full-Game MVP Bucket 10",
+      "header": "## Distribution program \u2014 Full-Game MVP Bucket 10",
       "items": [
         {
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 10 of full-game-mvp umbrella (Tier E — unsigned installer tier for curated 20–50 testers; signing / Linux / WebGL / patch deltas / Steam / public itch deferred). Exploration: [`docs/distribution-exploration.md`](docs/distribution-exploration.md) §Design Expansion. Step 1 = Unity build pipeline + versioning manifest. Step 2 = unsigned packaging + `/download` publication + in-game notifier. Stage 1.1 opened 2026-04-18 — 4 tasks filed below (TECH-347..TECH-350: BuildInfo SO type + asset + SemverCompare helper + distribution glossary rows).",
+            "Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 10 of full-game-mvp umbrella (Tier E \u2014 unsigned installer tier for curated 20\u201350 testers; signing / Linux / WebGL / patch deltas / Steam / public itch deferred). Exploration: [`docs/distribution-exploration.md`](docs/distribution-exploration.md) \u00a7Design Expansion. Step 1 = Unity build pipeline + versioning manifest. Step 2 = unsigned packaging + `/download` publication + in-game notifier. Stage 1.1 opened 2026-04-18 \u2014 4 tasks filed below (TECH-347..TECH-350: BuildInfo SO type + asset + SemverCompare helper + distribution glossary rows).",
             "",
-            "### Stage 1.1 — BuildInfo SO + semver compare helper",
+            "### Stage 1.1 \u2014 BuildInfo SO + semver compare helper",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-347",
-          "checklist_line": "- [ ] **TECH-347** — BuildInfo ScriptableObject type (Stage 1.1 T1.1.1)",
+          "checklist_line": "- [ ] **TECH-347** \u2014 BuildInfo ScriptableObject type (Stage 1.1 T1.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-348",
-          "checklist_line": "- [ ] **TECH-348** — BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)",
+          "checklist_line": "- [ ] **TECH-348** \u2014 BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-349",
-          "checklist_line": "- [ ] **TECH-349** — SemverCompare helper + EditMode truth-table tests (Stage 1.1 T1.1.3)",
+          "checklist_line": "- [ ] **TECH-349** \u2014 SemverCompare helper + EditMode truth-table tests (Stage 1.1 T1.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-350",
-          "checklist_line": "- [ ] **TECH-350** — Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)",
+          "checklist_line": "- [ ] **TECH-350** \u2014 Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)",
           "trailing_blanks": 1
         }
       ]
@@ -581,9 +641,9 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D — execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. **Stage 1.1 (Core types) closed 2026-04-21** — TECH-303, TECH-304 archived. Next: `/stage-file ia/projects/citystats-overhaul-master-plan.md` Stage 2 (CityStatsFacade + tick bracket; tasks still `_pending_`).",
+            "Orchestrator: [`ia/projects/citystats-overhaul-master-plan.md`](projects/citystats-overhaul-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 8 of full-game-mvp umbrella (Tier D \u2014 execution gated on downstream triggers; filing now for IA alignment). Replace `CityStats` god-class w/ typed read-model facade (`CityStatsFacade`) + columnar ring-buffer store (`ColumnarStatsStore`); migrate consumers; add region/country rollup facades; surface web stats route. **Stage 1.1 (Core types) closed 2026-04-21** \u2014 TECH-303, TECH-304 archived. Next: `/stage-file ia/projects/citystats-overhaul-master-plan.md` Stage 2 (CityStatsFacade + tick bracket; tasks still `_pending_`).",
             "",
-            "### Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore) — **closed**",
+            "### Stage 1.1 \u2014 Core types (IStatsReadModel, StatKey, ColumnarStatsStore) \u2014 **closed**",
             ""
           ]
         }
@@ -596,172 +656,172 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-depth-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 2 of full-game-mvp umbrella. Shared 12-signal simulation contract + district aggregation + `HappinessComposer` / `DesirabilityComposer` migration + 7 new simulation sub-surfaces + signal overlays + HUD/district panel parity. Step 1 = Signal Layer Foundation. Stage 1.1 opened 2026-04-17 — 4 tasks filed below (TECH-305..TECH-308: `SimulationSignal` enum + producer/consumer interfaces + `SignalField` + `SignalMetadataRegistry` SO + `SignalFieldRegistry` MonoBehaviour + `ia/specs/simulation-signals.md` reference spec).",
+            "Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-depth-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 2 of full-game-mvp umbrella. Shared 12-signal simulation contract + district aggregation + `HappinessComposer` / `DesirabilityComposer` migration + 7 new simulation sub-surfaces + signal overlays + HUD/district panel parity. Step 1 = Signal Layer Foundation. Stage 1.1 opened 2026-04-17 \u2014 4 tasks filed below (TECH-305..TECH-308: `SimulationSignal` enum + producer/consumer interfaces + `SignalField` + `SignalMetadataRegistry` SO + `SignalFieldRegistry` MonoBehaviour + `ia/specs/simulation-signals.md` reference spec).",
             "",
-            "### Stage 1.1 — Signal Contract Primitives",
+            "### Stage 1.1 \u2014 Signal Contract Primitives",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-305",
-          "checklist_line": "- [ ] **TECH-305** — Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)",
+          "checklist_line": "- [ ] **TECH-305** \u2014 Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-306",
-          "checklist_line": "- [ ] **TECH-306** — Add `SignalField` + `SignalMetadataRegistry` ScriptableObject (Stage 1.1 T1.1.2)",
+          "checklist_line": "- [ ] **TECH-306** \u2014 Add `SignalField` + `SignalMetadataRegistry` ScriptableObject (Stage 1.1 T1.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-307",
-          "checklist_line": "- [ ] **TECH-307** — Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)",
+          "checklist_line": "- [ ] **TECH-307** \u2014 Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-308",
-          "checklist_line": "- [ ] **TECH-308** — Author `ia/specs/simulation-signals.md` reference spec (Stage 1.1 T1.1.4)",
+          "checklist_line": "- [ ] **TECH-308** \u2014 Author `ia/specs/simulation-signals.md` reference spec (Stage 1.1 T1.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1588",
-          "checklist_line": "- [ ] **TECH-1588** — DiffusionKernel + Example 1 EditMode test (Stage 2 T2.1)",
+          "checklist_line": "- [ ] **TECH-1588** \u2014 DiffusionKernel + Example 1 EditMode test (Stage 2 T2.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1589",
-          "checklist_line": "- [ ] **TECH-1589** — SignalTickScheduler MonoBehaviour (Stage 2 T2.2)",
+          "checklist_line": "- [ ] **TECH-1589** \u2014 SignalTickScheduler MonoBehaviour (Stage 2 T2.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1590",
-          "checklist_line": "- [ ] **TECH-1590** — SimulationManager wiring + tick smoke test (Stage 2 T2.3)",
+          "checklist_line": "- [ ] **TECH-1590** \u2014 SimulationManager wiring + tick smoke test (Stage 2 T2.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1618",
-          "checklist_line": "- [ ] **TECH-1618 — DistrictMap data model + DistrictSignalCache real type** — Author DistrictMap plain C# class + DistrictMapData serializable + replace empty DistrictSignalCache.cs with real Get/GetAll/Set/Clear API.",
+          "checklist_line": "- [ ] **TECH-1618 \u2014 DistrictMap data model + DistrictSignalCache real type** \u2014 Author DistrictMap plain C# class + DistrictMapData serializable + replace empty DistrictSignalCache.cs with real Get/GetAll/Set/Clear API.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1619",
-          "checklist_line": "- [ ] **TECH-1619 — DistrictManager MonoBehaviour + tick Phase 0 hook** — Author DistrictManager MonoBehaviour + add SignalTickScheduler hook calling Rebuild() at top of Tick.",
+          "checklist_line": "- [ ] **TECH-1619 \u2014 DistrictManager MonoBehaviour + tick Phase 0 hook** \u2014 Author DistrictManager MonoBehaviour + add SignalTickScheduler hook calling Rebuild() at top of Tick.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1621",
-          "checklist_line": "- [ ] **TECH-1621 — DistrictAggregator + scheduler wiring + EditMode aggregator tests** — Author DistrictAggregator static class + wire into SignalTickScheduler post-diffusion + ship aggregator EditMode tests.",
+          "checklist_line": "- [ ] **TECH-1621 \u2014 DistrictAggregator + scheduler wiring + EditMode aggregator tests** \u2014 Author DistrictAggregator static class + wire into SignalTickScheduler post-diffusion + ship aggregator EditMode tests.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1620",
-          "checklist_line": "- [ ] **TECH-1620 — GameSaveManager schema v5 — DistrictMap save/load + round-trip test** — Bump GameSaveData schema 4-to-5 + add districtMap field + capture/restore via DistrictManager + ship round-trip test.",
+          "checklist_line": "- [ ] **TECH-1620 \u2014 GameSaveManager schema v5 \u2014 DistrictMap save/load + round-trip test** \u2014 Bump GameSaveData schema 4-to-5 + add districtMap field + capture/restore via DistrictManager + ship round-trip test.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1676",
-          "checklist_line": "- [ ] **TECH-1676 — HappinessComposer consumer** — Author Assets/Scripts/Simulation/HappinessComposer.cs MonoBehaviour implementing ISignalConsumer; ports ComputeTargetHappiness with PollutionAir read via DistrictSignalCache mean.",
+          "checklist_line": "- [ ] **TECH-1676 \u2014 HappinessComposer consumer** \u2014 Author Assets/Scripts/Simulation/HappinessComposer.cs MonoBehaviour implementing ISignalConsumer; ports ComputeTargetHappiness with PollutionAir read via DistrictSignalCache mean.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1677",
-          "checklist_line": "- [ ] **TECH-1677 — PollutionAir producers + sink** — Author IndustrialPollutionProducer + PowerPlantPollutionProducer + ForestPollutionSink under Assets/Scripts/Simulation/Signals/Producers/.",
+          "checklist_line": "- [ ] **TECH-1677 \u2014 PollutionAir producers + sink** \u2014 Author IndustrialPollutionProducer + PowerPlantPollutionProducer + ForestPollutionSink under Assets/Scripts/Simulation/Signals/Producers/.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1678",
-          "checklist_line": "- [ ] **TECH-1678 — Scene wiring + scheduler registration** — Wire 4 new MonoBehaviours into MainScene.unity Inspector + append to SignalTickScheduler producer/consumer lists via unity_bridge_command.",
+          "checklist_line": "- [ ] **TECH-1678 \u2014 Scene wiring + scheduler registration** \u2014 Wire 4 new MonoBehaviours into MainScene.unity Inspector + append to SignalTickScheduler producer/consumer lists via unity_bridge_command.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1679",
-          "checklist_line": "- [ ] **TECH-1679 — CityStats facade migration** — Migrate CityStats.happiness + CityStats.pollution getters to delegate to HappinessComposer + SignalFieldRegistry; remove inline RecalculatePollution/RecalculateHappiness call sites.",
+          "checklist_line": "- [ ] **TECH-1679 \u2014 CityStats facade migration** \u2014 Migrate CityStats.happiness + CityStats.pollution getters to delegate to HappinessComposer + SignalFieldRegistry; remove inline RecalculatePollution/RecalculateHappiness call sites.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1680",
-          "checklist_line": "- [ ] **TECH-1680 — HappinessComposer parity test** — Ship HappinessComposerParityTest EditMode TestFixture; assert ≤5-point delta vs legacy + no NaN/Infinity + non-negative PollutionAir cells.",
+          "checklist_line": "- [ ] **TECH-1680 \u2014 HappinessComposer parity test** \u2014 Ship HappinessComposerParityTest EditMode TestFixture; assert \u22645-point delta vs legacy + no NaN/Infinity + non-negative PollutionAir cells.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1711",
-          "checklist_line": "- [ ] **TECH-1711 — DesirabilityComposer consumer** — Author Assets/Scripts/Simulation/DesirabilityComposer.cs MonoBehaviour implementing ISignalConsumer; reads LandValue + PollutionAir + ServiceParks via SignalFieldRegistry; per-cell Mathf.Clamp01 store in float[] _cellDesirability with public CellValue(x,y) reader.",
+          "checklist_line": "- [ ] **TECH-1711 \u2014 DesirabilityComposer consumer** \u2014 Author Assets/Scripts/Simulation/DesirabilityComposer.cs MonoBehaviour implementing ISignalConsumer; reads LandValue + PollutionAir + ServiceParks via SignalFieldRegistry; per-cell Mathf.Clamp01 store in float[] _cellDesirability with public CellValue(x,y) reader.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1712",
-          "checklist_line": "- [ ] **TECH-1712 — FEAT-43 toggle wiring** — Add useSignalDesirability bool + DesirabilityComposer Inspector ref to AutoZoningManager + IsSignalDesirabilityEnabled getter; replace ZoneManager.AverageSectionDesirability c.desirability read with composer-conditional read at line 1096; default off for risk-free rollback.",
+          "checklist_line": "- [ ] **TECH-1712 \u2014 FEAT-43 toggle wiring** \u2014 Add useSignalDesirability bool + DesirabilityComposer Inspector ref to AutoZoningManager + IsSignalDesirabilityEnabled getter; replace ZoneManager.AverageSectionDesirability c.desirability read with composer-conditional read at line 1096; default off for risk-free rollback.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1713",
-          "checklist_line": "- [ ] **TECH-1713 — Scene wiring + scheduler registration** — Wire DesirabilityComposer into MainScene.unity Inspector via unity_bridge_command attach_component + append to SignalTickScheduler.consumerList + set AutoZoningManager + ZoneManager Inspector refs + save_scene; useSignalDesirability stays false-by-default.",
+          "checklist_line": "- [ ] **TECH-1713 \u2014 Scene wiring + scheduler registration** \u2014 Wire DesirabilityComposer into MainScene.unity Inspector via unity_bridge_command attach_component + append to SignalTickScheduler.consumerList + set AutoZoningManager + ZoneManager Inspector refs + save_scene; useSignalDesirability stays false-by-default.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1714",
-          "checklist_line": "- [ ] **TECH-1714 — Step 4 shell MonoBehaviours** — Author ConstructionStageController.cs + DensityEvolutionTicker.cs shell MonoBehaviours under Assets/Scripts/Simulation/ with no-op SetDesirabilitySource stubs + DesirabilityComposer Inspector refs + Awake fallback + empty Update; wire both into MainScene.unity via unity_bridge_command + save_scene.",
+          "checklist_line": "- [ ] **TECH-1714 \u2014 Step 4 shell MonoBehaviours** \u2014 Author ConstructionStageController.cs + DensityEvolutionTicker.cs shell MonoBehaviours under Assets/Scripts/Simulation/ with no-op SetDesirabilitySource stubs + DesirabilityComposer Inspector refs + Awake fallback + empty Update; wire both into MainScene.unity via unity_bridge_command + save_scene.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1725",
-          "checklist_line": "- [ ] **TECH-1725 — DesirabilityComposer parity test** — Ship Assets/Tests/EditMode/Simulation/Signals/DesirabilityComposerParityTest.cs TestFixture; 30-tick warmup asserts CellValue in [0,1] + no NaN/Infinity + toggle-off legacy parity within 1e-5 + toggle-on composer parity within 1e-5 on 5-cell section.",
+          "checklist_line": "- [ ] **TECH-1725 \u2014 DesirabilityComposer parity test** \u2014 Ship Assets/Tests/EditMode/Simulation/Signals/DesirabilityComposerParityTest.cs TestFixture; 30-tick warmup asserts CellValue in [0,1] + no NaN/Infinity + toggle-off legacy parity within 1e-5 + toggle-on composer parity within 1e-5 on 5-cell section.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1790",
-          "checklist_line": "- [ ] **TECH-1790 — SignalWarmupPass class + idempotency test** — Author Assets/Scripts/Simulation/Signals/SignalWarmupPass.cs exposing Run(SignalFieldRegistry, DistrictManager, SignalTickScheduler, int ticks = 5) — pre-roll N ticks via existing SignalTickScheduler.Tick orchestration; ship Assets/Tests/EditMode/Simulation/Signals/SignalWarmupPassIdempotencyTest.cs asserting two consecutive Run() invocations produce byte-identical SignalField cell arrays across all 12 signals (city-sim-depth Stage 6 T6.1).",
+          "checklist_line": "- [ ] **TECH-1790 \u2014 SignalWarmupPass class + idempotency test** \u2014 Author Assets/Scripts/Simulation/Signals/SignalWarmupPass.cs exposing Run(SignalFieldRegistry, DistrictManager, SignalTickScheduler, int ticks = 5) \u2014 pre-roll N ticks via existing SignalTickScheduler.Tick orchestration; ship Assets/Tests/EditMode/Simulation/Signals/SignalWarmupPassIdempotencyTest.cs asserting two consecutive Run() invocations produce byte-identical SignalField cell arrays across all 12 signals (city-sim-depth Stage 6 T6.1).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1791",
-          "checklist_line": "- [ ] **TECH-1791 — SignalTuningWeightsAsset SO + composer wiring** — Add Assets/Scripts/Simulation/Signals/SignalTuningWeightsAsset.cs ScriptableObject mirroring HappinessComposer + DesirabilityComposer const weights; author Assets/ScriptableObjects/SignalTuningWeights.asset with literal defaults; replace consts in HappinessComposer.cs + DesirabilityComposer.cs with [SerializeField] weights reads; HappinessComposerParityTest + DesirabilityComposerParityTest stay green (city-sim-depth Stage 6 T6.2).",
+          "checklist_line": "- [ ] **TECH-1791 \u2014 SignalTuningWeightsAsset SO + composer wiring** \u2014 Add Assets/Scripts/Simulation/Signals/SignalTuningWeightsAsset.cs ScriptableObject mirroring HappinessComposer + DesirabilityComposer const weights; author Assets/ScriptableObjects/SignalTuningWeights.asset with literal defaults; replace consts in HappinessComposer.cs + DesirabilityComposer.cs with [SerializeField] weights reads; HappinessComposerParityTest + DesirabilityComposerParityTest stay green (city-sim-depth Stage 6 T6.2).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1792",
-          "checklist_line": "- [ ] **TECH-1792 — GameSaveManager schema v6 — tuning weights + warmup hook** — In Assets/Scripts/Managers/GameManagers/GameSaveManager.cs bump GameSaveData.CurrentSchemaVersion 5→6; add tuningWeights snapshot field; extend MigrateSave with 5→6 case (null tuningWeights → asset defaults intact); after grid restore + DistrictManager.Rebuild fallback invoke SignalWarmupPass.Run before first tick (city-sim-depth Stage 6 T6.3 — sizing waiver per stage-decompose Phase 3.5).",
+          "checklist_line": "- [ ] **TECH-1792 \u2014 GameSaveManager schema v6 \u2014 tuning weights + warmup hook** \u2014 In Assets/Scripts/Managers/GameManagers/GameSaveManager.cs bump GameSaveData.CurrentSchemaVersion 5\u21926; add tuningWeights snapshot field; extend MigrateSave with 5\u21926 case (null tuningWeights \u2192 asset defaults intact); after grid restore + DistrictManager.Rebuild fallback invoke SignalWarmupPass.Run before first tick (city-sim-depth Stage 6 T6.3 \u2014 sizing waiver per stage-decompose Phase 3.5).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1793",
-          "checklist_line": "- [ ] **TECH-1793 — Save round-trip + warmup integration test** — Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs — v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).",
+          "checklist_line": "- [ ] **TECH-1793 \u2014 Save round-trip + warmup integration test** \u2014 Add Assets/Tests/EditMode/Simulation/Signals/SignalSaveWarmupIntegrationTest.cs \u2014 v6 round-trip preserves tuningWeights + post-load SignalWarmupPass produces stable deterministic state; v5 backward-compat case asserts asset defaults preserved + warmup runs cleanly; mirror DistrictMapSaveRoundTripTests.cs cadence (city-sim-depth Stage 6 T6.4).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2411",
-          "checklist_line": "- [ ] **TECH-2411 — ConstructionCurveTable SO + stage machine + per-tick advance** — Author NEW Assets/Scripts/Simulation/ConstructionCurveTable.cs ScriptableObject (12 rows R/C/I/S × Light/Medium/Heavy) + Resources/Construction/ConstructionCurveTable.asset companion + ConstructionStageController.cs ProcessTick() body wiring DesirabilityComposer.CellValue + curve-table lookup; effectiveTime = baseTime / (0.5 + Mathf.Clamp01(desirability)) with per-stage advance at effectiveTime/4 days (4-stage progression 0→3); append runtime fields constructionStage + constructionDayAccumulator to CityCell.cs (NOT persisted this Stage); wire SimulationManager.ProcessSimulationTick after signalTickScheduler.Tick and before autoRoadBuilder.ProcessTick (city-sim-depth Stage 10 T10.1).",
+          "checklist_line": "- [ ] **TECH-2411 \u2014 ConstructionCurveTable SO + stage machine + per-tick advance** \u2014 Author NEW Assets/Scripts/Simulation/ConstructionCurveTable.cs ScriptableObject (12 rows R/C/I/S \u00d7 Light/Medium/Heavy) + Resources/Construction/ConstructionCurveTable.asset companion + ConstructionStageController.cs ProcessTick() body wiring DesirabilityComposer.CellValue + curve-table lookup; effectiveTime = baseTime / (0.5 + Mathf.Clamp01(desirability)) with per-stage advance at effectiveTime/4 days (4-stage progression 0\u21923); append runtime fields constructionStage + constructionDayAccumulator to CityCell.cs (NOT persisted this Stage); wire SimulationManager.ProcessSimulationTick after signalTickScheduler.Tick and before autoRoadBuilder.ProcessTick (city-sim-depth Stage 10 T10.1).",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2412",
-          "checklist_line": "- [ ] **TECH-2412 — ZoneManager placement hook + sprite swap + EditMode parity test** — Add public BeginConstruction(CityCell pivotCell, Zone.ZoneType zoneType) entry to ConstructionStageController.cs (sets pivot stage 0 + invokes OnStageBoundary); implement OnStageBoundary sprite swap with Resources fallback chain (zone-specific → placeholder → graceful skip); hook ZoneManager.PlaceZoneBuilding at line ~1265 (pivot-cell only per pivot-cell-and-multi-cell-buildings spec); author Assets/Tests/EditMode/Simulation/ConstructionStageControllerTest.cs — 5 tests: parity (R-medium, desirability=0.6), edge-low (desirability=0), edge-high (desirability=1), sprite-fallback graceful, multi-cell pivot-only (city-sim-depth Stage 10 T10.2).",
+          "checklist_line": "- [ ] **TECH-2412 \u2014 ZoneManager placement hook + sprite swap + EditMode parity test** \u2014 Add public BeginConstruction(CityCell pivotCell, Zone.ZoneType zoneType) entry to ConstructionStageController.cs (sets pivot stage 0 + invokes OnStageBoundary); implement OnStageBoundary sprite swap with Resources fallback chain (zone-specific \u2192 placeholder \u2192 graceful skip); hook ZoneManager.PlaceZoneBuilding at line ~1265 (pivot-cell only per pivot-cell-and-multi-cell-buildings spec); author Assets/Tests/EditMode/Simulation/ConstructionStageControllerTest.cs \u2014 5 tests: parity (R-medium, desirability=0.6), edge-low (desirability=0), edge-high (desirability=1), sprite-fallback graceful, multi-cell pivot-only (city-sim-depth Stage 10 T10.2).",
           "trailing_blanks": 1
         }
       ]
@@ -773,34 +833,34 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 4a of full-game-mvp umbrella. Country-pool-first water / power / sewage w/ local contributor buildings feeding per-scale pools (city / region / country). EMA soft warning → cliff-edge deficit (freeze + happiness decay + desirability decay). Stage 1.1 opened 2026-04-17 — 4 tasks filed below (TECH-331..TECH-334: `UtilityKind` / `ScaleTag` / `PoolStatus` enums + `PoolState` struct + `IUtilityContributor` / `IUtilityConsumer` interfaces + assembly compile-check).",
+            "Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 4a of full-game-mvp umbrella. Country-pool-first water / power / sewage w/ local contributor buildings feeding per-scale pools (city / region / country). EMA soft warning \u2192 cliff-edge deficit (freeze + happiness decay + desirability decay). Stage 1.1 opened 2026-04-17 \u2014 4 tasks filed below (TECH-331..TECH-334: `UtilityKind` / `ScaleTag` / `PoolStatus` enums + `PoolState` struct + `IUtilityContributor` / `IUtilityConsumer` interfaces + assembly compile-check).",
             "",
-            "### Stage 1.1 — Data contracts + enums",
+            "### Stage 1.1 \u2014 Data contracts + enums",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-331",
-          "checklist_line": "- [ ] **TECH-331** — Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)",
+          "checklist_line": "- [ ] **TECH-331** \u2014 Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-332",
-          "checklist_line": "- [ ] **TECH-332** — Add `PoolState` struct (Stage 1.1 T1.1.2)",
+          "checklist_line": "- [ ] **TECH-332** \u2014 Add `PoolState` struct (Stage 1.1 T1.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-333",
-          "checklist_line": "- [ ] **TECH-333** — Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)",
+          "checklist_line": "- [ ] **TECH-333** \u2014 Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-334",
-          "checklist_line": "- [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 T1.1.4)",
+          "checklist_line": "- [ ] **TECH-334** \u2014 Utilities assembly + compile-check green (Stage 1.1 T1.1.4)",
           "trailing_blanks": 1
         }
       ]
@@ -812,28 +872,28 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/skill-training-master-plan.md`](projects/skill-training-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Approach A two-skill split — structured JSON self-report emitter at Phase-N-tail of 13 lifecycle skills + `skill-train` consumer subagent (Opus, on-demand) that synthesizes recurring friction into patch proposals for SKILL.md bodies, gated by user review. Exploration: [`docs/skill-training-exploration.md`](docs/skill-training-exploration.md) §Design Expansion. Stage 1.1 opened 2026-04-18 — 4 tasks filed below (TECH-367..TECH-370: glossary rows × 4 + agent-lifecycle surface-map row + CLAUDE.md §3 pointer + AGENTS.md retrospective paragraph). Satisfies invariant #12 — terminology lands before Stage 1.2 or Step 2 authors cross-refs.",
+            "Orchestrator: [`ia/projects/skill-training-master-plan.md`](projects/skill-training-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Approach A two-skill split \u2014 structured JSON self-report emitter at Phase-N-tail of 13 lifecycle skills + `skill-train` consumer subagent (Opus, on-demand) that synthesizes recurring friction into patch proposals for SKILL.md bodies, gated by user review. Exploration: [`docs/skill-training-exploration.md`](docs/skill-training-exploration.md) \u00a7Design Expansion. Stage 1.1 opened 2026-04-18 \u2014 4 tasks filed below (TECH-367..TECH-370: glossary rows \u00d7 4 + agent-lifecycle surface-map row + CLAUDE.md \u00a73 pointer + AGENTS.md retrospective paragraph). Satisfies invariant #12 \u2014 terminology lands before Stage 1.2 or Step 2 authors cross-refs.",
             "",
-            "### Stage 1.1 — Glossary + Docs Foundation",
+            "### Stage 1.1 \u2014 Glossary + Docs Foundation",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-368",
-          "checklist_line": "- [ ] **TECH-368** — agent-lifecycle.md surface-map row for /skill-train (Stage 1.1 T1.1.2)",
+          "checklist_line": "- [ ] **TECH-368** \u2014 agent-lifecycle.md surface-map row for /skill-train (Stage 1.1 T1.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-369",
-          "checklist_line": "- [ ] **TECH-369** — CLAUDE.md §3 pointer for skill-train SKILL (Stage 1.1 T1.1.3)",
+          "checklist_line": "- [ ] **TECH-369** \u2014 CLAUDE.md \u00a73 pointer for skill-train SKILL (Stage 1.1 T1.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-370",
-          "checklist_line": "- [ ] **TECH-370** — AGENTS.md pointer for skill-train retrospective (Stage 1.1 T1.1.4)",
+          "checklist_line": "- [ ] **TECH-370** \u2014 AGENTS.md pointer for skill-train retrospective (Stage 1.1 T1.1.4)",
           "trailing_blanks": 1
         }
       ]
@@ -845,76 +905,76 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 — Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 closed 2026-04-16 (TECH-243..TECH-246 all archived — `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update). Step 5 = DSP kernel v2 (post-MVP FX chain + LFOs + biquad BP + param smoothing). Stage 5.1 opened 2026-04-16 — 5 tasks filed below (FX data model + memoryless cores: BitCrush / RingMod / SoftClip / DcBlocker; delay-line kinds stubbed to passthrough until Stage 5.2). Stage 5.2 opened 2026-04-16 — 6 tasks filed below (TECH-270..TECH-275: `BlipDelayPool` service + `Render` delay-buffer overload + `BlipBaker` lease-on-bake + comb / allpass / chorus / flanger kernels + NoAlloc chorus gate).",
+            "Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress \u2014 Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 \u2014 Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 \u2014 Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 closed 2026-04-16 (TECH-243..TECH-246 all archived \u2014 `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update). Step 5 = DSP kernel v2 (post-MVP FX chain + LFOs + biquad BP + param smoothing). Stage 5.1 opened 2026-04-16 \u2014 5 tasks filed below (FX data model + memoryless cores: BitCrush / RingMod / SoftClip / DcBlocker; delay-line kinds stubbed to passthrough until Stage 5.2). Stage 5.2 opened 2026-04-16 \u2014 6 tasks filed below (TECH-270..TECH-275: `BlipDelayPool` service + `Render` delay-buffer overload + `BlipBaker` lease-on-bake + comb / allpass / chorus / flanger kernels + NoAlloc chorus gate).",
             "",
-            "### Stage 3.1 — Patch authoring + catalog wiring",
+            "### Stage 3.1 \u2014 Patch authoring + catalog wiring",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 3.2 — UI + Eco + Sys call sites",
+            "### Stage 3.2 \u2014 UI + Eco + Sys call sites",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 3.3 — World lane call sites",
+            "### Stage 3.3 \u2014 World lane call sites",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 3.4 — Golden fixtures + spec promotion + glossary",
+            "### Stage 3.4 \u2014 Golden fixtures + spec promotion + glossary",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
             "",
-            "### Stage 1.1 — Audio infrastructure + persistent bootstrap",
+            "### Stage 1.1 \u2014 Audio infrastructure + persistent bootstrap",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.2 — Patch data model",
+            "### Stage 1.2 \u2014 Patch data model",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.3 — Voice DSP kernel",
+            "### Stage 1.3 \u2014 Voice DSP kernel",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.4 — EditMode DSP tests",
+            "### Stage 1.4 \u2014 EditMode DSP tests",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 2.1 — Bake-to-clip pipeline",
+            "### Stage 2.1 \u2014 Bake-to-clip pipeline",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 2.2 — Catalog + mixer router + cooldown registry + player pool",
+            "### Stage 2.2 \u2014 Catalog + mixer router + cooldown registry + player pool",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 2.3 — BlipEngine facade + main-thread gate",
+            "### Stage 2.3 \u2014 BlipEngine facade + main-thread gate",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 2.4 — PlayMode smoke test",
+            "### Stage 2.4 \u2014 PlayMode smoke test",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 4.1 — Options panel UI (slider + mute toggle + controller stub)",
+            "### Stage 4.1 \u2014 Options panel UI (slider + mute toggle + controller stub)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 4.2 — Settings controller + persistence + mute semantics",
+            "### Stage 4.2 \u2014 Settings controller + persistence + mute semantics",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 5.1 — FX data model + memoryless cores",
+            "### Stage 5.1 \u2014 FX data model + memoryless cores",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 5.2 — Delay-line FX + BlipDelayPool",
+            "### Stage 5.2 \u2014 Delay-line FX + BlipDelayPool",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 5.3 — LFOs + routing matrix + param smoothing",
+            "### Stage 5.3 \u2014 LFOs + routing matrix + param smoothing",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             ""
           ]
         }
@@ -927,46 +987,46 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = audio infra + playlist pipeline. Stage 1.1 opened 2026-04-17 — 6 tasks filed below (TECH-316..TECH-321: Blip-Music mixer group + Master/Music param exposure + `MusicBootstrap` consts + Awake shape + prefab + MainMenu placement). Stages 1.2 / 2.x / 3.x remain in master plan; file rows when parent stage → `In Progress`.",
+            "Orchestrator: [`ia/projects/music-player-master-plan.md`](projects/music-player-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = audio infra + playlist pipeline. Stage 1.1 opened 2026-04-17 \u2014 6 tasks filed below (TECH-316..TECH-321: Blip-Music mixer group + Master/Music param exposure + `MusicBootstrap` consts + Awake shape + prefab + MainMenu placement). Stages 1.2 / 2.x / 3.x remain in master plan; file rows when parent stage \u2192 `In Progress`.",
             "",
-            "### Stage 1.1 — Mixer extension + persistent bootstrap",
+            "### Stage 1.1 \u2014 Mixer extension + persistent bootstrap",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-316",
-          "checklist_line": "- [ ] **TECH-316** — **Music** — Add Blip-Music mixer group (Stage 1.1 Phase 1)",
+          "checklist_line": "- [ ] **TECH-316** \u2014 **Music** \u2014 Add Blip-Music mixer group (Stage 1.1 Phase 1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-317",
-          "checklist_line": "- [ ] **TECH-317** — **Music** — Expose MusicVolume + MasterVolume params (Stage 1.1 Phase 1)",
+          "checklist_line": "- [ ] **TECH-317** \u2014 **Music** \u2014 Expose MusicVolume + MasterVolume params (Stage 1.1 Phase 1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-318",
-          "checklist_line": "- [ ] **TECH-318** — **Music** — Author MusicBootstrap constants (Stage 1.1 Phase 2)",
+          "checklist_line": "- [ ] **TECH-318** \u2014 **Music** \u2014 Author MusicBootstrap constants (Stage 1.1 Phase 2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-319",
-          "checklist_line": "- [ ] **TECH-319** — **Music** — MusicBootstrap.Awake shape (Stage 1.1 Phase 2)",
+          "checklist_line": "- [ ] **TECH-319** \u2014 **Music** \u2014 MusicBootstrap.Awake shape (Stage 1.1 Phase 2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-320",
-          "checklist_line": "- [ ] **TECH-320** — **Music** — MusicBootstrap prefab creation (Stage 1.1 Phase 3)",
+          "checklist_line": "- [ ] **TECH-320** \u2014 **Music** \u2014 MusicBootstrap prefab creation (Stage 1.1 Phase 3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-321",
-          "checklist_line": "- [ ] **TECH-321** — **Music** — MainMenu scene placement + compile verify (Stage 1.1 Phase 3)",
+          "checklist_line": "- [ ] **TECH-321** \u2014 **Music** \u2014 MainMenu scene placement + compile verify (Stage 1.1 Phase 3)",
           "trailing_blanks": 1
         }
       ]
@@ -978,52 +1038,52 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stages 1.1–1.2 archived (TECH-123..TECH-128, TECH-147..TECH-152 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.3 opened 2026-04-15 — 6 tasks filed below (K-means extractor + palette CLI + apply_ramp + compose wiring + palette tests + bootstrap residential JSON + Tier 1 `.gpl` round-trip). T1.3.3+T1.3.4 merged into TECH-155 (apply_ramp API + compose wiring — tight coupling, single commit unit); T1.3.7+T1.3.8+T1.3.9 merged into TECH-158 (GPL export + import + round-trip test — must land atomic for symmetry). Stage 1.4 opened 2026-04-15 — 9 tasks filed below (slopes.yaml + iso_stepped_foundation + compose auto-insert + slope regression tests + Unity meta writer + promote/reject CLI + Aseprite bin resolver + layered .aseprite emit + promote --edit round-trip). Steps 2–3 remain in master plan; file rows when parent stage → `In Progress`.",
+            "Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stages 1.1\u20131.2 archived (TECH-123..TECH-128, TECH-147..TECH-152 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.3 opened 2026-04-15 \u2014 6 tasks filed below (K-means extractor + palette CLI + apply_ramp + compose wiring + palette tests + bootstrap residential JSON + Tier 1 `.gpl` round-trip). T1.3.3+T1.3.4 merged into TECH-155 (apply_ramp API + compose wiring \u2014 tight coupling, single commit unit); T1.3.7+T1.3.8+T1.3.9 merged into TECH-158 (GPL export + import + round-trip test \u2014 must land atomic for symmetry). Stage 1.4 opened 2026-04-15 \u2014 9 tasks filed below (slopes.yaml + iso_stepped_foundation + compose auto-insert + slope regression tests + Unity meta writer + promote/reject CLI + Aseprite bin resolver + layered .aseprite emit + promote --edit round-trip). Steps 2\u20133 remain in master plan; file rows when parent stage \u2192 `In Progress`.",
             "",
-            "### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)",
+            "### Stage 1.1 \u2014 Scaffolding + Primitive Renderer (Layer 1)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.2 — Composition + YAML Schema + CLI Skeleton (Layer 2)",
+            "### Stage 1.2 \u2014 Composition + YAML Schema + CLI Skeleton (Layer 2)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.3 — Palette System (Layer 3)",
+            "### Stage 1.3 \u2014 Palette System (Layer 3)",
             "",
-            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "_(all tasks archived \u2014 see `BACKLOG-ARCHIVE.md`)_",
             "",
-            "### Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)",
+            "### Stage 1.4 \u2014 Slope-Aware Foundation + Curation CLI (Layer 5)",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-179",
-          "checklist_line": "- [ ] **TECH-179** — Unity `.meta` writer + `curate.promote` (Stage 1.4 Phase 3)",
+          "checklist_line": "- [ ] **TECH-179** \u2014 Unity `.meta` writer + `curate.promote` (Stage 1.4 Phase 3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-180",
-          "checklist_line": "- [ ] **TECH-180** — `promote` / `reject` CLI (Stage 1.4 Phase 3)",
+          "checklist_line": "- [ ] **TECH-180** \u2014 `promote` / `reject` CLI (Stage 1.4 Phase 3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-181",
-          "checklist_line": "- [ ] **TECH-181** — Aseprite binary resolver (Stage 1.4 Phase 4)",
+          "checklist_line": "- [ ] **TECH-181** \u2014 Aseprite binary resolver (Stage 1.4 Phase 4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-182",
-          "checklist_line": "- [ ] **TECH-182** — Layered `.aseprite` emission (Stage 1.4 Phase 4)",
+          "checklist_line": "- [ ] **TECH-182** \u2014 Layered `.aseprite` emission (Stage 1.4 Phase 4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-183",
-          "checklist_line": "- [ ] **TECH-183** — `promote --edit` round-trip (Stage 1.4 Phase 4)",
+          "checklist_line": "- [ ] **TECH-183** \u2014 `promote --edit` round-trip (Stage 1.4 Phase 4)",
           "trailing_blanks": 1
         }
       ]
@@ -1035,19 +1095,19 @@
           "type": "prose",
           "lines": [
             "",
-            "Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 — legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 — nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 — UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 — D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 — multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16). Stage 5.1 closed 2026-04-16 — Postgres provider + auth library selection. TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16 (Neon free + roll-own JWT + sessions + `web/lib/db/client.ts` lazy driver wiring + `web/README.md §Portal` contributor doc landed). Stage 5.2 opened 2026-04-16 — 4 tasks filed (drizzle schema + `db:generate` script + 4 stub auth route handlers; no migrations run, no real auth flow — architecture-only per orchestrator §Step 5). Stage 5.3 closed 2026-04-17 — Phase 0 (TECH-269), Phase 1 (TECH-265 + TECH-266), Phase 2 (TECH-267 + TECH-268) all archived; presence-only cookie check w/ `DASHBOARD_AUTH_SKIP=1` local-dev bypass, no signature verify — architecture-only per orchestrator §Step 5. Next.js 16 middleware → proxy rename absorbed during TECH-268 smoke (see `ia/projects/web-platform-master-plan.md` §Step 5 Status).",
+            "Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable \u2014 step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 \u2014 tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README \u00a7Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 \u2014 Stage 2.1 (MDX pipeline + public pages + SEO \u2014 TECH-163\u2026TECH-168), Stage 2.2 (wiki + glossary auto-index + search \u2014 TECH-184\u2026TECH-187), Stage 2.3 (devlog + RSS + origin story \u2014 TECH-192\u2026TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 \u2014 plan loader + typed schema (TECH-200\u2026TECH-203 archived). Stage 3.2 closed 2026-04-15 \u2014 dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 \u2014 legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 \u2014 nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 \u2014 UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 \u2014 D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 \u2014 multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16). Stage 5.1 closed 2026-04-16 \u2014 Postgres provider + auth library selection. TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16 (Neon free + roll-own JWT + sessions + `web/lib/db/client.ts` lazy driver wiring + `web/README.md \u00a7Portal` contributor doc landed). Stage 5.2 opened 2026-04-16 \u2014 4 tasks filed (drizzle schema + `db:generate` script + 4 stub auth route handlers; no migrations run, no real auth flow \u2014 architecture-only per orchestrator \u00a7Step 5). Stage 5.3 closed 2026-04-17 \u2014 Phase 0 (TECH-269), Phase 1 (TECH-265 + TECH-266), Phase 2 (TECH-267 + TECH-268) all archived; presence-only cookie check w/ `DASHBOARD_AUTH_SKIP=1` local-dev bypass, no signature verify \u2014 architecture-only per orchestrator \u00a7Step 5. Next.js 16 middleware \u2192 proxy rename absorbed during TECH-268 smoke (see `ia/projects/web-platform-master-plan.md` \u00a7Step 5 Status).",
             "",
-            "### Stage 5.2 — Auth API stubs + schema draft",
+            "### Stage 5.2 \u2014 Auth API stubs + schema draft",
             "",
-            "### Stage 5.3 — Dashboard auth middleware migration",
+            "### Stage 5.3 \u2014 Dashboard auth middleware migration",
             "",
-            "### Stage 6.1 — Playwright e2e harness: install + config + CI wiring",
+            "### Stage 6.1 \u2014 Playwright e2e harness: install + config + CI wiring",
             "",
-            "### Stage 6.2 — Baseline route coverage",
+            "### Stage 6.2 \u2014 Baseline route coverage",
             "",
-            "### Stage 6.3 — Dashboard e2e (SSR filter flows)",
+            "### Stage 6.3 \u2014 Dashboard e2e (SSR filter flows)",
             "",
-            "### Stage 7.1 — Registry + pure shapers",
+            "### Stage 7.1 \u2014 Registry + pure shapers",
             ""
           ]
         },
@@ -1055,7 +1115,7 @@
           "type": "prose",
           "lines": [
             "",
-            "### Grid asset visual registry — Step 1 Stage 1.2 (hand-written DTOs, no Drizzle)",
+            "### Grid asset visual registry \u2014 Step 1 Stage 1.2 (hand-written DTOs, no Drizzle)",
             "",
             "Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/projects/grid-asset-visual-registry-master-plan.md). **SQL** in `db/migrations/` is authoritative; `web/types/api/catalog*.ts` hand DTOs per **architecture audit 2026-04-22**; depends on **TECH-612** (0011) / **TECH-615** (0012) migrations archived.",
             ""
@@ -1064,261 +1124,285 @@
         {
           "type": "issue",
           "id": "TECH-626",
-          "checklist_line": "- [ ] **TECH-626** — **Core catalog DTOs (0011)** (grid catalog Stage 1.2 T1.2.1)",
+          "checklist_line": "- [ ] **TECH-626** \u2014 **Core catalog DTOs (0011)** (grid catalog Stage 1.2 T1.2.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-627",
-          "checklist_line": "- [ ] **TECH-627** — **Pool DTOs (0012)** (grid catalog Stage 1.2 T1.2.2)",
+          "checklist_line": "- [ ] **TECH-627** \u2014 **Pool DTOs (0012)** (grid catalog Stage 1.2 T1.2.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-628",
-          "checklist_line": "- [ ] **TECH-628** — **API filter + lock + preview DTOs** (grid catalog Stage 1.2 T1.2.3)",
+          "checklist_line": "- [ ] **TECH-628** \u2014 **API filter + lock + preview DTOs** (grid catalog Stage 1.2 T1.2.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-629",
-          "checklist_line": "- [ ] **TECH-629** — **DTO ↔ migration alignment** (grid catalog Stage 1.2 T1.2.4)",
+          "checklist_line": "- [ ] **TECH-629** \u2014 **DTO \u2194 migration alignment** (grid catalog Stage 1.2 T1.2.4)",
           "trailing_blanks": 1
         },
         {
           "type": "prose",
           "lines": [
             "",
-            "### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)",
+            "### Web platform \u2014 Stage 24 (CD bundle extraction + transcription pipeline)",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "TECH-630",
-          "checklist_line": "- [ ] **TECH-630** — **extract-cd-tokens.ts** (web-platform Stage 24 T24.1)",
+          "checklist_line": "- [ ] **TECH-630** \u2014 **extract-cd-tokens.ts** (web-platform Stage 24 T24.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-631",
-          "checklist_line": "- [ ] **TECH-631** — **Drift report + tests** (web-platform Stage 24 T24.2)",
+          "checklist_line": "- [ ] **TECH-631** \u2014 **Drift report + tests** (web-platform Stage 24 T24.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-632",
-          "checklist_line": "- [ ] **TECH-632** — **transcribe-cd-tokens.ts** (web-platform Stage 24 T24.3)",
+          "checklist_line": "- [ ] **TECH-632** \u2014 **transcribe-cd-tokens.ts** (web-platform Stage 24 T24.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-633",
-          "checklist_line": "- [ ] **TECH-633** — **design-system.md §7 CD appendix** (web-platform Stage 24 T24.4)",
+          "checklist_line": "- [ ] **TECH-633** \u2014 **design-system.md \u00a77 CD appendix** (web-platform Stage 24 T24.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1349",
-          "checklist_line": "- [ ] **TECH-1349** — **Users + capability migration** (asset-pipeline Stage 2.1 T2.1.1)",
+          "checklist_line": "- [ ] **TECH-1349** \u2014 **Users + capability migration** (asset-pipeline Stage 2.1 T2.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1350",
-          "checklist_line": "- [ ] **TECH-1350** — **NextAuth + middleware wiring** (asset-pipeline Stage 2.1 T2.1.2)",
+          "checklist_line": "- [ ] **TECH-1350** \u2014 **NextAuth + middleware wiring** (asset-pipeline Stage 2.1 T2.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1351",
-          "checklist_line": "- [ ] **TECH-1351** — **Audit log emitter + library** (asset-pipeline Stage 2.1 T2.1.3)",
+          "checklist_line": "- [ ] **TECH-1351** \u2014 **Audit log emitter + library** (asset-pipeline Stage 2.1 T2.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1352",
-          "checklist_line": "- [ ] **TECH-1352** — **validate:capability-coverage validator** (asset-pipeline Stage 2.1 T2.1.4)",
+          "checklist_line": "- [ ] **TECH-1352** \u2014 **validate:capability-coverage validator** (asset-pipeline Stage 2.1 T2.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1433",
-          "checklist_line": "- [ ] **TECH-1433** — **sprite-gen FastAPI serve mode** (asset-pipeline Stage 3.1 T3.1.1)",
+          "checklist_line": "- [ ] **TECH-1433** \u2014 **sprite-gen FastAPI serve mode** (asset-pipeline Stage 3.1 T3.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1434",
-          "checklist_line": "- [ ] **TECH-1434** — **Pydantic param schema + ui_hints sidecar** (asset-pipeline Stage 3.1 T3.1.2)",
+          "checklist_line": "- [ ] **TECH-1434** \u2014 **Pydantic param schema + ui_hints sidecar** (asset-pipeline Stage 3.1 T3.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1435",
-          "checklist_line": "- [ ] **TECH-1435** — **BlobResolver TS + Python** (asset-pipeline Stage 3.1 T3.1.3)",
+          "checklist_line": "- [ ] **TECH-1435** \u2014 **BlobResolver TS + Python** (asset-pipeline Stage 3.1 T3.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1436",
-          "checklist_line": "- [ ] **TECH-1436** — **validate:blob-roots validator** (asset-pipeline Stage 3.1 T3.1.4)",
+          "checklist_line": "- [ ] **TECH-1436** \u2014 **validate:blob-roots validator** (asset-pipeline Stage 3.1 T3.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1467",
-          "checklist_line": "- [ ] **TECH-1467** — **job_queue + render_run migration** (asset-pipeline Stage 4.1 T4.1.1)",
+          "checklist_line": "- [ ] **TECH-1467** \u2014 **job_queue + render_run migration** (asset-pipeline Stage 4.1 T4.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1468",
-          "checklist_line": "- [ ] **TECH-1468** — **Render worker process** (asset-pipeline Stage 4.1 T4.1.2)",
+          "checklist_line": "- [ ] **TECH-1468** \u2014 **Render worker process** (asset-pipeline Stage 4.1 T4.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1469",
-          "checklist_line": "- [ ] **TECH-1469** — **Render API routes** (asset-pipeline Stage 4.1 T4.1.3)",
+          "checklist_line": "- [ ] **TECH-1469** \u2014 **Render API routes** (asset-pipeline Stage 4.1 T4.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1470",
-          "checklist_line": "- [ ] **TECH-1470** — **Replay + identical re-render endpoints** (asset-pipeline Stage 4.1 T4.1.4)",
+          "checklist_line": "- [ ] **TECH-1470** \u2014 **Replay + identical re-render endpoints** (asset-pipeline Stage 4.1 T4.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1614",
-          "checklist_line": "- [ ] **TECH-1614** — **/catalog SPA shell + sidebar nav** (asset-pipeline Stage 5.1 T5.1.1)",
+          "checklist_line": "- [ ] **TECH-1614** \u2014 **/catalog SPA shell + sidebar nav** (asset-pipeline Stage 5.1 T5.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1615",
-          "checklist_line": "- [ ] **TECH-1615** — **Shared list+detail layout + edit tabs** (asset-pipeline Stage 5.1 T5.1.2)",
+          "checklist_line": "- [ ] **TECH-1615** \u2014 **Shared list+detail layout + edit tabs** (asset-pipeline Stage 5.1 T5.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1616",
-          "checklist_line": "- [ ] **TECH-1616** — **Optimistic concurrency middleware + 409 handler** (asset-pipeline Stage 5.1 T5.1.3)",
+          "checklist_line": "- [ ] **TECH-1616** \u2014 **Optimistic concurrency middleware + 409 handler** (asset-pipeline Stage 5.1 T5.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1617",
-          "checklist_line": "- [ ] **TECH-1617** — **Error envelope renderer** (asset-pipeline Stage 5.1 T5.1.4)",
+          "checklist_line": "- [ ] **TECH-1617** \u2014 **Error envelope renderer** (asset-pipeline Stage 5.1 T5.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1585",
-          "checklist_line": "- [ ] **TECH-1585** — **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)",
+          "checklist_line": "- [ ] **TECH-1585** \u2014 **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1586",
-          "checklist_line": "- [ ] **TECH-1586** — **Replaced-by chain resolver helper** (asset-pipeline Stage 19.2 T19.2.2)",
+          "checklist_line": "- [ ] **TECH-1586** \u2014 **Replaced-by chain resolver helper** (asset-pipeline Stage 19.2 T19.2.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1587",
-          "checklist_line": "- [ ] **TECH-1587** — **Missing-asset placeholder + audit_log emit + dev/ship split** (asset-pipeline Stage 19.2 T19.2.3)",
+          "checklist_line": "- [ ] **TECH-1587** \u2014 **Missing-asset placeholder + audit_log emit + dev/ship split** (asset-pipeline Stage 19.2 T19.2.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1591",
-          "checklist_line": "- [ ] **TECH-1591** — **wire_asset_from_catalog bridge command** (asset-pipeline Stage 19.3 T19.3.1)",
+          "checklist_line": "- [ ] **TECH-1591** \u2014 **wire_asset_from_catalog bridge command** (asset-pipeline Stage 19.3 T19.3.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1592",
-          "checklist_line": "- [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)",
+          "checklist_line": "- [ ] **TECH-1592** \u2014 **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1593",
-          "checklist_line": "- [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)",
+          "checklist_line": "- [ ] **TECH-1593** \u2014 **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1672",
-          "checklist_line": "- [ ] **TECH-1672** — **Sprite list + detail pages** (asset-pipeline Stage 6.1 T6.1.1)",
+          "checklist_line": "- [ ] **TECH-1672** \u2014 **Sprite list + detail pages** (asset-pipeline Stage 6.1 T6.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1673",
-          "checklist_line": "- [ ] **TECH-1673** — **ArchetypeParamsForm shared component** (asset-pipeline Stage 6.1 T6.1.2)",
+          "checklist_line": "- [ ] **TECH-1673** \u2014 **ArchetypeParamsForm shared component** (asset-pipeline Stage 6.1 T6.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1674",
-          "checklist_line": "- [ ] **TECH-1674** — **Render form + variant grid + Save flows** (asset-pipeline Stage 6.1 T6.1.3)",
+          "checklist_line": "- [ ] **TECH-1674** \u2014 **Render form + variant grid + Save flows** (asset-pipeline Stage 6.1 T6.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1675",
-          "checklist_line": "- [ ] **TECH-1675** — **Sprite CRUD API routes + promote** (asset-pipeline Stage 6.1 T6.1.4)",
+          "checklist_line": "- [ ] **TECH-1675** \u2014 **Sprite CRUD API routes + promote** (asset-pipeline Stage 6.1 T6.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1786",
-          "checklist_line": "- [ ] **TECH-1786** — **Asset CRUD + slot binding UI** (asset-pipeline Stage 7.1 T7.1.1)",
+          "checklist_line": "- [ ] **TECH-1786** \u2014 **Asset CRUD + slot binding UI** (asset-pipeline Stage 7.1 T7.1.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1787",
-          "checklist_line": "- [ ] **TECH-1787** — **EntityRefPicker shared component** (asset-pipeline Stage 7.1 T7.1.2)",
+          "checklist_line": "- [ ] **TECH-1787** \u2014 **EntityRefPicker shared component** (asset-pipeline Stage 7.1 T7.1.2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1788",
-          "checklist_line": "- [ ] **TECH-1788** — **Pool CRUD + member editor** (asset-pipeline Stage 7.1 T7.1.3)",
+          "checklist_line": "- [ ] **TECH-1788** \u2014 **Pool CRUD + member editor** (asset-pipeline Stage 7.1 T7.1.3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1789",
-          "checklist_line": "- [ ] **TECH-1789** — **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)",
+          "checklist_line": "- [ ] **TECH-1789** \u2014 **Subtype membership + primary-subtype binding** (asset-pipeline Stage 7.1 T7.1.4)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2459",
-          "checklist_line": "- [ ] **TECH-2459** — **Archetype CRUD + version pinning** (asset-pipeline Stage 11.1 T11.1.T1)",
+          "checklist_line": "- [ ] **TECH-2459** \u2014 **Archetype CRUD + version pinning** (asset-pipeline Stage 11.1 T11.1.T1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2460",
-          "checklist_line": "- [ ] **TECH-2460** — **Schema editor UI** (asset-pipeline Stage 11.1 T11.1.T2)",
+          "checklist_line": "- [ ] **TECH-2460** \u2014 **Schema editor UI** (asset-pipeline Stage 11.1 T11.1.T2)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2461",
-          "checklist_line": "- [ ] **TECH-2461** — **Migration hint authoring** (asset-pipeline Stage 11.1 T11.1.T3)",
+          "checklist_line": "- [ ] **TECH-2461** \u2014 **Migration hint authoring** (asset-pipeline Stage 11.1 T11.1.T3)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-2462",
-          "checklist_line": "- [ ] **TECH-2462** — **Migration runner + per-entity upgrade flow** (asset-pipeline Stage 11.1 T11.1.T4)",
+          "checklist_line": "- [ ] **TECH-2462** \u2014 **Migration runner + per-entity upgrade flow** (asset-pipeline Stage 11.1 T11.1.T4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2568",
+          "checklist_line": "- [ ] **TECH-2568** \u2014 **Layer 1 lint runner + non-audio rule seed** (asset-pipeline Stage 12.1 T12.1.T1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2569",
+          "checklist_line": "- [ ] **TECH-2569** \u2014 **Layer 2 cross-entity lint runner** (asset-pipeline Stage 12.1 T12.1.T2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2570",
+          "checklist_line": "- [ ] **TECH-2570** \u2014 **PublishDialog reusable UI + warn justification** (asset-pipeline Stage 12.1 T12.1.T3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2571",
+          "checklist_line": "- [ ] **TECH-2571** \u2014 **Generic publish API + entity_version freeze** (asset-pipeline Stage 12.1 T12.1.T4)",
           "trailing_blanks": 1
         }
       ]
@@ -1335,32 +1419,32 @@
         {
           "type": "prose",
           "lines": [
-            "<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
+            "<!-- zone-s-economy master plan \u2014 Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "BUG-31",
-          "checklist_line": "- [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)",
+          "checklist_line": "- [ ] **BUG-31** \u2014 Wrong prefabs at interstate entry/exit (border)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "BUG-28",
-          "checklist_line": "- [ ] **BUG-28** — **Sorting order** between **slope** cell and **interstate** cell",
+          "checklist_line": "- [ ] **BUG-28** \u2014 **Sorting order** between **slope** cell and **interstate** cell",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "BUG-20",
-          "checklist_line": "- [ ] **BUG-20** — **Utility buildings** (power plant, 3×3/2×2 multi-cell **buildings**) load incorrectly in LoadGame: end up under **grass cells** (**visual restore**)",
+          "checklist_line": "- [ ] **BUG-20** \u2014 **Utility buildings** (power plant, 3\u00d73/2\u00d72 multi-cell **buildings**) load incorrectly in LoadGame: end up under **grass cells** (**visual restore**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-01",
-          "checklist_line": "- [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)",
+          "checklist_line": "- [ ] **TECH-01** \u2014 Extract responsibilities from large files (focus: **GridManager** decomposition next)",
           "trailing_blanks": 1
         }
       ]
@@ -1371,56 +1455,56 @@
         {
           "type": "prose",
           "lines": [
-            "<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
+            "<!-- zone-s-economy master plan \u2014 Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "BUG-49",
-          "checklist_line": "- [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once",
+          "checklist_line": "- [ ] **BUG-49** \u2014 Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "BUG-48",
-          "checklist_line": "- [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)",
+          "checklist_line": "- [ ] **BUG-48** \u2014 Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-36",
-          "checklist_line": "- [ ] **FEAT-36** — Expand **AUTO** zoning and **AUTO** road candidates to include **forests** and cells meeting **land slope eligibility**",
+          "checklist_line": "- [ ] **FEAT-36** \u2014 Expand **AUTO** zoning and **AUTO** road candidates to include **forests** and cells meeting **land slope eligibility**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-35",
-          "checklist_line": "- [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)",
+          "checklist_line": "- [ ] **FEAT-35** \u2014 Area demolition tool (bulldozer drag-to-select)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-03",
-          "checklist_line": "- [ ] **FEAT-03** — **Forest (coverage)** mode hold-to-place",
+          "checklist_line": "- [ ] **FEAT-03** \u2014 **Forest (coverage)** mode hold-to-place",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-04",
-          "checklist_line": "- [ ] **FEAT-04** — Random **forest (coverage)** spray tool",
+          "checklist_line": "- [ ] **FEAT-04** \u2014 Random **forest (coverage)** spray tool",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-06",
-          "checklist_line": "- [ ] **FEAT-06** — **Forest (coverage)** that grows over **simulation ticks**: sparse → medium → dense",
+          "checklist_line": "- [ ] **FEAT-06** \u2014 **Forest (coverage)** that grows over **simulation ticks**: sparse \u2192 medium \u2192 dense",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-251",
-          "checklist_line": "- [ ] **TECH-251** — Adopt Claude Opus 4.7 across agent lifecycle",
+          "checklist_line": "- [ ] **TECH-251** \u2014 Adopt Claude Opus 4.7 across agent lifecycle",
           "trailing_blanks": 1
         }
       ]
@@ -1437,37 +1521,37 @@
         {
           "type": "issue",
           "id": "TECH-13",
-          "checklist_line": "- [ ] **TECH-13** — Remove obsolete **urbanization proposal** system (dead code, UI, models)",
+          "checklist_line": "- [ ] **TECH-13** \u2014 Remove obsolete **urbanization proposal** system (dead code, UI, models)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-04",
-          "checklist_line": "- [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager",
+          "checklist_line": "- [ ] **TECH-04** \u2014 Remove direct access to `gridArray`/`cellArray` outside GridManager",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-02",
-          "checklist_line": "- [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers",
+          "checklist_line": "- [ ] **TECH-02** \u2014 Change public fields to `[SerializeField] private` in managers",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-03",
-          "checklist_line": "- [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects",
+          "checklist_line": "- [ ] **TECH-03** \u2014 Extract magic numbers to constants or ScriptableObjects",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-05",
-          "checklist_line": "- [ ] **TECH-05** — Extract duplicated dependency resolution pattern",
+          "checklist_line": "- [ ] **TECH-05** \u2014 Extract duplicated dependency resolution pattern",
           "trailing_blanks": 1
         },
         {
           "type": "prose",
           "lines": [
-            "*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** + **TECH-552** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*",
+            "*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **\u00a7 IA evolution lane** holds **TECH-77**\u2013**TECH-83** + **TECH-552** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning, Unity Agent Bridge). **\u00a7 Economic depth lane** holds **monthly maintenance** (shipped \u2014 **glossary**) \u2192 **tax\u2192demand feedback** (shipped \u2014 **managers-reference** **Demand**) \u2192 **FEAT-52** \u2192 **FEAT-53** \u2192 **FEAT-09** (happiness + pollution shipped). **\u00a7 Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **\u00a7 Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*",
             ""
           ]
         }
@@ -1485,146 +1569,146 @@
         {
           "type": "issue",
           "id": "FEAT-18",
-          "checklist_line": "- [ ] **FEAT-18** — **Height generation** (improved terrain generator)",
+          "checklist_line": "- [ ] **FEAT-18** \u2014 **Height generation** (improved terrain generator)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-10",
-          "checklist_line": "- [ ] **FEAT-10** — **Regional map** contribution: monthly bonus for belonging to the region",
+          "checklist_line": "- [ ] **FEAT-10** \u2014 **Regional map** contribution: monthly bonus for belonging to the region",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-19",
-          "checklist_line": "- [ ] **FEAT-19** — Map rotation / prefabs",
+          "checklist_line": "- [ ] **FEAT-19** \u2014 Map rotation / prefabs",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-14",
-          "checklist_line": "- [ ] **TECH-14** — Remove residual placeholder / test scripts",
+          "checklist_line": "- [ ] **TECH-14** \u2014 Remove residual placeholder / test scripts",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-411",
-          "checklist_line": "- [ ] **TECH-411** — Claude Design pilot: web Step 8 reset + validation",
+          "checklist_line": "- [ ] **TECH-411** \u2014 Claude Design pilot: web Step 8 reset + validation",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-11",
-          "checklist_line": "- [ ] **FEAT-11** — Education level / Schools",
+          "checklist_line": "- [ ] **FEAT-11** \u2014 Education level / Schools",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-12",
-          "checklist_line": "- [ ] **FEAT-12** — Security / Order / Police",
+          "checklist_line": "- [ ] **FEAT-12** \u2014 Security / Order / Police",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-13",
-          "checklist_line": "- [ ] **FEAT-13** — Fire / Fire risk / Firefighters",
+          "checklist_line": "- [ ] **FEAT-13** \u2014 Fire / Fire risk / Firefighters",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-14",
-          "checklist_line": "- [ ] **FEAT-14** — Vehicle traffic system / traffic animations",
+          "checklist_line": "- [ ] **FEAT-14** \u2014 Vehicle traffic system / traffic animations",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-15",
-          "checklist_line": "- [ ] **FEAT-15** — Port system / cargo ship animations",
+          "checklist_line": "- [ ] **FEAT-15** \u2014 Port system / cargo ship animations",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-16",
-          "checklist_line": "- [ ] **FEAT-16** — Train system / train animations",
+          "checklist_line": "- [ ] **FEAT-16** \u2014 Train system / train animations",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-39",
-          "checklist_line": "- [ ] **FEAT-39** — Sea / **shore band**: **map border** region, infinite reservoir, tide direction (data)",
+          "checklist_line": "- [ ] **FEAT-39** \u2014 Sea / **shore band**: **map border** region, infinite reservoir, tide direction (data)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-40",
-          "checklist_line": "- [ ] **FEAT-40** — Water sources & drainage (snowmelt, rain, overflow) — simulation",
+          "checklist_line": "- [ ] **FEAT-40** \u2014 Water sources & drainage (snowmelt, rain, overflow) \u2014 simulation",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-41",
-          "checklist_line": "- [ ] **FEAT-41** — **Water body** terrain tools (manual paint/modify, **AUTO** terraform) — extended",
+          "checklist_line": "- [ ] **FEAT-41** \u2014 **Water body** terrain tools (manual paint/modify, **AUTO** terraform) \u2014 extended",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-42",
-          "checklist_line": "- [ ] **FEAT-42** — Minimap: optional **HeightMap** / relief shading layer",
+          "checklist_line": "- [ ] **FEAT-42** \u2014 Minimap: optional **HeightMap** / relief shading layer",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-46",
-          "checklist_line": "- [ ] **FEAT-46** — **Geography** authoring: **territory** / **urban** area **map** editor + parameter dashboard",
+          "checklist_line": "- [ ] **FEAT-46** \u2014 **Geography** authoring: **territory** / **urban** area **map** editor + parameter dashboard",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-47",
-          "checklist_line": "- [ ] **FEAT-47** — **Multipolar** **urban centroid** model, per-pole **urban growth rings**, **connurbation**",
+          "checklist_line": "- [ ] **FEAT-47** \u2014 **Multipolar** **urban centroid** model, per-pole **urban growth rings**, **connurbation**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "FEAT-48",
-          "checklist_line": "- [ ] **FEAT-48** — **Water body** volume budget: **basin** expand → **surface height (S)** adjusts; **Moore**-adjacent **dig** **fill**",
+          "checklist_line": "- [ ] **FEAT-48** \u2014 **Water body** volume budget: **basin** expand \u2192 **surface height (S)** adjusts; **Moore**-adjacent **dig** **fill**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "ART-01",
-          "checklist_line": "- [ ] **ART-01** — Missing prefabs: **forest (coverage)** on SE, NE, SW, NW **slope types**",
+          "checklist_line": "- [ ] **ART-01** \u2014 Missing prefabs: **forest (coverage)** on SE, NE, SW, NW **slope types**",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "ART-02",
-          "checklist_line": "- [ ] **ART-02** — Missing prefabs: residential **buildings** (2 heavy 1×1/2×2, light 2×2, medium 1×1 per **zone density**)",
+          "checklist_line": "- [ ] **ART-02** \u2014 Missing prefabs: residential **buildings** (2 heavy 1\u00d71/2\u00d72, light 2\u00d72, medium 1\u00d71 per **zone density**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "ART-03",
-          "checklist_line": "- [ ] **ART-03** — Missing prefabs: commercial **buildings** (2 heavy 2×2/1×1, light 2×2, medium 2×2 per **zone density**)",
+          "checklist_line": "- [ ] **ART-03** \u2014 Missing prefabs: commercial **buildings** (2 heavy 2\u00d72/1\u00d71, light 2\u00d72, medium 2\u00d72 per **zone density**)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "ART-04",
-          "checklist_line": "- [ ] **ART-04** — Missing prefabs: industrial **buildings** (2 heavy 2×2/1×1, light 1×1, 2 medium 1×1/2×2 per **zone density**)",
+          "checklist_line": "- [ ] **ART-04** \u2014 Missing prefabs: industrial **buildings** (2 heavy 2\u00d72/1\u00d71, light 1\u00d71, 2 medium 1\u00d71/2\u00d72 per **zone density**)",
           "trailing_blanks": 1
         },
         {
           "type": "prose",
           "lines": [
-            "*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, **§ Sprite gen lane**, **§ Web platform lane**, then standard priority sections.)*",
+            "*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **\u00a7 Compute-lib program**, **\u00a7 Agent \u2194 Unity & MCP context lane**, **\u00a7 IA evolution lane**, **\u00a7 Economic depth lane**, **\u00a7 Gameplay & simulation lane**, **\u00a7 Multi-scale simulation lane**, **\u00a7 Blip audio program**, **\u00a7 Sprite gen lane**, **\u00a7 Web platform lane**, then standard priority sections.)*",
             ""
           ]
         },
         {
           "type": "issue",
           "id": "AUDIO-01",
-          "checklist_line": "- [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects",
+          "checklist_line": "- [ ] **AUDIO-01** \u2014 Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects",
           "trailing_blanks": 1
         },
         {
@@ -1646,9 +1730,9 @@
             "1. **Work on issue:** Open chat in Cursor, reference `@BACKLOG.md`, request analysis / implementation by ID (e.g. \"Analyze BUG-01, propose plan\").",
             "2. **Reprioritize:** Move row up/down within section, or change section.",
             "3. **Add new issue:** Next available ID per category, place in correct priority section.",
-            "4. **Complete issue:** Remove row from **BACKLOG.md**; append **`[x]`** row w/ date to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) only (**no** \"Completed\" section in **BACKLOG.md**). After closure, **strip citations** to that issue id from durable docs (glossary, reference specs, rules, skills, `docs/`, code comments) per **project-spec-close** — **BACKLOG.md** (open rows), **BACKLOG-ARCHIVE.md**, new archived row may still name id.",
+            "4. **Complete issue:** Remove row from **BACKLOG.md**; append **`[x]`** row w/ date to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) only (**no** \"Completed\" section in **BACKLOG.md**). After closure, **strip citations** to that issue id from durable docs (glossary, reference specs, rules, skills, `docs/`, code comments) per **project-spec-close** \u2014 **BACKLOG.md** (open rows), **BACKLOG-ARCHIVE.md**, new archived row may still name id.",
             "5. **In progress:** Move to \"In progress\" section when starting.",
-            "6. **Dependencies:** `Depends on: ID` when open issue waits on another. **Convention:** every ID in `Depends on:` must appear **above** the dependent in this file (earlier in same section / higher-priority section), **or** be **completed** in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) — then write `Depends on: none` + cite archived id in **Notes**. Check deps before starting.",
+            "6. **Dependencies:** `Depends on: ID` when open issue waits on another. **Convention:** every ID in `Depends on:` must appear **above** the dependent in this file (earlier in same section / higher-priority section), **or** be **completed** in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) \u2014 then write `Depends on: none` + cite archived id in **Notes**. Check deps before starting.",
             "",
             "### ID Convention",
             "| Prefix | Category |",
@@ -1667,18 +1751,18 @@
             "- **Depends on** (optional): IDs that must complete first",
             "",
             "### Section Order",
-            "1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** archived; related **TECH-32**, **TECH-35**; charter — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))",
-            "2. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, perf harnesses, adjacent tooling)",
-            "3. In progress (active — insert above **High priority** when used)",
+            "1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** archived; related **TECH-32**, **TECH-35**; charter \u2014 [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))",
+            "2. **Agent \u2194 Unity & MCP context lane** (Unity exports, MCP, CI, perf harnesses, adjacent tooling)",
+            "3. In progress (active \u2014 insert above **High priority** when used)",
             "4. High priority (critical bugs, core gameplay blockers)",
             "5. Medium priority (important features, balance, improvements)",
-            "6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage → `In Progress`)",
-            "7. **Blip audio program** (orchestrator [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md); file rows only when parent stage → `In Progress`)",
-            "8. **Sprite gen lane** (orchestrator [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md); file rows only when parent stage → `In Progress`)",
-            "9. **Web platform lane** (orchestrator [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md); file rows only when parent stage → `In Progress`)",
+            "6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage \u2192 `In Progress`)",
+            "7. **Blip audio program** (orchestrator [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md); file rows only when parent stage \u2192 `In Progress`)",
+            "8. **Sprite gen lane** (orchestrator [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md); file rows only when parent stage \u2192 `In Progress`)",
+            "9. **Web platform lane** (orchestrator [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md); file rows only when parent stage \u2192 `In Progress`)",
             "9. Code Health (technical debt, refactors, performance)",
             "9. Low priority (new systems, polish, content)",
-            "8. **Archive** — completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)",
+            "8. **Archive** \u2014 completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)",
             ""
           ]
         }
