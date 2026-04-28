@@ -1,0 +1,15 @@
+{
+    "name": "Tests.UI.HUD.PlayMode",
+    "rootNamespace": "Territory.Tests.PlayMode.UI.HUD",
+    "references": ["TerritoryDeveloper.Game"],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

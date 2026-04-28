@@ -77,18 +77,16 @@ public partial class UIManager : MonoBehaviour
     #endregion
 
     #region UI References
-    public Text populationText;
-    public Text moneyText;
-    public Text happinessText;
+    // Stage 6 (game-ui-design-system): legacy HUD-bar Text fields decommissioned —
+    // populationText / moneyText / happinessText / cityNameText / buttonMoneyText replaced by
+    // baked StudioControl SO refs on hud-bar prefab driven by HudBarDataAdapter.
     public Text gridCoordinatesText;
     public Text cityPowerOutputText;
     public Text cityPowerConsumptionText;
     public Text dateText;
-    public Text cityNameText;
     public Text residentialTaxText;
     public Text commercialTaxText;
     public Text industrialTaxText;
-    public Text buttonMoneyText;
     public Text detailsNameText;
     public Text detailsOccupancyText;
     public Text detailsHappinessText;
@@ -325,7 +323,6 @@ public partial class UIManager : MonoBehaviour
             Text ht = hintGo.AddComponent<Text>();
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font != null) ht.font = font;
-            else if (moneyText != null) ht.font = moneyText.font;
             ht.fontSize = 14;
             ht.color = new Color(0.85f, 0.92f, 1f);
             ht.alignment = TextAnchor.MiddleCenter;
@@ -356,7 +353,6 @@ public partial class UIManager : MonoBehaviour
             Text bt = txtGo.AddComponent<Text>();
             Font bfont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (bfont != null) bt.font = bfont;
-            else if (moneyText != null) bt.font = moneyText.font;
             bt.fontSize = 13;
             bt.color = Color.white;
             bt.alignment = TextAnchor.MiddleCenter;

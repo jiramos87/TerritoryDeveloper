@@ -22,28 +22,10 @@ public partial class UIManager
     #region Demand Display
     public void UpdateUI()
     {
-        if (cityNameText != null && cityStats != null)
-            cityNameText.text = cityStats.cityName;
-        populationText.text = cityStats.population.ToString();
-        int delta = economyManager != null ? economyManager.GetHudEstimatedMonthlySurplus() : 0;
-        string deltaStr = delta >= 0 ? $"(+${delta:N0})" : $"(-${Mathf.Abs(delta):N0})";
-        if (hudUiTheme != null)
-        {
-            string primaryHex = ColorUtility.ToHtmlStringRGBA(hudUiTheme.TextPrimary);
-            string deltaHex = ColorUtility.ToHtmlStringRGBA(delta >= 0 ? hudUiTheme.AccentPositive : hudUiTheme.AccentNegative);
-            if (moneyText != null)
-                moneyText.text = $"<color=#{primaryHex}>{cityStats.money:N0}</color> <color=#{deltaHex}>{deltaStr}</color>";
-            if (buttonMoneyText != null)
-                buttonMoneyText.text = $"<color=#{primaryHex}>${cityStats.money:N0}</color> <color=#{deltaHex}>{deltaStr}</color>";
-        }
-        else
-        {
-            if (moneyText != null)
-                moneyText.text = $"{cityStats.money:N0} {deltaStr}";
-            if (buttonMoneyText != null)
-                buttonMoneyText.text = $"${cityStats.money:N0} {deltaStr}";
-        }
-        happinessText.text = $"{cityStats.happiness:F0}/100";
+        // Stage 6 (game-ui-design-system): HUD-bar core writes (city name / population /
+        // money / happiness) decommissioned — now driven by HudBarDataAdapter into baked
+        // StudioControl SO refs on hud-bar prefab. This UpdateUI retains non-hudbar
+        // HUD surfaces (power/water/date/tax/employment/demand/bond/surplus).
 
         cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
         cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";

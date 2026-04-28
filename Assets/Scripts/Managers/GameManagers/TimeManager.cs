@@ -159,6 +159,9 @@ public class TimeManager : MonoBehaviour
         return timeMultiplier;
     }
 
+    /// <summary>Read-only accessor for the current speed index (0..timeSpeeds.Length-1) — exposed for HUD adapters that mirror speed-button state. No setter; mutate via <see cref="SetTimeSpeedIndex"/>.</summary>
+    public int CurrentTimeSpeedIndex => currentTimeSpeedIndex;
+
     public InGameTime GetCurrentInGameTime()
     {
         InGameTime inGameTime = new InGameTime();

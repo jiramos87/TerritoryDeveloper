@@ -38,11 +38,9 @@ namespace Territory.UI
             if (hudUiTheme == null)
                 return;
 
-            ApplyHeroStatRow(populationText);
-            ApplyHeroStatRow(moneyText);
-            ApplyHeroStatRow(happinessText);
-            ApplyHeroStatRow(cityNameText);
-            ApplyToolbarMoneyRow(buttonMoneyText);
+            // Stage 6 (game-ui-design-system): hero/toolbar money rows removed — population /
+            // money / happiness / cityName / buttonMoney now baked StudioControl variants on
+            // hud-bar prefab; theme is applied by StudioControlBase.ApplyTheme via UiBakeHandler.
 
             ApplyBodyStatRow(dateText);
             ApplyBodyStatRow(cityPowerOutputText);
@@ -82,7 +80,8 @@ namespace Territory.UI
                 constructionCostText.color = hudUiTheme.TextPrimary;
             }
 
-            TintPanelRootBehindReference("StatsPanel", populationText, hudUiTheme.SurfaceCardHud);
+            // Stage 6: StatsPanel tint removed — legacy panel surface decommissioned with
+            // hero stats relocation to baked hud-bar prefab.
             TintPanelRootBehindReference("DatePanel", dateText, hudUiTheme.SurfaceCardHud);
             TintPanelRootBehindReference("TaxPanel", residentialTaxText, hudUiTheme.SurfaceCardHud);
             ApplyTaxPanelBudgetRowTexts();

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcfc9d7199cbd44abadc783580d687a5, type: 3}
+  m_Name: HudParityFixture
+  m_EditorClassIdentifier: 
+  expectedMoney: 0
+  expectedPopulation: 0
+  expectedHappiness: 0
+  expectedSpeedIndex: 0
+  happinessTolerance: 0.05
+  simTickBudget: 30

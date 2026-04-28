@@ -35,3 +35,37 @@ MonoBehaviour:
   fontSizeCaption: 11
   spacingUnit: 4
   panelPadding: 16
+  paletteEntries:
+  - slug: canvas
+    value:
+      ramp:
+      - '#0a0e1a'
+      - '#1a2540'
+  frameStyleEntries:
+  - slug: panel
+    value:
+      edge: single
+      innerShadowAlpha: 0.4
+  fontFaceEntries:
+  - slug: display
+    value:
+      family: Inter
+      weight: 600
+  motionCurveEntries:
+  - slug: spring-soft
+    value:
+      kind: spring
+      stiffness: 220
+      damping: 18
+      c1: []
+      c2: []
+      durationMs: 0
+  illuminationEntries:
+  - slug: led-amber
+    value:
+      color: '#fcb84a'
+      haloRadiusPx: 4
+  - slug: led-green
+    value:
+      color: '#4afc8a'
+      haloRadiusPx: 6
