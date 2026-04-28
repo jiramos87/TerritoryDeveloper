@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using Territory.UI;
+using Territory.UI.StudioControls;
 using Territory.UI.Themed;
 using UnityEditor;
 using UnityEngine;
@@ -155,6 +157,9 @@ namespace Territory.Editor.Bridge
         /// <c>(root, error=null)</c> on success or <c>(root=null, error)</c> on schema fault.
         /// JsonUtility silently drops unknown fields — acceptable for MVP per §Plan Digest.
         /// </summary>
+        /// <summary>Last raw IR JSON text passed to <see cref="Parse"/>; used by <see cref="ExtractInteractiveDetailJson"/> for per-row detail substring capture (JsonUtility cannot model open-shape detail block).</summary>
+        private static string _lastRawIrJson;
+
         public static BakeResult Parse(string jsonText)
         {
             if (string.IsNullOrWhiteSpace(jsonText))
@@ -170,6 +175,7 @@ namespace Territory.Editor.Bridge
                     },
                 };
             }
+            _lastRawIrJson = jsonText;
 
             IrRoot parsed;
             try
@@ -519,7 +525,17 @@ namespace Territory.Editor.Bridge
                     if (ic == null || string.IsNullOrEmpty(ic.slug)) continue;
 
                     var assetPath = $"{dir.TrimEnd('/')}/{ic.slug}.prefab";
-                    var err = SaveEmptyPlaceholderPrefab(ic.slug, assetPath);
+                    BakeError err;
+                    if (IsKnownStudioControlKind(ic.kind))
+                    {
+                        err = BakeInteractive(ic, i, assetPath, _lastRawIrJson);
+                    }
+                    else
+                    {
+                        // Defensive fallback — IR schema validation already gates kind enum upstream;
+                        // unknown slug still produces a placeholder so panel bake child-resolution works.
+                        err = SaveEmptyPlaceholderPrefab(ic.slug, assetPath);
+                    }
                     if (err != null) return err;
                 }
                 // Refresh again so freshly-written interactive prefabs are loadable by AssetDatabase.LoadAssetAtPath.
@@ -651,6 +667,308 @@ namespace Territory.Editor.Bridge
             {
                 if (go != null) UnityEngine.Object.DestroyImmediate(go);
             }
+        }
+
+        // ── StudioControl interactive bake (Stage 4 T4.5) ───────────────────────
+
+        /// <summary>Known StudioControl kind slugs — kept in sync with `tools/scripts/ir-schema.ts` <c>StudioControlKind</c>.</summary>
+        static readonly HashSet<string> _knownKinds = new HashSet<string>
+        {
+            "knob", "fader", "detent-ring",
+            "vu-meter", "oscilloscope",
+            "illuminated-button", "led", "segmented-readout",
+        };
+
+        static bool IsKnownStudioControlKind(string kind)
+        {
+            return !string.IsNullOrEmpty(kind) && _knownKinds.Contains(kind);
+        }
+
+        /// <summary>
+        /// Bake one IR interactive into a typed StudioControl prefab. Per-kind switch dispatches to typed
+        /// <see cref="IDetailRow"/> parse via <see cref="JsonUtility.FromJson{T}(string)"/> against the
+        /// per-row detail substring extracted from raw IR JSON (open-shape <c>detail</c> block cannot
+        /// round-trip through JsonUtility otherwise). Schema-mismatch (missing required field) returns
+        /// <c>interactive_schema_violation</c>.
+        /// </summary>
+        public static BakeError BakeInteractive(IrInteractive irRow, int interactiveIndex, string assetPath, string rawIrJson)
+        {
+            if (irRow == null)
+            {
+                return new BakeError
+                {
+                    error = "missing_arg",
+                    details = "irRow_null",
+                    path = $"$.interactives[{interactiveIndex}]",
+                };
+            }
+
+            var detailJson = ExtractInteractiveDetailJson(rawIrJson, interactiveIndex);
+            if (detailJson == null)
+            {
+                return new BakeError
+                {
+                    error = "interactive_detail_missing",
+                    details = $"kind={irRow.kind} slug={irRow.slug}",
+                    path = $"$.interactives[{interactiveIndex}].detail",
+                };
+            }
+
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+
+                BakeError schemaError = null;
+                StudioControlBase variant = null;
+                IDetailRow detailRow = null;
+
+                switch (irRow.kind)
+                {
+                    case "knob":
+                    {
+                        var kd = JsonUtility.FromJson<KnobDetail>(detailJson) ?? new KnobDetail();
+                        schemaError = AssertKnobFaderFields(irRow.kind, irRow.slug, detailJson, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<Knob>();
+                        detailRow = kd;
+                        break;
+                    }
+                    case "fader":
+                    {
+                        var fd = JsonUtility.FromJson<FaderDetail>(detailJson) ?? new FaderDetail();
+                        schemaError = AssertKnobFaderFields(irRow.kind, irRow.slug, detailJson, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<Fader>();
+                        detailRow = fd;
+                        break;
+                    }
+                    case "detent-ring":
+                    {
+                        var dr = JsonUtility.FromJson<DetentRingDetail>(detailJson) ?? new DetentRingDetail();
+                        schemaError = AssertField(detailJson, "detents", irRow.kind, irRow.slug, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<DetentRing>();
+                        detailRow = dr;
+                        break;
+                    }
+                    case "vu-meter":
+                    {
+                        var vd = JsonUtility.FromJson<VUMeterDetail>(detailJson) ?? new VUMeterDetail();
+                        schemaError = AssertVUMeterFields(irRow.slug, detailJson, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<VUMeter>();
+                        detailRow = vd;
+                        break;
+                    }
+                    case "oscilloscope":
+                    {
+                        var od = JsonUtility.FromJson<OscilloscopeDetail>(detailJson) ?? new OscilloscopeDetail();
+                        schemaError = AssertOscilloscopeFields(irRow.slug, detailJson, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<Oscilloscope>();
+                        detailRow = od;
+                        break;
+                    }
+                    case "illuminated-button":
+                    {
+                        var bd = JsonUtility.FromJson<IlluminatedButtonDetail>(detailJson) ?? new IlluminatedButtonDetail();
+                        schemaError = AssertField(detailJson, "illuminationSlug", irRow.kind, irRow.slug, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<IlluminatedButton>();
+                        detailRow = bd;
+                        break;
+                    }
+                    case "led":
+                    {
+                        var ld = JsonUtility.FromJson<LEDDetail>(detailJson) ?? new LEDDetail();
+                        schemaError = AssertField(detailJson, "illuminationSlug", irRow.kind, irRow.slug, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<LED>();
+                        detailRow = ld;
+                        break;
+                    }
+                    case "segmented-readout":
+                    {
+                        var sd = JsonUtility.FromJson<SegmentedReadoutDetail>(detailJson) ?? new SegmentedReadoutDetail();
+                        schemaError = AssertField(detailJson, "digits", irRow.kind, irRow.slug, interactiveIndex);
+                        if (schemaError != null) return schemaError;
+                        variant = go.AddComponent<SegmentedReadout>();
+                        detailRow = sd;
+                        break;
+                    }
+                    default:
+                        return new BakeError
+                        {
+                            error = "interactive_unknown_kind",
+                            details = $"kind={irRow.kind} slug={irRow.slug}",
+                            path = $"$.interactives[{interactiveIndex}].kind",
+                        };
+                }
+
+                // Apply detail row + write per-usage slug via SerializedObject for deterministic re-bake.
+                variant.ApplyDetail(detailRow);
+                var so = new SerializedObject(variant);
+                var slugProp = so.FindProperty("_slug");
+                if (slugProp != null)
+                {
+                    slugProp.stringValue = irRow.slug ?? string.Empty;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "prefab_write_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Extract per-row <c>detail</c> JSON substring from raw IR text. Returns null on miss.</summary>
+        public static string ExtractInteractiveDetailJson(string rawJson, int interactiveIndex)
+        {
+            if (string.IsNullOrEmpty(rawJson) || interactiveIndex < 0) return null;
+
+            // Locate `"interactives"` array start.
+            var interactivesMatch = Regex.Match(rawJson, "\"interactives\"\\s*:\\s*\\[");
+            if (!interactivesMatch.Success) return null;
+
+            int cursor = interactivesMatch.Index + interactivesMatch.Length;
+            int depth = 1;
+            int objectStart = -1;
+            int objectsSeen = -1;
+
+            for (int i = cursor; i < rawJson.Length && depth > 0; i++)
+            {
+                char c = rawJson[i];
+                if (c == '[')
+                {
+                    depth++;
+                }
+                else if (c == ']')
+                {
+                    depth--;
+                    if (depth == 0) break;
+                }
+                else if (c == '{' && depth == 1)
+                {
+                    objectsSeen++;
+                    if (objectsSeen == interactiveIndex)
+                    {
+                        objectStart = i;
+                        // Walk the object to find its end + locate "detail" key.
+                        int objDepth = 1;
+                        int detailObjStart = -1;
+                        int detailObjEnd = -1;
+                        for (int j = i + 1; j < rawJson.Length && objDepth > 0; j++)
+                        {
+                            char cc = rawJson[j];
+                            if (cc == '{') objDepth++;
+                            else if (cc == '}') { objDepth--; if (objDepth == 0) { i = j; break; } }
+                            else if (objDepth == 1 && detailObjStart < 0)
+                            {
+                                // Look for `"detail"` key at top level of this interactive object.
+                                if (cc == '"')
+                                {
+                                    var keyMatch = Regex.Match(
+                                        rawJson.Substring(j),
+                                        "^\"detail\"\\s*:\\s*\\{");
+                                    if (keyMatch.Success)
+                                    {
+                                        // Detail object opens at the `{` after the colon.
+                                        int braceIdx = j + keyMatch.Length - 1;
+                                        detailObjStart = braceIdx;
+                                        int innerDepth = 1;
+                                        for (int k = braceIdx + 1; k < rawJson.Length; k++)
+                                        {
+                                            char kc = rawJson[k];
+                                            if (kc == '{') innerDepth++;
+                                            else if (kc == '}')
+                                            {
+                                                innerDepth--;
+                                                if (innerDepth == 0)
+                                                {
+                                                    detailObjEnd = k;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (detailObjStart >= 0 && detailObjEnd > detailObjStart)
+                        {
+                            return rawJson.Substring(detailObjStart, detailObjEnd - detailObjStart + 1);
+                        }
+                        return null;
+                    }
+                    else
+                    {
+                        // Skip this object (not the target index).
+                        int objDepth = 1;
+                        for (int j = i + 1; j < rawJson.Length && objDepth > 0; j++)
+                        {
+                            char cc = rawJson[j];
+                            if (cc == '{') objDepth++;
+                            else if (cc == '}') { objDepth--; if (objDepth == 0) { i = j; break; } }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        static BakeError AssertField(string detailJson, string fieldName, string kind, string slug, int interactiveIndex)
+        {
+            if (string.IsNullOrEmpty(detailJson)) return null;
+            var pattern = $"\"{Regex.Escape(fieldName)}\"\\s*:";
+            if (Regex.IsMatch(detailJson, pattern)) return null;
+            return new BakeError
+            {
+                error = "interactive_schema_violation",
+                details = $"kind={kind} slug={slug} missing={fieldName}",
+                path = $"$.interactives[{interactiveIndex}].detail",
+            };
+        }
+
+        static BakeError AssertKnobFaderFields(string kind, string slug, string detailJson, int interactiveIndex)
+        {
+            var min = AssertField(detailJson, "min", kind, slug, interactiveIndex);
+            if (min != null) return min;
+            var max = AssertField(detailJson, "max", kind, slug, interactiveIndex);
+            if (max != null) return max;
+            return AssertField(detailJson, "step", kind, slug, interactiveIndex);
+        }
+
+        static BakeError AssertVUMeterFields(string slug, string detailJson, int interactiveIndex)
+        {
+            var a = AssertField(detailJson, "attackMs", "vu-meter", slug, interactiveIndex);
+            if (a != null) return a;
+            var r = AssertField(detailJson, "releaseMs", "vu-meter", slug, interactiveIndex);
+            if (r != null) return r;
+            return AssertField(detailJson, "range", "vu-meter", slug, interactiveIndex);
+        }
+
+        static BakeError AssertOscilloscopeFields(string slug, string detailJson, int interactiveIndex)
+        {
+            var s = AssertField(detailJson, "sampleCount", "oscilloscope", slug, interactiveIndex);
+            if (s != null) return s;
+            var sw = AssertField(detailJson, "sweepRateHz", "oscilloscope", slug, interactiveIndex);
+            if (sw != null) return sw;
+            return AssertField(detailJson, "range", "oscilloscope", slug, interactiveIndex);
         }
     }
 }
