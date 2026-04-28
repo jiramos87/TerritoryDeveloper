@@ -11,6 +11,8 @@
  * @see db/migrations/0033_publish_lint_rule_audio_seed.sql — seed source
  */
 
+import type { Sql } from "postgres";
+
 import { getSql } from "@/lib/db/client";
 import {
   DEFAULT_AUDIO_LOUDNESS_CONFIG,
@@ -28,12 +30,25 @@ export type PublishLintRuleRow = {
 
 /**
  * Load all enabled lint rules for `kind`. Empty array when the table has no
- * rows for that kind (e.g. before the migration runs).
+ * rows for that kind (e.g. before the migration runs). Convenience overload
+ * that uses the lazy singleton `getSql()` — for tx-bound paths use
+ * `loadEnabledLintRulesWithSql(kind, sql)` to thread the tx connection.
  */
 export async function loadEnabledLintRules(
   kind: string,
 ): Promise<PublishLintRuleRow[]> {
-  const sql = getSql();
+  return loadEnabledLintRulesWithSql(kind, getSql());
+}
+
+/**
+ * Load all enabled lint rules for `kind` using a caller-supplied `Sql`
+ * (e.g. one bound to a `withAudit` transaction). Same row shape as the
+ * singleton variant.
+ */
+export async function loadEnabledLintRulesWithSql(
+  kind: string,
+  sql: Sql,
+): Promise<PublishLintRuleRow[]> {
   const rows = await sql<PublishLintRuleRow[]>`
     select rule_id, kind, severity, enabled, config_json
     from publish_lint_rule

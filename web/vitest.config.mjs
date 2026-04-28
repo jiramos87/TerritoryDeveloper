@@ -16,6 +16,7 @@ export default defineConfig({
     include: [
       'lib/**/__tests__/**/*.test.ts',
       'components/**/__tests__/**/*.test.tsx',
+      'app/api/**/__tests__/**/*.test.ts',
       'tests/api/**/*.spec.ts',
       'tests/api/auth/**/*.smoke.spec.ts',
     ],
