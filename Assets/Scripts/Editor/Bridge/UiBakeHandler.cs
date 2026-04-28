@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Territory.UI;
+using Territory.UI.Themed;
 using UnityEditor;
 using UnityEngine;
 
@@ -509,19 +510,7 @@ namespace Territory.Editor.Bridge
             // Refresh so the new directory is recognized by AssetDatabase before writes.
             AssetDatabase.Refresh();
 
-            if (ir.panels != null)
-            {
-                for (int i = 0; i < ir.panels.Length; i++)
-                {
-                    var panel = ir.panels[i];
-                    if (panel == null || string.IsNullOrEmpty(panel.slug)) continue;
-
-                    var assetPath = $"{dir.TrimEnd('/')}/{panel.slug}.prefab";
-                    var err = SaveEmptyPlaceholderPrefab(panel.slug, assetPath);
-                    if (err != null) return err;
-                }
-            }
-
+            // Interactives FIRST so panel bake can resolve child slug → prefab without warn-skip on first run.
             if (ir.interactives != null)
             {
                 for (int i = 0; i < ir.interactives.Length; i++)
@@ -531,6 +520,21 @@ namespace Territory.Editor.Bridge
 
                     var assetPath = $"{dir.TrimEnd('/')}/{ic.slug}.prefab";
                     var err = SaveEmptyPlaceholderPrefab(ic.slug, assetPath);
+                    if (err != null) return err;
+                }
+                // Refresh again so freshly-written interactive prefabs are loadable by AssetDatabase.LoadAssetAtPath.
+                AssetDatabase.Refresh();
+            }
+
+            if (ir.panels != null)
+            {
+                for (int i = 0; i < ir.panels.Length; i++)
+                {
+                    var panel = ir.panels[i];
+                    if (panel == null || string.IsNullOrEmpty(panel.slug)) continue;
+
+                    var assetPath = $"{dir.TrimEnd('/')}/{panel.slug}.prefab";
+                    var err = SavePanelPrefab(panel, assetPath, dir);
                     if (err != null) return err;
                 }
             }
@@ -545,6 +549,92 @@ namespace Territory.Editor.Bridge
             {
                 go = new GameObject(slug);
                 go.AddComponent<RectTransform>();
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "prefab_write_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        // ── Panel prefab bake (Stage 3 T3.5) ────────────────────────────────────
+
+        /// <summary>
+        /// Write a panel prefab with attached <see cref="ThemedPanel"/> + populated <c>_slots</c> +
+        /// <c>_children[]</c>. SlotSpec order = IR slot order; children order = IR slot iteration order
+        /// (resolves child slug → existing prefab under <paramref name="dir"/>; warn + skip on miss).
+        /// SerializedObject path enforces deterministic property write for re-bake idempotency.
+        /// </summary>
+        static BakeError SavePanelPrefab(IrPanel panel, string assetPath, string dir)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(panel.slug);
+                go.AddComponent<RectTransform>();
+                var themedPanel = go.AddComponent<ThemedPanel>();
+
+                // Populate _slots + _children[] via SerializedObject for deterministic order.
+                var so = new SerializedObject(themedPanel);
+                var slotsProp = so.FindProperty("_slots");
+                var childrenProp = so.FindProperty("_children");
+
+                var childrenList = new List<GameObject>();
+
+                int slotCount = panel.slots != null ? panel.slots.Length : 0;
+                slotsProp.arraySize = slotCount;
+                for (int s = 0; s < slotCount; s++)
+                {
+                    var slot = panel.slots[s];
+                    var slotProp = slotsProp.GetArrayElementAtIndex(s);
+                    var slugProp = slotProp.FindPropertyRelative("slug");
+                    var acceptsProp = slotProp.FindPropertyRelative("accepts");
+
+                    slugProp.stringValue = slot?.name ?? string.Empty;
+
+                    var slotAccepts = slot?.accepts ?? Array.Empty<string>();
+                    acceptsProp.arraySize = slotAccepts.Length;
+                    for (int a = 0; a < slotAccepts.Length; a++)
+                    {
+                        acceptsProp.GetArrayElementAtIndex(a).stringValue = slotAccepts[a] ?? string.Empty;
+                    }
+
+                    // Resolve children for this slot in declared order.
+                    var slotChildren = slot?.children ?? Array.Empty<string>();
+                    for (int c = 0; c < slotChildren.Length; c++)
+                    {
+                        var childSlug = slotChildren[c];
+                        if (string.IsNullOrEmpty(childSlug)) continue;
+                        var childPath = $"{dir.TrimEnd('/')}/{childSlug}.prefab";
+                        var childPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(childPath);
+                        if (childPrefab == null)
+                        {
+                            Debug.LogWarning(
+                                $"[UiBakeHandler] panel={panel.slug} slot={slot?.name} child={childSlug} prefab missing at {childPath} — skipped");
+                            continue;
+                        }
+                        childrenList.Add(childPrefab);
+                    }
+                }
+
+                childrenProp.arraySize = childrenList.Count;
+                for (int i = 0; i < childrenList.Count; i++)
+                {
+                    childrenProp.GetArrayElementAtIndex(i).objectReferenceValue = childrenList[i];
+                }
+
+                so.ApplyModifiedPropertiesWithoutUndo();
+
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
                 return null;
             }

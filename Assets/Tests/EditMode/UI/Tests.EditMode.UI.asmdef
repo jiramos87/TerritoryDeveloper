@@ -1,0 +1,17 @@
+{
+    "name": "Tests.EditMode.UI",
+    "rootNamespace": "Territory.Tests.EditMode.UI",
+    "references": ["TerritoryDeveloper.Game"],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
