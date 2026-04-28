@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using Territory.UI;
+using Territory.UI.Juice;
 using Territory.UI.StudioControls;
 using Territory.UI.Themed;
 using UnityEditor;
@@ -123,6 +124,31 @@ namespace Territory.Editor.Bridge
             public string kind;
             // `detail` is open-ended (Record&lt;string,unknown&gt; in TS); not modeled in C# DTO since
             // bridge-side bake at this stage does not consume it. T3+ will introduce typed details.
+
+            /// <summary>
+            /// Optional Stage 5 (T5.5) juice declarations. Additive on the IR root — defaults to null
+            /// when absent so prior baked artifacts stay valid. Each entry overrides or disables a
+            /// per-kind default juice attachment.
+            /// </summary>
+            public IrJuiceDecl[] juice;
+        }
+
+        /// <summary>
+        /// Stage 5 juice override entry. <c>juice_kind</c> matches a known JuiceLayer behavior slug
+        /// (see <see cref="UiBakeHandler.JuiceKindNeedleBallistics"/> etc.). When <c>disabled</c> is true,
+        /// the per-kind default attachment for this interactive is skipped.
+        /// </summary>
+        [Serializable]
+        public class IrJuiceDecl
+        {
+            /// <summary>Optional usage slug for filtering; mirrors interactive slug when empty.</summary>
+            public string usage_slug;
+            /// <summary>Juice slug — see <see cref="UiBakeHandler.JuiceKindNeedleBallistics"/> et al.</summary>
+            public string juice_kind;
+            /// <summary>Optional motion-curve slug override for the juice component.</summary>
+            public string curve_slug;
+            /// <summary>When true, suppresses the per-kind default attachment for the matching <see cref="juice_kind"/>.</summary>
+            public bool disabled;
         }
 
         /// <summary>Bridge-mutation argument bag for `bake_ui_from_ir`.</summary>
@@ -651,6 +677,16 @@ namespace Territory.Editor.Bridge
 
                 so.ApplyModifiedPropertiesWithoutUndo();
 
+                // Stage 5 T5.5 — synthetic interactive row enables ShadowDepth opt-in via IR juice[]
+                // entries on the panel level (current MVP: defaults gated off; override-only path).
+                var panelRow = new IrInteractive
+                {
+                    slug = panel.slug,
+                    kind = "themed-panel",
+                    juice = null,
+                };
+                AttachJuiceComponents(go, panelRow);
+
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
                 return null;
             }
@@ -817,6 +853,9 @@ namespace Territory.Editor.Bridge
                     so.ApplyModifiedPropertiesWithoutUndo();
                 }
 
+                // Stage 5 T5.5 — bake-time juice attachment per per-kind defaults + IR juice[] override.
+                AttachJuiceComponents(go, irRow);
+
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
                 return null;
             }
@@ -969,6 +1008,170 @@ namespace Territory.Editor.Bridge
             var sw = AssertField(detailJson, "sweepRateHz", "oscilloscope", slug, interactiveIndex);
             if (sw != null) return sw;
             return AssertField(detailJson, "range", "oscilloscope", slug, interactiveIndex);
+        }
+
+        // ── Juice attachment (Stage 5 T5.5) ────────────────────────────────────
+
+        /// <summary>Juice slug constants — kept in sync with `tools/scripts/ir-schema.ts` Stage 5 IR juice DTO (post-MVP additive field).</summary>
+        public const string JuiceKindNeedleBallistics = "needle-ballistics";
+        public const string JuiceKindOscilloscopeSweep = "oscilloscope-sweep";
+        public const string JuiceKindPulseOnEvent = "pulse-on-event";
+        public const string JuiceKindTweenCounter = "tween-counter";
+        public const string JuiceKindShadowDepth = "shadow-depth";
+        public const string JuiceKindSparkleBurst = "sparkle-burst";
+
+        /// <summary>One entry in the per-kind default juice attachment table.</summary>
+        struct JuiceDefault
+        {
+            public string juiceKind;
+            public string defaultCurveSlug;
+            public bool gatedOptIn; // true → not attached unless IR juice[] explicitly enables.
+        }
+
+        /// <summary>Per-interactive-kind default juice attachments. ShadowDepth on themed-panel is gated (default-off).</summary>
+        static readonly Dictionary<string, JuiceDefault[]> _kindToJuiceDefaults = new Dictionary<string, JuiceDefault[]>
+        {
+            ["vu-meter"] = new[]
+            {
+                new JuiceDefault { juiceKind = JuiceKindNeedleBallistics, defaultCurveSlug = NeedleBallistics.DefaultCurveSlug },
+            },
+            ["oscilloscope"] = new[]
+            {
+                new JuiceDefault { juiceKind = JuiceKindOscilloscopeSweep, defaultCurveSlug = string.Empty },
+            },
+            ["illuminated-button"] = new[]
+            {
+                new JuiceDefault { juiceKind = JuiceKindPulseOnEvent, defaultCurveSlug = string.Empty },
+            },
+            ["segmented-readout"] = new[]
+            {
+                new JuiceDefault { juiceKind = JuiceKindTweenCounter, defaultCurveSlug = string.Empty },
+            },
+            // themed-panel → ShadowDepth gated (default off; opt-in via IR juice[] entry)
+            ["themed-panel"] = new[]
+            {
+                new JuiceDefault { juiceKind = JuiceKindShadowDepth, defaultCurveSlug = string.Empty, gatedOptIn = true },
+            },
+        };
+
+        /// <summary>
+        /// Attach JuiceLayer components to a baked prefab root per per-kind defaults + IR <c>juice[]</c>
+        /// overrides. Idempotent — existing components of the same juice type are skipped (re-bake safe).
+        /// </summary>
+        static void AttachJuiceComponents(GameObject prefabRoot, IrInteractive irRow)
+        {
+            if (prefabRoot == null || irRow == null) return;
+
+            // Build map of override declarations keyed by juice_kind for fast lookup.
+            var overrides = new Dictionary<string, IrJuiceDecl>();
+            if (irRow.juice != null)
+            {
+                foreach (var decl in irRow.juice)
+                {
+                    if (decl == null || string.IsNullOrEmpty(decl.juice_kind)) continue;
+                    overrides[decl.juice_kind] = decl;
+                }
+            }
+
+            // Per-kind default attachments — skip when override marks disabled.
+            if (_kindToJuiceDefaults.TryGetValue(irRow.kind ?? string.Empty, out var defaults))
+            {
+                foreach (var def in defaults)
+                {
+                    bool enabled = !def.gatedOptIn;
+                    string curveSlug = def.defaultCurveSlug;
+
+                    if (overrides.TryGetValue(def.juiceKind, out var ov))
+                    {
+                        if (ov.disabled) continue;
+                        enabled = true;
+                        if (!string.IsNullOrEmpty(ov.curve_slug)) curveSlug = ov.curve_slug;
+                    }
+
+                    if (!enabled) continue;
+                    AttachOneJuice(prefabRoot, def.juiceKind, curveSlug);
+                }
+            }
+
+            // Override-only attachments (juice kinds not in the per-kind default table).
+            foreach (var kv in overrides)
+            {
+                if (kv.Value.disabled) continue;
+                bool isDefault = false;
+                if (defaults != null)
+                {
+                    foreach (var def in defaults)
+                    {
+                        if (def.juiceKind == kv.Key) { isDefault = true; break; }
+                    }
+                }
+                if (isDefault) continue;
+                AttachOneJuice(prefabRoot, kv.Key, kv.Value.curve_slug ?? string.Empty);
+            }
+        }
+
+        /// <summary>Attach a single juice component by slug. No-op when the juice slug is unknown or already attached.</summary>
+        static void AttachOneJuice(GameObject prefabRoot, string juiceKind, string curveSlug)
+        {
+            switch (juiceKind)
+            {
+                case JuiceKindNeedleBallistics:
+                {
+                    if (prefabRoot.GetComponent<NeedleBallistics>() != null) return;
+                    var c = prefabRoot.AddComponent<NeedleBallistics>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                case JuiceKindOscilloscopeSweep:
+                {
+                    if (prefabRoot.GetComponent<OscilloscopeSweep>() != null) return;
+                    var c = prefabRoot.AddComponent<OscilloscopeSweep>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                case JuiceKindPulseOnEvent:
+                {
+                    if (prefabRoot.GetComponent<PulseOnEvent>() != null) return;
+                    var c = prefabRoot.AddComponent<PulseOnEvent>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                case JuiceKindTweenCounter:
+                {
+                    if (prefabRoot.GetComponent<TweenCounter>() != null) return;
+                    var c = prefabRoot.AddComponent<TweenCounter>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                case JuiceKindShadowDepth:
+                {
+                    if (prefabRoot.GetComponent<ShadowDepth>() != null) return;
+                    var c = prefabRoot.AddComponent<ShadowDepth>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                case JuiceKindSparkleBurst:
+                {
+                    if (prefabRoot.GetComponent<SparkleBurst>() != null) return;
+                    var c = prefabRoot.AddComponent<SparkleBurst>();
+                    WriteJuiceCurveSlug(c, curveSlug);
+                    break;
+                }
+                default:
+                    Debug.LogWarning($"[UiBakeHandler] juice_kind unknown — skipping (juice_kind={juiceKind})");
+                    break;
+            }
+        }
+
+        /// <summary>Write the <c>curveSlug</c> SerializedProperty on an attached JuiceLayer component when non-empty.</summary>
+        static void WriteJuiceCurveSlug(JuiceBase juice, string curveSlug)
+        {
+            if (juice == null || string.IsNullOrEmpty(curveSlug)) return;
+            var so = new SerializedObject(juice);
+            var prop = so.FindProperty("curveSlug");
+            if (prop == null) return;
+            prop.stringValue = curveSlug;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

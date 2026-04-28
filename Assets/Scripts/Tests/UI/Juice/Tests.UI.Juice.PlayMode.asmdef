@@ -1,0 +1,15 @@
+{
+    "name": "Tests.UI.Juice.PlayMode",
+    "rootNamespace": "Territory.Tests.PlayMode.UI.Juice",
+    "references": ["TerritoryDeveloper.Game"],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

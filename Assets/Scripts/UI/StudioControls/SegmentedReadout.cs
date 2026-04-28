@@ -11,11 +11,20 @@ namespace Territory.UI.StudioControls
         /// <inheritdoc />
         public override string Kind => "segmented-readout";
 
+        [SerializeField] private int _currentValue;
+
         /// <summary>Bake-time-cached detail row (read-only).</summary>
         public SegmentedReadoutDetail Detail => _detail;
 
         /// <summary>Digit count (display width); 0 when detail unset.</summary>
         public int Digits => _detail != null ? _detail.digits : 0;
+
+        /// <summary>Currently displayed integer value. JuiceLayer (TweenCounter) writes intermediate samples here; render layer reads.</summary>
+        public int CurrentValue
+        {
+            get => _currentValue;
+            set => _currentValue = value;
+        }
 
         /// <inheritdoc />
         public override void ApplyDetail(IDetailRow detail)

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Territory.UI.StudioControls
 {
@@ -8,11 +9,26 @@ namespace Territory.UI.StudioControls
     {
         [SerializeField] private IlluminatedButtonDetail _detail;
 
+        /// <summary>Click surface — JuiceLayer + game-side listeners attach here. Stage 5 PulseOnEvent + SparkleBurst defaults wire to this event.</summary>
+        [SerializeField] private UnityEvent _onClick = new UnityEvent();
+
+        [SerializeField, Range(0f, 1f)] private float _illuminationAlpha = 1f;
+
         /// <inheritdoc />
         public override string Kind => "illuminated-button";
 
         /// <summary>Bake-time-cached detail row (read-only).</summary>
         public IlluminatedButtonDetail Detail => _detail;
+
+        /// <summary>Click event — runtime + JuiceLayer hook. Driven by external pointer / input source.</summary>
+        public UnityEvent OnClick => _onClick;
+
+        /// <summary>Illumination alpha [0,1]. JuiceLayer (PulseOnEvent) writes here; render layer reads.</summary>
+        public float IlluminationAlpha
+        {
+            get => _illuminationAlpha;
+            set => _illuminationAlpha = Mathf.Clamp01(value);
+        }
 
         /// <inheritdoc />
         public override void ApplyDetail(IDetailRow detail)
