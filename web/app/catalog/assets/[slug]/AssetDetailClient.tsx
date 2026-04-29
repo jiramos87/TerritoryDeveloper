@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import AssetDetail from "@/components/catalog/AssetDetail";
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 import type { CatalogAssetSpineDto, CatalogAssetSpinePatchBody } from "@/types/api/catalog-api";
 
@@ -84,6 +85,7 @@ export default function AssetDetailClient({ slug }: { slug: string }) {
     <>
       <AssetDetail asset={asset} onSave={handleSave} saveError={saveError} />
       <VersionsTab entityId={asset.entity_id} kind="asset" />
+      <RefsTab entityId={asset.entity_id} kind="asset" />
     </>
   );
 }

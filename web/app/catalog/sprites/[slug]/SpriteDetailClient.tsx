@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import SpriteDetail, { type SpriteDetailView } from "@/components/catalog/SpriteDetail";
 import type { SpriteEditFormValue } from "@/components/catalog/SpriteEditForm";
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 
 type DetailApiPayload = {
@@ -126,6 +127,7 @@ export default function SpriteDetailClient({ slug }: { slug: string }) {
     <>
       <SpriteDetail sprite={sprite} onSave={handleSave} saveError={saveError} />
       <VersionsTab entityId={sprite.entity_id} kind="sprite" />
+      <RefsTab entityId={sprite.entity_id} kind="sprite" />
     </>
   );
 }

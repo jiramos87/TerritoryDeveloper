@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 import type {
   CatalogArchetype,
@@ -197,6 +198,7 @@ export default function ArchetypeDetailClient({ entityId }: { entityId: string }
       </section>
 
       <VersionsTab entityId={entityId} kind="archetype" />
+      <RefsTab entityId={entityId} kind="archetype" />
     </div>
   );
 }

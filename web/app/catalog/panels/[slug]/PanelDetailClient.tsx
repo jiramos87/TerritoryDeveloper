@@ -6,6 +6,7 @@ import PanelSlotColumn from "@/components/catalog/PanelSlotColumn";
 import { type PanelChildRowState } from "@/components/catalog/PanelChildRow";
 import type { EntityRefRow } from "@/components/catalog/EntityRefPicker";
 import EntityPreview from "@/components/preview/EntityPreview";
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 import type { PanelPreviewChild, PanelPreviewSlotDef } from "@/components/preview/PanelPreview";
 import { slotOrder } from "@/lib/catalog/panel-slots-schema";
@@ -328,6 +329,7 @@ export default function PanelDetailClient({ slug }: { slug: string }) {
       </div>
 
       <VersionsTab entityId={panel.entity_id} kind="panel" />
+      <RefsTab entityId={panel.entity_id} kind="panel" />
     </div>
   );
 }

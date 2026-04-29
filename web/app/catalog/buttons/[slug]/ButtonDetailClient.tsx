@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import EntityPreview from "@/components/preview/EntityPreview";
 import EntityRefPicker, { type EntityRefRow } from "@/components/catalog/EntityRefPicker";
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 import { SIZE_VARIANTS, type SizeVariant } from "@/lib/catalog/button-enums";
 import type {
@@ -345,6 +346,7 @@ export default function ButtonDetailClient({ slug }: { slug: string }) {
       </label>
 
       <VersionsTab entityId={button.entity_id} kind="button" />
+      <RefsTab entityId={button.entity_id} kind="button" />
     </div>
   );
 }

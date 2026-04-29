@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import AudioPreviewPlayer from "@/components/catalog/AudioPreviewPlayer";
+import RefsTab from "@/components/refs/RefsTab";
 import VersionsTab from "@/components/versions/VersionsTab";
 import {
   fetchAudioBySlug,
@@ -123,6 +124,7 @@ export default function AudioDetailClient({ slug }: { slug: string }) {
       />
 
       <VersionsTab entityId={audio.entity_id} kind="audio" />
+      <RefsTab entityId={audio.entity_id} kind="audio" />
     </section>
   );
 }
