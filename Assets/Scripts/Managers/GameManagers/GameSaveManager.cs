@@ -177,6 +177,12 @@ public class GameSaveManager : MonoBehaviour
         saveData.neighborCityBindings = neighborCityBindings != null
             ? new List<NeighborCityBinding>(neighborCityBindings)
             : new List<NeighborCityBinding>();
+        // TECH-3235 — overlay-toggle active state. UIManager owns the dictionary; capture into list-form
+        // for JsonUtility (Dictionary not supported). Empty list on missing UIManager — load path migrates.
+        Territory.UI.UIManager uiManagerForSave = FindObjectOfType<Territory.UI.UIManager>();
+        saveData.overlayActive = uiManagerForSave != null
+            ? uiManagerForSave.CaptureOverlayActiveForSave()
+            : new List<bool>();
         return saveData;
     }
 
@@ -329,6 +335,11 @@ public class GameSaveManager : MonoBehaviour
                     layers = MiniMapLayer.Streets | MiniMapLayer.Zones;
                 miniMapController.SetActiveLayers(layers);
             }
+            // TECH-3235 — restore overlay-toggle state. Empty / null list (legacy saves) → all defaults via
+            // LoadOverlayStateFromSaveData. UIManager fires OnOverlayStateChanged so adapter visuals sync.
+            Territory.UI.UIManager uiManagerForLoad = FindObjectOfType<Territory.UI.UIManager>();
+            if (uiManagerForLoad != null)
+                uiManagerForLoad.LoadOverlayStateFromSaveData(saveData.overlayActive);
         }
         else { }
     }
@@ -368,6 +379,10 @@ public class GameSaveManager : MonoBehaviour
         {
             // intentional no-op — backward-compat sentinel.
         }
+        // TECH-3235 — append-only overlay-toggle state. Null on saves predating Stage 7 → empty list;
+        // LoadOverlayStateFromSaveData migrates short / empty lists to default-false per slug.
+        if (data.overlayActive == null)
+            data.overlayActive = new List<bool>();
         data.schemaVersion = GameSaveData.CurrentSchemaVersion;
 
         if (string.IsNullOrEmpty(data.regionId) || string.IsNullOrEmpty(data.countryId))
@@ -531,5 +546,15 @@ public class GameSaveData
     /// Added schema 4 (Stage 4 — bond ledger).
     /// </summary>
     public List<BondData> bondRegistry = new List<BondData>();
+
+    /// <summary>
+    /// Overlay-toggle active state per <see cref="Territory.UI.Toolbar.OverlaySlug"/> (Stage 7 — TECH-3235).
+    /// Index ordering matches <see cref="Territory.UI.Toolbar.OverlaySlug"/> integer values
+    /// (0 = Terrain, 1 = Pollution, 2 = LandValue, 3 = RoadNetwork, 4 = TrafficFlow).
+    /// Empty list on legacy saves — <see cref="UIManager.LoadOverlayStateFromSaveData"/> migrates
+    /// to all-defaults (false). Append-only — never reorder existing slugs; new slugs append at tail.
+    /// No schema bump — JsonUtility yields empty list on missing field, which migrates cleanly.
+    /// </summary>
+    public List<bool> overlayActive = new List<bool>();
 }
 }

@@ -7,6 +7,7 @@ using Territory.UI.Juice;
 using Territory.UI.StudioControls;
 using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
+using Territory.UI.Themed.Renderers;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -616,12 +617,19 @@ namespace Territory.Editor.Bridge
 
         /// <summary>
         /// Write a panel prefab with attached <see cref="ThemedPanel"/> + populated <c>_slots</c> +
-        /// <c>_children[]</c>. SlotSpec order = IR slot order; children order = IR slot iteration order
-        /// (resolves child slug → existing prefab under <paramref name="dir"/>; warn + skip on miss).
+        /// <c>_children[]</c>. SlotSpec order = IR slot order; children order = IR slot iteration order.
+        /// Stage 7 T7.0 — children are instantiated as scene-instance <c>GameObject</c>s under the panel
+        /// root (state-holder + renderer pair + render-target descendants per Stage 10 T10.3 convention).
+        /// Asset-GUID resolution (loading <c>{dir}/{childSlug}.prefab</c>) is no longer used: adapter
+        /// Inspector slots must bind against real children, not asset stand-ins. <paramref name="dir"/>
+        /// stays in the signature for future bake-time variant resolution.
         /// SerializedObject path enforces deterministic property write for re-bake idempotency.
         /// </summary>
         static BakeError SavePanelPrefab(IrPanel panel, string assetPath, string dir)
         {
+            // dir kept for future variant resolution; not consumed in T7.0 path.
+            _ = dir;
+
             GameObject go = null;
             try
             {
@@ -638,6 +646,11 @@ namespace Territory.Editor.Bridge
 
                 int slotCount = panel.slots != null ? panel.slots.Length : 0;
                 slotsProp.arraySize = slotCount;
+                // Panel-scoped per-kind counter — prevents Unity sibling-name auto-suffix when
+                // multiple slots declare the same child kind (e.g. tool-grid + subtype-row both
+                // emit illuminated-button). Keys are the StudioControl kind slug; values are the
+                // running 0-based count for that kind across all slots in this panel.
+                var perKindCounters = new Dictionary<string, int>();
                 for (int s = 0; s < slotCount; s++)
                 {
                     var slot = panel.slots[s];
@@ -654,21 +667,33 @@ namespace Territory.Editor.Bridge
                         acceptsProp.GetArrayElementAtIndex(a).stringValue = slotAccepts[a] ?? string.Empty;
                     }
 
-                    // Resolve children for this slot in declared order.
+                    // Stage 7 T7.0 — instantiate scene-instance child GameObjects under the panel root
+                    // for each declared slot child (state-holder + renderer pair + render-target
+                    // descendants). Asset-prefab loading retired: adapter Inspector slots must bind
+                    // against real children, not asset GUID stand-ins.
                     var slotChildren = slot?.children ?? Array.Empty<string>();
                     for (int c = 0; c < slotChildren.Length; c++)
                     {
-                        var childSlug = slotChildren[c];
-                        if (string.IsNullOrEmpty(childSlug)) continue;
-                        var childPath = $"{dir.TrimEnd('/')}/{childSlug}.prefab";
-                        var childPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(childPath);
-                        if (childPrefab == null)
+                        var childKind = slotChildren[c];
+                        if (string.IsNullOrEmpty(childKind)) continue;
+                        if (!IsKnownStudioControlKind(childKind))
                         {
                             Debug.LogWarning(
-                                $"[UiBakeHandler] panel={panel.slug} slot={slot?.name} child={childSlug} prefab missing at {childPath} — skipped");
+                                $"[UiBakeHandler] panel={panel.slug} slot={slot?.name} child kind={childKind} unknown — skipped");
                             continue;
                         }
-                        childrenList.Add(childPrefab);
+                        // Panel-scoped per-kind counter — read-modify-write so multi-slot panels
+                        // (tool-grid + subtype-row) produce contiguous names (illuminated-button,
+                        // illuminated-button (1), ..., illuminated-button (17)) instead of
+                        // colliding with sibling auto-suffix.
+                        if (!perKindCounters.TryGetValue(childKind, out int kindCounter))
+                        {
+                            kindCounter = 0;
+                        }
+                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter);
+                        perKindCounters[childKind] = kindCounter;
+                        if (childGo == null) continue;
+                        childrenList.Add(childGo);
                     }
                 }
 
@@ -708,6 +733,124 @@ namespace Territory.Editor.Bridge
             }
         }
 
+        // ── Stage 7 T7.0 — embedded panel child instantiation ───────────────────
+
+        /// <summary>
+        /// Instantiate a fresh scene-instance <c>GameObject</c> under the panel root for the given
+        /// StudioControl <paramref name="kind"/>. Attaches the matching state-holder + renderer pair
+        /// (per Stage 10 T10.3 convention) and spawns the kind's render-target descendants
+        /// (<c>body</c> / <c>halo</c> / <c>text</c> / <c>Label</c> / <c>Icon</c> / <c>Toggle</c>).
+        /// Detail-row defaults applied so the embedded child is visually consistent with the
+        /// top-level baked prefab counterparts. Adapter Inspector slots bind against the returned
+        /// <c>GameObject</c> (or one of its components) — no asset-GUID stand-in.
+        /// </summary>
+        /// <param name="kind">StudioControl kind slug (must satisfy <see cref="IsKnownStudioControlKind"/>).</param>
+        /// <param name="panelRoot">Panel root <see cref="Transform"/>; child reparented with <c>worldPositionStays:false</c>.</param>
+        /// <param name="duplicateCounter">Per-panel suffix counter — incremented each call so multiple
+        /// children of the same kind get unique <c>GameObject.name</c> values (e.g. <c>illuminated-button</c>,
+        /// <c>illuminated-button (1)</c>, ...). Suffix-only — does not affect IR slot resolution.</param>
+        /// <returns>Instantiated child <c>GameObject</c>; <c>null</c> on unknown kind.</returns>
+        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter)
+        {
+            if (panelRoot == null || string.IsNullOrEmpty(kind)) return null;
+
+            var name = duplicateCounter == 0 ? kind : $"{kind} ({duplicateCounter})";
+            duplicateCounter++;
+
+            var childGo = new GameObject(name, typeof(RectTransform));
+            childGo.transform.SetParent(panelRoot, worldPositionStays: false);
+
+            // State-holder + renderer pair — mirrors the per-kind switch in BakeInteractive.
+            // Detail rows: panel children carry per-kind defaults at bake time (no IR detail block
+            // exists for slot children; future Stage extensions may add one).
+            switch (kind)
+            {
+                case "knob":
+                {
+                    var knob = childGo.AddComponent<Knob>();
+                    knob.ApplyDetail(new KnobDetail());
+                    break;
+                }
+                case "fader":
+                {
+                    var fader = childGo.AddComponent<Fader>();
+                    fader.ApplyDetail(new FaderDetail());
+                    break;
+                }
+                case "detent-ring":
+                {
+                    var dr = childGo.AddComponent<DetentRing>();
+                    dr.ApplyDetail(new DetentRingDetail());
+                    break;
+                }
+                case "vu-meter":
+                {
+                    var vu = childGo.AddComponent<VUMeter>();
+                    if (childGo.GetComponent<VUMeterRenderer>() == null)
+                    {
+                        childGo.AddComponent<VUMeterRenderer>();
+                    }
+                    SpawnVUMeterRenderTargets(childGo);
+                    vu.ApplyDetail(new VUMeterDetail());
+                    break;
+                }
+                case "oscilloscope":
+                {
+                    var osc = childGo.AddComponent<Oscilloscope>();
+                    osc.ApplyDetail(new OscilloscopeDetail());
+                    break;
+                }
+                case "illuminated-button":
+                {
+                    var btn = childGo.AddComponent<IlluminatedButton>();
+                    if (childGo.GetComponent<IlluminatedButtonRenderer>() == null)
+                    {
+                        childGo.AddComponent<IlluminatedButtonRenderer>();
+                    }
+                    SpawnIlluminatedButtonRenderTargets(childGo);
+                    btn.ApplyDetail(new IlluminatedButtonDetail());
+                    break;
+                }
+                case "led":
+                {
+                    var led = childGo.AddComponent<LED>();
+                    led.ApplyDetail(new LEDDetail());
+                    break;
+                }
+                case "segmented-readout":
+                {
+                    var sr = childGo.AddComponent<SegmentedReadout>();
+                    if (childGo.GetComponent<SegmentedReadoutRenderer>() == null)
+                    {
+                        childGo.AddComponent<SegmentedReadoutRenderer>();
+                    }
+                    var sd = new SegmentedReadoutDetail { digits = 1 };
+                    SpawnSegmentedReadoutRenderTargets(childGo, sd);
+                    sr.ApplyDetail(sd);
+                    break;
+                }
+                case "themed-overlay-toggle-row":
+                {
+                    childGo.AddComponent<ThemedOverlayToggleRow>();
+                    var renderer = childGo.AddComponent<ThemedOverlayToggleRowRenderer>();
+                    SpawnThemedOverlayToggleRowChildren(childGo, out var labelTmp, out var iconImage, out var unityToggle);
+                    var rendererSo = new SerializedObject(renderer);
+                    var labelProp = rendererSo.FindProperty("_labelText");
+                    if (labelProp != null) labelProp.objectReferenceValue = labelTmp;
+                    var iconProp = rendererSo.FindProperty("_iconImage");
+                    if (iconProp != null) iconProp.objectReferenceValue = iconImage;
+                    rendererSo.ApplyModifiedPropertiesWithoutUndo();
+                    _ = unityToggle;
+                    break;
+                }
+                default:
+                    UnityEngine.Object.DestroyImmediate(childGo);
+                    return null;
+            }
+
+            return childGo;
+        }
+
         // ── StudioControl interactive bake (Stage 4 T4.5) ───────────────────────
 
         /// <summary>Known StudioControl kind slugs — kept in sync with `tools/scripts/ir-schema.ts` <c>StudioControlKind</c>.</summary>
@@ -716,6 +859,7 @@ namespace Territory.Editor.Bridge
             "knob", "fader", "detent-ring",
             "vu-meter", "oscilloscope",
             "illuminated-button", "led", "segmented-readout",
+            "themed-overlay-toggle-row",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -751,6 +895,13 @@ namespace Territory.Editor.Bridge
                     details = $"kind={irRow.kind} slug={irRow.slug}",
                     path = $"$.interactives[{interactiveIndex}].detail",
                 };
+            }
+
+            // Themed primitive composite branch — diverges from StudioControlBase ceremony (no _slug field,
+            // no IDetailRow, sibling components are Themed primitives + renderer). Early-return on success.
+            if (irRow.kind == "themed-overlay-toggle-row")
+            {
+                return BakeThemedOverlayToggleRow(irRow, assetPath);
             }
 
             GameObject go = null;
@@ -1296,6 +1447,139 @@ namespace Territory.Editor.Bridge
             tmp.raycastTarget = false;
             // digits unused at spawn time except as future width hint (current impl uses anchor stretch).
             _ = digits;
+        }
+
+        /// <summary>
+        /// Bake one ThemedOverlayToggleRow IR row into a typed prefab — composite of
+        /// <see cref="ThemedOverlayToggleRow"/> state-holder + <see cref="ThemedOverlayToggleRowRenderer"/>
+        /// renderer + spawned child Label (TMP_Text), Icon (Image), Toggle (UnityEngine.UI.Toggle)
+        /// GameObjects. No StudioControlBase ceremony — Themed primitive composite branch.
+        /// Stage 10 lock honored — bake-time-attached only.
+        /// </summary>
+        static BakeError BakeThemedOverlayToggleRow(IrInteractive irRow, string assetPath)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+
+                var row = go.AddComponent<ThemedOverlayToggleRow>();
+                var renderer = go.AddComponent<ThemedOverlayToggleRowRenderer>();
+
+                // Spawn child Label (TMP_Text), Icon (Image), Toggle (Unity Toggle).
+                SpawnThemedOverlayToggleRowChildren(go, out var labelTmp, out var iconImage, out var unityToggle);
+
+                // Wire Inspector refs on the row primitive (toggle/label/icon as Themed siblings would
+                // require ThemedToggle/Label/Icon — defer to T7.4 art pass). Renderer side caches direct
+                // unity refs (TMP_Text + Image) for state writes.
+                var so = new SerializedObject(renderer);
+                var labelProp = so.FindProperty("_labelText");
+                if (labelProp != null) labelProp.objectReferenceValue = labelTmp;
+                var iconProp = so.FindProperty("_iconImage");
+                if (iconProp != null) iconProp.objectReferenceValue = iconImage;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                // Suppress unused-variable warnings — refs reserved for T7.4 Themed primitive cascading.
+                _ = row;
+                _ = unityToggle;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "prefab_write_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Spawn Label + Icon + Toggle children under a ThemedOverlayToggleRow prefab root. Idempotent.</summary>
+        static void SpawnThemedOverlayToggleRowChildren(
+            GameObject prefabRoot,
+            out TMP_Text labelTmp,
+            out Image iconImage,
+            out Toggle unityToggle)
+        {
+            labelTmp = null;
+            iconImage = null;
+            unityToggle = null;
+            if (prefabRoot == null) return;
+
+            // Label child (left third).
+            var labelGo = prefabRoot.transform.Find("Label")?.gameObject;
+            if (labelGo == null)
+            {
+                labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var lr = (RectTransform)labelGo.transform;
+                lr.anchorMin = new Vector2(0f, 0f);
+                lr.anchorMax = new Vector2(0.5f, 1f);
+                lr.pivot = new Vector2(0.5f, 0.5f);
+                lr.anchoredPosition = Vector2.zero;
+                lr.sizeDelta = Vector2.zero;
+                labelTmp = labelGo.AddComponent<TextMeshProUGUI>();
+                labelTmp.text = string.Empty;
+                labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                labelTmp.fontSize = 14f;
+                labelTmp.raycastTarget = false;
+            }
+            else
+            {
+                labelTmp = labelGo.GetComponent<TMP_Text>();
+            }
+
+            // Icon child (middle).
+            var iconGo = prefabRoot.transform.Find("Icon")?.gameObject;
+            if (iconGo == null)
+            {
+                iconGo = new GameObject("Icon", typeof(RectTransform));
+                iconGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var ir = (RectTransform)iconGo.transform;
+                ir.anchorMin = new Vector2(0.5f, 0f);
+                ir.anchorMax = new Vector2(0.75f, 1f);
+                ir.pivot = new Vector2(0.5f, 0.5f);
+                ir.anchoredPosition = Vector2.zero;
+                ir.sizeDelta = Vector2.zero;
+                iconImage = iconGo.AddComponent<Image>();
+                iconImage.raycastTarget = false;
+            }
+            else
+            {
+                iconImage = iconGo.GetComponent<Image>();
+            }
+
+            // Toggle child (right third).
+            var toggleGo = prefabRoot.transform.Find("Toggle")?.gameObject;
+            if (toggleGo == null)
+            {
+                toggleGo = new GameObject("Toggle", typeof(RectTransform));
+                toggleGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var tr = (RectTransform)toggleGo.transform;
+                tr.anchorMin = new Vector2(0.75f, 0f);
+                tr.anchorMax = new Vector2(1f, 1f);
+                tr.pivot = new Vector2(0.5f, 0.5f);
+                tr.anchoredPosition = Vector2.zero;
+                tr.sizeDelta = Vector2.zero;
+                // Background image required for Toggle interaction.
+                var bgImg = toggleGo.AddComponent<Image>();
+                bgImg.raycastTarget = true;
+                unityToggle = toggleGo.AddComponent<Toggle>();
+                unityToggle.targetGraphic = bgImg;
+                unityToggle.isOn = false;
+            }
+            else
+            {
+                unityToggle = toggleGo.GetComponent<Toggle>();
+            }
         }
     }
 }

@@ -43,6 +43,27 @@ const pgRequire = createRequire(
 const pg = pgRequire("pg");
 
 // ---------------------------------------------------------------------------
+// Plan-level allow-list — entire master plans waived from arch_surfaces
+// linkage, regardless of stage_id. Use when a master plan's preamble locks a
+// "standalone — not subject to canonical arch surfaces" decision (persisted
+// as a DEC-A row + master-plan preamble lock).
+//
+// Plan-level waivers should be rare and decision-backed. Each entry MUST
+// reference a DEC-A id in the comment. Adding a plan here without a backing
+// arch_decisions row is a process violation.
+// ---------------------------------------------------------------------------
+
+const EXPLICIT_NONE_PLANS = new Set([
+  // DEC-A20 — game-ui-design-system implements game UI via pure agent-skill
+  // orchestration (CD bundle → IR JSON → Unity bridge bake). Does NOT route
+  // through asset-pipeline standard (web console → DB → catalog refs → JSON
+  // fixtures). Preamble lock: "Standalone agent-skill flow — NOT
+  // asset-pipeline." Local save-schema extensions in-scope; STOPs citing
+  // asset-pipeline gates are misapplications on this plan.
+  "game-ui-design-system",
+]);
+
+// ---------------------------------------------------------------------------
 // Allow-list — Stages that intentionally declare `none` for arch_surfaces.
 //
 // Format: `${slug}::${stage_id}` keys. Seeded at Stage 1.2 closeout with all
@@ -62,6 +83,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "asset-pipeline::13.1",
   "asset-pipeline::14.1",
   "asset-pipeline::14.2",
+  "asset-pipeline::14.4",
   "asset-pipeline::15.1",
   "asset-pipeline::17.1",
   "asset-pipeline::18.1",
@@ -497,7 +519,9 @@ const unlinked = await client.query(
     ORDER BY s.slug, s.stage_id`,
 );
 const unlinkedFiltered = unlinked.rows.filter(
-  (r) => !EXPLICIT_NONE_STAGES.has(`${r.slug}::${r.stage_id}`),
+  (r) =>
+    !EXPLICIT_NONE_PLANS.has(r.slug) &&
+    !EXPLICIT_NONE_STAGES.has(`${r.slug}::${r.stage_id}`),
 );
 if (unlinkedFiltered.length > 0) {
   console.error(

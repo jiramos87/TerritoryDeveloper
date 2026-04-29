@@ -300,6 +300,78 @@
           "id": "TECH-2978",
           "checklist_line": "- [ ] **TECH-2978 — `backfill:arch-surfaces` promoted to `arch_surfaces_backfill` MCP tool** — Stage 1 T1.6 of `db-lifecycle-extensions`. Rewrite `tools/scripts/backfill-arch-surfaces.mjs` as TS-backed MCP tool `arch_surfaces_backfill` reading from DB. Preserve shell wrapper (`npm run backfill:arch-surfaces`) for human invocation; arch-drift-scan resolution path can dispatch inline via MCP. Files: `tools/mcp-ia-server/src/tools/arch-surfaces.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/scripts/backfill-arch-surfaces.mjs` (now thin wrapper calling MCP), `package.json` (script unchanged). Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2978.md`.",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3225",
+          "checklist_line": "- [ ] **TECH-3225 — ia_stages.depends_on text[] col + 0043 migration with Tarjan SCC cycle check** — Add `depends_on text[]` column to `ia_stages` via migration `0043_ia_stages_depends_on`. Stage-level cycle check on insert mirrors task-level Tarjan SCC pattern from T1.4 (TECH-2976).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3226",
+          "checklist_line": "- [ ] **TECH-3226 — ia_master_plan_health materialized view + 0044 migration with sync refresh trigger** — Materialized view `ia_master_plan_health` per-slug rollup of n_stages, n_done, n_in_progress, oldest_in_progress_age_days, missing_arch_surfaces[], drift_events_open, sibling_collisions[].",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3227",
+          "checklist_line": "- [ ] **TECH-3227 — master_plan_health MCP tool reading MV rollup + runtime_state merge** — Register `master_plan_health(slug?)` MCP tool reading `ia_master_plan_health` MV (T2.2). Merges `ia/state/runtime-state.json` for `last_verify_at`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3228",
+          "checklist_line": "- [ ] **TECH-3228 — master_plan_next_actionable MCP tool walking ia_stages.depends_on edges** — Register `master_plan_next_actionable(slug)` MCP tool walking `ia_stages.depends_on[]` edges from T2.1.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3229",
+          "checklist_line": "- [ ] **TECH-3229 — master_plan_cross_impact_scan MCP tool joining surfaces × drift events** — Register `master_plan_cross_impact_scan()` MCP tool joining `ia_master_plans` × `arch_surface_links` × open `arch_drift_events`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3230",
+          "checklist_line": "- [ ] **TECH-3230 — SKILL inline edits — depends_on writes in stage-decompose + health reads in master-plan-extend** — Edit `ia/skills/stage-decompose/agent-body.md` to write `depends_on[]` at decompose time via T2.1 col. Edit `ia/skills/master-plan-extend/agent-body.md` Phase N to read `master_plan_health` (T2.3) for cardinality gate input.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3402",
+          "checklist_line": "- [ ] **TECH-3402 — files_touched cols + skill-changelog validator scaffold + 0047/0048 migrations** — Stage 3 T3.1 of `db-lifecycle-extensions`. Migrate `0047_ia_tasks_files_touched` (JSONB cols `expected_files_touched` + `actual_files_touched` on `ia_tasks` + `tolerance_globs jsonb` on `ia_master_plans`, default `[]`) + `0048_skill_changelog_validator` (validator wiring scaffold rows). NULL-tolerant per BF=forward-only. Files: `db/migrations/0047_ia_tasks_files_touched.sql`, `db/migrations/0048_skill_changelog_validator.sql`, `tools/scripts/validate-skill-changelog-presence.mjs`, `package.json`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3403",
+          "checklist_line": "- [ ] **TECH-3403 — `intent_lint` + `task_intent_glossary_align` MCP tools with externalized rule registry** — Stage 3 T3.2 of `db-lifecycle-extensions`. Register `intent_lint(intent_text)` MCP tool with concrete-verb + non-empty + ≤2-sentence rule registry (externalized as JSON `tools/mcp-ia-server/src/data/intent-lint-rules.json` for `skill-train` tunability). Register `task_intent_glossary_align(task_id)` reading glossary + retired-surface scan. Both soft-gate (warnings only, do not block). Files: `tools/mcp-ia-server/src/tools/intent-lint.ts`, `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/data/intent-lint-rules.json`, `tools/mcp-ia-server/src/index.ts`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3404",
+          "checklist_line": "- [ ] **TECH-3404 — `task_batch_insert` MCP with intra-batch label-based dep resolve in single PG txn** — Stage 3 T3.3 of `db-lifecycle-extensions`. Register `task_batch_insert(stage_id, tasks[])` MCP tool with intra-batch label-based dep resolution in single PG txn. Rejects label collisions with structured error. Emits `id_map: {label: task_id}`. Files: `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/index.ts`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3405",
+          "checklist_line": "- [ ] **TECH-3405 — `stage_decompose_apply` MCP — atomic prose write + `task_batch_insert` + `task_dep_register`** — Stage 3 T3.4 of `db-lifecycle-extensions`. Register `stage_decompose_apply(slug, stage_idx, prose_block, tasks[])` MCP tool wrapping prose write + `task_batch_insert` (T3.3) + `task_dep_register` (T1.4) in single PG txn. Rollback on any sub-step fail. Emits `{ok, ids[]}`. Collapses `/stage-decompose` + `/stage-file` Phase boundaries. Files: `tools/mcp-ia-server/src/tools/stage.ts`, `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/index.ts`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3406",
+          "checklist_line": "- [ ] **TECH-3406 — `task_diff_anomaly_scan` MCP — JSONB diff with tolerance globs** — Stage 3 T3.5 of `db-lifecycle-extensions`. Register `task_diff_anomaly_scan(slug)` MCP tool diffing `expected_files_touched` ↔ `actual_files_touched` JSONB cols (commit-derived) with tolerance globs from `ia_master_plans.tolerance_globs`. Emits `[{task_id, expected_files, actual_files, unexpected_files, missed_files}]`. NULL-tolerant for pre-`0047` Tasks. Files: `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/lib/glob-matcher.ts`, `tools/mcp-ia-server/src/index.ts`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3407",
+          "checklist_line": "- [ ] **TECH-3407 — SKILL inline edits — `intent_lint` dispatch + decompose collapse + Changelog seed across 6 SKILLs** — Stage 3 T3.6 of `db-lifecycle-extensions`. Edit `/stage-decompose` to call `intent_lint` (T3.2 soft warn per Q6); collapse `/stage-decompose` + `/stage-file` Phase boundaries via `stage_decompose_apply` (T3.4); seed empty `## Changelog` section in 6 SKILL files: `stage-file`, `ship-stage`, `stage-authoring`, `master-plan-new`, `master-plan-extend`, `stage-decompose` (no synthesized history per SK=a inline lock). Run `npm run skill:sync:all`. Files: `ia/skills/stage-decompose/agent-body.md`, `ia/skills/{stage-file,ship-stage,stage-authoring,master-plan-new,master-plan-extend,stage-decompose}/SKILL.md`, `.claude/agents/*.md`, `.claude/commands/*.md` (regenerated).",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -698,6 +770,48 @@
           "type": "issue",
           "id": "TECH-2968",
           "checklist_line": "- [ ] **TECH-2968 — Game UI Stage 10 T10.6 — HudBarVisualSmokeTest PlayMode** — New `Assets/Scripts/Tests/UI/HUD/HudBarVisualSmokeTest.cs` PlayMode test. Enters PlayMode; for each rendered StudioControl child of hud-bar assert child `Image.color.a > 0`; assert city-name + population + money `TMP_Text.text` non-empty; sample happiness via `HudBarDataAdapter`; assert needle `RectTransform.localRotation.eulerAngles.z` matches expected angle range. Closes visibility regression hole that `HudBarParityTest` silently passed through. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3231",
+          "checklist_line": "- [ ] **TECH-3231 — Toolbar IR + bake (Stage 7 T7.1)** — Extend Stage 1 IR with toolbar panel + IlluminatedButton interactives per legacy tool slug.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3232",
+          "checklist_line": "- [ ] **TECH-3232 — Overlay strip IR + bake (Stage 7 T7.2)** — Extend IR with overlay-toggle-strip ThemedPanel + ThemedOverlayToggleRow interactives per overlay slug.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3233",
+          "checklist_line": "- [ ] **TECH-3233 — ThemedOverlayToggleRowRenderer + bake-time injection (Stage 7 T7.3a)** — Author `Assets/Scripts/UI/Themed/Renderers/ThemedOverlayToggleRowRenderer.cs` + extend `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` interactive emit path with renderer + child label + icon injection for `ThemedOverlayToggleRow` IR rows.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3234",
+          "checklist_line": "- [ ] **TECH-3234 — ToolbarDataAdapter (Stage 7 T7.3b)** — New `Assets/Scripts/UI/Toolbar/ToolbarDataAdapter.cs` MonoBehaviour mirrors `HudBarDataAdapter` pattern: Inspector producer slot for `UIManager` ref + consumer slots for `IlluminatedButton[]` keyed by tool slug.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3235",
+          "checklist_line": "- [ ] **TECH-3235 — OverlayToggleDataAdapter (Stage 7 T7.3c)** — New `Assets/Scripts/UI/Toolbar/OverlayToggleDataAdapter.cs` MonoBehaviour mirrors `HudBarDataAdapter` pattern. Inspector producer slot for overlay-state surface (target sealed by `/stage-file` planner pass) + consumer slot for `ThemedOverlayToggleRow[]` keyed by overlay slug.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3236",
+          "checklist_line": "- [ ] **TECH-3236 — Scene wiring + parity test (Stage 7 T7.4)** — Place `Toolbar.prefab` + `OverlayToggleStrip.prefab` into `MainScene.unity` under scene-level `UI Canvas` GameObject via `set_gameobject_parent` + `attach_component` + `assign_serialized_field` bridge mutations. Decommission legacy toolbar/overlay GameObjects.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3401",
+          "checklist_line": "- [ ] **TECH-3401 — Bake handler — embed panel children at bake time (Stage 7 T7.0)** — Extend `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` `SavePanelPrefab` so IR panel `_children[]` materialize as scene-instance GameObjects under panel root rather than asset GUID refs. Per child: instantiate child GameObject with `RectTransform` + `AddComponent` for state-holder kind (IlluminatedButton / ThemedOverlayToggleRow / etc.) + matching renderer per Stage 10 T10.3 pattern + spawn child Image / TMP_Text per IR detail row.",
           "trailing_blanks": 1
         }
       ]
@@ -1664,6 +1778,78 @@
           "type": "issue",
           "id": "TECH-3003",
           "checklist_line": "- [ ] **TECH-3003** — **Publish hook + lint + tests** (asset-pipeline Stage 14.1 T14.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3222",
+          "checklist_line": "- [ ] **TECH-3222** — **history-repo + versions API** (asset-pipeline Stage 14.2 T14.2.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3223",
+          "checklist_line": "- [ ] **TECH-3223** — **VersionsTab component** (asset-pipeline Stage 14.2 T14.2.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3224",
+          "checklist_line": "- [ ] **TECH-3224** — **8 kind page wires + shape tests** (asset-pipeline Stage 14.2 T14.2.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3300",
+          "checklist_line": "- [ ] **TECH-3300** — **diff-versions library + kind-schema dispatch** (asset-pipeline Stage 14.3 T14.3.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3301",
+          "checklist_line": "- [ ] **TECH-3301** — **Single-version diff API route** (asset-pipeline Stage 14.3 T14.3.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3302",
+          "checklist_line": "- [ ] **TECH-3302** — **EntityVersionDiff dispatcher + fallback renderers** (asset-pipeline Stage 14.3 T14.3.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3303",
+          "checklist_line": "- [ ] **TECH-3303** — **4 kind renderers — sprite / asset / button / token** (asset-pipeline Stage 14.3 T14.3.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3304",
+          "checklist_line": "- [ ] **TECH-3304** — **4 kind renderers + diff page route + 8 wires** (asset-pipeline Stage 14.3 T14.3.5)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3408",
+          "checklist_line": "- [ ] **TECH-3408** — **refs-repo + refs API route** (asset-pipeline Stage 14.4 T14.4.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3409",
+          "checklist_line": "- [ ] **TECH-3409** — **RefsTab component + view split** (asset-pipeline Stage 14.4 T14.4.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3410",
+          "checklist_line": "- [ ] **TECH-3410** — **8 detail-client RefsTab wires + per-kind goldens** (asset-pipeline Stage 14.4 T14.4.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3411",
+          "checklist_line": "- [ ] **TECH-3411** — **ripple-count upgrade + parity test** (asset-pipeline Stage 14.4 T14.4.4)",
           "trailing_blanks": 1
         }
       ]
