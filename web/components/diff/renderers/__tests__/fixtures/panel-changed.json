@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "background_token",
+      "before": "tok_panel_bg_old",
+      "after": "tok_panel_bg_new",
+      "hint": "token"
+    },
+    {
+      "field": "title",
+      "before": "Inventory",
+      "after": "Inventory Panel",
+      "hint": "scalar"
+    },
+    {
+      "field": "child_button_ids",
+      "before": ["btn_a"],
+      "after": ["btn_a", "btn_b"],
+      "hint": "list"
+    }
+  ]
+}

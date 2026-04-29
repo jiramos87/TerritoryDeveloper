@@ -1,0 +1,30 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "asset_ref",
+      "before": "asset_v1",
+      "after": "asset_v2",
+      "hint": "asset"
+    },
+    {
+      "field": "sprite_ref",
+      "before": "spr_v1",
+      "after": "spr_v2",
+      "hint": "sprite"
+    },
+    {
+      "field": "name",
+      "before": "house_arch_old",
+      "after": "house_arch_new",
+      "hint": "scalar"
+    },
+    {
+      "field": "slots",
+      "before": ["slot_a"],
+      "after": ["slot_a", "slot_b"],
+      "hint": "list"
+    }
+  ]
+}

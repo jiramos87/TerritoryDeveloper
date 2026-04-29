@@ -1,0 +1,30 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "value",
+      "before": "#ff0000",
+      "after": "#00ff00",
+      "hint": "token"
+    },
+    {
+      "field": "name",
+      "before": "color_primary",
+      "after": "color_brand_primary",
+      "hint": "scalar"
+    },
+    {
+      "field": "tags",
+      "before": ["brand"],
+      "after": ["brand", "primary"],
+      "hint": "list"
+    },
+    {
+      "field": "description",
+      "before": "old_token",
+      "after": "not-a-color",
+      "hint": "token"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "image_path",
+      "before": "sprites/old.png",
+      "after": "sprites/new.png",
+      "hint": "blob"
+    },
+    {
+      "field": "name",
+      "before": "rooftop_old",
+      "after": "rooftop_new",
+      "hint": "scalar"
+    },
+    {
+      "field": "tags",
+      "before": ["a", "b"],
+      "after": ["a", "c"],
+      "hint": "list"
+    }
+  ]
+}

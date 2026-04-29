@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "sprite_id",
+      "before": "spr_house_v1",
+      "after": "spr_house_v2",
+      "hint": "sprite"
+    },
+    {
+      "field": "name",
+      "before": "house_old",
+      "after": "house_new",
+      "hint": "scalar"
+    },
+    {
+      "field": "zone_subtype_ids",
+      "before": ["residential"],
+      "after": ["residential", "downtown"],
+      "hint": "list"
+    }
+  ]
+}

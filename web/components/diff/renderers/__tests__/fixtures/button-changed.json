@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "label",
+      "before": "Save",
+      "after": "Save Changes",
+      "hint": "scalar"
+    },
+    {
+      "field": "states",
+      "before": ["normal", "hover"],
+      "after": ["normal", "hover", "disabled"],
+      "hint": "list"
+    },
+    {
+      "field": "hover_token",
+      "before": "tok_blue_old",
+      "after": "tok_blue_new",
+      "hint": "token"
+    }
+  ]
+}

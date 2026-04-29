@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "audio_path",
+      "before": "audio/old.wav",
+      "after": "audio/new.wav",
+      "hint": "blob"
+    },
+    {
+      "field": "loop",
+      "before": false,
+      "after": true,
+      "hint": "scalar"
+    },
+    {
+      "field": "variants",
+      "before": ["short"],
+      "after": ["short", "long"],
+      "hint": "list"
+    }
+  ]
+}

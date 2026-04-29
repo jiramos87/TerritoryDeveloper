@@ -1,0 +1,24 @@
+{
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "field": "members",
+      "before": ["asset_a", "asset_b"],
+      "after": ["asset_a", "asset_c"],
+      "hint": "list"
+    },
+    {
+      "field": "name",
+      "before": "tree_pool_old",
+      "after": "tree_pool_new",
+      "hint": "scalar"
+    },
+    {
+      "field": "tags",
+      "before": ["nature"],
+      "after": ["nature", "outdoor"],
+      "hint": "list"
+    }
+  ]
+}
