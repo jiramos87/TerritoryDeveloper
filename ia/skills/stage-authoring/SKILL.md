@@ -277,6 +277,28 @@ The Opus authoring prompt MUST embed the 10-point rubric verbatim as a hard-cons
 ```
 HARD CONSTRAINTS — every Task §Plan Digest body MUST satisfy:
 
+0. SECTION HEADING IS LITERAL §. The body's top heading line MUST be exactly:
+
+       ## §Plan Digest
+
+   The character before `Plan Digest` is the section-marker `§` (Unicode
+   U+00A7 SECTION SIGN), NOT `S`, NOT `&sect;`, NOT omitted, NOT replaced
+   with any look-alike. Sub-section headings MUST also carry the literal §:
+
+       ### §Goal
+       ### §Acceptance
+       ### §Pending Decisions
+       ### §Implementer Latitude
+       ### §Work Items
+       ### §Test Blueprint
+       ### §Invariants & Gate
+
+   Bare `## Plan Digest` / `### Goal` / etc. are REJECTED — `/ship-stage`
+   readiness gate looks up the section by literal `§Plan Digest` and a
+   missing § returns `section_not_found`. Same rule applies to the
+   `task_spec_section_write` `section` arg: pass `"§Plan Digest"` (with §),
+   never `"Plan Digest"`.
+
 1. §Goal present — 1–2 sentences in product/domain terms; glossary-aligned.
 2. §Acceptance present — every row = one observable behavior; checkbox shape.
 3. §Pending Decisions present — EVERY row LOCKED with `{decision}: {choice} — rationale: {why}` shape. Forbidden: question form, `TBD`, `see spec`, `defer to implementer`, `pick A or B`, `unresolved`, `open`. Genuinely cannot pick AND unsafe to default → halt with `STOPPED — decision_required: {decision name}` + set `escalation_enum: decision_required`. Never leave a row as an open question.
@@ -309,7 +331,7 @@ mcp__territory-ia__task_spec_section_write({
 })
 ```
 
-Returns `{ok: true, version}` (history snapshot row written to `ia_task_spec_history`).
+Returns `{ok: true, version, heading_normalized}` (history snapshot row written to `ia_task_spec_history`).
 
 Errors:
 - `task_not_found` → escalate (should not happen — Phase 2 verified spec presence).
@@ -320,6 +342,22 @@ Errors:
 
 **Idempotency:** if `task_spec_section_write` returns `unchanged: true` (DB body matches new content) → record skip in hand-off counter.
 
+### 5.1 Heading-drift self-check (mandatory per Task)
+
+After every `task_spec_section_write` for `§Plan Digest`:
+
+1. Inspect the result. If `heading_normalized: true` → MCP auto-corrected a § drift (rubric #0 violated during composition). Increment per-Task `n_heading_normalized` counter and surface in hand-off.
+2. Read back via:
+
+   ```
+   mcp__territory-ia__task_spec_section({task_id, section: "§Plan Digest"})
+   ```
+
+   - `ok: true` → confirmed; the `/ship-stage` readiness gate will see the section.
+   - `section_not_found` → DRIFT NOT RECOVERED. Escalate with `STOPPED — heading_drift: {task_id} §Plan Digest` and re-author once with the literal § character.
+
+The read-back is cheap (single DB query per task) and guarantees the readiness gate of `/ship-stage` Phase 3 passes — preventing the failure mode where stage-authoring reports success but the next chain step finds `section_not_found` for all N tasks.
+
 ---
 
 ## Phase 6 — Hand-off
@@ -329,11 +367,11 @@ Errors:
 ```
 stage-authoring done. STAGE_ID={STAGE_ID} AUTHORED={N} SKIPPED={K} (split: {sub_pass_count} sub-pass(es))
 Per-Task:
-  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions_locked} decisions LOCKED, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}; n_unresolved_decisions=0 (must be 0 — non-zero → halt).
+  {ISSUE_ID_1}: §Plan Digest written ({n_work_items} work items, {n_acceptance} acceptance rows, {n_decisions_locked} decisions LOCKED, {n_latitude} latitude rows, {n_tests} test intents); fold: {n_term_replacements}/{n_retired_refs_replaced}; section_overrun={n_section_overrun}; n_heading_normalized={n_heading_normalized}; n_unresolved_decisions=0 (must be 0 — non-zero → halt).
   {ISSUE_ID_2}: …
   …
 drift_warnings: {true|false}
-DB writes: {N} task_spec_section_write OK; {K} unchanged.
+DB writes: {N} task_spec_section_write OK; {K} unchanged; {H} heading_normalized.
 next=stage-authoring-chain-continue
 ```
 

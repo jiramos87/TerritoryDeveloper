@@ -21,6 +21,7 @@
 import type pg from "pg";
 import { getIaDatabasePool } from "./pool.js";
 import {
+  canonHeadingText,
   IaDbUnavailableError,
   queryTaskBody,
   queryTaskState,
@@ -474,13 +475,28 @@ export async function mutateTaskStatusFlip(
  * line before the next same-or-shallower heading are replaced by `content`.
  * If the section is missing, `content` is appended at end of body with a
  * blank separator line.
+ *
+ * Defensive heading normalization: the `section` parameter is treated as the
+ * canonical form of the section name. The first heading line of `content` is
+ * normalized to match: when caller passes `§Plan Digest` but content opens
+ * with bare `## Plan Digest`, the heading is rewritten to `## §Plan Digest`
+ * (and vice versa). Prevents Opus authoring drift where the literal § marker
+ * is dropped during composition. Lookup of an existing section is also
+ * §-tolerant via `canonHeadingText` in `sliceSection` / `findHeadingLine`.
  */
 export async function mutateTaskSpecSectionWrite(
   task_id: string,
   section: string,
   content: string,
   meta: { actor?: string; git_sha?: string; change_reason?: string } = {},
-): Promise<{ task_id: string; history_id: number; updated_at: string }> {
+): Promise<{
+  task_id: string;
+  history_id: number;
+  updated_at: string;
+  heading_normalized: boolean;
+}> {
+  const { content: normalizedContent, normalized: heading_normalized } =
+    normalizeContentHeading(section, content);
   return withTx(async (c) => {
     const cur = await c.query<{ body: string }>(
       `SELECT body FROM ia_tasks WHERE task_id = $1 FOR UPDATE`,
@@ -512,11 +528,13 @@ export async function mutateTaskSpecSectionWrite(
       const endIdx = findSectionEnd(lines, beforeIdx, slice.level);
       const before = lines.slice(0, beforeIdx).join("\n");
       const after = lines.slice(endIdx).join("\n");
-      newBody = [before, content, after].filter((s) => s.length > 0).join("\n");
+      newBody = [before, normalizedContent, after]
+        .filter((s) => s.length > 0)
+        .join("\n");
     } else {
       newBody = oldBody.endsWith("\n")
-        ? `${oldBody}\n${content}`
-        : `${oldBody}\n\n${content}`;
+        ? `${oldBody}\n${normalizedContent}`
+        : `${oldBody}\n\n${normalizedContent}`;
     }
 
     const upd = await c.query<{ updated_at: string }>(
@@ -531,17 +549,72 @@ export async function mutateTaskSpecSectionWrite(
       task_id,
       history_id: parseInt(histRes.rows[0]!.id, 10),
       updated_at: upd.rows[0]!.updated_at,
+      heading_normalized,
     };
   });
 }
 
 function findHeadingLine(lines: string[], section: string): number {
-  const needle = section.trim().toLowerCase();
+  const needle = canonHeadingText(section);
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i]!.match(/^(#{1,6})\s+(.+?)\s*$/);
-    if (m && m[2]!.trim().toLowerCase() === needle) return i;
+    if (m && canonHeadingText(m[2]!) === needle) return i;
   }
   return -1;
+}
+
+/**
+ * Align the first heading line of `content` with the canonical `section`
+ * name. Asymmetric rule (section arg is authoritative for §, never
+ * destructively):
+ *
+ *   - section has `§` + content heading lacks `§` (canon-match holds)
+ *     → prepend `§` to the heading text. `normalized = true`.
+ *   - section lacks `§` + content heading has `§`              → leave alone
+ *     (content's § is preserved; we never force-strip a marker the author
+ *     deliberately wrote). `normalized = false`.
+ *   - both match exactly OR no canon match OR no leading heading
+ *     → leave alone. `normalized = false`.
+ *
+ * The boolean surfaces in the tool result so callers (stage-authoring,
+ * spec-implementer) can detect drift in their hand-off counters.
+ */
+function normalizeContentHeading(
+  section: string,
+  content: string,
+): { content: string; normalized: boolean } {
+  const lines = content.split(/\r?\n/);
+  let firstHeadingIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i]!.trim() === "") continue;
+    if (/^(#{1,6})\s+(.+?)\s*$/.test(lines[i]!)) {
+      firstHeadingIdx = i;
+    }
+    break;
+  }
+  if (firstHeadingIdx < 0) return { content, normalized: false };
+
+  const m = lines[firstHeadingIdx]!.match(/^(#{1,6})\s+(.+?)\s*$/);
+  if (!m) return { content, normalized: false };
+
+  const headingText = m[2]!.trim();
+  const sectionText = section.trim();
+  if (headingText === sectionText) return { content, normalized: false };
+
+  if (canonHeadingText(headingText) !== canonHeadingText(sectionText)) {
+    return { content, normalized: false };
+  }
+
+  const sectionHasMarker = sectionText.startsWith("\u00a7");
+  const headingHasMarker = headingText.startsWith("\u00a7");
+  if (!(sectionHasMarker && !headingHasMarker)) {
+    return { content, normalized: false };
+  }
+
+  const newLine = `${m[1]} ${sectionText}`;
+  const newLines = [...lines];
+  newLines[firstHeadingIdx] = newLine;
+  return { content: newLines.join("\n"), normalized: true };
 }
 
 function findSectionEnd(lines: string[], start: number, level: number): number {

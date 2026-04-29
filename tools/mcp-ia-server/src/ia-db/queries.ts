@@ -337,15 +337,29 @@ export async function queryTaskSection(
 }
 
 /**
+ * Canonicalise a heading text for matching: lowercase, trimmed, and with the
+ * leading section-marker `§` (U+00A7, optionally followed by whitespace)
+ * stripped. Lets `§Plan Digest` and `Plan Digest` compare equal — defensive
+ * against authoring drift where an Opus pass drops the literal § character.
+ */
+export function canonHeadingText(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/^\u00a7\s*/, "");
+}
+
+/**
  * Pure markdown section slicer — exported for unit testing.
  * Returns the heading line through the line before the next heading of
- * the same-or-shallower level. Case-insensitive heading match.
+ * the same-or-shallower level. Case-insensitive heading match; § prefix
+ * tolerated on either side via `canonHeadingText`.
  */
 export function sliceSection(
   body: string,
   section: string,
 ): { heading: string; level: number; content: string } | null {
-  const needle = section.trim().toLowerCase();
+  const needle = canonHeadingText(section);
   if (!needle) return null;
   const lines = body.split(/\r?\n/);
   let start = -1;
@@ -354,7 +368,7 @@ export function sliceSection(
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i]!.match(/^(#{1,6})\s+(.+?)\s*$/);
     if (!m) continue;
-    if (m[2]!.trim().toLowerCase() === needle) {
+    if (canonHeadingText(m[2]!) === needle) {
       start = i;
       startLevel = m[1]!.length;
       startHeading = m[2]!.trim();

@@ -292,13 +292,19 @@ export function registerTaskSpecSectionWrite(server: McpServer): void {
     "task_spec_section_write",
     {
       description:
-        "DB-backed: replace (or append) one section of a task body, snapshotting the old body into ia_task_spec_history first. Content must begin with a heading line matching the section level. If section missing → appended at end with blank separator.",
+        "DB-backed: replace (or append) one section of a task body, snapshotting the old body into ia_task_spec_history first. Content must begin with a heading line matching the section level. If section missing → appended at end with blank separator. Heading match is §-tolerant (`§Plan Digest` matches `Plan Digest` and vice versa); when the literal § marker on the content heading line differs from the `section` arg, the heading is auto-normalized to the canonical form and `heading_normalized: true` is returned so callers can detect authoring drift.",
       inputSchema: {
         task_id: z.string().describe("Task id e.g. TECH-776."),
-        section: z.string().describe("Section heading text (case-insensitive)."),
+        section: z
+          .string()
+          .describe(
+            "Canonical section heading text (case-insensitive; § prefix tolerated). Example: `§Plan Digest`.",
+          ),
         content: z
           .string()
-          .describe("Replacement section incl. its heading line."),
+          .describe(
+            "Replacement section incl. its heading line. The heading line is auto-normalized to match the `section` arg's literal § presence.",
+          ),
         actor: z.string().optional().describe("Who performed the edit (optional)."),
         git_sha: z.string().optional().describe("Current commit sha (optional)."),
         change_reason: z

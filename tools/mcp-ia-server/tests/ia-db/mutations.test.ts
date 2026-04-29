@@ -231,6 +231,80 @@ describe("ia-db mutations (Step 4)", skip, () => {
     assert.ok(bodyRes.rows[0]!.body.includes("fresh"));
   });
 
+  it("task_spec_section_write replaces a §-prefixed body when section arg drops §", async () => {
+    const ins = await mutateTaskInsert({
+      prefix: "TECH",
+      slug: SANDBOX_SLUG,
+      stage_id: SANDBOX_STAGE,
+      title: "section write §-tolerant target",
+      body: "# Top\n\n## §Plan Digest\n\nold\n\n## Notes\n\nn\n",
+    });
+    const res = await mutateTaskSpecSectionWrite(
+      ins.task_id,
+      "Plan Digest",
+      "## §Plan Digest\n\nnew\n",
+    );
+    assert.equal(res.heading_normalized, false);
+    const bodyRes = await pool!.query<{ body: string }>(
+      `SELECT body FROM ia_tasks WHERE task_id = $1`,
+      [ins.task_id],
+    );
+    const newBody = bodyRes.rows[0]!.body;
+    assert.ok(newBody.includes("## §Plan Digest"));
+    assert.ok(newBody.includes("\nnew\n"));
+    assert.ok(!newBody.includes("old"));
+    assert.ok(newBody.includes("## Notes"));
+  });
+
+  it("task_spec_section_write normalizes content heading when § missing on content but present on section arg", async () => {
+    const ins = await mutateTaskInsert({
+      prefix: "TECH",
+      slug: SANDBOX_SLUG,
+      stage_id: SANDBOX_STAGE,
+      title: "section write content normalize target",
+      body: "# Top\n\nintro\n",
+    });
+    const res = await mutateTaskSpecSectionWrite(
+      ins.task_id,
+      "§Plan Digest",
+      "## Plan Digest\n\ndrifted body\n",
+    );
+    assert.equal(res.heading_normalized, true);
+    const bodyRes = await pool!.query<{ body: string }>(
+      `SELECT body FROM ia_tasks WHERE task_id = $1`,
+      [ins.task_id],
+    );
+    const newBody = bodyRes.rows[0]!.body;
+    assert.ok(newBody.includes("## §Plan Digest"));
+    assert.ok(!/##\s+Plan Digest\b/.test(newBody));
+    assert.ok(newBody.includes("drifted body"));
+  });
+
+  it("task_spec_section_write replaces a non-§ body when section arg has §", async () => {
+    const ins = await mutateTaskInsert({
+      prefix: "TECH",
+      slug: SANDBOX_SLUG,
+      stage_id: SANDBOX_STAGE,
+      title: "section write legacy bare-heading target",
+      body: "# Top\n\n## Plan Digest\n\nlegacy\n\n## Notes\n\nn\n",
+    });
+    const res = await mutateTaskSpecSectionWrite(
+      ins.task_id,
+      "§Plan Digest",
+      "## §Plan Digest\n\nrecovered\n",
+    );
+    assert.equal(res.heading_normalized, false);
+    const bodyRes = await pool!.query<{ body: string }>(
+      `SELECT body FROM ia_tasks WHERE task_id = $1`,
+      [ins.task_id],
+    );
+    const newBody = bodyRes.rows[0]!.body;
+    assert.ok(newBody.includes("## §Plan Digest"));
+    assert.ok(newBody.includes("recovered"));
+    assert.ok(!newBody.includes("legacy"));
+    assert.ok(newBody.includes("## Notes"));
+  });
+
   it("task_raw_markdown_write persists body + idempotent re-write", async () => {
     const ins = await mutateTaskInsert({
       prefix: "TECH",
