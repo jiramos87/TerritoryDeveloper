@@ -732,6 +732,25 @@ public class MainMenuController : MonoBehaviour
         trig.triggers.Add(entry);
     }
 
+    public void StartNewGame(int mapSize, int seed, int scenarioIndex)
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+        Territory.Persistence.GameStartInfo.SetStartModeNewGame(mapSize, seed, scenarioIndex);
+        SceneManager.LoadScene(MainSceneBuildIndex);
+    }
+
+    public void ResumeGame() { }
+
+    public void OpenSettings() { OnOptionsClicked(); }
+
+    public void SaveGame() { }
+
+    public void LoadGame() { OnLoadCityClicked(); }
+
+    public void ReturnToMainMenu() { SceneManager.LoadScene(0); }
+
+    public void QuitGame() { Application.Quit(); }
+
     private void WireHoverBlips()
     {
         AddHoverBlip(continueButton);

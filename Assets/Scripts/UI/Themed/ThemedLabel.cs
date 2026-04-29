@@ -10,6 +10,12 @@ namespace Territory.UI.Themed
         [SerializeField] private string _paletteSlug;
         [SerializeField] private TMP_Text _tmpText;
 
+        public string Detail
+        {
+            get => _tmpText != null ? _tmpText.text : string.Empty;
+            set { if (_tmpText != null) _tmpText.text = value; }
+        }
+
         public override void ApplyTheme(UiTheme theme)
         {
             if (theme == null || _tmpText == null) return;

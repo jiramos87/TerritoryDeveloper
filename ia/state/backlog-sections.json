@@ -813,6 +813,42 @@
           "id": "TECH-3401",
           "checklist_line": "- [ ] **TECH-3401 — Bake handler — embed panel children at bake time (Stage 7 T7.0)** — Extend `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` `SavePanelPrefab` so IR panel `_children[]` materialize as scene-instance GameObjects under panel root rather than asset GUID refs. Per child: instantiate child GameObject with `RectTransform` + `AddComponent` for state-holder kind (IlluminatedButton / ThemedOverlayToggleRow / etc.) + matching renderer per Stage 10 T10.3 pattern + spawn child Image / TMP_Text per IR detail row.",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4184",
+          "checklist_line": "- [ ] **TECH-4184 — Game UI Stage 8 T8.1 — Modal/screen IR cluster + bake** — Extend Stage 1 IR with five panel definitions: `panels[].slug == \"info-panel\"` (ThemedPanel header + tabbed body slot graph + ThemedLabel rows for cell-data fields), `pause-menu` (ThemedPanel modal full-screen + ThemedButton column — Resume / Settings / Save / Load / Main Menu / Quit slots), `settings-screen` (ThemedPanel + ThemedTabBar with Audio / Video / Controls / Gameplay tabs + nested ThemedSlider + ThemedToggle children per tab), `save-load-screen` (ThemedPanel + ThemedList of save-slot rows with timestamp / city name / pop / thumbnail detail rows + ThemedButton row Save/Load/Cancel), `new-game-screen` (ThemedPanel + ThemedSlider param rows for map size / seed + ThemedToggle scenario picker + ThemedButton confirm/back row). Detail rows define slot graph + child interactive slugs per IR DEC-A27 schema. Re-run `npm run unity:bake-ui`; output `InfoPanel.prefab` + `PauseMenu.prefab` + `SettingsScreen.prefab` + `SaveLoadScreen.prefab` + `NewGameScreen.prefab` populated under `Assets/UI/Prefabs/Generated/` with state-holder + renderer pair per Stage 10 + Stage 7 conventions (renderer injection for Themed* primitive kinds lands in T8.2 — bake produces tree but render-incomplete until T8.2 re-bake).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4185",
+          "checklist_line": "- [ ] **TECH-4185 — Game UI Stage 8 T8.2 — Themed primitive renderer injection bake-path extension** — Audit `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` interactive emit path coverage: Stage 10 T10.3 covers `VUMeter` / `IlluminatedButton` / `SegmentedReadout` (StudioControl family); Stage 7 T7.3a covers `ThemedOverlayToggleRow`. For Stage 8 IR kinds (`ThemedSlider` / `ThemedToggle` / `ThemedTabBar` / `ThemedList` / `ThemedButton` / `ThemedLabel`), determine per primitive whether bake-time renderer-sibling injection is needed (vs primitive self-renders via existing UGUI components on bake) — `/stage-file` planner pass picks per primitive. Where renderer is needed, author `Assets/Scripts/UI/Themed/Renderers/{Kind}Renderer.cs` (subclass `StudioControlRendererBase` or `ThemedPrimitiveBase` sibling per Stage 7 T7.3a precedent; cache `UiTheme` + child `Image` + `TMP_Text` refs in `Awake` per invariant #3; `OnStateApplied()` writes visual state). Extend `UiBakeHandler` interactive emit path: when IR row `kind` matches a Stage 8 primitive needing renderer, after the state-holder `AddComponent`, also `AddComponent<{Kind}Renderer>` + spawn child `Image` / `TMP_Text` GameObjects sized via `RectTransform` per IR detail row. No runtime `AddComponent` paths — bake-time only (Stage 10 lock). Re-bake all five Stage 8 prefabs via `npm run unity:bake-ui`; `npm run unity:compile-check` exits 0.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4186",
+          "checklist_line": "- [ ] **TECH-4186 — Game UI Stage 8 T8.3 — InfoPanelDataAdapter + PauseMenuDataAdapter** — Two new MonoBehaviours under `Assets/Scripts/UI/Modals/`. **`InfoPanelDataAdapter.cs`**: pattern mirrors `Assets/Scripts/UI/HUD/HudBarDataAdapter.cs`; Inspector producer slot for `DetailsPopupController` ref (invariant #4 — `FindObjectOfType<DetailsPopupController>` fallback in `Awake`); Inspector consumer slots for ThemedLabel[] keyed by cell-data field (`_cellTypeLabel`, `_zoneTypeLabel`, `_populationLabel`, `_landValueLabel`, `_pollutionLabel`, etc.) + ThemedTabBar ref; on cell-select event from existing `DetailsPopupController` → adapter populates ThemedLabel `Detail` values + drives ThemedTabBar tab activation. **`PauseMenuDataAdapter.cs`**: Inspector producer slot for `MainMenuController` ref (or planner-picked pause shim — `/stage-file` seals); Inspector consumer slots for ThemedButton[] keyed by action slug (`_resumeButton`, `_settingsButton`, `_saveButton`, `_loadButton`, `_mainMenuButton`, `_quitButton`); on click event → invoke matching `MainMenuController` API (resume / open settings modal / save / load / return-to-main / quit). Both adapters: cache `UiTheme` ref in `Awake` (invariant #3); register modal open via `UIManager.RegisterPopupOpened(PopupType.{NewKind})` so Esc close-last-first stack preserved; per-channel null tolerance per Stage 6 precedent.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4187",
+          "checklist_line": "- [ ] **TECH-4187 — Game UI Stage 8 T8.4 — SettingsScreenDataAdapter + NewGameScreenDataAdapter** — Two new MonoBehaviours under `Assets/Scripts/UI/Modals/` — param-config family (slider/toggle dense surfaces). **`SettingsScreenDataAdapter.cs`**: Inspector producer slot for settings-state surface (target sealed by `/stage-file` planner pass — drive new `SettingsManager` MonoBehaviour vs extend `UIManager` partial vs ScriptableObject settings-state surface; current legacy uses `PlayerPrefs` direct reads scattered through codebase); Inspector consumer slots for ThemedTabBar ref + ThemedSlider[] (`_masterVolumeSlider`, `_musicVolumeSlider`, `_sfxVolumeSlider`, `_resolutionSlider`, etc.) + ThemedToggle[] (`_fullscreenToggle`, `_vsyncToggle`, `_scrollEdgeToggle`, etc.); on slider/toggle change event → flip settings-state surface + persist to `PlayerPrefs`; settings round-trip through save-load (verified by T8.6 parity test). **`NewGameScreenDataAdapter.cs`**: Inspector producer slot for `MainMenuController` ref (new-game flow source); Inspector consumer slots for ThemedSlider[] (`_mapSizeSlider`, `_seedSlider`) + ThemedToggle[] (`_scenarioToggles`) + ThemedButton[] (`_confirmButton`, `_backButton`); on confirm → marshal current slider/toggle values + invoke `MainMenuController` new-game API (or planner-picked `NewGameFlow` shim). Both adapters: cache `UiTheme` ref in `Awake` (invariant #3); MonoBehaviour producer fallback per invariant #4; register modal via `RegisterPopupOpened`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4188",
+          "checklist_line": "- [ ] **TECH-4188 — Game UI Stage 8 T8.5 — SaveLoadScreenDataAdapter** — New `Assets/Scripts/UI/Modals/SaveLoadScreenDataAdapter.cs` MonoBehaviour. Pattern mirrors `HudBarDataAdapter`. Inspector producer slot for `GameSaveManager` ref (invariant #4 — `FindObjectOfType<GameSaveManager>` fallback in `Awake`); Inspector consumer slots for ThemedList ref (save-slot list root) + ThemedButton[] action row (`_saveButton`, `_loadButton`, `_deleteButton`, `_cancelButton`); on `Awake` (or modal-open event) populate ThemedList children with one row per save slot — each row carries timestamp + city name + population + thumbnail metadata sourced via `GameSaveManager` save-slot enumeration API; on row select → set adapter `_selectedSlotIndex`; on action button click → invoke matching `GameSaveManager` API (save current → slot, load slot → game state, delete slot, cancel close). Cache `UiTheme` ref in `Awake` (invariant #3); register modal via `RegisterPopupOpened`. Per-channel null tolerance per Stage 6 precedent. Save-slot list refresh on save-system mutation event (planner pass picks event surface — direct subscribe vs polling on modal-open).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4189",
+          "checklist_line": "- [ ] **TECH-4189 — Game UI Stage 8 T8.6 — Scene wiring + modal-stack integration + parity test** — Place `InfoPanel.prefab` + `PauseMenu.prefab` + `SettingsScreen.prefab` + `SaveLoadScreen.prefab` + `NewGameScreen.prefab` into `MainScene.unity` under scene-level `UI Canvas` GameObject (Stage 10 T10.4 — distinct from `Game Managers` / `World` parents) via `set_gameobject_parent` bridge mutations. Attach `InfoPanelDataAdapter` + `PauseMenuDataAdapter` + `SettingsScreenDataAdapter` + `SaveLoadScreenDataAdapter` + `NewGameScreenDataAdapter` MonoBehaviours; bind producer slots (`DetailsPopupController` / `MainMenuController` / `GameSaveManager` / settings-state surface refs) and consumer arrays (ThemedLabel[] / ThemedButton[] / ThemedSlider[] / ThemedToggle[] / ThemedList) via `assign_serialized_field` bridge mutations. Extend `UIManager.PopupStack.cs` `PopupType` enum with new entries (`InfoPanel`, `PauseMenu`, `SettingsScreen`, `SaveLoadScreen`, `NewGameScreen`) — or planner-picked sealed-via-shim — so each baked modal registers via `RegisterPopupOpened` + closes via existing `ClosePopup` switch + Esc close-last-first path. Modal blocker (input capture / focus) sealed per planner pass — `EventSystem` interplay validated (full-screen GraphicRaycaster pass-through deny vs per-modal `Selectable` focus). Decommission legacy modal/screen GameObjects from `MainScene.unity` once parity green. Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`. PlayMode parity test under `Assets/Scripts/Tests/UI/Modals/` (single combined test or per-surface per planner pass): each modal opens via legacy trigger, commits values to legacy persistence (settings round-trip via `PlayerPrefs`, save-load via `GameSaveManager` round-trip, new-game via `MainMenuController` flow), closes preserving `popupStack` ordering. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -1850,6 +1886,30 @@
           "type": "issue",
           "id": "TECH-3411",
           "checklist_line": "- [ ] **TECH-3411** — **ripple-count upgrade + parity test** (asset-pipeline Stage 14.4 T14.4.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4180",
+          "checklist_line": "- [ ] **TECH-4180** — **pg_trgm migration + search API** (asset-pipeline Stage 15.1 T15.1.T1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4181",
+          "checklist_line": "- [ ] **TECH-4181** — **Search bar UI + grouped results** (asset-pipeline Stage 15.1 T15.1.T2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4182",
+          "checklist_line": "- [ ] **TECH-4182** — **Bulk action UI + transactional endpoints** (asset-pipeline Stage 15.1 T15.1.T3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4183",
+          "checklist_line": "- [ ] **TECH-4183** — **Dashboard widgets** (asset-pipeline Stage 15.1 T15.1.T4)",
           "trailing_blanks": 1
         }
       ]

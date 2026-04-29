@@ -11,6 +11,15 @@ namespace Territory.UI.Themed
         [SerializeField] private Image _backgroundImage;
         [SerializeField] private Image _checkmarkImage;
 
+        public event System.Action<bool> OnToggled;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            var toggle = GetComponent<Toggle>();
+            if (toggle != null) toggle.onValueChanged.AddListener(v => OnToggled?.Invoke(v));
+        }
+
         public override void ApplyTheme(UiTheme theme)
         {
             if (theme == null) return;

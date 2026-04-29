@@ -68,5 +68,13 @@ namespace Territory.UI
         {
             return detailsPanel != null && detailsPanel.activeSelf;
         }
+
+        public event System.Action<string, string, string, string, string> OnCellInfoShown;
+
+        public void ShowCellDetails(string cellType, string zoneType, string population, string landValue, string pollution)
+        {
+            OnCellInfoShown?.Invoke(cellType, zoneType, population, landValue, pollution);
+            ShowDetails();
+        }
     }
 }

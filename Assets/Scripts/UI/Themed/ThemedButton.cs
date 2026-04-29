@@ -10,6 +10,15 @@ namespace Territory.UI.Themed
         [SerializeField] private string _frameStyleSlug;
         [SerializeField] private Image _buttonImage;
 
+        public event System.Action OnClicked;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            var button = GetComponent<Button>();
+            if (button != null) button.onClick.AddListener(() => OnClicked?.Invoke());
+        }
+
         public override void ApplyTheme(UiTheme theme)
         {
             if (theme == null || _buttonImage == null) return;

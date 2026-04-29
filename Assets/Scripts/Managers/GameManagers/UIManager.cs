@@ -25,7 +25,12 @@ public enum PopupType
     TaxPanel,
     SubTypePicker,
     BudgetPanel,
-    BondIssuance
+    BondIssuance,
+    InfoPanel,
+    PauseMenu,
+    SettingsScreen,
+    SaveLoadScreen,
+    NewGameScreen
 }
 
 /// <summary>
@@ -60,6 +65,13 @@ public partial class UIManager : MonoBehaviour
     [SerializeField] private SubTypePickerModal subTypePickerModal;
     [SerializeField] private BudgetPanel budgetPanel;
     [SerializeField] private BondIssuanceModal bondIssuanceModal;
+
+    [Header("Stage 8 Modal Roots")]
+    [SerializeField] private GameObject infoPanelRoot;
+    [SerializeField] private GameObject pauseMenuRoot;
+    [SerializeField] private GameObject settingsScreenRoot;
+    [SerializeField] private GameObject saveLoadScreenRoot;
+    [SerializeField] private GameObject newGameScreenRoot;
     #endregion
 
     #region State

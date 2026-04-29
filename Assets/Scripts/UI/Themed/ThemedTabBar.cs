@@ -10,6 +10,8 @@ namespace Territory.UI.Themed
         [SerializeField] private string _frameStyleSlug;
         [SerializeField] private Image _tabStripImage;
 
+        public void SetActiveTab(int index) { }
+
         public override void ApplyTheme(UiTheme theme)
         {
             if (theme == null || _tabStripImage == null) return;

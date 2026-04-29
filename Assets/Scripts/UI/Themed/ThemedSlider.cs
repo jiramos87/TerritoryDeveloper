@@ -11,6 +11,15 @@ namespace Territory.UI.Themed
         [SerializeField] private Image _sliderHandleImage;
         [SerializeField] private Image _sliderTrackImage;
 
+        public event System.Action<float> OnValueChanged;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            var slider = GetComponent<Slider>();
+            if (slider != null) slider.onValueChanged.AddListener(v => OnValueChanged?.Invoke(v));
+        }
+
         public override void ApplyTheme(UiTheme theme)
         {
             if (theme == null) return;

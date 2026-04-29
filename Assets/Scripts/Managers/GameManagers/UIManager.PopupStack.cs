@@ -64,6 +64,21 @@ public partial class UIManager
                 if (bondIssuanceModal != null)
                     bondIssuanceModal.Hide();
                 break;
+            case PopupType.InfoPanel:
+                if (infoPanelRoot != null) infoPanelRoot.SetActive(false);
+                break;
+            case PopupType.PauseMenu:
+                if (pauseMenuRoot != null) pauseMenuRoot.SetActive(false);
+                break;
+            case PopupType.SettingsScreen:
+                if (settingsScreenRoot != null) settingsScreenRoot.SetActive(false);
+                break;
+            case PopupType.SaveLoadScreen:
+                if (saveLoadScreenRoot != null) saveLoadScreenRoot.SetActive(false);
+                break;
+            case PopupType.NewGameScreen:
+                if (newGameScreenRoot != null) newGameScreenRoot.SetActive(false);
+                break;
         }
     }
 
