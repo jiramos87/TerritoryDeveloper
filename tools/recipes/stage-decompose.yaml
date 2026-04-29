@@ -1,0 +1,92 @@
+recipe: stage-decompose
+description: >-
+  DB-backed stage-decompose body — Phase D recipify of ia/skills/stage-decompose. 1 seam
+  (decompose-skeleton-stage, Phase B validate-only). Phase 0 mode-detect halts on
+  already-decomposed Stage (unless --allow-overwrite) or advanced status. Phases 1–2
+  render plan + Stage and dispatch seam. Phase 3 composes new body preserving header
+  fields. Phase 4 persists via stage_body_write. Phase 5 master-plan rollup gate.
+inputs:
+  type: object
+  additionalProperties: false
+  required: [slug, stage_id]
+  properties:
+    slug:
+      type: string
+      description: Master plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage identifier — bare `X.Y` (e.g. `5.2`) or `Stage X.Y`.
+    allow_overwrite:
+      type: boolean
+      default: false
+      description: >-
+        When true, mode-detect accepts an already-decomposed Stage body (mode=overwrite).
+        Default false → hard halt on existing Task table.
+steps:
+  - id: mode_detect
+    description: >-
+      Phase 0 — verify Stage exists, status ≤ Draft, body has no Task table (or
+      --allow-overwrite asserted). Halts on advanced status / silent overwrite attempt.
+    bash: tools/scripts/recipe-engine/stage-decompose/mode-detect.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+      allow-overwrite: ${inputs.allow_overwrite}
+
+  - id: plan
+    description: Phase 1 — render plan title + preamble (shared Stage context).
+    mcp: master_plan_render
+    args:
+      slug: ${inputs.slug}
+
+  - id: stage
+    description: >-
+      Phase 1 — render Stage block. Provides body (preserved verbatim by compose),
+      objective + exit_criteria for seam input, normalized stage_id (bare X.Y).
+    mcp: stage_render
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: decompose
+    description: >-
+      Phase 2 — seam decompose-skeleton-stage. Validate-only here; subagent layer
+      dispatches LLM + enriches glossary_slice / invariants / surfaces.
+    seam: decompose-skeleton-stage
+    input:
+      master_plan_slug: ${inputs.slug}
+      stage_id: Stage ${stage.stage_id}
+      stage_objectives: ${stage.objective}
+      stage_exit: ${stage.exit_criteria}
+      glossary_slice: []
+
+  - id: compose
+    description: >-
+      Phase 3 — compose new Stage body. Preserves header fields up to first `**Tasks:**`
+      or `#### §` heading. Appends 5-col Task table + 2 pending subsections.
+    bash: tools/scripts/recipe-engine/stage-decompose/compose-body.sh
+    args:
+      existing-body: ${stage.body}
+      stage-id: ${stage.stage_id}
+      seam-output: ${decompose.output}
+
+  - id: write
+    description: >-
+      Phase 4 — persist new Stage body. Atomic replace via stage_body_write MCP. Status
+      line stays Draft (R2 flip is stage-file's responsibility).
+    mcp: stage_body_write
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${stage.stage_id}
+      body: ${compose.stdout}
+
+  - id: validate_status
+    description: >-
+      Phase 5 — narrow gate covering master-plan rollup drift after Stage body change.
+      Heavy validate:all chain belongs in /ship-stage Pass B, not here.
+    gate: validate:master-plan-status
+
+outputs:
+  mode: ${mode_detect.stdout}
+  task_count: ${decompose.output.tasks.length}
+  validate_status: ${validate_status.code}
