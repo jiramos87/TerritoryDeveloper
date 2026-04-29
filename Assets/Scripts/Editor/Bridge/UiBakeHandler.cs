@@ -5,9 +5,12 @@ using System.Text.RegularExpressions;
 using Territory.UI;
 using Territory.UI.Juice;
 using Territory.UI.StudioControls;
+using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Territory.Editor.Bridge
 {
@@ -795,6 +798,11 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertVUMeterFields(irRow.slug, detailJson, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<VUMeter>();
+                        if (go.GetComponent<VUMeterRenderer>() == null)
+                        {
+                            go.AddComponent<VUMeterRenderer>();
+                        }
+                        SpawnVUMeterRenderTargets(go);
                         detailRow = vd;
                         break;
                     }
@@ -813,6 +821,11 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertField(detailJson, "illuminationSlug", irRow.kind, irRow.slug, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<IlluminatedButton>();
+                        if (go.GetComponent<IlluminatedButtonRenderer>() == null)
+                        {
+                            go.AddComponent<IlluminatedButtonRenderer>();
+                        }
+                        SpawnIlluminatedButtonRenderTargets(go);
                         detailRow = bd;
                         break;
                     }
@@ -831,6 +844,11 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertField(detailJson, "digits", irRow.kind, irRow.slug, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<SegmentedReadout>();
+                        if (go.GetComponent<SegmentedReadoutRenderer>() == null)
+                        {
+                            go.AddComponent<SegmentedReadoutRenderer>();
+                        }
+                        SpawnSegmentedReadoutRenderTargets(go, sd);
                         detailRow = sd;
                         break;
                     }
@@ -1172,6 +1190,112 @@ namespace Territory.Editor.Bridge
             if (prop == null) return;
             prop.stringValue = curveSlug;
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // ── Render-target child spawners (Stage 10 T10.3) ────────────────────────
+
+        /// <summary>Spawn the VU-meter needle child + body child under the prefab root. Idempotent — re-bake returns early if children already exist (matches Awake-time resolver in <see cref="VUMeterRenderer"/>).</summary>
+        static void SpawnVUMeterRenderTargets(GameObject prefabRoot)
+        {
+            if (prefabRoot == null) return;
+            var rootRect = prefabRoot.GetComponent<RectTransform>();
+            if (rootRect == null) return;
+
+            // body child — full-rect Image (sized to parent).
+            if (prefabRoot.transform.Find("body") == null)
+            {
+                var body = new GameObject("body", typeof(RectTransform));
+                body.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var br = (RectTransform)body.transform;
+                br.anchorMin = new Vector2(0f, 0f);
+                br.anchorMax = new Vector2(1f, 1f);
+                br.pivot = new Vector2(0.5f, 0.5f);
+                br.anchoredPosition = Vector2.zero;
+                br.sizeDelta = Vector2.zero;
+                body.AddComponent<Image>();
+            }
+
+            // needle child — pivot at base; renderer rotates around Z.
+            if (prefabRoot.transform.Find("needle") == null)
+            {
+                var needle = new GameObject("needle", typeof(RectTransform));
+                needle.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var nr = (RectTransform)needle.transform;
+                nr.anchorMin = new Vector2(0.5f, 0f);
+                nr.anchorMax = new Vector2(0.5f, 0f);
+                nr.pivot = new Vector2(0.5f, 0f);
+                nr.anchoredPosition = Vector2.zero;
+                nr.sizeDelta = new Vector2(2f, 64f);
+            }
+        }
+
+        /// <summary>Spawn the illuminated-button main body Image child + halo child under the prefab root. Idempotent.</summary>
+        static void SpawnIlluminatedButtonRenderTargets(GameObject prefabRoot)
+        {
+            if (prefabRoot == null) return;
+            var rootRect = prefabRoot.GetComponent<RectTransform>();
+            if (rootRect == null) return;
+
+            // main body Image child — renderer reads first non-halo child Image.
+            if (prefabRoot.transform.Find("body") == null)
+            {
+                var body = new GameObject("body", typeof(RectTransform));
+                body.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var br = (RectTransform)body.transform;
+                br.anchorMin = new Vector2(0f, 0f);
+                br.anchorMax = new Vector2(1f, 1f);
+                br.pivot = new Vector2(0.5f, 0.5f);
+                br.anchoredPosition = Vector2.zero;
+                br.sizeDelta = Vector2.zero;
+                body.AddComponent<Image>();
+            }
+
+            // halo child — radial pulse target.
+            if (prefabRoot.transform.Find("halo") == null)
+            {
+                var halo = new GameObject("halo", typeof(RectTransform));
+                halo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var hr = (RectTransform)halo.transform;
+                hr.anchorMin = new Vector2(0.5f, 0.5f);
+                hr.anchorMax = new Vector2(0.5f, 0.5f);
+                hr.pivot = new Vector2(0.5f, 0.5f);
+                hr.anchoredPosition = Vector2.zero;
+                hr.sizeDelta = new Vector2(64f, 64f);
+                var img = halo.AddComponent<Image>();
+                var color = img.color;
+                color.a = 0f; // Halo idle alpha; renderer animates 1→0 on click.
+                img.color = color;
+            }
+        }
+
+        /// <summary>Spawn the segmented-readout TMP child under the prefab root. Idempotent — placeholder text is empty so T10.6 visual smoke (asserts non-empty post-render) is not polluted.</summary>
+        static void SpawnSegmentedReadoutRenderTargets(GameObject prefabRoot, SegmentedReadoutDetail detail)
+        {
+            if (prefabRoot == null) return;
+            var rootRect = prefabRoot.GetComponent<RectTransform>();
+            if (rootRect == null) return;
+
+            if (prefabRoot.transform.Find("text") != null) return;
+
+            var textGo = new GameObject("text", typeof(RectTransform));
+            textGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+            var tr = (RectTransform)textGo.transform;
+            tr.anchorMin = new Vector2(0f, 0f);
+            tr.anchorMax = new Vector2(1f, 1f);
+            tr.pivot = new Vector2(0.5f, 0.5f);
+            tr.anchoredPosition = Vector2.zero;
+            tr.sizeDelta = Vector2.zero;
+
+            var tmp = textGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = string.Empty;
+            tmp.alignment = TextAlignmentOptions.Center;
+            int digits = detail != null && detail.digits > 0 ? detail.digits : 1;
+            // Width hint in font size — ~24pt per digit floor; renderer will populate text on ApplyDetail.
+            tmp.fontSize = 24f;
+            // Ensure raycast surface stays minimal; readouts are non-interactive.
+            tmp.raycastTarget = false;
+            // digits unused at spawn time except as future width hint (current impl uses anchor stretch).
+            _ = digits;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using Territory.UI.Themed;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ namespace Territory.UI.StudioControls
 
         /// <summary>Cached <see cref="UiTheme"/> resolved in <c>Awake</c>; null when no theme available.</summary>
         protected UiTheme Theme { get; private set; }
+
+        /// <summary>Raised at end of <see cref="ApplyDetail"/>; render-layer subscribers re-read sibling state.</summary>
+        public event Action OnStateChanged;
 
         /// <inheritdoc />
         public abstract string Kind { get; }
@@ -29,9 +33,16 @@ namespace Territory.UI.StudioControls
             ApplyTheme(Theme);
         }
 
-        /// <summary>Override to consume detail row baked from IR; default no-op.</summary>
+        /// <summary>Override to consume detail row baked from IR; default no-op. Subclasses MUST call <c>base.ApplyDetail(detail)</c> at end (or invoke <see cref="RaiseStateChanged"/>) to notify render layer.</summary>
         public virtual void ApplyDetail(IDetailRow detail)
         {
+            OnStateChanged?.Invoke();
+        }
+
+        /// <summary>Subclasses raise after mutating state outside <see cref="ApplyDetail"/> (e.g. JuiceLayer tween writes); default <see cref="ApplyDetail"/> already raises.</summary>
+        protected void RaiseStateChanged()
+        {
+            OnStateChanged?.Invoke();
         }
 
         /// <summary>Override to consume token slugs from <paramref name="theme"/>; default no-op.</summary>

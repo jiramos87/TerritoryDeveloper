@@ -1,7 +1,7 @@
 {
     "name": "Tests.UI.HUD.PlayMode",
     "rootNamespace": "Territory.Tests.PlayMode.UI.HUD",
-    "references": ["TerritoryDeveloper.Game"],
+    "references": ["TerritoryDeveloper.Game", "GUID:6055be8ebefd69e48b49212b09b47b2f"],
     "includePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

@@ -29,6 +29,7 @@ namespace Territory.UI.StudioControls
             if (detail is VUMeterDetail vd)
             {
                 _detail = vd;
+                base.ApplyDetail(detail);
                 return;
             }
             Debug.LogWarning($"[VUMeter] ApplyDetail received non-VUMeterDetail row (slug={Slug})");

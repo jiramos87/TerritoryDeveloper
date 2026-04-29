@@ -32,6 +32,7 @@ namespace Territory.UI.StudioControls
             if (detail is SegmentedReadoutDetail sd)
             {
                 _detail = sd;
+                base.ApplyDetail(detail);
                 return;
             }
             Debug.LogWarning($"[SegmentedReadout] ApplyDetail received non-SegmentedReadoutDetail row (slug={Slug})");

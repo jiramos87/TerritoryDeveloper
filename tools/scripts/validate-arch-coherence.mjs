@@ -120,6 +120,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "game-ui-design-system::6",
   "game-ui-design-system::7",
   "game-ui-design-system::9",
+  "game-ui-design-system::10",
   "grid-asset-visual-registry::1.1",
   "grid-asset-visual-registry::1.2",
   "grid-asset-visual-registry::1.3",

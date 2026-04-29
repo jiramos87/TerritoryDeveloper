@@ -36,6 +36,7 @@ namespace Territory.UI.StudioControls
             if (detail is IlluminatedButtonDetail bd)
             {
                 _detail = bd;
+                base.ApplyDetail(detail);
                 return;
             }
             Debug.LogWarning($"[IlluminatedButton] ApplyDetail received non-IlluminatedButtonDetail row (slug={Slug})");
