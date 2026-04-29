@@ -3,17 +3,21 @@
  *
  * Verifies all section stages have status='done'. Appends a row to
  * `ia_master_plan_change_log` (kind='section_done'). Releases the active
- * section claim and cascades release of stage claims for the section held
- * by the same session.
+ * section claim and cascades release of stage claims for the section.
  *
- * **Does NOT run git** — caller skill (`/section-closeout`) handles merge
- * + worktree teardown.
+ * V2 row-only — no holder identity. Section claim addressed by
+ * (slug, section_id) only. Any caller may apply closeout once stages are
+ * all done. parallel-carcass §6.2 (D4 V2 / D9).
+ *
+ * **Does NOT run git** — same-branch same-worktree model. No worktree
+ * teardown, no merge step. Caller skill (`/section-closeout`) is mechanical
+ * DB-only.
  *
  * **Does NOT re-run drift scan** — caller MUST first verify zero open
  * `arch_drift_scan(scope='intra-plan')` events. This tool is the
  * post-verify atomic apply.
  *
- * parallel-carcass §6.2 / D9. Schema-cache restart required after add (N4).
+ * Schema-cache restart required after add (N4).
  */
 
 import { z } from "zod";
@@ -25,12 +29,6 @@ import { getIaDatabasePool } from "../ia-db/pool.js";
 const inputShape = {
   slug: z.string().describe("Master-plan slug."),
   section_id: z.string().describe("Section identifier."),
-  session_id: z
-    .string()
-    .optional()
-    .describe(
-      "Caller session id. Required to release the matching section claim.",
-    ),
   actor: z.string().optional().describe("Optional actor for change_log row."),
   commit_sha: z
     .string()
@@ -47,7 +45,6 @@ function jsonResult(payload: unknown) {
 type Args = {
   slug: string;
   section_id: string;
-  session_id?: string;
   actor?: string;
   commit_sha?: string;
 };
@@ -71,7 +68,7 @@ export async function applySectionCloseout(
   if (!pool) {
     throw { code: "db_unavailable", message: "ia_db pool not initialized" };
   }
-  const { slug, section_id, session_id, actor, commit_sha } = args;
+  const { slug, section_id, actor, commit_sha } = args;
 
   const stages = await pool.query<{ stage_id: string; status: string }>(
     `SELECT stage_id, status FROM ia_stages
@@ -126,32 +123,28 @@ export async function applySectionCloseout(
     );
     const entry_id = ins.rows[0]!.entry_id;
 
-    let releasedSection = false;
-    let cascaded = 0;
-    if (session_id) {
-      const upd = await client.query(
-        `UPDATE ia_section_claims
-            SET released_at = now()
-          WHERE slug = $1 AND section_id = $2 AND session_id = $3
-            AND released_at IS NULL`,
-        [slug, section_id, session_id],
-      );
-      releasedSection = (upd.rowCount ?? 0) > 0;
+    // V2 row-only: release section claim by row key alone, cascade to stage claims.
+    const upd = await client.query(
+      `UPDATE ia_section_claims
+          SET released_at = now()
+        WHERE slug = $1 AND section_id = $2
+          AND released_at IS NULL`,
+      [slug, section_id],
+    );
+    const releasedSection = (upd.rowCount ?? 0) > 0;
 
-      const cas = await client.query(
-        `UPDATE ia_stage_claims sc
-            SET released_at = now()
-           FROM ia_stages s
-          WHERE sc.slug = s.slug
-            AND sc.stage_id = s.stage_id
-            AND sc.slug = $1
-            AND s.section_id = $2
-            AND sc.session_id = $3
-            AND sc.released_at IS NULL`,
-        [slug, section_id, session_id],
-      );
-      cascaded = cas.rowCount ?? 0;
-    }
+    const cas = await client.query(
+      `UPDATE ia_stage_claims sc
+          SET released_at = now()
+         FROM ia_stages s
+        WHERE sc.slug = s.slug
+          AND sc.stage_id = s.stage_id
+          AND sc.slug = $1
+          AND s.section_id = $2
+          AND sc.released_at IS NULL`,
+      [slug, section_id],
+    );
+    const cascaded = cas.rowCount ?? 0;
 
     await client.query("COMMIT");
 
@@ -178,14 +171,14 @@ export function registerSectionCloseoutApply(server: McpServer): void {
     "section_closeout_apply",
     {
       description:
-        "DB-backed mutate: pure-DB closeout for a section. Asserts all " +
-        "stages with `section_id` have status='done'; appends " +
+        "DB-backed mutate: pure-DB closeout for a section (V2 row-only). " +
+        "Asserts all stages with `section_id` have status='done'; appends " +
         "`ia_master_plan_change_log` row (kind='section_done', body= " +
         "`{section_id, stages[]}` JSON); releases active section claim + " +
-        "cascade-releases stage claims when `session_id` provided. " +
-        "Does NOT run git or re-run drift scan — caller (`/section-closeout`) " +
-        "verifies drift first and handles merge after. " +
-        "parallel-carcass §6.2 (D9). " +
+        "cascade-releases open stage claims by row key alone (any caller). " +
+        "Does NOT run git — same-branch same-worktree model, no merge or " +
+        "worktree teardown. Caller (`/section-closeout`) verifies drift " +
+        "first. parallel-carcass §6.2 (D4 V2 / D9). " +
         "Schema-cache restart required after add (N4).",
       inputSchema: inputShape,
     },

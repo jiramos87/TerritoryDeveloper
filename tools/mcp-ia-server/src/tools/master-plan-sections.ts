@@ -27,7 +27,6 @@ export interface SectionView {
   stages: { stage_id: string; status: string; carcass_role: string | null }[];
   owned_surfaces: string[];
   claim: {
-    session_id: string;
     claimed_at: string;
     last_heartbeat: string;
   } | null;
@@ -59,7 +58,6 @@ interface SurfaceLinkRow {
 }
 interface ClaimRow {
   section_id: string;
-  session_id: string;
   claimed_at: Date | string;
   last_heartbeat: Date | string;
 }
@@ -92,7 +90,7 @@ export async function getMasterPlanSections(
   );
 
   const claimsRes = await pool.query<ClaimRow>(
-    `SELECT section_id, session_id, claimed_at, last_heartbeat
+    `SELECT section_id, claimed_at, last_heartbeat
        FROM ia_section_claims
       WHERE slug = $1 AND released_at IS NULL`,
     [slug],
@@ -161,7 +159,6 @@ export async function getMasterPlanSections(
       owned_surfaces: Array.from(owned).sort(),
       claim: c
         ? {
-            session_id: c.session_id,
             claimed_at: toIso(c.claimed_at),
             last_heartbeat: toIso(c.last_heartbeat),
           }

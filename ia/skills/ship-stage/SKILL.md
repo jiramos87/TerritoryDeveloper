@@ -564,3 +564,4 @@ Re-call `master_plan_state(slug=SLUG)`. Sort stages by **numeric tuple `(major, 
 | date | change | friction_types |
 |------|--------|---------------|
 | 2026-04-29 | parallel-carcass Wave 0 Phase 3 PR 3.5 — added stage_claim / stage_claim_release / claim_heartbeat / arch_drift_scan to tools_extra; documented Pass A/B carcass hooks in agent-body (conditional on .parallel-section-claim.json sentinel; legacy linear plans skip all hooks) | feature-extension |
+| 2026-04-29 | parallel-carcass V2 rewrite — dropped session_id from all claim calls. Carcass-hook trigger switched from `.parallel-section-claim.json` sentinel to "stage carries section_id" check via `stage_bundle.stage.section_id`. `stage_claim(slug, stage_id)` + `claim_heartbeat({slug, stage_id})` + `stage_claim_release(slug, stage_id)` — pure row-key mutex. Multi-sequential agents safe; same branch + same worktree model. | feature-extension |

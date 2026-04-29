@@ -41,11 +41,12 @@ At plan birth (before any Stage row exists):
 ### Move 3 — Sections (objective 2 — parallelization)
 
 - **Explicit identity** via new column `ia_stages.section_id text` (NULL for carcass + legacy stages). Author assigns at Phase C; `master_plan_sections` MCP returns sections grouped by `section_id`. Cluster detection on `arch_surfaces` becomes a **validation pass** (assert author-declared section matches surface clustering), not the source of truth.
-- **Two-tier claim** — section-level + stage-level:
-  - `ia_section_claims (slug, section_id, session_id, claimed_at, last_heartbeat, released_at)` PK `(slug, section_id)`.
-  - `ia_stage_claims (slug, stage_id, session_id, claimed_at, last_heartbeat, released_at)` PK `(slug, stage_id)`.
-  - `master_plan_next_actionable` returns a stage only if its section is unclaimed OR claimed by current session; AND the stage itself is unclaimed OR claimed by current session.
-- Parallel execution: each main session calls `/section-claim foo {section_id}` → opens worktree at `../territory-developer.section-{section_id}` on branch `feature/{slug}-section-{section_id}` → runs `/ship-stage` per member stage → `/section-closeout` at the end.
+- **Two-tier row-only claim (V2)** — section-level + stage-level, keyed by row alone:
+  - `ia_section_claims (slug, section_id, claimed_at, last_heartbeat, released_at)` PK `(slug, section_id)`.
+  - `ia_stage_claims (slug, stage_id, claimed_at, last_heartbeat, released_at)` PK `(slug, stage_id)`.
+  - No `session_id` column — section IS the holder. INSERT-or-fail on PK enforces concurrent contention; subsequent callers refresh heartbeat. Multi-sequential agents on one section trivially safe.
+  - `master_plan_next_actionable` returns a stage only if its section claim is held (any caller) AND the stage claim is unheld OR re-fetchable by row key.
+- Parallel execution (V2): each agent session calls `/section-claim {slug} {section_id}` → row claim taken on `ia_section_claims` → runs `/ship-stage` per member stage on the **same branch + same worktree** → `/section-closeout` at the end. No git worktree, no per-section branch, no per-section merge — stage commits land directly via `/ship-stage` Pass B.
 
 ```
 Plan birth
@@ -72,12 +73,12 @@ Plan birth
          │
    ┌─────┼──────┬──────┬──────┐
    ▼     ▼      ▼      ▼      ▼
- sess1 sess2  sess3  sess4  …      ← /section-claim + worktree per session
-   │     │      │      │      │
-   │     │      │      │      │  /ship-stage per stage:
-   │     │      │      │      │    · pre: stage_claim + assert section claim
-   │     │      │      │      │    · Pass B: arch_drift_scan(intra-plan)
-   │     │      │      │      │    · post: stage_claim_release
+ agent1 agent2 agent3 …            ← /section-claim row-only (same branch + same worktree)
+   │      │      │      │
+   │      │      │      │   /ship-stage per stage:
+   │      │      │      │     · pre: stage_claim(slug, stage_id) + parent section assert
+   │      │      │      │     · Pass A: claim_heartbeat({slug, stage_id}) per task
+   │      │      │      │     · Pass B: arch_drift_scan(intra-plan) + stage commit + stage_claim_release
    │     │      │      │      │
    ▼     ▼      ▼      ▼      ▼
  /section-closeout   /section-closeout   …   ← per section
@@ -105,11 +106,11 @@ User confirmed: NOT a `*-master-plan.md`. DB-first, dogfood-driven. The implemen
 | D1 | Carcass criteria shape | Extensible — `carcass_signal_kinds` table |
 | D2 | Architecture-first persistence | `arch_decisions` rows + new `plan_slug` column |
 | D3 | Carcass marker on stages | `ia_stages.carcass_role` enum column |
-| D4 | Parallel coordination | `ia_stage_claims` + `ia_section_claims` (2-tier) + worktree per section |
+| D4 | Parallel coordination | `ia_stage_claims` + `ia_section_claims` (2-tier, V2 row-only) — keyed by `(slug, section_id)` / `(slug, stage_id)` alone, no session_id, no worktree, same branch |
 | D5 | Migration scope | Future plans only; pilot on next plan birth |
 | D6 | Authoring flow | Extend `master-plan-new` with Phases A/B/C |
-| D7 | Section closeout | `section_closeout_apply` (pure-DB) + skill-side git merge |
-| D8 | Branch model | Worktree per section on `feature/{slug}-section-{section_id}` |
+| D7 | Section closeout | `section_closeout_apply` (pure-DB row-key release) — no git merge step (V2 same-branch model) |
+| D8 | Branch model | V2 same-branch + same-worktree — no per-section branch, no per-section worktree, no per-section merge. Stage commits land via `/ship-stage` Pass B on the active feature branch. |
 | D9 | Drift detection | Extend `arch_drift_scan` with `scope='intra-plan'` + per-stage hook in `/ship-stage` Pass B |
 | D10 | Visibility | Extend `ia_master_plan_health` MV |
 | D11 | Final impl-plan persistence | Dogfooding — plan itself uses new shape |
@@ -122,7 +123,7 @@ User confirmed: NOT a `*-master-plan.md`. DB-first, dogfood-driven. The implemen
 | D18 | Sections-imply-carcass | DB CHECK + Phase B authoring fail |
 | D19 | Section identity | Explicit `ia_stages.section_id` column |
 | D20 | `/ship-stage` integration | Pre-step `stage_claim` + section assertion; Pass B `arch_drift_scan(intra-plan)`; post-step release |
-| D21 | MCP boundary | `section_closeout_apply` MCP pure-DB; git merge in `/section-closeout` skill |
+| D21 | MCP boundary | `section_closeout_apply` MCP pure-DB row-key release — no git merge in skill (V2 dropped) |
 | D22 | Bootstrap shape | Single combined Wave 0 (primitives + skill extensions); dogfood as Wave 1 |
 
 ---
@@ -263,22 +264,22 @@ CREATE CONSTRAINT TRIGGER ia_stages_carcass_invariants_t
 
 -- Move 3 — two-tier claim mutex ------------------------------------------
 
+-- V2 row-only: no session_id column — section IS the holder.
+-- INSERT-or-fail on PK enforces concurrent contention; subsequent callers
+-- refresh heartbeat. Multi-sequential agents on one section trivially safe.
+-- Migration 0052 drops session_id columns + indexes from these tables.
 CREATE TABLE ia_section_claims (
   slug            text NOT NULL,
   section_id      text NOT NULL,
-  session_id      text NOT NULL,
   claimed_at      timestamptz NOT NULL DEFAULT now(),
   last_heartbeat  timestamptz NOT NULL DEFAULT now(),
   released_at     timestamptz,
   PRIMARY KEY (slug, section_id)
 );
-CREATE INDEX ia_section_claims_session_idx ON ia_section_claims (session_id)
-  WHERE released_at IS NULL;
 
 CREATE TABLE ia_stage_claims (
   slug            text NOT NULL,
   stage_id        text NOT NULL,
-  session_id      text NOT NULL,
   claimed_at      timestamptz NOT NULL DEFAULT now(),
   last_heartbeat  timestamptz NOT NULL DEFAULT now(),
   released_at     timestamptz,
@@ -286,8 +287,6 @@ CREATE TABLE ia_stage_claims (
   FOREIGN KEY (slug, stage_id) REFERENCES ia_stages (slug, stage_id)
     ON DELETE CASCADE
 );
-CREATE INDEX ia_stage_claims_session_idx ON ia_stage_claims (session_id)
-  WHERE released_at IS NULL;
 
 COMMIT;
 ```
@@ -297,22 +296,22 @@ COMMIT;
 - `carcass_done bool` — `(count(carcass) > 0) AND (every carcass stage status='done')`.
 - `n_sections int` — `count(distinct section_id) WHERE carcass_role='section'`.
 - `n_sections_done int` — sections where every member stage is `done`.
-- `sections_in_flight text[]` — section_ids with active `ia_section_claims` rows (formatted `{section_id}@{session_id}`).
+- `sections_in_flight text[]` — section_ids with active (unreleased) `ia_section_claims` rows.
 - `carcass_cardinality_breach bool` — `count(carcass) > carcass_config.max_carcass_stages_per_plan` (defensive surface alongside trigger).
 
 ### 6.2 MCP tool delta
 
 | Tool | Status | Behavior |
 |------|--------|----------|
-| `master_plan_next_actionable` | **modify** | Honor carcass gate (carcass_done=false → only carcass-role stages). Honor 2-tier claim — return stage only if its section is unclaimed OR claimed by `session_id` arg AND stage itself unclaimed OR claimed by same session. |
-| `master_plan_sections` | **NEW** | `({slug})` → returns sections grouped by `section_id`: member stages, owned arch_surfaces, surface-cluster validation result, claim status. |
-| `section_claim` | **NEW** | `({slug, section_id, session_id})` → INSERT into `ia_section_claims`; fail if active row exists. UPSERT heartbeat on already-owned. |
-| `section_claim_release` | **NEW** | `({slug, section_id, session_id})` → set `released_at = now()` if session matches. Cascade-releases stale stage claims for the section. |
-| `stage_claim` | **NEW** | `({slug, stage_id, session_id})` → assert section claim held by same session_id; INSERT stage claim. |
-| `stage_claim_release` | **NEW** | Symmetric. |
-| `claim_heartbeat` | **NEW** | `({session_id})` → UPDATE both `ia_section_claims` + `ia_stage_claims` for session. Single call refreshes both layers. |
-| `claims_sweep` | **NEW** | Background sweep — uses `carcass_config.claim_heartbeat_timeout_minutes`. Releases stale rows in both tables. |
-| `section_closeout_apply` | **NEW (pure-DB)** | `({slug, section_id})` → verify all section stages done; verify zero open `arch_drift_scan(scope='intra-plan')` events for section; append `master_plan_change_log` row (`kind='section_done'`); release section claim + cascade stage claims. **Does NOT run git** — caller skill handles merge. |
+| `master_plan_next_actionable` | **modify** | Honor carcass gate (carcass_done=false → only carcass-role stages). Honor 2-tier row-only claim — return stage only if parent section claim unheld OR re-fetchable; AND stage claim unheld OR re-fetchable by row key. |
+| `master_plan_sections` | **NEW** | `({slug})` → returns sections grouped by `section_id`: member stages, owned arch_surfaces, surface-cluster validation result, claim status (V2 — no session_id field). |
+| `section_claim` | **NEW (V2 row-only)** | `({slug, section_id})` → INSERT-or-fail on `(slug, section_id)` PK. Throws `section_claim_held` only on concurrent INSERT race; subsequent callers refresh heartbeat (section IS holder). |
+| `section_claim_release` | **NEW (V2 row-only)** | `({slug, section_id})` → set `released_at = now()` by row key. Cascade-releases stage claims for the section. Any caller may release. |
+| `stage_claim` | **NEW (V2 row-only)** | `({slug, stage_id})` → assert parent section claim held; INSERT stage claim. Re-call refreshes heartbeat. |
+| `stage_claim_release` | **NEW (V2 row-only)** | `({slug, stage_id})` → row-key release. |
+| `claim_heartbeat` | **NEW (V2 shape)** | `({slug, section_id?, stage_id?})` → refresh row by key. Stage path also refreshes parent section claim via `ia_stages.section_id` lookup; section path cascades to all stage claims via JOIN. |
+| `claims_sweep` | **NEW** | Background sweep — uses `carcass_config.claim_heartbeat_timeout_minutes`. Releases stale rows in both tables (time-based, no session). |
+| `section_closeout_apply` | **NEW (pure-DB, V2)** | `({slug, section_id})` → verify all section stages done; verify zero open `arch_drift_scan(scope='intra-plan')` events for section; append `master_plan_change_log` row (`kind='section_done'`); release section claim + cascade stage claims by row key alone. **Does NOT run git** — V2 same-branch same-worktree, no merge step. |
 | `arch_drift_scan` | **modify** | Add `scope` arg ∈ `{global, cross-plan, intra-plan}`. `intra-plan` joins `stage_arch_surfaces × arch_changelog` grouped by section, flags cross-section surface edits. |
 | `master_plan_lock_arch` | **NEW** | `({slug, commit_sha})` → set `architecture_locked_at = now()`, `locked_commit_sha = $sha`; `master_plan_change_log_append (kind='arch_locked')`. |
 
@@ -350,22 +349,21 @@ Phase C — section-decompose (D19 + D8)
   5. master_plan_sections({slug}) validation pass — surface cluster matches author intent
 ```
 
-**`/section-claim` new skill** — wraps `section_claim` MCP. Opens git worktree at `../territory-developer.section-{section_id}` on branch `feature/{slug}-section-{section_id}`. Starts heartbeat loop (cron-style or per-tool-call).
+**`/section-claim` new skill** — wraps `section_claim` MCP. Pure DB row-only mutex on `(slug, section_id)`. Same branch + same worktree as the rest of the plan; no git operations. INSERT-or-fail PK enforces concurrent contention.
 
 **`/section-closeout` new skill** — runs after every section stage `done`:
 
 1. `arch_drift_scan(slug, scope='intra-plan', section_id)` — must return 0 open events.
-2. `section_closeout_apply` MCP (pure-DB ops).
-3. Skill-side git merge — `git merge --no-ff feature/{slug}-section-{section_id}` into `feature/{slug}` plan branch.
-4. `claim_heartbeat` final beat → `section_claim_release`.
-5. Worktree teardown.
+2. `section_closeout_apply` MCP (pure-DB ops — releases section claim row).
+
+No git merge, no worktree teardown — section work landed on the shared branch as stages shipped.
 
 **`/ship-stage` extended (D20)**:
 
-- Pass A pre-step: `stage_claim({slug, stage_id, session_id})` — fails if section not claimed by current session.
-- Pass A iterations: periodic `claim_heartbeat`.
+- Pass A pre-step: `stage_claim(slug, stage_id)` — INSERT-or-fail on `(slug, stage_id)` row key. Section claim row auto-asserted via `ia_stages.section_id` lookup (no caller-supplied holder id).
+- Pass A iterations: periodic `claim_heartbeat({slug, stage_id})` — refreshes stage + parent section heartbeat in one MCP call.
 - Pass B: existing verify-loop + **new** `arch_drift_scan(scope='intra-plan')` filtered to *other* sections; hard-fail on cross-section drift; soft-warn on intra-section.
-- Pass B post-step: `stage_claim_release`.
+- Pass B post-step: `stage_claim_release(slug, stage_id)` — row-key release.
 
 **`stage-decompose` extended** — emits `carcass_role` + `section_id` on every authored stage.
 
@@ -384,16 +382,16 @@ Day 0  (single session — carcass wave)
   ... (all carcass stages, parallel-eligible)
   → ia_master_plan_health.carcass_done = true
 
-Day N  (multiple sessions — section wave)
-  Session A:
-    /section-claim foo section-A      → worktree + branch + section claim row
-    /ship-stage foo section-A.1       → stage_claim + Pass B intra-plan drift scan
+Day N  (multiple agents OR one agent across turns — same branch, same worktree)
+  Agent A:
+    /section-claim foo section-A      → DB row INSERT on ia_section_claims (slug, section_id)
+    /ship-stage foo section-A.1       → stage_claim row + Pass B intra-plan drift scan
     /ship-stage foo section-A.2
-    /section-closeout foo section-A   → drift scan + DB closeout + git merge
-  Session B (parallel):
-    /section-claim foo section-B
+    /section-closeout foo section-A   → drift scan + DB closeout (releases section row)
+  Agent B (parallel — different terminal, same branch + same worktree):
+    /section-claim foo section-B      → INSERT-or-fail PK enforces no double-claim
     ...
-  Session C (parallel): section-C
+  Agent C (parallel): section-C
   ...
   → all sections done → master_plan_close foo
 ```
@@ -469,8 +467,8 @@ Single ship cycle covers schema, MCP, and skill extensions. Trade-off: bigger PR
 PR sub-split (5 sub-PRs — gate ordering matters):
 
 - **PR 3.0 — engine regression-test backfill** *(new, blocks rest of Phase 3)* — engine-level smoke recipe with `mcp.*` step + asserts; golden harness via vitest. Catches engine-level regressions before heavy skills land. Source: deferred DEC-A19 Task #2 candidate.
-- **PR 3.1 — `tools/recipes/section-claim.yaml`** + `ia/skills/section-claim/{SKILL.md,agent-body.md,command-body.md}` — 0 seams; pure `mcp.section_claim` + `bash.git_worktree_add` + `flow.until` heartbeat loop.
-- **PR 3.2 — `tools/recipes/section-closeout.yaml`** + `ia/skills/section-closeout/*` — 0 seams; `mcp.arch_drift_scan(scope='intra-plan')` + `gate.zero_open_events` + `mcp.section_closeout_apply` + `bash.git_merge`.
+- **PR 3.1 — `tools/recipes/section-claim.yaml`** + `ia/skills/section-claim/{SKILL.md,agent-body.md,command-body.md}` — 0 seams; pure `mcp.section_claim` row-only INSERT. No worktree, no branch.
+- **PR 3.2 — `tools/recipes/section-closeout.yaml`** + `ia/skills/section-closeout/*` — 0 seams; `mcp.arch_drift_scan(scope='intra-plan')` + `gate.zero_open_events` + `mcp.section_closeout_apply` (releases section row). No git merge.
 - **PR 3.3 — `tools/recipes/master-plan-new.yaml`** + `ia/skills/master-plan-new/*` extension — Phase A deterministic-only (`mcp.arch_decision_write` ×N + `mcp.master_plan_lock_arch`); Phase B/C via `seam.decompose-skeleton-stage` (existing seam, output schema extended for `carcass_role` + `section_id`).
 - **PR 3.4 — `tools/recipes/stage-decompose.yaml`** + `ia/skills/stage-decompose/*` extension — 1 seam (`decompose-skeleton-stage`, reused). Validates seam I/O contract evolution.
 - **PR 3.5 — `tools/recipes/ship-stage-pass-a.yaml`** + `tools/recipes/ship-stage-pass-b.yaml` + `ia/skills/ship-stage/*` extension — Pass A pre-claim recipe step (`mcp.stage_claim`); Pass B post-step recipe (`mcp.arch_drift_scan(scope='intra-plan')` + `mcp.stage_claim_release`). Verify-loop subagent body **unchanged** (multi-turn keeper per DEC-A19 Phase F).
@@ -502,8 +500,8 @@ Run `/master-plan-new docs/parallel-carcass-exploration.md` (this doc) → seeds
 **Phase B — 3 carcass stages (parallel-eligible):**
 
 - **carcass.1 — Health MV proves carcass gate.** Seed synthetic plan, assert `next_actionable` returns only carcass stages. Signal: `dev_loop_affordance`.
-- **carcass.2 — Two-tier claim demo.** Two sessions race a section_claim; one wins. Signal: `agent_capability`.
-- **carcass.3 — End-to-end section closeout.** Synthetic 2-stage section, run `/ship-stage` ×2 + `/section-closeout`, observe branch merge + audit row + drift scan green. Signal: `runnable_prototype`.
+- **carcass.2 — Row-only claim demo.** Two agents race `section_claim` on same `(slug, section_id)`; PK INSERT-or-fail enforces single winner. Signal: `agent_capability`.
+- **carcass.3 — End-to-end section closeout.** Synthetic 2-stage section, run `/ship-stage` ×2 + `/section-closeout`, observe section row release + audit row + drift scan green (no git merge — same-branch + same-worktree). Signal: `runnable_prototype`.
 
 **Phase C — sections (parallel after carcass):**
 
@@ -524,12 +522,12 @@ Next exploration → master-plan birth uses Phase A/B/C natively. Validate: end-
 | Risk | Mitigation |
 |------|-----------|
 | `master_plan_next_actionable` change breaks legacy plans (no carcass stages). | Carcass gate fires only if ≥1 `carcass_role='carcass'` row for slug. Legacy slugs (all NULL) → unchanged behavior. |
-| Section branch merges produce conflicts. | `arch_drift_scan(scope='intra-plan')` runs per-stage in `/ship-stage` Pass B + per-section in `/section-closeout`; merge happens on green only. |
-| Stale claims strand stages. | Heartbeat sweep + manual `claim_release`. |
+| Cross-section commits collide on shared branch. | `arch_drift_scan(scope='intra-plan')` runs per-stage in `/ship-stage` Pass B + per-section in `/section-closeout`; hard-fails ship on cross-section surface edits. Boundary policy + drift scan, not branch isolation, is the safety net. |
+| Stale claims strand stages. | Time-based `claims_sweep` past `claim_heartbeat_timeout_minutes` + manual `claim_release(slug, section_id)`. |
 | Big Wave 0 PR review burden. | Phase 1–4 changes are mechanical + isolated; one commit per phase inside the PR. |
 | Lock trigger blocks legitimate edits. | Trigger only fires for `plan_slug IS NOT NULL`; supersession path remains open; skill `/architecture-supersede` (post-MVP) can wrap the workflow. |
 | MV refresh cost from new derived columns. | Bench during Phase 4; if > 200ms, split into a separate `ia_plan_section_health` MV refreshed on `ia_*_claims` UPDATE only (D10 fallback). |
-| Two-tier claim adds chattiness. | `claim_heartbeat` is a single MCP call refreshing both layers; sessions call once per minute. |
+| Two-tier claim adds chattiness. | `claim_heartbeat({slug, stage_id})` is a single MCP call refreshing both layers (stage row + parent section row via `ia_stages.section_id` lookup); agents call once per Pass A iteration. |
 | Recipe-engine bugs gate Phase 3 progress (DEC-A19 dogfood early-bind). | PR 3.0 (engine regression-test backfill) ships first; golden harness catches engine-level regressions before heavy-skill recipes land. Recipe seam refusal escalation (Q5) catches content-level. |
 | Recipe DSL learning curve while Phase 3 ships. | 0-seam PRs (3.1, 3.2) come first — exercise pure deterministic step kinds before introducing seams. |
 
@@ -537,7 +535,7 @@ Next exploration → master-plan birth uses Phase A/B/C natively. Validate: end-
 
 - Wave 0 PR merged; `validate:all` green.
 - Wave 1 `parallel-carcass-rollout` master-plan reaches `done` via the new shape.
-- At least one parallel main-session demonstration: 2 sections claimed by 2 sessions concurrently, both close cleanly.
+- At least one parallel-agent demonstration: 2 sections claimed by 2 agents concurrently on the same branch + worktree, both close cleanly.
 - `ia_master_plan_health` reports `carcass_done=true` + `n_sections_done=n_sections` for the rollout plan.
 - `arch_drift_scan(scope='intra-plan')` green on all rollout sections at closeout.
 - `/skill-train` proposals captured if friction ≥ 2 across rollout sections.

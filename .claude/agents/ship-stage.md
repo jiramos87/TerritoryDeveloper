@@ -47,7 +47,7 @@ This subagent's `tools:` frontmatter intentionally omits `Agent` / `Task` — su
 
 Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence (matches SKILL frontmatter `phases:`):
 
-1. **Phase 0 — Parse stage** — derive `SLUG` + `STAGE_ID_DB` + `SESSION_ID` from `$ARGUMENTS`.
+1. **Phase 0 — Parse stage** — derive `SLUG` + `STAGE_ID_DB` from `$ARGUMENTS`.
 2. **Phase 1 — Stage state load** — `stage_bundle(slug, stage_id)` → `master_plan_title`, `stage`, `tasks`, `status_counts`, `next_pending`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + all tasks terminal.
 3. **Phase 1.5 — Baseline worktree snapshot** — `git status --porcelain` → `BASELINE_DIRTY` set of `{XY}{path}` tuples. Chain-scope guard for Phase 8 commit; read-only for rest of chain. Prevents sweeping pre-existing dirty paths (sibling work streams, in-flight refactors, untracked artifacts) into the stage commit.
 4. **Phase 2 — Context load** — `domain-context-load` once for stage domain; cache as `CHAIN_CONTEXT` (passed to Pass A spec-implementer). `tooling_only_flag` heuristic per SKILL Step 2.
@@ -55,16 +55,16 @@ Follow `ia/skills/ship-stage/SKILL.md` end-to-end. Phase sequence (matches SKILL
 6. **Phase 4 — Resume gate** — DB status scan via `task_state` per pending task. `pending` → Pass A required; `implemented` → skip Pass A. All implemented → `PASS_B_ONLY` (verify chain-scope delta vs `BASELINE_DIRTY` non-empty; empty → STOPPED with manual-repair directive). Skipped under `--no-resume`.
 7. **Phase 5 — Pass A per-task loop** — sequential, fail-fast, NO commits. For each task: implement (`spec-implementer` work inline) → `unity:compile-check` + scene-wiring preflight when §Plan Digest carries Scene Wiring step → `task_status_flip(implemented)` + `journal_append`. Stop on first failure; emit partial chain digest.
 
-   **Carcass hooks (conditional — skip entirely when no `.parallel-section-claim.json` sentinel in repo root):**
-   - **Pass A pre-step (once, before first task):** read `.parallel-section-claim.json` → extract `session_id`, `section_id`. Call `stage_claim(slug, stage_id, session_id)` — fails if parent section not claimed by current session; abort with `STOPPED — stage_claim failed: {reason}`.
-   - **Pass A per-task heartbeat:** after each `task_status_flip(implemented)`, call `claim_heartbeat(session_id)` to refresh TTL across both claim tables.
-   - **Pass A post-step (once, after last task):** heartbeat fires one final time before entering Pass B.
+   **Carcass hooks (V2 row-only — conditional, skip entirely when stage carries no `section_id` per `stage_bundle`):**
+   - **Pass A pre-step (once, before first task):** call `stage_claim(slug, stage_id)`. INSERT-or-fail on `(slug, stage_id)` row key. Fails when parent `(slug, section_id)` claim not held; abort with `STOPPED — stage_claim failed: {reason}`. Same call refreshes claim when row already held — multi-sequential agents safe.
+   - **Pass A per-task heartbeat:** after each `task_status_flip(implemented)`, call `claim_heartbeat({slug, stage_id})` — refreshes stage claim + parent section claim (resolved by `ia_stages.section_id` lookup) in one MCP call.
+   - **Pass A post-step (once, after last task):** `claim_heartbeat({slug, stage_id})` fires once more before Pass B.
 
 8. **Phase 6 — Pass B per-stage** — runs ONCE after Pass A loop. 6.1 verify-loop full Path A+B on cumulative `git diff HEAD` → 6.2 per-task `task_status_flip(verified)` then `task_status_flip(done)`. No code-review in this chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band.
 
-   **Carcass hooks (conditional — skip entirely when no `.parallel-section-claim.json` sentinel):**
-   - **Pass B drift scan (before closeout):** `arch_drift_scan(scope='intra-plan', plan_id=SLUG, section_id=CURRENT_SECTION_ID)`. Filter result: stages NOT in current section = cross-section drift → hard-fail `STOPPED — cross-section drift detected: {affected_stages}`; stages within current section = soft-warn only (log, continue). Current section_id read from stage DB record (`stage_bundle`) or sentinel.
-   - **Pass B post-step (after stage_verification_flip):** `stage_claim_release(slug, stage_id, session_id)` to release stage-level mutex. Section-level claim persists — released by `/section-closeout` recipe when all section stages are done.
+   **Carcass hooks (V2 row-only — conditional, skip entirely when stage carries no `section_id`):**
+   - **Pass B drift scan (before closeout):** `arch_drift_scan(scope='intra-plan', plan_id=SLUG, section_id=CURRENT_SECTION_ID)` — `CURRENT_SECTION_ID` from `stage_bundle.stage.section_id`. Filter result: stages NOT in current section = cross-section drift → hard-fail `STOPPED — cross-section drift detected: {affected_stages}`; stages within current section = soft-warn only (log, continue).
+   - **Pass B post-step (after `stage_verification_flip`):** `stage_claim_release(slug, stage_id)` releases stage-level mutex by row key alone. Section-level claim persists — released by `/section-closeout` recipe when all section stages are done.
 9. **Phase 7 — Inline closeout (DB-only)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `master_plan_change_log_append` audit row. No filesystem mv.
 10. **Phase 8 — Stage commit (chain-scope delta only) + verification record** — compute `STAGE_TOUCHED_PATHS = CURRENT_DIRTY - BASELINE_DIRTY` (chain-scope only). Single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` stages **only** `STAGE_TOUCHED_PATHS` via `git add -- <paths>` (NEVER `git add -A`). Verify staged scope via `git diff --cached --name-only` — drift → STOPPED contamination guard. Capture `STAGE_COMMIT_SHA`. Resume note: if `STAGE_TOUCHED_PATHS` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse latest `STAGE_COMMIT_SHA` from `git rev-parse HEAD`. Per-task `task_commit_record(task_id, commit_sha, "feat", ...)`. `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage")` (history-preserving INSERT).
 11. **Phase 9 — Chain digest** — JSON header (`chain_stage_digest: true`, slug, stage_id, tasks_shipped, stage_verify, stage_commit_sha, archived_task_count, next_handoff) + caveman summary.

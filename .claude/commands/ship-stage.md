@@ -53,7 +53,7 @@ Dispatch Agent with `subagent_type: "ship-stage"` (when `FORCE_MODEL` set: pass 
 >
 > ## Phase sequence (matches SKILL frontmatter `phases:`)
 >
-> 1. Phase 0 — Parse stage (derive `SLUG`, `STAGE_ID_DB`, `SESSION_ID`).
+> 1. Phase 0 — Parse stage (derive `SLUG`, `STAGE_ID_DB` from `$ARGUMENTS`; auto-generate journal `SESSION_ID`).
 > 2. Phase 1 — Stage state load via `stage_bundle(slug, stage_id)`. Stale-DB → `/stage-file` handoff. Idle exit when stage done + tasks all terminal.
 > 3. Phase 1.5 — Baseline worktree snapshot: `git status --porcelain` → `BASELINE_DIRTY` set of `{XY}{path}` tuples. Chain-scope guard for Phase 8 commit (read-only after capture). Prevents sweeping pre-existing dirty paths (sibling work streams, in-flight refactors, untracked artifacts) into the stage commit.
 > 4. Phase 2 — Context load via `domain-context-load` (once per chain); cache `CHAIN_CONTEXT`.

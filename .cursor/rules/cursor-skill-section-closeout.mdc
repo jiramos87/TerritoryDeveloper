@@ -1,5 +1,5 @@
 ---
-description: "Use to close a parallel section after all member stages are done. Runs intra-plan arch_drift_scan (blocks on any open drift), calls section_closeout_apply (asserts all stages done + writes change_log row section_done + releases claims), then merges the section branch into base_branch and removes the git worktree. Read `.parallel-section-claim.json` in the worktree for session_id. Does NOT re-ship stages. Does NOT reopen claim. Triggers - \"/section-closeout {SLUG} {SECTION_ID}\", \"close section worktree\", \"merge section branch\"."
+description: "Use to close a parallel section after all member stages are done. Runs intra-plan arch_drift_scan (blocks on any open drift), calls section_closeout_apply (asserts all stages done + writes change_log row section_done + releases section + cascade-releases stage claims by row key alone). V2 row-only — no session_id, no git merge, no worktree teardown. Same branch + same worktree model. Does NOT re-ship stages. Does NOT reopen claim. Triggers - \"/section-closeout {SLUG} {SECTION_ID}\", \"close section\", \"release section claim\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/section-closeout/SKILL.md

@@ -1,9 +1,15 @@
 /**
  * MCP tools: section_claim + section_claim_release.
  *
- * Two-tier claim mutex (parallel-carcass §6.2 / D4). One open row per
- * (slug, section_id) in `ia_section_claims`. Release cascades stale stage
- * claims for the same section.
+ * Two-tier claim mutex (parallel-carcass §6.2 / D4, V2 row-only). One open row
+ * per (slug, section_id) in `ia_section_claims`. The section IS the holder —
+ * any agent can renew/release the open row. Concurrent contention enforced by
+ * INSERT-or-fail on the PRIMARY KEY. Stale rows cleared by time-based
+ * claims_sweep. Multi-sequential agents on the same task: trivially supported
+ * (both address the same row by (slug, section_id)).
+ *
+ * Section release cascades stale stage claims for the same section (same slug,
+ * same section_id).
  *
  * Schema-cache restart required after add (N4).
  */
@@ -17,7 +23,6 @@ import { getIaDatabasePool } from "../ia-db/pool.js";
 const claimShape = {
   slug: z.string().describe("Master-plan slug."),
   section_id: z.string().describe("Section identifier."),
-  session_id: z.string().describe("Caller session id (Claude/Cursor session)."),
 };
 
 function jsonResult(payload: unknown) {
@@ -29,7 +34,6 @@ function jsonResult(payload: unknown) {
 interface ClaimRow {
   slug: string;
   section_id: string;
-  session_id: string;
   claimed_at: Date | string;
   last_heartbeat: Date | string;
 }
@@ -38,12 +42,11 @@ function toIso(v: Date | string): string {
   return typeof v === "string" ? new Date(v).toISOString() : v.toISOString();
 }
 
-type ClaimArgs = { slug: string; section_id: string; session_id: string };
+type ClaimArgs = { slug: string; section_id: string };
 
 export interface SectionClaimResult {
   slug: string;
   section_id: string;
-  session_id: string;
   claimed_at: string;
   last_heartbeat: string;
   status: "claimed" | "renewed";
@@ -63,37 +66,28 @@ export async function applySectionClaim(
   if (!pool) {
     throw { code: "db_unavailable", message: "ia_db pool not initialized" };
   }
-  const { slug, section_id, session_id } = args;
+  const { slug, section_id } = args;
 
   const existing = await pool.query<ClaimRow>(
-    `SELECT slug, section_id, session_id, claimed_at, last_heartbeat
+    `SELECT slug, section_id, claimed_at, last_heartbeat
        FROM ia_section_claims
       WHERE slug = $1 AND section_id = $2 AND released_at IS NULL`,
     [slug, section_id],
   );
 
   if (existing.rows.length > 0) {
-    const r = existing.rows[0]!;
-    if (r.session_id !== session_id) {
-      throw {
-        code: "section_claim_held",
-        message: `section ${section_id} of plan ${slug} held by session ${r.session_id}`,
-      };
-    }
-    // Same session → heartbeat refresh.
+    // V2 row-only: any caller may refresh the open claim.
     const upd = await pool.query<ClaimRow>(
       `UPDATE ia_section_claims
           SET last_heartbeat = now()
-        WHERE slug = $1 AND section_id = $2 AND session_id = $3
-          AND released_at IS NULL
-        RETURNING slug, section_id, session_id, claimed_at, last_heartbeat`,
-      [slug, section_id, session_id],
+        WHERE slug = $1 AND section_id = $2 AND released_at IS NULL
+        RETURNING slug, section_id, claimed_at, last_heartbeat`,
+      [slug, section_id],
     );
     const u = upd.rows[0]!;
     return {
       slug,
       section_id,
-      session_id,
       claimed_at: toIso(u.claimed_at),
       last_heartbeat: toIso(u.last_heartbeat),
       status: "renewed",
@@ -101,16 +95,15 @@ export async function applySectionClaim(
   }
 
   const ins = await pool.query<ClaimRow>(
-    `INSERT INTO ia_section_claims (slug, section_id, session_id)
-     VALUES ($1, $2, $3)
+    `INSERT INTO ia_section_claims (slug, section_id)
+     VALUES ($1, $2)
      ON CONFLICT (slug, section_id) DO UPDATE
-       SET session_id = EXCLUDED.session_id,
-           claimed_at = now(),
+       SET claimed_at = now(),
            last_heartbeat = now(),
            released_at = NULL
        WHERE ia_section_claims.released_at IS NOT NULL
-     RETURNING slug, section_id, session_id, claimed_at, last_heartbeat`,
-    [slug, section_id, session_id],
+     RETURNING slug, section_id, claimed_at, last_heartbeat`,
+    [slug, section_id],
   );
   if (ins.rows.length === 0) {
     throw {
@@ -122,7 +115,6 @@ export async function applySectionClaim(
   return {
     slug,
     section_id,
-    session_id,
     claimed_at: toIso(r.claimed_at),
     last_heartbeat: toIso(r.last_heartbeat),
     status: "claimed",
@@ -136,14 +128,14 @@ export async function applySectionRelease(
   if (!pool) {
     throw { code: "db_unavailable", message: "ia_db pool not initialized" };
   }
-  const { slug, section_id, session_id } = args;
+  const { slug, section_id } = args;
 
   const upd = await pool.query(
     `UPDATE ia_section_claims
         SET released_at = now()
-      WHERE slug = $1 AND section_id = $2 AND session_id = $3
+      WHERE slug = $1 AND section_id = $2
         AND released_at IS NULL`,
-    [slug, section_id, session_id],
+    [slug, section_id],
   );
 
   if ((upd.rowCount ?? 0) === 0) {
@@ -155,8 +147,7 @@ export async function applySectionRelease(
     };
   }
 
-  // Cascade: release stage claims for stages in this section held by same
-  // session.
+  // Cascade: release stage claims for stages in this section.
   const cascade = await pool.query(
     `UPDATE ia_stage_claims sc
         SET released_at = now()
@@ -165,9 +156,8 @@ export async function applySectionRelease(
         AND sc.stage_id = s.stage_id
         AND sc.slug = $1
         AND s.section_id = $2
-        AND sc.session_id = $3
         AND sc.released_at IS NULL`,
-    [slug, section_id, session_id],
+    [slug, section_id],
   );
 
   return {
@@ -184,10 +174,10 @@ export function registerSectionClaimTools(server: McpServer): void {
     {
       description:
         "DB-backed mutate: insert active row in `ia_section_claims` for " +
-        "(slug, section_id, session_id). Fails (`section_claim_held`) when " +
-        "held by another session. Same-session call refreshes heartbeat. " +
-        "Two-tier claim mutex per parallel-carcass §6.2 (D4). " +
-        "Schema-cache restart required after add (N4).",
+        "(slug, section_id). Fails (`section_claim_held`) only on concurrent " +
+        "INSERT race; otherwise refreshes heartbeat (V2 row-only — any agent " +
+        "may renew the open claim). Two-tier claim mutex per parallel-carcass " +
+        "§6.2 (D4). Schema-cache restart required after add (N4).",
       inputSchema: claimShape,
     },
     async (args) =>
@@ -205,9 +195,9 @@ export function registerSectionClaimTools(server: McpServer): void {
     {
       description:
         "DB-backed mutate: set `released_at = now()` on the active section " +
-        "claim when (slug, section_id, session_id) match. Cascade-releases " +
-        "any active stage claims for stages in the same section held by " +
-        "the same session. Returns `{released, cascaded_stage_releases}`. " +
+        "claim for (slug, section_id). V2 row-only — callable by any agent. " +
+        "Cascade-releases active stage claims for stages in the same " +
+        "section. Returns `{released, cascaded_stage_releases}`. " +
         "Schema-cache restart required after add (N4).",
       inputSchema: claimShape,
     },

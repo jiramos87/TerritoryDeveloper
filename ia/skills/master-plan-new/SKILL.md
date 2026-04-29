@@ -326,7 +326,31 @@ Single concise message (caveman) naming:
 - Invariants flagged by number + which stages they gate.
 - Cardinality gate: resolved splits / justifications captured.
 - Non-scope list outcome: scope-boundary doc referenced in header, OR **recommend stub** if exploration carries explicit post-MVP items but no companion doc exists yet (propose path `docs/{SLUG}-post-mvp-extensions.md` — NOT this skill's job to create; user runs a separate task).
-- Next step: `claude-personal "/stage-file {SLUG} Stage 1.1"` (or named first stage) to file its pending tasks as BACKLOG rows + project-spec stubs.
+- **Next step (parallel-eligible commands for the *immediate* next move only — not the full wave plan).** Compute the parallel-eligible set per the algorithm below + emit one `/stage-file` command per eligible stage in a fan-out block. Do NOT enumerate downstream waves (sections after carcass, or stages past the immediate next gate) — user will re-invoke after each gate clears.
+
+**Parallel-eligibility algorithm (immediate-next only):**
+
+1. Read all stages just persisted from working memory (`stage_id`, `carcass_role`, `section_id`, `depends_on` if any).
+2. Find the lowest `stage_id` group with no unsatisfied dependencies — the "current front".
+3. Apply shape rules:
+   - **Carcass+section plan** (any `carcass_role='carcass'` stage exists) → eligible set = ALL `carcass_role='carcass'` stages (no inter-sibling deps per D16/D18). Section stages are NOT eligible until carcass closes — omit from this handoff.
+   - **Legacy linear plan** (all `carcass_role` NULL) → eligible set = single first Stage (typically `Stage 1.1`). Subsequent stages gate on prior completion — omit.
+4. If eligible set has 1 stage → emit single `Next` line.
+5. If eligible set has ≥2 stages → emit fan-out block:
+
+```markdown
+**Next — parallel-eligible (open one terminal per line):**
+
+```
+Session α: claude-personal "/stage-file {SLUG} Stage {N.M-α}"
+Session β: claude-personal "/stage-file {SLUG} Stage {N.M-β}"
+Session γ: claude-personal "/stage-file {SLUG} Stage {N.M-γ}"
+```
+
+Sessions touch disjoint surfaces — no contention. Re-invoke handoff logic after this front closes for the next gate.
+```
+
+For carcass+section plans, append a one-liner naming the gate that unlocks the section wave: `Gate after carcass: ia_master_plan_health.carcass_done = true (check via mcp__territory-ia__master_plan_health).`
 
 ---
 

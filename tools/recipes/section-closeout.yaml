@@ -1,16 +1,14 @@
 recipe: section-closeout
 description: >-
-  Close a parallel-carcass section: drift gate → DB closeout + claim release
-  → git merge + worktree remove. 0 seams. Per parallel-carcass §6.4 + DEC-A19
-  Phase E.
+  Close a parallel-carcass section: drift gate → DB closeout + claim release.
+  V2 row-only — same branch + same worktree, no merge, no worktree teardown.
+  Per parallel-carcass §6.4 (V2 rewrite) + DEC-A19 Phase E.
 inputs:
   type: object
   additionalProperties: false
   required:
     - slug
     - section_id
-    - session_id
-    - base_branch
   properties:
     slug:
       type: string
@@ -18,27 +16,12 @@ inputs:
     section_id:
       type: string
       description: Section id (matches `ia_stages.section_id` for member stages).
-    session_id:
-      type: string
-      description: >-
-        Session id from `.parallel-section-claim.json` sentinel. Required to
-        release the matching section + stage claims.
-    base_branch:
-      type: string
-      description: >-
-        Branch to merge section branch into. Must be current branch in main
-        worktree at time of recipe run. Required.
     actor:
       type: string
       description: Optional actor for change_log row.
     commit_sha:
       type: string
       description: Optional commit_sha for change_log row.
-    worktree_root:
-      type: string
-      description: >-
-        Optional override for worktree path. Default =
-        `{repo_parent}/{repo_name}.section-{section_id}`.
 steps:
   - id: drift_scan
     description: >-
@@ -61,25 +44,14 @@ steps:
   - id: closeout_apply
     description: >-
       Phase 2 — DB closeout: assert all stages done, append change_log row
-      (kind=section_done), release section claim + cascade stage claims.
+      (kind=section_done), release section claim + cascade stage claims by
+      row key alone (V2 row-only — any caller).
     mcp: section_closeout_apply
     args:
       slug: ${inputs.slug}
       section_id: ${inputs.section_id}
-      session_id: ${inputs.session_id}
       actor: ${inputs.actor}
       commit_sha: ${inputs.commit_sha}
-
-  - id: git_merge
-    description: >-
-      Phase 3 — merge section branch into base_branch + remove worktree.
-      Fails when main worktree is not on base_branch.
-    bash: tools/scripts/recipe-engine/section-closeout/git-merge-section.sh
-    args:
-      slug: ${inputs.slug}
-      section_id: ${inputs.section_id}
-      base_branch: ${inputs.base_branch}
-      worktree_root: ${inputs.worktree_root}
 
 outputs:
   drift_affected: ${drift_scan.affected_stages}
@@ -88,4 +60,3 @@ outputs:
   change_log_entry_id: ${closeout_apply.change_log_entry_id}
   section_claim_released: ${closeout_apply.section_claim_released}
   cascaded_stage_releases: ${closeout_apply.cascaded_stage_releases}
-  git_merge: ${git_merge.stdout}
