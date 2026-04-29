@@ -130,6 +130,12 @@ User confirmed: NOT a `*-master-plan.md`. DB-first, dogfood-driven. The implemen
 
 ## 6. Design — final (deltas folded)
 
+> **Carcass3 evidence:** worked-example trace of one canonical run is
+> captured in [`parallel-carcass-rollout-carcass3-evidence.md`](parallel-carcass-rollout-carcass3-evidence.md)
+> — section claim → 2× stage claim → heartbeat → stage flips →
+> section_closeout_apply → drift scan clean. Persisted signal:
+> `stage_carcass_signals` row written by migration `0054_parallel_carcass_runnable_prototype_signal.sql`.
+
 ### 6.1 Schema delta
 
 **Migration `0049_parallel_carcass_primitives.sql` — combined:**
