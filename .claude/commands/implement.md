@@ -43,7 +43,7 @@ Forward via Agent tool with `subagent_type: "spec-implementer"` (when `FORCE_MOD
 > 4. Verify after each phase per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause.
 > 5. Tick phase checklist.
 >
-> Multi-stage → invoke `project-stage-close` skill **inline** at end of each non-final stage. Umbrella close = `closeout` subagent (`/closeout`), not yours.
+> Stage closeout fires inline via `/ship-stage` Pass B (`stage_closeout_apply` MCP), not yours.
 >
 > ## Hard boundaries
 >

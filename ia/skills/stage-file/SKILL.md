@@ -105,7 +105,7 @@ Scan target Stage task table **before any other action**. Count by status:
 
 `In Review`, `In Progress`, `Done` tasks — skip in all modes. Never touch active/closed work.
 
-**Upstream Stage tail guard:** before No-op treats as "nothing to do", agent MAY run `npm run validate:master-plan-status -- --slug {SLUG}`. If **[R6]** on an earlier Stage → hand off `/ship-stage` or `/closeout` for that Stage before filing downstream.
+**Upstream Stage tail guard:** before No-op treats as "nothing to do", agent MAY run `npm run validate:master-plan-status -- --slug {SLUG}`. If **[R6]** on an earlier Stage → hand off `/ship-stage` for that Stage before filing downstream.
 
 **Collapsed-flow note (db-lifecycle-extensions Stage 3 / TECH-3405):** `/stage-decompose` Phase 4 now calls `stage_decompose_apply` MCP, which writes Stage prose AND inserts Task rows in single transaction. Stages decomposed via that path arrive at this skill in **No-op mode** (Tasks already filed in DB) — no work needed here. Run `/stage-file` only for legacy `_pending_` Stages or Mixed-mode follow-up after compress.
 

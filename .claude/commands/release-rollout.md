@@ -65,7 +65,7 @@ Forward via Agent tool with `subagent_type: "release-rollout"`:
 >
 > ## Hard boundaries
 >
-> - Do NOT close issues (= `/closeout`).
+> - Do NOT close issues (handled inline by `/ship-stage` Pass B).
 > - Do NOT author child master-plans directly — delegate to lifecycle subagents.
 > - Do NOT touch other rows' cells.
 > - Do NOT proceed on `⚠️` or `❓` markers — route to user pick.

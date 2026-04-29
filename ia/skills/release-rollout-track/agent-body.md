@@ -4,27 +4,31 @@ Flip one cell in `{TRACKER_SPEC}` for `{ROW_SLUG}` at `{TARGET_COL}` to `{NEW_MA
 
 # Recipe
 
-Follow `ia/skills/release-rollout-track/SKILL.md` end-to-end.
+Mechanical phases (validate, cell flip, Change log append, handoff) run as recipe `release-rollout-track` (`tools/recipes/release-rollout-track.yaml`) — DEC-A19 Phase C recipify. Invoke:
 
-Phase 0 — Load + validate: Read `{TRACKER_SPEC}`. Grep for `| {ROW_SLUG} |`. Missing row → STOP. Confirm `TARGET_COL` ∈ (a)–(g). Confirm `NEW_MARKER` ∈ {✓, ◐, —, ❓, ⚠️}.
+```
+npm run recipe:run -- release-rollout-track \
+  --input tracker_spec={TRACKER_SPEC} \
+  --input row_slug={ROW_SLUG} \
+  --input target_col={a..g} \
+  --input new_marker={✓|◐|—|❓|⚠️} \
+  --input ticket={TICKET} \
+  --input changelog_note={CHANGELOG_NOTE}
+```
 
-Phase 1 — Column (g) align verify (only when `TARGET_COL = (g)` OR `TARGET_COL = (e)` with (g) gate): run `term-anchor-verify` subskill (`ia/skills/term-anchor-verify/SKILL.md`) for every NEW domain entity introduced by this row. Inputs: `terms` = English entity names from child orchestrator Objectives / Exit criteria. `all_anchored = true` → (g) `✓`. `all_anchored = false` → (g) `—` + Skill Iteration Log note naming `unresolved_terms`.
+Recipe stops on first failure (validate row / column / marker; cell-flip header parse; row not matched). Both `cell_flip` and `changelog_append` are idempotent — re-runs return `noop` instead of duplicating edits.
 
-Phase 1b — Column (f) filed-signal verify (only when `TARGET_COL = (f)` AND `NEW_MARKER` = `✓` or `◐`): Glob `ia/backlog/*.yaml` + `ia/projects/{id}*.md` pairs for slug. Both present for all records → `✓`; any yaml without spec → `◐`; zero records → `—`.
+# Caller responsibilities (NOT in recipe — defer to seam Phase D)
 
-Phase 2 — Cell flip: Edit `{TRACKER_SPEC}`. Find row `| {ROW_SLUG} |`. Replace `TARGET_COL` cell with `{NEW_MARKER} ({TICKET})`. Idempotent: if already at target marker + same ticket → no-op + skip Phase 3.
-
-Phase 3 — Change log append: append row to `## Change log` table:
-`| {YYYY-MM-DD} | {ROW_SLUG} cell ({TARGET_COL}) → {NEW_MARKER}; ticket: {TICKET} ({CHANGELOG_NOTE}) | release-rollout-track |`
-
-Phase 4 — Handoff: single caveman line: `{TRACKER_SPEC} {ROW_SLUG}({TARGET_COL}) → {NEW_MARKER} ({TICKET}).`
+- Column (g) align verify when `target_col=g` OR `target_col=e` with (g) gate. Run `term-anchor-verify` subskill (`ia/skills/term-anchor-verify/SKILL.md`) over child orchestrator domain entities. `all_anchored=true` → marker `✓`; otherwise `—` + skill bug log entry. Caller picks final marker before invoking recipe.
+- Column (f) filed-signal verify when `target_col=f`. Either run helper `tools/scripts/recipe-engine/release-rollout-track/filed-signal.sh --slug {ROW_SLUG}` for a coarse glyph, or inspect Glob output by hand. Caller passes resulting glyph as `new_marker`.
 
 # Hard boundaries
 
-- IF row not in tracker → STOP.
-- IF `TARGET_COL` invalid → STOP.
-- IF `NEW_MARKER` invalid glyph → STOP.
-- IF (g) align verify fails AND `TARGET_COL = (e)` → STOP. Fall back to (g) = `—` + skill bug log entry. Do NOT tick (e).
+- IF row not in tracker → recipe `validate_row` step STOPs; do not retry.
+- IF `target_col` invalid → recipe STOPs.
+- IF `new_marker` invalid glyph → recipe STOPs.
+- IF (g) align verify fails AND `target_col = (e)` → caller passes `target_col=g` + `new_marker=—` + skill bug log entry. Do NOT tick (e).
 - Do NOT touch other rows.
 - Do NOT edit Disagreements appendix.
 - Do NOT commit.

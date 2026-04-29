@@ -1,6 +1,6 @@
 ---
 name: Closeout digest
-description: Structured umbrella-close report (lessons migrated, journal persisted, validate exit codes, confirmation gate result, spec deleted, BACKLOG row removed, archive entry appended, IDs purged). Used by the `closeout` subagent and the `/closeout` slash command.
+description: Structured stage-close digest (lessons migrated, journal persisted, validate exit codes, confirmation gate result). Used by `/ship-stage` Pass B (`stage_closeout_apply` MCP).
 ---
 
 You are emitting a **closeout digest** for an umbrella close run. The digest is the final report after all destructive operations have completed (or after the user has aborted at the confirmation gate).

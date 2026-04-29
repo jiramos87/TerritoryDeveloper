@@ -1,6 +1,6 @@
 ---
 name: spec-implementer
-description: Use to execute the Implementation Plan in `ia/projects/{ISSUE_ID}*.md` after the spec has been authored (`plan-author` Stage 1×N) and is ready to ship. Triggers — "implement TECH-XX", "execute project spec", "follow Implementation Plan", "ship spec phases", "implement BUG-XX". Runs phases in order with minimal diffs, calls territory-ia MCP slices for context, edits code + IA in place, emits a structured per-phase report. Does NOT author the spec — that is the `plan-author` subagent (`/author`). Does NOT close the Stage — that is the Stage-scoped closeout pair (`stage-closeout-planner` → `stage-closeout-applier`, `/closeout`).
+description: Use to execute the Implementation Plan in `ia/projects/{ISSUE_ID}*.md` after the spec has been authored (`plan-author` Stage 1×N) and is ready to ship. Triggers — "implement TECH-XX", "execute project spec", "follow Implementation Plan", "ship spec phases", "implement BUG-XX". Runs phases in order with minimal diffs, calls territory-ia MCP slices for context, edits code + IA in place, emits a structured per-phase report. Does NOT author the spec — that is the `plan-author` subagent (`/author`). Does NOT close the Stage — that is the `/ship-stage` Pass B (inline `stage_closeout_apply`).
 tools: Read, Edit, Write, Bash, Grep, Glob, NotebookEdit, mcp__territory-ia__issue_context_bundle, mcp__territory-ia__backlog_issue, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariant_preflight, mcp__territory-ia__glossary_lookup, mcp__territory-ia__findobjectoftype_scan, mcp__territory-ia__unity_compile, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__project_spec_journal_search, mcp__territory-ia__project_spec_journal_get, mcp__territory-ia__project_spec_journal_persist, mcp__territory-ia__project_spec_journal_update
 model: haiku
 ---
@@ -37,7 +37,7 @@ Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Phase loop:
 4. **Verify** — after each phase, run relevant `npm run validate:*` / `npm run unity:compile-check` per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause; no bypass.
 5. **Tick phase checklist** in spec.
 
-Multi-stage spec → Stage-scoped closeout fires ONCE per Stage via `/closeout` pair (`stage-closeout-planner` → `stage-closeout-applier`) — not this agent's territory. This agent implements phases within a Task; closeout / Stage rollup / umbrella close all delegated to the Stage-scoped pair invoked separately.
+Multi-stage spec → Stage closeout fires inline once per Stage via `/ship-stage` Pass B (`stage_closeout_apply` MCP) — not this agent's territory. This agent implements phases within a Task.
 
 # Verification policy (canonical)
 

@@ -1,6 +1,6 @@
 # Mission
 
-Drive ONE row of `{TRACKER_SPEC}` (sibling to `{UMBRELLA_SPEC}`) through its next lifecycle cell (a)–(g). When (b) ✓ (exploration done): chain (c)→(d)→(e)→(f) autonomously via Agent tool calls without pausing for user. Human pause only for: (b) incomplete exploration → product-language interview; `⚠️` disagreement; `❓` equivalence gate; subagent failure/blocker. After (f) ✓: invoke `release-rollout-track`, emit next-row recommendation. Does NOT close issues (= `/closeout`). Does NOT author child master-plans directly.
+Drive ONE row of `{TRACKER_SPEC}` (sibling to `{UMBRELLA_SPEC}`) through its next lifecycle cell (a)–(g). When (b) ✓ (exploration done): chain (c)→(d)→(e)→(f) autonomously via Agent tool calls without pausing for user. Human pause only for: (b) incomplete exploration → product-language interview; `⚠️` disagreement; `❓` equivalence gate; subagent failure/blocker. After (f) ✓: invoke `release-rollout-track`, emit next-row recommendation. Does NOT close issues (handled inline by `/ship-stage` Pass B). Does NOT author child master-plans directly.
 
 # Recipe
 
@@ -53,7 +53,7 @@ Run in order. Skip on `OPERATION = status`.
 - IF parallel-work conflict → STOP. Emit Tier-ordered alt row.
 - IF subagent returns failure/blocker → STOP. Surface blocker to user; do NOT chain further.
 - Do NOT pause between (c)→(f) when (b) ✓ — chain autonomously.
-- Do NOT close issues (= `/closeout`).
+- Do NOT close issues (handled inline by `/ship-stage` Pass B).
 - Do NOT author child master-plans directly — delegate to lifecycle subagents.
 - Do NOT touch other rows' cells.
 - Do NOT commit — user decides.
