@@ -31,6 +31,16 @@ namespace Territory.UI
                 if (go != null)
                     controlPanelBackgroundImage = go.GetComponent<Image>();
             }
+
+            // Stage 12 trigger contract: modal roots must start deactivated so OpenPopup
+            // can flip them on. Source prefabs ship with m_IsActive=1 for design preview;
+            // enforce hidden runtime state here so they don't block grid raycasts or short-
+            // circuit OpenPopup's `!activeSelf` gate (silent no-op + dead Esc / Shift+hover).
+            if (infoPanelRoot != null && infoPanelRoot.activeSelf) infoPanelRoot.SetActive(false);
+            if (pauseMenuRoot != null && pauseMenuRoot.activeSelf) pauseMenuRoot.SetActive(false);
+            if (settingsScreenRoot != null && settingsScreenRoot.activeSelf) settingsScreenRoot.SetActive(false);
+            if (saveLoadScreenRoot != null && saveLoadScreenRoot.activeSelf) saveLoadScreenRoot.SetActive(false);
+            if (newGameScreenRoot != null && newGameScreenRoot.activeSelf) newGameScreenRoot.SetActive(false);
         }
 
         /// <summary>
