@@ -63,6 +63,10 @@ tools_extra:
   - mcp__territory-ia__task_commit_record
   - mcp__territory-ia__stage_verification_flip
   - mcp__territory-ia__journal_append
+  - mcp__territory-ia__stage_claim
+  - mcp__territory-ia__stage_claim_release
+  - mcp__territory-ia__claim_heartbeat
+  - mcp__territory-ia__arch_drift_scan
 caveman_exceptions:
   - code
   - commits
@@ -99,10 +103,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ## Normative — closeout is part of `PASSED`
 
-When Pass B verify-loop succeeds (`verdict: pass`), the chain **must** run **Step 7 inline closeout** in the **same** invocation. Do **not**:
-
-- Emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify alone.
-- Tell the operator to run a separate `/closeout` later.
+When Pass B verify-loop succeeds (`verdict: pass`), the chain **must** run **Step 7 inline closeout** in the **same** invocation. Do **not** emit `SHIP_STAGE {STAGE_ID}: PASSED` after verify alone — Step 7 closeout + Step 8 commit + verification flip must succeed first.
 
 `SHIP_STAGE {STAGE_ID}: PASSED` is valid **only** after `stage_closeout_apply` succeeded + stage commit landed + `stage_verification_flip(pass, commit_sha)` recorded.
 
@@ -469,7 +470,7 @@ Emit one chain-level stage digest at chain end (success or STOPPED).
   "archived_task_count": N,
   "next_handoff": {
     "case": "filed|pending|skeleton|umbrella-done|stopped|stage_verify_fail",
-    "command": "/ship-stage|/stage-file|/stage-decompose|/closeout",
+    "command": "/ship-stage|/stage-file|/stage-decompose|none",
     "args": "{SLUG} Stage X.Y",
     "shell": "claude-personal \"...\""
   }
@@ -496,7 +497,7 @@ Re-call `master_plan_state(slug=SLUG)`. Sort stages by **numeric tuple `(major, 
    → `Next: claude-personal "/stage-decompose {SLUG} Stage X.Y"`
 
 4. **Umbrella done** — no more stages after current:
-   → `Next: claude-personal "/closeout {UMBRELLA_ISSUE_ID}"` if identifiable from master plan header. Else `All stages done — umbrella close pending.`
+   → `All stages done — plan complete (no further action; inline `stage_closeout_apply` already recorded per-stage).`
 
 **Forbidden:** skipping a skeleton or pending stage in favor of a later filed stage. Sequential ordering preserves the user's authored progression.
 
@@ -559,3 +560,7 @@ Re-call `master_plan_state(slug=SLUG)`. Sort stages by **numeric tuple `(major, 
 ---
 
 ## Changelog
+
+| date | change | friction_types |
+|------|--------|---------------|
+| 2026-04-29 | parallel-carcass Wave 0 Phase 3 PR 3.5 — added stage_claim / stage_claim_release / claim_heartbeat / arch_drift_scan to tools_extra; documented Pass A/B carcass hooks in agent-body (conditional on .parallel-section-claim.json sentinel; legacy linear plans skip all hooks) | feature-extension |
