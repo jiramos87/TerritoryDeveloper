@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import SpriteDetail, { type SpriteDetailView } from "@/components/catalog/SpriteDetail";
 import type { SpriteEditFormValue } from "@/components/catalog/SpriteEditForm";
+import VersionsTab from "@/components/versions/VersionsTab";
 
 type DetailApiPayload = {
   ok: "ok" | "error";
@@ -121,5 +122,10 @@ export default function SpriteDetailClient({ slug }: { slug: string }) {
       </p>
     );
   }
-  return <SpriteDetail sprite={sprite} onSave={handleSave} saveError={saveError} />;
+  return (
+    <>
+      <SpriteDetail sprite={sprite} onSave={handleSave} saveError={saveError} />
+      <VersionsTab entityId={sprite.entity_id} kind="sprite" />
+    </>
+  );
 }

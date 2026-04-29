@@ -10,6 +10,7 @@ import RippleBanner from "@/components/catalog/tokens/RippleBanner";
 import SemanticTokenEditor from "@/components/catalog/tokens/SemanticTokenEditor";
 import SpacingTokenEditor from "@/components/catalog/tokens/SpacingTokenEditor";
 import TypeScaleTokenEditor from "@/components/catalog/tokens/TypeScaleTokenEditor";
+import VersionsTab from "@/components/versions/VersionsTab";
 import type {
   CatalogTokenColorValue,
   CatalogTokenDto,
@@ -287,7 +288,7 @@ export default function TokenDetailClient({ slug }: { slug: string }) {
         onTabChange={setActiveTab}
         tabs={{
           edit: editPanel,
-          versions: <p data-testid="token-detail-placeholder-versions" className="text-[var(--ds-text-muted)]">Versions — Stage 11 ships this surface.</p>,
+          versions: <VersionsTab entityId={token.entity_id} kind="token" />,
           references: <p data-testid="token-detail-placeholder-references" className="text-[var(--ds-text-muted)]">References — Stage 14.1 wires `catalog_ref_edge`.</p>,
           lints: <p data-testid="token-detail-placeholder-lints" className="text-[var(--ds-text-muted)]">Lints — Stage 12 ships this surface.</p>,
           audit: <p data-testid="token-detail-placeholder-audit" className="text-[var(--ds-text-muted)]">Audit — Stage 13 ships this surface.</p>,

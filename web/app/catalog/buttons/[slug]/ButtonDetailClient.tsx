@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import EntityPreview from "@/components/preview/EntityPreview";
 import EntityRefPicker, { type EntityRefRow } from "@/components/catalog/EntityRefPicker";
+import VersionsTab from "@/components/versions/VersionsTab";
 import { SIZE_VARIANTS, type SizeVariant } from "@/lib/catalog/button-enums";
 import type {
   CatalogButtonDto,
@@ -342,6 +343,8 @@ export default function ButtonDetailClient({ slug }: { slug: string }) {
           </span>
         ) : null}
       </label>
+
+      <VersionsTab entityId={button.entity_id} kind="button" />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import AudioPreviewPlayer from "@/components/catalog/AudioPreviewPlayer";
+import VersionsTab from "@/components/versions/VersionsTab";
 import {
   fetchAudioBySlug,
   type AudioDetailDto,
@@ -120,6 +121,8 @@ export default function AudioDetailClient({ slug }: { slug: string }) {
         mimeType="audio/ogg"
         label={audio.assets_path ? "Promoted asset" : "Latest render"}
       />
+
+      <VersionsTab entityId={audio.entity_id} kind="audio" />
     </section>
   );
 }

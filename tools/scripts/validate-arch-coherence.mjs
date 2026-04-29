@@ -61,6 +61,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "asset-pipeline::12.1",
   "asset-pipeline::13.1",
   "asset-pipeline::14.1",
+  "asset-pipeline::14.2",
   "asset-pipeline::15.1",
   "asset-pipeline::17.1",
   "asset-pipeline::18.1",

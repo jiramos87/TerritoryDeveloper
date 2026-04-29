@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import VersionsTab from "@/components/versions/VersionsTab";
 import type {
   CatalogArchetype,
   CatalogArchetypeVersionWithPinCount,
@@ -194,6 +195,8 @@ export default function ArchetypeDetailClient({ entityId }: { entityId: string }
           </p>
         ) : null}
       </section>
+
+      <VersionsTab entityId={entityId} kind="archetype" />
     </div>
   );
 }

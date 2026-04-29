@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import AssetDetail from "@/components/catalog/AssetDetail";
+import VersionsTab from "@/components/versions/VersionsTab";
 import type { CatalogAssetSpineDto, CatalogAssetSpinePatchBody } from "@/types/api/catalog-api";
 
 type DetailApiPayload = {
@@ -79,5 +80,10 @@ export default function AssetDetailClient({ slug }: { slug: string }) {
       </p>
     );
   }
-  return <AssetDetail asset={asset} onSave={handleSave} saveError={saveError} />;
+  return (
+    <>
+      <AssetDetail asset={asset} onSave={handleSave} saveError={saveError} />
+      <VersionsTab entityId={asset.entity_id} kind="asset" />
+    </>
+  );
 }

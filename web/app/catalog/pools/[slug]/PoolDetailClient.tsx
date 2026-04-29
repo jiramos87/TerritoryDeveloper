@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import PoolDetail from "@/components/catalog/PoolDetail";
+import VersionsTab from "@/components/versions/VersionsTab";
 import type { CatalogPoolDto, CatalogPoolPatchBody } from "@/types/api/catalog-api";
 
 type DetailApiPayload = {
@@ -79,5 +80,10 @@ export default function PoolDetailClient({ slug }: { slug: string }) {
       </p>
     );
   }
-  return <PoolDetail pool={pool} onSave={handleSave} saveError={saveError} />;
+  return (
+    <>
+      <PoolDetail pool={pool} onSave={handleSave} saveError={saveError} />
+      <VersionsTab entityId={pool.entity_id} kind="pool" />
+    </>
+  );
 }
