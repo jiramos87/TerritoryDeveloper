@@ -339,17 +339,39 @@ const archDriftScanInputSchema = z.object({
     .string()
     .optional()
     .describe("Master-plan slug (e.g. `architecture-coherence-system`). Omit to scan every open plan."),
+  scope: z
+    .enum(["global", "cross-plan", "intra-plan"])
+    .optional()
+    .describe(
+      "Drift scope. `global` (default) = legacy behavior. `cross-plan` = " +
+        "same scan, but each affected stage carries the list of OTHER plans " +
+        "that link the drifted surface. `intra-plan` = requires `plan_id`; " +
+        "joins `stage_arch_surfaces × arch_changelog` grouped by section, " +
+        "and flags surfaces edited by stages outside the affected stage's " +
+        "own section (cross-section drift). parallel-carcass §6.2 / D9.",
+    ),
+  section_id: z
+    .string()
+    .optional()
+    .describe(
+      "Optional filter for `scope='intra-plan'`. When set, returns only " +
+        "stages whose `section_id` matches this value (or carcass stages " +
+        "with NULL section_id when `include_carcass=true`).",
+    ),
 });
 
 interface DriftSurface {
   slug: string;
   changelog_kind: string;
   ts: string;
+  cross_plan_links?: string[];
+  cross_section_links?: Array<{ section_id: string | null; stage_id: string }>;
 }
 
 interface AffectedStage {
   slug: string;
   stage_id: string;
+  section_id?: string | null;
   drifted_surfaces: DriftSurface[];
   suggested_questions: string[];
 }
@@ -368,24 +390,31 @@ function shapeQuestion(stageId: string, drift: DriftSurface, decisionSlug: strin
 
 export async function runArchDriftScan(
   pool: Pool,
-  input: { plan_id?: string },
+  input: {
+    plan_id?: string;
+    scope?: "global" | "cross-plan" | "intra-plan";
+    section_id?: string;
+  },
 ): Promise<{ affected_stages: AffectedStage[] }> {
+  const scope = input.scope ?? "global";
+  if (scope === "intra-plan" && !input.plan_id) {
+    throw {
+      code: "invalid_input" as const,
+      message: "scope='intra-plan' requires plan_id",
+    };
+  }
+
   const params: unknown[] = [];
   let planFilter = "";
   if (input.plan_id) {
     params.push(input.plan_id.trim());
     planFilter = `WHERE mp.slug = $${params.length}`;
   } else {
-    // scan every open plan: stage-level status != 'done'.
-    // ia_master_plans has no status column (orchestrators are permanent);
-    // stage_status enum = ('pending', 'in_progress', 'done') — no 'archived'.
-    // A plan is "open" iff it has at least one non-terminal stage.
     planFilter = `WHERE s.status <> 'done'`;
   }
 
-  // Collect (slug, stage_id, plan_created_at, last_pending_flip_ts) per stage.
   const stageSql = `
-    SELECT s.slug, s.stage_id, mp.created_at AS plan_created_at,
+    SELECT s.slug, s.stage_id, s.section_id, mp.created_at AS plan_created_at,
            (
              SELECT MAX(cl.ts)
                FROM ia_master_plan_change_log cl
@@ -405,9 +434,14 @@ export async function runArchDriftScan(
   for (const st of stages as Array<{
     slug: string;
     stage_id: string;
+    section_id: string | null;
     plan_created_at: Date;
     last_pending_flip_ts: Date | null;
   }>) {
+    if (scope === "intra-plan" && input.section_id) {
+      if (st.section_id !== input.section_id) continue;
+    }
+
     const cutoff = st.last_pending_flip_ts ?? st.plan_created_at;
     const driftSql = `
       SELECT cl.surface_slug, cl.decision_slug, cl.kind, cl.created_at::text AS ts
@@ -433,15 +467,52 @@ export async function runArchDriftScan(
         changelog_kind: dr.kind,
         ts: dr.ts,
       };
+
+      if (scope === "cross-plan") {
+        const xp = await pool.query<{ slug: string }>(
+          `SELECT DISTINCT sas.slug
+             FROM stage_arch_surfaces sas
+            WHERE sas.surface_slug = $1
+              AND sas.slug <> $2
+            ORDER BY sas.slug ASC`,
+          [dr.surface_slug, st.slug],
+        );
+        drift.cross_plan_links = xp.rows.map((r) => r.slug);
+      }
+
+      if (scope === "intra-plan") {
+        const xs = await pool.query<{ section_id: string | null; stage_id: string }>(
+          `SELECT DISTINCT s2.section_id, sas.stage_id
+             FROM stage_arch_surfaces sas
+             JOIN ia_stages s2 ON s2.slug = sas.slug AND s2.stage_id = sas.stage_id
+            WHERE sas.surface_slug = $1
+              AND sas.slug = $2
+              AND (s2.section_id IS DISTINCT FROM $3 OR sas.stage_id <> $4)
+            ORDER BY s2.section_id NULLS FIRST, sas.stage_id ASC`,
+          [dr.surface_slug, st.slug, st.section_id, st.stage_id],
+        );
+        const cross = xs.rows.filter((r) => r.section_id !== st.section_id);
+        if (cross.length > 0) {
+          drift.cross_section_links = cross.map((r) => ({
+            section_id: r.section_id,
+            stage_id: r.stage_id,
+          }));
+        }
+      }
+
       drifted_surfaces.push(drift);
       suggested_questions.push(shapeQuestion(st.stage_id, drift, dr.decision_slug));
     }
-    affected.push({
+    const entry: AffectedStage = {
       slug: st.slug,
       stage_id: st.stage_id,
       drifted_surfaces,
       suggested_questions,
-    });
+    };
+    if (scope === "intra-plan") {
+      entry.section_id = st.section_id;
+    }
+    affected.push(entry);
   }
 
   return { affected_stages: affected };
@@ -452,7 +523,8 @@ export function registerArchDriftScan(server: McpServer): void {
     "arch_drift_scan",
     {
       description:
-        "DB-backed: scan plan(s) for arch drift. Compares each Stage's linked arch_surfaces against arch_changelog entries newer than the Stage's last `_pending_` flip ts (fallback: plan `created_at`). Returns `{affected_stages: [{slug, stage_id, drifted_surfaces, suggested_questions}]}` — Stages with zero drift are excluded. Stage 1.3 / TECH-2445.",
+        "DB-backed: scan plan(s) for arch drift. Compares each Stage's linked arch_surfaces against arch_changelog entries newer than the Stage's last `_pending_` flip ts (fallback: plan `created_at`). Returns `{affected_stages: [{slug, stage_id, drifted_surfaces, suggested_questions}]}` — Stages with zero drift are excluded. " +
+        "Optional `scope` ∈ {global (default), cross-plan, intra-plan}. `cross-plan` annotates each drifted surface with `cross_plan_links[]` (other plan slugs linking the same surface). `intra-plan` requires `plan_id`, includes `section_id` on each affected stage, annotates `cross_section_links[]` (other sections in the same plan that touch the surface), and honors optional `section_id` filter. parallel-carcass §6.2 / D9. Stage 1.3 / TECH-2445.",
       inputSchema: archDriftScanInputSchema.shape,
     },
     async (args) =>

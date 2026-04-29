@@ -41,6 +41,16 @@ const inputShape = {
       "Master-plan slug. Required. Walks `ia_stages.depends_on[]` for this " +
         "slug + cross-slug dep refs to emit pending stages whose deps are all `done`.",
     ),
+  session_id: z
+    .string()
+    .optional()
+    .describe(
+      "Optional caller session id (parallel-carcass §6.2). When provided, " +
+        "section stages are filtered through 2-tier claim awareness — a " +
+        "stage is emitted only if its section is unclaimed OR claimed by " +
+        "this session AND the stage itself is unclaimed OR claimed by " +
+        "this session.",
+    ),
 };
 
 // ---------------------------------------------------------------------------
@@ -232,7 +242,92 @@ export function computeNextActionable(
 // Registration
 // ---------------------------------------------------------------------------
 
-type NextActionableArgs = { slug?: string };
+type NextActionableArgs = { slug?: string; session_id?: string };
+
+interface StageCarcassRow {
+  stage_id: string;
+  carcass_role: string | null;
+  section_id: string | null;
+  status: "pending" | "in_progress" | "done";
+}
+interface ClaimSnapshot {
+  section_session: Map<string, string>; // section_id → session_id (active)
+  stage_session: Map<string, string>; // stage_id → session_id (active)
+}
+
+async function readCarcassMeta(slug: string): Promise<StageCarcassRow[]> {
+  const pool = getIaDatabasePool();
+  if (!pool) {
+    throw { code: "db_unavailable", message: "ia_db pool not initialized" };
+  }
+  const res = await pool.query<StageCarcassRow>(
+    `SELECT stage_id, carcass_role, section_id, status
+       FROM ia_stages
+      WHERE slug = $1`,
+    [slug],
+  );
+  return res.rows;
+}
+
+async function readClaims(slug: string): Promise<ClaimSnapshot> {
+  const pool = getIaDatabasePool();
+  if (!pool) {
+    throw { code: "db_unavailable", message: "ia_db pool not initialized" };
+  }
+  const sec = await pool.query<{ section_id: string; session_id: string }>(
+    `SELECT section_id, session_id FROM ia_section_claims
+      WHERE slug = $1 AND released_at IS NULL`,
+    [slug],
+  );
+  const stg = await pool.query<{ stage_id: string; session_id: string }>(
+    `SELECT stage_id, session_id FROM ia_stage_claims
+      WHERE slug = $1 AND released_at IS NULL`,
+    [slug],
+  );
+  return {
+    section_session: new Map(sec.rows.map((r) => [r.section_id, r.session_id])),
+    stage_session: new Map(stg.rows.map((r) => [r.stage_id, r.session_id])),
+  };
+}
+
+/**
+ * Apply parallel-carcass filters to candidate next-actionable entries:
+ *  - carcass gate: when ≥1 carcass stage exists and not all are 'done',
+ *    drop non-carcass entries.
+ *  - 2-tier claim awareness: when a stage has section_id, emit only if
+ *    (section unclaimed OR claimed by session_id) AND (stage unclaimed
+ *    OR claimed by session_id).
+ */
+export function applyCarcassFilters(
+  entries: NextActionableEntry[],
+  meta: StageCarcassRow[],
+  claims: ClaimSnapshot,
+  session_id: string | undefined,
+): NextActionableEntry[] {
+  const byStage = new Map<string, StageCarcassRow>();
+  for (const m of meta) byStage.set(m.stage_id, m);
+
+  const carcass = meta.filter((m) => m.carcass_role === "carcass");
+  const carcassExists = carcass.length > 0;
+  const carcassDone =
+    carcassExists && carcass.every((c) => c.status === "done");
+
+  const out: NextActionableEntry[] = [];
+  for (const e of entries) {
+    const m = byStage.get(e.stage_id);
+    if (carcassExists && !carcassDone) {
+      if (!m || m.carcass_role !== "carcass") continue;
+    }
+    if (m && m.section_id) {
+      const secOwner = claims.section_session.get(m.section_id);
+      if (secOwner !== undefined && secOwner !== session_id) continue;
+      const stgOwner = claims.stage_session.get(m.stage_id);
+      if (stgOwner !== undefined && stgOwner !== session_id) continue;
+    }
+    out.push(e);
+  }
+  return out;
+}
 
 export function registerMasterPlanNextActionable(server: McpServer): void {
   server.registerTool(
@@ -248,6 +343,11 @@ export function registerMasterPlanNextActionable(server: McpServer): void {
         "Cross-slug deps resolved against `ia_stages` for the referenced slug; " +
         "missing rows emit `status: 'unknown'`. " +
         "Errors: `slug_not_found` (no `ia_master_plans` row). " +
+        "Parallel-carcass §6.2: when plan has carcass stages and any are " +
+        "not 'done', non-carcass entries are filtered out. When `session_id` " +
+        "is provided, section stages are 2-tier-claim filtered (section " +
+        "+ stage). Legacy plans (NULL carcass_role + zero claim rows) " +
+        "pass through unchanged. " +
         "Schema-cache restart required after adding this tool (N4): " +
         "restart Claude Code or run `tsx tools/mcp-ia-server/src/index.ts`.",
       inputSchema: inputShape,
@@ -296,7 +396,13 @@ export function registerMasterPlanNextActionable(server: McpServer): void {
             const crossSlugStatuses =
               await resolveCrossSlugStatuses(crossSlugRefs);
 
-            return computeNextActionable(graph, crossSlugStatuses);
+            const raw = computeNextActionable(graph, crossSlugStatuses);
+
+            // Parallel-carcass filters (additive; legacy plans w/ NULL
+            // carcass_role + zero claim rows pass through unchanged).
+            const meta = await readCarcassMeta(slug);
+            const claims = await readClaims(slug);
+            return applyCarcassFilters(raw, meta, claims, input?.session_id);
           },
         )(args as NextActionableArgs | undefined);
 

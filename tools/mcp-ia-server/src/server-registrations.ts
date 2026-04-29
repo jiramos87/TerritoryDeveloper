@@ -73,6 +73,12 @@ import {
   registerStageDecomposeApply,
 } from "./tools/task-batch-and-decompose.js";
 import { registerTaskDiffAnomalyScan } from "./tools/task-diff-anomaly-scan.js";
+import { registerMasterPlanSections } from "./tools/master-plan-sections.js";
+import { registerSectionClaimTools } from "./tools/section-claim.js";
+import { registerStageClaimTools } from "./tools/stage-claim.js";
+import { registerClaimHeartbeatTools } from "./tools/claim-heartbeat.js";
+import { registerSectionCloseoutApply } from "./tools/section-closeout-apply.js";
+import { registerMasterPlanLockArch } from "./tools/master-plan-lock-arch.js";
 
 // Bridge + compute tools
 import {
@@ -173,6 +179,12 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerTaskBatchInsert(server);
   registerStageDecomposeApply(server);
   registerTaskDiffAnomalyScan(server);
+  registerMasterPlanSections(server);
+  registerSectionClaimTools(server);
+  registerStageClaimTools(server);
+  registerClaimHeartbeatTools(server);
+  registerSectionCloseoutApply(server);
+  registerMasterPlanLockArch(server);
 }
 
 /**
