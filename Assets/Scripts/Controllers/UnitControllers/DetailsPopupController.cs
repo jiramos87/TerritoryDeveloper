@@ -1,80 +1,22 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using Territory.Utilities;
 
 namespace Territory.UI
 {
     /// <summary>
-    /// UI controller for cell details popup. Shows detail info for selected grid cell.
+    /// Stage 12 (game-ui-design-system): legacy popup chrome retired.
+    /// Surface is now a thin event-fire shim: <see cref="ShowCellDetails"/> publishes
+    /// <see cref="OnCellInfoShown"/> for <c>InfoPanelDataAdapter</c> to consume, then
+    /// opens the themed info-panel via <c>UIManager.Instance.OpenPopup</c>.
     /// </summary>
     public class DetailsPopupController : MonoBehaviour
     {
-        public GameObject detailsPanel;
-        public Text waterConsumptionText;
-        public Text waterOutputText;
-
-        [SerializeField] private UIManager uiManager;
-        [SerializeField] private float popupFadeSeconds = 0.12f;
-
-        private Coroutine fadeRoutine;
-
-        private float FadeDuration => uiManager != null ? uiManager.PopupFadeDurationSeconds : popupFadeSeconds;
-
-        private void Awake()
-        {
-            if (uiManager == null)
-                uiManager = FindObjectOfType<UIManager>();
-        }
-
-        public void ShowDetails()
-        {
-            if (fadeRoutine != null)
-                StopCoroutine(fadeRoutine);
-            detailsPanel.SetActive(true);
-            fadeRoutine = StartCoroutine(FadeInRoutine());
-        }
-
-        private IEnumerator FadeInRoutine()
-        {
-            CanvasGroup cg = UiCanvasGroupUtility.EnsureCanvasGroup(detailsPanel);
-            cg.blocksRaycasts = true;
-            cg.interactable = false;
-            cg.alpha = 0f;
-            yield return UiCanvasGroupUtility.FadeUnscaled(cg, 0f, 1f, FadeDuration);
-            cg.interactable = true;
-            fadeRoutine = null;
-        }
-
-        public void CloseDetails()
-        {
-            if (fadeRoutine != null)
-                StopCoroutine(fadeRoutine);
-            if (detailsPanel == null || !detailsPanel.activeSelf)
-                return;
-            fadeRoutine = StartCoroutine(FadeOutRoutine());
-        }
-
-        private IEnumerator FadeOutRoutine()
-        {
-            CanvasGroup cg = detailsPanel.GetComponent<CanvasGroup>();
-            if (cg != null)
-                yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, FadeDuration);
-            detailsPanel.SetActive(false);
-            fadeRoutine = null;
-        }
-
-        public bool IsOpen()
-        {
-            return detailsPanel != null && detailsPanel.activeSelf;
-        }
-
         public event System.Action<string, string, string, string, string> OnCellInfoShown;
 
         public void ShowCellDetails(string cellType, string zoneType, string population, string landValue, string pollution)
         {
             OnCellInfoShown?.Invoke(cellType, zoneType, population, landValue, pollution);
-            ShowDetails();
+            if (UIManager.Instance != null)
+                UIManager.Instance.OpenPopup(PopupType.InfoPanel);
         }
     }
 }

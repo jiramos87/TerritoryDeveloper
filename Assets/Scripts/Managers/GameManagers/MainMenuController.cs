@@ -556,9 +556,8 @@ public class MainMenuController : MonoBehaviour
 
     public void OnNewGameClicked()
     {
-        BlipEngine.Play(BlipId.UiButtonClick);
-        GameStartInfo.SetStartModeNewGame();
-        SceneManager.LoadScene(MainSceneBuildIndex);
+        if (Territory.UI.UIManager.Instance != null)
+            Territory.UI.UIManager.Instance.OpenPopup(Territory.UI.PopupType.NewGameScreen);
     }
 
     public void OnLoadCityClicked()
@@ -693,10 +692,8 @@ public class MainMenuController : MonoBehaviour
 
     public void OnOptionsClicked()
     {
-        BlipEngine.Play(BlipId.UiButtonClick);
-        ShowMenuStrip(false);
-        if (optionsPanel != null)
-            optionsPanel.SetActive(true);
+        if (Territory.UI.UIManager.Instance != null)
+            Territory.UI.UIManager.Instance.OpenPopup(Territory.UI.PopupType.SettingsScreen);
     }
 
     private void CloseOptionsPanel()

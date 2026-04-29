@@ -19,6 +19,12 @@ namespace Territory.UI
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[UIManager] duplicate instance detected; replacing prior reference.");
+            }
+            Instance = this;
+
             if (controlPanelBackgroundImage == null)
             {
                 GameObject go = GameObject.Find("ControlPanel");

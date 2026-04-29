@@ -41,6 +41,9 @@ public enum PopupType
 /// </summary>
 public partial class UIManager : MonoBehaviour
 {
+    /// <summary>Cached scene-singleton for trigger-side modal pushes (Stage 12 / game-ui-design-system). Set in Awake; cleared in OnDestroy.</summary>
+    public static UIManager Instance { get; private set; }
+
     #region Dependencies
     public ZoneManager zoneManager;
     public CursorManager cursorManager;
@@ -190,6 +193,11 @@ public partial class UIManager : MonoBehaviour
     public float PopupFadeDurationSeconds => Mathf.Clamp(popupFadeDurationSeconds, 0.02f, 1f);
 
     #region Initialization
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     void Start()
     {
         if (cityStats == null)
@@ -433,7 +441,7 @@ public partial class UIManager : MonoBehaviour
             UpdateUI();
         }
 
-        // Esc: dismiss welcome briefing first, then last opened pop-up, or close all if stack empty
+        // Esc: dismiss welcome briefing first, then last opened pop-up; if stack empty AND running (MainScene) → open pause menu (Stage 12 trigger rewire). Falls through to legacy CloseAllPopups only when not in running scene.
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (IsWelcomeBriefingVisible())
@@ -444,8 +452,11 @@ public partial class UIManager : MonoBehaviour
 
             if (popupStack.Count > 0)
             {
-                PopupType last = popupStack.Pop();
-                ClosePopup(last);
+                ClosePopup(popupStack.Peek());
+            }
+            else if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 1)
+            {
+                OpenPopup(PopupType.PauseMenu);
             }
             else
             {

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Territory.UI;
 using Territory.UI.Themed;
 
 namespace Territory.UI.Modals
@@ -47,10 +48,14 @@ namespace Territory.UI.Modals
             if (_quitButton != null) _quitButton.OnClicked -= OnQuit;
         }
 
-        private void OnResume() { if (_mainMenu != null) _mainMenu.ResumeGame(); }
+        private void OnResume()
+        {
+            if (_mainMenu != null) _mainMenu.ResumeGame();
+            if (UIManager.Instance != null) UIManager.Instance.ClosePopup(PopupType.PauseMenu);
+        }
         private void OnSettings() { if (_mainMenu != null) _mainMenu.OpenSettings(); }
-        private void OnSave() { if (_mainMenu != null) _mainMenu.SaveGame(); }
-        private void OnLoad() { if (_mainMenu != null) _mainMenu.LoadGame(); }
+        private void OnSave() { if (UIManager.Instance != null) UIManager.Instance.OpenPopup(PopupType.SaveLoadScreen); }
+        private void OnLoad() { if (UIManager.Instance != null) UIManager.Instance.OpenPopup(PopupType.SaveLoadScreen); }
         private void OnMainMenu() { if (_mainMenu != null) _mainMenu.ReturnToMainMenu(); }
         private void OnQuit() { if (_mainMenu != null) _mainMenu.QuitGame(); }
     }

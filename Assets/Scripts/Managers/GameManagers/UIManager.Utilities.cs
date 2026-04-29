@@ -21,33 +21,23 @@ namespace Territory.UI
 public partial class UIManager
 {
     #region Utility Methods
+    /// <summary>
+    /// Stage 12 (game-ui-design-system): legacy popup chrome + per-row text writes retired.
+    /// Path: assemble 5-tuple → fire <c>OnCellInfoShown</c> via DetailsPopupController →
+    /// open themed info-panel via <c>UIManager.Instance.OpenPopup(PopupType.InfoPanel)</c>.
+    /// <c>InfoPanelDataAdapter</c> binds tuple → ThemedLabel slots; tab activation included.
+    /// </summary>
     public void ShowTileDetails(CityCell cell)
     {
-        detailsPopupController.ShowDetails();
-        RegisterPopupOpened(PopupType.Details);
-        detailsNameText.text = cell.GetBuildingName();
-        detailsOccupancyText.text = "Occupancy: " + cell.GetPopulation();
-        detailsHappinessText.text = "Happiness: " + cell.GetHappiness();
-        detailsPowerOutputText.text = "Power Output: " + cell.GetPowerOutput() + " MW";
-        detailsPowerConsumptionText.text = "Power Consumption: " + cell.GetPowerConsumption() + " MW";
+        if (detailsPopupController == null) return;
 
-        // Add water consumption information
-        if (detailsPopupController.waterConsumptionText != null)
-            detailsPopupController.waterConsumptionText.text = "Water Consumption: " + cell.GetWaterConsumption() + " kL";
+        string cellType = cell.GetBuildingType();
+        string zoneType = cell.GetBuildingName();
+        string population = "Occupancy: " + cell.GetPopulation();
+        string landValue = "Desirability: " + cell.desirability.ToString("F1");
+        string pollution = "Happiness: " + cell.GetHappiness();
 
-        // Add water output information for water plants
-        if (cell.waterPlant != null && detailsPopupController.waterOutputText != null)
-            detailsPopupController.waterOutputText.text = "Water Output: " + cell.waterPlant.WaterOutput + " kL";
-
-        // detailsDateBuiltText.text = "Date Built: " + timeManager.GetCurrentDate();
-        detailsBuildingTypeText.text = "Building Type: " + cell.GetBuildingType();
-        detailsImage.sprite = cell.GetCellPrefab().GetComponent<SpriteRenderer>().sprite;
-        detailsSortingOrderText.text = "Sorting Order: " + cell.GetSortingOrder();
-        if (detailsDesirabilityText != null)
-            detailsDesirabilityText.text = "Desirability: " + cell.desirability.ToString("F1");
-
-        if (gameDebugInfoBuilder != null && detailsDebugText != null)
-            detailsDebugText.text = gameDebugInfoBuilder.GetCellUnderCursorInfo(new Vector2(cell.x, cell.y));
+        detailsPopupController.ShowCellDetails(cellType, zoneType, population, landValue, pollution);
     }
 
     public bool IsDetailsMode()

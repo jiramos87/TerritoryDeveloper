@@ -26,16 +26,58 @@ public partial class UIManager
         popupStack.Push(type);
     }
 
-    private void ClosePopup(PopupType type)
+    /// <summary>Stage 12 trigger-side helper: activate a Stage 8 modal root + register on stack. Mirror of <see cref="ClosePopup"/>. Idempotent (no-op if root null or already active).</summary>
+    public void OpenPopup(PopupType type)
     {
+        switch (type)
+        {
+            case PopupType.InfoPanel:
+                if (infoPanelRoot != null && !infoPanelRoot.activeSelf)
+                {
+                    infoPanelRoot.SetActive(true);
+                    RegisterPopupOpened(type);
+                }
+                break;
+            case PopupType.PauseMenu:
+                if (pauseMenuRoot != null && !pauseMenuRoot.activeSelf)
+                {
+                    pauseMenuRoot.SetActive(true);
+                    RegisterPopupOpened(type);
+                }
+                break;
+            case PopupType.SettingsScreen:
+                if (settingsScreenRoot != null && !settingsScreenRoot.activeSelf)
+                {
+                    settingsScreenRoot.SetActive(true);
+                    RegisterPopupOpened(type);
+                }
+                break;
+            case PopupType.SaveLoadScreen:
+                if (saveLoadScreenRoot != null && !saveLoadScreenRoot.activeSelf)
+                {
+                    saveLoadScreenRoot.SetActive(true);
+                    RegisterPopupOpened(type);
+                }
+                break;
+            case PopupType.NewGameScreen:
+                if (newGameScreenRoot != null && !newGameScreenRoot.activeSelf)
+                {
+                    newGameScreenRoot.SetActive(true);
+                    RegisterPopupOpened(type);
+                }
+                break;
+        }
+    }
+
+    /// <summary>Stage 12: public trigger-side close — pops from stack if currently top, then deactivates root. Used by both Esc handler and external triggers (PauseMenu Resume).</summary>
+    public void ClosePopup(PopupType type)
+    {
+        if (popupStack.Count > 0 && popupStack.Peek() == type)
+            popupStack.Pop();
         switch (type)
         {
             case PopupType.LoadGame:
                 CloseLoadGameMenu();
-                break;
-            case PopupType.Details:
-                if (detailsPopupController != null)
-                    detailsPopupController.CloseDetails();
                 break;
             case PopupType.BuildingSelector:
                 if (buildingSelectorMenuController != null)
@@ -85,8 +127,6 @@ public partial class UIManager
     private void CloseAllPopups()
     {
         CloseLoadGameMenu();
-        if (detailsPopupController != null)
-            detailsPopupController.CloseDetails();
         if (buildingSelectorMenuController != null)
         {
             buildingSelectorMenuController.ClosePopup();
