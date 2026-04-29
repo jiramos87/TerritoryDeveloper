@@ -61,8 +61,12 @@ import {
 import { registerIaDbReadTools } from "./tools/ia-db-reads.js";
 import { registerIaDbWriteTools } from "./tools/ia-db-writes.js";
 import { registerMasterPlanRenderTools } from "./tools/master-plan-render-tools.js";
+import { registerMasterPlanHealth } from "./tools/master-plan-health.js";
+import { registerMasterPlanNextActionable } from "./tools/master-plan-next-actionable.js";
+import { registerMasterPlanCrossImpactScan } from "./tools/master-plan-cross-impact-scan.js";
 import { registerArchTools } from "./tools/arch.js";
 import { registerArchSurfacesBackfill } from "./tools/arch-surfaces.js";
+import { registerSeamsRun } from "./tools/seams-run.js";
 
 // Bridge + compute tools
 import {
@@ -84,7 +88,10 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
 /**
  * Register IA-authoring tool surfaces on the given MCP server.
  *
- * ≥30 tools: list-specs, spec-outline, spec-section, spec-sections, glossary
+ * ≥30 tools (incl. db-lifecycle-extensions Stage 2 additions:
+ * master_plan_health, master_plan_next_actionable,
+ * master_plan_cross_impact_scan):
+ * list-specs, spec-outline, spec-section, spec-sections, glossary
  * lookup/discover, router-for-task, invariants-summary, list-rules,
  * rule-content/section, backlog-issue/list/search/record-validate,
  * reserve-backlog-ids, stage-closeout-digest,
@@ -149,8 +156,12 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerIaDbReadTools(server);
   registerIaDbWriteTools(server);
   registerMasterPlanRenderTools(server);
+  registerMasterPlanHealth(server);
+  registerMasterPlanNextActionable(server);
+  registerMasterPlanCrossImpactScan(server);
   registerArchTools(server);
   registerArchSurfacesBackfill(server);
+  registerSeamsRun(server);
 }
 
 /**

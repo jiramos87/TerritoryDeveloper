@@ -55,6 +55,12 @@ export interface StageRowDB {
   objective: string | null;
   exit_criteria: string | null;
   status: "pending" | "in_progress" | "done";
+  /**
+   * Stage-level dep edges. Array of `slug/stage_id` strings. Cycle-checked
+   * by trigger fn_ia_stages_cycle_check (db-lifecycle-extensions Stage 2 /
+   * TECH-3225). Empty array for stages without deps.
+   */
+  depends_on: string[];
   created_at: string;
   updated_at: string;
 }
@@ -199,6 +205,7 @@ export async function queryStageState(
   const pool = poolOrThrow();
   const stageRes = await pool.query<StageRowDB>(
     `SELECT slug, stage_id, title, objective, exit_criteria, status,
+            COALESCE(depends_on, '{}'::text[]) AS depends_on,
             created_at, updated_at
        FROM ia_stages
       WHERE slug = $1 AND stage_id = $2`,
@@ -757,6 +764,7 @@ export async function queryTaskBundle(
     const pool = poolOrThrow();
     const sr = await pool.query<StageRowDB>(
       `SELECT slug, stage_id, title, objective, exit_criteria, status,
+              COALESCE(depends_on, '{}'::text[]) AS depends_on,
               created_at, updated_at
          FROM ia_stages
         WHERE slug = $1 AND stage_id = $2`,
@@ -814,5 +822,67 @@ export async function queryStageCloseoutDiagnose(
     ok: r.payload.ok,
     error: r.payload.error ?? null,
     ts: r.recorded_at,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Stage-level dep walks (TECH-3225 / TECH-3228)
+// ---------------------------------------------------------------------------
+
+export interface StageDepNode {
+  slug: string;
+  stage_id: string;
+  status: "pending" | "in_progress" | "done";
+  depends_on: string[];
+}
+
+/**
+ * Read `depends_on text[]` for one stage. Empty array if column NULL or row
+ * absent. Used by `master_plan_next_actionable` (TECH-3228) Kahn topo walk.
+ */
+export async function getStageDependsOn(
+  slug: string,
+  stage_id: string,
+): Promise<string[]> {
+  const pool = poolOrThrow();
+  const res = await pool.query<{ depends_on: string[] | null }>(
+    `SELECT COALESCE(depends_on, '{}'::text[]) AS depends_on
+       FROM ia_stages
+      WHERE slug = $1 AND stage_id = $2`,
+    [slug, stage_id],
+  );
+  if (res.rows.length === 0) return [];
+  return res.rows[0]!.depends_on ?? [];
+}
+
+/**
+ * Read all stage rows for one master-plan slug with their depends_on edges
+ * + status. Used by `master_plan_next_actionable` to build the topo graph
+ * before walking.
+ */
+export async function getStageDependsOnGraph(
+  slug: string,
+): Promise<StageDepNode[]> {
+  const pool = poolOrThrow();
+  const res = await pool.query<{
+    slug: string;
+    stage_id: string;
+    status: "pending" | "in_progress" | "done";
+    depends_on: string[] | null;
+  }>(
+    `SELECT slug,
+            stage_id,
+            status,
+            COALESCE(depends_on, '{}'::text[]) AS depends_on
+       FROM ia_stages
+      WHERE slug = $1
+      ORDER BY stage_id ASC`,
+    [slug],
+  );
+  return res.rows.map((r) => ({
+    slug: r.slug,
+    stage_id: r.stage_id,
+    status: r.status,
+    depends_on: r.depends_on ?? [],
   }));
 }

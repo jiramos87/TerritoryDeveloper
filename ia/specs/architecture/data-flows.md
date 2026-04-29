@@ -31,6 +31,29 @@ GridManager dispatches clicks by active mode → zoning, road drawing, building 
 - **Save:** Grid data (`List<CellData>`) + `WaterMapData` on `GameSaveData`.
 - **Load:** Restore heightmap → water map (or legacy path) → grid → sync water body ids w/ shore membership. Snapshot applies saved prefabs, sorting order, water body type/id. Does NOT run global slope restoration / sorting recalc (geography spec §7.4).
 
+## Master-plan health rollup (DB MV)
+
+`ia_master_plan_health` materialized view — rollup metrics per master-plan slug. Powers `master_plan_health` MCP tool (TECH-3227) + `master_plan_cross_impact_scan` MCP tool (TECH-3229). Migration `0045_ia_master_plan_health_mv.sql` (db-lifecycle-extensions Stage 2 / TECH-3226).
+
+**Schema:**
+
+| Column | Type | Source |
+|--------|------|--------|
+| `slug` | text PK | `ia_master_plans.slug` |
+| `n_stages` | int | `COUNT(ia_stages)` per slug |
+| `n_done` | int | `COUNT(ia_stages WHERE status='done')` |
+| `n_in_progress` | int | `COUNT(ia_stages WHERE status='in_progress')` |
+| `n_pending` | int | `COUNT(ia_stages WHERE status='pending')` |
+| `oldest_in_progress_age_days` | int | days since oldest in-progress stage `updated_at` |
+| `missing_arch_surfaces` | text[] | stage_ids with zero `stage_arch_surfaces` rows |
+| `drift_events_open` | int | `COUNT(arch_changelog WHERE commit_sha IS NULL AND kind IN ('edit','spec_edit_commit'))` joined via `stage_arch_surfaces` |
+| `sibling_collisions` | text[] | other slugs sharing surface_slug whose stages are `in_progress` |
+| `refreshed_at` | timestamptz | last refresh ts |
+
+**Refresh contract (sync):** `fn_ia_master_plan_health_refresh` runs `REFRESH MATERIALIZED VIEW CONCURRENTLY` post-statement on `ia_stages`, `ia_tasks`, `stage_arch_surfaces` DML. UNIQUE INDEX on `slug` is the precondition. Smoke gate (`validate:master-plan-health-rollup`) asserts p50 refresh latency <150ms on N=10 successive refreshes.
+
+**Async escape hatch:** staleness-tolerant consumers may switch to `LISTEN ia_master_plan_health_dirty` + debounced background refresh (not yet wired — escape hatch documented for future regression if sync triggers regress beyond budget). Conversion path: drop the 3 statement-level triggers, add `NOTIFY ia_master_plan_health_dirty` from a lighter trigger, run a daemon that issues CONCURRENTLY refresh on debounce. Staleness window: <1s typical with sub-second debounce.
+
 ## Interchange JSON (config and tooling, TECH-41)
 
 Data is split into three layers: **runtime** (`MonoBehaviour` managers and live `Cell` on the grid), **interchange** (JSON DTOs with string `artifact` and optional `schema_version` — validated by JSON Schema under `docs/schemas/` and Zod in `tools/mcp-ia-server`), and **persistence** (`CellData` / `GameSaveData` / `WaterMapData` on the save/load path only). Geography initialization may load `geography_init_params` once per pipeline from `StreamingAssets` (`GeographyInitParamsLoader`, `GeographyManager`). Editor exports for diagnostics live under `tools/reports/` (see `unity-development-context.md` §10).
