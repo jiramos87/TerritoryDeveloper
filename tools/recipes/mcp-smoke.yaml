@@ -1,0 +1,18 @@
+recipe: mcp-smoke
+description: MCP step regression smoke — exercises stdio MCP client + injector + bind chain via list_specs (read-only). Asserts non-empty registry. Used by recipe-engine self-test.
+inputs:
+  type: object
+  additionalProperties: false
+  properties: {}
+steps:
+  - id: list_specs
+    description: Call list_specs MCP tool. Empty args → full registry. wrapTool envelope unwraps to array of spec rows; bind value = array.
+    mcp: list_specs
+    args: {}
+  - id: assert_non_empty
+    description: Bash assertion — non-zero exit when count < 1. Verifies bind value resolved to array + .length dotted-path access.
+    bash: tools/scripts/recipe-engine/mcp-smoke-assert.sh
+    args:
+      count: ${list_specs.length}
+outputs:
+  count: ${list_specs.length}

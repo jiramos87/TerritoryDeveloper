@@ -280,8 +280,10 @@ test("arch_drift_scan: omitted plan_id scans every open plan", async () => {
   ]);
   await runArchDriftScan(pool, {});
   // No params bound when plan_id omitted; SQL filters by open plans only.
+  // Open = at least one stage with status != 'done' (orchestrators are
+  // permanent — ia_master_plans has no status column).
   assert.deepEqual(calls[0].params, []);
-  assert.match(calls[0].sql, /status NOT IN/);
+  assert.match(calls[0].sql, /s\.status <> 'done'/);
 });
 
 test("arch_drift_scan: question shape per kind (supersede → pivot, edit → re-validate)", async () => {
