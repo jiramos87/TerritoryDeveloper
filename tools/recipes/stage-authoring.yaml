@@ -1,0 +1,136 @@
+recipe: stage-authoring
+description: >-
+  DB-backed stage-authoring body — Phase D recipify of ia/skills/stage-authoring. 1 seam
+  (author-plan-digest, Phase B validate-only). Per-pending-task: spec-stub fetch → seam
+  digest → compose §Plan Digest body → task_spec_section_write → readback heading-drift
+  check. Closes with validate:master-plan-status. Phase 4 token-split + Scene-Wiring
+  trigger detection deferred to subagent layer (LLM responsibility).
+inputs:
+  type: object
+  additionalProperties: false
+  required: [slug, stage_id]
+  properties:
+    slug:
+      type: string
+      description: Master plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage identifier — `X.Y` (e.g. `5.2`) or `Stage X.Y`.
+    target_task:
+      type: string
+      description: >-
+        Optional single-task re-author escape hatch (e.g. `TECH-776`). When set,
+        Phase 5 foreach iterates only that task. Phase 0 mode-detect still gates pending count.
+steps:
+  - id: mode_detect
+    description: >-
+      Phase 0 — gate on pending tasks for stage. Halts on stage-not-found / pending=0.
+    bash: tools/scripts/recipe-engine/stage-authoring/mode-detect.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+
+  - id: plan
+    description: Phase 1 — render plan title + preamble (shared Stage context).
+    mcp: master_plan_render
+    args:
+      slug: ${inputs.slug}
+
+  - id: stage
+    description: >-
+      Phase 1 — render Stage block. Provides objective + exit_criteria for seam stage_bundle.
+    mcp: stage_render
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: pending_q
+    description: >-
+      Filter pending tasks via SQL (template engine has no array filter). Returns rows
+      in task_id order — drives Phase 4 foreach.
+    sql: query
+    query: |
+      SELECT task_id, title, priority
+        FROM ia_tasks
+       WHERE slug = $1 AND stage_id = $2 AND status = 'pending'
+       ORDER BY task_id ASC
+    params:
+      - ${inputs.slug}
+      - ${inputs.stage_id}
+
+  - id: per_task
+    description: >-
+      Phase 2 + 4 + 5 per task — read stub → seam author → compose body → write to DB →
+      readback heading-drift check. Sequential per Phase 0 dispatch guardrail.
+    flow: foreach
+    items: ${pending_q.rows}
+    as: task
+    index_as: idx
+    steps:
+      - id: spec_body
+        description: Phase 2 — read existing task spec stub from DB (sole source of truth).
+        mcp: task_spec_body
+        args:
+          task_id: ${task.task_id}
+
+      - id: digest
+        description: >-
+          Phase 4 — author §Plan Digest sections via author-plan-digest seam. Phase B
+          validate-only; Phase C subagent layer dispatches LLM. Pass `expected_output`
+          when smoke-testing with golden fixture.
+        seam: author-plan-digest
+        input:
+          task_id: ${task.task_id}
+          task_spec_stub: ${spec_body.body}
+          stage_bundle:
+            master_plan_slug: ${inputs.slug}
+            stage_id: ${inputs.stage_id}
+            stage_objectives: ${stage.objective}
+            stage_exit: ${stage.exit_criteria}
+          work_items: []
+          invariants: []
+
+      - id: compose
+        description: >-
+          Compose §Plan Digest markdown body from seam.output.sections (literal § per
+          rubric #0). Outputs full section to stdout for write step.
+        bash: tools/scripts/recipe-engine/stage-authoring/compose-body.sh
+        args:
+          goal: ${digest.output.sections.goal}
+          acceptance: ${digest.output.sections.acceptance}
+          pending-decisions: ${digest.output.sections.pending_decisions}
+          implementer-latitude: ${digest.output.sections.implementer_latitude}
+          work-items: ${digest.output.sections.work_items}
+          test-blueprint: ${digest.output.sections.test_blueprint}
+          invariants-and-gate: ${digest.output.sections.invariants_and_gate}
+
+      - id: write
+        description: >-
+          Phase 5 — persist §Plan Digest to DB. heading_normalized:true on response =
+          MCP auto-corrected § drift; surface in handoff. content arg uses literal §.
+        mcp: task_spec_section_write
+        args:
+          task_id: ${task.task_id}
+          section: §Plan Digest
+          content: ${compose.stdout}
+          change_reason: stage-authoring recipe write
+
+      - id: readback
+        description: >-
+          Phase 5.1 — heading-drift self-check. ok:false (section_not_found) → DRIFT
+          NOT RECOVERED, escalate. Cheap single DB query per task.
+        mcp: task_spec_section
+        args:
+          task_id: ${task.task_id}
+          section: §Plan Digest
+
+  - id: validate_status
+    description: >-
+      Phase 6.2 — narrow gate covering cross-task / master-plan rollup drift.
+      Do NOT run validate:all here (heavy chain belongs in /ship-stage Pass B).
+    gate: validate:master-plan-status
+
+outputs:
+  mode: ${mode_detect.stdout}
+  authored_count: ${per_task.count}
+  validate_status: ${validate_status.code}

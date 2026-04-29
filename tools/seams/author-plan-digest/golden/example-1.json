@@ -1,0 +1,32 @@
+{
+  "input": {
+    "task_id": "TECH-101",
+    "task_spec_stub": "## §1 Goal\n\nAdd `--quiet` flag to bake CLI.\n\n## §3 Acceptance\n\n- Flag suppresses INFO logs; WARN+ still emitted.\n- Default path unchanged.\n\n## §4 Implementation Plan\n\n1. Parse `--quiet` in CLI entry.\n2. Set log filter when set.",
+    "stage_bundle": {
+      "master_plan_slug": "asset-pipeline",
+      "stage_id": "Stage 14.2",
+      "stage_objectives": "Improve dev iteration ergonomics.",
+      "stage_exit": "Bake CLI supports `--quiet` and `--verbose` modes."
+    },
+    "work_items": [
+      { "path": "tools/bake/cli.ts", "kind": "edit", "note": "parse flag" },
+      { "path": "tools/bake/log.ts", "kind": "edit", "note": "filter sink" },
+      { "path": "tools/bake/cli.test.ts", "kind": "edit", "note": "add quiet test" }
+    ],
+    "invariants": [
+      { "id": "INV-Universal-7", "summary": "Logs default to INFO+; quiet drops INFO." }
+    ]
+  },
+  "output": {
+    "sections": {
+      "goal": "Add `--quiet` flag to bake CLI. Drop INFO logs when set.",
+      "acceptance": "- `--quiet` suppresses INFO; WARN+ still emit.\n- Default path unchanged.\n- Unit test: invoking with `--quiet` produces no INFO line.",
+      "pending_decisions": "",
+      "implementer_latitude": "Sink filter implementation: env var or in-process — implementer choice.",
+      "work_items": "- [ ] tools/bake/cli.ts — edit: parse flag\n- [ ] tools/bake/log.ts — edit: filter sink\n- [ ] tools/bake/cli.test.ts — edit: add quiet test",
+      "test_blueprint": "Unit: tools/bake/cli.test.ts — quiet mode asserts no INFO output. No bridge/play-mode needed.",
+      "invariants_and_gate": "- INV-Universal-7: logs default to INFO+; quiet drops INFO. Gate: verify-loop asserts no INFO line in `--quiet` invocation log capture."
+    },
+    "anchors_resolved": ["tools/bake/cli.ts", "tools/bake/log.ts", "tools/bake/cli.test.ts"]
+  }
+}

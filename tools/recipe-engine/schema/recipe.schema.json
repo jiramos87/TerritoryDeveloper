@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://territory-developer/recipe.schema.json",
+  "title": "Recipe DSL",
+  "description": "Recipe contract for tools/recipe-engine. DEC-A19 Phase B. Step kinds: mcp.{tool} | bash.{script} | sql.{op} | seam.{name} | gate.{validator} | flow.{seq|parallel|when|until|foreach}. Exactly one kind key per step. `retry` rejected on seam steps (per Q5 escalate-to-human policy).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recipe", "steps"],
+  "properties": {
+    "recipe": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "Recipe slug (kebab-case). Matches the file basename under tools/recipes/."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "inputs": {
+      "type": "object",
+      "description": "JSON Schema describing the inputs object passed to the recipe at run time. Same shape as a draft-07 schema (additionalProperties false recommended).",
+      "additionalProperties": true
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Mapping of output-key → expression. Expressions reference bound step results via `${step_id.field}` template syntax.",
+      "additionalProperties": { "type": "string" }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/step" }
+    }
+  },
+  "definitions": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Step identifier (snake_case). Unique within the recipe; bound results are addressable as `${id.field}`."
+        },
+        "description": { "type": "string", "maxLength": 200 },
+        "bind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Optional variable name to bind this step's result to. Defaults to step `id`."
+        },
+        "when": {
+          "type": "string",
+          "description": "Optional gate expression. Step is skipped if expression evaluates to falsy. Truthy strings: 'true', non-empty non-zero. Examples: '${prev.ok}', '${count > 0}'."
+        },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Retry policy for transient failures. NOT permitted on `seam` steps — seam failures escalate to human per Q5 policy.",
+          "properties": {
+            "max": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "backoff_ms": { "type": "integer", "minimum": 0, "maximum": 60000 }
+          },
+          "required": ["max"]
+        },
+        "mcp": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "MCP tool name to invoke (no `mcp__territory-ia__` prefix — engine resolves)."
+        },
+        "bash": {
+          "type": "string",
+          "description": "Bash script path relative to repo root (or absolute)."
+        },
+        "sql": {
+          "type": "string",
+          "enum": ["query", "exec"],
+          "description": "SQL operation kind. `query` returns rows; `exec` returns affected-row count."
+        },
+        "seam": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+          "description": "Seam name (matches tools/seams/{name}/ dir)."
+        },
+        "gate": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(:[a-z0-9-]+)*$",
+          "description": "Validator name (npm script name; the engine spawns `npm run {gate}`)."
+        },
+        "flow": {
+          "type": "string",
+          "enum": ["seq", "parallel", "when", "until", "foreach"],
+          "description": "Flow control kind."
+        },
+        "items": {
+          "type": "string",
+          "description": "Flow `foreach` items expression — template ref to an array (e.g. `${prev.rows}`). Required for foreach."
+        },
+        "as": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Flow `foreach` per-item variable name. Defaults to `item`."
+        },
+        "index_as": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Flow `foreach` per-item index variable name. Defaults to `index`."
+        },
+        "args": {
+          "description": "Arguments object passed to the kind handler. Templated values resolve before dispatch.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "input": {
+          "description": "Seam input payload (seam steps only). Templated values resolve before dispatch.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "query": { "type": "string", "description": "SQL string (sql steps only)." },
+        "params": {
+          "type": "array",
+          "description": "SQL parameter array (sql steps only).",
+          "items": {}
+        },
+        "cond": { "type": "string", "description": "Flow conditional (when/until)." },
+        "then": {
+          "type": "array",
+          "description": "Flow `when` true-branch.",
+          "items": { "$ref": "#/definitions/step" }
+        },
+        "else": {
+          "type": "array",
+          "description": "Flow `when` false-branch.",
+          "items": { "$ref": "#/definitions/step" }
+        },
+        "steps": {
+          "type": "array",
+          "description": "Child steps for flow seq/parallel/until.",
+          "items": { "$ref": "#/definitions/step" }
+        },
+        "max_iters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Bound for flow `until` — required."
+        }
+      },
+      "oneOf": [
+        { "required": ["mcp"] },
+        { "required": ["bash"] },
+        { "required": ["sql"] },
+        { "required": ["seam"] },
+        { "required": ["gate"] },
+        { "required": ["flow"] }
+      ]
+    }
+  }
+}

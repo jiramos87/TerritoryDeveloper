@@ -1,0 +1,25 @@
+recipe: foreach-smoke
+description: Smoke recipe for flow.foreach — iterates a string array, echoing per-item value + index. Used by recipe-engine self-test.
+inputs:
+  type: object
+  additionalProperties: false
+  required: [items]
+  properties:
+    items:
+      type: array
+      description: Array of string items to iterate.
+      items: { type: string }
+steps:
+  - id: per_item
+    description: Iterate each item. Inner echo step asserts ${row} + ${index} bind.
+    flow: foreach
+    items: ${inputs.items}
+    as: row
+    index_as: idx
+    steps:
+      - id: echo
+        bash: tools/scripts/recipe-engine/echo.sh
+        args:
+          message: "row=${row} idx=${idx}"
+outputs:
+  count: ${per_item.count}

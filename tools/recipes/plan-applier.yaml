@@ -1,0 +1,52 @@
+recipe: plan-applier
+description: >-
+  DB-backed plan-applier body — Phase D recipify of ia/skills/plan-applier. 0 seams.
+  stage_render MCP → §Plan Fix tuple extract + apply (9 ops, idempotent) →
+  validate:master-plan-status + validate:backlog-yaml. Escalation → helper exit 1,
+  subagent forwards JSON payload to pair-head per plan-apply-pair-contract.
+inputs:
+  type: object
+  additionalProperties: false
+  required: [slug, stage_id]
+  properties:
+    slug:
+      type: string
+      description: Master plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage identifier — `X.Y` (e.g. `7.1`) or `Stage X.Y`.
+steps:
+  - id: stage
+    description: >-
+      Phase 1 — render Stage block + body from DB. `body` field carries the
+      §Plan Fix YAML block when pair-head emitted tuples.
+    mcp: stage_render
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: apply
+    description: >-
+      Phases 2 + 3 — extract §Plan Fix, parse YAML tuples, apply verbatim.
+      Exit 0 on apply/pass/missing; exit 1 on escalation (JSON to stderr).
+    bash: tools/scripts/recipe-engine/plan-applier/apply-tuples.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+      body: ${stage.body}
+
+  - id: validate_status
+    description: >-
+      Phase 4.1 — master-plan status validator. Non-zero halts; subagent returns
+      `{exit_code, stderr, failing_tuple_index}` to pair-head per
+      ia/rules/plan-apply-pair-contract.md §Validation gate.
+    gate: validate:master-plan-status
+
+  - id: validate_yaml
+    description: Phase 4.2 — backlog-yaml validator. Non-zero halts on schema drift.
+    gate: validate:backlog-yaml
+
+outputs:
+  apply_status: ${apply.stdout}
+  validate_status: ${validate_status.code}
+  validate_yaml: ${validate_yaml.code}

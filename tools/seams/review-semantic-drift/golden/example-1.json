@@ -1,0 +1,22 @@
+{
+  "input": {
+    "task_id": "TECH-101",
+    "task_spec_body": "## §1 Goal\n\nAdd `--quiet` flag to bake CLI.\n\n## §3 Acceptance\n\n- Flag suppresses INFO logs; WARN+ still emitted.\n- Default path unchanged.\n- Per-step timing emitted on stderr when set.\n\n## §4 Implementation Plan\n\n1. Parse `--quiet` in CLI entry.\n2. Set log filter when set.",
+    "stage_objectives": "Improve dev iteration ergonomics.",
+    "stage_exit": "Bake CLI supports `--quiet` and `--verbose` modes.",
+    "sibling_task_titles": ["Wire verbose log sink + timing emit"],
+    "mechanical_findings": ""
+  },
+  "output": {
+    "plan_fix_tuples": [
+      {
+        "check": "impl_plan_incomplete",
+        "severity": "block",
+        "section": "§4 Implementation Plan",
+        "summary": "§3 acceptance bullet `Per-step timing emitted on stderr when set` not covered by any §4 step.",
+        "suggested_fix": "Add §4 step: wire timing sink to stderr when `--quiet` set, OR remove the timing bullet from §3 (probably belongs to verbose-sink sibling task)."
+      }
+    ],
+    "verdict": "block"
+  }
+}

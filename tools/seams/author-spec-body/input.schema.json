@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://author-spec-body/input",
+  "title": "AuthorSpecBodyInput",
+  "type": "object",
+  "required": ["issue_id", "issue_yaml", "glossary_slice", "stage_context"],
+  "additionalProperties": false,
+  "properties": {
+    "issue_id": {
+      "type": "string",
+      "pattern": "^(BUG|FEAT|TECH|ART|AUDIO)-[0-9]+$"
+    },
+    "issue_yaml": {
+      "type": "object",
+      "description": "Parsed ia/backlog/{id}.yaml record",
+      "required": ["id", "title", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "minLength": 1 },
+        "type": { "type": "string" },
+        "priority": { "type": "string" },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "related": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    },
+    "glossary_slice": {
+      "type": "array",
+      "description": "Subset of glossary rows relevant to this issue",
+      "items": {
+        "type": "object",
+        "required": ["term"],
+        "properties": {
+          "term": { "type": "string" },
+          "definition": { "type": "string" }
+        }
+      }
+    },
+    "stage_context": {
+      "type": "object",
+      "description": "Master-plan stage bundle (null for standalone issues)",
+      "required": ["is_stage_attached"],
+      "properties": {
+        "is_stage_attached": { "type": "boolean" },
+        "master_plan_slug": { "type": ["string", "null"] },
+        "stage_id": { "type": ["string", "null"] },
+        "stage_objectives": { "type": ["string", "null"] },
+        "stage_exit": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

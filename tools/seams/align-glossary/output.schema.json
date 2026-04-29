@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://align-glossary/output",
+  "title": "AlignGlossaryOutput",
+  "type": "object",
+  "required": ["replacements", "warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "replacements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "line"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string", "minLength": 1 },
+          "to": { "type": "string", "minLength": 1 },
+          "line": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["message"],
+        "additionalProperties": false,
+        "properties": {
+          "message": { "type": "string", "minLength": 1 },
+          "line": { "type": "integer", "minimum": 1 },
+          "severity": { "type": "string", "enum": ["info", "warn", "error"] }
+        }
+      }
+    }
+  }
+}

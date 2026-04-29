@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://review-semantic-drift/output",
+  "title": "ReviewSemanticDriftOutput",
+  "type": "object",
+  "required": ["plan_fix_tuples", "verdict"],
+  "additionalProperties": false,
+  "properties": {
+    "plan_fix_tuples": {
+      "type": "array",
+      "description": "Drift findings — each consumed literally by plan-applier",
+      "items": {
+        "type": "object",
+        "required": ["check", "severity", "section", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "check": {
+            "type": "string",
+            "enum": ["goal_intent_mismatch", "impl_plan_incomplete", "stage_exit_misaligned", "sibling_overlap"],
+            "description": "Semantic check id (1=goal-intent, 2=impl-plan; extras allowed)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warn", "block"]
+          },
+          "section": {
+            "type": "string",
+            "enum": ["§1 Goal", "§3 Acceptance", "§4 Implementation Plan", "§5 Test Blueprint", "§Plan Digest"]
+          },
+          "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+          "suggested_fix": { "type": "string" }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "advisory", "block"],
+      "description": "pass=no findings; advisory=info/warn only; block=≥1 block-severity tuple"
+    }
+  }
+}

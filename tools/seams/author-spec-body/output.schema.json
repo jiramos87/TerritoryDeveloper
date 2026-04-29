@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://author-spec-body/output",
+  "title": "AuthorSpecBodyOutput",
+  "type": "object",
+  "required": ["sections"],
+  "additionalProperties": false,
+  "properties": {
+    "sections": {
+      "type": "object",
+      "description": "Project spec sections §1–§10 (markdown bodies, no headers)",
+      "required": [
+        "goal",
+        "context",
+        "acceptance",
+        "implementation_plan",
+        "test_blueprint",
+        "open_questions",
+        "risks",
+        "out_of_scope",
+        "references",
+        "changelog"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal": { "type": "string", "minLength": 1 },
+        "context": { "type": "string" },
+        "acceptance": { "type": "string", "minLength": 1 },
+        "implementation_plan": { "type": "string", "minLength": 1 },
+        "test_blueprint": { "type": "string" },
+        "open_questions": { "type": "string" },
+        "risks": { "type": "string" },
+        "out_of_scope": { "type": "string" },
+        "references": { "type": "string" },
+        "changelog": { "type": "string" }
+      }
+    },
+    "glossary_terms_used": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Canonical glossary terms referenced in body (drift gate)"
+    }
+  }
+}

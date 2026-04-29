@@ -1,0 +1,42 @@
+{
+  "input": {
+    "master_plan_slug": "asset-pipeline",
+    "stage_id": "Stage 14.3",
+    "stage_objectives": "Add bake CLI verbose mode for diagnostic output.",
+    "stage_exit": "Bake CLI supports `--verbose` flag emitting per-step timing + memory.",
+    "deferred_decomposition_hints": "Split parsing from sink wiring.",
+    "relevant_surfaces": [
+      { "path": "tools/bake/cli.ts", "kind": "code" },
+      { "path": "tools/bake/log.ts", "kind": "code" },
+      { "path": "tools/bake/cli.test.ts", "kind": "test" }
+    ],
+    "glossary_slice": [
+      { "term": "bake CLI", "definition": "Command-line entry for asset bake pipeline." }
+    ],
+    "invariants": [
+      { "id": "INV-Universal-7", "summary": "Logs default to INFO+; verbose adds DEBUG+TIMING." }
+    ]
+  },
+  "output": {
+    "tasks": [
+      {
+        "title": "Parse `--verbose` flag in bake CLI",
+        "type": "TECH",
+        "size": "H2",
+        "summary": "Add `--verbose` boolean flag to **bake CLI** arg parser. No log change yet.",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "title": "Wire verbose log sink + timing emit",
+        "type": "TECH",
+        "size": "H3",
+        "summary": "When verbose set, attach DEBUG+TIMING sinks. Per-step timing emitted to stderr.",
+        "depends_on": ["Parse `--verbose` flag in bake CLI"],
+        "notes": "Cite INV-Universal-7."
+      }
+    ],
+    "stage_file_plan": "BACKLOG section: asset-pipeline. Prefix counter: TECH. File order: parse task first, sink task second (depends-on chain). No new glossary terms.",
+    "plan_fix": ""
+  }
+}

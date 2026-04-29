@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://author-plan-digest/input",
+  "title": "AuthorPlanDigestInput",
+  "type": "object",
+  "required": ["task_id", "task_spec_stub", "stage_bundle", "invariants"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^(BUG|FEAT|TECH|ART|AUDIO)-[0-9]+$"
+    },
+    "task_spec_stub": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Existing project-spec body (§1–§10) for the task"
+    },
+    "stage_bundle": {
+      "type": "object",
+      "required": ["master_plan_slug", "stage_id", "stage_objectives"],
+      "properties": {
+        "master_plan_slug": { "type": "string" },
+        "stage_id": { "type": "string" },
+        "stage_objectives": { "type": "string" },
+        "stage_exit": { "type": "string" }
+      }
+    },
+    "work_items": {
+      "type": "array",
+      "description": "Work-Items rows from task spec (file-path + change kind)",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "type": "string", "enum": ["create", "edit", "delete", "rename"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "summary"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    }
+  }
+}

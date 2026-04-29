@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://decompose-skeleton-stage/output",
+  "title": "DecomposeSkeletonStageOutput",
+  "type": "object",
+  "required": ["tasks", "stage_file_plan", "plan_fix"],
+  "additionalProperties": false,
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "minItems": 2,
+      "description": "Task table rows for the stage (cardinality ≥2 enforced)",
+      "items": {
+        "type": "object",
+        "required": ["title", "type", "size", "summary", "depends_on"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "type": {
+            "type": "string",
+            "enum": ["BUG", "FEAT", "TECH", "ART", "AUDIO"]
+          },
+          "size": {
+            "type": "string",
+            "enum": ["H1", "H2", "H3", "H4", "H5", "H6"],
+            "description": "T-shirt size — H1 smallest, H6 largest"
+          },
+          "summary": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Sibling task title within this stage, OR existing issue id"
+            }
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "stage_file_plan": {
+      "type": "string",
+      "minLength": 1,
+      "description": "§Stage File Plan body — filing notes for /stage-file"
+    },
+    "plan_fix": {
+      "type": "string",
+      "description": "§Plan Fix body — pre-emitted drift tuples (often empty at decompose time)"
+    }
+  }
+}

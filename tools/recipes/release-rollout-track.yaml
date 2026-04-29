@@ -1,0 +1,92 @@
+recipe: release-rollout-track
+description: >-
+  Mechanical tracker cell flip + Change log append after a downstream subagent
+  returns success. Phase 1 (g) align verify defers to a future seam (LLM-y);
+  recipe handles Phase 0 validate, Phase 2 cell flip (idempotent), Phase 3
+  Change log append, Phase 4 handoff line. Deterministic — never decides cell
+  targets.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - tracker_spec
+    - row_slug
+    - target_col
+    - new_marker
+    - changelog_note
+  properties:
+    tracker_spec:
+      type: string
+      description: Path to ia/projects/{umbrella-slug}-rollout-tracker.md (or docs/ variant).
+    row_slug:
+      type: string
+      description: Row slug as it appears in the rollout matrix (`| {row_slug} |` cell).
+    target_col:
+      type: string
+      enum: [a, b, c, d, e, f, g]
+      description: Column letter (a..g). Recipe rejects any other value.
+    new_marker:
+      type: string
+      enum: ["✓", "◐", "—", "❓", "⚠️"]
+      description: New cell glyph. Caller picks per umbrella decision.
+    ticket:
+      type: string
+      description: Completion evidence (commit SHA / doc path / issue id). Optional.
+    changelog_note:
+      type: string
+      description: Caveman delta for the Change log row.
+    date:
+      type: string
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: Override Change log date (default = today).
+steps:
+  - id: validate_row
+    description: >-
+      Phase 0 — confirm tracker exists, row matches, column letter valid,
+      marker glyph valid. Stops the chain on any mismatch (bash exit 1).
+    bash: tools/scripts/recipe-engine/release-rollout-track/validate-row.sh
+    args:
+      tracker: ${inputs.tracker_spec}
+      row: ${inputs.row_slug}
+      col: ${inputs.target_col}
+      marker: ${inputs.new_marker}
+
+  - id: cell_flip
+    description: >-
+      Phase 2 — locate header (a)..(g) column index, replace target cell of
+      `| {row_slug} |` row with `{new_marker} ({ticket})`. Idempotent — no-op
+      when cell already at desired text.
+    bash: tools/scripts/recipe-engine/release-rollout-track/cell-flip.sh
+    args:
+      tracker: ${inputs.tracker_spec}
+      row: ${inputs.row_slug}
+      col: ${inputs.target_col}
+      marker: ${inputs.new_marker}
+      ticket: ${inputs.ticket}
+
+  - id: changelog_append
+    description: >-
+      Phase 3 — append `| YYYY-MM-DD | {row} cell ({col}) → {marker}; ticket: ... | release-rollout-track |`
+      to the Change log table at tracker tail. Idempotent on identical line.
+    bash: tools/scripts/recipe-engine/release-rollout-track/changelog-append.sh
+    args:
+      tracker: ${inputs.tracker_spec}
+      row: ${inputs.row_slug}
+      col: ${inputs.target_col}
+      marker: ${inputs.new_marker}
+      ticket: ${inputs.ticket}
+      note: ${inputs.changelog_note}
+      date: ${inputs.date}
+
+  - id: handoff
+    description: >-
+      Phase 4 — emit single caveman handoff line for umbrella skill Phase 6.
+    bash: tools/scripts/recipe-engine/echo.sh
+    args:
+      message: "${inputs.tracker_spec} ${inputs.row_slug}(${inputs.target_col}) → ${inputs.new_marker} (${inputs.ticket})."
+
+outputs:
+  validated: ${validate_row.stdout}
+  flip_status: ${cell_flip.stdout}
+  changelog_status: ${changelog_append.stdout}
+  handoff_line: ${handoff.stdout}

@@ -1,0 +1,151 @@
+recipe: stage-file
+description: >-
+  DB-backed stage-file body — Phase D MVP recipify of ia/skills/stage-file. 0 seams.
+  Subagent dispatcher wraps recipe; on halt (mode != file, cardinality PAUSE, sizing FAIL,
+  manifest ambiguous) recipe exits non-zero → subagent surfaces structured details + prompts
+  user. Phase 5.B (cross-iter dep registration map) deferred to subagent post-recipe pass.
+  Phase 5.A.3 (project-spec-template.md body compose) deferred — recipe writes empty body;
+  follow-up stage-authoring populates §Plan Digest.
+inputs:
+  type: object
+  additionalProperties: false
+  required: [slug, stage_id]
+  properties:
+    slug:
+      type: string
+      description: Master plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage identifier — `X.Y` (e.g. `5.2`) or `Stage X.Y`.
+    issue_prefix:
+      type: string
+      enum: [TECH, FEAT, BUG, ART, AUDIO]
+      default: TECH
+      description: Prefix for new task ids. Defaults to TECH.
+    target_section:
+      type: string
+      description: >-
+        Optional override of resolved manifest section header (e.g. `## Compute-lib program`).
+        When set, skips Phase 4 manifest-resolve (use after subagent disambiguated).
+steps:
+  - id: mode_detect
+    description: Phase 0 — confirm file mode (≥1 pending, 0 draft). Halts on compress/mixed/no-op.
+    bash: tools/scripts/recipe-engine/stage-file/mode-detect.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+
+  - id: lifecycle_ctx
+    description: Phase 1 — load shared Stage MCP bundle (glossary + invariants + pair contract).
+    mcp: lifecycle_stage_context
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: stage
+    description: Phase 2.1 — render Stage block + tasks[] from DB.
+    mcp: stage_render
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: plan
+    description: Phase 2.2 — render plan title + preamble.
+    mcp: master_plan_render
+    args:
+      slug: ${inputs.slug}
+
+  - id: cardinality
+    description: Phase 2.3 — gate on ≥2 pending tasks. PAUSE → subagent confirms with user.
+    bash: tools/scripts/recipe-engine/stage-file/cardinality-gate.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+
+  - id: sizing
+    description: Phase 2.4 — H1 task-count ≤ 8 hard cap. WARN at 7+, FAIL at 9+.
+    bash: tools/scripts/recipe-engine/stage-file/sizing-gate.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+
+  - id: pending_q
+    description: >-
+      Filter pending tasks via SQL (template engine has no array filter). Returns rows in
+      task_key order — drives Phase 5 foreach.
+    sql: query
+    query: |
+      SELECT task_id, title, priority, notes
+        FROM ia_tasks
+       WHERE slug = $1 AND stage_id = $2 AND status = 'pending'
+       ORDER BY task_id ASC
+    params:
+      - ${inputs.slug}
+      - ${inputs.stage_id}
+
+  - id: manifest_resolve
+    description: >-
+      Phase 4 — match plan title/slug to BACKLOG manifest section header.
+      Bash short-circuits when --override-section supplied.
+    bash: tools/scripts/recipe-engine/stage-file/manifest-resolve.sh
+    args:
+      slug: ${inputs.slug}
+      plan-title: ${plan.title}
+      override-section: ${inputs.target_section}
+
+  - id: file_pass
+    description: >-
+      Phase 5.A insert + 5.D manifest-append per iteration. Deps + raw_markdown deferred.
+    flow: foreach
+    items: ${pending_q.rows}
+    as: row
+    index_as: idx
+    steps:
+      - id: ins
+        description: Phase 5.A.2 — task_insert MCP. Idempotent on (slug,stage_id,title) triple.
+        mcp: task_insert
+        args:
+          prefix: ${inputs.issue_prefix}
+          title: ${row.title}
+          slug: ${inputs.slug}
+          stage_id: ${inputs.stage_id}
+          priority: ${row.priority}
+          notes: ${row.notes}
+          depends_on: []
+          related: []
+          raw_markdown: null
+          body: ""
+          status: pending
+      - id: append
+        description: Phase 5.D — append manifest entry. Idempotent on issue_id.
+        bash: tools/scripts/recipe-engine/stage-file/manifest-append.sh
+        args:
+          section-header: ${inputs.target_section}
+          issue-id: ${ins.task_id}
+          checklist-line: ${row.title}
+
+  - id: materialize
+    description: >-
+      Phase 6.1 — regenerate BACKLOG.md from DB + manifest. Filing gate: exit 0 = success.
+      Skipped when no rows filed (every task hit idempotent skip).
+    when: ${file_pass.count}
+    bash: tools/scripts/materialize-backlog.sh
+
+  - id: stage_changelog
+    description: Phase 6.4 — R2 Stage Status flip change-log entry (audit record).
+    mcp: master_plan_change_log_append
+    args:
+      slug: ${inputs.slug}
+      kind: stage_status_flip
+      body: "Stage ${inputs.stage_id}: Draft → In Progress (${file_pass.count} tasks filed)"
+
+  - id: progress
+    description: Phase 6.6 — regenerate dashboard. Non-blocking gate (exit 0 always; npm script wraps).
+    gate: progress
+    when: ${materialize.code}
+
+outputs:
+  mode: ${mode_detect.stdout}
+  filed_count: ${file_pass.count}
+  target_section: ${manifest_resolve.stdout}
+  materialize_status: ${materialize.code}

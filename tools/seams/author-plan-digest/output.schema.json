@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://author-plan-digest/output",
+  "title": "AuthorPlanDigestOutput",
+  "type": "object",
+  "required": ["sections"],
+  "additionalProperties": false,
+  "properties": {
+    "sections": {
+      "type": "object",
+      "description": "§Plan Digest subsections (markdown bodies)",
+      "required": [
+        "goal",
+        "acceptance",
+        "pending_decisions",
+        "implementer_latitude",
+        "work_items",
+        "test_blueprint",
+        "invariants_and_gate"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal": { "type": "string", "minLength": 1, "maxLength": 800 },
+        "acceptance": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "pending_decisions": { "type": "string", "maxLength": 1000 },
+        "implementer_latitude": { "type": "string", "maxLength": 1000 },
+        "work_items": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "test_blueprint": { "type": "string", "maxLength": 1500 },
+        "invariants_and_gate": { "type": "string", "minLength": 1, "maxLength": 1500 }
+      }
+    },
+    "anchors_resolved": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "File paths resolved during authoring (verified-exist gate input)"
+    }
+  }
+}

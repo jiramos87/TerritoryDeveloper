@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://decompose-skeleton-stage/input",
+  "title": "DecomposeSkeletonStageInput",
+  "type": "object",
+  "required": ["master_plan_slug", "stage_id", "stage_objectives", "stage_exit", "glossary_slice"],
+  "additionalProperties": false,
+  "properties": {
+    "master_plan_slug": { "type": "string", "minLength": 1 },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^Stage [0-9]+\\.[0-9]+$"
+    },
+    "stage_objectives": { "type": "string", "minLength": 1 },
+    "stage_exit": { "type": "string", "minLength": 1 },
+    "deferred_decomposition_hints": { "type": "string" },
+    "relevant_surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "type": "string", "enum": ["spec", "code", "test", "rule"] }
+        }
+      }
+    },
+    "glossary_slice": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term"],
+        "properties": {
+          "term": { "type": "string" },
+          "definition": { "type": "string" }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "summary"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    }
+  }
+}

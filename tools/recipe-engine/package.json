@@ -1,0 +1,16 @@
+{
+  "name": "@territory/recipe-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DEC-A19 recipe engine — YAML recipe DSL + step dispatchers (mcp/bash/sql/seam/gate/flow). Run via npm run recipe:run from repo root.",
+  "main": "src/run.ts",
+  "bin": {
+    "recipe-run": "src/cli.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.18.0",
+    "js-yaml": "^4.1.0"
+  }
+}

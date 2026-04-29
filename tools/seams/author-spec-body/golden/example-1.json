@@ -1,0 +1,35 @@
+{
+  "input": {
+    "issue_id": "TECH-99",
+    "issue_yaml": {
+      "id": "TECH-99",
+      "title": "HeightMap dry-run flag",
+      "type": "TECH",
+      "priority": "P2",
+      "depends_on": [],
+      "related": ["FEAT-12"],
+      "notes": "Add --dry-run flag to HeightMap bake."
+    },
+    "glossary_slice": [
+      { "term": "HeightMap", "definition": "Per-cell elevation grid." },
+      { "term": "dry run", "definition": "Bake without persisting outputs." },
+      { "term": "wet run", "definition": "Bake with persistence." }
+    ],
+    "stage_context": { "is_stage_attached": false }
+  },
+  "output": {
+    "sections": {
+      "goal": "Add **dry run** flag to **HeightMap** bake. Skip persistence; log only.",
+      "context": "Dev iteration faster without disk write. Related: FEAT-12 bake speedup.",
+      "acceptance": "- `HeightMap.Bake(dryRun: true)` skips write to disk.\n- Default path unchanged (**wet run**).\n- Unit test: dry run produces same in-memory result, no file output.",
+      "implementation_plan": "1. Add `bool dryRun = false` param to `HeightMap.Bake`.\n2. Guard `File.WriteAllBytes` calls with `if (!dryRun)`.\n3. Log `[HeightMap] dry run` when flag set.\n4. Update callers: keep default false.",
+      "test_blueprint": "Unit: HeightMapTests.Bake_DryRun_NoDiskWrite. Integration: none.",
+      "open_questions": "",
+      "risks": "",
+      "out_of_scope": "Other bake pipelines (roads, water).",
+      "references": "Assets/Scripts/HeightMap/HeightMap.cs, FEAT-12.",
+      "changelog": "2026-04-28: spec authored."
+    },
+    "glossary_terms_used": ["HeightMap", "dry run", "wet run"]
+  }
+}

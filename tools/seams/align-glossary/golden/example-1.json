@@ -1,0 +1,21 @@
+{
+  "input": {
+    "spec_body": "# Goal\n\nThe heightmap pipeline runs a wet pass before road strokes are baked. The HeightMap module owns the elevation grid.\n\nA dry-run mode skips persistence.",
+    "glossary_table": [
+      { "term": "HeightMap", "aliases": ["heightmap", "height map"] },
+      { "term": "wet run", "aliases": ["wet pass"] },
+      { "term": "road stroke", "aliases": ["road strokes"] },
+      { "term": "dry run", "aliases": ["dry-run"] }
+    ],
+    "context_path": "ia/projects/TECH-99.md"
+  },
+  "output": {
+    "replacements": [
+      { "from": "heightmap", "to": "HeightMap", "line": 3, "reason": "alias→canonical" },
+      { "from": "wet pass", "to": "wet run", "line": 3, "reason": "alias→canonical" },
+      { "from": "road strokes", "to": "road stroke", "line": 3, "reason": "alias→canonical" },
+      { "from": "dry-run", "to": "dry run", "line": 5, "reason": "alias→canonical" }
+    ],
+    "warnings": []
+  }
+}

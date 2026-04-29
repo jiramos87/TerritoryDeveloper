@@ -1,0 +1,17 @@
+recipe: noop-smoke
+description: Minimal smoke recipe — echoes inputs through a bash step. Used by validate:recipe-drift + recipe-engine self-test.
+inputs:
+  type: object
+  additionalProperties: false
+  properties:
+    message:
+      type: string
+  required: [message]
+steps:
+  - id: echo_message
+    description: Bash echo of the input message — verifies bash step + variable resolution.
+    bash: tools/scripts/recipe-engine/echo.sh
+    args:
+      message: ${inputs.message}
+outputs:
+  echoed: ${echo_message.stdout}

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://review-semantic-drift/input",
+  "title": "ReviewSemanticDriftInput",
+  "type": "object",
+  "required": ["task_id", "task_spec_body", "stage_objectives", "stage_exit"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^(BUG|FEAT|TECH|ART|AUDIO)-[0-9]+$"
+    },
+    "task_spec_body": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Filed task project-spec body (§1–§10)"
+    },
+    "stage_objectives": { "type": "string", "minLength": 1 },
+    "stage_exit": { "type": "string", "minLength": 1 },
+    "sibling_task_titles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Other task titles in the same stage (overlap detection)"
+    },
+    "mechanical_findings": {
+      "type": "string",
+      "description": "Output from plan-reviewer-mechanical run, if available"
+    }
+  }
+}
