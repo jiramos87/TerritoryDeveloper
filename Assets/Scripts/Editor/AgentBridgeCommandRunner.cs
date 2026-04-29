@@ -170,6 +170,9 @@ public static partial class AgentBridgeCommandRunner
             case "export_sorting_debug":
                 RunExportSortingDebug(repoRoot, commandId, dq.request_json);
                 break;
+            case "catalog_preview":
+                TryDispatchCatalogPreviewKind(dq.kind, repoRoot, commandId, dq.request_json);
+                break;
             default:
                 // Try mutation kinds (Phases 1-3)
                 if (!TryDispatchMutationKind(dq.kind, repoRoot, commandId, dq.request_json))
@@ -177,7 +180,7 @@ public static partial class AgentBridgeCommandRunner
                     TryFinalizeFailed(
                         repoRoot,
                         commandId,
-                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
+                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug, catalog_preview. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
                 }
                 break;
         }
@@ -1513,6 +1516,9 @@ class AgentBridgeParamsPayloadDto
 
     /// <summary><c>debug_context_bundle</c>: JSON omits key → runner defaults <c>true</c>.</summary>
     public bool include_anomaly_scan;
+
+    /// <summary><c>catalog_preview</c>: catalog entity id (maps to catalog_entity.entity_id UUID).</summary>
+    public string catalog_entry_id;
 }
 
 [Serializable]
@@ -1582,6 +1588,9 @@ class AgentBridgeResponseFileDto
 
     /// <summary>Populated for <c>sorting_order_debug</c>.</summary>
     public AgentBridgeSortingOrderDebugDto sorting_order_debug;
+
+    /// <summary>Populated for <c>catalog_preview</c>: JSON string with resolved, entry_id, screenshot_path.</summary>
+    public string catalog_preview_result;
 
     /// <summary>
     /// Populated for mutation kinds (attach_component, remove_component, assign_serialized_field,

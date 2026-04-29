@@ -44,6 +44,7 @@ const unityBridgeCommandInputShape = {
       "sorting_order_debug",
       "export_cell_chunk",
       "export_sorting_debug",
+      "catalog_preview",
       // ── MUTATION (Edit Mode only) — TECH-412 ─────────────────────────────
       // Component lifecycle
       "attach_component",
@@ -76,7 +77,7 @@ const unityBridgeCommandInputShape = {
     ])
     .default("export_agent_context")
     .describe(
-      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status); economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand from EconomyManager/CityStats/DemandManager); prefab_manifest (lists scene MonoBehaviours and detects missing script references); sorting_order_debug (requires seed_cell \"x,y\": returns all SpriteRenderers on a cell with sorting layer/order). Mutation kinds (Edit Mode only — TECH-412): attach_component (params: target_path, component_type_name), remove_component (params: target_path, component_type_name), assign_serialized_field (params: target_path, component_type_name, field_name, value_kind∈object_ref|asset_ref|int|float|bool|string|vector3, value, value_object_path?), create_gameobject (params: name, parent_path?, position?), delete_gameobject (params: target_path), find_gameobject (params: target_path), set_transform (params: target_path, position?, rotation?, scale? as 'x,y,z'), set_gameobject_active (params: target_path, active), set_gameobject_parent (params: target_path, new_parent_path?, world_position_stays), save_scene (params: scene_path?), open_scene (params: scene_path, mode∈single|additive), new_scene (params: setup_mode∈default_game_objects|empty_scene, mode∈single|additive), instantiate_prefab (params: prefab_path, parent_path?, position?), apply_prefab_overrides (params: target_path), create_scriptable_object (params: type_name, asset_path), modify_scriptable_object (params: asset_path, field_writes[]{field_name, value_kind, value, value_object_path?}), refresh_asset_database (no params), move_asset (params: asset_path, new_path), delete_asset (params: asset_path), execute_menu_item (params: menu_path).",
+      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status); economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand from EconomyManager/CityStats/DemandManager); prefab_manifest (lists scene MonoBehaviours and detects missing script references); sorting_order_debug (requires seed_cell \"x,y\": returns all SpriteRenderers on a cell with sorting layer/order); catalog_preview (params: catalog_entry_id, include_screenshot — loads draft catalog entity in sandboxed CatalogPreview.unity scene via PreviewCatalog component; returns screenshot_path when include_screenshot true). Mutation kinds (Edit Mode only — TECH-412): attach_component (params: target_path, component_type_name), remove_component (params: target_path, component_type_name), assign_serialized_field (params: target_path, component_type_name, field_name, value_kind∈object_ref|asset_ref|int|float|bool|string|vector3, value, value_object_path?), create_gameobject (params: name, parent_path?, position?), delete_gameobject (params: target_path), find_gameobject (params: target_path), set_transform (params: target_path, position?, rotation?, scale? as 'x,y,z'), set_gameobject_active (params: target_path, active), set_gameobject_parent (params: target_path, new_parent_path?, world_position_stays), save_scene (params: scene_path?), open_scene (params: scene_path, mode∈single|additive), new_scene (params: setup_mode∈default_game_objects|empty_scene, mode∈single|additive), instantiate_prefab (params: prefab_path, parent_path?, position?), apply_prefab_overrides (params: target_path), create_scriptable_object (params: type_name, asset_path), modify_scriptable_object (params: asset_path, field_writes[]{field_name, value_kind, value, value_object_path?}), refresh_asset_database (no params), move_asset (params: asset_path, new_path), delete_asset (params: asset_path), execute_menu_item (params: menu_path).",
     ),
   timeout_ms: unityBridgeTimeoutMsSchema,
   since_utc: z
@@ -130,7 +131,7 @@ const unityBridgeCommandInputShape = {
     .boolean()
     .default(true)
     .describe(
-      "debug_context_bundle only: when false, skip Game view PNG (bundle.screenshot.skipped true). Default true.",
+      "debug_context_bundle / catalog_preview: when false, skip screenshot capture. Default true.",
     ),
   include_console: z
     .boolean()
@@ -143,6 +144,13 @@ const unityBridgeCommandInputShape = {
     .default(true)
     .describe(
       "debug_context_bundle only: when false, skip Moore neighborhood anomaly rules (bundle.anomaly_scan_skipped true). Default true.",
+    ),
+  // ── catalog_preview params ───────────────────────────────────────────────
+  catalog_entry_id: z
+    .string()
+    .optional()
+    .describe(
+      "catalog_preview: catalog entity id to preview (maps to catalog_entity.entity_id UUID).",
     ),
   // ── export_cell_chunk params ─────────────────────────────────────────────
   origin_x: z
@@ -197,20 +205,20 @@ const unityBridgeCommandInputShape = {
     .optional()
     .describe("assign_serialized_field / modify_scriptable_object: serialized field name on the component or asset."),
   value_kind: z
-    .enum(["object_ref", "asset_ref", "int", "float", "bool", "string", "vector3"])
+    .enum(["object_ref", "component_ref", "asset_ref", "int", "float", "bool", "string", "vector3"])
     .optional()
     .describe(
-      "assign_serialized_field: tagged-union discriminant. object_ref = scene GO path in value_object_path; asset_ref = asset path in value_object_path; primitives = string value; vector3 = 'x,y,z' string.",
+      "assign_serialized_field: tagged-union discriminant. object_ref = scene GO path in value_object_path; component_ref = scene GO path in value_object_path + short component type name in value; asset_ref = asset path in value_object_path; primitives = string value; vector3 = 'x,y,z' string.",
     ),
   value: z
     .string()
     .optional()
-    .describe("assign_serialized_field: primitive value as string (int, float, bool, string, vector3 as 'x,y,z')."),
+    .describe("assign_serialized_field: primitive value as string (int, float, bool, string, vector3 as 'x,y,z') or short component type name when value_kind=component_ref."),
   value_object_path: z
     .string()
     .optional()
     .describe(
-      "assign_serialized_field: for object_ref — scene-root-relative GO path; for asset_ref — asset database path (e.g. 'Assets/Prefabs/Foo.prefab').",
+      "assign_serialized_field: for object_ref / component_ref — scene-root-relative GO path; for asset_ref — asset database path (e.g. 'Assets/Prefabs/Foo.prefab').",
     ),
   // create_gameobject
   go_name: z
@@ -285,7 +293,7 @@ const unityBridgeCommandInputShape = {
     .array(
       z.object({
         field_name: z.string(),
-        value_kind: z.enum(["object_ref", "asset_ref", "int", "float", "bool", "string", "vector3"]),
+        value_kind: z.enum(["object_ref", "component_ref", "asset_ref", "int", "float", "bool", "string", "vector3"]),
         value: z.string().optional(),
         value_object_path: z.string().optional(),
       }),
@@ -637,6 +645,15 @@ function buildRequestEnvelope(
       },
     };
   }
+  if (input.kind === "catalog_preview") {
+    return {
+      ...base,
+      params: {
+        catalog_entry_id: input.catalog_entry_id ?? "",
+        include_screenshot: input.include_screenshot ?? true,
+      },
+    };
+  }
   return { ...base, params: {} };
 }
 
@@ -942,7 +959,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     "unity_bridge_command",
     {
       description:
-        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug). Mutation kinds (Edit Mode only — TECH-412): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item. Each mutation kind returns response.mutation_result (JSON string with kind-specific fields). Safety: Edit Mode only; each kind validates target existence before mutation; MarkSceneDirty called after scene mutations; AssetDatabase.SaveAssets+Refresh called after asset mutations. Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 120000). On timeout, run `npm run unity:ensure-editor` then retry with timeout_ms 60000. Removes pending row on MCP timeout.",
+        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug), catalog_preview (params: catalog_entry_id, include_screenshot; loads draft entity in CatalogPreview.unity via PreviewCatalog component; returns screenshot_path + resolved + entry_id). Mutation kinds (Edit Mode only — TECH-412): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item. Each mutation kind returns response.mutation_result (JSON string with kind-specific fields). Safety: Edit Mode only; each kind validates target existence before mutation; MarkSceneDirty called after scene mutations; AssetDatabase.SaveAssets+Refresh called after asset mutations. Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 120000). On timeout, run `npm run unity:ensure-editor` then retry with timeout_ms 60000. Removes pending row on MCP timeout.",
       // Full Zod object (not a raw shape) so @modelcontextprotocol/sdk JSON Schema matches
       // unityBridgeCommandInputSchema.safeParse in the handler (timeout_ms max = UNITY_BRIDGE_TIMEOUT_MS_MAX).
       inputSchema: unityBridgeCommandInputSchema,
