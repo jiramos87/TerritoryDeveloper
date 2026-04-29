@@ -19,6 +19,7 @@
     "validate:capability-coverage": "npx tsx tools/scripts/validate-capability-coverage.ts",
     "validate:sprite-gen-schema": "npx tsx tools/scripts/validate-sprite-gen-schema.ts",
     "validate:blob-roots": "npx tsx tools/scripts/validate/validate-blob-roots.ts",
+    "validate:trgm-indexes": "npx tsx tools/scripts/validate-trgm-indexes.ts",
     "validate:mcp-readme": "node tools/scripts/validate-mcp-readme.mjs",
     "validate:mcp-descriptor-prose": "node tools/scripts/validate-mcp-descriptor-prose.mjs",
     "validate:cache-block-sizing": "npx tsx tools/scripts/validate-cache-block-sizing.ts",

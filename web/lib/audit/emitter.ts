@@ -1,4 +1,6 @@
-import type { Sql } from "postgres";
+import type { TransactionSql } from "postgres";
+
+type Sql = TransactionSql | import("postgres").Sql;
 
 export type AuditEntry = {
   actor_user_id: string | null;

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import CatalogSidebar from "@/components/catalog/CatalogSidebar";
+import { SearchBar } from "@/components/catalog/SearchBar";
 
 /**
  * Authoring-console root layout (DEC-A16, DEC-A34, TECH-1614).
@@ -15,6 +16,7 @@ export default function CatalogLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 overflow-y-auto p-[var(--ds-spacing-lg)]" data-testid="catalog-main">
         {children}
       </main>
+      <SearchBar />
     </div>
   );
 }

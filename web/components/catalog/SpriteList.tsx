@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BulkActionBar } from "./BulkActionBar";
 
 export type SpriteListRow = {
   entity_id: string;
@@ -12,12 +13,20 @@ export type SpriteListRow = {
 
 export type SpriteListFilter = "active" | "retired" | "all";
 
+export type BulkSelectionProp = {
+  selected: Set<string>;
+  toggle: (id: string) => void;
+  toggleAll: (ids: string[]) => void;
+  clear: () => void;
+};
+
 export type SpriteListProps = {
   rows: SpriteListRow[];
   filter: SpriteListFilter;
   onFilterChange: (next: SpriteListFilter) => void;
   loading?: boolean;
   error?: string | null;
+  bulkSelection?: BulkSelectionProp;
 };
 
 const FILTERS: ReadonlyArray<{ id: SpriteListFilter; label: string }> = [
@@ -30,7 +39,8 @@ const FILTERS: ReadonlyArray<{ id: SpriteListFilter; label: string }> = [
  * Sprite list view — filter chips + create CTA + row list (TECH-1672).
  * Pure presentational; parent owns fetch + filter state.
  */
-export default function SpriteList({ rows, filter, onFilterChange, loading, error }: SpriteListProps) {
+export default function SpriteList({ rows, filter, onFilterChange, loading, error, bulkSelection }: SpriteListProps) {
+  const allIds = rows.map((r) => r.entity_id);
   return (
     <div data-testid="sprite-list" className="flex flex-col gap-[var(--ds-spacing-md)]">
       <header className="flex items-center justify-between">
@@ -86,33 +96,60 @@ export default function SpriteList({ rows, filter, onFilterChange, loading, erro
       ) : null}
 
       {rows.length > 0 ? (
-        <ul data-testid="sprite-list-rows" className="flex flex-col gap-[var(--ds-spacing-xs)]">
-          {rows.map((row) => (
-            <li key={row.entity_id} data-testid={`sprite-list-row-${row.slug}`}>
-              <Link
-                href={`/catalog/sprites/${row.slug}`}
-                data-testid={`sprite-list-row-link-${row.slug}`}
-                className="grid grid-cols-[1fr_2fr_auto_auto] gap-[var(--ds-spacing-md)] rounded border border-[var(--ds-border-subtle)] bg-[var(--ds-bg-panel)] p-[var(--ds-spacing-sm)] hover:border-[var(--ds-text-accent-info)]"
-              >
-                <span data-testid={`sprite-list-row-slug-${row.slug}`} className="font-mono text-[var(--ds-text-primary)]">
-                  {row.slug}
-                </span>
-                <span className="text-[var(--ds-text-primary)]">{row.display_name}</span>
-                <span
-                  data-testid={`sprite-list-row-status-${row.slug}`}
-                  className={
-                    row.status === "active"
-                      ? "text-[var(--ds-text-accent-info)]"
-                      : "text-[var(--ds-text-muted)]"
-                  }
+        <>
+          {bulkSelection && (
+            <div className="flex items-center gap-[var(--ds-spacing-xs)] pb-[var(--ds-spacing-xs)]">
+              <input
+                type="checkbox"
+                aria-label="Select all sprites"
+                checked={allIds.length > 0 && allIds.every((id) => bulkSelection.selected.has(id))}
+                onChange={() => bulkSelection.toggleAll(allIds)}
+              />
+              <span className="text-[var(--ds-text-muted)] text-sm">Select all</span>
+            </div>
+          )}
+          <ul data-testid="sprite-list-rows" className="flex flex-col gap-[var(--ds-spacing-xs)]">
+            {rows.map((row) => (
+              <li key={row.entity_id} data-testid={`sprite-list-row-${row.slug}`} className="flex items-center gap-[var(--ds-spacing-xs)]">
+                {bulkSelection && (
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.display_name}`}
+                    checked={bulkSelection.selected.has(row.entity_id)}
+                    onChange={() => bulkSelection.toggle(row.entity_id)}
+                  />
+                )}
+                <Link
+                  href={`/catalog/sprites/${row.slug}`}
+                  data-testid={`sprite-list-row-link-${row.slug}`}
+                  className="grid flex-1 grid-cols-[1fr_2fr_auto_auto] gap-[var(--ds-spacing-md)] rounded border border-[var(--ds-border-subtle)] bg-[var(--ds-bg-panel)] p-[var(--ds-spacing-sm)] hover:border-[var(--ds-text-accent-info)]"
                 >
-                  {row.status}
-                </span>
-                <span className="text-[var(--ds-text-muted)] text-[length:var(--text-xs)]">{row.updated_at}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <span data-testid={`sprite-list-row-slug-${row.slug}`} className="font-mono text-[var(--ds-text-primary)]">
+                    {row.slug}
+                  </span>
+                  <span className="text-[var(--ds-text-primary)]">{row.display_name}</span>
+                  <span
+                    data-testid={`sprite-list-row-status-${row.slug}`}
+                    className={
+                      row.status === "active"
+                        ? "text-[var(--ds-text-accent-info)]"
+                        : "text-[var(--ds-text-muted)]"
+                    }
+                  >
+                    {row.status}
+                  </span>
+                  <span className="text-[var(--ds-text-muted)] text-[length:var(--text-xs)]">{row.updated_at}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {bulkSelection && (
+            <BulkActionBar
+              selectedIds={Array.from(bulkSelection.selected)}
+              onClear={bulkSelection.clear}
+            />
+          )}
+        </>
       ) : null}
     </div>
   );

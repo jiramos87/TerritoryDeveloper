@@ -33,6 +33,7 @@ import {
 } from "@/lib/catalog/catalog-api-errors";
 import { aggregateLintResults, runLayer2 } from "@/lib/lint/cross-entity";
 import { runLayer1 } from "@/lib/lint/runner";
+import { recordFindings } from "@/lib/lint/finding-recorder";
 import { buildEdgesForVersion } from "@/lib/refs/edge-builder";
 import type { CatalogKind } from "@/lib/refs/types";
 import { enqueueSnapshotRebuild } from "@/lib/snapshot/enqueue";
@@ -182,6 +183,8 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               slug_frozen_at = coalesce(slug_frozen_at, now())
           where id = ${idNum}
         `;
+        // TECH-4183 — Stage 15.1: persist lint findings for Dashboard widget.
+        await recordFindings(sql, idNum, versionIdNum, [...results.block, ...results.warn, ...results.info]);
         // TECH-3003 — Stage 14.1 publish hook: materialize cross-entity
         // ref edges (DEC-A37 + DEC-A42) before the snapshot job is enqueued.
         // Builder runs inside the same `withAudit` tx so DELETE+INSERT share

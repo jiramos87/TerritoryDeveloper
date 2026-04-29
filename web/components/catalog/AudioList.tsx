@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { BulkActionBar } from "./BulkActionBar";
+import type { BulkSelectionProp } from "./SpriteList";
 
 export type AudioListRow = {
   entity_id: string;
@@ -20,6 +22,7 @@ export type AudioListProps = {
   onFilterChange: (next: AudioListFilter) => void;
   loading?: boolean;
   error?: string | null;
+  bulkSelection?: BulkSelectionProp;
 };
 
 const FILTERS: ReadonlyArray<{ id: AudioListFilter; label: string }> = [
@@ -41,8 +44,10 @@ export default function AudioList({
   onFilterChange,
   loading,
   error,
+  bulkSelection,
 }: AudioListProps) {
   const visibleCount = rows.length;
+  const allIds = rows.map((r) => r.entity_id);
 
   return (
     <section
@@ -113,58 +118,57 @@ export default function AudioList({
       ) : null}
 
       {rows.length > 0 ? (
-        <table
-          data-testid="audio-list-table"
-          className="w-full text-left border-collapse"
-        >
-          <thead>
-            <tr className="text-[var(--ds-text-muted)] text-[length:var(--ds-font-size-caption)]">
-              <th className="py-[var(--ds-spacing-xs)]">Slug</th>
-              <th className="py-[var(--ds-spacing-xs)]">Display name</th>
-              <th className="py-[var(--ds-spacing-xs)]">Status</th>
-              <th className="py-[var(--ds-spacing-xs)]">Duration</th>
-              <th className="py-[var(--ds-spacing-xs)]">Loudness (LUFS)</th>
-              <th className="py-[var(--ds-spacing-xs)]">Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.entity_id}
-                data-testid={`audio-list-row-${row.slug}`}
-                className="border-t border-[var(--ds-border-subtle)]"
-              >
-                <td className="py-[var(--ds-spacing-xs)]">
-                  <Link
-                    href={`/catalog/audio/${row.slug}`}
-                    data-testid={`audio-list-row-link-${row.slug}`}
-                    className="underline"
-                  >
-                    {row.slug}
-                  </Link>
-                </td>
-                <td className="py-[var(--ds-spacing-xs)]">{row.display_name}</td>
-                <td
-                  data-testid={`audio-list-row-status-${row.slug}`}
-                  className="py-[var(--ds-spacing-xs)]"
-                >
-                  {row.status}
-                </td>
-                <td className="py-[var(--ds-spacing-xs)]">
-                  {row.duration_ms !== null ? `${row.duration_ms} ms` : "—"}
-                </td>
-                <td className="py-[var(--ds-spacing-xs)]">
-                  {row.loudness_lufs !== null
-                    ? row.loudness_lufs.toFixed(1)
-                    : "—"}
-                </td>
-                <td className="py-[var(--ds-spacing-xs)] text-[var(--ds-text-muted)] text-[length:var(--text-xs)]">
-                  {row.updated_at ? row.updated_at.slice(0, 10) : "—"}
-                </td>
+        <>
+          <table data-testid="audio-list-table" className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-[var(--ds-text-muted)] text-[length:var(--ds-font-size-caption)]">
+                {bulkSelection && (
+                  <th className="py-[var(--ds-spacing-xs)] w-6">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all audio"
+                      checked={allIds.length > 0 && allIds.every((id) => bulkSelection.selected.has(id))}
+                      onChange={() => bulkSelection.toggleAll(allIds)}
+                    />
+                  </th>
+                )}
+                <th className="py-[var(--ds-spacing-xs)]">Slug</th>
+                <th className="py-[var(--ds-spacing-xs)]">Display name</th>
+                <th className="py-[var(--ds-spacing-xs)]">Status</th>
+                <th className="py-[var(--ds-spacing-xs)]">Duration</th>
+                <th className="py-[var(--ds-spacing-xs)]">Loudness (LUFS)</th>
+                <th className="py-[var(--ds-spacing-xs)]">Updated</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.entity_id} data-testid={`audio-list-row-${row.slug}`} className="border-t border-[var(--ds-border-subtle)]">
+                  {bulkSelection && (
+                    <td className="py-[var(--ds-spacing-xs)]">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${row.display_name}`}
+                        checked={bulkSelection.selected.has(row.entity_id)}
+                        onChange={() => bulkSelection.toggle(row.entity_id)}
+                      />
+                    </td>
+                  )}
+                  <td className="py-[var(--ds-spacing-xs)]">
+                    <Link href={`/catalog/audio/${row.slug}`} data-testid={`audio-list-row-link-${row.slug}`} className="underline">{row.slug}</Link>
+                  </td>
+                  <td className="py-[var(--ds-spacing-xs)]">{row.display_name}</td>
+                  <td data-testid={`audio-list-row-status-${row.slug}`} className="py-[var(--ds-spacing-xs)]">{row.status}</td>
+                  <td className="py-[var(--ds-spacing-xs)]">{row.duration_ms !== null ? `${row.duration_ms} ms` : "—"}</td>
+                  <td className="py-[var(--ds-spacing-xs)]">{row.loudness_lufs !== null ? row.loudness_lufs.toFixed(1) : "—"}</td>
+                  <td className="py-[var(--ds-spacing-xs)] text-[var(--ds-text-muted)] text-[length:var(--text-xs)]">{row.updated_at ? row.updated_at.slice(0, 10) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {bulkSelection && (
+            <BulkActionBar selectedIds={Array.from(bulkSelection.selected)} onClear={bulkSelection.clear} />
+          )}
+        </>
       ) : null}
     </section>
   );

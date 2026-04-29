@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { BulkActionBar } from "@/components/catalog/BulkActionBar";
+import { useBulkSelection } from "@/lib/hooks/useBulkSelection";
 
 import type { CatalogArchetypeKindTag } from "@/types/api/catalog-api";
 
@@ -50,6 +52,8 @@ export default function ArchetypesCatalogPage() {
   const [rows, setRows] = useState<ArchetypeListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const bulkSelection = useBulkSelection();
+  const allIds = rows.map((r) => r.entity_id);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,6 +149,18 @@ export default function ArchetypesCatalogPage() {
         </p>
       ) : null}
 
+      {rows.length > 0 && (
+        <div className="flex items-center gap-[var(--ds-spacing-xs)] pb-[var(--ds-spacing-xs)]">
+          <input
+            type="checkbox"
+            aria-label="Select all archetypes"
+            checked={allIds.length > 0 && allIds.every((id) => bulkSelection.selected.has(id))}
+            onChange={() => bulkSelection.toggleAll(allIds)}
+          />
+          <span className="text-[var(--ds-text-muted)] text-sm">Select all</span>
+        </div>
+      )}
+
       {grouped.map(({ tag, items }) => (
         <section
           key={tag}
@@ -159,40 +175,26 @@ export default function ArchetypesCatalogPage() {
               <li
                 key={row.entity_id}
                 data-testid={`archetype-list-row-${row.slug}`}
-                className="flex items-center justify-between rounded border border-[var(--ds-border-subtle)] px-[var(--ds-spacing-sm)] py-[var(--ds-spacing-xs)]"
+                className="flex items-center gap-[var(--ds-spacing-xs)] rounded border border-[var(--ds-border-subtle)] px-[var(--ds-spacing-sm)] py-[var(--ds-spacing-xs)]"
               >
-                <Link
-                  href={`/catalog/archetypes/${row.entity_id}`}
-                  className="flex flex-col"
-                >
-                  <span className="font-medium text-[var(--ds-text-primary)]">
-                    {row.display_name}
-                  </span>
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${row.display_name}`}
+                  checked={bulkSelection.selected.has(row.entity_id)}
+                  onChange={() => bulkSelection.toggle(row.entity_id)}
+                />
+                <Link href={`/catalog/archetypes/${row.entity_id}`} className="flex flex-1 flex-col">
+                  <span className="font-medium text-[var(--ds-text-primary)]">{row.display_name}</span>
                   <span className="text-[var(--ds-text-muted)]">{row.slug}</span>
                 </Link>
                 <div className="flex items-center gap-[var(--ds-spacing-xs)]">
                   {row.current_published_version_id ? (
-                    <span
-                      data-testid={`archetype-list-row-${row.slug}-published`}
-                      className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-accent-info)]"
-                    >
-                      Published
-                    </span>
+                    <span data-testid={`archetype-list-row-${row.slug}-published`} className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-accent-info)]">Published</span>
                   ) : (
-                    <span
-                      data-testid={`archetype-list-row-${row.slug}-draft`}
-                      className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-muted)]"
-                    >
-                      Draft only
-                    </span>
+                    <span data-testid={`archetype-list-row-${row.slug}-draft`} className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-muted)]">Draft only</span>
                   )}
                   {row.retired_at ? (
-                    <span
-                      data-testid={`archetype-list-row-${row.slug}-retired`}
-                      className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-accent-warn)]"
-                    >
-                      Retired
-                    </span>
+                    <span data-testid={`archetype-list-row-${row.slug}-retired`} className="rounded bg-[var(--ds-bg-panel)] px-[var(--ds-spacing-xs)] text-[var(--ds-text-accent-warn)]">Retired</span>
                   ) : null}
                 </div>
               </li>
@@ -200,6 +202,11 @@ export default function ArchetypesCatalogPage() {
           </ul>
         </section>
       ))}
+
+      <BulkActionBar
+        selectedIds={Array.from(bulkSelection.selected)}
+        onClear={bulkSelection.clear}
+      />
     </div>
   );
 }
