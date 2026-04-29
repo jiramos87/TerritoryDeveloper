@@ -1,0 +1,75 @@
+recipe: section-claim
+description: >-
+  Open a parallel-carcass section worktree + take the two-tier section claim.
+  0 seams. Steps: git worktree add (idempotent) → mcp.section_claim (atomic)
+  → write session sentinel inside worktree. Heartbeats happen externally —
+  /ship-stage Pass A iterations + claim_heartbeat MCP. Recipe is one-shot;
+  caller drives lifecycle. Per parallel-carcass §6.4 + DEC-A19 Phase E.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - section_id
+    - session_id
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (matches `ia_master_plans.slug`).
+    section_id:
+      type: string
+      description: Section id (matches `ia_stages.section_id` for member stages).
+    session_id:
+      type: string
+      description: >-
+        Caller session id. Reused across /ship-stage + /section-closeout calls
+        within the worktree. Convention - `section-claim-{slug}-{section_id}-{ISO8601_compact}`.
+    worktree_root:
+      type: string
+      description: >-
+        Optional override for worktree path. Default = `{repo_parent}/{repo_name}.section-{section_id}`.
+    base_branch:
+      type: string
+      description: >-
+        Optional base ref to fork from. Default = current HEAD of repo. Branch
+        created = `feature/{slug}-section-{section_id}`.
+steps:
+  - id: open_worktree
+    description: >-
+      Phase 1 — open git worktree at `{worktree_root}` on branch
+      `feature/{slug}-section-{section_id}`. Idempotent: noop when path already
+      on expected branch; fail when path on different branch.
+    bash: tools/scripts/recipe-engine/section-claim/git-worktree-add.sh
+    args:
+      slug: ${inputs.slug}
+      section_id: ${inputs.section_id}
+      worktree_root: ${inputs.worktree_root}
+      base_branch: ${inputs.base_branch}
+
+  - id: claim
+    description: >-
+      Phase 2 — atomic mutex claim via MCP. Fails `section_claim_held` when
+      held by another session. Same-session call refreshes heartbeat.
+    mcp: section_claim
+    args:
+      slug: ${inputs.slug}
+      section_id: ${inputs.section_id}
+      session_id: ${inputs.session_id}
+
+  - id: write_sentinel
+    description: >-
+      Phase 3 — write `.parallel-section-claim.json` inside worktree so
+      /ship-stage + /section-closeout read session_id. Idempotent.
+    bash: tools/scripts/recipe-engine/section-claim/write-session-sentinel.sh
+    args:
+      slug: ${inputs.slug}
+      section_id: ${inputs.section_id}
+      session_id: ${inputs.session_id}
+      worktree_root: ${inputs.worktree_root}
+
+outputs:
+  worktree: ${open_worktree.stdout}
+  claim_status: ${claim.status}
+  claimed_at: ${claim.claimed_at}
+  last_heartbeat: ${claim.last_heartbeat}
+  sentinel: ${write_sentinel.stdout}

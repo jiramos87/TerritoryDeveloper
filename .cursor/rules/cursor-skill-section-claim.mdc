@@ -1,0 +1,8 @@
+---
+description: "Use to start parallel work on one master-plan section. Opens a git worktree at `../territory-developer.section-{section_id}` on branch `feature/{slug}-section-{section_id}`, takes the section claim row in `ia_section_claims`, and writes a `.parallel-section-claim.json` sentinel inside the worktree so downstream `/ship-stage` + `/section-closeout` calls can read the same `session_id`. Heartbeats happen externally — `/ship-stage` Pass A iterations call `claim_heartbeat` MCP. Does NOT close the section (= `/section-closeout`). Does NOT run any ship-stage work. Triggers - \"/section-claim {SLUG} {SECTION_ID}\", \"claim section worktree\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/section-claim/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "section-claim"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
