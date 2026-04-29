@@ -1,0 +1,8 @@
+---
+description: "Use to close a parallel section after all member stages are done. Runs intra-plan arch_drift_scan (blocks on any open drift), calls section_closeout_apply (asserts all stages done + writes change_log row section_done + releases claims), then merges the section branch into base_branch and removes the git worktree. Read `.parallel-section-claim.json` in the worktree for session_id. Does NOT re-ship stages. Does NOT reopen claim. Triggers - \"/section-closeout {SLUG} {SECTION_ID}\", \"close section worktree\", \"merge section branch\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/section-closeout/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "section-closeout"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
