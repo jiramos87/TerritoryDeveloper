@@ -392,3 +392,7 @@ After persist: recommend first stage to file.
 ---
 
 ## Changelog
+
+| Date | Change | Trigger |
+|------|--------|---------|
+| 2026-04-29 | Phase A recipe extension — `tools/recipes/master-plan-new-phase-a.yaml` handles deterministic DB mutations for carcass-aware plans: `master_plan_insert` + `arch_decision_write` ×N (foreach) + HEAD SHA resolve + `master_plan_lock_arch`. Skill Phase sequence unchanged for legacy linear path. | `docs/parallel-carcass-exploration.md` §7 PR 3.3 |

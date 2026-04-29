@@ -1,0 +1,114 @@
+recipe: master-plan-new-phase-a
+description: >-
+  Phase A deterministic seal for master-plan-new: insert plan row → seed
+  arch_decisions (foreach) → resolve HEAD SHA → lock architecture. 0 seams.
+  Caller authors decision content; recipe handles DB mutations only.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - title
+    - arch_decisions
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (kebab-case, matches ia_master_plans.slug).
+    title:
+      type: string
+      description: Master-plan title (display heading).
+    description:
+      type: string
+      description: Short product overview ≤200 chars. Stored on ia_master_plans.
+    preamble:
+      type: string
+      description: Optional initial preamble markdown for the plan.
+    arch_decisions:
+      type: array
+      description: >-
+        Ordered list of arch_decisions to seed. Each item must carry slug
+        (DEC-A{N}), title, rationale (≤250 chars), optional alternatives
+        (semicolon-separated ≤3), optional surface_slugs[], optional status
+        (default active).
+      items:
+        type: object
+        required: [slug, title, rationale]
+        additionalProperties: false
+        properties:
+          slug:
+            type: string
+            description: Decision slug (DEC-A{N}).
+          title:
+            type: string
+            description: Decision title (kebab-case).
+          rationale:
+            type: string
+            description: Rationale ≤250 chars.
+          alternatives:
+            type: string
+            description: Alternatives considered; semicolon-separated ≤3 entries.
+          surface_slugs:
+            type: array
+            items:
+              type: string
+            description: Affected arch_surfaces slugs. First = FK.
+          status:
+            type: string
+            enum: [active, superseded]
+            description: Defaults to active.
+    actor:
+      type: string
+      description: Optional actor for change_log row on master_plan_lock_arch.
+steps:
+  - id: insert_plan
+    description: >-
+      Phase A.1 — create ia_master_plans row. Errors on duplicate slug. Sets
+      title + optional description + optional preamble.
+    mcp: master_plan_insert
+    args:
+      slug: ${inputs.slug}
+      title: ${inputs.title}
+      description: ${inputs.description}
+      preamble: ${inputs.preamble}
+
+  - id: seed_decisions
+    description: >-
+      Phase A.2 — seed arch_decisions rows (foreach, sequential). Upserts by
+      slug. surface_slugs[0] resolved to surface_id FK.
+    flow: foreach
+    items: ${inputs.arch_decisions}
+    as: decision
+    steps:
+      - id: write_decision
+        description: >-
+          Write one arch_decisions row via arch_decision_write MCP.
+        mcp: arch_decision_write
+        args:
+          slug: ${decision.slug}
+          title: ${decision.title}
+          rationale: ${decision.rationale}
+          alternatives: ${decision.alternatives}
+          surface_slugs: ${decision.surface_slugs}
+          status: ${decision.status}
+
+  - id: head_sha
+    description: >-
+      Phase A.3 — resolve HEAD commit SHA for architecture lock seal.
+    bash: tools/scripts/recipe-engine/master-plan-new-phase-a/git-head-sha.sh
+
+  - id: lock_arch
+    description: >-
+      Phase A.4 — arm architecture lock: sets architecture_locked_at + arms
+      plan-scoped arch_decisions UPDATE-lock trigger (D17).
+    mcp: master_plan_lock_arch
+    args:
+      slug: ${inputs.slug}
+      commit_sha: ${head_sha.stdout}
+      actor: ${inputs.actor}
+
+outputs:
+  plan_id: ${insert_plan.id}
+  decisions_seeded: ${seed_decisions.count}
+  locked_commit_sha: ${lock_arch.locked_commit_sha}
+  architecture_locked_at: ${lock_arch.architecture_locked_at}
+  lock_applied: ${lock_arch.applied}
