@@ -388,3 +388,7 @@ After persist: recommend first stage to file.
 
 `claude-personal "/stage-file {SLUG} Stage 1.1"` — all Stages already fully decomposed; file in order.
 
+
+---
+
+## Changelog

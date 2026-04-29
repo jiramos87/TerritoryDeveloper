@@ -326,3 +326,7 @@ Only the target STAGE_ID is decomposed; all other deferred Stages remain as skel
 
 After persist: `claude-personal "/stage-file {SLUG} Stage {STAGE_ID}"` — but ONLY after the prior Stage reaches `Final`.
 
+
+---
+
+## Changelog

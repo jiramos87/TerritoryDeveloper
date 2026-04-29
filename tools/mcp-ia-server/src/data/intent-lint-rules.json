@@ -1,0 +1,6 @@
+{
+  "$comment": "Externalized rule registry for intent_lint MCP tool (db-lifecycle-extensions Stage 3 / TECH-3403). Editable JSON for skill-train tunability without code change. Reload requires MCP restart.",
+  "vague_verbs": ["do", "handle", "manage", "process", "work on"],
+  "sentence_max": 2,
+  "min_chars": 1
+}

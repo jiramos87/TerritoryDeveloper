@@ -68,7 +68,7 @@ hard_boundaries:
   - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates from DB + manifest.
   - "Do NOT run `validate:backlog-yaml` — no yaml written on DB path."
   - "Do NOT run `validate:all` — gate is `materialize-backlog.sh` exit 0 only."
-  - "Do NOT call `task_spec_section_write` for `raw_markdown` — that MCP writes `body` column only; pass `raw_markdown` to `task_insert` upfront (with `{ISSUE_ID}` placeholder), then patch via DB workaround / `task_raw_markdown_write` MCP when present."
+  - "Do NOT call `task_spec_section_write` for `raw_markdown` — that MCP writes `body` column only; dispatch `task_raw_markdown_write` directly after `task_insert` returns `ISSUE_ID`."
 caller_agent: stage-file
 ---
 
@@ -106,6 +106,8 @@ Scan target Stage task table **before any other action**. Count by status:
 `In Review`, `In Progress`, `Done` tasks — skip in all modes. Never touch active/closed work.
 
 **Upstream Stage tail guard:** before No-op treats as "nothing to do", agent MAY run `npm run validate:master-plan-status -- --slug {SLUG}`. If **[R6]** on an earlier Stage → hand off `/ship-stage` or `/closeout` for that Stage before filing downstream.
+
+**Collapsed-flow note (db-lifecycle-extensions Stage 3 / TECH-3405):** `/stage-decompose` Phase 4 now calls `stage_decompose_apply` MCP, which writes Stage prose AND inserts Task rows in single transaction. Stages decomposed via that path arrive at this skill in **No-op mode** (Tasks already filed in DB) — no work needed here. Run `/stage-file` only for legacy `_pending_` Stages or Mixed-mode follow-up after compress.
 
 ---
 
@@ -238,8 +240,8 @@ Store `TARGET_SECTION_HEADER`. Used in Phase 5 step 3 (manifest append).
 Two-pass over `pending_tasks[]` (task-table order):
 
 - **5.A insert pass** — `task_insert` per Task with `depends_on=[]` + `related=[]` (deps deferred). Capture `task_key → ISSUE_ID` map.
-- **5.B dep registration pass** — post-insert; resolve same-batch `task_key` → `ISSUE_ID` via map; register `external + same_batch` edges into `ia_task_deps` via `task_dep_register` MCP (when present) or direct SQL fallback (`INSERT INTO ia_task_deps (task_id, depends_on_id, kind) VALUES ...`).
-- **5.C raw_markdown patch pass** — render row text using returned `ISSUE_ID`; persist to `ia_tasks.raw_markdown` column. Until `task_raw_markdown_write` MCP lands, fallback = direct SQL `UPDATE ia_tasks SET raw_markdown = $1 WHERE task_id = $2`.
+- **5.B dep registration pass** — post-insert; resolve same-batch `task_key` → `ISSUE_ID` via map; register `external + same_batch` edges via `task_dep_register` MCP (atomic per-call Tarjan SCC cycle check; idempotent re-register).
+- **5.C raw_markdown patch pass** — render row text using returned `ISSUE_ID`; persist to `ia_tasks.raw_markdown` column via `task_raw_markdown_write` MCP.
 
 ### 5.A.1 Compose task_insert args
 
@@ -287,15 +289,7 @@ For each Task with non-empty deps in `verified_deps[task_key]`:
 
 1. Resolve `same_batch_keys[]` → `ISSUE_ID` via `task_key → ISSUE_ID` map.
 2. Concatenate `external + resolved_same_batch` → `final_dep_ids[]`.
-3. Register via `task_dep_register({ task_id: ISSUE_ID, depends_on_id, kind: "depends_on" })` MCP per edge — **OR** direct SQL fallback when MCP absent:
-
-   ```sql
-   INSERT INTO ia_task_deps (task_id, depends_on_id, kind)
-   VALUES ($1, $2, 'depends_on')
-   ON CONFLICT DO NOTHING;
-   ```
-
-Idempotent on `ON CONFLICT DO NOTHING`.
+3. Register via `task_dep_register({ task_id: ISSUE_ID, depends_on: final_dep_ids })` — single MCP call inserts all edges atomically with Tarjan SCC cycle detection inside the same `withTx`. Idempotent: re-register returns `edges_added: 0`. Cycle response: `{ok:false, error:{code:"cycle_detected", scc_members:[...]}}` → halt + escalate.
 
 ### 5.C `raw_markdown` patch (post 5.B)
 
@@ -307,11 +301,7 @@ Render `raw_markdown` string per Task using returned `ISSUE_ID`. Shape (must be 
   - Spec — [`ia/projects/{ISSUE_ID}.md`](ia/projects/{ISSUE_ID}.md)
 ```
 
-Persist via `task_raw_markdown_write({ task_id, raw_markdown })` MCP (when present) **OR** direct SQL fallback:
-
-```sql
-UPDATE ia_tasks SET raw_markdown = $1, updated_at = now() WHERE task_id = $2;
-```
+Persist via `task_raw_markdown_write({ task_id, body: raw_markdown })` MCP — single-row UPDATE with idempotent overwrite semantics.
 
 `task_spec_section_write` does NOT cover `raw_markdown` (writes `body` col only).
 
@@ -431,7 +421,7 @@ Single-skill NEVER guesses. Immediate halt triggers:
 | `task_insert` unique_violation (non-idempotent) | Retry once; else halt. |
 | `task_insert` sequence_gap | Retry once; else halt. |
 | `task_insert` `unknown dep targets` (Phase 5.A leaked deps; should be empty per 2-pass split) | Halt; review Phase 3 partition. |
-| `task_dep_register` / SQL fallback failure (Phase 5.B) | Halt; emit edge that failed. |
+| `task_dep_register` failure or `cycle_detected` response (Phase 5.B) | Halt; emit `scc_members` from response. |
 | `raw_markdown` patch failure (Phase 5.C) | Halt; emit task_id + stderr. |
 | Manifest section ambiguous after heuristic | Prompt user; wait. |
 | `materialize-backlog.sh` non-zero | Halt post-loop; emit stderr. |
@@ -444,7 +434,7 @@ Single-skill NEVER guesses. Immediate halt triggers:
 ## Idempotency
 
 - `task_insert`: MCP-side unique-on-`(slug, stage_id, title)` triple → returns existing `task_id` on duplicate.
-- `task_dep_register` / SQL fallback: `ON CONFLICT DO NOTHING` on `ia_task_deps` — re-run safe.
+- `task_dep_register`: `ON CONFLICT DO NOTHING` on `ia_task_deps` — re-run safe (`edges_added: 0` on duplicate).
 - `raw_markdown` patch: idempotent UPDATE — re-run produces same row state.
 - Manifest append: if `{type:"issue", id:ISSUE_ID}` already present in target section → skip append.
 - Spec stub: passed via `task_insert.body` upfront; no separate write step.
@@ -467,7 +457,11 @@ Re-running fully-applied state = exit 0 + zero diff.
 - Do NOT read or edit any `ia/projects/**` markdown — DB is source of truth; use `master_plan_render` / `stage_render` / `master_plan_preamble_write` / `master_plan_change_log_append` MCP tools.
 - Do NOT call `domain-context-load` per Task — Phase 1 once per Stage.
 - Do NOT pass forward-ref same-batch deps via `task_insert.depends_on` — validation throws `unknown dep targets`. Use Phase 5.B 2-pass split.
-- Do NOT call `task_spec_section_write` for `raw_markdown` column — writes `body` only. Use Phase 5.C UPDATE / dedicated MCP.
+- Do NOT call `task_spec_section_write` for `raw_markdown` column — writes `body` only. Use Phase 5.C `task_raw_markdown_write` MCP.
 - Do NOT call `validate:dead-project-specs` — script retired. Filing gate = `materialize-backlog.sh` exit 0.
 - Do NOT commit — user decides.
 
+
+---
+
+## Changelog

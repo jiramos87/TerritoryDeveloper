@@ -1440,6 +1440,461 @@ export async function mutateStageBodyWrite(
   });
 }
 
+// ---------------------------------------------------------------------------
+// task_batch_insert — db-lifecycle-extensions Stage 3 / TECH-3404
+// ---------------------------------------------------------------------------
+
+export interface TaskBatchInsertItem {
+  label: string;
+  prefix?: "TECH" | "FEAT" | "BUG" | "ART" | "AUDIO";
+  title: string;
+  body?: string;
+  type?: string | null;
+  priority?: string | null;
+  notes?: string | null;
+  depends_on_labels?: string[];
+  status?: TaskRowDB["status"];
+}
+
+export interface TaskBatchInsertInput {
+  slug: string;
+  stage_id: string;
+  tasks: TaskBatchInsertItem[];
+}
+
+export type TaskBatchInsertResult =
+  | {
+      ok: true;
+      ids: string[];
+      id_map: Record<string, string>;
+    }
+  | {
+      ok: false;
+      error:
+        | "label_collision"
+        | "unknown_label"
+        | "cycle_detected"
+        | "label_missing"
+        | "title_missing";
+      offending_labels?: string[];
+      missing?: string[];
+      scc_members?: string[];
+      message?: string;
+    };
+
+/**
+ * Atomically insert N tasks under one stage with intra-batch label-based
+ * dep resolve in a single PG transaction. Pre-flight collision check
+ * BEFORE any DB write. Rollback on any failure leaves zero residual
+ * `ia_tasks` rows.
+ *
+ * Cycle detection uses Tarjan SCC over the intra-batch label graph
+ * (resolved post-id-reservation). Pre-existing cycles in the DB graph are
+ * not flagged here — only newly-introduced cycles.
+ */
+export async function mutateTaskBatchInsert(
+  input: TaskBatchInsertInput,
+): Promise<TaskBatchInsertResult> {
+  const slug = (input.slug ?? "").trim();
+  const stage_id = (input.stage_id ?? "").trim();
+  if (!slug) throw new IaDbValidationError("slug is required");
+  if (!stage_id) throw new IaDbValidationError("stage_id is required");
+  if (!Array.isArray(input.tasks) || input.tasks.length === 0) {
+    throw new IaDbValidationError("tasks array is required (non-empty)");
+  }
+
+  // Pre-flight: label collision + missing label + missing title.
+  const labelSeen = new Map<string, number>();
+  const collisions: string[] = [];
+  for (const t of input.tasks) {
+    const lbl = (t.label ?? "").trim();
+    if (!lbl) {
+      return {
+        ok: false,
+        error: "label_missing",
+        message: "every task item requires a non-empty `label`",
+      };
+    }
+    const title = (t.title ?? "").trim();
+    if (!title) {
+      return {
+        ok: false,
+        error: "title_missing",
+        message: `task ${lbl}: title is required`,
+      };
+    }
+    const prev = labelSeen.get(lbl) ?? 0;
+    labelSeen.set(lbl, prev + 1);
+    if (prev === 1) collisions.push(lbl);
+  }
+  if (collisions.length > 0) {
+    return {
+      ok: false,
+      error: "label_collision",
+      offending_labels: collisions,
+    };
+  }
+
+  // Intra-batch label set for dep resolve.
+  const labels = new Set(input.tasks.map((t) => t.label.trim()));
+  // Pre-flight: unknown label refs in depends_on_labels.
+  const missingLabels = new Set<string>();
+  for (const t of input.tasks) {
+    const deps = (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean);
+    for (const d of deps) {
+      if (!labels.has(d)) missingLabels.add(d);
+    }
+  }
+  if (missingLabels.size > 0) {
+    return {
+      ok: false,
+      error: "unknown_label",
+      missing: Array.from(missingLabels),
+    };
+  }
+
+  // Cycle detection on intra-batch label graph (pre-id-reservation).
+  const labelAdj = new Map<string, string[]>();
+  for (const t of input.tasks) {
+    labelAdj.set(t.label.trim(), (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean));
+  }
+  const cycleResult = tarjanScc(Array.from(labels), labelAdj);
+  if (cycleResult.multiNodeSccs.length > 0 || cycleResult.selfLoops.length > 0) {
+    const offending =
+      cycleResult.multiNodeSccs.length > 0
+        ? cycleResult.multiNodeSccs[0]!
+        : [cycleResult.selfLoops[0]!];
+    return {
+      ok: false,
+      error: "cycle_detected",
+      scc_members: offending,
+    };
+  }
+
+  return withTx(async (c) => {
+    // Stage existence guard.
+    const sg = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2`,
+      [slug, stage_id],
+    );
+    if (sg.rowCount === 0) {
+      throw new IaDbValidationError(
+        `no stage '${slug}/${stage_id}' in ia_stages`,
+      );
+    }
+
+    // Reserve ids per task (per-prefix DB sequence; Invariant 13 honored —
+    // reserve-id.sh shell wrapper retired in favor of the DB-MCP successor
+    // path established by Step 4 of ia-dev-db-refactor).
+    const id_map: Record<string, string> = {};
+    const ids: string[] = [];
+    for (const t of input.tasks) {
+      const prefix = t.prefix ?? "TECH";
+      const seq = PREFIX_SEQ[prefix];
+      if (!seq) throw new IaDbValidationError(`unknown prefix: ${prefix}`);
+      const nextRes = await c.query<{ n: string }>(`SELECT nextval($1)::text AS n`, [seq]);
+      const task_id = `${prefix}-${nextRes.rows[0]!.n}`;
+      id_map[t.label.trim()] = task_id;
+      ids.push(task_id);
+    }
+
+    // Insert task rows.
+    for (const t of input.tasks) {
+      const task_id = id_map[t.label.trim()]!;
+      const status = t.status ?? "pending";
+      await c.query(
+        `INSERT INTO ia_tasks (task_id, prefix, slug, stage_id, title, status,
+                               priority, type, notes, body)
+           VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10)`,
+        [
+          task_id,
+          t.prefix ?? "TECH",
+          slug,
+          stage_id,
+          t.title.trim(),
+          status,
+          t.priority ?? null,
+          t.type ?? null,
+          t.notes ?? null,
+          t.body ?? "",
+        ],
+      );
+    }
+
+    // Resolve label-based deps to ids and register edges.
+    for (const t of input.tasks) {
+      const task_id = id_map[t.label.trim()]!;
+      const deps = (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean);
+      for (const depLabel of deps) {
+        const depId = id_map[depLabel];
+        if (!depId) {
+          throw new IaDbValidationError(
+            `internal: unresolved label ${depLabel} (post-flight)`,
+          );
+        }
+        await c.query(
+          `INSERT INTO ia_task_deps (task_id, depends_on_id, kind)
+             VALUES ($1, $2, 'depends_on')
+           ON CONFLICT DO NOTHING`,
+          [task_id, depId],
+        );
+      }
+    }
+
+    return { ok: true, ids, id_map };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// stage_decompose_apply — db-lifecycle-extensions Stage 3 / TECH-3405
+// ---------------------------------------------------------------------------
+
+export interface StageDecomposeApplyInput {
+  slug: string;
+  stage_id: string;
+  prose_block?: {
+    title?: string | null;
+    objective?: string | null;
+    exit_criteria?: string | null;
+    body?: string;
+  };
+  tasks: TaskBatchInsertItem[];
+  commit_sha?: string;
+}
+
+export interface StageDecomposeApplyResult {
+  ok: true;
+  ids: string[];
+  id_map: Record<string, string>;
+  stage_id_resolved: string;
+  deduped?: boolean;
+}
+
+/**
+ * Atomic compose of:
+ *   1. Stage prose write (title/objective/exit_criteria/body) on
+ *      `ia_stages` row (must exist).
+ *   2. Batch task insert via shared mutation path (label-based dep
+ *      resolve).
+ *
+ * Idempotency: dedup keyed on `(slug, stage_id, commit_sha)` against
+ * `ia_master_plan_change_log` (UNIQUE constraint shape from Stage 1
+ * T1.2). If a matching row exists with the supplied commit_sha, returns
+ * `{ok:true, deduped:true}` with existing ids fetched from the stage's
+ * task rows. Caller passes `commit_sha` from outer git env; missing
+ * `commit_sha` disables dedup.
+ *
+ * Rollback semantics: any sub-step failure rolls back ALL writes (prose
+ * update revert + zero task rows committed). All-or-nothing.
+ */
+export async function mutateStageDecomposeApply(
+  input: StageDecomposeApplyInput,
+): Promise<StageDecomposeApplyResult> {
+  const slug = (input.slug ?? "").trim();
+  const stage_id = (input.stage_id ?? "").trim();
+  if (!slug) throw new IaDbValidationError("slug is required");
+  if (!stage_id) throw new IaDbValidationError("stage_id is required");
+  if (!Array.isArray(input.tasks)) {
+    throw new IaDbValidationError("tasks array is required");
+  }
+
+  return withTx(async (c) => {
+    // Stage row guard (existence required — `/stage-decompose` runs on
+    // skeleton stage from `master_plan_extend`, never creates stages).
+    const sg = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
+      [slug, stage_id],
+    );
+    if (sg.rowCount === 0) {
+      throw new IaDbValidationError(
+        `no stage '${slug}/${stage_id}' in ia_stages`,
+      );
+    }
+
+    // Idempotency check via `ia_master_plan_change_log` UNIQUE on
+    // (slug, stage_id, kind, commit_sha). Mirrors Stage 1 T1.2 shape.
+    if (input.commit_sha) {
+      const dedup = await c.query<{ entry_id: number }>(
+        `SELECT entry_id
+           FROM ia_master_plan_change_log
+          WHERE slug = $1
+            AND stage_id = $2
+            AND kind = 'stage-decompose-apply'
+            AND commit_sha = $3
+          LIMIT 1`,
+        [slug, stage_id, input.commit_sha],
+      );
+      if ((dedup.rowCount ?? 0) > 0) {
+        const existing = await c.query<{ task_id: string }>(
+          `SELECT task_id FROM ia_tasks WHERE slug = $1 AND stage_id = $2 ORDER BY created_at`,
+          [slug, stage_id],
+        );
+        const ids = existing.rows.map((r) => r.task_id);
+        return {
+          ok: true as const,
+          ids,
+          id_map: {},
+          stage_id_resolved: stage_id,
+          deduped: true,
+        };
+      }
+    }
+
+    // Prose write — ALL-or-NOTHING with task inserts.
+    const prose = input.prose_block ?? {};
+    const sets: string[] = [];
+    const values: unknown[] = [slug, stage_id];
+    if (prose.title !== undefined) {
+      sets.push(`title = $${values.length + 1}`);
+      values.push(prose.title);
+    }
+    if (prose.objective !== undefined) {
+      sets.push(`objective = $${values.length + 1}`);
+      values.push(prose.objective);
+    }
+    if (prose.exit_criteria !== undefined) {
+      sets.push(`exit_criteria = $${values.length + 1}`);
+      values.push(prose.exit_criteria);
+    }
+    if (prose.body !== undefined) {
+      sets.push(`body = $${values.length + 1}`);
+      values.push(prose.body);
+    }
+    if (sets.length > 0) {
+      await c.query(
+        `UPDATE ia_stages
+            SET ${sets.join(", ")}, updated_at = now()
+          WHERE slug = $1 AND stage_id = $2`,
+        values,
+      );
+    }
+
+    // Inline batch insert — duplicates `mutateTaskBatchInsert` core logic
+    // inside SAME tx (cannot nest withTx). Pre-flight already runs in
+    // mutateTaskBatchInsert; here we re-execute the validation +
+    // reservation + insert sequence on the supplied client.
+    const labelSeen = new Map<string, number>();
+    const collisions: string[] = [];
+    for (const t of input.tasks) {
+      const lbl = (t.label ?? "").trim();
+      if (!lbl) {
+        throw new IaDbValidationError("every task item requires a non-empty `label`");
+      }
+      const title = (t.title ?? "").trim();
+      if (!title) {
+        throw new IaDbValidationError(`task ${lbl}: title is required`);
+      }
+      const prev = labelSeen.get(lbl) ?? 0;
+      labelSeen.set(lbl, prev + 1);
+      if (prev === 1) collisions.push(lbl);
+    }
+    if (collisions.length > 0) {
+      throw new IaDbValidationError(
+        `label_collision: ${collisions.join(", ")}`,
+      );
+    }
+    const labels = new Set(input.tasks.map((t) => t.label.trim()));
+    const missingLabels = new Set<string>();
+    for (const t of input.tasks) {
+      const deps = (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean);
+      for (const d of deps) {
+        if (!labels.has(d)) missingLabels.add(d);
+      }
+    }
+    if (missingLabels.size > 0) {
+      throw new IaDbValidationError(
+        `unknown_label: ${Array.from(missingLabels).join(", ")}`,
+      );
+    }
+    const labelAdj = new Map<string, string[]>();
+    for (const t of input.tasks) {
+      labelAdj.set(t.label.trim(), (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean));
+    }
+    const cycleResult = tarjanScc(Array.from(labels), labelAdj);
+    if (cycleResult.multiNodeSccs.length > 0 || cycleResult.selfLoops.length > 0) {
+      const offending =
+        cycleResult.multiNodeSccs.length > 0
+          ? cycleResult.multiNodeSccs[0]!
+          : [cycleResult.selfLoops[0]!];
+      throw new IaDbValidationError(
+        `cycle_detected: ${offending.join(", ")}`,
+      );
+    }
+
+    const id_map: Record<string, string> = {};
+    const ids: string[] = [];
+    for (const t of input.tasks) {
+      const prefix = t.prefix ?? "TECH";
+      const seq = PREFIX_SEQ[prefix];
+      if (!seq) throw new IaDbValidationError(`unknown prefix: ${prefix}`);
+      const nextRes = await c.query<{ n: string }>(`SELECT nextval($1)::text AS n`, [seq]);
+      const task_id = `${prefix}-${nextRes.rows[0]!.n}`;
+      id_map[t.label.trim()] = task_id;
+      ids.push(task_id);
+    }
+    for (const t of input.tasks) {
+      const task_id = id_map[t.label.trim()]!;
+      const status = t.status ?? "pending";
+      await c.query(
+        `INSERT INTO ia_tasks (task_id, prefix, slug, stage_id, title, status,
+                               priority, type, notes, body)
+           VALUES ($1, $2, $3, $4, $5, $6::task_status, $7, $8, $9, $10)`,
+        [
+          task_id,
+          t.prefix ?? "TECH",
+          slug,
+          stage_id,
+          t.title.trim(),
+          status,
+          t.priority ?? null,
+          t.type ?? null,
+          t.notes ?? null,
+          t.body ?? "",
+        ],
+      );
+    }
+    for (const t of input.tasks) {
+      const task_id = id_map[t.label.trim()]!;
+      const deps = (t.depends_on_labels ?? []).map((s) => s.trim()).filter(Boolean);
+      for (const depLabel of deps) {
+        const depId = id_map[depLabel]!;
+        await c.query(
+          `INSERT INTO ia_task_deps (task_id, depends_on_id, kind)
+             VALUES ($1, $2, 'depends_on')
+           ON CONFLICT DO NOTHING`,
+          [task_id, depId],
+        );
+      }
+    }
+
+    // Audit row in ia_master_plan_change_log so dedup is feasible on
+    // re-call. UNIQUE(slug, stage_id, kind, commit_sha) — duplicate
+    // inserts no-op via ON CONFLICT (already-handled-by-pre-check above).
+    if (input.commit_sha) {
+      await c.query(
+        `INSERT INTO ia_master_plan_change_log
+            (slug, stage_id, kind, commit_sha, body, actor)
+          VALUES ($1, $2, 'stage-decompose-apply', $3, $4, $5)
+          ON CONFLICT DO NOTHING`,
+        [
+          slug,
+          stage_id,
+          input.commit_sha,
+          `Decomposed stage with ${ids.length} tasks: ${ids.join(", ")}`,
+          "stage-decompose-apply",
+        ],
+      );
+    }
+
+    return {
+      ok: true as const,
+      ids,
+      id_map,
+      stage_id_resolved: stage_id,
+    };
+  });
+}
+
 // Re-export read helper so tools can round-trip without two imports.
 export { queryTaskBody, queryTaskState };
 export type { TaskStateDB };

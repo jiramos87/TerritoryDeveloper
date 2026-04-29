@@ -555,3 +555,7 @@ Re-call `master_plan_state(slug=SLUG)`. Sort stages by **numeric tuple `(major, 
 ## Open Questions
 
 - Crash-survivable session journal: `journal_append` writes to `ia_ship_stage_journal` table — survives process crash. Resume on re-invocation reads journal by `session_id` to detect mid-Pass-B state (e.g. verify done but status-flip not). Currently Step 6 re-runs as a unit; finer sub-step resume deferred.
+
+---
+
+## Changelog

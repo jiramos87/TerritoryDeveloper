@@ -67,6 +67,12 @@ import { registerMasterPlanCrossImpactScan } from "./tools/master-plan-cross-imp
 import { registerArchTools } from "./tools/arch.js";
 import { registerArchSurfacesBackfill } from "./tools/arch-surfaces.js";
 import { registerSeamsRun } from "./tools/seams-run.js";
+import { registerIntentLint, registerTaskIntentGlossaryAlign } from "./tools/intent-lint.js";
+import {
+  registerTaskBatchInsert,
+  registerStageDecomposeApply,
+} from "./tools/task-batch-and-decompose.js";
+import { registerTaskDiffAnomalyScan } from "./tools/task-diff-anomaly-scan.js";
 
 // Bridge + compute tools
 import {
@@ -162,6 +168,11 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerArchTools(server);
   registerArchSurfacesBackfill(server);
   registerSeamsRun(server);
+  registerIntentLint(server);
+  registerTaskIntentGlossaryAlign(server);
+  registerTaskBatchInsert(server);
+  registerStageDecomposeApply(server);
+  registerTaskDiffAnomalyScan(server);
 }
 
 /**

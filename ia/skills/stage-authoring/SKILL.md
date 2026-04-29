@@ -442,3 +442,7 @@ When invoked standalone (not via `/stage-file` chain): emit same handoff verbati
 - [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — downstream (Pass A implement + Pass B verify + closeout).
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe (fallback when `lifecycle_stage_context` unavailable).
 
+
+---
+
+## Changelog
