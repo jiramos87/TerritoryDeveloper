@@ -52,6 +52,37 @@ async function entityResolves(
 }
 
 /**
+ * Stricter form of `entityResolves` — TECH-3003 dangling-ref gate.
+ * Returns true only if the target is non-retired AND has a non-NULL
+ * `current_published_version_id` (i.e. has at least one published version
+ * the edge builder can resolve `dst_version_id` from).
+ *
+ * Returns `{ resolves, kind }` so the caller can include the actual kind
+ * in the lint message — useful when an authoring slot points at the wrong
+ * kind (e.g. a sprite slot resolving to a token).
+ */
+async function entityPublishedResolves(
+  entityId: string | number,
+  sql: Sql,
+): Promise<{ resolves: boolean; kind: string | null }> {
+  const rows = await sql<
+    Array<{ id: number; kind: string; current_published_version_id: number | null }>
+  >`
+    select id, kind, current_published_version_id
+    from catalog_entity
+    where id = ${entityId}
+      and retired_at is null
+    limit 1
+  `;
+  if (rows.length === 0) return { resolves: false, kind: null };
+  const row = rows[0];
+  return {
+    resolves: row.current_published_version_id !== null,
+    kind: row.kind,
+  };
+}
+
+/**
  * Panel ref resolver — walks `panel_child` rows for the panel + flags any
  * `child_entity_id` that fails to resolve. Returns `block` rows tagged
  * `panel.unresolved_ref`. NULL `child_entity_id` is allowed (spacer /
@@ -197,6 +228,144 @@ async function auditOrphanCandidate(
 }
 
 /**
+ * Dangling-ref walker (TECH-3003 / Stage 14.1) — stricter than
+ * `auditPanelRefs` / `auditButtonRefs`. Each non-NULL slot id must point at
+ * an entity that:
+ *   1. exists + is non-retired (`entityResolves` baseline)
+ *   2. has a non-NULL `current_published_version_id` (so the edge builder
+ *      can resolve `dst_version_id` at publish time)
+ * Failures emit `{kind}.dangling_ref` block rows. Pool + archetype stay
+ * pass-through (their edge walkers are stubs in TECH-3002 — no refs to
+ * check until those land).
+ *
+ * Layer 2 already runs `auditPanelRefs` / `auditButtonRefs` which catch
+ * missing/retired targets; dangling-ref check additionally rejects
+ * unpublished targets (`current_published_version_id IS NULL`).
+ */
+async function checkDanglingRefs(
+  kind: string,
+  entityId: string,
+  sql: Sql,
+): Promise<LintResult[]> {
+  const out: LintResult[] = [];
+
+  if (kind === "panel") {
+    type Row = {
+      palette_entity_id: number | null;
+      frame_style_entity_id: number | null;
+    };
+    const rows = await sql<Row[]>`
+      select palette_entity_id, frame_style_entity_id
+      from panel_detail
+      where entity_id = ${entityId}
+      limit 1
+    `;
+    if (rows.length === 0) return out;
+    const detail = rows[0];
+    const slots: Array<[string, number | null]> = [
+      ["palette", detail.palette_entity_id],
+      ["frame_style", detail.frame_style_entity_id],
+    ];
+    for (const [slotName, refId] of slots) {
+      if (refId === null) continue;
+      const { resolves } = await entityPublishedResolves(refId, sql);
+      if (!resolves) {
+        out.push({
+          rule_id: "panel.dangling_ref",
+          severity: "block",
+          message: `panel slot ${slotName} → entity ${refId} missing, retired, or unpublished`,
+        });
+      }
+    }
+    return out;
+  }
+
+  if (kind === "button") {
+    type Row = {
+      sprite_idle_entity_id: number | null;
+      sprite_hover_entity_id: number | null;
+      sprite_pressed_entity_id: number | null;
+      sprite_disabled_entity_id: number | null;
+      sprite_icon_entity_id: number | null;
+      sprite_badge_entity_id: number | null;
+    };
+    const rows = await sql<Row[]>`
+      select sprite_idle_entity_id, sprite_hover_entity_id,
+             sprite_pressed_entity_id, sprite_disabled_entity_id,
+             sprite_icon_entity_id, sprite_badge_entity_id
+      from button_detail
+      where entity_id = ${entityId}
+      limit 1
+    `;
+    if (rows.length === 0) return out;
+    const detail = rows[0];
+    const slots: Array<[string, number | null]> = [
+      ["sprite_idle", detail.sprite_idle_entity_id],
+      ["sprite_hover", detail.sprite_hover_entity_id],
+      ["sprite_pressed", detail.sprite_pressed_entity_id],
+      ["sprite_disabled", detail.sprite_disabled_entity_id],
+      ["sprite_icon", detail.sprite_icon_entity_id],
+      ["sprite_badge", detail.sprite_badge_entity_id],
+    ];
+    for (const [slotName, refId] of slots) {
+      if (refId === null) continue;
+      const { resolves } = await entityPublishedResolves(refId, sql);
+      if (!resolves) {
+        out.push({
+          rule_id: "button.dangling_ref",
+          severity: "block",
+          message: `button slot ${slotName} → entity ${refId} missing, retired, or unpublished`,
+        });
+      }
+    }
+    return out;
+  }
+
+  if (kind === "asset") {
+    type Row = {
+      world_sprite_entity_id: number | null;
+      button_target_sprite_entity_id: number | null;
+      button_pressed_sprite_entity_id: number | null;
+      button_disabled_sprite_entity_id: number | null;
+      button_hover_sprite_entity_id: number | null;
+    };
+    const rows = await sql<Row[]>`
+      select world_sprite_entity_id, button_target_sprite_entity_id,
+             button_pressed_sprite_entity_id, button_disabled_sprite_entity_id,
+             button_hover_sprite_entity_id
+      from asset_detail
+      where entity_id = ${entityId}
+      limit 1
+    `;
+    if (rows.length === 0) return out;
+    const detail = rows[0];
+    const slots: Array<[string, number | null]> = [
+      ["world_sprite", detail.world_sprite_entity_id],
+      ["button_target_sprite", detail.button_target_sprite_entity_id],
+      ["button_pressed_sprite", detail.button_pressed_sprite_entity_id],
+      ["button_disabled_sprite", detail.button_disabled_sprite_entity_id],
+      ["button_hover_sprite", detail.button_hover_sprite_entity_id],
+    ];
+    for (const [slotName, refId] of slots) {
+      if (refId === null) continue;
+      const { resolves } = await entityPublishedResolves(refId, sql);
+      if (!resolves) {
+        out.push({
+          rule_id: "asset.dangling_ref",
+          severity: "block",
+          message: `asset slot ${slotName} → entity ${refId} missing, retired, or unpublished`,
+        });
+      }
+    }
+    return out;
+  }
+
+  // archetype + pool: edge walkers are stubs (TECH-3002 deferred posture);
+  // dangling-ref check stays a no-op until those walkers land.
+  return out;
+}
+
+/**
  * Run Layer 2 (cross-entity) lint rules for `kind`. Routes per-kind to
  * appropriate resolver / orphan check; archetype + pool stubs return `[]`
  * until later stages.
@@ -219,8 +388,13 @@ export async function runLayer2(
     out.push(...(await auditButtonRefs(entityId, sql)));
   } else if (kind === "archetype" || kind === "pool") {
     // Stub — see §Pending Decisions (Stage 14.1 ref materialization).
+    // Dangling-ref walker also no-ops for these until walkers land.
     return [];
   }
+
+  // TECH-3003 dangling-ref gate — runs for panel/button/asset/archetype/pool
+  // (archetype + pool already early-returned above; walker no-ops anyway).
+  out.push(...(await checkDanglingRefs(kind, entityId, sql)));
 
   // Orphan check runs for all leaf kinds (panel + button covered above for
   // outbound refs; orphan is independent — leaf kind with zero inbound).

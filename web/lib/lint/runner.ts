@@ -32,8 +32,8 @@ import type { LintResult } from "@/lib/lint/types";
  * audit fns are async to allow DB reads (audio reads `audio_detail`).
  */
 async function auditAudioRow(
-  _entityId: string,
-  versionId: string,
+  entityId: string,
+  _versionId: string,
   rules: PublishLintRuleRow[],
   sql: Sql,
 ): Promise<LintResult[]> {
@@ -41,10 +41,14 @@ async function auditAudioRow(
     loudness_lufs: number | null;
     peak_db: number | null;
   };
+  // `audio_detail` is keyed by `entity_id` (1:1 with `catalog_entity` per
+  // DEC-A8); there is no `version_id` column. Per-entity loudness/peak
+  // measurements are shared across versions until per-version detail is
+  // introduced.
   const rows = await sql<AudioDetailRow[]>`
     select loudness_lufs, peak_db
     from audio_detail
-    where version_id = ${versionId}
+    where entity_id = ${entityId}
     limit 1
   `;
   if (rows.length === 0) return [];

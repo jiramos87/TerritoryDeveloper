@@ -33,6 +33,8 @@ import {
 } from "@/lib/catalog/catalog-api-errors";
 import { aggregateLintResults, runLayer2 } from "@/lib/lint/cross-entity";
 import { runLayer1 } from "@/lib/lint/runner";
+import { buildEdgesForVersion } from "@/lib/refs/edge-builder";
+import type { CatalogKind } from "@/lib/refs/types";
 import { enqueueSnapshotRebuild } from "@/lib/snapshot/enqueue";
 
 export const dynamic = "force-dynamic";
@@ -180,6 +182,17 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               slug_frozen_at = coalesce(slug_frozen_at, now())
           where id = ${idNum}
         `;
+        // TECH-3003 — Stage 14.1 publish hook: materialize cross-entity
+        // ref edges (DEC-A37 + DEC-A42) before the snapshot job is enqueued.
+        // Builder runs inside the same `withAudit` tx so DELETE+INSERT share
+        // rollback scope; snapshot rebuild reads materialized edges so
+        // ordering matters (builder commits first).
+        await buildEdgesForVersion(
+          kind as CatalogKind,
+          idNum,
+          versionIdNum,
+          sql,
+        );
         // TECH-2674 — auto-enqueue snapshot rebuild after every successful
         // publish freeze. Runs inside the same tx as `entity_version` freeze
         // + audit emit so any rollback drops the queued job too.
