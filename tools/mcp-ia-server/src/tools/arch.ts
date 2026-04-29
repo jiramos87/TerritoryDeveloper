@@ -376,8 +376,11 @@ export async function runArchDriftScan(
     params.push(input.plan_id.trim());
     planFilter = `WHERE mp.slug = $${params.length}`;
   } else {
-    // scan every open plan: status NOT IN ('done', 'archived')
-    planFilter = `WHERE mp.status NOT IN ('done', 'archived')`;
+    // scan every open plan: stage-level status != 'done'.
+    // ia_master_plans has no status column (orchestrators are permanent);
+    // stage_status enum = ('pending', 'in_progress', 'done') — no 'archived'.
+    // A plan is "open" iff it has at least one non-terminal stage.
+    planFilter = `WHERE s.status <> 'done'`;
   }
 
   // Collect (slug, stage_id, plan_created_at, last_pending_flip_ts) per stage.
@@ -703,26 +706,15 @@ export function registerArchDecisionWrite(server: McpServer): void {
         "DB-backed: INSERT (or upsert by slug) one arch_decisions row. Stage 1.4 / TECH-2563 design-explore Architecture Decision phase write surface. UNIQUE(slug). Resolves first `surface_slugs[]` entry to `surface_id` FK; rejects unmapped slugs (invariant #12 — never auto-create surfaces).",
       inputSchema: archDecisionWriteInputSchema.shape,
     },
-    wrapTool(
-      "arch_decision_write",
-      async (args) => {
-        const envelope = await (async (rawInput: unknown) => {
-          const parsed = archDecisionWriteInputSchema.safeParse(rawInput);
-          if (!parsed.success) {
-            throw {
-              code: "invalid_input" as const,
-              message: parsed.error.issues.map((i) => i.message).join("; "),
-            };
-          }
+    async (args) =>
+      runWithToolTiming("arch_decision_write", async () => {
+        const envelope = await wrapTool(async (input: z.infer<typeof archDecisionWriteInputSchema>) => {
           const pool = getIaDatabasePool();
           if (!pool) throw dbUnconfiguredError();
-          return await runWithToolTiming("arch_decision_write", async () => {
-            return await runArchDecisionWrite(pool, parsed.data);
-          });
-        })(args);
+          return await runArchDecisionWrite(pool, input);
+        })(archDecisionWriteInputSchema.parse(args ?? {}));
         return jsonResult(envelope);
-      },
-    ),
+      }),
   );
 }
 
@@ -800,26 +792,15 @@ export function registerArchChangelogAppend(server: McpServer): void {
         "DB-backed: INSERT one arch_changelog row. Stage 1.4 / TECH-2563. Idempotent on (commit_sha, spec_path) via UNIQUE partial index (migration 0038); returns `deduped: true` when row already exists. kind: edit | decide | supersede | spec_edit_commit | design_explore_decision.",
       inputSchema: archChangelogAppendInputSchema.shape,
     },
-    wrapTool(
-      "arch_changelog_append",
-      async (args) => {
-        const envelope = await (async (rawInput: unknown) => {
-          const parsed = archChangelogAppendInputSchema.safeParse(rawInput);
-          if (!parsed.success) {
-            throw {
-              code: "invalid_input" as const,
-              message: parsed.error.issues.map((i) => i.message).join("; "),
-            };
-          }
+    async (args) =>
+      runWithToolTiming("arch_changelog_append", async () => {
+        const envelope = await wrapTool(async (input: z.infer<typeof archChangelogAppendInputSchema>) => {
           const pool = getIaDatabasePool();
           if (!pool) throw dbUnconfiguredError();
-          return await runWithToolTiming("arch_changelog_append", async () => {
-            return await runArchChangelogAppend(pool, parsed.data);
-          });
-        })(args);
+          return await runArchChangelogAppend(pool, input);
+        })(archChangelogAppendInputSchema.parse(args ?? {}));
         return jsonResult(envelope);
-      },
-    ),
+      }),
   );
 }
 
