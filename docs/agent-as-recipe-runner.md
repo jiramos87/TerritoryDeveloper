@@ -22,6 +22,8 @@ Persisted as decisions land during `/design-explore`. Each row = locked answer +
 
 **Cross-plan finding (2026-04-28):** db-lifecycle-extensions master plan (DEC-A18 locked) is **layered below** recipe-runner, not competing. db-lifecycle adds 10 deterministic MCP primitives (`task_batch_insert`, `master_plan_health`, `stage_decompose_apply`, `intent_lint`, etc.) — all consumed as `mcp.*` recipe steps. Build order: db-lifecycle Stages 1→3 first, recipe-runner Phases A→D after. ~16% overlap (3 of 18 db-lifecycle tasks edit SKILL bodies which recipify later supersedes — acceptable; tactical wins ship now, recipe migration absorbs naturally).
 
+**Cross-plan convergence (2026-04-29):** parallel-carcass exploration (`docs/parallel-carcass-exploration.md`) Wave 0 Phase 3 (skill surface edits — `section-claim` NEW, `section-closeout` NEW, `master-plan-new` ext, `stage-decompose` ext, `ship-stage` ext) **early-binds Phase E of this plan**. Same target skills, same surface — different motivations. Parallel-carcass Phase 3 ships as recipify-and-extend, not edit-and-extend. Buys recipe-runner first heavy-LLM dogfood on hot-path skills; buys parallel-carcass a recipe-shaped Phase 3 PR set with golden harness regression net. Sequence: engine regression test (deferred DEC-A19 Task #2 candidate) → `section-claim`/`section-closeout` recipes (0 seams, low risk) → `master-plan-new` Phase A recipe (0 seams) → `stage-decompose` ext (1 seam — `decompose-skeleton-stage`) → `ship-stage` ext (Pass A/B hooks recipify; verify-loop subagent body remains keeper per Phase F). See §K diagram below + parallel-carcass §6.3.
+
 ---
 
 ## 0. Approaches surveyed
@@ -480,10 +482,12 @@ flowchart LR
 2. `plan-applier` → recipe with 0 seams
 3. `stage-authoring` → recipe with 1 seam (`author-plan-digest`)
 
-**Phase E — Heavy-LLM recipify (3 PRs)**
-1. `stage-decompose` → recipe with 1 seam (`decompose-skeleton-stage`)
-2. `master-plan-new` → recipe with 1 seam (`decompose-skeleton-stage` reused)
-3. `plan-reviewer-{mechanical,semantic}` → recipe with 1 seam each
+**Phase E — Heavy-LLM recipify (3 PRs)** — *early-bound to parallel-carcass Wave 0 Phase 3 (2026-04-29)*
+1. `stage-decompose` → recipe with 1 seam (`decompose-skeleton-stage`); extension emits `carcass_role` + `section_id` per parallel-carcass §6.3
+2. `master-plan-new` → recipe with 1 seam (`decompose-skeleton-stage` reused); Phase A (arch lock) deterministic-only, Phase B/C seam-driven per parallel-carcass §6.3
+3. `ship-stage` → Pass A/B pre/post hooks recipify (`stage_claim`, `arch_drift_scan(scope='intra-plan')`); verify-loop subagent body keeper (multi-turn — Phase F)
+4. `section-claim` (NEW) + `section-closeout` (NEW) → 0-seam recipes; pure deterministic MCP+bash chains
+5. `plan-reviewer-{mechanical,semantic}` → recipe with 1 seam each (post-parallel-carcass; original Phase E scope)
 
 **Phase F — Subagent layer collapse**
 1. Audit remaining `.claude/agents/*.md` — keep only multi-turn-reasoning subagents (code review, design exploration)
@@ -631,22 +635,30 @@ alternatives: A1 status-quo+docs; A2 seams-only; A3 YAML-engine flow-only;
 surface_slug: interchange/agent-ia    (or new agent-orchestration/recipe-runner — Phase 0 picks)
 ```
 
-### K. Build-order vs db-lifecycle-extensions (DEC-A18)
+### K. Build-order vs db-lifecycle-extensions (DEC-A18) + parallel-carcass
 
 ```
-db-lifecycle-extensions  (DEC-A18)        recipe-runner  (DEC-A19)
-─────────────────────────────────────     ─────────────────────────
+db-lifecycle-extensions  (DEC-A18)        recipe-runner  (DEC-A19)               parallel-carcass (Wave 0)
+─────────────────────────────────────     ─────────────────────────               ─────────────────────────
 Stage 1 — task batch + arch indexes  ──┐
 Stage 2 — health + decompose         ──┼──> Phase A — seams scaffolding
-Stage 3 — intent-lint + diff-anomaly  ─┘    Phase B — engine MVP
-                                            Phase C — release-rollout-track recipify
-                                            Phase D — stage-file / plan-applier / stage-authoring
-                                            Phase E — stage-decompose / master-plan-new / plan-reviewer-*
-                                            Phase F — subagent layer collapse
+Stage 3 — intent-lint + diff-anomaly  ─┘    Phase B — engine MVP                  Phase 1 — schema (mig 0049+0050) ✓
+                                            Phase C — release-rollout-track       Phase 2 — MCP tools (6 NEW) ✓
+                                            Phase D — engine MCP injector ✓
+                                                          │
+                                                          ▼
+                                            Phase E — heavy-LLM recipify ◀──────  Phase 3 — skill surface edits
+                                              (early-bound dogfood)                 (recipify-and-extend)
+                                                · stage-decompose                    · master-plan-new ext
+                                                · master-plan-new                    · stage-decompose ext
+                                                · ship-stage hooks                   · ship-stage ext
+                                                · section-claim/closeout NEW         · section-claim NEW
+                                                                                     · section-closeout NEW
+                                            Phase F — subagent layer collapse     Wave 1 — dogfood rollout plan
                                             Phase G — cheat-sheet auto-sync
 ```
 
-Overlap = ~16% (3 of 18 db-lifecycle tasks edit SKILL bodies recipify later supersedes — acceptable; DB primitives ship now, recipe migration absorbs naturally).
+Overlap with db-lifecycle = ~16% (acceptable; absorbed). Convergence with parallel-carcass = full overlap on Phase E ↔ Phase 3 — same skills, same files, ship as recipes (engine validation) instead of prose edits. Engine regression-test backfill ships first as gate.
 
 ---
 

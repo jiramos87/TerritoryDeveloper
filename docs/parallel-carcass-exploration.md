@@ -318,6 +318,8 @@ COMMIT;
 
 ### 6.3 Skill catalogue delta
 
+> **Cross-plan convergence (2026-04-29):** all five skill surfaces below ship as **recipify-and-extend** per DEC-A19 Phase E (`docs/agent-as-recipe-runner.md` §G + §K). Engine + MCP injector live (Phase D shipped 2026-04-29, commit 6996e130). Phase 3 = first heavy-LLM dogfood for the recipe-runner. Sequence: engine regression-test backfill → 0-seam recipes (`section-claim`, `section-closeout`) → deterministic Phase A of `master-plan-new` → seam-driven Phase B/C → `stage-decompose` ext → `ship-stage` Pass A/B hooks (verify-loop subagent body stays — Phase F keeper).
+
 **`master-plan-new` extended** — new phase order:
 
 ```
@@ -460,14 +462,20 @@ Single ship cycle covers schema, MCP, and skill extensions. Trade-off: bigger PR
 - Register all new tools in `tools/mcp-ia-server/src/index.ts`.
 - Unit + integration tests under `tools/mcp-ia-server/test/`.
 
-**Phase 3 — skill catalogue (via `npm run skill:sync:all`):**
+**Phase 3 — skill catalogue (recipify-and-extend per DEC-A19 Phase E):**
 
-- `ia/skills/master-plan-new/SKILL.md` + `agent-body.md` — Phase A/B/C extension per §6.3.
-- `ia/skills/stage-decompose/SKILL.md` — emit `carcass_role` + `section_id`.
-- `ia/skills/ship-stage/SKILL.md` + `agent-body.md` — Pass A pre-claim, Pass B intra-plan drift scan, Pass B post-release.
-- New `ia/skills/section-claim/{SKILL.md, agent-body.md, command-body.md}`.
-- New `ia/skills/section-closeout/{SKILL.md, agent-body.md, command-body.md}`.
-- Run `npm run skill:sync:all`.
+> Skill bodies ship as recipes under `tools/recipes/{name}.yaml`. SKILL.md frontmatter + change log retained; procedural prose collapses to recipe ref. `.claude/{agents,commands}/*.md` regenerated via `npm run skill:sync:all` (drift gate: `validate:recipe-drift`).
+
+PR sub-split (5 sub-PRs — gate ordering matters):
+
+- **PR 3.0 — engine regression-test backfill** *(new, blocks rest of Phase 3)* — engine-level smoke recipe with `mcp.*` step + asserts; golden harness via vitest. Catches engine-level regressions before heavy skills land. Source: deferred DEC-A19 Task #2 candidate.
+- **PR 3.1 — `tools/recipes/section-claim.yaml`** + `ia/skills/section-claim/{SKILL.md,agent-body.md,command-body.md}` — 0 seams; pure `mcp.section_claim` + `bash.git_worktree_add` + `flow.until` heartbeat loop.
+- **PR 3.2 — `tools/recipes/section-closeout.yaml`** + `ia/skills/section-closeout/*` — 0 seams; `mcp.arch_drift_scan(scope='intra-plan')` + `gate.zero_open_events` + `mcp.section_closeout_apply` + `bash.git_merge`.
+- **PR 3.3 — `tools/recipes/master-plan-new.yaml`** + `ia/skills/master-plan-new/*` extension — Phase A deterministic-only (`mcp.arch_decision_write` ×N + `mcp.master_plan_lock_arch`); Phase B/C via `seam.decompose-skeleton-stage` (existing seam, output schema extended for `carcass_role` + `section_id`).
+- **PR 3.4 — `tools/recipes/stage-decompose.yaml`** + `ia/skills/stage-decompose/*` extension — 1 seam (`decompose-skeleton-stage`, reused). Validates seam I/O contract evolution.
+- **PR 3.5 — `tools/recipes/ship-stage-pass-a.yaml`** + `tools/recipes/ship-stage-pass-b.yaml` + `ia/skills/ship-stage/*` extension — Pass A pre-claim recipe step (`mcp.stage_claim`); Pass B post-step recipe (`mcp.arch_drift_scan(scope='intra-plan')` + `mcp.stage_claim_release`). Verify-loop subagent body **unchanged** (multi-turn keeper per DEC-A19 Phase F).
+
+After every PR: `npm run skill:sync:all`.
 
 **Phase 4 — verify:**
 
@@ -522,6 +530,8 @@ Next exploration → master-plan birth uses Phase A/B/C natively. Validate: end-
 | Lock trigger blocks legitimate edits. | Trigger only fires for `plan_slug IS NOT NULL`; supersession path remains open; skill `/architecture-supersede` (post-MVP) can wrap the workflow. |
 | MV refresh cost from new derived columns. | Bench during Phase 4; if > 200ms, split into a separate `ia_plan_section_health` MV refreshed on `ia_*_claims` UPDATE only (D10 fallback). |
 | Two-tier claim adds chattiness. | `claim_heartbeat` is a single MCP call refreshing both layers; sessions call once per minute. |
+| Recipe-engine bugs gate Phase 3 progress (DEC-A19 dogfood early-bind). | PR 3.0 (engine regression-test backfill) ships first; golden harness catches engine-level regressions before heavy-skill recipes land. Recipe seam refusal escalation (Q5) catches content-level. |
+| Recipe DSL learning curve while Phase 3 ships. | 0-seam PRs (3.1, 3.2) come first — exercise pure deterministic step kinds before introducing seams. |
 
 ### Definition of done
 
@@ -537,3 +547,5 @@ Next exploration → master-plan birth uses Phase A/B/C natively. Validate: end-
 ## 8. Next action
 
 User decides invocation cadence. No TECH issue filing in this exploration — implementation lands naturally as the user drives Wave 0 work or, post-Wave 0 primitives, dogfoods the rollout plan via `/master-plan-new docs/parallel-carcass-exploration.md`.
+
+**Wave 0 status (2026-04-29):** Phase 1 ✓ (commit 6bb0500d), Phase 2 ✓ (commit a291b520), Phase 3 deferred + early-bound to DEC-A19 Phase E (recipe-runner dogfood). Next concrete step: PR 3.0 — engine regression-test backfill (gates Phase 3 progress per §7 Wave 0 Phase 3 sub-PR list).
