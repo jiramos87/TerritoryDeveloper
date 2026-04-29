@@ -28,6 +28,7 @@ import {
   type TaskRowDB,
   type TaskStateDB,
 } from "./queries.js";
+import { tarjanScc } from "./tarjan-scc.js";
 
 // ---------------------------------------------------------------------------
 // Shared helpers.
@@ -191,6 +192,221 @@ export async function mutateTaskInsert(
       related,
     };
   });
+}
+
+// ---------------------------------------------------------------------------
+// task_dep_register — TECH-2976 (db-lifecycle-extensions Stage 1)
+// ---------------------------------------------------------------------------
+
+export interface TaskDepRegisterResult {
+  ok: true;
+  task_id: string;
+  edges_added: number;
+}
+
+export interface TaskDepRegisterCycleResult {
+  ok: false;
+  error: { code: "cycle_detected"; scc_members: string[] };
+}
+
+/**
+ * Atomically insert `(task_id, dep_id, 'depends_on')` rows into `ia_task_deps`
+ * with Tarjan SCC cycle detection inside the same PG transaction.
+ *
+ * Txn shape: BEGIN → existence checks → SELECT existing edges FOR UPDATE →
+ * INSERT new edges (ON CONFLICT DO NOTHING) → load full edge graph → run
+ * Tarjan over union → if any multi-node SCC OR self-loop ⇒ throw → tx
+ * rollback discards the writes; else COMMIT. Cycle detection raises a
+ * sentinel error caught at the boundary and reshaped into the structured
+ * `{ok:false, error:{code, scc_members}}` non-throw response per §Plan
+ * Digest §Pending Decisions (cycle error response shape).
+ */
+class CycleDetectedError extends Error {
+  scc_members: string[];
+  constructor(members: string[]) {
+    super(`cycle_detected: ${members.join(", ")}`);
+    this.scc_members = members;
+  }
+}
+
+export async function mutateTaskDepRegister(
+  task_id: string,
+  depends_on: string[],
+): Promise<TaskDepRegisterResult | TaskDepRegisterCycleResult> {
+  const id = (task_id ?? "").trim();
+  if (!id) throw new IaDbValidationError("task_id is required");
+  const targets = Array.from(
+    new Set(depends_on.map((s) => (s ?? "").trim()).filter((s) => s.length)),
+  );
+
+  // Self-reference short-circuit (avoids Tarjan run on trivial cycle).
+  if (targets.includes(id)) {
+    return { ok: false, error: { code: "cycle_detected", scc_members: [id] } };
+  }
+
+  try {
+    return await withTx(async (c): Promise<TaskDepRegisterResult> => {
+      // Existence guards.
+      const checkIds = [id, ...targets];
+      const ex = await c.query<{ task_id: string }>(
+        `SELECT task_id FROM ia_tasks WHERE task_id = ANY($1::text[]) FOR UPDATE`,
+        [checkIds],
+      );
+      const found = new Set(ex.rows.map((r) => r.task_id));
+      if (!found.has(id)) {
+        throw new IaDbValidationError(`task not found: ${id}`);
+      }
+      const missing = targets.filter((t) => !found.has(t));
+      if (missing.length > 0) {
+        throw new IaDbValidationError(
+          `unknown dep targets: ${missing.join(", ")}`,
+        );
+      }
+
+      // Insert new edges (idempotent re-register no-op).
+      let edges_added = 0;
+      for (const dep of targets) {
+        const ins = await c.query(
+          `INSERT INTO ia_task_deps (task_id, depends_on_id, kind)
+             VALUES ($1, $2, 'depends_on')
+           ON CONFLICT DO NOTHING`,
+          [id, dep],
+        );
+        edges_added += ins.rowCount ?? 0;
+      }
+
+      // Load full edge graph (depends_on edges only).
+      const all = await c.query<{ task_id: string; depends_on_id: string }>(
+        `SELECT task_id, depends_on_id
+           FROM ia_task_deps
+          WHERE kind = 'depends_on'`,
+      );
+      const adj = new Map<string, string[]>();
+      const radj = new Map<string, string[]>();
+      const nodeSet = new Set<string>();
+      for (const row of all.rows) {
+        nodeSet.add(row.task_id);
+        nodeSet.add(row.depends_on_id);
+        const fwd = adj.get(row.task_id) ?? [];
+        fwd.push(row.depends_on_id);
+        adj.set(row.task_id, fwd);
+        const back = radj.get(row.depends_on_id) ?? [];
+        back.push(row.task_id);
+        radj.set(row.depends_on_id, back);
+      }
+
+      // Scope Tarjan to reachability closure of new edge endpoints
+      // (forward + backward BFS from {id} ∪ targets). Pre-existing cycles
+      // disjoint from new edges are not flagged — only newly-introduced
+      // cycles trip rejection. §Implementer Latitude: spec §Acceptance
+      // says "no new cycles introduced"; full-graph Tarjan would re-flag
+      // every prior write on contaminated DBs. Closure approach honours
+      // intent without falsely rejecting clean inserts.
+      const seeds = new Set<string>([id, ...targets]);
+      const closure = new Set<string>();
+      const queue: string[] = [];
+      for (const s of seeds) {
+        if (nodeSet.has(s) && !closure.has(s)) {
+          closure.add(s);
+          queue.push(s);
+        }
+      }
+      while (queue.length > 0) {
+        const u = queue.shift()!;
+        for (const v of adj.get(u) ?? []) {
+          if (!closure.has(v)) {
+            closure.add(v);
+            queue.push(v);
+          }
+        }
+        for (const v of radj.get(u) ?? []) {
+          if (!closure.has(v)) {
+            closure.add(v);
+            queue.push(v);
+          }
+        }
+      }
+
+      // Sub-adjacency restricted to closure nodes.
+      const subAdj = new Map<string, string[]>();
+      for (const u of closure) {
+        const outs = (adj.get(u) ?? []).filter((v) => closure.has(v));
+        subAdj.set(u, outs);
+      }
+      const result = tarjanScc(Array.from(closure), subAdj);
+      if (result.multiNodeSccs.length > 0 || result.selfLoops.length > 0) {
+        const offending =
+          result.multiNodeSccs.length > 0
+            ? result.multiNodeSccs[0]!
+            : [result.selfLoops[0]!];
+        throw new CycleDetectedError(offending);
+      }
+
+      return { ok: true, task_id: id, edges_added };
+    });
+  } catch (e) {
+    if (e instanceof CycleDetectedError) {
+      return {
+        ok: false,
+        error: { code: "cycle_detected", scc_members: e.scc_members },
+      };
+    }
+    throw e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// task_raw_markdown_write — TECH-2973 (db-lifecycle-extensions Stage 1)
+// ---------------------------------------------------------------------------
+
+export interface TaskRawMarkdownWriteResult {
+  task_id: string;
+  bytes_written: number;
+  updated_at: string;
+}
+
+/**
+ * Persist verbatim BACKLOG.md row block into `ia_tasks.raw_markdown`.
+ *
+ * Removes the Pass-A-null + Pass-B-backfill workaround in `/stage-file`:
+ * callers can now author the row text directly once `task_insert` returns
+ * the reserved `ISSUE_ID`, without falling back to direct SQL UPDATE.
+ *
+ * Single-row UPDATE, no surrounding txn — idempotent write, no cascading
+ * state. Caller may wrap in an outer txn if it needs atomic compound
+ * semantics with other writes.
+ *
+ * Empty string is accepted; `null` is reserved for "never written" sentinel
+ * so this entrypoint normalises explicit empty input to "" rather than
+ * NULL.
+ */
+export async function mutateTaskRawMarkdownWrite(
+  task_id: string,
+  body: string,
+): Promise<TaskRawMarkdownWriteResult> {
+  const cleanId = (task_id ?? "").trim().toUpperCase();
+  if (!cleanId) {
+    throw new IaDbValidationError("task_id is required");
+  }
+  if (typeof body !== "string") {
+    throw new IaDbValidationError("body must be a string");
+  }
+  const pool = poolOrThrow();
+  const res = await pool.query<{ updated_at: string }>(
+    `UPDATE ia_tasks
+        SET raw_markdown = $2, updated_at = now()
+      WHERE task_id = $1
+     RETURNING updated_at`,
+    [cleanId, body],
+  );
+  if (res.rowCount === 0) {
+    throw new IaDbValidationError(`task not found: ${cleanId}`);
+  }
+  return {
+    task_id: cleanId,
+    bytes_written: Buffer.byteLength(body, "utf8"),
+    updated_at: res.rows[0]!.updated_at,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -423,60 +639,136 @@ export async function mutateStageVerificationFlip(
 }
 
 // ---------------------------------------------------------------------------
-// stage_closeout_apply
+// stage_closeout_apply (TECH-2975 — txn wrap + per-step audit trail)
 // ---------------------------------------------------------------------------
+
+const CLOSEOUT_AUDIT_PHASE = "stage_closeout";
+const CLOSEOUT_AUDIT_KIND_PREFIX = "closeout_step.";
+
+/**
+ * Persist one audit row to `ia_ship_stage_journal` outside any transaction.
+ *
+ * Rationale (TECH-2975 §Implementer Latitude): the §Plan Digest §Acceptance
+ * promises that `stage_closeout_diagnose` against a *failed* closeout shows
+ * the step where the error occurred. If audit rows shared the closeout
+ * txn, ROLLBACK would discard them along with state, defeating forensic
+ * use. We trade per-step audit atomicity for visible failure trails —
+ * state mutations remain atomic via the closeout `withTx`.
+ *
+ * `payload_kind = "closeout_step.<step_name>"` so the diagnose reader can
+ * filter purely by prefix without touching payload jsonb.
+ */
+async function appendCloseoutAuditRow(
+  slug: string,
+  stage_id: string,
+  step_name: string,
+  ok: boolean,
+  error?: string | null,
+): Promise<void> {
+  const pool = poolOrThrow();
+  const session_id = `closeout-${slug}-${stage_id}`;
+  await pool.query(
+    `INSERT INTO ia_ship_stage_journal
+       (session_id, slug, stage_id, phase, payload_kind, payload)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+    [
+      session_id,
+      slug,
+      stage_id,
+      CLOSEOUT_AUDIT_PHASE,
+      `${CLOSEOUT_AUDIT_KIND_PREFIX}${step_name}`,
+      JSON.stringify({ step_name, ok, error: error ?? null }),
+    ],
+  );
+}
 
 export async function mutateStageCloseoutApply(
   slug: string,
   stage_id: string,
 ): Promise<{ slug: string; stage_id: string; archived_task_count: number; stage_status: "done" }> {
-  return withTx(async (c) => {
-    const sr = await c.query(
-      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
-      [slug, stage_id],
-    );
-    if (sr.rowCount === 0) {
-      throw new IaDbValidationError(`stage not found: ${slug}/${stage_id}`);
-    }
-
-    const nonTerminal = await c.query<{ task_id: string; status: string }>(
-      `SELECT task_id, status::text AS status
-         FROM ia_tasks
-        WHERE slug = $1 AND stage_id = $2
-          AND status NOT IN ('done', 'archived')`,
-      [slug, stage_id],
-    );
-    if (nonTerminal.rowCount! > 0) {
-      const ids = nonTerminal.rows.map((r) => `${r.task_id}(${r.status})`).join(", ");
-      throw new IaDbValidationError(
-        `stage has non-terminal tasks: ${ids} — must be done or archived before closeout`,
+  // Audit log captured in-memory through the txn; flushed post-commit/rollback
+  // so failed closeouts retain a forensic trail (rollback would otherwise
+  // discard rows written via the same client `c`).
+  const trail: Array<{ step_name: string; ok: boolean; error?: string | null }> = [];
+  let lastStep = "init";
+  try {
+    const result = await withTx(async (c) => {
+      lastStep = "stage_lock";
+      const sr = await c.query(
+        `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
+        [slug, stage_id],
       );
+      if (sr.rowCount === 0) {
+        throw new IaDbValidationError(`stage not found: ${slug}/${stage_id}`);
+      }
+      trail.push({ step_name: "stage_lock", ok: true });
+
+      lastStep = "non_terminal_check";
+      const nonTerminal = await c.query<{ task_id: string; status: string }>(
+        `SELECT task_id, status::text AS status
+           FROM ia_tasks
+          WHERE slug = $1 AND stage_id = $2
+            AND status NOT IN ('done', 'archived')`,
+        [slug, stage_id],
+      );
+      if (nonTerminal.rowCount! > 0) {
+        const ids = nonTerminal.rows.map((r) => `${r.task_id}(${r.status})`).join(", ");
+        throw new IaDbValidationError(
+          `stage has non-terminal tasks: ${ids} — must be done or archived before closeout`,
+        );
+      }
+      trail.push({ step_name: "non_terminal_check", ok: true });
+
+      lastStep = "archive_done_tasks";
+      const upd = await c.query<{ task_id: string }>(
+        `UPDATE ia_tasks
+            SET status = 'archived'::task_status,
+                archived_at = COALESCE(archived_at, now()),
+                updated_at = now()
+          WHERE slug = $1 AND stage_id = $2 AND status = 'done'
+         RETURNING task_id`,
+        [slug, stage_id],
+      );
+      trail.push({ step_name: "archive_done_tasks", ok: true });
+
+      lastStep = "stage_status_done";
+      await c.query(
+        `UPDATE ia_stages
+            SET status = 'done'::stage_status, updated_at = now()
+          WHERE slug = $1 AND stage_id = $2`,
+        [slug, stage_id],
+      );
+      trail.push({ step_name: "stage_status_done", ok: true });
+
+      return {
+        slug,
+        stage_id,
+        archived_task_count: upd.rowCount ?? 0,
+        stage_status: "done" as const,
+      };
+    });
+    // Flush successful trail post-commit. Each row gets its own txn-less
+    // INSERT; failures here surface as bare errors but do not roll back the
+    // closeout itself (state is already committed).
+    for (const row of trail) {
+      await appendCloseoutAuditRow(slug, stage_id, row.step_name, row.ok, row.error ?? null);
     }
-
-    const upd = await c.query<{ task_id: string }>(
-      `UPDATE ia_tasks
-          SET status = 'archived'::task_status,
-              archived_at = COALESCE(archived_at, now()),
-              updated_at = now()
-        WHERE slug = $1 AND stage_id = $2 AND status = 'done'
-       RETURNING task_id`,
-      [slug, stage_id],
-    );
-
-    await c.query(
-      `UPDATE ia_stages
-          SET status = 'done'::stage_status, updated_at = now()
-        WHERE slug = $1 AND stage_id = $2`,
-      [slug, stage_id],
-    );
-
-    return {
-      slug,
-      stage_id,
-      archived_task_count: upd.rowCount ?? 0,
-      stage_status: "done",
-    };
-  });
+    return result;
+  } catch (e) {
+    // Flush partial trail + failure marker for the failed step. Best-effort —
+    // audit-write failures are swallowed so the original closeout error is
+    // surfaced unchanged to the caller.
+    try {
+      for (const row of trail) {
+        await appendCloseoutAuditRow(slug, stage_id, row.step_name, row.ok, row.error ?? null);
+      }
+      const err = e instanceof Error ? e.message : String(e);
+      await appendCloseoutAuditRow(slug, stage_id, lastStep, false, err);
+    } catch {
+      /* best-effort */
+    }
+    throw e;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -725,12 +1017,28 @@ export async function mutateMasterPlanDescriptionWrite(
   });
 }
 
+/**
+ * Append one change-log row.
+ *
+ * UNIQUE `(slug, stage_id, kind, commit_sha)` constraint (migration 0042)
+ * lets repeat closeout chains rely on idempotent appends — `ON CONFLICT DO
+ * NOTHING` returns `deduped: true` + `entry_id: null` instead of raising
+ * `23505`. Callers that need to distinguish first-write vs dedup inspect
+ * the returned `deduped` flag.
+ *
+ * NULL columns are distinct under PG default UNIQUE semantics, so legacy
+ * plan-scope rows (no `stage_id` / no `commit_sha`) never collide.
+ */
 export async function mutateMasterPlanChangeLogAppend(
   slug: string,
   kind: string,
   body: string,
-  opts: { actor?: string | null; commit_sha?: string | null } = {},
-): Promise<{ entry_id: number; ts: string }> {
+  opts: {
+    actor?: string | null;
+    commit_sha?: string | null;
+    stage_id?: string | null;
+  } = {},
+): Promise<{ entry_id: number | null; ts: string | null; deduped: boolean }> {
   const cleanSlug = (slug ?? "").trim();
   const cleanKind = (kind ?? "").trim();
   const cleanBody = body ?? "";
@@ -747,20 +1055,27 @@ export async function mutateMasterPlanChangeLogAppend(
     }
     const res = await c.query<{ entry_id: string; ts: string }>(
       `INSERT INTO ia_master_plan_change_log
-         (slug, kind, body, actor, commit_sha)
-       VALUES ($1, $2, $3, $4, $5)
+         (slug, stage_id, kind, body, actor, commit_sha)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT ON CONSTRAINT ia_master_plan_change_log_unique
+       DO NOTHING
        RETURNING entry_id::text AS entry_id, ts`,
       [
         cleanSlug,
+        opts.stage_id ?? null,
         cleanKind,
         cleanBody,
         opts.actor ?? null,
         opts.commit_sha ?? null,
       ],
     );
+    if (res.rowCount === 0) {
+      return { entry_id: null, ts: null, deduped: true };
+    }
     return {
       entry_id: parseInt(res.rows[0]!.entry_id, 10),
       ts: res.rows[0]!.ts,
+      deduped: false,
     };
   });
 }

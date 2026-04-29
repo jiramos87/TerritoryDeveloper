@@ -286,7 +286,7 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
     "master_plan_change_log_append",
     {
       description:
-        "DB-backed: append one append-only history row to ia_master_plan_change_log. Replaces manual edits to the `Change log` sections previously scattered through index.md / stage-*.md files.",
+        "DB-backed: append one append-only history row to ia_master_plan_change_log. UNIQUE (slug, stage_id, kind, commit_sha) — duplicate inserts return `deduped: true` with `entry_id: null` (idempotent for re-run closeout / sha-backfill chains).",
       inputSchema: {
         slug: z.string().describe("Master-plan slug."),
         kind: z
@@ -297,6 +297,12 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
         body: z.string().describe("Markdown body of the entry."),
         actor: z.string().optional().describe("Who recorded the entry."),
         commit_sha: z.string().optional().describe("Commit sha (optional)."),
+        stage_id: z
+          .string()
+          .optional()
+          .describe(
+            "Stage id (optional). Distinguishes per-stage entries from plan-scope rows under same kind+sha.",
+          ),
       },
     },
     async (args) =>
@@ -310,6 +316,7 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
                   body?: string;
                   actor?: string;
                   commit_sha?: string;
+                  stage_id?: string;
                 }
               | undefined,
           ) => {
@@ -326,6 +333,7 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
               return await mutateMasterPlanChangeLogAppend(slug, kind, body, {
                 actor: input?.actor ?? null,
                 commit_sha: input?.commit_sha ?? null,
+                stage_id: input?.stage_id ?? null,
               });
             } catch (e) {
               mapDbErrors(e);
@@ -339,6 +347,7 @@ export function registerMasterPlanChangeLogAppend(server: McpServer): void {
                 body?: string;
                 actor?: string;
                 commit_sha?: string;
+                stage_id?: string;
               }
             | undefined,
         );

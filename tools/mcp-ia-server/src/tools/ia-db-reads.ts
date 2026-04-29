@@ -1,10 +1,11 @@
 /**
  * MCP tools (read-only, DB-backed) — Step 3 of ia-dev-db-refactor.
  *
- * Registers 8 tools on the IA core server bucket:
+ * Registers 9 tools on the IA core server bucket:
  *   - task_state, stage_state, master_plan_state
  *   - task_spec_body, task_spec_section, task_spec_search
  *   - stage_bundle, task_bundle
+ *   - stage_closeout_diagnose
  *
  * Filesystem is never touched; all reads route through
  * `src/ia-db/queries.ts` → singleton `pg.Pool`.
@@ -27,6 +28,7 @@ import {
   IaDbUnavailableError,
   queryMasterPlanState,
   queryStageBundle,
+  queryStageCloseoutDiagnose,
   queryStageState,
   queryTaskBody,
   queryTaskBundle,
@@ -440,7 +442,49 @@ export function registerTaskBundle(server: McpServer): void {
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
-/** Register all 8 new DB-backed read tools on the IA core bucket. */
+// ---------------------------------------------------------------------------
+// stage_closeout_diagnose (TECH-2975)
+// ---------------------------------------------------------------------------
+
+export function registerStageCloseoutDiagnose(server: McpServer): void {
+  server.registerTool(
+    "stage_closeout_diagnose",
+    {
+      description:
+        "DB-backed read-only: per-step audit trail for one (slug, stage_id) closeout, ordered by ts ASC. Returns `[{step_name, ok, error, ts}]`. Empty array for legacy stages without audit rows (closeouts predating TECH-2975). Sources rows from ia_ship_stage_journal where `payload_kind LIKE 'closeout_step.%'`.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug."),
+        stage_id: z.string().describe("Stage id e.g. `1` or `3.1`."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("stage_closeout_diagnose", async () => {
+        const envelope = await wrapTool(
+          async (
+            input: { slug?: string; stage_id?: string } | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            if (!slug || !stage_id) {
+              throw {
+                code: "invalid_input",
+                message: "slug and stage_id are required.",
+              };
+            }
+            try {
+              const trail = await queryStageCloseoutDiagnose(slug, stage_id);
+              return { slug, stage_id, trail };
+            } catch (e) {
+              mapUnavailable(e);
+            }
+          },
+        )(args as { slug?: string; stage_id?: string } | undefined);
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+/** Register all 9 new DB-backed read tools on the IA core bucket. */
 export function registerIaDbReadTools(server: McpServer): void {
   registerTaskState(server);
   registerStageState(server);
@@ -450,4 +494,5 @@ export function registerIaDbReadTools(server: McpServer): void {
   registerTaskSpecSearch(server);
   registerStageBundle(server);
   registerTaskBundle(server);
+  registerStageCloseoutDiagnose(server);
 }

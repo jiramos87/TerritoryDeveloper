@@ -773,3 +773,46 @@ export async function queryTaskBundle(
 
   return { ...task, stage, master_plan_title };
 }
+
+// ---------------------------------------------------------------------------
+// queryStageCloseoutDiagnose (TECH-2975)
+// ---------------------------------------------------------------------------
+
+export interface StageCloseoutAuditStep {
+  step_name: string;
+  ok: boolean;
+  error: string | null;
+  ts: string;
+}
+
+/**
+ * Read per-step audit trail for one (slug, stage_id) closeout, ordered by ts
+ * ASC. Pulls from `ia_ship_stage_journal` rows where
+ * `payload_kind LIKE 'closeout_step.%'`. Empty array for legacy stages
+ * without audit rows (closeouts predating TECH-2975); never throws on
+ * missing rows.
+ */
+export async function queryStageCloseoutDiagnose(
+  slug: string,
+  stage_id: string,
+): Promise<StageCloseoutAuditStep[]> {
+  const pool = poolOrThrow();
+  const res = await pool.query<{
+    payload: { step_name: string; ok: boolean; error: string | null };
+    recorded_at: string;
+  }>(
+    `SELECT payload, recorded_at
+       FROM ia_ship_stage_journal
+      WHERE slug = $1
+        AND stage_id = $2
+        AND payload_kind LIKE 'closeout_step.%'
+      ORDER BY recorded_at ASC, id ASC`,
+    [slug, stage_id],
+  );
+  return res.rows.map((r) => ({
+    step_name: r.payload.step_name,
+    ok: r.payload.ok,
+    error: r.payload.error ?? null,
+    ts: r.recorded_at,
+  }));
+}

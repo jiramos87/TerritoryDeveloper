@@ -208,6 +208,24 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 2.2 — Rewrite 32 Tool Handlers
 
+## DB lifecycle extensions program
+
+Orchestrator: [`ia/projects/db-lifecycle-extensions/index.md`](projects/db-lifecycle-extensions/index.md) (permanent, never closeable — stage > task per `ia/specs/project-hierarchy.md`). Closes DB-backed lifecycle subsystem gaps surfaced post-pivot — 10 new MCP tools + 6 PG migrations + skill chain inline edits to remove documented workarounds. Sequenced Approach D (A→B→C) + 6 picked DB-arch leverage opportunities (#2, #4, #6, #7, #8, #10), under DEC-A18 lock. Stage 1 opened 2026-04-28 — 6 tasks filed below (TECH-2973..TECH-2978: `task_raw_markdown_write` MCP + 0041 migration / `master_plan_change_log` UNIQUE + 0042 / `stage_closeout_apply` PG-txn wrap + diagnose / `task_dep_register` Tarjan SCC / SKILL inline workaround removal / `arch_surfaces_backfill` MCP promotion). Stage 2 + Stage 3 file when Stage 1 → `In Progress`.
+
+### Stage 1 — Mechanical fillers
+
+- [ ] **TECH-2973 — `task_raw_markdown_write` MCP + 0041 raw_markdown extend migration** — Stage 1 T1.1 of `db-lifecycle-extensions`. Migrate `0041_task_raw_markdown_extend` (verify `ia_tasks.raw_markdown text` col present per migration 0017; add if missing). Register `task_raw_markdown_write(task_id, body)` MCP tool persisting into `ia_tasks.raw_markdown` so `materialize-backlog.sh` regenerates byte-identical BACKLOG.md rows. Removes Pass A null + Pass B backfill workaround currently called out in `ia/skills/stage-file/agent-body.md`. Files: `db/migrations/0041_task_raw_markdown_extend.sql`, `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/index.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2973.md`.
+
+- [ ] **TECH-2974 — `master_plan_change_log` UNIQUE constraint + 0042 migration** — Stage 1 T1.2 of `db-lifecycle-extensions`. Migrate `0042_master_plan_change_log_unique` adding UNIQUE `(slug, kind, commit_sha)` constraint on `ia_master_plan_change_log` to prevent duplicate change-log appends. Pre-migration dedup audit gates with fail-loud on existing dup rows (Q9 risk). Document escape hatch (manual `DELETE` of dups) before applying. Files: `db/migrations/0042_master_plan_change_log_unique.sql`, `tools/scripts/audit-master-plan-change-log-dups.mjs`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2974.md`.
+
+- [ ] **TECH-2975 — `stage_closeout_apply` PG txn wrap + `stage_closeout_diagnose` MCP** — Stage 1 T1.3 of `db-lifecycle-extensions`. Wrap `stage_closeout_apply` MCP body in single PG transaction (rollback all sub-steps on any failure). Register `stage_closeout_diagnose(slug, stage_idx)` read-only MCP tool returning per-step `[{name, ok, error?}]` for partial-failure inspection. Removes silent half-applied closeout drift caught in 2026-04-26 audit. Files: `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/tools/stage.ts`, `tools/mcp-ia-server/src/index.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2975.md`.
+
+- [ ] **TECH-2976 — `task_dep_register` MCP with Tarjan SCC cycle check** — Stage 1 T1.4 of `db-lifecycle-extensions`. Register `task_dep_register(task_id, depends_on[])` MCP tool with atomic insert + Tarjan SCC cycle detection on commit. Rejects cycles with structured `cycle_detected` error containing offending SCC member ids. Removes post-`task_insert` workaround dance in `/stage-file` SKILL where deps must be added separately. Files: `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/lib/tarjan-scc.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2976.md`.
+
+- [ ] **TECH-2977 — SKILL inline edits — remove documented workarounds in stage-file + ship-stage** — Stage 1 T1.5 of `db-lifecycle-extensions`. Edit `ia/skills/stage-file/agent-body.md` + `ia/skills/stage-file/SKILL.md` + `ia/skills/ship-stage/agent-body.md`: remove `task_raw_markdown_write` placeholder Pass A null + Pass B backfill dance (now dispatches direct to T1.1 MCP) + `task_dep_register` post-`task_insert` workaround note (now dispatches direct to T1.4 MCP). Run `npm run skill:sync:all` to regen `.claude/agents/*.md` + `.claude/commands/*.md`. Files: `ia/skills/stage-file/agent-body.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/ship-stage/agent-body.md`, `.claude/agents/stage-file.md`, `.claude/commands/stage-file.md` (regenerated). Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2977.md`.
+
+- [ ] **TECH-2978 — `backfill:arch-surfaces` promoted to `arch_surfaces_backfill` MCP tool** — Stage 1 T1.6 of `db-lifecycle-extensions`. Rewrite `tools/scripts/backfill-arch-surfaces.mjs` as TS-backed MCP tool `arch_surfaces_backfill` reading from DB. Preserve shell wrapper (`npm run backfill:arch-surfaces`) for human invocation; arch-drift-scan resolution path can dispatch inline via MCP. Files: `tools/mcp-ia-server/src/tools/arch-surfaces.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/scripts/backfill-arch-surfaces.mjs` (now thin wrapper calling MCP), `package.json` (script unchanged). Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2978.md`.
+
 ## IA evolution lane
 
 Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **TECH-552** (Unity Agent Bridge program — MCP + Editor queue hardening / transport / depth tiers per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §10). **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
@@ -337,21 +355,29 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-2899 — HudBar IR + bake (Stage 6 T6.1)** — Confirm Stage 1 IR `panels[].slug == "hud-bar"` slot accept-rules cover money/pop/happiness/speed children. Re-run `npm run unity:bake-ui`; bake driver emits `Assets/UI/Prefabs/Generated/HudBar.prefab` + StudioControl variant prefabs (`SegmentedReadout_money.prefab`, `SegmentedReadout_pop.prefab`, `VUMeter_happiness.prefab`, `IlluminatedButton_speed1x.prefab`).
-  - Acceptance — Re-run `npm run unity:bake-ui`; bake driver emits `Assets/UI/Prefabs/Generated/HudBar.prefab` + StudioControl variant prefabs (`SegmentedReadout_money.prefab`, `SegmentedReadout_pop.prefab`, `VUMeter_happiness.prefab`, `IlluminatedButton_speed1x.prefab`).
-  - Spec — [`ia/projects/TECH-2899.md`](ia/projects/TECH-2899.md)
+- [ ] **TECH-2963 — Game UI Stage 10 T10.1 — Renderer base + SegmentedReadoutRenderer** — New `Assets/Scripts/UI/StudioControls/Renderers/StudioControlRendererBase.cs` abstract MonoBehaviour. Caches `CanvasRenderer` + child `Image` ref + `UiTheme` ref in `Awake` per invariant #3 (no per-frame `FindObjectOfType`). Subscribes `StudioControlBase.OnStateChanged`; abstract `OnStateApplied()` hook for subclasses. New `SegmentedReadoutRenderer.cs` writes `Detail` string into child `TMP_Text` on state change. Establishes per-kind renderer pattern. State-holder + renderer split preserved — no render code in `StudioControlBase` / subclasses.
+  - Files: `Assets/Scripts/UI/StudioControls/Renderers/StudioControlRendererBase.cs` (new), `Assets/Scripts/UI/StudioControls/Renderers/SegmentedReadoutRenderer.cs` (new)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
 
-- [ ] **TECH-2900 — HudBarDataAdapter MonoBehaviour (Stage 6 T6.2)** — New `Assets/Scripts/UI/HUD/HudBarDataAdapter.cs` bridges sim manager refs (CityFinanceManager, PopulationManager, HappinessService, GameSpeedManager) → baked StudioControl SO refs. Awake-caches all manager + UiTheme refs via `[SerializeField] + FindObjectOfType` fallback per invariants #3 + #4; per-frame consumer ticks gated on producer `IsInitialized` per guardrail #14.
-  - Acceptance — Awake-caches all manager + UiTheme refs via `[SerializeField] + FindObjectOfType` fallback per invariants #3 + #4; per-frame consumer ticks gated on producer `IsInitialized` per guardrail #14.
-  - Spec — [`ia/projects/TECH-2900.md`](ia/projects/TECH-2900.md)
+- [ ] **TECH-2964 — Game UI Stage 10 T10.2 — IlluminatedButtonRenderer + VUMeterRenderer** — New `Assets/Scripts/UI/StudioControls/Renderers/IlluminatedButtonRenderer.cs` toggles tint/alpha on `Pressed` state; emits halo pulse via child `Image.color` lerp on `Halo` event. New `VUMeterRenderer.cs` rotates child needle `RectTransform.localRotation` by `Detail` value mapped to angle range pulled from `UiTheme`. Pattern matches T10.1 (TECH-2963); both subclass `StudioControlRendererBase`. `UiTheme` cached in `Awake` per invariant #3.
+  - Files: `Assets/Scripts/UI/StudioControls/Renderers/IlluminatedButtonRenderer.cs` (new), `Assets/Scripts/UI/StudioControls/Renderers/VUMeterRenderer.cs` (new)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
 
-- [ ] **TECH-2901 — HudBar scene wiring + legacy decommission (Stage 6 T6.3)** — Place `HudBar.prefab` instance under `Game Managers` parent in `MainScene.unity` via `unity_bridge_command instantiate_prefab` + `set_gameobject_parent` + `attach_component` + `assign_serialized_field`. Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.
-  - Acceptance — Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.
-  - Spec — [`ia/projects/TECH-2901.md`](ia/projects/TECH-2901.md)
+- [ ] **TECH-2965 — Game UI Stage 10 T10.3 — UiBakeHandler renderer injection** — Extend `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` interactive emit path (around `VUMeter` / `IlluminatedButton` / `SegmentedReadout` `AddComponent` calls). After state-holder component attaches, also `AddComponent` matching `*Renderer` + spawn child `Image` / `TMP_Text` GameObject sized via `RectTransform` per IR detail row. Bake-time only — NO runtime `AddComponent` paths. Re-bake all StudioControl prefabs under `Assets/UI/Prefabs/Generated/` via `npm run unity:bake-ui`.
+  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` (canonical bake handler — source doc's `Assets/Scripts/UI/Bake/BakePrefab.cs` reference is stale), `Assets/UI/Prefabs/Generated/hud-bar.prefab` (re-baked output)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
 
-- [ ] **TECH-2902 — HUD parity PlayMode test (Stage 6 T6.4)** — PlayMode test under `Assets/Scripts/Tests/UI/HUD/` — load fixture save, advance simulation N ticks, assert new HUD readouts match legacy fixture values within tolerance. Speed-change toggle asserts IlluminatedButton state mirrors `GameSpeedManager.CurrentSpeed`; smoke via `npm run unity:testmode-batch`; Stage 6 gate `npm run verify:local` exits 0.
-  - Acceptance — Speed-change toggle asserts IlluminatedButton state mirrors `GameSpeedManager.CurrentSpeed`; smoke via `npm run unity:testmode-batch`; Stage 6 gate `npm run verify:local` exits 0.
-  - Spec — [`ia/projects/TECH-2902.md`](ia/projects/TECH-2902.md)
+- [ ] **TECH-2966 — Game UI Stage 10 T10.4 — UI Canvas scene root** — Add scene-level `UI Canvas` GameObject to `MainScene.unity` via bridge mutations: `Canvas` (Render Mode = Screen Space — Overlay) + `CanvasScaler` (Scale-With-Screen-Size, reference resolution + match value sourced from `UiTheme`) + `GraphicRaycaster`. Sibling `EventSystem` GameObject (StandaloneInputModule). Distinct from `Game Managers` / `World` parents. Reference resolution sourced from `UiTheme` per invariant #3 (cached in `Awake`). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.
+  - Files: `Assets/Scenes/MainScene.unity` (canvas root + EventSystem added)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
+
+- [ ] **TECH-2967 — Game UI Stage 10 T10.5 — HUD reparent + channel binds close** — Reparent `hud-bar` PrefabInstance from `Game Managers` Transform under `UI Canvas` via `set_gameobject_parent` bridge mutation. Bind `HudBarDataAdapter._populationReadout` to population `SegmentedReadout` ref + `_happinessNeedle` to happiness `NeedleBallistics` (or `VUMeter` when needle-juice sibling absent) ref via `assign_serialized_field` bridge mutations on the PrefabInstance. Closes the HUD silent-channels gap. Inspector slot first per invariant #4 (FindObjectOfType fallback only when slot null). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.
+  - Files: `Assets/Scenes/MainScene.unity` (hud-bar PrefabInstance reparent + Inspector binds)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
+
+- [ ] **TECH-2968 — Game UI Stage 10 T10.6 — HudBarVisualSmokeTest PlayMode** — New `Assets/Scripts/Tests/UI/HUD/HudBarVisualSmokeTest.cs` PlayMode test. Enters PlayMode; for each rendered StudioControl child of hud-bar assert child `Image.color.a > 0`; assert city-name + population + money `TMP_Text.text` non-empty; sample happiness via `HudBarDataAdapter`; assert needle `RectTransform.localRotation.eulerAngles.z` matches expected angle range. Closes visibility regression hole that `HudBarParityTest` silently passed through. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.
+  - Files: `Assets/Scripts/Tests/UI/HUD/HudBarVisualSmokeTest.cs` (new)
+  - Spec: `ia/projects/game-ui-design-system/{ID}.md` (stub; populated post-`/stage-authoring`)
 
 ## Economic depth lane
 
@@ -678,6 +704,18 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
+
+- [ ] **TECH-3001** — **Migration + edge types** (asset-pipeline Stage 14.1 T14.1.1)
+  - Acceptance — Migration applies clean (`npm run db:migrate`); forward + reverse composite indexes present; `web/lib/refs/types.ts` exports `CatalogRefEdge` + `EdgeRole`; tsc clean.
+  - Spec — [`ia/projects/TECH-3001.md`](ia/projects/TECH-3001.md)
+
+- [ ] **TECH-3002** — **Edge-builder library** (asset-pipeline Stage 14.1 T14.1.2)
+  - Acceptance — All 8 walkers present (Panel/Button/Asset/Pool/Archetype active + Sprite/Token/Audio terminal); single-batch INSERT per walker; DELETE-then-INSERT idempotent (re-run produces same edge state).
+  - Spec — [`ia/projects/TECH-3002.md`](ia/projects/TECH-3002.md)
+
+- [ ] **TECH-3003** — **Publish hook + lint + tests** (asset-pipeline Stage 14.1 T14.1.3)
+  - Acceptance — Publish route invokes edge-builder atomically inside tx; `checkDanglingRefs` integrated into `runLayer2`; golden suite at `__tests__/edge-population.test.ts` covers all 8 publish paths with deterministic edge counts.
+  - Spec — [`ia/projects/TECH-3003.md`](ia/projects/TECH-3003.md)
 
 ## High Priority
 

@@ -62,6 +62,7 @@ import { registerIaDbReadTools } from "./tools/ia-db-reads.js";
 import { registerIaDbWriteTools } from "./tools/ia-db-writes.js";
 import { registerMasterPlanRenderTools } from "./tools/master-plan-render-tools.js";
 import { registerArchTools } from "./tools/arch.js";
+import { registerArchSurfacesBackfill } from "./tools/arch-surfaces.js";
 
 // Bridge + compute tools
 import {
@@ -149,6 +150,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerIaDbWriteTools(server);
   registerMasterPlanRenderTools(server);
   registerArchTools(server);
+  registerArchSurfacesBackfill(server);
 }
 
 /**

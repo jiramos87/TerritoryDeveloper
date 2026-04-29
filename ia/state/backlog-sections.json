@@ -253,6 +253,57 @@
       ]
     },
     {
+      "header": "## DB lifecycle extensions program",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "Orchestrator: [`ia/projects/db-lifecycle-extensions/index.md`](projects/db-lifecycle-extensions/index.md) (permanent, never closeable — stage > task per `ia/specs/project-hierarchy.md`). Closes DB-backed lifecycle subsystem gaps surfaced post-pivot — 10 new MCP tools + 6 PG migrations + skill chain inline edits to remove documented workarounds. Sequenced Approach D (A→B→C) + 6 picked DB-arch leverage opportunities (#2, #4, #6, #7, #8, #10), under DEC-A18 lock. Stage 1 opened 2026-04-28 — 6 tasks filed below (TECH-2973..TECH-2978: `task_raw_markdown_write` MCP + 0041 migration / `master_plan_change_log` UNIQUE + 0042 / `stage_closeout_apply` PG-txn wrap + diagnose / `task_dep_register` Tarjan SCC / SKILL inline workaround removal / `arch_surfaces_backfill` MCP promotion). Stage 2 + Stage 3 file when Stage 1 → `In Progress`.",
+            "",
+            "### Stage 1 — Mechanical fillers",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2973",
+          "checklist_line": "- [ ] **TECH-2973 — `task_raw_markdown_write` MCP + 0041 raw_markdown extend migration** — Stage 1 T1.1 of `db-lifecycle-extensions`. Migrate `0041_task_raw_markdown_extend` (verify `ia_tasks.raw_markdown text` col present per migration 0017; add if missing). Register `task_raw_markdown_write(task_id, body)` MCP tool persisting into `ia_tasks.raw_markdown` so `materialize-backlog.sh` regenerates byte-identical BACKLOG.md rows. Removes Pass A null + Pass B backfill workaround currently called out in `ia/skills/stage-file/agent-body.md`. Files: `db/migrations/0041_task_raw_markdown_extend.sql`, `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/index.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2973.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2974",
+          "checklist_line": "- [ ] **TECH-2974 — `master_plan_change_log` UNIQUE constraint + 0042 migration** — Stage 1 T1.2 of `db-lifecycle-extensions`. Migrate `0042_master_plan_change_log_unique` adding UNIQUE `(slug, kind, commit_sha)` constraint on `ia_master_plan_change_log` to prevent duplicate change-log appends. Pre-migration dedup audit gates with fail-loud on existing dup rows (Q9 risk). Document escape hatch (manual `DELETE` of dups) before applying. Files: `db/migrations/0042_master_plan_change_log_unique.sql`, `tools/scripts/audit-master-plan-change-log-dups.mjs`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2974.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2975",
+          "checklist_line": "- [ ] **TECH-2975 — `stage_closeout_apply` PG txn wrap + `stage_closeout_diagnose` MCP** — Stage 1 T1.3 of `db-lifecycle-extensions`. Wrap `stage_closeout_apply` MCP body in single PG transaction (rollback all sub-steps on any failure). Register `stage_closeout_diagnose(slug, stage_idx)` read-only MCP tool returning per-step `[{name, ok, error?}]` for partial-failure inspection. Removes silent half-applied closeout drift caught in 2026-04-26 audit. Files: `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/tools/stage.ts`, `tools/mcp-ia-server/src/index.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2975.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2976",
+          "checklist_line": "- [ ] **TECH-2976 — `task_dep_register` MCP with Tarjan SCC cycle check** — Stage 1 T1.4 of `db-lifecycle-extensions`. Register `task_dep_register(task_id, depends_on[])` MCP tool with atomic insert + Tarjan SCC cycle detection on commit. Rejects cycles with structured `cycle_detected` error containing offending SCC member ids. Removes post-`task_insert` workaround dance in `/stage-file` SKILL where deps must be added separately. Files: `tools/mcp-ia-server/src/ia-db/mutations.ts`, `tools/mcp-ia-server/src/tools/task.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/lib/tarjan-scc.ts`. Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2976.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2977",
+          "checklist_line": "- [ ] **TECH-2977 — SKILL inline edits — remove documented workarounds in stage-file + ship-stage** — Stage 1 T1.5 of `db-lifecycle-extensions`. Edit `ia/skills/stage-file/agent-body.md` + `ia/skills/stage-file/SKILL.md` + `ia/skills/ship-stage/agent-body.md`: remove `task_raw_markdown_write` placeholder Pass A null + Pass B backfill dance (now dispatches direct to T1.1 MCP) + `task_dep_register` post-`task_insert` workaround note (now dispatches direct to T1.4 MCP). Run `npm run skill:sync:all` to regen `.claude/agents/*.md` + `.claude/commands/*.md`. Files: `ia/skills/stage-file/agent-body.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/ship-stage/agent-body.md`, `.claude/agents/stage-file.md`, `.claude/commands/stage-file.md` (regenerated). Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2977.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2978",
+          "checklist_line": "- [ ] **TECH-2978 — `backfill:arch-surfaces` promoted to `arch_surfaces_backfill` MCP tool** — Stage 1 T1.6 of `db-lifecycle-extensions`. Rewrite `tools/scripts/backfill-arch-surfaces.mjs` as TS-backed MCP tool `arch_surfaces_backfill` reading from DB. Preserve shell wrapper (`npm run backfill:arch-surfaces`) for human invocation; arch-drift-scan resolution path can dispatch inline via MCP. Files: `tools/mcp-ia-server/src/tools/arch-surfaces.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/scripts/backfill-arch-surfaces.mjs` (now thin wrapper calling MCP), `package.json` (script unchanged). Spec stub: `ia/projects/db-lifecycle-extensions/TECH-2978.md`.",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## IA evolution lane",
       "items": [
         {
@@ -611,6 +662,42 @@
           "type": "issue",
           "id": "TECH-2902",
           "checklist_line": "- [ ] **TECH-2902 — HUD parity PlayMode test (Stage 6 T6.4)** — PlayMode test under `Assets/Scripts/Tests/UI/HUD/` — load fixture save, advance simulation N ticks, assert new HUD readouts match legacy fixture values within tolerance. Speed-change toggle asserts IlluminatedButton state mirrors `GameSpeedManager.CurrentSpeed`; smoke via `npm run unity:testmode-batch`; Stage 6 gate `npm run verify:local` exits 0.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2963",
+          "checklist_line": "- [ ] **TECH-2963 — Game UI Stage 10 T10.1 — Renderer base + SegmentedReadoutRenderer** — New `Assets/Scripts/UI/StudioControls/Renderers/StudioControlRendererBase.cs` abstract MonoBehaviour. Caches `CanvasRenderer` + child `Image` ref + `UiTheme` ref in `Awake` per invariant #3 (no per-frame `FindObjectOfType`). Subscribes `StudioControlBase.OnStateChanged`; abstract `OnStateApplied()` hook for subclasses. New `SegmentedReadoutRenderer.cs` writes `Detail` string into child `TMP_Text` on state change. Establishes per-kind renderer pattern. State-holder + renderer split preserved — no render code in `StudioControlBase` / subclasses.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2964",
+          "checklist_line": "- [ ] **TECH-2964 — Game UI Stage 10 T10.2 — IlluminatedButtonRenderer + VUMeterRenderer** — New `Assets/Scripts/UI/StudioControls/Renderers/IlluminatedButtonRenderer.cs` toggles tint/alpha on `Pressed` state; emits halo pulse via child `Image.color` lerp on `Halo` event. New `VUMeterRenderer.cs` rotates child needle `RectTransform.localRotation` by `Detail` value mapped to angle range pulled from `UiTheme`. Pattern matches T10.1 (TECH-2963); both subclass `StudioControlRendererBase`. `UiTheme` cached in `Awake` per invariant #3.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2965",
+          "checklist_line": "- [ ] **TECH-2965 — Game UI Stage 10 T10.3 — UiBakeHandler renderer injection** — Extend `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` interactive emit path (around `VUMeter` / `IlluminatedButton` / `SegmentedReadout` `AddComponent` calls). After state-holder component attaches, also `AddComponent` matching `*Renderer` + spawn child `Image` / `TMP_Text` GameObject sized via `RectTransform` per IR detail row. Bake-time only — NO runtime `AddComponent` paths. Re-bake all StudioControl prefabs under `Assets/UI/Prefabs/Generated/` via `npm run unity:bake-ui`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2966",
+          "checklist_line": "- [ ] **TECH-2966 — Game UI Stage 10 T10.4 — UI Canvas scene root** — Add scene-level `UI Canvas` GameObject to `MainScene.unity` via bridge mutations: `Canvas` (Render Mode = Screen Space — Overlay) + `CanvasScaler` (Scale-With-Screen-Size, reference resolution + match value sourced from `UiTheme`) + `GraphicRaycaster`. Sibling `EventSystem` GameObject (StandaloneInputModule). Distinct from `Game Managers` / `World` parents. Reference resolution sourced from `UiTheme` per invariant #3 (cached in `Awake`). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2967",
+          "checklist_line": "- [ ] **TECH-2967 — Game UI Stage 10 T10.5 — HUD reparent + channel binds close** — Reparent `hud-bar` PrefabInstance from `Game Managers` Transform under `UI Canvas` via `set_gameobject_parent` bridge mutation. Bind `HudBarDataAdapter._populationReadout` to population `SegmentedReadout` ref + `_happinessNeedle` to happiness `NeedleBallistics` (or `VUMeter` when needle-juice sibling absent) ref via `assign_serialized_field` bridge mutations on the PrefabInstance. Closes the HUD silent-channels gap. Inspector slot first per invariant #4 (FindObjectOfType fallback only when slot null). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-2968",
+          "checklist_line": "- [ ] **TECH-2968 — Game UI Stage 10 T10.6 — HudBarVisualSmokeTest PlayMode** — New `Assets/Scripts/Tests/UI/HUD/HudBarVisualSmokeTest.cs` PlayMode test. Enters PlayMode; for each rendered StudioControl child of hud-bar assert child `Image.color.a > 0`; assert city-name + population + money `TMP_Text.text` non-empty; sample happiness via `HudBarDataAdapter`; assert needle `RectTransform.localRotation.eulerAngles.z` matches expected angle range. Closes visibility regression hole that `HudBarParityTest` silently passed through. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
           "trailing_blanks": 1
         }
       ]
@@ -1559,6 +1646,24 @@
           "type": "issue",
           "id": "TECH-2676",
           "checklist_line": "- [ ] **TECH-2676** — **Snapshot retire UI + GC sweep script + cron hookup** (asset-pipeline Stage 13.1 T13.1.T4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3001",
+          "checklist_line": "- [ ] **TECH-3001** — **Migration + edge types** (asset-pipeline Stage 14.1 T14.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3002",
+          "checklist_line": "- [ ] **TECH-3002** — **Edge-builder library** (asset-pipeline Stage 14.1 T14.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-3003",
+          "checklist_line": "- [ ] **TECH-3003** — **Publish hook + lint + tests** (asset-pipeline Stage 14.1 T14.1.3)",
           "trailing_blanks": 1
         }
       ]

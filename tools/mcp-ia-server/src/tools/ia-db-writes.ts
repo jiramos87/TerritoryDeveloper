@@ -1,8 +1,10 @@
 /**
  * MCP tools (write/mutation, DB-backed) — Step 4 of ia-dev-db-refactor.
  *
- * Registers 9 mutation tools on the IA core server bucket:
+ * Registers 11 mutation tools on the IA core server bucket:
  *   - task_insert, task_status_flip, task_spec_section_write
+ *   - task_raw_markdown_write
+ *   - task_dep_register
  *   - task_commit_record
  *   - stage_verification_flip, stage_closeout_apply
  *   - journal_append
@@ -36,7 +38,9 @@ import {
   mutateStageCloseoutApply,
   mutateStageVerificationFlip,
   mutateTaskCommitRecord,
+  mutateTaskDepRegister,
   mutateTaskInsert,
+  mutateTaskRawMarkdownWrite,
   mutateTaskSpecSectionWrite,
   mutateTaskStatusFlip,
 } from "../ia-db/mutations.js";
@@ -349,6 +353,104 @@ export function registerTaskSpecSectionWrite(server: McpServer): void {
               }
             | undefined,
         );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// task_dep_register (TECH-2976)
+// ---------------------------------------------------------------------------
+
+export function registerTaskDepRegister(server: McpServer): void {
+  server.registerTool(
+    "task_dep_register",
+    {
+      description:
+        "DB-backed: atomically register `depends_on` edges into `ia_task_deps` with Tarjan SCC cycle detection inside a single PG transaction. Inserts use `ON CONFLICT DO NOTHING` (idempotent re-register). Cycle-inducing edges → ROLLBACK + structured `{ok:false, error:{code:'cycle_detected', scc_members:[...]}}` (non-throw). Self-references rejected pre-Tarjan.",
+      inputSchema: {
+        task_id: z.string().describe("Task id e.g. TECH-776 (must exist)."),
+        depends_on: z
+          .array(z.string())
+          .describe(
+            "Existing task ids this task depends on. Empty array allowed (no-op).",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("task_dep_register", async () => {
+        const envelope = await wrapTool(
+          async (
+            input: { task_id?: string; depends_on?: string[] } | undefined,
+          ) => {
+            const id = (input?.task_id ?? "").trim().toUpperCase();
+            const deps = Array.isArray(input?.depends_on)
+              ? input!.depends_on!.map((s) => (s ?? "").trim().toUpperCase())
+              : [];
+            if (!id) {
+              throw {
+                code: "invalid_input",
+                message: "task_id is required.",
+              };
+            }
+            try {
+              return await mutateTaskDepRegister(id, deps);
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(args as { task_id?: string; depends_on?: string[] } | undefined);
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// task_raw_markdown_write
+// ---------------------------------------------------------------------------
+
+export function registerTaskRawMarkdownWrite(server: McpServer): void {
+  server.registerTool(
+    "task_raw_markdown_write",
+    {
+      description:
+        "DB-backed: persist verbatim BACKLOG.md row block into `ia_tasks.raw_markdown`. Single-row UPDATE, idempotent. Replaces the Pass-A-null + Pass-B-backfill workaround in `/stage-file` (TECH-2973). Body string is stored byte-identical so the DB-sourced BACKLOG.md generator can emit unchanged output.",
+      inputSchema: {
+        task_id: z.string().describe("Task id e.g. TECH-776."),
+        body: z
+          .string()
+          .describe(
+            "Verbatim BACKLOG.md row block (checklist line + sub-bullets). Empty string accepted; null is reserved for `never written` sentinel.",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("task_raw_markdown_write", async () => {
+        const envelope = await wrapTool(
+          async (
+            input: { task_id?: string; body?: string } | undefined,
+          ) => {
+            const id = (input?.task_id ?? "").trim().toUpperCase();
+            const body = input?.body;
+            if (!id) {
+              throw {
+                code: "invalid_input",
+                message: "task_id is required.",
+              };
+            }
+            if (typeof body !== "string") {
+              throw {
+                code: "invalid_input",
+                message: "body is required and must be a string.",
+              };
+            }
+            try {
+              return await mutateTaskRawMarkdownWrite(id, body);
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(args as { task_id?: string; body?: string } | undefined);
         return jsonResult(envelope);
       }),
   );
@@ -749,11 +851,13 @@ export function registerFixPlanConsume(server: McpServer): void {
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
-/** Register all 9 new DB-backed write tools on the IA core bucket. */
+/** Register all 11 DB-backed write tools on the IA core bucket. */
 export function registerIaDbWriteTools(server: McpServer): void {
   registerTaskInsert(server);
   registerTaskStatusFlip(server);
   registerTaskSpecSectionWrite(server);
+  registerTaskRawMarkdownWrite(server);
+  registerTaskDepRegister(server);
   registerTaskCommitRecord(server);
   registerStageVerificationFlip(server);
   registerStageCloseoutApply(server);
