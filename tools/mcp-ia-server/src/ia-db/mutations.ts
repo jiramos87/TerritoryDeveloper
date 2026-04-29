@@ -1219,6 +1219,10 @@ export interface StageInsertInput {
    * Empty / null = no surface links (cross-cutting tooling Stages).
    */
   arch_surfaces?: string[] | null;
+  /** parallel-carcass D3 — 'carcass' | 'section' | null (legacy linear). */
+  carcass_role?: "carcass" | "section" | null;
+  /** parallel-carcass D19 — section cluster id; NULL for carcass + legacy. */
+  section_id?: string | null;
 }
 
 export interface StageInsertResult {
@@ -1262,9 +1266,15 @@ export async function mutateStageInsert(
         `stage already exists: ${cleanSlug}/${cleanStageId}`,
       );
     }
+    const carcassRole = input.carcass_role ?? null;
+    if (carcassRole !== null && !["carcass", "section"].includes(carcassRole)) {
+      throw new IaDbValidationError(
+        `invalid carcass_role: ${carcassRole}; must be 'carcass', 'section', or null`,
+      );
+    }
     const ins = await c.query<{ created_at: string; updated_at: string }>(
-      `INSERT INTO ia_stages (slug, stage_id, title, objective, exit_criteria, body, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7::stage_status)
+      `INSERT INTO ia_stages (slug, stage_id, title, objective, exit_criteria, body, status, carcass_role, section_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::stage_status, $8, $9)
        RETURNING created_at, updated_at`,
       [
         cleanSlug,
@@ -1274,6 +1284,8 @@ export async function mutateStageInsert(
         input.exit_criteria ?? null,
         input.body ?? "",
         status,
+        carcassRole,
+        input.section_id ?? null,
       ],
     );
 
@@ -1325,6 +1337,10 @@ export interface StageUpdateInput {
   title?: string | null;
   objective?: string | null;
   exit_criteria?: string | null;
+  /** parallel-carcass D3 — 'carcass' | 'section' | null (legacy linear). */
+  carcass_role?: "carcass" | "section" | null;
+  /** parallel-carcass D19 — section cluster id; NULL for carcass + legacy. */
+  section_id?: string | null;
 }
 
 export interface StageUpdateResult {
@@ -1359,9 +1375,24 @@ export async function mutateStageUpdate(
     values.push(input.exit_criteria);
     fields.push("exit_criteria");
   }
+  if (input.carcass_role !== undefined) {
+    if (input.carcass_role !== null && !["carcass", "section"].includes(input.carcass_role)) {
+      throw new IaDbValidationError(
+        `invalid carcass_role: ${input.carcass_role}; must be 'carcass', 'section', or null`,
+      );
+    }
+    sets.push(`carcass_role = $${values.length + 1}`);
+    values.push(input.carcass_role);
+    fields.push("carcass_role");
+  }
+  if (input.section_id !== undefined) {
+    sets.push(`section_id = $${values.length + 1}`);
+    values.push(input.section_id);
+    fields.push("section_id");
+  }
   if (sets.length === 0) {
     throw new IaDbValidationError(
-      "at least one of title/objective/exit_criteria must be provided",
+      "at least one of title/objective/exit_criteria/carcass_role/section_id must be provided",
     );
   }
   return withTx(async (c) => {

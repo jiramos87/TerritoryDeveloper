@@ -561,6 +561,20 @@ export function registerStageInsert(server: McpServer): void {
           .describe(
             "Optional list of `arch_surfaces.slug` values to link via `stage_arch_surfaces` (DEC-A12). Unknown slugs reject (Invariant #12 — no auto-create).",
           ),
+        carcass_role: z
+          .enum(["carcass", "section"])
+          .nullable()
+          .optional()
+          .describe(
+            "parallel-carcass D3 — 'carcass' (milestone gate stage) | 'section' (parallel work unit) | null (legacy linear). Default null.",
+          ),
+        section_id: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            "parallel-carcass D19 — section cluster id (e.g. 'A', 'B'). Required when carcass_role='section'. Null for carcass + legacy stages.",
+          ),
       },
     },
     async (args) =>
@@ -577,6 +591,8 @@ export function registerStageInsert(server: McpServer): void {
                   body?: string;
                   status?: "pending" | "in_progress" | "done";
                   arch_surfaces?: string[];
+                  carcass_role?: "carcass" | "section" | null;
+                  section_id?: string | null;
                 }
               | undefined,
           ) => {
@@ -598,6 +614,8 @@ export function registerStageInsert(server: McpServer): void {
                 body: input?.body ?? null,
                 status: input?.status,
                 arch_surfaces: input?.arch_surfaces ?? null,
+                carcass_role: input?.carcass_role ?? null,
+                section_id: input?.section_id ?? null,
               });
             } catch (e) {
               mapDbErrors(e);
@@ -614,6 +632,8 @@ export function registerStageInsert(server: McpServer): void {
                 body?: string;
                 status?: "pending" | "in_progress" | "done";
                 arch_surfaces?: string[];
+                carcass_role?: "carcass" | "section" | null;
+                section_id?: string | null;
               }
             | undefined,
         );
@@ -631,7 +651,7 @@ export function registerStageUpdate(server: McpServer): void {
     "stage_update",
     {
       description:
-        "DB-backed: update structured stage fields (title / objective / exit_criteria) on an existing ia_stages row. Pass any subset; pass null to clear a field. Status transitions go through task_status_flip + stage_closeout_apply, not this tool.",
+        "DB-backed: update structured stage fields (title / objective / exit_criteria / carcass_role / section_id) on an existing ia_stages row. Pass any subset; pass null to clear a field. Status transitions go through task_status_flip + stage_closeout_apply, not this tool.",
       inputSchema: {
         slug: z.string().describe("Master-plan slug."),
         stage_id: z.string().describe("Stage id e.g. `5.4`."),
@@ -650,6 +670,20 @@ export function registerStageUpdate(server: McpServer): void {
           .nullable()
           .optional()
           .describe("Exit criteria prose (null clears)."),
+        carcass_role: z
+          .enum(["carcass", "section"])
+          .nullable()
+          .optional()
+          .describe(
+            "parallel-carcass D3 — 'carcass' | 'section' | null. Null clears to legacy linear.",
+          ),
+        section_id: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            "parallel-carcass D19 — section cluster id. Null clears.",
+          ),
       },
     },
     async (args) =>
@@ -663,6 +697,8 @@ export function registerStageUpdate(server: McpServer): void {
                   title?: string | null;
                   objective?: string | null;
                   exit_criteria?: string | null;
+                  carcass_role?: "carcass" | "section" | null;
+                  section_id?: string | null;
                 }
               | undefined,
           ) => {
@@ -681,6 +717,8 @@ export function registerStageUpdate(server: McpServer): void {
                 title: input?.title,
                 objective: input?.objective,
                 exit_criteria: input?.exit_criteria,
+                carcass_role: input?.carcass_role,
+                section_id: input?.section_id,
               });
             } catch (e) {
               mapDbErrors(e);
@@ -694,6 +732,8 @@ export function registerStageUpdate(server: McpServer): void {
                 title?: string | null;
                 objective?: string | null;
                 exit_criteria?: string | null;
+                carcass_role?: "carcass" | "section" | null;
+                section_id?: string | null;
               }
             | undefined,
         );

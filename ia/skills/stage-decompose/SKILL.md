@@ -330,3 +330,7 @@ After persist: `claude-personal "/stage-file {SLUG} Stage {STAGE_ID}"` — but O
 ---
 
 ## Changelog
+
+| Date | Change | Trigger |
+|------|--------|---------|
+| 2026-04-29 | parallel-carcass D3/D19 extension — `stage_insert` + `stage_update` MCP tools now accept `carcass_role` ('carcass'\|'section'\|null) + `section_id` (text\|null). Skill passes these fields when authoring carcass-aware plans. Legacy linear path unaffected (both default null). | `docs/parallel-carcass-exploration.md` §7 PR 3.4 |
