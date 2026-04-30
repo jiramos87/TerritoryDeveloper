@@ -321,6 +321,8 @@ COMMIT;
 | `arch_drift_scan` | **modify** | Add `scope` arg ∈ `{global, cross-plan, intra-plan}`. `intra-plan` joins `stage_arch_surfaces × arch_changelog` grouped by section, flags cross-section surface edits. |
 | `master_plan_lock_arch` | **NEW** | `({slug, commit_sha})` → set `architecture_locked_at = now()`, `locked_commit_sha = $sha`; `master_plan_change_log_append (kind='arch_locked')`. |
 
+**Ops:** [`docs/parallel-carcass-claims-sweep-ops.md`](parallel-carcass-claims-sweep-ops.md) — claims sweep cadence + manual override + stuck-claim recovery.
+
 ### 6.3 Skill catalogue delta
 
 > **Cross-plan convergence (2026-04-29):** all five skill surfaces below ship as **recipify-and-extend** per DEC-A19 Phase E (`docs/agent-as-recipe-runner.md` §G + §K). Engine + MCP injector live (Phase D shipped 2026-04-29, commit 6996e130). Phase 3 = first heavy-LLM dogfood for the recipe-runner. Sequence: engine regression-test backfill → 0-seam recipes (`section-claim`, `section-closeout`) → deterministic Phase A of `master-plan-new` → seam-driven Phase B/C → `stage-decompose` ext → `ship-stage` Pass A/B hooks (verify-loop subagent body stays — Phase F keeper).

@@ -53,6 +53,7 @@
     "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
     "audit:master-plan-change-log-dups": "node tools/scripts/audit-master-plan-change-log-dups.mjs",
+    "claims:sweep:tick": "node tools/scripts/claims-sweep-tick.mjs",
     "ia:db-import": "npx tsx tools/mcp-ia-server/scripts/ia-db-import.ts",
     "db:setup-local": "bash tools/scripts/setup-territory-ia-postgres.sh",
     "db:seed:glossary": "npm --prefix tools/postgres-ia run seed:glossary",

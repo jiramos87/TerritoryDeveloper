@@ -446,6 +446,10 @@ Everything else — app shell code, component identifiers, TypeScript comments, 
 
 Authority: `ia/rules/agent-output-caveman.md` §exceptions (authoring surface rule).
 
+## Ops
+
+- Claims sweep cron + manual override + stuck-claim recovery: [`docs/parallel-carcass-claims-sweep-ops.md`](../docs/parallel-carcass-claims-sweep-ops.md).
+
 ## Deploy
 
 Vercel project linked via dashboard. Build root: `web/`. Framework preset: Next.js. Production branch: `main`.
