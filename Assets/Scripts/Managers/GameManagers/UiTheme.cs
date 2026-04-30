@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace Territory.UI
@@ -239,21 +240,29 @@ namespace Territory.UI
             public string[] ramp;
         }
 
-        /// <summary>Frame-style spec. Mirrors `IrTokenFrameStyle`.</summary>
+        /// <summary>Frame-style spec. Mirrors `IrTokenFrameStyle` + catalog_token_frame_style shape.</summary>
         [Serializable]
         public struct FrameStyleSpec
         {
             /// <summary>`single` | `double` (CD partner extends).</summary>
             public string edge;
             public float innerShadowAlpha;
+            /// <summary>Catalog slug matching future catalog_token_frame_style.slug. Stage 19.3 wire_asset_from_catalog reads this.</summary>
+            public string catalog_sprite_slug;
+            /// <summary>Fallback sprite used when catalog row not yet resolved. May be null on first-pass entries.</summary>
+            public Sprite sprite_ref_fallback;
         }
 
-        /// <summary>Font-face spec. Mirrors `IrTokenFontFace`.</summary>
+        /// <summary>Font-face spec. Mirrors `IrTokenFontFace` + catalog_token_font_face shape.</summary>
         [Serializable]
         public struct FontFaceSpec
         {
             public string family;
             public int weight;
+            /// <summary>Catalog slug matching future catalog_token_font_face.slug. Stage 19.3 wire_asset_from_catalog reads this.</summary>
+            public string font_catalog_slug;
+            /// <summary>TMP font asset reference. May be null on first-pass entries.</summary>
+            public TMP_FontAsset font_ref;
         }
 
         /// <summary>Motion-curve spec. Mirrors `IrTokenMotionCurve`. Optional fields default to 0.</summary>

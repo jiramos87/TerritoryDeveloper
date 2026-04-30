@@ -107,7 +107,7 @@ export interface IrInteractive {
   detail: IrInteractiveDetail;
 }
 
-/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. Extended Stage 7 with `themed-overlay-toggle-row`. Extended Stage 8 with Themed* modal primitive kinds. */
+/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. Extended Stage 7 with `themed-overlay-toggle-row`. Extended Stage 8 with Themed* modal primitive kinds. Extended Stage 1.1 (ui-visual-fidelity-layer) with `section_header`, `divider`, `badge`, `panel`, `button`. */
 export type StudioControlKind =
   | 'knob'
   | 'fader'
@@ -123,7 +123,12 @@ export type StudioControlKind =
   | 'themed-slider'
   | 'themed-toggle'
   | 'themed-tab-bar'
-  | 'themed-list';
+  | 'themed-list'
+  | 'section_header'
+  | 'divider'
+  | 'badge'
+  | 'panel'
+  | 'button';
 
 export const STUDIO_CONTROL_KINDS: readonly StudioControlKind[] = [
   'knob',
@@ -141,6 +146,11 @@ export const STUDIO_CONTROL_KINDS: readonly StudioControlKind[] = [
   'themed-toggle',
   'themed-tab-bar',
   'themed-list',
+  'section_header',
+  'divider',
+  'badge',
+  'panel',
+  'button',
 ] as const;
 
 /** Detail row shapes — open-ended union per archetype; transcribe + bridge handler refine. */
@@ -331,6 +341,37 @@ export function validateIrShape(raw: unknown): SchemaResult {
         path: `$.interactives[${i}].kind`,
         detail: `kind '${it.kind}' not in StudioControl archetype enum (${[...kinds].join(', ')})`,
       };
+    }
+    // Per-kind detail validation.
+    if (it.kind === 'panel') {
+      const d = it.detail;
+      if (typeof d.paddingX !== 'number' || typeof d.paddingY !== 'number' || typeof d.gap !== 'number') {
+        return {
+          ok: false,
+          error: 'ir_shape_invalid',
+          path: `$.interactives[${i}].detail`,
+          detail: 'panel detail requires paddingX:number, paddingY:number, gap:number',
+        };
+      }
+      if (d.dividerThickness !== undefined && typeof d.dividerThickness !== 'number') {
+        return {
+          ok: false,
+          error: 'ir_shape_invalid',
+          path: `$.interactives[${i}].detail.dividerThickness`,
+          detail: 'panel detail.dividerThickness must be number when present',
+        };
+      }
+    }
+    if (it.kind === 'button') {
+      const d = it.detail;
+      if (typeof d.paddingX !== 'number' || typeof d.paddingY !== 'number') {
+        return {
+          ok: false,
+          error: 'ir_shape_invalid',
+          path: `$.interactives[${i}].detail`,
+          detail: 'button detail requires paddingX:number, paddingY:number',
+        };
+      }
     }
   }
   return { ok: true };
