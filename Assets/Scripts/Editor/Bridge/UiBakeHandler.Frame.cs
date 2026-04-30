@@ -1,0 +1,441 @@
+using System;
+using System.Collections.Generic;
+using Territory.UI;
+using Territory.UI.Themed;
+using TMPro;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Territory.Editor.Bridge
+{
+    public static partial class UiBakeHandler
+    {
+        // ── Panel prefab bake (Stage 3 T3.5) ────────────────────────────────────
+
+        /// <summary>
+        /// Write a panel prefab with attached <see cref="ThemedPanel"/> + populated <c>_slots</c> +
+        /// <c>_children[]</c>. SlotSpec order = IR slot order; children order = IR slot iteration order.
+        /// Stage 7 T7.0 — children are instantiated as scene-instance <c>GameObject</c>s under the panel
+        /// root (state-holder + renderer pair + render-target descendants per Stage 10 T10.3 convention).
+        /// Asset-GUID resolution (loading <c>{dir}/{childSlug}.prefab</c>) is no longer used: adapter
+        /// Inspector slots must bind against real children, not asset stand-ins. <paramref name="dir"/>
+        /// stays in the signature for future bake-time variant resolution.
+        /// SerializedObject path enforces deterministic property write for re-bake idempotency.
+        /// </summary>
+        static BakeError SavePanelPrefab(IrPanel panel, string assetPath, string dir, UiTheme theme)
+        {
+            // dir kept for future variant resolution; not consumed in T7.0 path.
+            _ = dir;
+
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(panel.slug);
+                var rootRect = go.AddComponent<RectTransform>();
+                // Step 11.3 — bake-time RectTransform values are placeholder; runtime ApplyKindLayout
+                // overrides anchor/sizeDelta/pivot per _kind on every OnEnable (defeats scene PrefabInstance
+                // override pin-down). Slug-suffix heuristic + unconditional VLG attach removed.
+                rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+                rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+                rootRect.pivot = new Vector2(0.5f, 0.5f);
+                rootRect.anchoredPosition = Vector2.zero;
+                rootRect.sizeDelta = new Vector2(600f, 800f);
+                var bgImage = go.AddComponent<Image>();
+                bgImage.color = Color.white;
+                bgImage.raycastTarget = true;
+                var themedPanel = go.AddComponent<ThemedPanel>();
+                WireThemeRef(themedPanel, theme);
+
+                // Populate _kind + _slots + _children[] via SerializedObject for deterministic order.
+                var so = new SerializedObject(themedPanel);
+                var slotsProp = so.FindProperty("_slots");
+                var childrenProp = so.FindProperty("_children");
+                var paletteProp = so.FindProperty("_paletteSlug");
+                var bgProp = so.FindProperty("_backgroundImage");
+                var kindProp = so.FindProperty("_kind");
+                if (paletteProp != null) paletteProp.stringValue = "chassis-graphite";
+                if (bgProp != null) bgProp.objectReferenceValue = bgImage;
+                if (kindProp != null) kindProp.enumValueIndex = ResolvePanelKindIndex(panel.kind);
+
+                var childrenList = new List<GameObject>();
+
+                int slotCount = panel.slots != null ? panel.slots.Length : 0;
+                slotsProp.arraySize = slotCount;
+                // Panel-scoped per-kind counter — prevents Unity sibling-name auto-suffix when
+                // multiple slots declare the same child kind (e.g. tool-grid + subtype-row both
+                // emit illuminated-button). Keys are the StudioControl kind slug; values are the
+                // running 0-based count for that kind across all slots in this panel.
+                var perKindCounters = new Dictionary<string, int>();
+                for (int s = 0; s < slotCount; s++)
+                {
+                    var slot = panel.slots[s];
+                    var slotProp = slotsProp.GetArrayElementAtIndex(s);
+                    var slugProp = slotProp.FindPropertyRelative("slug");
+                    var acceptsProp = slotProp.FindPropertyRelative("accepts");
+
+                    slugProp.stringValue = slot?.name ?? string.Empty;
+
+                    var slotAccepts = slot?.accepts ?? Array.Empty<string>();
+                    acceptsProp.arraySize = slotAccepts.Length;
+                    for (int a = 0; a < slotAccepts.Length; a++)
+                    {
+                        acceptsProp.GetArrayElementAtIndex(a).stringValue = slotAccepts[a] ?? string.Empty;
+                    }
+
+                    // Stage 7 T7.0 — instantiate scene-instance child GameObjects under the panel root
+                    // for each declared slot child (state-holder + renderer pair + render-target
+                    // descendants). Asset-prefab loading retired: adapter Inspector slots must bind
+                    // against real children, not asset GUID stand-ins.
+                    var slotChildren = slot?.children ?? Array.Empty<string>();
+                    var slotLabels = slot?.labels;
+                    for (int c = 0; c < slotChildren.Length; c++)
+                    {
+                        var childKind = slotChildren[c];
+                        if (string.IsNullOrEmpty(childKind)) continue;
+                        if (!IsKnownStudioControlKind(childKind))
+                        {
+                            Debug.LogWarning(
+                                $"[UiBakeHandler] panel={panel.slug} slot={slot?.name} child kind={childKind} unknown — skipped");
+                            continue;
+                        }
+                        // Panel-scoped per-kind counter — read-modify-write so multi-slot panels
+                        // (tool-grid + subtype-row) produce contiguous names (illuminated-button,
+                        // illuminated-button (1), ..., illuminated-button (17)) instead of
+                        // colliding with sibling auto-suffix.
+                        if (!perKindCounters.TryGetValue(childKind, out int kindCounter))
+                        {
+                            kindCounter = 0;
+                        }
+                        var childLabel = (slotLabels != null && c < slotLabels.Length) ? slotLabels[c] : null;
+                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter, theme, childLabel);
+                        perKindCounters[childKind] = kindCounter;
+                        if (childGo == null) continue;
+                        childrenList.Add(childGo);
+                    }
+                }
+
+                childrenProp.arraySize = childrenList.Count;
+                for (int i = 0; i < childrenList.Count; i++)
+                {
+                    childrenProp.GetArrayElementAtIndex(i).objectReferenceValue = childrenList[i];
+                }
+
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                // Stage 5 T5.5 — synthetic interactive row enables ShadowDepth opt-in via IR juice[]
+                // entries on the panel level (current MVP: defaults gated off; override-only path).
+                var panelRow = new IrInteractive
+                {
+                    slug = panel.slug,
+                    kind = "themed-panel",
+                    juice = null,
+                };
+                AttachJuiceComponents(go, panelRow);
+
+                // Step 13 — pause-menu adapter wiring. Bake-time: attach PauseMenuDataAdapter
+                // and serialize the six ThemedButton refs in IR-canonical order
+                // [Resume, Save, Load, Settings, MainMenu, Quit] so OnEnable subscriptions fire
+                // without manual Inspector wiring per scene placement.
+                if (panel.slug == "pause-menu" && childrenList.Count >= 6)
+                {
+                    var adapter = go.AddComponent<PauseMenuDataAdapter>();
+                    var aSo = new SerializedObject(adapter);
+                    void BindBtn(string fieldName, int idx)
+                    {
+                        if (idx < 0 || idx >= childrenList.Count) return;
+                        var btnComp = childrenList[idx]?.GetComponent<ThemedButton>();
+                        if (btnComp == null) return;
+                        var prop = aSo.FindProperty(fieldName);
+                        if (prop != null) prop.objectReferenceValue = btnComp;
+                    }
+                    BindBtn("_resumeButton", 0);
+                    BindBtn("_saveButton", 1);
+                    BindBtn("_loadButton", 2);
+                    BindBtn("_settingsButton", 3);
+                    BindBtn("_mainMenuButton", 4);
+                    BindBtn("_quitButton", 5);
+                    aSo.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "prefab_write_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        // ── Stage 7 T7.0 — embedded panel child instantiation ───────────────────
+
+        /// <summary>
+        /// Instantiate a fresh scene-instance <c>GameObject</c> under the panel root for the given
+        /// StudioControl <paramref name="kind"/>. Attaches the matching state-holder + renderer pair
+        /// (per Stage 10 T10.3 convention) and spawns the kind's render-target descendants
+        /// (<c>body</c> / <c>halo</c> / <c>text</c> / <c>Label</c> / <c>Icon</c> / <c>Toggle</c>).
+        /// Detail-row defaults applied so the embedded child is visually consistent with the
+        /// top-level baked prefab counterparts. Adapter Inspector slots bind against the returned
+        /// <c>GameObject</c> (or one of its components) — no asset-GUID stand-in.
+        /// </summary>
+        /// <param name="kind">StudioControl kind slug (must satisfy <see cref="IsKnownStudioControlKind"/>).</param>
+        /// <param name="panelRoot">Panel root <see cref="Transform"/>; child reparented with <c>worldPositionStays:false</c>.</param>
+        /// <param name="duplicateCounter">Per-panel suffix counter — incremented each call so multiple
+        /// children of the same kind get unique <c>GameObject.name</c> values (e.g. <c>illuminated-button</c>,
+        /// <c>illuminated-button (1)</c>, ...). Suffix-only — does not affect IR slot resolution.</param>
+        /// <returns>Instantiated child <c>GameObject</c>; <c>null</c> on unknown kind.</returns>
+        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter, UiTheme theme, string label = null)
+        {
+            if (panelRoot == null || string.IsNullOrEmpty(kind)) return null;
+
+            var name = duplicateCounter == 0 ? kind : $"{kind} ({duplicateCounter})";
+            duplicateCounter++;
+
+            var childGo = new GameObject(name, typeof(RectTransform));
+            childGo.transform.SetParent(panelRoot, worldPositionStays: false);
+
+            // State-holder + renderer pair — mirrors the per-kind switch in BakeInteractive.
+            // Detail rows: panel children carry per-kind defaults at bake time (no IR detail block
+            // exists for slot children; future Stage extensions may add one).
+            switch (kind)
+            {
+                case "knob":
+                {
+                    var knob = childGo.AddComponent<Knob>();
+                    WireThemeRef(knob, theme);
+                    knob.ApplyDetail(new KnobDetail());
+                    break;
+                }
+                case "fader":
+                {
+                    var fader = childGo.AddComponent<Fader>();
+                    WireThemeRef(fader, theme);
+                    fader.ApplyDetail(new FaderDetail());
+                    break;
+                }
+                case "detent-ring":
+                {
+                    var dr = childGo.AddComponent<DetentRing>();
+                    WireThemeRef(dr, theme);
+                    dr.ApplyDetail(new DetentRingDetail());
+                    break;
+                }
+                case "vu-meter":
+                {
+                    var vu = childGo.AddComponent<VUMeter>();
+                    WireThemeRef(vu, theme);
+                    var vuRend = childGo.GetComponent<VUMeterRenderer>();
+                    if (vuRend == null)
+                    {
+                        vuRend = childGo.AddComponent<VUMeterRenderer>();
+                    }
+                    WireThemeRef(vuRend, theme);
+                    SpawnVUMeterRenderTargets(childGo);
+                    vu.ApplyDetail(new VUMeterDetail());
+                    break;
+                }
+                case "oscilloscope":
+                {
+                    var osc = childGo.AddComponent<Oscilloscope>();
+                    WireThemeRef(osc, theme);
+                    osc.ApplyDetail(new OscilloscopeDetail());
+                    break;
+                }
+                case "illuminated-button":
+                {
+                    var btn = childGo.AddComponent<IlluminatedButton>();
+                    WireThemeRef(btn, theme);
+                    var btnRend = childGo.GetComponent<IlluminatedButtonRenderer>();
+                    if (btnRend == null)
+                    {
+                        btnRend = childGo.AddComponent<IlluminatedButtonRenderer>();
+                    }
+                    WireThemeRef(btnRend, theme);
+                    SpawnIlluminatedButtonRenderTargets(childGo);
+                    btn.ApplyDetail(new IlluminatedButtonDetail());
+                    break;
+                }
+                case "led":
+                {
+                    var led = childGo.AddComponent<LED>();
+                    WireThemeRef(led, theme);
+                    led.ApplyDetail(new LEDDetail());
+                    break;
+                }
+                case "segmented-readout":
+                {
+                    var sr = childGo.AddComponent<SegmentedReadout>();
+                    WireThemeRef(sr, theme);
+                    var srRend = childGo.GetComponent<SegmentedReadoutRenderer>();
+                    if (srRend == null)
+                    {
+                        srRend = childGo.AddComponent<SegmentedReadoutRenderer>();
+                    }
+                    WireThemeRef(srRend, theme);
+                    var sd = new SegmentedReadoutDetail { digits = 1 };
+                    SpawnSegmentedReadoutRenderTargets(childGo, sd);
+                    sr.ApplyDetail(sd);
+                    break;
+                }
+                case "themed-overlay-toggle-row":
+                {
+                    var row = childGo.AddComponent<ThemedOverlayToggleRow>();
+                    WireThemeRef(row, theme);
+                    var renderer = childGo.AddComponent<ThemedOverlayToggleRowRenderer>();
+                    WireThemeRef(renderer, theme);
+                    SpawnThemedOverlayToggleRowChildren(childGo, out var labelTmp, out var iconImage, out var unityToggle);
+                    var rendererSo = new SerializedObject(renderer);
+                    var labelProp = rendererSo.FindProperty("_labelText");
+                    if (labelProp != null) labelProp.objectReferenceValue = labelTmp;
+                    var iconProp = rendererSo.FindProperty("_iconImage");
+                    if (iconProp != null) iconProp.objectReferenceValue = iconImage;
+                    rendererSo.ApplyModifiedPropertiesWithoutUndo();
+                    _ = unityToggle;
+                    break;
+                }
+                // Stage 8 Themed* modal primitive panel-child cases.
+                // Renderer-sibling decision per §Pending Decisions:
+                //   themed-button  : UGUI-self-renders (no renderer sibling)
+                //   themed-label   : UGUI-self-renders (no renderer sibling)
+                //   themed-slider  : renderer-sibling needed (ThemedSliderRenderer)
+                //   themed-toggle  : renderer-sibling needed (ThemedToggleRenderer)
+                //   themed-tab-bar : renderer-sibling needed (ThemedTabBarRenderer)
+                //   themed-list    : UGUI-self-renders (no renderer sibling)
+                case "themed-button":
+                {
+                    var btn = childGo.AddComponent<ThemedButton>();
+                    WireThemeRef(btn, theme);
+                    var btnImg = childGo.AddComponent<Image>();
+                    btnImg.color = Color.white;
+                    btnImg.raycastTarget = true;
+                    // Step 13 — UnityEngine.UI.Button so ThemedButton.Awake can wire onClick → OnClicked event.
+                    // Without this, PauseMenuDataAdapter.OnClicked subscriptions never fire.
+                    var unityBtn = childGo.AddComponent<Button>();
+                    unityBtn.targetGraphic = btnImg;
+                    unityBtn.transition = Selectable.Transition.ColorTint;
+                    var btnSo = new SerializedObject(btn);
+                    var btnImgProp = btnSo.FindProperty("_buttonImage");
+                    if (btnImgProp != null) btnImgProp.objectReferenceValue = btnImg;
+                    var btnPalette = btnSo.FindProperty("_paletteSlug");
+                    if (btnPalette != null) btnPalette.stringValue = "chassis-graphite";
+                    var btnFrame = btnSo.FindProperty("_frameStyleSlug");
+                    if (btnFrame != null) btnFrame.stringValue = "thin";
+                    btnSo.ApplyModifiedPropertiesWithoutUndo();
+                    // Step 12 — caption child + LayoutElement so VLG/HLG can size button.
+                    SpawnThemedButtonCaption(childGo, label);
+                    EnsureChildLayoutElement(childGo, preferredWidth: 280f, preferredHeight: 56f, flexibleWidth: 1f);
+                    break;
+                }
+                case "themed-label":
+                {
+                    var lbl = childGo.AddComponent<ThemedLabel>();
+                    WireThemeRef(lbl, theme);
+                    SpawnThemedLabelChild(childGo, out var labelTmp);
+                    if (labelTmp != null && !string.IsNullOrEmpty(label)) labelTmp.text = label;
+                    var lblSo = new SerializedObject(lbl);
+                    var tmpProp = lblSo.FindProperty("_tmpText");
+                    if (tmpProp != null) tmpProp.objectReferenceValue = labelTmp;
+                    var lblPalette = lblSo.FindProperty("_paletteSlug");
+                    if (lblPalette != null) lblPalette.stringValue = "silkscreen";
+                    lblSo.ApplyModifiedPropertiesWithoutUndo();
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    break;
+                }
+                case "themed-slider":
+                {
+                    var slider = childGo.AddComponent<ThemedSlider>();
+                    WireThemeRef(slider, theme);
+                    var sliderSo = new SerializedObject(slider);
+                    var sliderPalette = sliderSo.FindProperty("_paletteSlug");
+                    if (sliderPalette != null) sliderPalette.stringValue = "chassis-graphite";
+                    sliderSo.ApplyModifiedPropertiesWithoutUndo();
+                    var rend = childGo.AddComponent<ThemedSliderRenderer>();
+                    WireThemeRef(rend, theme);
+                    SpawnThemedSliderChildren(childGo, out var trackImg, out var fillImg, out var thumbImg, out var valueText);
+                    var so = new SerializedObject(rend);
+                    var trackProp = so.FindProperty("_trackImage");
+                    if (trackProp != null) trackProp.objectReferenceValue = trackImg;
+                    var fillProp = so.FindProperty("_fillImage");
+                    if (fillProp != null) fillProp.objectReferenceValue = fillImg;
+                    var thumbProp = so.FindProperty("_thumbImage");
+                    if (thumbProp != null) thumbProp.objectReferenceValue = thumbImg;
+                    var textProp = so.FindProperty("_valueText");
+                    if (textProp != null) textProp.objectReferenceValue = valueText;
+                    var rendPalette = so.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-cyan";
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    break;
+                }
+                case "themed-toggle":
+                {
+                    var tg = childGo.AddComponent<ThemedToggle>();
+                    WireThemeRef(tg, theme);
+                    var tgSo = new SerializedObject(tg);
+                    var tgPalette = tgSo.FindProperty("_paletteSlug");
+                    if (tgPalette != null) tgPalette.stringValue = "chassis-graphite";
+                    tgSo.ApplyModifiedPropertiesWithoutUndo();
+                    var rend = childGo.AddComponent<ThemedToggleRenderer>();
+                    WireThemeRef(rend, theme);
+                    SpawnThemedToggleChildren(childGo, out var checkmarkImg, out var toggleLabelTmp);
+                    var so = new SerializedObject(rend);
+                    var checkProp = so.FindProperty("_checkmarkImage");
+                    if (checkProp != null) checkProp.objectReferenceValue = checkmarkImg;
+                    var labelProp2 = so.FindProperty("_labelText");
+                    if (labelProp2 != null) labelProp2.objectReferenceValue = toggleLabelTmp;
+                    var rendPalette = so.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-grass";
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    break;
+                }
+                case "themed-tab-bar":
+                {
+                    var tabBar = childGo.AddComponent<ThemedTabBar>();
+                    WireThemeRef(tabBar, theme);
+                    var rend = childGo.AddComponent<ThemedTabBarRenderer>();
+                    WireThemeRef(rend, theme);
+                    SpawnThemedTabBarChildren(childGo, out var stripImg, out var indicatorImg, out var tabLabelTmp);
+                    var rendSo = new SerializedObject(rend);
+                    var indicatorProp = rendSo.FindProperty("_activeTabIndicator");
+                    if (indicatorProp != null) indicatorProp.objectReferenceValue = indicatorImg;
+                    var tabLabelProp = rendSo.FindProperty("_tabLabel");
+                    if (tabLabelProp != null) tabLabelProp.objectReferenceValue = tabLabelTmp;
+                    var rendPalette = rendSo.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-amber";
+                    rendSo.ApplyModifiedPropertiesWithoutUndo();
+                    var tabBarSo = new SerializedObject(tabBar);
+                    var stripProp = tabBarSo.FindProperty("_tabStripImage");
+                    if (stripProp != null) stripProp.objectReferenceValue = stripImg;
+                    var tabBarPalette = tabBarSo.FindProperty("_paletteSlug");
+                    if (tabBarPalette != null) tabBarPalette.stringValue = "chassis-graphite";
+                    tabBarSo.ApplyModifiedPropertiesWithoutUndo();
+                    break;
+                }
+                case "themed-list":
+                {
+                    var lst = childGo.AddComponent<ThemedList>();
+                    WireThemeRef(lst, theme);
+                    var lstSo = new SerializedObject(lst);
+                    var lstPalette = lstSo.FindProperty("_paletteSlug");
+                    if (lstPalette != null) lstPalette.stringValue = "chassis-graphite";
+                    lstSo.ApplyModifiedPropertiesWithoutUndo();
+                    break;
+                }
+                default:
+                    UnityEngine.Object.DestroyImmediate(childGo);
+                    return null;
+            }
+
+            return childGo;
+        }
+
+    }
+}
