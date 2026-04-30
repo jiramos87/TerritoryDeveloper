@@ -127,6 +127,7 @@ Hold in working memory:
 - **Source doc Architecture / Component map** — entry / exit points → §"Relevant surfaces" per new Stage.
 - **Source doc Subsystem Impact** — touched subsystems + invariant numbers → per-stage guardrails.
 - **Source doc Locked decisions (if any)** — new locks to merge into orchestrator header (Phase 7).
+- **Plan shape** — parse `### Plan Shape` block from `{SOURCE_DOC}` when present: extract `Shape:` value → `plan_shape ∈ {carcass+section, flat}`. When `plan_shape=carcass+section`: parse `### Carcass Stages` + `### Sections` blocks into `CARCASS_LIST` + `SECTION_ROSTER`. Fallback: block absent OR partial parse → `plan_shape=flat`; emit warning `SHAPE_PARSE_WARN: treating as flat (Plan Shape block missing or partial)`.
 
 ### Phase 1 — Start-number resolution + duplication gate
 
@@ -267,8 +268,9 @@ DB MCP writes only — no filesystem Edits. Operations (in order):
    - `**Hierarchy rules:**` → replace retired 3-level phrasing with canonical line.
    - Call `master_plan_preamble_write({slug: SLUG, preamble: <new preamble string>})`.
 
-2. **Stage block insertion (per new Stage):** For each new `Stage {START}.{M_first}` ... `Stage {END}.{M_last}` block from Phase 4:
-   - Call `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: "<full Stage block markdown>", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets}"})`.
+2. **Stage block insertion (per new Stage):** For each new `Stage {START}.{M_first}` ... `Stage {END}.{M_last}` block from Phase 4 — pass `carcass_role` + `section_id` based on working-memory shape:
+   - **`plan_shape=carcass+section`:** stages annotated `(carcass)` → `stage_insert({slug, stage_id, title, body, objective, exit_criteria, carcass_role: "carcass", section_id: null})`; stages annotated `(section-A/B/C/...)` → `stage_insert({..., carcass_role: "section", section_id: "{kebab-name}"})` where `{kebab-name}` = kebab-case of section name from `SECTION_ROSTER` (e.g. `Section A — Data model` → `data-model`); un-annotated stages → `carcass_role: null, section_id: null`.
+   - **`plan_shape=flat`:** `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{Name}", body: "<full Stage block markdown>", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets}"})` — no `carcass_role` / `section_id` params (current behavior preserved).
 
 3. **Change-log audit row:** Call `master_plan_change_log_append({slug: SLUG, kind: "plan_extended", body: "Extended via {SOURCE_DOC} — +N stages ({START}.{M_first}..{END}.{M_last}), +M tasks"})`.
 

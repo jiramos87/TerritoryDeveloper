@@ -94,6 +94,25 @@ Read `{DOC_PATH}`. Extract and hold in working memory:
 | Locked design (no Approaches list) | No | STOP — present user three options: (A) add an Approaches section and re-run, (B) pass `--against {UMBRELLA_DOC}` to run gap analysis, (C) skip to `/master-plan-extend` if no alignment gaps expected |
 | `DOC_PATH` unreadable | Either | STOP — report path error |
 
+**Plan-shape gate (end of Phase 0):**
+
+After locked-doc detection, poll the user for plan shape. Skip if working memory already carries a `plan_shape` value (re-run or gap-analysis resume).
+
+Plain-language preface + `Recommended:` line mandatory per [`agent-human-polling`](../../rules/agent-human-polling.md). Poll runs ONE time; downstream phases (2.5 / 6 / 9) read `plan_shape` — never re-poll.
+
+```
+Plan shape — release slices that ship in parallel (carcass+section), or linear ladder of stages (flat)?
+
+A. Carcass + sections — parallel sections that run simultaneously inside milestone gates
+B. Flat — linear ladder of stages, one at a time
+
+Recommended: flat (safe default; choose carcass+section only when parallel work streams are confirmed)
+```
+
+Capture result as working-memory token: `plan_shape ∈ {carcass+section, flat}`.
+
+**Non-interactive default:** `flat` (headless runs / skipped poll).
+
 ### Phase 0.5 — Interview (user gate)
 
 **Skip this phase entirely** if the doc already has a `## Design Expansion` block with a completed Select section. Proceed directly to Phase 1 (compare) or Phase 3 (expand) as appropriate.
@@ -153,15 +172,30 @@ Per DEC-A15 (`arch-authoring-via-design-explore`): if the selected approach touc
 3. **Alternatives considered** — ≤3 entries, semicolon-separated. Names of approaches NOT chosen + why.
 4. **Affected `arch_surfaces[]`** — list of slugs from `arch_surfaces` (e.g. `layers/full-dependency-map`, `interchange/agent-ia`). Implementer derives candidate list from Phase 3 component → spec_path mapping; user confirms / trims via multi-select.
 
-**MCP writes (after polling):**
+**MCP writes (after polling) — shape-branched:**
 
-1. `arch_decision_write({ slug, title, rationale, alternatives, surface_slugs[], status: 'active' })` — INSERT row into `arch_decisions` (status=active).
-2. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug, body, commit_sha: null })` — INSERT audit row.
-3. `arch_drift_scan({ open_plans_only: true })` — scan every open master plan for drift vs new arch state. Returns `{ drift_per_plan: [...] }`.
+Read `plan_shape` from working memory (set in Phase 0 plan-shape gate).
+
+**When `plan_shape=carcass+section`** — seed 3 plan-scoped decision rows (slug-shape contract: `plan-{slug}-{suffix}` where `{slug}` = exploration doc slug; `{suffix}` ∈ `boundaries` / `end-state-contract` / `shared-seams`). Write in order:
+
+1. `arch_decision_write({ slug: "plan-{slug}-boundaries", plan_slug: "{slug}", title: "Plan {slug} — Boundaries", summary: "{one-line from working memory}", status: "locked" })`
+2. `arch_decision_write({ slug: "plan-{slug}-end-state-contract", plan_slug: "{slug}", title: "Plan {slug} — End-State Contract", summary: "{one-line from working memory}", status: "locked" })`
+3. `arch_decision_write({ slug: "plan-{slug}-shared-seams", plan_slug: "{slug}", title: "Plan {slug} — Shared Seams", summary: "{one-line from working memory}", status: "locked" })`
+
+Then:
+
+4. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug: "plan-{slug}-boundaries", body, commit_sha: null })`
+5. `arch_drift_scan({ open_plans_only: true })`
+
+**When `plan_shape=flat`** — legacy single DEC-A15 path (unchanged):
+
+1. `arch_decision_write({ slug: "architecture-lock-{slug}", title, rationale, alternatives, surface_slugs[], status: 'active' })`
+2. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug, body, commit_sha: null })`
+3. `arch_drift_scan({ open_plans_only: true })`
 
 **Drift report render target:** append to exploration doc under sibling section `### Architecture Decision` (peer of `### Architecture` block authored in Phase 4 → §Persist). Block contains: decision row summary + rendered drift report (per-plan breakdown).
 
-**Stop condition:** if any of the 3 MCP writes fails → stop, surface error, do NOT continue to Phase 3 / 4. User must reconcile DB state before re-running.
+**Stop condition:** if any MCP write fails → stop, surface error, do NOT continue to Phase 3 / 4. User must reconcile DB state before re-running.
 
 ### Phase 3 — Expand
 
@@ -192,7 +226,25 @@ Run **Tool recipe** (below). For each touched subsystem:
 
 ### Phase 6 — Implementation points
 
-Phased checklist ordered by dependency. Format:
+Phased checklist ordered by dependency.
+
+**When `plan_shape=carcass+section`** — group items under `#### Carcass` (shared across sections) + `#### Section {A|B|C|...}` (section-scoped) subheadings:
+
+```
+#### Carcass
+Phase A — {Shared deliverable}
+  - [ ] Task 1
+  ...
+  Risk: {flag or "none"}
+
+#### Section A
+Phase B — {Section-scoped deliverable}
+  - [ ] Task 1
+  ...
+  Risk: {flag or "none"}
+```
+
+**When `plan_shape=flat`** — flat format (unchanged):
 
 ```
 Phase A — {Deliverable}
@@ -246,6 +298,18 @@ Sections to write (in order):
 ---
 
 ## Design Expansion
+
+### Plan Shape
+- Shape: {carcass+section|flat}
+- Rationale: {one-liner — why this shape fits the problem}
+
+### Carcass Stages
+{Emit only when plan_shape=carcass+section. ≤3 entries (hard cap). Format per row:
+`Carcass {N} — {milestone gate name} — {one-line objective}`}
+
+### Sections
+{Emit only when plan_shape=carcass+section. ≥1 entries. Format per row:
+`Section {A|B|C|...} — {section name} — {touched subsystems / glossary anchors}`}
 
 ### Chosen Approach
 {approach id + name + one-paragraph rationale referencing Phase 1 criteria}
@@ -327,6 +391,7 @@ Derive a context title from `AGAINST_DOC` filename slug (e.g. `full-game-mvp-exp
 
 - If an existing `## Design Expansion` block is present → append the new named section **after** it, separated by `---`. Do NOT overwrite the existing block.
 - If no `## Design Expansion` block exists → append after `---` following the last existing section.
+- Emit `### Plan Shape` block (same format as Phase 9 standard) at top of the appended Design Expansion section.
 
 Never overwrite Problem / Approaches surveyed / Recommendation / Open questions / any prior Design Expansion block.
 

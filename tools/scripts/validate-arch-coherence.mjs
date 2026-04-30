@@ -220,6 +220,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "parallel-carcass-rollout::2.3",
   "parallel-carcass-rollout::2.4",
   "parallel-carcass-rollout::2.5",
+  "parallel-carcass-rollout::3.1",
   "session-token-latency::1.1",
   "session-token-latency::1.2",
   "session-token-latency::1.3",

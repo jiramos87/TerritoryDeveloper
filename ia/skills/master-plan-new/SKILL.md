@@ -113,6 +113,7 @@ Hold in working memory:
 - **Examples** + **Review Notes** — Decision Log seed for first stage.
 - **Non-scope / Post-MVP** list — out-of-scope / scope-boundary doc handoff (Phase 8).
 - **Locked decisions** — MVP guardrails to surface in the header block (do-not-reopen list).
+- **Plan shape** — parse `### Plan Shape` block when present: extract `Shape:` value → `plan_shape ∈ {carcass+section, flat}`. When `plan_shape=carcass+section`: parse `### Carcass Stages` (≤3 rows, format `Carcass {N} — {gate} — {objective}`) + `### Sections` (≥1 rows, format `Section {A|B|C|...} — {name} — {subsystems}`) into working memory as `CARCASS_LIST` + `SECTION_ROSTER`. Fallback: block absent OR partial parse → `plan_shape=flat`; emit warning `SHAPE_PARSE_WARN: treating as flat (Plan Shape block missing or partial)`.
 
 ### Phase 1 — Slug + overwrite gate
 
@@ -227,6 +228,18 @@ _pending — populated by `/stage-file` planner pass._
 _pending — populated by `/plan-review` when fixes are needed._
 ```
 
+**Carcass + section title annotation (carcass-shape plans only):**
+
+Carcass-shape master plans (any Stage with `carcass_role='carcass'`) annotate Stage titles to make role + section affiliation visible at-a-glance in the rendered preamble + `## Stages` ToC. Convention:
+
+- Carcass stages: `### Stage {N}.{M} — {Name} (carcass)` — append literal ` (carcass)`.
+- Section-affiliated stages: `### Stage {N}.{M} — {Name} (section-{X})` — `{X}` = capital letter A/B/C/... matching `section_id` order from Phase 4 stage decomposition (first declared section = `section-A`, second = `section-B`, etc.).
+- Plain (no carcass + no section) stages: no suffix — `### Stage {N}.{M} — {Name}`.
+
+Annotation is title-only — the `carcass_role` + `section_id` DB columns remain the source of truth; downstream `arch_drift_scan(scope='intra-plan')` + `/ship-stage` Pass A claim mutex read DB, not title. Goal of the suffix: human-readable orientation when landing cold on a long preamble.
+
+Skip annotation for legacy linear plans (no carcass stages). Mixing carcass + linear stages in one plan is forbidden per `docs/MASTER-PLAN-STRUCTURE.md` — carcass-shape applies whole-plan.
+
 **Task table schema (5 columns, per MASTER-PLAN-STRUCTURE.md §3):**
 
 - `Task` = hierarchical id `T{N}.{M}.{K}` (e.g. `T1.3.2`).
@@ -281,11 +294,16 @@ Compose markdown in working memory using the canonical order per MASTER-PLAN-STR
 7. `## Orchestration guardrails`
 8. Final `---` separator
 
+**Stage block path-verify gate (pre-persist).** For each Stage block in working memory, extract every repo-relative file path token from the `**Relevant surfaces (load when stage opens):**` bullets (skip URLs, MCP tool names, glossary refs, paths already annotated `(new)`). Call `mcp__territory-ia__plan_digest_verify_paths({ paths: [...extracted] })` per Stage. Per returned `{path, exists}` row with `exists: false` AND no `(new)` annotation → emit warning `SURFACE_PATH_MISS Stage {N}.{M}: '{path}' cited in Relevant surfaces but not on disk + missing (new) marker.` Surface to user; offer fix-in-place (annotate `(new)` or correct typo) before persistence. Warn-only — author overrides allowed when the path lands inside a downstream Task. Defense-in-depth: stage-file Phase 2.2b re-checks at file time, but author-time fix is cheaper than file-time re-author.
+
 **Persist via DB MCP** (no filesystem write):
 
 1. `master_plan_insert({slug: SLUG, title: "{plan title}", preamble: "{everything from Header block through tracking legend}", description: "{Phase 3 short product description, ≤200 chars}"})` — creates the `ia_master_plans` row + preamble + description (dashboard subtitle). Description required for new plans.
-2. For each Stage block authored: `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{name}", body: "{full Stage block markdown}", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets joined}"})`.
-3. `master_plan_change_log_append({slug: SLUG, kind: "plan_authored", body: "Authored {N} stages from {DOC_PATH}"})` — audit row.
+2. For each Stage block authored — pass `carcass_role` + `section_id` based on working-memory shape:
+   - **`plan_shape=carcass+section`:** stages annotated `(carcass)` → `stage_insert({slug, stage_id, title, body, objective, exit_criteria, carcass_role: "carcass", section_id: null})`; stages annotated `(section-A/B/C/...)` → `stage_insert({..., carcass_role: "section", section_id: "{kebab-name}"})` where `{kebab-name}` = kebab-case of section name from `SECTION_ROSTER` (e.g. `Section A — Data model` → `data-model`); un-annotated stages → `carcass_role: null, section_id: null`.
+   - **`plan_shape=flat`:** `stage_insert({slug: SLUG, stage_id: "{N}.{M}", title: "{name}", body: "{full Stage block markdown}", objective: "{Objectives prose}", exit_criteria: "{Exit criteria bullets joined}"})` — no `carcass_role` / `section_id` params (current behavior preserved).
+3. **Task pre-seed (mandatory).** For every Task row inside every authored Stage's Task table, call `task_insert({prefix: "TECH" (or domain-inferred FEAT/BUG/ART/AUDIO), title: row.Name, slug: SLUG, stage_id: "{N}.{M}", status: "pending", notes: row.Intent})`. Creates the `ia_tasks` rows that downstream `/stage-file` mode-detect (`tools/scripts/recipe-engine/stage-file/mode-detect.sh`) requires — `mode=file` only fires when `ia_tasks WHERE status='pending'` count ≥ 1. Skipping this step strands the Stage: `stage_render` shows the Task table from Stage body markdown, but `ia_tasks` is empty, so `/stage-file` halts with `mode-detect: no-op (pending=0) — nothing to file`. Idempotent on `(slug, stage_id, title)` — re-runs no-op. Use `TECH` for tooling/IA/MCP/migration/test/CI surfaces; pick `FEAT` / `BUG` / `ART` / `AUDIO` only when domain match is unambiguous from the Task intent.
+4. `master_plan_change_log_append({slug: SLUG, kind: "plan_authored", body: "Authored {N} stages, {T} pending task rows pre-seeded from {DOC_PATH}"})` — audit row.
 
 No `## Deferred decomposition` section — all Stages fully decomposed at author time (refer `master-plan-extend` for new-Stage authoring post-ship).
 
@@ -385,7 +403,8 @@ For carcass+section plans, append a one-liner naming the gate that unlocks the s
 - IF exploration doc's Non-scope list carries explicit post-MVP items but no companion `docs/{SLUG}-post-mvp-extensions.md` exists → raise recommendation in Phase 8 handoff. Do NOT create the stub.
 - IF authored output carries `### Step N` heading, `**Phases:**` checkbox block, `Phase` column in Task table, or `#### Stage N.M` H4 heading → STOP. Canonical shape is H3 Stages with 5-column Task table (see MASTER-PLAN-STRUCTURE.md §1).
 - IF `description` arg empty / missing on `master_plan_insert` → STOP. Description (≤200 char soft target, product-terminology overview) is required for new plans — it backs the dashboard subtitle.
-- Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
+- IF Phase 7 step 3 (task pre-seed via `task_insert`) skipped → downstream `/stage-file` halts with `mode-detect: no-op (pending=0)` because `ia_tasks` carries zero rows for the stage. Hard contract: every Task table row authored in Phase 4 → one `task_insert` row in `ia_tasks` with `status='pending'`. The Task table inside Stage body markdown is presentational; `ia_tasks` is the queryable source of truth.
+- Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` (= `ia_tasks.status='pending'` rows pre-seeded by Phase 7 step 3) — `stage-file` materializes them into BACKLOG + spec stubs later.
 - Do NOT delete or rename exploration doc. Do NOT edit its expansion block.
 - Do NOT commit — user decides when to commit the new orchestrator.
 
@@ -420,3 +439,16 @@ After persist: recommend first stage to file.
 | Date | Change | Trigger |
 |------|--------|---------|
 | 2026-04-29 | Phase A recipe extension — `tools/recipes/master-plan-new-phase-a.yaml` handles deterministic DB mutations for carcass-aware plans: `master_plan_insert` + `arch_decision_write` ×N (foreach) + HEAD SHA resolve + `master_plan_lock_arch`. Skill Phase sequence unchanged for legacy linear path. | `docs/parallel-carcass-exploration.md` §7 PR 3.3 |
+| 2026-04-29 | Phase 7 contract fix — added mandatory task pre-seed step (was: stage_insert → change_log; now: stage_insert → `task_insert` per Task row → change_log). Closes structural gap where Stage body markdown showed a Task table but `ia_tasks` had zero pending rows, causing `/stage-file` mode-detect to halt with `pending=0`. Idempotent on (slug, stage_id, title). | parallel-carcass-rollout Stage 1.1 stage-file escalation; recipe contract gap diagnosis |
+
+### 2026-04-29 — skill-train run
+
+**source:** train-proposed
+
+**proposal:** `ia/skills/master-plan-new/proposed/2026-04-29-train.md`
+
+**friction_count:** 0
+
+**threshold:** 2
+
+---
