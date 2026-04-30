@@ -53,7 +53,7 @@ namespace Territory.UI.Modals
             if (_mainMenu != null) _mainMenu.ResumeGame();
             if (UIManager.Instance != null) UIManager.Instance.ClosePopup(PopupType.PauseMenu);
         }
-        private void OnSettings() { if (_mainMenu != null) _mainMenu.OpenSettings(); }
+        private void OnSettings() { if (UIManager.Instance != null) UIManager.Instance.OpenPopup(PopupType.SettingsScreen); }
         private void OnSave() { if (UIManager.Instance != null) UIManager.Instance.OpenPopup(PopupType.SaveLoadScreen); }
         private void OnLoad() { if (UIManager.Instance != null) UIManager.Instance.OpenPopup(PopupType.SaveLoadScreen); }
         private void OnMainMenu() { if (_mainMenu != null) _mainMenu.ReturnToMainMenu(); }

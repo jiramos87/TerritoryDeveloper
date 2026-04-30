@@ -36,36 +36,180 @@ MonoBehaviour:
   spacingUnit: 4
   panelPadding: 16
   paletteEntries:
-  - slug: canvas
+  - slug: chassis-graphite
     value:
       ramp:
-      - '#0a0e1a'
-      - '#1a2540'
-  frameStyleEntries:
-  - slug: panel
+      - '#0a0c0d'
+      - '#131618'
+      - '#1c2024'
+      - '#262b30'
+      - '#34393f'
+      - '#4a4f55'
+  - slug: faceplate-bronze
     value:
-      edge: single
-      innerShadowAlpha: 0.4
-  fontFaceEntries:
-  - slug: display
+      ramp:
+      - '#1a1410'
+      - '#2b211a'
+      - '#3d2f24'
+      - '#5a4632'
+      - '#8a6a48'
+      - '#b8915c'
+  - slug: knob-cream
     value:
-      family: Inter
-      weight: 600
-  motionCurveEntries:
-  - slug: spring-soft
-    value:
-      kind: spring
-      stiffness: 220
-      damping: 18
-      c1: []
-      c2: []
-      durationMs: 0
-  illuminationEntries:
+      ramp:
+      - '#f4ead4'
+      - '#e6d8b4'
+      - '#c8b78e'
+      - '#9a8a64'
+      - '#6b5e3f'
   - slug: led-amber
     value:
-      color: '#fcb84a'
-      haloRadiusPx: 4
-  - slug: led-green
+      ramp:
+      - '#4a2e08'
+      - '#8a5610'
+      - '#d48a1c'
+      - '#ffb742'
+      - '#ffd58a'
+  - slug: led-cyan
     value:
-      color: '#4afc8a'
-      haloRadiusPx: 6
+      ramp:
+      - '#062a30'
+      - '#0a5a66'
+      - '#2ab8c8'
+      - '#6df0ff'
+      - '#b8f8ff'
+  - slug: led-grass
+    value:
+      ramp:
+      - '#082a10'
+      - '#1a6628'
+      - '#3ec05a'
+      - '#74ff8a'
+      - '#b8ffc4'
+  - slug: led-ruby
+    value:
+      ramp:
+      - '#34060a'
+      - '#7a1418'
+      - '#d83040'
+      - '#ff5560'
+      - '#ffb0b8'
+  - slug: silkscreen
+    value:
+      ramp:
+      - '#1a1611'
+      - '#5d5848'
+      - '#8e8772'
+      - '#d8cfb6'
+  frameStyleEntries:
+  - slug: bezel
+    value:
+      edge: bezel
+      innerShadowAlpha: 0.85
+  - slug: chassis
+    value:
+      edge: chassis
+      innerShadowAlpha: 0.85
+  - slug: rail
+    value:
+      edge: rail
+      innerShadowAlpha: 0.5
+  - slug: thin
+    value:
+      edge: thin
+      innerShadowAlpha: 0
+  fontFaceEntries:
+  - slug: engraved
+    value:
+      family: Helvetica Neue
+      weight: 600
+  - slug: faceplate
+    value:
+      family: Helvetica Neue
+      weight: 500
+  - slug: segmented
+    value:
+      family: Menlo
+      weight: 700
+  - slug: silkscreen
+    value:
+      family: Helvetica Neue
+      weight: 600
+  motionCurveEntries:
+  - slug: detent-click
+    value:
+      kind: cubic-bezier
+      stiffness: 0
+      damping: 0
+      c1:
+      - 0.85
+      - 0
+      c2:
+      - 0.15
+      - 1
+      durationMs: 120
+  - slug: fader-glide
+    value:
+      kind: cubic-bezier
+      stiffness: 0
+      damping: 0
+      c1:
+      - 0.32
+      - 0
+      c2:
+      - 0.16
+      - 1
+      durationMs: 200
+  - slug: lamp-warm
+    value:
+      kind: cubic-bezier
+      stiffness: 0
+      damping: 0
+      c1:
+      - 0.4
+      - 0
+      c2:
+      - 0.6
+      - 1
+      durationMs: 120
+  - slug: vu-attack
+    value:
+      kind: cubic-bezier
+      stiffness: 0
+      damping: 0
+      c1:
+      - 0
+      - 0.65
+      c2:
+      - 0.35
+      - 1
+      durationMs: 80
+  - slug: vu-release
+    value:
+      kind: cubic-bezier
+      stiffness: 0
+      damping: 0
+      c1:
+      - 0.6
+      - 0
+      c2:
+      - 0.7
+      - 1
+      durationMs: 200
+  illuminationEntries:
+  - slug: amber
+    value:
+      color: '#ffb742'
+      haloRadiusPx: 12
+  - slug: cyan
+    value:
+      color: '#6df0ff'
+      haloRadiusPx: 12
+  - slug: grass
+    value:
+      color: '#74ff8a'
+      haloRadiusPx: 12
+  - slug: ruby
+    value:
+      color: '#ff5560'
+      haloRadiusPx: 14

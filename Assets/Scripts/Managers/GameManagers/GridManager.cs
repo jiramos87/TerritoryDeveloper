@@ -818,7 +818,12 @@ public class GridManager : MonoBehaviour, IGridManager
     {
         if (Input.GetMouseButtonDown(0))
         {
-            CityCell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
+            if (cellArray == null) return;
+            int gx = (int)gridPosition.x;
+            int gy = (int)gridPosition.y;
+            if (gx < 0 || gy < 0 || gx >= cellArray.GetLength(0) || gy >= cellArray.GetLength(1))
+                return;
+            CityCell cellComponent = cellArray[gx, gy];
             uiManager.ShowTileDetails(cellComponent);
         }
     }

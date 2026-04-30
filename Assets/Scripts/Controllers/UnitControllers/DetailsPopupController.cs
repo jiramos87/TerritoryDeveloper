@@ -14,9 +14,13 @@ namespace Territory.UI
 
         public void ShowCellDetails(string cellType, string zoneType, string population, string landValue, string pollution)
         {
-            OnCellInfoShown?.Invoke(cellType, zoneType, population, landValue, pollution);
+            // OpenPopup must run first: it SetActive(true)s the modal root, which synchronously
+            // fires OnEnable on InfoPanelDataAdapter and subscribes it to OnCellInfoShown. If the
+            // event fired before activation, the adapter would still be inactive (root is default-
+            // off per UIManager.Awake) and would miss the payload, leaving every ThemedLabel blank.
             if (UIManager.Instance != null)
                 UIManager.Instance.OpenPopup(PopupType.InfoPanel);
+            OnCellInfoShown?.Invoke(cellType, zoneType, population, landValue, pollution);
         }
     }
 }
