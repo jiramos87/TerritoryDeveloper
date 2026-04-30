@@ -1,8 +1,9 @@
 recipe: master-plan-new-phase-a
 description: >-
   Phase A deterministic seal for master-plan-new: insert plan row → seed
-  arch_decisions (foreach) → resolve HEAD SHA → lock architecture. 0 seams.
-  Caller authors decision content; recipe handles DB mutations only.
+  arch_decisions (foreach) → verify seeded count → resolve HEAD SHA → lock
+  architecture. 0 seams. When `plan_slug` set, decisions are plan-scoped +
+  verify_seeded_decisions enforces ≥3-row gate; else legacy global mode.
 inputs:
   type: object
   additionalProperties: false
@@ -23,13 +24,21 @@ inputs:
     preamble:
       type: string
       description: Optional initial preamble markdown for the plan.
+    plan_slug:
+      type: string
+      description: >-
+        Optional master-plan slug threaded into every arch_decision_write call
+        + verify_seeded_decisions count gate. When set, decisions are
+        plan-scoped (arch_decisions.plan_slug populated). When omitted, runs
+        legacy global-only mode (verify step skipped via `when` cond).
     arch_decisions:
       type: array
       description: >-
         Ordered list of arch_decisions to seed. Each item must carry slug
-        (DEC-A{N}), title, rationale (≤250 chars), optional alternatives
-        (semicolon-separated ≤3), optional surface_slugs[], optional status
-        (default active).
+        (DEC-A{N} or plan-{slug}-{boundaries|end-state-contract|shared-seams}),
+        title, rationale (≤250 chars), optional alternatives (semicolon-
+        separated ≤3), optional surface_slugs[], optional status (default
+        active).
       items:
         type: object
         required: [slug, title, rationale]
@@ -37,7 +46,7 @@ inputs:
         properties:
           slug:
             type: string
-            description: Decision slug (DEC-A{N}).
+            description: Decision slug (DEC-A{N} or plan-scoped shape).
           title:
             type: string
             description: Decision title (kebab-case).
@@ -74,7 +83,7 @@ steps:
   - id: seed_decisions
     description: >-
       Phase A.2 — seed arch_decisions rows (foreach, sequential). Upserts by
-      slug. surface_slugs[0] resolved to surface_id FK.
+      slug. surface_slugs[0] = FK. plan_slug threaded when set (TECH-5244).
     flow: foreach
     items: ${inputs.arch_decisions}
     as: decision
@@ -90,6 +99,30 @@ steps:
           alternatives: ${decision.alternatives}
           surface_slugs: ${decision.surface_slugs}
           status: ${decision.status}
+          plan_slug: ${inputs.plan_slug}
+
+  - id: verify_seeded_decisions
+    description: >-
+      Phase A.2.5 — count plan-scoped rows in arch_decisions before seal.
+      Skipped via `when` when plan_slug absent (legacy global mode).
+    when: ${inputs.plan_slug}
+    sql: query
+    query: >-
+      SELECT COUNT(*)::int AS seeded_count FROM arch_decisions WHERE plan_slug = $1
+    params:
+      - ${inputs.plan_slug}
+
+  - id: verify_count_gate
+    description: >-
+      Phase A.2.6 — enforce ≥3 plan-scoped decisions. Bash predicate trips
+      with non-zero exit when seeded_count < 3 (boundaries +
+      end-state-contract + shared-seams minimum). Skipped when plan_slug
+      absent.
+    when: ${inputs.plan_slug}
+    bash: tools/scripts/recipe-engine/master-plan-new-phase-a/verify-seeded-count.sh
+    args:
+      seeded_count: ${verify_seeded_decisions.rows[0].seeded_count}
+      min_count: 3
 
   - id: head_sha
     description: >-
@@ -109,6 +142,7 @@ steps:
 outputs:
   plan_id: ${insert_plan.id}
   decisions_seeded: ${seed_decisions.count}
+  seeded_count_verified: ${verify_seeded_decisions.rows[0].seeded_count}
   locked_commit_sha: ${lock_arch.locked_commit_sha}
   architecture_locked_at: ${lock_arch.architecture_locked_at}
   lock_applied: ${lock_arch.applied}

@@ -690,12 +690,26 @@ export function registerArchChangelogSince(server: McpServer): void {
 // Decision phase write surface).
 // ---------------------------------------------------------------------------
 
+/**
+ * Slug regex: union of canonical global pattern (`DEC-A{N}`) and plan-scoped
+ * carcass-shape pattern (`plan-{slug}-{boundaries|end-state-contract|shared-seams}`)
+ * per Stage 2.4 / TECH-5244 — Phase A architecture-lock-seal seed support.
+ */
+const ARCH_DECISION_SLUG_REGEX =
+  /^(DEC-A\d+|plan-[a-z0-9-]+-(boundaries|end-state-contract|shared-seams))$/;
+
 const archDecisionWriteInputSchema = z.object({
   slug: z
     .string()
     .min(1)
-    .regex(/^DEC-A\d+$/, "slug must match pattern DEC-A{N}")
-    .describe("Decision slug (DEC-A{N}, kebab title separately)."),
+    .regex(
+      ARCH_DECISION_SLUG_REGEX,
+      "slug must match DEC-A{N} or plan-{slug}-{boundaries|end-state-contract|shared-seams}",
+    )
+    .describe(
+      "Decision slug. Either canonical `DEC-A{N}` (global) OR " +
+        "`plan-{slug}-{boundaries|end-state-contract|shared-seams}` (plan-scoped).",
+    ),
   title: z.string().min(1).describe("Decision title (kebab-case)."),
   rationale: z
     .string()
@@ -714,6 +728,14 @@ const archDecisionWriteInputSchema = z.object({
       "Affected `arch_surfaces.slug` list. First slug is stored as `surface_id` FK; remainder logged in body for now.",
     ),
   status: z.enum(["active", "superseded"]).default("active"),
+  plan_slug: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Optional master-plan slug (must exist in `ia_master_plans`). When set, " +
+        "decision is plan-scoped via `arch_decisions.plan_slug` column. Stage 2.4 / TECH-5244.",
+    ),
 });
 
 export async function runArchDecisionWrite(
@@ -725,8 +747,9 @@ export async function runArchDecisionWrite(
     alternatives?: string;
     surface_slugs?: string[];
     status?: "active" | "superseded";
+    plan_slug?: string;
   },
-): Promise<{ slug: string; id: number; status: string }> {
+): Promise<{ slug: string; id: number; status: string; plan_slug: string | null }> {
   const slug = (input.slug ?? "").trim();
   const title = (input.title ?? "").trim();
   const rationale = (input.rationale ?? "").trim();
@@ -738,6 +761,23 @@ export async function runArchDecisionWrite(
   }
   const status = input.status ?? "active";
   const alternatives = input.alternatives ?? null;
+  const planSlug = input.plan_slug?.trim() || null;
+
+  // Plan-scoped: preflight master-plan slug existence (invariant #12 — never auto-create).
+  if (planSlug) {
+    const pRes = await pool.query(
+      `SELECT slug FROM ia_master_plans WHERE slug = $1 LIMIT 1`,
+      [planSlug],
+    );
+    if (pRes.rowCount === 0) {
+      throw {
+        code: "unknown_master_plan_slug" as const,
+        message: `ia_master_plans row '${planSlug}' does not exist.`,
+        details: { plan_slug: planSlug },
+      };
+    }
+  }
+
   const firstSurfaceSlug = input.surface_slugs?.[0] ?? null;
   let surfaceId: number | null = null;
   if (firstSurfaceSlug) {
@@ -755,18 +795,24 @@ export async function runArchDecisionWrite(
     surfaceId = sRes.rows[0].id;
   }
   const ins = await pool.query(
-    `INSERT INTO arch_decisions (slug, title, status, rationale, alternatives, surface_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO arch_decisions (slug, title, status, rationale, alternatives, surface_id, plan_slug)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (slug) DO UPDATE SET
        title = EXCLUDED.title,
        status = EXCLUDED.status,
        rationale = EXCLUDED.rationale,
        alternatives = EXCLUDED.alternatives,
-       surface_id = EXCLUDED.surface_id
-     RETURNING id, status`,
-    [slug, title, status, rationale, alternatives, surfaceId],
+       surface_id = EXCLUDED.surface_id,
+       plan_slug = EXCLUDED.plan_slug
+     RETURNING id, status, plan_slug`,
+    [slug, title, status, rationale, alternatives, surfaceId, planSlug],
   );
-  return { slug, id: ins.rows[0].id, status: ins.rows[0].status };
+  return {
+    slug,
+    id: ins.rows[0].id,
+    status: ins.rows[0].status,
+    plan_slug: ins.rows[0].plan_slug ?? null,
+  };
 }
 
 export function registerArchDecisionWrite(server: McpServer): void {
@@ -775,7 +821,7 @@ export function registerArchDecisionWrite(server: McpServer): void {
     {
       title: "arch_decision_write",
       description:
-        "DB-backed: INSERT (or upsert by slug) one arch_decisions row. Stage 1.4 / TECH-2563 design-explore Architecture Decision phase write surface. UNIQUE(slug). Resolves first `surface_slugs[]` entry to `surface_id` FK; rejects unmapped slugs (invariant #12 — never auto-create surfaces).",
+        "DB-backed: INSERT (or upsert by slug) one arch_decisions row. Stage 1.4 / TECH-2563 design-explore Architecture Decision phase write surface. UNIQUE(slug). Slug pattern: `DEC-A{N}` (global) OR `plan-{slug}-{boundaries|end-state-contract|shared-seams}` (plan-scoped, Stage 2.4 / TECH-5244). Optional `plan_slug` arg attaches plan-scoped decisions; preflight rejects with `unknown_master_plan_slug` when slug missing. Resolves first `surface_slugs[]` entry to `surface_id` FK; rejects unmapped slugs (invariant #12 — never auto-create surfaces).",
       inputSchema: archDecisionWriteInputSchema.shape,
     },
     async (args) =>

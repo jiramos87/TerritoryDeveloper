@@ -90,6 +90,7 @@ Charters + discovery for cross-cutting programs → `docs/`. Umbrella programs:
 
 - **JSON interchange program** — glossary row + [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md), [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); charter trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 - **Compute-lib program** — glossary **Compute-lib program**; charter in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md); ongoing work in [`BACKLOG.md`](BACKLOG.md) **§ Compute-lib program**.
+- **Parallel-carcass program** — multi-section master-plan shape with row-only mutex + architecture lock seal. Migration cookbook for new plans: [`docs/parallel-carcass-migration-cookbook.md`](docs/parallel-carcass-migration-cookbook.md) (Phase A/B/C walkthrough + worked example). Design rationale: [`docs/parallel-carcass-exploration.md`](docs/parallel-carcass-exploration.md). Green-bar trace: [`docs/parallel-carcass-rollout-carcass3-evidence.md`](docs/parallel-carcass-rollout-carcass3-evidence.md).
 
 Durable IA does NOT embed backlog issue ids — see [`ia/rules/terminology-consistency.md`](ia/rules/terminology-consistency.md).
 
