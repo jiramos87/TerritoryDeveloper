@@ -52,7 +52,7 @@ MonoBehaviour:
   _slug: oscilloscope
   _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _detail:
-    sampleCount: 256
+    sampleCount: 128
     sweepRateHz: 60
     range: 1
 --- !u!114 &6207158290444381774

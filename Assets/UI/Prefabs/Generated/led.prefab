@@ -51,5 +51,5 @@ MonoBehaviour:
   _slug: led
   _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _detail:
-    illuminationSlug: amber
+    illuminationSlug: led-amber
     defaultState: 0

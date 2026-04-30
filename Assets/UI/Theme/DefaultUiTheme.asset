@@ -131,25 +131,25 @@ MonoBehaviour:
     value:
       family: Helvetica Neue
       weight: 600
-      font_catalog_slug: engraved
+      font_catalog_slug: 
       font_ref: {fileID: 0}
   - slug: faceplate
     value:
       family: Helvetica Neue
       weight: 500
-      font_catalog_slug: faceplate
+      font_catalog_slug: 
       font_ref: {fileID: 0}
   - slug: segmented
     value:
       family: Menlo
       weight: 700
-      font_catalog_slug: segmented
+      font_catalog_slug: 
       font_ref: {fileID: 0}
   - slug: silkscreen
     value:
       family: Helvetica Neue
       weight: 600
-      font_catalog_slug: silkscreen
+      font_catalog_slug: 
       font_ref: {fileID: 0}
   motionCurveEntries:
   - slug: detent-click

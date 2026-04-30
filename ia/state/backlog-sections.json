@@ -691,6 +691,30 @@
           "id": "TECH-6970",
           "checklist_line": "Token-drop measurement contribution to C2 gate",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6973",
+          "checklist_line": "Define align-arch-decision seam schema",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6974",
+          "checklist_line": "Plan-covered subagent body for seam-align-arch-decision",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6975",
+          "checklist_line": "Recipify master-plan-new Phase A+B+C into YAML",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6976",
+          "checklist_line": "Body trim master-plan-new to dispatch shell",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -1160,6 +1184,60 @@
           "type": "issue",
           "id": "TECH-7990",
           "checklist_line": "- [ ] **TECH-7990** — **ThemedBadge component** — count / status indicator archetype; composes background `Image` + foreground `ThemedLabel`; static (no animation) per §Components 7 non-scope (Stage 1.3 T1.3.6 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8141",
+          "checklist_line": "- [ ] **TECH-8141 — Bake spacing application** — apply panel/button detail spacing to LayoutGroup during prefab bake.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8142",
+          "checklist_line": "- [ ] **TECH-8142 — Bake archetype dispatch** — add section_header / divider / badge dispatch arms to UiBakeHandler.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8143",
+          "checklist_line": "- [ ] **TECH-8143 — Bake frame + illumination wiring** — resolve atlas slug + instantiate ThemedIlluminationLayer in Frame bake.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8144",
+          "checklist_line": "- [ ] **TECH-8144 — Bake button state wiring** — patch Selectable.colors + SpriteState + fadeDuration from palette/atlas/motion.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8145",
+          "checklist_line": "- [ ] **TECH-8145 — Conformance 5 new check kinds** — add 5 case arms to AgentBridgeCommandRunner.Conformance.cs.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8296",
+          "checklist_line": "ui-fidelity-review skill sync",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8297",
+          "checklist_line": "pause-menu + info-panel rollout",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8298",
+          "checklist_line": "settings-screen + save-load-screen rollout",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8299",
+          "checklist_line": "HUD rollout (TMP-only scope)",
           "trailing_blanks": 1
         }
       ]

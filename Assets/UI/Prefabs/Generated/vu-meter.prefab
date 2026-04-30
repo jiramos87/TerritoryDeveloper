@@ -57,7 +57,7 @@ MonoBehaviour:
   _detail:
     attackMs: 10
     releaseMs: 300
-    range: 1
+    range: 60
 --- !u!114 &4162117458733977128
 MonoBehaviour:
   m_ObjectHideFlags: 0
