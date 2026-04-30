@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7d8e90a1f2b3c4d5e6f071829304556, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _toggle: {fileID: 0}
   _label: {fileID: 0}
   _icon: {fileID: 0}
@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 109c0b4bb4eb44ce6b992d4575dff779, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _labelText: {fileID: 6433605146763617582}
   _iconImage: {fileID: 1158582584173395731}
   _overlayLabel: 

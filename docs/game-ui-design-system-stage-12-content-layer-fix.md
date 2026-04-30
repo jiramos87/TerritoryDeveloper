@@ -457,3 +457,766 @@ the marker (historical record).
 DataAdapter slots wired (Step 3b), PauseMenuDataAdapter.OnSettings
 rewired (Step 4), trace instrumentation removed (this step). Original
 failing repro (Esc / Shift+click / white squares) closed end-to-end.
+
+## Step 7 — Post-fix runtime regression (FAILED — needs follow-up)
+
+User play-tested commit `aba1bc1e` after Stage 12 closeout. Trigger
+paths confirmed wired (smoke green) but **visible chrome still wrong**.
+Console flood:
+
+```
+[Blip] SfxVolume bound headless: 0 dB
+[ZoneSubTypeRegistry] GridAssetCatalog not found in scene.
+[TokenCatalog] Streaming relative path is not set.
+Assertion failed on expression: 'CompareApproximately(SqrMagnitude(result), 1.0F)'
+transform.localRotation assign attempt for 'needle' is not valid. Input rotation is { NaN, NaN, NaN, NaN }.
+```
+
+Screenshot evidence: MainScene UI not rendering as expected at runtime
+despite trigger contract being green and DataAdapter slots wired.
+
+### Failure classification
+
+Three orthogonal layers, none reachable by the Stage 12 trigger-path
+fix:
+
+1. **Catalog wiring (config gap)** —
+   `Assets/StreamingAssets/catalog/*.json` was committed but
+   `TokenCatalog` and `ZoneSubTypeRegistry` runtime components have
+   empty / wrong "streaming relative path" config + missing scene refs.
+   Effect: themed renderers can't resolve token / sprite ids → fall back
+   to unstyled chrome (white squares) or empty visuals.
+   - `TokenCatalog`: `Streaming relative path is not set` →
+     ScriptableObject instance in scene / theme has the path field
+     blank; needs `"catalog/token.json"` (or repo equivalent) wired in
+     inspector.
+   - `ZoneSubTypeRegistry`: `GridAssetCatalog not found in scene` →
+     scene is missing a `GridAssetCatalog` GameObject + component;
+     registry component does scene-search at Awake.
+
+2. **Time-controls compass NaN (math regression)** — bake of
+   `time-controls.prefab` (re-baked in this commit) produced a `needle`
+   transform whose driving rotation source emits NaN quaternion. Likely
+   division-by-zero in compass-arrow LookRotation when the up vector or
+   target vector is zero-length (default state pre-tick or on null
+   reference). Unrelated to modal trigger paths.
+
+3. **Visible chrome still wrong (downstream of #1)** — once token /
+   asset / archetype catalogs fail to resolve, ThemedImage / ThemedLabel
+   renderers paint with the default fallback theme (transparent / white
+   squares). The smoke test passed because it asserts trigger semantics
+   (root SetActive(true) + adapter listener fires), not visual fidelity.
+
+### Why Stage 12 smoke missed this
+
+`ModalTriggerPathsSmokeTest` covers control-flow contract (trigger →
+OpenPopup → root active → adapter receives event). It does **not**:
+
+- Assert themed renderer pulled non-empty token from catalog.
+- Assert no `Assertion failed` / `LogError` lines emitted during scene
+  load.
+- Assert compass needle rotation is finite.
+
+These are renderer-data contracts (what's painted) and Awake-init
+contracts (no console errors), not trigger contracts. Stage 12 stayed
+in-scope correctly; the failures live in Stages 13+ / catalog wiring
+backlog.
+
+### Next steps (deferred — paused per user)
+
+Three independent fix workstreams (no order dependency between them):
+
+1. **Catalog scene-wiring fix** — populate `TokenCatalog.streamingPath`
+   field on the canonical scene / theme asset; add `GridAssetCatalog`
+   GameObject + component to `MainScene.unity`. Verify via
+   `unity_bridge_get` on registry component. Likely a 2-line
+   `set_property` + `add_component` bridge mutation pair.
+
+2. **Compass needle NaN fix** — locate the `needle` GameObject in
+   `time-controls.prefab` re-bake; trace driver script (probably a
+   `CompassNeedleController` or similar) for `Quaternion.LookRotation`
+   call with zero-vector input. Add zero-magnitude guard or initialize
+   to `Quaternion.identity`.
+
+3. **Smoke contract upgrade** — extend `ModalTriggerPathsSmokeTest`
+   (or a sibling `RendererSmokeTest`) to assert: (a) zero `LogError`
+   during scene load; (b) themed renderer painted at least one
+   non-default color sample; (c) all `localRotation` values finite.
+   Closes the visual-fidelity gap exposed by this regression.
+
+**Status**: STAGE 12 TRIGGER PATHS GREEN, RUNTIME RENDERING RED.
+Original repro symptoms (Esc no-op, Shift+click no-op) closed; new
+symptoms (catalog config + NaN rotation) open. Workstream paused per
+user request.
+
+## Step 8 — Architecture-alignment audit (2026-04-30)
+
+User flagged a possible misdiagnosis in Step 7: `[TokenCatalog]` /
+`[ZoneSubTypeRegistry]` console errors may be **out-of-scope** for
+`game-ui-design-system`. Audited authoring-approach exploration to
+confirm.
+
+### Locked architecture — Approach G (NOT asset-pipeline catalog)
+
+`docs/game-ui-mvp-authoring-approach-exploration.md` — polling locked
+2026-04-27, **Approach G**:
+
+```
+CD bundle (out-of-repo)
+   ↓ npm run transcribe:cd-game-ui
+web/design-refs/step-N-game-ui/ir.json    ← single source of truth
+   ↓ npm run unity:bake-ui
+unity_bridge_command bake_ui_from_ir
+   ↓ writes
+Assets/UI/Prefabs/Generated/*.prefab
+Assets/UI/Theme/DefaultUiTheme.asset      ← populated AT BAKE TIME from IR
+```
+
+**Q4 (locked):** "MVP ships hand-tuned `UiTheme.cs` SO + IR JSON. **NO
+catalog rows.**"
+
+**Phase 3 (locked) explicit non-scope for MVP:**
+
+> Web admin schema-driven editors (DEC-A45) · catalog DDL drops · publish
+> ripple (DEC-A44) · ephemeral preview lane · **snapshot pipeline** ·
+> **runtime hydration from snapshot** · token migration script · designer-
+> driven CD loop · **asset-pipeline catalog integration**.
+
+### Implementation alignment confirmed
+
+`Assets/Scripts/Editor/Bridge/UiBakeHandler.cs:374,389`:
+
+```csharp
+var theme = AssetDatabase.LoadAssetAtPath<UiTheme>(soPath);  // DefaultUiTheme.asset
+PopulateThemeFromIr(theme, parseResult.root);                // bake-time hydration
+EditorUtility.SetDirty(theme);
+AssetDatabase.SaveAssets();
+```
+
+✅ Aligned with Approach G. Bake-time hydration of `UiTheme` SO from IR.
+NO TokenCatalog read at runtime. NO StreamingAssets snapshot consumption.
+
+### Console errors are red herrings
+
+Three runtime errors observed (Step 7) belong to **other buckets**, not
+game-ui-design-system MVP:
+
+| Error | Bucket | In-scope for game-ui? |
+|---|---|---|
+| `[TokenCatalog] Streaming relative path is not set` | asset-pipeline (`TokenCatalog.cs` reads `Assets/StreamingAssets/catalog/token.json`) | ❌ post-MVP catalog lane |
+| `[ZoneSubTypeRegistry] GridAssetCatalog not found in scene` | grid / zone catalog (cell sprite / zone sub-type lookups) | ❌ asset-pipeline |
+| Empty `Assets/StreamingAssets/catalog/*.json` (`rows: []`) | asset-pipeline snapshot pipeline | ❌ post-MVP |
+| `[Blip] SfxVolume bound headless: 0 dB` | audio bucket | ❌ orthogonal |
+| `transform.localRotation NaN for needle` | game-ui-design-system (compass needle bake produced this prefab) | ✅ in-scope, separate fix |
+
+**Step 7 misdiagnosis corrected**: "Cause #1 catalog wiring" + "Cause #2
+TokenCatalog._streamingRelativePath blank" + "Cause #3 GridAssetCatalog
+absent" are NOT root causes for game-ui white squares. They are unrelated
+asset-pipeline gaps that surface in the same console because the same
+scene loads them. Fixing them would NOT light up the new themed UI.
+
+### Real root cause (re-confirmed under Approach G lens)
+
+**Bake handler omits `_themeRef` wire-up on every themed primitive.**
+
+- `UiBakeHandler.cs` populates `UiTheme.asset` (line 389) ✅
+- `UiBakeHandler.cs` `AddComponent<ThemedPanel>()` / `<ThemedButton>()` /
+  `<ThemedLabel>()` / `<IlluminatedButton>()` etc. ✅
+- `UiBakeHandler.cs` **never writes to** `_themeRef` SerializeField on
+  any of the above ❌
+- Grep `_themeRef|themeRef` in `UiBakeHandler.cs` → 0 matches.
+
+Runtime path (`ThemedPrimitiveBase.cs:13-22`):
+
+```csharp
+protected virtual void Awake()
+{
+    Theme = _themeRef != null ? _themeRef : FindObjectOfType<UiTheme>();
+    if (Theme == null) {
+        Debug.LogWarning("[ThemedPrimitiveBase] no UiTheme available");
+        return;                       // ← bail; ApplyTheme NEVER runs
+    }
+    ApplyTheme(Theme);
+}
+```
+
+`UiTheme` is a ScriptableObject **asset**, not a scene MonoBehaviour.
+`FindObjectOfType<UiTheme>()` does NOT find unloaded assets. Fallback
+returns null → bail → no chrome → white squares.
+
+Inspector evidence: `IlluminatedButton.Theme Ref: None (Ui Ther...)` —
+direct visual proof every baked primitive is unwired.
+
+### Decisions
+
+1. **Confirmed: implementation aligned with Approach G.** No conflict
+   between approaches. The asset-pipeline catalog surfaces (`TokenCatalog`,
+   `GridAssetCatalog`, `StreamingAssets/catalog/*.json`) belong to other
+   buckets and are correctly NOT consumed by `ThemedPrimitiveBase` /
+   `StudioControlBase` at runtime.
+2. **Step 7 fix list pruned**: drop "Cause #1 catalog wiring" + "Cause #2
+   TokenCatalog path" + "Cause #3 GridAssetCatalog scene wiring" from
+   game-ui scope. They re-surface under asset-pipeline / grid buckets if
+   needed. White-square fix does NOT depend on them.
+3. **Single fix lands the white-square problem**: extend
+   `UiBakeHandler.cs` so every `AddComponent<ThemedX>` /
+   `<StudioControlBase>` / `<IlluminatedButton>` site also writes the
+   `UiTheme.asset` reference into the `_themeRef` SerializeField via
+   `SerializedObject.FindProperty("_themeRef").objectReferenceValue`.
+4. **Compass NaN stays in-scope** for game-ui — it lives inside
+   `time-controls.prefab` which IS bake handler output. Likely zero-vector
+   guard missing in `LookRotation` driver.
+5. **Hand-wiring NOT acceptable** per locked authoring loop (Approach G:
+   "Agent = orchestrator only; deterministic boundaries"). Fix lives in
+   the bridge handler, re-bakes apply uniformly.
+
+### Single-step fix plan (replaces Step 7 fix-1/2/3)
+
+**Step 8.1 — Patch `UiBakeHandler.cs` to wire `_themeRef`.**
+
+Add helper:
+
+```csharp
+static void WireThemeRef(Component c, UiTheme theme)
+{
+    if (c == null || theme == null) return;
+    var so = new UnityEditor.SerializedObject(c);
+    var p = so.FindProperty("_themeRef");
+    if (p != null) {
+        p.objectReferenceValue = theme;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+}
+```
+
+Plumb `UiTheme theme` through `BakePanelChild`, `BakeStage8ThemedPrimitive`,
+`BakeIlluminatedButton`, etc. — all bake paths already loaded the SO at
+line 374. Pass it through and call `WireThemeRef(component, theme)` after
+every `AddComponent<T>` site for any `T : ThemedPrimitiveBase` or
+`T : StudioControlBase` (incl. `IlluminatedButton`).
+
+Affected sites (grepped from `case "..."` switch arms):
+
+- `themed-panel`, `themed-button`, `themed-label`, `themed-slider`,
+  `themed-toggle`, `themed-tab-bar`, `themed-list`, `themed-icon`,
+  `themed-overlay-toggle-row`, `themed-tooltip`, `themed-popup`
+- `illuminated-button`, `knob`, `fader`, `vu-meter`, `oscilloscope`,
+  `led`, `segmented-readout`, `detent-ring`
+
+Plus renderer-sibling components if any inherit `ThemedPrimitiveBase`
+(check `ThemedTabBarRenderer`, `ThemedSliderRenderer` parentage).
+
+**Step 8.2 — Re-bake all panels.**
+
+```bash
+npm run unity:bake-ui
+```
+
+Verify: open a generated prefab in text view; `_themeRef:` no longer
+`{fileID: 0}` — should reference `DefaultUiTheme.asset` GUID
+`8a7f6e5d4c3b2a1098f7e6d5c4b3a201`.
+
+**Step 8.3 — Verify in play mode.**
+
+- Hit Esc → PauseMenu chrome paints with palette colors (not white).
+- Shift+click cell → InfoPanel labels render TMP text + tab strip color.
+- HUD bar buttons paint with `chassis-graphite` ramp.
+
+**Step 8.4 — Compass NaN guard (parallel).**
+
+Locate compass needle driver script. Add `if (vec.sqrMagnitude <
+Mathf.Epsilon) return;` before `Quaternion.LookRotation` call.
+
+### Out of scope (asset-pipeline / other buckets)
+
+- `TokenCatalog` scene wiring — asset-pipeline backlog item.
+- `GridAssetCatalog` scene addition — grid bucket; orthogonal to UI.
+- `StreamingAssets/catalog/*.json` population — post-MVP catalog lane.
+- `[Blip] SfxVolume` headless warning — audio bucket.
+
+These remain visible in console but do NOT block game-ui Stage 12 visual
+fidelity. File separately if/when their owning buckets activate.
+
+**Status after Step 8 audit**: root cause re-classified, fix scope
+reduced from 3 layers to 1 (`_themeRef` bake wire-up) + 1 cosmetic
+(compass NaN). Other console errors triaged out of scope per locked
+Approach G.
+
+## Step 9 — Post-Step-8 runtime regression (2026-04-30)
+
+User play-tested Step 8 patches. Trigger paths still green; compass NaN
+silenced; **panels still invisible**. New console signals:
+
+```
+Tag: knob is not defined.
+Tag: fader is not defined.
+Tag: vu-meter is not defined.
+Tag: themed-slider is not defined.
+Tag: themed-toggle is not defined.
+Tag: themed-button is not defined.
+```
+
+Three orthogonal render-content bugs uncovered, none in Step 8 scope:
+
+### Layer E — Tag spam (cosmetic, safe to fix)
+
+`Assets/Scripts/UI/Themed/ThemedPanel.cs · ChildMatches` calls
+`child.CompareTag(token)` against slot `accepts[]` tokens (`knob`,
+`fader`, `vu-meter`, `themed-button`, ...). Unity emits "Tag: X is not
+defined" log line before throwing the `UnityException`; the existing
+try/catch silences the throw but not the log. Slugs are not Unity tags
+— drop the `CompareTag` fallback, name-only match.
+
+### Layer F — Panel root has no `Image` component
+
+`UiBakeHandler.SavePanelPrefab` produces a panel with only
+`RectTransform` + `ThemedPanel`. `ThemedPanel.ApplyTheme` is a
+slot-graph composer (reparents children) — never paints chrome. Result:
+panel renders nothing; only children with their own renderers paint.
+Every modal root is invisible at runtime.
+
+Fix: bake adds `Image` to panel root + new `_backgroundImage`
+SerializeField on `ThemedPanel` + `ApplyTheme` paints background with
+palette ramp[0]. Anchor RectTransform to full-stretch.
+
+### Layer G — Bake never writes `_paletteSlug` (root render bug)
+
+Every `Themed*` component carries `[SerializeField] private string
+_paletteSlug` (verified across 11 components: ThemedButton, ThemedLabel,
+ThemedSlider, ThemedToggle, ThemedTabBar, ThemedTooltip, ThemedIcon,
+ThemedList, ThemedPanel, ThemedSliderRenderer, ThemedTabBarRenderer,
+ThemedToggleRenderer). Their `ApplyTheme` early-returns when
+`TryGetPalette(_paletteSlug, out var ramp)` returns false — which it
+always does, because `_paletteSlug` is never assigned by the bake.
+
+Result: every themed primitive renders default (transparent / white /
+unpainted). This is the actual root cause of "white squares" — not
+`_themeRef` (Step 8) and not Image components alone (Layer F). The
+field is wired but the lookup key is empty.
+
+Plus: `themed-button` carries `[SerializeField] private Image
+_buttonImage` but bake adds no Image and never writes the field
+reference. Same story.
+
+### Decision — Option A: hardcoded defaults per kind in bake
+
+Three options surveyed:
+
+- **A**: Hardcoded defaults per kind in bake (panel →
+  `chassis-graphite`, button → `chassis-graphite`, label →
+  `silkscreen`, slider track / toggle / tab-bar → matched palettes).
+  Fast, ships Stage 12 visual chrome today; locks aesthetic in C#.
+- **B**: Extend IR schema with per-interactive `palette` slug;
+  transcribe layer emits it. Cleaner, more work (web transcribe +
+  ir-schema.ts + IR JSON + bake DTO).
+- **C**: Theme asset carries `defaultPalettePerKind` map; runtime
+  fallback inside each ApplyTheme. Cleanest separation; one theme
+  edit + 11 ApplyTheme tweaks.
+
+**Selected: Option A** — minimum blast radius, unlocks visual
+verification immediately. Aesthetic-flexibility migration path: graduate
+to Option B or C in a render-tokens pass post-Stage-12.
+
+### Step 9 fix plan — mechanical
+
+**Step 9.1 — Patch `ThemedPanel.cs`.**
+
+- Drop `CompareTag` fallback in `ChildMatches`. Replace try/catch with
+  name-only match.
+- Add `[SerializeField] private Image _backgroundImage` field +
+  `using UnityEngine.UI;`.
+- `ApplyTheme`: when `_backgroundImage != null` and palette resolves,
+  paint `_backgroundImage.color = ramp[0]`.
+
+**Step 9.2 — Patch `UiBakeHandler.cs · SavePanelPrefab`.**
+
+- Add `Image` component to panel root.
+- Set RectTransform anchors to `(0, 0)` → `(1, 1)`, sizeDelta zero,
+  pivot `(0.5, 0.5)` so panel fills its parent on activation.
+- Write `_backgroundImage` SerializedObject prop = the panel-root
+  Image.
+- Write `_paletteSlug` = `chassis-graphite` (default panel chrome).
+
+**Step 9.3 — Patch `UiBakeHandler.cs` themed-button branches.**
+
+Both `InstantiatePanelChild` (panel-child path) and
+`BakeStage8ThemedPrimitive` (Stage 8 standalone path):
+
+- Add `Image` component to `go`.
+- Wire `_buttonImage` via SerializedObject.
+- Write `_paletteSlug` = `chassis-graphite`.
+- Write `_frameStyleSlug` = `thin` (existing IR frame_style slug).
+
+**Step 9.4 — Patch `UiBakeHandler.cs` other themed branches.**
+
+For each themed-* state-holder + renderer pair, write `_paletteSlug`
+default per Option A table:
+
+| Kind | State-holder palette | Renderer palette |
+| --- | --- | --- |
+| themed-label | `silkscreen` | n/a (self-renders) |
+| themed-slider | `chassis-graphite` | `led-cyan` (fill) |
+| themed-toggle | `chassis-graphite` | `led-grass` (checkmark) |
+| themed-tab-bar | `chassis-graphite` | `led-amber` (active indicator) |
+| themed-list | `chassis-graphite` | n/a |
+| themed-icon | `silkscreen` | n/a |
+| themed-tooltip | `chassis-graphite` | n/a |
+
+**Step 9.5 — Re-bake + compile gate.**
+
+```
+unity_compile (MCP)
+npm run unity:bake-ui
+grep _paletteSlug Assets/UI/Prefabs/Generated/pause-menu.prefab
+```
+
+Expected: every themed component carries non-empty `_paletteSlug`
+string + Image component populated.
+
+**Step 9.6 — Play-mode verify.**
+
+- Esc → PauseMenu paints `chassis-graphite` background; six themed
+  buttons paint with chassis ramp.
+- Shift+click cell → InfoPanel labels render TMP text in
+  `silkscreen`; tab strip paints; active indicator amber.
+- HUD bar buttons paint chassis ramp.
+- Console clean of `Tag: X is not defined`.
+
+### Out of scope (still)
+
+Same triage as Step 8: TokenCatalog wiring, GridAssetCatalog scene add,
+catalog json population, Blip headless warning. Render content drives
+chrome only; renderer aesthetics + token catalog wiring belong to
+later passes.
+
+**Status entering Step 9**: Step 8 (`_themeRef`) confirmed mechanical —
+prefabs carry GUID. Layer F+G blocking visual fidelity. Option A
+selected for fastest path.
+
+## Step 10 — modal sizing + layout + z-order + ramp index (post Step 9 visual verify)
+
+### Step 9 visual verify outcome
+
+- ✓ tag spam gone (no more `Tag: knob is not defined`).
+- ✓ panels paint chassis-graphite background; ThemedPanel inspector shows
+  `_paletteSlug=chassis-graphite` + `_backgroundImage` wired.
+- ✓ themed-buttons + themed-labels + themed-tab-bar carry palette slugs.
+- ✗ pause-menu + info-panel render full-window (anchor 0,0→1,1) — wrong
+  for modals; obscures hud-bar.
+- ✗ panels render BEHIND hud-bar siblings (sibling order, not last).
+- ✗ child content lands at (0,0) — only one tiny brown rect visible inside
+  the black panel. No LayoutGroup on panel root.
+- ✗ chassis-graphite ramp[0]=`#0a0c0d` paints near-pure-black — too dark
+  for panel fill.
+
+### New diagnostic layers
+
+| Layer | Symptom                          | Cause                                            |
+|-------|----------------------------------|--------------------------------------------------|
+| H     | Modal panels fill entire canvas  | `SavePanelPrefab` anchor 0,0→1,1 for every panel |
+| I     | Panels render under hud-bar      | Sibling index = insertion order (not last)       |
+| J     | Children stack at (0,0)          | No LayoutGroup on panel; default RectTransforms  |
+| K     | Background appears pure black    | `chassis-graphite` ramp[0]=`#0a0c0d` (darkest)   |
+
+### Decisions
+
+| Id | Decision                                                                        |
+|----|---------------------------------------------------------------------------------|
+| D1 | A — slug heuristic: `*-screen` → full-stretch; else → centered 600×800 modal    |
+| D2 | A — keep `chassis-graphite`; ApplyTheme reads ramp index 1 (fallback ramp[0])   |
+| D3 | A — bake adds VerticalLayoutGroup + ContentSizeFitter to panel root             |
+| D4 | B — runtime SetAsLastSibling on OnEnable in ThemedPanel                         |
+
+### Mechanical plan
+
+**Step 10.1 — `SavePanelPrefab` modal vs screen branch.**
+`Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` — replace fixed
+anchor block with slug-suffix branch. Modals: anchorMin=anchorMax=(0.5,
+0.5), sizeDelta=(600, 800). Screens: keep current full-stretch.
+
+**Step 10.2 — VerticalLayoutGroup + ContentSizeFitter on panel root.**
+After Image + ThemedPanel attach, add VerticalLayoutGroup
+(spacing=8, padding=16, childAlignment=UpperCenter, childForce* =true).
+ContentSizeFitter omitted for modal (fixed size) and screen
+(full-stretch); both have explicit dimensions.
+
+**Step 10.3 — `ThemedPanel.ApplyTheme` ramp index 1.**
+`Assets/Scripts/UI/Themed/ThemedPanel.cs` — read `ramp.ramp[1]` when
+`Length >= 2`, else fall back to `ramp.ramp[0]`.
+
+**Step 10.4 — `ThemedPanel.OnEnable` SetAsLastSibling.**
+`Assets/Scripts/UI/Themed/ThemedPanel.cs` — add `private void
+OnEnable() { transform.SetAsLastSibling(); }`. Ensures modals draw on
+top regardless of canvas insertion order.
+
+**Step 10.5 — Re-compile + re-bake + verify prefab.**
+
+```
+unity_compile (MCP)
+npm run unity:bake-ui
+grep -E "anchorMin|anchorMax|sizeDelta" Assets/UI/Prefabs/Generated/pause-menu.prefab | head
+```
+
+Expected: pause-menu + info-panel anchor=(0.5,0.5) sizeDelta=(600,800);
+settings-screen + save-load-screen anchor=(0,0)→(1,1).
+
+**Step 10.6 — Play-mode visual verify.**
+
+- Esc → pause menu = centered modal, lighter graphite bg, on top.
+- Shift+click cell → info panel = centered modal with stacked content.
+- HUD bar visible behind modals; not obscured.
+
+## Step 11 — scene-override regression + layout-kind ambiguity (post Step 10 visual verify)
+
+### Step 10 visual verify outcome
+
+Screenshots:
+- pause-menu in Scene: child `themed-button(1)` shows **Width=1950, Height=100**
+  (canvas-wide bar). Inspector header: "Some values driven by VerticalLayoutGroup."
+- pause-menu in Game (Esc pressed): no centered modal; canvas dark below hud-bar;
+  6 themed-buttons effectively invisible (stretched off the visible safe area).
+- MainScene scene view: scene-only modals (`BondIssuanceModal`, `BudgetPanel`,
+  `HudEstimatedSurplusHint`, `BondHudBadge`, `ConstructionCostText`) now render
+  as a vertical column of empty white rectangles centered on canvas — used to
+  sit overlapped at center.
+- info-panel (cell click): inspector shows RectTransform **stretch** (Left=0,
+  Top=0, Right=0, Bottom=0; AnchorMin=(0,0), AnchorMax=(1,1)) **with** VLG
+  (Padding=16, Spacing=8, ChildAlignment=Upper Center). Panel paints; no actual
+  content rendered.
+
+### Root-cause evidence
+
+Grep `MainScene.unity` for the pause-menu prefab guid
+(`6e9ed49d7fbf84cd9a1f749174a9f3ca`) at line 10260 (`PrefabInstance &882970146`):
+
+```
+- target: …guid: 6e9ed49d7fbf84cd9a1f749174a9f3ca…
+  propertyPath: m_AnchorMax.x  value: 1
+- target: …  propertyPath: m_AnchorMax.y  value: 1
+- target: …  propertyPath: m_AnchorMin.x  value: 0
+- target: …  propertyPath: m_AnchorMin.y  value: 0
+- target: …  propertyPath: m_SizeDelta.x  value: 0
+- target: …  propertyPath: m_SizeDelta.y  value: 0
+- target: …  propertyPath: m_AnchoredPosition.x  value: 0
+- target: …  propertyPath: m_AnchoredPosition.y  value: 0
+```
+
+The PrefabInstance carries explicit RectTransform overrides that pin the scene
+instance to **full-stretch (0,0→1,1, sizeDelta=0)** regardless of what the
+prefab itself stores. Step 10.1's prefab-side `(0.5,0.5)` + `sizeDelta=(600,
+800)` is **ignored** for any pre-existing scene instance.
+
+Same override pattern applies to `info-panel`, `hud-bar`, `toolbar`,
+`overlay-toggle-strip`, `settings-screen`, `save-load-screen`, `new-game-screen`
+(verified via guid grep — all have PrefabInstance overrides on RectTransform
+properties).
+
+`pause-menu.prefab` line 466 (and `hud-bar.prefab` line 1306) confirm VLG
+component **was** baked: `m_Padding`, `m_Spacing: 8`, `m_ChildAlignment: 1`.
+Component additions (Image + ThemedPanel + VLG) propagate prefab→scene because
+they're new; existing-property changes (anchors) do not when scene already
+overrides them.
+
+### New diagnostic layers
+
+| Layer | Symptom                                    | Cause                                                       |
+|-------|--------------------------------------------|-------------------------------------------------------------|
+| L     | Modal panels still full-stretch in scene   | MainScene PrefabInstance overrides RectTransform anchors    |
+| M     | hud-bar children stack vertically in scene | VLG attached to **every** themed panel — wrong for toolbars |
+| N     | info-panel paints but no content           | Stretched anchors + content adapter slot match fails        |
+| O     | Scene-only modals (BondIssuanceModal etc.) appear in vertical column at center | Side effect of Layer M / VLG cascade; secondary |
+
+Layers L + M are the load-bearing bugs. N is downstream of L. O is cosmetic
+fallout that should self-resolve when L+M land.
+
+### Why bake-time anchoring can't win
+
+Unity prefab→scene contract:
+- New components added to prefab → propagate to scene instance.
+- Property edits to existing components → propagate **only** if the scene has
+  no override on that property. Once the scene records an override, it sticks
+  until "Revert" is invoked (manually in inspector or programmatically).
+
+MainScene was authored before the modal-sizing logic existed; every panel
+instance has hand-set full-stretch overrides. Bake-time prefab edits cannot
+reach those instances.
+
+### Pending decisions
+
+| Id | Question                                                                       | Options                                                                                                                                                                                       |
+|----|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D5 | Where does modal vs screen vs toolbar layout live?                             | A — runtime (`ThemedPanel.OnEnable` forces anchors + sizeDelta + layout-component).<br>B — IR `panel.kind` field consumed by bake handler; runtime trusts prefab.<br>C — both (kind in IR + runtime enforces). |
+| D6 | How do we recover MainScene's existing instances?                              | A — delete + re-instantiate each panel in MainScene from prefab.<br>B — scripted scene-fix pass strips RectTransform overrides + saves scene.<br>C — runtime enforcement (D5=A) makes recovery moot.            |
+| D7 | hud-bar / toolbar layout direction                                             | A — horizontal (HorizontalLayoutGroup).<br>B — keep VLG; restructure children.<br>C — no LayoutGroup (manual positioning).                                                                                       |
+| D8 | Layout-kind taxonomy — explicit set                                            | A — `modal` / `screen` / `hud` / `toolbar` (4 kinds).<br>B — `modal` / `screen` only (2 kinds; hud/toolbar = manual).<br>C — open-ended string slug + bake handler pattern-matches.                              |
+
+### Proposed mechanical plan (pending decisions)
+
+**Recommended path: D5=A, D6=C, D7=A, D8=A.**
+
+Rationale: runtime enforcement (D5=A) bypasses Unity's prefab-override
+contract entirely — `ThemedPanel.OnEnable` writes RectTransform values
+directly each time the panel activates. Scene overrides become irrelevant
+(D6=C). Explicit kind taxonomy (D8=A) removes slug-suffix heuristic
+brittleness. hud-bar gets HorizontalLayoutGroup (D7=A) so the toolbar
+remains horizontal.
+
+**Step 11.1 — IR `panel.kind` field.**
+`tools/scripts/transcribe-cd-to-ir/` — add `kind: "modal" | "screen" | "hud" |
+"toolbar"` to each `panels[]` entry. Default = `modal`. Existing panels:
+- `pause-menu`, `info-panel`, `building-info`, `alerts-panel` → `modal`.
+- `settings-screen`, `save-load-screen`, `new-game-screen` → `screen`.
+- `hud-bar` → `hud`.
+- `toolbar`, `overlay-toggle-strip` → `toolbar`.
+
+**Step 11.2 — `ThemedPanel` runtime kind enforcement.**
+`Assets/Scripts/UI/Themed/ThemedPanel.cs` —
+- Add SerializeField `_kind: PanelKind` enum.
+- New `OnEnable` body:
+  - `transform.SetAsLastSibling()` (keep Step 10.4).
+  - Call `ApplyKindLayout()` → switch on `_kind`:
+    - `Modal` → anchorMin = anchorMax = (0.5, 0.5); sizeDelta = (600, 800);
+      anchoredPosition = Vector2.zero. Ensure `VerticalLayoutGroup` present.
+    - `Screen` → anchorMin = (0,0), anchorMax = (1,1), sizeDelta = Vector2.zero.
+      No layout group (children position themselves).
+    - `Hud` → anchorMin = (0,1), anchorMax = (1,1), pivot = (0.5, 1),
+      sizeDelta = (0, 100). Ensure `HorizontalLayoutGroup`.
+    - `Toolbar` → anchorMin = (0,0), anchorMax = (0,1), pivot = (0, 0.5),
+      sizeDelta = (200, 0). Ensure `HorizontalLayoutGroup` or
+      `VerticalLayoutGroup` per design.
+
+**Step 11.3 — `UiBakeHandler.SavePanelPrefab` simplification.**
+- Drop slug-suffix branch (Step 10.1).
+- Keep Image + ThemedPanel attach.
+- Remove unconditional VLG add (Step 10.2) — runtime adds correct kind.
+- Write `_kind` SerializedProperty on ThemedPanel from IR `panel.kind`.
+
+**Step 11.4 — Re-bake + scene re-pickup.**
+```
+unity_compile (MCP)
+npm run unity:bake-ui
+unity_bridge_command refresh_asset_database
+```
+Scene's existing instances pick up new `_kind` SerializeField (since adding a
+serialized property propagates to scene). Runtime `OnEnable` overrides
+RectTransform regardless of scene overrides.
+
+**Step 11.5 — Optional: scene-fix pass to strip overrides.**
+If runtime enforcement leaves stale Inspector noise, run editor script that
+walks MainScene PrefabInstance entries for generated panel guids and removes
+RectTransform property overrides. Idempotent. Skip if Step 11.4 visual
+verify is clean.
+
+**Step 11.6 — Play-mode visual verify (re-run Step 10.6).**
+- Esc → pause-menu centered 600×800 modal, on top, content stacked.
+- Shift+click cell → info-panel centered modal with adapter content visible.
+- hud-bar horizontal toolbar at top, drawn behind modals.
+- Scene-only column (BondIssuanceModal etc.) returns to original overlapped
+  positions (no longer column).
+
+### Awaiting user decisions
+
+D5 / D6 / D7 / D8 — please confirm A/B/C per row. Default = recommended
+path above (D5=A, D6=C, D7=A, D8=A). Reply "confirm defaults" to apply.
+
+## Step 12 — caption labels for themed-buttons (post Step 11 visual verify)
+
+**Symptom (user screenshots).** pause-menu modal renders 6 themed-buttons but
+caption text invisible — buttons looked like flat empty rectangles.
+
+**Root cause.** IR `panels[].children[]` themed-button entries had no embedded
+caption text. Bake handler spawned the chrome (Image + ThemedButton +
+RectTransform) but no TMP child carrying the label.
+
+**Fixes applied.**
+- **12.1** IR schema — added optional `labels[]` array on themed-button child
+  entries with `{ slug, font_face, palette, text }`.
+- **12.2** `UiBakeHandler.SpawnThemedButtonCaption` — new helper spawning a TMP
+  child centered on the button with caption text from IR.
+- **12.3** `web/design-refs/step-1-game-ui/ir.json` — pause-menu canonical
+  buttons populated [Resume, Save, Load, Settings, Main Menu, Quit] in order.
+- **12.4** Re-bake + verify — caption text rendered, but per Step 13 the
+  contrast against panel was still wrong (dark on dark).
+
+## Step 13 — palette contrast + click wiring + sound parity (post Step 12 visual verify)
+
+**Symptoms (user screenshots after Step 12).**
+1. pause-menu buttons + captions visible **shape-wise** but no Claude design
+   visible — flat black on flat black, no frames, no palette accents.
+2. Buttons don't fire actions when clicked.
+3. Buttons have no sound (MainMenu scene buttons emit click + hover blips).
+4. info-panel renders nearly-empty black panel with no useful info.
+
+**Root causes.**
+- **A. Palette inversion.** `ThemedButton.ApplyTheme` + `ThemedLabel.ApplyTheme`
+  both painted `ramp.ramp[0]` (darkest stop). Panel background uses ramp[1]
+  (also dark). chassis-graphite ramp = `[#0a0c0d, #131618, #1c2024, #262b30,
+  #34393f, #4a4f55]` → button + text rendered in `#0a0c0d` against `#131618`
+  panel — invisible.
+- **B. No `UnityEngine.UI.Button` component.** Bake handler attached
+  `ThemedButton` (MonoBehaviour) + `Image` only. `ThemedButton.Awake` reads
+  `GetComponent<Button>()` to subscribe `onClick` → `OnClicked` event. With no
+  `Button` component, `onClick` never fired, `OnClicked` never invoked,
+  `PauseMenuDataAdapter.OnResume`/`OnSave`/etc. never triggered.
+- **C. No `PauseMenuDataAdapter` on prefab.** Adapter class existed
+  (`Assets/Scripts/UI/Modals/PauseMenuDataAdapter.cs`) but bake handler never
+  attached it to pause-menu prefab. Even if Button fired, no consumer.
+- **D. No blip wiring.** Click + hover sound effects not propagated from
+  MainMenu pattern (`BlipEngine.Play(BlipId.UiButtonClick)` on click,
+  `EventTrigger.PointerEnter` → `BlipEngine.Play(BlipId.UiButtonHover)`).
+
+**Fixes applied.**
+- **13A — palette contrast.** `ThemedButton.ApplyTheme` + `ThemedLabel.ApplyTheme`
+  switched from `ramp.ramp[0]` → `ramp.ramp[ramp.Length - 1]` (lightest stop).
+  ThemedButton additionally writes `Selectable.ColorBlock`:
+  - `normalColor` = ramp[last]
+  - `highlightedColor` / `selectedColor` = ramp[last-1]
+  - `pressedColor` = ramp[last-2]
+- **13B — bake adds Button + adapter.** `UiBakeHandler` themed-button case adds
+  `UnityEngine.UI.Button` with `targetGraphic = Image` + `transition =
+  ColorTint`. Caption TMP forced `color = white` + `fontStyle = Bold` for
+  baseline legibility. Post-children loop: when `panel.slug == "pause-menu"`
+  and ≥6 children present, attach `PauseMenuDataAdapter` + bind
+  `_resumeButton` (idx 0), `_saveButton` (idx 1), `_loadButton` (idx 2),
+  `_settingsButton` (idx 3), `_mainMenuButton` (idx 4), `_quitButton` (idx 5)
+  via `SerializedObject.FindProperty` / `objectReferenceValue`.
+- **13C — re-bake + prefab verify.** Re-baked after exiting Play Mode. Verified
+  on `Assets/UI/Prefabs/Generated/pause-menu.prefab`:
+  - 6 ThemedButton GUID refs (`e5f60718293045b6c7d8e90a1f2b3c4d`)
+  - 1 PauseMenuDataAdapter GUID ref (`9b45ea547a7614a37a2b5446b339fc65`)
+  - 6 distinct fileIDs wired into `_resumeButton` / `_settingsButton` /
+    `_saveButton` / `_loadButton` / `_mainMenuButton` / `_quitButton`
+  - 6 `m_Transition: 1` (ColorTint) entries → confirms 6 Selectable.Buttons.
+- **13D — blip parity (universal).** `ThemedButton.Awake` (not adapter) hooked
+  for cross-panel coverage:
+  - `button.onClick.AddListener(() => { BlipEngine.Play(UiButtonClick);
+    OnClicked?.Invoke(); })` — click blip emitted before consumer event.
+  - `gameObject.AddComponent<EventTrigger>()` + `PointerEnter` entry calling
+    `BlipEngine.Play(UiButtonHover)` — matches MainMenu `AddHoverBlip` pattern.
+  - All themed-buttons across pause-menu, info-panel, and other panels inherit
+    sound automatically.
+
+**Compile state.** `unity_compile` (post 13D) → `compilation_failed: false`.
+Stale NREs in console buffer from earlier 16:06 timestamps (pre-edit) are
+runtime/scene errors, not compile.
+
+**Files touched (Step 13).**
+- `Assets/Scripts/UI/Themed/ThemedButton.cs` — palette inversion fix +
+  Selectable.ColorBlock + click blip + EventTrigger hover blip + `using
+  UnityEngine.EventSystems;` + `using Territory.Audio;`.
+- `Assets/Scripts/UI/Themed/ThemedLabel.cs` — palette inversion fix on text
+  color (ramp[last]).
+- `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` — `using Territory.UI.Modals;`,
+  caption white-bold paint, Button component attach, pause-menu adapter
+  binding block.
+
+### Pending — live verify
+
+User to play-test (Esc + cell-click) and report screenshots:
+1. pause-menu — buttons render with chassis-graphite light fill + dark text
+   contrast, hover/press tint visible, click fires action (Resume closes
+   popup, Main Menu loads scene 0, Quit exits), click + hover blips audible.
+2. info-panel — caption labels white-bold against dark panel; **content
+   binding still skeletal** (no real cell data adapter yet — separate
+   follow-up Step 14 candidate).
+

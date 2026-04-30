@@ -126,8 +126,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45b6c7d8e90a1f2b3c4d5e6f07182930, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: chassis-graphite
   _frameStyleSlug: 
   _backgroundImage: {fileID: 0}
   _checkmarkImage: {fileID: 0}
@@ -143,8 +143,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0dbdd80dd9894202887513032da576a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: led-grass
   _checkmarkImage: {fileID: 5106648831451810202}
   _labelText: {fileID: 4900008033343059723}
 --- !u!1 &6183001646815184125

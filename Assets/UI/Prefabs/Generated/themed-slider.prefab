@@ -203,8 +203,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3045b6c7d8e90a1f2b3c4d5e6f071829, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: chassis-graphite
   _frameStyleSlug: 
   _sliderHandleImage: {fileID: 0}
   _sliderTrackImage: {fileID: 0}
@@ -220,8 +220,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e122ce560290c4cf3bfc918b2fbbbdd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: led-cyan
   _trackImage: {fileID: 9009839721140347118}
   _fillImage: {fileID: 1178719774644344334}
   _thumbImage: {fileID: 5416836181211252503}

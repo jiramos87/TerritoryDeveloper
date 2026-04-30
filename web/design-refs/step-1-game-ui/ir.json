@@ -221,6 +221,7 @@
     {
       "slug": "hud-bar",
       "archetype": "hud-bar",
+      "kind": "hud",
       "slots": [
         {
           "name": "left",
@@ -272,57 +273,41 @@
     {
       "slug": "info-panel",
       "archetype": "info-panel",
+      "kind": "modal",
       "slots": [
         {
-          "name": "master",
+          "name": "header",
           "accepts": [
-            "knob",
-            "fader",
-            "vu-meter",
-            "illuminated-button",
-            "segmented-readout"
+            "themed-label",
+            "themed-tab-bar"
           ],
           "children": [
-            "fader",
-            "segmented-readout"
+            "themed-label",
+            "themed-tab-bar"
+          ],
+          "labels": [
+            "Cell Info",
+            ""
           ]
         },
         {
-          "name": "bus-bay",
+          "name": "body",
           "accepts": [
-            "knob",
-            "fader",
-            "vu-meter",
-            "illuminated-button",
-            "segmented-readout"
+            "themed-label"
           ],
           "children": [
-            "fader",
-            "fader",
-            "fader",
-            "fader",
-            "segmented-readout",
-            "segmented-readout",
-            "segmented-readout",
-            "segmented-readout"
-          ]
-        },
-        {
-          "name": "trim-bay",
-          "accepts": [
-            "knob",
-            "fader",
-            "vu-meter",
-            "illuminated-button",
-            "segmented-readout"
+            "themed-label",
+            "themed-label",
+            "themed-label",
+            "themed-label",
+            "themed-label"
           ],
-          "children": [
-            "knob",
-            "knob",
-            "knob",
-            "segmented-readout",
-            "segmented-readout",
-            "segmented-readout"
+          "labels": [
+            "Coordinates: (--, --)",
+            "Terrain: --",
+            "Zone: --",
+            "Building: --",
+            "Population: --"
           ]
         }
       ]
@@ -499,6 +484,7 @@
     {
       "slug": "toolbar",
       "archetype": "toolbar",
+      "kind": "toolbar",
       "slots": [
         {
           "name": "tool-grid",
@@ -510,6 +496,11 @@
             "segmented-readout"
           ],
           "children": [
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
+            "illuminated-button",
             "illuminated-button",
             "illuminated-button",
             "illuminated-button",
@@ -531,6 +522,8 @@
             "segmented-readout"
           ],
           "children": [
+            "illuminated-button",
+            "illuminated-button",
             "illuminated-button",
             "illuminated-button"
           ]
@@ -629,6 +622,7 @@
     {
       "slug": "building-info",
       "archetype": "building-info",
+      "kind": "modal",
       "slots": [
         {
           "name": "header",
@@ -785,6 +779,7 @@
     {
       "slug": "alerts-panel",
       "archetype": "alerts-panel",
+      "kind": "modal",
       "slots": [
         {
           "name": "summary",
@@ -874,6 +869,144 @@
           ],
           "children": [
             "segmented-readout"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "overlay-toggle-strip",
+      "archetype": "overlay-toggle-strip",
+      "kind": "toolbar",
+      "slots": [
+        {
+          "name": "overlays",
+          "accepts": [
+            "themed-overlay-toggle-row"
+          ],
+          "children": [
+            "themed-overlay-toggle-row",
+            "themed-overlay-toggle-row",
+            "themed-overlay-toggle-row",
+            "themed-overlay-toggle-row",
+            "themed-overlay-toggle-row"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "pause-menu",
+      "archetype": "pause-menu",
+      "kind": "modal",
+      "slots": [
+        {
+          "name": "actions",
+          "accepts": [
+            "themed-button"
+          ],
+          "children": [
+            "themed-button",
+            "themed-button",
+            "themed-button",
+            "themed-button",
+            "themed-button",
+            "themed-button"
+          ],
+          "labels": [
+            "Resume",
+            "Save",
+            "Load",
+            "Settings",
+            "Main Menu",
+            "Quit"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "settings-screen",
+      "archetype": "settings-screen",
+      "kind": "screen",
+      "slots": [
+        {
+          "name": "nav",
+          "accepts": [
+            "themed-tab-bar"
+          ],
+          "children": [
+            "themed-tab-bar"
+          ]
+        },
+        {
+          "name": "content",
+          "accepts": [
+            "themed-slider",
+            "themed-toggle"
+          ],
+          "children": [
+            "themed-slider",
+            "themed-slider",
+            "themed-slider",
+            "themed-slider",
+            "themed-toggle",
+            "themed-toggle",
+            "themed-toggle"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "save-load-screen",
+      "archetype": "save-load-screen",
+      "kind": "screen",
+      "slots": [
+        {
+          "name": "slot-list",
+          "accepts": [
+            "themed-list"
+          ],
+          "children": [
+            "themed-list"
+          ]
+        },
+        {
+          "name": "actions",
+          "accepts": [
+            "themed-button"
+          ],
+          "children": [
+            "themed-button",
+            "themed-button",
+            "themed-button",
+            "themed-button"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "new-game-screen",
+      "archetype": "new-game-screen",
+      "kind": "screen",
+      "slots": [
+        {
+          "name": "params",
+          "accepts": [
+            "themed-slider",
+            "themed-toggle"
+          ],
+          "children": [
+            "themed-slider",
+            "themed-slider",
+            "themed-toggle"
+          ]
+        },
+        {
+          "name": "actions",
+          "accepts": [
+            "themed-button"
+          ],
+          "children": [
+            "themed-button",
+            "themed-button"
           ]
         }
       ]
@@ -1193,6 +1326,124 @@
         "default_tone": "primary",
         "default_lit": true,
         "illuminationSlug": "amber"
+      }
+    },
+    {
+      "slug": "themed-overlay-toggle-row",
+      "kind": "themed-overlay-toggle-row",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "tones": [
+          "primary",
+          "neutral"
+        ],
+        "default_tone": "neutral",
+        "default_initial_state": false,
+        "overlay_slugs": [
+          "terrain",
+          "pollution",
+          "land-value",
+          "road-network",
+          "traffic-flow"
+        ],
+        "row_layout": "label-icon-toggle",
+        "panel_layout": "horizontal"
+      }
+    },
+    {
+      "slug": "themed-button",
+      "kind": "themed-button",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "themed-label",
+      "kind": "themed-label",
+      "detail": {
+        "tones": [
+          "primary",
+          "neutral",
+          "muted"
+        ],
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "themed-slider",
+      "kind": "themed-slider",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "default_value": 0.5
+      }
+    },
+    {
+      "slug": "themed-toggle",
+      "kind": "themed-toggle",
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "tones": [
+          "primary",
+          "neutral"
+        ],
+        "default_tone": "primary",
+        "default_initial_state": false
+      }
+    },
+    {
+      "slug": "themed-tab-bar",
+      "kind": "themed-tab-bar",
+      "detail": {
+        "tones": [
+          "primary",
+          "neutral"
+        ],
+        "default_tone": "primary",
+        "default_active_index": 0
+      }
+    },
+    {
+      "slug": "themed-list",
+      "kind": "themed-list",
+      "detail": {
+        "tones": [
+          "primary",
+          "neutral"
+        ],
+        "default_tone": "primary"
       }
     }
   ]

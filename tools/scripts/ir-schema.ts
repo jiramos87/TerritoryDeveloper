@@ -60,13 +60,29 @@ export interface IrTokenIllumination {
   haloRadiusPx: number;
 }
 
-/** Panel block — matches §Phase 3 locked grammar. */
+/** Panel block — matches §Phase 3 locked grammar. Stage 12 Step 11 — adds `kind`. */
 export interface IrPanel {
   slug: string;
   /** ThemedPanel archetype identifier (Stage 3+ runtime composer). */
   archetype: string;
+  /** Layout kind — drives runtime anchor + LayoutGroup choice in `ThemedPanel.OnEnable`. */
+  kind?: PanelKind;
   slots: IrPanelSlot[];
 }
+
+/**
+ * Layout-kind taxonomy — Stage 12 Step 11.
+ *
+ * - `modal`   → centered 600×800 modal; VerticalLayoutGroup; SetAsLastSibling on enable.
+ * - `screen`  → full-stretch (anchorMin (0,0) → anchorMax (1,1)); no LayoutGroup; children freely positioned.
+ * - `hud`     → top-anchored full-width strip; HorizontalLayoutGroup.
+ * - `toolbar` → left-anchored vertical strip; VerticalLayoutGroup (or designer override).
+ *
+ * Default when omitted: `modal` (preserves Stage 8 panel set behavior post-bake).
+ */
+export type PanelKind = 'modal' | 'screen' | 'hud' | 'toolbar';
+
+export const PANEL_KINDS: readonly PanelKind[] = ['modal', 'screen', 'hud', 'toolbar'] as const;
 
 export interface IrPanelSlot {
   /** Slot name unique within owning panel. */
@@ -75,6 +91,12 @@ export interface IrPanelSlot {
   accepts: string[];
   /** Bound `interactives[].slug` values. Each must appear in `accepts`. */
   children: string[];
+  /**
+   * Optional per-child label content — parallel to `children[]`. When present, length
+   * must equal `children.length`; empty string skips label injection for that index.
+   * Stage 12 Step 12 — themed-button caption + themed-label text source.
+   */
+  labels?: string[];
 }
 
 /** Interactive block — matches §Phase 3 locked grammar. StudioControl ring. */
@@ -85,7 +107,7 @@ export interface IrInteractive {
   detail: IrInteractiveDetail;
 }
 
-/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. */
+/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. Extended Stage 7 with `themed-overlay-toggle-row`. Extended Stage 8 with Themed* modal primitive kinds. */
 export type StudioControlKind =
   | 'knob'
   | 'fader'
@@ -94,7 +116,14 @@ export type StudioControlKind =
   | 'illuminated-button'
   | 'segmented-readout'
   | 'detent-ring'
-  | 'led';
+  | 'led'
+  | 'themed-overlay-toggle-row'
+  | 'themed-button'
+  | 'themed-label'
+  | 'themed-slider'
+  | 'themed-toggle'
+  | 'themed-tab-bar'
+  | 'themed-list';
 
 export const STUDIO_CONTROL_KINDS: readonly StudioControlKind[] = [
   'knob',
@@ -105,6 +134,13 @@ export const STUDIO_CONTROL_KINDS: readonly StudioControlKind[] = [
   'segmented-readout',
   'detent-ring',
   'led',
+  'themed-overlay-toggle-row',
+  'themed-button',
+  'themed-label',
+  'themed-slider',
+  'themed-toggle',
+  'themed-tab-bar',
+  'themed-list',
 ] as const;
 
 /** Detail row shapes — open-ended union per archetype; transcribe + bridge handler refine. */
@@ -217,6 +253,7 @@ export function validateIrShape(raw: unknown): SchemaResult {
     };
   }
   // Per-panel + per-slot shape.
+  const panelKinds = new Set<string>(PANEL_KINDS);
   for (let i = 0; i < raw.panels.length; i++) {
     const p = raw.panels[i];
     if (!isObject(p) || typeof p.slug !== 'string' || typeof p.archetype !== 'string') {
@@ -225,6 +262,14 @@ export function validateIrShape(raw: unknown): SchemaResult {
         error: 'ir_shape_invalid',
         path: `$.panels[${i}]`,
         detail: 'panel missing slug/archetype',
+      };
+    }
+    if (p.kind !== undefined && (typeof p.kind !== 'string' || !panelKinds.has(p.kind))) {
+      return {
+        ok: false,
+        error: 'ir_shape_invalid',
+        path: `$.panels[${i}].kind`,
+        detail: `panel.kind '${String(p.kind)}' not in PanelKind enum (${[...panelKinds].join(', ')})`,
       };
     }
     if (!Array.isArray(p.slots)) {
@@ -249,6 +294,16 @@ export function validateIrShape(raw: unknown): SchemaResult {
           path: `$.panels[${i}].slots[${j}]`,
           detail: 'slot needs name/accepts[]/children[]',
         };
+      }
+      if (s.labels !== undefined) {
+        if (!isStringArray(s.labels) || (s.labels as string[]).length !== (s.children as string[]).length) {
+          return {
+            ok: false,
+            error: 'ir_shape_invalid',
+            path: `$.panels[${i}].slots[${j}].labels`,
+            detail: 'labels must be string[] with same length as children[]',
+          };
+        }
       }
     }
   }

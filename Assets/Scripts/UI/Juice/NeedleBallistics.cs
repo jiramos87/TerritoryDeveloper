@@ -46,6 +46,13 @@ namespace Territory.UI.Juice
         {
             if (_meter == null) return;
 
+            if (float.IsNaN(targetValue) || float.IsInfinity(targetValue)) targetValue = currentValue;
+            if (float.IsNaN(currentValue) || float.IsInfinity(currentValue))
+            {
+                currentValue = 0f;
+                velocity = 0f;
+            }
+
             float attackMs = _meter.AttackMs;
             float releaseMs = _meter.ReleaseMs;
 

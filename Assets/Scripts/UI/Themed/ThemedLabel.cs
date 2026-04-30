@@ -22,8 +22,10 @@ namespace Territory.UI.Themed
             if (theme.TryGetPalette(_paletteSlug, out var ramp)
                 && ramp.ramp != null
                 && ramp.ramp.Length > 0
-                && ColorUtility.TryParseHtmlString(ramp.ramp[0], out var c))
+                && ColorUtility.TryParseHtmlString(ramp.ramp[ramp.ramp.Length - 1], out var c))
             {
+                // Stage 12 Step 13 — paint text from lightest ramp stop so labels read against
+                // the dark panel background. Ramp[0] = darkest (invisible on near-black panel).
                 _tmpText.color = c;
             }
             if (theme.TryGetFontFace(_fontFaceSlug, out _))

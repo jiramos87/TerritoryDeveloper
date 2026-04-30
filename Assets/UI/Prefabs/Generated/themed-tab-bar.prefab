@@ -261,8 +261,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f60718293045b6c7d8e90a1f2b3c4d5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: chassis-graphite
   _frameStyleSlug: 
   _tabStripImage: {fileID: 6789839006063750216}
 --- !u!114 &4762269395817568015
@@ -277,8 +277,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08e8a78822e1449238203dc5700e065b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _themeRef: {fileID: 0}
-  _paletteSlug: 
+  _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  _paletteSlug: led-amber
   _activeTabIndicator: {fileID: 2268105140827725066}
   _tabLabel: {fileID: 8810519959527183318}
 --- !u!1 &6907647383611595679

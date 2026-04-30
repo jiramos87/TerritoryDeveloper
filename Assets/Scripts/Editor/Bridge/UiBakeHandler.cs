@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Territory.UI;
 using Territory.UI.Juice;
+using Territory.UI.Modals;
 using Territory.UI.StudioControls;
 using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
@@ -99,6 +100,7 @@ namespace Territory.Editor.Bridge
         {
             public string slug;
             public string archetype;
+            public string kind;
             public IrPanelSlot[] slots;
         }
 
@@ -108,6 +110,8 @@ namespace Territory.Editor.Bridge
             public string name;
             public string[] accepts;
             public string[] children;
+            // Step 12 — optional per-child label content; parallel to children[] when present.
+            public string[] labels;
         }
 
         /// <summary>Polymorphic token entry — guardrail #11 `value_kind` + flat `value` shape.
@@ -390,7 +394,7 @@ namespace Territory.Editor.Bridge
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();
 
-            var prefabError = WritePlaceholderPrefabs(parseResult.root, args.out_dir);
+            var prefabError = WritePlaceholderPrefabs(parseResult.root, args.out_dir, theme);
             if (prefabError != null)
             {
                 return new BakeResult { root = parseResult.root, error = prefabError };
@@ -517,6 +521,25 @@ namespace Territory.Editor.Bridge
             theme.InvalidateTokenCaches();
         }
 
+        // ── _themeRef wire-up helper (Step 8 fix) ───────────────────────────────
+
+        /// <summary>
+        /// Bake-time write of the <c>_themeRef</c> SerializeField on a <see cref="ThemedPrimitiveBase"/>
+        /// or <see cref="StudioControlBase"/> derived component (also <c>StudioControlRendererBase</c>).
+        /// Without this, runtime <c>Awake</c> falls back to <see cref="UnityEngine.Object.FindObjectOfType{T}"/>
+        /// which never resolves a <see cref="UiTheme"/> ScriptableObject asset (white-square chrome bug).
+        /// No-op when the component does not declare <c>_themeRef</c> or when <paramref name="theme"/> is null.
+        /// </summary>
+        static void WireThemeRef(Component component, UiTheme theme)
+        {
+            if (component == null || theme == null) return;
+            var so = new SerializedObject(component);
+            var prop = so.FindProperty("_themeRef");
+            if (prop == null) return;
+            prop.objectReferenceValue = theme;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         // ── Placeholder prefab writes ───────────────────────────────────────────
 
         /// <summary>
@@ -525,7 +548,7 @@ namespace Territory.Editor.Bridge
         /// PrefabUtility.SaveAsPrefabAsset overwrites existing files — second bake on same IR is idempotent.
         /// Returns null on success, populated <see cref="BakeError"/> on first IO failure.
         /// </summary>
-        static BakeError WritePlaceholderPrefabs(IrRoot ir, string outDir)
+        static BakeError WritePlaceholderPrefabs(IrRoot ir, string outDir, UiTheme theme)
         {
             var dir = string.IsNullOrEmpty(outDir) ? "Assets/UI/Prefabs/Generated" : outDir;
 
@@ -558,7 +581,7 @@ namespace Territory.Editor.Bridge
                     BakeError err;
                     if (IsKnownStudioControlKind(ic.kind))
                     {
-                        err = BakeInteractive(ic, i, assetPath, _lastRawIrJson);
+                        err = BakeInteractive(ic, i, assetPath, _lastRawIrJson, theme);
                     }
                     else
                     {
@@ -580,7 +603,7 @@ namespace Territory.Editor.Bridge
                     if (panel == null || string.IsNullOrEmpty(panel.slug)) continue;
 
                     var assetPath = $"{dir.TrimEnd('/')}/{panel.slug}.prefab";
-                    var err = SavePanelPrefab(panel, assetPath, dir);
+                    var err = SavePanelPrefab(panel, assetPath, dir, theme);
                     if (err != null) return err;
                 }
             }
@@ -625,7 +648,7 @@ namespace Territory.Editor.Bridge
         /// stays in the signature for future bake-time variant resolution.
         /// SerializedObject path enforces deterministic property write for re-bake idempotency.
         /// </summary>
-        static BakeError SavePanelPrefab(IrPanel panel, string assetPath, string dir)
+        static BakeError SavePanelPrefab(IrPanel panel, string assetPath, string dir, UiTheme theme)
         {
             // dir kept for future variant resolution; not consumed in T7.0 path.
             _ = dir;
@@ -634,13 +657,31 @@ namespace Territory.Editor.Bridge
             try
             {
                 go = new GameObject(panel.slug);
-                go.AddComponent<RectTransform>();
+                var rootRect = go.AddComponent<RectTransform>();
+                // Step 11.3 — bake-time RectTransform values are placeholder; runtime ApplyKindLayout
+                // overrides anchor/sizeDelta/pivot per _kind on every OnEnable (defeats scene PrefabInstance
+                // override pin-down). Slug-suffix heuristic + unconditional VLG attach removed.
+                rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+                rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+                rootRect.pivot = new Vector2(0.5f, 0.5f);
+                rootRect.anchoredPosition = Vector2.zero;
+                rootRect.sizeDelta = new Vector2(600f, 800f);
+                var bgImage = go.AddComponent<Image>();
+                bgImage.color = Color.white;
+                bgImage.raycastTarget = true;
                 var themedPanel = go.AddComponent<ThemedPanel>();
+                WireThemeRef(themedPanel, theme);
 
-                // Populate _slots + _children[] via SerializedObject for deterministic order.
+                // Populate _kind + _slots + _children[] via SerializedObject for deterministic order.
                 var so = new SerializedObject(themedPanel);
                 var slotsProp = so.FindProperty("_slots");
                 var childrenProp = so.FindProperty("_children");
+                var paletteProp = so.FindProperty("_paletteSlug");
+                var bgProp = so.FindProperty("_backgroundImage");
+                var kindProp = so.FindProperty("_kind");
+                if (paletteProp != null) paletteProp.stringValue = "chassis-graphite";
+                if (bgProp != null) bgProp.objectReferenceValue = bgImage;
+                if (kindProp != null) kindProp.enumValueIndex = ResolvePanelKindIndex(panel.kind);
 
                 var childrenList = new List<GameObject>();
 
@@ -672,6 +713,7 @@ namespace Territory.Editor.Bridge
                     // descendants). Asset-prefab loading retired: adapter Inspector slots must bind
                     // against real children, not asset GUID stand-ins.
                     var slotChildren = slot?.children ?? Array.Empty<string>();
+                    var slotLabels = slot?.labels;
                     for (int c = 0; c < slotChildren.Length; c++)
                     {
                         var childKind = slotChildren[c];
@@ -690,7 +732,8 @@ namespace Territory.Editor.Bridge
                         {
                             kindCounter = 0;
                         }
-                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter);
+                        var childLabel = (slotLabels != null && c < slotLabels.Length) ? slotLabels[c] : null;
+                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter, theme, childLabel);
                         perKindCounters[childKind] = kindCounter;
                         if (childGo == null) continue;
                         childrenList.Add(childGo);
@@ -714,6 +757,31 @@ namespace Territory.Editor.Bridge
                     juice = null,
                 };
                 AttachJuiceComponents(go, panelRow);
+
+                // Step 13 — pause-menu adapter wiring. Bake-time: attach PauseMenuDataAdapter
+                // and serialize the six ThemedButton refs in IR-canonical order
+                // [Resume, Save, Load, Settings, MainMenu, Quit] so OnEnable subscriptions fire
+                // without manual Inspector wiring per scene placement.
+                if (panel.slug == "pause-menu" && childrenList.Count >= 6)
+                {
+                    var adapter = go.AddComponent<PauseMenuDataAdapter>();
+                    var aSo = new SerializedObject(adapter);
+                    void BindBtn(string fieldName, int idx)
+                    {
+                        if (idx < 0 || idx >= childrenList.Count) return;
+                        var btnComp = childrenList[idx]?.GetComponent<ThemedButton>();
+                        if (btnComp == null) return;
+                        var prop = aSo.FindProperty(fieldName);
+                        if (prop != null) prop.objectReferenceValue = btnComp;
+                    }
+                    BindBtn("_resumeButton", 0);
+                    BindBtn("_saveButton", 1);
+                    BindBtn("_loadButton", 2);
+                    BindBtn("_settingsButton", 3);
+                    BindBtn("_mainMenuButton", 4);
+                    BindBtn("_quitButton", 5);
+                    aSo.ApplyModifiedPropertiesWithoutUndo();
+                }
 
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
                 return null;
@@ -750,7 +818,7 @@ namespace Territory.Editor.Bridge
         /// children of the same kind get unique <c>GameObject.name</c> values (e.g. <c>illuminated-button</c>,
         /// <c>illuminated-button (1)</c>, ...). Suffix-only — does not affect IR slot resolution.</param>
         /// <returns>Instantiated child <c>GameObject</c>; <c>null</c> on unknown kind.</returns>
-        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter)
+        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter, UiTheme theme, string label = null)
         {
             if (panelRoot == null || string.IsNullOrEmpty(kind)) return null;
 
@@ -768,28 +836,34 @@ namespace Territory.Editor.Bridge
                 case "knob":
                 {
                     var knob = childGo.AddComponent<Knob>();
+                    WireThemeRef(knob, theme);
                     knob.ApplyDetail(new KnobDetail());
                     break;
                 }
                 case "fader":
                 {
                     var fader = childGo.AddComponent<Fader>();
+                    WireThemeRef(fader, theme);
                     fader.ApplyDetail(new FaderDetail());
                     break;
                 }
                 case "detent-ring":
                 {
                     var dr = childGo.AddComponent<DetentRing>();
+                    WireThemeRef(dr, theme);
                     dr.ApplyDetail(new DetentRingDetail());
                     break;
                 }
                 case "vu-meter":
                 {
                     var vu = childGo.AddComponent<VUMeter>();
-                    if (childGo.GetComponent<VUMeterRenderer>() == null)
+                    WireThemeRef(vu, theme);
+                    var vuRend = childGo.GetComponent<VUMeterRenderer>();
+                    if (vuRend == null)
                     {
-                        childGo.AddComponent<VUMeterRenderer>();
+                        vuRend = childGo.AddComponent<VUMeterRenderer>();
                     }
+                    WireThemeRef(vuRend, theme);
                     SpawnVUMeterRenderTargets(childGo);
                     vu.ApplyDetail(new VUMeterDetail());
                     break;
@@ -797,16 +871,20 @@ namespace Territory.Editor.Bridge
                 case "oscilloscope":
                 {
                     var osc = childGo.AddComponent<Oscilloscope>();
+                    WireThemeRef(osc, theme);
                     osc.ApplyDetail(new OscilloscopeDetail());
                     break;
                 }
                 case "illuminated-button":
                 {
                     var btn = childGo.AddComponent<IlluminatedButton>();
-                    if (childGo.GetComponent<IlluminatedButtonRenderer>() == null)
+                    WireThemeRef(btn, theme);
+                    var btnRend = childGo.GetComponent<IlluminatedButtonRenderer>();
+                    if (btnRend == null)
                     {
-                        childGo.AddComponent<IlluminatedButtonRenderer>();
+                        btnRend = childGo.AddComponent<IlluminatedButtonRenderer>();
                     }
+                    WireThemeRef(btnRend, theme);
                     SpawnIlluminatedButtonRenderTargets(childGo);
                     btn.ApplyDetail(new IlluminatedButtonDetail());
                     break;
@@ -814,16 +892,20 @@ namespace Territory.Editor.Bridge
                 case "led":
                 {
                     var led = childGo.AddComponent<LED>();
+                    WireThemeRef(led, theme);
                     led.ApplyDetail(new LEDDetail());
                     break;
                 }
                 case "segmented-readout":
                 {
                     var sr = childGo.AddComponent<SegmentedReadout>();
-                    if (childGo.GetComponent<SegmentedReadoutRenderer>() == null)
+                    WireThemeRef(sr, theme);
+                    var srRend = childGo.GetComponent<SegmentedReadoutRenderer>();
+                    if (srRend == null)
                     {
-                        childGo.AddComponent<SegmentedReadoutRenderer>();
+                        srRend = childGo.AddComponent<SegmentedReadoutRenderer>();
                     }
+                    WireThemeRef(srRend, theme);
                     var sd = new SegmentedReadoutDetail { digits = 1 };
                     SpawnSegmentedReadoutRenderTargets(childGo, sd);
                     sr.ApplyDetail(sd);
@@ -831,8 +913,10 @@ namespace Territory.Editor.Bridge
                 }
                 case "themed-overlay-toggle-row":
                 {
-                    childGo.AddComponent<ThemedOverlayToggleRow>();
+                    var row = childGo.AddComponent<ThemedOverlayToggleRow>();
+                    WireThemeRef(row, theme);
                     var renderer = childGo.AddComponent<ThemedOverlayToggleRowRenderer>();
+                    WireThemeRef(renderer, theme);
                     SpawnThemedOverlayToggleRowChildren(childGo, out var labelTmp, out var iconImage, out var unityToggle);
                     var rendererSo = new SerializedObject(renderer);
                     var labelProp = rendererSo.FindProperty("_labelText");
@@ -853,23 +937,54 @@ namespace Territory.Editor.Bridge
                 //   themed-list    : UGUI-self-renders (no renderer sibling)
                 case "themed-button":
                 {
-                    childGo.AddComponent<ThemedButton>();
+                    var btn = childGo.AddComponent<ThemedButton>();
+                    WireThemeRef(btn, theme);
+                    var btnImg = childGo.AddComponent<Image>();
+                    btnImg.color = Color.white;
+                    btnImg.raycastTarget = true;
+                    // Step 13 — UnityEngine.UI.Button so ThemedButton.Awake can wire onClick → OnClicked event.
+                    // Without this, PauseMenuDataAdapter.OnClicked subscriptions never fire.
+                    var unityBtn = childGo.AddComponent<Button>();
+                    unityBtn.targetGraphic = btnImg;
+                    unityBtn.transition = Selectable.Transition.ColorTint;
+                    var btnSo = new SerializedObject(btn);
+                    var btnImgProp = btnSo.FindProperty("_buttonImage");
+                    if (btnImgProp != null) btnImgProp.objectReferenceValue = btnImg;
+                    var btnPalette = btnSo.FindProperty("_paletteSlug");
+                    if (btnPalette != null) btnPalette.stringValue = "chassis-graphite";
+                    var btnFrame = btnSo.FindProperty("_frameStyleSlug");
+                    if (btnFrame != null) btnFrame.stringValue = "thin";
+                    btnSo.ApplyModifiedPropertiesWithoutUndo();
+                    // Step 12 — caption child + LayoutElement so VLG/HLG can size button.
+                    SpawnThemedButtonCaption(childGo, label);
+                    EnsureChildLayoutElement(childGo, preferredWidth: 280f, preferredHeight: 56f, flexibleWidth: 1f);
                     break;
                 }
                 case "themed-label":
                 {
                     var lbl = childGo.AddComponent<ThemedLabel>();
+                    WireThemeRef(lbl, theme);
                     SpawnThemedLabelChild(childGo, out var labelTmp);
+                    if (labelTmp != null && !string.IsNullOrEmpty(label)) labelTmp.text = label;
                     var lblSo = new SerializedObject(lbl);
                     var tmpProp = lblSo.FindProperty("_tmpText");
                     if (tmpProp != null) tmpProp.objectReferenceValue = labelTmp;
+                    var lblPalette = lblSo.FindProperty("_paletteSlug");
+                    if (lblPalette != null) lblPalette.stringValue = "silkscreen";
                     lblSo.ApplyModifiedPropertiesWithoutUndo();
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 case "themed-slider":
                 {
-                    childGo.AddComponent<ThemedSlider>();
+                    var slider = childGo.AddComponent<ThemedSlider>();
+                    WireThemeRef(slider, theme);
+                    var sliderSo = new SerializedObject(slider);
+                    var sliderPalette = sliderSo.FindProperty("_paletteSlug");
+                    if (sliderPalette != null) sliderPalette.stringValue = "chassis-graphite";
+                    sliderSo.ApplyModifiedPropertiesWithoutUndo();
                     var rend = childGo.AddComponent<ThemedSliderRenderer>();
+                    WireThemeRef(rend, theme);
                     SpawnThemedSliderChildren(childGo, out var trackImg, out var fillImg, out var thumbImg, out var valueText);
                     var so = new SerializedObject(rend);
                     var trackProp = so.FindProperty("_trackImage");
@@ -880,42 +995,63 @@ namespace Territory.Editor.Bridge
                     if (thumbProp != null) thumbProp.objectReferenceValue = thumbImg;
                     var textProp = so.FindProperty("_valueText");
                     if (textProp != null) textProp.objectReferenceValue = valueText;
+                    var rendPalette = so.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-cyan";
                     so.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
                 case "themed-toggle":
                 {
-                    childGo.AddComponent<ThemedToggle>();
+                    var tg = childGo.AddComponent<ThemedToggle>();
+                    WireThemeRef(tg, theme);
+                    var tgSo = new SerializedObject(tg);
+                    var tgPalette = tgSo.FindProperty("_paletteSlug");
+                    if (tgPalette != null) tgPalette.stringValue = "chassis-graphite";
+                    tgSo.ApplyModifiedPropertiesWithoutUndo();
                     var rend = childGo.AddComponent<ThemedToggleRenderer>();
+                    WireThemeRef(rend, theme);
                     SpawnThemedToggleChildren(childGo, out var checkmarkImg, out var toggleLabelTmp);
                     var so = new SerializedObject(rend);
                     var checkProp = so.FindProperty("_checkmarkImage");
                     if (checkProp != null) checkProp.objectReferenceValue = checkmarkImg;
                     var labelProp2 = so.FindProperty("_labelText");
                     if (labelProp2 != null) labelProp2.objectReferenceValue = toggleLabelTmp;
+                    var rendPalette = so.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-grass";
                     so.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
                 case "themed-tab-bar":
                 {
                     var tabBar = childGo.AddComponent<ThemedTabBar>();
+                    WireThemeRef(tabBar, theme);
                     var rend = childGo.AddComponent<ThemedTabBarRenderer>();
+                    WireThemeRef(rend, theme);
                     SpawnThemedTabBarChildren(childGo, out var stripImg, out var indicatorImg, out var tabLabelTmp);
                     var rendSo = new SerializedObject(rend);
                     var indicatorProp = rendSo.FindProperty("_activeTabIndicator");
                     if (indicatorProp != null) indicatorProp.objectReferenceValue = indicatorImg;
                     var tabLabelProp = rendSo.FindProperty("_tabLabel");
                     if (tabLabelProp != null) tabLabelProp.objectReferenceValue = tabLabelTmp;
+                    var rendPalette = rendSo.FindProperty("_paletteSlug");
+                    if (rendPalette != null) rendPalette.stringValue = "led-amber";
                     rendSo.ApplyModifiedPropertiesWithoutUndo();
                     var tabBarSo = new SerializedObject(tabBar);
                     var stripProp = tabBarSo.FindProperty("_tabStripImage");
                     if (stripProp != null) stripProp.objectReferenceValue = stripImg;
+                    var tabBarPalette = tabBarSo.FindProperty("_paletteSlug");
+                    if (tabBarPalette != null) tabBarPalette.stringValue = "chassis-graphite";
                     tabBarSo.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
                 case "themed-list":
                 {
-                    childGo.AddComponent<ThemedList>();
+                    var lst = childGo.AddComponent<ThemedList>();
+                    WireThemeRef(lst, theme);
+                    var lstSo = new SerializedObject(lst);
+                    var lstPalette = lstSo.FindProperty("_paletteSlug");
+                    if (lstPalette != null) lstPalette.stringValue = "chassis-graphite";
+                    lstSo.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
                 default:
@@ -945,6 +1081,22 @@ namespace Territory.Editor.Bridge
             return !string.IsNullOrEmpty(kind) && _knownKinds.Contains(kind);
         }
 
+        /// <summary>Map IR `panel.kind` string to <see cref="PanelKind"/> enum index. Default = Modal (0).</summary>
+        static int ResolvePanelKindIndex(string kind)
+        {
+            if (string.IsNullOrEmpty(kind)) return (int)PanelKind.Modal;
+            switch (kind)
+            {
+                case "modal": return (int)PanelKind.Modal;
+                case "screen": return (int)PanelKind.Screen;
+                case "hud": return (int)PanelKind.Hud;
+                case "toolbar": return (int)PanelKind.Toolbar;
+                default:
+                    Debug.LogWarning($"[UiBakeHandler] panel.kind '{kind}' unknown — defaulting to modal");
+                    return (int)PanelKind.Modal;
+            }
+        }
+
         /// <summary>
         /// Bake one IR interactive into a typed StudioControl prefab. Per-kind switch dispatches to typed
         /// <see cref="IDetailRow"/> parse via <see cref="JsonUtility.FromJson{T}(string)"/> against the
@@ -952,7 +1104,7 @@ namespace Territory.Editor.Bridge
         /// round-trip through JsonUtility otherwise). Schema-mismatch (missing required field) returns
         /// <c>interactive_schema_violation</c>.
         /// </summary>
-        public static BakeError BakeInteractive(IrInteractive irRow, int interactiveIndex, string assetPath, string rawIrJson)
+        public static BakeError BakeInteractive(IrInteractive irRow, int interactiveIndex, string assetPath, string rawIrJson, UiTheme theme)
         {
             if (irRow == null)
             {
@@ -979,7 +1131,7 @@ namespace Territory.Editor.Bridge
             // no IDetailRow, sibling components are Themed primitives + renderer). Early-return on success.
             if (irRow.kind == "themed-overlay-toggle-row")
             {
-                return BakeThemedOverlayToggleRow(irRow, assetPath);
+                return BakeThemedOverlayToggleRow(irRow, assetPath, theme);
             }
 
             // Stage 8 Themed* modal primitive branch (themed-button, themed-label, themed-slider,
@@ -989,7 +1141,7 @@ namespace Territory.Editor.Bridge
                 irRow.kind == "themed-slider" || irRow.kind == "themed-toggle" ||
                 irRow.kind == "themed-tab-bar" || irRow.kind == "themed-list")
             {
-                return BakeStage8ThemedPrimitive(irRow, assetPath);
+                return BakeStage8ThemedPrimitive(irRow, assetPath, theme);
             }
 
             GameObject go = null;
@@ -1037,10 +1189,12 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertVUMeterFields(irRow.slug, detailJson, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<VUMeter>();
-                        if (go.GetComponent<VUMeterRenderer>() == null)
+                        var vuRend = go.GetComponent<VUMeterRenderer>();
+                        if (vuRend == null)
                         {
-                            go.AddComponent<VUMeterRenderer>();
+                            vuRend = go.AddComponent<VUMeterRenderer>();
                         }
+                        WireThemeRef(vuRend, theme);
                         SpawnVUMeterRenderTargets(go);
                         detailRow = vd;
                         break;
@@ -1060,10 +1214,12 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertField(detailJson, "illuminationSlug", irRow.kind, irRow.slug, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<IlluminatedButton>();
-                        if (go.GetComponent<IlluminatedButtonRenderer>() == null)
+                        var btnRend = go.GetComponent<IlluminatedButtonRenderer>();
+                        if (btnRend == null)
                         {
-                            go.AddComponent<IlluminatedButtonRenderer>();
+                            btnRend = go.AddComponent<IlluminatedButtonRenderer>();
                         }
+                        WireThemeRef(btnRend, theme);
                         SpawnIlluminatedButtonRenderTargets(go);
                         detailRow = bd;
                         break;
@@ -1083,10 +1239,12 @@ namespace Territory.Editor.Bridge
                         schemaError = AssertField(detailJson, "digits", irRow.kind, irRow.slug, interactiveIndex);
                         if (schemaError != null) return schemaError;
                         variant = go.AddComponent<SegmentedReadout>();
-                        if (go.GetComponent<SegmentedReadoutRenderer>() == null)
+                        var srRend = go.GetComponent<SegmentedReadoutRenderer>();
+                        if (srRend == null)
                         {
-                            go.AddComponent<SegmentedReadoutRenderer>();
+                            srRend = go.AddComponent<SegmentedReadoutRenderer>();
                         }
+                        WireThemeRef(srRend, theme);
                         SpawnSegmentedReadoutRenderTargets(go, sd);
                         detailRow = sd;
                         break;
@@ -1100,15 +1258,22 @@ namespace Territory.Editor.Bridge
                         };
                 }
 
-                // Apply detail row + write per-usage slug via SerializedObject for deterministic re-bake.
+                // Apply detail row + write per-usage slug + theme ref via SerializedObject for
+                // deterministic re-bake. _themeRef wire-up (Step 8 fix) must happen here so
+                // runtime Awake skips the unreliable FindObjectOfType<UiTheme>() fallback.
                 variant.ApplyDetail(detailRow);
                 var so = new SerializedObject(variant);
                 var slugProp = so.FindProperty("_slug");
                 if (slugProp != null)
                 {
                     slugProp.stringValue = irRow.slug ?? string.Empty;
-                    so.ApplyModifiedPropertiesWithoutUndo();
                 }
+                var themeRefProp = so.FindProperty("_themeRef");
+                if (themeRefProp != null && theme != null)
+                {
+                    themeRefProp.objectReferenceValue = theme;
+                }
+                so.ApplyModifiedPropertiesWithoutUndo();
 
                 // Stage 5 T5.5 — bake-time juice attachment per per-kind defaults + IR juice[] override.
                 AttachJuiceComponents(go, irRow);
@@ -1544,7 +1709,7 @@ namespace Territory.Editor.Bridge
         /// GameObjects. No StudioControlBase ceremony — Themed primitive composite branch.
         /// Stage 10 lock honored — bake-time-attached only.
         /// </summary>
-        static BakeError BakeThemedOverlayToggleRow(IrInteractive irRow, string assetPath)
+        static BakeError BakeThemedOverlayToggleRow(IrInteractive irRow, string assetPath, UiTheme theme)
         {
             GameObject go = null;
             try
@@ -1553,7 +1718,9 @@ namespace Territory.Editor.Bridge
                 go.AddComponent<RectTransform>();
 
                 var row = go.AddComponent<ThemedOverlayToggleRow>();
+                WireThemeRef(row, theme);
                 var renderer = go.AddComponent<ThemedOverlayToggleRowRenderer>();
+                WireThemeRef(renderer, theme);
 
                 // Spawn child Label (TMP_Text), Icon (Image), Toggle (Unity Toggle).
                 SpawnThemedOverlayToggleRowChildren(go, out var labelTmp, out var iconImage, out var unityToggle);
@@ -1678,7 +1845,7 @@ namespace Territory.Editor.Bridge
         /// per audit table (see §Pending Decisions). No StudioControlBase ceremony.
         /// Stage 10 lock honored — bake-time-attached only.
         /// </summary>
-        static BakeError BakeStage8ThemedPrimitive(IrInteractive irRow, string assetPath)
+        static BakeError BakeStage8ThemedPrimitive(IrInteractive irRow, string assetPath, UiTheme theme)
         {
             GameObject go = null;
             try
@@ -1689,22 +1856,45 @@ namespace Territory.Editor.Bridge
                 switch (irRow.kind)
                 {
                     case "themed-button":
-                        go.AddComponent<ThemedButton>();
+                    {
+                        var btn = go.AddComponent<ThemedButton>();
+                        WireThemeRef(btn, theme);
+                        var btnImg = go.AddComponent<Image>();
+                        btnImg.color = Color.white;
+                        btnImg.raycastTarget = true;
+                        var btnSo = new SerializedObject(btn);
+                        var btnImgProp = btnSo.FindProperty("_buttonImage");
+                        if (btnImgProp != null) btnImgProp.objectReferenceValue = btnImg;
+                        var btnPalette = btnSo.FindProperty("_paletteSlug");
+                        if (btnPalette != null) btnPalette.stringValue = "chassis-graphite";
+                        var btnFrame = btnSo.FindProperty("_frameStyleSlug");
+                        if (btnFrame != null) btnFrame.stringValue = "thin";
+                        btnSo.ApplyModifiedPropertiesWithoutUndo();
                         break;
+                    }
                     case "themed-label":
                     {
                         var lbl = go.AddComponent<ThemedLabel>();
+                        WireThemeRef(lbl, theme);
                         SpawnThemedLabelChild(go, out var labelTmp);
                         var lblSo = new SerializedObject(lbl);
                         var tmpProp = lblSo.FindProperty("_tmpText");
                         if (tmpProp != null) tmpProp.objectReferenceValue = labelTmp;
+                        var lblPalette = lblSo.FindProperty("_paletteSlug");
+                        if (lblPalette != null) lblPalette.stringValue = "silkscreen";
                         lblSo.ApplyModifiedPropertiesWithoutUndo();
                         break;
                     }
                     case "themed-slider":
                     {
-                        go.AddComponent<ThemedSlider>();
+                        var slider = go.AddComponent<ThemedSlider>();
+                        WireThemeRef(slider, theme);
+                        var sliderSo = new SerializedObject(slider);
+                        var sliderPalette = sliderSo.FindProperty("_paletteSlug");
+                        if (sliderPalette != null) sliderPalette.stringValue = "chassis-graphite";
+                        sliderSo.ApplyModifiedPropertiesWithoutUndo();
                         var rend = go.AddComponent<ThemedSliderRenderer>();
+                        WireThemeRef(rend, theme);
                         SpawnThemedSliderChildren(go, out var trackImg, out var fillImg, out var thumbImg, out var valueText);
                         var so = new SerializedObject(rend);
                         var trackProp = so.FindProperty("_trackImage");
@@ -1715,42 +1905,65 @@ namespace Territory.Editor.Bridge
                         if (thumbProp != null) thumbProp.objectReferenceValue = thumbImg;
                         var textProp = so.FindProperty("_valueText");
                         if (textProp != null) textProp.objectReferenceValue = valueText;
+                        var rendPalette = so.FindProperty("_paletteSlug");
+                        if (rendPalette != null) rendPalette.stringValue = "led-cyan";
                         so.ApplyModifiedPropertiesWithoutUndo();
                         break;
                     }
                     case "themed-toggle":
                     {
-                        go.AddComponent<ThemedToggle>();
+                        var tg = go.AddComponent<ThemedToggle>();
+                        WireThemeRef(tg, theme);
+                        var tgSo = new SerializedObject(tg);
+                        var tgPalette = tgSo.FindProperty("_paletteSlug");
+                        if (tgPalette != null) tgPalette.stringValue = "chassis-graphite";
+                        tgSo.ApplyModifiedPropertiesWithoutUndo();
                         var rend = go.AddComponent<ThemedToggleRenderer>();
+                        WireThemeRef(rend, theme);
                         SpawnThemedToggleChildren(go, out var checkmarkImg, out var labelTmp);
                         var so = new SerializedObject(rend);
                         var checkProp = so.FindProperty("_checkmarkImage");
                         if (checkProp != null) checkProp.objectReferenceValue = checkmarkImg;
                         var labelProp = so.FindProperty("_labelText");
                         if (labelProp != null) labelProp.objectReferenceValue = labelTmp;
+                        var rendPalette = so.FindProperty("_paletteSlug");
+                        if (rendPalette != null) rendPalette.stringValue = "led-grass";
                         so.ApplyModifiedPropertiesWithoutUndo();
                         break;
                     }
                     case "themed-tab-bar":
                     {
                         var tabBar = go.AddComponent<ThemedTabBar>();
+                        WireThemeRef(tabBar, theme);
                         var rend = go.AddComponent<ThemedTabBarRenderer>();
+                        WireThemeRef(rend, theme);
                         SpawnThemedTabBarChildren(go, out var stripImg, out var indicatorImg, out var tabLabelTmp);
                         var rendSo = new SerializedObject(rend);
                         var indicatorProp = rendSo.FindProperty("_activeTabIndicator");
                         if (indicatorProp != null) indicatorProp.objectReferenceValue = indicatorImg;
                         var tabLabelProp = rendSo.FindProperty("_tabLabel");
                         if (tabLabelProp != null) tabLabelProp.objectReferenceValue = tabLabelTmp;
+                        var rendPalette = rendSo.FindProperty("_paletteSlug");
+                        if (rendPalette != null) rendPalette.stringValue = "led-amber";
                         rendSo.ApplyModifiedPropertiesWithoutUndo();
                         var tabBarSo = new SerializedObject(tabBar);
                         var stripProp = tabBarSo.FindProperty("_tabStripImage");
                         if (stripProp != null) stripProp.objectReferenceValue = stripImg;
+                        var tabBarPalette = tabBarSo.FindProperty("_paletteSlug");
+                        if (tabBarPalette != null) tabBarPalette.stringValue = "chassis-graphite";
                         tabBarSo.ApplyModifiedPropertiesWithoutUndo();
                         break;
                     }
                     case "themed-list":
-                        go.AddComponent<ThemedList>();
+                    {
+                        var lst = go.AddComponent<ThemedList>();
+                        WireThemeRef(lst, theme);
+                        var lstSo = new SerializedObject(lst);
+                        var lstPalette = lstSo.FindProperty("_paletteSlug");
+                        if (lstPalette != null) lstPalette.stringValue = "chassis-graphite";
+                        lstSo.ApplyModifiedPropertiesWithoutUndo();
                         break;
+                    }
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
@@ -1892,6 +2105,45 @@ namespace Territory.Editor.Bridge
         /// can push DataAdapter strings into visible text. Without this child the
         /// ThemedLabel component is inert (silent bail in ApplyTheme + no-op Detail).
         /// </summary>
+        /// <summary>Step 12 — spawn a centered TMP caption under a themed-button so the button has visible text.</summary>
+        static void SpawnThemedButtonCaption(GameObject buttonRoot, string captionText)
+        {
+            if (buttonRoot == null) return;
+            var existing = buttonRoot.transform.Find("Caption")?.gameObject;
+            TMP_Text tmp;
+            if (existing == null)
+            {
+                var go = new GameObject("Caption", typeof(RectTransform));
+                go.transform.SetParent(buttonRoot.transform, worldPositionStays: false);
+                var rt = (RectTransform)go.transform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
+                tmp = go.AddComponent<TextMeshProUGUI>();
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.fontSize = 18f;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.color = Color.white;
+                tmp.raycastTarget = false;
+            }
+            else
+            {
+                tmp = existing.GetComponent<TMP_Text>();
+            }
+            if (tmp != null) tmp.text = captionText ?? string.Empty;
+        }
+
+        /// <summary>Step 12 — ensure a LayoutElement sibling so parent VerticalLayoutGroup can size the child.</summary>
+        static void EnsureChildLayoutElement(GameObject child, float preferredWidth, float preferredHeight, float flexibleWidth = 0f)
+        {
+            if (child == null) return;
+            var le = child.GetComponent<LayoutElement>();
+            if (le == null) le = child.AddComponent<LayoutElement>();
+            le.preferredWidth = preferredWidth;
+            le.preferredHeight = preferredHeight;
+            le.flexibleWidth = flexibleWidth;
+        }
+
         static void SpawnThemedLabelChild(GameObject prefabRoot, out TMP_Text tmp)
         {
             tmp = null;

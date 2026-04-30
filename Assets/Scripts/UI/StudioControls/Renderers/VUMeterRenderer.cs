@@ -52,7 +52,9 @@ namespace Territory.UI.StudioControls.Renderers
         private void Update()
         {
             if (_needleBallistics == null || _needleRect == null) return;
-            float v = Mathf.Clamp01(_needleBallistics.CurrentValue);
+            float current = _needleBallistics.CurrentValue;
+            if (float.IsNaN(current) || float.IsInfinity(current)) return;
+            float v = Mathf.Clamp01(current);
             float angleZ = Mathf.Lerp(DefaultMinAngle, DefaultMaxAngle, v);
             _needleRect.localRotation = Quaternion.Euler(0f, 0f, angleZ);
         }

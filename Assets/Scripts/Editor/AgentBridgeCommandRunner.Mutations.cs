@@ -296,8 +296,9 @@ public static partial class AgentBridgeCommandRunner
     }
 
     /// <summary>
-    /// Set a SerializedProperty value from a tagged-union (value_kind ∈ object_ref | asset_ref | int | float | bool | string | vector3).
-    /// For object_ref and asset_ref, value_object_path is the scene path or asset path of the target object.
+    /// Set a SerializedProperty value from a tagged-union (value_kind ∈ object_ref | component_ref | asset_ref | int | float | bool | string | vector3).
+    /// For object_ref / component_ref / asset_ref, value_object_path is the scene path or asset path of the target object.
+    /// For component_ref, value carries the short component type name to resolve on the target GO.
     /// For primitives, value is the string representation.
     /// </summary>
     static bool TrySetSerializedProperty(
@@ -324,6 +325,38 @@ public static partial class AgentBridgeCommandRunner
                     return false;
                 }
                 prop.objectReferenceValue = refGo;
+                return true;
+            }
+            case "component_ref":
+            {
+                if (string.IsNullOrWhiteSpace(valueObjectPath))
+                {
+                    error = "params_invalid:value_object_path (required for component_ref — scene path of GO carrying component)";
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    error = "params_invalid:value (required for component_ref — short component type name)";
+                    return false;
+                }
+                GameObject refGo = GameObject.Find(valueObjectPath);
+                if (refGo == null)
+                {
+                    error = $"target_not_found:{valueObjectPath}";
+                    return false;
+                }
+                if (!TryResolveComponentType(value, out Type compType, out string typeErr))
+                {
+                    error = typeErr;
+                    return false;
+                }
+                Component comp = refGo.GetComponent(compType);
+                if (comp == null)
+                {
+                    error = $"component_not_found:{value} on {valueObjectPath}";
+                    return false;
+                }
+                prop.objectReferenceValue = comp;
                 return true;
             }
             case "asset_ref":
@@ -398,7 +431,7 @@ public static partial class AgentBridgeCommandRunner
                 return true;
             }
             default:
-                error = $"params_invalid:value_kind (unsupported: {valueKind}). Supported: object_ref, asset_ref, int, float, bool, string, vector3";
+                error = $"params_invalid:value_kind (unsupported: {valueKind}). Supported: object_ref, component_ref, asset_ref, int, float, bool, string, vector3";
                 return false;
         }
     }
@@ -1048,8 +1081,9 @@ class RemoveComponentParamsDto
 }
 
 /// <summary>
-/// value_kind ∈ object_ref | asset_ref | int | float | bool | string | vector3.
+/// value_kind ∈ object_ref | component_ref | asset_ref | int | float | bool | string | vector3.
 /// For object_ref: value_object_path = scene-root-relative GO path.
+/// For component_ref: value_object_path = scene-root-relative GO path; value = short component type name resolved on that GO.
 /// For asset_ref: value_object_path = asset path (e.g. "Assets/Prefabs/Foo.prefab").
 /// For primitives: value = string representation.
 /// For vector3: value = "x,y,z".
