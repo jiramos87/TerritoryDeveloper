@@ -22,6 +22,12 @@ inputs:
       description: >-
         When true, mode-detect accepts an already-decomposed Stage body (mode=overwrite).
         Default false → hard halt on existing Task table.
+    decompose_expected_output:
+      type: object
+      description: >-
+        Optional golden fixture for the seam validate-only path. When provided via
+        `--inputs`, the `decompose` seam step skips live dispatch and validates this
+        value against output.schema.json instead. Shape: `{tasks, stage_file_plan, plan_fix}`.
 steps:
   - id: mode_detect
     description: >-
@@ -50,9 +56,10 @@ steps:
 
   - id: decompose
     description: >-
-      Phase 2 — seam decompose-skeleton-stage. Validate-only here; subagent layer
-      dispatches LLM + enriches glossary_slice / invariants / surfaces.
+      Phase 2 — seam decompose-skeleton-stage. Live dispatch when no fixture; validate-only
+      when `inputs.decompose_expected_output` is provided (inject via `--inputs` fixture file).
     seam: decompose-skeleton-stage
+    expected_output: ${inputs.decompose_expected_output}
     input:
       master_plan_slug: ${inputs.slug}
       stage_id: Stage ${stage.stage_id}

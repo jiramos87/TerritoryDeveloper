@@ -41,7 +41,7 @@ fi
 stage_norm="${stage_id#Stage }"
 stage_norm="${stage_norm// /}"
 
-row_query="SELECT COALESCE(status, 'Draft') || E'\t' || COALESCE(body, '') FROM ia_stages WHERE slug = '${slug//\'/\'\'}' AND stage_id = '${stage_norm//\'/\'\'}' LIMIT 1;"
+row_query="SELECT COALESCE(status::text, 'pending') || E'\t' || COALESCE(body, '') FROM ia_stages WHERE slug = '${slug//\'/\'\'}' AND stage_id = '${stage_norm//\'/\'\'}' LIMIT 1;"
 row=$(psql "$DATABASE_URL" -tAF $'\t' -c "$row_query" 2>/dev/null || true)
 
 if [[ -z "$row" ]]; then

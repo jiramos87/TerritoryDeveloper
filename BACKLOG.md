@@ -282,9 +282,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
-
-
-
 ## Architecture coherence program
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
@@ -346,7 +343,17 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
+- [ ] **TECH-7985** — **ThemedFrame component** — `ThemedPrimitiveBase` subclass driving `Image.sprite` + `Image.type = Sliced` from `frameStyleSlug` via `UiTheme.TryGetFrameStyle` (Stage 1.3 T1.3.1 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
 
+- [ ] **TECH-7986** — **ThemedIlluminationLayer component** — sibling `Image` overlay color + alpha from `illuminationSlug` via `UiTheme.TryGetIllumination`, layered above `ThemedFrame` (Stage 1.3 T1.3.2 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+
+- [ ] **TECH-7987** — **ThemedButton state binding** — wire `Selectable.colors` from palette ramp + `SpriteState` from sprite atlas slot enum + optional `motionCurveSlug` fadeDuration; graceful degrade per §Examples edge cases (Stage 1.3 T1.3.3 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+
+- [ ] **TECH-7988** — **ThemedSectionHeader component** — title row archetype `ThemedPrimitiveBase` subclass; composes `ThemedLabel` for title text + optional sub-title slot (Stage 1.3 T1.3.4 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+
+- [ ] **TECH-7989** — **ThemedDivider component** — divider `Image` archetype; reads `dividerThickness` from parent panel detail; binds palette ramp slug for color (Stage 1.3 T1.3.5 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+
+- [ ] **TECH-7990** — **ThemedBadge component** — count / status indicator archetype; composes background `Image` + foreground `ThemedLabel`; static (no animation) per §Components 7 non-scope (Stage 1.3 T1.3.6 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
 
 ## Economic depth lane
 

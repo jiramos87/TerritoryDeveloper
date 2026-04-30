@@ -1,0 +1,39 @@
+{
+  "slug": "recipe-runner-phase-e",
+  "stage_id": "3.1",
+  "allow_overwrite": true,
+  "decompose_expected_output": {
+    "tasks": [
+      {
+        "title": "Define align-arch-decision seam schema",
+        "type": "TECH",
+        "size": "H2",
+        "summary": "Author tools/seams/align-arch-decision/input.schema.json + output.schema.json. Input: exploration-doc decision-log block + plan_slug. Output: 3 plan-scoped arch_decisions (slug/title/rationale/alternatives).",
+        "depends_on": []
+      },
+      {
+        "title": "Plan-covered subagent body for seam-align-arch-decision",
+        "type": "TECH",
+        "size": "H2",
+        "summary": "Author .claude/agents/seam-align-arch-decision.md. Reads decision-log block + scope rules; emits 3 ratified arch_decisions per Phase A contract. Mission + Hard boundaries + Output shape only.",
+        "depends_on": ["Define align-arch-decision seam schema"]
+      },
+      {
+        "title": "Recipify master-plan-new Phase A+B+C into YAML",
+        "type": "TECH",
+        "size": "H3",
+        "summary": "Author ia/recipes/master-plan-new.yaml with Phase A seam.align-arch-decision step + Phase B header step + Phase C decomposition step. Engine call sites + MCP-write step blocks.",
+        "depends_on": ["Plan-covered subagent body for seam-align-arch-decision"]
+      },
+      {
+        "title": "Body trim master-plan-new to dispatch shell",
+        "type": "TECH",
+        "size": "H2",
+        "summary": "Trim .claude/agents/master-plan-new.md to recipe-dispatch shell (>=60% line drop). Recipe pointer + CLI + Hard boundaries + escape hatch + cache pointer only.",
+        "depends_on": ["Recipify master-plan-new Phase A+B+C into YAML"]
+      }
+    ],
+    "stage_file_plan": "File 4 tasks as TECH issues. Sizing: H2/H2/H3/H2. Depends-on chain: task 2 depends on task 1, task 3 on task 2, task 4 on task 3. Seam schema first (unblocks subagent body), then recipe YAML, then body trim.",
+    "plan_fix": ""
+  }
+}

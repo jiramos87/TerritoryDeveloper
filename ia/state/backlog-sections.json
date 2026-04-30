@@ -1125,6 +1125,42 @@
           "id": "TECH-7744",
           "checklist_line": "UiBakeHandler partial split",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7985",
+          "checklist_line": "- [ ] **TECH-7985** — **ThemedFrame component** — `ThemedPrimitiveBase` subclass driving `Image.sprite` + `Image.type = Sliced` from `frameStyleSlug` via `UiTheme.TryGetFrameStyle` (Stage 1.3 T1.3.1 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7986",
+          "checklist_line": "- [ ] **TECH-7986** — **ThemedIlluminationLayer component** — sibling `Image` overlay color + alpha from `illuminationSlug` via `UiTheme.TryGetIllumination`, layered above `ThemedFrame` (Stage 1.3 T1.3.2 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7987",
+          "checklist_line": "- [ ] **TECH-7987** — **ThemedButton state binding** — wire `Selectable.colors` from palette ramp + `SpriteState` from sprite atlas slot enum + optional `motionCurveSlug` fadeDuration; graceful degrade per §Examples edge cases (Stage 1.3 T1.3.3 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7988",
+          "checklist_line": "- [ ] **TECH-7988** — **ThemedSectionHeader component** — title row archetype `ThemedPrimitiveBase` subclass; composes `ThemedLabel` for title text + optional sub-title slot (Stage 1.3 T1.3.4 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7989",
+          "checklist_line": "- [ ] **TECH-7989** — **ThemedDivider component** — divider `Image` archetype; reads `dividerThickness` from parent panel detail; binds palette ramp slug for color (Stage 1.3 T1.3.5 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7990",
+          "checklist_line": "- [ ] **TECH-7990** — **ThemedBadge component** — count / status indicator archetype; composes background `Image` + foreground `ThemedLabel`; static (no animation) per §Components 7 non-scope (Stage 1.3 T1.3.6 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))",
+          "trailing_blanks": 1
         }
       ]
     },
