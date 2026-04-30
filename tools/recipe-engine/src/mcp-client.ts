@@ -35,13 +35,39 @@ export interface CreateStdioMcpClientOptions {
   env?: NodeJS.ProcessEnv;
 }
 
-function unwrapToolResult(raw: { content?: Array<{ type: string; text?: string }> }): unknown {
+function unwrapToolResult(raw: {
+  content?: Array<{ type: string; text?: string }>;
+  isError?: boolean;
+}): unknown {
   const block = raw.content?.find((c) => c.type === "text");
-  if (!block?.text) return raw;
+  if (!block?.text) {
+    if (raw.isError === true) {
+      throw Object.assign(new Error("MCP tool error (no message)"), {
+        code: "mcp_tool_error",
+      });
+    }
+    return raw;
+  }
+  // Protocol-level error: SDK sets isError=true and the text block is the
+  // human-readable error string (typically `MCP error <code>: <message>`).
+  // Without this branch, non-JSON error text was silently returned as a
+  // success value — callers like `${ins.task_id}` then resolved to empty.
+  if (raw.isError === true) {
+    throw Object.assign(new Error(block.text), { code: "mcp_protocol_error" });
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(block.text);
   } catch {
+    // Defensive: a non-JSON text body without isError is suspicious. The
+    // wrapTool envelope always emits JSON for both ok and error paths, so
+    // any plain string here likely means a protocol error slipped through
+    // without the isError flag (older SDK versions). Surface it.
+    if (/^MCP error /.test(block.text)) {
+      throw Object.assign(new Error(block.text), {
+        code: "mcp_protocol_error",
+      });
+    }
     return block.text;
   }
   if (parsed === null || typeof parsed !== "object") return parsed;

@@ -342,6 +342,19 @@ const EXPLICIT_NONE_STAGES = new Set([
   "zone-s-economy::7",
   "zone-s-economy::8",
   "zone-s-economy::9",
+  "recipe-runner-phase-e::1.1",
+  "recipe-runner-phase-e::1.2",
+  "recipe-runner-phase-e::1.3",
+  "recipe-runner-phase-e::2.1",
+  "recipe-runner-phase-e::2.2",
+  "recipe-runner-phase-e::2.3",
+  "recipe-runner-phase-e::3.1",
+  "recipe-runner-phase-e::3.2",
+  "recipe-runner-phase-e::4.1",
+  "recipe-runner-phase-e::4.2",
+  "recipe-runner-phase-e::5.1",
+  "recipe-runner-phase-e::5.2",
+  "recipe-runner-phase-e::5.3",
 ]);
 
 // ---------------------------------------------------------------------------

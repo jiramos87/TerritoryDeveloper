@@ -1,25 +1,22 @@
 /**
- * seam step — Phase B MVP: validate-only against tools/seams/{name}/*.schema.json.
+ * seam step — Phase E: real subagent dispatch via seams_run MCP tool.
  *
- * Per DEC-A19 Q3.b, LLM dispatch flows through a plan-covered subagent — not
- * available from a Node CLI. Phase B keeps this step kind validation-only:
- *   - Validate provided seam.input against input.schema.json
- *   - When seam.expected_output present, validate against output.schema.json
+ * When expected_output present: validate-only path (regression/dry-run).
+ * When expected_output absent: call seams_run with dispatch_mode="subagent".
+ *   - dispatch_unavailable in response → fall back to validate-only if
+ *     expected_output is present; otherwise escalate with code "dispatch_unavailable".
+ *   - schema_out validation failure → escalate with handoff file (Q5 policy).
  *
- * Real LLM dispatch lands in Phase C when the recipe-runner subagent wraps the
- * engine. Until then, recipes that need a live seam call must invoke the
- * subagent at the outer layer; this step validates the round-trip envelope.
- *
- * Failure → escalation handoff file under
- * `ia/state/recipe-runs/{run_id}/seam-{step_id}-error.md` per Q5 policy. retry
- * attribute is rejected in the schema for seam steps.
+ * Escalation handoff at ia/state/recipe-runs/{run_id}/seam-{step_id}-error.md
+ * per Q5 policy. retry attribute is rejected in the schema for seam steps.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import Ajv from "ajv";
-import type { SeamStep, RunContext, StepResult } from "../types.js";
+import type { SeamStep, RunContext, StepResult, SeamStepValue } from "../types.js";
 import { resolveTree } from "../template.js";
+import { getMcpInvoker } from "./mcp.js";
 
 interface SeamStepExtended extends SeamStep {
   expected_output?: Record<string, unknown>;
@@ -60,28 +57,83 @@ export async function runSeamStep(step: SeamStep, ctx: RunContext): Promise<Step
     return await escalate(ctx, step.id, seamName, "schema_in", validateInput.errors, input);
   }
 
+  // Validate-only path: expected_output provided (regression/golden fixture)
   if (expected !== undefined) {
     const validateOutput = ajv.compile(outputSchema as object);
     if (!validateOutput(expected)) {
       return await escalate(ctx, step.id, seamName, "schema_out", validateOutput.errors, input, expected);
     }
-    return { ok: true, value: { seam: seamName, output: expected, validated: true } };
+    const value: SeamStepValue = {
+      seam: seamName,
+      output: expected,
+      validated: true,
+      dispatch_mode: "validate-only",
+    };
+    return { ok: true, value };
   }
 
-  return {
-    ok: false,
-    error: {
-      code: "phase_b_no_dispatch",
-      message: `Phase B: seam ${seamName} requires plan-covered subagent dispatch (not yet wired). Pass expected_output for validate-only round-trip.`,
-    },
+  // Subagent dispatch path
+  const invoker = getMcpInvoker();
+  if (!invoker) {
+    return await escalate(
+      ctx,
+      step.id,
+      seamName,
+      "dispatch_unavailable" as "schema_in",
+      { reason: "no_mcp_invoker" },
+      input,
+    );
+  }
+
+  let seamsResult: unknown;
+  try {
+    seamsResult = await invoker("seams_run", {
+      name: seamName,
+      dispatch_mode: "subagent",
+      input,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return await escalate(ctx, step.id, seamName, "schema_in", { reason: "seams_run_invoke_failed", message: msg }, input);
+  }
+
+  // Handle dispatch_unavailable envelope
+  const resultObj = seamsResult as Record<string, unknown> | null;
+  if (resultObj && resultObj["dispatch_unavailable"] === true) {
+    return await escalate(
+      ctx,
+      step.id,
+      seamName,
+      "dispatch_unavailable" as "schema_in",
+      { reason: "subagent_env_not_available" },
+      input,
+    );
+  }
+
+  // Validate output from subagent
+  const output = resultObj?.["output"];
+  const validateOutput = ajv.compile(outputSchema as object);
+  if (!validateOutput(output)) {
+    return await escalate(ctx, step.id, seamName, "schema_out", validateOutput.errors, input, output);
+  }
+
+  const value: SeamStepValue = {
+    seam: seamName,
+    output,
+    validated: true,
+    dispatch_mode: "subagent",
   };
+  if (resultObj?.["token_totals"]) {
+    value.token_totals = resultObj["token_totals"] as SeamStepValue["token_totals"];
+  }
+  return { ok: true, value };
 }
 
 async function escalate(
   ctx: RunContext,
   stepId: string,
   seamName: string,
-  code: "schema_in" | "schema_out" | "refusal" | "timeout",
+  code: "schema_in" | "schema_out" | "refusal" | "timeout" | "dispatch_unavailable",
   details: unknown,
   input: unknown,
   attemptedOutput?: unknown,
@@ -110,7 +162,7 @@ async function escalate(
     ok: false,
     error: {
       code,
-      message: `Seam ${seamName} validation failed — escalation handoff at ${path.relative(ctx.cwd, handoffPath)}`,
+      message: `Seam ${seamName} failed (${code}) — escalation handoff at ${path.relative(ctx.cwd, handoffPath)}`,
       details,
     },
   };

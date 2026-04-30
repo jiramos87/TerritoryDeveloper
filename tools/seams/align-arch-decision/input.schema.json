@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://align-arch-decision/input",
+  "title": "AlignArchDecisionInput",
+  "type": "object",
+  "required": ["decision_id", "current_record", "proposed_change"],
+  "additionalProperties": false,
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Decision identifier, e.g. DEC-A19"
+    },
+    "current_record": {
+      "type": "object",
+      "required": ["title", "status", "body"],
+      "additionalProperties": true,
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["active", "superseded", "deprecated"] },
+        "body": { "type": "string", "minLength": 1 }
+      },
+      "description": "Current arch_decisions row fields"
+    },
+    "proposed_change": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "description": "Free-text description of the change to apply or evaluate"
+    },
+    "evidence_links": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": [],
+      "description": "Optional list of paths/urls supporting the change"
+    }
+  }
+}

@@ -119,6 +119,36 @@ export async function mutateTaskInsert(
   const related = (input.related ?? []).map((s) => s.trim()).filter(Boolean);
 
   return withTx(async (c) => {
+    // Idempotency guard — when (slug, stage_id, title) triple already exists,
+    // return the existing row instead of advancing the sequence. Matches the
+    // contract documented in `ia/skills/stage-file/SKILL.md` Phase 5.A.2 so
+    // recipe re-runs on an already-filed Stage skip work cleanly.
+    if (input.slug && input.stage_id) {
+      const dup = await c.query<{
+        task_id: string;
+        created_at: string;
+      }>(
+        `SELECT task_id, created_at::text AS created_at
+           FROM ia_tasks
+          WHERE slug = $1 AND stage_id = $2 AND title = $3
+          LIMIT 1`,
+        [input.slug, input.stage_id, title],
+      );
+      if (dup.rowCount && dup.rowCount > 0) {
+        const existing = dup.rows[0]!;
+        const depRows = await c.query<{ depends_on_id: string; kind: string }>(
+          `SELECT depends_on_id, kind FROM ia_task_deps WHERE task_id = $1`,
+          [existing.task_id],
+        );
+        return {
+          task_id: existing.task_id,
+          created_at: existing.created_at,
+          depends_on: depRows.rows.filter((r) => r.kind === "depends_on").map((r) => r.depends_on_id),
+          related: depRows.rows.filter((r) => r.kind === "related").map((r) => r.depends_on_id),
+        };
+      }
+    }
+
     const nextRes = await c.query<{ n: string }>(`SELECT nextval($1)::text AS n`, [seq]);
     const task_id = `${prefix}-${nextRes.rows[0]!.n}`;
 

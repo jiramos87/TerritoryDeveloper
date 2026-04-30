@@ -101,6 +101,22 @@ export interface AuditSink {
   end(step: Step, parent_path: string, result: StepResult): Promise<void>;
 }
 
+export interface TokenTotals {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens?: number;
+  cache_creation_tokens?: number;
+}
+
+export interface SeamStepValue {
+  seam: string;
+  output: unknown;
+  validated: boolean;
+  token_totals?: TokenTotals;
+  dispatch_mode?: "subagent" | "validate-only";
+  dispatch_unavailable?: boolean;
+}
+
 export interface StepResult {
   ok: boolean;
   value?: unknown;

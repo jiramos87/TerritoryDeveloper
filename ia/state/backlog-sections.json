@@ -372,6 +372,186 @@
           "id": "TECH-3407",
           "checklist_line": "- [ ] **TECH-3407 — SKILL inline edits — `intent_lint` dispatch + decompose collapse + Changelog seed across 6 SKILLs** — Stage 3 T3.6 of `db-lifecycle-extensions`. Edit `/stage-decompose` to call `intent_lint` (T3.2 soft warn per Q6); collapse `/stage-decompose` + `/stage-file` Phase boundaries via `stage_decompose_apply` (T3.4); seed empty `## Changelog` section in 6 SKILL files: `stage-file`, `ship-stage`, `stage-authoring`, `master-plan-new`, `master-plan-extend`, `stage-decompose` (no synthesized history per SK=a inline lock). Run `npm run skill:sync:all`. Files: `ia/skills/stage-decompose/agent-body.md`, `ia/skills/{stage-file,ship-stage,stage-authoring,master-plan-new,master-plan-extend,stage-decompose}/SKILL.md`, `.claude/agents/*.md`, `.claude/commands/*.md` (regenerated).",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4622",
+          "checklist_line": "- [ ] **TECH-4622 — Synthetic fixture seed** — Stage 1.1 T1.1.1 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/test/fixtures/parallel-carcass-health-mv.fixture.ts` seeding one plan via `master_plan_insert` + 4 `stage_insert` calls (2 `carcass_role='carcass'`, 2 `carcass_role='section'` with `section_id='A'`). Insert one `stage_carcass_signals` row tying carcass.1 to `dev_loop_affordance`. Idempotent teardown via `truncate ia_master_plans cascade`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4623",
+          "checklist_line": "- [ ] **TECH-4623 — next_actionable carcass gate test** — Stage 1.1 T1.1.2 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/test/master-plan-next-actionable.carcass.test.ts`. Assert (a) while any carcass stage non-done, response includes only `carcass_role='carcass'` rows; (b) after all carcass stages flip to `done`, response includes section-root stage. Call signature is `master_plan_next_actionable({slug})` — V2 row-only model dropped `session_id`. Uses vitest + existing MCP test harness.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4624",
+          "checklist_line": "- [ ] **TECH-4624 — MV carcass_done flip test** — Stage 1.1 T1.1.3 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/test/ia-master-plan-health.carcass.test.ts`. Refresh MV after each carcass stage closeout; assert `carcass_done=false` until all carcass stages done, then flips to `true`. Covers edge case: zero carcass stages (legacy plan, NULL `carcass_role`) → `carcass_done=true` (vacuous).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4827",
+          "checklist_line": "- [ ] **TECH-4827 — Section claim race test** — Stage 1.2 T1.2.1 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/tests/section-claim.race.test.ts`. Race two parallel `section_claim({slug, section_id})` calls via `Promise.allSettled`; assert exactly one INSERT wins, loser returns structured `claim_conflict` envelope. PK INSERT-or-fail enforces single winner — V2 row-only (mig 0052): no `session_id`, section row IS the holder. Per-file sandbox slug `__test_section_claim_race__`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4828",
+          "checklist_line": "- [ ] **TECH-4828 — Stage claim auto-assert test** — Stage 1.2 T1.2.2 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/tests/stage-claim.auto-assert.test.ts`. `stage_claim({slug, stage_id})` auto-asserts parent `ia_section_claims` row via `ia_stages.section_id` lookup; sibling stage in same section reuses parent row (no duplicate INSERT); `stage_claim_release` symmetric — releases stage row, leaves section row alive while siblings hold. Per-file sandbox slug `__test_stage_claim_auto_assert__`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4829",
+          "checklist_line": "- [ ] **TECH-4829 — Heartbeat + sweep test** — Stage 1.2 T1.2.3 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/tests/claim-heartbeat.test.ts`. Single `claim_heartbeat({slug, stage_id})` advances both `ia_section_claims.heartbeat_at` + `ia_stage_claims.heartbeat_at` in one MCP roundtrip via `ia_stages.section_id` lookup. Backdate `last_heartbeat` past `carcass_config.claim_heartbeat_timeout_minutes`; call `claims_sweep`; assert section + stage rows release. Per-file sandbox slug `__test_claim_heartbeat__`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5243",
+          "checklist_line": "- [ ] **TECH-5243 — Sections page route + BFF** — Stage 2.2 T2.2.1 of `parallel-carcass-rollout`. Author `web/app/plans/[slug]/sections/page.tsx` (RSC) + `web/app/api/plans/[slug]/sections/route.ts` BFF wrapping `master_plan_sections({slug})`. Grid layout: section_id header, member stages w/ Status, owned `arch_surfaces.slug` chips, claim status pill (held / free / stale) + heartbeat age, drift scan pill. Use `ds-*` tokens.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5245",
+          "checklist_line": "- [ ] **TECH-5245 — Dashboard tile + stale claim badge** — Stage 2.2 T2.2.2 of `parallel-carcass-rollout`. Add `web/app/plans/[slug]/page.tsx` landing tile linking to `/plans/[slug]/sections` w/ carcass-done flag + section counts. Author `<StaleClaimBadge>` at `web/components/StaleClaimBadge.tsx` firing when `now() - heartbeat_at` exceeds `carcass_config.claim_heartbeat_timeout_minutes`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5249",
+          "checklist_line": "- [ ] **TECH-5249 — E2E render test** — Stage 2.2 T2.2.3 of `parallel-carcass-rollout`. Author Playwright (or existing harness) spec seeding fixture plan w/ 2 sections (1 claimed, 1 free); assert both render w/ correct pills. Gate on BFF returning 200 + JSON shape match `SectionView[]`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5244",
+          "checklist_line": "- [ ] **TECH-5244 — arch_decision_write plan_slug wiring** — Stage 2.4 T2.4.1 of `parallel-carcass-rollout`. Extend `tools/mcp-ia-server/src/tools/arch.ts` `arch_decision_write` schema: add optional `plan_slug` arg; relax slug regex to accept `^DEC-A\\d+$` OR `^plan-[a-z0-9-]+-(boundaries|end-state-contract|shared-seams)$`. Validate `plan_slug` exists in `ia_master_plans` when set; persist into `arch_decisions.plan_slug`. Vitest covers both shapes + invalid combos.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5248",
+          "checklist_line": "- [ ] **TECH-5248 — Phase A recipe extension** — Stage 2.4 T2.4.2 of `parallel-carcass-rollout`. Extend `tools/recipes/master-plan-new-phase-a.yaml` `seed_decisions` step to accept a `plan_slug` recipe input + forward through to each `arch_decision_write` step. Add pre-`lock_arch` verification step asserting seeded decisions exist + are plan-scoped. Engine regression test exercises full recipe end-to-end.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5252",
+          "checklist_line": "- [ ] **TECH-5252 — Migration cookbook doc** — Stage 2.4 T2.4.3 of `parallel-carcass-rollout`. Author `docs/parallel-carcass-migration-cookbook.md` — §1 gate criteria · §2 Phase A walkthrough w/ `plan_slug` arg · §3 Phase B carcass sizing + signal kind selection · §4 Phase C `section_id` + surface clustering · §5 worked example (`game-ui-design-system-v2` from §6.6 promoted). Cross-link from `AGENTS.md` orchestrator section; reference carcass.3 evidence doc as green-bar exemplar.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5246",
+          "checklist_line": "- [ ] **TECH-5246 — Cross-section drift integration test** — Stage 2.1 T2.1.1 of `parallel-carcass-rollout`. Extend `tools/mcp-ia-server/test/arch-drift-scan.intra-plan.test.ts` w/ cross-section case. Seed plan w/ 2 sections owning distinct surfaces; append `arch_changelog` rows touching surfaces from both sections; assert single `arch_drift_scan(scope='intra-plan')` event with `metadata.section_ids` containing both ids.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5247",
+          "checklist_line": "- [ ] **TECH-5247 — Edge case coverage** — Stage 2.1 T2.1.2 of `parallel-carcass-rollout`. Add three cases to `arch-drift-scan.intra-plan.test.ts`: (a) stage with empty `stage_arch_surfaces` → no drift events; (b) `arch_decisions.status='superseded'` row → drift skipped per DEC-A17; (c) `arch_drift_scan` twice w/ no intervening changes → same event ids returned, zero new rows in event store.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5250",
+          "checklist_line": "- [ ] **TECH-5250 — Perf bench harness** — Stage 2.1 T2.1.3 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/test/arch-drift-scan.bench.ts`. Seed 50-stage / 5-section / 200-changelog-row fixture; run `arch_drift_scan(scope='intra-plan')` 20 times; assert P95 < 200ms. Persist measurement to `ia_master_plan_health.arch_drift_scan_p95_ms` (or sibling MV col) for ops dashboard consumption.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5251",
+          "checklist_line": "- [ ] **TECH-5251 — Scheduler tick + change_log emit** — Stage 2.3 T2.3.1 of `parallel-carcass-rollout`. Author `tools/scripts/claims-sweep-tick.ts` Node entry. Imports `applySweep` from MCP claims module; runs on cron cadence (default 5min, configurable via env). Emits `master_plan_change_log_append({slug, kind: 'claim_swept', body, metadata: {section_ids[], stage_ids[]}})` per affected slug. Idempotent: no-op when zero stale rows.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5253",
+          "checklist_line": "- [ ] **TECH-5253 — Sweep integration test** — Stage 2.3 T2.3.2 of `parallel-carcass-rollout`. Author `tools/mcp-ia-server/test/claims-sweep.scheduled.test.ts` (vitest). Seed 3 stale claims past `carcass_config.claim_heartbeat_timeout_minutes`; run sweep tick; assert all 3 released + 1 change_log row per affected slug + idempotent on re-run (zero new rows).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5254",
+          "checklist_line": "- [ ] **TECH-5254 — Ops doc — claims sweep cadence + override** — Stage 2.3 T2.3.3 of `parallel-carcass-rollout`. Author `docs/parallel-carcass-claims-sweep-ops.md` §1 cadence (default 5min) · §2 env override (`CLAIMS_SWEEP_INTERVAL_MIN`) · §3 emergency manual sweep (`node tools/scripts/claims-sweep-tick.ts --once`) · §4 audit trail (change_log `kind: 'claim_swept'` query recipe).",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5255",
+          "checklist_line": "- [ ] **TECH-5255 — Train master-plan-new + stage-decompose** — Stage 2.5 T2.5.1 of `parallel-carcass-rollout`. Run `/skill-train master-plan-new` + `/skill-train stage-decompose` after carcass complete. Each emits proposal under `ia/skills/{name}/proposed/{date}-train.md`. Group friction by `friction_types[]`; filter recurrence ≥ 2. Write back accepted proposals as SKILL.md edits or `ia/rules/*.md` rows per lesson-integration loop.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5256",
+          "checklist_line": "- [ ] **TECH-5256 — Train ship-stage + section-claim + section-closeout** — Stage 2.5 T2.5.2 of `parallel-carcass-rollout`. Run `/skill-train` for ship-stage + section-claim + section-closeout. Same proposal-write-back loop. Capture: Pass A pre-claim friction, Pass B intra-plan drift scan false-positive rate, claim heartbeat noise.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5257",
+          "checklist_line": "- [ ] **TECH-5257 — Rollup skill iteration doc** — Stage 2.5 T2.5.3 of `parallel-carcass-rollout`. Author `docs/parallel-carcass-rollout-skill-iteration.md`: top-3 frictions across all 5 skills, proposed fixes (or accepted edits), carryovers. Cross-link from master plan change log via `master_plan_change_log_append({slug, kind:'skill_train_summary'})`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6377",
+          "checklist_line": "- [ ] **TECH-6377 — Plan-shape gate poll (C1)** — Stage 3.1 T3.1.1 of `parallel-carcass-rollout`. Edit `ia/skills/design-explore/SKILL.md` Phase 0: insert plan-shape gate polling user `carcass+section` vs `flat`. Persist decision into Phase 9 Persist `### Plan Shape` block. Run `skill:sync:all` + `validate:skill-drift`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6378",
+          "checklist_line": "- [ ] **TECH-6378 — 3+ plan-scoped arch_decisions seed (C2)** — Stage 3.1 T3.1.2 of `parallel-carcass-rollout`. Edit `/design-explore` Phase 2.5 lock writer: when shape=carcass+section, seed 3 plan-scoped `arch_decisions` (`plan-{slug}-boundaries` / `-end-state-contract` / `-shared-seams`) so `master-plan-new-phase-a` `verify_seeded_decisions` ≥3 gate passes. Legacy flat continues single DEC-A15 row.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6379",
+          "checklist_line": "- [ ] **TECH-6379 — Carcass + Sections persist + IP grouping (C3+C4)** — Stage 3.1 T3.1.3 of `parallel-carcass-rollout`. Edit `/design-explore` Phase 9 Persist: append `### Carcass Stages` (≤3 entries) + `### Sections` (≥1 entries) blocks when shape=carcass+section. Group Phase 6 Implementation Points under `#### Carcass` / `#### Section X` subheadings. Legacy flat preserved.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6380",
+          "checklist_line": "- [ ] **TECH-6380 — Upstream consumer wiring — master-plan-new + master-plan-extend (C3 handoff)** — Stage 3.1 T3.1.4 of `parallel-carcass-rollout`. Edit `master-plan-new` + `master-plan-extend` Phase 0 parsers: read `### Plan Shape` + `### Carcass Stages` + `### Sections` blocks. Phase 4 sets `carcass_role` + `section_id` on `stage_insert` calls. Fallback flat when blocks absent.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6951",
+          "checklist_line": "- [ ] **TECH-6951 — Wire seams_run MCP dispatch to plan-covered Task subagent**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6952",
+          "checklist_line": "- [ ] **TECH-6952 — Replace phase_b_no_dispatch stub in seam.ts step**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6953",
+          "checklist_line": "- [ ] **TECH-6953 — Define align-arch-decision seam input/output schema**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6954",
+          "checklist_line": "- [ ] **TECH-6954 — Update test fixtures for live dispatch path**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6955",
+          "checklist_line": "- [ ] **TECH-6955 — Q5 escalate-no-auto-retry handoff smoke test**",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -438,6 +618,60 @@
           "type": "issue",
           "id": "TECH-322",
           "checklist_line": "- [ ] **TECH-322** — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6956",
+          "checklist_line": "- [ ] **TECH-6956 — Establish prose-path baseline from ia_session_log**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6957",
+          "checklist_line": "- [ ] **TECH-6957 — Dogfood stage-authoring recipe on Section A tasks**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6958",
+          "checklist_line": "- [ ] **TECH-6958 — Dogfood stage-decompose recipe on skeleton stage(s)**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6959",
+          "checklist_line": "- [ ] **TECH-6959 — Token-drop SQL gate + cache-hit-rate delta**",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6960",
+          "checklist_line": "- [ ] **TECH-6960 — Author validate:skill-recipe-drift script (P1+P2)** — New `tools/scripts/skill-tools/validate-skill-recipe-drift.ts`: walks recipified skills (`ia/skills/{name}/SKILL.md` + `.claude/agents/{name}.md`); cross-checks against `ia/recipes/{name}.yaml` step list.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6961",
+          "checklist_line": "- [ ] **TECH-6961 — Per-skill baseline snapshot pass** — New `tools/scripts/skill-tools/snapshot-baseline.ts`: captures pre-Day-1 hash per recipified skill under `ia/state/skill-recipe-baselines/{skill}.json`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6962",
+          "checklist_line": "- [ ] **TECH-6962 — P3 recipe_version DB migration (additive)** — New `db/migrations/0056_recipe_version.sql`: `ALTER TABLE ia_recipe_runs ADD COLUMN recipe_version int NOT NULL DEFAULT 1`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6963",
+          "checklist_line": "- [ ] **TECH-6963 — P3 recipe YAML schema + engine field-read** — Add `recipe_version: 1` field to recipe YAML schema in `tools/recipe-engine/src/schema.ts`. Engine reads field; unknown future fields ignored on older versions; emit on `ia_recipe_runs` insert.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6964",
+          "checklist_line": "- [ ] **TECH-6964 — Wire validate:skill-recipe-drift into validate:all** — Edit `package.json` `scripts.validate:all` to invoke `validate:skill-recipe-drift`. Run end-to-end; confirm CI red on hand-edit + green on recipe-only edit.",
           "trailing_blanks": 1
         }
       ]
@@ -1910,6 +2144,54 @@
           "type": "issue",
           "id": "TECH-4183",
           "checklist_line": "- [ ] **TECH-4183** — **Dashboard widgets** (asset-pipeline Stage 15.1 T15.1.T4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4627",
+          "checklist_line": "- [ ] **TECH-4627** — **`catalog_preview` MCP kind + `PreviewCatalog.cs`** (asset-pipeline Stage 16.1 T16.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4630",
+          "checklist_line": "- [ ] **TECH-4630** — **bridge handler + `CatalogPreview.unity` scene** (asset-pipeline Stage 16.1 T16.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4631",
+          "checklist_line": "- [ ] **TECH-4631** — **`PreviewCompare.tsx` + preview API route** (asset-pipeline Stage 16.1 T16.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-4633",
+          "checklist_line": "- [ ] **TECH-4633** — **entity detail Preview tab + smoke test** (asset-pipeline Stage 16.1 T16.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5121",
+          "checklist_line": "- [ ] **TECH-5121** — **Catalog read tool registration (list/get/refs/search)** (asset-pipeline Stage 17.1 T17.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5122",
+          "checklist_line": "- [ ] **TECH-5122** — **Catalog mutate tool registration (CRUD/publish/bulk)** (asset-pipeline Stage 17.1 T17.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5123",
+          "checklist_line": "- [ ] **TECH-5123** — **validate:mcp-catalog-coverage script** (asset-pipeline Stage 17.1 T17.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-5124",
+          "checklist_line": "- [ ] **TECH-5124** — **CI wiring + handler-level test parity** (asset-pipeline Stage 17.1 T17.1.4)",
           "trailing_blanks": 1
         }
       ]

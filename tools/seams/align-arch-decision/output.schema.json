@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "seam://align-arch-decision/output",
+  "title": "AlignArchDecisionOutput",
+  "type": "object",
+  "required": ["aligned_record", "change_kind", "rationale"],
+  "additionalProperties": false,
+  "properties": {
+    "aligned_record": {
+      "type": "object",
+      "required": ["title", "status", "body"],
+      "additionalProperties": true,
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["active", "superseded", "deprecated"] },
+        "body": { "type": "string", "minLength": 1 }
+      },
+      "description": "The updated arch_decisions row to write back"
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "Decision id this change supersedes, if change_kind=supersede"
+    },
+    "change_kind": {
+      "type": "string",
+      "enum": ["amend", "supersede", "deprecate", "noop"],
+      "description": "amend=in-place edit; supersede=new record replaces old; deprecate=mark inactive; noop=no change needed"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why this change_kind was chosen"
+    }
+  }
+}

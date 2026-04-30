@@ -27,9 +27,20 @@ export function setMcpInvoker(invoker: McpInvoker | undefined): void {
   injectedInvoker = invoker;
 }
 
+export function getMcpInvoker(): McpInvoker | undefined {
+  return injectedInvoker;
+}
+
 export async function runMcpStep(step: McpStep, ctx: RunContext): Promise<StepResult> {
   const tool = String(resolveTree(ctx.vars, step.mcp));
-  const args = (resolveTree(ctx.vars, step.args ?? {}) as Record<string, unknown>) ?? {};
+  const resolved = (resolveTree(ctx.vars, step.args ?? {}) as Record<string, unknown>) ?? {};
+  // MCP convention: optional args are "omit when unset". Strip top-level null/undefined
+  // so SQL NULL row columns and YAML `null` literals both behave as "not provided"
+  // against Zod `.optional()` schemas.
+  const args: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(resolved)) {
+    if (v !== null && v !== undefined) args[k] = v;
+  }
 
   if (ctx.dry_run) {
     return { ok: true, value: { dry_run: true, tool, args } };

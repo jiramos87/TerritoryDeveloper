@@ -25,6 +25,7 @@ tools/seams/{name}/
 | `decompose-skeleton-stage` | stage objectives + exit + glossary → Task table rows | `master-plan-new` / `stage-decompose` |
 | `align-glossary` | spec body + glossary table → term replacements + warnings | `plan-reviewer-mechanical` glossary scan |
 | `review-semantic-drift` | filed task spec + master-plan stage → §Plan Fix tuples | `plan-reviewer-semantic` |
+| `align-arch-decision` | decision record + proposed change → aligned_record + change_kind (amend\|supersede\|deprecate\|noop) | `arch_decision_write` flow |
 
 ## Invariants
 

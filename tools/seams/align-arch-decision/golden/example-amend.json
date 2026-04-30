@@ -1,0 +1,21 @@
+{
+  "input": {
+    "decision_id": "DEC-A01",
+    "current_record": {
+      "title": "Use HeightMap for terrain elevation",
+      "status": "active",
+      "body": "All terrain elevation stored in HeightMap component. GridManager reads height via HeightMap.GetHeight(cell)."
+    },
+    "proposed_change": "Clarify that HeightMap.GetHeight returns normalized float 0..1, not raw int. Update body to reflect this.",
+    "evidence_links": ["ia/specs/architecture/layers.md"]
+  },
+  "output": {
+    "aligned_record": {
+      "title": "Use HeightMap for terrain elevation",
+      "status": "active",
+      "body": "All terrain elevation stored in HeightMap component. GridManager reads height via HeightMap.GetHeight(cell), which returns a normalized float in range 0..1."
+    },
+    "change_kind": "amend",
+    "rationale": "The proposed change adds a missing precision detail (return type range) without altering the decision's outcome or approach."
+  }
+}

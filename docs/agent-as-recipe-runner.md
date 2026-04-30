@@ -663,3 +663,20 @@ Overlap with db-lifecycle = ~16% (acceptable; absorbed). Convergence with parall
 ---
 
 **End of Design Expansion.**
+
+---
+
+## §Q5 Parent Re-Dispatch
+
+Q5 decision: escalate immediately, no auto-retry. Full handoff format: `docs/recipe-runner-handoff-file-format.md`.
+
+**Escalation trigger**: seam step fails with `schema_out`, `dispatch_unavailable`, `schema_in`, `refusal`, or `timeout`.
+
+**Handoff file**: `ia/state/recipe-runs/{run_id}/seam-{step_id}-error.md` — contains recipe slug, step id, seam name, sidecar paths, error code, resume cursor, and three human options.
+
+**Three options**:
+1. Fix-in-place: agent edits attempted-output sidecar to valid JSON, re-runs from resume-cursor.
+2. Accept-as-is: bypass schema gate with current attempted-output (emergency only).
+3. Abort: discard run.
+
+**No auto-retry**: one MCP invocation per seam per run. Retry is a human decision.
