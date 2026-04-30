@@ -141,3 +141,15 @@ V2 same-branch same-worktree model.
 |------|--------|---------|
 | 2026-04-29 | NEW skill — parallel-carcass Wave 0 Phase 3 PR 3.2 (DEC-A19 Phase E recipify). 4 steps: drift_gate + section_closeout_apply + git_merge + worktree_remove. Counterpart to section-claim (PR 3.1). | `docs/parallel-carcass-exploration.md` §7 PR 3.2 |
 | 2026-04-29 | V2 rewrite — dropped session_id arg, dropped git_merge step, dropped worktree teardown. Same branch + same worktree model. Recipe is now drift_scan + drift_gate + closeout_apply (3 steps). Section claim released by row key alone. | parallel-carcass V2 rewrite (no worktree / no branch / no holder-token) |
+
+### 2026-04-29 — skill-train run
+
+**source:** train-proposed
+
+**proposal:** `ia/skills/section-closeout/proposed/2026-04-29-train.md`
+
+**friction_count:** 0
+
+**threshold:** 2
+
+---

@@ -158,3 +158,15 @@ Heartbeats refreshed automatically by `/ship-stage` Pass A loop via `claim_heart
 |------|--------|---------|
 | 2026-04-29 | NEW skill — parallel-carcass Wave 0 Phase 3 PR 3.1 (DEC-A19 Phase E recipify). 0 seams: `git worktree add` + `mcp.section_claim` + sentinel write. Heartbeats external. | `docs/parallel-carcass-exploration.md` §7 PR 3.1 |
 | 2026-04-29 | V2 rewrite — dropped session_id arg, dropped git worktree step, dropped sentinel write step. Same branch + same worktree model. Section IS the holder, row key is identity. Multi-sequential agents on same section trivially supported. | parallel-carcass V2 rewrite (no worktree / no branch / no holder-token) |
+
+### 2026-04-29 — skill-train run
+
+**source:** train-proposed
+
+**proposal:** `ia/skills/section-claim/proposed/2026-04-29-train.md`
+
+**friction_count:** 0
+
+**threshold:** 2
+
+---
