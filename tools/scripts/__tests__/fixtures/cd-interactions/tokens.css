@@ -1,0 +1,19 @@
+/* Synthetic CSS fixture — Knob + ILed BEM modifier ladder. */
+.knob { width: 56px; height: 56px; border-radius: 50%; }
+.knob--sm { --knob-size: 36px; }
+.knob--md { --knob-size: 56px; }
+.knob--lg { --knob-size: 76px; }
+.knob--hover { box-shadow: 0 0 0 1px #f80; }
+.knob--focus { box-shadow: 0 0 0 2px #0ff; }
+.knob--pressed { transform: scale(0.97); }
+.knob--disabled { filter: grayscale(0.7); }
+.knob--tone-primary::after { background: #f80; }
+.knob--tone-neutral::after { background: #888; }
+.knob--tone-alert::after { background: #f33; }
+
+.iled--sm { padding: 6px 10px; }
+.iled--md { padding: 10px 16px; }
+.iled--lit .iled__lamp { background: #f80; }
+.iled--hover { filter: brightness(1.15); }
+.iled--tone-primary { color: #f80; }
+.iled--tone-alert { color: #f33; }

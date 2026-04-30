@@ -1,0 +1,1586 @@
+{
+  "schema_version": 1,
+  "source_files": [
+    "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+    "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.jsx",
+    "web/design-refs/step-1-game-ui/cd-bundle/archetypes.jsx",
+    "web/design-refs/step-1-game-ui/cd-bundle/interactives-extension.json",
+    "web/design-refs/step-1-game-ui/cd-bundle/interactives.json",
+    "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+    "web/design-refs/step-1-game-ui/cd-bundle/tokens.css"
+  ],
+  "generated_at_utc": "2026-04-30T16:56:11.734Z",
+  "interactive_count": 8,
+  "interactives": [
+    {
+      "slug": "knob",
+      "kind": "knob",
+      "class_root": "knob",
+      "component_name": "Knob",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "rotation": 0,
+        "label": null
+      },
+      "modifiers": {
+        "size": [
+          ".knob--lg",
+          ".knob--md",
+          ".knob--sm"
+        ],
+        "tone": [
+          ".knob--tone-alert",
+          ".knob--tone-neutral",
+          ".knob--tone-primary"
+        ],
+        "state": [
+          ".knob--disabled",
+          ".knob--focus",
+          ".knob--hover",
+          ".knob--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".knob--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 490
+        },
+        {
+          "selector": ".knob--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 491
+        },
+        {
+          "selector": ".knob--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 492
+        },
+        {
+          "selector": ".knob--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 494
+        },
+        {
+          "selector": ".knob--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 495
+        },
+        {
+          "selector": ".knob--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 496
+        },
+        {
+          "selector": ".knob--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 497
+        },
+        {
+          "selector": ".knob--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 498
+        },
+        {
+          "selector": ".knob--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 500
+        },
+        {
+          "selector": ".knob--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 501
+        },
+        {
+          "selector": ".knob--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 502
+        },
+        {
+          "selector": ".knob--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 318
+        },
+        {
+          "selector": ".knob--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 319
+        },
+        {
+          "selector": ".knob--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 320
+        },
+        {
+          "selector": ".knob--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 322
+        },
+        {
+          "selector": ".knob--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 323
+        },
+        {
+          "selector": ".knob--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 324
+        },
+        {
+          "selector": ".knob--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 325
+        },
+        {
+          "selector": ".knob--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 326
+        },
+        {
+          "selector": ".knob--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 328
+        },
+        {
+          "selector": ".knob--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 329
+        },
+        {
+          "selector": ".knob--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 330
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "rotation_samples": {
+          "sm": -60,
+          "md": -30,
+          "lg": 20,
+          "alert": 45
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "fader",
+      "kind": "fader",
+      "class_root": "fader",
+      "component_name": "Fader",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "value": 60,
+        "orientation": "vertical",
+        "label": null,
+        "ticks": true
+      },
+      "modifiers": {
+        "size": [
+          ".fader--lg",
+          ".fader--md",
+          ".fader--sm"
+        ],
+        "tone": [
+          ".fader--tone-alert",
+          ".fader--tone-neutral",
+          ".fader--tone-primary"
+        ],
+        "state": [
+          ".fader--disabled",
+          ".fader--focus",
+          ".fader--hover",
+          ".fader--pressed"
+        ],
+        "orientation": [
+          ".fader--horizontal"
+        ],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 568
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 572
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 576
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 582
+        },
+        {
+          "selector": ".fader--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 590
+        },
+        {
+          "selector": ".fader--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 591
+        },
+        {
+          "selector": ".fader--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 592
+        },
+        {
+          "selector": ".fader--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 594
+        },
+        {
+          "selector": ".fader--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 595
+        },
+        {
+          "selector": ".fader--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 596
+        },
+        {
+          "selector": ".fader--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 597
+        },
+        {
+          "selector": ".fader--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 598
+        },
+        {
+          "selector": ".fader--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 600
+        },
+        {
+          "selector": ".fader--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 601
+        },
+        {
+          "selector": ".fader--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 602
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 396
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 400
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 404
+        },
+        {
+          "selector": ".fader--horizontal",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 410
+        },
+        {
+          "selector": ".fader--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 418
+        },
+        {
+          "selector": ".fader--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 419
+        },
+        {
+          "selector": ".fader--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 420
+        },
+        {
+          "selector": ".fader--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 422
+        },
+        {
+          "selector": ".fader--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 423
+        },
+        {
+          "selector": ".fader--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 424
+        },
+        {
+          "selector": ".fader--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 425
+        },
+        {
+          "selector": ".fader--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 426
+        },
+        {
+          "selector": ".fader--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 428
+        },
+        {
+          "selector": ".fader--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 429
+        },
+        {
+          "selector": ".fader--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 430
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "orientations": [
+          "vertical",
+          "horizontal"
+        ],
+        "value_samples": {
+          "sm": 40,
+          "md": 55,
+          "lg": 70,
+          "horizontal_primary": 60,
+          "horizontal_neutral": 40,
+          "horizontal_alert": 85
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_orientation": "vertical"
+      }
+    },
+    {
+      "slug": "vu-meter",
+      "kind": "vu-meter",
+      "class_root": "vu",
+      "component_name": "VuMeter",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "segments": 16,
+        "lit": 10,
+        "orientation": "horizontal",
+        "label": null
+      },
+      "modifiers": {
+        "size": [
+          ".vu--lg",
+          ".vu--md",
+          ".vu--sm"
+        ],
+        "tone": [
+          ".vu--tone-alert",
+          ".vu--tone-neutral",
+          ".vu--tone-primary",
+          ".vu--tone-success"
+        ],
+        "state": [
+          ".vu--disabled",
+          ".vu--focus",
+          ".vu--hover",
+          ".vu--pressed"
+        ],
+        "orientation": [
+          ".vu--vertical"
+        ],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".vu--vertical",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 629
+        },
+        {
+          "selector": ".vu--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 635
+        },
+        {
+          "selector": ".vu--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 636
+        },
+        {
+          "selector": ".vu--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 637
+        },
+        {
+          "selector": ".vu--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 639
+        },
+        {
+          "selector": ".vu--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 640
+        },
+        {
+          "selector": ".vu--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 641
+        },
+        {
+          "selector": ".vu--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 642
+        },
+        {
+          "selector": ".vu--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 643
+        },
+        {
+          "selector": ".vu--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 645
+        },
+        {
+          "selector": ".vu--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 646
+        },
+        {
+          "selector": ".vu--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 647
+        },
+        {
+          "selector": ".vu--vertical",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 457
+        },
+        {
+          "selector": ".vu--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 463
+        },
+        {
+          "selector": ".vu--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 464
+        },
+        {
+          "selector": ".vu--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 465
+        },
+        {
+          "selector": ".vu--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 467
+        },
+        {
+          "selector": ".vu--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 468
+        },
+        {
+          "selector": ".vu--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 469
+        },
+        {
+          "selector": ".vu--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 470
+        },
+        {
+          "selector": ".vu--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 471
+        },
+        {
+          "selector": ".vu--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 473
+        },
+        {
+          "selector": ".vu--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 474
+        },
+        {
+          "selector": ".vu--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 475
+        },
+        {
+          "selector": ".vu--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 192
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "orientations": [
+          "horizontal",
+          "vertical"
+        ],
+        "segment_samples": {
+          "sm": {
+            "segments": 12,
+            "lit": 8
+          },
+          "md": {
+            "segments": 16,
+            "lit": 11
+          },
+          "lg": {
+            "segments": 20,
+            "lit": 14
+          }
+        },
+        "tone_lit_samples": {
+          "primary": 12,
+          "neutral": 8,
+          "alert": 15
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_orientation": "horizontal"
+      }
+    },
+    {
+      "slug": "illuminated-button",
+      "kind": "illuminated-button",
+      "class_root": "iled",
+      "component_name": "ILed",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "lit": false,
+        "children": null
+      },
+      "modifiers": {
+        "size": [
+          ".iled--lg",
+          ".iled--md",
+          ".iled--sm"
+        ],
+        "tone": [
+          ".iled--tone-alert",
+          ".iled--tone-neutral",
+          ".iled--tone-primary",
+          ".iled--tone-success"
+        ],
+        "state": [
+          ".iled--disabled",
+          ".iled--focus",
+          ".iled--hover",
+          ".iled--lit",
+          ".iled--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 680
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 681
+        },
+        {
+          "selector": ".iled--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 683
+        },
+        {
+          "selector": ".iled--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 684
+        },
+        {
+          "selector": ".iled--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 685
+        },
+        {
+          "selector": ".iled--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 687
+        },
+        {
+          "selector": ".iled--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 688
+        },
+        {
+          "selector": ".iled--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 689
+        },
+        {
+          "selector": ".iled--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 690
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 692
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 693
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 693
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 694
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 694
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 696
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 697
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 697
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 698
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 698
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 700
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 701
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 701
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 702
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 702
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 508
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 509
+        },
+        {
+          "selector": ".iled--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 511
+        },
+        {
+          "selector": ".iled--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 512
+        },
+        {
+          "selector": ".iled--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 513
+        },
+        {
+          "selector": ".iled--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 515
+        },
+        {
+          "selector": ".iled--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 516
+        },
+        {
+          "selector": ".iled--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 517
+        },
+        {
+          "selector": ".iled--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 518
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 520
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 521
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 521
+        },
+        {
+          "selector": ".iled--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 522
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 522
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 524
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 525
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 525
+        },
+        {
+          "selector": ".iled--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 526
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 526
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 528
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 529
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 529
+        },
+        {
+          "selector": ".iled--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 530
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 530
+        },
+        {
+          "selector": ".iled--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 183
+        },
+        {
+          "selector": ".iled--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 184
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 184
+        },
+        {
+          "selector": ".iled--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 185
+        },
+        {
+          "selector": ".iled--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 185
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "lit_modes": [
+          "unlit",
+          "lit"
+        ],
+        "label_samples": {
+          "sm": "SM",
+          "md": "MEDIUM",
+          "lg": "LARGE BUTTON",
+          "primary": "PLAY",
+          "neutral": "SYNC",
+          "alert": "MUTE"
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_lit": false
+      }
+    },
+    {
+      "slug": "segmented-readout",
+      "kind": "segmented-readout",
+      "class_root": "segread",
+      "component_name": "SegRead",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "value": "0000000",
+        "digits": 7,
+        "label": null
+      },
+      "modifiers": {
+        "size": [
+          ".segread--lg",
+          ".segread--md",
+          ".segread--sm"
+        ],
+        "tone": [
+          ".segread--tone-alert",
+          ".segread--tone-neutral",
+          ".segread--tone-primary",
+          ".segread--tone-success"
+        ],
+        "state": [
+          ".segread--disabled",
+          ".segread--focus",
+          ".segread--hover",
+          ".segread--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".segread--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 737
+        },
+        {
+          "selector": ".segread--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 738
+        },
+        {
+          "selector": ".segread--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 739
+        },
+        {
+          "selector": ".segread--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 741
+        },
+        {
+          "selector": ".segread--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 742
+        },
+        {
+          "selector": ".segread--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 743
+        },
+        {
+          "selector": ".segread--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 744
+        },
+        {
+          "selector": ".segread--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 748
+        },
+        {
+          "selector": ".segread--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 750
+        },
+        {
+          "selector": ".segread--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 751
+        },
+        {
+          "selector": ".segread--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 752
+        },
+        {
+          "selector": ".segread--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 753
+        },
+        {
+          "selector": ".segread--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 754
+        },
+        {
+          "selector": ".segread--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens.css",
+          "line": 755
+        },
+        {
+          "selector": ".segread--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 565
+        },
+        {
+          "selector": ".segread--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 566
+        },
+        {
+          "selector": ".segread--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 567
+        },
+        {
+          "selector": ".segread--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 569
+        },
+        {
+          "selector": ".segread--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 570
+        },
+        {
+          "selector": ".segread--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 571
+        },
+        {
+          "selector": ".segread--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 572
+        },
+        {
+          "selector": ".segread--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 576
+        },
+        {
+          "selector": ".segread--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 578
+        },
+        {
+          "selector": ".segread--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 579
+        },
+        {
+          "selector": ".segread--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 580
+        },
+        {
+          "selector": ".segread--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 581
+        },
+        {
+          "selector": ".segread--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 582
+        },
+        {
+          "selector": ".segread--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/tokens-extension.css",
+          "line": 583
+        },
+        {
+          "selector": ".segread--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 188
+        },
+        {
+          "selector": ".segread--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 189
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "digit_samples": {
+          "sm": 3,
+          "md": 7,
+          "lg": 9
+        },
+        "value_samples": {
+          "sm": "50",
+          "md": "20,000",
+          "lg": "1,200,000",
+          "primary": "$20,000",
+          "neutral": "50/100",
+          "alert": "-3,420"
+        },
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_digits": 7
+      }
+    },
+    {
+      "slug": "oscilloscope",
+      "kind": "oscilloscope",
+      "class_root": "osc",
+      "component_name": "Osc",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "path": null,
+        "label": null
+      },
+      "modifiers": {
+        "size": [
+          ".osc--lg",
+          ".osc--md",
+          ".osc--sm"
+        ],
+        "tone": [
+          ".osc--tone-alert",
+          ".osc--tone-neutral",
+          ".osc--tone-primary"
+        ],
+        "state": [
+          ".osc--disabled",
+          ".osc--focus",
+          ".osc--hover",
+          ".osc--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".osc--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 63
+        },
+        {
+          "selector": ".osc--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 64
+        },
+        {
+          "selector": ".osc--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 65
+        },
+        {
+          "selector": ".osc--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 67
+        },
+        {
+          "selector": ".osc--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 68
+        },
+        {
+          "selector": ".osc--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 69
+        },
+        {
+          "selector": ".osc--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 71
+        },
+        {
+          "selector": ".osc--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 72
+        },
+        {
+          "selector": ".osc--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 73
+        },
+        {
+          "selector": ".osc--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 74
+        },
+        {
+          "selector": ".osc--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 75
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "trace_samples": {
+          "sm": "M0,28 Q12,0 24,28 T48,28 T72,28 T96,28",
+          "md": "M0,90 L40,80 L80,30 L100,15 L130,40 L192,75",
+          "lg": "M0,140 L60,120 L100,40 L160,60 L220,150 L320,90"
+        },
+        "graticule_divisions": {
+          "x": 8,
+          "y": 4
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "detent-ring",
+      "kind": "detent-ring",
+      "class_root": "detent-ring",
+      "component_name": "DetentRing",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "detents": 12,
+        "current": 7,
+        "label": null
+      },
+      "modifiers": {
+        "size": [
+          ".detent-ring--lg",
+          ".detent-ring--md",
+          ".detent-ring--sm"
+        ],
+        "tone": [
+          ".detent-ring--tone-alert",
+          ".detent-ring--tone-neutral",
+          ".detent-ring--tone-primary"
+        ],
+        "state": [
+          ".detent-ring--disabled",
+          ".detent-ring--focus",
+          ".detent-ring--hover",
+          ".detent-ring--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".detent-ring--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 135
+        },
+        {
+          "selector": ".detent-ring--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 136
+        },
+        {
+          "selector": ".detent-ring--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 137
+        },
+        {
+          "selector": ".detent-ring--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 139
+        },
+        {
+          "selector": ".detent-ring--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 140
+        },
+        {
+          "selector": ".detent-ring--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 141
+        },
+        {
+          "selector": ".detent-ring--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 143
+        },
+        {
+          "selector": ".detent-ring--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 144
+        },
+        {
+          "selector": ".detent-ring--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 145
+        },
+        {
+          "selector": ".detent-ring--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 146
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert"
+        ],
+        "detent_samples": {
+          "sm": {
+            "detents": 8,
+            "current": 3
+          },
+          "md": {
+            "detents": 12,
+            "current": 7
+          },
+          "lg": {
+            "detents": 16,
+            "current": 11
+          }
+        },
+        "default_size": "md",
+        "default_tone": "primary"
+      }
+    },
+    {
+      "slug": "led",
+      "kind": "led",
+      "class_root": "led",
+      "component_name": "Led",
+      "default_props": {
+        "size": "md",
+        "tone": "primary",
+        "state": null,
+        "lit": true
+      },
+      "modifiers": {
+        "size": [
+          ".led--lg",
+          ".led--md",
+          ".led--sm"
+        ],
+        "tone": [
+          ".led--tone-alert",
+          ".led--tone-neutral",
+          ".led--tone-primary",
+          ".led--tone-success"
+        ],
+        "state": [
+          ".led--disabled",
+          ".led--focus",
+          ".led--hover",
+          ".led--lit",
+          ".led--pressed"
+        ],
+        "orientation": [],
+        "lit": [],
+        "other": []
+      },
+      "selectors": [
+        {
+          "selector": ".led--sm",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 163
+        },
+        {
+          "selector": ".led--md",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 164
+        },
+        {
+          "selector": ".led--lg",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 165
+        },
+        {
+          "selector": ".led--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 167
+        },
+        {
+          "selector": ".led--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 167
+        },
+        {
+          "selector": ".led--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 168
+        },
+        {
+          "selector": ".led--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 168
+        },
+        {
+          "selector": ".led--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 169
+        },
+        {
+          "selector": ".led--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 169
+        },
+        {
+          "selector": ".led--lit",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 170
+        },
+        {
+          "selector": ".led--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 170
+        },
+        {
+          "selector": ".led--tone-primary",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 172
+        },
+        {
+          "selector": ".led--tone-neutral",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 173
+        },
+        {
+          "selector": ".led--tone-alert",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 174
+        },
+        {
+          "selector": ".led--tone-success",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 175
+        },
+        {
+          "selector": ".led--hover",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 177
+        },
+        {
+          "selector": ".led--focus",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 178
+        },
+        {
+          "selector": ".led--pressed",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 179
+        },
+        {
+          "selector": ".led--disabled",
+          "source_file": "web/design-refs/step-1-game-ui/cd-bundle/archetypes-extension.css",
+          "line": 180
+        }
+      ],
+      "detail": {
+        "states": [
+          "default",
+          "hover",
+          "focus",
+          "pressed",
+          "disabled"
+        ],
+        "sizes": [
+          "sm",
+          "md",
+          "lg"
+        ],
+        "tones": [
+          "primary",
+          "neutral",
+          "alert",
+          "success"
+        ],
+        "lit_modes": [
+          "unlit",
+          "lit"
+        ],
+        "default_size": "md",
+        "default_tone": "primary",
+        "default_lit": true
+      }
+    }
+  ]
+}

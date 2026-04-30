@@ -45,6 +45,7 @@ const unityBridgeCommandInputShape = {
       "export_cell_chunk",
       "export_sorting_debug",
       "catalog_preview",
+      "prefab_inspect",
       // ── MUTATION (Edit Mode only) — TECH-412 ─────────────────────────────
       // Component lifecycle
       "attach_component",
@@ -77,7 +78,7 @@ const unityBridgeCommandInputShape = {
     ])
     .default("export_agent_context")
     .describe(
-      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status); economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand from EconomyManager/CityStats/DemandManager); prefab_manifest (lists scene MonoBehaviours and detects missing script references); sorting_order_debug (requires seed_cell \"x,y\": returns all SpriteRenderers on a cell with sorting layer/order); catalog_preview (params: catalog_entry_id, include_screenshot — loads draft catalog entity in sandboxed CatalogPreview.unity scene via PreviewCatalog component; returns screenshot_path when include_screenshot true). Mutation kinds (Edit Mode only — TECH-412): attach_component (params: target_path, component_type_name), remove_component (params: target_path, component_type_name), assign_serialized_field (params: target_path, component_type_name, field_name, value_kind∈object_ref|asset_ref|int|float|bool|string|vector3, value, value_object_path?), create_gameobject (params: name, parent_path?, position?), delete_gameobject (params: target_path), find_gameobject (params: target_path), set_transform (params: target_path, position?, rotation?, scale? as 'x,y,z'), set_gameobject_active (params: target_path, active), set_gameobject_parent (params: target_path, new_parent_path?, world_position_stays), save_scene (params: scene_path?), open_scene (params: scene_path, mode∈single|additive), new_scene (params: setup_mode∈default_game_objects|empty_scene, mode∈single|additive), instantiate_prefab (params: prefab_path, parent_path?, position?), apply_prefab_overrides (params: target_path), create_scriptable_object (params: type_name, asset_path), modify_scriptable_object (params: asset_path, field_writes[]{field_name, value_kind, value, value_object_path?}), refresh_asset_database (no params), move_asset (params: asset_path, new_path), delete_asset (params: asset_path), execute_menu_item (params: menu_path).",
+      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status); economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand from EconomyManager/CityStats/DemandManager); prefab_manifest (lists scene MonoBehaviours and detects missing script references); sorting_order_debug (requires seed_cell \"x,y\": returns all SpriteRenderers on a cell with sorting layer/order); catalog_preview (params: catalog_entry_id, include_screenshot — loads draft catalog entity in sandboxed CatalogPreview.unity scene via PreviewCatalog component; returns screenshot_path when include_screenshot true); prefab_inspect (params: prefab_path — read-only walk of a prefab asset's GameObject hierarchy; returns response.prefab_inspect_result with node_count + component_count + missing_script_count + recursive root tree carrying name/relative_path/active_self/tag/layer + RectTransform layout (anchor_min/max, pivot, anchored_position, size_delta, offset_min/max, local_scale) + components[] with type_name + serialized fields[] {field_name, propertyType, value_str}). Mutation kinds (Edit Mode only — TECH-412): attach_component (params: target_path, component_type_name), remove_component (params: target_path, component_type_name), assign_serialized_field (params: target_path, component_type_name, field_name, value_kind∈object_ref|asset_ref|int|float|bool|string|vector3, value, value_object_path?), create_gameobject (params: name, parent_path?, position?), delete_gameobject (params: target_path), find_gameobject (params: target_path), set_transform (params: target_path, position?, rotation?, scale? as 'x,y,z'), set_gameobject_active (params: target_path, active), set_gameobject_parent (params: target_path, new_parent_path?, world_position_stays), save_scene (params: scene_path?), open_scene (params: scene_path, mode∈single|additive), new_scene (params: setup_mode∈default_game_objects|empty_scene, mode∈single|additive), instantiate_prefab (params: prefab_path, parent_path?, position?), apply_prefab_overrides (params: target_path), create_scriptable_object (params: type_name, asset_path), modify_scriptable_object (params: asset_path, field_writes[]{field_name, value_kind, value, value_object_path?}), refresh_asset_database (no params), move_asset (params: asset_path, new_path), delete_asset (params: asset_path), execute_menu_item (params: menu_path).",
     ),
   timeout_ms: unityBridgeTimeoutMsSchema,
   since_utc: z
@@ -400,6 +401,50 @@ export type UnityBridgeResponsePayload = {
     last_error_excerpt: string;
     recent_error_messages: UnityBridgeLogLine[];
   };
+  /** Populated for prefab_inspect (Stage 12 Step 14.1) — read-only prefab hierarchy + serialized field dump. */
+  prefab_inspect_result?: {
+    prefab_path: string;
+    root_name: string;
+    node_count: number;
+    component_count: number;
+    missing_script_count: number;
+    root: PrefabInspectNode;
+  };
+};
+
+export type PrefabInspectField = {
+  field_name: string;
+  propertyType: string;
+  value_str: string;
+};
+
+export type PrefabInspectComponent = {
+  type_name: string;
+  full_type_name?: string;
+  is_missing_script: boolean;
+  fields: PrefabInspectField[];
+};
+
+export type PrefabInspectRect = {
+  anchor_min: string;
+  anchor_max: string;
+  pivot: string;
+  anchored_position: string;
+  size_delta: string;
+  offset_min: string;
+  offset_max: string;
+  local_scale: string;
+};
+
+export type PrefabInspectNode = {
+  name: string;
+  relative_path: string;
+  active_self: boolean;
+  tag: string;
+  layer: string;
+  rect_transform?: PrefabInspectRect | null;
+  components: PrefabInspectComponent[];
+  children: PrefabInspectNode[];
 };
 
 const getInputShape = {
@@ -653,6 +698,9 @@ function buildRequestEnvelope(
         include_screenshot: input.include_screenshot ?? true,
       },
     };
+  }
+  if (input.kind === "prefab_inspect") {
+    return { ...base, params: { prefab_path: input.prefab_path ?? "" } };
   }
   return { ...base, params: {} };
 }

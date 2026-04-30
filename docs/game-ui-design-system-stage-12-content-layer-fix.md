@@ -1220,3 +1220,232 @@ User to play-test (Esc + cell-click) and report screenshots:
    binding still skeletal** (no real cell data adapter yet — separate
    follow-up Step 14 candidate).
 
+### Live-verify outcome (post-commit `0028266f`)
+
+User reported:
+- ✅ pause-menu buttons render correctly (chrome + captions visible).
+- ✅ click sounds + hover blips work (MainMenu parity achieved).
+- ✅ click opens targeted menus (action wiring confirmed).
+- ⚠️ targeted menus opened by clicks **still need work** (raw, not aligned
+  with claude-design).
+- ⚠️ info-panel shows some data but **every design rendered still very raw
+  and far from expected** vs. claude-design game-ui-design-system reference.
+
+Key observation by user:
+> Many of my interventions could have been done in closed loop by you, the
+> agent. Many requests around button text appearance, panel/button
+> positioning, sizing, and applying claude-design tokens have repeated.
+
+Diagnosis — gaps in current agent loop:
+- Bridge can capture screenshots + read prefab MonoBehaviour manifests, but
+  **cannot semantically inspect** rendered UI: Rect bounds in screen-space,
+  text legibility (size, weight, contrast ratio), child hierarchy walk,
+  serialized-field readback, layout-group settings, anchor frame.
+- Bridge can mutate components (`attach_component`, `assign_serialized_field`,
+  `set_transform`) but **cannot read back the same surface** to verify
+  mutation hit the right target with the right values.
+- Bake handler emits prefab + writes serialized fields, but agent has **no
+  feedback loop** that compares baked prefab to claude-design IR — drift
+  between IR intent and rendered prefab is invisible until human inspects.
+- IR → prefab → scene → screenshot pipeline is **one-way**; agent cannot
+  diff (a) IR token slug references vs. resolved palette/font values, (b)
+  prefab RectTransform vs. expected layout-kind anchors, (c) screenshot
+  pixel sampling vs. ramp slot expectations.
+- No structured **claude-design conformance check**: token coverage,
+  font_face binding, palette contrast ratio (WCAG-style), hit-target size,
+  tap-target spacing, modal centering, z-order ordering.
+
+## Step 14 — Improving Unity bridge tools for reviewing + mutating visual + functional components (planning)
+
+**Goal.** Close the loop so the agent iterates on UI fidelity against
+claude-design without human screenshots between every iteration. Closed-loop
+review + mutate + verify on visual + functional surfaces.
+
+**Scope (first pass — keep doc-guided, defer master-plan extraction).**
+Limited to surfaces relevant to Stage 12 finalization: pause-menu, info-panel,
+hud-bar, toolbar, settings-screen, save-load-screen, new-game-screen +
+themed-button / themed-label / themed-panel / panel-kind enforcement.
+
+### Pending decisions (D9–D14) — needs user input
+
+| Id | Question | Options |
+|----|----------|---------|
+| D9 | What review surface is the **biggest blocker** for closed-loop iteration? | A — semantic prefab inspect (full hierarchy + components + serialized fields + RectTransform anchors).<br>B — runtime UI tree walk (live `Canvas` → child Rects + computed screen-space bounds).<br>C — pixel-sampling probe on Game-view screenshot (sample N points, compare to expected palette ramp stops).<br>D — claude-design conformance scan (IR token slugs → resolved values → contrast ratio + hit-target + spacing checks). |
+| D10 | What mutation gap hurt most this round? | A — bake-time field-write in `UiBakeHandler` (already done — adapter binding, Button attach).<br>B — runtime mutation on **already-instantiated** scene UI (e.g. fix existing pause-menu without re-bake).<br>C — IR-side mutation (write `panel.kind` / `labels[]` programmatically + re-bake atomically).<br>D — both A+C; runtime mutation deferred. |
+| D11 | Closed-loop verify cadence | A — agent runs review tool **once per change**, gates next mutation on review pass.<br>B — agent batches changes, runs review at end-of-batch.<br>C — agent runs review continuously (every play-mode tick) — too noisy, probably skip. |
+| D12 | Output for review tools — agent-consumable shape | A — JSON-structured response (e.g. `{slug, expected_palette, actual_color, contrast_ratio, pass}` rows).<br>B — annotated screenshot (PNG with overlay rects + slug labels) — heavier, maybe deferred.<br>C — both A (default) + B (on demand). |
+| D13 | Where do the tools live? | A — extend `mcp__territory-ia-bridge__unity_bridge_command` with new `kind` values (e.g. `prefab_inspect`, `ui_tree_walk`, `contrast_probe`, `claude_design_conformance`).<br>B — new top-level MCP tools (e.g. `mcp__territory-ia-bridge__prefab_inspect`).<br>C — new agent skill (`ui-fidelity-review`) wrapping existing primitives. |
+| D14 | Reference source of truth for "expected" values | A — claude-design IR JSON (`web/design-refs/step-1-game-ui/ir.json`) — already canonical.<br>B — `Assets/UI/Theme/DefaultUiTheme.asset` ScriptableObject — runtime resolved palette/font.<br>C — both — IR for slug intent, theme for resolved values; agent diffs prefab serialized field against both. |
+
+### Recommended path (default — reply "confirm D9..D14 defaults" to apply)
+
+- **D9 = A + D** (semantic prefab inspect first, claude-design conformance
+  second — biggest leverage; B + C deferred).
+- **D10 = D** (bake-time + IR-side; runtime mutation on scene instances
+  deferred — re-bake + scene re-pickup is cheap enough).
+- **D11 = A** (gate next mutation on review pass — closed loop).
+- **D12 = A** (JSON only first; annotated PNG deferred).
+- **D13 = A** (extend `unity_bridge_command` with new `kind` values —
+  matches existing surface, no new MCP tool surface area).
+- **D14 = C** (IR + theme — agent diffs both).
+
+### First-iteration scope sketch (post-decision)
+
+If defaults confirmed, Step 14 expands to ~5 sub-steps:
+
+- **14.1 — `prefab_inspect` bridge kind.** Param: `prefab_path`. Returns
+  full hierarchy: list of GO nodes with `name`, `path`, `components[]`
+  (component_type + serialized_fields[] as `{name, kind, value}` tuples),
+  `rect_transform` (anchorMin/Max, sizeDelta, anchoredPosition, pivot).
+  Read-only; no mutation.
+- **14.2 — `ui_tree_walk` bridge kind (Play Mode).** Param: optional
+  `root_path` (default = active Canvas). Returns runtime tree with computed
+  screen-space rects + active state. Captures **scene-instance state** that
+  prefab inspect cannot see (e.g. PrefabInstance overrides, runtime layout
+  resolution).
+- **14.3 — `claude_design_conformance` bridge kind.** Params: `ir_path`,
+  `theme_so`, `prefab_path` (or `scene_root_path`). Walks claude-design IR
+  + resolves theme tokens + diffs against prefab/scene serialized fields.
+  Returns conformance rows: `{panel_slug, child_slug, expected (slug),
+  resolved (theme value), actual (prefab value), pass}`. Includes:
+  - palette ramp stop binding correctness
+  - font_face slug binding correctness
+  - frame_style slug binding correctness
+  - panel kind matches expected layout (modal/screen/hud/toolbar)
+  - caption text matches IR `labels[]`
+  - contrast ratio of fill vs. text (WCAG-style threshold ≥ 4.5:1)
+- **14.4 — Skill wrap (optional).** New skill `ui-fidelity-review` that
+  composes 14.1 + 14.2 + 14.3 into a single agent-callable verify pass +
+  emits a structured Verification block (Bake → Inspect → Conformance →
+  Verify → Iterate).
+- **14.5 — Iteration loop on info-panel + targeted-menus.** Use new tools
+  to drive info-panel content binding (cell adapter) + finalize
+  pause-menu-targeted menus (settings-screen, save-load-screen) without
+  human screenshots between iterations. Live-verify only at end of batch.
+
+### Locked decisions (2026-04-30)
+
+| Id | Resolved | Rationale |
+|----|----------|-----------|
+| D9 | **A + B + D** (semantic prefab inspect + runtime UI tree walk + claude-design conformance) | All three review surfaces needed; pixel sampling (C) deferred — IR-resolved expected values + serialized field diffs cover most contrast/binding checks without pixel work. |
+| D10 | **D** (bake-time + IR-side mutation; runtime scene mutation deferred) | Re-bake + scene re-pickup is cheap + deterministic. |
+| D11 | **A** (per-change verify gates next mutation) | Closed-loop. |
+| D12 | **A** (JSON-structured rows) | Annotated-PNG (B) deferred; JSON enough for first iteration. |
+| D13 | **A** (extend `unity_bridge_command` kinds) | No new MCP top-level surface; matches existing bridge ergonomics. |
+| D14 | **C** (IR + theme) | Diff prefab serialized field against both claude-design intent + theme-resolved values. |
+| P1 | **Inline** | No subagent dispatch — keep Step 14 in main context. |
+| P2 | **New skill** `ui-fidelity-review` | Skills under refactor; clean fresh scope, no entanglement with `ui-hud-row-theme`. |
+| P3 | **Doc-guided** (this file) | Skill catalog refactor in flight; defer master-plan extraction until Step 14 first-iteration validates. |
+| P4 | **Bridge tooling only** | Targeted menu polish (settings-screen / save-load-screen / info-panel content adapter) deferred to Step 15. |
+
+### P5 — claude-design artifact extraction (locked 2026-04-30)
+
+Current pipeline: claude-design HTML+CSS+JSX → `tools/scripts/transcribe-cd-to-ir/`
+emits IR JSON (`web/design-refs/step-1-game-ui/ir.json`). Bridge consumes IR
++ runtime theme SO. Gaps that **additional claude-design artifacts** would
+close:
+
+- **A. Computed-style snapshot per element.** Post-CSS resolution: final
+  color hex, font-size px, font-weight, line-height, padding/margin,
+  border-radius, box-shadow, opacity. Agent diffs prefab serialized field
+  values directly without re-resolving CSS. Highest leverage — would have
+  caught the ramp[0] vs. ramp[last] inversion (Step 13A) on the first bake.
+- **B. Layout bounding-box snapshot per panel.** DOM rect (x, y, width,
+  height) per `panel.slug` + `child.slug` at design viewport size. Feeds
+  D9=B runtime UI tree walk comparison — agent diffs computed Canvas rect
+  against design rect. Would have caught Step 11 modal-sizing + scene-
+  override regressions earlier.
+- **C. DOM hierarchy tree (parent → child slug map).** Authoritative
+  parent-child shape; bridge can verify prefab tree mirrors design tree
+  (no missing/extra slots). Already partially implicit in IR `slots[]`,
+  but explicit hierarchy + role per node helps conformance.
+- **D. Token-usage map.** Per slug → which palette ramp index / font_face
+  slug / frame_style slug it consumes (and at what rendering state —
+  default / hover / pressed / disabled). Currently inferred from IR; an
+  explicit `token_bindings.json` would let conformance scan flag drift.
+- **E. Interaction-event map.** Per element: `onClick` target action,
+  hover/press/focus state changes, sound effects (click blip, hover blip,
+  modal open/close). Would have caught Step 13B (missing
+  `UnityEngine.UI.Button`) + 13C (missing adapter) + 13D (missing blips)
+  on the first bake — bridge could verify each interactive prefab carries
+  the expected component + listener wiring.
+- **F. Per-state screenshot reference (default/hover/pressed/disabled).**
+  PNG per panel per state at design viewport. Deferred (matches D12=A);
+  becomes useful when D12=B (annotated PNG) lands. Skip for now.
+
+**Recommended ask priority:** A (computed style) + E (interaction map) +
+B (layout bounding-box). C (hierarchy) is mostly redundant with IR; D
+(token usage) emerges naturally from A. F (per-state PNG) deferred.
+
+**Locked decision: extract via script from already-delivered material —
+no claude-design session re-open.**
+
+cd-bundle/ at `web/design-refs/step-1-game-ui/cd-bundle/` already carries
+HTML (`Studio Rack Game UI.html` + extension), CSS (`tokens.css` +
+extensions + `archetypes-extension.css`), JSX (`app.jsx`, `panels.jsx`,
+`archetypes.jsx`, `design-canvas.jsx` + extensions), JSON
+(`interactives.json`, `panels.json` + extensions), `icons.svg`. Script-
+based extraction pattern already established by
+`tools/scripts/transcribe-cd-game-ui.ts`,
+`tools/scripts/transcribe-cd-tokens.ts`,
+`tools/scripts/extract-cd-tokens.ts` + sibling tests.
+
+| Artifact | Source | Tool |
+|----------|--------|------|
+| `computed-styles.json` | HTML + CSS | Playwright headless → `getComputedStyle(el)` per slugged element |
+| `layout-rects.json` | HTML + CSS | same Playwright run → `el.getBoundingClientRect()` at fixed viewport |
+| `interactions.json` | JSX + CSS + interactives.json | Babel AST walk for `onClick` handlers + CSS pseudo-class scan (`:hover`, `:active`, `:disabled`) for state colors |
+
+| Decision | Locked value | Rationale |
+|----------|--------------|-----------|
+| **P5.a** — extraction approach | **Script** (Playwright + Babel) | cd-bundle already carries HTML/CSS/JSX; no re-open needed; matches existing transcribe-cd-* sibling pattern |
+| **P5.b** — design viewport | **1920×1080** | claude-design canvas native size; rects 1:1 with HTML render; Unity scaling math = downstream concern of conformance scan, not raw artifact |
+| **P5.c** — sequencing | **Parallel** | Step 14.1 `prefab_inspect` reads Unity-side state — zero cd-bundle dependency. Extractors land in `tools/scripts/`, 14.1 in `AgentBridgeCommandRunner` — no file overlap, no merge risk. Converge at 14.3 conformance scan |
+
+Output paths (sibling to existing `ir.json`):
+
+- `web/design-refs/step-1-game-ui/computed-styles.json`
+- `web/design-refs/step-1-game-ui/layout-rects.json`
+- `web/design-refs/step-1-game-ui/interactions.json`
+
+Extractor scripts (new, beside existing transcribe-cd-*):
+
+- `tools/scripts/extract-cd-computed-styles.ts` (Playwright)
+- `tools/scripts/extract-cd-layout-rects.ts` (Playwright, same browser run)
+- `tools/scripts/extract-cd-interactions.ts` (Babel AST + CSS scan)
+
+### Step 14 — sub-step plan (locked decisions applied)
+
+Ordered, mechanical:
+
+- **14.1 — `prefab_inspect` bridge kind.** Params: `prefab_path`. Returns
+  full hierarchy + components + serialized fields + RectTransform per node
+  in JSON. Read-only.
+- **14.2 — `ui_tree_walk` bridge kind (Play Mode + Edit Mode if Canvas
+  loaded).** Params: optional `root_path` (default = active Canvas).
+  Returns runtime tree with computed screen-space rects + active state
+  per node. JSON.
+- **14.3 — `claude_design_conformance` bridge kind.** Params: `ir_path`,
+  `theme_so`, `prefab_path` OR `scene_root_path`. Diffs prefab/scene
+  serialized fields against IR slug intent + theme-resolved values.
+  Returns conformance rows. JSON.
+- **14.4 — `ui-fidelity-review` skill.** Composes 14.1 + 14.2 + 14.3 into
+  agent-callable closed-loop verify pass. Emits structured Verification
+  block. (Skill catalog refactor permitting — if blocked, defer skill
+  authoring + use bridge kinds inline.)
+- **14.5 — Smoke run on pause-menu + info-panel.** Run new tools end-to-end
+  on the two surfaces to validate JSON shape + conformance row coverage
+  before Step 15 iteration. Adjust schemas based on findings.
+
+### Implementation order (post-lock)
+
+1. **Track 1 (extractors)** — scaffold 3 new `tools/scripts/extract-cd-*.ts`
+   scripts emitting the 3 sibling JSON files. Tests in
+   `tools/scripts/__tests__/`.
+2. **Track 2 (bridge kind, parallel)** — implement Step 14.1
+   `prefab_inspect` in `Assets/Scripts/Editor/AgentBridgeCommandRunner.*`.
+3. **Converge** — Step 14.2 `ui_tree_walk` + Step 14.3
+   `claude_design_conformance` (consumes IR + 3 extracted artifacts +
+   prefab inspect output).
+4. **14.5 smoke** on pause-menu + info-panel.
+

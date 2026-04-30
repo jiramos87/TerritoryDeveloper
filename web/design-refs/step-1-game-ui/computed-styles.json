@@ -1,0 +1,2255 @@
+{
+  "schema_version": 1,
+  "source_html": "web/design-refs/step-1-game-ui/cd-bundle/Studio Rack Game UI.html",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "generated_at_utc": "2026-04-30T16:59:01.826Z",
+  "node_count": 89,
+  "nodes": [
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "hud-bar",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "left",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:left]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "center",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:center]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "right",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:right]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:right]>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "info-panel",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "master",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:master]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:master]>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "bus-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "trim-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "city-stats",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "row-list",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "toolbar",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "tool-grid",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]>div[slot:tool-grid]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "subtype-row",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]>div[slot:subtype-row]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "settings",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "audio-rack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-neutral",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "toggles",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:toggles]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "footer",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:footer]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "new-game",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "power-stack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]>div[slot:power-stack]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "pause",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:pause]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "actions",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:pause]>div[slot:actions]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "save-load",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "slots",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]>div[slot:slots]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "footer",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]>div[slot:footer]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "tooltip",
+      "class_list": [
+        "rack-chrome"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "body",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]>div[slot:body]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]>div[slot:body]>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "onboarding",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(52, 57, 63)",
+        "borderRadius": "8px",
+        "boxShadow": "rgb(10, 12, 13) 0px 0px 0px 1px, rgb(52, 57, 63) 0px 0px 0px 2px, rgb(10, 12, 13) 0px 0px 0px 3px, rgba(0, 0, 0, 0.7) 0px 12px 32px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "step-rack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:step-rack]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "meter-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:meter-bay]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:meter-bay]>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "actions",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:actions]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.5) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.85) 0px 3px 8px 0px, rgb(212, 138, 28) 0px 0px 0px 1px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgb(42, 184, 200) 0px 0px 0px 2px, rgb(10, 90, 102) 0px 0px 12px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.8) 0px 2px 4px 0px inset, rgba(0, 0, 0, 0.6) 0px 1px 2px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "matrix(0.97, 0, 0, 0.97, 0, 0)"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--sm",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--lg",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "50%",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px -3px 6px 0px inset, rgba(255, 255, 255, 0.4) 0px 2px 2px 0px inset, rgba(0, 0, 0, 0.7) 0px 3px 6px 0px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-neutral",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-alert",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "0px",
+        "boxShadow": "none",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset, rgb(138, 86, 16) 0px 0px 0px 1px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset, rgb(42, 184, 200) 0px 0px 0px 2px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset, rgb(42, 184, 200) 0px 0px 0px 1px",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--lg",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--vertical"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-alert",
+        "vu--vertical"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "computed": {
+        "color": "rgb(216, 207, 182)",
+        "backgroundColor": "rgb(10, 12, 13)",
+        "borderTopColor": "rgb(216, 207, 182)",
+        "borderRadius": "4px",
+        "boxShadow": "rgba(0, 0, 0, 0.85) 0px 2px 4px 0px inset, rgba(255, 255, 255, 0.04) 0px -1px 0px 0px inset",
+        "fontFamily": "\"Helvetica Neue\", Arial, system-ui, sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textAlign": "start",
+        "opacity": "1",
+        "transform": "none"
+      }
+    }
+  ]
+}

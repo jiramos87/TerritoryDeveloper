@@ -49,7 +49,7 @@
     "validate:skill-drift": "tsx tools/scripts/skill-tools/index.ts lint --json --strict",
     "test:skill-tools": "npx tsx --test tools/scripts/skill-tools/__tests__/*.test.ts",
     "test:ia": "npm --prefix tools/mcp-ia-server test",
-    "test:scripts": "npx tsx --test tools/scripts/__tests__/extract-cd-tokens.test.ts && npx tsx --test tools/scripts/__tests__/transcribe-cd-game-ui.test.ts && npx tsx --test tools/scripts/__tests__/unity-bake-ui.smoke.test.ts && npx tsx --test web/lib/catalog/stable-json-stringify.test.ts",
+    "test:scripts": "npx tsx --test tools/scripts/__tests__/extract-cd-tokens.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-interactions.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-computed-styles.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-layout-rects.test.ts && npx tsx --test tools/scripts/__tests__/transcribe-cd-game-ui.test.ts && npx tsx --test tools/scripts/__tests__/unity-bake-ui.smoke.test.ts && npx tsx --test web/lib/catalog/stable-json-stringify.test.ts",
     "transcribe:cd-game-ui": "npx tsx tools/scripts/transcribe-cd-game-ui.ts",
     "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
@@ -98,7 +98,11 @@
     "node": "22.18.0"
   },
   "devDependencies": {
+    "@babel/parser": "^7.29.2",
+    "@babel/traverse": "^7.29.0",
+    "@types/babel__traverse": "^7.28.0",
     "glob": "^13.0.6",
+    "playwright": "^1.59.1",
     "ts-morph": "^28.0.0"
   }
 }

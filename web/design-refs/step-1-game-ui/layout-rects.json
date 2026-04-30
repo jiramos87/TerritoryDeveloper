@@ -1,0 +1,2255 @@
+{
+  "schema_version": 1,
+  "source_html": "web/design-refs/step-1-game-ui/cd-bundle/Studio Rack Game UI.html",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "generated_at_utc": "2026-04-30T16:59:04.692Z",
+  "node_count": 89,
+  "nodes": [
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 141.27,
+        "y": 376,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 141.27,
+        "y": 376,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 263.8,
+        "y": 312,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 263.8,
+        "y": 312,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 343.08,
+        "y": 408,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 343.08,
+        "y": 408,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "hud-bar",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 84,
+        "y": 774,
+        "width": 1340,
+        "height": 151
+      },
+      "parent_relative_rect": {
+        "x": 84,
+        "y": 774,
+        "width": 1340,
+        "height": 151
+      },
+      "aspect_ratio": 8.874
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "left",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:left]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "hud-bar",
+      "viewport_rect": {
+        "x": 114,
+        "y": 857,
+        "width": 192,
+        "height": 26
+      },
+      "parent_relative_rect": {
+        "x": 30,
+        "y": 83,
+        "width": 192,
+        "height": 26
+      },
+      "aspect_ratio": 7.385
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "center",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:center]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "hud-bar",
+      "viewport_rect": {
+        "x": 338,
+        "y": 837,
+        "width": 345.02,
+        "height": 66
+      },
+      "parent_relative_rect": {
+        "x": 254,
+        "y": 63,
+        "width": 345.02,
+        "height": 66
+      },
+      "aspect_ratio": 5.228
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "right",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:right]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "hud-bar",
+      "viewport_rect": {
+        "x": 715.02,
+        "y": 843,
+        "width": 678.98,
+        "height": 54
+      },
+      "parent_relative_rect": {
+        "x": 631.02,
+        "y": 69,
+        "width": 678.98,
+        "height": 54
+      },
+      "aspect_ratio": 12.574
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:hud-bar]>div>div[slot:right]>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "right",
+      "viewport_rect": {
+        "x": 881.13,
+        "y": 867.5,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 166.11,
+        "y": 24.5,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "info-panel",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1472,
+        "y": 774,
+        "width": 780,
+        "height": 593
+      },
+      "parent_relative_rect": {
+        "x": 1472,
+        "y": 774,
+        "width": 780,
+        "height": 593
+      },
+      "aspect_ratio": 1.315
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "master",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:master]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "info-panel",
+      "viewport_rect": {
+        "x": 1502,
+        "y": 926,
+        "width": 139.19,
+        "height": 263
+      },
+      "parent_relative_rect": {
+        "x": 30,
+        "y": 152,
+        "width": 139.19,
+        "height": 263
+      },
+      "aspect_ratio": 0.529
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:master]>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "master",
+      "viewport_rect": {
+        "x": 1555.58,
+        "y": 926,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 53.58,
+        "y": 0,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "bus-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "info-panel",
+      "viewport_rect": {
+        "x": 1665.19,
+        "y": 926,
+        "width": 556.81,
+        "height": 263
+      },
+      "parent_relative_rect": {
+        "x": 193.19,
+        "y": 152,
+        "width": 556.81,
+        "height": 263
+      },
+      "aspect_ratio": 2.117
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "bus-bay",
+      "viewport_rect": {
+        "x": 1711.16,
+        "y": 966,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 45.97,
+        "y": 40,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "bus-bay",
+      "viewport_rect": {
+        "x": 1855.02,
+        "y": 966,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 189.83,
+        "y": 40,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "bus-bay",
+      "viewport_rect": {
+        "x": 1998.88,
+        "y": 966,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 333.69,
+        "y": 40,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div>div[slot:bus-bay]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "bus-bay",
+      "viewport_rect": {
+        "x": 2141.42,
+        "y": 966,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 476.23,
+        "y": 40,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "trim-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "info-panel",
+      "viewport_rect": {
+        "x": 1502,
+        "y": 1224,
+        "width": 720,
+        "height": 117
+      },
+      "parent_relative_rect": {
+        "x": 30,
+        "y": 450,
+        "width": 720,
+        "height": 117
+      },
+      "aspect_ratio": 6.154
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "trim-bay",
+      "viewport_rect": {
+        "x": 1585.98,
+        "y": 1224,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 83.98,
+        "y": 0,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "trim-bay",
+      "viewport_rect": {
+        "x": 1834,
+        "y": 1224,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 332,
+        "y": 0,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:info-panel]>div[slot:trim-bay]>div>div>div[interactive:knob]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "trim-bay",
+      "viewport_rect": {
+        "x": 2082,
+        "y": 1224,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 580,
+        "y": 0,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "city-stats",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 2300,
+        "y": 774,
+        "width": 620,
+        "height": 803
+      },
+      "parent_relative_rect": {
+        "x": 2300,
+        "y": 774,
+        "width": 620,
+        "height": 803
+      },
+      "aspect_ratio": 0.772
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "row-list",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "city-stats",
+      "viewport_rect": {
+        "x": 2330,
+        "y": 933,
+        "width": 560,
+        "height": 618
+      },
+      "parent_relative_rect": {
+        "x": 30,
+        "y": 159,
+        "width": 560,
+        "height": 618
+      },
+      "aspect_ratio": 0.906
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2528.91,
+        "y": 1048,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 198.91,
+        "y": 115,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2531.53,
+        "y": 1100,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 201.53,
+        "y": 167,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2537.78,
+        "y": 1152,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 207.78,
+        "y": 219,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2536.19,
+        "y": 1308,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 206.19,
+        "y": 375,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2548.28,
+        "y": 1360,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 218.28,
+        "y": 427,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:city-stats]>div[slot:row-list]>div>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "row-list",
+      "viewport_rect": {
+        "x": 2543.77,
+        "y": 1412,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 213.77,
+        "y": 479,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "toolbar",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 2968,
+        "y": 774,
+        "width": 428,
+        "height": 553
+      },
+      "parent_relative_rect": {
+        "x": 2968,
+        "y": 774,
+        "width": 428,
+        "height": 553
+      },
+      "aspect_ratio": 0.774
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "tool-grid",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]>div[slot:tool-grid]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "toolbar",
+      "viewport_rect": {
+        "x": 2992,
+        "y": 864,
+        "width": 380,
+        "height": 380
+      },
+      "parent_relative_rect": {
+        "x": 24,
+        "y": 90,
+        "width": 380,
+        "height": 380
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "subtype-row",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:toolbar]>div[slot:subtype-row]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "toolbar",
+      "viewport_rect": {
+        "x": 2992,
+        "y": 1279,
+        "width": 380,
+        "height": 26
+      },
+      "parent_relative_rect": {
+        "x": 24,
+        "y": 505,
+        "width": 380,
+        "height": 26
+      },
+      "aspect_ratio": 14.615
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "settings",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3456,
+        "y": 774,
+        "width": 708,
+        "height": 441
+      },
+      "parent_relative_rect": {
+        "x": 3456,
+        "y": 774,
+        "width": 708,
+        "height": 441
+      },
+      "aspect_ratio": 1.605
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "audio-rack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "settings",
+      "viewport_rect": {
+        "x": 3490,
+        "y": 903,
+        "width": 640,
+        "height": 138
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 129,
+        "width": 640,
+        "height": 138
+      },
+      "aspect_ratio": 4.638
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "audio-rack",
+      "viewport_rect": {
+        "x": 3680,
+        "y": 904,
+        "width": 280,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 190,
+        "y": 1,
+        "width": 280,
+        "height": 32
+      },
+      "aspect_ratio": 8.75
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "audio-rack",
+      "viewport_rect": {
+        "x": 3680,
+        "y": 956,
+        "width": 280,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 190,
+        "y": 53,
+        "width": 280,
+        "height": 32
+      },
+      "aspect_ratio": 8.75
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-neutral",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:audio-rack]>div>div>div[interactive:fader]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "audio-rack",
+      "viewport_rect": {
+        "x": 3680,
+        "y": 1008,
+        "width": 280,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 190,
+        "y": 105,
+        "width": 280,
+        "height": 32
+      },
+      "aspect_ratio": 8.75
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "toggles",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:toggles]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "settings",
+      "viewport_rect": {
+        "x": 3490,
+        "y": 1076,
+        "width": 640,
+        "height": 37
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 302,
+        "width": 640,
+        "height": 37
+      },
+      "aspect_ratio": 17.297
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "footer",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:settings]>div[slot:footer]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "settings",
+      "viewport_rect": {
+        "x": 3490,
+        "y": 1148,
+        "width": 640,
+        "height": 37
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 374,
+        "width": 640,
+        "height": 37
+      },
+      "aspect_ratio": 17.297
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "new-game",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 4204,
+        "y": 774,
+        "width": 604,
+        "height": 560
+      },
+      "parent_relative_rect": {
+        "x": 4204,
+        "y": 774,
+        "width": 604,
+        "height": 560
+      },
+      "aspect_ratio": 1.079
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "power-stack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]>div[slot:power-stack]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "new-game",
+      "viewport_rect": {
+        "x": 4246,
+        "y": 949,
+        "width": 520,
+        "height": 288
+      },
+      "parent_relative_rect": {
+        "x": 42,
+        "y": 175,
+        "width": 520,
+        "height": 288
+      },
+      "aspect_ratio": 1.806
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:new-game]>div>div>div[interactive:vu]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "new-game",
+      "viewport_rect": {
+        "x": 4433.42,
+        "y": 1272,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 229.42,
+        "y": 498,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "pause",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:pause]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 4832,
+        "y": 774,
+        "width": 556,
+        "height": 457
+      },
+      "parent_relative_rect": {
+        "x": 4832,
+        "y": 774,
+        "width": 556,
+        "height": 457
+      },
+      "aspect_ratio": 1.217
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "actions",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:pause]>div[slot:actions]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "pause",
+      "viewport_rect": {
+        "x": 4870,
+        "y": 963,
+        "width": 480,
+        "height": 234
+      },
+      "parent_relative_rect": {
+        "x": 38,
+        "y": 189,
+        "width": 480,
+        "height": 234
+      },
+      "aspect_ratio": 2.051
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "save-load",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 5420,
+        "y": 774,
+        "width": 788,
+        "height": 509
+      },
+      "parent_relative_rect": {
+        "x": 5420,
+        "y": 774,
+        "width": 788,
+        "height": 509
+      },
+      "aspect_ratio": 1.548
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "slots",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]>div[slot:slots]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "save-load",
+      "viewport_rect": {
+        "x": 5454,
+        "y": 903,
+        "width": 720,
+        "height": 278
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 129,
+        "width": 720,
+        "height": 278
+      },
+      "aspect_ratio": 2.59
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "footer",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:save-load]>div[slot:footer]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "save-load",
+      "viewport_rect": {
+        "x": 5454,
+        "y": 1216,
+        "width": 720,
+        "height": 37
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 442,
+        "width": 720,
+        "height": 37
+      },
+      "aspect_ratio": 19.459
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "tooltip",
+      "class_list": [
+        "rack-chrome"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 6248,
+        "y": 774,
+        "width": 400,
+        "height": 207
+      },
+      "parent_relative_rect": {
+        "x": 6248,
+        "y": 774,
+        "width": 400,
+        "height": 207
+      },
+      "aspect_ratio": 1.932
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "body",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]>div[slot:body]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "tooltip",
+      "viewport_rect": {
+        "x": 6268,
+        "y": 823,
+        "width": 360,
+        "height": 142
+      },
+      "parent_relative_rect": {
+        "x": 20,
+        "y": 49,
+        "width": 360,
+        "height": 142
+      },
+      "aspect_ratio": 2.535
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:tooltip]>div[slot:body]>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "body",
+      "viewport_rect": {
+        "x": 6268,
+        "y": 941,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 0,
+        "y": 118,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "panel",
+      "cd_slug": "onboarding",
+      "class_list": [
+        "rack-chrome",
+        "rack-chrome--bottom-rivets"
+      ],
+      "tag_name": "section",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 6716,
+        "y": 774,
+        "width": 788,
+        "height": 397
+      },
+      "parent_relative_rect": {
+        "x": 6716,
+        "y": 774,
+        "width": 788,
+        "height": 397
+      },
+      "aspect_ratio": 1.985
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "step-rack",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:step-rack]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "onboarding",
+      "viewport_rect": {
+        "x": 6750,
+        "y": 930,
+        "width": 720,
+        "height": 42
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 156,
+        "width": 720,
+        "height": 42
+      },
+      "aspect_ratio": 17.143
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "meter-bay",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:meter-bay]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "onboarding",
+      "viewport_rect": {
+        "x": 6750,
+        "y": 996,
+        "width": 720,
+        "height": 73
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 222,
+        "width": 720,
+        "height": 73
+      },
+      "aspect_ratio": 9.863
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:meter-bay]>div>div[interactive:vu]",
+      "parent_kind": "slot",
+      "parent_cd_slug": "meter-bay",
+      "viewport_rect": {
+        "x": 6750,
+        "y": 1027,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 0,
+        "y": 31,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "slot",
+      "cd_slug": "actions",
+      "class_list": [],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section[panel:onboarding]>div[slot:actions]",
+      "parent_kind": "panel",
+      "parent_cd_slug": "onboarding",
+      "viewport_rect": {
+        "x": 6750,
+        "y": 1104,
+        "width": 720,
+        "height": 37
+      },
+      "parent_relative_rect": {
+        "x": 34,
+        "y": 330,
+        "width": 720,
+        "height": 37
+      },
+      "aspect_ratio": 19.459
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 295,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 295,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 451,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 451,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 607,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 607,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 763.84,
+        "y": 1860.84,
+        "width": 54.32,
+        "height": 54.32
+      },
+      "parent_relative_rect": {
+        "x": 763.84,
+        "y": 1860.84,
+        "width": 54.32,
+        "height": 54.32
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary",
+        "knob--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 919,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 919,
+        "y": 1860,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--sm",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 305,
+        "y": 2018,
+        "width": 36,
+        "height": 36
+      },
+      "parent_relative_rect": {
+        "x": 305,
+        "y": 2018,
+        "width": 36,
+        "height": 36
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 451,
+        "y": 2008,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 451,
+        "y": 2008,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--lg",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 597,
+        "y": 1998,
+        "width": 76,
+        "height": 76
+      },
+      "parent_relative_rect": {
+        "x": 597,
+        "y": 1998,
+        "width": 76,
+        "height": 76
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 295,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 295,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 451,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 451,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "knob",
+      "class_list": [
+        "knob",
+        "knob--md",
+        "knob--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:knob]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 607,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "parent_relative_rect": {
+        "x": 607,
+        "y": 2156,
+        "width": 56,
+        "height": 56
+      },
+      "aspect_ratio": 1
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1670,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 1670,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1776,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 1776,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1882,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 1882,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1988,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 1988,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 2094,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 2094,
+        "y": 1843,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--sm",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1695,
+        "y": 2181,
+        "width": 32,
+        "height": 120
+      },
+      "parent_relative_rect": {
+        "x": 1695,
+        "y": 2181,
+        "width": 32,
+        "height": 120
+      },
+      "aspect_ratio": 0.267
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1851,
+        "y": 2141,
+        "width": 32,
+        "height": 200
+      },
+      "parent_relative_rect": {
+        "x": 1851,
+        "y": 2141,
+        "width": 32,
+        "height": 200
+      },
+      "aspect_ratio": 0.16
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--lg",
+        "fader--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 2017,
+        "y": 2101,
+        "width": 32,
+        "height": 280
+      },
+      "parent_relative_rect": {
+        "x": 2017,
+        "y": 2101,
+        "width": 32,
+        "height": 280
+      },
+      "aspect_ratio": 0.114
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-primary",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1681,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 1681,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "aspect_ratio": 6.25
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-neutral",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 1977,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 1977,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "aspect_ratio": 6.25
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "fader",
+      "class_list": [
+        "fader",
+        "fader--md",
+        "fader--tone-alert",
+        "fader--horizontal"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:fader]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 2273,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "parent_relative_rect": {
+        "x": 2273,
+        "y": 2468,
+        "width": 200,
+        "height": 32
+      },
+      "aspect_ratio": 6.25
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3050,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3050,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--hover"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3336,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3336,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--focus"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3622,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3622,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--pressed"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3908,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3908,
+        "y": 1873,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--disabled"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3050,
+        "y": 2019,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3050,
+        "y": 2019,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--sm",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3050,
+        "y": 2170,
+        "width": 148,
+        "height": 24
+      },
+      "parent_relative_rect": {
+        "x": 3050,
+        "y": 2170,
+        "width": 148,
+        "height": 24
+      },
+      "aspect_ratio": 6.167
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3256,
+        "y": 2167,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3256,
+        "y": 2167,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--lg",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3542,
+        "y": 2164,
+        "width": 328,
+        "height": 36
+      },
+      "parent_relative_rect": {
+        "x": 3542,
+        "y": 2164,
+        "width": 328,
+        "height": 36
+      },
+      "aspect_ratio": 9.111
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3050,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3050,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-neutral"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3336,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3336,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-alert"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3622,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3622,
+        "y": 2315,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-primary",
+        "vu--vertical"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3039,
+        "y": 2463,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3039,
+        "y": 2463,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    },
+    {
+      "node_kind": "interactive",
+      "cd_slug": "vu",
+      "class_list": [
+        "vu",
+        "vu--md",
+        "vu--tone-alert",
+        "vu--vertical"
+      ],
+      "tag_name": "div",
+      "dom_path": "div>div>div>div>div>div>div>div>section>div>div>div>div>div>div[interactive:vu]",
+      "parent_kind": null,
+      "parent_cd_slug": null,
+      "viewport_rect": {
+        "x": 3303,
+        "y": 2463,
+        "width": 228,
+        "height": 30
+      },
+      "parent_relative_rect": {
+        "x": 3303,
+        "y": 2463,
+        "width": 228,
+        "height": 30
+      },
+      "aspect_ratio": 7.6
+    }
+  ]
+}
