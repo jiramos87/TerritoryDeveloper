@@ -346,19 +346,7 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-7681** — **UiTheme catalog-shape fields** — extend UiTheme w/ frame-style + font-face + motion-preset arrays
-  - Type: technical / UI infrastructure
-  - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`; `Assets/UI/Theme/DefaultUiTheme.asset`
-  - Notes: Add `[Serializable]` nested classes `FrameStyleSpec`, `FontFaceSpec`, `MotionPresetSpec` to `UiTheme.cs` w/ catalog-shape fields mirroring future `catalog_token_*` row schema (token name, palette indices, slice metadata, baseline grid, motion duration + easing). Expose `public FrameStyleSpec[] frameStyles`, `public FontFaceSpec[] fontFaces`, `public MotionPresetSpec[] motionPresets` + lookup methods `GetFrameStyle(string)`, `GetFontFace(string)`, `GetMotionPreset(string)`. Populate `Assets/UI/Theme/DefaultUiTheme.asset` w/ first-pass entries (default frame, default body font, default fade-in motion). Catalog-shape forward-compat: field names match `catalog_token_*` schema so asset-pipeline Stage 19.3 `wire_asset_from_catalog` resolver lifts unchanged. Stage 1.1 T1.1.1 of `ui-visual-fidelity-layer` master plan.
-  - Acceptance: `FrameStyleSpec` + `FontFaceSpec` + `MotionPresetSpec` nested classes present w/ catalog-shape fields; `UiTheme` exposes 3 arrays + 3 `Get*` lookup methods; `DefaultUiTheme.asset` carries first-pass entries; `npm run unity:compile-check` green; `npm run validate:all` green.
-  - Depends on: none (stage-internal: TECH-7682 consumes field names as IR detail keys)
 
-- [ ] **TECH-7682** — **IR schema archetype + detail extensions** — carry frameStyle / fontFace / motion refs on UI archetypes
-  - Type: technical / IR schema
-  - Files: `tools/scripts/ir-schema.ts`; `web/design-refs/step-1-game-ui/ir.json`
-  - Notes: Extend IR archetype enum + detail JSON shape in `tools/scripts/ir-schema.ts` to carry optional `frameStyle: string` on `panel` + `button` archetypes, optional `fontFace: string` on `text`, optional `motion: { preset: string, on: 'enter' | 'exit' | 'press' }` across interactive archetypes. Validator rows must reject unknown style / face names against UiTheme registry (build-time check) + warn on missing motion presets. Round-trip `web/design-refs/step-1-game-ui/ir.json` against extended schema — must validate clean. Stage 1.1 T1.1.2 of `ui-visual-fidelity-layer` master plan.
-  - Acceptance: IR archetype enum extended w/ optional `frameStyle` / `fontFace` / `motion` fields per archetype; validator rejects unknown style names; validator warns on unknown motion preset; `web/design-refs/step-1-game-ui/ir.json` validates clean; `npm run validate:all` green.
-  - Depends on: TECH-7681 (UiTheme catalog-shape fields — IR detail keys mirror UiTheme spec field names)
 
 ## Economic depth lane
 

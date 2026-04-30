@@ -95,6 +95,7 @@ export interface RunContext {
   vars: Record<string, unknown>;
   cwd: string;
   dry_run: boolean;
+  emit_trace: boolean;
   audit: AuditSink;
 }
 

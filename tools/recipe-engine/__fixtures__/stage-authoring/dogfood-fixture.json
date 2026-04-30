@@ -1,0 +1,16 @@
+{
+  "slug": "recipe-runner-phase-e",
+  "stage_id": "2.2",
+  "target_task": "TECH-6969",
+  "digest_expected_output": {
+    "sections": {
+      "goal": "Verify `tools/seams/author-plan-digest/output.schema.json` matches the structured output the engine emits when `seam.author-plan-digest` runs live; confirm `task_spec_section_write` MCP fires and writes the §Plan Digest body to `ia_task_spec_history`.",
+      "acceptance": "- audit.jsonl carries `seam.author-plan-digest` invocation + emit events with output_keys = {goal, acceptance, pending_decisions, implementer_latitude, work_items, test_blueprint, invariants_and_gate}.\n- `task_spec_section_write` event in audit.jsonl with `task_id` matching input Task and `section: \"§Plan Digest\"`.\n- DB row in `ia_task_spec_history` with `change_reason` = `stage-authoring recipe write`.\n- Output schema validation passes (no extra/missing keys).\n- `npm run test:recipe-engine` exit 0.",
+      "pending_decisions": "- live-dispatch input: fixture inject via `--inputs dogfood-fixture.json`; live dispatch default when absent — rationale: CLI context lacks subagent env.\n- audit event taxonomy: seam steps emit `seam`/`dispatch_mode`/`output_keys`; mcp steps emit `mcp`/`task_id`/`section` — rationale: aligns with acceptance criteria.\n- task_id: TECH-6969 (self-dogfood) — rationale: Stage 2.2 self-contained.",
+      "implementer_latitude": "- `--emit-trace` flag added to CLI for richer audit JSONL.\n- `--task` flag added to CLI (maps to `inputs.target_task`).\n- `expected_output` property added to recipe schema; `digest_expected_output` input added to stage-authoring YAML.\n- `pending_q` SQL updated to filter by `target_task` when set.",
+      "work_items": "- tools/recipe-engine/src/cli.ts: add `--task` (→ `inputs.target_task`) + `--emit-trace` flags.\n- tools/recipe-engine/src/audit.ts: richer JSONL trace when `emit_trace` — seam steps log `seam`, `dispatch_mode`, `output_keys`; mcp steps log `mcp`, `task_id`, `section`.\n- tools/recipe-engine/src/types.ts: add `emit_trace: boolean` to `RunContext`.\n- tools/recipe-engine/src/run.ts: thread `emit_trace` from options.\n- tools/recipe-engine/schema/recipe.schema.json: add `expected_output` to step properties.\n- tools/recipes/stage-authoring.yaml: add `digest_expected_output` input + wire fixture path.\n- tools/recipe-engine/__fixtures__/stage-authoring/dogfood-fixture.json: this file.",
+      "test_blueprint": "- `npm run recipe:run -- stage-authoring --emit-trace --inputs tools/recipe-engine/__fixtures__/stage-authoring/dogfood-fixture.json` → exit 0, audit.jsonl present with seam + mcp trace events.\n- `npm run test:recipe-engine` exit 0.\n- `psql $DATABASE_URL -c \"SELECT task_id, change_reason FROM ia_task_spec_history WHERE task_id = 'TECH-6969' ORDER BY id DESC LIMIT 3\"` returns ≥1 row.",
+      "invariants_and_gate": "invariant_touchpoints: seam contract integrity, DB sole source of truth, recipe audit log completeness.\nvalidator_gate: validate:recipe-drift, test:recipe-engine, validate:master-plan-status.\nescalation_enum: schema_drift, db_unavailable.\n**Gate:** schema validation passes AND audit.jsonl has `task_spec_section_write` mcp event AND DB row in `ia_task_spec_history`.\n**STOP:** schema mismatch OR write MCP not invoked OR DB row missing."
+    }
+  }
+}

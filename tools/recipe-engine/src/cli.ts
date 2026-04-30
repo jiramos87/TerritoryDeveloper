@@ -22,12 +22,13 @@ import { createStdioMcpClient, type StdioMcpClient } from "./mcp-client.js";
 interface CliArgs {
   name: string;
   dry_run: boolean;
+  emit_trace: boolean;
   inputs: Record<string, unknown>;
   run_id?: string;
 }
 
 function parseArgs(argv: string[]): CliArgs {
-  const out: CliArgs = { name: "", dry_run: false, inputs: {} };
+  const out: CliArgs = { name: "", dry_run: false, emit_trace: false, inputs: {} };
   let i = 0;
   if (argv[0] && !argv[0].startsWith("--")) {
     out.name = argv[0];
@@ -38,6 +39,14 @@ function parseArgs(argv: string[]): CliArgs {
     if (a === "--dry-run") {
       out.dry_run = true;
       i += 1;
+    } else if (a === "--emit-trace") {
+      out.emit_trace = true;
+      i += 1;
+    } else if (a === "--task") {
+      const taskId = argv[i + 1];
+      if (!taskId) throw new Error("--task requires a task id (e.g. TECH-6969)");
+      out.inputs["target_task"] = taskId;
+      i += 2;
     } else if (a === "--inputs") {
       const p = argv[i + 1];
       if (!p) throw new Error("--inputs requires a path");
@@ -103,6 +112,7 @@ async function main(): Promise<void> {
     const result = await runRecipe(parsed.name, {
       inputs: parsed.inputs,
       dry_run: parsed.dry_run,
+      emit_trace: parsed.emit_trace,
       run_id: parsed.run_id,
     });
     if (!result.ok) {

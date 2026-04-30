@@ -20,7 +20,13 @@ inputs:
       type: string
       description: >-
         Optional single-task re-author escape hatch (e.g. `TECH-776`). When set,
-        Phase 5 foreach iterates only that task. Phase 0 mode-detect still gates pending count.
+        pending_q filters to that task only. Phase 0 mode-detect still gates pending count.
+    digest_expected_output:
+      type: object
+      description: >-
+        Optional golden fixture for the seam validate-only path. When provided via
+        `--inputs`, the `digest` seam step skips live dispatch and validates this
+        value against output.schema.json instead. Shape: `{sections: {goal, acceptance, ...}}`.
 steps:
   - id: mode_detect
     description: >-
@@ -47,16 +53,18 @@ steps:
   - id: pending_q
     description: >-
       Filter pending tasks via SQL (template engine has no array filter). Returns rows
-      in task_id order — drives Phase 4 foreach.
+      in task_id order — drives Phase 4 foreach. Filters by target_task when set.
     sql: query
     query: |
       SELECT task_id, title, priority
         FROM ia_tasks
        WHERE slug = $1 AND stage_id = $2 AND status = 'pending'
+         AND ($3::text IS NULL OR task_id = $3::text)
        ORDER BY task_id ASC
     params:
       - ${inputs.slug}
       - ${inputs.stage_id}
+      - ${inputs.target_task}
 
   - id: per_task
     description: >-
@@ -75,10 +83,11 @@ steps:
 
       - id: digest
         description: >-
-          Phase 4 — author §Plan Digest sections via author-plan-digest seam. Phase B
-          validate-only; Phase C subagent layer dispatches LLM. Pass `expected_output`
-          when smoke-testing with golden fixture.
+          Phase 4 — author §Plan Digest sections via author-plan-digest seam. Live
+          dispatch when no fixture; validate-only when `inputs.digest_expected_output`
+          is provided (inject via `--inputs` fixture file).
         seam: author-plan-digest
+        expected_output: ${inputs.digest_expected_output}
         input:
           task_id: ${task.task_id}
           task_spec_stub: ${spec_body.body}

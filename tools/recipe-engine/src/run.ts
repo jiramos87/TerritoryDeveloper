@@ -39,6 +39,7 @@ export interface RunRecipeOptions {
   inputs?: Record<string, unknown>;
   cwd?: string;
   dry_run?: boolean;
+  emit_trace?: boolean;
   run_id?: string;
 }
 
@@ -139,7 +140,8 @@ export async function runRecipe(name: string, options: RunRecipeOptions = {}): P
   }
 
   const recipe_version = recipe.recipe_version ?? 1;
-  const audit = createAuditSink({ run_id, recipe_slug: recipe.recipe, recipe_version, cwd });
+  const emit_trace = Boolean(options.emit_trace);
+  const audit = createAuditSink({ run_id, recipe_slug: recipe.recipe, recipe_version, cwd, emit_trace });
   const ctx: RunContext = {
     run_id,
     recipe_slug: recipe.recipe,
@@ -148,6 +150,7 @@ export async function runRecipe(name: string, options: RunRecipeOptions = {}): P
     vars: { inputs },
     cwd,
     dry_run: Boolean(options.dry_run),
+    emit_trace,
     audit,
   };
 

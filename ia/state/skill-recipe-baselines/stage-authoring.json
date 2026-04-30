@@ -22,5 +22,7 @@
     "per-task task_spec_section_write to db",
     "hand-off"
   ],
-  "slug": "stage-authoring"
+  "slug": "stage-authoring",
+  "total_tokens": 28500,
+  "total_tokens_note": "Legacy direct-Opus baseline (pre-Phase E): single bulk prompt_tokens≈22000 + completion_tokens≈6500 for a 3-task stage authoring pass. Captured 2026-04-30. Recipe-runner path C2 gate requires ≥40% drop vs this value."
 }

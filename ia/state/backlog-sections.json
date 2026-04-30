@@ -1113,6 +1113,18 @@
           "id": "TECH-7682",
           "checklist_line": "- [ ] **TECH-7682** — **IR schema archetype + detail extensions** — carry frameStyle / fontFace / motion refs on UI archetypes",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7743",
+          "checklist_line": "cd-bundle sprite atlas pipeline",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7744",
+          "checklist_line": "UiBakeHandler partial split",
+          "trailing_blanks": 1
         }
       ]
     },

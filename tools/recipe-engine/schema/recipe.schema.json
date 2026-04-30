@@ -122,6 +122,10 @@
           "type": "object",
           "additionalProperties": true
         },
+        "expected_output": {
+          "description": "Golden fixture for seam validate-only path (seam steps only). When set, engine skips live dispatch and validates this value against the seam output schema. Supports template refs to inject fixture from inputs.",
+          "additionalProperties": true
+        },
         "query": { "type": "string", "description": "SQL string (sql steps only)." },
         "params": {
           "type": "array",
