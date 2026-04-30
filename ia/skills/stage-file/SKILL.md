@@ -159,6 +159,23 @@ mcp__territory-ia__master_plan_render({ slug: "{SLUG}" })
 
 Returns `{slug, title, preamble, stages[]}`. Store `PLAN_TITLE` = `title`. `SLUG` already derived in 2.1. Used as `task_insert.slug` arg + manifest resolution fallback.
 
+### 2.2b Surface-path verify (warn-only)
+
+Parse `block_md` `**Relevant surfaces (load when stage opens):**` bullets. Extract every repo-relative file path token (skip URLs, MCP tool names, glossary refs). Call:
+
+```
+mcp__territory-ia__plan_digest_verify_paths({ paths: [...extracted] })
+```
+
+Per returned `{path, exists}` row:
+
+- `exists: true` → ok.
+- `exists: false` AND not annotated `(new)` in source bullet → emit warning: `SURFACE_PATH_MISS Stage {STAGE_ID}: '{path}' cited in Relevant surfaces but not on disk + missing (new) marker.`
+
+Warn-only — does NOT halt filing. Rationale: catches drift before spec stubs inherit ghost paths into §4.2 Systems map at 5.A.3 (real-world dogfood: `parallel-carcass-rollout` Stage 2.1 cited `tools/mcp-ia-server/test/arch-drift-scan*.ts` — singular `test/` dir doesn't exist; real path uses plural `tests/tools/`). Halting on miss is too aggressive — author may legitimately reference a path that lands in this Stage's first task. User decides whether to abort + re-author Stage block or proceed.
+
+Skip step entirely when `block_md` carries no Relevant surfaces section (greenfield Stage).
+
 ### 2.3 Cardinality gate
 
 Run [`cardinality-gate-check`](../cardinality-gate-check/SKILL.md) on `pending_tasks`:
@@ -465,3 +482,31 @@ Re-running fully-applied state = exit 0 + zero diff.
 ---
 
 ## Changelog
+
+### 2026-04-30 — `lifecycle_stage_context` glossary lookup `ENAMETOOLONG` on greenfield slug
+
+**Status:** applied — fix landed pre-log (commit pending)
+
+**Symptom:**
+Recipe step `lifecycle_ctx` fails with `ENAMETOOLONG` on every parallel `/stage-file` invocation against slug `recipe-runner-phase-e`. Two failed `ia_recipe_runs` rows captured (run_ids `751587bae723a3f4` + `e3a82a7c3db5de83`, 2026-04-30 12:21). Blocks Phase 1 MCP bundle load — Stage cannot proceed.
+
+**Root cause:**
+`tools/mcp-ia-server/src/tools/lifecycle-stage-context.ts:160` called `parseGlossary(content)` passing the glossary file *body* string (read via `fs.readFileSync(glossaryPath, "utf8")` at line 159). `parseGlossary` signature is `parseGlossary(filePath: string)` — internally re-reads via `fs.readFileSync(filePath)`. Result: kernel got the entire glossary body as a path arg, exceeded `PATH_MAX` → `ENAMETOOLONG`. Type system did not catch — both args typed `string`. Manifested only when the glossary search hits a real path (greenfield slug `recipe-runner-phase-e` triggered the lookup; pre-existing slugs likely skipped that branch via cache or early return).
+
+**Fix:**
+```typescript
+// before (lines 159-160)
+const content = fs.readFileSync(glossaryPath, "utf8");
+const rows: GlossaryEntry[] = parseGlossary(content);
+// after (line 159)
+const rows: GlossaryEntry[] = parseGlossary(glossaryPath);
+```
+Verified by re-running `npm run recipe:run -- stage-file --inputs /tmp/recipe-inputs-1.1.json` — `lifecycle_ctx` clears, recipe halts at expected `manifest_resolve` gate.
+
+**Friction types:** regression, type-mismatch, silent-breakage.
+
+**Rollout row:** wave-2-dogfood-pilot (slug `recipe-runner-phase-e`, first carcass+section pilot)
+
+**Tracker aggregator:** [docs/parallel-carcass-rollout-skill-iteration.md#skill-iteration-log-aggregator](../../../docs/parallel-carcass-rollout-skill-iteration.md#skill-iteration-log-aggregator)
+
+---

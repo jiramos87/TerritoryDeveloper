@@ -3,7 +3,12 @@
  * Composite bundle for a Stage in a master-plan: stage header block, task list,
  * glossary hits derived from stage title, and invariants summary slice.
  * Used by plan-reviewer-mechanical to amortize MCP context load to O(1) per Stage.
- * Input: { master_plan_path: string, stage_id: string, keyword_override?: string }
+ *
+ * Input shape: either `{ slug, stage_id, ... }` (DB-only plans, preferred) or
+ * `{ master_plan_path, stage_id, ... }` (legacy filesystem path). Caller must
+ * supply at least one of `slug` or `master_plan_path`. When both are present,
+ * `slug` wins (DB branch).
+ *
  * Output: { stage_block, tasks, glossary_hits, invariants_hint }
  */
 
@@ -17,12 +22,23 @@ import { parseGlossary } from "../parser/glossary-parser.js";
 import { normalizeGlossaryQuery } from "../parser/fuzzy.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool } from "../envelope.js";
+import { queryStageRender } from "../ia-db/queries.js";
 
 const inputShape = {
+  slug: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Master-plan slug (DB-only plans, preferred). Either `slug` or `master_plan_path` is required. If both supplied, `slug` wins.",
+    ),
   master_plan_path: z
     .string()
     .min(1)
-    .describe("Path to the master-plan markdown file (relative to repo root or absolute)."),
+    .optional()
+    .describe(
+      "Path to the master-plan markdown file (relative to repo root or absolute). Legacy filesystem fallback when `slug` is not supplied.",
+    ),
   stage_id: z
     .string()
     .min(1)
@@ -140,8 +156,7 @@ function glossarySearch(
   if (!glossaryEntry) return [];
   const glossaryPath = path.resolve(root, glossaryEntry.filePath);
   if (!fs.existsSync(glossaryPath)) return [];
-  const content = fs.readFileSync(glossaryPath, "utf8");
-  const rows: GlossaryEntry[] = parseGlossary(content);
+  const rows: GlossaryEntry[] = parseGlossary(glossaryPath);
   const hits: Array<{ term: string; definition: string; specReference?: string }> = [];
   const seen = new Set<string>();
   for (const kw of keywords) {
@@ -157,22 +172,83 @@ function glossarySearch(
   return hits.slice(0, 15);
 }
 
+interface LifecycleStageContextInput {
+  slug?: string;
+  master_plan_path?: string;
+  stage_id: string;
+  keyword_override?: string;
+}
+
 export function registerLifecycleStageContext(server: McpServer, registry: SpecRegistryEntry[]): void {
   server.registerTool(
     "lifecycle_stage_context",
     {
       description:
-        "Composite Stage-level context bundle for plan-reviewer-mechanical: stage block text, task list, glossary hits. Amortizes MCP calls to O(1) per Stage instead of O(N) per task. Use at Stage-review start.",
+        "Composite Stage-level context bundle for plan-reviewer-mechanical / stage-authoring: stage block text, task list, glossary hits. Accepts `slug` (DB-only plans) or `master_plan_path` (legacy filesystem). Amortizes MCP calls to O(1) per Stage instead of O(N) per task. Use at Stage-review / Stage-author start.",
       inputSchema: inputShape,
     },
     async (args) =>
       runWithToolTiming("lifecycle_stage_context", async () => {
         const envelope = await wrapTool(
-          async (input: { master_plan_path: string; stage_id: string; keyword_override?: string }) => {
+          async (input: LifecycleStageContextInput) => {
             const root = resolveRepoRoot();
-            const absPath = path.isAbsolute(input.master_plan_path)
-              ? input.master_plan_path
-              : path.resolve(root, input.master_plan_path);
+            const slug = (input.slug ?? "").trim();
+            const planPath = (input.master_plan_path ?? "").trim();
+            if (!slug && !planPath) {
+              throw {
+                code: "invalid_input",
+                message: "either `slug` or `master_plan_path` is required.",
+              };
+            }
+
+            // DB branch — preferred when slug supplied (works for DB-only plans
+            // with no `ia/projects/{slug}/index.md` mirror on disk).
+            if (slug) {
+              const stageId = input.stage_id.replace(/^stage\s+/i, "").trim();
+              let row: Awaited<ReturnType<typeof queryStageRender>>;
+              try {
+                row = await queryStageRender(slug, stageId);
+              } catch (e) {
+                throw {
+                  code: "db_error",
+                  message: `lifecycle_stage_context: queryStageRender failed for slug='${slug}' stage_id='${stageId}'.`,
+                  details: e instanceof Error ? { error: e.message } : { error: String(e) },
+                };
+              }
+              if (!row) {
+                throw {
+                  code: "stage_not_found",
+                  message: `Stage '${stageId}' not found in ia_stages for slug '${slug}'.`,
+                };
+              }
+              const stageHeading = `### Stage ${stageId} — ${row.title ?? "(untitled)"}`;
+              const tasks = row.tasks.map((t) => ({
+                task_key: t.task_id,
+                title: t.title,
+                status: t.status,
+                issue_id: t.task_id,
+              }));
+              const rawKeywords =
+                input.keyword_override ?? `${row.title ?? ""} ${stageHeading}`;
+              const keywords = deriveKeywords(rawKeywords);
+              const glossaryHits = glossarySearch(root, registry, keywords);
+              return {
+                stage_id: stageId,
+                slug,
+                master_plan: null,
+                stage_heading: stageHeading,
+                stage_block: row.rendered ?? row.body ?? "",
+                tasks,
+                glossary_hits: glossaryHits,
+                source: "db" as const,
+                hint: "DB-backed slice. Use task_spec_body / task_spec_section for individual specs.",
+              };
+            }
+
+            // Filesystem branch — legacy compatibility for plans still on disk.
+            const absPath = path.isAbsolute(planPath)
+              ? planPath
+              : path.resolve(root, planPath);
 
             if (!fs.existsSync(absPath)) {
               throw { code: "file_not_found", message: `Master plan not found: ${absPath}` };
@@ -183,7 +259,7 @@ export function registerLifecycleStageContext(server: McpServer, registry: SpecR
             if (!extracted) {
               throw {
                 code: "stage_not_found",
-                message: `Stage '${input.stage_id}' not found in ${input.master_plan_path}`,
+                message: `Stage '${input.stage_id}' not found in ${planPath}`,
               };
             }
 
@@ -194,15 +270,17 @@ export function registerLifecycleStageContext(server: McpServer, registry: SpecR
 
             return {
               stage_id: input.stage_id,
-              master_plan: input.master_plan_path,
+              slug: null,
+              master_plan: planPath,
               stage_heading: extracted.heading,
               stage_block: extracted.block,
               tasks,
               glossary_hits: glossaryHits,
-              hint: "Use spec_section to load individual task specs. Use issue_context_bundle per task if deeper context needed.",
+              source: "fs" as const,
+              hint: "Filesystem slice. Use spec_section to load individual task specs. Use issue_context_bundle per task if deeper context needed.",
             };
           },
-        )(args as { master_plan_path: string; stage_id: string; keyword_override?: string });
+        )(args as LifecycleStageContextInput);
         return jsonResult(envelope);
       }),
   );

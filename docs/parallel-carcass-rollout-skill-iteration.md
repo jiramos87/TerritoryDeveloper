@@ -45,3 +45,15 @@ No friction reached recurrence ≥ 2 threshold — no SKILL.md Guardrail rows wr
 |-----------|--------|
 | `emitter_stanza_missing`: not yet captured because no Phase-tail emitter stanzas exist in the 5 skills — structured self-report requires explicit wiring first. | Wire stanzas in Wave 2 skill-sync pass before next skill-train run. |
 | `architecture_pivot` friction type: not yet captured because V2 rewrites happened before emitter stanzas were in place. | Retrospectively documented in proposals; no recurrence count available. |
+
+---
+
+## Skill Iteration Log (aggregator)
+
+Per-skill bug + fix detail lives in each `ia/skills/{name}/SKILL.md` §Changelog. Table below aggregates parallel-carcass-rollout dogfood entries (Wave 1 retrospective + Wave 2 pilot signals).
+
+| Date | Skill | Rollout row | Bug / gap | Fix SHA | SKILL.md anchor |
+|------|-------|-------------|-----------|---------|-----------------|
+| 2026-04-30 | stage-file | wave-2-dogfood-pilot | `lifecycle_stage_context` glossary lookup `ENAMETOOLONG` on greenfield slug (`recipe-runner-phase-e`) — `parseGlossary(content)` got body string instead of filePath; type system missed it (both args `string`); blocked 3 parallel `/stage-file` sessions on first carcass+section pilot | _pending_ | [`ia/skills/stage-file/SKILL.md`](../ia/skills/stage-file/SKILL.md#changelog) |
+
+Rollout agents append rows chronologically. Each entry MUST link back to its per-skill `## Changelog` anchor.
