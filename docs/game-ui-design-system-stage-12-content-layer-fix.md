@@ -1615,3 +1615,77 @@ Schema findings (skill prose realigned):
   resume.
 - **No commits** this session.
 
+## Step 15 — UI fidelity iteration on info-panel + targeted menus (post Step 14 smoke)
+
+Drive remaining UI fidelity work to convergence (`fail_count == 0`) using the
+`ui-fidelity-review` skill (Step 14.4) end-to-end. Smoke (Step 14.5) validated
+tool shape; Step 15 drives actual fixes.
+
+### Surfaces (in batch)
+
+1. **info-panel** (`Assets/UI/Prefabs/Generated/info-panel.prefab`).
+2. **settings-screen** (`Assets/UI/Prefabs/Generated/settings-screen.prefab`).
+3. **save-load-screen** (`Assets/UI/Prefabs/Generated/save-load-screen.prefab`).
+
+Pause-menu deferred — already covered by Step 14 commits.
+
+### Iteration policy
+
+- Run skill in main session (no subagent dispatch). `MAX_ITERATIONS=2` per
+  surface. Live-verify only at end of batch, not between iterations.
+
+### Decisions resolved (this session)
+
+- **D15.1 = A** — palette_ramp methodology fix. `claude_design_conformance`
+  now runs an `ApplyThemePrePass` over every `Themed*` descendant before
+  measuring colors, since `PrefabUtility.LoadPrefabContents` does not invoke
+  `Awake` (where `ApplyTheme` runs at runtime). `TryReadComponentColor` also
+  reads live `.color` accessors (Graphic / TMP_Text) instead of relying on
+  the SerializedObject snapshot, which may not flush after property-setter
+  mutation. Patch in `AgentBridgeCommandRunner.Conformance.cs`.
+- **D15.2 = A** — caption check methodology fix. IR refreshed via
+  `npm run transcribe:cd-game-ui` against current cd-bundle. Stale
+  `"Population: --"` slot label removed; info-panel IR now carries no
+  per-slot `labels` array (cd-bundle never emitted them), so the caption
+  check no-fires for that surface — correct behavior given the source.
+
+### Convergence (iter 2 results — final)
+
+| Surface           | rows | fails | verdict |
+|-------------------|------|-------|---------|
+| info-panel        | 14   | 0     | PASS    |
+| settings-screen   | 1    | 0     | PASS    |
+| save-load-screen  | 9    | 0     | PASS    |
+
+### Live-verify outcome (human screenshots)
+
+Visual QA in Editor Play Mode revealed conformance is necessary but **not
+sufficient** for design-fidelity gating. Conformance measures token
+resolution (palette + panel kind + contrast + frame_style slug + font_face
+slug) but does NOT measure:
+
+1. **Frame sprite swap** — `frame_style` check resolves slug only; bake
+   handler comment notes "sprite swap deferred". → no rounded corners, no
+   border, no inner shadow visually.
+2. **Font asset binding** — `ThemedLabel.ApplyTheme` notes "runtime
+   fontAsset binding deferred to Stage 6 catalog". → all labels render in
+   the default TMP font.
+3. **Slot padding / gap** — no spacing tokens applied at bake or runtime.
+   → labels stack without rhythm.
+4. **Illumination / gradient** — cd-bundle carries decorative motifs that
+   theme/IR does not yet model. → panels look flat.
+5. **Button states** — hover / press / focus styles missing.
+6. **Content density / grouping** — bake places children sequentially; no
+   section dividers, headers, badges.
+
+This is **expected for Stage 12 scope** (palette + panel chrome + slot
+composition + theme paint), not a Step 15 regression.
+
+### Out of scope (Step 16 / Stage 13)
+
+- Visual fidelity layer (frame sprite swap, font asset binding, spacing
+  tokens, illumination motifs, button states, content density). Driven via
+  separate exploration → master plan.
+- Info-panel **content binding** (cell adapter wiring live cell data →
+  panel labels) deferred to a separate cell-adapter pass.
+

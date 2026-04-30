@@ -120,6 +120,16 @@ public static partial class AgentBridgeCommandRunner
             var irPanels = BuildIrPanelIndex(ir);
             var irLabelIndex = BuildIrLabelIndex(ir);
 
+            // Pre-pass — Themed* components paint their bound Image / TMP_Text from
+            // the resolved theme inside Awake at runtime, but PrefabUtility.LoadPrefabContents
+            // does NOT invoke Awake, so serialized colors stay at the default
+            // (white) state authored at bake time. We invoke ApplyTheme on every
+            // Themed* descendant so the second-pass conformance checks measure
+            // the runtime-equivalent surface instead of the pre-paint serialized
+            // state. Order: panels first (paint background + slot graph compose),
+            // then labels + buttons (depend on final tmpText / image refs).
+            ApplyThemePrePass(root, theme);
+
             var rows = new List<AgentBridgeConformanceRowDto>();
             WalkConformanceNode(root, root, theme, ir, irPanels, irLabelIndex, rows);
 
@@ -151,6 +161,31 @@ public static partial class AgentBridgeCommandRunner
             {
                 PrefabUtility.UnloadPrefabContents(loadedPrefabContents);
             }
+        }
+    }
+
+    static void ApplyThemePrePass(Transform root, UiTheme theme)
+    {
+        // Two passes — panels first (slot reparenting + bg paint), then labels +
+        // buttons (palette paint on bound TMP / Image, which may have been
+        // reparented by the panel pass).
+        var panels = root.GetComponentsInChildren<ThemedPanel>(includeInactive: true);
+        for (int i = 0; i < panels.Length; i++)
+        {
+            try { panels[i].ApplyTheme(theme); }
+            catch (Exception ex) { Debug.LogWarning($"[Conformance] ThemedPanel.ApplyTheme threw on '{panels[i].gameObject.name}': {ex.Message}"); }
+        }
+        var labels = root.GetComponentsInChildren<ThemedLabel>(includeInactive: true);
+        for (int i = 0; i < labels.Length; i++)
+        {
+            try { labels[i].ApplyTheme(theme); }
+            catch (Exception ex) { Debug.LogWarning($"[Conformance] ThemedLabel.ApplyTheme threw on '{labels[i].gameObject.name}': {ex.Message}"); }
+        }
+        var buttons = root.GetComponentsInChildren<ThemedButton>(includeInactive: true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            try { buttons[i].ApplyTheme(theme); }
+            catch (Exception ex) { Debug.LogWarning($"[Conformance] ThemedButton.ApplyTheme threw on '{buttons[i].gameObject.name}': {ex.Message}"); }
         }
     }
 
@@ -681,6 +716,24 @@ public static partial class AgentBridgeCommandRunner
     static Color? TryReadComponentColor(Component comp, string propName)
     {
         if (comp == null) return null;
+        // Live accessor first — Themed* ApplyTheme writes via property setters,
+        // which may not flush to the SerializedObject snapshot until next
+        // serialization. Read the runtime color directly when the component
+        // exposes a `.color` property (Graphic / TMP_Text / etc).
+        try
+        {
+            switch (comp)
+            {
+                case TMPro.TMP_Text tmp:
+                    return tmp.color;
+                case UnityEngine.UI.Graphic gfx:
+                    return gfx.color;
+            }
+        }
+        catch
+        {
+            // fall through to SerializedObject path
+        }
         try
         {
             var so = new SerializedObject(comp);
