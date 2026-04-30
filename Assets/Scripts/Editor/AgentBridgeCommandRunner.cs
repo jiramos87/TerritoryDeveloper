@@ -179,6 +179,9 @@ public static partial class AgentBridgeCommandRunner
             case "ui_tree_walk": // OBSERVATION (Stage 12 Step 14.2) — read-only scene Canvas walk + screen-space rects
                 RunUiTreeWalk(repoRoot, commandId, dq.request_json);
                 break;
+            case "claude_design_conformance": // OBSERVATION (Stage 12 Step 14.3) — IR + theme conformance check
+                RunClaudeDesignConformance(repoRoot, commandId, dq.request_json);
+                break;
             default:
                 // Try mutation kinds (Phases 1-3)
                 if (!TryDispatchMutationKind(dq.kind, repoRoot, commandId, dq.request_json))
@@ -186,7 +189,7 @@ public static partial class AgentBridgeCommandRunner
                     TryFinalizeFailed(
                         repoRoot,
                         commandId,
-                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug, catalog_preview, prefab_inspect, ui_tree_walk. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
+                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug, catalog_preview, prefab_inspect, ui_tree_walk, claude_design_conformance. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
                 }
                 break;
         }
@@ -1603,6 +1606,9 @@ class AgentBridgeResponseFileDto
 
     /// <summary>Populated for <c>ui_tree_walk</c> (Stage 12 Step 14.2): scene Canvas walk + screen-space rects.</summary>
     public AgentBridgeUiTreeWalkDto ui_tree_walk_result;
+
+    /// <summary>Populated for <c>claude_design_conformance</c> (Stage 12 Step 14.3): IR + theme conformance rows.</summary>
+    public AgentBridgeConformanceResultDto claude_design_conformance_result;
 
     /// <summary>
     /// Populated for mutation kinds (attach_component, remove_component, assign_serialized_field,

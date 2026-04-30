@@ -1449,3 +1449,146 @@ Ordered, mechanical:
    prefab inspect output).
 4. **14.5 smoke** on pause-menu + info-panel.
 
+### Progress + findings (2026-04-30, mid-session checkpoint before usage cap)
+
+State of Step 14 sub-steps — single source of truth for the next session.
+Read this block first on resume; do **not** repeat scaffolding work already
+captured here.
+
+**14.1 — `prefab_inspect` bridge kind — DONE (committed earlier).**
+Lives in `Assets/Scripts/Editor/AgentBridgeCommandRunner.Inspect.cs`.
+Reusable helpers exposed via the partial — `BuildPrefabInspectNode`,
+`SnapshotSerializedFields(Component)`,
+`FormatSerializedPropertyValue(SerializedProperty)`, `FormatVector2/3`,
+`ComputeRelativePath(Transform, Transform)`, `ExtractParamsJsonBlockInspect`.
+Reused by Step 14.2 + 14.3. DTOs reusable: `AgentBridgePrefabInspectComponentDto`,
+`AgentBridgePrefabInspectFieldDto`, `AgentBridgePrefabInspectRectDto`.
+
+**14.2 — `ui_tree_walk` bridge kind — DONE (commit `e87c9092`).**
+Lives in `Assets/Scripts/Editor/AgentBridgeCommandRunner.UiTreeWalk.cs`.
+Walks every active Canvas in the active scene (or single named root),
+emits per-Rect layout + screen-space bounds + components + serialized
+fields. Calls `Canvas.ForceUpdateCanvases()` so `RectTransform.GetWorldCorners`
+returns post-layout values in Edit Mode. Wired into the main partial at
+line 179 + response DTO has `ui_tree_walk_result`.
+
+**14.3 — `claude_design_conformance` bridge kind — IN PROGRESS, ~70% done.**
+
+Done this session:
+- Wrote `Assets/Scripts/Editor/AgentBridgeCommandRunner.Conformance.cs`
+  (~600 lines, file size 30,455 bytes, mtime 2026-04-30 13:23). Implements:
+  - Entry `RunClaudeDesignConformance(repoRoot, commandId, requestJson)`.
+  - Param parsing via shared `ExtractParamsJsonBlockInspect` →
+    `ConformanceParamsDto { ir_path, theme_so, prefab_path, scene_root_path }`
+    with exactly-one-of prefab/scene validation.
+  - IR JSON load via `File.ReadAllText` + `JsonUtility.FromJson<ConformanceIrRootDto>`.
+    DTO subset — skips `interactives[].detail` (open-ended `Record<string, unknown>`,
+    incompatible with `JsonUtility`).
+  - `UiTheme` load via `AssetDatabase.LoadAssetAtPath<UiTheme>`.
+  - Root resolution — `PrefabUtility.LoadPrefabContents` (paired with
+    `UnloadPrefabContents` in `finally`) OR `GameObject.Find` for scene mode.
+  - `WalkConformanceNode` recursion. Per node:
+    - `ThemedButton` → `CheckThemedButton` → `CheckPaletteRamp` +
+      `CheckFrameStyle`.
+    - `ThemedLabel` → `CheckThemedLabel` → `CheckPaletteRamp` +
+      `CheckFontFace` + `CheckCaptionMatch` + `CheckContrastUnderPanel`.
+    - `ThemedPanel` → `CheckThemedPanel` → `CheckPaletteRamp` +
+      `CheckFrameStyle` + panel-kind enum-vs-IR row.
+  - Six check kinds emit `AgentBridgeConformanceRowDto`:
+    `palette_ramp` (color compare with epsilon `1.5/255` via
+    `ColorsApproxEqual`), `font_face` (info-only, runtime fontAsset deferred),
+    `frame_style` (info-only), `panel_kind` (enum-index → IR string via
+    `PanelKindEnumIdxToIrName`), `caption` (TMP `m_text` vs IR labels indexed
+    by `{panelSlug}/{childSlug}` walking parent chain to nearest ThemedPanel),
+    `contrast_ratio` (WCAG 2.x relative luminance, threshold 4.5, label
+    `ramp[last]` vs panel `ramp[1]`).
+  - Helpers: `TryReadStringField`, `TryReadObjectField`, `TryReadEnumIndex`,
+    `TryReadComponentColor`, `RelativeLuminance`, `LinearChannel`,
+    `ContrastRatio`, `FormatColor`.
+  - DTOs: `ConformanceParamsDto`, `ConformanceIrRootDto/TokensDto/PanelDto/
+    PanelSlotDto/PaletteDto/FrameStyleDto/FontFaceDto`,
+    `AgentBridgeConformanceResultDto { ir_path, theme_so, target_kind,
+    target_path, row_count, fail_count, rows[] }`,
+    `AgentBridgeConformanceRowDto`.
+
+Outstanding 14.3 wiring (mechanical — see "Resume actions" below):
+1. `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` line ~181 — add
+   switch case `"claude_design_conformance"` calling
+   `RunClaudeDesignConformance(repoRoot, commandId, dq.request_json)`.
+2. Same file line ~189 — append `, claude_design_conformance` to the
+   observation-kind enumeration in the unknown-kind error string.
+3. Same file line ~1606 — add field
+   `public AgentBridgeConformanceResultDto claude_design_conformance_result;`
+   to `AgentBridgeResponseFileDto`.
+4. `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` —
+   - add `claude_design_conformance` to kind enum;
+   - add prose to descriptor blob (≤120 chars per-field caps; see
+     `validate:mcp-descriptor-prose` chain);
+   - add new input field `scene_root_path` (string, optional);
+   - reuse existing `ir_path`, `theme_so`, `prefab_path`;
+   - envelope mapping clause near line 770;
+   - exported types `ConformanceRow` + `ConformanceResult`;
+   - extend `UnityBridgeResponsePayload` with
+     `claude_design_conformance_result?`.
+5. Run gates: `npx --prefix tools/mcp-ia-server tsc --noEmit -p tools/mcp-ia-server`,
+   `npm run unity:compile-check`, `npm run validate:mcp-descriptor-prose`.
+
+**14.4 — `ui-fidelity-review` skill — PENDING.**
+Authoring location: `ia/skills/ui-fidelity-review/SKILL.md`. Phase shape:
+Bake → Inspect (14.1) → Walk (14.2) → Conformance (14.3) → Verify → Iterate.
+Emits Verification block per `verification-report` output style.
+
+**14.5 — Smoke run on pause-menu + info-panel — PENDING.**
+End-to-end through 14.1 → 14.2 → 14.3 → 14.4. Validate JSON shape +
+conformance row coverage. Adjust schemas if findings warrant.
+
+### Findings + decisions captured this session
+
+- **JsonUtility deserialization limitation.** Cannot bind
+  `Record<string, unknown>` (`interactives[].detail` in IR JSON). Workaround:
+  Conformance DTO subset omits `detail` field — checks don't need it.
+- **Read-only `SerializedObject` introspection pattern.** Construct
+  `new SerializedObject(component)`, walk `FindProperty`, format value, do
+  **not** call `ApplyModifiedProperties()`. Same shape used by `prefab_inspect`.
+- **WCAG contrast threshold.** Body text 4.5:1 used as the gate (matches
+  WCAG 2.x AA body-text rule). Larger text would justify 3:1 — not
+  differentiated by current check; conservative pass policy.
+- **PanelKind enum index → IR string mapping.** Enum order Modal=0,
+  Screen=1, Hud=2, Toolbar=3 (matches `tools/scripts/ir-schema.ts`
+  `PANEL_KINDS` array). `PanelKindEnumIdxToIrName` helper bakes this in.
+- **Caption indexing strategy.** Walk parent chain from ThemedLabel up to
+  nearest `ThemedPanel`; key IR labels by `{panelSlug}/{childSlug}` parallel
+  to `slot.children[]`/`slot.labels[]` arrays. Length-mismatch in IR is
+  treated as "no expected label" (skip).
+- **Contrast comparison pair.** Label color = palette `ramp[last]`. Panel
+  fill = panel-resolved palette `ramp[1]` (or `ramp[0]` if length<2).
+  Mirrors `ThemedPanel.ApplyTheme` selection rule.
+- **Color epsilon.** `1.5/255` per channel — covers TMP/Image color
+  rounding without false negatives on legitimate ramp drift.
+
+### Resume actions (paste-ready, in order)
+
+```
+1. Read Assets/Scripts/Editor/AgentBridgeCommandRunner.cs lines 175–192
+   + 1595–1610 (current shape).
+2. Edit line ~181: add ui_tree_walk-style case for claude_design_conformance.
+3. Edit line ~189: append , claude_design_conformance to error enumeration.
+4. Edit line ~1606: append claude_design_conformance_result field.
+5. Read tools/mcp-ia-server/src/tools/unity-bridge-command.ts (kind enum
+   block, descriptor prose block, envelope-mapping switch ~line 770,
+   UnityBridgeResponsePayload type).
+6. Apply MCP-side wiring per outstanding list above.
+7. Gate: tsc --noEmit + unity:compile-check + validate:mcp-descriptor-prose.
+8. Commit: feat(game-ui-design-system-stage-12): claude_design_conformance
+   bridge kind (14.3).
+9. Move to 14.4 (skill author) then 14.5 (smoke).
+```
+
+### Files touched / created (this session — uncommitted)
+
+- **NEW:** `Assets/Scripts/Editor/AgentBridgeCommandRunner.Conformance.cs`
+  (30,455 bytes, mtime 2026-04-30 13:23).
+- **No edits** yet to main partial or MCP server — wiring deferred to
+  resume.
+- **No commits** this session.
+

@@ -47,6 +47,7 @@ const unityBridgeCommandInputShape = {
       "catalog_preview",
       "prefab_inspect",
       "ui_tree_walk",
+      "claude_design_conformance",
       // ── MUTATION (Edit Mode only) — TECH-412 ─────────────────────────────
       // Component lifecycle
       "attach_component",
@@ -275,7 +276,7 @@ const unityBridgeCommandInputShape = {
   prefab_path: z
     .string()
     .optional()
-    .describe("instantiate_prefab: asset database path to the prefab (e.g. 'Assets/Prefabs/Foo.prefab')."),
+    .describe("instantiate_prefab + prefab_inspect + claude_design_conformance: prefab asset path (e.g. 'Assets/Prefabs/Foo.prefab')."),
   // Asset lifecycle
   type_name: z
     .string()
@@ -311,7 +312,7 @@ const unityBridgeCommandInputShape = {
   ir_path: z
     .string()
     .optional()
-    .describe("bake_ui_from_ir: repo-relative path to IR JSON from transcribe:cd-game-ui."),
+    .describe("bake_ui_from_ir / claude_design_conformance: repo-relative path to IR JSON from transcribe:cd-game-ui."),
   out_dir: z
     .string()
     .optional()
@@ -319,7 +320,7 @@ const unityBridgeCommandInputShape = {
   theme_so: z
     .string()
     .optional()
-    .describe("bake_ui_from_ir: repo-relative path to UiTheme ScriptableObject asset (default 'Assets/UI/Theme/DefaultUiTheme.asset')."),
+    .describe("bake_ui_from_ir + claude_design_conformance: UiTheme SO asset path (default 'Assets/UI/Theme/DefaultUiTheme.asset')."),
   // ── ui_tree_walk (Stage 12 Step 14.2) ───────────────────────────────────
   root_path: z
     .string()
@@ -333,6 +334,11 @@ const unityBridgeCommandInputShape = {
     .boolean()
     .default(false)
     .describe("ui_tree_walk: when true, include serialized field snapshot per component (same shape as prefab_inspect). Default false."),
+  // ── claude_design_conformance (Stage 12 Step 14.3) ──────────────────────
+  scene_root_path: z
+    .string()
+    .optional()
+    .describe("claude_design_conformance: scene-mode root GameObject name (mutex with prefab_path; exactly one required)."),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */
@@ -356,6 +362,31 @@ export const unityBridgeCommandInputSchema = z
           code: z.ZodIssueCode.custom,
           message: 'seed_cell is required for sorting_order_debug (e.g. "3,0").',
           path: ["seed_cell"],
+        });
+      }
+    }
+    if (data.kind === "claude_design_conformance") {
+      const hasPrefab = !!data.prefab_path?.trim();
+      const hasScene = !!data.scene_root_path?.trim();
+      if (hasPrefab === hasScene) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'claude_design_conformance requires exactly one of prefab_path or scene_root_path.',
+          path: ["prefab_path"],
+        });
+      }
+      if (!data.ir_path?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'ir_path is required for claude_design_conformance (e.g. "web/design-refs/step-1-game-ui/ir.json").',
+          path: ["ir_path"],
+        });
+      }
+      if (!data.theme_so?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'theme_so is required for claude_design_conformance (e.g. "Assets/UI/Theme/DefaultUiTheme.asset").',
+          path: ["theme_so"],
         });
       }
     }
@@ -434,6 +465,8 @@ export type UnityBridgeResponsePayload = {
     missing_script_count: number;
     canvases: UiTreeCanvas[];
   };
+  /** Populated for claude_design_conformance (Stage 12 Step 14.3) — IR + UiTheme conformance rows. */
+  claude_design_conformance_result?: ConformanceResult;
 };
 
 export type PrefabInspectField = {
@@ -500,6 +533,29 @@ export type UiTreeCanvas = {
   sort_order: number;
   is_active_in_hierarchy: boolean;
   root: UiTreeNode;
+};
+
+export type ConformanceRow = {
+  node_path: string;
+  component: string;
+  check_kind: "palette_ramp" | "font_face" | "frame_style" | "panel_kind" | "caption" | "contrast_ratio";
+  slug: string;
+  expected: string;
+  resolved: string;
+  actual: string;
+  severity: "info" | "warn" | "fail";
+  pass: boolean;
+  message: string;
+};
+
+export type ConformanceResult = {
+  ir_path: string;
+  theme_so: string;
+  target_kind: "prefab" | "scene";
+  target_path: string;
+  row_count: number;
+  fail_count: number;
+  rows: ConformanceRow[];
 };
 
 const getInputShape = {
@@ -764,6 +820,17 @@ function buildRequestEnvelope(
         root_path: input.root_path ?? "",
         active_only: input.active_only ?? true,
         include_serialized_fields: input.include_serialized_fields ?? false,
+      },
+    };
+  }
+  if (input.kind === "claude_design_conformance") {
+    return {
+      ...base,
+      params: {
+        ir_path: input.ir_path ?? "",
+        theme_so: input.theme_so ?? "",
+        prefab_path: input.prefab_path ?? "",
+        scene_root_path: input.scene_root_path ?? "",
       },
     };
   }
