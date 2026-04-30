@@ -58,6 +58,7 @@ import {
   registerCatalogPoolList,
   registerCatalogPoolUpsert,
 } from "./tools/catalog-pool-tools.js";
+import { registerCatalogReadTools, registerCatalogMutateTools } from "./tools/catalog-tools.js";
 import { registerIaDbReadTools } from "./tools/ia-db-reads.js";
 import { registerIaDbWriteTools } from "./tools/ia-db-writes.js";
 import { registerMasterPlanRenderTools } from "./tools/master-plan-render-tools.js";
@@ -79,6 +80,7 @@ import { registerStageClaimTools } from "./tools/stage-claim.js";
 import { registerClaimHeartbeatTools } from "./tools/claim-heartbeat.js";
 import { registerSectionCloseoutApply } from "./tools/section-closeout-apply.js";
 import { registerMasterPlanLockArch } from "./tools/master-plan-lock-arch.js";
+import { registerNextMigrationId } from "./tools/next-migration-id.js";
 
 // Bridge + compute tools
 import {
@@ -111,7 +113,7 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
  * master-plan-locate, master-plan-next-pending, plan-apply-validate,
  * runtime_state, plan-digest-verify-paths/resolve-anchor/render-literal/
  * scan-for-picks/lint/gate-author-helper/compile-stage-doc,
- * catalog_list/get/upsert, catalog_pool_list/get/upsert,
+ * catalog_list/get/upsert, catalog_spawn_pool_list/get/upsert,
  * task_state, stage_state, master_plan_state, task_spec_body,
  * task_spec_section, task_spec_search, stage_bundle, task_bundle
  * (8 DB-backed reads — Step 3 of ia-dev-db-refactor),
@@ -165,6 +167,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCatalogPoolList(server);
   registerCatalogPoolGet(server);
   registerCatalogPoolUpsert(server);
+  registerCatalogReadTools(server);
+  registerCatalogMutateTools(server);
   registerIaDbReadTools(server);
   registerIaDbWriteTools(server);
   registerMasterPlanRenderTools(server);
@@ -185,6 +189,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerClaimHeartbeatTools(server);
   registerSectionCloseoutApply(server);
   registerMasterPlanLockArch(server);
+  registerNextMigrationId(server);
 }
 
 /**

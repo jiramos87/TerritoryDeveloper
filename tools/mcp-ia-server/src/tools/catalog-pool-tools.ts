@@ -1,5 +1,5 @@
 /**
- * MCP tools: catalog_pool_list, catalog_pool_get, catalog_pool_upsert
+ * MCP tools: catalog_spawn_pool_list, catalog_spawn_pool_get, catalog_spawn_pool_upsert (spawn pool tables)
  * — spawn pool tables per migration 0012.
  */
 
@@ -98,7 +98,7 @@ export async function runCatalogPoolGet(input: z.infer<typeof poolGetSchema>): P
 }
 
 export async function runCatalogPoolUpsert(input: z.infer<typeof poolUpsertSchema>): Promise<unknown> {
-  checkCaller("catalog_pool_upsert", input.caller_agent);
+  checkCaller("catalog_spawn_pool_upsert", input.caller_agent);
   const pool = getIaDatabasePool();
   if (!pool) throw dbUnconfiguredError();
 
@@ -133,14 +133,14 @@ export async function runCatalogPoolUpsert(input: z.infer<typeof poolUpsertSchem
 
 export function registerCatalogPoolList(server: McpServer): void {
   server.registerTool(
-    "catalog_pool_list",
+    "catalog_spawn_pool_list",
     {
       description:
         "List **catalog_spawn_pool** rows (optional **owner_category** filter). Read-only; requires Postgres + migration **0012_catalog_spawn_pools.sql**.",
       inputSchema: poolListSchema,
     },
     async (args) =>
-      runWithToolTiming("catalog_pool_list", async () => {
+      runWithToolTiming("catalog_spawn_pool_list", async () => {
         const envelope = await wrapTool(async (input: z.infer<typeof poolListSchema>) => {
           try {
             return await runCatalogPoolList(input);
@@ -164,14 +164,14 @@ export function registerCatalogPoolList(server: McpServer): void {
 
 export function registerCatalogPoolGet(server: McpServer): void {
   server.registerTool(
-    "catalog_pool_get",
+    "catalog_spawn_pool_get",
     {
       description:
         "Load one **catalog_spawn_pool** by id plus **catalog_pool_member** rows for that pool. Read-only.",
       inputSchema: poolGetSchema,
     },
     async (args) =>
-      runWithToolTiming("catalog_pool_get", async () => {
+      runWithToolTiming("catalog_spawn_pool_get", async () => {
         const envelope = await wrapTool(async (input: z.infer<typeof poolGetSchema>) => {
           try {
             return await runCatalogPoolGet(input);
@@ -196,14 +196,14 @@ export function registerCatalogPoolGet(server: McpServer): void {
 
 export function registerCatalogPoolUpsert(server: McpServer): void {
   server.registerTool(
-    "catalog_pool_upsert",
+    "catalog_spawn_pool_upsert",
     {
       description:
         "**kind:spawn_pool** — upsert by **slug** (insert or update owner fields). **kind:pool_member** — upsert **(pool_id, asset_id)** weight. **caller_agent** required; gated like **catalog_upsert**.",
       inputSchema: poolUpsertSchema,
     },
     async (args) =>
-      runWithToolTiming("catalog_pool_upsert", async () => {
+      runWithToolTiming("catalog_spawn_pool_upsert", async () => {
         const envelope = await wrapTool(async (input: z.infer<typeof poolUpsertSchema>) => {
           try {
             return await runCatalogPoolUpsert(input);

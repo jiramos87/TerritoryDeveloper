@@ -81,9 +81,10 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`backlog_search`** | Keyword search across open / archived backlog issues. `query` (required), `scope` (`open` \| `archive` \| `all`, default `open`), `max_results` (1–50, default 10). Returns ranked results with `issue_id`, `title`, `type`, `status`, `section`, `score`, truncated `notes`. |
 | **`catalog_get`** | Composite **`GET`**-style read for one **`catalog_asset`** by id: asset + economy + **`sprite_slots`** (join **`catalog_sprite`**). Returns **`db_unconfigured`** / **`invalid_input`** (bad id / not found). |
 | **`catalog_list`** | Keyset-paginated list of **`catalog_asset`** rows. Default **`published`** only (optional **`include_draft`**, **`status`**, **`category`**, **`limit`**, **`cursor`**). Mirrors HTTP list semantics. |
-| **`catalog_pool_get`** | One **`catalog_spawn_pool`** row + **`catalog_pool_member`** rows for that pool. |
-| **`catalog_pool_list`** | List **`catalog_spawn_pool`** rows; optional **`owner_category`** filter. |
-| **`catalog_pool_upsert`** | **`kind:spawn_pool`** upserts by **`slug`**; **`kind:pool_member`** upserts **`(pool_id, asset_id)`** weight. Requires **`caller_agent`** (allowlist: **`ship-stage`**, **`stage-file`**, **`project-new`**, **`closeout`**). |
+| **`catalog_spawn_pool_get`** | One **`catalog_spawn_pool`** row + **`catalog_pool_member`** rows for that pool. |
+| **`catalog_spawn_pool_list`** | List **`catalog_spawn_pool`** rows; optional **`owner_category`** filter. |
+| **`catalog_spawn_pool_upsert`** | **`kind:spawn_pool`** upserts by **`slug`**; **`kind:pool_member`** upserts **`(pool_id, asset_id)`** weight. Requires **`caller_agent`** (allowlist: **`ship-stage`**, **`stage-file`**, **`project-new`**, **`closeout`**). |
+| **`catalog_bulk_action`** | Bulk retire / restore / publish for a list of **`entity_ids`** (1–1000). `action` required (`retire` \| `restore` \| `publish`). Returns per-entity results with `affected` count. |
 | **`catalog_upsert`** | **`mode:create`** inserts asset + economy + sprite binds; **`mode:patch`** optimistic-lock patch (**`updated_at`**). Requires **`caller_agent`** (same allowlist as **`catalog_pool_upsert`**). |
 | **`invariant_preflight`** | Composite context tool: given `issue_id`, bundles invariants + router matches + relevant spec sections in one call. Infers domains from issue **Files**; fetches up to 6 spec sections (800 chars each). |
 | **`findobjectoftype_scan`** | Static regex scan of C# files for `FindObjectOfType` / `FindObjectsOfType` in `Update` / `LateUpdate` / `FixedUpdate` methods. Optional `path` (default `Assets/Scripts/`). Returns `violation_count` + `violations[]` (`file`, `line`, `method`, `snippet`). |

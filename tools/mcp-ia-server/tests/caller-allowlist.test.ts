@@ -55,8 +55,8 @@ test("catalog_upsert — ship-stage allowed; random caller rejected", () => {
   );
 });
 
-test("catalog_pool_upsert — stage-file allowed", () => {
-  assert.doesNotThrow(() => checkCaller("catalog_pool_upsert", "stage-file"));
+test("catalog_spawn_pool_upsert — stage-file allowed", () => {
+  assert.doesNotThrow(() => checkCaller("catalog_spawn_pool_upsert", "stage-file"));
 });
 
 test("undefined caller_agent — throws unauthorized_caller mentioning <missing>", () => {

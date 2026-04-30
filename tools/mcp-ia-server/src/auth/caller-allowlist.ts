@@ -79,7 +79,7 @@ export const ALLOWLIST: Record<string, readonly string[]> = {
     "project-new",
     "ship-stage",
   ],
-  catalog_pool_upsert: [
+  catalog_spawn_pool_upsert: [
     "closeout",
     "stage-file",
     "project-new",
