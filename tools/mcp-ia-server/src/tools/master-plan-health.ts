@@ -50,6 +50,7 @@ export interface MasterPlanHealthRow {
   missing_arch_surfaces: string[];
   drift_events_open: number;
   sibling_collisions: string[];
+  arch_drift_scan_p95_ms: number | null;
   refreshed_at: string;
   last_verify_at: string | null;
 }
@@ -65,6 +66,7 @@ export interface MasterPlanHealthPayload {
   missing_arch_surfaces?: string[];
   drift_events_open?: number;
   sibling_collisions?: string[];
+  arch_drift_scan_p95_ms?: number | null;
   refreshed_at?: string;
   last_verify_at?: string | null;
 }
@@ -118,6 +120,7 @@ interface HealthMvRow {
   missing_arch_surfaces: string[];
   drift_events_open: number;
   sibling_collisions: string[];
+  arch_drift_scan_p95_ms: number | null;
   refreshed_at: Date | string;
 }
 
@@ -139,6 +142,7 @@ function rowToPayload(
     missing_arch_surfaces: r.missing_arch_surfaces ?? [],
     drift_events_open: r.drift_events_open,
     sibling_collisions: r.sibling_collisions ?? [],
+    arch_drift_scan_p95_ms: r.arch_drift_scan_p95_ms ?? null,
     refreshed_at: toIso(r.refreshed_at),
     last_verify_at: lastVerifyAt,
   };
@@ -163,6 +167,7 @@ export async function getMasterPlanHealth(
       `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
               oldest_in_progress_age_days,
               missing_arch_surfaces, drift_events_open, sibling_collisions,
+              arch_drift_scan_p95_ms,
               refreshed_at
          FROM ia_master_plan_health
         WHERE slug = $1`,
@@ -174,6 +179,7 @@ export async function getMasterPlanHealth(
     `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
             oldest_in_progress_age_days,
             missing_arch_surfaces, drift_events_open, sibling_collisions,
+            arch_drift_scan_p95_ms,
             refreshed_at
        FROM ia_master_plan_health
       ORDER BY slug ASC`,
@@ -200,7 +206,8 @@ export function registerMasterPlanHealth(server: McpServer): void {
         "Per-slug payload shape: " +
         "`{slug, n_stages, n_done, n_in_progress, n_pending, " +
         "oldest_in_progress_age_days, missing_arch_surfaces, " +
-        "drift_events_open, sibling_collisions, refreshed_at, last_verify_at}`. " +
+        "drift_events_open, sibling_collisions, arch_drift_scan_p95_ms, " +
+        "refreshed_at, last_verify_at}`. " +
         "Replaces hand-written cross-plan audit doc workflow. " +
         "Schema-cache restart required after adding this tool (N4): " +
         "restart Claude Code or run `tsx tools/mcp-ia-server/src/index.ts`.",

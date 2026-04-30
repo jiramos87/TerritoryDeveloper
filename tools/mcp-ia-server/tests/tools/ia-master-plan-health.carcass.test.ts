@@ -16,6 +16,7 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
+import { getMasterPlanHealth } from "../../src/tools/master-plan-health.js";
 import {
   seedCarcassHealthFixture,
   teardownCarcassHealthFixture,
@@ -136,6 +137,16 @@ describe("ia_master_plan_health — carcass_done flip (TECH-4624)", skip, () => 
     assert.equal(final.carcass_done, true, "final carcass_done must be true");
     assert.equal(final.n_carcass, 2);
     assert.equal(final.n_carcass_done, 2);
+  });
+
+  it("master-plan-health: arch_drift_scan_p95_ms field present in tool payload (null tolerated pre-bench)", async () => {
+    if (!pool) return;
+    const rows = await getMasterPlanHealth(CARCASS_FIXTURE_SLUG);
+    assert.ok(rows.length > 0, "expected MV row for fixture slug");
+    assert.ok(
+      "arch_drift_scan_p95_ms" in rows[0]!,
+      "arch_drift_scan_p95_ms missing from getMasterPlanHealth() payload (mig 0055)",
+    );
   });
 
   it("legacy edge case — zero-carcass plan: carcass_done IS NULL", async () => {

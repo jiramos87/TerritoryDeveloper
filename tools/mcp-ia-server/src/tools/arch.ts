@@ -444,9 +444,11 @@ export async function runArchDriftScan(
 
     const cutoff = st.last_pending_flip_ts ?? st.plan_created_at;
     const driftSql = `
-      SELECT cl.surface_slug, cl.decision_slug, cl.kind, cl.created_at::text AS ts
+      SELECT cl.surface_slug, cl.decision_slug, cl.kind, cl.created_at::text AS ts,
+             ad.status AS decision_status
         FROM stage_arch_surfaces sas
         JOIN arch_changelog cl ON cl.surface_slug = sas.surface_slug
+   LEFT JOIN arch_decisions ad ON ad.slug = cl.decision_slug
        WHERE sas.slug = $1
          AND sas.stage_id = $2
          AND cl.created_at > $3
@@ -461,7 +463,10 @@ export async function runArchDriftScan(
       decision_slug: string | null;
       kind: string;
       ts: string;
+      decision_status?: string | null;
     }>) {
+      // DEC-A17: suppress drift events for superseded arch_decisions rows
+      if (dr.decision_slug && dr.decision_status === "superseded") continue;
       const drift: DriftSurface = {
         slug: dr.surface_slug,
         changelog_kind: dr.kind,
@@ -503,6 +508,7 @@ export async function runArchDriftScan(
       drifted_surfaces.push(drift);
       suggested_questions.push(shapeQuestion(st.stage_id, drift, dr.decision_slug));
     }
+    if (drifted_surfaces.length === 0) continue;
     const entry: AffectedStage = {
       slug: st.slug,
       stage_id: st.stage_id,

@@ -5,7 +5,7 @@
  * and returns canned rows. No real DB / git required.
  */
 
-import test from "node:test";
+import test, { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 import {
@@ -15,6 +15,7 @@ import {
   runArchDriftScan,
   runArchChangelogSince,
 } from "../../src/tools/arch.js";
+import { getIaDatabasePool } from "../../src/ia-db/pool.js";
 
 interface Recorded {
   sql: string;
@@ -377,4 +378,91 @@ test("arch_changelog_since: empty result → {entries: []}", async () => {
   const { pool } = makeStubPool([{ rows: [] }]);
   const out = await runArchChangelogSince(pool, { since_ts: "2026-04-01T00:00:00Z" });
   assert.deepEqual(out, { entries: [] });
+});
+
+// ---------------------------------------------------------------------------
+// arch_drift_scan — intra-plan: cross-section (TECH-5246)
+// ---------------------------------------------------------------------------
+
+test("arch_drift_scan: intra-plan flags cross-section surface edit with both section_ids", async () => {
+  const oldCutoff = new Date("2026-01-01T00:00:00Z");
+  const futureCutoff = new Date("2026-12-31T00:00:00Z");
+  const planCreatedAt = new Date("2026-01-01T00:00:00Z");
+
+  const { pool } = makeStubPool([
+    // stageSql: two stages in different sections
+    {
+      rows: [
+        { slug: "pcr-xsec", stage_id: "1.1", section_id: "section-a", plan_created_at: planCreatedAt, last_pending_flip_ts: oldCutoff },
+        { slug: "pcr-xsec", stage_id: "2.1", section_id: "section-b", plan_created_at: planCreatedAt, last_pending_flip_ts: futureCutoff },
+      ],
+    },
+    // driftSql for stage 1.1: drift on shared-surf (decision_status absent → not filtered)
+    { rows: [{ surface_slug: "shared-surf", decision_slug: null, kind: "edit", ts: "2026-04-10T00:00:00Z" }] },
+    // intra-plan xs for stage 1.1: cross-section link to section-b
+    { rows: [{ section_id: "section-b", stage_id: "2.1" }] },
+    // driftSql for stage 2.1: future cutoff → no changelog entries after it
+    { rows: [] },
+  ]);
+
+  const out = await runArchDriftScan(pool, { plan_id: "pcr-xsec", scope: "intra-plan" });
+
+  assert.equal(out.affected_stages.length, 1);
+  assert.equal(out.affected_stages[0].stage_id, "1.1");
+  assert.equal(out.affected_stages[0].section_id, "section-a");
+  assert.equal(out.affected_stages[0].drifted_surfaces.length, 1);
+  const xlinks = out.affected_stages[0].drifted_surfaces[0].cross_section_links;
+  assert.ok(Array.isArray(xlinks) && xlinks.length === 1, "expected cross_section_links with 1 entry");
+  assert.equal(xlinks![0].section_id, "section-b");
+});
+
+// ---------------------------------------------------------------------------
+// arch_drift_scan — edge cases (TECH-5247)
+// ---------------------------------------------------------------------------
+
+test("arch_drift_scan: intra-plan with empty stage_arch_surfaces returns zero drift events", async () => {
+  const { pool } = makeStubPool([
+    // stageSql: one stage with no linked surfaces (driftSql returns [] because no JOIN match)
+    { rows: [{ slug: "pcr-empty", stage_id: "1.1", section_id: "sec-a", plan_created_at: new Date(), last_pending_flip_ts: null }] },
+    { rows: [] }, // driftSql: zero rows
+  ]);
+  const out = await runArchDriftScan(pool, { plan_id: "pcr-empty", scope: "intra-plan" });
+  assert.deepEqual(out, { affected_stages: [] });
+});
+
+test("arch_drift_scan: intra-plan skips drift for superseded arch_decisions row (DEC-A17)", async () => {
+  const { pool } = makeStubPool([
+    { rows: [{ slug: "pcr-sup", stage_id: "1.1", section_id: "sec-a", plan_created_at: new Date("2026-01-01T00:00:00Z"), last_pending_flip_ts: new Date("2026-01-01T00:00:00Z") }] },
+    // driftSql: one decide-kind row whose decision is superseded
+    { rows: [{ surface_slug: "sup-surf", decision_slug: "DEC-ASUP", kind: "decide", ts: "2026-04-10T00:00:00Z", decision_status: "superseded" }] },
+    // xs query never reached (loop hits continue before intra-plan block)
+  ]);
+  const out = await runArchDriftScan(pool, { plan_id: "pcr-sup", scope: "intra-plan" });
+  assert.deepEqual(out, { affected_stages: [] });
+});
+
+test("arch_drift_scan: intra-plan idempotent re-scan returns identical events and writes no new rows", async () => {
+  const cutoff = new Date("2026-01-01T00:00:00Z");
+  const stageRow = { slug: "pcr-idemp", stage_id: "1.1", section_id: "sec-a", plan_created_at: cutoff, last_pending_flip_ts: cutoff };
+  const driftRow = { surface_slug: "idem-surf", decision_slug: null, kind: "edit", ts: "2026-04-10T00:00:00Z" };
+  const xsRow = { section_id: "sec-b", stage_id: "2.1" };
+
+  const { pool, calls } = makeStubPool([
+    // first call
+    { rows: [stageRow] },
+    { rows: [driftRow] },
+    { rows: [xsRow] },
+    // second call
+    { rows: [stageRow] },
+    { rows: [driftRow] },
+    { rows: [xsRow] },
+  ]);
+
+  const input = { plan_id: "pcr-idemp", scope: "intra-plan" as const };
+  const out1 = await runArchDriftScan(pool, input);
+  const out2 = await runArchDriftScan(pool, input);
+
+  assert.deepEqual(out1, out2);
+  const insertCalls = calls.filter((c) => /insert/i.test(c.sql));
+  assert.equal(insertCalls.length, 0, "arch_drift_scan must not write to arch_changelog");
 });
