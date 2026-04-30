@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using TMPro;
 using Territory.UI;
 using Territory.UI.Juice;
 using Territory.UI.StudioControls;
 using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
+using Territory.UI.Themed.Renderers;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;

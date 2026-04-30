@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Territory.UI;
+using Territory.UI.Modals;
+using Territory.UI.StudioControls;
+using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
+using Territory.UI.Themed.Renderers;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
