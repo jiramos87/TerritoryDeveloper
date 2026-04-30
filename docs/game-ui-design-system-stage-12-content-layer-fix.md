@@ -1533,10 +1533,15 @@ Outstanding 14.3 wiring (mechanical — see "Resume actions" below):
 5. Run gates: `npx --prefix tools/mcp-ia-server tsc --noEmit -p tools/mcp-ia-server`,
    `npm run unity:compile-check`, `npm run validate:mcp-descriptor-prose`.
 
-**14.4 — `ui-fidelity-review` skill — PENDING.**
-Authoring location: `ia/skills/ui-fidelity-review/SKILL.md`. Phase shape:
-Bake → Inspect (14.1) → Walk (14.2) → Conformance (14.3) → Verify → Iterate.
-Emits Verification block per `verification-report` output style.
+**14.4 — `ui-fidelity-review` skill — DONE (commit pending).**
+Lives at `ia/skills/ui-fidelity-review/SKILL.md` (~165 lines). Phase shape:
+Preflight (0) → Bake (1) → Inspect (2, 14.1) → Walk (3, 14.2) → Conformance
+(4, 14.3) → Verify (5) → Iterate (6, MAX_ITERATIONS=2). Wraps `bake_ui_from_ir`
++ `prefab_inspect` + `ui_tree_walk` + `claude_design_conformance` bridge kinds.
+Emits Verification block per `verification-report` output style. `tools_role:
+custom` + `tools_extra: []` — surfaceless skill (no `.claude/agents` /
+`.claude/commands` rendered, invoked via Skill tool on `/ui-fidelity-review`).
+`validate:skill-drift` clean (48 skills, 0 errors).
 
 **14.5 — Smoke run on pause-menu + info-panel — PENDING.**
 End-to-end through 14.1 → 14.2 → 14.3 → 14.4. Validate JSON shape +
