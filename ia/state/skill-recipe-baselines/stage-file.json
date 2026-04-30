@@ -7,16 +7,16 @@
     "sizing",
     "pending_q",
     "manifest_resolve",
-    "materialize",
-    "progress"
+    "materialize"
   ],
-  "captured_at": "2026-04-30T17:47:26.291Z",
-  "hash": "521d7f377bed7d33",
+  "captured_at": "2026-04-30T20:58:01.209Z",
+  "hash": "88629553d1da52fb",
   "recipe_step_ids": [
     "mode_detect",
     "lifecycle_ctx",
     "stage",
     "plan",
+    "surface_path_verify",
     "cardinality",
     "sizing",
     "pending_q",

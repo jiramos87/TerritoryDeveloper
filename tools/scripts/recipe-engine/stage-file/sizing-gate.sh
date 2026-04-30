@@ -40,15 +40,9 @@ fi
 stage_norm="${stage_id#Stage }"
 stage_norm="${stage_norm// /}"
 
-task_count_query=$(cat <<SQL
-SELECT COUNT(*)
-  FROM ia_tasks
- WHERE slug = '${slug//\'/\'\'}'
-   AND stage_id = '${stage_norm//\'/\'\'}'
-   AND status IN ('pending','draft');
-SQL
-)
-task_count=$(psql "$DATABASE_URL" -tAc "$task_count_query" 2>/dev/null | tr -d '[:space:]' || true)
+slug_safe="${slug//\'/\'\'}"
+stage_safe="${stage_norm//\'/\'\'}"
+task_count=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM ia_tasks WHERE slug = '${slug_safe}' AND stage_id = '${stage_safe}' AND status IN ('pending','draft')" 2>/dev/null | tr -d '[:space:]' || true)
 
 if [[ "$task_count" -gt 8 ]]; then
   echo "sizing=FAIL H1 task_count=${task_count} > 8 — split Stage ${stage_norm} via /stage-decompose" >&2

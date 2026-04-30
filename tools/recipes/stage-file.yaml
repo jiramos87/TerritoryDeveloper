@@ -55,6 +55,15 @@ steps:
     args:
       slug: ${inputs.slug}
 
+  - id: surface_path_verify
+    description: Phase 2.2b — warn-only path check on Relevant surfaces. Catches ghost paths before spec stubs inherit them. Non-blocking.
+    gate: surface:path-verify
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      paths: ${stage.relevant_surfaces}
+    when: ${stage.relevant_surfaces}
+
   - id: cardinality
     description: Phase 2.3 — gate on ≥2 pending tasks. PAUSE → subagent confirms with user.
     bash: tools/scripts/recipe-engine/stage-file/cardinality-gate.sh

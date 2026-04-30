@@ -214,16 +214,6 @@ Orchestrator: [`ia/projects/db-lifecycle-extensions/index.md`](projects/db-lifec
 
 ### Stage 1 — Mechanical fillers
 
-- [ ] **TECH-6951 — Wire seams_run MCP dispatch to plan-covered Task subagent**
-
-- [ ] **TECH-6952 — Replace phase_b_no_dispatch stub in seam.ts step**
-
-- [ ] **TECH-6953 — Define align-arch-decision seam input/output schema**
-
-- [ ] **TECH-6954 — Update test fixtures for live dispatch path**
-
-- [ ] **TECH-6955 — Q5 escalate-no-auto-retry handoff smoke test**
-
 ## IA evolution lane
 
 Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **TECH-552** (Unity Agent Bridge program — MCP + Editor queue hardening / transport / depth tiers per [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §10). **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
@@ -292,41 +282,8 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
-- [ ] **TECH-6956 — Establish prose-path baseline from ia_session_log**
-  - Acceptance — Baseline JSON persisted under `ia/state/baselines/recipe-runner-phase-e-prose-baseline.json`.
-  - Spec — [`ia/projects/TECH-6956.md`](ia/projects/TECH-6956.md)
 
-- [ ] **TECH-6957 — Dogfood stage-authoring recipe on Section A tasks**
-  - Acceptance — `ia_recipe_runs.status=ok` per run + token totals captured.
-  - Spec — [`ia/projects/TECH-6957.md`](ia/projects/TECH-6957.md)
 
-- [ ] **TECH-6958 — Dogfood stage-decompose recipe on skeleton stage(s)**
-  - Acceptance — `seam.decompose-skeleton-stage` live-dispatches.
-  - Spec — [`ia/projects/TECH-6958.md`](ia/projects/TECH-6958.md)
-
-- [ ] **TECH-6959 — Token-drop SQL gate + cache-hit-rate delta**
-  - Acceptance — Cache-hit-rate delta from Tier 1 fingerprint metrics logged in stage closeout digest.
-  - Spec — [`ia/projects/TECH-6959.md`](ia/projects/TECH-6959.md)
-
-- [ ] **TECH-6960 — Author validate:skill-recipe-drift script (P1+P2)** — New `tools/scripts/skill-tools/validate-skill-recipe-drift.ts`: walks recipified skills (`ia/skills/{name}/SKILL.md` + `.claude/agents/{name}.md`); cross-checks against `ia/recipes/{name}.yaml` step list.
-  - Acceptance — Script walks recipified skills + cross-checks `ia/recipes/{name}.yaml` step list. Exit non-zero on divergence.
-  - Spec — [`ia/projects/TECH-6960.md`](ia/projects/TECH-6960.md)
-
-- [ ] **TECH-6961 — Per-skill baseline snapshot pass** — New `tools/scripts/skill-tools/snapshot-baseline.ts`: captures pre-Day-1 hash per recipified skill under `ia/state/skill-recipe-baselines/{skill}.json`.
-  - Acceptance — Capture per-skill hash → `ia/state/skill-recipe-baselines/{skill}.json`. Drift gate diffs against baseline.
-  - Spec — [`ia/projects/TECH-6961.md`](ia/projects/TECH-6961.md)
-
-- [ ] **TECH-6962 — P3 recipe_version DB migration (additive)** — New `db/migrations/0056_recipe_version.sql`: `ALTER TABLE ia_recipe_runs ADD COLUMN recipe_version int NOT NULL DEFAULT 1`.
-  - Acceptance — Migration adds `recipe_version int NOT NULL DEFAULT 1` to `ia_recipe_runs`. Column-add only — no invariant-13 risk.
-  - Spec — [`ia/projects/TECH-6962.md`](ia/projects/TECH-6962.md)
-
-- [ ] **TECH-6963 — P3 recipe YAML schema + engine field-read** — Add `recipe_version: 1` field to recipe YAML schema in `tools/recipe-engine/src/schema.ts`. Engine reads field; unknown future fields ignored on older versions; emit on `ia_recipe_runs` insert.
-  - Acceptance — Schema accepts `recipe_version: 1`. Engine reads field; emits on `ia_recipe_runs` insert. Unknown future fields ignored on older versions.
-  - Spec — [`ia/projects/TECH-6963.md`](ia/projects/TECH-6963.md)
-
-- [ ] **TECH-6964 — Wire validate:skill-recipe-drift into validate:all** — Edit `package.json` `scripts.validate:all` to invoke `validate:skill-recipe-drift`. Run end-to-end; confirm CI red on hand-edit + green on recipe-only edit.
-  - Acceptance — `validate:all` chain invokes `validate:skill-recipe-drift`. CI red on hand-edit. Green on recipe-only edit.
-  - Spec — [`ia/projects/TECH-6964.md`](ia/projects/TECH-6964.md)
 
 ## Architecture coherence program
 
@@ -388,6 +345,20 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Notes: Add three rows to `ia/specs/glossary.md`: `UiTheme token ring` (extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). Each row cites `ia/specs/ui-design-system.md` §1 / §1.5 per terminology-consistency rule. Stage 1.1 T1.1.5 of `ia/projects/ui-polish-master-plan.md`. Locks vocabulary downstream steps reference.
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
+
+- [ ] **TECH-7681** — **UiTheme catalog-shape fields** — extend UiTheme w/ frame-style + font-face + motion-preset arrays
+  - Type: technical / UI infrastructure
+  - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`; `Assets/UI/Theme/DefaultUiTheme.asset`
+  - Notes: Add `[Serializable]` nested classes `FrameStyleSpec`, `FontFaceSpec`, `MotionPresetSpec` to `UiTheme.cs` w/ catalog-shape fields mirroring future `catalog_token_*` row schema (token name, palette indices, slice metadata, baseline grid, motion duration + easing). Expose `public FrameStyleSpec[] frameStyles`, `public FontFaceSpec[] fontFaces`, `public MotionPresetSpec[] motionPresets` + lookup methods `GetFrameStyle(string)`, `GetFontFace(string)`, `GetMotionPreset(string)`. Populate `Assets/UI/Theme/DefaultUiTheme.asset` w/ first-pass entries (default frame, default body font, default fade-in motion). Catalog-shape forward-compat: field names match `catalog_token_*` schema so asset-pipeline Stage 19.3 `wire_asset_from_catalog` resolver lifts unchanged. Stage 1.1 T1.1.1 of `ui-visual-fidelity-layer` master plan.
+  - Acceptance: `FrameStyleSpec` + `FontFaceSpec` + `MotionPresetSpec` nested classes present w/ catalog-shape fields; `UiTheme` exposes 3 arrays + 3 `Get*` lookup methods; `DefaultUiTheme.asset` carries first-pass entries; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: none (stage-internal: TECH-7682 consumes field names as IR detail keys)
+
+- [ ] **TECH-7682** — **IR schema archetype + detail extensions** — carry frameStyle / fontFace / motion refs on UI archetypes
+  - Type: technical / IR schema
+  - Files: `tools/scripts/ir-schema.ts`; `web/design-refs/step-1-game-ui/ir.json`
+  - Notes: Extend IR archetype enum + detail JSON shape in `tools/scripts/ir-schema.ts` to carry optional `frameStyle: string` on `panel` + `button` archetypes, optional `fontFace: string` on `text`, optional `motion: { preset: string, on: 'enter' | 'exit' | 'press' }` across interactive archetypes. Validator rows must reject unknown style / face names against UiTheme registry (build-time check) + warn on missing motion presets. Round-trip `web/design-refs/step-1-game-ui/ir.json` against extended schema — must validate clean. Stage 1.1 T1.1.2 of `ui-visual-fidelity-layer` master plan.
+  - Acceptance: IR archetype enum extended w/ optional `frameStyle` / `fontFace` / `motion` fields per archetype; validator rejects unknown style names; validator warns on unknown motion preset; `web/design-refs/step-1-game-ui/ir.json` validates clean; `npm run validate:all` green.
+  - Depends on: TECH-7681 (UiTheme catalog-shape fields — IR detail keys mirror UiTheme spec field names)
 
 ## Economic depth lane
 

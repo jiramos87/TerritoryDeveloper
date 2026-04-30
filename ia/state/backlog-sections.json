@@ -673,6 +673,24 @@
           "id": "TECH-6964",
           "checklist_line": "- [ ] **TECH-6964 — Wire validate:skill-recipe-drift into validate:all** — Edit `package.json` `scripts.validate:all` to invoke `validate:skill-recipe-drift`. Run end-to-end; confirm CI red on hand-edit + green on recipe-only edit.",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6968",
+          "checklist_line": "Recipe-parity audit + body trim for stage-authoring",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6969",
+          "checklist_line": "Live-dispatch seam.author-plan-digest",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6970",
+          "checklist_line": "Token-drop measurement contribution to C2 gate",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -1082,6 +1100,18 @@
           "type": "issue",
           "id": "TECH-4189",
           "checklist_line": "- [ ] **TECH-4189 — Game UI Stage 8 T8.6 — Scene wiring + modal-stack integration + parity test** — Place `InfoPanel.prefab` + `PauseMenu.prefab` + `SettingsScreen.prefab` + `SaveLoadScreen.prefab` + `NewGameScreen.prefab` into `MainScene.unity` under scene-level `UI Canvas` GameObject (Stage 10 T10.4 — distinct from `Game Managers` / `World` parents) via `set_gameobject_parent` bridge mutations. Attach `InfoPanelDataAdapter` + `PauseMenuDataAdapter` + `SettingsScreenDataAdapter` + `SaveLoadScreenDataAdapter` + `NewGameScreenDataAdapter` MonoBehaviours; bind producer slots (`DetailsPopupController` / `MainMenuController` / `GameSaveManager` / settings-state surface refs) and consumer arrays (ThemedLabel[] / ThemedButton[] / ThemedSlider[] / ThemedToggle[] / ThemedList) via `assign_serialized_field` bridge mutations. Extend `UIManager.PopupStack.cs` `PopupType` enum with new entries (`InfoPanel`, `PauseMenu`, `SettingsScreen`, `SaveLoadScreen`, `NewGameScreen`) — or planner-picked sealed-via-shim — so each baked modal registers via `RegisterPopupOpened` + closes via existing `ClosePopup` switch + Esc close-last-first path. Modal blocker (input capture / focus) sealed per planner pass — `EventSystem` interplay validated (full-screen GraphicRaycaster pass-through deny vs per-modal `Selectable` focus). Decommission legacy modal/screen GameObjects from `MainScene.unity` once parity green. Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`. PlayMode parity test under `Assets/Scripts/Tests/UI/Modals/` (single combined test or per-surface per planner pass): each modal opens via legacy trigger, commits values to legacy persistence (settings round-trip via `PlayerPrefs`, save-load via `GameSaveManager` round-trip, new-game via `MainMenuController` flow), closes preserving `popupStack` ordering. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7681",
+          "checklist_line": "- [ ] **TECH-7681** — **UiTheme catalog-shape fields** — extend UiTheme w/ frame-style + font-face + motion-preset arrays",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-7682",
+          "checklist_line": "- [ ] **TECH-7682** — **IR schema archetype + detail extensions** — carry frameStyle / fontFace / motion refs on UI archetypes",
           "trailing_blanks": 1
         }
       ]

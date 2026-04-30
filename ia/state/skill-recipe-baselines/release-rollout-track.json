@@ -5,7 +5,7 @@
     "changelog_append",
     "handoff"
   ],
-  "captured_at": "2026-04-30T17:47:26.284Z",
+  "captured_at": "2026-04-30T20:58:01.203Z",
   "hash": "e8be231bfd9450bc",
   "recipe_step_ids": [
     "validate_row",

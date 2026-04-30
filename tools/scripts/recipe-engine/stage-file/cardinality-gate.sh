@@ -33,15 +33,9 @@ fi
 stage_norm="${stage_id#Stage }"
 stage_norm="${stage_norm// /}"
 
-count_query=$(cat <<SQL
-SELECT COUNT(*)
-  FROM ia_tasks
- WHERE slug = '${slug//\'/\'\'}'
-   AND stage_id = '${stage_norm//\'/\'\'}'
-   AND status = 'pending';
-SQL
-)
-pending=$(psql "$DATABASE_URL" -tAc "$count_query" 2>/dev/null | tr -d '[:space:]' || true)
+slug_safe="${slug//\'/\'\'}"
+stage_safe="${stage_norm//\'/\'\'}"
+pending=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM ia_tasks WHERE slug = '${slug_safe}' AND stage_id = '${stage_safe}' AND status = 'pending'" 2>/dev/null | tr -d '[:space:]' || true)
 
 if [[ "$pending" -ge 2 ]]; then
   echo "cardinality=PASS pending=${pending}"

@@ -88,6 +88,7 @@
     "verify:post-implementation": "npm run verify:local",
     "backfill:arch-surfaces": "node tools/scripts/backfill-arch-surfaces.mjs",
     "progress": "node tools/progress-tracker/index.mjs",
+    "surface:path-verify": "node tools/scripts/surface-path-verify.mjs",
     "deploy:web": "bash tools/scripts/vercel-deploy.sh",
     "deploy:web:preview": "bash tools/scripts/vercel-deploy.sh --preview",
     "validate:e2e": "npm --prefix web run test:e2e:ci",
