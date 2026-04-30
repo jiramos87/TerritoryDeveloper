@@ -126,9 +126,9 @@ Returns `response.claude_design_conformance_result`:
 
 Six check kinds emitted: `palette_ramp`, `font_face`, `frame_style`, `panel_kind`, `caption`, `contrast_ratio`.
 
-Severity scale: `info` (deferred; e.g. font_face runtime fontAsset), `warn` (drift but acceptable; e.g. caption mismatch under length-skip), `fail` (gate-blocking; e.g. palette ramp mismatch, contrast < 4.5:1).
+Severity scale: `info` (deferred / read-only metadata; e.g. font_face binding, frame_style binding — always `pass=true`), `error` (gate-blocking; e.g. palette ramp mismatch, panel_kind enum drift, caption mismatch, contrast < 4.5:1 — `pass=false`).
 
-Pass policy: `fail_count == 0` over rows where `severity ∈ { fail }`. Warns logged; do not gate on warns.
+Pass policy: gate on `fail_count == 0` (server-computed: count where `pass == false`, which always equals `severity == "error"`). Info rows logged but never gate.
 
 ### 5. Verify — emit Verification block
 

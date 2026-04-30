@@ -1543,9 +1543,27 @@ custom` + `tools_extra: []` — surfaceless skill (no `.claude/agents` /
 `.claude/commands` rendered, invoked via Skill tool on `/ui-fidelity-review`).
 `validate:skill-drift` clean (48 skills, 0 errors).
 
-**14.5 — Smoke run on pause-menu + info-panel — PENDING.**
-End-to-end through 14.1 → 14.2 → 14.3 → 14.4. Validate JSON shape +
-conformance row coverage. Adjust schemas if findings warrant.
+**14.5 — Smoke run on pause-menu + info-panel — DONE (commit pending).**
+Direct-DB harness `tools/scripts/smoke-uifid.mjs` enqueues
+`agent_bridge_job` rows (bypasses MCP cache stale on new kinds, same
+envelope shape as `buildRequestEnvelope`). Both prefabs ran end-to-end
+(`prefab_inspect` → `claude_design_conformance`) against
+`Assets/UI/Theme/DefaultUiTheme.asset` + `web/design-refs/step-1-game-ui/ir.json`.
+
+| Surface | Nodes | Components | Conf rows | Fails | Check kinds | Severity |
+|---|---|---|---|---|---|---|
+| pause-menu | 13 | 59 | 14 | 7 | palette_ramp×7, panel_kind×1, frame_style×6 | error×7, info×7 |
+| info-panel | 17 | 52 | 15 | 8 | palette_ramp×7, panel_kind×1, caption×1, contrast_ratio×6 | error×8, info×7 |
+
+Schema findings (skill prose realigned):
+- Severity vocabulary is `error` / `info` (not `fail` / `warn` / `info`).
+- `pass=false` ⟺ `severity="error"` 1:1 — gate on `fail_count == 0`
+  (server-computed, equivalent to filter `pass=false`). Info rows
+  metadata-only (font_face binding, frame_style binding) — never gate.
+- `node_path` is `""` for top-level ThemedPanel root — formatter could
+  emit canonical slug; deferred (cosmetic).
+- All six declared check kinds reachable across two surfaces; coverage
+  validated.
 
 ### Findings + decisions captured this session
 
