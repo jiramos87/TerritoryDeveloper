@@ -1,0 +1,18 @@
+{
+  "agent_step_refs": [
+    "validate_row",
+    "cell_flip",
+    "changelog_append",
+    "handoff"
+  ],
+  "captured_at": "2026-04-30T17:47:26.284Z",
+  "hash": "e8be231bfd9450bc",
+  "recipe_step_ids": [
+    "validate_row",
+    "cell_flip",
+    "changelog_append",
+    "handoff"
+  ],
+  "skill_phase_ids": [],
+  "slug": "release-rollout-track"
+}

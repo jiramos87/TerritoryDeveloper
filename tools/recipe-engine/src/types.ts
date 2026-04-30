@@ -10,6 +10,7 @@ export type StepKind = "mcp" | "bash" | "sql" | "seam" | "gate" | "flow";
 
 export interface Recipe {
   recipe: string;
+  recipe_version?: number;
   description?: string;
   inputs?: Record<string, unknown>;
   outputs?: Record<string, string>;
@@ -89,6 +90,7 @@ export type Step = McpStep | BashStep | SqlStep | SeamStep | GateStep | FlowStep
 export interface RunContext {
   run_id: string;
   recipe_slug: string;
+  recipe_version: number;
   inputs: Record<string, unknown>;
   vars: Record<string, unknown>;
   cwd: string;

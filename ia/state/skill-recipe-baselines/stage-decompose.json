@@ -1,0 +1,31 @@
+{
+  "agent_step_refs": [
+    "plan",
+    "stage",
+    "decompose",
+    "compose",
+    "write"
+  ],
+  "captured_at": "2026-04-30T17:47:26.290Z",
+  "hash": "119a1bbd7ad51041",
+  "recipe_step_ids": [
+    "mode_detect",
+    "plan",
+    "stage",
+    "decompose",
+    "compose",
+    "write",
+    "validate_status"
+  ],
+  "skill_phase_ids": [
+    "load + validate",
+    "mcp context",
+    "task decomposition",
+    "cardinality gate",
+    "sizing-gate evaluation",
+    "persist",
+    "progress regen",
+    "handoff"
+  ],
+  "slug": "stage-decompose"
+}

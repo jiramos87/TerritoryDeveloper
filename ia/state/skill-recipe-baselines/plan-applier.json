@@ -1,0 +1,22 @@
+{
+  "agent_step_refs": [
+    "stage",
+    "apply"
+  ],
+  "captured_at": "2026-04-30T17:47:26.281Z",
+  "hash": "df65e1043bf8dc6b",
+  "recipe_step_ids": [
+    "stage",
+    "apply",
+    "validate_status",
+    "validate_yaml"
+  ],
+  "skill_phase_ids": [
+    "read §plan fix",
+    "resolve anchors",
+    "apply tuples",
+    "validate",
+    "return"
+  ],
+  "slug": "plan-applier"
+}

@@ -20,7 +20,12 @@ interface BeginRecord {
   startedAt: number;
 }
 
-export function createAuditSink(runIdRef: { run_id: string; recipe_slug: string; cwd: string }): AuditSink {
+export function createAuditSink(runIdRef: {
+  run_id: string;
+  recipe_slug: string;
+  recipe_version: number;
+  cwd: string;
+}): AuditSink {
   const begins = new Map<string, BeginRecord>();
   const pool = getIaDatabasePool();
   const fallbackDir = path.join(runIdRef.cwd, "ia", "state", "recipe-runs", runIdRef.run_id);
@@ -53,6 +58,7 @@ export function createAuditSink(runIdRef: { run_id: string; recipe_slug: string;
       const row = {
         run_id: runIdRef.run_id,
         recipe_slug: runIdRef.recipe_slug,
+        recipe_version: runIdRef.recipe_version,
         step_id: step.id,
         parent_path: parentPath,
         kind: stepKind(step),
@@ -69,8 +75,9 @@ export function createAuditSink(runIdRef: { run_id: string; recipe_slug: string;
           await pool.query(
             `INSERT INTO ia_recipe_runs
               (run_id, recipe_slug, step_id, parent_path, kind, status,
-               input_hash, output_hash, started_at, finished_at, error_code)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+               input_hash, output_hash, started_at, finished_at, error_code,
+               recipe_version)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
             [
               row.run_id,
               row.recipe_slug,
@@ -83,6 +90,7 @@ export function createAuditSink(runIdRef: { run_id: string; recipe_slug: string;
               row.started_at,
               row.finished_at,
               row.error_code,
+              row.recipe_version,
             ],
           );
           return;

@@ -1,0 +1,26 @@
+{
+  "agent_step_refs": [
+    "plan",
+    "stage"
+  ],
+  "captured_at": "2026-04-30T17:47:26.288Z",
+  "hash": "151b7e079ce25296",
+  "recipe_step_ids": [
+    "mode_detect",
+    "plan",
+    "stage",
+    "pending_q",
+    "per_task",
+    "validate_status"
+  ],
+  "skill_phase_ids": [
+    "sequential-dispatch guardrail",
+    "load shared stage mcp bundle",
+    "read filed task spec stubs",
+    "token-split guardrail",
+    "bulk author §plan digest (relaxed shape, direct, rubric-in-prompt)",
+    "per-task task_spec_section_write to db",
+    "hand-off"
+  ],
+  "slug": "stage-authoring"
+}

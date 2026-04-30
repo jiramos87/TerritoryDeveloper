@@ -46,6 +46,7 @@ export interface RunRecipeResult {
   ok: boolean;
   run_id: string;
   recipe: string;
+  recipe_version?: number;
   outputs?: Record<string, unknown>;
   error?: { code: string; message: string; details?: unknown; failed_step?: string };
   step_results: Array<{ step_id: string; result: StepResult }>;
@@ -137,10 +138,12 @@ export async function runRecipe(name: string, options: RunRecipeOptions = {}): P
     }
   }
 
-  const audit = createAuditSink({ run_id, recipe_slug: recipe.recipe, cwd });
+  const recipe_version = recipe.recipe_version ?? 1;
+  const audit = createAuditSink({ run_id, recipe_slug: recipe.recipe, recipe_version, cwd });
   const ctx: RunContext = {
     run_id,
     recipe_slug: recipe.recipe,
+    recipe_version,
     inputs,
     vars: { inputs },
     cwd,
@@ -222,5 +225,5 @@ export async function runRecipe(name: string, options: RunRecipeOptions = {}): P
     outputs[k] = resolveTree(ctx.vars, expr);
   }
 
-  return { ok: true, run_id, recipe: recipe.recipe, outputs, step_results: stepResults };
+  return { ok: true, run_id, recipe: recipe.recipe, recipe_version, outputs, step_results: stepResults };
 }

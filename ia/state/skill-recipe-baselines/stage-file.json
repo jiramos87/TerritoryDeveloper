@@ -1,0 +1,40 @@
+{
+  "agent_step_refs": [
+    "mode_detect",
+    "stage",
+    "plan",
+    "cardinality",
+    "sizing",
+    "pending_q",
+    "manifest_resolve",
+    "materialize",
+    "progress"
+  ],
+  "captured_at": "2026-04-30T17:47:26.291Z",
+  "hash": "521d7f377bed7d33",
+  "recipe_step_ids": [
+    "mode_detect",
+    "lifecycle_ctx",
+    "stage",
+    "plan",
+    "cardinality",
+    "sizing",
+    "pending_q",
+    "manifest_resolve",
+    "file_pass",
+    "materialize",
+    "stage_changelog",
+    "progress"
+  ],
+  "skill_phase_ids": [
+    "mode detection",
+    "load shared stage mcp bundle",
+    "read stage block + cardinality + sizing gates",
+    "batch depends-on verification",
+    "resolve target manifest section",
+    "per-task iterator (task_insert + spec stub + manifest append)",
+    "post-loop: materialize + validate + task-table + r1/r2 flips",
+    "return to dispatcher"
+  ],
+  "slug": "stage-file"
+}

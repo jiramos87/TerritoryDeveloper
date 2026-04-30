@@ -4,13 +4,19 @@
   "title": "Recipe DSL",
   "description": "Recipe contract for tools/recipe-engine. DEC-A19 Phase B. Step kinds: mcp.{tool} | bash.{script} | sql.{op} | seam.{name} | gate.{validator} | flow.{seq|parallel|when|until|foreach}. Exactly one kind key per step. `retry` rejected on seam steps (per Q5 escalate-to-human policy).",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": ["recipe", "steps"],
   "properties": {
     "recipe": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
       "description": "Recipe slug (kebab-case). Matches the file basename under tools/recipes/."
+    },
+    "recipe_version": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Recipe DSL version. Engine accepts unknown future fields under older schema; explicit version unlocks newer kinds."
     },
     "description": {
       "type": "string",

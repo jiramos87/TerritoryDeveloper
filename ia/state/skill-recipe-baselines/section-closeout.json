@@ -1,0 +1,16 @@
+{
+  "agent_step_refs": [
+    "drift_scan",
+    "drift_gate",
+    "closeout_apply"
+  ],
+  "captured_at": "2026-04-30T17:47:26.286Z",
+  "hash": "8b31fc6a3499302f",
+  "recipe_step_ids": [
+    "drift_scan",
+    "drift_gate",
+    "closeout_apply"
+  ],
+  "skill_phase_ids": [],
+  "slug": "section-closeout"
+}

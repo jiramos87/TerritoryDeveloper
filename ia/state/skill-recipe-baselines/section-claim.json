@@ -1,0 +1,12 @@
+{
+  "agent_step_refs": [
+    "claim"
+  ],
+  "captured_at": "2026-04-30T17:47:26.285Z",
+  "hash": "98375958932402c3",
+  "recipe_step_ids": [
+    "claim"
+  ],
+  "skill_phase_ids": [],
+  "slug": "section-claim"
+}
