@@ -791,5 +791,84 @@ namespace Territory.Editor.Bridge
             }
         }
 
+        // ── Stage 1.4 T1.4.1 — panel spacing application ────────────────────────
+
+        /// <summary>
+        /// Apply <paramref name="panel"/>.detail spacing values to <paramref name="root"/>'s
+        /// <see cref="VerticalLayoutGroup"/> and optional divider Image. No-op when detail is null.
+        /// Stage 1.4 (T1.4.1).
+        /// </summary>
+        static void ApplySpacing(IrPanel panel, GameObject root)
+        {
+            if (panel?.detail == null) return;
+
+            var vlg = root.GetComponent<VerticalLayoutGroup>();
+            if (vlg == null) vlg = root.AddComponent<VerticalLayoutGroup>();
+
+            int px = Mathf.RoundToInt(panel.detail.paddingX);
+            int py = Mathf.RoundToInt(panel.detail.paddingY);
+            vlg.padding = new RectOffset(px, px, py, py);
+            vlg.spacing = panel.detail.gap;
+
+            // Apply dividerThickness to the first child Image named "Divider" when present.
+            if (panel.detail.dividerThickness > 0f)
+            {
+                var dividerTf = root.transform.Find("Divider");
+                if (dividerTf != null)
+                {
+                    var rt = dividerTf as RectTransform ?? dividerTf.GetComponent<RectTransform>();
+                    if (rt != null)
+                    {
+                        var sd = rt.sizeDelta;
+                        sd.y = panel.detail.dividerThickness;
+                        rt.sizeDelta = sd;
+                    }
+                }
+            }
+        }
+
+        // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
+
+        /// <summary>
+        /// Dispatch IR <paramref name="panel"/>.archetype to instantiate the matching Themed component
+        /// child on <paramref name="root"/>. Known arms: section_header, divider, badge. Unknown archetype
+        /// logs a warning and skips (no exception). Stage 1.4 (T1.4.2).
+        /// </summary>
+        static void BakePanelArchetype(IrPanel panel, GameObject root, UiTheme theme)
+        {
+            if (panel == null || root == null || string.IsNullOrEmpty(panel.archetype)) return;
+
+            switch (panel.archetype)
+            {
+                case "section_header":
+                {
+                    var childGo = new GameObject("SectionHeader", typeof(RectTransform));
+                    childGo.transform.SetParent(root.transform, worldPositionStays: false);
+                    var header = childGo.AddComponent<ThemedSectionHeader>();
+                    WireThemeRef(header, theme);
+                    break;
+                }
+                case "divider":
+                {
+                    var childGo = new GameObject("Divider", typeof(RectTransform));
+                    childGo.transform.SetParent(root.transform, worldPositionStays: false);
+                    var divider = childGo.AddComponent<ThemedDivider>();
+                    WireThemeRef(divider, theme);
+                    break;
+                }
+                case "badge":
+                {
+                    var childGo = new GameObject("Badge", typeof(RectTransform));
+                    childGo.transform.SetParent(root.transform, worldPositionStays: false);
+                    var badge = childGo.AddComponent<ThemedBadge>();
+                    WireThemeRef(badge, theme);
+                    break;
+                }
+                default:
+                    Debug.LogWarning($"[UiBakeHandler] panel.archetype '{panel.archetype}' unknown — skipped");
+                    break;
+            }
+        }
+
     }
 }

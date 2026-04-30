@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using Territory.UI;
+using Territory.UI.Editor;
 using Territory.UI.Juice;
 using Territory.UI.Modals;
 using Territory.UI.StudioControls;
@@ -95,6 +96,59 @@ namespace Territory.Editor.Bridge
             public float haloRadiusPx;
         }
 
+        /// <summary>Stage 1.4 (T1.4.1) — panel spacing overrides from IR `panel.detail`.</summary>
+        [Serializable]
+        public class IrPanelDetail
+        {
+            public float paddingX;
+            public float paddingY;
+            public float gap;
+            public float dividerThickness;
+        }
+
+        /// <summary>Stage 1.4 (T1.4.4) — button state override block from IR `button.detail`.</summary>
+        [Serializable]
+        public class IrButtonDetail
+        {
+            public float paddingX;
+            public float paddingY;
+        }
+
+        /// <summary>Stage 1.4 (T1.4.4) — per-state color table from IR `button.palette_ramp`.</summary>
+        [Serializable]
+        public class IrButtonPaletteRamp
+        {
+            public string normal;
+            public string highlighted;
+            public string pressed;
+            public string disabled;
+        }
+
+        /// <summary>Stage 1.4 (T1.4.4) — atlas slot enums for sprite-swap states.</summary>
+        [Serializable]
+        public class IrButtonAtlasSlotEnum
+        {
+            public string normal;
+            public string highlighted;
+            public string pressed;
+        }
+
+        /// <summary>Stage 1.4 (T1.4.4) — motion-curve override for button fade duration.</summary>
+        [Serializable]
+        public class IrButtonMotionCurve
+        {
+            public float fadeDuration;
+        }
+
+        /// <summary>Stage 1.4 (T1.4.4) — full button state IR detail block; parsed from interactive.detail JSON.</summary>
+        [Serializable]
+        public class IrButtonStateDetail
+        {
+            public IrButtonPaletteRamp palette_ramp;
+            public IrButtonAtlasSlotEnum atlas_slot_enum;
+            public IrButtonMotionCurve motion_curve;
+        }
+
         [Serializable]
         public class IrPanel
         {
@@ -102,6 +156,12 @@ namespace Territory.Editor.Bridge
             public string archetype;
             public string kind;
             public IrPanelSlot[] slots;
+            /// <summary>Stage 1.4 (T1.4.1) — optional spacing overrides; null when absent from IR.</summary>
+            public IrPanelDetail detail;
+            /// <summary>Stage 1.4 (T1.4.3) — atlas frame sprite slug; resolved via <see cref="Territory.UI.Editor.AtlasIndex"/>.</summary>
+            public string frame_style_slug;
+            /// <summary>Stage 1.4 (T1.4.3) — illumination token slug; drives <see cref="ThemedIlluminationLayer"/> child when non-empty.</summary>
+            public string illumination_slug;
         }
 
         [Serializable]

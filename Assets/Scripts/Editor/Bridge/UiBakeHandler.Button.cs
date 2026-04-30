@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Territory.UI;
+using Territory.UI.Editor;
 using Territory.UI.Modals;
 using Territory.UI.Themed;
 using Territory.UI.Themed.Renderers;
@@ -402,5 +403,76 @@ namespace Territory.Editor.Bridge
             }
             else { tabLabel = labelGo.GetComponent<TMP_Text>(); }
         }
+        // ── Stage 1.4 T1.4.4 — button state wiring ──────────────────────────────
+
+        /// <summary>
+        /// Wire <see cref="UnityEngine.UI.Selectable"/> color-block, sprite-state, and fade duration
+        /// from <paramref name="detail"/>. Transition mode: <see cref="Selectable.Transition.SpriteSwap"/>
+        /// when <paramref name="detail"/>.atlas_slot_enum is present; <see cref="Selectable.Transition.ColorTint"/>
+        /// when only palette_ramp is supplied. No-op when <paramref name="detail"/> is null.
+        /// Stage 1.4 (T1.4.4).
+        /// </summary>
+        static void ApplyButtonStates(IrButtonStateDetail detail, Selectable sel)
+        {
+            if (detail == null || sel == null) return;
+
+            bool hasSpriteSlots = detail.atlas_slot_enum != null
+                && !string.IsNullOrEmpty(detail.atlas_slot_enum.highlighted);
+            bool hasPaletteRamp = detail.palette_ramp != null
+                && !string.IsNullOrEmpty(detail.palette_ramp.normal);
+
+            if (hasSpriteSlots)
+            {
+                sel.transition = Selectable.Transition.SpriteSwap;
+                var ss = sel.spriteState;
+                var highlightSprite = AtlasIndex.Resolve(detail.atlas_slot_enum.highlighted);
+                if (highlightSprite != null) ss.highlightedSprite = highlightSprite;
+                if (!string.IsNullOrEmpty(detail.atlas_slot_enum.pressed))
+                {
+                    var pressedSprite = AtlasIndex.Resolve(detail.atlas_slot_enum.pressed);
+                    if (pressedSprite != null) ss.pressedSprite = pressedSprite;
+                }
+                if (!string.IsNullOrEmpty(detail.atlas_slot_enum.normal))
+                {
+                    var normalSprite = AtlasIndex.Resolve(detail.atlas_slot_enum.normal);
+                    if (normalSprite != null) ss.selectedSprite = normalSprite;
+                }
+                sel.spriteState = ss;
+            }
+            else if (hasPaletteRamp)
+            {
+                sel.transition = Selectable.Transition.ColorTint;
+            }
+
+            if (hasPaletteRamp)
+            {
+                // Build full ColorBlock and assign atomically (struct copy semantics — partial assign is a no-op).
+                var cb = sel.colors;
+                const float DefaultColorMultiplier = 1f;
+                float fadeDuration = detail.motion_curve != null ? detail.motion_curve.fadeDuration : 0.1f;
+                cb.fadeDuration = fadeDuration;
+                cb.colorMultiplier = DefaultColorMultiplier;
+                if (ColorUtility.TryParseHtmlString(detail.palette_ramp.normal, out var normalColor))
+                    cb.normalColor = normalColor;
+                if (!string.IsNullOrEmpty(detail.palette_ramp.highlighted)
+                    && ColorUtility.TryParseHtmlString(detail.palette_ramp.highlighted, out var highlightColor))
+                    cb.highlightedColor = highlightColor;
+                if (!string.IsNullOrEmpty(detail.palette_ramp.pressed)
+                    && ColorUtility.TryParseHtmlString(detail.palette_ramp.pressed, out var pressedColor))
+                    cb.pressedColor = pressedColor;
+                if (!string.IsNullOrEmpty(detail.palette_ramp.disabled)
+                    && ColorUtility.TryParseHtmlString(detail.palette_ramp.disabled, out var disabledColor))
+                    cb.disabledColor = disabledColor;
+                sel.colors = cb;
+            }
+            else if (detail.motion_curve != null)
+            {
+                // motion_curve only — update fadeDuration without touching colors.
+                var cb = sel.colors;
+                cb.fadeDuration = detail.motion_curve.fadeDuration;
+                sel.colors = cb;
+            }
+        }
+
     }
 }

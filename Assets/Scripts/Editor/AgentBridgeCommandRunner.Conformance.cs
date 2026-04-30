@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Territory.UI;
 using Territory.UI.Themed;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -794,6 +795,194 @@ public static partial class AgentBridgeCommandRunner
             : Mathf.Pow((v + 0.055f) / 1.055f, 2.4f);
     }
 
+    // ── Stage 1.4 T1.4.5 — targeted check dispatch ──────────────────────────────
+
+    /// <summary>
+    /// <c>claude_design_check</c> bridge command. Dispatches a single targeted conformance check
+    /// by <c>check_kind</c>, returns <c>{"check_kind":"...","pass":true/false,"detail":"..."}</c>.
+    /// Stage 1.4 (T1.4.5).
+    /// </summary>
+    static void RunClaudeDesignCheck(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseDesignCheckParams(requestJson, out var dto, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(dto.check_kind))
+        {
+            TryFinalizeFailed(repoRoot, commandId, "params_invalid:check_kind");
+            return;
+        }
+
+        GameObject loadedPrefabContents = null;
+        try
+        {
+            Transform root = null;
+            if (!string.IsNullOrEmpty(dto.prefab_path))
+            {
+                loadedPrefabContents = PrefabUtility.LoadPrefabContents(dto.prefab_path);
+                if (loadedPrefabContents == null)
+                {
+                    TryFinalizeFailed(repoRoot, commandId, $"prefab_load_failed:{dto.prefab_path}");
+                    return;
+                }
+                root = loadedPrefabContents.transform;
+            }
+            else if (!string.IsNullOrEmpty(dto.scene_root_path))
+            {
+                var sceneRoot = GameObject.Find(dto.scene_root_path);
+                if (sceneRoot == null)
+                {
+                    TryFinalizeFailed(repoRoot, commandId, $"scene_root_not_found:{dto.scene_root_path}");
+                    return;
+                }
+                root = sceneRoot.transform;
+            }
+            else
+            {
+                TryFinalizeFailed(repoRoot, commandId, "params_invalid:require_prefab_path_or_scene_root_path");
+                return;
+            }
+
+            bool pass;
+            string detail;
+
+            switch (dto.check_kind)
+            {
+                case "frame_visual_present":
+                {
+                    // Pass when root has a non-null Image sprite (indicating a frame sprite was resolved at bake time).
+                    var img = root.GetComponent<Image>();
+                    pass = img != null && img.sprite != null;
+                    detail = pass ? "Image.sprite is non-null" : "Image.sprite is null or Image component missing";
+                    break;
+                }
+                case "font_asset_bound":
+                {
+                    // Pass when all TMP_Text components in scope have a non-null font asset.
+                    var texts = root.GetComponentsInChildren<TMP_Text>(includeInactive: true);
+                    if (texts == null || texts.Length == 0)
+                    {
+                        pass = false;
+                        detail = "no TMP_Text components found in scope";
+                        break;
+                    }
+                    int unbound = 0;
+                    for (int i = 0; i < texts.Length; i++)
+                    {
+                        if (texts[i].font == null) unbound++;
+                    }
+                    pass = unbound == 0;
+                    detail = pass
+                        ? $"all {texts.Length} TMP_Text(s) have a bound font asset"
+                        : $"{unbound}/{texts.Length} TMP_Text(s) have unbound font asset";
+                    break;
+                }
+                case "spacing_match":
+                {
+                    // Pass when LayoutGroup.spacing matches dto.expected_spacing within ±1 px tolerance.
+                    const float SpacingTolerance = 1f; // ±1 px per Stage 1.4 exit criteria
+                    var lg = root.GetComponent<LayoutGroup>();
+                    if (lg == null)
+                    {
+                        pass = false;
+                        detail = "no LayoutGroup on root";
+                        break;
+                    }
+                    float actualSpacing = 0f;
+                    if (lg is HorizontalOrVerticalLayoutGroup hvlg) actualSpacing = hvlg.spacing;
+                    float delta = Mathf.Abs(actualSpacing - dto.expected_spacing);
+                    pass = delta <= SpacingTolerance;
+                    detail = pass
+                        ? $"spacing={actualSpacing:F1} matches expected={dto.expected_spacing:F1} within ±{SpacingTolerance} px"
+                        : $"spacing={actualSpacing:F1} differs from expected={dto.expected_spacing:F1} (delta={delta:F1}, tolerance=±{SpacingTolerance} px)";
+                    break;
+                }
+                case "button_states_wired":
+                {
+                    // Pass when Selectable.transition != None OR colors.normalColor != white (indicates explicit wiring).
+                    var sel = root.GetComponent<Selectable>();
+                    if (sel == null)
+                    {
+                        pass = false;
+                        detail = "no Selectable component on root";
+                        break;
+                    }
+                    pass = sel.transition != Selectable.Transition.None
+                        || sel.colors.normalColor != Color.white;
+                    detail = pass
+                        ? $"transition={sel.transition} normalColor={sel.colors.normalColor}"
+                        : "Selectable has default transition=None and normalColor=white — not wired";
+                    break;
+                }
+                case "illumination_layer_present":
+                {
+                    // Pass when a ThemedIlluminationLayer component exists as a direct child of root.
+                    bool found = false;
+                    for (int i = 0; i < root.childCount; i++)
+                    {
+                        if (root.GetChild(i).GetComponent<ThemedIlluminationLayer>() != null)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    pass = found;
+                    detail = pass
+                        ? "ThemedIlluminationLayer found as direct child"
+                        : "no ThemedIlluminationLayer direct child found";
+                    break;
+                }
+                default:
+                    TryFinalizeFailed(repoRoot, commandId, $"check_kind_unknown:{dto.check_kind}");
+                    return;
+            }
+
+            string resultJson = $"{{\"check_kind\":\"{dto.check_kind}\",\"pass\":{(pass ? "true" : "false")},\"detail\":\"{EscapeJsonString(detail)}\"}}";
+            var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "claude_design_check");
+            resp.result_json = resultJson;
+            CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"design_check_threw:{ex.GetType().Name}:{ex.Message}");
+        }
+        finally
+        {
+            if (loadedPrefabContents != null) PrefabUtility.UnloadPrefabContents(loadedPrefabContents);
+        }
+    }
+
+    static bool TryParseDesignCheckParams(string requestJson, out DesignCheckParamsDto dto, out string error)
+    {
+        dto = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(requestJson))
+        {
+            error = "params_invalid: empty request_json";
+            return false;
+        }
+        string paramsJson = ExtractParamsJsonBlockInspect(requestJson);
+        if (string.IsNullOrWhiteSpace(paramsJson))
+        {
+            dto = new DesignCheckParamsDto();
+            return true;
+        }
+        try
+        {
+            dto = JsonUtility.FromJson<DesignCheckParamsDto>(paramsJson);
+        }
+        catch (Exception ex)
+        {
+            error = $"params_invalid: {ex.Message}";
+            return false;
+        }
+        if (dto == null) dto = new DesignCheckParamsDto();
+        return true;
+    }
+
     // -- Param parse ------------------------------------------------------------
 
     static bool TryParseConformanceParams(string requestJson, out ConformanceParamsDto dto, out string error)
@@ -832,6 +1021,17 @@ class ConformanceParamsDto
     public string theme_so;
     public string prefab_path;
     public string scene_root_path;
+}
+
+/// <summary>Stage 1.4 (T1.4.5) — params bag for <c>claude_design_check</c> targeted check command.</summary>
+[Serializable]
+class DesignCheckParamsDto
+{
+    public string check_kind;
+    public string prefab_path;
+    public string scene_root_path;
+    /// <summary>Expected spacing value in px; used by <c>spacing_match</c> check kind.</summary>
+    public float expected_spacing;
 }
 
 // IR JSON subset needed for conformance scope. JsonUtility cannot deserialize

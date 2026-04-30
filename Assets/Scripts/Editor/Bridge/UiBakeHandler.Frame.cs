@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Territory.UI;
+using Territory.UI.Editor;
 using Territory.UI.Modals;
 using Territory.UI.StudioControls;
 using Territory.UI.StudioControls.Renderers;
@@ -160,6 +161,45 @@ namespace Territory.Editor.Bridge
                     BindBtn("_mainMenuButton", 4);
                     BindBtn("_quitButton", 5);
                     aSo.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                // Stage 1.4 T1.4.2 — archetype dispatch: instantiate section_header / divider / badge child.
+                BakePanelArchetype(panel, go, theme);
+
+                // Stage 1.4 T1.4.1 — apply spacing overrides from panel.detail to LayoutGroup + divider.
+                ApplySpacing(panel, go);
+
+                // Stage 1.4 T1.4.3 — frame sprite resolution via AtlasIndex; fallback slug on miss.
+                {
+                    const string FallbackFrameSlug = "ui/frame/default";
+                    string frameSlug = !string.IsNullOrEmpty(panel.frame_style_slug)
+                        ? panel.frame_style_slug
+                        : FallbackFrameSlug;
+                    var frameSprite = AtlasIndex.Resolve(frameSlug);
+                    if (frameSprite == null && panel.frame_style_slug != null)
+                    {
+                        // AtlasIndex.Resolve already logged a warning; try fallback.
+                        frameSprite = AtlasIndex.Resolve(FallbackFrameSlug);
+                    }
+                    if (frameSprite != null) bgImage.sprite = frameSprite;
+                }
+
+                // Stage 1.4 T1.4.3 — conditional ThemedIlluminationLayer sibling when illumination_slug set.
+                if (!string.IsNullOrEmpty(panel.illumination_slug))
+                {
+                    var illumGo = new GameObject("IlluminationLayer", typeof(RectTransform));
+                    illumGo.transform.SetParent(go.transform, worldPositionStays: false);
+                    var illumImg = illumGo.AddComponent<Image>();
+                    illumImg.raycastTarget = false;
+                    illumImg.color = new Color(1f, 1f, 1f, 0f); // transparent until ApplyTheme
+                    var illumLayer = illumGo.AddComponent<ThemedIlluminationLayer>();
+                    WireThemeRef(illumLayer, theme);
+                    var illumSo = new SerializedObject(illumLayer);
+                    var illumSlugProp = illumSo.FindProperty("_illuminationSlug");
+                    if (illumSlugProp != null) illumSlugProp.stringValue = panel.illumination_slug;
+                    var illumImgProp = illumSo.FindProperty("_overlayImage");
+                    if (illumImgProp != null) illumImgProp.objectReferenceValue = illumImg;
+                    illumSo.ApplyModifiedPropertiesWithoutUndo();
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);

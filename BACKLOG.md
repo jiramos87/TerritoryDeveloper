@@ -282,6 +282,22 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
+Define align-arch-decision seam schema
+  - Acceptance — `tools/seams/align-arch-decision/input.schema.json` + `output.schema.json` shipped. Schemas validate against `seam-golden` smoke fixture.
+  - Spec — [`ia/projects/TECH-6973.md`](ia/projects/TECH-6973.md)
+
+Plan-covered subagent body for seam-align-arch-decision
+  - Acceptance — `.claude/agents/seam-align-arch-decision.md` shipped (Mission + Hard boundaries + Output shape). Plan-covered dispatch slot wired.
+  - Spec — [`ia/projects/TECH-6974.md`](ia/projects/TECH-6974.md)
+
+Recipify master-plan-new Phase A+B+C into YAML
+  - Acceptance — `ia/recipes/master-plan-new.yaml` Phase A invokes `seam.align-arch-decision`. End-to-end recipe run inserts master-plan + 3 plan-scoped **arch_decisions** automatically.
+  - Spec — [`ia/projects/TECH-6975.md`](ia/projects/TECH-6975.md)
+
+Body trim master-plan-new to dispatch shell
+  - Acceptance — `.claude/agents/master-plan-new.md` line drop ≥60% vs pre-trim baseline. Drift gate green.
+  - Spec — [`ia/projects/TECH-6976.md`](ia/projects/TECH-6976.md)
+
 ## Architecture coherence program
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
@@ -343,17 +359,40 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-7985** — **ThemedFrame component** — `ThemedPrimitiveBase` subclass driving `Image.sprite` + `Image.type = Sliced` from `frameStyleSlug` via `UiTheme.TryGetFrameStyle` (Stage 1.3 T1.3.1 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+- [ ] **TECH-8141 — Bake spacing application** — apply panel/button detail spacing to LayoutGroup during prefab bake.
+  - Type: technical / UI bake pipeline
+  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs`
+  - Notes: In UiBakeHandler.Archetype.cs, read panel.detail.{paddingX, paddingY, gap, dividerThickness} + button.detail.{paddingX, paddingY} → write LayoutGroup.padding / spacing + divider Image height during prefab construction.
+  - Acceptance: spacing values from IR detail JSON applied to LayoutGroup; divider Image height set; npm run unity:compile-check green.
+  - Depends on: TECH-7985..TECH-7990 (Stage 1.3 components — must be archived)
 
-- [ ] **TECH-7986** — **ThemedIlluminationLayer component** — sibling `Image` overlay color + alpha from `illuminationSlug` via `UiTheme.TryGetIllumination`, layered above `ThemedFrame` (Stage 1.3 T1.3.2 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+- [ ] **TECH-8142 — Bake archetype dispatch** — add section_header / divider / badge dispatch arms to UiBakeHandler.
+  - Type: technical / UI bake pipeline
+  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs`
+  - Notes: In UiBakeHandler.Archetype.cs, add dispatch arms for section_header → ThemedSectionHeader; divider → ThemedDivider; badge → ThemedBadge. Existing archetype switch untouched.
+  - Acceptance: 3 new archetypes dispatch to correct Themed components; existing switch unchanged; npm run unity:compile-check green.
+  - Depends on: TECH-8141 (spacing must land first)
 
-- [ ] **TECH-7987** — **ThemedButton state binding** — wire `Selectable.colors` from palette ramp + `SpriteState` from sprite atlas slot enum + optional `motionCurveSlug` fadeDuration; graceful degrade per §Examples edge cases (Stage 1.3 T1.3.3 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+- [ ] **TECH-8143 — Bake frame + illumination wiring** — resolve atlas slug + instantiate ThemedIlluminationLayer in Frame bake.
+  - Type: technical / UI bake pipeline
+  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs`
+  - Notes: In UiBakeHandler.Frame.cs, resolve frame_style_slug via AtlasIndex.Resolve with sprite_ref_fallback path; instantiate ThemedIlluminationLayer sibling Image when illumination_slug set on panel.
+  - Acceptance: frame sprite resolved from atlas; illumination overlay instantiated when slug present; npm run unity:compile-check green.
+  - Depends on: TECH-8141 (spacing first)
 
-- [ ] **TECH-7988** — **ThemedSectionHeader component** — title row archetype `ThemedPrimitiveBase` subclass; composes `ThemedLabel` for title text + optional sub-title slot (Stage 1.3 T1.3.4 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+- [ ] **TECH-8144 — Bake button state wiring** — patch Selectable.colors + SpriteState + fadeDuration from palette/atlas/motion.
+  - Type: technical / UI bake pipeline
+  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs`
+  - Notes: In UiBakeHandler.Button.cs, patch Selectable.colors from palette ramp + SpriteState from atlas slot enum + optional fadeDuration from motion curve. Mirror exploration §Examples bake excerpt verbatim.
+  - Acceptance: Selectable.colors populated from palette; SpriteState wired from atlas; fadeDuration applied when present; npm run unity:compile-check green.
+  - Depends on: TECH-8141 (spacing first)
 
-- [ ] **TECH-7989** — **ThemedDivider component** — divider `Image` archetype; reads `dividerThickness` from parent panel detail; binds palette ramp slug for color (Stage 1.3 T1.3.5 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
-
-- [ ] **TECH-7990** — **ThemedBadge component** — count / status indicator archetype; composes background `Image` + foreground `ThemedLabel`; static (no animation) per §Components 7 non-scope (Stage 1.3 T1.3.6 of [`master-plan / ui-visual-fidelity-layer`](mcp:master_plan_render?slug=ui-visual-fidelity-layer))
+- [ ] **TECH-8145 — Conformance 5 new check kinds** — add 5 case arms to AgentBridgeCommandRunner.Conformance.cs.
+  - Type: technical / conformance bridge
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.Conformance.cs`
+  - Notes: In AgentBridgeCommandRunner.Conformance.cs, add case arms for frame_visual_present / font_asset_bound / spacing_match (±1 px tolerance) / button_states_wired / illumination_layer_present. Smoke green via end-to-end IR fixture.
+  - Acceptance: 5 new case arms added; existing 6 untouched; smoke fixture bakes and all 5 new check_kinds return pass: true; npm run unity:compile-check + npm run db:bridge-preflight green.
+  - Depends on: TECH-8141, TECH-8142, TECH-8143, TECH-8144 (all bake patches must land first)
 
 ## Economic depth lane
 
