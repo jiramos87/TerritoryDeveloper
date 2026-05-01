@@ -27,6 +27,8 @@ import {
   Screen,
   Sparkline,
 } from '@/components/console';
+import { loadLatestOrphanBlobReport } from '@/lib/dashboard/orphan-blobs';
+import { loadLatestRestoreDrillStatus } from '@/lib/dashboard/restore-drill';
 
 const toSlug = toPlanSlug;
 
@@ -149,6 +151,8 @@ export default async function DashboardPage({
   const allTasks = allPlans.flatMap((p) => p.allTasks);
   const counts = aggregateTaskCounts(allTasks);
   const releaseChartData = buildReleaseChartData(allPlans);
+  const orphanReport = loadLatestOrphanBlobReport();
+  const restoreDrill = loadLatestRestoreDrillStatus();
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
@@ -159,6 +163,23 @@ export default async function DashboardPage({
         <span className="opacity-50">{'//'}</span>
         <span className="text-[var(--ds-raw-blue)]">Dashboard</span>
       </div>
+
+      {(restoreDrill.state === 'failed' ||
+        restoreDrill.state === 'stale' ||
+        restoreDrill.state === 'never_run') && (
+        <div
+          role="alert"
+          className="mb-4 rounded border border-[var(--ds-raw-red)] bg-[var(--ds-raw-red)]/10 px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-[var(--ds-raw-red)]"
+        >
+          DB restore drill{' '}
+          {restoreDrill.state === 'failed'
+            ? `failed (${restoreDrill.report?.reason ?? 'unknown'})`
+            : restoreDrill.state === 'stale'
+              ? `stale (${restoreDrill.ageDays}d old)`
+              : 'never run'}
+          {' — see runbooks/catalog-recovery.md'}
+        </div>
+      )}
 
       <div
         className="mb-4 grid items-stretch gap-4"
@@ -208,6 +229,26 @@ export default async function DashboardPage({
               </div>
               <div className="font-mono text-[26px] font-bold leading-none">
                 {String(counts.blocked).padStart(3, '0')}
+              </div>
+            </Screen>
+          </Bezel>
+        </Rack>
+        <Rack className="min-w-0" label="Orphan blobs">
+          <Bezel>
+            <Screen
+              tone="dark"
+              sweep={false}
+              className={`lcd p-2 ${
+                orphanReport && orphanReport.count > 0
+                  ? 'text-[var(--ds-raw-amber)]'
+                  : 'text-[var(--ds-text-meta)]'
+              }`}
+            >
+              <div className="lcd-label font-mono text-[9px] uppercase tracking-[0.25em] opacity-60">
+                {orphanReport ? `Last sweep ${orphanReport.date}` : 'No sweep'}
+              </div>
+              <div className="font-mono text-[26px] font-bold leading-none">
+                {orphanReport ? String(orphanReport.count).padStart(3, '0') : '—'}
               </div>
             </Screen>
           </Bezel>
