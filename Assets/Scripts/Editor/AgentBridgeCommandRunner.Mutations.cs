@@ -104,6 +104,11 @@ public static partial class AgentBridgeCommandRunner
                 RunBakeUiFromIr(repoRoot, commandId, requestJson);
                 return true;
 
+            // ── Asset pipeline bridge composite (Stage 19.3 / TECH-1591) ─
+            case "wire_asset_from_catalog":
+                RunWireAssetFromCatalog(repoRoot, commandId, requestJson);
+                return true;
+
             // ── Game UI runtime — Play Mode allowed ──────────────────────
             // Step 16.10 — narrow `set_panel_visible(slug, active)` lets the bridge
             // toggle a ThemedPanel without simulating a keyboard Esc press; used by
@@ -991,6 +996,55 @@ public static partial class AgentBridgeCommandRunner
         CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
     }
 
+    // ── Asset pipeline composite (Stage 19.3 / TECH-1591 + 1592) ─────────────
+
+    static void RunWireAssetFromCatalog(string repoRoot, string commandId, string requestJson)
+    {
+        if (!AssertEditMode(out string modeErr)) { TryFinalizeFailed(repoRoot, commandId, modeErr); return; }
+        if (!TryParseMutationParams<WireAssetFromCatalogParamsDto>(requestJson, out var dto, out string parseErr)) { TryFinalizeFailed(repoRoot, commandId, parseErr); return; }
+
+        var args = new Territory.Editor.Bridge.WireAssetFromCatalog.WireArgs
+        {
+            entity_id = dto.entity_id,
+            cell_xy = dto.cell_xy,
+            dry_run = dto.dry_run,
+        };
+
+        // Boot-time CatalogLoader resolution — invariant 3 (cache in Awake/Start) is
+        // not violated here because the bridge command runs Editor-only on demand,
+        // not per-frame. Falls back to null on miss → entity_unresolvable response.
+        var catalogLoader = UnityEngine.Object.FindObjectOfType<Territory.Catalog.CatalogLoader>();
+
+        Territory.Editor.Bridge.WireAssetFromCatalog.WireResult result;
+        try
+        {
+            result = Territory.Editor.Bridge.WireAssetFromCatalog.Run(args, catalogLoader);
+
+            // TECH-1592 — snapshot/rollback wrap. Skipped on dry_run + on T1 fail
+            // paths. On verify-fail, the dispatcher restores cell subtree state and
+            // rewrites the result envelope to {ok:false, error:<verify_err>, rollback_applied:true}.
+            if (result != null && result.ok && !args.dry_run)
+            {
+                result = Territory.Editor.Bridge.Snapshot.RollbackDispatcher.WrapWithSnapshot(result, args, catalogLoader);
+            }
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"wire_threw:{ex.GetType().Name}:{ex.Message}");
+            return;
+        }
+
+        if (result == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, "wire_null_result");
+            return;
+        }
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "wire_asset_from_catalog");
+        resp.mutation_result = Territory.Editor.Bridge.WireAssetFromCatalog.ToBridgeJson(result);
+        CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     static bool TryParseMutationParams<TDto>(string requestJson, out TDto dto, out string error)
@@ -1297,4 +1351,17 @@ class BakeUiFromIrParamsDto
     public string out_dir;
     /// <summary>Asset path to UiTheme ScriptableObject (e.g. "Assets/UI/Theme/DefaultUiTheme.asset").</summary>
     public string theme_so;
+}
+
+// Asset pipeline bridge composite (Stage 19.3 / TECH-1591)
+
+[Serializable]
+class WireAssetFromCatalogParamsDto
+{
+    /// <summary>Catalog entity_id to wire onto the scene (resolved via TECH-1586 ResolveLiveEntityId).</summary>
+    public string entity_id;
+    /// <summary>Cell coordinate token, e.g. "5_7"; resolves to canonical World/GridRoot/Cells/{cell_xy} parent.</summary>
+    public string cell_xy;
+    /// <summary>When true, returns proposed mutations[] without scene mutation OR snapshot capture.</summary>
+    public bool dry_run;
 }

@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-26T17:08:35.656Z",
+  "last_generated": "2026-05-01T06:47:40.421Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -491,25 +491,25 @@
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 280
+          "line_start": 283
         },
         {
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 304
+          "line_start": 307
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 312
+          "line_start": 315
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 326
+          "line_start": 329
         }
       ]
     },
