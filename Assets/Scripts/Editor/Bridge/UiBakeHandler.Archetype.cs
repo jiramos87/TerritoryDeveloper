@@ -28,6 +28,8 @@ namespace Territory.Editor.Bridge
             // Stage 8 Themed* modal primitive kinds.
             "themed-button", "themed-label", "themed-slider",
             "themed-toggle", "themed-tab-bar", "themed-list",
+            // Stage 9 (game-ui-design-system) Themed* tooltip kind.
+            "themed-tooltip",
         };
 
         static bool IsKnownStudioControlKind(string kind)

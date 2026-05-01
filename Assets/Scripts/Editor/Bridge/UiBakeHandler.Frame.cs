@@ -471,6 +471,45 @@ namespace Territory.Editor.Bridge
                     var lstPalette = lstSo.FindProperty("_paletteSlug");
                     if (lstPalette != null) lstPalette.stringValue = "chassis-graphite";
                     lstSo.ApplyModifiedPropertiesWithoutUndo();
+                    // Stage 9 (TECH-8541) — renderer sibling for theme-driven row tinting.
+                    var lstRend = childGo.AddComponent<ThemedListRenderer>();
+                    WireThemeRef(lstRend, theme);
+                    var lstRendSo = new SerializedObject(lstRend);
+                    var lstRendPalette = lstRendSo.FindProperty("_paletteSlug");
+                    if (lstRendPalette != null) lstRendPalette.stringValue = "led-amber";
+                    lstRendSo.ApplyModifiedPropertiesWithoutUndo();
+                    break;
+                }
+                // Stage 9 (game-ui-design-system) — themed-tooltip primitive panel-child.
+                // Composition: ThemedTooltip primitive + background Image + body TMP_Text + arrow Image.
+                // Renderer-sibling (ThemedTooltipRenderer) wired in TECH-8541; this case stays minimal.
+                case "themed-tooltip":
+                {
+                    var tooltip = childGo.AddComponent<ThemedTooltip>();
+                    WireThemeRef(tooltip, theme);
+                    SpawnThemedTooltipChildren(childGo, out var bgImg, out var arrowImg, out var bodyTmp);
+                    var tipSo = new SerializedObject(tooltip);
+                    var bgProp = tipSo.FindProperty("_backgroundImage");
+                    if (bgProp != null) bgProp.objectReferenceValue = bgImg;
+                    var tmpProp = tipSo.FindProperty("_tmpText");
+                    if (tmpProp != null) tmpProp.objectReferenceValue = bodyTmp;
+                    var palette = tipSo.FindProperty("_paletteSlug");
+                    if (palette != null) palette.stringValue = "chassis-graphite";
+                    var fontFace = tipSo.FindProperty("_fontFaceSlug");
+                    if (fontFace != null) fontFace.stringValue = "silkscreen";
+                    tipSo.ApplyModifiedPropertiesWithoutUndo();
+                    if (bodyTmp != null && !string.IsNullOrEmpty(label)) bodyTmp.text = label;
+                    // Stage 9 (TECH-8541) — renderer sibling consumes arrow + body refs.
+                    var tipRend = childGo.AddComponent<ThemedTooltipRenderer>();
+                    WireThemeRef(tipRend, theme);
+                    var tipRendSo = new SerializedObject(tipRend);
+                    var arrowProp = tipRendSo.FindProperty("_arrowImage");
+                    if (arrowProp != null) arrowProp.objectReferenceValue = arrowImg;
+                    var bodyProp = tipRendSo.FindProperty("_bodyLabel");
+                    if (bodyProp != null) bodyProp.objectReferenceValue = bodyTmp;
+                    var tipRendPalette = tipRendSo.FindProperty("_paletteSlug");
+                    if (tipRendPalette != null) tipRendPalette.stringValue = "led-amber";
+                    tipRendSo.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
                 default:

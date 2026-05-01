@@ -403,6 +403,75 @@ namespace Territory.Editor.Bridge
             }
             else { tabLabel = labelGo.GetComponent<TMP_Text>(); }
         }
+
+        /// <summary>
+        /// Spawn ThemedTooltip children — Background Image (sibling-zero, palette repaint target),
+        /// Arrow Image (anchor stub for tail), Body TMP_Text (caption surface). Idempotent.
+        /// Stage 9 T9.1 (game-ui-design-system).
+        /// </summary>
+        static void SpawnThemedTooltipChildren(
+            GameObject prefabRoot,
+            out Image backgroundImage,
+            out Image arrowImage,
+            out TMP_Text bodyText)
+        {
+            backgroundImage = null; arrowImage = null; bodyText = null;
+            if (prefabRoot == null) return;
+
+            // Background Image — full-rect, sibling-zero so Body + Arrow render on top.
+            var bgGo = prefabRoot.transform.Find("Background")?.gameObject;
+            if (bgGo == null)
+            {
+                bgGo = new GameObject("Background", typeof(RectTransform));
+                bgGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                bgGo.transform.SetSiblingIndex(0);
+                var rt = (RectTransform)bgGo.transform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
+                backgroundImage = bgGo.AddComponent<Image>();
+                backgroundImage.raycastTarget = false;
+            }
+            else { backgroundImage = bgGo.GetComponent<Image>(); }
+
+            // Arrow Image — small triangle anchor stub at bottom-center.
+            var arrowGo = prefabRoot.transform.Find("Arrow")?.gameObject;
+            if (arrowGo == null)
+            {
+                arrowGo = new GameObject("Arrow", typeof(RectTransform));
+                arrowGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var rt = (RectTransform)arrowGo.transform;
+                rt.anchorMin = new Vector2(0.5f, 0f);
+                rt.anchorMax = new Vector2(0.5f, 0f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.anchoredPosition = Vector2.zero;
+                rt.sizeDelta = new Vector2(12f, 8f);
+                arrowImage = arrowGo.AddComponent<Image>();
+                arrowImage.raycastTarget = false;
+            }
+            else { arrowImage = arrowGo.GetComponent<Image>(); }
+
+            // Body TMP_Text — full-rect minus padding; caption surface.
+            var bodyGo = prefabRoot.transform.Find("Body")?.gameObject;
+            if (bodyGo == null)
+            {
+                bodyGo = new GameObject("Body", typeof(RectTransform));
+                bodyGo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var rt = (RectTransform)bodyGo.transform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = new Vector2(8f, 6f);
+                rt.offsetMax = new Vector2(-8f, -6f);
+                var tmp = bodyGo.AddComponent<TextMeshProUGUI>();
+                tmp.text = string.Empty;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.fontSize = 14f;
+                tmp.raycastTarget = false;
+                bodyText = tmp;
+            }
+            else { bodyText = bodyGo.GetComponent<TMP_Text>(); }
+        }
+
         // ── Stage 1.4 T1.4.4 — button state wiring ──────────────────────────────
 
         /// <summary>

@@ -107,7 +107,7 @@ export interface IrInteractive {
   detail: IrInteractiveDetail;
 }
 
-/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. Extended Stage 7 with `themed-overlay-toggle-row`. Extended Stage 8 with Themed* modal primitive kinds. Extended Stage 1.1 (ui-visual-fidelity-layer) with `section_header`, `divider`, `badge`, `panel`, `button`. */
+/** StudioControl archetype enum — locked by §Phase 3 + Phase 6 Stage 4. Extended Stage 7 with `themed-overlay-toggle-row`. Extended Stage 8 with Themed* modal primitive kinds. Extended Stage 1.1 (ui-visual-fidelity-layer) with `section_header`, `divider`, `badge`, `panel`, `button`. Extended Stage 9 (game-ui-design-system) with `themed-tooltip`. */
 export type StudioControlKind =
   | 'knob'
   | 'fader'
@@ -124,6 +124,7 @@ export type StudioControlKind =
   | 'themed-toggle'
   | 'themed-tab-bar'
   | 'themed-list'
+  | 'themed-tooltip'
   | 'section_header'
   | 'divider'
   | 'badge'
@@ -146,6 +147,7 @@ export const STUDIO_CONTROL_KINDS: readonly StudioControlKind[] = [
   'themed-toggle',
   'themed-tab-bar',
   'themed-list',
+  'themed-tooltip',
   'section_header',
   'divider',
   'badge',

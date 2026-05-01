@@ -205,7 +205,7 @@ MonoBehaviour:
   _slug: illuminated-button
   _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _detail:
-    illuminationSlug: led-amber
+    illuminationSlug: illumination-amber
     pulseOnEvent: 
   _onClick:
     m_PersistentCalls:

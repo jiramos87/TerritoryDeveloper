@@ -11,7 +11,7 @@ namespace Territory.UI.Themed.Renderers
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ThemedTabBar))]
-    public class ThemedTabBarRenderer : ThemedPrimitiveBase
+    public class ThemedTabBarRenderer : ThemedPrimitiveRendererBase
     {
         [Header("Token")]
         [SerializeField] private string _paletteSlug;
@@ -32,6 +32,11 @@ namespace Territory.UI.Themed.Renderers
             if (!ColorUtility.TryParseHtmlString(ramp.ramp[0], out var activeColor)) return;
             _activeTabIndicator.color = activeColor;
             if (_tabLabel != null) _tabLabel.color = activeColor;
+        }
+
+        protected override void OnStateApplied()
+        {
+            // Active-tab tint already follows ApplyTheme; runtime tab switch updates color via state holder hook.
         }
     }
 }

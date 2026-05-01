@@ -52,5 +52,5 @@ MonoBehaviour:
   _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _detail:
     min: 0
-    max: 1
-    step: 0.01
+    max: 100
+    step: 1

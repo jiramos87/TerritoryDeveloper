@@ -259,20 +259,18 @@
   {
     "slug": "tooltip",
     "archetype": "tooltip",
+    "kind": "hud",
     "slots": [
       {
         "name": "body",
         "accepts": [
-          "knob",
-          "fader",
-          "vu-meter",
-          "illuminated-button",
-          "segmented-readout"
+          "themed-tooltip"
         ],
         "children": [
-          "segmented-readout",
-          "segmented-readout",
-          "vu-meter"
+          "themed-tooltip"
+        ],
+        "labels": [
+          ""
         ]
       }
     ]
@@ -655,6 +653,159 @@
         ],
         "children": [
           "segmented-readout"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "splash",
+    "archetype": "splash",
+    "kind": "modal",
+    "slots": [
+      {
+        "name": "title",
+        "accepts": [
+          "themed-label"
+        ],
+        "children": [
+          "themed-label"
+        ],
+        "labels": [
+          "Territory"
+        ]
+      },
+      {
+        "name": "tagline",
+        "accepts": [
+          "themed-label"
+        ],
+        "children": [
+          "themed-label"
+        ],
+        "labels": [
+          "A city building game"
+        ]
+      },
+      {
+        "name": "actions",
+        "accepts": [
+          "themed-button"
+        ],
+        "children": [
+          "themed-button"
+        ],
+        "labels": [
+          "Continue"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "onboarding-overlay",
+    "archetype": "onboarding-overlay",
+    "kind": "modal",
+    "slots": [
+      {
+        "name": "title",
+        "accepts": [
+          "themed-label"
+        ],
+        "children": [
+          "themed-label"
+        ],
+        "labels": [
+          "Welcome"
+        ]
+      },
+      {
+        "name": "steps",
+        "accepts": [
+          "themed-list"
+        ],
+        "children": [
+          "themed-list"
+        ]
+      },
+      {
+        "name": "actions",
+        "accepts": [
+          "themed-button"
+        ],
+        "children": [
+          "themed-button",
+          "themed-button"
+        ],
+        "labels": [
+          "Next",
+          "Skip"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "glossary-panel",
+    "archetype": "glossary-panel",
+    "kind": "screen",
+    "slots": [
+      {
+        "name": "categories",
+        "accepts": [
+          "themed-tab-bar"
+        ],
+        "children": [
+          "themed-tab-bar"
+        ]
+      },
+      {
+        "name": "terms",
+        "accepts": [
+          "themed-list"
+        ],
+        "children": [
+          "themed-list"
+        ]
+      },
+      {
+        "name": "definition",
+        "accepts": [
+          "themed-label"
+        ],
+        "children": [
+          "themed-label"
+        ],
+        "labels": [
+          "Select a term to view its definition"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "city-stats-handoff",
+    "archetype": "city-stats-handoff",
+    "kind": "screen",
+    "slots": [
+      {
+        "name": "categories",
+        "accepts": [
+          "themed-tab-bar"
+        ],
+        "children": [
+          "themed-tab-bar"
+        ]
+      },
+      {
+        "name": "readouts",
+        "accepts": [
+          "segmented-readout",
+          "vu-meter"
+        ],
+        "children": [
+          "segmented-readout",
+          "vu-meter",
+          "segmented-readout",
+          "vu-meter",
+          "segmented-readout",
+          "vu-meter"
         ]
       }
     ]

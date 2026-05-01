@@ -478,20 +478,18 @@
     {
       "slug": "tooltip",
       "archetype": "tooltip",
+      "kind": "hud",
       "slots": [
         {
           "name": "body",
           "accepts": [
-            "knob",
-            "fader",
-            "vu-meter",
-            "illuminated-button",
-            "segmented-readout"
+            "themed-tooltip"
           ],
           "children": [
-            "segmented-readout",
-            "segmented-readout",
-            "vu-meter"
+            "themed-tooltip"
+          ],
+          "labels": [
+            ""
           ]
         }
       ]
@@ -877,6 +875,159 @@
           ]
         }
       ]
+    },
+    {
+      "slug": "splash",
+      "archetype": "splash",
+      "kind": "modal",
+      "slots": [
+        {
+          "name": "title",
+          "accepts": [
+            "themed-label"
+          ],
+          "children": [
+            "themed-label"
+          ],
+          "labels": [
+            "Territory"
+          ]
+        },
+        {
+          "name": "tagline",
+          "accepts": [
+            "themed-label"
+          ],
+          "children": [
+            "themed-label"
+          ],
+          "labels": [
+            "A city building game"
+          ]
+        },
+        {
+          "name": "actions",
+          "accepts": [
+            "themed-button"
+          ],
+          "children": [
+            "themed-button"
+          ],
+          "labels": [
+            "Continue"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "onboarding-overlay",
+      "archetype": "onboarding-overlay",
+      "kind": "modal",
+      "slots": [
+        {
+          "name": "title",
+          "accepts": [
+            "themed-label"
+          ],
+          "children": [
+            "themed-label"
+          ],
+          "labels": [
+            "Welcome"
+          ]
+        },
+        {
+          "name": "steps",
+          "accepts": [
+            "themed-list"
+          ],
+          "children": [
+            "themed-list"
+          ]
+        },
+        {
+          "name": "actions",
+          "accepts": [
+            "themed-button"
+          ],
+          "children": [
+            "themed-button",
+            "themed-button"
+          ],
+          "labels": [
+            "Next",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "glossary-panel",
+      "archetype": "glossary-panel",
+      "kind": "screen",
+      "slots": [
+        {
+          "name": "categories",
+          "accepts": [
+            "themed-tab-bar"
+          ],
+          "children": [
+            "themed-tab-bar"
+          ]
+        },
+        {
+          "name": "terms",
+          "accepts": [
+            "themed-list"
+          ],
+          "children": [
+            "themed-list"
+          ]
+        },
+        {
+          "name": "definition",
+          "accepts": [
+            "themed-label"
+          ],
+          "children": [
+            "themed-label"
+          ],
+          "labels": [
+            "Select a term to view its definition"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "city-stats-handoff",
+      "archetype": "city-stats-handoff",
+      "kind": "screen",
+      "slots": [
+        {
+          "name": "categories",
+          "accepts": [
+            "themed-tab-bar"
+          ],
+          "children": [
+            "themed-tab-bar"
+          ]
+        },
+        {
+          "name": "readouts",
+          "accepts": [
+            "segmented-readout",
+            "vu-meter"
+          ],
+          "children": [
+            "segmented-readout",
+            "vu-meter",
+            "segmented-readout",
+            "vu-meter",
+            "segmented-readout",
+            "vu-meter"
+          ]
+        }
+      ]
     }
   ],
   "interactives": [
@@ -910,8 +1061,8 @@
         "default_size": "md",
         "default_tone": "primary",
         "min": 0,
-        "max": 1,
-        "step": 0.01
+        "max": 100,
+        "step": 1
       }
     },
     {
@@ -951,8 +1102,8 @@
         "default_tone": "primary",
         "default_orientation": "vertical",
         "min": 0,
-        "max": 1,
-        "step": 0.01
+        "max": 100,
+        "step": 1
       }
     },
     {
@@ -1004,7 +1155,10 @@
         "default_orientation": "horizontal",
         "attackMs": 10,
         "releaseMs": 300,
-        "range": 60
+        "range": [
+          -60,
+          6
+        ]
       }
     },
     {
@@ -1043,7 +1197,7 @@
         "default_size": "md",
         "default_tone": "primary",
         "default_lit": false,
-        "illuminationSlug": "led-amber"
+        "illuminationSlug": "illumination-amber"
       }
     },
     {
@@ -1118,9 +1272,12 @@
         },
         "default_size": "md",
         "default_tone": "primary",
-        "sampleCount": 128,
-        "sweepRateHz": 60,
-        "range": 1.0
+        "sampleCount": 256,
+        "sweepRateHz": 30,
+        "range": [
+          -1,
+          1
+        ]
       }
     },
     {
@@ -1192,7 +1349,7 @@
         "default_size": "md",
         "default_tone": "primary",
         "default_lit": true,
-        "illuminationSlug": "led-amber"
+        "illuminationSlug": "illumination-amber"
       }
     }
   ]
