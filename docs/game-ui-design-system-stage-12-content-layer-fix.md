@@ -1689,3 +1689,159 @@ composition + theme paint), not a Step 15 regression.
 - Info-panel **content binding** (cell adapter wiring live cell data →
   panel labels) deferred to a separate cell-adapter pass.
 
+## Step 16 — pause + info-panel visual polish iteration (post ui-visual-fidelity-layer)
+
+**Pre-conditions.** `ui-visual-fidelity-layer` master plan closed end-to-end
+(commits `a1301cf5`, `fed86644`, `2b4f1a36`, `3a5a8766`, `11272abd` — Stage
+1.1 → 1.5). Surface now carries:
+
+- `claude_design_conformance` bridge kind (Step 14.3) + `prefab_inspect`
+  (14.1) + `ui_tree_walk` (14.2) live.
+- `ui-fidelity-review` skill (14.4) wired closed-loop.
+- New `ThemedPrimitive` ring (Stage 1.3): `ThemedFrame`, `ThemedDivider`,
+  `ThemedBadge`, `ThemedSectionHeader`, `ThemedIlluminationLayer`,
+  plus `ThemedButton` state-binding extension (hover / press / focus).
+- `UiBakeHandler` partial split (Stage 1.2) + bake handler dispatch +
+  conformance bridge extension (Stage 1.4).
+- `AtlasIndex` (frame sprite swap surface).
+- IR schema fix (Stage 1.5) + cd-bundle extracts now sibling to
+  `ir.json`: `computed-styles.json`, `layout-rects.json`,
+  `interactions.json`.
+- All 18 panel prefabs re-baked under Stage 1.5 (pause, info-panel,
+  settings, save-load, new-game, hud-bar, toolbar, city-stats, …).
+
+**Goal.** Drive **pause** (`Assets/UI/Prefabs/Generated/pause.prefab`,
+slug `pause`) and **info-panel**
+(`Assets/UI/Prefabs/Generated/info-panel.prefab`, slug `info-panel`) to
+visual parity with cd-bundle reference — **panels + buttons only this
+pass**. Other primitives (labels, tabs, lists, sliders, toggles,
+dividers, badges, headers) deferred to a follow-up Step 17.
+
+### Scope (this step)
+
+| Slug | Surface | Primitive set |
+|------|---------|---------------|
+| `pause` | `pause.prefab` panel root + 6 themed-buttons | `ThemedPanel` chrome, `ThemedButton` state ring |
+| `info-panel` | `info-panel.prefab` panel root + any themed-button children | `ThemedPanel` chrome, `ThemedButton` state ring |
+
+Out of scope this step (deferred to Step 17+): typography (font asset
+binding inside labels), tab-bar chrome, slot padding rhythm, illumination
+layer, content density (sections / dividers / badges / headers),
+info-panel content binding (cell adapter live data wiring).
+
+### Pending decisions (P1–P6) — needs user input
+
+| Id | Question | Options |
+|----|----------|---------|
+| P1 | Iteration cadence | A — `ui-fidelity-review` skill main-session, `MAX_ITERATIONS=2` per surface, live-verify only at end of batch.<br>B — per-surface, per-iter live-verify human screenshot.<br>C — subagent dispatch via `/ui-fidelity-review`, parallel surfaces. |
+| P2 | Frame sprite source | A — `AtlasIndex` lookup by `frame_style` slug → 9-sliced `Sprite` baked into `ThemedFrame.Image.sprite`.<br>B — runtime `ThemedFrame.ApplyTheme` reads sprite from `UiTheme.frameStyles[].sprite` slot (catalog-bound).<br>C — both — bake writes default; runtime can swap on theme change. |
+| P3 | Button state palette source | A — `ThemedButton._stateColorBlock` bound to ramp[last], ramp[last-1], ramp[last-2], ramp[0] (normal/highlight/pressed/disabled) — current `ColorBlock` write retained.<br>B — drive state via `interactions.json` per slug (per-element `:hover` / `:active` / `:disabled` color overrides).<br>C — both — A as default, B overrides per slug when present. |
+| P4 | Conformance gate scope | A — gate on existing six check kinds (`palette_ramp`, `font_face`, `frame_style`, `panel_kind`, `caption`, `contrast_ratio`) only. `frame_style` flips from `info` → `error` once sprite swap lands.<br>B — extend conformance with two new check kinds: `frame_sprite_bound` (ThemedFrame.Image.sprite ≠ null) + `button_state_block` (ThemedButton state colors match ramp). |
+| P5 | Layout-rect verify | A — skip (no `layout-rects.json` diff yet).<br>B — run `ui_tree_walk` per surface + diff vs `layout-rects.json` at 1920×1080 viewport; emit advisory rows (no gate). |
+| P6 | Surface ordering | A — pause → info-panel (pause first; smaller surface, faster feedback).<br>B — info-panel → pause (info-panel carries more content density risk).<br>C — both in parallel (single batch through skill). |
+
+### Recommended path (default — reply "confirm P1..P6 defaults" to apply)
+
+- **P1 = A** — main-session, `MAX_ITERATIONS=2`, batch live-verify at end.
+- **P2 = C** — bake default + runtime theme swap. Lets later theme
+  variants drop in without re-bake.
+- **P3 = C** — A default, B overrides where `interactions.json`
+  carries per-slug state colors. Falls back gracefully when no override.
+- **P4 = B** — extend conformance with `frame_sprite_bound` +
+  `button_state_block`. Without these, conformance stays green while
+  visuals stay broken — repeat of Step 15 trap.
+- **P5 = B** — single `ui_tree_walk` per surface; advisory rows only.
+  No new gate this step. Cheap insurance against layout drift.
+- **P6 = A** — pause first, info-panel second.
+
+### Mechanical sub-step plan (post-decision, per recommended defaults)
+
+Ordered, surface-scoped:
+
+- **16.1 — Conformance baseline (per surface).** Run
+  `ui-fidelity-review` Phase 0 → 5 against pause + info-panel against
+  current `ir.json` + `DefaultUiTheme.asset`. Capture row count + fail
+  count per check kind. **Gate**: this is read-only — no fix yet. Output
+  feeds 16.2 / 16.3 / 16.4.
+- **16.2 — Frame sprite bake-time wiring (`ThemedPanel` + `ThemedFrame`).**
+  `Assets/Scripts/Editor/Bridge/UiBakeHandler.*.cs` — extend themed-panel
+  bake path to look up `frame_style` slug via `AtlasIndex`, write resolved
+  sprite into `ThemedFrame.Image.sprite` SerializedField + set
+  `Image.type = Sliced`. Re-bake pause + info-panel.
+- **16.3 — _retired_.** Procedural 4-strip border replaces sprite swap (P7'
+  decision). Runtime border color + thickness now wired in 16.8 via
+  `ThemedPanel.ApplyTheme` directly. No `ThemedFrame.sprite` runtime path.
+- **16.4 — Button state palette wiring (`ThemedButton`).**
+  `Assets/Scripts/UI/Themed/ThemedButton.cs` — extend
+  `ApplyTheme` to write per-state colors:
+  - `normalColor` = `ramp[last]`
+  - `highlightedColor` = `ramp[last-1]`
+  - `pressedColor` = `ramp[last-2]`
+  - `disabledColor` = `ramp[0]`
+  Then load `interactions.json` if present; for each entry matching
+  `{panel_slug}/{child_slug}`, override per-state colors.
+  `UiBakeHandler` themed-button bake path must also emit
+  `Selectable.transition = ColorTint` + `targetGraphic = Image` (already
+  in Step 13B; verify still present after Stage 1.4 dispatch refactor).
+- **16.5 — Conformance check-kind extensions (`AgentBridgeCommandRunner.Conformance.cs`).**
+  Add two new row kinds:
+  - `frame_sprite_bound` (`error` if `ThemedFrame.Image.sprite == null`
+    on a panel root carrying a non-null `frame_style` slug).
+  - `button_state_block` (`error` if `Selectable.colors` ColorBlock
+    state colors do not match expected ramp indices within 1.5/255
+    epsilon, OR if `interactions.json` override active and not honored).
+  Surface-mirror MCP descriptor + tsc gate.
+- **16.6 — Re-bake + closed-loop verify (per surface).** Run
+  `ui-fidelity-review` Phase 1 → 5 against pause + info-panel after
+  16.2 + 16.4 land. Iterate up to `MAX_ITERATIONS=2` if `fail_count > 0`.
+  Apply `ui_tree_walk` advisory diff (P5 = B) at end of iteration to
+  flag layout drift vs `layout-rects.json`.
+- **16.7 — Live-verify (single batch).** User play-tests:
+  - Esc → pause → buttons render with frame ornament + chrome border;
+    hover lightens, press darkens, click fires action + blip
+    (regression check vs Step 13D).
+  - Cell click → info-panel → buttons (if any) carry same chrome +
+    state ring; panel chassis carries frame sprite.
+  Capture screenshots; compare to
+  `web/design-refs/step-1-game-ui/screenshots/`.
+
+### Iteration policy
+
+`MAX_ITERATIONS=2` per surface. Stop early on `fail_count == 0`.
+Escalate (paste-ready dump) when no convergence — list
+top-fail rows by `node_path` + `check_kind` + `expected` vs `actual`,
+plus suspected drift surface (theme palette / IR slot / cd-bundle
+extract / bake handler).
+
+### Out of scope (deferred to Step 17+)
+
+- Typography polish — `ThemedLabel` font asset binding from
+  `UiTheme.fontFaces[slug].fontAsset`; per-label size/weight from
+  `computed-styles.json`.
+- Tab-bar chrome (`ThemedTabBar`) sprite + indicator polish.
+- Slot padding / spacing rhythm from `computed-styles.json` per slot.
+- Illumination layer (`ThemedIlluminationLayer`) gradient bake.
+- Content density — section dividers, headers, badges
+  (`ThemedDivider`, `ThemedSectionHeader`, `ThemedBadge`).
+- Info-panel **content binding** (cell adapter live data wiring →
+  per-slot label text).
+- Settings / save-load / new-game / hud-bar / toolbar visual polish
+  (different surface ring; same skill, different batch).
+
+### Locked decisions
+
+| Id | Resolved | Rationale |
+|----|----------|-----------|
+| P1 | **Main-session, per-impl QA gate** (refined) | Closed-loop `ui-fidelity-review` after each fix. When agent thinks the fix is ready, ask human for QA (screenshots / logs). No advance to next work item until human confirms. |
+| P2 | **Bake-time only via `AtlasIndex`** | No runtime swap. Border art baked once into each prefab; `ThemedFrame.ApplyTheme` does not assign sprite. Theme variant support deferred. |
+| P3 | **Ramp + `interactions.json` overrides** | Default state colors from palette ramp (last / last-1 / last-2 / 0); `interactions.json` per-slug entries override when present. |
+| P4 | **Strict — extend conformance** | Add `frame_sprite_bound` + `button_state_block` check kinds. Eight check kinds total. Avoids Step 15 trap (green conformance + visually broken). |
+| P5 | **Advisory layout-rect diff** | Run `ui_tree_walk` per surface; diff against `layout-rects.json` at 1920×1080 viewport; emit advisory rows (no gate). Cheap regression insurance. |
+| P6 | **Pause first** | Smaller surface, faster feedback. Info-panel after. |
+
+### Next action
+
+Begin **16.1 — conformance baseline on `pause.prefab`**. Run
+`ui-fidelity-review` Phase 0 → 5 (read-only) against current IR + theme.
+Human QA gate before 16.2.
+

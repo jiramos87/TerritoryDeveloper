@@ -1,19 +1,29 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Territory.UI.StudioControls.Renderers
 {
     /// <summary>Render-layer companion for <see cref="IlluminatedButton"/>; lerps main <see cref="Image"/> alpha from <see cref="IlluminatedButton.IlluminationAlpha"/> on each <see cref="StudioControlBase.ApplyDetail"/> + halo flash coroutine on <see cref="IlluminatedButton.OnClick"/>.</summary>
     [RequireComponent(typeof(IlluminatedButton))]
-    public class IlluminatedButtonRenderer : StudioControlRendererBase
+    public class IlluminatedButtonRenderer : StudioControlRendererBase,
+        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         private const float DefaultHaloDurationSeconds = 0.25f;
+
+        // Step 16.4 — hover/press state visuals (P8=a locked).
+        private const float HaloIdleAlpha = 0f;
+        private const float HaloHoverAlpha = 0.35f;
+        private const float HaloPressAlpha = 0.6f;
+        private const float BodyPressDimFactor = 0.7f;
 
         private IlluminatedButton _button;
         private Image _mainImage;
         private Image _haloImage;
         private Coroutine _haloCoroutine;
+        private bool _isHover;
+        private bool _isPressed;
 
         protected override void Awake()
         {
@@ -24,6 +34,7 @@ namespace Territory.UI.StudioControls.Renderers
             {
                 _button.OnClick.AddListener(OnClicked);
             }
+            ApplyHaloState();
         }
 
         protected override void OnDestroy()
@@ -32,6 +43,51 @@ namespace Territory.UI.StudioControls.Renderers
             if (_button != null)
             {
                 _button.OnClick.RemoveListener(OnClicked);
+            }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            _isHover = true;
+            ApplyHaloState();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            _isHover = false;
+            _isPressed = false;
+            ApplyHaloState();
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _isPressed = true;
+            ApplyHaloState();
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            _isPressed = false;
+            ApplyHaloState();
+        }
+
+        private void ApplyHaloState()
+        {
+            if (_haloCoroutine != null) return; // active click pulse owns halo until done
+            if (_haloImage != null)
+            {
+                float target = _isPressed ? HaloPressAlpha : (_isHover ? HaloHoverAlpha : HaloIdleAlpha);
+                var hc = _haloImage.color;
+                hc.a = target;
+                _haloImage.color = hc;
+            }
+            if (_mainImage != null && _button != null)
+            {
+                float baseAlpha = Mathf.Clamp01(_button.IlluminationAlpha);
+                float bodyAlpha = _isPressed ? baseAlpha * BodyPressDimFactor : baseAlpha;
+                var bc = _mainImage.color;
+                bc.a = bodyAlpha;
+                _mainImage.color = bc;
             }
         }
 
@@ -59,8 +115,10 @@ namespace Territory.UI.StudioControls.Renderers
         protected override void OnStateApplied()
         {
             if (_button == null || _mainImage == null) return;
+            float baseAlpha = Mathf.Clamp01(_button.IlluminationAlpha);
+            float bodyAlpha = _isPressed ? baseAlpha * BodyPressDimFactor : baseAlpha;
             var color = _mainImage.color;
-            color.a = Mathf.Clamp01(_button.IlluminationAlpha);
+            color.a = bodyAlpha;
             _mainImage.color = color;
         }
 
@@ -88,13 +146,9 @@ namespace Territory.UI.StudioControls.Renderers
                 elapsed += Time.deltaTime;
                 yield return null;
             }
-            if (_haloImage != null)
-            {
-                var color = _haloImage.color;
-                color.a = 0f;
-                _haloImage.color = color;
-            }
             _haloCoroutine = null;
+            // Step 16.4 — restore hover/press steady state after click pulse ends.
+            ApplyHaloState();
         }
     }
 }

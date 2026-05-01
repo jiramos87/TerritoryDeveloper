@@ -104,6 +104,14 @@ public static partial class AgentBridgeCommandRunner
                 RunBakeUiFromIr(repoRoot, commandId, requestJson);
                 return true;
 
+            // ── Game UI runtime — Play Mode allowed ──────────────────────
+            // Step 16.10 — narrow `set_panel_visible(slug, active)` lets the bridge
+            // toggle a ThemedPanel without simulating a keyboard Esc press; used by
+            // closed-loop QA (claude_design_conformance) to surface pause + info-panel.
+            case "set_panel_visible":
+                RunSetPanelVisible(repoRoot, commandId, requestJson);
+                return true;
+
             default:
                 return false;
         }
@@ -590,6 +598,40 @@ public static partial class AgentBridgeCommandRunner
 
         var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "set_gameobject_active");
         resp.mutation_result = $"{{\"game_object\":\"{EscapeJsonString(go.name)}\",\"active\":{(dto.active ? "true" : "false")}}}";
+        CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
+    }
+
+    // Step 16.10 — runtime ThemedPanel toggle by IR slug (Play Mode allowed).
+    static void RunSetPanelVisible(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseMutationParams<SetPanelVisibleParamsDto>(requestJson, out var dto, out string parseErr)) { TryFinalizeFailed(repoRoot, commandId, parseErr); return; }
+        if (string.IsNullOrWhiteSpace(dto.slug)) { TryFinalizeFailed(repoRoot, commandId, "params_invalid:slug"); return; }
+
+        var panels = UnityEngine.Object.FindObjectsOfType<Territory.UI.Themed.ThemedPanel>(includeInactive: true);
+        Territory.UI.Themed.ThemedPanel match = null;
+        for (int i = 0; i < panels.Length; i++)
+        {
+            if (panels[i] != null && panels[i].gameObject.name == dto.slug)
+            {
+                match = panels[i];
+                break;
+            }
+        }
+
+        if (match == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"panel_not_found:slug={dto.slug}");
+            return;
+        }
+
+        match.gameObject.SetActive(dto.active);
+        if (!EditorApplication.isPlaying)
+        {
+            EditorSceneManager.MarkSceneDirty(match.gameObject.scene);
+        }
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "set_panel_visible");
+        resp.mutation_result = $"{{\"slug\":\"{EscapeJsonString(dto.slug)}\",\"active\":{(dto.active ? "true" : "false")},\"play_mode\":{(EditorApplication.isPlaying ? "true" : "false")}}}";
         CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
     }
 
@@ -1152,6 +1194,14 @@ class SetGameObjectParentParamsDto
     public string target_path;
     public string new_parent_path;
     public bool world_position_stays;
+}
+
+// Step 16.10 — Game UI runtime toggle.
+[Serializable]
+class SetPanelVisibleParamsDto
+{
+    public string slug;
+    public bool active;
 }
 
 // Scene lifecycle

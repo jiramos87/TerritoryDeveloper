@@ -65,8 +65,10 @@ Closed-loop diff between baked prefab/scene and claude-design IR (`ir.json`) + U
 | `{PREFAB_PATH}` | Asset path of baked prefab (mutex with `{SCENE_ROOT_PATH}`) |
 | `{SCENE_ROOT_PATH}` | Active-scene Canvas-rooted GameObject name (mutex with `{PREFAB_PATH}`) |
 | `{MAX_ITERATIONS}` | Bake-fix cycles before escalating (default 2) |
+| `{LAYOUT_RECTS_PATH}` | Optional design-reference layout rects (default `web/design-refs/step-1-game-ui/layout-rects.json`) — enables advisory layout-rect diff in Phase 3 |
+| `{HUMAN_QA_GATE}` | When `on` (default), the skill stops after Phase 5 of each iteration and asks the human for QA (screenshots / logs / play-mode confirmation) before allowing the next bake-fix work item. When `off`, the loop runs autonomously up to `{MAX_ITERATIONS}`. |
 
-## Phase order — Bake → Inspect → Walk → Conformance → Verify → Iterate
+## Phase order — Bake → Inspect → Walk → Conformance → Verify → Human QA → Iterate
 
 ### 0. Preflight
 
@@ -92,6 +94,8 @@ Use when:
 - Scene-mode review (no prefab to inspect — only the live Canvas).
 
 Skip when prefab inspect alone covers the scope.
+
+**Layout-rect advisory diff (optional).** When `{LAYOUT_RECTS_PATH}` is provided, after the walk completes, load the JSON + diff per-node rect (`x`, `y`, `width`, `height` at 1920×1080 viewport) against the design-reference rect keyed by `{panel_slug}/{child_slug}`. Emit advisory rows in the Verification block under a `layout_rect_drift` section: `{ node_path, slug, expected_rect, actual_rect, dx, dy, dw, dh }`. **Advisory only — never gate `fail_count`.** Use to flag regressions; visual / human QA judges severity.
 
 ### 4. Conformance — IR + theme diff (Edit Mode)
 
@@ -124,11 +128,22 @@ Returns `response.claude_design_conformance_result`:
 }
 ```
 
-Six check kinds emitted: `palette_ramp`, `font_face`, `frame_style`, `panel_kind`, `caption`, `contrast_ratio`.
+Eight check kinds emitted: `palette_ramp`, `font_face`, `frame_style`, `panel_kind`, `caption`, `contrast_ratio`, `frame_sprite_bound`, `button_state_block`.
 
-Severity scale: `info` (deferred / read-only metadata; e.g. font_face binding, frame_style binding — always `pass=true`), `error` (gate-blocking; e.g. palette ramp mismatch, panel_kind enum drift, caption mismatch, contrast < 4.5:1 — `pass=false`).
+| Check kind | Severity rule | Gate |
+|---|---|---|
+| `palette_ramp` | `error` on color drift > 1.5/255 epsilon | yes |
+| `font_face` | `info` (read-only metadata, runtime binding deferred) | no |
+| `frame_style` | `info` until sprite-bake lands; `error` once `frame_sprite_bound` enforced | conditional |
+| `panel_kind` | `error` on enum / IR string mismatch | yes |
+| `caption` | `error` on TMP `m_text` vs IR labels mismatch | yes |
+| `contrast_ratio` | `error` on WCAG body-text < 4.5:1 | yes |
+| `frame_sprite_bound` | `error` when `ThemedFrame.Image.sprite == null` on a panel root carrying a non-null `frame_style` slug | yes |
+| `button_state_block` | `error` when `Selectable.colors` ColorBlock state colors do not match expected ramp indices within 1.5/255 epsilon (ramp[last] / ramp[last-1] / ramp[last-2] / ramp[0]) OR when `interactions.json` carries a per-slug override that the ColorBlock does not honor | yes |
 
-Pass policy: gate on `fail_count == 0` (server-computed: count where `pass == false`, which always equals `severity == "error"`). Info rows logged but never gate.
+Severity scale: `info` (deferred / read-only metadata — always `pass=true`), `error` (gate-blocking — `pass=false`).
+
+Pass policy: gate on `fail_count == 0` (server-computed: count where `pass == false`, which always equals `severity == "error"`). Info rows logged but never gate. Layout-rect drift rows from Phase 3 are **advisory** and never fold into `fail_count`.
 
 ### 5. Verify — emit Verification block
 
@@ -141,15 +156,38 @@ Emit a Verification block per [`verification-report`](../../../.claude/output-st
 
 Append a caveman markdown summary after the JSON: per-iteration row counts (`row_count`, `fail_count`, top 3 fail rows by `node_path` + `check_kind`), bake/inspect/walk artifact paths, surface slug.
 
-### 6. Iterate
+### 6. Human QA gate (when `{HUMAN_QA_GATE} = on`, default)
 
-If `fail_count > 0` and cause is clear:
+After Phase 5 emits the Verification block, **stop**. Ask the human for QA confirmation before proceeding to the next bake-fix work item.
 
-- **Theme drift** (palette ramp, font face, frame style mismatch) → edit `Assets/UI/Theme/DefaultUiTheme.asset` ramp / font face / frame style binding → re-bake (Phase 1) → re-inspect (Phase 2) → re-walk if needed (Phase 3) → re-run conformance (Phase 4) → re-emit Verification block (Phase 5).
-- **IR drift** (caption text, panel kind, slot tree shape) → edit `{IR_PATH}` upstream OR re-run `transcribe:cd-game-ui` against updated cd-bundle → re-bake → re-verify.
-- **Contrast fail** → swap palette ramp index in IR or theme → re-bake → re-verify.
+Polling shape (product language; see `ia/rules/agent-human-polling.md`):
 
-Stop after `{MAX_ITERATIONS}` (default 2) without convergence; escalate with row dump + suspected drift surface (theme vs IR vs prefab override).
+```
+Pause-menu border art + button hover/press states baked. Conformance: row_count=N, fail_count=0.
+Advisory layout-rect drift: K nodes >4px off design reference (see report).
+Please confirm in Editor Play Mode (Esc → pause menu):
+  - Border / corners visible on panel chrome.
+  - Buttons lighten on hover, darken on press.
+  - Click still fires action + blip.
+Reply: pass / fail (with screenshot or log if fail).
+```
+
+Wait for human reply. On `pass`, advance to the next work item. On `fail`, treat as Phase 6 iterate (next section) with the human-flagged surface as the suspected drift target.
+
+Skip this phase when `{HUMAN_QA_GATE} = off` (autonomous mode); flow straight from Phase 5 to Phase 7.
+
+### 7. Iterate
+
+If `fail_count > 0` (conformance) **or** human QA returned `fail`, and cause is clear:
+
+- **Theme drift** (palette ramp, font face, frame style mismatch) → edit `Assets/UI/Theme/DefaultUiTheme.asset` ramp / font face / frame style binding → re-bake (Phase 1) → re-inspect (Phase 2) → re-walk if needed (Phase 3) → re-run conformance (Phase 4) → re-emit Verification block (Phase 5) → re-poll human (Phase 6).
+- **IR drift** (caption text, panel kind, slot tree shape) → edit `{IR_PATH}` upstream OR re-run `transcribe:cd-game-ui` against updated cd-bundle → re-bake → re-verify → re-poll.
+- **Contrast fail** → swap palette ramp index in IR or theme → re-bake → re-verify → re-poll.
+- **Frame sprite unbound** (`frame_sprite_bound` error) → bake handler `themed-panel` path: look up `frame_style` slug via `AtlasIndex` → write resolved sprite into `ThemedFrame.Image.sprite` SerializedField + set `Image.type = Sliced` → re-bake → re-verify. **Bake-time only — runtime never assigns sprite.**
+- **Button state block drift** (`button_state_block` error) → `ThemedButton.ApplyTheme`: write `Selectable.colors` ColorBlock with ramp[last] / ramp[last-1] / ramp[last-2] / ramp[0] → optionally apply per-slug override from `interactions.json` → re-bake → re-verify.
+- **Layout-rect drift advisory** (Phase 3 advisory rows) → not auto-gated; raise to human in Phase 6 polling block; act only when human flags in QA reply.
+
+Stop after `{MAX_ITERATIONS}` (default 2) without convergence; escalate with row dump + suspected drift surface (theme vs IR vs prefab override vs bake handler).
 
 ## MCP tools
 
@@ -175,18 +213,27 @@ ui-fidelity-review {SURFACE_SLUG} — iter N/{MAX_ITERATIONS}
 target: prefab Assets/UI/Prefabs/Generated/PauseMenu.prefab
 ir: web/design-refs/step-1-game-ui/ir.json
 theme: Assets/UI/Theme/DefaultUiTheme.asset
-row_count: 24  fail_count: 3
+layout_rects: web/design-refs/step-1-game-ui/layout-rects.json (advisory)
+row_count: 26  fail_count: 3  layout_drift_count: 2 (advisory)
 top fails:
-  - PauseMenuRoot/Title    palette_ramp   ramp[last] #FFFFFF vs #E0E0E0
-  - PauseMenuRoot/QuitBtn  contrast_ratio 3.8:1 vs 4.5:1 threshold
-  - PauseMenuRoot/Body     caption        "Quit Game" vs "Quit"
-suspected drift: theme palette ramp[last] override
-next: edit DefaultUiTheme palette ramp → re-bake → iter N+1
+  - PauseMenuRoot/Title         palette_ramp        ramp[last] #FFFFFF vs #E0E0E0
+  - PauseMenuRoot/Frame         frame_sprite_bound  expected non-null sprite, got null
+  - PauseMenuRoot/QuitBtn       button_state_block  pressed #1c2024 vs ramp[last-2] #131618
+top layout drifts (advisory):
+  - PauseMenuRoot/QuitBtn       dx=+12  dy=-6  dw=+8   dh=0
+suspected drift: bake handler — ThemedFrame sprite write missing
+next: edit UiBakeHandler themed-panel case → AtlasIndex lookup → re-bake → iter N+1
+human QA: pending (gate=on)
 ```
 
 ## Seed prompt
 
 ```markdown
 Run ui-fidelity-review (`ia/skills/ui-fidelity-review/SKILL.md`) for {SURFACE_SLUG}.
-Bake → prefab_inspect → ui_tree_walk (optional) → claude_design_conformance against {IR_PATH} + {THEME_SO} on {PREFAB_PATH or SCENE_ROOT_PATH}. Emit Verification block. Iterate up to {MAX_ITERATIONS} on fail_count > 0; escalate with row dump if no convergence.
+Bake → prefab_inspect → ui_tree_walk (with layout-rect advisory diff against {LAYOUT_RECTS_PATH}) → claude_design_conformance (8 check kinds) against {IR_PATH} + {THEME_SO} on {PREFAB_PATH or SCENE_ROOT_PATH}.
+Emit Verification block. When {HUMAN_QA_GATE}=on (default), stop after Phase 5 and poll human (product-language QA prompt: border art visible, hover/press states, click+blip). Iterate on fail_count > 0 OR human-fail. Stop after {MAX_ITERATIONS} without convergence; escalate with row dump + suspected drift surface.
 ```
+
+## Changelog
+
+- 2026-04-30 — Added `frame_sprite_bound` + `button_state_block` strict check kinds; added Phase 3 advisory layout-rect diff (`{LAYOUT_RECTS_PATH}`); added Phase 6 human QA gate (`{HUMAN_QA_GATE}`, default `on`); renumbered iterate to Phase 7. Driven by Stage 12 Step 16 polish iteration (pause + info-panel; bake-time-only frame sprite, ramp+interactions.json button states).

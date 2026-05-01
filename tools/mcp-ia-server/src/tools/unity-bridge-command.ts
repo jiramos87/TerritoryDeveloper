@@ -77,6 +77,8 @@ const unityBridgeCommandInputShape = {
       "execute_menu_item",
       // ── Game UI bake (Stage 2) ───────────────────────────────────────────
       "bake_ui_from_ir",
+      // ── Game UI runtime (Stage 12 Step 16.10) — Play Mode allowed ────────
+      "set_panel_visible",
     ])
     .default("export_agent_context")
     .describe(
@@ -308,6 +310,11 @@ const unityBridgeCommandInputShape = {
     .string()
     .optional()
     .describe("execute_menu_item: Unity Editor menu path (e.g. 'Assets/Refresh'). Unresolved path → menu_not_found."),
+  // ── Game UI runtime (Stage 12 Step 16.10) ──────────────────────────────
+  slug: z
+    .string()
+    .optional()
+    .describe("set_panel_visible: ThemedPanel slug (matches GameObject root name baked from IR panel.slug)."),
   // ── Game UI bake (Stage 2) ─────────────────────────────────────────────
   ir_path: z
     .string()
@@ -538,7 +545,15 @@ export type UiTreeCanvas = {
 export type ConformanceRow = {
   node_path: string;
   component: string;
-  check_kind: "palette_ramp" | "font_face" | "frame_style" | "panel_kind" | "caption" | "contrast_ratio";
+  check_kind:
+    | "palette_ramp"
+    | "font_face"
+    | "frame_style"
+    | "panel_kind"
+    | "caption"
+    | "contrast_ratio"
+    | "frame_sprite_bound"
+    | "button_state_block";
   slug: string;
   expected: string;
   resolved: string;
@@ -798,6 +813,15 @@ function buildRequestEnvelope(
         ir_path: input.ir_path ?? "",
         out_dir: input.out_dir ?? "",
         theme_so: input.theme_so ?? "",
+      },
+    };
+  }
+  if (input.kind === "set_panel_visible") {
+    return {
+      ...base,
+      params: {
+        slug: input.slug ?? "",
+        active: input.active ?? true,
       },
     };
   }

@@ -20,6 +20,11 @@ namespace Territory.UI.Themed
         [SerializeField] private SlotSpec[] _slots;
         [SerializeField] private GameObject[] _children;
         [SerializeField] private PanelKind _kind = PanelKind.Modal;
+        [SerializeField] private string _frameStyleSlug;
+        [SerializeField] private Image _borderTop;
+        [SerializeField] private Image _borderBottom;
+        [SerializeField] private Image _borderLeft;
+        [SerializeField] private Image _borderRight;
 
         /// <summary>Bake-time SlotSpec[] (read-only — runtime accessor used by EditMode smoke).</summary>
         public SlotSpec[] Slots => _slots;
@@ -122,6 +127,18 @@ namespace Territory.UI.Themed
                 if (ColorUtility.TryParseHtmlString(ramp.ramp[idx], out var bg))
                 {
                     _backgroundImage.color = bg;
+                }
+                // Step 16.8 — procedural border tint: pick a clearly-distinct shade from the
+                // panel-fill ramp[1]. ramp[2] (Step 16.2) was only ~9 brightness units lighter and
+                // rendered invisible. ramp[4] (or ramp.Length-1 fallback) gives a visible hairline.
+                int borderIdx = ramp.ramp.Length >= 5 ? 4 : ramp.ramp.Length - 1;
+                if (borderIdx < 0) borderIdx = idx;
+                if (ColorUtility.TryParseHtmlString(ramp.ramp[borderIdx], out var borderColor))
+                {
+                    if (_borderTop != null) _borderTop.color = borderColor;
+                    if (_borderBottom != null) _borderBottom.color = borderColor;
+                    if (_borderLeft != null) _borderLeft.color = borderColor;
+                    if (_borderRight != null) _borderRight.color = borderColor;
                 }
             }
 

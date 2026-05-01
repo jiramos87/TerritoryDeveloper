@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Territory.UI;
+using Territory.UI.StudioControls;
+using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
 using TMPro;
 using UnityEditor;
@@ -10,20 +12,27 @@ using UnityEngine.UI;
 
 // Stage 12 Step 14.3 — `claude_design_conformance` bridge kind (read-only).
 // Diffs a baked prefab/scene root against IR slug intent + UiTheme-resolved
-// values. Returns one row per check. Six check kinds:
-//   palette_ramp   — ThemedButton/Label/Panel `_paletteSlug` resolves to a
-//                    UiTheme palette whose ramp stop matches the actual
-//                    rendered Color on the bound Image / TMP_Text.
-//   font_face      — ThemedLabel `_fontFaceSlug` resolves to a UiTheme font
-//                    face (family + weight emitted as expected/actual).
-//   frame_style    — ThemedButton/Panel `_frameStyleSlug` resolves to a
-//                    UiTheme frame style (edge + innerShadowAlpha).
-//   panel_kind     — ThemedPanel `_kind` matches IR panel.kind for the
-//                    panel whose slug == GameObject name.
-//   caption        — IR panel.slot.labels[i] for child slug C matches the
-//                    TMP_Text.m_text of a ThemedLabel under that child.
-//   contrast_ratio — Per ThemedLabel under a ThemedPanel parent, WCAG
-//                    contrast between text color + panel fill color ≥ 4.5.
+// values. Returns one row per check. Eight check kinds:
+//   palette_ramp        — ThemedButton/Label/Panel `_paletteSlug` resolves
+//                         to a UiTheme palette whose ramp stop matches the
+//                         actual rendered Color on the bound Image / TMP_Text.
+//   font_face           — ThemedLabel `_fontFaceSlug` resolves to a UiTheme
+//                         font face (family + weight emitted as expected/actual).
+//   frame_style         — ThemedButton/Panel `_frameStyleSlug` resolves to a
+//                         UiTheme frame style (edge + innerShadowAlpha).
+//   panel_kind          — ThemedPanel `_kind` matches IR panel.kind for the
+//                         panel whose slug == GameObject name.
+//   caption             — IR panel.slot.labels[i] for child slug C matches the
+//                         TMP_Text.m_text of a ThemedLabel under that child.
+//   contrast_ratio      — Per ThemedLabel under a ThemedPanel parent, WCAG
+//                         contrast between text color + panel fill color ≥ 4.5.
+//   frame_sprite_bound  — Step 16.5 procedural border check: ThemedPanel has
+//                         all 4 border strip Image children (BorderTop/Bottom/
+//                         Left/Right) wired via SerializedObject refs.
+//   button_state_block  — Step 16.5: IlluminatedButton has companion renderer
+//                         that handles pointer hover/press (lighten halo,
+//                         darken body); detected via IlluminatedButtonRenderer
+//                         presence on same GameObject.
 
 public static partial class AgentBridgeCommandRunner
 {
@@ -204,6 +213,7 @@ public static partial class AgentBridgeCommandRunner
         var components = node.gameObject.GetComponents<Component>();
         ThemedPanel themedPanel = null;
         Image backgroundImage = null;
+        IlluminatedButton illuminatedButton = null;
         foreach (var comp in components)
         {
             if (comp == null) continue;
@@ -220,11 +230,19 @@ public static partial class AgentBridgeCommandRunner
                 case ThemedPanel pnl:
                     themedPanel = pnl;
                     break;
+                case IlluminatedButton ibtn:
+                    illuminatedButton = ibtn;
+                    break;
             }
         }
         if (themedPanel != null)
         {
             CheckThemedPanel(nodePath, node, themedPanel, theme, irPanels, rows);
+            CheckFrameSpriteBound(nodePath, themedPanel, rows);
+        }
+        if (illuminatedButton != null)
+        {
+            CheckButtonStateBlock(nodePath, node, illuminatedButton, rows);
         }
 
         for (int i = 0; i < node.childCount; i++)
@@ -535,6 +553,86 @@ public static partial class AgentBridgeCommandRunner
             severity = "info",
             pass = true,
             message = "frame_style slug resolves (sprite swap deferred)",
+        });
+    }
+
+    // -- Step 16.5 — frame_sprite_bound (procedural 4-strip border) -------------
+
+    static void CheckFrameSpriteBound(
+        string nodePath,
+        ThemedPanel pnl,
+        List<AgentBridgeConformanceRowDto> rows)
+    {
+        var so = new SerializedObject(pnl);
+        var top = TryReadObjectField(so, "_borderTop") as Image;
+        var bot = TryReadObjectField(so, "_borderBottom") as Image;
+        var lft = TryReadObjectField(so, "_borderLeft") as Image;
+        var rgt = TryReadObjectField(so, "_borderRight") as Image;
+
+        var strips = new[] {
+            ("Top", top), ("Bottom", bot), ("Left", lft), ("Right", rgt),
+        };
+
+        int present = 0;
+        int visibleAlpha = 0;
+        int nonZeroSize = 0;
+        int ignoreLayout = 0;
+        var failures = new List<string>();
+
+        foreach (var (name, img) in strips)
+        {
+            if (img == null) { failures.Add($"{name}:missing"); continue; }
+            present++;
+            if (img.color.a > 0f) visibleAlpha++; else failures.Add($"{name}:alpha=0");
+            var rt = img.rectTransform;
+            var size = rt != null ? rt.rect.size : Vector2.zero;
+            if (size.x > 0f || size.y > 0f) nonZeroSize++; else failures.Add($"{name}:size=0");
+            var le = img.GetComponent<LayoutElement>();
+            if (le != null && le.ignoreLayout) ignoreLayout++; else failures.Add($"{name}:layout-not-ignored");
+        }
+
+        bool pass = present == 4 && visibleAlpha == 4 && nonZeroSize == 4 && ignoreLayout == 4;
+        rows.Add(new AgentBridgeConformanceRowDto
+        {
+            node_path = nodePath,
+            component = "ThemedPanel",
+            check_kind = "frame_sprite_bound",
+            slug = TryReadStringField(so, "_frameStyleSlug") ?? string.Empty,
+            expected = "4 strips wired + visible alpha + non-zero size + LayoutElement.ignoreLayout=true",
+            resolved = "4 strips wired + visible alpha + non-zero size + LayoutElement.ignoreLayout=true",
+            actual = $"wired={present}/4 alpha={visibleAlpha}/4 size={nonZeroSize}/4 ignoreLayout={ignoreLayout}/4",
+            severity = pass ? "info" : "error",
+            pass = pass,
+            message = pass
+                ? "all 4 border strips wired + visible + sized + layout-exempt"
+                : $"strip defects: {string.Join(",", failures)} — re-bake panel",
+        });
+    }
+
+    // -- Step 16.5 — button_state_block (hover/press wiring) --------------------
+
+    static void CheckButtonStateBlock(
+        string nodePath,
+        Transform node,
+        IlluminatedButton btn,
+        List<AgentBridgeConformanceRowDto> rows)
+    {
+        var renderer = node.GetComponent<IlluminatedButtonRenderer>();
+        bool pass = renderer != null;
+        rows.Add(new AgentBridgeConformanceRowDto
+        {
+            node_path = nodePath,
+            component = "IlluminatedButton",
+            check_kind = "button_state_block",
+            slug = btn.Slug ?? string.Empty,
+            expected = "IlluminatedButtonRenderer present (handles hover/press)",
+            resolved = "IlluminatedButtonRenderer present (handles hover/press)",
+            actual = pass ? "renderer present" : "renderer missing",
+            severity = pass ? "info" : "error",
+            pass = pass,
+            message = pass
+                ? "hover/press state block wired via IlluminatedButtonRenderer"
+                : "no IlluminatedButtonRenderer — pointer hover/press will not animate",
         });
     }
 
@@ -1110,7 +1208,7 @@ public class AgentBridgeConformanceRowDto
 {
     public string node_path;
     public string component;
-    public string check_kind; // palette_ramp | font_face | frame_style | panel_kind | caption | contrast_ratio
+    public string check_kind; // palette_ramp | font_face | frame_style | panel_kind | caption | contrast_ratio | frame_sprite_bound | button_state_block
     public string slug;
     public string expected;
     public string resolved;

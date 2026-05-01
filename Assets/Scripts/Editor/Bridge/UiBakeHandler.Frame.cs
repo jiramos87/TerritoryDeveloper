@@ -170,6 +170,9 @@ namespace Territory.Editor.Bridge
                 ApplySpacing(panel, go);
 
                 // Stage 1.4 T1.4.3 — frame sprite resolution via AtlasIndex; fallback slug on miss.
+                // Step 16.2 — additionally bake procedural 4-strip border (top/bottom/left/right) so
+                // panel chrome renders even when no PNG asset is present under Assets/UI/Sprites/Frames/.
+                Image borderTop = null, borderBottom = null, borderLeft = null, borderRight = null;
                 {
                     const string FallbackFrameSlug = "ui/frame/default";
                     string frameSlug = !string.IsNullOrEmpty(panel.frame_style_slug)
@@ -182,6 +185,27 @@ namespace Territory.Editor.Bridge
                         frameSprite = AtlasIndex.Resolve(FallbackFrameSlug);
                     }
                     if (frameSprite != null) bgImage.sprite = frameSprite;
+
+                    // Procedural border — thickness from frame_style edge keyword; default 2px.
+                    float thickness = ResolveBorderThickness(panel.frame_style_slug);
+                    borderTop = SpawnBorderStrip(go.transform, "BorderTop", BorderEdge.Top, thickness);
+                    borderBottom = SpawnBorderStrip(go.transform, "BorderBottom", BorderEdge.Bottom, thickness);
+                    borderLeft = SpawnBorderStrip(go.transform, "BorderLeft", BorderEdge.Left, thickness);
+                    borderRight = SpawnBorderStrip(go.transform, "BorderRight", BorderEdge.Right, thickness);
+
+                    // Persist border refs onto ThemedPanel so runtime ApplyTheme can tint them.
+                    var panelSo2 = new SerializedObject(themedPanel);
+                    var frameSlugProp = panelSo2.FindProperty("_frameStyleSlug");
+                    if (frameSlugProp != null) frameSlugProp.stringValue = frameSlug;
+                    var topProp = panelSo2.FindProperty("_borderTop");
+                    if (topProp != null) topProp.objectReferenceValue = borderTop;
+                    var botProp = panelSo2.FindProperty("_borderBottom");
+                    if (botProp != null) botProp.objectReferenceValue = borderBottom;
+                    var lftProp = panelSo2.FindProperty("_borderLeft");
+                    if (lftProp != null) lftProp.objectReferenceValue = borderLeft;
+                    var rgtProp = panelSo2.FindProperty("_borderRight");
+                    if (rgtProp != null) rgtProp.objectReferenceValue = borderRight;
+                    panelSo2.ApplyModifiedPropertiesWithoutUndo();
                 }
 
                 // Stage 1.4 T1.4.3 — conditional ThemedIlluminationLayer sibling when illumination_slug set.
@@ -518,6 +542,80 @@ namespace Territory.Editor.Bridge
             }
 
             return childGo;
+        }
+
+        // ── Step 16.2 — procedural border strips ────────────────────────────────
+
+        enum BorderEdge { Top, Bottom, Left, Right }
+
+        /// <summary>
+        /// Spawn a thin Image strip stretched along one panel edge. Tint applied at runtime by
+        /// <c>ThemedPanel.ApplyTheme</c>; bake-time color is white so theme-driven colors win.
+        /// Step 16.8 — strip carries <see cref="LayoutElement"/> with <c>ignoreLayout=true</c> so
+        /// the panel's <see cref="VerticalLayoutGroup"/> / <see cref="HorizontalLayoutGroup"/> does
+        /// not rewrite its anchored RectTransform into the flow layout (which would zero its size
+        /// + lose the edge anchor + render the strip invisible).
+        /// </summary>
+        static Image SpawnBorderStrip(Transform panelRoot, string name, BorderEdge edge, float thickness)
+        {
+            var stripGo = new GameObject(name, typeof(RectTransform));
+            stripGo.transform.SetParent(panelRoot, worldPositionStays: false);
+            var ignore = stripGo.AddComponent<LayoutElement>();
+            ignore.ignoreLayout = true;
+            var rt = stripGo.GetComponent<RectTransform>();
+            switch (edge)
+            {
+                case BorderEdge.Top:
+                    rt.anchorMin = new Vector2(0f, 1f);
+                    rt.anchorMax = new Vector2(1f, 1f);
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.sizeDelta = new Vector2(0f, thickness);
+                    rt.anchoredPosition = Vector2.zero;
+                    break;
+                case BorderEdge.Bottom:
+                    rt.anchorMin = new Vector2(0f, 0f);
+                    rt.anchorMax = new Vector2(1f, 0f);
+                    rt.pivot = new Vector2(0.5f, 0f);
+                    rt.sizeDelta = new Vector2(0f, thickness);
+                    rt.anchoredPosition = Vector2.zero;
+                    break;
+                case BorderEdge.Left:
+                    rt.anchorMin = new Vector2(0f, 0f);
+                    rt.anchorMax = new Vector2(0f, 1f);
+                    rt.pivot = new Vector2(0f, 0.5f);
+                    rt.sizeDelta = new Vector2(thickness, 0f);
+                    rt.anchoredPosition = Vector2.zero;
+                    break;
+                case BorderEdge.Right:
+                    rt.anchorMin = new Vector2(1f, 0f);
+                    rt.anchorMax = new Vector2(1f, 1f);
+                    rt.pivot = new Vector2(1f, 0.5f);
+                    rt.sizeDelta = new Vector2(thickness, 0f);
+                    rt.anchoredPosition = Vector2.zero;
+                    break;
+            }
+            var img = stripGo.AddComponent<Image>();
+            img.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            img.type = Image.Type.Sliced;
+            img.color = Color.white;
+            img.raycastTarget = false;
+            return img;
+        }
+
+        /// <summary>Map IR frame_style edge keyword → border strip thickness in px.
+        /// Step 16.8 — bumped baseline thicknesses so hairlines stay visible against the panel
+        /// fill at standard reference resolution (1920×1080) without HiDPI scale-up.</summary>
+        static float ResolveBorderThickness(string frameStyleSlug)
+        {
+            if (string.IsNullOrEmpty(frameStyleSlug)) return 3f;
+            switch (frameStyleSlug)
+            {
+                case "thin": return 2f;
+                case "bezel": return 3f;
+                case "rail": return 3f;
+                case "chassis": return 4f;
+                default: return 3f;
+            }
         }
 
     }

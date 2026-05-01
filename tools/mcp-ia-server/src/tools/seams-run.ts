@@ -27,7 +27,7 @@ import { z } from "zod";
 import fs from "node:fs";
 import path from "node:path";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import draft7MetaSchema from "ajv/dist/refs/json-schema-draft-07.json" assert { type: "json" };
+import draft7MetaSchema from "ajv/dist/refs/json-schema-draft-07.json" with { type: "json" };
 
 type AjvInstance = InstanceType<typeof Ajv2020>;
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
