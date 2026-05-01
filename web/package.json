@@ -13,6 +13,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
     "test:e2e": "playwright test --pass-with-no-tests",
     "test:e2e:ci": "playwright test --pass-with-no-tests --reporter=github"
   },

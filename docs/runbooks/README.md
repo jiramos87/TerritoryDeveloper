@@ -1,7 +1,7 @@
 ---
 purpose: Operator runbook index for catalog operations + DR.
 audience: operator
-last_walkthrough: 2026-04-30
+last_walkthrough: 2026-05-01
 ---
 
 # Operator runbooks
@@ -13,6 +13,7 @@ Step-by-step copy-pasteable procedures for catalog ops + disaster recovery. Each
 | [catalog-recovery.md](catalog-recovery.md) | Restore catalog DB + blob mirror from nightly backup; re-publish; smoke. |
 | [catalog-publish-flow.md](catalog-publish-flow.md) | Draft → diff → publish → version bump → consumer ref refresh cycle. |
 | [catalog-archetype-authoring.md](catalog-archetype-authoring.md) | Spawn new archetype via MCP → fill fields → wire refs → publish → consume. |
+| [playmode-catalog-roundtrip-extension.md](playmode-catalog-roundtrip-extension.md) | Per-kind PlayMode roundtrip extension once runtime catalog ships. |
 
 ## Conventions
 

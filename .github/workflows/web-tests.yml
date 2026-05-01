@@ -1,0 +1,37 @@
+name: Web tests
+
+# Stage 19.1 / TECH-8607: Vitest unit suite for web/lib pure logic.
+# Triggers only on web/** changes + this workflow + root package.json (test:web alias source).
+# DOES NOT cover integration (TECH-8608) or e2e (TECH-8609) or roundtrip (TECH-8610) — those
+# layers add their own CI steps in subsequent stages.
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web-tests.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web-tests.yml"
+
+jobs:
+  unit:
+    name: Vitest unit (web/lib)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install workspace deps
+        run: npm ci
+      - name: Vitest unit suite
+        # `test:web` (root alias) → `npm --prefix web run test` → `vitest run --passWithNoTests`.
+        # Suite covers schema validation, ref resolver, lint rules, search ranker (≥ 50 tests).
+        run: npm run test:web

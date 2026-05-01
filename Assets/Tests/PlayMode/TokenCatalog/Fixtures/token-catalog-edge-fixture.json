@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-01T00:00:00.000Z",
+  "tokens": [
+    {
+      "slug": "spacing-neg",
+      "token_kind": "spacing",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": { "px": -4.0 },
+      "semantic": null
+    },
+    {
+      "slug": "spacing-zero",
+      "token_kind": "spacing",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": { "px": 0.0 },
+      "semantic": null
+    },
+    {
+      "slug": "spacing-frac",
+      "token_kind": "spacing",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": { "px": 1.5 },
+      "semantic": null
+    },
+    {
+      "slug": "motion-bezier",
+      "token_kind": "motion",
+      "color": null,
+      "type_scale": null,
+      "motion": { "curve": "cubic-bezier", "duration_ms": 250.0, "cubic_bezier": [0.25, 0.1, 0.25, 1.0] },
+      "spacing": null,
+      "semantic": null
+    },
+    {
+      "slug": "type-display",
+      "token_kind": "type-scale",
+      "color": null,
+      "type_scale": { "font_family": "Inter", "size_px": 32.0, "line_height": 1.2 },
+      "motion": null,
+      "spacing": null,
+      "semantic": null
+    },
+    {
+      "slug": "spacing-retired",
+      "token_kind": "spacing",
+      "color": null,
+      "type_scale": null,
+      "motion": null,
+      "spacing": { "px": 12.0 },
+      "semantic": null
+    }
+  ]
+}
