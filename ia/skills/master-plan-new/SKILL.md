@@ -29,12 +29,10 @@ argument_hint: >-
   docs/foo-post-mvp-extensions.md)
 model: inherit
 reasoning_effort: high
-tools_role: pair-head
+tools_role: custom
 tools_extra:
-  - mcp__territory-ia__spec_outline
-  - mcp__territory-ia__list_specs
-  - mcp__territory-ia__master_plan_render
-  - mcp__territory-ia__stage_render
+  - Read
+  - Bash
   - mcp__territory-ia__master_plan_insert
   - mcp__territory-ia__stage_insert
   - mcp__territory-ia__master_plan_preamble_write

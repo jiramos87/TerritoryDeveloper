@@ -1,0 +1,226 @@
+recipe: master-plan-new
+description: >-
+  Full master-plan-new pipeline: Phases A+B+C. Phase A ratifies plan-scoped
+  arch_decisions via seam.align-arch-decision (foreach), inserts plan row, seeds
+  ratified decisions, verifies ≥3 plan-scoped rows, captures HEAD SHA, locks arch.
+  Phase B authors preamble + dashboard description. Phase C decomposes stages via
+  seam.decompose-skeleton-stage (foreach). Supersedes master-plan-new-phase-a.yaml
+  as canonical entry for new master plans — phase-a recipe retained for legacy callers.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - title
+    - arch_decisions
+    - stage_skeletons
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (kebab-case, matches ia_master_plans.slug).
+    title:
+      type: string
+      description: Master-plan title (display heading).
+    description:
+      type: string
+      description: Short product overview ≤200 chars. Stored on ia_master_plans.
+    preamble:
+      type: string
+      description: Initial preamble markdown for the plan header block.
+    arch_decisions:
+      type: array
+      description: >-
+        Plan-scoped arch_decisions to ratify + seed. Each item carries decision_id,
+        current_record {title, status, body}, proposed_change, and optional evidence_links.
+        Seam ratifies each; recipe seeds the aligned_record into arch_decisions table.
+      items:
+        type: object
+        required: [decision_id, current_record, proposed_change]
+        additionalProperties: true
+        properties:
+          decision_id:
+            type: string
+            description: Decision slug (e.g. DEC-A19 or plan-scoped id).
+          current_record:
+            type: object
+            description: Current arch_decisions row fields for ratification.
+          proposed_change:
+            type: string
+            description: Proposed change to evaluate via seam.
+          evidence_links:
+            type: array
+            items:
+              type: string
+    stage_skeletons:
+      type: array
+      description: >-
+        Ordered Stage skeleton list. Each item: {stage_id, title, objective,
+        exit_criteria, decision_log_subset?}. Phase C inserts rows + decomposes Tasks.
+      items:
+        type: object
+        required: [stage_id, title, objective, exit_criteria]
+        additionalProperties: true
+        properties:
+          stage_id:
+            type: string
+            description: Bare X.Y stage identifier (e.g. "1.1").
+          title:
+            type: string
+          objective:
+            type: string
+          exit_criteria:
+            type: string
+    actor:
+      type: string
+      description: Optional actor for change_log + lock_arch rows.
+
+steps:
+  # ── Phase A — ratify decisions + insert plan + seed + lock ──────────────────
+
+  - id: align_decisions
+    description: >-
+      Phase A.1 — foreach: ratify each arch_decision via seam.align-arch-decision.
+      Seam returns aligned_record + change_kind + rationale per decision.
+    flow: foreach
+    items: ${inputs.arch_decisions}
+    as: decision_item
+    steps:
+      - id: align
+        description: Ratify one decision via align-arch-decision seam.
+        seam: align-arch-decision
+        input:
+          decision_id: ${decision_item.decision_id}
+          current_record: ${decision_item.current_record}
+          proposed_change: ${decision_item.proposed_change}
+          evidence_links: ${decision_item.evidence_links}
+
+  - id: insert_plan
+    description: >-
+      Phase A.2 — create ia_master_plans row. Errors on duplicate slug.
+      Sets title + optional description + optional preamble.
+    mcp: master_plan_insert
+    args:
+      slug: ${inputs.slug}
+      title: ${inputs.title}
+      description: ${inputs.description}
+      preamble: ${inputs.preamble}
+
+  - id: seed_decisions
+    description: >-
+      Phase A.3 — seed ratified arch_decisions rows (foreach, sequential).
+      Upserts by slug using aligned_record from seam output. plan_slug threaded.
+    flow: foreach
+    items: ${inputs.arch_decisions}
+    as: seed_item
+    steps:
+      - id: write_decision
+        description: Write one ratified arch_decisions row via arch_decision_write MCP.
+        mcp: arch_decision_write
+        args:
+          slug: ${seed_item.decision_id}
+          title: ${seed_item.current_record.title}
+          rationale: ${seed_item.proposed_change}
+          plan_slug: ${inputs.slug}
+
+  - id: verify_seeded_decisions
+    description: >-
+      Phase A.4 — count plan-scoped rows in arch_decisions before seal.
+      Gate: ≥3 plan-scoped decisions required (boundaries + end-state-contract + shared-seams).
+    sql: query
+    query: >-
+      SELECT COUNT(*)::int AS seeded_count FROM arch_decisions WHERE plan_slug = $1
+    params:
+      - ${inputs.slug}
+
+  - id: verify_count_gate
+    description: >-
+      Phase A.5 — enforce ≥3 plan-scoped decisions. Bash predicate trips non-zero
+      when seeded_count < 3. Reuses phase-a script.
+    bash: tools/scripts/recipe-engine/master-plan-new-phase-a/verify-seeded-count.sh
+    args:
+      seeded_count: ${verify_seeded_decisions.rows[0].seeded_count}
+      min_count: 3
+
+  - id: head_sha
+    description: Phase A.6 — resolve HEAD commit SHA for architecture lock seal.
+    bash: tools/scripts/recipe-engine/master-plan-new-phase-a/git-head-sha.sh
+
+  - id: lock_arch
+    description: >-
+      Phase A.7 — arm architecture lock: sets architecture_locked_at + arms
+      plan-scoped arch_decisions UPDATE-lock trigger (D17).
+    mcp: master_plan_lock_arch
+    args:
+      slug: ${inputs.slug}
+      commit_sha: ${head_sha.stdout}
+      actor: ${inputs.actor}
+
+  # ── Phase B — preamble + description authoring ────────────────────────────
+
+  - id: author_preamble
+    description: >-
+      Phase B.1 — write plan preamble block (status, scope, locked decisions,
+      hierarchy rules pointer, read-first list). Replaces any preamble seeded in Phase A.
+    mcp: master_plan_preamble_write
+    args:
+      slug: ${inputs.slug}
+      preamble: ${inputs.preamble}
+
+  - id: author_description
+    description: >-
+      Phase B.2 — write dashboard description (≤200 char product overview).
+      Stored as ia_master_plans.description; displayed on progress dashboard.
+    mcp: master_plan_description_write
+    args:
+      slug: ${inputs.slug}
+      description: ${inputs.description}
+
+  # ── Phase C — stage decomposition ─────────────────────────────────────────
+
+  - id: decompose_stages
+    description: >-
+      Phase C.1 — insert Stage rows + decompose each via seam.decompose-skeleton-stage
+      (foreach). Each iteration: insert Stage row, then dispatch seam to generate Task table.
+    flow: foreach
+    items: ${inputs.stage_skeletons}
+    as: skeleton
+    steps:
+      - id: insert_stage
+        description: Insert ia_stages row for this skeleton.
+        mcp: stage_insert
+        args:
+          slug: ${inputs.slug}
+          stage_id: ${skeleton.stage_id}
+          title: ${skeleton.title}
+          objective: ${skeleton.objective}
+          exit_criteria: ${skeleton.exit_criteria}
+
+      - id: decompose_stage
+        description: Decompose skeleton into Task table via seam.decompose-skeleton-stage.
+        seam: decompose-skeleton-stage
+        input:
+          master_plan_slug: ${inputs.slug}
+          stage_id: Stage ${skeleton.stage_id}
+          stage_objectives: ${skeleton.objective}
+          stage_exit: ${skeleton.exit_criteria}
+          glossary_slice: []
+
+  - id: audit_row
+    description: >-
+      Phase C.2 — append plan-authored change_log row for audit trail.
+    mcp: master_plan_change_log_append
+    args:
+      slug: ${inputs.slug}
+      kind: plan_authored
+      body: >-
+        master-plan-new recipe ran: Phase A ratified decisions + Phase B authored
+        preamble + Phase C decomposed stages. Locked at ${lock_arch.locked_commit_sha}.
+      actor: ${inputs.actor}
+
+outputs:
+  plan_id: ${insert_plan.slug}
+  decisions_ratified: ${align_decisions.count}
+  decisions_seeded: ${seed_decisions.count}
+  seeded_count_verified: ${verify_seeded_decisions.rows[0].seeded_count}
+  locked_commit_sha: ${lock_arch.locked_commit_sha}
+  stages_decomposed: ${decompose_stages.count}
