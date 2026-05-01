@@ -1,0 +1,70 @@
+recipe: ship-stage-pass-a
+description: >-
+  Ship-stage Pass A per-task loop. For each pending task in a Stage: load §Plan Digest,
+  dispatch spec-implementer (Wave 3 seam — stub path until LLM wiring), run
+  unity:compile-check fast-fail gate, flip task status to `implemented`.
+  Pass B (verify-loop + closeout + commit) remains prose-path in ship-stage SKILL.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - stage_id
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage id (e.g. "4.1"). Passed to stage_bundle.
+
+steps:
+  - id: load_stage
+    description: >-
+      Phase 1 — load stage bundle to get ordered task list.
+    mcp: stage_bundle
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: pass_a_tasks
+    description: >-
+      Phase 2 — per-task Pass A loop (sequential, fail-fast).
+    flow: foreach
+    items: ${load_stage.tasks}
+    as: task
+    steps:
+      - id: load_task_spec
+        description: Load §Plan Digest for this task.
+        mcp: task_spec_section
+        args:
+          task_id: ${task.task_id}
+          section: "§Plan Digest"
+
+      - id: implementer_work
+        description: >-
+          Dispatch spec-implementer for this task.
+          Wave 3 seam wiring pending — exits 0 as stub until seam.implement is live.
+        bash: tools/scripts/recipe-engine/ship-stage-pass-a/implementer-work.sh
+        args:
+          task_id: ${task.task_id}
+          slug: ${inputs.slug}
+          stage_id: ${inputs.stage_id}
+
+      - id: compile_gate
+        description: Fast-fail unity compile-check gate. Non-zero exit aborts before status flip.
+        bash: tools/scripts/recipe-engine/ship-stage-pass-a/compile-gate.sh
+        args:
+          task_id: ${task.task_id}
+
+      - id: status_flip
+        description: Flip task to implemented on clean compile gate.
+        mcp: task_status_flip
+        args:
+          task_id: ${task.task_id}
+          new_status: implemented
+
+outputs:
+  slug: ${inputs.slug}
+  stage_id: ${inputs.stage_id}
+  tasks_processed: ${pass_a_tasks.count}
