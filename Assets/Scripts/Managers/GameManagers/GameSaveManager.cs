@@ -218,6 +218,11 @@ public class GameSaveManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             GameSaveData saveData = JsonUtility.FromJson<GameSaveData>(json);
             MigrateLoadedSaveData(saveData);
+            // TECH-1585 — legacy `subTypeId` → `entity_id` remap on load. Idempotent:
+            // entries already carrying `entityId` short-circuit. Lookup tolerates a
+            // missing CatalogLoader (test bypass / cold start) by leaving the field
+            // empty so TECH-1587 placeholder fallback handles the unmapped case.
+            RemapStateServiceZoneEntityIds(saveData.stateServiceZones);
             // Cache parent ids + neighbor stubs on manager so subsequent saves preserve them.
             regionId = saveData.regionId;
             countryId = saveData.countryId;
@@ -397,6 +402,40 @@ public class GameSaveManager : MonoBehaviour
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: budgetAllocation null after migration — save data integrity error.");
         if (data.bondRegistry == null)
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: bondRegistry null after migration — save data integrity error.");
+    }
+
+    /// <summary>
+    /// TECH-1585 — idempotent legacy <c>subTypeId</c> → catalog <c>entity_id</c> remap
+    /// for the <see cref="StateServiceZoneData"/> registry. Pre-condition: post-deserialize.
+    /// Skips entries already carrying <c>entityId</c> (idempotent re-load) and entries with
+    /// <c>subTypeId &lt; 0</c> (no legacy carrier). Unmapped lookups leave <c>entityId</c>
+    /// empty — downstream TECH-1587 placeholder fallback handles. No save-schema bump
+    /// (D2 lock); legacy <c>subTypeId</c> field preserved for byte-identical re-save.
+    /// </summary>
+    void RemapStateServiceZoneEntityIds(List<StateServiceZoneData> zones)
+    {
+        if (zones == null || zones.Count == 0) return;
+        Territory.Catalog.CatalogLoader catalogLoader = FindObjectOfType<Territory.Catalog.CatalogLoader>();
+        if (catalogLoader == null)
+        {
+            // Cold start / test bypass — no remap possible. Leave entityId empty;
+            // TECH-1587 placeholder dispatches downstream.
+            return;
+        }
+        for (int i = 0; i < zones.Count; i++)
+        {
+            StateServiceZoneData zone = zones[i];
+            if (zone == null) continue;
+            // Idempotent — entries already carrying entityId skip the lookup.
+            if (!string.IsNullOrEmpty(zone.entityId)) continue;
+            // No legacy carrier — leave empty.
+            if (zone.subTypeId < 0) continue;
+            if (catalogLoader.TryResolveByLegacyAssetId(zone.subTypeId, out var resolved))
+            {
+                zone.entityId = resolved;
+            }
+            // Unmapped: zone.entityId stays "" — TECH-1587 placeholder handles.
+        }
     }
 
     /// <summary>Migrate old saves storing <c>totalGrowthBudget</c> (amount) → <c>growthBudgetPercent</c>.</summary>

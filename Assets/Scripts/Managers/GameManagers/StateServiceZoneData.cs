@@ -21,5 +21,15 @@ namespace Territory.Economy
 
         /// <summary>Density tier (raw int; Light / Medium / Heavy resolved in Step 2).</summary>
         public int densityTier;
+
+        /// <summary>
+        /// TECH-1585 — catalog `entity_id` (string UUID). Empty `""` on legacy saves;
+        /// resolved on load via <c>CatalogLoader.TryResolveByLegacyAssetId(subTypeId)</c>
+        /// when empty AND <c>subTypeId &gt;= 0</c>. Re-saves persist the resolved id.
+        /// Existing <c>subTypeId</c> stays as the legacy carrier (D5 — no field removal,
+        /// no save-schema bump). Idempotent: second-pass load short-circuits the
+        /// lookup branch when this field is non-empty.
+        /// </summary>
+        public string entityId = string.Empty;
     }
 }

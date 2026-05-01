@@ -51,6 +51,14 @@ namespace Territory.Catalog
         private volatile IReadOnlyDictionary<string, CatalogEntity> _entities =
             new Dictionary<string, CatalogEntity>();
 
+        // TECH-1585 — legacy `subTypeId` (int) → `entity_id` (string) side index for
+        // `asset` kind rows only. Rebuilt + atomic-swapped alongside `_entities` on
+        // every reload. `volatile` for the same publishing-write contract as `_entities`
+        // (Unity invariant 9). Non-`asset` rows + rows lacking `legacy_asset_id`
+        // skipped at build time.
+        private volatile IReadOnlyDictionary<int, string> _legacyAssetIdIndex =
+            new Dictionary<int, string>();
+
         private FileSystemWatcher _watcher;
         private Coroutine _debounceCoroutine;
         private volatile bool _reloadPending;
@@ -90,12 +98,13 @@ namespace Territory.Catalog
         public void LoadInitial()
         {
             string err;
-            if (!TryBuildEntities(CatalogDirectoryAbsolute, out var fresh, out err))
+            if (!TryBuildEntities(CatalogDirectoryAbsolute, out var fresh, out var freshLegacyIndex, out err))
             {
                 Debug.LogError("[CatalogLoader] Initial load failed: " + err);
                 return;
             }
             _entities = fresh;
+            _legacyAssetIdIndex = freshLegacyIndex;
             if (_onCatalogReloaded != null) _onCatalogReloaded.Invoke();
         }
 
@@ -107,14 +116,33 @@ namespace Territory.Catalog
         public bool Reload()
         {
             string err;
-            if (!TryBuildEntities(CatalogDirectoryAbsolute, out var fresh, out err))
+            if (!TryBuildEntities(CatalogDirectoryAbsolute, out var fresh, out var freshLegacyIndex, out err))
             {
                 Debug.LogWarning("[CatalogLoader] Reload skipped: " + err);
                 return false;
             }
             _entities = fresh;
+            _legacyAssetIdIndex = freshLegacyIndex;
             if (_onCatalogReloaded != null) _onCatalogReloaded.Invoke();
             return true;
+        }
+
+        /// <summary>
+        /// TECH-1585 — resolve a legacy `subTypeId` (0..6 from `ZoneSubTypeRegistry`)
+        /// to the matching catalog `entity_id` via the live `asset`-kind side index.
+        /// Returns <c>true</c> + the entity_id on hit; <c>false</c> + empty string
+        /// on miss (caller dispatches placeholder per TECH-1587).
+        /// </summary>
+        public bool TryResolveByLegacyAssetId(int legacyAssetId, out string entityId)
+        {
+            var index = _legacyAssetIdIndex;
+            if (index != null && index.TryGetValue(legacyAssetId, out var resolved))
+            {
+                entityId = resolved;
+                return true;
+            }
+            entityId = string.Empty;
+            return false;
         }
 
         private void StartWatching()
@@ -175,13 +203,17 @@ namespace Territory.Catalog
         /// recompute the kind-ordered sha256 hash, parity-check vs the
         /// manifest, build the immutable lookup. Returns <c>false</c> on any
         /// failure with a diagnostic in <paramref name="err"/>.
+        /// TECH-1585 — also builds the side `legacy_asset_id (int) → entity_id`
+        /// dictionary for `asset` kind rows in <paramref name="freshLegacyAssetIdIndex"/>.
         /// </summary>
         public static bool TryBuildEntities(
             string dir,
             out IReadOnlyDictionary<string, CatalogEntity> fresh,
+            out IReadOnlyDictionary<int, string> freshLegacyAssetIdIndex,
             out string err)
         {
             fresh = null;
+            freshLegacyAssetIdIndex = null;
             err = null;
             if (string.IsNullOrEmpty(dir))
             {
@@ -244,6 +276,12 @@ namespace Territory.Catalog
             var dict = new Dictionary<string, CatalogEntity>(manifest.entityCounts != null
                 ? manifest.entityCounts.Total
                 : 0);
+            // TECH-1585 — side index for `asset` kind only. Legacy `subTypeId` ids
+            // are 0..6 today; map covers any future range so long as the snapshot
+            // exporter keeps `legacy_asset_id` populated. Duplicate legacy ids
+            // logged as warnings (not fatal — DB row uniqueness is exporter
+            // territory; first-seen wins here so reload still publishes).
+            var legacyDict = new Dictionary<int, string>();
             foreach (var kind in KindOrder)
             {
                 string text = System.Text.Encoding.UTF8.GetString(perKindBytes[kind]);
@@ -273,10 +311,35 @@ namespace Territory.Catalog
                         return false;
                     }
                     dict[row.entity_id] = row;
+
+                    // TECH-1585 — only `asset` rows carry the legacy carrier.
+                    if (kind == "asset" && !string.IsNullOrEmpty(row.legacy_asset_id))
+                    {
+                        if (int.TryParse(row.legacy_asset_id, out var legacyInt))
+                        {
+                            if (legacyDict.ContainsKey(legacyInt))
+                            {
+                                Debug.LogWarning(
+                                    "[CatalogLoader] Duplicate legacy_asset_id " + legacyInt
+                                    + " — keeping first-seen entity_id, ignoring " + row.entity_id);
+                            }
+                            else
+                            {
+                                legacyDict[legacyInt] = row.entity_id;
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                "[CatalogLoader] legacy_asset_id parse failed for entity_id="
+                                + row.entity_id + " value=" + row.legacy_asset_id);
+                        }
+                    }
                 }
             }
 
             fresh = dict;
+            freshLegacyAssetIdIndex = legacyDict;
             return true;
         }
 

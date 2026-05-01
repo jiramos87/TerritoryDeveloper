@@ -59,7 +59,8 @@ namespace Territory.Tests.EditMode.CatalogLoader
 
             string err;
             IReadOnlyDictionary<string, CatalogEntity> dict;
-            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out err);
+            IReadOnlyDictionary<int, string> legacyIndex;
+            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out legacyIndex, out err);
 
             Assert.IsTrue(ok, "TryBuildEntities should succeed; err=" + err);
             Assert.IsNotNull(dict);
@@ -68,6 +69,7 @@ namespace Territory.Tests.EditMode.CatalogLoader
             Assert.AreEqual("sprite", dict["sprite-1"].Kind);
             Assert.AreEqual("sprite-one", dict["sprite-1"].slug);
             Assert.AreEqual("asset", dict["asset-1"].Kind);
+            Assert.IsNotNull(legacyIndex, "legacy_asset_id index must always be non-null on success");
         }
 
         [Test]
@@ -83,7 +85,8 @@ namespace Territory.Tests.EditMode.CatalogLoader
 
             string err;
             IReadOnlyDictionary<string, CatalogEntity> dict;
-            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out err);
+            IReadOnlyDictionary<int, string> legacyIndex;
+            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out legacyIndex, out err);
 
             Assert.IsFalse(ok, "Hash parity must fail when manifest is corrupted.");
             Assert.IsNull(dict);
@@ -97,16 +100,18 @@ namespace Territory.Tests.EditMode.CatalogLoader
 
             string err;
             IReadOnlyDictionary<string, CatalogEntity> first;
+            IReadOnlyDictionary<int, string> firstLegacy;
             Assert.IsTrue(
-                Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out first, out err), err);
+                Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out first, out firstLegacy, out err), err);
             int firstCount = first.Count;
 
             // Mutate snapshot on disk + rebuild — first reference must NOT change.
             WriteValidSnapshot(_tempDir, spriteRows: new[] { ("sprite-1", "v2"), ("sprite-2", "v2b") });
 
             IReadOnlyDictionary<string, CatalogEntity> second;
+            IReadOnlyDictionary<int, string> secondLegacy;
             Assert.IsTrue(
-                Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out second, out err), err);
+                Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out second, out secondLegacy, out err), err);
 
             Assert.AreNotSame(first, second, "Each rebuild must yield a fresh dictionary.");
             Assert.AreEqual(firstCount, first.Count, "Old snapshot must remain unchanged after rebuild.");
@@ -125,7 +130,8 @@ namespace Territory.Tests.EditMode.CatalogLoader
 
             string err;
             IReadOnlyDictionary<string, CatalogEntity> dict;
-            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out err);
+            IReadOnlyDictionary<int, string> legacyIndex;
+            bool ok = Territory.Catalog.CatalogLoader.TryBuildEntities(_tempDir, out dict, out legacyIndex, out err);
 
             Assert.IsFalse(ok);
             StringAssert.Contains("Duplicate entity_id", err);

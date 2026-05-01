@@ -24,6 +24,12 @@ namespace Territory.Catalog
         public string version_id;
         public int version_number;
         public string status;
+        // TECH-1585 — legacy `subTypeId` (0..6 from `ZoneSubTypeRegistry`) carrier on
+        // `asset` kind rows. Snapshot exporter (`web/lib/snapshot/export.ts:287`) emits
+        // this column as `bigint::text`, so the field stays `string` to mirror the JSON
+        // shape; CatalogLoader builds a side `legacy_asset_id (int) → entity_id`
+        // dictionary at hot-reload time. Null / empty on non-`asset` rows.
+        public string legacy_asset_id;
         // Per-kind tag set after dispatch — `kind` is not on the per-row JSON,
         // but the CatalogLoader stamps it post-parse from the file envelope.
         [NonSerialized] public string Kind;
