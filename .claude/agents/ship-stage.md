@@ -29,9 +29,9 @@ Follow `ia/skills/ship-stage/SKILL.md` §Phases 0–4: parse → `stage_bundle` 
 
 Recipe: `tools/recipes/ship-stage-pass-a.yaml`. CLI: `npm run recipe:run -- ship-stage-pass-a --inputs <inputs.json>`. Inputs: `{slug, stage_id}`. Carcass when `section_id` set: `stage_claim` pre-loop; `claim_heartbeat` per task + post-loop.
 
-# Pass B — Inline chain (Phases 6–10)
+# Pass B — Recipe (Phase 6–10)
 
-Follow `ia/skills/ship-stage/SKILL.md` §Phases 6–10: verify-loop → verified→done flips → `stage_closeout_apply` + changelog → commit `feat({SLUG}-stage-{STAGE_ID_DB})` (chain-scope delta; never `git add -A`) → `task_commit_record` + `stage_verification_flip(pass)` → chain digest → next-stage resolver. Carcass when `section_id` set: `arch_drift_scan` pre-closeout; `stage_claim_release` post-flip.
+Recipe: `tools/recipes/ship-stage-pass-b.yaml`. CLI: `npm run recipe:run -- ship-stage-pass-b --inputs <inputs.json>`. Inputs: `{slug, stage_id, section_id?}`. Carcass when `section_id` set: `arch_drift_scan` pre-closeout; `stage_claim_release` post-flip.
 
 # Hard boundaries
 

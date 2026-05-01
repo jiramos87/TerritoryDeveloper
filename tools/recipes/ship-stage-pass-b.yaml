@@ -1,0 +1,152 @@
+recipe: ship-stage-pass-b
+description: >-
+  Ship-stage Pass B per-stage chain. Entry: all Pass A tasks implemented, worktree dirty.
+  verify-loop (prose-path, Wave 3) → verified→done flips → optional arch_drift_scan
+  (carcass) → stage_closeout_apply → change_log → stage commit (chain-scope delta) →
+  task_commit_record → stage_verification_flip(pass) → optional stage_claim_release.
+  Pass A is a separate recipe (ship-stage-pass-a).
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - stage_id
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (matches ia_master_plans.slug).
+    stage_id:
+      type: string
+      description: Stage id (e.g. "4.1"). Passed to stage_bundle.
+    section_id:
+      type: string
+      description: >-
+        Optional. Parallel-carcass section id. When set: enables arch_drift_scan
+        pre-closeout and stage_claim_release post-flip.
+
+steps:
+  - id: load_stage
+    description: >-
+      Phase 1 — rehydrate stage bundle. Confirms tasks + slug still valid in DB.
+    mcp: stage_bundle
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: verify_loop
+    description: >-
+      Phase 2 — verify-loop wrapper (prose-path stub). Wave 3 seam pending —
+      exits 0 until seam.verify-loop wires in the LLM subagent on git diff HEAD.
+    bash: tools/scripts/recipe-engine/ship-stage-pass-b/verify-loop.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: task_done_loop
+    description: >-
+      Phase 3 — per-task verified→done flips (sequential). Two flips required
+      by DB enum order (pending→implemented→verified→done).
+    flow: foreach
+    items: ${load_stage.tasks}
+    as: task
+    steps:
+      - id: flip_verified
+        description: Flip task to verified.
+        mcp: task_status_flip
+        args:
+          task_id: ${task.task_id}
+          new_status: verified
+
+      - id: flip_done
+        description: Flip task to done.
+        mcp: task_status_flip
+        args:
+          task_id: ${task.task_id}
+          new_status: done
+
+  - id: carcass_drift_scan
+    description: >-
+      Phase 4a — carcass branch: arch_drift_scan pre-closeout.
+      No-op when section_id not provided. Fails recipe on drift found.
+    bash: tools/scripts/recipe-engine/ship-stage-pass-b/carcass-arch-drift.sh
+    args:
+      slug: ${inputs.slug}
+      section_id: ${inputs.section_id}
+
+  - id: stage_closeout
+    description: >-
+      Phase 5 — DB closeout: assert all tasks done, flip stage status to done,
+      update master-plan rollup row. DB-only — no filesystem mv.
+    mcp: stage_closeout_apply
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: change_log
+    description: >-
+      Phase 6 — append audit row to ia_master_plan_change_log.
+    mcp: master_plan_change_log_append
+    args:
+      slug: ${inputs.slug}
+      kind: stage_closed
+      body: >-
+        Stage ${inputs.stage_id} closed — ${stage_closeout.archived_task_count}
+        tasks archived
+
+  - id: stage_commit
+    description: >-
+      Phase 7 — single stage commit covering chain-scope delta (tracked modified files
+      since HEAD + newly tracked files; never git add -A). Captures STAGE_COMMIT_SHA.
+    bash: tools/scripts/recipe-engine/ship-stage-pass-b/stage-commit.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      archived_task_count: ${stage_closeout.archived_task_count}
+
+  - id: task_commit_records
+    description: >-
+      Phase 8 — per-task task_commit_record. UNIQUE(task_id, commit_sha) → idempotent.
+    flow: foreach
+    items: ${load_stage.tasks}
+    as: task
+    steps:
+      - id: record_commit
+        description: Record stage commit sha for this task.
+        mcp: task_commit_record
+        args:
+          task_id: ${task.task_id}
+          commit_sha: ${stage_commit.commit_sha}
+          commit_kind: feat
+          message: Stage ${inputs.stage_id} — ${inputs.slug}
+
+  - id: stage_verification
+    description: >-
+      Phase 9 — stage_verification_flip(pass). History-preserving INSERT.
+      PASSED is valid only after this step succeeds.
+    mcp: stage_verification_flip
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      verdict: pass
+      commit_sha: ${stage_commit.commit_sha}
+      notes: ship-stage Pass B green (recipe)
+      actor: ship-stage
+
+  - id: carcass_claim_release
+    description: >-
+      Phase 10 — carcass branch: stage_claim_release post-flip.
+      No-op when section_id not provided.
+    bash: tools/scripts/recipe-engine/ship-stage-pass-b/carcass-claim-release.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      section_id: ${inputs.section_id}
+
+outputs:
+  slug: ${inputs.slug}
+  stage_id: ${inputs.stage_id}
+  verify_loop: ${verify_loop.stdout}
+  tasks_done: ${task_done_loop.count}
+  stage_closeout_applied: ${stage_closeout.archived_task_count}
+  commit_sha: ${stage_commit.commit_sha}
+  stage_verify_verdict: ${stage_verification.verdict}

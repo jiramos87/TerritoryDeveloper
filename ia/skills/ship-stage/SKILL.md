@@ -300,6 +300,8 @@ Continue to next task.
 
 ## Step 6 — Pass B: per-stage bulk (runs ONCE)
 
+**Canonical execution surface:** `tools/recipes/ship-stage-pass-b.yaml`. Escape-hatch when recipe-engine unavailable: inline prose below.
+
 **Order is fixed:** 6.1 verify → 6.3 status flip done. **Code-review is NOT part of this chain** — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band.
 
 ### Step 6.1 — Verify-loop on cumulative HEAD diff
