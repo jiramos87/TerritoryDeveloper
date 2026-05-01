@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-01T06:47:40.533Z",
+  "last_generated": "2026-05-01T07:02:18.189Z",
   "graph": {
     "A* search": {
       "related": [
@@ -14,11 +14,11 @@
     },
     "Active scale": {
       "related": [
+        "snapshot",
         "Cell",
         "Child-scale entity",
         "City / Region / Country cell",
-        "Dormant scale",
-        "Evolution algorithm"
+        "Dormant scale"
       ],
       "cited_in": [
         {
@@ -52,12 +52,58 @@
     "Alignment gate": {
       "related": [
         "Agent test mode batch",
+        "archetype_version",
         "Backlog record",
         "Backlog view",
-        "Cell",
-        "Chain-level stage digest"
+        "blob_resolver"
       ],
       "cited_in": []
+    },
+    "archetype_version": {
+      "related": [
+        "render_run",
+        "entity_version",
+        "panel_child",
+        "pool_member",
+        "Junction"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.2",
+          "section_title": "2.2 Per-kind detail tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4",
+          "section_title": "4. Publish lint layers"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4.1",
+          "section_title": "4.1 Layer 1 — Hard gates (block publish, no override)"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7",
+          "section_title": "7. Render run lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7.1",
+          "section_title": "7.1 Tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "8",
+          "section_title": "8. Archetype authoring"
+        }
+      ]
     },
     "AUTO systems": {
       "related": [
@@ -84,9 +130,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog view",
-        "Cell",
-        "Chain-level stage digest"
+        "blob_resolver"
       ],
       "cited_in": []
     },
@@ -94,9 +140,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Cell",
-        "Chain-level stage digest"
+        "blob_resolver"
       ],
       "cited_in": []
     },
@@ -382,6 +428,27 @@
           "spec": "audio-blip",
           "section_id": "10",
           "section_title": "10. Cross-refs"
+        }
+      ]
+    },
+    "blob_resolver": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "Backlog record",
+        "Backlog view"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "9",
+          "section_title": "9. Blob resolver protocol"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "9.2",
+          "section_title": "9.2 Resolver implementations"
         }
       ]
     },
@@ -693,6 +760,42 @@
           "spec": "managers-reference",
           "section_id": "zones-buildings",
           "section_title": "Zones & Buildings"
+        }
+      ]
+    },
+    "capability": {
+      "related": [
+        "snapshot",
+        "scene contract",
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10",
+          "section_title": "10. Capability matrix"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10.1",
+          "section_title": "10.1 Tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10.3",
+          "section_title": "10.3 Route gating"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "12",
+          "section_title": "12. Decision pointers (canonical)"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "13",
+          "section_title": "13. Future extensions (post-MVP)"
         }
       ]
     },
@@ -1259,9 +1362,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -1317,7 +1420,7 @@
         "Save data",
         "Agent test mode batch",
         "Alignment gate",
-        "Backlog record"
+        "archetype_version"
       ],
       "cited_in": [
         {
@@ -1528,9 +1631,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -1538,9 +1641,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -1895,6 +1998,62 @@
       ],
       "cited_in": []
     },
+    "entity_version": {
+      "related": [
+        "snapshot",
+        "archetype_version",
+        "publish_lint_rule",
+        "panel_child",
+        "pool_member"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.1",
+          "section_title": "2.1 Spine — `catalog_entity`"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3",
+          "section_title": "3. Entity version lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.1",
+          "section_title": "3.1 `entity_version` table"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.2",
+          "section_title": "3.2 Lifecycle stages"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4",
+          "section_title": "4. Publish lint layers"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4.2",
+          "section_title": "4.2 Layer 2 — Soft lints (warn, author can publish-anyway)"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5",
+          "section_title": "5. Snapshot export contract"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5.5",
+          "section_title": "5.5 `catalog_snapshot` table"
+        }
+      ]
+    },
     "envelope (budget sense)": {
       "related": [
         "BudgetAllocationService",
@@ -2091,6 +2250,11 @@
           "spec": "audio-blip",
           "section_id": "7.2",
           "section_title": "7.2 Tolerance"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "1",
+          "section_title": "1. Scope"
         },
         {
           "spec": "economy-system",
@@ -2725,9 +2889,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3005,6 +3169,26 @@
         "River"
       ],
       "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.2",
+          "section_title": "2.2 Per-kind detail tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.1",
+          "section_title": "6.1 `panel_child`"
+        },
         {
           "spec": "isometric-geography-system",
           "section_id": "0",
@@ -3505,9 +3689,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3515,9 +3699,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3530,6 +3714,42 @@
         "skill-train"
       ],
       "cited_in": []
+    },
+    "panel_child": {
+      "related": [
+        "Junction",
+        "pool_member",
+        "archetype_version",
+        "snapshot",
+        "entity_version"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.2",
+          "section_title": "2.2 Per-kind detail tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.3",
+          "section_title": "2.3 Implications"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.1",
+          "section_title": "6.1 `panel_child`"
+        }
+      ]
     },
     "Param smoothing": {
       "related": [
@@ -3648,9 +3868,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3667,9 +3887,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3834,9 +4054,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3844,9 +4064,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3854,9 +4074,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3916,6 +4136,37 @@
         }
       ]
     },
+    "pool_member": {
+      "related": [
+        "panel_child",
+        "archetype_version",
+        "Junction",
+        "entity_version",
+        "snapshot"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.2",
+          "section_title": "2.2 Per-kind detail tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.2",
+          "section_title": "6.2 `pool_member`"
+        }
+      ]
+    },
     "Procedural scale generation": {
       "related": [
         "Active scale",
@@ -3930,9 +4181,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -3954,6 +4205,27 @@
           "spec": "ui-design-system",
           "section_id": "6",
           "section_title": "6. Revision history"
+        }
+      ]
+    },
+    "publish_lint_rule": {
+      "related": [
+        "entity_version",
+        "archetype_version",
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4",
+          "section_title": "4. Publish lint layers"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "4.2",
+          "section_title": "4.2 Layer 2 — Soft lints (warn, author can publish-anyway)"
         }
       ]
     },
@@ -4127,6 +4399,37 @@
           "spec": "managers-reference",
           "section_id": "world-features",
           "section_title": "World features"
+        }
+      ]
+    },
+    "render_run": {
+      "related": [
+        "archetype_version",
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7",
+          "section_title": "7. Render run lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7.1",
+          "section_title": "7.1 Tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7.2",
+          "section_title": "7.2 Replay semantics"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "8",
+          "section_title": "8. Archetype authoring"
         }
       ]
     },
@@ -4543,21 +4846,27 @@
     },
     "rollback_token": {
       "related": [
+        "snapshot",
+        "wire_asset_from_catalog",
         "Agent test mode batch",
         "Alignment gate",
-        "Backlog record",
-        "Backlog view",
-        "Cell"
+        "archetype_version"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "11",
+          "section_title": "11. Bridge composite surface"
+        }
+      ]
     },
     "Rollout lifecycle": {
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -4565,9 +4874,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -4592,8 +4901,8 @@
         "Stage",
         "Agent test mode batch",
         "Alignment gate",
-        "Backlog record",
-        "Backlog view"
+        "archetype_version",
+        "Backlog record"
       ],
       "cited_in": []
     },
@@ -4601,9 +4910,9 @@
       "related": [
         "Cell",
         "Building",
+        "snapshot",
         "Agent test mode batch",
-        "CellData",
-        "City metrics history"
+        "CellData"
       ],
       "cited_in": [
         {
@@ -4683,21 +4992,27 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
     "scene contract": {
       "related": [
+        "capability",
         "Agent test mode batch",
         "Alignment gate",
-        "Backlog record",
-        "Backlog view",
-        "Cell"
+        "archetype_version",
+        "Backlog record"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "13",
+          "section_title": "13. Future extensions (post-MVP)"
+        }
+      ]
     },
     "Sea level": {
       "related": [
@@ -4729,9 +5044,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -4967,9 +5282,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -4977,9 +5292,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -4987,9 +5302,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -5053,6 +5368,157 @@
           "spec": "isometric-geography-system",
           "section_id": "6",
           "section_title": "6. Prefab Inventory"
+        }
+      ]
+    },
+    "snapshot": {
+      "related": [
+        "Cell",
+        "entity_version",
+        "Water map",
+        "HeightMap",
+        "wire_asset_from_catalog"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "1",
+          "section_title": "1. Scope"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.3",
+          "section_title": "2.3 Implications"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3",
+          "section_title": "3. Entity version lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.2",
+          "section_title": "3.2 Lifecycle stages"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.3",
+          "section_title": "3.3 Implications"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5",
+          "section_title": "5. Snapshot export contract"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5.1",
+          "section_title": "5.1 Output layout"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5.4",
+          "section_title": "5.4 Export driver"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10",
+          "section_title": "10. Capability matrix"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10.2",
+          "section_title": "10.2 Seed roles + capabilities (MVP)"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "10.4",
+          "section_title": "10.4 Audit log"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "11",
+          "section_title": "11. Bridge composite surface"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "12",
+          "section_title": "12. Decision pointers (canonical)"
+        },
+        {
+          "spec": "game-overview",
+          "section_id": "vision",
+          "section_title": "Vision"
+        },
+        {
+          "spec": "game-overview",
+          "section_id": "core-design-principles",
+          "section_title": "Core design principles"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "11",
+          "section_title": "11. Water map, lakes, and persistence"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "11.5",
+          "section_title": "11.5 Save / load"
+        },
+        {
+          "spec": "persistence-system",
+          "section_id": "load-pipeline",
+          "section_title": "Load pipeline"
+        },
+        {
+          "spec": "simulation-signals",
+          "section_id": "diffusion-physics-contract",
+          "section_title": "Diffusion physics contract"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "overview",
+          "section_title": "Overview"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "as-built-vs-target",
+          "section_title": "As-built vs target"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "6",
+          "section_title": "6. Revision history"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "machine-readable-traceability-ui-inventory-baseline",
+          "section_title": "Machine-readable traceability (UI inventory baseline)"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "3",
+          "section_title": "3. Inspector, SerializeField, and dependency resolution"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "8",
+          "section_title": "8. ScriptableObject"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "10",
+          "section_title": "10. Editor agent diagnostics (machine-readable exports)"
         }
       ]
     },
@@ -5182,9 +5648,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -5294,9 +5760,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
+        "archetype_version",
         "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Backlog view"
       ],
       "cited_in": []
     },
@@ -5934,13 +6400,29 @@
     },
     "wire_asset_from_catalog": {
       "related": [
+        "snapshot",
+        "entity_version",
+        "rollback_token",
         "Agent test mode batch",
-        "Alignment gate",
-        "Backlog record",
-        "Backlog view",
-        "Cell"
+        "Alignment gate"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3",
+          "section_title": "3. Entity version lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.3",
+          "section_title": "3.3 Implications"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "11",
+          "section_title": "11. Bridge composite surface"
+        }
+      ]
     },
     "World ↔ Grid conversion": {
       "related": [
@@ -5961,6 +6443,16 @@
         "IMaintenanceContributor"
       ],
       "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.2",
+          "section_title": "6.2 `pool_member`"
+        },
         {
           "spec": "economy-system",
           "section_id": "overview",
@@ -6150,6 +6642,16 @@
         "ZoneSService"
       ],
       "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.2",
+          "section_title": "6.2 `pool_member`"
+        },
         {
           "spec": "economy-system",
           "section_id": "overview",

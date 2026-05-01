@@ -3,6 +3,8 @@
 > Interconnection of **sprite-gen CLI** ↔ **grid-asset visual registry** ↔ **web catalog tool** ↔ **Unity runtime**.  
 > Status: 2026-04-25. Branch: `feature/skill-files-audit`.
 
+> **Graduated 2026-05-01 (Stage 20.1 / TECH-8613).** Canonical reference for catalog spine + per-kind detail tables, entity_version lifecycle, publish lint layers, snapshot export contract, blob resolver protocol, capability matrix, render run lifecycle, and composition junctions now lives in [`ia/specs/catalog-architecture.md`](../ia/specs/catalog-architecture.md). This file is retained for historical context (DEC-A1..A52 trail + Stage roadmap) but the canonical spec wins on conflicts (per `ia/rules/terminology-consistency.md`). New domain edits go to the spec; cross-link DEC-A entries via the **Decision pointers** table in §13 of the canonical spec.
+
 ---
 
 ## 1. System Overview

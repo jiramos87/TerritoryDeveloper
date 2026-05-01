@@ -74,6 +74,32 @@ repo-local `var/blobs/` root resolved relative to the repo root. Future
 hosted blob stores swap in via this single env-var flip — no module edits
 required.
 
+## Archetype YAML format
+
+Each archetype spec lives at `tools/sprite-gen/specs/{slug}.yaml`. Top-level keys (verbatim from `specs/building_residential_small.yaml`):
+
+| Key | Type | Purpose |
+| --- | --- | --- |
+| `id` | string | Archetype slug (mirrors filename stem) |
+| `class` | string | Catalog archetype class for grouping (e.g. `residential_small`) |
+| `footprint` | `[w, d]` | Cell footprint in tile units |
+| `terrain` | enum | `flat` / `slope` (drives compose pipeline) |
+| `ground` | string | Ground auto-layer key (`grass_flat`, etc.) |
+| `levels` | int | Vertical floors |
+| `seed` | int | Deterministic RNG seed |
+| `palette` | string | Palette id under `palettes/` |
+| `building` | object | R11 nested spec (composition primitives) |
+| `output` | object | `{name, variants}` — output filename + variant count |
+| `diffusion` | object | `{enabled}` — optional diffusion pass toggle |
+
+Full field reference (`footprint_ratio`, primitive `composition`, R11 nesting): `docs/sprite-gen-usage.md`.
+
+## `gen://` blob ref convention
+
+Render output is referenced via `gen://` URIs (DEC-A25 swap point). Format: `gen://{archetype_slug}/v{NN}` resolves via `BlobResolver` to a path under `BLOB_ROOT`. Stable across local + hosted blob stores; the resolver mediates the URI → physical path lookup so consumers (catalog `render_run` rows, Unity snapshot loader) never embed absolute paths.
+
+Cross-refs: `render_run`, `archetype_version`, `blob_resolver` glossary terms in `ia/specs/glossary.md`.
+
 ## Status
 
 `out/` is gitignored — rendered sprites are ephemeral until promoted.
