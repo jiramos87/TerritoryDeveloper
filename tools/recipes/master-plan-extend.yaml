@@ -1,0 +1,132 @@
+recipe: master-plan-extend
+description: >-
+  Extend an existing master plan with one or more new Stages. For each Stage skeleton:
+  inserts `ia_stages` row via `stage_insert` MCP, then inserts Task rows via `task_insert`
+  MCP (inner foreach). No arch-decision seam — extend adds Stages only, not a new plan.
+  Mirrors step shape of sibling `tools/recipes/master-plan-new.yaml`.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - source_doc_path
+    - stage_skeletons
+  properties:
+    slug:
+      type: string
+      description: Existing master-plan slug (matches ia_master_plans.slug). Recipe aborts if slug unknown.
+    source_doc_path:
+      type: string
+      description: Repo-relative path to exploration or extensions doc that sourced these Stages.
+    stage_skeletons:
+      type: array
+      description: >-
+        Ordered list of new Stage skeletons to append. Each item carries
+        {stage_id, title, objective, exit_criteria, tasks[]}.
+      minItems: 1
+      items:
+        type: object
+        required: [stage_id, title, objective, exit_criteria, tasks]
+        additionalProperties: false
+        properties:
+          stage_id:
+            type: string
+            description: Bare X.Y stage identifier (e.g. "6.1"). Must not already exist on the plan.
+          title:
+            type: string
+          objective:
+            type: string
+          exit_criteria:
+            type: string
+          tasks:
+            type: array
+            description: Task rows for this Stage. Each item carries {task_key, title, intent}.
+            minItems: 2
+            items:
+              type: object
+              required: [task_key, title, intent]
+              additionalProperties: false
+              properties:
+                task_key:
+                  type: string
+                  description: Short key within Stage (e.g. "6.1.1"). Used in Stage body task table.
+                title:
+                  type: string
+                intent:
+                  type: string
+                  description: One-line intent for the task table Intent column.
+    actor:
+      type: string
+      description: Optional actor label for change_log rows.
+
+steps:
+  - id: load_plan
+    description: >-
+      Phase 1 — verify plan exists. Errors on unknown slug before any rows are inserted.
+    mcp: master_plan_state
+    args:
+      slug: ${inputs.slug}
+
+  - id: load_source_doc
+    description: >-
+      Phase 2 — read source exploration/extensions doc. Non-blocking; content surfaced
+      in outputs for caller audit. Recipe does not parse the doc — caller pre-extracts
+      stage_skeletons from it.
+    bash: tools/scripts/recipe-engine/master-plan-extend/load-source-doc.sh
+    args:
+      path: ${inputs.source_doc_path}
+
+  - id: insert_stages
+    description: >-
+      Phase 3 — foreach Stage skeleton: insert Stage row then foreach Task: insert Task row.
+    flow: foreach
+    items: ${inputs.stage_skeletons}
+    as: skeleton
+    steps:
+      - id: stage_insert
+        description: Insert ia_stages row for this Stage skeleton.
+        mcp: stage_insert
+        args:
+          slug: ${inputs.slug}
+          stage_id: ${skeleton.stage_id}
+          title: ${skeleton.title}
+          objective: ${skeleton.objective}
+          exit_criteria: ${skeleton.exit_criteria}
+
+      - id: insert_tasks
+        description: Inner foreach — insert Task rows for this Stage.
+        flow: foreach
+        items: ${skeleton.tasks}
+        as: task
+        steps:
+          - id: task_insert
+            description: Insert ia_tasks row for one Task.
+            mcp: task_insert
+            args:
+              prefix: TECH
+              title: ${task.title}
+              slug: ${inputs.slug}
+              stage_id: ${skeleton.stage_id}
+              notes: ${task.intent}
+              depends_on: []
+              related: []
+              raw_markdown: null
+              body: ""
+              status: pending
+
+  - id: audit_row
+    description: >-
+      Phase 4 — append change_log row for audit trail.
+    mcp: master_plan_change_log_append
+    args:
+      slug: ${inputs.slug}
+      kind: stage_status_flip
+      body: >-
+        master-plan-extend recipe ran: ${insert_stages.count} Stage(s) appended from
+        ${inputs.source_doc_path}.
+      actor: ${inputs.actor}
+
+outputs:
+  plan_slug: ${load_plan.slug}
+  stages_inserted: ${insert_stages.count}
+  source_doc: ${inputs.source_doc_path}

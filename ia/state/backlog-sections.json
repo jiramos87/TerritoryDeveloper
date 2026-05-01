@@ -715,6 +715,18 @@
           "id": "TECH-6976",
           "checklist_line": "Body trim master-plan-new to dispatch shell",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6977",
+          "checklist_line": "Recipify master-plan-extend into YAML",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6978",
+          "checklist_line": "Body trim master-plan-extend to dispatch shell",
+          "trailing_blanks": 1
         }
       ]
     },
@@ -1238,6 +1250,24 @@
           "type": "issue",
           "id": "TECH-8299",
           "checklist_line": "HUD rollout (TMP-only scope)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8540",
+          "checklist_line": "- [ ] **TECH-8540** — **Game UI Stage 9 T9.1** — IR authoring + bake re-run for 5 half-A prefabs (`web/design-refs/step-1-game-ui/cd-bundle/panels-extension.json`, `Assets/UI/Prefabs/Generated/`)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8541",
+          "checklist_line": "- [ ] **TECH-8541** — **Game UI Stage 9 T9.2** — Per-kind renderers + UiBakeHandler injection (`Assets/Scripts/UI/Themed/Renderers/`, `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs`)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8548",
+          "checklist_line": "- [ ] **TECH-8548** — **Game UI Stage 9 T9.3** — TooltipController + TooltipText + scene root + hover smoke test (`Assets/Scripts/UI/Tooltips/`, `Assets/Scripts/Tests/UI/Tooltips/`)",
           "trailing_blanks": 1
         }
       ]
@@ -2348,6 +2378,78 @@
           "type": "issue",
           "id": "TECH-5124",
           "checklist_line": "- [ ] **TECH-5124** — **CI wiring + handler-level test parity** (asset-pipeline Stage 17.1 T17.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8603",
+          "checklist_line": "- [ ] **TECH-8603** — **Backup scripts + retention sweep** (asset-pipeline Stage 18.1 T18.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8604",
+          "checklist_line": "- [ ] **TECH-8604** — **GC sweep workers (retired + orphan blob)** (asset-pipeline Stage 18.1 T18.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8605",
+          "checklist_line": "- [ ] **TECH-8605** — **verify:db-restore drill** (asset-pipeline Stage 18.1 T18.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8606",
+          "checklist_line": "- [ ] **TECH-8606** — **Three runbooks (DR + publish + archetype authoring)** (asset-pipeline Stage 18.1 T18.1.4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8607",
+          "checklist_line": "- [ ] **TECH-8607** — **Vitest unit suite for web/lib** (asset-pipeline Stage 19.1 T19.1.T1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8608",
+          "checklist_line": "- [ ] **TECH-8608** — **Integration suite per kind** (asset-pipeline Stage 19.1 T19.1.T2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8609",
+          "checklist_line": "- [ ] **TECH-8609** — **Playwright critical-path smoke** (asset-pipeline Stage 19.1 T19.1.T3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8610",
+          "checklist_line": "- [ ] **TECH-8610** — **catalog-snapshot-roundtrip Unity scenario** (asset-pipeline Stage 19.1 T19.1.T4)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8611",
+          "checklist_line": "Console + sprite-gen READMEs",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8612",
+          "checklist_line": "Glossary additions for new terms",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8613",
+          "checklist_line": "Graduate ia/specs/catalog-architecture.md",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-8614",
+          "checklist_line": "Master plan rollup + closeout digest",
           "trailing_blanks": 1
         }
       ]

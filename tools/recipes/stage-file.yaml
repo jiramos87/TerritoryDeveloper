@@ -133,6 +133,17 @@ steps:
           issue-id: ${ins.task_id}
           checklist-line: ${row.title}
 
+  - id: task_table_flip
+    description: >-
+      Phase 6.3 — atomic task-table flip. Replaces `_pending_` in Stage body Issue column
+      with actual filed task_ids in task_id ASC order. Idempotent on re-run.
+      Skipped when no rows filed.
+    when: ${file_pass.count}
+    bash: tools/scripts/recipe-engine/stage-file/task-table-flip.sh
+    args:
+      slug: ${inputs.slug}
+      stage-id: ${inputs.stage_id}
+
   - id: materialize
     description: >-
       Phase 6.1 — regenerate BACKLOG.md from DB + manifest. Filing gate: exit 0 = success.
@@ -156,5 +167,6 @@ steps:
 outputs:
   mode: ${mode_detect.stdout}
   filed_count: ${file_pass.count}
+  task_table_flip: ${task_table_flip.stdout}
   target_section: ${manifest_resolve.stdout}
   materialize_status: ${materialize.code}

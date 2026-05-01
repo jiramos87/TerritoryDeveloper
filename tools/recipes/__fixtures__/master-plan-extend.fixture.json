@@ -1,0 +1,25 @@
+{
+  "slug": "asset-pipeline",
+  "source_doc_path": "docs/recipe-runner-phase-e-completion-exploration.md",
+  "stage_skeletons": [
+    {
+      "stage_id": "99.1",
+      "title": "Smoke test Stage — master-plan-extend fixture",
+      "objective": "Verify master-plan-extend recipe inserts a Stage row + Task rows via DB MCP.",
+      "exit_criteria": "Stage 99.1 row present in ia_stages. Two Task rows present in ia_tasks.",
+      "tasks": [
+        {
+          "task_key": "99.1.1",
+          "title": "Fixture task alpha",
+          "intent": "Smoke task alpha — inserted by master-plan-extend recipe fixture run."
+        },
+        {
+          "task_key": "99.1.2",
+          "title": "Fixture task beta",
+          "intent": "Smoke task beta — inserted by master-plan-extend recipe fixture run."
+        }
+      ]
+    }
+  ],
+  "actor": "recipe-smoke"
+}

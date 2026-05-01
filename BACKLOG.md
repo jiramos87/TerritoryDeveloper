@@ -282,21 +282,7 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
-Define align-arch-decision seam schema
-  - Acceptance — `tools/seams/align-arch-decision/input.schema.json` + `output.schema.json` shipped. Schemas validate against `seam-golden` smoke fixture.
-  - Spec — [`ia/projects/TECH-6973.md`](ia/projects/TECH-6973.md)
 
-Plan-covered subagent body for seam-align-arch-decision
-  - Acceptance — `.claude/agents/seam-align-arch-decision.md` shipped (Mission + Hard boundaries + Output shape). Plan-covered dispatch slot wired.
-  - Spec — [`ia/projects/TECH-6974.md`](ia/projects/TECH-6974.md)
-
-Recipify master-plan-new Phase A+B+C into YAML
-  - Acceptance — `ia/recipes/master-plan-new.yaml` Phase A invokes `seam.align-arch-decision`. End-to-end recipe run inserts master-plan + 3 plan-scoped **arch_decisions** automatically.
-  - Spec — [`ia/projects/TECH-6975.md`](ia/projects/TECH-6975.md)
-
-Body trim master-plan-new to dispatch shell
-  - Acceptance — `.claude/agents/master-plan-new.md` line drop ≥60% vs pre-trim baseline. Drift gate green.
-  - Spec — [`ia/projects/TECH-6976.md`](ia/projects/TECH-6976.md)
 
 ## Architecture coherence program
 
@@ -359,40 +345,29 @@ Body trim master-plan-new to dispatch shell
   - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
   - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)
 
-- [ ] **TECH-8141 — Bake spacing application** — apply panel/button detail spacing to LayoutGroup during prefab bake.
-  - Type: technical / UI bake pipeline
-  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs`
-  - Notes: In UiBakeHandler.Archetype.cs, read panel.detail.{paddingX, paddingY, gap, dividerThickness} + button.detail.{paddingX, paddingY} → write LayoutGroup.padding / spacing + divider Image height during prefab construction.
-  - Acceptance: spacing values from IR detail JSON applied to LayoutGroup; divider Image height set; npm run unity:compile-check green.
-  - Depends on: TECH-7985..TECH-7990 (Stage 1.3 components — must be archived)
+- [ ] **TECH-8540** — **Game UI Stage 9 T9.1** — IR authoring + bake re-run for 5 half-A prefabs (`web/design-refs/step-1-game-ui/cd-bundle/panels-extension.json`, `Assets/UI/Prefabs/Generated/`)
+  - Type: infrastructure / design system
+  - Files: `web/design-refs/step-1-game-ui/cd-bundle/panels-extension.json`, `web/design-refs/step-1-game-ui/ir.json`, `Assets/UI/Prefabs/Generated/{splash,onboarding,glossary-panel,tooltip,city-stats-handoff}.prefab`
+  - Spec: `ia/projects/game-ui-design-system/index.md` Stage 9 T9.1; `docs/game-ui-design-system-exploration.md` §Phase 6 Stage 9 deliverable line
+  - Notes: extend `panels-extension.json` with 5 half-A panel definitions — `splash` (ThemedPanel + ThemedLabel + ThemedButton), `onboarding-overlay` (ThemedPanel + step ThemedList + ThemedButton next/skip), `glossary-panel` (ThemedPanel + ThemedTabBar + ThemedList + ThemedLabel definition), `tooltip` (ThemedTooltip primitive template — anchor + arrow + body label), `city-stats-handoff` (ThemedPanel + ThemedTabBar + SegmentedReadout/VUMeter rows). Run `npm run transcribe:game-ui` to refresh `ir.json`. Run `npm run unity:bake-ui` to (re)produce 5 prefabs. Verify each baked tree matches IR slot graph. No surface-adapter wiring yet — pure IR + bake.
+  - Acceptance: `panels-extension.json` carries 5 panel defs matching locked IR schema; `ir.json` regenerated; 5 `Generated/*.prefab` files exist with tree shape matching IR; `npm run unity:compile-check` exits 0; `npm run validate:all` passes IR-schema validator.
+  - Depends on: —
 
-- [ ] **TECH-8142 — Bake archetype dispatch** — add section_header / divider / badge dispatch arms to UiBakeHandler.
-  - Type: technical / UI bake pipeline
-  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs`
-  - Notes: In UiBakeHandler.Archetype.cs, add dispatch arms for section_header → ThemedSectionHeader; divider → ThemedDivider; badge → ThemedBadge. Existing archetype switch untouched.
-  - Acceptance: 3 new archetypes dispatch to correct Themed components; existing switch unchanged; npm run unity:compile-check green.
-  - Depends on: TECH-8141 (spacing must land first)
+- [ ] **TECH-8541** — **Game UI Stage 9 T9.2** — Per-kind renderers + UiBakeHandler injection (`Assets/Scripts/UI/Themed/Renderers/`, `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs`)
+  - Type: infrastructure / design system
+  - Files: `Assets/Scripts/UI/Themed/Renderers/ThemedPrimitiveRendererBase.cs` (new), `Assets/Scripts/UI/Themed/Renderers/ThemedTooltipRenderer.cs` (new), `Assets/Scripts/UI/Themed/Renderers/ThemedListRenderer.cs` (new), `Assets/Scripts/UI/Themed/Renderers/ThemedTabBarRenderer.cs` (new), `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs`
+  - Spec: `ia/projects/game-ui-design-system/index.md` Stage 9 T9.2; `docs/game-ui-design-system-render-layer-extensions.md` (Stage 10 `StudioControlRendererBase` pattern reference)
+  - Notes: author `ThemedPrimitiveRendererBase.cs` abstract MonoBehaviour — caches `UiTheme` ref + child `Image` / `TMP_Text` refs in `Awake` (invariant #3); subscribes to state-holder change event; abstract `OnStateApplied()` hook. Subclasses: `ThemedTooltipRenderer.cs` (anchors body label + arrow image, applies `UiTheme.tooltipPalette`), `ThemedListRenderer.cs` (renders item rows from `Detail` array into vertical layout), `ThemedTabBarRenderer.cs` (renders tab buttons from `Detail` tab list + active-tint state). Pattern mirrors Stage 10 `StudioControlRendererBase`. Extend `UiBakeHandler.cs` interactive emit path: around state-holder `AddComponent` calls, also `AddComponent` matching `*Renderer` + spawn child `Image` / `TMP_Text` GameObject sized via `RectTransform` per IR detail row. Bake-time only — no runtime `AddComponent`.
+  - Acceptance: 4 new C# files compile (`npm run unity:compile-check` exits 0); re-bake via `npm run unity:bake-ui` produces prefabs with `*Renderer` siblings attached + visible `Image` / `TMP_Text` children; renderer tree matches IR detail rows.
+  - Depends on: TECH-8540
 
-- [ ] **TECH-8143 — Bake frame + illumination wiring** — resolve atlas slug + instantiate ThemedIlluminationLayer in Frame bake.
-  - Type: technical / UI bake pipeline
-  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs`
-  - Notes: In UiBakeHandler.Frame.cs, resolve frame_style_slug via AtlasIndex.Resolve with sprite_ref_fallback path; instantiate ThemedIlluminationLayer sibling Image when illumination_slug set on panel.
-  - Acceptance: frame sprite resolved from atlas; illumination overlay instantiated when slug present; npm run unity:compile-check green.
-  - Depends on: TECH-8141 (spacing first)
-
-- [ ] **TECH-8144 — Bake button state wiring** — patch Selectable.colors + SpriteState + fadeDuration from palette/atlas/motion.
-  - Type: technical / UI bake pipeline
-  - Files: `Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs`
-  - Notes: In UiBakeHandler.Button.cs, patch Selectable.colors from palette ramp + SpriteState from atlas slot enum + optional fadeDuration from motion curve. Mirror exploration §Examples bake excerpt verbatim.
-  - Acceptance: Selectable.colors populated from palette; SpriteState wired from atlas; fadeDuration applied when present; npm run unity:compile-check green.
-  - Depends on: TECH-8141 (spacing first)
-
-- [ ] **TECH-8145 — Conformance 5 new check kinds** — add 5 case arms to AgentBridgeCommandRunner.Conformance.cs.
-  - Type: technical / conformance bridge
-  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.Conformance.cs`
-  - Notes: In AgentBridgeCommandRunner.Conformance.cs, add case arms for frame_visual_present / font_asset_bound / spacing_match (±1 px tolerance) / button_states_wired / illumination_layer_present. Smoke green via end-to-end IR fixture.
-  - Acceptance: 5 new case arms added; existing 6 untouched; smoke fixture bakes and all 5 new check_kinds return pass: true; npm run unity:compile-check + npm run db:bridge-preflight green.
-  - Depends on: TECH-8141, TECH-8142, TECH-8143, TECH-8144 (all bake patches must land first)
+- [ ] **TECH-8548** — **Game UI Stage 9 T9.3** — TooltipController + TooltipText + scene root + hover smoke test (`Assets/Scripts/UI/Tooltips/`, `Assets/Scripts/Tests/UI/Tooltips/`)
+  - Type: infrastructure / design system
+  - Files: `Assets/Scripts/UI/Tooltips/TooltipController.cs` (new), `Assets/Scripts/UI/Tooltips/TooltipTextAttribute.cs` (new), `Assets/Scripts/Tests/UI/Tooltips/TooltipHoverSmokeTest.cs` (new), `Assets/Scenes/MainScene.unity`
+  - Spec: `ia/projects/game-ui-design-system/index.md` Stage 9 T9.3; `ia/rules/unity-scene-wiring.md`; `ia/rules/unity-invariants.md` invariants #3 + #4
+  - Notes: author `TooltipController.cs` MonoBehaviour — caches `UiTheme` ref in `Awake` (invariant #3); Inspector slot `_tooltipPrefab` (baked `Tooltip.prefab`) with `FindObjectOfType` fallback (invariant #4); scans for any UI element carrying `[TooltipText]`, subscribes to `IPointerEnterHandler` / `IPointerExitHandler`, instantiates `_tooltipPrefab` at hover position child of `UI Canvas`, hides / destroys on exit. Author `TooltipTextAttribute.cs` (or `TooltipText.cs` MonoBehaviour with `[SerializeField] string _text`) as hover-trigger marker. Scene-wire: parent `TooltipController` GameObject under scene-level `UI Canvas` (Stage 10 T10.4 root) via `set_gameobject_parent` bridge mutation; bind `_tooltipPrefab` Inspector slot via `assign_serialized_field`. Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`. Author `TooltipHoverSmokeTest.cs` PlayMode test — instantiates probe element with `[TooltipText("hover-me")]`, fires synthetic `PointerEnter`, asserts `Tooltip.prefab` child active with non-empty `TMP_Text.text`, fires `PointerExit`, asserts hidden / destroyed.
+  - Acceptance: 3 new C# files compile (`npm run unity:compile-check` exits 0); `TooltipController` GameObject in `MainScene.unity` parented under `UI Canvas` with Inspector slot bound; Scene Wiring evidence block emitted; `npm run unity:testmode-batch` green for `TooltipHoverSmokeTest`; `npm run verify:local` exits 0.
+  - Depends on: TECH-8541
 
 ## Economic depth lane
 
@@ -719,6 +694,46 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 - [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
 
 - [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
+
+- [ ] **TECH-8603** — **Backup scripts + retention sweep** (asset-pipeline Stage 18.1 T18.1.1)
+  - Acceptance — `backup-db.sh` + `backup-blobs.sh` tested + scheduled via cron; retention sweep prunes per policy.
+  - Spec — [`ia/projects/TECH-8603.md`](ia/projects/TECH-8603.md)
+
+- [ ] **TECH-8604** — **GC sweep workers (retired + orphan blob)** (asset-pipeline Stage 18.1 T18.1.2)
+  - Acceptance — Sweep workers run nightly; orphan blob count visible in dashboard.
+  - Spec — [`ia/projects/TECH-8604.md`](ia/projects/TECH-8604.md)
+
+- [ ] **TECH-8605** — **verify:db-restore drill** (asset-pipeline Stage 18.1 T18.1.3)
+  - Acceptance — `verify:db-restore` script green on first drill; failure surfaces in dashboard.
+  - Spec — [`ia/projects/TECH-8605.md`](ia/projects/TECH-8605.md)
+
+- [ ] **TECH-8606** — **Three runbooks (DR + publish + archetype authoring)** (asset-pipeline Stage 18.1 T18.1.4)
+  - Acceptance — Three runbook .md files committed + walkthrough-tested by user.
+  - Spec — [`ia/projects/TECH-8606.md`](ia/projects/TECH-8606.md)
+
+- [ ] **TECH-8607** — **Vitest unit suite for web/lib** (asset-pipeline Stage 19.1 T19.1.T1)
+
+- [ ] **TECH-8608** — **Integration suite per kind** (asset-pipeline Stage 19.1 T19.1.T2)
+
+- [ ] **TECH-8609** — **Playwright critical-path smoke** (asset-pipeline Stage 19.1 T19.1.T3)
+
+- [ ] **TECH-8610** — **catalog-snapshot-roundtrip Unity scenario** (asset-pipeline Stage 19.1 T19.1.T4)
+
+Console + sprite-gen READMEs
+  - Acceptance — `web/app/catalog/README.md` + `tools/sprite-gen/README.md` written; user walkthrough green.
+  - Spec — [`ia/projects/TECH-8611.md`](ia/projects/TECH-8611.md)
+
+Glossary additions for new terms
+  - Acceptance — 9 term rows added to `ia/specs/glossary.md`; `npm run generate:ia-indexes` green.
+  - Spec — [`ia/projects/TECH-8612.md`](ia/projects/TECH-8612.md)
+
+Graduate ia/specs/catalog-architecture.md
+  - Acceptance — `ia/specs/catalog-architecture.md` committed with graduated canonical sections; exploration doc retained as design-trail.
+  - Spec — [`ia/projects/TECH-8613.md`](ia/projects/TECH-8613.md)
+
+Master plan rollup + closeout digest
+  - Acceptance — `master_plan_change_log_append` entry recorded; Stage 20.1 status `done`; orchestrator preamble Status `Final`.
+  - Spec — [`ia/projects/TECH-8614.md`](ia/projects/TECH-8614.md)
 
 ## High Priority
 

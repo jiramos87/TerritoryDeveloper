@@ -1,0 +1,13 @@
+{
+  "agent_step_refs": [],
+  "captured_at": "2026-05-01T02:31:34.745Z",
+  "hash": "e48a139c6bb4bc1f",
+  "recipe_step_ids": [
+    "load_plan",
+    "load_source_doc",
+    "insert_stages",
+    "audit_row"
+  ],
+  "skill_phase_ids": [],
+  "slug": "master-plan-extend"
+}

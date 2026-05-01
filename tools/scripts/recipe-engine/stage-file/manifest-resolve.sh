@@ -58,8 +58,9 @@ candidates=("$slug_l")
 [[ -n "$title_kebab" && "$title_kebab" != "$slug_l" ]] && candidates+=("$title_kebab")
 [[ -n "$title_kebab_stripped" && "$title_kebab_stripped" != "$title_kebab" ]] && candidates+=("$title_kebab_stripped")
 
-# Build header list: header → normalized.
-mapfile -t headers < <(jq -r '.sections[].header' "$manifest")
+# Build header list: header → normalized. bash3-safe (no mapfile).
+headers=()
+while IFS= read -r line; do headers+=("$line"); done < <(jq -r '.sections[].header' "$manifest")
 
 best_header=""
 best_score=0

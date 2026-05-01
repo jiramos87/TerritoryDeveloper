@@ -9,8 +9,8 @@
     "manifest_resolve",
     "materialize"
   ],
-  "captured_at": "2026-04-30T20:58:01.209Z",
-  "hash": "88629553d1da52fb",
+  "captured_at": "2026-05-01T02:31:34.351Z",
+  "hash": "f822b8aa0e4d65c8",
   "recipe_step_ids": [
     "mode_detect",
     "lifecycle_ctx",
@@ -22,6 +22,7 @@
     "pending_q",
     "manifest_resolve",
     "file_pass",
+    "task_table_flip",
     "materialize",
     "stage_changelog",
     "progress"
