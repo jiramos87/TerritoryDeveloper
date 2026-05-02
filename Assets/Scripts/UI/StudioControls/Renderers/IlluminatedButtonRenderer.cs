@@ -8,7 +8,7 @@ namespace Territory.UI.StudioControls.Renderers
     /// <summary>Render-layer companion for <see cref="IlluminatedButton"/>; lerps main <see cref="Image"/> alpha from <see cref="IlluminatedButton.IlluminationAlpha"/> on each <see cref="StudioControlBase.ApplyDetail"/> + halo flash coroutine on <see cref="IlluminatedButton.OnClick"/>.</summary>
     [RequireComponent(typeof(IlluminatedButton))]
     public class IlluminatedButtonRenderer : StudioControlRendererBase,
-        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
     {
         private const float DefaultHaloDurationSeconds = 0.25f;
 
@@ -19,8 +19,11 @@ namespace Territory.UI.StudioControls.Renderers
         private const float BodyPressDimFactor = 0.7f;
 
         private IlluminatedButton _button;
-        private Image _mainImage;
-        private Image _haloImage;
+        // Step 16 D3.1 — bake handler writes these refs at authoring time so hover/press wiring
+        // is deterministic (no runtime GetComponentsInChildren scan + name-match coupling).
+        // ResolveImages() stays as a fallback for legacy prefabs that pre-date the bake-time wire.
+        [SerializeField] private Image _mainImage;
+        [SerializeField] private Image _haloImage;
         private Coroutine _haloCoroutine;
         private bool _isHover;
         private bool _isPressed;
@@ -29,7 +32,8 @@ namespace Territory.UI.StudioControls.Renderers
         {
             base.Awake();
             _button = GetComponent<IlluminatedButton>();
-            ResolveImages();
+            // Step 16 D3.1 — only fall back to runtime image discovery when bake-time refs are absent.
+            if (_mainImage == null || _haloImage == null) ResolveImages();
             if (_button != null)
             {
                 _button.OnClick.AddListener(OnClicked);
@@ -69,6 +73,13 @@ namespace Territory.UI.StudioControls.Renderers
         {
             _isPressed = false;
             ApplyHaloState();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_button == null) return;
+            if (eventData != null && eventData.button != PointerEventData.InputButton.Left) return;
+            _button.OnClick.Invoke();
         }
 
         private void ApplyHaloState()

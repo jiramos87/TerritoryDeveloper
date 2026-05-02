@@ -1,8 +1,10 @@
 using UnityEngine;
 using Territory.Economy;
+using Territory.Simulation;
 using Territory.Timing;
 using Territory.UI.Juice;
 using Territory.UI.StudioControls;
+using Territory.UI.Themed;
 
 namespace Territory.UI.HUD
 {
@@ -27,6 +29,14 @@ namespace Territory.UI.HUD
         [SerializeField] private EconomyManager _economyManager;
         [SerializeField] private TimeManager _timeManager;
 
+        [Header("Sim controllers (AUTO toggle target)")]
+        [SerializeField] private AutoZoningManager _autoZoningManager;
+        [SerializeField] private AutoRoadBuilder _autoRoadBuilder;
+
+        [Header("UI handlers")]
+        [SerializeField] private UIManager _uiManager;
+        [SerializeField] private CameraController _cameraController;
+
         // ── Theme cache (invariant #3 — caching contract regardless of immediate read)
 
         [Header("Theme")]
@@ -34,22 +44,153 @@ namespace Territory.UI.HUD
 
         // ── Consumer refs (StudioControl variants on baked hud-bar prefab)
 
-        [Header("Consumers")]
+        [Header("Consumers — readouts")]
         [SerializeField] private SegmentedReadout _moneyReadout;
         [SerializeField] private SegmentedReadout _populationReadout; // optional — null-tolerant
         [SerializeField] private VUMeter _happinessMeter;
         [SerializeField] private NeedleBallistics _happinessNeedle; // optional — preferred input surface for happiness; falls back to none if absent
+        [SerializeField] private ThemedLabel _cityNameLabel; // center cluster — populated from cityStats.cityName
+
+        [Header("Consumers — left cluster (file ops)")]
+        [SerializeField] private IlluminatedButton _newButton;
+        [SerializeField] private IlluminatedButton _saveButton;
+        [SerializeField] private IlluminatedButton _loadButton;
+
+        [Header("Consumers — right cluster (controls)")]
+        [SerializeField] private IlluminatedButton _autoButton;
+        [SerializeField] private IlluminatedButton _zoomInButton;
+        [SerializeField] private IlluminatedButton _zoomOutButton;
+        [SerializeField] private IlluminatedButton _statsButton;
+        [SerializeField] private IlluminatedButton _miniMapButton;
+
+        [Header("Stats + MiniMap roots — toggle on click")]
+        [SerializeField] private GameObject _cityStatsRoot;
+        [SerializeField] private GameObject _miniMapRoot;
+
+        [Header("Speed cluster — index 0 = paused, 1..4 = 0.5x/1x/2x/4x")]
         [SerializeField] private IlluminatedButton[] _speedButtons; // length 5: paused / 0.5x / 1x / 2x / 4x
+
+        private string _lastBoundCityName;
 
         private void Awake()
         {
             // MonoBehaviour producers — Inspector first, FindObjectOfType fallback (invariant #4).
             if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
             if (_timeManager == null) _timeManager = FindObjectOfType<TimeManager>();
-            // CityStats is a MonoBehaviour in this codebase per Assets/Scripts/Managers/GameManagers/CityStats.cs.
             if (_cityStats == null) _cityStats = FindObjectOfType<CityStats>();
-            // UiTheme is a ScriptableObject — Inspector-only assignment per StudioControlBase pattern.
-            // No FindObjectOfType for SOs.
+            if (_autoZoningManager == null) _autoZoningManager = FindObjectOfType<AutoZoningManager>();
+            if (_autoRoadBuilder == null) _autoRoadBuilder = FindObjectOfType<AutoRoadBuilder>();
+            if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
+            if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
+
+            WireClickHandlers();
+        }
+
+        private void WireClickHandlers()
+        {
+            if (_newButton != null)
+            {
+                _newButton.OnClick.RemoveListener(HandleNewClick);
+                _newButton.OnClick.AddListener(HandleNewClick);
+            }
+            if (_saveButton != null)
+            {
+                _saveButton.OnClick.RemoveListener(HandleSaveClick);
+                _saveButton.OnClick.AddListener(HandleSaveClick);
+            }
+            if (_loadButton != null)
+            {
+                _loadButton.OnClick.RemoveListener(HandleLoadClick);
+                _loadButton.OnClick.AddListener(HandleLoadClick);
+            }
+            if (_autoButton != null)
+            {
+                _autoButton.OnClick.RemoveListener(HandleAutoClick);
+                _autoButton.OnClick.AddListener(HandleAutoClick);
+            }
+            if (_zoomInButton != null)
+            {
+                _zoomInButton.OnClick.RemoveListener(HandleZoomInClick);
+                _zoomInButton.OnClick.AddListener(HandleZoomInClick);
+            }
+            if (_zoomOutButton != null)
+            {
+                _zoomOutButton.OnClick.RemoveListener(HandleZoomOutClick);
+                _zoomOutButton.OnClick.AddListener(HandleZoomOutClick);
+            }
+            if (_statsButton != null)
+            {
+                _statsButton.OnClick.RemoveListener(HandleStatsClick);
+                _statsButton.OnClick.AddListener(HandleStatsClick);
+            }
+            if (_miniMapButton != null)
+            {
+                _miniMapButton.OnClick.RemoveListener(HandleMiniMapClick);
+                _miniMapButton.OnClick.AddListener(HandleMiniMapClick);
+            }
+            WireSpeedButtonClicks();
+        }
+
+        private void WireSpeedButtonClicks()
+        {
+            if (_speedButtons == null) return;
+            for (int i = 0; i < _speedButtons.Length; i++)
+            {
+                var btn = _speedButtons[i];
+                if (btn == null) continue;
+                int captured = i;
+                btn.OnClick.AddListener(() => HandleSpeedClick(captured));
+            }
+        }
+
+        private void HandleSpeedClick(int index)
+        {
+            if (_timeManager == null) return;
+            _timeManager.SetTimeSpeedIndex(index);
+        }
+
+        private void HandleNewClick()
+        {
+            if (_uiManager != null) _uiManager.OnNewGameButtonClicked();
+        }
+
+        private void HandleSaveClick()
+        {
+            if (_uiManager != null) _uiManager.OnSaveGameButtonClicked();
+        }
+
+        private void HandleLoadClick()
+        {
+            if (_uiManager != null) _uiManager.OpenPopup(PopupType.SaveLoadScreen);
+        }
+
+        private void HandleAutoClick()
+        {
+            // Single toggle drives both auto-zoning + auto-road-building.
+            // Read state from AutoZoningManager (treated as primary); flip both to inverse.
+            bool enable = _autoZoningManager == null ? true : !_autoZoningManager.enabled;
+            if (_autoZoningManager != null) _autoZoningManager.enabled = enable;
+            if (_autoRoadBuilder != null) _autoRoadBuilder.enabled = enable;
+        }
+
+        private void HandleZoomInClick()
+        {
+            if (_cameraController != null) _cameraController.ZoomIn();
+        }
+
+        private void HandleZoomOutClick()
+        {
+            if (_cameraController != null) _cameraController.ZoomOut();
+        }
+
+        private void HandleStatsClick()
+        {
+            if (_cityStatsRoot != null) _cityStatsRoot.SetActive(!_cityStatsRoot.activeSelf);
+        }
+
+        private void HandleMiniMapClick()
+        {
+            if (_miniMapRoot != null) _miniMapRoot.SetActive(!_miniMapRoot.activeSelf);
         }
 
         private void Update()
@@ -72,6 +213,23 @@ namespace Territory.UI.HUD
             if (_cityStats != null && _happinessNeedle != null)
             {
                 _happinessNeedle.TargetValue = _cityStats.happiness;
+            }
+
+            // city name channel — only rebind when value changes (avoid TMP rebuilds every frame).
+            if (_cityStats != null && _cityNameLabel != null)
+            {
+                string name = _cityStats.cityName;
+                if (name != _lastBoundCityName)
+                {
+                    _cityNameLabel.Detail = string.IsNullOrEmpty(name) ? "—" : name;
+                    _lastBoundCityName = name;
+                }
+            }
+
+            // AUTO illumination mirrors AutoZoningManager.enabled (treated as primary).
+            if (_autoButton != null && _autoZoningManager != null)
+            {
+                _autoButton.IlluminationAlpha = _autoZoningManager.enabled ? 1f : 0f;
             }
 
             // speed channel — exactly-one-illuminated mirroring TimeManager.CurrentTimeSpeedIndex
