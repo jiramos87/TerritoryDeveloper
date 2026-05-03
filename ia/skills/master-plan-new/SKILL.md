@@ -169,14 +169,15 @@ Map Implementation Points directly to **Stages** — each = shippable compilable
 
 **Stage numbering:** `Stage N.M`. Use `M` subdivisions when a single milestone splits into serial sub-milestones (e.g. `Stage 1.1 scaffolding`, `Stage 1.2 data model` within MVP cluster `1`). Simple plans may use single-level `Stage 1 / Stage 2 / ...` — equivalent; N.M pattern is convention, not mandatory.
 
-**Stage-ordering heuristic** (earliest first):
+**Stage-ordering heuristic — tracer-first** (per `docs/prototype-first-methodology-design.md §6 D8`, verbatim):
 
-1. **Scaffolding / infrastructure** — bootstrap, persistent bindings, project settings, AudioMixer groups, scene setup. No data model yet.
-2. **Data model** — ScriptableObject / blittable struct / serialized fields. Typed but inert.
-3. **Runtime logic** — DSP kernel / update loop / compute code. Consumes data model.
-4. **Integration + tests** — call sites, EditMode/PlayMode tests, golden fixtures. Lands last.
+1. **Stage 1.0 — Tracer slice (mandatory).** End-to-end real code, one real player/agent verb, hardcoded data OK, peripheral systems explicitly stubbed (per D4). Throwaway/forward-living split declared (per D7). Authored as the §Tracer Slice subsection (Stage 1.0 only) per [`docs/MASTER-PLAN-STRUCTURE.md §3.5`](../../../docs/MASTER-PLAN-STRUCTURE.md#tracer-slice) — 5 named fields all non-empty (`verb`, `hardcoded_scope`, `stubbed_systems`, `throwaway`, `forward_living`).
+2. **Stages 2+ — Visibility-ordered fattening.** Each subsequent stage adds the next slice the player/agent will see/feel soonest. Replace stubs with real behavior, prioritized by player visibility. Hidden plumbing (perf, refactor, infra hardening) lands inside the visible slice that needs it, not as standalone plumbing-only stages. Each Stage authors a §Visibility Delta line per [`docs/MASTER-PLAN-STRUCTURE.md §3.6`](../../../docs/MASTER-PLAN-STRUCTURE.md#visibility-delta) — single sentence, non-empty, unique within plan.
+3. **Late stages — Production hardening + polish.** Save/load completeness, multi-config support, edge cases, post-MVP extensions. Land only after every visible slice is real.
 
-Follow order unless Implementation Points declare different dep chain (note deviation in Decision Log seed). Rationale: earlier stages inherit zero scaffolding debt; test stage validates everything shipped.
+**Implication:** Authoring AI reads "next stage = next thing the player sees" as the ordering rule, not "next layer to build up." Plumbing-only stages forbidden post Stage 1.0 — every Stage MUST declare its player-visible delta or be merged into one that does. Mechanical mapping from upstream `design-explore` output: §Core Prototype → Stage 1.0 §Tracer Slice fields (1:1); §Iteration Roadmap rows → Stages 2+ §Visibility Delta lines (1:1). No invention at master-plan time (per D11).
+
+**Cross-link:** `docs/MASTER-PLAN-STRUCTURE.md §3.5 §Tracer Slice` + `§3.6 §Visibility Delta` + `§6.2 footnote` (validator gate `validate:plan-prototype-first` lands Stage 1.3 of `prototype-first-methodology` master plan).
 
 **Stage count target:** 2–6 Stages typical; 7+ suggests scope creep (consider splitting into sibling master plans with dependency note).
 

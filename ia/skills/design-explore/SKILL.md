@@ -292,6 +292,26 @@ Detect whether `## Design Expansion` section already exists in `{DOC_PATH}`:
 - **Exists** → update content in place between that header and the next `---` separator.
 - **Not present** → append after a `---` separator following the last existing section.
 
+**Mandatory subsections (per `docs/prototype-first-methodology-design.md §6 D10` — prototype-first methodology):**
+
+`## Design Expansion` MUST carry both `### Core Prototype` and `### Iteration Roadmap`. Skill MUST FAIL persist (abort + structured error, no partial write) when either is missing or empty.
+
+- **`### Core Prototype` (mandatory).** Maps 1:1 to Stage 1.0 §Tracer Slice in the downstream master plan (`docs/MASTER-PLAN-STRUCTURE.md §3.5`). Carries 5 named fields, all non-empty:
+  - `verb:` — what the player/agent can do at end of Stage 1.0 (one verb-phrase, free-form).
+  - `hardcoded_scope:` — list of hardcoded data / scenes / configs.
+  - `stubbed_systems:` — list of stub methods returning constants.
+  - `throwaway:` — visible-layer items acceptable for Stage 2+ rewrite.
+  - `forward_living:` — structural-layer items locked forward.
+- **`### Iteration Roadmap` (mandatory).** Maps 1:1 to Stages 2+ §Visibility Delta lines (`docs/MASTER-PLAN-STRUCTURE.md §3.6`). 3-column table, ≥1 row, no plumbing-only rows:
+
+  | Stage | Scope | Visibility delta |
+  |---|---|---|
+  | 2.x | {what this iteration adds} | {one sentence — what player/agent sees/feels new} |
+
+**Persist failure mode:** Missing or empty `### Core Prototype` OR missing/empty `### Iteration Roadmap` → skill aborts persist with structured error `design_explore_persist_contract_violation` naming the missing/empty subsection. No partial write to `{DOC_PATH}`.
+
+**Canonical reference fixture:** [`tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json`](../../../tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json) — authoring shape canonical for §Core Prototype 5-field block + §Iteration Roadmap 3-column table.
+
 Sections to write (in order):
 
 ```markdown
@@ -310,6 +330,21 @@ Sections to write (in order):
 ### Sections
 {Emit only when plan_shape=carcass+section. ≥1 entries. Format per row:
 `Section {A|B|C|...} — {section name} — {touched subsystems / glossary anchors}`}
+
+### Core Prototype
+{MANDATORY per D10 — feeds Stage 1.0 §Tracer Slice. 5 named fields, all non-empty:
+- `verb:` {one player/agent verb-phrase}
+- `hardcoded_scope:` {list of hardcoded data/scenes/configs}
+- `stubbed_systems:` {list of stub methods returning constants}
+- `throwaway:` {visible-layer items rewriteable in Stage 2+}
+- `forward_living:` {structural-layer items locked forward}}
+
+### Iteration Roadmap
+{MANDATORY per D10 — feeds Stages 2+ §Visibility Delta lines. 3-column table, ≥1 row, no plumbing-only rows. Each row → one Stage. `Visibility delta` column MUST be unique within table.}
+
+| Stage | Scope | Visibility delta |
+|---|---|---|
+| 2.x | {what this iteration adds} | {one sentence — what player/agent sees/feels new} |
 
 ### Chosen Approach
 {approach id + name + one-paragraph rationale referencing Phase 1 criteria}

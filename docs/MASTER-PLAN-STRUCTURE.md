@@ -127,6 +127,15 @@ Every Stage block under `## Stages` is an H3 heading + the subsection sequence b
 - {prior stage surfaces}
 - {code paths — mark `(new)` for non-existent}
 
+**§Tracer Slice (Stage 1.0 ONLY — mandatory per §3.5):**
+- `verb:` {one player/agent verb}
+- `hardcoded_scope:` {list}
+- `stubbed_systems:` {list}
+- `throwaway:` {list}
+- `forward_living:` {list}
+
+**§Visibility Delta (Stages 2+ ONLY — mandatory per §3.6):** {single sentence — what player/agent sees/feels new this stage; unique within plan}
+
 **Tasks:**
 
 | Task | Name | Issue | Status | Intent |
@@ -189,6 +198,54 @@ The two `####` subsections under every Stage are lifecycle pair-seam anchors. Or
 
 Retired variants (**do NOT reintroduce**): `#### §Stage Audit` subsection (opus-auditor pass dropped from `/ship-stage` Pass B per `3ac2d6e`); `#### §Stage Closeout Plan` subsection (collapsed into `/ship-stage` Pass B inline closeout via `stage_closeout_apply` MCP — single call applies shared migration tuples + N archive ops + N status flips + N id-purge ops); per-Task `§Closeout Plan` inside project specs (collapsed into Pass B inline closeout). Closeout is no longer a pair seam.
 
+### 3.5 §Tracer Slice subsection — Stage 1.0 only (MANDATORY)
+
+Anchor: `#tracer-slice`. Source contract: `docs/prototype-first-methodology-design.md §6 D9`. Sourced upstream from `design-explore` §Core Prototype block (per D10 / D11 — mechanical 1:1 mapping, no invention at master-plan time).
+
+**Applies to Stage 1.0 only.** Every other Stage MUST omit §Tracer Slice and instead carry §Visibility Delta (§3.6).
+
+**5 fields, all non-empty (validator gate):**
+
+| Field | Type | Meaning |
+|---|---|---|
+| `verb` | string | What the player/agent can DO at end of Stage 1.0. One verb-phrase, free-form, non-empty (per D2). |
+| `hardcoded_scope` | list | Hardcoded data / scenes / configs accepted as Stage 1.0 input (per D4). |
+| `stubbed_systems` | list | Stub methods returning constants — peripheral systems not yet real (per D4). |
+| `throwaway` | list | Visible-layer items acceptable for Stage 2+ rewrite (per D7). |
+| `forward_living` | list | Structural-layer items locked forward — survive past Stage 1.0 unchanged (per D7). |
+
+**Empty / missing field → `validate:plan-prototype-first` CI red (Stage 1.3 deliverable).**
+
+**Example:**
+
+```markdown
+**§Tracer Slice (Stage 1.0 ONLY — mandatory per §3.5):**
+- `verb:` player can place a road tile on grid and see it render
+- `hardcoded_scope:` single 8x8 grid scene; one road sprite; no terrain variation
+- `stubbed_systems:` GridManager.GetCellCost returns constant 1; HeightMap returns flat 0
+- `throwaway:` road sprite (replaced by atlas Stage 2.x); 8x8 grid (replaced by 64x64)
+- `forward_living:` GridManager.PlaceTile API; ITileRenderer interface
+```
+
+### 3.6 §Visibility Delta line — Stages 2+ only (MANDATORY)
+
+Anchor: `#visibility-delta`. Source contract: `docs/prototype-first-methodology-design.md §6 D9`. Sourced upstream from `design-explore` §Iteration Roadmap rows (per D10 / D11 — one row → one Stage delta line).
+
+**Applies to every Stage with `N.M ≠ 1.0`.** Stage 1.0 MUST omit §Visibility Delta and instead carry §Tracer Slice (§3.5).
+
+**Single sentence, non-empty, unique within plan (validator gate):**
+
+- One-line statement answering "what does the player/agent see/feel that they didn't before this stage?" (per D9).
+- Free-form prose; non-empty.
+- MUST be unique across all Stages within one master plan (no two Stages claim same delta — `validate:plan-prototype-first` CI red on duplicate or empty per D9).
+- Plumbing-only Stages forbidden post Stage 1.0 — every Stage MUST declare its player-visible delta or be merged into one that does (per D8).
+
+**Example:**
+
+```markdown
+**§Visibility Delta (Stages 2+ ONLY — mandatory per §3.6):** Player sees road tiles snap to grid corners and animate in-place when adjacent tiles update.
+```
+
 ---
 
 ## 4. Section ordering — full master plan
@@ -198,9 +255,11 @@ Retired variants (**do NOT reintroduce**): `#### §Stage Audit` subsection (opus
 2. --- separator
 3. ## Stages  (umbrella H2 — single occurrence)
 4. ### Stage 1.1 — ...  (H3 — repeat per Stage)
-   4.1 Status / Notes / Backlog state / Objectives / Exit criteria / Art / Arch surfaces / Relevant surfaces / Tasks table
-   4.2 #### §Stage File Plan
-   4.3 #### §Plan Fix
+   4.1 Status / Notes / Backlog state / Objectives / Exit criteria / Art / Arch surfaces / Relevant surfaces
+   4.2 §Tracer Slice (Stage 1.0 ONLY — §3.5) XOR §Visibility Delta (Stages 2+ ONLY — §3.6)
+   4.3 Tasks table
+   4.4 #### §Stage File Plan
+   4.5 #### §Plan Fix
 5. --- separator (after last Stage)
 6. ## Orchestration guardrails  (H2 — single occurrence, terminal)
 ```
@@ -250,6 +309,8 @@ Draft | In Review | In Progress | Final
 | `In Review` | Post-`plan-review` drift scan pending fix-apply. | `plan-reviewer-mechanical` + `plan-reviewer-semantic` write `In Review` when `§Plan Fix` non-empty. |
 | `In Progress` | ≥1 Task filed in this Stage. | `stage-file` applier pass R2 flips on first Task filed in the Stage. |
 | `Final` | Every Task row in Stage = `Done`; closeout applied. | `/ship-stage` Pass B inline closeout R3 on last Task archived. |
+
+> **Footnote — prototype-first gate:** Stage 1.0 §Tracer Slice (§3.5) and Stages 2+ §Visibility Delta (§3.6) are mandatory subsections. The dedicated CI gate is `validate:plan-prototype-first` — it asserts (a) Stage 1.0 carries §Tracer Slice with all 5 fields non-empty, (b) every Stage 2+ carries a non-empty §Visibility Delta line, (c) §Visibility Delta lines are unique within a plan. Validator script lands in **Stage 1.3** of `prototype-first-methodology` master plan; until then, presence is contract-only (manual review). Existing 17 pending plans grandfathered until per-plan retrofit.
 
 ### 6.3 Task row `Status`
 
