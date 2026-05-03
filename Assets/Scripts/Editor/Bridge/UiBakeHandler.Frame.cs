@@ -444,7 +444,102 @@ namespace Territory.Editor.Bridge
                 if (activeProp != null) activeProp.boolValue = tab?.active ?? false;
                 if (iconSlugProp != null) iconSlugProp.stringValue = tab?.iconSlug ?? string.Empty;
             }
+
+            // Stage 13.4 T13.4.3 (TECH-9867) — propagate IR `defaultTabIndex` (or 0) to
+            // ThemedTabBar._initialIndex so OnEnable snaps the panel to the configured tab
+            // on every open (D1 city-stats-handoff override). Clamp to [0, tabs.Length).
+            var initialProp = so.FindProperty("_initialIndex");
+            if (initialProp != null)
+            {
+                int requested = panel.defaultTabIndex.HasValue ? panel.defaultTabIndex.Value : 0;
+                if (requested < 0 || requested >= panel.tabs.Length)
+                {
+                    Debug.LogWarning(
+                        $"[UiBakeHandler] panel={panel.slug} defaultTabIndex={requested} out of range [0,{panel.tabs.Length}) — clamping to 0");
+                    requested = 0;
+                }
+                initialProp.intValue = requested;
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Stage 13.4 T13.4.2 (TECH-9866) — emit per-tab interactive cells.
+            // One ThemedTabCell child per tab carries IPointerClickHandler + serialized index +
+            // bake-time parent ref. Cells laid out across the strip width as raycast hit areas
+            // (transparent Image; visible chrome stays in legacy single TabLabel until polish).
+            // Cell Images collected into ThemedTabBar._tabIndicators[] so SetActiveTab can
+            // toggle highlight visibility per cell (D7.A hard show/hide).
+            EmitTabCells(tabBar, panel.tabs.Length);
+        }
+
+        /// <summary>Stage 13.4 T13.4.2 — spawn N TabCell_{i} children under the tab bar GameObject,
+        /// each with ThemedTabCell + Image raycast target. Wire ThemedTabBar._tabIndicators[] to
+        /// the per-cell Image GameObjects. Idempotent: skips spawn when child exists; refreshes
+        /// SerializedObject wiring on every call.</summary>
+        static void EmitTabCells(ThemedTabBar tabBar, int tabCount)
+        {
+            if (tabBar == null || tabCount <= 0) return;
+            var barRoot = tabBar.gameObject;
+            var indicatorGos = new GameObject[tabCount];
+
+            float cellWidth = 1f / tabCount;
+            for (int i = 0; i < tabCount; i++)
+            {
+                var cellName = $"TabCell_{i}";
+                var existing = barRoot.transform.Find(cellName);
+                GameObject cellGo;
+                if (existing == null)
+                {
+                    cellGo = new GameObject(cellName, typeof(RectTransform));
+                    cellGo.transform.SetParent(barRoot.transform, worldPositionStays: false);
+                    var rt = (RectTransform)cellGo.transform;
+                    rt.anchorMin = new Vector2(i * cellWidth, 0f);
+                    rt.anchorMax = new Vector2((i + 1) * cellWidth, 1f);
+                    rt.offsetMin = rt.offsetMax = Vector2.zero;
+                    var hit = cellGo.AddComponent<Image>();
+                    // Transparent hit area — visible chrome handled by sibling TabLabel chrome
+                    // until per-cell label / icon polish lands in a later stage.
+                    hit.color = new Color(0f, 0f, 0f, 0f);
+                    hit.raycastTarget = true;
+                    cellGo.AddComponent<ThemedTabCell>();
+                }
+                else
+                {
+                    cellGo = existing.gameObject;
+                    if (cellGo.GetComponent<Image>() == null)
+                    {
+                        var hit = cellGo.AddComponent<Image>();
+                        hit.color = new Color(0f, 0f, 0f, 0f);
+                        hit.raycastTarget = true;
+                    }
+                    if (cellGo.GetComponent<ThemedTabCell>() == null)
+                    {
+                        cellGo.AddComponent<ThemedTabCell>();
+                    }
+                }
+
+                var cell = cellGo.GetComponent<ThemedTabCell>();
+                var cellSo = new SerializedObject(cell);
+                var idxProp = cellSo.FindProperty("_index");
+                var parentProp = cellSo.FindProperty("_parentTabBar");
+                if (idxProp != null) idxProp.intValue = i;
+                if (parentProp != null) parentProp.objectReferenceValue = tabBar;
+                cellSo.ApplyModifiedPropertiesWithoutUndo();
+
+                indicatorGos[i] = cellGo;
+            }
+
+            var barSo = new SerializedObject(tabBar);
+            var indicatorsProp = barSo.FindProperty("_tabIndicators");
+            if (indicatorsProp != null)
+            {
+                indicatorsProp.arraySize = tabCount;
+                for (int i = 0; i < tabCount; i++)
+                {
+                    indicatorsProp.GetArrayElementAtIndex(i).objectReferenceValue = indicatorGos[i];
+                }
+                barSo.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         // ── Stage 7 T7.0 — embedded panel child instantiation ───────────────────

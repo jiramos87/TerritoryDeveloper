@@ -78,6 +78,13 @@ export interface IrPanel {
    * declares row containers. Omitted on v1 panels.
    */
   rows?: IrRow[];
+  /**
+   * Stage 13.4 (TECH-9867) — initial tab index applied at panel `OnEnable` (D7.A hard
+   * show/hide). Bake handler propagates to `ThemedTabBar._initialIndex`. Default 0 when
+   * tabs[] present; per-panel override (e.g. `city-stats-handoff` → Infrastructure idx)
+   * lands at transcribe time. Omitted on tabless panels.
+   */
+  defaultTabIndex?: number;
 }
 
 /**

@@ -336,6 +336,38 @@ export function extractRows(panelSrc: string): IrRow[] {
   return out;
 }
 
+/**
+ * Stage 13.4 (TECH-9867) — derive IR v2 `defaultTabIndex` per panel.
+ *
+ * Resolution order:
+ *   1. D1 override — slug `city-stats-handoff` opens on the Infrastructure tab.
+ *      First tab whose `id` or `label` matches `/infrastructure/i`.
+ *   2. First tab carrying `active` (set by `extractTabs` when the JSX tab node
+ *      declared `active` / `active={true}` / `data-tab-active="true"`).
+ *   3. `0` (sane fallback when tabs[] non-empty but no active marker).
+ *
+ * Returns `undefined` when `tabs.length === 0` (caller drops field on tabless
+ * panels — keeps IR shape stable for v1-shape entries).
+ */
+export function extractDefaultTabIndex(
+  slug: string,
+  tabs: IrTab[],
+): number | undefined {
+  if (tabs.length === 0) return undefined;
+
+  if (slug === 'city-stats-handoff') {
+    const infraIdx = tabs.findIndex(
+      (t) => /infrastructure/i.test(t.id) || /infrastructure/i.test(t.label),
+    );
+    if (infraIdx >= 0) return infraIdx;
+  }
+
+  const activeIdx = tabs.findIndex((t) => t.active === true);
+  if (activeIdx >= 0) return activeIdx;
+
+  return 0;
+}
+
 // -- Bundle assembly ---------------------------------------------------------
 
 export interface TranscribeOpts {
@@ -375,7 +407,11 @@ export function buildIrFromBundle(opts: TranscribeOpts): Ir {
       if (!panelSrc) continue;
       const tabs = extractTabs(panelSrc);
       const rows = extractRows(panelSrc);
-      if (tabs.length > 0) panel.tabs = tabs;
+      if (tabs.length > 0) {
+        panel.tabs = tabs;
+        const defaultIdx = extractDefaultTabIndex(panel.slug, tabs);
+        if (defaultIdx !== undefined) panel.defaultTabIndex = defaultIdx;
+      }
       if (rows.length > 0) panel.rows = rows;
     }
   }
