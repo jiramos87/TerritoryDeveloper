@@ -1,0 +1,15 @@
+{
+    "name": "CityStats.Tests.PlayMode",
+    "rootNamespace": "Territory.Tests.PlayMode.CityStats",
+    "references": ["TerritoryDeveloper.Game"],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

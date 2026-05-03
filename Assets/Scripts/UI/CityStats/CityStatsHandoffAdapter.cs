@@ -1,75 +1,105 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
-using Territory.Economy;
 using Territory.UI.StudioControls;
 using Territory.UI.Themed;
 
 namespace Territory.UI.CityStatsHandoff
 {
     /// <summary>
-    /// Bridges live <see cref="Territory.Economy.CityStats"/> + <see cref="CityStatsFacade"/>
-    /// producers into baked <c>city-stats-handoff.prefab</c> Themed/StudioControl SO refs.
-    /// Mirrors Stage 6 <c>HudBarDataAdapter</c> wiring contract verbatim.
+    /// Stage 13.5 (TECH-9869) — presenter-driven city-stats panel adapter.
+    /// Subscribes to <see cref="IStatsPresenter.OnRefreshed"/> instead of polling
+    /// producers per frame; row population reads live binding closures from
+    /// <see cref="IStatsPresenter.Bindings"/> by slug.
     /// </summary>
     /// <remarks>
-    /// Read-only consumer. All refs cached in <see cref="Awake"/> (invariant #3 — never
-    /// <see cref="MonoBehaviour.FindObjectOfType{T}()"/> in <see cref="Update"/>). Per-channel
-    /// null-check on producer + consumer refs so partial init still surfaces ready channels.
-    /// MonoBehaviour producers fall back to <see cref="MonoBehaviour.FindObjectOfType{T}()"/> in
-    /// <see cref="Awake"/> when Inspector slot empty (invariant #4); <see cref="UiTheme"/>
-    /// Inspector-only (SO; no <c>FindObjectOfType</c> for SOs per Stage 6 precedent).
-    /// Bake-time row hierarchy + digit widths + captions provided by Stage 13.2 UiBakeHandler v2 —
-    /// no runtime <c>AddComponent</c> here.
+    /// Read-only consumer. Producer ref (<see cref="_presenter"/>) cached in
+    /// <see cref="Awake"/> via Inspector-first + <see cref="MonoBehaviour.FindObjectOfType{T}()"/>
+    /// fallback (invariant #4 / guardrail #0). Row repaint gated on
+    /// <see cref="IStatsPresenter.IsReady"/> (guardrail #14) so manager-init race
+    /// cannot fire writes before bindings populate.
     /// </remarks>
     public class CityStatsHandoffAdapter : MonoBehaviour
     {
-        [Header("Producers")]
-        [SerializeField] private Territory.Economy.CityStats _cityStats;
-        [SerializeField] private CityStatsFacade _cityStatsFacade;
+        [Header("Presenter")]
+        [SerializeField] private CityStatsPresenter _presenter;
 
         [Header("Theme")]
         [SerializeField] private UiTheme _uiTheme;
 
-        [Header("Consumers")]
+        [Header("Chrome consumers")]
         [SerializeField] private ThemedPanel _panelChrome;
         [SerializeField] private ThemedTabBar _categoryTabBar;
+
+        [Header("Row consumers (bake-baked slugs)")]
         [SerializeField] private SegmentedReadout _moneyReadout;
         [SerializeField] private SegmentedReadout _populationReadout;
         [SerializeField] private SegmentedReadout _happinessReadout;
 
+        private readonly Dictionary<string, SegmentedReadout> _rowConsumers = new Dictionary<string, SegmentedReadout>(8);
+        private readonly HashSet<string> _missingBindingWarned = new HashSet<string>();
+
         private void Awake()
         {
-            // MonoBehaviour producers — Inspector first, FindObjectOfType fallback (invariant #4).
-            if (_cityStats == null) _cityStats = FindObjectOfType<Territory.Economy.CityStats>();
-            if (_cityStatsFacade == null) _cityStatsFacade = FindObjectOfType<CityStatsFacade>();
-            // _uiTheme is a ScriptableObject — Inspector-only assignment (Stage 6 precedent).
+            // Inspector-first; FindObjectOfType fallback per guardrail #0.
+            if (_presenter == null) _presenter = FindObjectOfType<CityStatsPresenter>();
+
+            // Bake-baked slug → consumer dict (Stage 13.5 row scaffolding seed).
+            _rowConsumers["money.balance"] = _moneyReadout;
+            _rowConsumers["people.population"] = _populationReadout;
+            _rowConsumers["people.happiness"] = _happinessReadout;
         }
 
         private void OnEnable()
         {
             ApplyThemeToConsumers();
+            if (_presenter != null) _presenter.OnRefreshed += HandlePresenterRefreshed;
+            RepaintActiveTabRows();
         }
 
         private void OnDisable()
         {
-            // No event subscription to tear down — facade exposes OnTickEnd but adapter polls in Update for parity with Stage 6.
+            if (_presenter != null) _presenter.OnRefreshed -= HandlePresenterRefreshed;
         }
 
-        private void Update()
+        private void HandlePresenterRefreshed()
         {
-            if (_cityStats == null) return;
+            RepaintActiveTabRows();
+        }
 
-            if (_moneyReadout != null)
+        private void RepaintActiveTabRows()
+        {
+            if (_presenter == null || !_presenter.IsReady) return;
+
+            foreach (var kv in _rowConsumers)
             {
-                _moneyReadout.CurrentValue = _cityStats.money;
+                var slug = kv.Key;
+                var consumer = kv.Value;
+                if (consumer == null) continue;
+
+                if (!_presenter.Bindings.TryGetValue(slug, out var producer) || producer == null)
+                {
+                    if (_missingBindingWarned.Add(slug))
+                    {
+                        Debug.LogWarning($"CityStatsHandoffAdapter: presenter missing binding '{slug}' — row skipped.");
+                    }
+                    continue;
+                }
+
+                var raw = producer();
+                consumer.CurrentValue = ToInt(raw);
             }
-            if (_populationReadout != null)
+        }
+
+        private static int ToInt(object raw)
+        {
+            switch (raw)
             {
-                _populationReadout.CurrentValue = _cityStats.population;
-            }
-            if (_happinessReadout != null)
-            {
-                _happinessReadout.CurrentValue = (int)_cityStats.happiness;
+                case int i: return i;
+                case long l: return (int)l;
+                case float f: return Mathf.RoundToInt(f);
+                case double d: return (int)Math.Round(d);
+                default: return 0;
             }
         }
 
