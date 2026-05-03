@@ -450,6 +450,28 @@
             "illuminated-button"
           ]
         }
+      ],
+      "rows": [
+        {
+          "kind": "detail",
+          "label": "MERIDIAN",
+          "value": "0042"
+        },
+        {
+          "kind": "detail",
+          "label": "VESTRA",
+          "value": "0019"
+        },
+        {
+          "kind": "detail",
+          "label": "AURORIN",
+          "value": "0007"
+        },
+        {
+          "kind": "detail",
+          "label": "—",
+          "value": "----"
+        }
       ]
     },
     {
@@ -569,6 +591,68 @@
             "segmented-readout"
           ]
         }
+      ],
+      "rows": [
+        {
+          "kind": "stat",
+          "label": "POPULATION",
+          "value": "12,408"
+        },
+        {
+          "kind": "stat",
+          "label": "MONEY",
+          "value": "$20,000"
+        },
+        {
+          "kind": "stat",
+          "label": "HAPPINESS",
+          "value": "50/100"
+        },
+        {
+          "kind": "stat",
+          "label": "POWER OUT",
+          "value": "84 MW"
+        },
+        {
+          "kind": "stat",
+          "label": "POWER CONS",
+          "value": "62 MW"
+        },
+        {
+          "kind": "stat",
+          "label": "UNEMPLOYMENT",
+          "value": "4.2%"
+        },
+        {
+          "kind": "stat",
+          "label": "TOTAL JOBS",
+          "value": "3,120"
+        },
+        {
+          "kind": "stat",
+          "label": "RESID. DEMAND",
+          "value": "OVERSUPPLY"
+        },
+        {
+          "kind": "stat",
+          "label": "COMM. DEMAND",
+          "value": "BALANCED"
+        },
+        {
+          "kind": "stat",
+          "label": "INDUS. DEMAND",
+          "value": "VERY HIGH"
+        },
+        {
+          "kind": "stat",
+          "label": "WATER OUT",
+          "value": "1,200 KL"
+        },
+        {
+          "kind": "stat",
+          "label": "WATER CONS",
+          "value": "  840 KL"
+        }
       ]
     },
     {
@@ -621,6 +705,28 @@
             "illuminated-button",
             "illuminated-button"
           ]
+        }
+      ],
+      "rows": [
+        {
+          "kind": "stat",
+          "label": "POWER ON"
+        },
+        {
+          "kind": "stat",
+          "label": "ZONE PATCH"
+        },
+        {
+          "kind": "stat",
+          "label": "FIRST BUILD"
+        },
+        {
+          "kind": "stat",
+          "label": "TAX BUS"
+        },
+        {
+          "kind": "stat",
+          "label": "GO LIVE"
         }
       ]
     },
@@ -1352,5 +1458,6 @@
         "illuminationSlug": "illumination-amber"
       }
     }
-  ]
+  ],
+  "schemaVersion": 2
 }

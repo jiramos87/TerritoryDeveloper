@@ -60,7 +60,7 @@ export interface IrTokenIllumination {
   haloRadiusPx: number;
 }
 
-/** Panel block — matches §Phase 3 locked grammar. Stage 12 Step 11 — adds `kind`. */
+/** Panel block — matches §Phase 3 locked grammar. Stage 12 Step 11 — adds `kind`. Stage 13.1 — adds optional `tabs?[]` + `rows?[]` for IR v2 (DEC-A21 Path C full-fidelity). */
 export interface IrPanel {
   slug: string;
   /** ThemedPanel archetype identifier (Stage 3+ runtime composer). */
@@ -68,6 +68,46 @@ export interface IrPanel {
   /** Layout kind — drives runtime anchor + LayoutGroup choice in `ThemedPanel.OnEnable`. */
   kind?: PanelKind;
   slots: IrPanelSlot[];
+  /**
+   * IR v2 — optional tab taxonomy (Stage 13.1). Populated only when `panels.jsx` source
+   * declares tabs (e.g. `role="tab"` children or `<Tab>` JSX nodes). Omitted on v1 panels.
+   */
+  tabs?: IrTab[];
+  /**
+   * IR v2 — optional row layout list (Stage 13.1). Populated only when `panels.jsx` source
+   * declares row containers. Omitted on v1 panels.
+   */
+  rows?: IrRow[];
+}
+
+/**
+ * IR v2 tab descriptor — one entry per tab in a tabbed panel (Stage 13.1).
+ * Locked by D2 (tab taxonomy from `panels.jsx` `role="tab"` / class hint).
+ */
+export interface IrTab {
+  /** Stable tab id (slug-cased). */
+  id: string;
+  /** Visible tab label. */
+  label: string;
+  /** Whether this tab is active by default. Optional — default false. */
+  active?: boolean;
+}
+
+/**
+ * IR v2 row descriptor — one entry per row in a row-layout panel (Stage 13.1).
+ * Flat list (D3 — no nested groups in v2). `kind` discriminates render shape.
+ */
+export interface IrRow {
+  /** Render shape — `stat` (label + numeric value), `detail` (key/value pair), `header` (section title). */
+  kind: 'stat' | 'detail' | 'header';
+  /** Optional row label. */
+  label?: string;
+  /** Optional row value (typically formatted string). */
+  value?: string;
+  /** Optional segmented-readout segment count (when kind=stat with a SegmentedReadout). */
+  segments?: number;
+  /** Optional font face slug (matches `tokens.font_face[].slug`). */
+  fontSlug?: string;
 }
 
 /**
@@ -97,6 +137,13 @@ export interface IrPanelSlot {
    * Stage 12 Step 12 — themed-button caption + themed-label text source.
    */
   labels?: string[];
+  /**
+   * Optional per-child icon sprite slug — parallel to `children[]`. When present, length
+   * must equal `children.length`; empty/null skips icon injection for that index.
+   * Stage 12 Step 16.D — illuminated-button icon sprite slug; bake handler resolves to
+   * `Assets/Sprites/Buttons/{slug}-target.png` (with fallback to `Assets/Sprites/{slug}-target.png`).
+   */
+  iconSpriteSlugs?: string[];
 }
 
 /** Interactive block — matches §Phase 3 locked grammar. StudioControl ring. */
@@ -163,6 +210,26 @@ export interface Ir {
   tokens: IrTokens;
   panels: IrPanel[];
   interactives: IrInteractive[];
+  /**
+   * IR schema discriminator (Stage 13.1 — DEC-A21 Path C). When omitted, treat as v1
+   * (legacy CD bundles + tests). v2 panels carry optional `tabs[]` + `rows[]`.
+   */
+  schemaVersion?: 1 | 2;
+}
+
+/**
+ * Stage 13.1 — `IrRoot` alias for `Ir` (top-level IR JSON shape). Plan-digest naming alias
+ * — keeps existing `Ir` references compiling while exposing `IrRoot` symbol per Path C spec.
+ */
+export type IrRoot = Ir;
+
+/**
+ * Stage 13.1 — Lift a v1 IR root into v2 by stamping `schemaVersion: 2`. Shallow clone;
+ * panels untouched (per acceptance — no in-place mutation, no panel rewrite). Use when
+ * legacy v1 fixtures must be carried into v2-aware downstream consumers.
+ */
+export function liftV1ToV2(root: IrRoot): IrRoot {
+  return { ...root, schemaVersion: 2 };
 }
 
 // -- Slot accept-rule guard ---------------------------------------------------

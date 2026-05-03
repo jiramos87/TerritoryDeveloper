@@ -32,6 +32,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   type Ir,
   type IrPanel,
+  type IrTab,
+  type IrRow,
   type IrInteractive,
   type IrTokens,
   type IrTokenPalette,
@@ -154,6 +156,184 @@ export function parseInteractivesJson(raw: unknown): IrInteractive[] {
   return raw as IrInteractive[];
 }
 
+// -- panels.jsx tabs/rows extraction (Stage 13.1 — IR v2) --------------------
+
+/**
+ * Locate the `function PanelXxx() { ... }` block in `panels.jsx` source whose
+ * body declares `data-panel-slug="${slug}"`. Returns the function body src
+ * (including the brace-matched body), or `null` when not found. Used by
+ * `extractTabs` + `extractRows` to scope the heuristics per panel.
+ *
+ * Determinism: relies on first occurrence of `data-panel-slug="${slug}"`; the
+ * CD bundle source declares one section per slug.
+ */
+export function locatePanelSrc(jsxSrc: string, slug: string): string | null {
+  const marker = `data-panel-slug="${slug}"`;
+  const idx = jsxSrc.indexOf(marker);
+  if (idx < 0) return null;
+  const fnIdx = jsxSrc.lastIndexOf('function Panel', idx);
+  if (fnIdx < 0) return null;
+  const braceStart = jsxSrc.indexOf('{', fnIdx);
+  if (braceStart < 0) return null;
+  let depth = 0;
+  for (let i = braceStart; i < jsxSrc.length; i++) {
+    const c = jsxSrc[i];
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) return jsxSrc.slice(fnIdx, i + 1);
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract IR v2 tab descriptors from a panel's JSX source (D2 heuristic).
+ *
+ * Recognized markers (deterministic, first-match-wins per id):
+ *   1. `<Tab id="..." label="..." [active]>` JSX nodes.
+ *   2. `role="tab"` attrs paired with `data-tab-id="..." [data-tab-label="..."]`.
+ *
+ * Returns `[]` when no tab markers detected. Empty arrays are dropped by the
+ * caller before emit (`tabs` field omitted on flat panels).
+ */
+export function extractTabs(panelSrc: string): IrTab[] {
+  const out: IrTab[] = [];
+  const seen = new Set<string>();
+
+  const tabRe = /<Tab\b([^>]*?)\/?>/g;
+  let m: RegExpExecArray | null;
+  while ((m = tabRe.exec(panelSrc)) !== null) {
+    const attrs = m[1];
+    const id = (attrs.match(/\bid=["']([^"']+)["']/) ?? [])[1];
+    if (!id || seen.has(id)) continue;
+    const label = (attrs.match(/\blabel=["']([^"']+)["']/) ?? [])[1] ?? id;
+    const active = /\bactive\b(?!=)/.test(attrs) || /\bactive=\{?true\}?/.test(attrs);
+    seen.add(id);
+    const tab: IrTab = { id, label };
+    if (active) tab.active = true;
+    out.push(tab);
+  }
+
+  const roleRe = /role=["']tab["']([^>]*?)\/?>/g;
+  while ((m = roleRe.exec(panelSrc)) !== null) {
+    const attrs = m[1];
+    const id = (attrs.match(/\bdata-tab-id=["']([^"']+)["']/) ?? [])[1];
+    if (!id || seen.has(id)) continue;
+    const label = (attrs.match(/\bdata-tab-label=["']([^"']+)["']/) ?? [])[1] ?? id;
+    const active = /\bdata-tab-active=["']true["']/.test(attrs);
+    seen.add(id);
+    const tab: IrTab = { id, label };
+    if (active) tab.active = true;
+    out.push(tab);
+  }
+
+  return out;
+}
+
+function splitObjectLiterals(arrayBody: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = -1;
+  let inStr: '"' | "'" | null = null;
+  for (let i = 0; i < arrayBody.length; i++) {
+    const c = arrayBody[i];
+    if (inStr) {
+      if (c === '\\') {
+        i++;
+        continue;
+      }
+      if (c === inStr) inStr = null;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      continue;
+    }
+    if (c === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        out.push(arrayBody.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+  return out;
+}
+
+function parseRowEntry(entry: string): IrRow | null {
+  const inner = entry.replace(/^\{\s*|\s*\}$/g, '');
+  const fields: Record<string, string> = {};
+  const fieldRe = /(\w+)\s*:\s*(?:"([^"]*)"|'([^']*)'|(null|true|false|[\d.]+|\{[^}]*\}))/g;
+  let fm: RegExpExecArray | null;
+  while ((fm = fieldRe.exec(inner)) !== null) {
+    const name = fm[1];
+    if (fm[2] !== undefined) fields[name] = fm[2];
+    else if (fm[3] !== undefined) fields[name] = fm[3];
+    else fields[name] = fm[4] ?? '';
+  }
+
+  const label = fields.label ?? fields.name ?? fields.n ?? '';
+  const value = fields.value ?? fields.year ?? '';
+  if (!label && !value) return null;
+
+  let kind: IrRow['kind'] = 'stat';
+  if (fields.name && (fields.id || fields.year)) kind = 'detail';
+
+  const row: IrRow = { kind };
+  if (label) row.label = label;
+  if (value) row.value = value;
+  if (fields.segments) {
+    const n = Number(fields.segments);
+    if (Number.isFinite(n)) row.segments = n;
+  }
+  return row;
+}
+
+/**
+ * Extract IR v2 row descriptors from a panel's JSX source (D3 heuristic).
+ *
+ * Recognized pattern: panel declares `const rows = [...]` (or `slots` / `steps` /
+ * `tools`), each entry being an object literal carrying `label` / `value` /
+ * `name` / `year` fields, then iterates via `.map(...)` to render rows.
+ *
+ * Returns `[]` when no array-of-objects-mapped-to-render pattern detected.
+ * Empty arrays are dropped by the caller before emit.
+ *
+ * Kind mapping:
+ *   - object has `name` + (`id` | `year`) → `detail` (slot/save-game-style row).
+ *   - otherwise → `stat` (label/value pair, optionally segmented).
+ */
+export function extractRows(panelSrc: string): IrRow[] {
+  const out: IrRow[] = [];
+  const constRe = /const\s+(rows|slots|steps|tools)\s*=\s*\[([\s\S]*?)\];/g;
+  let cm: RegExpExecArray | null;
+  while ((cm = constRe.exec(panelSrc)) !== null) {
+    const name = cm[1];
+    const body = cm[2];
+    const mapRe = new RegExp(`\\b${name}\\.map\\(`);
+    if (!mapRe.test(panelSrc)) continue;
+
+    // `tools` is a 3x3 patchbay grid in `toolbar` panel — not a row layout.
+    // Keep heuristic narrow: skip `tools` unless rendered inside `data-slot`
+    // suffixed `-list` or `row-list`. Heuristic per acceptance crit ("list of
+    // rows OR flex row containers").
+    if (name === 'tools' && !/data-slot=["']row-list["']|data-slot=["'][^"']*-list["']/.test(panelSrc)) {
+      continue;
+    }
+
+    for (const entry of splitObjectLiterals(body)) {
+      const row = parseRowEntry(entry);
+      if (row) out.push(row);
+    }
+    if (out.length > 0) break; // first matching const wins — deterministic
+  }
+  return out;
+}
+
 // -- Bundle assembly ---------------------------------------------------------
 
 export interface TranscribeOpts {
@@ -164,6 +344,7 @@ export function buildIrFromBundle(opts: TranscribeOpts): Ir {
   const cssPath = path.join(opts.bundleDir, 'tokens.css');
   const panelsPath = path.join(opts.bundleDir, 'panels.json');
   const interactivesPath = path.join(opts.bundleDir, 'interactives.json');
+  const panelsJsxPath = path.join(opts.bundleDir, 'panels.jsx');
 
   if (!fs.existsSync(cssPath)) {
     throw new Error(`transcribe: missing tokens.css at ${cssPath}`);
@@ -181,7 +362,23 @@ export function buildIrFromBundle(opts: TranscribeOpts): Ir {
     JSON.parse(fs.readFileSync(interactivesPath, 'utf8')),
   );
 
-  return { tokens, panels, interactives };
+  // IR v2 enrichment (Stage 13.1 — DEC-A21 Path C). Read panels.jsx (when
+  // present in bundle) and attach per-panel `tabs[]` / `rows[]` extracted
+  // from JSX source. Panels not declared in panels.jsx (or with empty
+  // extraction) emit no tabs/rows fields → flat v1-shape on those entries.
+  if (fs.existsSync(panelsJsxPath)) {
+    const jsxSrc = fs.readFileSync(panelsJsxPath, 'utf8');
+    for (const panel of panels) {
+      const panelSrc = locatePanelSrc(jsxSrc, panel.slug);
+      if (!panelSrc) continue;
+      const tabs = extractTabs(panelSrc);
+      const rows = extractRows(panelSrc);
+      if (tabs.length > 0) panel.tabs = tabs;
+      if (rows.length > 0) panel.rows = rows;
+    }
+  }
+
+  return { tokens, panels, interactives, schemaVersion: 2 };
 }
 
 // -- CLI ---------------------------------------------------------------------
