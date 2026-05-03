@@ -66,7 +66,7 @@ Closed-loop diff between baked prefab/scene and claude-design IR (`ir.json`) + U
 | `{SCENE_ROOT_PATH}` | Active-scene Canvas-rooted GameObject name (mutex with `{PREFAB_PATH}`) |
 | `{MAX_ITERATIONS}` | Bake-fix cycles before escalating (default 2) |
 | `{LAYOUT_RECTS_PATH}` | Optional design-reference layout rects (default `web/design-refs/step-1-game-ui/layout-rects.json`) — enables advisory layout-rect diff in Phase 3 |
-| `{HUMAN_QA_GATE}` | When `on` (default), the skill stops after Phase 5 of each iteration and asks the human for QA (screenshots / logs / play-mode confirmation) before allowing the next bake-fix work item. When `off`, the loop runs autonomously up to `{MAX_ITERATIONS}`. |
+| `{HUMAN_QA_GATE}` | When `on` (default), the skill stops after Phase 5 of each iteration and asks the human for QA before allowing the next bake-fix work item. Human-QA is **manual + out-of-band** — human launches Editor Play Mode, takes their own screenshots, adds comments. The skill's closed-loop bridge captures (`prefab_inspect`, `ui_tree_walk`, `claude_design_conformance` rows, any auto-saved Game-view PNGs) are **agent-internal review only** — never required input for the human gate. When `off`, the loop runs autonomously up to `{MAX_ITERATIONS}`. |
 
 ## Phase order — Bake → Inspect → Walk → Conformance → Verify → Human QA → Iterate
 
@@ -160,19 +160,20 @@ Append a caveman markdown summary after the JSON: per-iteration row counts (`row
 
 After Phase 5 emits the Verification block, **stop**. Ask the human for QA confirmation before proceeding to the next bake-fix work item.
 
-Polling shape (product language; see `ia/rules/agent-human-polling.md`):
+**Closed-loop captures vs human QA — separate channels.** Bridge captures from Phases 1–4 (`prefab_inspect` / `ui_tree_walk` / `claude_design_conformance` rows, any auto-saved Game-view PNGs) are **agent-internal review only**. Do not link, attach, or paste them as evidence the human is expected to QA. Human runs Editor Play Mode manually, takes their own screenshots, and adds their own comments per section. Closed-loop captures stay under bridge artifact paths for the agent's iterate decision; human-QA evidence is whatever the human posts in reply.
+
+Polling shape (product language; see `ia/rules/agent-human-polling.md`) — short prompt, no agent screenshots inlined:
 
 ```
-Pause-menu border art + button hover/press states baked. Conformance: row_count=N, fail_count=0.
-Advisory layout-rect drift: K nodes >4px off design reference (see report).
-Please confirm in Editor Play Mode (Esc → pause menu):
+Pause-menu border art + button hover/press states baked. Closed-loop conformance: row_count=N, fail_count=0 (agent-internal).
+Please QA manually in Editor Play Mode (Esc → pause menu):
   - Border / corners visible on panel chrome.
   - Buttons lighten on hover, darken on press.
   - Click still fires action + blip.
-Reply: pass / fail (with screenshot or log if fail).
+Take your own screenshots + add comments. Reply: pass / fail.
 ```
 
-Wait for human reply. On `pass`, advance to the next work item. On `fail`, treat as Phase 6 iterate (next section) with the human-flagged surface as the suspected drift target.
+Wait for human reply. On `pass`, advance to the next work item. On `fail`, treat as Phase 7 iterate with the human-flagged surface (and human's screenshots / comments) as the suspected drift target.
 
 Skip this phase when `{HUMAN_QA_GATE} = off` (autonomous mode); flow straight from Phase 5 to Phase 7.
 
@@ -223,7 +224,7 @@ top layout drifts (advisory):
   - PauseMenuRoot/QuitBtn       dx=+12  dy=-6  dw=+8   dh=0
 suspected drift: bake handler — ThemedFrame sprite write missing
 next: edit UiBakeHandler themed-panel case → AtlasIndex lookup → re-bake → iter N+1
-human QA: pending (gate=on)
+human QA: pending (gate=on; closed-loop captures are agent-internal — human runs Play Mode + posts own screenshots)
 ```
 
 ## Seed prompt
@@ -231,9 +232,10 @@ human QA: pending (gate=on)
 ```markdown
 Run ui-fidelity-review (`ia/skills/ui-fidelity-review/SKILL.md`) for {SURFACE_SLUG}.
 Bake → prefab_inspect → ui_tree_walk (with layout-rect advisory diff against {LAYOUT_RECTS_PATH}) → claude_design_conformance (8 check kinds) against {IR_PATH} + {THEME_SO} on {PREFAB_PATH or SCENE_ROOT_PATH}.
-Emit Verification block. When {HUMAN_QA_GATE}=on (default), stop after Phase 5 and poll human (product-language QA prompt: border art visible, hover/press states, click+blip). Iterate on fail_count > 0 OR human-fail. Stop after {MAX_ITERATIONS} without convergence; escalate with row dump + suspected drift surface.
+Emit Verification block. When {HUMAN_QA_GATE}=on (default), stop after Phase 5 and poll human (product-language QA prompt: border art visible, hover/press states, click+blip). Closed-loop captures (prefab_inspect / ui_tree_walk / conformance rows / auto-saved PNGs) are agent-internal review only — never inline them as human-QA evidence. Human runs Play Mode manually, posts own screenshots + comments. Iterate on fail_count > 0 OR human-fail. Stop after {MAX_ITERATIONS} without convergence; escalate with row dump + suspected drift surface.
 ```
 
 ## Changelog
 
 - 2026-04-30 — Added `frame_sprite_bound` + `button_state_block` strict check kinds; added Phase 3 advisory layout-rect diff (`{LAYOUT_RECTS_PATH}`); added Phase 6 human QA gate (`{HUMAN_QA_GATE}`, default `on`); renumbered iterate to Phase 7. Driven by Stage 12 Step 16 polish iteration (pause + info-panel; bake-time-only frame sprite, ramp+interactions.json button states).
+- 2026-05-01 — Clarified Phase 6 channel separation: closed-loop captures (`prefab_inspect`, `ui_tree_walk`, conformance rows, auto-saved PNGs) are **agent-internal review only**. Human QA is manual + out-of-band — human runs Editor Play Mode, takes own screenshots, adds own comments. Polling prompt no longer asks human to inspect agent screenshots.

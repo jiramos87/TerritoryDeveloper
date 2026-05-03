@@ -320,6 +320,7 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Urbanization proposal | Urban centroid / Urban growth rings AUTO | Invariants forbid re-enabling. |
 | Phase | Stage | 4-level hierarchy (Step > Stage > Phase > Task) collapsed to 2-level per `lifecycle`. |
 | Gate | Stage exit criteria | Folded into the Exit subsection of each `### Stage N.M` block. |
+| `DataPopupController.statsPanel` (legacy city-stats deep-dive panel) | `CityStatsHandoffAdapter` SO-ref consumer pattern | Stage 11 (`game-ui-design-system`) — legacy direct-poll deep-dive panel decommissioned. Same Update-poll cadence preserved via baked `SegmentedReadout` SO refs (Stage 6 `HudBarDataAdapter` precedent). `DataPopupController.taxPanel` half retained (separate surface). |
 
 ## Do not confuse
 

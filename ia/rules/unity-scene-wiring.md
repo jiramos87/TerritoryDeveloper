@@ -66,9 +66,18 @@ Historical gap: `grid-asset-visual-registry` Stage 2.2 landed `GridAssetCatalog`
 
 `open_scene → create_gameobject → set_gameobject_parent → attach_component → assign_serialized_field → save_scene`.
 
-Bridge emits consistent GUIDs + serialization format and avoids YAML-merge hazards. Escalate only when a needed kind is absent (`gap_reason: bridge_kind_missing`).
+Bridge emits consistent GUIDs + serialization format and avoids YAML-merge hazards.
 
-**Text-edit fallback** (when bridge unavailable): edit `.unity` YAML directly using the target scene's existing objects as the shape template; confirm script `guid` via the adjacent `.cs.meta`. Run `npm run unity:compile-check` after.
+**Cabinet-gap protocol — agent owns wiring end-to-end. No checklist handoff to human.**
+
+When agent hits missing bridge kind:
+1. Stop wiring attempt.
+2. Propose new bridge kind stub: handler signature in `Assets/Scripts/Editor/Bridge/UiBakeHandler.*.cs` (or sibling handler) + tool registration in `tools/mcp-ia-server/src/index.ts` + value_kind enum extension if needed.
+3. Land proposal as a discrete commit (or task) with `gap_reason: bridge_kind_missing` annotation.
+4. Re-attempt wiring with the new kind.
+5. Only escalate to human when the proposal itself is blocked (e.g. fundamental Unity API gap, not just absent code).
+
+Text-edit fallback on `.unity` YAML is **last-resort** — only when bridge round-trip itself unavailable (Editor offline + agent must continue). Confirm script `guid` via adjacent `.cs.meta`. Run `npm run unity:compile-check` after.
 
 ---
 
@@ -121,6 +130,19 @@ Missing block when a trigger fired = `critical` verdict on Stage code review.
 ---
 
 ## Changelog
+
+### 2026-05-02 — Cabinet-gap protocol + agent-owned wiring tightened
+
+**Symptom:** Session ended with agent handing human a "checklist of which scene object goes in which slot" for HudBarDataAdapter — wrong tactic. User: *"All unity editor interaction should be performed by the agents via unity bridge tools."* Prior framing in `agent-principles.md` line 13 said *"escalate to human only when kind doesn't exist"* — left an out for agent to bail.
+
+**Fix:** Flipped to "propose new bridge kind, then continue". Added §Cabinet-gap protocol above. Agent must author handler + registration stub before escalating. Text-edit fallback demoted to last-resort.
+
+**Findings — bridge cabinet audit vs HudBarDataAdapter (22 SerializeFields):**
+- 21 fields covered by existing `assign_serialized_field` value_kind: `asset_ref` (CityStats, UiTheme), `component_ref` (managers + StudioControls + IlluminatedButtons), `object_ref` (GameObject roots).
+- 1 field GAP: `_speedButtons` is `IlluminatedButton[]` length 5. `assign_serialized_field` value_kind enum has no array variant.
+- **Mitigation found, no new kind needed yet:** Unity SerializedProperty path syntax `_speedButtons.Array.size` then `_speedButtons.Array.data[i]` reaches array elements via existing `field_name` plumbing. Test before proposing new kind. If it fails, propose `assign_serialized_field_array` with `value_kind: component_ref_array` + handler that calls `arraySize` then iterates.
+
+**Cross-link:** Audience split for chat vs docs — `feedback_simple_product_language.md` (Javier reads chat, agents read docs).
 
 ### 2026-04-22 — Rule introduced
 

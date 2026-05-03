@@ -19,11 +19,16 @@ namespace Territory.UI.StudioControls
         /// <summary>Digit count (display width); 0 when detail unset.</summary>
         public int Digits => _detail != null ? _detail.digits : 0;
 
-        /// <summary>Currently displayed integer value. JuiceLayer (TweenCounter) writes intermediate samples here; render layer reads.</summary>
+        /// <summary>Currently displayed integer value. JuiceLayer (TweenCounter) writes intermediate samples here; render layer reads. Setter raises <see cref="StudioControlBase.RaiseStateChanged"/> on change so renderer repaints (Stage 6 fix — adapters write per-frame and rely on event-driven render loop).</summary>
         public int CurrentValue
         {
             get => _currentValue;
-            set => _currentValue = value;
+            set
+            {
+                if (_currentValue == value) return;
+                _currentValue = value;
+                RaiseStateChanged();
+            }
         }
 
         /// <inheritdoc />

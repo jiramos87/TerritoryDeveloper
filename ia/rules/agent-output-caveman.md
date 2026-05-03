@@ -9,17 +9,28 @@ alwaysApply: true
 
 # Agent output style — caveman default
 
-Agent output defaults to `caveman:caveman` skill rules: drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step]`. Applies to main session, subagents launched via the Agent tool, handoff messages, and MEMORY entries — including when the host SessionStart hook does not auto-activate the caveman plugin.
+## Audience split (read this first)
 
-Exceptions (write normal English):
+Pick voice by **who reads the surface**, not by file extension.
 
-1. Code — source files, blocks, identifiers, XML docs.
+| Register | Audience | Where | Voice |
+|---|---|---|---|
+| **Caveman-tech (default)** | Agents | `ia/**`, `docs/**`, master plans, BACKLOG row prose, code XML docs, commits, PR bodies, MEMORY, agent-to-agent handoffs | Drop articles/filler/hedging. Fragments OK. Jargon welcome (class names, tool names, paths, glossary slugs). Maximum density = max agent perf + token economy. Pattern `[thing] [action] [reason]. [next step]`. |
+| **Human-product** | Javier (chat only) | Main-session replies, subagent return prose bubbling up, status updates between tool calls, end-of-turn summaries, `AskUserQuestion` polls | Simple product / game / feature language. Drop class names, tool names, paths, stage numbers, yaml fields, anchor refs, glossary slugs from prose. Translate to what player/designer sees. Caveman terseness still applies — jargon drops, not brevity. Trailing `Context:` line OK for ids when audit needed. |
+
+**Why.** Javier reads chat, not the docs agents edit. Mixing registers forces him to translate every reply → decision latency. Agents read docs at max jargon density.
+
+**Length identical** in both registers; vocabulary differs.
+
+Exceptions (write normal English regardless of register):
+
+1. Code source files, blocks, identifiers, XML docs.
 2. Commits, PR titles, PR bodies.
-3. Security / auth content — credential handling, permission rationale, hook denylist explanations.
+3. Security / auth content — credential handling, hook denylist rationale.
 4. Verbatim quotes — user prompts, error messages, stack traces, tool output.
-5. Structured output — JSON Verification blocks, MCP tool payloads.
-6. Destructive-op confirmations — `/ship-stage` Pass B spec deletes, force-push warnings.
-7. When the user says "normal" / "stop caveman" / "in Spanish" — overrides for that turn.
-8. Human-polling surfaces — user-gate questions and option labels use product/domain wording (game/feature semantics), not IA/tooling jargon. Caveman terseness still applies; jargon density does not. See [`ia/rules/agent-human-polling.md`](agent-human-polling.md) — fetch via `rule_content agent-human-polling`.
+5. Structured payloads — JSON Verification blocks, MCP tool args.
+6. Destructive-op confirmations — Pass B spec deletes, force-push warnings.
+7. User says "normal" / "stop caveman" / "in Spanish" → overrides for that turn.
+8. Human polls — see [`ia/rules/agent-human-polling.md`](agent-human-polling.md). Product wording mandatory.
 
-Authoring surfaces (caveman applies): subagent / skill (preamble + body prose, not just preamble) / slash command / handoff files, new `ia/projects/{ISSUE_ID}*.md` specs (§1–§10 prose), new or modified **BACKLOG.md** / **BACKLOG-ARCHIVE.md** rows (Notes / Acceptance prose; row structure + bolded glossary terms + id cross-refs + path links stay verbatim). Full where-to-apply checklist: [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring`.
+Authoring surfaces checklist + edge cases: [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring`.

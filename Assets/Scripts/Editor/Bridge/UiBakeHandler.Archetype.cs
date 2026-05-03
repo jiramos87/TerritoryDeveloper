@@ -176,7 +176,8 @@ namespace Territory.Editor.Bridge
                             btnRend = go.AddComponent<IlluminatedButtonRenderer>();
                         }
                         WireThemeRef(btnRend, theme);
-                        SpawnIlluminatedButtonRenderTargets(go);
+                        SpawnIlluminatedButtonRenderTargets(go, bd.iconSpriteSlug, out var ibBody, out var ibHalo);
+                        WireIlluminatedButtonHoverAndPress(go, btnRend, ibBody, ibHalo, theme);
                         detailRow = bd;
                         break;
                     }
@@ -589,15 +590,31 @@ namespace Territory.Editor.Bridge
             }
         }
 
-        /// <summary>Spawn the illuminated-button main body Image child + halo child under the prefab root. Idempotent.</summary>
-        static void SpawnIlluminatedButtonRenderTargets(GameObject prefabRoot)
+        /// <summary>Spawn the illuminated-button main body Image child + optional icon child + halo child
+        /// under the prefab root. Step 16 D3.1 — returns refs so the caller can serialize them onto
+        /// <see cref="IlluminatedButtonRenderer"/> at bake time, eliminating the runtime
+        /// <c>GetComponentsInChildren</c> + name-match scan that caused partial-hover symptoms when child
+        /// ordering shifted between scene-instance + prefab-asset paths.
+        /// Step 16.D — when <paramref name="iconSpriteSlug"/> is non-empty, resolve the human-art icon
+        /// sprite via <see cref="AssetDatabase"/> (Editor-only, bake-time) at
+        /// <c>Assets/Sprites/Buttons/{slug}-target.png</c> with fallback <c>Assets/Sprites/{slug}-target.png</c>
+        /// and assign to the icon Image. Sprite ref is serialized into the prefab — no runtime
+        /// <c>Resources.Load</c> + no PlayMode-only API.</summary>
+        static void SpawnIlluminatedButtonRenderTargets(
+            GameObject prefabRoot,
+            string iconSpriteSlug,
+            out Image bodyImage,
+            out Image haloImage)
         {
+            bodyImage = null;
+            haloImage = null;
             if (prefabRoot == null) return;
             var rootRect = prefabRoot.GetComponent<RectTransform>();
             if (rootRect == null) return;
 
-            // main body Image child — renderer reads first non-halo child Image.
-            if (prefabRoot.transform.Find("body") == null)
+            // main body Image child.
+            var bodyT = prefabRoot.transform.Find("body");
+            if (bodyT == null)
             {
                 var body = new GameObject("body", typeof(RectTransform));
                 body.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
@@ -607,11 +624,55 @@ namespace Territory.Editor.Bridge
                 br.pivot = new Vector2(0.5f, 0.5f);
                 br.anchoredPosition = Vector2.zero;
                 br.sizeDelta = Vector2.zero;
-                body.AddComponent<Image>();
+                bodyImage = body.AddComponent<Image>();
+            }
+            else
+            {
+                bodyImage = bodyT.GetComponent<Image>();
             }
 
-            // halo child — radial pulse target.
-            if (prefabRoot.transform.Find("halo") == null)
+            // icon child — Step 16.D human-art sprite host. Layered between body + halo so the click
+            // pulse (halo) draws on top. Only spawned when iconSpriteSlug is provided.
+            var iconT = prefabRoot.transform.Find("icon");
+            if (!string.IsNullOrEmpty(iconSpriteSlug))
+            {
+                Image iconImage;
+                if (iconT == null)
+                {
+                    var icon = new GameObject("icon", typeof(RectTransform));
+                    icon.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                    var ir = (RectTransform)icon.transform;
+                    ir.anchorMin = new Vector2(0.5f, 0.5f);
+                    ir.anchorMax = new Vector2(0.5f, 0.5f);
+                    ir.pivot = new Vector2(0.5f, 0.5f);
+                    ir.anchoredPosition = Vector2.zero;
+                    ir.sizeDelta = new Vector2(64f, 64f);
+                    iconImage = icon.AddComponent<Image>();
+                    iconImage.raycastTarget = false; // body owns hit-testing.
+                    iconImage.preserveAspect = true;
+                }
+                else
+                {
+                    iconImage = iconT.GetComponent<Image>();
+                    if (iconImage == null) iconImage = iconT.gameObject.AddComponent<Image>();
+                }
+
+                var sprite = ResolveButtonIconSprite(iconSpriteSlug);
+                if (sprite != null)
+                {
+                    iconImage.sprite = sprite;
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"[UiBakeHandler] illuminated-button icon sprite not found (slug={iconSpriteSlug}); "
+                        + "expected Assets/Sprites/Buttons/{slug}-target.png or Assets/Sprites/{slug}-target.png");
+                }
+            }
+
+            // halo child — radial pulse target. Drawn on top of body + icon.
+            var haloT = prefabRoot.transform.Find("halo");
+            if (haloT == null)
             {
                 var halo = new GameObject("halo", typeof(RectTransform));
                 halo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
@@ -625,7 +686,144 @@ namespace Territory.Editor.Bridge
                 var color = img.color;
                 color.a = 0f; // Halo idle alpha; renderer animates 1→0 on click.
                 img.color = color;
+                img.raycastTarget = false;
+                haloImage = img;
             }
+            else
+            {
+                haloImage = haloT.GetComponent<Image>();
+            }
+
+            // Ensure render order: body (back) → icon → halo (front). SetAsLastSibling on halo
+            // re-asserts the contract regardless of pre-existing child order.
+            if (haloImage != null) haloImage.transform.SetAsLastSibling();
+        }
+
+        /// <summary>Resolve a human-art button sprite by slug. Search order:
+        /// (1) <c>Assets/Sprites/Buttons/{slug}-target.png</c> (primary canon).
+        /// (2) <c>Assets/Sprites/{slug}-target.png</c> (root catch-all).
+        /// (3) <see cref="AssetDatabase.FindAssets"/> name-filtered scan across all sibling
+        /// subfolders under <c>Assets/Sprites/**</c> (e.g. <c>Assets/Sprites/Commercial/Commercial-button-64-target.png</c>).
+        /// First .png hit wins. Editor-only.</summary>
+        static Sprite ResolveButtonIconSprite(string slug)
+        {
+            if (string.IsNullOrEmpty(slug)) return null;
+            var primary = $"Assets/Sprites/Buttons/{slug}-target.png";
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(primary);
+            if (sprite != null) return sprite;
+            var fallback = $"Assets/Sprites/{slug}-target.png";
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fallback);
+            if (sprite != null) return sprite;
+            // Step 16.D extension — sibling-folder scan (sprites organized under family folders
+            // like Assets/Sprites/Commercial/Commercial-button-64-target.png).
+            var guids = AssetDatabase.FindAssets($"{slug}-target t:Sprite", new[] { "Assets/Sprites" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (string.IsNullOrEmpty(path)) continue;
+                if (!path.EndsWith($"{slug}-target.png", System.StringComparison.OrdinalIgnoreCase)) continue;
+                var found = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>Step 16 D3.1+D3.2 — wire IlluminatedButton hover/press at bake time.
+        /// Serializes <c>_mainImage</c>+<c>_haloImage</c> refs onto <paramref name="renderer"/> and adds a
+        /// <see cref="UnityEngine.UI.Button"/> with <see cref="Selectable.Transition.ColorTint"/> sourced
+        /// from the body palette ramp (last=normal, last-1=highlighted/selected, last-2=pressed,
+        /// 0=disabled). Reuses <c>button_state_block</c> conformance check + <c>button_states_wired</c>
+        /// targeted check; collapses two hover paths (custom pointer handlers + Selectable) into one.</summary>
+        static void WireIlluminatedButtonHoverAndPress(
+            GameObject hostGo,
+            IlluminatedButtonRenderer renderer,
+            Image bodyImage,
+            Image haloImage,
+            UiTheme theme)
+        {
+            if (renderer != null)
+            {
+                var rendSo = new SerializedObject(renderer);
+                var bodyProp = rendSo.FindProperty("_mainImage");
+                if (bodyProp != null) bodyProp.objectReferenceValue = bodyImage;
+                var haloProp = rendSo.FindProperty("_haloImage");
+                if (haloProp != null) haloProp.objectReferenceValue = haloImage;
+                rendSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            if (hostGo == null || bodyImage == null) return;
+            var sel = hostGo.GetComponent<UnityEngine.UI.Button>();
+            if (sel == null) sel = hostGo.AddComponent<UnityEngine.UI.Button>();
+            sel.targetGraphic = bodyImage;
+            sel.transition = Selectable.Transition.ColorTint;
+
+            var cb = sel.colors;
+            cb.normalColor = Color.white;
+            cb.highlightedColor = Color.white;
+            cb.pressedColor = Color.white;
+            cb.selectedColor = Color.white;
+            cb.disabledColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+            if (theme != null && theme.TryGetPalette("led-amber", out var ramp) && ramp.ramp != null && ramp.ramp.Length >= 3)
+            {
+                int last = ramp.ramp.Length - 1;
+                if (ColorUtility.TryParseHtmlString(ramp.ramp[last], out var normal)) cb.normalColor = normal;
+                if (ColorUtility.TryParseHtmlString(ramp.ramp[Mathf.Max(0, last - 1)], out var hl))
+                {
+                    cb.highlightedColor = hl;
+                    cb.selectedColor = hl;
+                }
+                if (ColorUtility.TryParseHtmlString(ramp.ramp[Mathf.Max(0, last - 2)], out var pressed)) cb.pressedColor = pressed;
+                if (ColorUtility.TryParseHtmlString(ramp.ramp[0], out var disabled)) cb.disabledColor = disabled;
+            }
+            cb.colorMultiplier = 1f;
+            cb.fadeDuration = 0.1f;
+            sel.colors = cb;
+        }
+
+        /// <summary>Step 16.G — caption fallback for illuminated-button slots that carry a label
+        /// in IR but no human-art icon sprite (e.g. AUTO, MAP). Spawns a centered, raycast-inert
+        /// TMP_Text child stretched to fill the body so the button still signals its function
+        /// while art is pending. Idempotent — re-bake skips when "caption" child already exists.
+        /// Halo is re-asserted as last sibling so click pulse still draws on top.</summary>
+        static void SpawnIlluminatedButtonCaption(GameObject prefabRoot, string label)
+        {
+            if (prefabRoot == null) return;
+            if (string.IsNullOrEmpty(label)) return;
+            var rootRect = prefabRoot.GetComponent<RectTransform>();
+            if (rootRect == null) return;
+
+            var existing = prefabRoot.transform.Find("caption");
+            TextMeshProUGUI tmp;
+            if (existing == null)
+            {
+                var go = new GameObject("caption", typeof(RectTransform));
+                go.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
+                var tr = (RectTransform)go.transform;
+                tr.anchorMin = new Vector2(0f, 0f);
+                tr.anchorMax = new Vector2(1f, 1f);
+                tr.pivot = new Vector2(0.5f, 0.5f);
+                tr.anchoredPosition = Vector2.zero;
+                tr.sizeDelta = Vector2.zero;
+                tmp = go.AddComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                tmp = existing.GetComponent<TextMeshProUGUI>();
+                if (tmp == null) tmp = existing.gameObject.AddComponent<TextMeshProUGUI>();
+            }
+
+            tmp.text = label;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 14f;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 8f;
+            tmp.fontSizeMax = 18f;
+            tmp.color = Color.white;
+            tmp.raycastTarget = false; // body owns hit-testing.
+
+            // Re-assert render order: caption sits above body, halo stays on top.
+            var haloT = prefabRoot.transform.Find("halo");
+            if (haloT != null) haloT.SetAsLastSibling();
         }
 
         /// <summary>Spawn the segmented-readout TMP child under the prefab root. Idempotent — placeholder text is empty so T10.6 visual smoke (asserts non-empty post-render) is not polluted.</summary>

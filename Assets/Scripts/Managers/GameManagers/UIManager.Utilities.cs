@@ -156,7 +156,6 @@ public partial class UIManager
 
             if (waterPumpPrefab == null)
             {
-                RequestToolbarChromeRefresh();
                 return;
             }
 
@@ -172,7 +171,6 @@ public partial class UIManager
             selectedBuilding = waterPlant;
 
             cursorManager.ShowBuildingPreview(waterPumpPrefab, 2);
-            RequestToolbarChromeRefresh();
         }
         catch (System.Exception ex)
         {
@@ -184,7 +182,6 @@ public partial class UIManager
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Water;
-        RequestToolbarChromeRefresh();
     }
 
     private static readonly System.Collections.Generic.Dictionary<PlacementFailReason, string> PlacementReasonStringMap =
@@ -320,7 +317,6 @@ public partial class UIManager
         selectedForest = null; // Clear any existing instance
 
         SetGhostPreview(forestData.prefab, 0);
-        RequestToolbarChromeRefresh();
     }
 
     /// <summary>
@@ -489,13 +485,11 @@ public partial class UIManager
     public void ExitBulldozeMode()
     {
         ClearCurrentTool();
-        RequestToolbarChromeRefresh();
     }
 
     public void ExitDetailsMode()
     {
         ClearCurrentTool();
-        RequestToolbarChromeRefresh();
     }
 
     public bool IsBuildingPlacementMode()
@@ -508,7 +502,6 @@ public partial class UIManager
         ClearCurrentTool();
         buildingSelectorMenuController.ClosePopup();
         buildingSelectorMenuController.DeselectAndUnpressAllButtons();
-        RequestToolbarChromeRefresh();
     }
     #endregion
 }

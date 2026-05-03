@@ -24,23 +24,35 @@ public partial class UIManager
     {
         // Stage 6 (game-ui-design-system): HUD-bar core writes (city name / population /
         // money / happiness) decommissioned — now driven by HudBarDataAdapter into baked
-        // StudioControl SO refs on hud-bar prefab. This UpdateUI retains non-hudbar
-        // HUD surfaces (power/water/date/tax/employment/demand/bond/surplus).
+        // StudioControl SO refs on hud-bar prefab.
+        // Stage 11 (game-ui-design-system): legacy power/water HUD chrome decommissioned in
+        // T11.2 MainScene deletes — fields may now be unwired. Guard each ref to keep
+        // surviving non-hudbar HUD surfaces (date/tax/employment/demand/bond/surplus) live.
 
-        cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
-        cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";
-        cityWaterOutputText.text = cityStats.cityWaterOutput.ToString() + " kL";
-        cityWaterConsumptionText.text = cityStats.cityWaterConsumption.ToString() + " kL";
+        if (cityPowerOutputText != null)
+            cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
+        if (cityPowerConsumptionText != null)
+            cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";
+        if (cityWaterOutputText != null)
+            cityWaterOutputText.text = cityStats.cityWaterOutput.ToString() + " kL";
+        if (cityWaterConsumptionText != null)
+            cityWaterConsumptionText.text = cityStats.cityWaterConsumption.ToString() + " kL";
 
-        dateText.text = timeManager.GetCurrentDate().Date.ToString();
-        residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
-        commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
-        industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
+        if (dateText != null)
+            dateText.text = timeManager.GetCurrentDate().Date.ToString();
+        if (residentialTaxText != null)
+            residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
+        if (commercialTaxText != null)
+            commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
+        if (industrialTaxText != null)
+            industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
 
         if (employmentManager != null)
         {
-            unemploymentRateText.text = employmentManager.unemploymentRate.ToString("F1") + "%";
-            totalJobsText.text = employmentManager.GetAvailableJobs().ToString();
+            if (unemploymentRateText != null)
+                unemploymentRateText.text = employmentManager.unemploymentRate.ToString("F1") + "%";
+            if (totalJobsText != null)
+                totalJobsText.text = employmentManager.GetAvailableJobs().ToString();
 
             if (totalJobsCreatedText != null)
                 totalJobsCreatedText.text = employmentManager.GetTotalJobs().ToString();
@@ -52,12 +64,15 @@ public partial class UIManager
 
         if (demandManager != null)
         {
-            demandResidentialText.text = demandManager.GetResidentialDemand().demandStatus +
-                " (" + demandManager.GetResidentialDemand().demandLevel.ToString("F0") + ")";
-            demandCommercialText.text = demandManager.GetCommercialDemand().demandStatus +
-                " (" + demandManager.GetCommercialDemand().demandLevel.ToString("F0") + ")";
-            demandIndustrialText.text = demandManager.GetIndustrialDemand().demandStatus +
-                " (" + demandManager.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
+            if (demandResidentialText != null)
+                demandResidentialText.text = demandManager.GetResidentialDemand().demandStatus +
+                    " (" + demandManager.GetResidentialDemand().demandLevel.ToString("F0") + ")";
+            if (demandCommercialText != null)
+                demandCommercialText.text = demandManager.GetCommercialDemand().demandStatus +
+                    " (" + demandManager.GetCommercialDemand().demandLevel.ToString("F0") + ")";
+            if (demandIndustrialText != null)
+                demandIndustrialText.text = demandManager.GetIndustrialDemand().demandStatus +
+                    " (" + demandManager.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
         }
 
         UpdateDemandBarFills(demandManager);

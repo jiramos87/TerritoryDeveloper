@@ -86,10 +86,6 @@ public partial class UIManager
                     buildingSelectorMenuController.DeselectAndUnpressAllButtons();
                 }
                 break;
-            case PopupType.StatsPanel:
-                if (dataPopupController != null)
-                    dataPopupController.CloseStats();
-                break;
             case PopupType.TaxPanel:
                 if (dataPopupController != null)
                     dataPopupController.CloseTaxes();

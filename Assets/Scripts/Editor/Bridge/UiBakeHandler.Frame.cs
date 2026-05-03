@@ -94,6 +94,7 @@ namespace Territory.Editor.Bridge
                     // against real children, not asset GUID stand-ins.
                     var slotChildren = slot?.children ?? Array.Empty<string>();
                     var slotLabels = slot?.labels;
+                    var slotIconSpriteSlugs = slot?.iconSpriteSlugs;
                     for (int c = 0; c < slotChildren.Length; c++)
                     {
                         var childKind = slotChildren[c];
@@ -113,7 +114,8 @@ namespace Territory.Editor.Bridge
                             kindCounter = 0;
                         }
                         var childLabel = (slotLabels != null && c < slotLabels.Length) ? slotLabels[c] : null;
-                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter, theme, childLabel);
+                        var childIconSpriteSlug = (slotIconSpriteSlugs != null && c < slotIconSpriteSlugs.Length) ? slotIconSpriteSlugs[c] : null;
+                        var childGo = InstantiatePanelChild(childKind, go.transform, ref kindCounter, theme, childLabel, childIconSpriteSlug);
                         perKindCounters[childKind] = kindCounter;
                         if (childGo == null) continue;
                         childrenList.Add(childGo);
@@ -161,6 +163,27 @@ namespace Territory.Editor.Bridge
                     BindBtn("_mainMenuButton", 4);
                     BindBtn("_quitButton", 5);
                     aSo.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                // Step 16 D2.1 — info-panel adapter wiring. Bake-time: attach InfoPanelAdapter
+                // and serialize the ordered StudioControlBase refs (slot order, child order within slot)
+                // captured during BakeSlots above. Stage 13 cell-data wiring will subscribe via this array
+                // instead of runtime GetComponentsInChildren scans (invariant #3).
+                if (panel.slug == "info-panel" && childrenList.Count > 0)
+                {
+                    var adapter = go.AddComponent<Territory.UI.HUD.InfoPanelAdapter>();
+                    var aSo = new SerializedObject(adapter);
+                    var widgetsProp = aSo.FindProperty("_widgets");
+                    if (widgetsProp != null)
+                    {
+                        widgetsProp.arraySize = childrenList.Count;
+                        for (int i = 0; i < childrenList.Count; i++)
+                        {
+                            var sc = childrenList[i]?.GetComponent<StudioControlBase>();
+                            widgetsProp.GetArrayElementAtIndex(i).objectReferenceValue = sc;
+                        }
+                        aSo.ApplyModifiedPropertiesWithoutUndo();
+                    }
                 }
 
                 // Stage 1.4 T1.4.2 — archetype dispatch: instantiate section_header / divider / badge child.
@@ -261,7 +284,7 @@ namespace Territory.Editor.Bridge
         /// children of the same kind get unique <c>GameObject.name</c> values (e.g. <c>illuminated-button</c>,
         /// <c>illuminated-button (1)</c>, ...). Suffix-only — does not affect IR slot resolution.</param>
         /// <returns>Instantiated child <c>GameObject</c>; <c>null</c> on unknown kind.</returns>
-        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter, UiTheme theme, string label = null)
+        static GameObject InstantiatePanelChild(string kind, Transform panelRoot, ref int duplicateCounter, UiTheme theme, string label = null, string iconSpriteSlug = null)
         {
             if (panelRoot == null || string.IsNullOrEmpty(kind)) return null;
 
@@ -328,8 +351,19 @@ namespace Territory.Editor.Bridge
                         btnRend = childGo.AddComponent<IlluminatedButtonRenderer>();
                     }
                     WireThemeRef(btnRend, theme);
-                    SpawnIlluminatedButtonRenderTargets(childGo);
-                    btn.ApplyDetail(new IlluminatedButtonDetail());
+                    SpawnIlluminatedButtonRenderTargets(childGo, iconSpriteSlug, out var ibBody, out var ibHalo);
+                    // Step 16 D3.1+D3.2 — bake-time hover/press wiring (refs onto renderer + Selectable).
+                    WireIlluminatedButtonHoverAndPress(childGo, btnRend, ibBody, ibHalo, theme);
+                    // Step 16.D — IR-side icon sprite slug + per-button identity injected via parallel-array
+                    // slot.iconSpriteSlugs[c]; persists onto detail row so renderer/render reads back.
+                    btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSpriteSlug });
+                    // Step 16.G — caption fallback. When IR provides slot.labels[c] but iconSpriteSlugs[c]
+                    // is empty (no human-art available yet), spawn a TMP caption child so the button
+                    // still signals its function. Stage 13 follow-up: promote to first-class detail field.
+                    if (string.IsNullOrEmpty(iconSpriteSlug) && !string.IsNullOrEmpty(label))
+                    {
+                        SpawnIlluminatedButtonCaption(childGo, label);
+                    }
                     break;
                 }
                 case "led":
@@ -408,7 +442,9 @@ namespace Territory.Editor.Bridge
                     var lbl = childGo.AddComponent<ThemedLabel>();
                     WireThemeRef(lbl, theme);
                     SpawnThemedLabelChild(childGo, out var labelTmp);
-                    if (labelTmp != null && !string.IsNullOrEmpty(label)) labelTmp.text = label;
+                    // Step 16 D2.3 — fall through to placeholder "--" so the slot composes a non-empty
+                    // visible chrome even before live cell-data wiring lands in Stage 13.
+                    if (labelTmp != null) labelTmp.text = string.IsNullOrEmpty(label) ? "--" : label;
                     var lblSo = new SerializedObject(lbl);
                     var tmpProp = lblSo.FindProperty("_tmpText");
                     if (tmpProp != null) tmpProp.objectReferenceValue = labelTmp;
@@ -539,6 +575,22 @@ namespace Territory.Editor.Bridge
                 default:
                     UnityEngine.Object.DestroyImmediate(childGo);
                     return null;
+            }
+
+            // Step 16 D2.2 — write canonical _slug onto every StudioControlBase-derived widget so adapter
+            // resolution + conformance walks can key on a stable IR-rooted slug instead of GameObject name.
+            // Themed primitives (button/label/slider/toggle/tab-bar/list/tooltip) intentionally skipped —
+            // their identity is captured by IR slot.labels + child kind in the conformance label index.
+            var studio = childGo.GetComponent<StudioControlBase>();
+            if (studio != null)
+            {
+                var studioSo = new SerializedObject(studio);
+                var slugProp = studioSo.FindProperty("_slug");
+                if (slugProp != null && slugProp.propertyType == SerializedPropertyType.String)
+                {
+                    slugProp.stringValue = childGo.name;
+                    studioSo.ApplyModifiedPropertiesWithoutUndo();
+                }
             }
 
             return childGo;

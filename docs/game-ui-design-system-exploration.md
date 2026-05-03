@@ -493,3 +493,126 @@ Self-run Phase 8 review against template (no external subagent spawn this pass):
 - **Predecessor bucket retired:** UI Polish (`docs/ui-polish-exploration.md` — no DB-backed master plan was authored)
 - **Handoff dependency:** CityStats overhaul master plan Dashboard step must reference this catalog
 
+---
+
+## MVP Closeout Findings (2026-05-02)
+
+Mid-Stage 11 the city-stats panel rendered only 3 of CityStats' ~40 fields, tabs were chrome-only (no click), icons authored but not in Unity, runtime adapter forced to inject captions/digit-widths the bake should have written. Five compounding root causes:
+
+### 1. Two parallel `city-stats` archetypes — wrong twin wired
+`panels.json` defines `city-stats` (rich `row-list` slot, 18 children = 6 rows × 3 controls per `panels.jsx PanelCityStats` 9-row design) AND `city-stats-handoff` (skeletal: `categories` tab-bar + `readouts` 3+3 controls). Stats button opens the latter. Rich twin authored, never reached by any controller. Cause: cloned-from-`hud-bar` shortcut during Stage 8/11 modal wiring; richness deferred, never picked up.
+
+### 2. IR translation = lossy
+`panels.jsx → panels.json → UiBakeHandler` flattens semantic intent into a slot-graph (`accepts[]` + `children[]` ordered list of kinds). The flatten step drops:
+- per-row `label` text
+- per-row `value` literal (display string before runtime binding)
+- per-row `tone` enum (primary | neutral | alert)
+- per-row `delta` literal
+- per-row `vu` config (lit / segments / tone)
+- per-row `icon` ref
+- per-tab page taxonomy (which rows belong to which tab)
+
+The baker can only place generic SegmentedReadout/VUMeter/IlluminatedButton instances in slot order. Captions, tints, taxonomy never reach Unity. The runtime `EnsureCaption` patch on `CityStatsHandoffAdapter.Awake` is exactly the gap papered over imperatively — should come from IR.
+
+### 3. `ThemedTabBar` shipped chrome-only
+`SetActiveTab(int) { }` is empty. Authored as visual indicator only on the assumption "interactivity comes later". No click handler, no page-show/hide state, no per-tab page registry. No spec defines tab taxonomy (which fields → which tab).
+
+### 4. Icons authored but orphaned
+`web/design-refs/step-1-game-ui/cd-bundle/icons.svg` carries 22 icon ids (`icon-zone-residential`, `icon-power`, `icon-water`, `icon-pollution`, `icon-land-value`, `icon-pause`, `icon-play`, `icon-fast-forward`, `icon-step`, `icon-alert`, `icon-info`, `icon-success`, `icon-autosave`, `icon-select`, `icon-bulldoze`, `icon-services`, `icon-landmark`, `icon-desirability`, `icon-heat`, `icon-zone-commercial`, `icon-zone-industrial`, `icon-road`). UiBakeHandler reads JSON only; SVG → Unity Sprite step never authored. `Assets/Sprites/Icons/` empty. Icons have no consumer.
+
+### 5. Stage scope discipline → repeated truncation
+Stage 6 (HUD) shipped 3 readouts (money/pop/happiness) — full CityStats coverage was never the goal. Stage 11 ("legacy decommission") = plumbing replacement, not richness. Each stage shipped a thin slice end-to-end (good for verify) but baseline froze at "3 stats + tab chrome". No stage said "render all CityStats fields with full taxonomy + icons". Stage 11 is the last open lane and won't fix this without re-scoping.
+
+### CityStats real surface (~40 fields, natural 5-tab grouping)
+
+| Tab | Fields |
+|---|---|
+| Economy | money, totalEnvelopeCap, envelopeRemainingPerSubType[7], activeBondDebt, monthlyBondRepayment, cityLandValueMean |
+| Demographics | population, residential/commercial/industrial × {zoneCount, buildingCount, light/medium/heavy variants} = ~18 fields |
+| Mood / Health | happiness (HappinessComposer), pollution (SignalFieldRegistry mean) |
+| Infrastructure | roadCount, cityPowerOutput, cityPowerConsumption, cityWaterOutput, cityWaterConsumption |
+| Land | grassCount, forestCellCount, forestCoveragePercentage |
+
+Today: 3 fields render (money / population / happiness). Everything else is in `CityStats` already, unconsumed.
+
+---
+
+## Path C — Full Fidelity Strategy (MVP Closeout)
+
+**Decision (2026-05-02):** Path C selected over A (wire-rich-prefab-only) and B (per-panel surgical patch). Pays back across every panel; closes the lossy translation step that caused all of root causes 2–4. City + Region scale UI parity targeted as MVP terminal; Country/World deferred.
+
+### Strategy
+
+1. **Extend IR schema (Stage 13 candidate — schema landing)**
+   - `panel.tabs[]` — per-panel page taxonomy: `{ slug, label, icon?, rowGroup }`
+   - `panel.rows[]` — per-row spec: `{ tab, label, valueKind, vuConfig?, icon?, tone, deltaKind?, bindingKey? }`
+   - `valueKind` ∈ `segmented-readout` | `themed-label` | `none`
+   - `tone` ∈ `primary` | `neutral` | `alert`
+   - `bindingKey` — runtime data source slug (e.g. `cityStats.money`, `cityStats.envelopeRemaining[7]`)
+   - Backward-compatible: legacy `slot.children[]` flat list still parsed when `rows`/`tabs` absent.
+
+2. **Update transcribe step (Stage 13 candidate — translator)**
+   - `tools/scripts/transcribe-cd-game-ui.ts` parses `panels.jsx` row arrays (or a new sibling `panel-content.json` if jsx parsing is too brittle).
+   - Extracts: rows, labels, tones, vu configs, deltas, icon ids, tab taxonomy.
+   - Writes enriched `panels.json` schema (versioned — `schemaVersion: 2`).
+   - Re-runs against existing CD bundle; produces full-fidelity IR for all 16 panels.
+
+3. **Update bake handler (Stage 14 candidate — bake fidelity)**
+   - `UiBakeHandler` reads `panel.rows[]` → emits prefab row hierarchy with caption Text + value primitive + optional VUMeter + optional delta + icon ref per row.
+   - Emits `panel.tabs[]` → wires `ThemedTabBar.pages[]` (new field) + per-page row containers.
+   - Removes runtime `EnsureCaption` / `ApplyDigitWidth` hacks from adapters — bake-time correctness.
+   - Re-bake all 16 panels (`hud-bar`, `info-panel`, `pause`, `settings`, `save-load`, `new-game`, `tooltip`, `toolbar`, `city-stats`, `city-stats-handoff`, `onboarding`, `building-info`, `zone-overlay`, `time-controls`, `alerts-panel`, `mini-map`, `splash`, `onboarding-overlay`, `glossary-panel`).
+
+4. **Icon import pipeline (Stage 15 candidate — icons)**
+   - SVG → Unity Sprite import: split `icons.svg` into per-id PNGs (or use `com.unity.vectorgraphics` UPM if SVG fidelity matters at scale).
+   - Output: `Assets/Sprites/Icons/{icon-id}.png` + meta with `TextureType = Sprite (2D and UI)`.
+   - `ThemedIcon` consumes via slug → sprite lookup table on `UiTheme` SO (mirrors palette / font_face pattern).
+   - Re-bake panels resolves `panel.rows[].icon` slug → `ThemedIcon._sprite` ref.
+
+5. **Tab interactivity (Stage 16 candidate — tabs functional)**
+   - `ThemedTabBar.SetActiveTab(int)` → fires `OnActiveTabChanged(int)` event; flips per-tab page GameObjects active.
+   - PointerClick handler on each tab cell → calls `SetActiveTab(idx)`.
+   - Initial active tab from IR `panel.tabs[0]`. Persists across panel close/reopen via state on adapter (optional).
+
+6. **CityStats full surface adapter (Stage 17 candidate — adapter rewrite)**
+   - Replace `CityStatsHandoffAdapter` Update polling with `CityStatsPresenter` (new class) — pure C# presenter exposing `IReadOnlyList<CityStatsRow>` keyed by `bindingKey`.
+   - Adapter resolves `bindingKey` per row → writes value + delta + vu input per frame.
+   - 5 tabs × ~8 rows each ≈ 40 binding keys. Centralized in one switch / dictionary.
+
+7. **Region scale parity (Stage 18 candidate — region UI)**
+   - Mirror city-stats panel structure for region scale.
+   - Additional buttons: **TBD — pending design clarity** (see extension exploration doc).
+   - Probable surface: aggregated multi-city stats, region-level alerts, scale-switch button.
+
+8. **MVP closeout (Stage 19 candidate — close)**
+   - Migrate runtime patches into IR (kill the imperative captions / digit-widths in `CityStatsHandoffAdapter`).
+   - Promote `ui-design-system.md` to canonical (already partial — finish per Stage 10 acceptance).
+   - Retire any orphan twin archetypes (e.g. `city-stats` rich vs `city-stats-handoff` consolidate to one).
+   - Master plan close.
+
+### Architectural impact
+
+- **`tools/scripts/ir-schema.ts`** — `IrPanel` type extended; back-compat helper for v1 IR.
+- **`tools/scripts/transcribe-cd-game-ui.ts`** — new parser branch for row/tab semantics.
+- **`Assets/Scripts/Editor/Bridge/UiBakeHandler.cs`** — DTO additions; bake body emits row hierarchy + tab page containers.
+- **`Assets/Scripts/UI/Themed/ThemedTabBar.cs`** — `pages[]`, `OnActiveTabChanged`, click handler.
+- **`Assets/Scripts/UI/Themed/ThemedIcon.cs`** — wired into bake (currently exists, unused).
+- **`Assets/Scripts/UI/CityStats/CityStatsPresenter.cs`** — new; `bindingKey → ICityStatsRow`.
+- **`Assets/Scripts/UI/CityStats/CityStatsHandoffAdapter.cs`** — gutted; presenter-driven only.
+- **`Assets/Sprites/Icons/`** — new asset directory.
+- **`UiTheme.asset`** — new icon slug → sprite map.
+
+### Pending decisions (drives extension exploration polling)
+
+- **D1: Tab taxonomy.** 5 tabs (Economy / Demographics / Mood&Health / Infrastructure / Land), 4 (collapse), or 6 (split Demographics)?
+- **D2: Region-scale UI deltas.** Same panel structure? Which additional buttons + what do they do?
+- **D3: Icon set scope.** 22 existing icons enough, or add (e.g. `icon-happiness`, `icon-population`, `icon-money`, `icon-bond`, `icon-envelope`)?
+- **D4: Per-row layout exact template.** `[icon | label | value | optional-vu | optional-delta]` confirmed? Tone color mapping confirmed?
+- **D5: IR migration strategy.** Hard cutover (schemaVersion=2 → re-bake all) vs opt-in per archetype?
+- **D6: SVG → Sprite pipeline.** Per-id PNG export, single SpriteAtlas, or `com.unity.vectorgraphics` UPM dependency?
+- **D7: Tab switch visual.** Hard show/hide vs alpha-fade vs slide?
+- **D8: CityStats data source.** Direct field reads in adapter vs `CityStatsPresenter` abstraction (recommended)?
+- **D9: MVP terminal scope.** City + Region only (defer Country/World), or all four scales?
+
+These get resolved in the extension exploration doc (`docs/game-ui-design-system-mvp-closeout-extensions.md`) via `/design-explore` polling, then `/master-plan-extend game-ui-design-system` appends Stages 13–N.
+

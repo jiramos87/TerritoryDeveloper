@@ -13,9 +13,8 @@ namespace Territory.UI
         [Tooltip("Assign DefaultUiTheme or a variant; when null, HUD keeps scene-authored colors.")]
         [SerializeField] private UiTheme hudUiTheme;
 
-        [Header("Toolbar / theme wiring (optional)")]
-        [Tooltip("Background Image on the ControlPanel strip. When null, resolved once from GameObject name ControlPanel in Awake.")]
-        [SerializeField] private Image controlPanelBackgroundImage;
+        // Stage 11 (game-ui-design-system): legacy controlPanelBackgroundImage decommissioned —
+        // toolbar chrome now driven by themed-toolbar-strip studio-control + ToolbarChromeAdapter.
 
         private void Awake()
         {
@@ -24,13 +23,6 @@ namespace Territory.UI
                 Debug.LogWarning("[UIManager] duplicate instance detected; replacing prior reference.");
             }
             Instance = this;
-
-            if (controlPanelBackgroundImage == null)
-            {
-                GameObject go = GameObject.Find("ControlPanel");
-                if (go != null)
-                    controlPanelBackgroundImage = go.GetComponent<Image>();
-            }
 
             // Stage 12 trigger contract: modal roots must start deactivated so OpenPopup
             // can flip them on. Source prefabs ship with m_IsActive=1 for design preview;
@@ -96,8 +88,8 @@ namespace Territory.UI
                 constructionCostText.color = hudUiTheme.TextPrimary;
             }
 
-            // Stage 6: StatsPanel tint removed — legacy panel surface decommissioned with
-            // hero stats relocation to baked hud-bar prefab.
+            // Stage 11 (`game-ui-design-system`): legacy StatsPanel surface fully decommissioned
+            // with `DataPopupController.statsPanel` retirement (see glossary "Retired terms").
             TintPanelRootBehindReference("DatePanel", dateText, hudUiTheme.SurfaceCardHud);
             TintPanelRootBehindReference("TaxPanel", residentialTaxText, hudUiTheme.SurfaceCardHud);
             ApplyTaxPanelBudgetRowTexts();
@@ -111,8 +103,8 @@ namespace Territory.UI
                     dw.color = hudUiTheme.SurfaceCardHud;
             }
 
-            if (controlPanelBackgroundImage != null)
-                controlPanelBackgroundImage.color = hudUiTheme.SurfaceToolbar;
+            // Stage 11: controlPanelBackgroundImage tint dropped — themed-toolbar-strip
+            // owns SurfaceToolbar via baked StudioControl SO refs.
 
             ApplyLoadGameAndFundsPanels();
         }

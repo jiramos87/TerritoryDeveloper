@@ -10,9 +10,11 @@ namespace Territory.UI.Themed
         Screen = 1,
         Hud = 2,
         Toolbar = 3,
+        SideRail = 4,
     }
 
     /// <summary>Themed panel root + runtime slot graph composer; baked by <c>UiBakeHandler</c> from IR <c>panels[]</c>.</summary>
+    [ExecuteAlways]
     public class ThemedPanel : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;
@@ -75,11 +77,22 @@ namespace Territory.UI.Themed
                     EnsureLayoutGroup<HorizontalLayoutGroup>();
                     break;
                 case PanelKind.Toolbar:
+                    // Step 12 content-layer fix — left-dock between HUD (top 100px) and building-selector (bottom 200px reserve).
+                    // 2-column grid, 12px left inset, 220px width.
                     rt.anchorMin = new Vector2(0f, 0f);
                     rt.anchorMax = new Vector2(0f, 1f);
                     rt.pivot = new Vector2(0f, 0.5f);
-                    rt.sizeDelta = new Vector2(200f, 0f);
-                    rt.anchoredPosition = Vector2.zero;
+                    rt.offsetMin = new Vector2(12f, 200f);
+                    rt.offsetMax = new Vector2(232f, -100f);
+                    EnsureGridLayout(columns: 2, cell: new Vector2(100f, 100f), spacing: new Vector2(8f, 8f), padding: 8);
+                    break;
+                case PanelKind.SideRail:
+                    // Right-side vertical rail — 360px wide, 90% viewport height, 20px inset from right edge.
+                    rt.anchorMin = new Vector2(1f, 0.05f);
+                    rt.anchorMax = new Vector2(1f, 0.95f);
+                    rt.pivot = new Vector2(1f, 0.5f);
+                    rt.sizeDelta = new Vector2(360f, 0f);
+                    rt.anchoredPosition = new Vector2(-20f, 0f);
                     EnsureLayoutGroup<VerticalLayoutGroup>();
                     break;
             }
@@ -100,6 +113,31 @@ namespace Territory.UI.Themed
             {
                 gameObject.AddComponent<T>();
             }
+        }
+
+        private void EnsureGridLayout(int columns, Vector2 cell, Vector2 spacing, int padding)
+        {
+            var existing = GetComponents<LayoutGroup>();
+            for (int i = 0; i < existing.Length; i++)
+            {
+                if (!(existing[i] is GridLayoutGroup))
+                {
+                    DestroyImmediate(existing[i]);
+                }
+            }
+            var grid = GetComponent<GridLayoutGroup>();
+            if (grid == null)
+            {
+                grid = gameObject.AddComponent<GridLayoutGroup>();
+            }
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = columns;
+            grid.cellSize = cell;
+            grid.spacing = spacing;
+            grid.padding = new RectOffset(padding, padding, padding, padding);
+            grid.childAlignment = TextAnchor.UpperCenter;
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
         }
 
         private void RemoveLayoutGroups()

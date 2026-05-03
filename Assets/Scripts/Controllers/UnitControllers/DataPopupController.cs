@@ -6,12 +6,12 @@ using Territory.Utilities;
 namespace Territory.UI
 {
     /// <summary>
-    /// UI controller for data/stats popup panel. Displays city stats from <see cref="UIManager"/> + <see cref="CityStats"/>.
-    /// Open/close with short <see cref="CanvasGroup"/> fades when supported.
+    /// UI controller for the legacy tax popup panel.
+    /// Stage 11 (`game-ui-design-system`): stats half decommissioned — see glossary "Retired terms" row
+    /// `DataPopupController.statsPanel` → `CityStatsHandoffAdapter` SO-ref consumer pattern.
     /// </summary>
     public class DataPopupController : MonoBehaviour
     {
-        public GameObject statsPanel;
         public GameObject taxPanel;
         [SerializeField] private UIManager uiManager;
         [SerializeField] private CityStats cityStats;
@@ -28,31 +28,6 @@ namespace Territory.UI
                 uiManager = FindObjectOfType<UIManager>();
         }
 
-        public void ShowStats()
-        {
-            StopFadeRoutine();
-            taxPanel.SetActive(false);
-            statsPanel.SetActive(true);
-            RegisterWithUIManager(PopupType.StatsPanel);
-            fadeRoutine = StartCoroutine(FadeInRoutine(statsPanel));
-        }
-
-        public void ToggleStats()
-        {
-            StopFadeRoutine();
-            if (statsPanel.activeSelf)
-            {
-                fadeRoutine = StartCoroutine(FadeOutRoutine(statsPanel));
-            }
-            else
-            {
-                taxPanel.SetActive(false);
-                statsPanel.SetActive(true);
-                RegisterWithUIManager(PopupType.StatsPanel);
-                fadeRoutine = StartCoroutine(FadeInRoutine(statsPanel));
-            }
-        }
-
         public void ToggleTaxes()
         {
             StopFadeRoutine();
@@ -62,7 +37,6 @@ namespace Territory.UI
             }
             else
             {
-                statsPanel.SetActive(false);
                 taxPanel.SetActive(true);
                 RegisterWithUIManager(PopupType.TaxPanel);
                 if (growthBudgetSlidersContainer != null && cityStats != null)
@@ -74,21 +48,8 @@ namespace Territory.UI
         public void CloseAll()
         {
             StopFadeRoutine();
-            if (statsPanel != null)
-                statsPanel.SetActive(false);
             if (taxPanel != null)
                 taxPanel.SetActive(false);
-        }
-
-        public void CloseStats()
-        {
-            StopFadeRoutine();
-            if (statsPanel == null)
-                return;
-            if (statsPanel.activeSelf)
-                fadeRoutine = StartCoroutine(FadeOutRoutine(statsPanel));
-            else
-                statsPanel.SetActive(false);
         }
 
         public void CloseTaxes()

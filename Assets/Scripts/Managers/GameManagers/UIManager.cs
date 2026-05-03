@@ -21,7 +21,6 @@ public enum PopupType
     LoadGame,
     Details,
     BuildingSelector,
-    StatsPanel,
     TaxPanel,
     SubTypePicker,
     BudgetPanel,
@@ -235,7 +234,7 @@ public partial class UIManager : MonoBehaviour
             bondHudBadgeButton.onClick.AddListener(OpenBondDetailModal);
         }
         ApplyHudUiThemeIfConfigured();
-        RequestToolbarChromeRefresh();
+        // Stage 11: RequestToolbarChromeRefresh() removed — toolbar tinting now baked into ThemedToolbarStrip.
         TryShowWelcomeBriefingAfterStart();
     }
 
@@ -467,12 +466,7 @@ public partial class UIManager : MonoBehaviour
 
     void LateUpdate()
     {
-        if (toolbarChromeDirty)
-        {
-            toolbarChromeDirty = false;
-            RefreshToolbarToolChrome();
-        }
-
+        // Stage 11: toolbarChromeDirty / RefreshToolbarToolChrome dispatch removed — ThemedToolbarStrip self-tints.
         if (cityStats == null)
             return;
         UpdateGridCoordinatesDebugText();

@@ -143,6 +143,25 @@ Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP*
 
 - Source / style (line vs filled), sizes, and tint rules — **varies** by panel; many stats use small **Image** children named `*Icon` next to **Text**. Consolidate in a future **FEAT-**/**TECH-** row if a library is introduced.
 
+#### 1.4.1 Button iconography — human-authored mandate
+
+**Rule.** Toolbar / panel button artwork is **human-authored**. `claude-design` output (and any LLM-driven generator) supplies **theme + layout only** — never button icon PNGs. Bake pipeline drives button icons from `IrPanelSlot.iconSpriteSlugs[]` parallel array, resolved at bake-time via `UiBakeHandler.ResolveButtonIconSprite` (Editor `AssetDatabase.LoadAssetAtPath<Sprite>`).
+
+**Asset locations.** Resolver probes three paths in order per slug:
+1. `Assets/Sprites/Buttons/{slug}-target.png` (preferred — keep new art here).
+2. `Assets/Sprites/{slug}-target.png` (legacy root — tolerated).
+3. `AssetDatabase.FindAssets("{slug}-target t:Sprite", new[]{ "Assets/Sprites" })` (recursive sibling-folder scan; tolerates `Assets/Sprites/Commercial/`, `Assets/Sprites/Residential/`, etc.).
+
+Slug convention: `{Concept}-button-64` (e.g. `Residential-button-64`, `Commercial-button-64`, `Pause-button-1-64`). Suffix `-target.png` is the resolver-expected file.
+
+**Authoring flow.**
+1. Human / artist drops `{slug}-target.png` (+ optional `{slug}-pressed.png`) anywhere under `Assets/Sprites/**` — prefer `Assets/Sprites/Buttons/`.
+2. IR parallel array in `web/design-refs/step-1-game-ui/ir.json` lists slug per button child of an `IlluminatedButton` parent slot (`slot.iconSpriteSlugs[c]` matches `slot.children[c]` index).
+3. `bake_ui_from_ir` bridge mutation re-runs; bake handler spawns Image child + injects sprite ref.
+4. Verify via `prefab_inspect` — every IlluminatedButton must have an `icon` child with non-null `m_Sprite`.
+
+**LLM-out-of-scope.** Generators must not draft, suggest, or fall-back-synthesize button icons. Missing slug → flat-color body (legacy behaviour) is acceptable; never inject placeholder icons. New slugs added to IR must reference existing artist-authored PNGs.
+
 ### 1.5 Motion (optional)
 
 - Duration and easing for show/hide of panels — **TBD**; keep scope small unless an issue explicitly covers animation.

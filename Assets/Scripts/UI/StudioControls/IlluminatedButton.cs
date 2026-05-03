@@ -61,5 +61,10 @@ namespace Territory.UI.StudioControls
     {
         public string illuminationSlug;
         public string pulseOnEvent;
+        // Stage 12 Step 16.D — bake-time icon sprite resolution.
+        // Bake handler loads `Assets/Sprites/Buttons/{iconSpriteSlug}-target.png` (with fallback
+        // to `Assets/Sprites/{iconSpriteSlug}-target.png`) via AssetDatabase + assigns to icon Image.
+        // Empty/null = no icon (legacy flat-color body).
+        public string iconSpriteSlug;
     }
 }

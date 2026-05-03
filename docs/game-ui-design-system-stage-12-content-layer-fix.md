@@ -300,6 +300,59 @@ User QA: ACCEPTED. HUD-bar + toolbar buttons all dispatch on click. Captions (AU
 - Terrain button — IR addition + bake re-run if/when terrain tools surface.
 - Stage 13 popup-stack gate — Stats/MiniMap currently raw `SetActive`; promote to `OpenPopup` registration once enum + roots land in `UIManager.PopupStack.cs` (prior 16.G follow-up; not regressed by 16.H).
 
+### Step 16.I — post-16.H bug triage (DONE 2026-05-02)
+
+#### User-reported bugs after 16.H QA acceptance
+
+1. **MAP button no-op.** Click did not toggle MiniMapPanel.
+2. **AUTO button verification blocked.** User couldn't confirm AUTO mode wiring because budget panel inaccessible (bug #3).
+3. **Budget toggler missing.** Pre-16.G hud-bar had a button doubling as money readout + budget panel opener; post-16.G IR carries only `segmented-readout` (display-only widget). User unable to assign auto-mode budget %.
+
+#### Findings
+
+- **Two-canvas scene structure.** Bake placed hud-bar under new `UI Canvas` root; legacy MiniMapPanel + ControlPanel live under `UI/City/Canvas`. `find_gameobject UI Canvas/MiniMapPanel` returns `exists:false`. Correct path = `UI/City/Canvas/MiniMapPanel`.
+- **MiniMapController location.** Component lives ON the MiniMapPanel GO itself (not a sibling under Game Managers).
+- **HudBarDataAdapter `_miniMapRoot` was `fileID:0`.** Step 16.H wired `_cityStatsRoot` + speed buttons but missed mini-map root.
+- **No budget toggle in IR.** Restoration requires runtime click handler on existing money readout — IR change deferred (out of scope for triage).
+- **Raycast surface gap on `segmented-readout`.** GO has `RectTransform + SegmentedReadout + SegmentedReadoutRenderer` only — no Graphic. IPointerClickHandler on a child without Graphic doesn't catch clicks.
+
+#### Fixes
+
+| Bug | Fix |
+|---|---|
+| Mini-map | Bridge `assign_serialized_field` → `HudBarDataAdapter._miniMapRoot = UI/City/Canvas/MiniMapPanel` (object_ref). |
+| Budget toggle | New `Assets/Scripts/UI/HUD/MoneyReadoutBudgetToggle.cs` — inherits `Graphic` (invisible raycast surface, `OnPopulateMesh` clears verts) + `IPointerClickHandler` → `UIManager.OpenBudgetPanel()`. Bridge `attach_component` to `UI Canvas/hud-bar/segmented-readout`. |
+| AUTO verify | Unblocked by budget toggle fix; deferred to user QA. |
+
+#### Bridge writes
+
+| Op | Target | Result |
+|---|---|---|
+| `assign_serialized_field` | `_miniMapRoot` (object_ref) | ok |
+| `attach_component` | `MoneyReadoutBudgetToggle` on segmented-readout | ok |
+| `save_scene` | MainScene | ok |
+| `unity_compile` | — | `compilation_failed: false` |
+
+#### Carry-forward
+
+- Stage 13 popup-stack gate — MiniMapPanel toggle still raw `SetActive` (HudBarDataAdapter.HandleMiniMapClick); promote to `OpenPopup(PopupType.MiniMap)` once enum + handler lands.
+- Money readout click handler is runtime-only (not in IR). If hud-bar IR rebakes, MoneyReadoutBudgetToggle must be re-attached — same applies to mini-map root wire.
+- IR tracking: consider adding `clickAction: open-budget` field to readout panel def so bake handler attaches the toggle automatically.
+
+#### Follow-up — CanvasRenderer requirement (DONE same-session)
+
+Play Mode threw `MissingComponentException: CanvasRenderer ... segmented-readout`. `Graphic.RequireComponent(typeof(CanvasRenderer))` only fires at Editor-time attach via menu — bridge `attach_component` skipped the auto-add. Fix: bridge `attach_component CanvasRenderer` on `UI Canvas/hud-bar/segmented-readout` + `save_scene`. **Pattern:** when bridge-attaching a `Graphic` subclass, explicitly attach `CanvasRenderer` first.
+
+#### Follow-up — city-stats panel wiring (DONE 2026-05-02)
+
+`_cityStatsRoot` was `fileID: 0` → STATS button click no-op. Target: `UI Canvas/city-stats-handoff` prefab instance (`a153ec8cf629842019a03b5263e0f11a`). Default `m_IsActive: 0`.
+
+**Bridge cabinet gap surfaced.** `find_gameobject` / `set_gameobject_active` / `assign_serialized_field value_kind=object_ref` all `target_not_found` when GO inactive — handlers use `GameObject.Find()`, which skips inactive. Hidden-by-default popups can't be referenced by path through the bridge.
+
+**Workaround.** Scene yaml text-edit. Located stripped GameObject via `m_CorrespondingSourceObject` source-GUID match → fileID `427734555`. Set `_cityStatsRoot: {fileID: 427734555}` direct. `open_scene` (reload from disk) + `save_scene` round-trip confirmed persistence.
+
+**Carry-forward.** File TECH issue: extend `find_gameobject` (and mutation kinds that resolve `value_object_path` / `target_path`) with `include_inactive` flag using `Resources.FindObjectsOfTypeAll<Transform>()` for inactive subtree walk. Until then, text-edit is only path for hidden-by-default panel wiring.
+
 ### Step 16.F — close out Stage 12
 
 **Action.** Once Steps 16.A–E + 16.G green, `/ship-stage` Pass B closeout. Stage 13 popup-stack gate work follows separately.

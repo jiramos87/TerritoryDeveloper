@@ -172,6 +172,9 @@ namespace Territory.Editor.Bridge
             public string[] children;
             // Step 12 — optional per-child label content; parallel to children[] when present.
             public string[] labels;
+            // Step 16.D — optional per-child icon sprite slug; parallel to children[]. Empty/null skips icon.
+            // Bake handler resolves to Assets/Sprites/Buttons/{slug}-target.png (fallback Assets/Sprites/{slug}-target.png).
+            public string[] iconSpriteSlugs;
         }
 
         /// <summary>Polymorphic token entry — guardrail #11 `value_kind` + flat `value` shape.

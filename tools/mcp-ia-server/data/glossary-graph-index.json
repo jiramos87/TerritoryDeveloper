@@ -1,8 +1,18 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-01T07:02:18.189Z",
+  "last_generated": "2026-05-03T15:23:24.103Z",
   "graph": {
+    "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)": {
+      "related": [
+        "Gate",
+        "Phase",
+        "Stage",
+        "Urban centroid",
+        "Urban growth rings"
+      ],
+      "cited_in": []
+    },
     "A* search": {
       "related": [
         "Diagonal step expansion",
@@ -6096,8 +6106,8 @@
         "Phase",
         "Stage",
         "Urban centroid",
-        "AUTO systems",
-        "DiffusionKernel"
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "AUTO systems"
       ],
       "cited_in": []
     },
@@ -6114,10 +6124,10 @@
     "Urbanization proposal": {
       "related": [
         "RCI",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
         "Gate",
         "Phase",
-        "Stage",
-        "Urban centroid"
+        "Stage"
       ],
       "cited_in": [
         {

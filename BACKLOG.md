@@ -282,13 +282,19 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
-- [ ] **TECH-6981** — Recipify ship-stage Pass B closeout + commit
-  - Author / extend `ia/recipes/ship-stage-pass-b.yaml`. Verify-loop wrapper + `stage_closeout_apply` MCP + commit step. Internal verify-loop chain stays prose-path.
-  - Acceptance: recipe runs end-to-end through closeout + commit; verify-loop internal chain stays prose; drift gate green.
+- [ ] **TECH-6985** — Recipe-parity audit + body trim for section-closeout
+  - Type: tooling / lifecycle pipeline
+  - Files: `ia/skills/section-closeout/SKILL.md`, `.claude/agents/section-closeout.md`, `ia/recipes/section-closeout.yaml`
+  - Notes: Diff skill + agent body vs `section-closeout.yaml`. Migrate orphan prose into recipe steps. Trim `.claude/agents/section-closeout.md` body ≥60%. Mirror Stage 5.1 outcome (43→6 lines, 60.7% drop on `section-claim`).
+  - Acceptance: agent body ≥60% line drop; drift gate green; `npm run validate:skill-drift` exit 0; recipe still parses (`npm run recipe:run -- section-closeout --dry-run`).
+  - Depends on: none
 
-- [ ] **TECH-6982** — Body trim ship-stage Pass B agent to recipe-dispatch shell
-  - Trim `.claude/agents/ship-stage-pass-b.md` ≥60% to recipe-dispatch shell pointing at `ia/recipes/ship-stage-pass-b.yaml` (TECH-6981 deliverable). Mirror Pass A trim shape from Stage 4.1.
-  - Acceptance: body ≥60% line drop; dispatch shell only; drift gate green.
+- [ ] **TECH-6986** — End-to-end smoke run via recipe-dispatch shell
+  - Type: tooling / lifecycle pipeline
+  - Files: `ia/recipes/section-closeout.yaml`, `.claude/agents/section-closeout.md`, `ia_recipe_runs` table
+  - Notes: Run `npm run recipe:run -- section-closeout --inputs <closeout input>` against a real section. Confirm `ia_recipe_runs.status=ok`. Validates recipe-dispatch shell wires through cleanly post body trim.
+  - Acceptance: `ia_recipe_runs` row recorded with `status=ok` for at least one section-closeout run; smoke run output matches pre-trim baseline (closeout digest + commit shape unchanged).
+  - Depends on: TECH-6985 (body trim must land before smoke run validates new shell)
 
 ## Architecture coherence program
 

@@ -739,6 +739,18 @@
           "id": "TECH-6982",
           "checklist_line": "- [ ] **TECH-6982** — Body trim ship-stage Pass B agent to recipe-dispatch shell",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6985",
+          "checklist_line": "- [ ] **TECH-6985** — Recipe-parity audit + body trim for section-closeout",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-6986",
+          "checklist_line": "- [ ] **TECH-6986** — End-to-end smoke run via recipe-dispatch shell",
+          "trailing_blanks": 1
         }
       ]
     },

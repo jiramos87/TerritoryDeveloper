@@ -10,7 +10,7 @@ alwaysApply: true
 ## Testing + verification
 
 - Prefer closed-loop testing (`verify-loop` / `testmode-batch`) over human-in-the-loop. Ask only when bridge/batch can't reach the surface.
-- Unity mutations/reads → `unity_bridge_command` / `unity_bridge_get` first; escalate to human only when mutation kind doesn't exist.
+- Unity mutations/reads → `unity_bridge_command` / `unity_bridge_get` end-to-end. Agent owns Editor work; never hand the human a wiring checklist. Missing kind → propose new bridge tool stub in `tools/mcp-ia-server/src/index.ts` BEFORE escalating; only escalate when proposal itself blocked.
 
 ## Token economy + speed
 
