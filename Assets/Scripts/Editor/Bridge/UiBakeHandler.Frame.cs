@@ -48,7 +48,10 @@ namespace Territory.Editor.Bridge
                 rootRect.sizeDelta = new Vector2(600f, 800f);
                 var bgImage = go.AddComponent<Image>();
                 bgImage.color = Color.white;
-                bgImage.raycastTarget = true;
+                // Stage 13.2 — chrome raycast policy: only modal kinds block input behind the panel.
+                // Hud / Toolbar / SideRail / Screen are non-modal overlays — chrome stays input-transparent
+                // so legacy DebugPanel (and any background world clicks) keep receiving pointer events.
+                bgImage.raycastTarget = string.Equals(panel.kind, "modal", StringComparison.Ordinal);
                 var themedPanel = go.AddComponent<ThemedPanel>();
                 WireThemeRef(themedPanel, theme);
 
@@ -186,6 +189,21 @@ namespace Territory.Editor.Bridge
                     }
                 }
 
+                // Stage 13.2 (TECH-9854) — IR v2 row hierarchy. Emit one fresh GameObject per
+                // `panel.rows[]` entry under the panel root. Caption + Value primitive leaves
+                // (TMP_Text) populated from row.label / row.value; runtime adapters (Stage 13.4)
+                // bind data sources against these leaves. Optional VU/Delta/IconRef leaves
+                // deferred until row schema carries those fields. Invariant #6 honored: every
+                // row container is a fresh GameObject — no AddComponent on existing nodes.
+                EmitRowChildren(panel, go.transform, theme);
+
+                // Stage 13.2 (TECH-9854) — wire ThemedTabBar.pages[] from `panel.tabs[]` when both
+                // a tab bar slot child and tab descriptors are present. Tabless panels skip wholly.
+                if (panel.tabs != null && panel.tabs.Length > 0)
+                {
+                    WireTabBarPages(panel, childrenList);
+                }
+
                 // Stage 1.4 T1.4.2 — archetype dispatch: instantiate section_header / divider / badge child.
                 BakePanelArchetype(panel, go, theme);
 
@@ -267,6 +285,124 @@ namespace Territory.Editor.Bridge
             }
         }
 
+        // ── Stage 13.2 (TECH-9854) — IR v2 row hierarchy + tab page wiring ──────
+
+        /// <summary>
+        /// Emit one fresh <c>GameObject</c> per <c>panel.rows[]</c> entry under <paramref name="panelRoot"/>.
+        /// Each row container holds a <c>Caption</c> TMP child (label) and a <c>Value</c> TMP child
+        /// (formatted value). <c>kind=header</c> rows skip the value leaf. Runtime adapters
+        /// (Stage 13.4) re-bind these leaves against live data sources; bake handler only
+        /// captures the IR-declared placeholder text so designers can review structure.
+        /// </summary>
+        static void EmitRowChildren(IrPanel panel, Transform panelRoot, UiTheme theme)
+        {
+            _ = theme; // Theme wiring deferred — row leaves stay neutral until Stage 13.4 adapter pass.
+            if (panel?.rows == null || panel.rows.Length == 0) return;
+            if (panelRoot == null) return;
+
+            bool isHeader;
+            for (int r = 0; r < panel.rows.Length; r++)
+            {
+                var row = panel.rows[r];
+                if (row == null) continue;
+                isHeader = string.Equals(row.kind, "header", StringComparison.Ordinal);
+
+                var rowName = string.IsNullOrEmpty(row.label) ? $"Row {r}" : $"Row {r} ({row.label})";
+                var rowGo = new GameObject(rowName, typeof(RectTransform));
+                rowGo.transform.SetParent(panelRoot, worldPositionStays: false);
+                // Stage 13.2 — row container must size cleanly under panel VLG (SideRail / Modal).
+                // LayoutElement supplies preferredHeight; HorizontalLayoutGroup splits caption + value
+                // 50/50 with childForceExpandWidth so both leaves render at known size. Without this
+                // patch the row + its leaves stayed at the default 0×0 RectTransform → invisible.
+                var rowLe = rowGo.AddComponent<LayoutElement>();
+                rowLe.preferredHeight = isHeader ? 28f : 24f;
+                rowLe.flexibleWidth = 1f;
+                var rowHlg = rowGo.AddComponent<HorizontalLayoutGroup>();
+                rowHlg.childAlignment = TextAnchor.MiddleLeft;
+                rowHlg.childControlWidth = true;
+                rowHlg.childControlHeight = true;
+                rowHlg.childForceExpandWidth = true;
+                rowHlg.childForceExpandHeight = true;
+                rowHlg.spacing = 8f;
+                rowHlg.padding = new RectOffset(8, 8, 0, 0);
+
+                var captionGo = new GameObject("Caption", typeof(RectTransform));
+                captionGo.transform.SetParent(rowGo.transform, worldPositionStays: false);
+                var captionTmp = captionGo.AddComponent<TextMeshProUGUI>();
+                captionTmp.text = row.label ?? string.Empty;
+                captionTmp.fontSize = isHeader ? 14f : 12f;
+                captionTmp.fontStyle = isHeader ? FontStyles.Bold : FontStyles.Normal;
+                captionTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                captionTmp.color = Color.white;
+                captionTmp.raycastTarget = false;
+                var captionLe = captionGo.AddComponent<LayoutElement>();
+                captionLe.flexibleWidth = 1f;
+                captionLe.preferredHeight = rowLe.preferredHeight;
+
+                if (!isHeader)
+                {
+                    var valueGo = new GameObject("Value", typeof(RectTransform));
+                    valueGo.transform.SetParent(rowGo.transform, worldPositionStays: false);
+                    var valueTmp = valueGo.AddComponent<TextMeshProUGUI>();
+                    valueTmp.text = row.value ?? string.Empty;
+                    valueTmp.fontSize = 12f;
+                    valueTmp.alignment = TextAlignmentOptions.MidlineRight;
+                    valueTmp.color = Color.white;
+                    valueTmp.raycastTarget = false;
+                    var valueLe = valueGo.AddComponent<LayoutElement>();
+                    valueLe.flexibleWidth = 1f;
+                    valueLe.preferredHeight = rowLe.preferredHeight;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Locate the first <see cref="ThemedTabBar"/> child in <paramref name="panelChildren"/>
+        /// and write its <c>_pages[]</c> serialized array from <c>panel.tabs[]</c>. No-op when
+        /// no tab bar child exists (panel declared tabs but no `themed-tab-bar` slot child).
+        /// </summary>
+        static void WireTabBarPages(IrPanel panel, List<GameObject> panelChildren)
+        {
+            if (panel?.tabs == null || panel.tabs.Length == 0) return;
+            if (panelChildren == null) return;
+
+            ThemedTabBar tabBar = null;
+            for (int i = 0; i < panelChildren.Count; i++)
+            {
+                if (panelChildren[i] == null) continue;
+                tabBar = panelChildren[i].GetComponent<ThemedTabBar>();
+                if (tabBar != null) break;
+            }
+            if (tabBar == null)
+            {
+                Debug.LogWarning(
+                    $"[UiBakeHandler] panel={panel.slug} carries tabs[] but no themed-tab-bar slot child — pages[] wiring skipped");
+                return;
+            }
+
+            var so = new SerializedObject(tabBar);
+            var pagesProp = so.FindProperty("_pages");
+            if (pagesProp == null)
+            {
+                Debug.LogWarning($"[UiBakeHandler] panel={panel.slug} ThemedTabBar._pages property missing — wiring skipped");
+                return;
+            }
+
+            pagesProp.arraySize = panel.tabs.Length;
+            for (int t = 0; t < panel.tabs.Length; t++)
+            {
+                var tab = panel.tabs[t];
+                var elem = pagesProp.GetArrayElementAtIndex(t);
+                var idProp = elem.FindPropertyRelative("id");
+                var labelProp = elem.FindPropertyRelative("label");
+                var activeProp = elem.FindPropertyRelative("active");
+                if (idProp != null) idProp.stringValue = tab?.id ?? string.Empty;
+                if (labelProp != null) labelProp.stringValue = tab?.label ?? string.Empty;
+                if (activeProp != null) activeProp.boolValue = tab?.active ?? false;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         // ── Stage 7 T7.0 — embedded panel child instantiation ───────────────────
 
         /// <summary>
@@ -304,6 +440,7 @@ namespace Territory.Editor.Bridge
                     var knob = childGo.AddComponent<Knob>();
                     WireThemeRef(knob, theme);
                     knob.ApplyDetail(new KnobDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 64f, preferredHeight: 64f, flexibleWidth: 0f);
                     break;
                 }
                 case "fader":
@@ -311,6 +448,7 @@ namespace Territory.Editor.Bridge
                     var fader = childGo.AddComponent<Fader>();
                     WireThemeRef(fader, theme);
                     fader.ApplyDetail(new FaderDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 60f, preferredHeight: 120f, flexibleWidth: 0f);
                     break;
                 }
                 case "detent-ring":
@@ -318,6 +456,7 @@ namespace Territory.Editor.Bridge
                     var dr = childGo.AddComponent<DetentRing>();
                     WireThemeRef(dr, theme);
                     dr.ApplyDetail(new DetentRingDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 80f, preferredHeight: 80f, flexibleWidth: 0f);
                     break;
                 }
                 case "vu-meter":
@@ -332,6 +471,7 @@ namespace Territory.Editor.Bridge
                     WireThemeRef(vuRend, theme);
                     SpawnVUMeterRenderTargets(childGo);
                     vu.ApplyDetail(new VUMeterDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 96f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
                 case "oscilloscope":
@@ -339,6 +479,7 @@ namespace Territory.Editor.Bridge
                     var osc = childGo.AddComponent<Oscilloscope>();
                     WireThemeRef(osc, theme);
                     osc.ApplyDetail(new OscilloscopeDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 160f, preferredHeight: 80f, flexibleWidth: 1f);
                     break;
                 }
                 case "illuminated-button":
@@ -364,6 +505,7 @@ namespace Territory.Editor.Bridge
                     {
                         SpawnIlluminatedButtonCaption(childGo, label);
                     }
+                    EnsureChildLayoutElement(childGo, preferredWidth: 64f, preferredHeight: 64f, flexibleWidth: 0f);
                     break;
                 }
                 case "led":
@@ -371,6 +513,7 @@ namespace Territory.Editor.Bridge
                     var led = childGo.AddComponent<LED>();
                     WireThemeRef(led, theme);
                     led.ApplyDetail(new LEDDetail());
+                    EnsureChildLayoutElement(childGo, preferredWidth: 16f, preferredHeight: 16f, flexibleWidth: 0f);
                     break;
                 }
                 case "segmented-readout":
@@ -386,6 +529,7 @@ namespace Territory.Editor.Bridge
                     var sd = new SegmentedReadoutDetail { digits = 1 };
                     SpawnSegmentedReadoutRenderTargets(childGo, sd);
                     sr.ApplyDetail(sd);
+                    EnsureChildLayoutElement(childGo, preferredWidth: 120f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 case "themed-overlay-toggle-row":

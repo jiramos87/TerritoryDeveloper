@@ -470,7 +470,9 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Position grid debug chrome above <c>ControlPanel</c> if available, else above minimap.
+        /// Pin grid debug chrome to right edge of HUD layout root (vertically centered) so it
+        /// never covers the bottom toolbar or left ControlPanel. Replaces the legacy stack-above-
+        /// ControlPanel/minimap layout that obscured toolbar buttons.
         /// </summary>
         private static void AlignGridCoordinatesChrome(RectTransform chromeRt)
         {
@@ -478,9 +480,20 @@ namespace Territory.UI
                 return;
             Canvas.ForceUpdateCanvases();
             EnsureGridCoordinatesChromeHudMount(chromeRt);
-            if (TryAlignGridCoordinatesChromeToControlPanel(chromeRt))
+
+            RectTransform parentRt = chromeRt.parent as RectTransform;
+            if (parentRt == null)
                 return;
-            AlignGridCoordinatesChromeToMiniMap(chromeRt);
+
+            const float rightMargin = 16f;
+            float side = Mathf.Min(GridCoordinatesChromeMaxSquareSide, parentRt.rect.height * 0.5f);
+            side = Mathf.Max(side, 1f);
+
+            chromeRt.anchorMin = new Vector2(1f, 0.5f);
+            chromeRt.anchorMax = new Vector2(1f, 0.5f);
+            chromeRt.pivot = new Vector2(1f, 0.5f);
+            chromeRt.anchoredPosition = new Vector2(-rightMargin, 0f);
+            chromeRt.sizeDelta = new Vector2(side, side);
         }
 
         /// <summary>

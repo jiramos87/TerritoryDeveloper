@@ -83,7 +83,69 @@ namespace Territory.UI.HUD
             if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
 
+            // Self-wire button slots by IR iconSpriteSlug — resilient against bake-time reordering
+            // of physical button instances. Inspector slots referencing legacy buttons (no slug match)
+            // are preserved as-is.
+            RebindButtonsByIconSlug();
+
             WireClickHandlers();
+        }
+
+        // Slug-to-slot map for hud-bar IR. Adapter clears ALL Inspector array slots, then walks child
+        // IlluminatedButton components and matches IlluminatedButtonDetail.iconSpriteSlug. Inspector
+        // refs from pre-bake scene serialization can resolve to physical buttons whose icon meaning
+        // changed after re-bake — leaving them attached causes click handlers to fire stale actions
+        // (e.g. Save/New game on visually-Stats click). Hard reset is the only safe path: slugs not
+        // present in IR (NEW/SAVE/LOAD/AUTO/MINIMAP) leave their slot null + their handler unwired,
+        // which is correct because those visuals do not exist in the baked output.
+        private void RebindButtonsByIconSlug()
+        {
+            // Hard reset — drop all Inspector slot bindings before slug-walk.
+            _newButton = null;
+            _saveButton = null;
+            _loadButton = null;
+            _autoButton = null;
+            _zoomInButton = null;
+            _zoomOutButton = null;
+            _statsButton = null;
+            _miniMapButton = null;
+            _speedButtons = null;
+
+            var buttons = GetComponentsInChildren<IlluminatedButton>(true);
+            if (buttons == null || buttons.Length == 0) return;
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                var btn = buttons[i];
+                var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug : null;
+                if (string.IsNullOrEmpty(slug)) continue;
+
+                switch (slug)
+                {
+                    case "stats-button-64": _statsButton = btn; break;
+                    case "zoom-in-button-1-64": _zoomInButton = btn; break;
+                    case "zoom-out-button-1-64": _zoomOutButton = btn; break;
+                    case "pause-button-1-64": EnsureSpeedSlot(0, btn); break;
+                    case "speed-1-button-1-64": EnsureSpeedSlot(1, btn); break;
+                    case "speed-2-button-1-64": EnsureSpeedSlot(2, btn); break;
+                    case "speed-3-button-1-64": EnsureSpeedSlot(3, btn); break;
+                    case "speed-4-button-1-64": EnsureSpeedSlot(4, btn); break;
+                }
+            }
+        }
+
+        private void EnsureSpeedSlot(int index, IlluminatedButton btn)
+        {
+            if (_speedButtons == null || _speedButtons.Length < 5)
+            {
+                var resized = new IlluminatedButton[5];
+                if (_speedButtons != null)
+                {
+                    for (int i = 0; i < _speedButtons.Length && i < 5; i++) resized[i] = _speedButtons[i];
+                }
+                _speedButtons = resized;
+            }
+            _speedButtons[index] = btn;
         }
 
         private void WireClickHandlers()

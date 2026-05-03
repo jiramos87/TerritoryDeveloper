@@ -67,7 +67,67 @@ namespace Territory.UI.Toolbar
             // UiTheme is a ScriptableObject — Inspector-only assignment per StudioControlBase pattern.
             // No FindObjectOfType for SOs (Stage 6 precedent).
 
+            // Self-wire button slots by IR iconSpriteSlug — resilient against bake-time reordering.
+            // Maps single-tier baked icons to canonical adapter slot indices (residential→0,
+            // commercial→3, industrial→6, state→9; power→0, water→1; forest sparse→0).
+            RebindButtonsByIconSlug();
+
             SubscribeClicks();
+        }
+
+        private void RebindButtonsByIconSlug()
+        {
+            // Hard reset — drop all Inspector slot bindings before slug-walk. Pre-bake Inspector
+            // refs can resolve to physical buttons whose icon meaning changed after re-bake; leaving
+            // them attached causes click handlers to fire stale actions on visually-different
+            // buttons. Slugs not present in IR leave their slot null → handler not wired → no
+            // false-positive dispatch.
+            _zoningButtons = null;
+            _roadButtons = null;
+            _terrainButtons = null;
+            _buildingButtons = null;
+            _forestButtons = null;
+            _bulldozeButton = null;
+
+            var buttons = GetComponentsInChildren<IlluminatedButton>(true);
+            if (buttons == null || buttons.Length == 0) return;
+
+            EnsureArray(ref _zoningButtons, 10);
+            EnsureArray(ref _roadButtons, 1);
+            EnsureArray(ref _terrainButtons, 1);
+            EnsureArray(ref _buildingButtons, 2);
+            EnsureArray(ref _forestButtons, 3);
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                var btn = buttons[i];
+                var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug : null;
+                if (string.IsNullOrEmpty(slug)) continue;
+
+                switch (slug)
+                {
+                    case "residential-button-64": _zoningButtons[0] = btn; break;
+                    case "commercial-button-64": _zoningButtons[3] = btn; break;
+                    case "industrial-button-64": _zoningButtons[6] = btn; break;
+                    case "state-button-64": _zoningButtons[9] = btn; break;
+                    case "power-buildings-button-64": _buildingButtons[0] = btn; break;
+                    case "water-buildings-button-64": _buildingButtons[1] = btn; break;
+                    case "roads-button-64": _roadButtons[0] = btn; break;
+                    case "forest-button-64": _forestButtons[0] = btn; break;
+                    case "bulldoze-button-64": _bulldozeButton = btn; break;
+                }
+            }
+        }
+
+        private static void EnsureArray(ref IlluminatedButton[] arr, int length)
+        {
+            if (arr != null && arr.Length >= length) return;
+            var resized = new IlluminatedButton[length];
+            if (arr != null)
+            {
+                for (int i = 0; i < arr.Length && i < length; i++) resized[i] = arr[i];
+            }
+            arr = resized;
         }
 
         private void OnDestroy()

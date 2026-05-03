@@ -47,6 +47,9 @@ namespace Territory.Editor.Bridge
                 case "screen": return (int)PanelKind.Screen;
                 case "hud": return (int)PanelKind.Hud;
                 case "toolbar": return (int)PanelKind.Toolbar;
+                case "side-rail":
+                case "side_rail":
+                case "sideRail": return (int)PanelKind.SideRail;
                 default:
                     Debug.LogWarning($"[UiBakeHandler] panel.kind '{kind}' unknown — defaulting to modal");
                     return (int)PanelKind.Modal;
@@ -755,7 +758,13 @@ namespace Territory.Editor.Bridge
             var sel = hostGo.GetComponent<UnityEngine.UI.Button>();
             if (sel == null) sel = hostGo.AddComponent<UnityEngine.UI.Button>();
             sel.targetGraphic = bodyImage;
-            sel.transition = Selectable.Transition.ColorTint;
+            // Stage 13.2 — IlluminatedButtonRenderer owns hover/press visuals (halo alpha + body alpha
+            // via IPointerEnter/Exit/Down/Up). Selectable.Transition.ColorTint races the renderer by
+            // overwriting bodyImage.color on hover/select; with selectedColor != normalColor the click
+            // leaves the button stuck at the highlight tint forever. Disable Selectable transition so
+            // the renderer is the single writer of body color; pointer routing still works because the
+            // Button component is present (raycast hit + onClick wiring intact via IPointerClick).
+            sel.transition = Selectable.Transition.None;
 
             var cb = sel.colors;
             cb.normalColor = Color.white;
@@ -763,21 +772,10 @@ namespace Territory.Editor.Bridge
             cb.pressedColor = Color.white;
             cb.selectedColor = Color.white;
             cb.disabledColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-            if (theme != null && theme.TryGetPalette("led-amber", out var ramp) && ramp.ramp != null && ramp.ramp.Length >= 3)
-            {
-                int last = ramp.ramp.Length - 1;
-                if (ColorUtility.TryParseHtmlString(ramp.ramp[last], out var normal)) cb.normalColor = normal;
-                if (ColorUtility.TryParseHtmlString(ramp.ramp[Mathf.Max(0, last - 1)], out var hl))
-                {
-                    cb.highlightedColor = hl;
-                    cb.selectedColor = hl;
-                }
-                if (ColorUtility.TryParseHtmlString(ramp.ramp[Mathf.Max(0, last - 2)], out var pressed)) cb.pressedColor = pressed;
-                if (ColorUtility.TryParseHtmlString(ramp.ramp[0], out var disabled)) cb.disabledColor = disabled;
-            }
             cb.colorMultiplier = 1f;
             cb.fadeDuration = 0.1f;
             sel.colors = cb;
+            _ = theme; // Palette no longer consumed here — renderer reads body alpha from IlluminatedButton.IlluminationAlpha.
         }
 
         /// <summary>Step 16.G — caption fallback for illuminated-button slots that carry a label

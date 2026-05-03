@@ -18,7 +18,8 @@ namespace Territory.UI.CityStatsHandoff
     /// MonoBehaviour producers fall back to <see cref="MonoBehaviour.FindObjectOfType{T}()"/> in
     /// <see cref="Awake"/> when Inspector slot empty (invariant #4); <see cref="UiTheme"/>
     /// Inspector-only (SO; no <c>FindObjectOfType</c> for SOs per Stage 6 precedent).
-    /// No runtime <c>AddComponent</c>.
+    /// Bake-time row hierarchy + digit widths + captions provided by Stage 13.2 UiBakeHandler v2 —
+    /// no runtime <c>AddComponent</c> here.
     /// </remarks>
     public class CityStatsHandoffAdapter : MonoBehaviour
     {
@@ -42,49 +43,6 @@ namespace Territory.UI.CityStatsHandoff
             if (_cityStats == null) _cityStats = FindObjectOfType<Territory.Economy.CityStats>();
             if (_cityStatsFacade == null) _cityStatsFacade = FindObjectOfType<CityStatsFacade>();
             // _uiTheme is a ScriptableObject — Inspector-only assignment (Stage 6 precedent).
-
-            // Bake-time digits=1 truncates values to a single character; widen per channel so
-            // money/population/happiness render at their natural magnitude.
-            ApplyDigitWidth(_moneyReadout, 8);
-            ApplyDigitWidth(_populationReadout, 6);
-            ApplyDigitWidth(_happinessReadout, 3);
-
-            // Inject caption above each readout so the panel reads as a stats list, not a row of
-            // bare digit boxes. Labels are per-instance children — runtime AddComponent on a fresh
-            // GameObject is permitted by Stage 6 precedent (no AddComponent on existing nodes).
-            EnsureCaption(_moneyReadout, "MONEY");
-            EnsureCaption(_populationReadout, "POPULATION");
-            EnsureCaption(_happinessReadout, "HAPPINESS");
-        }
-
-        private static void ApplyDigitWidth(SegmentedReadout readout, int digits)
-        {
-            if (readout == null || readout.Detail == null) return;
-            if (readout.Detail.digits >= digits) return;
-            readout.Detail.digits = digits;
-        }
-
-        private static void EnsureCaption(SegmentedReadout readout, string captionText)
-        {
-            if (readout == null) return;
-            var parent = readout.transform;
-            if (parent.Find("Caption") != null) return;
-
-            var go = new GameObject("Caption", typeof(RectTransform));
-            var rect = (RectTransform)go.transform;
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.anchoredPosition = new Vector2(0f, 4f);
-            rect.sizeDelta = new Vector2(0f, 20f);
-
-            var label = go.AddComponent<TextMeshProUGUI>();
-            label.text = captionText;
-            label.fontSize = 14f;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = new Color(0.85f, 0.85f, 0.85f, 1f);
-            label.raycastTarget = false;
         }
 
         private void OnEnable()

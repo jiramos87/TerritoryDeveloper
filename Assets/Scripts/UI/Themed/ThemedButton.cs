@@ -59,10 +59,15 @@ namespace Territory.UI.Themed
                     {
                         var colors = button.colors;
                         colors.normalColor = c;
+                        // Stage 13.2 Bug 5 — selectedColor must equal normalColor so that
+                        // after first click the button does NOT stay stuck at the highlight
+                        // tint (Unity Selectable retains "selected" state until another
+                        // Selectable receives focus; with selectedColor=highlightedColor the
+                        // button reads as permanently hovered after click+exit).
+                        colors.selectedColor = c;
                         if (ramp.ramp.Length >= 2 && ColorUtility.TryParseHtmlString(ramp.ramp[ramp.ramp.Length - 2], out var hover))
                         {
                             colors.highlightedColor = hover;
-                            colors.selectedColor = hover;
                         }
                         if (ramp.ramp.Length >= 3 && ColorUtility.TryParseHtmlString(ramp.ramp[ramp.ramp.Length - 3], out var pressed))
                         {

@@ -162,6 +162,31 @@ namespace Territory.Editor.Bridge
             public string frame_style_slug;
             /// <summary>Stage 1.4 (T1.4.3) — illumination token slug; drives <see cref="ThemedIlluminationLayer"/> child when non-empty.</summary>
             public string illumination_slug;
+            /// <summary>Stage 13.1+ — IR v2 tab descriptors. Null/empty on tabless panels; bake skips ThemedTabBar.pages[] wiring when absent.</summary>
+            public IrTab[] tabs;
+            /// <summary>Stage 13.1+ — IR v2 flat row list. Null/empty on rowless panels; bake emits no row children.</summary>
+            public IrRow[] rows;
+        }
+
+        /// <summary>Stage 13.1+ — IR v2 tab descriptor (mirrors `IrTab` in tools/scripts/ir-schema.ts). Drives ThemedTabBar.pages[] wiring at bake time.</summary>
+        [Serializable]
+        public class IrTab
+        {
+            public string id;
+            public string label;
+            public bool active;
+        }
+
+        /// <summary>Stage 13.1+ — IR v2 row descriptor (mirrors `IrRow` in tools/scripts/ir-schema.ts). Flat list per panel; `kind` discriminates render shape.</summary>
+        [Serializable]
+        public class IrRow
+        {
+            /// <summary>Render shape — `stat`, `detail`, or `header`.</summary>
+            public string kind;
+            public string label;
+            public string value;
+            public int segments;
+            public string fontSlug;
         }
 
         [Serializable]
