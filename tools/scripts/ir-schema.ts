@@ -91,6 +91,8 @@ export interface IrTab {
   label: string;
   /** Whether this tab is active by default. Optional — default false. */
   active?: boolean;
+  /** Stage 13.3 — optional icon slug (matches `UiTheme.iconEntries[].slug`). */
+  iconSlug?: string;
 }
 
 /**
@@ -108,6 +110,8 @@ export interface IrRow {
   segments?: number;
   /** Optional font face slug (matches `tokens.font_face[].slug`). */
   fontSlug?: string;
+  /** Stage 13.3 — optional icon slug (matches `UiTheme.iconEntries[].slug`). */
+  iconSlug?: string;
 }
 
 /**

@@ -175,6 +175,8 @@ namespace Territory.Editor.Bridge
             public string id;
             public string label;
             public bool active;
+            /// <summary>Stage 13.3 — optional icon slug; when non-empty, bake adds <see cref="Territory.UI.Themed.ThemedIcon"/> child resolving via <see cref="Territory.UI.Themed.UiTheme.TryGetIcon"/>.</summary>
+            public string iconSlug;
         }
 
         /// <summary>Stage 13.1+ — IR v2 row descriptor (mirrors `IrRow` in tools/scripts/ir-schema.ts). Flat list per panel; `kind` discriminates render shape.</summary>
@@ -187,6 +189,8 @@ namespace Territory.Editor.Bridge
             public string value;
             public int segments;
             public string fontSlug;
+            /// <summary>Stage 13.3 — optional icon slug; when non-empty, bake adds <see cref="Territory.UI.Themed.ThemedIcon"/> child resolving via <see cref="Territory.UI.Themed.UiTheme.TryGetIcon"/>.</summary>
+            public string iconSlug;
         }
 
         [Serializable]

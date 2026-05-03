@@ -296,7 +296,7 @@ namespace Territory.Editor.Bridge
         /// </summary>
         static void EmitRowChildren(IrPanel panel, Transform panelRoot, UiTheme theme)
         {
-            _ = theme; // Theme wiring deferred — row leaves stay neutral until Stage 13.4 adapter pass.
+            // Stage 13.3 (TECH-9864) — theme wiring on for ThemedIcon child resolution.
             if (panel?.rows == null || panel.rows.Length == 0) return;
             if (panelRoot == null) return;
 
@@ -326,6 +326,14 @@ namespace Territory.Editor.Bridge
                 rowHlg.spacing = 8f;
                 rowHlg.padding = new RectOffset(8, 8, 0, 0);
 
+                // Stage 13.3 (TECH-9864) — optional icon leaf; runs before caption so it
+                // anchors at the row's leading edge under HLG. Resolves slug via
+                // theme.TryGetIcon at runtime; bake-time fallback handled by ThemedIcon.
+                if (!string.IsNullOrEmpty(row.iconSlug))
+                {
+                    SpawnRowIcon(rowGo.transform, row.iconSlug, theme, rowLe.preferredHeight);
+                }
+
                 var captionGo = new GameObject("Caption", typeof(RectTransform));
                 captionGo.transform.SetParent(rowGo.transform, worldPositionStays: false);
                 var captionTmp = captionGo.AddComponent<TextMeshProUGUI>();
@@ -354,6 +362,40 @@ namespace Territory.Editor.Bridge
                     valueLe.preferredHeight = rowLe.preferredHeight;
                 }
             }
+        }
+
+        /// <summary>
+        /// Stage 13.3 (TECH-9864) — spawn fresh <c>Icon</c> child <c>GameObject</c> under a row
+        /// container. Composition: <see cref="RectTransform"/> + <see cref="UnityEngine.UI.Image"/> +
+        /// <see cref="Territory.UI.Themed.ThemedIcon"/>. Runtime <c>ApplyTheme</c> resolves the slug
+        /// via <see cref="UiTheme.TryGetIcon"/>; missing slug → <c>icon-info</c> fallback + per-session
+        /// deduped warning. Invariant #6 honored: fresh GameObject — no AddComponent on existing nodes.
+        /// </summary>
+        static void SpawnRowIcon(Transform rowRoot, string iconSlug, UiTheme theme, float rowHeight)
+        {
+            if (rowRoot == null || string.IsNullOrEmpty(iconSlug)) return;
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
+            iconGo.transform.SetParent(rowRoot, worldPositionStays: false);
+            var img = iconGo.AddComponent<Image>();
+            img.color = Color.white;
+            img.raycastTarget = false;
+            img.preserveAspect = true;
+            var themedIcon = iconGo.AddComponent<ThemedIcon>();
+            WireThemeRef(themedIcon, theme);
+            themedIcon.IconSlug = iconSlug;
+            // SerializedObject path persists _iconImage ref + _iconSlug so re-bake reads back.
+            var so = new SerializedObject(themedIcon);
+            var imgProp = so.FindProperty("_iconImage");
+            if (imgProp != null) imgProp.objectReferenceValue = img;
+            var slugProp = so.FindProperty("_iconSlug");
+            if (slugProp != null) slugProp.stringValue = iconSlug;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            float side = rowHeight > 0f ? rowHeight - 4f : 20f;
+            var le = iconGo.AddComponent<LayoutElement>();
+            le.preferredWidth = side;
+            le.preferredHeight = side;
+            le.flexibleWidth = 0f;
         }
 
         /// <summary>
@@ -396,9 +438,11 @@ namespace Territory.Editor.Bridge
                 var idProp = elem.FindPropertyRelative("id");
                 var labelProp = elem.FindPropertyRelative("label");
                 var activeProp = elem.FindPropertyRelative("active");
+                var iconSlugProp = elem.FindPropertyRelative("iconSlug");
                 if (idProp != null) idProp.stringValue = tab?.id ?? string.Empty;
                 if (labelProp != null) labelProp.stringValue = tab?.label ?? string.Empty;
                 if (activeProp != null) activeProp.boolValue = tab?.active ?? false;
+                if (iconSlugProp != null) iconSlugProp.stringValue = tab?.iconSlug ?? string.Empty;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
         }

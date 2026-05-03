@@ -16,6 +16,9 @@ namespace Territory.UI.Themed
             public string id;
             public string label;
             public bool active;
+            /// <summary>Stage 13.3 — optional icon slug; bake handler wires a <see cref="ThemedIcon"/>
+            /// child per tab when non-empty. Empty/null tabs render label-only.</summary>
+            public string iconSlug;
         }
 
         [SerializeField] private string _paletteSlug;

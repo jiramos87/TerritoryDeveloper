@@ -77,12 +77,16 @@ namespace Territory.UI
         [SerializeField] private List<MotionCurveKv> motionCurveEntries = new List<MotionCurveKv>();
         [SerializeField] private List<IlluminationKv> illuminationEntries = new List<IlluminationKv>();
 
+        [Header("Icon slug map (Stage 13.3 — bake-time icon resolution)")]
+        [SerializeField] private List<IconKv> iconEntries = new List<IconKv>();
+
         // Lazy-rebuilt runtime caches. Rebuild trigger: dict null OR slug count differs from list count.
         private Dictionary<string, PaletteRamp> _paletteCache;
         private Dictionary<string, FrameStyleSpec> _frameStyleCache;
         private Dictionary<string, FontFaceSpec> _fontFaceCache;
         private Dictionary<string, MotionCurveSpec> _motionCurveCache;
         private Dictionary<string, IlluminationSpec> _illuminationCache;
+        private Dictionary<string, Sprite> _iconCache;
 
         // ----- Legacy accessors -----
 
@@ -148,6 +152,13 @@ namespace Territory.UI
             return _illuminationCache.TryGetValue(slug ?? string.Empty, out value);
         }
 
+        /// <summary>Try-get icon Sprite by slug (Stage 13.3). Lazy-rebuilds dict cache on first call after deserialization.</summary>
+        public bool TryGetIcon(string slug, out Sprite sprite)
+        {
+            EnsureIconCache();
+            return _iconCache.TryGetValue(slug ?? string.Empty, out sprite);
+        }
+
         // ----- Mutation surface (Editor-only contract — used by UiBakeHandler — Stage 2 T2.4). -----
         // Public visibility required because bake handler lives in Editor assembly. Runtime callers
         // must NOT mutate these lists directly; use IR JSON → bake pipeline.
@@ -157,6 +168,7 @@ namespace Territory.UI
         public List<FontFaceKv> FontFaceEntries => fontFaceEntries;
         public List<MotionCurveKv> MotionCurveEntries => motionCurveEntries;
         public List<IlluminationKv> IlluminationEntries => illuminationEntries;
+        public List<IconKv> IconEntries => iconEntries;
 
         /// <summary>Force dict cache invalidation. Bake handler calls this after rewriting backing lists.</summary>
         public void InvalidateTokenCaches()
@@ -166,6 +178,7 @@ namespace Territory.UI
             _fontFaceCache = null;
             _motionCurveCache = null;
             _illuminationCache = null;
+            _iconCache = null;
         }
 
         // ----- Lazy-rebuild guards. Idempotent: rebuilds when dict null or count mismatches list. -----
@@ -228,6 +241,18 @@ namespace Territory.UI
                 dict[kv.slug] = kv.value;
             }
             _illuminationCache = dict;
+        }
+
+        private void EnsureIconCache()
+        {
+            if (_iconCache != null && _iconCache.Count == iconEntries.Count) return;
+            var dict = new Dictionary<string, Sprite>(iconEntries.Count);
+            foreach (var kv in iconEntries)
+            {
+                if (string.IsNullOrEmpty(kv.slug)) continue;
+                dict[kv.slug] = kv.sprite;
+            }
+            _iconCache = dict;
         }
 
         // ----- DTO struct types. Field names mirror `tools/scripts/ir-schema.ts` verbatim. -----
@@ -322,6 +347,14 @@ namespace Territory.UI
         {
             public string slug;
             public IlluminationSpec value;
+        }
+
+        /// <summary>Icon slug → Sprite pair (Stage 13.3 — bake-time icon resolution).</summary>
+        [Serializable]
+        public struct IconKv
+        {
+            public string slug;
+            public Sprite sprite;
         }
     }
 }

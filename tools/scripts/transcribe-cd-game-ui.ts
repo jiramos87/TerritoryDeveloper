@@ -44,12 +44,14 @@ import {
   validateIrShape,
   validateSlotAccept,
 } from './ir-schema.ts';
+import { runSplit, CANONICAL_ICON_SLUGS } from './icons-svg-split.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 const DEFAULT_BUNDLE_DIR = path.join(REPO_ROOT, 'web/design-refs/step-1-game-ui/cd-bundle');
 const DEFAULT_OUT = path.join(REPO_ROOT, 'web/design-refs/step-1-game-ui/ir.json');
+const DEFAULT_ICONS_OUT_DIR = path.join(REPO_ROOT, 'Assets/Sprites/Icons');
 
 // -- Token css parsing --------------------------------------------------------
 
@@ -408,7 +410,7 @@ Schema fail → stderr + exit 1. Slot accept-rule violation reports panel/slot/o
   return { bundleDir, outPath };
 }
 
-function main() {
+async function main() {
   const { bundleDir, outPath } = parseArgs(process.argv);
 
   let ir: Ir;
@@ -442,9 +444,40 @@ function main() {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(ir, null, 2) + '\n', 'utf8');
   process.stdout.write(`transcribe-cd-game-ui: wrote ${outPath}\n`);
+
+  // Stage 13.3 T1 — chain icon split as a sub-step. Source SVG lives in the
+  // CD bundle; emit one PNG per `<symbol id="icon-…">` into Assets/Sprites/Icons.
+  // Missing canonical ids are non-fatal — ThemedIcon falls back at runtime.
+  const iconsSvgPath = path.join(bundleDir, 'icons.svg');
+  if (fs.existsSync(iconsSvgPath)) {
+    try {
+      const split = await runSplit({ sourcePath: iconsSvgPath, outDir: DEFAULT_ICONS_OUT_DIR });
+      process.stdout.write(
+        `transcribe-cd-game-ui: icons split emitted ${split.emitted.length}/${CANONICAL_ICON_SLUGS.length} → ${DEFAULT_ICONS_OUT_DIR}\n`,
+      );
+      if (split.missing.length > 0) {
+        process.stderr.write(
+          `transcribe-cd-game-ui: icons split WARNING ${split.missing.length} canonical id(s) absent (reserved-slug hooks): ${split.missing.join(', ')}\n`,
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      process.stderr.write(`transcribe-cd-game-ui: icons split failed — ${msg}\n`);
+      process.exit(1);
+      return;
+    }
+  } else {
+    process.stderr.write(
+      `transcribe-cd-game-ui: no icons.svg in bundle dir — skipping icon split step\n`,
+    );
+  }
 }
 
 const entry = process.argv[1];
 if (entry && import.meta.url === pathToFileURL(path.resolve(entry)).href) {
-  main();
+  main().catch((e) => {
+    const msg = e instanceof Error ? e.message : String(e);
+    process.stderr.write(`transcribe-cd-game-ui: ${msg}\n`);
+    process.exit(1);
+  });
 }

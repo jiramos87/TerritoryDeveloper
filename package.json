@@ -56,6 +56,7 @@
     "test:ia": "npm --prefix tools/mcp-ia-server test",
     "test:scripts": "npx tsx --test tools/scripts/__tests__/extract-cd-tokens.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-interactions.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-computed-styles.test.ts && npx tsx --test tools/scripts/__tests__/extract-cd-layout-rects.test.ts && npx tsx --test tools/scripts/__tests__/transcribe-cd-game-ui.test.ts && npx tsx --test tools/scripts/__tests__/unity-bake-ui.smoke.test.ts && npx tsx --test web/lib/catalog/stable-json-stringify.test.ts",
     "transcribe:cd-game-ui": "npx tsx tools/scripts/transcribe-cd-game-ui.ts",
+    "icons:split": "npx tsx tools/scripts/icons-svg-split.ts",
     "test:mcp-split": "cd tools/mcp-ia-server && node --import tsx --test tests/server-split.test.ts",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
     "audit:master-plan-change-log-dups": "node tools/scripts/audit-master-plan-change-log-dups.mjs",
