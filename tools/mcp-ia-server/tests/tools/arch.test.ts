@@ -14,6 +14,7 @@ import {
   runArchSurfaceResolve,
   runArchDriftScan,
   runArchChangelogSince,
+  runArchSurfaceWrite,
 } from "../../src/tools/arch.js";
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
 
@@ -465,4 +466,93 @@ test("arch_drift_scan: intra-plan idempotent re-scan returns identical events an
   assert.deepEqual(out1, out2);
   const insertCalls = calls.filter((c) => /insert/i.test(c.sql));
   assert.equal(insertCalls.length, 0, "arch_drift_scan must not write to arch_changelog");
+});
+
+// ---------------------------------------------------------------------------
+// arch_surface_write (prototype-first-methodology Stage 1.1 / migration 0058)
+// ---------------------------------------------------------------------------
+
+test("arch_surface_write: missing slug → invalid_input", async () => {
+  const { pool } = makeStubPool([]);
+  await assert.rejects(
+    () =>
+      runArchSurfaceWrite(pool, {
+        slug: "",
+        kind: "rule",
+        spec_path: "ia/rules/x.md",
+      }),
+    (e: unknown) =>
+      e !== null && typeof e === "object" && (e as { code?: string }).code === "invalid_input",
+  );
+});
+
+test("arch_surface_write: missing kind → invalid_input", async () => {
+  const { pool } = makeStubPool([]);
+  await assert.rejects(
+    () =>
+      runArchSurfaceWrite(pool, {
+        slug: "rules/foo",
+        kind: undefined,
+        spec_path: "ia/rules/foo.md",
+      }),
+    (e: unknown) =>
+      e !== null && typeof e === "object" && (e as { code?: string }).code === "invalid_input",
+  );
+});
+
+test("arch_surface_write: new slug → INSERT, upserted=false", async () => {
+  const { pool, calls } = makeStubPool([
+    { rows: [] }, // pre-check: no existing row
+    {
+      rows: [
+        {
+          id: 42,
+          slug: "rules/prototype-first-methodology",
+          kind: "rule",
+          spec_path: "ia/rules/prototype-first-methodology.md",
+          spec_section: null,
+        },
+      ],
+    },
+  ]);
+  const out = await runArchSurfaceWrite(pool, {
+    slug: "rules/prototype-first-methodology",
+    kind: "rule",
+    spec_path: "ia/rules/prototype-first-methodology.md",
+  });
+  assert.equal(out.id, 42);
+  assert.equal(out.slug, "rules/prototype-first-methodology");
+  assert.equal(out.kind, "rule");
+  assert.equal(out.spec_section, null);
+  assert.equal(out.upserted, false);
+  // Pre-check then insert.
+  assert.match(calls[0].sql, /SELECT id FROM arch_surfaces WHERE slug = \$1/);
+  assert.match(calls[1].sql, /INSERT INTO arch_surfaces/);
+  assert.match(calls[1].sql, /ON CONFLICT \(slug\) DO UPDATE/);
+});
+
+test("arch_surface_write: existing slug → UPSERT, upserted=true", async () => {
+  const { pool } = makeStubPool([
+    { rows: [{ id: 7 }] }, // pre-check: existing row
+    {
+      rows: [
+        {
+          id: 7,
+          slug: "decisions/all",
+          kind: "decision",
+          spec_path: "ia/specs/architecture/decisions.md",
+          spec_section: "DEC-A22",
+        },
+      ],
+    },
+  ]);
+  const out = await runArchSurfaceWrite(pool, {
+    slug: "decisions/all",
+    kind: "decision",
+    spec_path: "ia/specs/architecture/decisions.md",
+    spec_section: "DEC-A22",
+  });
+  assert.equal(out.id, 7);
+  assert.equal(out.spec_section, "DEC-A22");
+  assert.equal(out.upserted, true);
 });

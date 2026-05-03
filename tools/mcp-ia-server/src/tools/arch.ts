@@ -846,45 +846,53 @@ export function registerArchDecisionWrite(server: McpServer): void {
 // arch_changelog_append (Stage 1.4 / TECH-2563).
 // ---------------------------------------------------------------------------
 
+const ARCH_CHANGELOG_KIND_VALUES = [
+  "edit",
+  "decide",
+  "supersede",
+  "spec_edit_commit",
+  "design_explore_decision",
+  "design_explore_persist_contract_v2",
+] as const;
+
+type ArchChangelogKind = (typeof ARCH_CHANGELOG_KIND_VALUES)[number];
+
 const archChangelogAppendInputSchema = z.object({
   kind: z
-    .enum([
-      "edit",
-      "decide",
-      "supersede",
-      "spec_edit_commit",
-      "design_explore_decision",
-    ])
+    .enum(ARCH_CHANGELOG_KIND_VALUES)
     .describe("Audit row kind."),
   surface_slug: z.string().optional(),
   decision_slug: z.string().optional(),
   commit_sha: z.string().optional(),
   spec_path: z.string().optional(),
   body: z.string().optional(),
+  plan_slug: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Optional master-plan slug attribution. Stored in `arch_changelog.plan_slug` (migration 0058) for per-plan filtering of audit rows.",
+    ),
 });
 
 export async function runArchChangelogAppend(
   pool: Pool,
   input: {
-    kind?:
-      | "edit"
-      | "decide"
-      | "supersede"
-      | "spec_edit_commit"
-      | "design_explore_decision";
+    kind?: ArchChangelogKind;
     surface_slug?: string;
     decision_slug?: string;
     commit_sha?: string;
     spec_path?: string;
     body?: string;
+    plan_slug?: string;
   },
 ): Promise<{ id: number; created_at: string; deduped: boolean }> {
   if (!input.kind) {
     throw { code: "invalid_input" as const, message: "kind is required." };
   }
   const ins = await pool.query(
-    `INSERT INTO arch_changelog (kind, surface_slug, decision_slug, commit_sha, spec_path, body)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO arch_changelog (kind, surface_slug, decision_slug, commit_sha, spec_path, body, plan_slug)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (commit_sha, spec_path) WHERE commit_sha IS NOT NULL AND spec_path IS NOT NULL
      DO NOTHING
      RETURNING id, created_at::text AS created_at`,
@@ -895,13 +903,14 @@ export async function runArchChangelogAppend(
       input.commit_sha ?? null,
       input.spec_path ?? null,
       input.body ?? null,
+      input.plan_slug ?? null,
     ],
   );
   if (ins.rowCount === 0) {
     return { id: -1, created_at: "", deduped: true };
   }
   return {
-    id: ins.rows[0].id,
+    id: Number(ins.rows[0].id),
     created_at: ins.rows[0].created_at,
     deduped: false,
   };
@@ -913,7 +922,7 @@ export function registerArchChangelogAppend(server: McpServer): void {
     {
       title: "arch_changelog_append",
       description:
-        "DB-backed: INSERT one arch_changelog row. Stage 1.4 / TECH-2563. Idempotent on (commit_sha, spec_path) via UNIQUE partial index (migration 0038); returns `deduped: true` when row already exists. kind: edit | decide | supersede | spec_edit_commit | design_explore_decision.",
+        "DB-backed: INSERT one arch_changelog row. Stage 1.4 / TECH-2563. Idempotent on (commit_sha, spec_path) via UNIQUE partial index (migration 0038); returns `deduped: true` when row already exists. kind: edit | decide | supersede | spec_edit_commit | design_explore_decision | design_explore_persist_contract_v2 (migration 0058 / prototype-first-methodology Stage 1.1). Optional `plan_slug` attaches per-plan attribution (migration 0058 column).",
       inputSchema: archChangelogAppendInputSchema.shape,
     },
     async (args) =>
@@ -929,14 +938,141 @@ export function registerArchChangelogAppend(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// arch_surface_write (prototype-first-methodology Stage 1.1 / TECH-10297 +
+// migration 0058 — adds 'rule' kind for rule-doc surfaces).
+// ---------------------------------------------------------------------------
+//
+// Explicit write surface for `arch_surfaces`. Distinct from
+// `arch_surfaces_backfill` which NEVER inserts (Invariant #12 link-only).
+// This tool exists so `design-explore` Phase 2.5 can register new
+// rule/decision surfaces without raw `psql`.
+
+const ARCH_SURFACE_KIND_VALUES = [
+  "layer",
+  "flow",
+  "contract",
+  "decision",
+  "rule",
+] as const;
+
+type ArchSurfaceKind = (typeof ARCH_SURFACE_KIND_VALUES)[number];
+
+const archSurfaceWriteInputSchema = z.object({
+  slug: z
+    .string()
+    .min(1)
+    .describe(
+      "Surface slug (UNIQUE in arch_surfaces). Convention: `{kind}/{name}` " +
+        "e.g. `rules/prototype-first-methodology`, `decisions/all`, " +
+        "`contracts/seam-design-explore`.",
+    ),
+  kind: z
+    .enum(ARCH_SURFACE_KIND_VALUES)
+    .describe(
+      "Surface kind. `rule` added by migration 0058 for rule-doc surfaces " +
+        "(`ia/rules/*.md`).",
+    ),
+  spec_path: z
+    .string()
+    .min(1)
+    .describe(
+      "Repo-relative spec path (e.g. `ia/rules/prototype-first-methodology.md`).",
+    ),
+  spec_section: z
+    .string()
+    .optional()
+    .describe("Optional anchor / heading inside `spec_path`."),
+});
+
+export async function runArchSurfaceWrite(
+  pool: Pool,
+  input: {
+    slug?: string;
+    kind?: ArchSurfaceKind;
+    spec_path?: string;
+    spec_section?: string;
+  },
+): Promise<{
+  id: number;
+  slug: string;
+  kind: string;
+  spec_path: string;
+  spec_section: string | null;
+  upserted: boolean;
+}> {
+  const slug = (input.slug ?? "").trim();
+  const kind = input.kind;
+  const specPath = (input.spec_path ?? "").trim();
+  if (!slug || !kind || !specPath) {
+    throw {
+      code: "invalid_input" as const,
+      message: "slug, kind, spec_path are required.",
+    };
+  }
+  const specSection = input.spec_section?.trim() || null;
+
+  // Pre-check existence so we can return upserted flag accurately.
+  // Use rows.length (rowCount can be null on some pg client paths).
+  const pre = await pool.query<{ id: number }>(
+    `SELECT id FROM arch_surfaces WHERE slug = $1 LIMIT 1`,
+    [slug],
+  );
+  const existed = pre.rows.length > 0;
+
+  const ins = await pool.query(
+    `INSERT INTO arch_surfaces (slug, kind, spec_path, spec_section, last_edited_at)
+     VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (slug) DO UPDATE SET
+       kind = EXCLUDED.kind,
+       spec_path = EXCLUDED.spec_path,
+       spec_section = EXCLUDED.spec_section,
+       last_edited_at = NOW()
+     RETURNING id, slug, kind, spec_path, spec_section`,
+    [slug, kind, specPath, specSection],
+  );
+  const r = ins.rows[0];
+  return {
+    id: Number(r.id),
+    slug: r.slug,
+    kind: r.kind,
+    spec_path: r.spec_path,
+    spec_section: (r.spec_section as string | null) ?? null,
+    upserted: existed,
+  };
+}
+
+export function registerArchSurfaceWrite(server: McpServer): void {
+  server.registerTool(
+    "arch_surface_write",
+    {
+      title: "arch_surface_write",
+      description:
+        "DB-backed: INSERT (or upsert by slug) one arch_surfaces row. Distinct from `arch_surfaces_backfill` (link-only per Invariant #12). Use when registering new rule/decision/contract surfaces from `design-explore` Phase 2.5 or master-plan-new flows. kind: layer | flow | contract | decision | rule (rule added by migration 0058). Returns `{id, slug, kind, spec_path, spec_section, upserted}` — `upserted: true` when an existing row was updated.",
+      inputSchema: archSurfaceWriteInputSchema.shape,
+    },
+    async (args) =>
+      runWithToolTiming("arch_surface_write", async () => {
+        const envelope = await wrapTool(async (input: z.infer<typeof archSurfaceWriteInputSchema>) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          return await runArchSurfaceWrite(pool, input);
+        })(archSurfaceWriteInputSchema.parse(args ?? {}));
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Aggregate registration helper.
 // ---------------------------------------------------------------------------
 
 /**
- * Register all seven architecture-coherence MCP tools on the given server:
+ * Register all eight architecture-coherence MCP tools on the given server:
  * Stage 1.3 read tools (arch_decision_get, arch_decision_list,
  * arch_surface_resolve, arch_drift_scan, arch_changelog_since) +
- * Stage 1.4 write tools (arch_decision_write, arch_changelog_append).
+ * Stage 1.4 write tools (arch_decision_write, arch_changelog_append) +
+ * prototype-first-methodology Stage 1.1 / migration 0058 write tool
+ * (arch_surface_write).
  */
 export function registerArchTools(server: McpServer): void {
   registerArchDecisionGet(server);
@@ -946,4 +1082,5 @@ export function registerArchTools(server: McpServer): void {
   registerArchChangelogSince(server);
   registerArchDecisionWrite(server);
   registerArchChangelogAppend(server);
+  registerArchSurfaceWrite(server);
 }
