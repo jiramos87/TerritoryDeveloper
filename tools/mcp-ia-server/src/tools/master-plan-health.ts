@@ -93,9 +93,16 @@ interface RuntimeStateRow {
 }
 
 /**
- * Read set of plan slugs whose Stage 1.0 OR 1.1 carries a non-null
+ * Read set of plan slugs whose ANY stage carries a non-null
  * `tracer_slice_block`. Sibling-query merge (mig 0059 column read; no MV
  * touch). Empty set on read failure / no matches. TECH-10307.
+ *
+ * Generalized predicate (TECH-10315): originally restricted to Stage 1.0/1.1
+ * for greenfield plans whose first stage is the tracer; widened to "any stage"
+ * to cover retrofit case where the first playable stage arrives later (e.g.
+ * `multi-scale` Stage 10 — see `docs/prototype-first-methodology-design.md`
+ * §12.3). Methodology contract = "plan has at least one tracer slice block",
+ * not "Stage 1 is tracer". Field name retained for backward compatibility.
  *
  * Exported for test harness — the MV does not carry this column; the bool
  * is synthesized in `rowToPayload` from the slug membership check.
@@ -107,8 +114,7 @@ export async function readTracerSliceSlugs(): Promise<Set<string>> {
     const res = await pool.query<{ slug: string }>(
       `SELECT DISTINCT slug
          FROM ia_stages
-        WHERE stage_id IN ('1.0', '1.1')
-          AND tracer_slice_block IS NOT NULL`,
+        WHERE tracer_slice_block IS NOT NULL`,
     );
     return new Set(res.rows.map((r) => r.slug));
   } catch {
@@ -236,8 +242,11 @@ export function registerMasterPlanHealth(server: McpServer): void {
         "oldest_in_progress_age_days, missing_arch_surfaces, " +
         "drift_events_open, sibling_collisions, arch_drift_scan_p95_ms, " +
         "refreshed_at, last_verify_at, stage_1_is_tracer}`. " +
-        "`stage_1_is_tracer` (TECH-10307) is true when Stage 1.0 OR 1.1 " +
-        "carries non-null `tracer_slice_block` (mig 0059). " +
+        "`stage_1_is_tracer` (TECH-10307; predicate widened by TECH-10315) is " +
+        "true when ANY stage carries non-null `tracer_slice_block` (mig 0059) " +
+        "— supports both greenfield (tracer at Stage 1) and retrofit (tracer " +
+        "at later stage, e.g. `multi-scale` Stage 10) cases. Field name " +
+        "retained for backward compatibility. " +
         "Replaces hand-written cross-plan audit doc workflow. " +
         "Schema-cache restart required after adding this tool (N4): " +
         "restart Claude Code or run `tsx tools/mcp-ia-server/src/index.ts`.",
