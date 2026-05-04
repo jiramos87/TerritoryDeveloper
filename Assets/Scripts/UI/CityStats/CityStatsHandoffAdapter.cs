@@ -7,21 +7,30 @@ using Territory.UI.Themed;
 namespace Territory.UI.CityStatsHandoff
 {
     /// <summary>
-    /// Stage 13.5 (TECH-9869) — presenter-driven city-stats panel adapter.
-    /// Subscribes to <see cref="IStatsPresenter.OnRefreshed"/> instead of polling
-    /// producers per frame; row population reads live binding closures from
-    /// <see cref="IStatsPresenter.Bindings"/> by slug.
+    /// Stage 13.5 (TECH-9869) + Stage 13.6 (TECH-9872) — presenter-driven
+    /// city-stats panel adapter. Subscribes to <see cref="IStatsPresenter.OnRefreshed"/>
+    /// instead of polling producers per frame; row population reads live binding
+    /// closures from <see cref="IStatsPresenter.Bindings"/> by slug.
     /// </summary>
     /// <remarks>
-    /// Read-only consumer. Producer ref (<see cref="_presenter"/>) cached in
-    /// <see cref="Awake"/> via Inspector-first + <see cref="MonoBehaviour.FindObjectOfType{T}()"/>
+    /// <para>
+    /// Read-only consumer. Default presenter ref (<see cref="_presenter"/>) cached
+    /// in <see cref="Awake"/> via Inspector-first + <see cref="MonoBehaviour.FindObjectOfType{T}()"/>
     /// fallback (invariant #4 / guardrail #0). Row repaint gated on
     /// <see cref="IStatsPresenter.IsReady"/> (guardrail #14) so manager-init race
     /// cannot fire writes before bindings populate.
+    /// </para>
+    /// <para>
+    /// Stage 13.6 — <see cref="SetPresenter"/> swaps the active <see cref="IStatsPresenter"/>
+    /// in place: unsubscribes the previous source's <see cref="IStatsPresenter.OnRefreshed"/>,
+    /// re-subscribes to the new source, then repaints. Driven by
+    /// <see cref="StatsScaleSwitcher"/> on City ↔ Region toggle. Same panel + same 4 tabs
+    /// (D2.A) — binding-key set unchanged across scales (Region presenter mirrors City keys).
+    /// </para>
     /// </remarks>
     public class CityStatsHandoffAdapter : MonoBehaviour
     {
-        [Header("Presenter")]
+        [Header("Presenter (default — Inspector-wired)")]
         [SerializeField] private CityStatsPresenter _presenter;
 
         [Header("Theme")]
@@ -38,6 +47,10 @@ namespace Territory.UI.CityStatsHandoff
 
         private readonly Dictionary<string, SegmentedReadout> _rowConsumers = new Dictionary<string, SegmentedReadout>(8);
         private readonly HashSet<string> _missingBindingWarned = new HashSet<string>();
+        private IStatsPresenter _activePresenter;
+
+        /// <summary>The currently bound presenter (city or region). Null until <see cref="OnEnable"/> runs.</summary>
+        public IStatsPresenter ActivePresenter => _activePresenter;
 
         private void Awake()
         {
@@ -53,13 +66,42 @@ namespace Territory.UI.CityStatsHandoff
         private void OnEnable()
         {
             ApplyThemeToConsumers();
-            if (_presenter != null) _presenter.OnRefreshed += HandlePresenterRefreshed;
+            if (_activePresenter == null) _activePresenter = _presenter;
+            SubscribeActive();
             RepaintActiveTabRows();
         }
 
         private void OnDisable()
         {
-            if (_presenter != null) _presenter.OnRefreshed -= HandlePresenterRefreshed;
+            UnsubscribeActive();
+        }
+
+        /// <summary>
+        /// Stage 13.6 (TECH-9872) — swap the active <see cref="IStatsPresenter"/>.
+        /// Unsubscribes the previous source, re-subscribes to <paramref name="presenter"/>,
+        /// then repaints. Idempotent: passing the same ref is a no-op.
+        /// </summary>
+        public void SetPresenter(IStatsPresenter presenter)
+        {
+            if (presenter == null) return;
+            if (ReferenceEquals(presenter, _activePresenter)) return;
+
+            UnsubscribeActive();
+            _activePresenter = presenter;
+            // Reset per-presenter warn state so missing-binding noise is per-source.
+            _missingBindingWarned.Clear();
+            SubscribeActive();
+            RepaintActiveTabRows();
+        }
+
+        private void SubscribeActive()
+        {
+            if (_activePresenter != null) _activePresenter.OnRefreshed += HandlePresenterRefreshed;
+        }
+
+        private void UnsubscribeActive()
+        {
+            if (_activePresenter != null) _activePresenter.OnRefreshed -= HandlePresenterRefreshed;
         }
 
         private void HandlePresenterRefreshed()
@@ -69,7 +111,7 @@ namespace Territory.UI.CityStatsHandoff
 
         private void RepaintActiveTabRows()
         {
-            if (_presenter == null || !_presenter.IsReady) return;
+            if (_activePresenter == null || !_activePresenter.IsReady) return;
 
             foreach (var kv in _rowConsumers)
             {
@@ -77,7 +119,7 @@ namespace Territory.UI.CityStatsHandoff
                 var consumer = kv.Value;
                 if (consumer == null) continue;
 
-                if (!_presenter.Bindings.TryGetValue(slug, out var producer) || producer == null)
+                if (!_activePresenter.Bindings.TryGetValue(slug, out var producer) || producer == null)
                 {
                     if (_missingBindingWarned.Add(slug))
                     {
