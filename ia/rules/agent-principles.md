@@ -37,6 +37,7 @@ alwaysApply: true
 - `validate:backlog-yaml` = source of truth for yaml schema.
 - `validate:frontmatter` exits 0 on warnings — gate on stdout, not exit code.
 - Run `npm run generate:ia-indexes` after any glossary edit.
+- Prototype-first methodology — every master plan ships a Stage 1.0 tracer slice + Stages 2+ §Visibility Delta lines. See [`prototype-first-methodology.md`](prototype-first-methodology.md) — `rule_content prototype-first-methodology`.
 
 ## On-demand hints
 

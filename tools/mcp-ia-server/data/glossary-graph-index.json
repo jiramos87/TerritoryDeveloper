@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-04T07:39:34.318Z",
+  "last_generated": "2026-05-04T14:12:35.534Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -4332,6 +4332,16 @@
         }
       ]
     },
+    "Prototype-pillar discipline": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "Backlog record",
+        "Backlog view"
+      ],
+      "cited_in": []
+    },
     "publish_lint_rule": {
       "related": [
         "entity_version",
@@ -5463,6 +5473,16 @@
       ],
       "cited_in": []
     },
+    "Slice fattening": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "Backlog record",
+        "Backlog view"
+      ],
+      "cited_in": []
+    },
     "Slope categories": {
       "related": [
         "Cell",
@@ -6170,6 +6190,16 @@
         "Cell",
         "Direction convention",
         "Grass cell"
+      ],
+      "cited_in": []
+    },
+    "Tracer slice": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "Backlog record",
+        "Backlog view"
       ],
       "cited_in": []
     },

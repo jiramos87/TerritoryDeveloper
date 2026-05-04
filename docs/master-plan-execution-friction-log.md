@@ -267,9 +267,26 @@ The `feature/ia-dev-db-refactor` branch (12 steps, design `docs/master-plan-fold
 
 ## Prototype-first deltas
 
-Methodology iteration log per `docs/prototype-first-methodology-design.md` §8.2 + §12.4. Stage 1.6 picks up retrofit cost + friction signals.
+> Methodology drift signals captured per `ia/rules/prototype-first-methodology.md` D12. `/skill-train` retrospective pulls from these subsections.
 
+### (i) Stage 1.0 thinness misjudgments
+
+- _none yet_
+
+### (ii) §Iteration Roadmap unimplementables
+
+- _none yet_
+
+### (iii) Stage retrofits applied
+
+- 2026-05-04 — multi-scale Stages 10–15 retrofit per /ship-stage prototype-first-methodology Stage 1.5 (commit 67d65929). Evidence: docs/multi-scale-retrofit-snapshot-{pre,post}.md. Surface delta: Stage 10 §Tracer Slice block + Stages 11–15 §Visibility Delta lines.
 - 2026-05-04 multi-scale retrofit (Stage 1.5): tokens=~85k hours=~1.5 notes=Stage 10 §Tracer Slice + Stages 11–15 §Visibility Delta landed via `stage_body_write` fallback (per source §12.3); `master-plan-extend` skill STOPs on existing-stage collision so direct body re-author was used; `validate:plan-prototype-first` exit 0; `arch_drift_scan(DEC-A22)` zero new drift.
+
+### (iv) `validate:plan-prototype-first` false positives/negatives
+
 - 2026-05-04 friction — `master_plan_health.stage_1_is_tracer` semantics gap: flag literally inspects Stage 1 of the plan, but retrofitted multi-scale plan has Stage 1 already done (pre-methodology) and Stage 10 = the new tracer slice. Spec authors expected the flag to detect "first stage carrying §Tracer Slice block" not "literal stage_id=1". Stage 1.5 Exit row 4 + TECH-10315 §Acceptance row 3 both fail under current impl. **Fix scope:** Stage 1.3 follow-up — patch `master_plan_health` to set `stage_1_is_tracer: true` when ANY stage in the plan carries a §Tracer Slice block (or rename flag to `tracer_stage_present`). Until then, retrofitted plans appear non-compliant despite carrying tracer block.
+
+### (v) Author friction with §Tracer Slice / §Visibility Delta requirements
+
 - 2026-05-04 friction — `master-plan-extend` skill hard_boundary STOPs on `START_STAGE_NUMBER` collision: forces fallback to direct `stage_body_write` for retrofit-mode dispatches. Source §12.3 explicitly authorizes the fallback, so this is documented + working — but skill could grow a `--retrofit` flag that enables in-place re-author of existing stages without the collision STOP. **Fix scope:** Stage 1.6+ — extend skill with retrofit-mode dispatch path.
 

@@ -288,6 +288,9 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | skill training | Retrospective Changelog-driven loop: lifecycle skills emit skill self-report entries; skill-train aggregates recurring friction (≥2 occurrences) into a patch proposal for user review. No auto-apply. | train |
 | patch proposal (skill) | Unified-diff proposal authored by skill-train against a target SKILL.md (Phase sequence / Guardrails / Seed prompt), stored as `ia/skills/{name}/train-proposal-{YYYY-MM-DD}.md`. Never auto-applied. | train |
 | skill-train | Opus consumer + `/skill-train` command. On demand, reads target skill's Per-skill Changelog since last `source: train-proposed` entry, aggregates recurring friction, writes patch proposal. Input: skill self-report entries. | train |
+| Prototype-pillar discipline | Explicit upfront declaration of what's deferred from Stage 1.0 (save/load, multi-config, edge cases) to prevent scope sprawl. | [rules/prototype-first-methodology](../rules/prototype-first-methodology.md) |
+| Slice fattening | Subsequent stages replacing stubs with real behavior, ordered by player visibility. | [rules/prototype-first-methodology](../rules/prototype-first-methodology.md) |
+| Tracer slice | End-to-end thinnest stage delivering one real player/agent verb with real code; hardcoded data + stub peripheral systems acceptable. | [rules/prototype-first-methodology](../rules/prototype-first-methodology.md) |
 
 ## Multi-scale simulation
 
