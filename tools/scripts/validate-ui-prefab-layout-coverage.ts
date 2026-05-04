@@ -46,6 +46,13 @@ const LAYOUT_RECTS_PATH = path.join(
   "step-1-game-ui",
   "layout-rects.json",
 );
+const LAYOUT_RECTS_OVERRIDES_PATH = path.join(
+  REPO_ROOT,
+  "web",
+  "design-refs",
+  "step-1-game-ui",
+  "layout-rects-overrides.json",
+);
 const GENERATED_PREFAB_DIR = path.join(
   REPO_ROOT,
   "Assets",
@@ -64,6 +71,11 @@ type LayoutNode = {
 type LayoutRects = {
   schema_version?: number;
   nodes?: LayoutNode[];
+};
+type LayoutRectsOverridePanel = { cd_slug?: string };
+type LayoutRectsOverrides = {
+  schema_version?: number;
+  panels?: LayoutRectsOverridePanel[];
 };
 
 function readJson<T>(file: string): T {
@@ -91,6 +103,22 @@ function main(): number {
     return 2;
   }
 
+  // Optional override file — hand-authored canonical viewport coords for
+  // panels whose CD-bundle entry is off-viewport (horizontal-strip artifact)
+  // or absent. Loaded by LayoutRectsLoader.cs AFTER base file; entries here
+  // count as covered for the purpose of this validator.
+  let layoutOverrides: LayoutRectsOverrides | null = null;
+  if (fs.existsSync(LAYOUT_RECTS_OVERRIDES_PATH)) {
+    try {
+      layoutOverrides = readJson<LayoutRectsOverrides>(LAYOUT_RECTS_OVERRIDES_PATH);
+    } catch (e) {
+      console.error(
+        `[validate:ui-prefab-layout-coverage] cannot read overrides at ${LAYOUT_RECTS_OVERRIDES_PATH}: ${(e as Error).message}`,
+      );
+      return 2;
+    }
+  }
+
   if (!Array.isArray(ir.panels)) {
     console.error(
       `[validate:ui-prefab-layout-coverage] IR has no panels[] array — schema drift?`,
@@ -112,11 +140,17 @@ function main(): number {
       .filter((n) => n?.node_kind === "panel" && typeof n.cd_slug === "string")
       .map((n) => n.cd_slug),
   );
+  const overrideSlugs = new Set<string>(
+    (layoutOverrides?.panels ?? [])
+      .map((p) => p?.cd_slug)
+      .filter((s): s is string => typeof s === "string" && s.length > 0),
+  );
+  const coveredSlugs = new Set<string>([...layoutPanelSlugs, ...overrideSlugs]);
 
   const uncoveredWithPrefab: string[] = [];
   const uncoveredNoPrefab: string[] = [];
   for (const slug of irSlugs) {
-    if (layoutPanelSlugs.has(slug)) continue;
+    if (coveredSlugs.has(slug)) continue;
     const prefabPath = path.join(GENERATED_PREFAB_DIR, `${slug}.prefab`);
     if (fs.existsSync(prefabPath)) {
       uncoveredWithPrefab.push(slug);
@@ -126,18 +160,18 @@ function main(): number {
   }
 
   console.log(
-    `[validate:ui-prefab-layout-coverage] IR panels: ${irSlugs.length}; layout-rects panel entries: ${layoutPanelSlugs.size}; uncovered+prefab: ${uncoveredWithPrefab.length}; uncovered+no-prefab: ${uncoveredNoPrefab.length}`,
+    `[validate:ui-prefab-layout-coverage] IR panels: ${irSlugs.length}; layout-rects panel entries: ${layoutPanelSlugs.size}; override entries: ${overrideSlugs.size}; uncovered+prefab: ${uncoveredWithPrefab.length}; uncovered+no-prefab: ${uncoveredNoPrefab.length}`,
   );
 
   if (uncoveredNoPrefab.length > 0) {
     console.log(
-      `[validate:ui-prefab-layout-coverage] notice — IR panels without layout-rects entry AND no existing prefab (next bake will emit top-left 200×80 sentinel): ${uncoveredNoPrefab.join(", ")}`,
+      `[validate:ui-prefab-layout-coverage] notice — IR panels without layout-rects/override entry AND no existing prefab (next bake will emit top-left 200×80 sentinel): ${uncoveredNoPrefab.join(", ")}`,
     );
   }
 
   if (uncoveredWithPrefab.length > 0) {
     console.error(
-      `[validate:ui-prefab-layout-coverage] FAIL — ${uncoveredWithPrefab.length} IR panel(s) lack a layout-rects.json entry but have an existing prefab on disk. Next bake risks clobbering authored RectTransform state. Add the slug(s) below to web/design-refs/step-1-game-ui/layout-rects.json (regenerate via tools/scripts/extract-cd-layout-rects.ts) before re-baking:`,
+      `[validate:ui-prefab-layout-coverage] FAIL — ${uncoveredWithPrefab.length} IR panel(s) lack a layout-rects.json/overrides entry but have an existing prefab on disk. Next bake risks clobbering authored RectTransform state. Either regenerate via tools/scripts/extract-cd-layout-rects.ts OR add to web/design-refs/step-1-game-ui/layout-rects-overrides.json before re-baking:`,
     );
     for (const slug of uncoveredWithPrefab) {
       console.error(`  - ${slug}  (prefab: Assets/UI/Prefabs/Generated/${slug}.prefab)`);

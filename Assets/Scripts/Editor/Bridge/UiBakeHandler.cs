@@ -427,6 +427,11 @@ namespace Territory.Editor.Bridge
                 };
             }
 
+            // Anti-loss invariant — every bake re-reads layout-rects.json + overrides from
+            // disk. Static cache survived prior session where override file did not yet
+            // exist → stale base coords leaked through to prefabs (off-viewport anchors).
+            LayoutRectsLoader.Invalidate();
+
             if (string.IsNullOrEmpty(args.ir_path))
             {
                 return new BakeResult

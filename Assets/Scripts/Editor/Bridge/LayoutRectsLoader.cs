@@ -36,6 +36,9 @@ namespace Territory.Editor.Bridge
         private const string LayoutRectsRelativePath =
             "../web/design-refs/step-1-game-ui/layout-rects.json";
 
+        private const string LayoutRectsOverridesRelativePath =
+            "../web/design-refs/step-1-game-ui/layout-rects-overrides.json";
+
         public readonly struct LayoutRect
         {
             public readonly string NodeKind;
@@ -114,6 +117,12 @@ namespace Territory.Editor.Bridge
                 LayoutRectsRelativePath));
         }
 
+        public static string GetLayoutRectsOverridesAbsolutePath()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath,
+                LayoutRectsOverridesRelativePath));
+        }
+
         private static void EnsureLoaded()
         {
             if (_panelRects != null) return;
@@ -170,6 +179,52 @@ namespace Territory.Editor.Bridge
                 panelCount++;
             }
             Debug.Log($"[LayoutRectsLoader] loaded {panelCount} panel rects from {absPath}");
+
+            // Apply hand-authored overrides on top — canonical viewport coords
+            // for panels whose CD-bundle entry is off-viewport (horizontal-strip
+            // artifact) or missing entirely.
+            int overrideCount = 0;
+            string overridesPath = GetLayoutRectsOverridesAbsolutePath();
+            if (File.Exists(overridesPath))
+            {
+                string overridesJson = null;
+                try
+                {
+                    overridesJson = File.ReadAllText(overridesPath);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[LayoutRectsLoader] overrides read failed: {e.Message}");
+                }
+
+                if (!string.IsNullOrEmpty(overridesJson))
+                {
+                    LayoutRectsOverridesRoot overrides = null;
+                    try
+                    {
+                        overrides = JsonUtility.FromJson<LayoutRectsOverridesRoot>(overridesJson);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"[LayoutRectsLoader] overrides parse failed: {e.Message}");
+                    }
+
+                    if (overrides?.panels != null)
+                    {
+                        foreach (var ov in overrides.panels)
+                        {
+                            if (ov == null || string.IsNullOrEmpty(ov.cd_slug)) continue;
+                            if (ov.viewport_rect == null) continue;
+                            var rect = new Rect(ov.viewport_rect.x, ov.viewport_rect.y,
+                                ov.viewport_rect.width, ov.viewport_rect.height);
+                            _panelRects[ov.cd_slug] = new LayoutRect(
+                                "panel", ov.cd_slug, null, null, rect, rect);
+                            overrideCount++;
+                        }
+                    }
+                }
+            }
+            Debug.Log($"[LayoutRectsLoader] applied {overrideCount} canonical overrides from {overridesPath}");
         }
 
         // ── JSON DTOs ───────────────────────────────────────────────────────
@@ -207,6 +262,21 @@ namespace Territory.Editor.Bridge
             public float y;
             public float width;
             public float height;
+        }
+
+        [Serializable]
+        private class LayoutRectsOverridesRoot
+        {
+            public int schema_version;
+            public LayoutRectsViewport viewport;
+            public List<LayoutRectsOverrideNode> panels;
+        }
+
+        [Serializable]
+        private class LayoutRectsOverrideNode
+        {
+            public string cd_slug;
+            public LayoutRectsRect viewport_rect;
         }
     }
 }
