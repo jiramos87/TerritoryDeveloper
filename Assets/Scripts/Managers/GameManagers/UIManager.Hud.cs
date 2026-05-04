@@ -27,7 +27,7 @@ public partial class UIManager
         // StudioControl SO refs on hud-bar prefab.
         // Stage 11 (game-ui-design-system): legacy power/water HUD chrome decommissioned in
         // T11.2 MainScene deletes — fields may now be unwired. Guard each ref to keep
-        // surviving non-hudbar HUD surfaces (date/tax/employment/demand/bond/surplus) live.
+        // surviving non-hudbar HUD surfaces (date/tax/employment/demand/surplus) live.
 
         if (cityPowerOutputText != null)
             cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
@@ -90,26 +90,6 @@ public partial class UIManager
             else
                 hudEstimatedSurplusHintText.color = s >= 0 ? Color.green : Color.red;
         }
-
-#if BONDS_ENABLED
-        // BUG-61 W4 — bond HUD badge hidden behind feature flag (default OFF) for MVP.
-        if (bondHudBadgeButton != null)
-        {
-            BondData bond = bondLedgerHud != null && economyManager != null
-                ? bondLedgerHud.GetActiveBond(economyManager.GetCityScaleTier())
-                : null;
-            bondHudBadgeButton.gameObject.SetActive(bond != null);
-            if (bond != null)
-            {
-                var badgeTxt = bondHudBadgeButton.GetComponentInChildren<Text>();
-                if (badgeTxt != null)
-                {
-                    badgeTxt.text = $"Active bond: {bond.monthsRemaining} mo, ${bond.monthlyRepayment:N0}/mo";
-                    badgeTxt.color = bond.arrears ? new Color(1f, 0.35f, 0.35f) : Color.white;
-                }
-            }
-        }
-#endif
 
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();

@@ -162,15 +162,6 @@ public class GameSaveManager : MonoBehaviour
         saveData.budgetAllocation = budgetAllocationSvc != null
             ? budgetAllocationSvc.CaptureSaveData()
             : BudgetAllocationData.Default(DEFAULT_S_CAP);
-#if BONDS_ENABLED
-        // BUG-61 W4 — bond capture hidden behind feature flag (default OFF) for MVP.
-        BondLedgerService bondLedgerSvc = FindObjectOfType<BondLedgerService>();
-        saveData.bondRegistry = bondLedgerSvc != null
-            ? bondLedgerSvc.CaptureSaveData()
-            : new List<BondData>();
-#else
-        saveData.bondRegistry = new List<BondData>();
-#endif
         saveData.pendingProposals = new List<UrbanizationProposal>();
         if (miniMapController != null)
             saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
@@ -331,12 +322,6 @@ public class GameSaveManager : MonoBehaviour
             BudgetAllocationService budgetAllocationSvc = FindObjectOfType<BudgetAllocationService>();
             if (budgetAllocationSvc != null)
                 budgetAllocationSvc.RestoreFromSaveData(saveData.budgetAllocation);
-#if BONDS_ENABLED
-            // BUG-61 W4 — bond restore hidden behind feature flag (default OFF) for MVP.
-            BondLedgerService bondLedgerSvc = FindObjectOfType<BondLedgerService>();
-            if (bondLedgerSvc != null)
-                bondLedgerSvc.RestoreFromSaveData(saveData.bondRegistry);
-#endif
             // Proposal flow disabled: clear any pending proposals on load
             UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
             if (proposalManager != null)
@@ -384,8 +369,6 @@ public class GameSaveManager : MonoBehaviour
             data.stateServiceZones = new List<StateServiceZoneData>();
         if (data.budgetAllocation == null)
             data.budgetAllocation = BudgetAllocationData.Default(DEFAULT_S_CAP);
-        if (data.bondRegistry == null)
-            data.bondRegistry = new List<BondData>();
         // Schema 5 → 6: tuningWeights null on legacy ≤ 5 saves — leave null so LoadGame preserves the
         // live SignalTuningWeightsAsset defaults (RestoreFromData is a no-op on null payload).
         if (data.tuningWeights == null)
@@ -408,8 +391,6 @@ public class GameSaveManager : MonoBehaviour
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: stateServiceZones null after migration — save data integrity error.");
         if (data.budgetAllocation == null)
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: budgetAllocation null after migration — save data integrity error.");
-        if (data.bondRegistry == null)
-            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: bondRegistry null after migration — save data integrity error.");
     }
 
     /// <summary>
@@ -549,8 +530,7 @@ public class GameSaveData
     /// Current save schema version. Bump when adding migration-required fields.
     /// Schema 2 adds <c>neighborStubs</c> (see <b>parent-scale stub</b> glossary term).
     /// Schema 3 adds <c>neighborCityBindings</c> (interstate border exit bindings).
-    /// Schema 4 adds <c>budgetAllocation</c> + <c>stateServiceZones</c> (envelope budget + state-service zone registry — Stage 1.3 Phase 3)
-    /// + <c>bondRegistry</c> (bond ledger active bonds — Stage 4).
+    /// Schema 4 adds <c>budgetAllocation</c> + <c>stateServiceZones</c> (envelope budget + state-service zone registry — Stage 1.3 Phase 3).
     /// Schema 5 adds <c>districtMap</c> (Stage 3 District layer — per-cell <see cref="DistrictMap"/> ordinal round-trip).
     /// Schema 6 adds <c>tuningWeights</c> (Stage 6 — <see cref="Territory.Simulation.Signals.SignalTuningWeightsAsset"/> snapshot)
     /// + post-load <see cref="Territory.Simulation.Signals.SignalWarmupPass.Run"/> invocation in <see cref="GameSaveManager.LoadGame"/>.
@@ -585,14 +565,6 @@ public class GameSaveData
     /// Added schema 4.
     /// </summary>
     public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();
-
-    /// <summary>
-    /// Active bond registry serialized as list (JsonUtility does not support Dictionary).
-    /// Each entry is one active bond keyed by <see cref="BondData.scaleTier"/>.
-    /// Empty list on fresh games; populated when bonds are issued.
-    /// Added schema 4 (Stage 4 — bond ledger).
-    /// </summary>
-    public List<BondData> bondRegistry = new List<BondData>();
 
     /// <summary>
     /// Overlay-toggle active state per <see cref="Territory.UI.Toolbar.OverlaySlug"/> (Stage 7 — TECH-3235).

@@ -24,9 +24,6 @@ public enum PopupType
     TaxPanel,
     SubTypePicker,
     BudgetPanel,
-#if BONDS_ENABLED
-    BondIssuance,
-#endif
     InfoPanel,
     PauseMenu,
     SettingsScreen,
@@ -68,9 +65,6 @@ public partial class UIManager : MonoBehaviour
     [SerializeField] private ZoneSService zoneSService;
     [SerializeField] private SubtypePickerController subtypePickerController;
     [SerializeField] private BudgetPanel budgetPanel;
-#if BONDS_ENABLED
-    [SerializeField] private BondIssuanceModal bondIssuanceModal;
-#endif
 
     [Header("Stage 8 Modal Roots")]
     [SerializeField] private GameObject infoPanelRoot;
@@ -137,10 +131,6 @@ public partial class UIManager : MonoBehaviour
     [Header("HUD — economy hints (optional)")]
     [Tooltip("When set, shows estimated monthly surplus after envelope cap.")]
     [SerializeField] private Text hudEstimatedSurplusHintText;
-#if BONDS_ENABLED
-    [Tooltip("When set, shows active bond summary; click opens read-only bond modal.")]
-    [SerializeField] private Button bondHudBadgeButton;
-#endif
 
     [Header("Debug (optional)")]
     [SerializeField] private GameDebugInfoBuilder gameDebugInfoBuilder;
@@ -190,9 +180,6 @@ public partial class UIManager : MonoBehaviour
 
     private GameObject welcomeBriefingRoot;
     private Coroutine loadMenuFadeRoutine;
-#if BONDS_ENABLED
-    private BondLedgerService bondLedgerHud;
-#endif
     private bool economyHudRuntimeWired;
     #endregion
 
@@ -229,22 +216,9 @@ public partial class UIManager : MonoBehaviour
 
         if (zoneSService == null)
             zoneSService = FindObjectOfType<ZoneSService>();
-#if BONDS_ENABLED
-        if (bondIssuanceModal == null)
-            bondIssuanceModal = FindObjectOfType<BondIssuanceModal>();
-        if (bondLedgerHud == null)
-            bondLedgerHud = FindObjectOfType<BondLedgerService>();
-#endif
 
         EnsureEconomyHudRuntimeWiring();
         EnsureConstructionCostTextExists();
-#if BONDS_ENABLED
-        if (bondHudBadgeButton != null)
-        {
-            bondHudBadgeButton.onClick.RemoveAllListeners();
-            bondHudBadgeButton.onClick.AddListener(OpenBondDetailModal);
-        }
-#endif
         ApplyHudUiThemeIfConfigured();
         // Stage 11: RequestToolbarChromeRefresh() removed — toolbar tinting now baked into ThemedToolbarStrip.
         TryShowWelcomeBriefingAfterStart();
@@ -274,7 +248,7 @@ public partial class UIManager : MonoBehaviour
     public void OpenSubTypePicker() => ShowSubtypePicker(ToolFamily.StateService);
 
     /// <summary>Picker controller accessor for PopupStack close routing.</summary>
-    internal SubtypePickerController SubtypePickerController => subtypePickerController;
+    public SubtypePickerController SubtypePickerController => subtypePickerController;
 
     private void EnsureSubtypePickerRuntimeWiring()
     {
@@ -297,33 +271,8 @@ public partial class UIManager : MonoBehaviour
         }
     }
 
-#if BONDS_ENABLED
-    /// <summary>Open bond issuance modal (stacked popup).</summary>
-    public void OpenBondIssuanceModal()
-    {
-        if (bondIssuanceModal != null)
-        {
-            bondIssuanceModal.ShowIssue(this);
-            RegisterPopupOpened(PopupType.BondIssuance);
-        }
-    }
-
-    /// <summary>Open read-only bond detail for active bond on city tier.</summary>
-    public void OpenBondDetailModal()
-    {
-        if (bondIssuanceModal == null || economyManager == null) return;
-        var ledger = FindObjectOfType<BondLedgerService>();
-        if (ledger == null) return;
-        int tier = economyManager.GetCityScaleTier();
-        BondData bond = ledger.GetActiveBond(tier);
-        if (bond == null) return;
-        bondIssuanceModal.ShowReadOnly(this, bond);
-        RegisterPopupOpened(PopupType.BondIssuance);
-    }
-#endif
-
     /// <summary>
-    /// Instantiate bond modal, budget panel, and HUD surplus/bond widgets when scene has no Inspector wiring.
+    /// Instantiate budget panel and HUD surplus widget when scene has no Inspector wiring.
     /// UI parents under the first <see cref="Canvas"/> so layout stacks above world space.
     /// </summary>
     private void EnsureEconomyHudRuntimeWiring()
@@ -334,21 +283,6 @@ public partial class UIManager : MonoBehaviour
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
             return;
-
-#if BONDS_ENABLED
-        if (bondIssuanceModal == null)
-        {
-            GameObject go = new GameObject("BondIssuanceModal");
-            go.transform.SetParent(canvas.transform, false);
-            go.transform.SetAsLastSibling();
-            RectTransform brt = go.AddComponent<RectTransform>();
-            brt.anchorMin = Vector2.zero;
-            brt.anchorMax = Vector2.one;
-            brt.offsetMin = Vector2.zero;
-            brt.offsetMax = Vector2.zero;
-            bondIssuanceModal = go.AddComponent<BondIssuanceModal>();
-        }
-#endif
 
         if (budgetPanel == null)
         {
@@ -384,42 +318,6 @@ public partial class UIManager : MonoBehaviour
             ht.raycastTarget = false;
             hudEstimatedSurplusHintText = ht;
         }
-
-#if BONDS_ENABLED
-        if (bondHudBadgeButton == null)
-        {
-            GameObject badgeGo = new GameObject("BondHudBadge");
-            badgeGo.transform.SetParent(canvas.transform, false);
-            RectTransform art = badgeGo.AddComponent<RectTransform>();
-            art.anchorMin = new Vector2(1f, 1f);
-            art.anchorMax = new Vector2(1f, 1f);
-            art.pivot = new Vector2(1f, 1f);
-            art.anchoredPosition = new Vector2(-12f, -12f);
-            art.sizeDelta = new Vector2(300f, 34f);
-            var bg = badgeGo.AddComponent<Image>();
-            bg.color = new Color(0.12f, 0.16f, 0.22f, 0.92f);
-            bg.raycastTarget = true;
-            bondHudBadgeButton = badgeGo.AddComponent<Button>();
-            bondHudBadgeButton.targetGraphic = bg;
-
-            GameObject txtGo = new GameObject("Text");
-            txtGo.transform.SetParent(badgeGo.transform, false);
-            Text bt = txtGo.AddComponent<Text>();
-            Font bfont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (bfont != null) bt.font = bfont;
-            bt.fontSize = 13;
-            bt.color = Color.white;
-            bt.alignment = TextAnchor.MiddleCenter;
-            bt.raycastTarget = false;
-            bt.text = "";
-            RectTransform trt = txtGo.GetComponent<RectTransform>();
-            trt.anchorMin = Vector2.zero;
-            trt.anchorMax = Vector2.one;
-            trt.sizeDelta = Vector2.zero;
-
-            badgeGo.SetActive(false);
-        }
-#endif
 
         economyHudRuntimeWired = true;
     }
