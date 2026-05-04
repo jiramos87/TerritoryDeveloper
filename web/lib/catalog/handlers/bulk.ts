@@ -2,7 +2,7 @@
  * Catalog bulk handler — wraps bulk-actions for MCP tool surface (DEC-A35).
  */
 
-import type { Sql } from "postgres";
+import type { TransactionSql } from "postgres";
 import { runBulkRetire, runBulkRestore, runBulkPublish, type BulkAction } from "@/lib/catalog/bulk-actions";
 
 export type { BulkAction };
@@ -15,7 +15,7 @@ export type BulkResult =
 export async function bulkCatalogAction(
   action: BulkAction,
   entityIds: string[],
-  sql: Sql,
+  sql: TransactionSql,
 ): Promise<BulkResult> {
   if (entityIds.length === 0 || entityIds.length > 1000) {
     return { ok: "validation", reason: "entity_ids must be a non-empty array of ≤1000 ids" };

@@ -8,13 +8,14 @@ import type { CatalogKind } from "@/lib/refs/types";
 import { patchSprite, type PatchSpriteBody } from "@/lib/db/sprite-repo";
 import { patchAssetSpine } from "@/lib/catalog/asset-spine-repo";
 import { patchButtonSpine } from "@/lib/catalog/button-spine-repo";
-import { patchPanelSpine, type CatalogPanelPatchBody } from "@/lib/catalog/panel-spine-repo";
+import { patchPanelSpine } from "@/lib/catalog/panel-spine-repo";
 import { patchTokenSpine } from "@/lib/catalog/token-spine-repo";
 import { patchArchetype, type PatchArchetypeBody } from "@/lib/catalog/archetype-repo";
 import { patchPoolSpine } from "@/lib/catalog/pool-spine-repo";
 import type {
   CatalogAssetSpinePatchBody,
   CatalogButtonPatchBody,
+  CatalogPanelPatchBody,
   CatalogPoolPatchBody,
   CatalogTokenPatchBody,
 } from "@/types/api/catalog-api";
@@ -35,17 +36,17 @@ export async function updateCatalogEntity(
     case "sprite":
       return patchSprite(slug, body as PatchSpriteBody, sql) as Promise<UpdateResult>;
     case "asset":
-      return patchAssetSpine(slug, body as CatalogAssetSpinePatchBody, sql) as Promise<UpdateResult>;
+      return patchAssetSpine(slug, body as unknown as CatalogAssetSpinePatchBody, sql) as Promise<UpdateResult>;
     case "button":
-      return patchButtonSpine(slug, body as CatalogButtonPatchBody, sql) as Promise<UpdateResult>;
+      return patchButtonSpine(slug, body as unknown as CatalogButtonPatchBody, sql) as Promise<UpdateResult>;
     case "panel":
-      return patchPanelSpine(slug, body as CatalogPanelPatchBody, sql) as Promise<UpdateResult>;
+      return patchPanelSpine(slug, body as unknown as CatalogPanelPatchBody, sql) as Promise<UpdateResult>;
     case "token":
-      return patchTokenSpine(slug, body as CatalogTokenPatchBody, sql) as Promise<UpdateResult>;
+      return patchTokenSpine(slug, body as unknown as CatalogTokenPatchBody, sql) as Promise<UpdateResult>;
     case "archetype":
       return patchArchetype(slug, body as PatchArchetypeBody, sql) as Promise<UpdateResult>;
     case "pool":
-      return patchPoolSpine(slug, body as CatalogPoolPatchBody, sql) as Promise<UpdateResult>;
+      return patchPoolSpine(slug, body as unknown as CatalogPoolPatchBody, sql) as Promise<UpdateResult>;
     case "audio":
       return { ok: "validation", reason: "audio update not supported via generic handler; use /api/catalog/audio/[slug]" };
     default: {

@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-03T15:23:23.968Z",
+  "last_generated": "2026-05-04T07:39:33.716Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -740,22 +740,28 @@
           "line_start": 292
         },
         {
+          "section_id": "user-interface",
+          "title": "User interface",
+          "depth": 2,
+          "line_start": 316
+        },
+        {
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 316
+          "line_start": 329
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 325
+          "line_start": 340
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 339
+          "line_start": 354
         }
       ]
     },
@@ -1874,46 +1880,58 @@
           "line_start": 309
         },
         {
+          "section_id": "3.6",
+          "title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)",
+          "depth": 3,
+          "line_start": 322
+        },
+        {
+          "section_id": "3.7",
+          "title": "3.7 RCIS subtype picker pattern",
+          "depth": 3,
+          "line_start": 346
+        },
+        {
           "section_id": "7",
           "title": "7. Target visual language (inferred — pending game UX/UI master plan)",
           "depth": 2,
-          "line_start": 322
+          "line_start": 352
         },
         {
           "section_id": "7.1",
           "title": "7.1 Dark-first palette",
           "depth": 3,
-          "line_start": 326
+          "line_start": 356
         },
         {
           "section_id": "7.2",
           "title": "7.2 Typography direction",
           "depth": 3,
-          "line_start": 338
+          "line_start": 368
         },
         {
           "section_id": "7.3",
           "title": "7.3 Information density",
           "depth": 3,
-          "line_start": 347
+          "line_start": 377
         },
         {
           "section_id": "7.4",
           "title": "7.4 Cross-surface note (game ↔ web)",
           "depth": 3,
-          "line_start": 360
+          "line_start": 390
         },
         {
           "section_id": "6",
           "title": "6. Revision history",
           "depth": 2,
-          "line_start": 366
+          "line_start": 396
         },
         {
           "section_id": "machine-readable-traceability-ui-inventory-baseline",
           "title": "Machine-readable traceability (UI inventory baseline)",
           "depth": 3,
-          "line_start": 382
+          "line_start": 413
         }
       ]
     },

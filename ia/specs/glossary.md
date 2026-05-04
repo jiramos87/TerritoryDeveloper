@@ -313,6 +313,19 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Scale-switch event bubble-up / constraint push-down | Event and parameter transport across scales, applied at switch time (not continuously). MVP ships both as thin hooks. | ms |
 | Player-authored dormant control | At region scale, player sets budget allocation per dormant child city. At country scale, per dormant region. Extended surface is post-MVP. | ms |
 
+## User interface
+
+| Term | Definition | Spec |
+|------|-----------|------|
+| IStatsPresenter | Read-only interface exposing `Bindings: IReadOnlyDictionary<string, Func<object>>` (slug → producer closure), `OnRefreshed` event, `IsReady` flag. Adapters subscribe instead of polling per frame. | ui §3.6 |
+| CityStatsPresenter | `IStatsPresenter` over a single `CityStats` MonoBehaviour. Inspector-first wiring; `Awake` `FindObjectOfType` fallback. Refresh fires on `CityStatsFacade.OnTickEnd`. | ui §3.6 |
+| RegionStatsPresenter | `IStatsPresenter` over an arbitrary set of `CityStats`. Aggregation per D2: `population`/`money`=sum, `happiness`/`pollution`/`cityLandValueMean`=population-weighted mean (null when Σpop=0), default=sum. Same binding-key set as `CityStatsPresenter`. | ui §3.6 |
+| CityStatsHandoffAdapter | Presenter consumer driving baked `SegmentedReadout` rows from active presenter's `Bindings`. `SetPresenter(IStatsPresenter)` swaps source on scale toggle. Repaint gated on `IsReady`. | ui §3.6 |
+| StatsScaleSwitcher | HUD widget exposing `Scale` enum (City + Region only — D9.A; Country/World hidden entirely, NOT greyed). Toggling rebinds `CityStatsHandoffAdapter` via `SetPresenter`. | ui §3.6 |
+| Stats panel IR v2 | JSX/IR archetype `city-stats-handoff` schema v2 — `tabs[] + rows[]` shape replacing v1 flat list. Hard cutover, no back-compat. Per-panel approval gate at each Stage 14.* task. | ui §3.6 |
+| Stats panel tab taxonomy | 4 tabs `Money / People / Land / Infrastructure`; default open = **Infrastructure**. Field→tab mapping authored in IR `tabs[].rows[]`. Full labels, no abbreviations. | ui §3.6 |
+| Subtype picker (RCIS) | Generalised picker covering Residential + Commercial + Industrial + Zone-S subtypes. Replaces decommissioned `SubTypePickerModal.cs`. Baked from new `subtype-picker` IR archetype. Event-driven on toolbar button click. | ui §3.7 |
+
 ## Retired terms — do not use
 
 | Term | Replacement | Note |
@@ -321,6 +334,8 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Phase | Stage | 4-level hierarchy (Step > Stage > Phase > Task) collapsed to 2-level per `lifecycle`. |
 | Gate | Stage exit criteria | Folded into the Exit subsection of each `### Stage N.M` block. |
 | `DataPopupController.statsPanel` (legacy city-stats deep-dive panel) | `CityStatsHandoffAdapter` SO-ref consumer pattern | Stage 11 (`game-ui-design-system`) — legacy direct-poll deep-dive panel decommissioned. Same Update-poll cadence preserved via baked `SegmentedReadout` SO refs (Stage 6 `HudBarDataAdapter` precedent). `DataPopupController.taxPanel` half retained (separate surface). |
+| `Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs` | `subtype-picker` IR archetype + RCIS picker controller | Stage 13.7 (`game-ui-design-system`) — legacy R/C/I picker generalised to RCIS (R+C+I+Zone-S). Bake handler emits prefab + controller from new IR archetype. |
+| Stats panel IR v1 (flat list) | Stats panel IR v2 (`tabs[] + rows[]`) | Stage 13.5+ — hard cutover, no back-compat. Per-panel approval gate at each Stage 14.* task. |
 
 ## Do not confuse
 

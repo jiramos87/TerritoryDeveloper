@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-05-03T15:23:23.973Z",
+  "last_generated": "2026-05-04T07:39:33.760Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -742,6 +742,38 @@
     "Player-authored dormant control": {
       "spec_key": "ms",
       "anchor": ""
+    },
+    "IStatsPresenter": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "CityStatsPresenter": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "RegionStatsPresenter": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "CityStatsHandoffAdapter": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "StatsScaleSwitcher": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "Stats panel IR v2": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "Stats panel tab taxonomy": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.6"
+    },
+    "Subtype picker (RCIS)": {
+      "spec_key": "ui-design-system",
+      "anchor": "3.7"
     }
   }
 }

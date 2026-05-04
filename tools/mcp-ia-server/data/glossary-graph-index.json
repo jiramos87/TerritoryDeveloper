@@ -1,15 +1,36 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-03T15:23:24.103Z",
+  "last_generated": "2026-05-04T07:39:34.318Z",
   "graph": {
+    "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
+      "related": [
+        "Stage",
+        "Zone",
+        "CityStatsHandoffAdapter",
+        "Gate",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.7",
+          "section_title": "3.7 RCIS subtype picker pattern"
+        }
+      ]
+    },
     "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)": {
       "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "CityStatsHandoffAdapter",
         "Gate",
         "Phase",
-        "Stage",
-        "Urban centroid",
-        "Urban growth rings"
+        "Stage"
       ],
       "cited_in": []
     },
@@ -1440,6 +1461,48 @@
         }
       ]
     },
+    "CityStatsHandoffAdapter": {
+      "related": [
+        "Gate",
+        "Stage",
+        "CityStatsPresenter",
+        "Happiness",
+        "IStatsPresenter"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        }
+      ]
+    },
+    "CityStatsPresenter": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "Gate",
+        "Happiness",
+        "IStatsPresenter",
+        "Pollution"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        }
+      ]
+    },
     "Cliff": {
       "related": [
         "Cell",
@@ -2347,6 +2410,16 @@
           "section_title": "Codebase inventory (uGUI)"
         },
         {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        },
+        {
           "spec": "unity-development-context",
           "section_id": "6",
           "section_title": "6. Script Execution Order and initialization"
@@ -2485,9 +2558,9 @@
     "Happiness": {
       "related": [
         "Building",
-        "Cell",
         "Zone",
-        "Game notification",
+        "Cell",
+        "Pollution",
         "RCI"
       ],
       "cited_in": [
@@ -2545,6 +2618,16 @@
           "spec": "ui-design-system",
           "section_id": "3.1",
           "section_title": "3.1 HUD information density"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
         }
       ]
     },
@@ -3169,6 +3252,27 @@
         "Pathfinding cost model"
       ],
       "cited_in": []
+    },
+    "IStatsPresenter": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter",
+        "Gate",
+        "Happiness",
+        "Pollution"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        }
+      ]
     },
     "Junction": {
       "related": [
@@ -4102,11 +4206,11 @@
     },
     "Pollution": {
       "related": [
+        "Happiness",
         "Cell",
         "Building",
-        "Happiness",
         "Monthly maintenance",
-        "Tax base"
+        "RCI"
       ],
       "cited_in": [
         {
@@ -4143,6 +4247,16 @@
           "spec": "simulation-system",
           "section_id": "calendar-and-monthly-economy",
           "section_title": "Calendar and monthly economy"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
         }
       ]
     },
@@ -4409,6 +4523,27 @@
           "spec": "managers-reference",
           "section_id": "world-features",
           "section_title": "World features"
+        }
+      ]
+    },
+    "RegionStatsPresenter": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter",
+        "Gate",
+        "Happiness",
+        "IStatsPresenter"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
         }
       ]
     },
@@ -5688,10 +5823,10 @@
     "Stage": {
       "related": [
         "Phase",
-        "Cell",
-        "SignalTickScheduler",
-        "DistrictSignalCache",
-        "SignalFieldRegistry"
+        "Gate",
+        "Pollution",
+        "Zone",
+        "Cell"
       ],
       "cited_in": [
         {
@@ -5755,6 +5890,21 @@
           "section_title": "Tick phase insertion"
         },
         {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.7",
+          "section_title": "3.7 RCIS subtype picker pattern"
+        },
+        {
           "spec": "web-ui-design-system",
           "section_id": "4",
           "section_title": "4. Components"
@@ -5775,6 +5925,57 @@
         "Backlog view"
       ],
       "cited_in": []
+    },
+    "Stats panel IR v1 (flat list)": {
+      "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "CityStatsHandoffAdapter",
+        "Gate",
+        "Phase"
+      ],
+      "cited_in": []
+    },
+    "Stats panel IR v2": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "Gate",
+        "Stage",
+        "Zone",
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`"
+      ],
+      "cited_in": []
+    },
+    "Stats panel tab taxonomy": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter",
+        "Gate",
+        "Happiness",
+        "IStatsPresenter"
+      ],
+      "cited_in": []
+    },
+    "StatsScaleSwitcher": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter",
+        "Gate",
+        "Happiness",
+        "IStatsPresenter"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.6",
+          "section_title": "3.6 Stats panel pattern (presenter-driven, scale-switchable)"
+        }
+      ]
     },
     "Street (ordinary road)": {
       "related": [
@@ -5817,6 +6018,16 @@
           "section_title": "Deprecated prose → canonical terms (authoring)"
         }
       ]
+    },
+    "Subtype picker (RCIS)": {
+      "related": [
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter",
+        "Gate",
+        "Happiness",
+        "IStatsPresenter"
+      ],
+      "cited_in": []
     },
     "Surface height (S)": {
       "related": [
@@ -6106,8 +6317,8 @@
         "Phase",
         "Stage",
         "Urban centroid",
-        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
-        "AUTO systems"
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)"
       ],
       "cited_in": []
     },
@@ -6124,10 +6335,10 @@
     "Urbanization proposal": {
       "related": [
         "RCI",
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
         "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
-        "Gate",
-        "Phase",
-        "Stage"
+        "CityStatsHandoffAdapter",
+        "Gate"
       ],
       "cited_in": [
         {
@@ -6450,7 +6661,7 @@
         "Cell",
         "Happiness",
         "Zone S",
-        "IMaintenanceContributor"
+        "Gate"
       ],
       "cited_in": [
         {
@@ -6547,6 +6758,16 @@
           "spec": "ui-design-system",
           "section_id": "codebase-inventory-ugui",
           "section_title": "Codebase inventory (uGUI)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Acceptance criteria (per issue)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "3.7",
+          "section_title": "3.7 RCIS subtype picker pattern"
         },
         {
           "spec": "unity-development-context",
