@@ -79,6 +79,19 @@ The ceiling is **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`); the escalation protoco
 
 The **`unity_bridge_command`** / **`unity_compile`** **120 s** ceiling is enforced in [`tools/mcp-ia-server/src/tools/unity-bridge-command.ts`](../tools/mcp-ia-server/src/tools/unity-bridge-command.ts) (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). After pulling a change that adjusts this cap, **restart the territory-ia MCP server** (or reload the Cursor window) so the host picks up the new tool schema — otherwise the client may still validate **`timeout_ms`** against the old maximum.
 
+## validate:all sub-chain — IA gate validators
+
+`npm run validate:all` runs a sequenced chain of sub-validators. The table below documents each IA-methodology gate (non-Unity, non-web validators) in chain order.
+
+| Validator | Purpose | Exit codes | Notes |
+|-----------|---------|------------|-------|
+| `validate:master-plan-status` | Header `Status` ↔ Stage `Status` ↔ Task row status ↔ `ia_tasks` row consistency (R1–R6). | 0 green / 1 violation / 2 DB error | Always runs first. |
+| `validate:plan-prototype-first` | Asserts every non-grandfathered master plan Stage 1.0/1.1 carries a complete §Tracer Slice block (5 fields) and every Stage 2+ carries a non-empty, unique §Visibility Delta line. | 0 green / 1 violation / 2 DB error | Grandfathers plans created before 2026-05-03. |
+| `validate:plan-red-stage` | CI red on any non-closed master plan Stage that lacks a complete §Red-Stage Proof block (4 fields: `red_test_anchor`, `target_kind`, `proof_artifact_id`, `proof_status`). Skip-clause: `target_kind=design_only` Stages may use `proof_artifact_id=n/a`. | 0 green / 1 ≥1 hard violation / 2 DB error | Runs after `validate:plan-prototype-first`, before `validate:arch-coherence`. Grandfathers plans created before 2026-05-03. |
+| `validate:arch-coherence` | Arch-surface drift scan — every Stage `arch_surfaces` slug must exist in `arch_surfaces` table (Invariant #12). | 0 green / non-zero violation | — |
+
+---
+
 ## Cursor Memory (optional)
 
 Paste the following into **Cursor → Memory** if you want the same policy across projects or sessions without opening this repo:

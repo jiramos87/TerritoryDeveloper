@@ -246,6 +246,62 @@ Anchor: `#visibility-delta`. Source contract: `docs/prototype-first-methodology-
 **§Visibility Delta (Stages 2+ ONLY — mandatory per §3.6):** Player sees road tiles snap to grid corners and animate in-place when adjacent tiles update.
 ```
 
+### 3.7 §Red-Stage Proof block — Stages 2+ (MANDATORY per `ia/rules/tdd-red-green-methodology.md`)
+
+Anchor: `#red-stage-proof`. Source contract: [`ia/rules/tdd-red-green-methodology.md`](../rules/tdd-red-green-methodology.md). Every Stage of every non-grandfathered master plan MUST carry a §Red-Stage Proof block with all 4 fields filled. Validator gate: `validate:plan-red-stage` CI red on any missing or empty block.
+
+**4 required fields:**
+
+| Field | Type | Purpose | Example |
+|-------|------|---------|---------|
+| `red_test_anchor` | anchor grammar string | Points to the test method that was **red** (failing) before implementation. Parsed by `tools/lib/red-stage-anchor-resolver.ts`. | `tracer-verb-test:tools/scripts/test/validate-plan-red-stage.test.mjs::CIRedOnEmptyRedStageProofBlock` |
+| `target_kind` | enum | Category of the red test. See enum below. | `tracer_verb` |
+| `proof_artifact_id` | path or `n/a` | Repo-relative path to the test file containing the red test. `n/a` allowed only when `target_kind=design_only`. | `tools/scripts/test/validate-plan-red-stage.test.mjs` |
+| `proof_status` | enum | Current status of the red test. See enum below. | `failed_as_expected` |
+
+**`target_kind` enum:**
+
+| Value | Meaning |
+|-------|---------|
+| `tracer_verb` | Stage 1.0 tracer-verb test — proves the player-visible verb fires end-to-end. |
+| `visibility_delta` | Stages 2+ visibility-delta test — proves the new player-visible surface is absent pre-impl. |
+| `bug_repro` | Regression test reproducing a filed BUG-NNNN before the fix. |
+| `design_only` | Stage is purely design / doc work with no code surface to test. `proof_artifact_id=n/a` allowed. |
+
+**`proof_status` enum:**
+
+| Value | Meaning |
+|-------|---------|
+| `pending` | Test not yet written or run. |
+| `failed_as_expected` | Test runs red before implementation — proof exists. |
+| `unexpected_pass` | Test passed before implementation (unexpected); escalate for review. |
+| `not_applicable` | No testable surface (`target_kind=design_only`). |
+
+**Anchor grammar — 4 forms:**
+
+| Grammar form | Example | `target_kind` it pairs with |
+|---|---|---|
+| `tracer-verb-test:{path}::{method}` | `tracer-verb-test:tools/scripts/__tests__/validate-plan-red-stage.test.mjs::greenPlanExitsZero` | `tracer_verb` |
+| `visibility-delta-test:{path}::{method}` | `visibility-delta-test:tools/scripts/__tests__/validate-plan-red-stage.test.mjs::CIRedOnEmptyRedStageProofBlock` | `visibility_delta` |
+| `BUG-NNNN:{path}::{method}` | `BUG-3210:Assets/Tests/EditMode/Economy/SomeReproTest.cs::ReproducesNegativeBalance` | `bug_repro` |
+| `n/a` | `n/a` | `design_only` |
+
+**Skip-clause:** Stages with `target_kind=design_only` may set `proof_artifact_id=n/a` and `proof_status=not_applicable` — `validate:plan-red-stage` exits 0 for these Stages.
+
+**Grandfathering:** master plans with `created_at < 2026-05-03` are skipped silently (warn-only). Plans on or after the cutover date are fully enforced.
+
+**Empty / missing block → `validate:plan-red-stage` CI red.**
+
+**Example:**
+
+```markdown
+**§Red-Stage Proof:**
+- `red_test_anchor:` visibility-delta-test:tools/scripts/__tests__/validate-plan-red-stage.test.mjs::CIRedOnEmptyRedStageProofBlock
+- `target_kind:` visibility_delta
+- `proof_artifact_id:` tools/scripts/__tests__/validate-plan-red-stage.test.mjs
+- `proof_status:` failed_as_expected
+```
+
 ---
 
 ## 4. Section ordering — full master plan
