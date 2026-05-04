@@ -53,6 +53,7 @@ export interface MasterPlanHealthRow {
   arch_drift_scan_p95_ms: number | null;
   refreshed_at: string;
   last_verify_at: string | null;
+  stage_1_is_tracer: boolean;
 }
 
 export interface MasterPlanHealthPayload {
@@ -69,6 +70,7 @@ export interface MasterPlanHealthPayload {
   arch_drift_scan_p95_ms?: number | null;
   refreshed_at?: string;
   last_verify_at?: string | null;
+  stage_1_is_tracer?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +90,30 @@ function jsonResult(payload: unknown) {
 
 interface RuntimeStateRow {
   updated_at: Date | string;
+}
+
+/**
+ * Read set of plan slugs whose Stage 1.0 OR 1.1 carries a non-null
+ * `tracer_slice_block`. Sibling-query merge (mig 0059 column read; no MV
+ * touch). Empty set on read failure / no matches. TECH-10307.
+ *
+ * Exported for test harness — the MV does not carry this column; the bool
+ * is synthesized in `rowToPayload` from the slug membership check.
+ */
+export async function readTracerSliceSlugs(): Promise<Set<string>> {
+  try {
+    const pool = getIaDatabasePool();
+    if (!pool) return new Set();
+    const res = await pool.query<{ slug: string }>(
+      `SELECT DISTINCT slug
+         FROM ia_stages
+        WHERE stage_id IN ('1.0', '1.1')
+          AND tracer_slice_block IS NOT NULL`,
+    );
+    return new Set(res.rows.map((r) => r.slug));
+  } catch {
+    return new Set();
+  }
 }
 
 /**
@@ -131,6 +157,7 @@ function toIso(v: Date | string): string {
 function rowToPayload(
   r: HealthMvRow,
   lastVerifyAt: string | null,
+  tracerSlugs: Set<string>,
 ): MasterPlanHealthRow {
   return {
     slug: r.slug,
@@ -145,6 +172,7 @@ function rowToPayload(
     arch_drift_scan_p95_ms: r.arch_drift_scan_p95_ms ?? null,
     refreshed_at: toIso(r.refreshed_at),
     last_verify_at: lastVerifyAt,
+    stage_1_is_tracer: tracerSlugs.has(r.slug),
   };
 }
 
@@ -207,7 +235,9 @@ export function registerMasterPlanHealth(server: McpServer): void {
         "`{slug, n_stages, n_done, n_in_progress, n_pending, " +
         "oldest_in_progress_age_days, missing_arch_surfaces, " +
         "drift_events_open, sibling_collisions, arch_drift_scan_p95_ms, " +
-        "refreshed_at, last_verify_at}`. " +
+        "refreshed_at, last_verify_at, stage_1_is_tracer}`. " +
+        "`stage_1_is_tracer` (TECH-10307) is true when Stage 1.0 OR 1.1 " +
+        "carries non-null `tracer_slice_block` (mig 0059). " +
         "Replaces hand-written cross-plan audit doc workflow. " +
         "Schema-cache restart required after adding this tool (N4): " +
         "restart Claude Code or run `tsx tools/mcp-ia-server/src/index.ts`.",
@@ -223,18 +253,21 @@ export function registerMasterPlanHealth(server: McpServer): void {
           > => {
             const slug = input?.slug?.trim();
             const lastVerifyAt = await readLastVerifyAt();
+            const tracerSlugs = await readTracerSliceSlugs();
 
             if (slug !== undefined && slug !== "") {
               const rows = await getMasterPlanHealth(slug);
               if (rows.length === 0) {
                 return { slug, error: "not_found" } as MasterPlanHealthPayload;
               }
-              return rowToPayload(rows[0]!, lastVerifyAt);
+              return rowToPayload(rows[0]!, lastVerifyAt, tracerSlugs);
             }
 
             const rows = await getMasterPlanHealth();
             return {
-              plans: rows.map((r) => rowToPayload(r, lastVerifyAt)),
+              plans: rows.map((r) =>
+                rowToPayload(r, lastVerifyAt, tracerSlugs),
+              ),
             };
           },
         )(args as HealthArgs | undefined);

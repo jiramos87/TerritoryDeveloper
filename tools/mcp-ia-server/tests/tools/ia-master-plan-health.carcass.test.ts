@@ -149,6 +149,62 @@ describe("ia_master_plan_health — carcass_done flip (TECH-4624)", skip, () => 
     );
   });
 
+  it("master-plan-health: stage_1_is_tracer surfaces tracer_slice_block presence (TECH-10307)", async () => {
+    if (!pool) return;
+
+    const { readTracerSliceSlugs } = await import(
+      "../../src/tools/master-plan-health.js"
+    );
+
+    // Baseline: ensure fixture has no tracer_slice_block on Stage 1.x.
+    await pool.query(
+      `UPDATE ia_stages SET tracer_slice_block = NULL
+        WHERE slug = $1 AND stage_id IN ('1.0','1.1')`,
+      [CARCASS_FIXTURE_SLUG],
+    );
+    const baseSet = await readTracerSliceSlugs();
+    assert.equal(
+      baseSet.has(CARCASS_FIXTURE_SLUG),
+      false,
+      "baseline: fixture slug must NOT appear in tracer-slice slug set",
+    );
+
+    // Seed a Stage 1.1 with tracer_slice_block; assert slug now appears.
+    await pool.query(
+      `INSERT INTO ia_stages (slug, stage_id, title, status, tracer_slice_block)
+         VALUES ($1, '1.1', 'sandbox tracer stage', 'pending', $2::jsonb)
+       ON CONFLICT (slug, stage_id) DO UPDATE
+         SET tracer_slice_block = EXCLUDED.tracer_slice_block`,
+      [
+        CARCASS_FIXTURE_SLUG,
+        JSON.stringify({
+          name: "sandbox-tracer",
+          verb: "test",
+          surface: "sandbox",
+          evidence: "sandbox",
+          gate: "sandbox",
+        }),
+      ],
+    );
+    const seededSet = await readTracerSliceSlugs();
+    assert.equal(
+      seededSet.has(CARCASS_FIXTURE_SLUG),
+      true,
+      "after seed: fixture slug MUST appear in tracer-slice slug set",
+    );
+
+    // rowToPayload synthesis contract: stage_1_is_tracer = tracerSlugs.has(slug).
+    // Asserted via membership check — payload layer is a pure boolean projection
+    // of this set, so set-membership = field-truth.
+
+    // Cleanup the seeded tracer block.
+    await pool.query(
+      `UPDATE ia_stages SET tracer_slice_block = NULL
+        WHERE slug = $1 AND stage_id = '1.1'`,
+      [CARCASS_FIXTURE_SLUG],
+    );
+  });
+
   it("legacy edge case — zero-carcass plan: carcass_done IS NULL", async () => {
     if (!pool) return;
     await seedLegacyPlan();
