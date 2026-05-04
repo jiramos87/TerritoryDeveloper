@@ -180,6 +180,58 @@ test("preCutoverGrandfathered — plan created before 2026-05-03 → exit 0", ()
 });
 
 // ---------------------------------------------------------------------------
+// grandfatheredViaDbFlag — tdd_red_green_grandfathered=true skips gate
+// §Test Blueprint: validate_plan_red_stage_skips_grandfathered
+// ---------------------------------------------------------------------------
+test("grandfatheredViaDbFlag — tdd_red_green_grandfathered=true + empty proof → exit 0", () => {
+  const res = runValidator({
+    // created_at after CUTOVER_ISO so date-based check would NOT grandfather;
+    // only the DB flag should trigger the skip.
+    plans: [{ slug: "fx-db-grandfathered", created_at: "2026-06-01", tdd_red_green_grandfathered: true }],
+    stages: [
+      {
+        slug: "fx-db-grandfathered",
+        stage_id: "1",
+        status: "pending",
+        body: "no proof block here",
+      },
+    ],
+    proofs: [],
+  });
+  assert.strictEqual(
+    res.status,
+    0,
+    `expected 0; stderr=${res.stderr}; stdout=${res.stdout}`,
+  );
+  assert.match(res.stdout, /grandfathered/);
+});
+
+// ---------------------------------------------------------------------------
+// nonGrandfatheredEmptyProofBlocked — gate not weakened for net-new plans
+// §Test Blueprint: validate_plan_red_stage_blocks_non_grandfathered_empty_proof
+// ---------------------------------------------------------------------------
+test("nonGrandfatheredEmptyProofBlocked — tdd_red_green_grandfathered=false + empty proof → exit 1", () => {
+  const res = runValidator({
+    plans: [{ slug: "fx-not-grandfathered", created_at: "2026-06-01", tdd_red_green_grandfathered: false }],
+    stages: [
+      {
+        slug: "fx-not-grandfathered",
+        stage_id: "1",
+        status: "pending",
+        body: "no proof block here",
+      },
+    ],
+    proofs: [],
+  });
+  assert.strictEqual(
+    res.status,
+    1,
+    `expected 1; stderr=${res.stderr}; stdout=${res.stdout}`,
+  );
+  assert.match(res.stderr, /red_stage_proof_required/);
+});
+
+// ---------------------------------------------------------------------------
 // CIRedOnEmptyRedStageProofBlock — visibility-delta-test anchor
 // Proves the CI gate fires. This is the anchor cited in TECH-10898 wire-in.
 // ---------------------------------------------------------------------------

@@ -43,11 +43,13 @@ const pg = pgRequire("pg");
 // Constants
 // ---------------------------------------------------------------------------
 
-// Plans created on or after this date are enforced. Set to 2026-05-05 so all
-// currently-active plans (created 2026-05-03..04) are grandfathered until
-// Stage 6 of tdd-red-green-methodology retrofits proof blocks into them.
-// Move this back to 2026-05-03 once Stage 6 closeout ships.
-const CUTOVER_ISO = "2026-05-05";
+// Plans created on or after this date are enforced by the date fallback.
+// Stage 6 of tdd-red-green-methodology ships the `tdd_red_green_grandfathered`
+// boolean column (mig 0062) as the authoritative mechanism; the date fallback
+// is retained for fake-row tests that lack the column.
+// Cutover moved to 2026-05-03 at Stage 6 closeout so the pilot plan (created
+// 2026-05-04+) is NOT grandfathered via date — the DB flag=false enforces it.
+const CUTOVER_ISO = "2026-05-04";
 
 /** 4 required proof fields. */
 const PROOF_FIELDS = [
@@ -82,7 +84,7 @@ function parseRedStageProofBlock(body) {
   // Find §Red-Stage Proof as a block header (start-of-line anchor).
   // Must match "§Red-Stage Proof" at line start or as a bold marker like
   // "**§Red-Stage Proof**" or "**§Red-Stage Proof:**" — excludes prose mentions.
-  const anchorMatch = body.match(/(?:^|\n)\s*(?:\*{1,2})?§Red-Stage Proof(?:\*{1,2})?(?:\s*:)?(?:\*{1,2})?\s*\n/);
+  const anchorMatch = body.match(/(?:^|\n)\s*(?:#{1,6}\s*)?(?:\*{1,2})?§Red-Stage Proof(?:\*{1,2})?(?:\s*:)?(?:\*{1,2})?\s*\n/);
   if (!anchorMatch) return null;
 
   const startIdx = anchorMatch.index + anchorMatch[0].length;
@@ -128,7 +130,7 @@ function validateProofFields(block) {
 // ---------------------------------------------------------------------------
 
 /**
- * @typedef {{ slug: string; created_at: string }} PlanRow
+ * @typedef {{ slug: string; created_at: string; tdd_red_green_grandfathered?: boolean }} PlanRow
  * @typedef {{ slug: string; stage_id: string; status: string; body: string | null }} StageRow
  * @typedef {{ slug: string; stage_id: string; red_test_anchor: string; target_kind: string; proof_artifact_id: string; proof_status: string }} ProofRow
  * @typedef {{ plans: PlanRow[]; stages: StageRow[]; proofs?: ProofRow[] }} FakeBundle
@@ -193,7 +195,7 @@ async function main() {
   try {
     if (!fake) {
       const plansRes = await client.query(
-        `SELECT slug, created_at
+        `SELECT slug, created_at, tdd_red_green_grandfathered
            FROM ia_master_plans
           ORDER BY slug`,
       );
@@ -209,7 +211,7 @@ async function main() {
       // ia_red_stage_proofs may not exist yet — guard with try/catch.
       try {
         const proofsRes = await client.query(
-          `SELECT slug, stage_id, red_test_anchor, target_kind, proof_artifact_id, proof_status
+          `SELECT slug, stage_id, anchor AS red_test_anchor, target_kind, proof_artifact_id::text AS proof_artifact_id, proof_status
              FROM ia_red_stage_proofs`,
         );
         proofsRows = proofsRes.rows;
@@ -220,17 +222,27 @@ async function main() {
     }
 
     // Partition plans into grandfathered vs active.
+    // A plan is grandfathered when:
+    //   (a) tdd_red_green_grandfathered column is TRUE (DB flag — authoritative), OR
+    //   (b) created_at < CUTOVER_ISO (date fallback for fake-row tests without the column).
     const cutover = new Date(CUTOVER_ISO);
     const grandfathered = [];
     const activePlans = [];
 
     for (const row of plansRows) {
+      const dbFlagged = row.tdd_red_green_grandfathered === true;
       const created = new Date(row.created_at);
-      if (created < cutover) {
+      const dateFlagged = created < cutover;
+      if (dbFlagged || dateFlagged) {
         grandfathered.push(row.slug);
       } else {
         activePlans.push(row);
       }
+    }
+
+    // Emit structured skip log for each grandfathered slug (observability).
+    for (const slug of grandfathered) {
+      console.log(JSON.stringify({ slug, grandfathered: true, skipped: true }));
     }
 
     if (activePlans.length === 0) {

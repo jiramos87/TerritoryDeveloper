@@ -369,6 +369,9 @@ const EXPLICIT_NONE_STAGES = new Set([
   "recipe-runner-phase-e::5.1",
   "recipe-runner-phase-e::5.2",
   "recipe-runner-phase-e::5.3",
+  // tdd-pilot-plan: methodology validation artifact — pure IA/DB; no arch_surfaces.
+  "tdd-pilot-plan::1",
+  "tdd-pilot-plan::2",
 ]);
 
 // ---------------------------------------------------------------------------

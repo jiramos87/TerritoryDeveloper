@@ -253,6 +253,7 @@ CURRENT_TASK_ID = task.task_id
 
 Runs ONCE per Stage at Pass A entry, before any task implementation. Stage-level (one call per Stage, not per Task).
 
+0. **Grandfather skip:** if `stage_bundle` payload carries `tdd_red_green_grandfathered=true` for the plan → emit skip log `{slug, grandfathered: true, skipped: true}` and continue to Step 5.1 for first task. No capture call.
 1. Read `target_kind` from `**§Red-Stage Proof:**` field in master plan Stage body (loaded in Step 1 context).
 2. **Design-only skip:** if `target_kind=design_only` → skip capture + continue to Step 5.1 for first task.
 3. Call `red_stage_proof_capture({slug: SLUG, stage_id: STAGE_ID_DB, target_kind, anchor: red_test_anchor, proof_artifact_id, proof_status})`.

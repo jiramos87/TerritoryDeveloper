@@ -527,6 +527,7 @@ export interface MasterPlanRenderDB {
   title: string;
   description: string | null;
   preamble: string | null;
+  tdd_red_green_grandfathered: boolean;
   stages: StageRenderRowDB[];
   change_log?: MasterPlanChangeLogRow[];
 }
@@ -640,8 +641,9 @@ export async function queryMasterPlanRender(
     title: string;
     description: string | null;
     preamble: string | null;
+    tdd_red_green_grandfathered: boolean;
   }>(
-    `SELECT title, description, preamble FROM ia_master_plans WHERE slug = $1`,
+    `SELECT title, description, preamble, tdd_red_green_grandfathered FROM ia_master_plans WHERE slug = $1`,
     [slug],
   );
   if (pr.rowCount === 0) return null;
@@ -724,6 +726,7 @@ export async function queryMasterPlanRender(
     title: plan.title,
     description: plan.description,
     preamble: plan.preamble,
+    tdd_red_green_grandfathered: plan.tdd_red_green_grandfathered,
     stages,
     ...(change_log ? { change_log } : {}),
   };

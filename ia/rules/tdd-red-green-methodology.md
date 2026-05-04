@@ -83,6 +83,22 @@ Pass B `verify-loop` re-runs the anchored test; asserts green; calls `red_stage_
 
 `npm run validate:plan-red-stage` — CI gate (shipped Stage 3). Asserts: (i) every non-`design_only` Stage with a player-visible delta carries a non-empty `red_test_anchor`; (ii) anchor resolves to a real test file; (iii) `target_kind` value is in the enum. CI red blocks merge on missing proof anchor.
 
+## Retrofit policy
+
+Forward-only enforcement. Pre-Stage 6 master plans (including all plans created before the `0062_master_plan_grandfathered` migration applies) are **exempt** from the §Red-Stage Proof gate.
+
+Exemption is tracked via `tdd_red_green_grandfathered BOOLEAN` on `ia_master_plans`:
+- Migration `0062` backfills `TRUE` for every plan that exists at apply time (covers all in-flight plans, including `tdd-red-green-methodology` Stages 1.0–5).
+- New plans inserted after migration apply default to `FALSE` → gate enforced.
+
+Both `validate:plan-red-stage` and the Pass A entry gate (`red_stage_proof_capture` call site in `/ship-stage`) honor the flag:
+- Grandfathered plan → emit `{slug, grandfathered: true, skipped: true}` log line; exit 0 / skip capture.
+- Non-grandfathered plan → full proof check applies; missing block = violation.
+
+The first non-grandfathered pilot is the plan authored as part of TECH-10908 (Stage 6 closeout pilot).
+
+See §Driving intent above for the cross-link to this policy.
+
 ## Cross-links
 
 - `prototype-first-methodology.md` — D1/D7/D8/D9/D10 anchor; this methodology layers onto without overwriting.
