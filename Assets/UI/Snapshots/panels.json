@@ -1,0 +1,71 @@
+{
+  "snapshot_id": "2026-05-04T20:14:09.120Z",
+  "kind": "panels",
+  "schema_version": 1,
+  "items": [
+    {
+      "panel": {
+        "slug": "hud_bar",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "button",
+          "params_json": "{\"ord\":1,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_1.png"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"ord\":2,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_2.png"
+        },
+        {
+          "ord": 3,
+          "kind": "button",
+          "params_json": "{\"ord\":3,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_3.png"
+        },
+        {
+          "ord": 4,
+          "kind": "button",
+          "params_json": "{\"ord\":4,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_4.png"
+        },
+        {
+          "ord": 5,
+          "kind": "button",
+          "params_json": "{\"ord\":5,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_5.png"
+        },
+        {
+          "ord": 6,
+          "kind": "button",
+          "params_json": "{\"ord\":6,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_6.png"
+        },
+        {
+          "ord": 7,
+          "kind": "button",
+          "params_json": "{\"ord\":7,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_7.png"
+        },
+        {
+          "ord": 8,
+          "kind": "button",
+          "params_json": "{\"ord\":8,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_8.png"
+        },
+        {
+          "ord": 9,
+          "kind": "button",
+          "params_json": "{\"ord\":9,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_9.png"
+        }
+      ]
+    }
+  ]
+}

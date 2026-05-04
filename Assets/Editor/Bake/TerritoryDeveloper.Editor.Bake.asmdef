@@ -1,0 +1,16 @@
+{
+    "name": "TerritoryDeveloper.Editor.Bake",
+    "rootNamespace": "TerritoryDeveloper.Editor.Bake",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

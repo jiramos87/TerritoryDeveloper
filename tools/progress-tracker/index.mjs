@@ -45,8 +45,8 @@ try {
     .sort(); // deterministic order
 
   if (planFiles.length === 0) {
-    console.error(`[progress-tracker] No master-plan files found in ${plansDir}`);
-    process.exit(1);
+    console.log(`[progress-tracker] No master-plan files in ${plansDir} — DB-backed master plans; skipping HTML render.`);
+    process.exit(0);
   }
 
   console.log(`[progress-tracker] Parsing ${planFiles.length} master plan(s):`);
