@@ -1,5 +1,7 @@
 # Game UI Design System — MVP Closeout Extensions (City + Region scale)
 
+> **Status (2026-05-04):** **SUPERSEDED — historical record.** Decisions D1–D9 + DEC-A21 + IR v2 + presenter pattern + scale enum + RCIS picker findings migrated to canonical spec [`ia/specs/ui-design-system.md`](../ia/specs/ui-design-system.md) §3.6 + §3.7 + glossary §User interface (Stage 13.7 / TECH-9875). This doc preserved as the historical decision-process record for `game-ui-design-system` Stages 13–19.
+>
 > **Source type:** Extensions doc for existing `game-ui-design-system` master plan (DB-backed, slug `game-ui-design-system`).
 > **Companion to:** `docs/game-ui-design-system-exploration.md` (parent — Path C strategy verbatim) + `docs/game-ui-design-system-stage-9-split-extensions.md` + `docs/game-ui-design-system-render-layer-extensions.md` + `docs/game-ui-design-system-stage-12-modal-trigger-rewiring-extensions.md`.
 > **Why this doc exists:** Stages 1–10 + 12 shipped. Stage 11 still open. Mid-Stage-11 audit (2026-05-02) revealed 5 compounding root causes that block MVP UI close: two parallel `city-stats` archetypes (wrong twin wired), lossy IR translation (drops label/tone/vu/icon/tab taxonomy), `ThemedTabBar.SetActiveTab` empty stub, 22 icons orphaned, stage-scope discipline froze baseline at "3 stats + tab chrome". Path C selected (parent doc §"Path C — Full Fidelity Strategy"): extend IR schema → update transcribe → update bake handler → import icons → wire tab interactivity → CityStatsPresenter → region parity → MVP closeout. This doc resolves 9 pending decisions (D1–D9) via `/design-explore` polling, then `/master-plan-extend game-ui-design-system` appends Stages 13–N.
@@ -638,3 +640,35 @@ flowchart LR
 - **Drift scan:** clean (0 open stages flagged on `layers/system-layers`)
 - **Blocking items resolved:** 0
 - **Handoff:** `/master-plan-extend game-ui-design-system docs/game-ui-design-system-mvp-closeout-extensions.md`
+
+---
+
+## Post-D9 Follow-up — RCIS subtype picker (2026-05-03)
+
+### Finding
+
+Mid-Stage-13.5 ship audit revealed a gap in D1–D9 scope: legacy `Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs` provides Light/Medium/Heavy density chooser when player clicks a Residential / Commercial / Industrial tool button. NOT migrated in Stages 13.x.
+
+- D1–D9 covered city-stats panel + IR + bake + presenter + region parity. Zoning-tool subtype picker out of scope.
+- Stage 12 (modal trigger rewiring) covered HUD / toolbar / screen modals; subtype picker missed.
+- `web/design-refs/step-1-game-ui/cd-bundle/panels.jsx` `<div data-slot="subtype-row">` (line 306) = static decorative ILed lamps (`MED · 3`, `HVY · 2`), NOT an interactive picker.
+- Legacy picker still functional but uses direct UnityUI (no IR / bake / theme integration). Shipping as-is breaks design-system parity at MVP close.
+
+### Decision (2026-05-03)
+
+Append **TECH-10500 — RCIS subtype picker re-design** to Stage 13.7 (MVP closeout). Generalize R / C / I → **RCIS** (R + C + I + Zone S):
+
+- Every R / C / I / S tool button click opens the picker.
+- Default subtype on tool click = first variant (residential light, commercial light, industrial light, S first registry entry).
+- Player picks any other subtype from the popup; picker commits `currentSubTypeId` on `UIManager` + closes (ESC / outside-click cancels).
+- Zone S subtypes wired even without playable buildings / prefabs — tool button parity with RCI.
+- Picker authored as new IR archetype (`subtype-picker` panel) → bake handler emits prefab → `UIManager.ShowPanel` pattern (Stage 12 trigger plumbing).
+- Legacy `Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs` decommissioned post-cutover.
+- `MvpUiCloseoutSmokeTest.cs` (TECH-9876) extends to cover all 4 RCIS picker paths (open / select / cancel) + Zone S variant.
+
+### Implication
+
+- Stage 13.7 task count grows 3 → 4 (TECH-9874 / TECH-9875 / TECH-9876 + new TECH-10500).
+- TECH-9876 smoke test gains dependency on TECH-10500.
+- Master-plan close gate (Stage 13.7 exit) blocks until RCIS picker ships clean.
+- No new stage required; in-stage append only.

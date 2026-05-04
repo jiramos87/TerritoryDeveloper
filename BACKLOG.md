@@ -282,19 +282,13 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)
 
-- [ ] **TECH-6985** — Recipe-parity audit + body trim for section-closeout
-  - Type: tooling / lifecycle pipeline
-  - Files: `ia/skills/section-closeout/SKILL.md`, `.claude/agents/section-closeout.md`, `ia/recipes/section-closeout.yaml`
-  - Notes: Diff skill + agent body vs `section-closeout.yaml`. Migrate orphan prose into recipe steps. Trim `.claude/agents/section-closeout.md` body ≥60%. Mirror Stage 5.1 outcome (43→6 lines, 60.7% drop on `section-claim`).
-  - Acceptance: agent body ≥60% line drop; drift gate green; `npm run validate:skill-drift` exit 0; recipe still parses (`npm run recipe:run -- section-closeout --dry-run`).
-  - Depends on: none
+## Prototype-first methodology rollout
 
-- [ ] **TECH-6986** — End-to-end smoke run via recipe-dispatch shell
-  - Type: tooling / lifecycle pipeline
-  - Files: `ia/recipes/section-closeout.yaml`, `.claude/agents/section-closeout.md`, `ia_recipe_runs` table
-  - Notes: Run `npm run recipe:run -- section-closeout --inputs <closeout input>` against a real section. Confirm `ia_recipe_runs.status=ok`. Validates recipe-dispatch shell wires through cleanly post body trim.
-  - Acceptance: `ia_recipe_runs` row recorded with `status=ok` for at least one section-closeout run; smoke run output matches pre-trim baseline (closeout digest + commit shape unchanged).
-  - Depends on: TECH-6985 (body trim must land before smoke run validates new shell)
+**Master plan:** `prototype-first-methodology` — codify the meta-result already shipped in `docs/prototype-first-methodology-design.md` `## Design Expansion`: amend `design-explore` Phase 9 persist contract so future explorations emit `§Core Prototype + §Iteration Roadmap` subsections. **Stage 1.1** (self-application codified — DEC-A22 surface re-point + persist-contract v2 fixture + arch_changelog audit row).
+
+
+
+
 
 ## Architecture coherence program
 
@@ -678,58 +672,6 @@ Orchestrator: [`ia/projects/grid-asset-visual-registry-master-plan.md`](../ia/pr
 
 
 ### Web platform — Stage 24 (CD bundle extraction + transcription pipeline)
-
-- [ ] **TECH-1585** — **Save load remap subTypeId to entity_id** (asset-pipeline Stage 19.2 T19.2.1)
-
-- [ ] **TECH-1586** — **Replaced-by chain resolver helper** (asset-pipeline Stage 19.2 T19.2.2)
-
-- [ ] **TECH-1587** — **Missing-asset placeholder + audit_log emit + dev/ship split** (asset-pipeline Stage 19.2 T19.2.3)
-
-- [ ] **TECH-1591** — **wire_asset_from_catalog bridge command** (asset-pipeline Stage 19.3 T19.3.1)
-
-- [ ] **TECH-1592** — **Transactional snapshot + dry_run + rollback for bridge composite** (asset-pipeline Stage 19.3 T19.3.2)
-
-- [ ] **TECH-1593** — **IA scene contract doc + glossary rows for bridge composite** (asset-pipeline Stage 19.3 T19.3.3)
-
-- [ ] **TECH-8603** — **Backup scripts + retention sweep** (asset-pipeline Stage 18.1 T18.1.1)
-  - Acceptance — `backup-db.sh` + `backup-blobs.sh` tested + scheduled via cron; retention sweep prunes per policy.
-  - Spec — [`ia/projects/TECH-8603.md`](ia/projects/TECH-8603.md)
-
-- [ ] **TECH-8604** — **GC sweep workers (retired + orphan blob)** (asset-pipeline Stage 18.1 T18.1.2)
-  - Acceptance — Sweep workers run nightly; orphan blob count visible in dashboard.
-  - Spec — [`ia/projects/TECH-8604.md`](ia/projects/TECH-8604.md)
-
-- [ ] **TECH-8605** — **verify:db-restore drill** (asset-pipeline Stage 18.1 T18.1.3)
-  - Acceptance — `verify:db-restore` script green on first drill; failure surfaces in dashboard.
-  - Spec — [`ia/projects/TECH-8605.md`](ia/projects/TECH-8605.md)
-
-- [ ] **TECH-8606** — **Three runbooks (DR + publish + archetype authoring)** (asset-pipeline Stage 18.1 T18.1.4)
-  - Acceptance — Three runbook .md files committed + walkthrough-tested by user.
-  - Spec — [`ia/projects/TECH-8606.md`](ia/projects/TECH-8606.md)
-
-- [ ] **TECH-8607** — **Vitest unit suite for web/lib** (asset-pipeline Stage 19.1 T19.1.T1)
-
-- [ ] **TECH-8608** — **Integration suite per kind** (asset-pipeline Stage 19.1 T19.1.T2)
-
-- [ ] **TECH-8609** — **Playwright critical-path smoke** (asset-pipeline Stage 19.1 T19.1.T3)
-
-- [ ] **TECH-8610** — **catalog-snapshot-roundtrip Unity scenario** (asset-pipeline Stage 19.1 T19.1.T4)
-
-Console + sprite-gen READMEs
-  - Acceptance — `web/app/catalog/README.md` + `tools/sprite-gen/README.md` written; user walkthrough green.
-  - Spec — [`ia/projects/TECH-8611.md`](ia/projects/TECH-8611.md)
-
-Glossary additions for new terms
-  - Acceptance — 9 term rows added to `ia/specs/glossary.md`; `npm run generate:ia-indexes` green.
-  - Spec — [`ia/projects/TECH-8612.md`](ia/projects/TECH-8612.md)
-
-Graduate ia/specs/catalog-architecture.md
-  - Acceptance — `ia/specs/catalog-architecture.md` committed with graduated canonical sections; exploration doc retained as design-trail.
-  - Spec — [`ia/projects/TECH-8613.md`](ia/projects/TECH-8613.md)
-
-Master plan rollup + closeout digest
-  - Acceptance — `master_plan_change_log_append` entry recorded; Stage 20.1 status `done`; orchestrator preamble Status `Final`.
-  - Spec — [`ia/projects/TECH-8614.md`](ia/projects/TECH-8614.md)
 
 ## High Priority
 

@@ -286,5 +286,83 @@ public class GameDebugInfoBuilder : MonoBehaviour
     {
         return GetCoordinatesLine(gridPosition) + SectionSeparator + GetCellUnderCursorInfo(gridPosition);
     }
+
+    /// <summary>
+    /// BUG-60 — CellDataPanel two-section debug text. Hover + Last-clicked stacked,
+    /// each renders 5 data points: grid coords, height, surface level, prefab, owner/city id.
+    /// Last-clicked section omitted when <paramref name="lastClicked"/> negative.
+    /// </summary>
+    /// <param name="hover">Current cursor grid position.</param>
+    /// <param name="lastClicked">Last clicked grid position (-1,-1 → none).</param>
+    public string GetCellDataPanelText(Vector2 hover, Vector2 lastClicked)
+    {
+        ResolveRefsIfNeeded();
+        var sb = new StringBuilder();
+        sb.Append("[Hover]\n");
+        sb.Append(FormatCellDataPanelSection(hover));
+        int lx = (int)lastClicked.x;
+        int ly = (int)lastClicked.y;
+        if (lx >= 0 && ly >= 0)
+        {
+            sb.Append("\n\n[Last-clicked]\n");
+            sb.Append(FormatCellDataPanelSection(lastClicked));
+        }
+        return sb.ToString();
+    }
+
+    private string FormatCellDataPanelSection(Vector2 gridPosition)
+    {
+        int x = (int)gridPosition.x;
+        int y = (int)gridPosition.y;
+
+        string coordsLine = $"Grid: ({x}, {y})";
+        if (gridManager != null && gridManager.chunkSize > 0)
+        {
+            int cx = x / gridManager.chunkSize;
+            int cy = y / gridManager.chunkSize;
+            coordsLine += $"  chunk: ({cx},{cy})";
+        }
+
+        string heightLine = "Height: n/a";
+        string surfaceLine = "Surface: n/a";
+        string prefabLine = "Prefab: -";
+        string ownerLine = "Owner: n/a";
+
+        if (gridManager != null && x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
+        {
+            int h = 0;
+            if (terrainManager != null && terrainManager.GetHeightMap() != null)
+                h = terrainManager.GetHeightMap().GetHeight(x, y);
+            heightLine = $"Height: {h}";
+
+            if (waterManager != null)
+            {
+                WaterManager.CellWaterContext ctx = waterManager.GetCellWaterContext(x, y);
+                if (ctx.SurfaceHeight >= 0)
+                    surfaceLine = ctx.WaterBodyId != 0
+                        ? $"Surface: {ctx.SurfaceHeight} ({ctx.Classification} id={ctx.WaterBodyId})"
+                        : $"Surface: {ctx.SurfaceHeight}";
+                else
+                    surfaceLine = "Surface: dry";
+            }
+
+            CityCell cell = gridManager.GetCell(x, y);
+            if (cell != null)
+            {
+                string prefabs = FormatCellInstantiatedPrefabNames(cell);
+                prefabLine = string.IsNullOrEmpty(prefabs)
+                    ? $"Prefab: empty ({cell.zoneType})"
+                    : $"Prefab: {prefabs}";
+            }
+        }
+        else
+        {
+            heightLine = "Height: oob";
+            surfaceLine = "Surface: oob";
+            prefabLine = "Prefab: oob";
+        }
+
+        return string.Join(LineBreak, new[] { coordsLine, heightLine, surfaceLine, prefabLine, ownerLine });
+    }
 }
 }

@@ -115,14 +115,20 @@ public class CityStats : MonoBehaviour, ICityStats
     public int totalEnvelopeCap;
     /// <summary>Remaining draw per Zone S sub-type (length 7).</summary>
     public int[] envelopeRemainingPerSubType = new int[7];
+#if BONDS_ENABLED
+    // BUG-61 W4 — bond read-model fields hidden behind feature flag (default OFF) for MVP.
     /// <summary>Approximate remaining bond liability (sum of monthlyRepayment × monthsRemaining).</summary>
     public int activeBondDebt;
     /// <summary>Sum of monthly repayments across active bonds.</summary>
     public int monthlyBondRepayment;
+#endif
     #endregion
 
     private BudgetAllocationService budgetAllocationService;
+#if BONDS_ENABLED
+    // BUG-61 W4 — bond ledger ref hidden behind feature flag (default OFF) for MVP.
     private BondLedgerService bondLedgerService;
+#endif
 
     #region Population and Demographics
     void Start()
@@ -154,8 +160,11 @@ public class CityStats : MonoBehaviour, ICityStats
             _statisticsManager = FindObjectOfType<StatisticsManager>();
         if (budgetAllocationService == null)
             budgetAllocationService = FindObjectOfType<BudgetAllocationService>();
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond ledger fallback hidden behind feature flag (default OFF) for MVP.
         if (bondLedgerService == null)
             bondLedgerService = FindObjectOfType<BondLedgerService>();
+#endif
         // Stage 4 facade refs — Inspector primary, FindObjectOfType fallback per invariant #4.
         if (happinessComposer == null)
             happinessComposer = FindObjectOfType<HappinessComposer>();
@@ -180,6 +189,8 @@ public class CityStats : MonoBehaviour, ICityStats
                 envelopeRemainingPerSubType[i] = budgetAllocationService.GetRemaining(i);
         }
 
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond read-model refresh hidden behind feature flag (default OFF) for MVP.
         activeBondDebt = 0;
         monthlyBondRepayment = 0;
         if (bondLedgerService != null)
@@ -196,6 +207,7 @@ public class CityStats : MonoBehaviour, ICityStats
                 }
             }
         }
+#endif
 
         // Stage 7 (TECH-1892) — refresh per-tick mean LandValue from district cache.
         // Empty cache or absent scheduler → 0f (no NaN propagation into EconomyManager bonus).

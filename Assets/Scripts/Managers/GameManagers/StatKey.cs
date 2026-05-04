@@ -79,8 +79,11 @@ namespace Territory.Economy
         EnvelopeRemainingSubType5,
         EnvelopeRemainingSubType6,
 
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond stat keys hidden behind feature flag (default OFF) for MVP.
         ActiveBondDebt,
         MonthlyBondRepayment,
+#endif
 
         // --- Multi-scale stubs (filled in Stage 3+) ---
         /// <summary>Region aggregate population — stub until region facade.</summary>

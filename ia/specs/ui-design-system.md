@@ -319,6 +319,36 @@ Normative behavior stays in **§1–§3**; the following are **consistency** not
 
 ---
 
+### 3.6 Stats panel pattern (presenter-driven, scale-switchable)
+
+City + Region stats render through a **shared presenter pipeline** baked from a JSX/IR archetype (`city-stats-handoff` v2, schema `tabs[] + rows[]`). The Stage 13.5–13.7 closeout settled the following:
+
+| Decision | Pick | Notes |
+|---|---|---|
+| **D1 — Tabs** | `Money / People / Land / Infrastructure` | Default open tab = **Infrastructure**. Full labels, no abbreviations. Field→tab mapping authored in IR `tabs[].rows[]`. |
+| **D2 — Region aggregation** | Same panel + same 4 tabs at Region scope | `population` + `money` = totals; `happiness` / `pollution` / `cityLandValueMean` = **population-weighted means** (null when Σpop=0); default = total. Region-only stats deferred. |
+| **D3 — Iconography** | `icon-{happiness,population,money,bond,envelope}` added (27 icons total) | Tab + row icons everywhere. Bake handler resolves slug → 128×128 PNG via `tools/scripts/icons-svg-split.ts`. |
+| **D4 — Row layout** | `[icon | label | value | vu? | delta?]`, 28 px row, 20 px icon | Label = 50% width. Sign-driven delta color. Row hover = MVP-scope only (no expansion). |
+| **D5 — Schema cutover** | Hard cutover IR v1 → v2 | Per-panel approval gate at each Stage 14.* task. No back-compat. |
+| **D6 — SVG export** | Per-id 128×128 PNG export at transcribe step | Invoked by `icons-svg-split.ts`; no runtime SVG import. |
+| **D7 — Tab show/hide** | Hard show/hide via `SetActiveTab` | Pages[] flip; indicator snap; **no animation**. |
+| **D8 — Presenter wiring** | `IStatsPresenter` interface + `CityStatsPresenter` + `RegionStatsPresenter` | Tick-driven (`CityStatsFacade.OnTickEnd` → `OnRefreshed`). Adapter gates writes on `IsReady` (guardrail #14 — manager-init race). |
+| **D9 — Scale enum** | `City + Region` only — Country / World **hidden entirely** (NOT greyed) | `StatsScaleSwitcher.Scale` enum enforces; PlayMode test asserts cardinality + absence. |
+
+**Wiring contract:**
+- `CityStatsHandoffAdapter` subscribes to active presenter's `OnRefreshed`; `SetPresenter(IStatsPresenter)` swaps source on scale toggle (unsubscribe → swap → resubscribe → repaint).
+- Inspector-first wiring per invariant #4; `FindObjectOfType` fallback in `Awake` only (guardrail #0). No runtime `AddComponent` on existing scene nodes (invariant #6).
+- Same panel, same 4 tabs across scales — binding-key set is identical (`PlayMode RegionStatsPanelSmokeTests.Region_And_City_Bindings_HaveIdenticalKeySets`).
+- No per-frame `Update` polling; refresh fires on facade tick end only (invariant #3).
+
+**Architecture decision:** **DEC-A21** — Stats panel presenter-driven baking with scale-switchable adapter. Logged in `arch_decisions` (plan-scoped to `game-ui-design-system`).
+
+### 3.7 RCIS subtype picker pattern
+
+The legacy `Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs` is decommissioned post-Stage 13.7. The replacement is a **generalised RCIS** (Residential + Commercial + Industrial + Zone-S) picker baked from a new IR archetype `subtype-picker`. Same 4 paths (R / C / I / S) flow through the new modal; bake handler emits one prefab + one C# controller. Wiring follows the §3.6 presenter contract — Inspector-first, tick-agnostic (modal is event-driven on toolbar button click).
+
+---
+
 ## 7. Target visual language (inferred — pending game UX/UI master plan)
 
 These assertions are inferred from visual references provided by the developer (April 2026). They are **targets** — not yet enforced in as-built code. A future game UX/UI master plan will formalize them into backlog issues. Cross-reference: `ia/specs/web-ui-design-system.md` shares the same language for the web layer.
@@ -378,6 +408,7 @@ These patterns apply to both the **in-game HUD** (Unity uGUI) and the **web plat
 | 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
 | 2026-04-11 | **§3.5** touch / **WASD** **UI** blocking note; **§5.3** shipped **UiTheme** / **HUD** polish implementation patterns (migrated from closed project spec) |
 | 2026-04-14 | **§7** Target visual language (inferred from reference images) — dark-first, data-dense, semantic color, stat bars, entity cards, heat/bubble overlays. Cross-linked to `web-ui-design-system.md`. |
+| 2026-05-04 | **§3.6** Stats panel pattern — D1-D9 closeout (4 tabs, region weighted-mean aggregation, IR v2 cutover, presenter pipeline, City+Region scale enum, DEC-A21). **§3.7** RCIS subtype picker pattern — legacy `SubTypePickerModal` decommissioned, IR-baked replacement. Migrated from `docs/game-ui-design-system-mvp-closeout-extensions.md` (preserved as historical record). |
 
 ### Machine-readable traceability (UI inventory baseline)
 

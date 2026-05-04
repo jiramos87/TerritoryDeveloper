@@ -40,7 +40,7 @@ namespace Territory.UI
         /// </summary>
         private void ApplyHudUiThemeIfConfigured()
         {
-            EnsureGridCoordinatesDebugChrome();
+            EnsureCellDataPanelChrome();
             EnsureDemandGaugeBars();
 
             if (hudUiTheme == null)
@@ -109,14 +109,14 @@ namespace Territory.UI
             ApplyLoadGameAndFundsPanels();
         }
 
-        private const string GridCoordinatesChromeName = "Fe50GridCoordinatesChrome";
-        private const string GridCoordinatesChromeNameAlt = "Fe50GridCoordinatesPanel";
-        private const string GridCoordinatesTextInsetName = "Fe50GridCoordinatesTextInset";
-        private const string GridCoordinatesTextHolderAlt = "Fe50GridCoordinatesText";
+        private const string CellDataPanelName = "CellDataPanel";
+        private const string CellDataPanelNameAlt = "CellDataPanelAlt";
+        private const string CellDataPanelTextInsetName = "CellDataPanelTextInset";
+        private const string CellDataPanelTextHolderAlt = "CellDataPanelText";
 
-        private const string GridCoordinatesScrollRootName = "Fe50GridCoordinatesScrollRoot";
-        private const string GridCoordinatesViewportName = "Fe50GridCoordinatesViewport";
-        private const string GridCoordinatesContentName = "Fe50GridCoordinatesContent";
+        private const string CellDataPanelScrollRootName = "CellDataPanelScrollRoot";
+        private const string CellDataPanelViewportName = "CellDataPanelViewport";
+        private const string CellDataPanelContentName = "CellDataPanelContent";
 
         private const string ControlPanelObjectName = "ControlPanel";
 
@@ -124,35 +124,35 @@ namespace Territory.UI
         private const string DataPanelButtonsObjectName = "DataPanelButtons";
 
         /// <summary>Gap: grid debug chrome bottom → top of <see cref="ControlPanelObjectName"/>.</summary>
-        private const float GridCoordinatesChromeGapAboveControlPanel = 10f;
+        private const float CellDataPanelGapAboveControlPanel = 10f;
 
         /// <summary>Gap: bottom of <see cref="DataPanelButtonsObjectName"/> → top of grid debug chrome.</summary>
-        private const float GridCoordinatesGapBelowDataPanelButtons = 8f;
+        private const float CellDataPanelGapBelowDataPanelButtons = 8f;
 
         /// <summary>Gap: grid debug chrome bottom → top of <c>MiniMapPanel</c> (fallback layout).</summary>
-        private const float GridCoordinatesChromeGapAboveMinimap = 30f;
+        private const float CellDataPanelGapAboveMinimap = 30f;
 
         /// <summary>Max outer size (w=h) of square grid debug chrome.</summary>
-        private const float GridCoordinatesChromeMaxSquareSide = 220f;
+        private const float CellDataPanelMaxSquareSide = 220f;
 
-        private static bool IsGridCoordinatesChromeRootName(string n)
+        private static bool IsCellDataPanelRootName(string n)
         {
-            return n == GridCoordinatesChromeName || n == GridCoordinatesChromeNameAlt;
+            return n == CellDataPanelName || n == CellDataPanelNameAlt;
         }
 
-        private static bool IsGridCoordinatesTextHolderName(string n)
+        private static bool IsCellDataPanelTextHolderName(string n)
         {
-            return n == GridCoordinatesTextInsetName || n == GridCoordinatesTextHolderAlt;
+            return n == CellDataPanelTextInsetName || n == CellDataPanelTextHolderAlt;
         }
 
         /// <summary>
         /// Walk parents → find grid debug chrome root (inset or scroll lives under it).
         /// </summary>
-        private static Transform FindGridCoordinatesChromeRoot(Transform from)
+        private static Transform FindCellDataPanelRoot(Transform from)
         {
             for (Transform p = from; p != null; p = p.parent)
             {
-                if (IsGridCoordinatesChromeRootName(p.name))
+                if (IsCellDataPanelRootName(p.name))
                     return p;
             }
 
@@ -162,13 +162,13 @@ namespace Territory.UI
         /// <summary>
         /// Return text inset <see cref="RectTransform"/> under chrome if present.
         /// </summary>
-        private static RectTransform FindGridCoordinatesInset(RectTransform chromeRt)
+        private static RectTransform FindCellDataPanelInset(RectTransform chromeRt)
         {
             if (chromeRt == null)
                 return null;
-            Transform t = chromeRt.Find(GridCoordinatesTextInsetName);
+            Transform t = chromeRt.Find(CellDataPanelTextInsetName);
             if (t == null)
-                t = chromeRt.Find(GridCoordinatesTextHolderAlt);
+                t = chromeRt.Find(CellDataPanelTextHolderAlt);
             return t != null ? t.GetComponent<RectTransform>() : null;
         }
 
@@ -188,7 +188,7 @@ namespace Territory.UI
         /// <summary>
         /// Parent grid debug chrome under HUD layout root; draw just after <c>ControlPanel</c> if present, else after <c>MiniMapPanel</c>.
         /// </summary>
-        private static void EnsureGridCoordinatesChromeHudMount(RectTransform chromeRt)
+        private static void EnsureCellDataPanelHudMount(RectTransform chromeRt)
         {
             if (chromeRt == null)
                 return;
@@ -210,7 +210,7 @@ namespace Territory.UI
         /// <summary>
         /// Wrap <see cref="gridCoordinatesText"/> in semi-transparent HUD panel, white copy → contrast over map.
         /// </summary>
-        private void EnsureGridCoordinatesDebugChrome()
+        private void EnsureCellDataPanelChrome()
         {
             if (gridCoordinatesText == null)
                 return;
@@ -218,15 +218,15 @@ namespace Territory.UI
             Transform t = gridCoordinatesText.transform;
             RectTransform textRt = gridCoordinatesText.GetComponent<RectTransform>();
 
-            Transform chromeRoot = FindGridCoordinatesChromeRoot(t);
+            Transform chromeRoot = FindCellDataPanelRoot(t);
             if (chromeRoot != null)
             {
                 RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
-                EnsureGridCoordinatesTextUnderInset(chromeRt.transform, textRt);
-                ApplyGridCoordinatesChromeTextStyle();
-                EnsureGridCoordinatesChromeHudMount(chromeRt);
-                AlignGridCoordinatesChrome(chromeRt);
-                UpdateGridCoordinatesScrollLayout(chromeRt, gridCoordinatesText);
+                EnsureCellDataPanelTextUnderInset(chromeRt.transform, textRt);
+                ApplyCellDataPanelTextStyle();
+                EnsureCellDataPanelHudMount(chromeRt);
+                AlignCellDataPanel(chromeRt);
+                UpdateCellDataPanelScrollLayout(chromeRt, gridCoordinatesText);
                 return;
             }
 
@@ -234,7 +234,7 @@ namespace Territory.UI
             int siblingIndex = t.GetSiblingIndex();
             Transform chromeMount = FindHudLayoutRoot(t) ?? originalParent;
 
-            GameObject chrome = new GameObject(GridCoordinatesChromeName, typeof(RectTransform));
+            GameObject chrome = new GameObject(CellDataPanelName, typeof(RectTransform));
             chrome.transform.SetParent(chromeMount, false);
             Transform cpForOrder = chromeMount.Find(ControlPanelObjectName);
             Transform mmForOrder = chromeMount.Find("MiniMapPanel");
@@ -252,7 +252,7 @@ namespace Territory.UI
             chromeRtNew.sizeDelta = textRt.sizeDelta + new Vector2(36f, 18f);
             chromeRtNew.localScale = textRt.localScale;
 
-            GameObject bgGo = new GameObject("Fe50GridDebugBg", typeof(RectTransform), typeof(Image));
+            GameObject bgGo = new GameObject("CellDataPanelBg", typeof(RectTransform), typeof(Image));
             bgGo.transform.SetParent(chrome.transform, false);
             bgGo.transform.SetAsFirstSibling();
             RectTransform bgRt = bgGo.GetComponent<RectTransform>();
@@ -266,18 +266,18 @@ namespace Territory.UI
             panel.a = hudUiTheme != null ? Mathf.Clamp(hudUiTheme.SurfaceToolbar.a * 0.92f, 0.78f, 0.9f) : 0.86f;
             bgImg.color = panel;
 
-            EnsureGridCoordinatesTextUnderInset(chrome.transform, textRt);
+            EnsureCellDataPanelTextUnderInset(chrome.transform, textRt);
 
-            ApplyGridCoordinatesChromeTextStyle();
-            EnsureGridCoordinatesChromeHudMount(chromeRtNew);
-            AlignGridCoordinatesChrome(chromeRtNew);
-            UpdateGridCoordinatesScrollLayout(chromeRtNew, gridCoordinatesText);
+            ApplyCellDataPanelTextStyle();
+            EnsureCellDataPanelHudMount(chromeRtNew);
+            AlignCellDataPanel(chromeRtNew);
+            UpdateCellDataPanelScrollLayout(chromeRtNew, gridCoordinatesText);
         }
 
         /// <summary>
         /// Inset debug copy from chrome edges (plain <see cref="RectTransform"/>, no layout groups).
         /// </summary>
-        private static void ApplyGridCoordinatesChromeTextInset(RectTransform insetRt)
+        private static void ApplyCellDataPanelTextInset(RectTransform insetRt)
         {
             if (insetRt == null)
                 return;
@@ -296,7 +296,7 @@ namespace Territory.UI
         /// <summary>
         /// Strip nested canvas/scaler + layout drivers → legacy <see cref="Text"/> draws on root HUD canvas.
         /// </summary>
-        private static void EnsureGridCoordinatesTextLayoutDriver(RectTransform textRt)
+        private static void EnsureCellDataPanelTextLayoutDriver(RectTransform textRt)
         {
             if (textRt == null)
                 return;
@@ -333,43 +333,43 @@ namespace Territory.UI
         /// <summary>
         /// Ensure inset holder exists under chrome; <see cref="gridCoordinatesText"/> is layout-driven child with real padding.
         /// </summary>
-        private static void EnsureGridCoordinatesTextUnderInset(Transform chromeTransform, RectTransform textRt)
+        private static void EnsureCellDataPanelTextUnderInset(Transform chromeTransform, RectTransform textRt)
         {
             if (chromeTransform == null || textRt == null)
                 return;
 
-            Transform insetTransform = chromeTransform.Find(GridCoordinatesTextInsetName);
+            Transform insetTransform = chromeTransform.Find(CellDataPanelTextInsetName);
             if (insetTransform == null)
-                insetTransform = chromeTransform.Find(GridCoordinatesTextHolderAlt);
+                insetTransform = chromeTransform.Find(CellDataPanelTextHolderAlt);
             if (insetTransform == null)
             {
-                GameObject insetGo = new GameObject(GridCoordinatesTextInsetName, typeof(RectTransform));
+                GameObject insetGo = new GameObject(CellDataPanelTextInsetName, typeof(RectTransform));
                 insetTransform = insetGo.transform;
                 insetTransform.SetParent(chromeTransform, false);
-                Transform bg = chromeTransform.Find("Fe50GridDebugBg");
+                Transform bg = chromeTransform.Find("CellDataPanelBg");
                 if (bg != null)
                     insetTransform.SetSiblingIndex(bg.GetSiblingIndex() + 1);
             }
 
             RectTransform insetRt = insetTransform.GetComponent<RectTransform>();
-            ApplyGridCoordinatesChromeTextInset(insetRt);
+            ApplyCellDataPanelTextInset(insetRt);
 
-            EnsureGridCoordinatesScrollUnderInset(insetRt, textRt);
-            EnsureGridCoordinatesTextLayoutDriver(textRt);
+            EnsureCellDataPanelScrollUnderInset(insetRt, textRt);
+            EnsureCellDataPanelTextLayoutDriver(textRt);
         }
 
         /// <summary>
         /// Add <see cref="ScrollRect"/> under inset → long grid debug copy scrolls inside panel vs overflowing.
         /// </summary>
-        private static void EnsureGridCoordinatesScrollUnderInset(RectTransform insetRt, RectTransform textRt)
+        private static void EnsureCellDataPanelScrollUnderInset(RectTransform insetRt, RectTransform textRt)
         {
             if (insetRt == null || textRt == null)
                 return;
 
-            Transform scrollRootT = insetRt.Find(GridCoordinatesScrollRootName);
+            Transform scrollRootT = insetRt.Find(CellDataPanelScrollRootName);
             if (scrollRootT == null)
             {
-                GameObject scrollGo = new GameObject(GridCoordinatesScrollRootName, typeof(RectTransform), typeof(ScrollRect));
+                GameObject scrollGo = new GameObject(CellDataPanelScrollRootName, typeof(RectTransform), typeof(ScrollRect));
                 scrollRootT = scrollGo.transform;
                 scrollRootT.SetParent(insetRt, false);
                 RectTransform scrollRt = scrollGo.GetComponent<RectTransform>();
@@ -378,7 +378,7 @@ namespace Territory.UI
                 scrollRt.offsetMin = Vector2.zero;
                 scrollRt.offsetMax = Vector2.zero;
 
-                GameObject vpGo = new GameObject(GridCoordinatesViewportName, typeof(RectTransform), typeof(RectMask2D), typeof(Image));
+                GameObject vpGo = new GameObject(CellDataPanelViewportName, typeof(RectTransform), typeof(RectMask2D), typeof(Image));
                 vpGo.transform.SetParent(scrollRootT, false);
                 RectTransform vpRt = vpGo.GetComponent<RectTransform>();
                 vpRt.anchorMin = Vector2.zero;
@@ -389,7 +389,7 @@ namespace Territory.UI
                 vpImg.color = new Color(0f, 0f, 0f, 0.01f);
                 vpImg.raycastTarget = true;
 
-                GameObject contentGo = new GameObject(GridCoordinatesContentName, typeof(RectTransform));
+                GameObject contentGo = new GameObject(CellDataPanelContentName, typeof(RectTransform));
                 contentGo.transform.SetParent(vpGo.transform, false);
                 RectTransform contentRt = contentGo.GetComponent<RectTransform>();
                 contentRt.anchorMin = new Vector2(0f, 1f);
@@ -409,8 +409,8 @@ namespace Territory.UI
                 sr.decelerationRate = 0.135f;
             }
 
-            Transform viewportT = scrollRootT.Find(GridCoordinatesViewportName);
-            Transform contentTransform = viewportT != null ? viewportT.Find(GridCoordinatesContentName) : null;
+            Transform viewportT = scrollRootT.Find(CellDataPanelViewportName);
+            Transform contentTransform = viewportT != null ? viewportT.Find(CellDataPanelContentName) : null;
             RectTransform contentParent = contentTransform != null ? contentTransform.GetComponent<RectTransform>() : null;
             if (contentParent == null)
                 return;
@@ -428,16 +428,16 @@ namespace Territory.UI
         /// <summary>
         /// Size scroll content from text preferred height; enable vertical scroll only when exceeds viewport.
         /// </summary>
-        private static void UpdateGridCoordinatesScrollLayout(RectTransform chromeRt, Text dbgText)
+        private static void UpdateCellDataPanelScrollLayout(RectTransform chromeRt, Text dbgText)
         {
             if (chromeRt == null)
                 return;
 
-            RectTransform insetRt = FindGridCoordinatesInset(chromeRt);
+            RectTransform insetRt = FindCellDataPanelInset(chromeRt);
             if (insetRt == null)
                 return;
 
-            Transform scrollRootT = insetRt.Find(GridCoordinatesScrollRootName);
+            Transform scrollRootT = insetRt.Find(CellDataPanelScrollRootName);
             if (scrollRootT == null)
                 return;
 
@@ -455,7 +455,7 @@ namespace Territory.UI
             float viewW = Mathf.Max(viewport.rect.width, 40f);
             float viewH = Mathf.Max(viewport.rect.height, 1f);
 
-            float prefH = EstimateGridCoordinatesTextPreferredHeight(dbgText, viewW);
+            float prefH = EstimateCellDataPanelTextPreferredHeight(dbgText, viewW);
             float contentH = Mathf.Max(prefH, viewH);
             content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentH);
             LayoutRebuilder.ForceRebuildLayoutImmediate(content);
@@ -474,19 +474,19 @@ namespace Territory.UI
         /// never covers the bottom toolbar or left ControlPanel. Replaces the legacy stack-above-
         /// ControlPanel/minimap layout that obscured toolbar buttons.
         /// </summary>
-        private static void AlignGridCoordinatesChrome(RectTransform chromeRt)
+        private static void AlignCellDataPanel(RectTransform chromeRt)
         {
             if (chromeRt == null)
                 return;
             Canvas.ForceUpdateCanvases();
-            EnsureGridCoordinatesChromeHudMount(chromeRt);
+            EnsureCellDataPanelHudMount(chromeRt);
 
             RectTransform parentRt = chromeRt.parent as RectTransform;
             if (parentRt == null)
                 return;
 
             const float rightMargin = 16f;
-            float side = Mathf.Min(GridCoordinatesChromeMaxSquareSide, parentRt.rect.height * 0.5f);
+            float side = Mathf.Min(CellDataPanelMaxSquareSide, parentRt.rect.height * 0.5f);
             side = Mathf.Max(side, 1f);
 
             chromeRt.anchorMin = new Vector2(1f, 0.5f);
@@ -499,7 +499,7 @@ namespace Territory.UI
         /// <summary>
         /// Square grid debug chrome above reference panel top; cap top below <see cref="DataPanelButtonsObjectName"/> when present.
         /// </summary>
-        private static void GridCoordinatesApplySquareChromeLayout(
+        private static void CellDataPanelApplySquareLayout(
             RectTransform chromeRt,
             RectTransform parentRt,
             float minX,
@@ -512,16 +512,16 @@ namespace Territory.UI
             float limitTop = float.PositiveInfinity;
             Transform dpTransform = parentRt.Find(DataPanelButtonsObjectName);
             RectTransform dpRt = dpTransform != null ? dpTransform.GetComponent<RectTransform>() : null;
-            if (dpRt != null && GridCoordinatesTryGetRectBoundsInParent(parentRt, dpRt, out _, out _, out float dpMinY, out _))
-                limitTop = dpMinY - GridCoordinatesGapBelowDataPanelButtons;
+            if (dpRt != null && CellDataPanelTryGetRectBoundsInParent(parentRt, dpRt, out _, out _, out float dpMinY, out _))
+                limitTop = dpMinY - CellDataPanelGapBelowDataPanelButtons;
 
             float verticalRoom = limitTop - minChromeBottom;
             if (!float.IsFinite(verticalRoom) || verticalRoom > 5000f)
-                verticalRoom = GridCoordinatesChromeMaxSquareSide;
+                verticalRoom = CellDataPanelMaxSquareSide;
             verticalRoom = Mathf.Max(verticalRoom, 1f);
 
             float panelW = Mathf.Max(widthBand, 44f);
-            float side = Mathf.Min(Mathf.Min(panelW, GridCoordinatesChromeMaxSquareSide), verticalRoom);
+            float side = Mathf.Min(Mathf.Min(panelW, CellDataPanelMaxSquareSide), verticalRoom);
             side = Mathf.Max(side, 1f);
 
             float chromeBottomY = minChromeBottom;
@@ -546,7 +546,7 @@ namespace Territory.UI
         /// <summary>
         /// Place grid debug chrome just above left <c>ControlPanel</c> (square, same width band as toolbar).
         /// </summary>
-        private static bool TryAlignGridCoordinatesChromeToControlPanel(RectTransform chromeRt)
+        private static bool TryAlignCellDataPanelToControlPanel(RectTransform chromeRt)
         {
             RectTransform parentRt = chromeRt.parent as RectTransform;
             if (parentRt == null)
@@ -555,18 +555,18 @@ namespace Territory.UI
             RectTransform cpRt = cpTransform != null ? cpTransform.GetComponent<RectTransform>() : null;
             if (cpRt == null)
                 return false;
-            if (!GridCoordinatesTryGetRectBoundsInParent(parentRt, cpRt, out float minX, out float maxX, out _, out float cpMaxY))
+            if (!CellDataPanelTryGetRectBoundsInParent(parentRt, cpRt, out float minX, out float maxX, out _, out float cpMaxY))
                 return false;
             float panelW = maxX - minX;
             if (panelW < 32f)
                 panelW = Mathf.Max(cpRt.rect.width, 80f);
 
-            GridCoordinatesApplySquareChromeLayout(
+            CellDataPanelApplySquareLayout(
                 chromeRt,
                 parentRt,
                 minX,
                 cpMaxY,
-                GridCoordinatesChromeGapAboveControlPanel,
+                CellDataPanelGapAboveControlPanel,
                 panelW);
             return true;
         }
@@ -575,12 +575,12 @@ namespace Territory.UI
         /// Place grid debug chrome above minimap, same width band, square (capped below <see cref="DataPanelButtonsObjectName"/> when present).
         /// Do NOT copy <c>MiniMapPanel</c> stretch anchors: anchors (0,0)-(1,1) → height = parent.height + sizeDelta.y, so small positive sizeDelta.y fills almost entire screen.
         /// </summary>
-        private static void AlignGridCoordinatesChromeToMiniMap(RectTransform chromeRt)
+        private static void AlignCellDataPanelToMiniMap(RectTransform chromeRt)
         {
             if (chromeRt == null)
                 return;
             Canvas.ForceUpdateCanvases();
-            EnsureGridCoordinatesChromeHudMount(chromeRt);
+            EnsureCellDataPanelHudMount(chromeRt);
             RectTransform parentRt = chromeRt.parent as RectTransform;
             if (parentRt == null)
                 return;
@@ -589,25 +589,25 @@ namespace Territory.UI
             if (mmRt == null)
                 return;
 
-            if (!GridCoordinatesTryGetRectBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out _, out float mmMaxY))
+            if (!CellDataPanelTryGetRectBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out _, out float mmMaxY))
                 return;
             float mmWidth = maxX - minX;
             if (mmWidth < 32f)
                 mmWidth = Mathf.Max(mmRt.rect.width, 80f);
 
-            GridCoordinatesApplySquareChromeLayout(
+            CellDataPanelApplySquareLayout(
                 chromeRt,
                 parentRt,
                 minX,
                 mmMaxY,
-                GridCoordinatesChromeGapAboveMinimap,
+                CellDataPanelGapAboveMinimap,
                 mmWidth);
         }
 
         /// <summary>
         /// Axis-aligned bounds of <paramref name="childRt"/> in <paramref name="parentRt"/> local space.
         /// </summary>
-        private static bool GridCoordinatesTryGetRectBoundsInParent(RectTransform parentRt, RectTransform childRt, out float minX, out float maxX, out float minY, out float maxY)
+        private static bool CellDataPanelTryGetRectBoundsInParent(RectTransform parentRt, RectTransform childRt, out float minX, out float maxX, out float minY, out float maxY)
         {
             minX = maxX = minY = maxY = 0f;
             if (parentRt == null || childRt == null)
@@ -636,21 +636,21 @@ namespace Territory.UI
         /// <summary>
         /// Re-size/place chrome after <see cref="gridCoordinatesText"/> changes (Awake uses empty string; full debug grows height).
         /// </summary>
-        private void RefreshGridCoordinatesChromeLayout()
+        private void RefreshCellDataPanelLayout()
         {
             if (gridCoordinatesText == null)
                 return;
-            Transform chromeRoot = FindGridCoordinatesChromeRoot(gridCoordinatesText.transform);
+            Transform chromeRoot = FindCellDataPanelRoot(gridCoordinatesText.transform);
             if (chromeRoot == null)
                 return;
             RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
             if (chromeRt == null)
                 return;
-            AlignGridCoordinatesChrome(chromeRt);
-            UpdateGridCoordinatesScrollLayout(chromeRt, gridCoordinatesText);
+            AlignCellDataPanel(chromeRt);
+            UpdateCellDataPanelScrollLayout(chromeRt, gridCoordinatesText);
         }
 
-        private static float EstimateGridCoordinatesTextPreferredHeight(Text text, float innerWidth)
+        private static float EstimateCellDataPanelTextPreferredHeight(Text text, float innerWidth)
         {
             if (text == null)
                 return 64f;
@@ -661,7 +661,7 @@ namespace Territory.UI
             return Mathf.Clamp(px, 28f, 10000f);
         }
 
-        private void ApplyGridCoordinatesChromeTextStyle()
+        private void ApplyCellDataPanelTextStyle()
         {
             if (gridCoordinatesText == null)
                 return;

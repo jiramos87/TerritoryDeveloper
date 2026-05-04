@@ -150,8 +150,11 @@ namespace Territory.UI.CityStatsHandoff
             _bindings["money.envelope.remaining.4"] = () => SumInt(c => SafeEnvelope(c, 4));
             _bindings["money.envelope.remaining.5"] = () => SumInt(c => SafeEnvelope(c, 5));
             _bindings["money.envelope.remaining.6"] = () => SumInt(c => SafeEnvelope(c, 6));
+#if BONDS_ENABLED
+            // BUG-61 W4 — bond region bindings hidden behind feature flag (default OFF) for MVP.
             _bindings["money.bond.debt"] = () => SumInt(c => c.activeBondDebt);
             _bindings["money.bond.monthly_repayment"] = () => SumInt(c => c.monthlyBondRepayment);
+#endif
 
             // ── People tab — sum-default + 2 weighted means ───────────────────
             _bindings["people.population"] = () => SumInt(c => c.population);

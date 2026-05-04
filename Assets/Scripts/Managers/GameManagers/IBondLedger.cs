@@ -1,3 +1,5 @@
+// BUG-61 W4 — bond ledger contract hidden behind feature flag (default OFF) for MVP.
+#if BONDS_ENABLED
 namespace Territory.Economy
 {
     /// <summary>
@@ -36,3 +38,4 @@ namespace Territory.Economy
         void ProcessMonthlyRepayment(int scaleTier);
     }
 }
+#endif

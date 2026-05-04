@@ -1,3 +1,5 @@
+// BUG-61 W4 — bond ledger hidden behind feature flag (default OFF) for MVP.
+#if BONDS_ENABLED
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -153,3 +155,4 @@ namespace Territory.Economy
         }
     }
 }
+#endif

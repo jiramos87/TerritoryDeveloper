@@ -603,7 +603,11 @@ namespace Territory.Editor.Bridge
         /// <c>Assets/Sprites/Buttons/{slug}-target.png</c> with fallback <c>Assets/Sprites/{slug}-target.png</c>
         /// and assign to the icon Image. Sprite ref is serialized into the prefab — no runtime
         /// <c>Resources.Load</c> + no PlayMode-only API.</summary>
-        static void SpawnIlluminatedButtonRenderTargets(
+        // BUG-61 W6+W7 — return value: true when icon sprite resolved to a real asset; false when
+        // slug empty OR ResolveButtonIconSprite returned null (missing target sprite). Caller
+        // (Step 16.G in Frame.cs) uses this to decide whether to fall back to a TMP caption so
+        // the button still signals function while sprite art is pending.
+        static bool SpawnIlluminatedButtonRenderTargets(
             GameObject prefabRoot,
             string iconSpriteSlug,
             out Image bodyImage,
@@ -611,9 +615,10 @@ namespace Territory.Editor.Bridge
         {
             bodyImage = null;
             haloImage = null;
-            if (prefabRoot == null) return;
+            bool spriteResolved = false;
+            if (prefabRoot == null) return false;
             var rootRect = prefabRoot.GetComponent<RectTransform>();
-            if (rootRect == null) return;
+            if (rootRect == null) return false;
 
             // main body Image child.
             var bodyT = prefabRoot.transform.Find("body");
@@ -664,6 +669,7 @@ namespace Territory.Editor.Bridge
                 if (sprite != null)
                 {
                     iconImage.sprite = sprite;
+                    spriteResolved = true;
                 }
                 else
                 {
@@ -700,6 +706,7 @@ namespace Territory.Editor.Bridge
             // Ensure render order: body (back) → icon → halo (front). SetAsLastSibling on halo
             // re-asserts the contract regardless of pre-existing child order.
             if (haloImage != null) haloImage.transform.SetAsLastSibling();
+            return spriteResolved;
         }
 
         /// <summary>Resolve a human-art button sprite by slug. Search order:

@@ -1,3 +1,6 @@
+// BUG-61 W4 — bond data layer hidden behind feature flag (default OFF) for MVP.
+// Define BONDS_ENABLED in Player Settings → Scripting Define Symbols to re-enable post-MVP.
+#if BONDS_ENABLED
 using System;
 
 namespace Territory.Economy
@@ -35,3 +38,4 @@ namespace Territory.Economy
         public bool arrears;
     }
 }
+#endif

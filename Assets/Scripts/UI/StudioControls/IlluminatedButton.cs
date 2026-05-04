@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace Territory.UI.StudioControls
 {
@@ -16,6 +17,25 @@ namespace Territory.UI.StudioControls
 
         /// <inheritdoc />
         public override string Kind => "illuminated-button";
+
+        // Sibling UnityEngine.UI.Button (when present from legacy bake or scene authoring)
+        // drives its own Selectable transition (ColorTint) + navigation Selected state that
+        // persists across pointer-exit after click → "hover-stick" (BUG-61 W9).
+        // IlluminatedButtonRenderer already owns hover/press/click visuals via IPointer*Handler,
+        // so neutralize the Selectable's transition + navigation here so the Button stays a
+        // passive click receiver only (its onClick UnityEvent still fires through Renderer.OnPointerClick).
+        protected override void Awake()
+        {
+            base.Awake();
+            var legacyButton = GetComponent<Button>();
+            if (legacyButton != null)
+            {
+                legacyButton.transition = Selectable.Transition.None;
+                var nav = legacyButton.navigation;
+                nav.mode = Navigation.Mode.None;
+                legacyButton.navigation = nav;
+            }
+        }
 
         /// <summary>Bake-time-cached detail row (read-only).</summary>
         public IlluminatedButtonDetail Detail => _detail;

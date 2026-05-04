@@ -631,16 +631,18 @@ namespace Territory.Editor.Bridge
                         btnRend = childGo.AddComponent<IlluminatedButtonRenderer>();
                     }
                     WireThemeRef(btnRend, theme);
-                    SpawnIlluminatedButtonRenderTargets(childGo, iconSpriteSlug, out var ibBody, out var ibHalo);
+                    bool iconSpriteResolved = SpawnIlluminatedButtonRenderTargets(childGo, iconSpriteSlug, out var ibBody, out var ibHalo);
                     // Step 16 D3.1+D3.2 — bake-time hover/press wiring (refs onto renderer + Selectable).
                     WireIlluminatedButtonHoverAndPress(childGo, btnRend, ibBody, ibHalo, theme);
                     // Step 16.D — IR-side icon sprite slug + per-button identity injected via parallel-array
                     // slot.iconSpriteSlugs[c]; persists onto detail row so renderer/render reads back.
                     btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSpriteSlug });
-                    // Step 16.G — caption fallback. When IR provides slot.labels[c] but iconSpriteSlugs[c]
-                    // is empty (no human-art available yet), spawn a TMP caption child so the button
-                    // still signals its function. Stage 13 follow-up: promote to first-class detail field.
-                    if (string.IsNullOrEmpty(iconSpriteSlug) && !string.IsNullOrEmpty(label))
+                    // Step 16.G — caption fallback. Fires when slot.labels[c] is set AND no icon sprite
+                    // resolved (slug empty OR ResolveButtonIconSprite missed the asset). BUG-61 W6+W7
+                    // extension: previously gated on slug-empty only; now also covers placeholder slugs
+                    // (e.g. "auto-button-64") whose target sprite is pending — the slug stays on detail
+                    // for switch routing while the caption signals function visually.
+                    if (!iconSpriteResolved && !string.IsNullOrEmpty(label))
                     {
                         SpawnIlluminatedButtonCaption(childGo, label);
                     }

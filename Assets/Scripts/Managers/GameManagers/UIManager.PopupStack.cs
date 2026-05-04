@@ -91,17 +91,20 @@ public partial class UIManager
                     dataPopupController.CloseTaxes();
                 break;
             case PopupType.SubTypePicker:
-                if (subTypePickerModal != null)
-                    subTypePickerModal.Hide(cancelled: true);
+                if (SubtypePickerController != null)
+                    SubtypePickerController.Hide(cancelled: true);
                 break;
             case PopupType.BudgetPanel:
                 if (budgetPanel != null)
                     budgetPanel.Hide();
                 break;
+#if BONDS_ENABLED
+            // BUG-61 W4 — bond popup case hidden behind feature flag (default OFF) for MVP.
             case PopupType.BondIssuance:
                 if (bondIssuanceModal != null)
                     bondIssuanceModal.Hide();
                 break;
+#endif
             case PopupType.InfoPanel:
                 if (infoPanelRoot != null) infoPanelRoot.SetActive(false);
                 break;

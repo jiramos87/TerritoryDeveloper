@@ -24,7 +24,9 @@ public enum PopupType
     TaxPanel,
     SubTypePicker,
     BudgetPanel,
+#if BONDS_ENABLED
     BondIssuance,
+#endif
     InfoPanel,
     PauseMenu,
     SettingsScreen,
@@ -64,9 +66,11 @@ public partial class UIManager : MonoBehaviour
 
     [Header("Zone S")]
     [SerializeField] private ZoneSService zoneSService;
-    [SerializeField] private SubTypePickerModal subTypePickerModal;
+    [SerializeField] private SubtypePickerController subtypePickerController;
     [SerializeField] private BudgetPanel budgetPanel;
+#if BONDS_ENABLED
     [SerializeField] private BondIssuanceModal bondIssuanceModal;
+#endif
 
     [Header("Stage 8 Modal Roots")]
     [SerializeField] private GameObject infoPanelRoot;
@@ -131,10 +135,12 @@ public partial class UIManager : MonoBehaviour
     public Vector2 constructionCostOffset = new Vector2(24, -24);
 
     [Header("HUD — economy hints (optional)")]
-    [Tooltip("When set, shows estimated monthly surplus after envelope cap + bond repayment.")]
+    [Tooltip("When set, shows estimated monthly surplus after envelope cap.")]
     [SerializeField] private Text hudEstimatedSurplusHintText;
+#if BONDS_ENABLED
     [Tooltip("When set, shows active bond summary; click opens read-only bond modal.")]
     [SerializeField] private Button bondHudBadgeButton;
+#endif
 
     [Header("Debug (optional)")]
     [SerializeField] private GameDebugInfoBuilder gameDebugInfoBuilder;
@@ -184,7 +190,9 @@ public partial class UIManager : MonoBehaviour
 
     private GameObject welcomeBriefingRoot;
     private Coroutine loadMenuFadeRoutine;
+#if BONDS_ENABLED
     private BondLedgerService bondLedgerHud;
+#endif
     private bool economyHudRuntimeWired;
     #endregion
 
@@ -221,18 +229,22 @@ public partial class UIManager : MonoBehaviour
 
         if (zoneSService == null)
             zoneSService = FindObjectOfType<ZoneSService>();
+#if BONDS_ENABLED
         if (bondIssuanceModal == null)
             bondIssuanceModal = FindObjectOfType<BondIssuanceModal>();
         if (bondLedgerHud == null)
             bondLedgerHud = FindObjectOfType<BondLedgerService>();
+#endif
 
         EnsureEconomyHudRuntimeWiring();
         EnsureConstructionCostTextExists();
+#if BONDS_ENABLED
         if (bondHudBadgeButton != null)
         {
             bondHudBadgeButton.onClick.RemoveAllListeners();
             bondHudBadgeButton.onClick.AddListener(OpenBondDetailModal);
         }
+#endif
         ApplyHudUiThemeIfConfigured();
         // Stage 11: RequestToolbarChromeRefresh() removed — toolbar tinting now baked into ThemedToolbarStrip.
         TryShowWelcomeBriefingAfterStart();
@@ -241,20 +253,38 @@ public partial class UIManager : MonoBehaviour
     /// <summary>Current Zone S sub-type id; -1 = not picked yet.</summary>
     public int CurrentSubTypeId => currentSubTypeId;
 
-    /// <summary>Set by <see cref="SubTypePickerModal"/> on selection.</summary>
+    /// <summary>Set by <see cref="SubtypePickerController"/> on selection.</summary>
     public void SetCurrentSubTypeId(int id) { currentSubTypeId = id; }
 
     /// <summary>Zone S placement service reference for <see cref="GridManager"/> routing.</summary>
     public ZoneSService ZoneSService => zoneSService;
 
-    /// <summary>Open the sub-type picker modal for Zone S placement.</summary>
-    public void OpenSubTypePicker()
+    /// <summary>TECH-10500: open the unified subtype picker for the given tool family (R/C/I density tiers or Zone S catalog).</summary>
+    public void ShowSubtypePicker(ToolFamily family)
     {
-        if (subTypePickerModal != null)
+        EnsureSubtypePickerRuntimeWiring();
+        if (subtypePickerController != null)
         {
-            subTypePickerModal.Show(this);
+            subtypePickerController.Show(this, family);
             RegisterPopupOpened(PopupType.SubTypePicker);
         }
+    }
+
+    /// <summary>Backward-compat shim — defaults to StateService family (legacy Zone S entry point).</summary>
+    public void OpenSubTypePicker() => ShowSubtypePicker(ToolFamily.StateService);
+
+    /// <summary>Picker controller accessor for PopupStack close routing.</summary>
+    internal SubtypePickerController SubtypePickerController => subtypePickerController;
+
+    private void EnsureSubtypePickerRuntimeWiring()
+    {
+        if (subtypePickerController != null) return;
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+        GameObject go = new GameObject("SubtypePickerController");
+        go.transform.SetParent(canvas.transform, false);
+        go.transform.SetAsLastSibling();
+        subtypePickerController = go.AddComponent<SubtypePickerController>();
     }
 
     /// <summary>Open budget panel from HUD.</summary>
@@ -267,6 +297,7 @@ public partial class UIManager : MonoBehaviour
         }
     }
 
+#if BONDS_ENABLED
     /// <summary>Open bond issuance modal (stacked popup).</summary>
     public void OpenBondIssuanceModal()
     {
@@ -289,6 +320,7 @@ public partial class UIManager : MonoBehaviour
         bondIssuanceModal.ShowReadOnly(this, bond);
         RegisterPopupOpened(PopupType.BondIssuance);
     }
+#endif
 
     /// <summary>
     /// Instantiate bond modal, budget panel, and HUD surplus/bond widgets when scene has no Inspector wiring.
@@ -303,6 +335,7 @@ public partial class UIManager : MonoBehaviour
         if (canvas == null)
             return;
 
+#if BONDS_ENABLED
         if (bondIssuanceModal == null)
         {
             GameObject go = new GameObject("BondIssuanceModal");
@@ -315,6 +348,7 @@ public partial class UIManager : MonoBehaviour
             brt.offsetMax = Vector2.zero;
             bondIssuanceModal = go.AddComponent<BondIssuanceModal>();
         }
+#endif
 
         if (budgetPanel == null)
         {
@@ -351,6 +385,7 @@ public partial class UIManager : MonoBehaviour
             hudEstimatedSurplusHintText = ht;
         }
 
+#if BONDS_ENABLED
         if (bondHudBadgeButton == null)
         {
             GameObject badgeGo = new GameObject("BondHudBadge");
@@ -384,6 +419,7 @@ public partial class UIManager : MonoBehaviour
 
             badgeGo.SetActive(false);
         }
+#endif
 
         economyHudRuntimeWired = true;
     }
@@ -467,9 +503,9 @@ public partial class UIManager : MonoBehaviour
     void LateUpdate()
     {
         // Stage 11: toolbarChromeDirty / RefreshToolbarToolChrome dispatch removed — ThemedToolbarStrip self-tints.
-        if (cityStats == null)
-            return;
-        UpdateGridCoordinatesDebugText();
+        // BUG-60: dropped `cityStats == null` guard — CellDataPanel debug text is grid-only,
+        // does not depend on cityStats; pre-cityStats frames now still render hover coords.
+        UpdateCellDataPanelText();
     }
     #endregion
 

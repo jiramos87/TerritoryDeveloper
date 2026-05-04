@@ -129,14 +129,35 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Zone S toolbar button — enters S placement mode and opens sub-type picker.
+    /// Zone S toolbar button — enters S placement mode and opens unified subtype picker (TECH-10500).
     /// </summary>
     public void OnStateServiceZoningButtonClicked()
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.StateServiceLightZoning;
         currentSubTypeId = -1;
-        OpenSubTypePicker();
+        ShowSubtypePicker(ToolFamily.StateService);
+    }
+
+    /// <summary>TECH-10500: Residential family picker entry — picker rows commit Light/Medium/Heavy via existing density handlers.</summary>
+    public void OnResidentialFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Residential);
+    }
+
+    /// <summary>TECH-10500: Commercial family picker entry.</summary>
+    public void OnCommercialFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Commercial);
+    }
+
+    /// <summary>TECH-10500: Industrial family picker entry.</summary>
+    public void OnIndustrialFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Industrial);
     }
 
     public void OnTwoWayRoadButtonClicked()

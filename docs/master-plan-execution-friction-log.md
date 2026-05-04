@@ -265,3 +265,11 @@ The `feature/ia-dev-db-refactor` branch (12 steps, design `docs/master-plan-fold
 4. **`mechanicalization_preflight_lint` hatch scope-expansion** — file ticket (TECH-776 follow-up): widen hatch to cover `validators` field + scope `tupleCount` regex to §Plan Digest section only.
 5. **Per-prefix sequence drift audit** — `tech_id_seq` advanced from 817 to ~880 during refactor; sequence gaps from rollback (e.g. TECH-859 lost in Step 6 self-smoke) are fine — `nextval` doesn't replay. Periodic audit script to confirm no id collisions.
 
+## Prototype-first deltas
+
+Methodology iteration log per `docs/prototype-first-methodology-design.md` §8.2 + §12.4. Stage 1.6 picks up retrofit cost + friction signals.
+
+- 2026-05-04 multi-scale retrofit (Stage 1.5): tokens=~85k hours=~1.5 notes=Stage 10 §Tracer Slice + Stages 11–15 §Visibility Delta landed via `stage_body_write` fallback (per source §12.3); `master-plan-extend` skill STOPs on existing-stage collision so direct body re-author was used; `validate:plan-prototype-first` exit 0; `arch_drift_scan(DEC-A22)` zero new drift.
+- 2026-05-04 friction — `master_plan_health.stage_1_is_tracer` semantics gap: flag literally inspects Stage 1 of the plan, but retrofitted multi-scale plan has Stage 1 already done (pre-methodology) and Stage 10 = the new tracer slice. Spec authors expected the flag to detect "first stage carrying §Tracer Slice block" not "literal stage_id=1". Stage 1.5 Exit row 4 + TECH-10315 §Acceptance row 3 both fail under current impl. **Fix scope:** Stage 1.3 follow-up — patch `master_plan_health` to set `stage_1_is_tracer: true` when ANY stage in the plan carries a §Tracer Slice block (or rename flag to `tracer_stage_present`). Until then, retrofitted plans appear non-compliant despite carrying tracer block.
+- 2026-05-04 friction — `master-plan-extend` skill hard_boundary STOPs on `START_STAGE_NUMBER` collision: forces fallback to direct `stage_body_write` for retrofit-mode dispatches. Source §12.3 explicitly authorizes the fallback, so this is documented + working — but skill could grow a `--retrofit` flag that enables in-place re-author of existing stages without the collision STOP. **Fix scope:** Stage 1.6+ — extend skill with retrofit-mode dispatch path.
+

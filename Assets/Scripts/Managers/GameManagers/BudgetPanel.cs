@@ -1,28 +1,30 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Territory.UI;
 
 namespace Territory.Economy
 {
     /// <summary>
     /// HUD-accessible budget panel: seven envelope percentage sliders (one per Zone S sub-type),
-    /// one global cap slider, and remaining-this-month readouts.
+    /// and remaining-this-month readouts.
     /// Commits via <see cref="BudgetAllocationService.SetEnvelopePct"/>; UI re-reads
     /// normalized values after commit so sliders reflect stored state.
     /// </summary>
+    // BUG-61 W3 — bond UI surfaces stripped (Issue bond / Bond status buttons + Global Cap row).
+    // Bond data layer hidden behind #if BONDS_ENABLED (W4); UI never reachable in MVP build.
     public class BudgetPanel : MonoBehaviour
     {
         [SerializeField] private BudgetAllocationService budgetAllocation;
         [SerializeField] private ZoneSubTypeRegistry registry;
-        [SerializeField] private UIManager uiManager;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Transform sliderContainer;
+        // BUG-61 W10 — palette tokens for chrome (panel bg / label text / slider bg+fill).
+        // ScriptableObject ref; assign UiTheme asset in Inspector. Literal fallback colors
+        // preserved when ref is null so runtime-instantiated panels still render legibly.
+        [SerializeField] private Territory.UI.UiTheme uiTheme;
 
         private Slider[] envelopeSliders;
         private Text[] remainingLabels;
         private Text[] pctLabels;
-        private Slider capSlider;
-        private Text capLabel;
         private bool isVisible;
         private bool suppressCallbacks;
         private bool uiBuilt;
@@ -35,8 +37,6 @@ namespace Territory.Economy
                 budgetAllocation = FindObjectOfType<BudgetAllocationService>();
             if (registry == null)
                 registry = FindObjectOfType<ZoneSubTypeRegistry>();
-            if (uiManager == null)
-                uiManager = FindObjectOfType<UIManager>();
             EnsureRuntimePanelRootIfNeeded();
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -63,7 +63,7 @@ namespace Territory.Economy
             rt.sizeDelta = new Vector2(520, 640);
             rt.anchoredPosition = Vector2.zero;
             var img = root.AddComponent<Image>();
-            img.color = new Color(0.08f, 0.08f, 0.1f, 0.96f);
+            img.color = uiTheme != null ? uiTheme.SurfaceCardHud : new Color(0.08f, 0.08f, 0.1f, 0.96f);
             var v = root.AddComponent<VerticalLayoutGroup>();
             v.spacing = 6;
             v.padding = new RectOffset(12, 12, 12, 12);
@@ -105,59 +105,22 @@ namespace Territory.Economy
             pctLabels = new Text[SubTypeCount];
 
             var entries = registry != null ? registry.Entries : null;
+            // BUG-61 W5 — glossary-aligned fallback labels when ZoneSubTypeRegistry asset
+            // is missing or under-populated. Order matches `ia/specs/glossary.md`
+            // ZoneSubTypeRegistry row: police, fire, education, health, parks,
+            // public housing, public offices.
+            string[] fallbackLabels = { "Police", "Fire", "Education", "Health", "Parks", "Public Housing", "Public Offices" };
 
             for (int i = 0; i < SubTypeCount; i++)
             {
-                string label = entries != null && i < entries.Count ? entries[i].displayName : $"Sub-type {i}";
+                string label = entries != null && i < entries.Count
+                    ? entries[i].displayName
+                    : (i < fallbackLabels.Length ? fallbackLabels[i] : $"Sub-type {i}");
                 int capturedId = i;
 
                 GameObject row = CreateSliderRow(label, capturedId);
                 row.transform.SetParent(sliderContainer, false);
             }
-
-            GameObject capRow = CreateCapRow();
-            capRow.transform.SetParent(sliderContainer, false);
-
-            GameObject bondRow = new GameObject("BondActionsRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            bondRow.transform.SetParent(sliderContainer, false);
-            var hb = bondRow.GetComponent<HorizontalLayoutGroup>();
-            hb.spacing = 8;
-            hb.childAlignment = TextAnchor.MiddleLeft;
-            CreateBondButton("Issue bond", bondRow.transform, () =>
-            {
-                if (uiManager != null)
-                    uiManager.OpenBondIssuanceModal();
-            });
-            CreateBondButton("Bond status", bondRow.transform, () =>
-            {
-                if (uiManager != null)
-                    uiManager.OpenBondDetailModal();
-            });
-        }
-
-        private void CreateBondButton(string label, Transform parent, UnityEngine.Events.UnityAction onClick)
-        {
-            GameObject go = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            go.GetComponent<Image>().color = new Color(0.22f, 0.35f, 0.55f);
-            var btn = go.GetComponent<Button>();
-            var le = go.AddComponent<LayoutElement>();
-            le.minHeight = 28;
-            le.minWidth = 100;
-            GameObject txtGo = new GameObject("Text", typeof(Text));
-            txtGo.transform.SetParent(go.transform, false);
-            var te = txtGo.GetComponent<Text>();
-            te.text = label;
-            te.fontSize = 13;
-            te.color = Color.white;
-            te.alignment = TextAnchor.MiddleCenter;
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font != null) te.font = font;
-            var rt = te.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.sizeDelta = Vector2.zero;
-            btn.onClick.AddListener(onClick);
         }
 
         private GameObject CreateSliderRow(string label, int subTypeId)
@@ -181,36 +144,10 @@ namespace Territory.Economy
             return row;
         }
 
-        private GameObject CreateCapRow()
-        {
-            GameObject row = new GameObject("CapRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            var layout = row.GetComponent<HorizontalLayoutGroup>();
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.spacing = 8;
-
-            CreateLabel("Global Cap", row.transform);
-            GameObject sliderObj = CreateSlider(row.transform, 0f, 50000f, OnCapSliderChanged);
-            capSlider = sliderObj.GetComponent<Slider>();
-            capSlider.wholeNumbers = true;
-
-            GameObject capLabelObj = CreateLabel("$0", row.transform);
-            capLabel = capLabelObj.GetComponent<Text>();
-
-            return row;
-        }
-
         private void OnEnvelopeSliderChanged(int subTypeId, float value)
         {
             if (suppressCallbacks || budgetAllocation == null) return;
             budgetAllocation.SetEnvelopePct(subTypeId, value);
-            RefreshFromModel();
-        }
-
-        private void OnCapSliderChanged(float value)
-        {
-            if (suppressCallbacks || budgetAllocation == null) return;
-            budgetAllocation.GlobalMonthlyCap = (int)value;
             RefreshFromModel();
         }
 
@@ -232,22 +169,18 @@ namespace Territory.Economy
                     remainingLabels[i].text = $"${remaining:N0}";
             }
 
-            if (capSlider != null)
-                capSlider.SetValueWithoutNotify(budgetAllocation.GlobalMonthlyCap);
-            if (capLabel != null)
-                capLabel.text = $"${budgetAllocation.GlobalMonthlyCap:N0}";
-
             suppressCallbacks = false;
         }
 
-        private static GameObject CreateLabel(string text, Transform parent)
+        // BUG-61 W10 — instance method (was static) so chrome label color reads UiTheme.TextPrimary.
+        private GameObject CreateLabel(string text, Transform parent)
         {
             GameObject obj = new GameObject("Label", typeof(RectTransform), typeof(Text));
             obj.transform.SetParent(parent, false);
             var t = obj.GetComponent<Text>();
             t.text = text;
             t.fontSize = 14;
-            t.color = Color.white;
+            t.color = uiTheme != null ? uiTheme.TextPrimary : Color.white;
             t.raycastTarget = false;
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font != null) t.font = font;
@@ -256,14 +189,16 @@ namespace Territory.Economy
             return obj;
         }
 
-        private static GameObject CreateSlider(Transform parent, float min, float max, UnityEngine.Events.UnityAction<float> onChanged)
+        // BUG-61 W10 — instance method (was static) so slider chrome reads UiTheme tokens
+        // (SurfaceElevated for track, AccentPrimary for fill).
+        private GameObject CreateSlider(Transform parent, float min, float max, UnityEngine.Events.UnityAction<float> onChanged)
         {
             GameObject obj = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
             obj.transform.SetParent(parent, false);
 
             GameObject bg = new GameObject("Background", typeof(RectTransform), typeof(Image));
             bg.transform.SetParent(obj.transform, false);
-            bg.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            bg.GetComponent<Image>().color = uiTheme != null ? uiTheme.SurfaceElevated : new Color(0.2f, 0.2f, 0.2f, 1f);
             var bgRt = bg.GetComponent<RectTransform>();
             bgRt.anchorMin = Vector2.zero;
             bgRt.anchorMax = Vector2.one;
@@ -278,7 +213,7 @@ namespace Territory.Economy
 
             GameObject fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
             fill.transform.SetParent(fillArea.transform, false);
-            fill.GetComponent<Image>().color = new Color(0.3f, 0.7f, 1f, 1f);
+            fill.GetComponent<Image>().color = uiTheme != null ? uiTheme.AccentPrimary : new Color(0.3f, 0.7f, 1f, 1f);
             var fillRt = fill.GetComponent<RectTransform>();
             fillRt.anchorMin = Vector2.zero;
             fillRt.anchorMax = Vector2.one;

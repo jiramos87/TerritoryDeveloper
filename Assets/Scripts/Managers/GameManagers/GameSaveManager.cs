@@ -162,10 +162,15 @@ public class GameSaveManager : MonoBehaviour
         saveData.budgetAllocation = budgetAllocationSvc != null
             ? budgetAllocationSvc.CaptureSaveData()
             : BudgetAllocationData.Default(DEFAULT_S_CAP);
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond capture hidden behind feature flag (default OFF) for MVP.
         BondLedgerService bondLedgerSvc = FindObjectOfType<BondLedgerService>();
         saveData.bondRegistry = bondLedgerSvc != null
             ? bondLedgerSvc.CaptureSaveData()
             : new List<BondData>();
+#else
+        saveData.bondRegistry = new List<BondData>();
+#endif
         saveData.pendingProposals = new List<UrbanizationProposal>();
         if (miniMapController != null)
             saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
@@ -326,9 +331,12 @@ public class GameSaveManager : MonoBehaviour
             BudgetAllocationService budgetAllocationSvc = FindObjectOfType<BudgetAllocationService>();
             if (budgetAllocationSvc != null)
                 budgetAllocationSvc.RestoreFromSaveData(saveData.budgetAllocation);
+#if BONDS_ENABLED
+            // BUG-61 W4 — bond restore hidden behind feature flag (default OFF) for MVP.
             BondLedgerService bondLedgerSvc = FindObjectOfType<BondLedgerService>();
             if (bondLedgerSvc != null)
                 bondLedgerSvc.RestoreFromSaveData(saveData.bondRegistry);
+#endif
             // Proposal flow disabled: clear any pending proposals on load
             UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
             if (proposalManager != null)

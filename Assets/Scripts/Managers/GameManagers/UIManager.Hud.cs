@@ -79,11 +79,20 @@ public partial class UIManager
 
         if (hudEstimatedSurplusHintText != null && economyManager != null)
         {
+            // BUG-61 W8 — surplus hint serves as HUD budget delta indicator. Sign-coded color
+            // (green positive / red negative) per design tokens; falls back to literal Color when
+            // hudUiTheme not Inspector-assigned.
             int s = economyManager.GetHudEstimatedMonthlySurplus();
             hudEstimatedSurplusHintText.text =
-                $"Est. monthly surplus (after S envelope + bond repayment): {(s >= 0 ? "+" : "")}${s:N0}";
+                $"Est. monthly surplus (after S envelope): Δ {(s >= 0 ? "+" : "")}${s:N0}";
+            if (hudUiTheme != null)
+                hudEstimatedSurplusHintText.color = s >= 0 ? hudUiTheme.AccentPositive : hudUiTheme.AccentNegative;
+            else
+                hudEstimatedSurplusHintText.color = s >= 0 ? Color.green : Color.red;
         }
 
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond HUD badge hidden behind feature flag (default OFF) for MVP.
         if (bondHudBadgeButton != null)
         {
             BondData bond = bondLedgerHud != null && economyManager != null
@@ -100,6 +109,7 @@ public partial class UIManager
                 }
             }
         }
+#endif
 
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();
@@ -109,16 +119,18 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Write <see cref="gridCoordinatesText"/> from <see cref="GridManager.mouseGridPosition"/>. Called from <see cref="LateUpdate"/> → stays in sync with grid picking after <see cref="GridManager.Update"/>.
+    /// Write CellDataPanel debug text from <see cref="GridManager.mouseGridPosition"/> + last-clicked cell.
+    /// Two-section layout (Hover / Last-clicked) — same 5 data points each (BUG-60).
+    /// Called from <see cref="LateUpdate"/> → stays in sync with grid picking after <see cref="GridManager.Update"/>.
     /// </summary>
-    void UpdateGridCoordinatesDebugText()
+    void UpdateCellDataPanelText()
     {
         if (gridCoordinatesText == null)
             return;
-        if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
+        if (gameDebugInfoBuilder != null && gridManager != null)
         {
-            gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
-            RefreshGridCoordinatesChromeLayout();
+            gridCoordinatesText.text = gameDebugInfoBuilder.GetCellDataPanelText(gridManager.mouseGridPosition, gridManager.selectedPoint);
+            RefreshCellDataPanelLayout();
             return;
         }
         if (gridManager == null)
@@ -142,7 +154,7 @@ public partial class UIManager
             }
         }
         gridCoordinatesText.text = line;
-        RefreshGridCoordinatesChromeLayout();
+        RefreshCellDataPanelLayout();
     }
 
     private void HideConstructionCostDisplay()

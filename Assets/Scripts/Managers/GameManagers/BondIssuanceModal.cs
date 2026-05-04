@@ -1,3 +1,5 @@
+// BUG-61 W4 — bond UI hidden behind feature flag (default OFF) for MVP.
+#if BONDS_ENABLED
 using UnityEngine;
 using UnityEngine.UI;
 using Territory.UI;
@@ -361,3 +363,4 @@ namespace Territory.Economy
         }
     }
 }
+#endif

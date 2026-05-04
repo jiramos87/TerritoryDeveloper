@@ -725,6 +725,9 @@ MonoBehaviour:
   _frameStyleSlug: 
   _tabStripImage: {fileID: 559351989288567904}
   _pages: []
+  _pageRoots: []
+  _tabIndicators: []
+  _initialIndex: 0
 --- !u!114 &935247409911833680
 MonoBehaviour:
   m_ObjectHideFlags: 0

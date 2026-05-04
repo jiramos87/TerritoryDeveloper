@@ -130,6 +130,10 @@ namespace Territory.UI.HUD
                     case "speed-2-button-1-64": EnsureSpeedSlot(2, btn); break;
                     case "speed-3-button-1-64": EnsureSpeedSlot(3, btn); break;
                     case "speed-4-button-1-64": EnsureSpeedSlot(4, btn); break;
+                    // BUG-61 W6+W7 — AUTO toggle baked into hud-bar right slot via IR iconSpriteSlugs[].
+                    // Sprite art pending; bake handler Step 16.G renders TMP "AUTO" caption fallback.
+                    // Drives both AutoZoningManager + AutoRoadBuilder via HandleAutoClick.
+                    case "auto-button-64": _autoButton = btn; break;
                 }
             }
         }

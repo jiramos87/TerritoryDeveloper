@@ -31,11 +31,14 @@ public class EconomyManager : MonoBehaviour
     /// Composition helper on same GO — consumed by this manager once Phase 2 wires call sites.
     /// </summary>
     [SerializeField] private BudgetAllocationService budgetAllocation;
+#if BONDS_ENABLED
+    // BUG-61 W4 — bond ledger ref hidden behind feature flag (default OFF) for MVP.
     /// <summary>
     /// Single-bond-per-scale-tier ledger. Composition helper on same GO.
     /// Tick-integrated in Stage 4 (TECH-531) for monthly repayment processing.
     /// </summary>
     [SerializeField] private BondLedgerService bondLedger;
+#endif
 
     /// <summary>
     /// Stage 7 (TECH-1892) — signal tuning weights asset; consulted at <see cref="GetProjectedMonthlyIncome"/>
@@ -76,10 +79,13 @@ public class EconomyManager : MonoBehaviour
             budgetAllocation = FindObjectOfType<BudgetAllocationService>();
         if (budgetAllocation == null)
             Debug.LogWarning("EconomyManager: BudgetAllocationService not found. Attach it to the EconomyManager GameObject in the scene.");
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond ledger fallback hidden behind feature flag (default OFF) for MVP.
         if (bondLedger == null)
             bondLedger = FindObjectOfType<BondLedgerService>();
         if (bondLedger == null)
             Debug.LogWarning("EconomyManager: BondLedgerService not found. Attach it to the EconomyManager GameObject in the scene.");
+#endif
         if (tuningWeights == null)
             tuningWeights = Resources.Load<SignalTuningWeightsAsset>("SignalTuningWeights");
         // Soft warn — if asset is absent, GetProjectedMonthlyIncome falls back to no land-value bonus.
@@ -117,7 +123,10 @@ public class EconomyManager : MonoBehaviour
 
         ApplyMonthlyTaxCollection();
         ProcessMonthlyMaintenance();
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond monthly repayment hidden behind feature flag (default OFF) for MVP.
         if (bondLedger != null) bondLedger.ProcessAllMonthlyRepayments();
+#endif
         if (budgetAllocation != null) budgetAllocation.MonthlyReset();
     }
 
@@ -743,16 +752,23 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// HUD surplus hint: projected tax − maintenance − Zone S envelope cap − active bond repayment.
+    /// HUD surplus hint: projected tax − maintenance − Zone S envelope cap (− active bond repayment when BONDS_ENABLED).
     /// Uses <see cref="CityStats"/> read-model fields populated by <see cref="CityStats.RefreshEconomyReadModel"/>.
     /// </summary>
     public int GetHudEstimatedMonthlySurplus()
     {
         int baseDelta = GetMonthlyIncomeDelta();
         if (cityStats == null) return baseDelta;
-        return baseDelta - cityStats.totalEnvelopeCap - cityStats.monthlyBondRepayment;
+        int surplus = baseDelta - cityStats.totalEnvelopeCap;
+#if BONDS_ENABLED
+        // BUG-61 W4 — bond repayment subtraction hidden behind feature flag (default OFF) for MVP.
+        surplus -= cityStats.monthlyBondRepayment;
+#endif
+        return surplus;
     }
 
+#if BONDS_ENABLED
+    // BUG-61 W4 — city scale tier helper hidden behind feature flag (default OFF) for MVP. Bonds-only consumer.
     /// <summary>
     /// City scale tier for <see cref="IBondLedger"/> (single-city MVP → 0).
     /// </summary>
@@ -760,6 +776,7 @@ public class EconomyManager : MonoBehaviour
     {
         return 0;
     }
+#endif
 
     /// <summary>
     /// Return projected monthly maintenance from all registered contributors.

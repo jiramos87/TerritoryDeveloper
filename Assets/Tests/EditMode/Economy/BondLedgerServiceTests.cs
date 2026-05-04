@@ -1,3 +1,5 @@
+// BUG-61 W4 — bond ledger tests hidden behind feature flag (default OFF) for MVP.
+#if BONDS_ENABLED
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
@@ -178,3 +180,4 @@ namespace Territory.Tests.EditMode.Economy
         }
     }
 }
+#endif

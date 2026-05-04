@@ -755,6 +755,85 @@
       ]
     },
     {
+      "header": "## Prototype-first methodology rollout",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "**Master plan:** `prototype-first-methodology` — codify the meta-result already shipped in `docs/prototype-first-methodology-design.md` `## Design Expansion`: amend `design-explore` Phase 9 persist contract so future explorations emit `§Core Prototype + §Iteration Roadmap` subsections. **Stage 1.1** (self-application codified — DEC-A22 surface re-point + persist-contract v2 fixture + arch_changelog audit row).",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10297",
+          "checklist_line": "- [ ] **TECH-10297** — Register methodology arch_surface",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10298",
+          "checklist_line": "- [ ] **TECH-10298** — Codify persist-contract v2 fixture",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10299",
+          "checklist_line": "- [ ] **TECH-10299** — Append codification arch_changelog",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10300",
+          "checklist_line": "Rewrite master-plan-new Phase 4",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10301",
+          "checklist_line": "Extend design-explore Phase 9 persist",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10302",
+          "checklist_line": "Schema-bump MASTER-PLAN-STRUCTURE",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10303",
+          "checklist_line": "Sync Claude harness + skill-drift gate",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10312",
+          "checklist_line": "Dispatch master-plan-extend retrofit",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10313",
+          "checklist_line": "Backfill §Tracer Slice on Stage 10",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10314",
+          "checklist_line": "Author §Visibility Delta on Stages 11–15",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10315",
+          "checklist_line": "Validator pass + drift re-scan",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## Architecture coherence program",
       "items": [
         {
