@@ -451,7 +451,7 @@ namespace Territory.Editor.Bridge
             var initialProp = so.FindProperty("_initialIndex");
             if (initialProp != null)
             {
-                int requested = panel.defaultTabIndex.HasValue ? panel.defaultTabIndex.Value : 0;
+                int requested = panel.defaultTabIndex;
                 if (requested < 0 || requested >= panel.tabs.Length)
                 {
                     Debug.LogWarning(

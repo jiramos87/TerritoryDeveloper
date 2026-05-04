@@ -166,6 +166,8 @@ namespace Territory.Editor.Bridge
             public IrTab[] tabs;
             /// <summary>Stage 13.1+ — IR v2 flat row list. Null/empty on rowless panels; bake emits no row children.</summary>
             public IrRow[] rows;
+            /// <summary>Stage 13.4 (TECH-9867) — IR v2 default tab index (0 = first tab; absent in IR also defaults to 0 since JsonUtility cannot model nullable int). Bake clamps to [0, tabs.Length).</summary>
+            public int defaultTabIndex;
         }
 
         /// <summary>Stage 13.1+ — IR v2 tab descriptor (mirrors `IrTab` in tools/scripts/ir-schema.ts). Drives ThemedTabBar.pages[] wiring at bake time.</summary>
