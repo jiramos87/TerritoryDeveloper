@@ -39,7 +39,12 @@ namespace Territory.UI.Themed
 
         private void OnEnable()
         {
-            // Step 11.2 — runtime kind enforcement (overrides any scene PrefabInstance overrides).
+            // Stage 13.7 fallout — kind dispatch is now component-only (LayoutGroup
+            // attach + sibling order). RectTransform is sourced from the authored
+            // prefab (baked from layout-rects.json CD truth source). Runtime rect
+            // override was the loss vector for Stage 13.7's anchor wipe — bake handler
+            // wrote correct anchors, OnEnable clobbered them with kind-default
+            // placeholder before SaveAsPrefabAsset captured the result.
             ApplyKindLayout();
             // Step 10.4 — modal stacking: ensure panel draws above its canvas siblings.
             transform.SetAsLastSibling();
@@ -47,52 +52,27 @@ namespace Territory.UI.Themed
 
         private void ApplyKindLayout()
         {
-            var rt = transform as RectTransform;
-            if (rt == null) return;
-
+            // RectTransform writes intentionally removed (Stage 13.7 fallout). Authored
+            // anchors / pivot / sizeDelta on the prefab are the truth source — see
+            // `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs` SavePanelPrefab +
+            // `LayoutRectsLoader` for bake-time derivation from
+            // `web/design-refs/step-1-game-ui/layout-rects.json`. This switch only
+            // attaches the kind-appropriate LayoutGroup; layout itself is anchor-driven.
             switch (_kind)
             {
                 case PanelKind.Modal:
-                    rt.anchorMin = new Vector2(0.5f, 0.5f);
-                    rt.anchorMax = new Vector2(0.5f, 0.5f);
-                    rt.pivot = new Vector2(0.5f, 0.5f);
-                    rt.sizeDelta = new Vector2(600f, 800f);
-                    rt.anchoredPosition = Vector2.zero;
                     EnsureLayoutGroup<VerticalLayoutGroup>();
                     break;
                 case PanelKind.Screen:
-                    rt.anchorMin = Vector2.zero;
-                    rt.anchorMax = Vector2.one;
-                    rt.pivot = new Vector2(0.5f, 0.5f);
-                    rt.sizeDelta = Vector2.zero;
-                    rt.anchoredPosition = Vector2.zero;
                     RemoveLayoutGroups();
                     break;
                 case PanelKind.Hud:
-                    rt.anchorMin = new Vector2(0f, 1f);
-                    rt.anchorMax = new Vector2(1f, 1f);
-                    rt.pivot = new Vector2(0.5f, 1f);
-                    rt.sizeDelta = new Vector2(0f, 100f);
-                    rt.anchoredPosition = Vector2.zero;
                     EnsureLayoutGroup<HorizontalLayoutGroup>();
                     break;
                 case PanelKind.Toolbar:
-                    // Step 12 content-layer fix — left-dock between HUD (top 100px) and building-selector (bottom 200px reserve).
-                    // 2-column grid, 12px left inset, 220px width.
-                    rt.anchorMin = new Vector2(0f, 0f);
-                    rt.anchorMax = new Vector2(0f, 1f);
-                    rt.pivot = new Vector2(0f, 0.5f);
-                    rt.offsetMin = new Vector2(12f, 200f);
-                    rt.offsetMax = new Vector2(232f, -100f);
                     EnsureGridLayout(columns: 2, cell: new Vector2(100f, 100f), spacing: new Vector2(8f, 8f), padding: 8);
                     break;
                 case PanelKind.SideRail:
-                    // Right-side vertical rail — 360px wide, 90% viewport height, 20px inset from right edge.
-                    rt.anchorMin = new Vector2(1f, 0.05f);
-                    rt.anchorMax = new Vector2(1f, 0.95f);
-                    rt.pivot = new Vector2(1f, 0.5f);
-                    rt.sizeDelta = new Vector2(360f, 0f);
-                    rt.anchoredPosition = new Vector2(-20f, 0f);
                     EnsureLayoutGroup<VerticalLayoutGroup>();
                     break;
             }

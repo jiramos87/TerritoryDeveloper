@@ -45,12 +45,13 @@ namespace Territory.Editor.Bridge
                 {
                     return new BakeError
                     {
-                        code = "panel_layout_rect_missing",
-                        detail = $"panel '{panel.slug}' has no entry in layout-rects.json " +
-                                 $"AND existing prefab at '{assetPath}' carries non-default " +
-                                 $"RectTransform. Refusing overwrite — add slug to " +
-                                 $"web/design-refs/step-1-game-ui/layout-rects.json (regenerate " +
-                                 $"via tools/scripts/extract-cd-layout-rects.ts) before re-bake.",
+                        error = "panel_layout_rect_missing",
+                        details = $"panel '{panel.slug}' has no entry in layout-rects.json " +
+                                  $"AND existing prefab at '{assetPath}' carries non-default " +
+                                  $"RectTransform. Refusing overwrite — add slug to " +
+                                  $"web/design-refs/step-1-game-ui/layout-rects.json (regenerate " +
+                                  $"via tools/scripts/extract-cd-layout-rects.ts) before re-bake.",
+                        path = assetPath,
                     };
                 }
 
