@@ -81,7 +81,7 @@ import { registerClaimHeartbeatTools } from "./tools/claim-heartbeat.js";
 import { registerSectionCloseoutApply } from "./tools/section-closeout-apply.js";
 import { registerMasterPlanLockArch } from "./tools/master-plan-lock-arch.js";
 import { registerNextMigrationId } from "./tools/next-migration-id.js";
-import { registerRedStageProofCapture } from "./tools/red-stage-proof.js";
+import { registerRedStageProofTools } from "./red-stage-proof/index.js";
 
 // Bridge + compute tools
 import {
@@ -191,7 +191,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerSectionCloseoutApply(server);
   registerMasterPlanLockArch(server);
   registerNextMigrationId(server);
-  registerRedStageProofCapture(server);
+  registerRedStageProofTools(server);
 }
 
 /**
