@@ -58,6 +58,9 @@ export interface SectionCloseoutResult {
   change_log_entry_id: number | null;
   section_claim_released: boolean;
   cascaded_stage_releases: number;
+  red_stage_coverage_pct: number | null;
+  pending_count: number;
+  unexpected_pass_count: number;
   error?: string;
 }
 
@@ -89,6 +92,9 @@ export async function applySectionCloseout(
       change_log_entry_id: null,
       section_claim_released: false,
       cascaded_stage_releases: 0,
+      red_stage_coverage_pct: null,
+      pending_count: 0,
+      unexpected_pass_count: 0,
       error: "no_stages_in_section",
     };
   }
@@ -102,7 +108,81 @@ export async function applySectionCloseout(
       change_log_entry_id: null,
       section_claim_released: false,
       cascaded_stage_releases: 0,
+      red_stage_coverage_pct: null,
+      pending_count: 0,
+      unexpected_pass_count: 0,
       error: "stages_not_done",
+    };
+  }
+
+  // --- Red-stage coverage aggregation (pre-transaction read) ---
+  const memberStageIds = stages.rows.map((r) => r.stage_id);
+
+  interface PerStageProofRow {
+    stage_id: string;
+    proof_status: string;
+  }
+  const perStageProofs = await pool.query<PerStageProofRow>(
+    `SELECT DISTINCT ON (stage_id) stage_id, proof_status
+       FROM ia_red_stage_proofs
+      WHERE slug = $1
+        AND stage_id = ANY($2::text[])
+      ORDER BY stage_id, captured_at DESC`,
+    [slug, memberStageIds],
+  );
+
+  const latestByStage = new Map<string, string>();
+  for (const row of perStageProofs.rows) {
+    latestByStage.set(row.stage_id, row.proof_status);
+  }
+
+  let red_stage_coverage_pct: number | null = null;
+  let pending_count = 0;
+  let unexpected_pass_count = 0;
+
+  if (latestByStage.size > 0) {
+    let failed_as_expected = 0;
+    let not_applicable = 0;
+
+    for (const stageId of memberStageIds) {
+      const status = latestByStage.get(stageId);
+      if (!status) {
+        // No proof row → pending
+        pending_count += 1;
+      } else if (status === "failed_as_expected") {
+        failed_as_expected += 1;
+      } else if (status === "not_applicable") {
+        not_applicable += 1;
+      } else if (status === "unexpected_pass") {
+        unexpected_pass_count += 1;
+      } else {
+        // pending status on the row itself
+        pending_count += 1;
+      }
+    }
+
+    red_stage_coverage_pct =
+      Math.round(((failed_as_expected + not_applicable) / total) * 100 * 100) / 100;
+  } else {
+    // Zero proof rows → grandfathered, back-compat
+    red_stage_coverage_pct = null;
+  }
+
+  // Gate: unexpected_pass_count blocks closeout
+  if (unexpected_pass_count > 0) {
+    return {
+      slug,
+      section_id,
+      applied: false,
+      stages_total: total,
+      stages_done: done,
+      change_log_entry_id: null,
+      section_claim_released: false,
+      cascaded_stage_releases: 0,
+      red_stage_coverage_pct,
+      pending_count,
+      unexpected_pass_count,
+      error: "red_stage_unexpected_pass_blocks_closeout",
     };
   }
 
@@ -157,6 +237,9 @@ export async function applySectionCloseout(
       change_log_entry_id: entry_id,
       section_claim_released: releasedSection,
       cascaded_stage_releases: cascaded,
+      red_stage_coverage_pct,
+      pending_count,
+      unexpected_pass_count,
     };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
@@ -172,13 +255,16 @@ export function registerSectionCloseoutApply(server: McpServer): void {
     {
       description:
         "DB-backed mutate: pure-DB closeout for a section (V2 row-only). " +
-        "Asserts all stages with `section_id` have status='done'; appends " +
-        "`ia_master_plan_change_log` row (kind='section_done', body= " +
-        "`{section_id, stages[]}` JSON); releases active section claim + " +
-        "cascade-releases open stage claims by row key alone (any caller). " +
-        "Does NOT run git — same-branch same-worktree model, no merge or " +
-        "worktree teardown. Caller (`/section-closeout`) verifies drift " +
-        "first. parallel-carcass §6.2 (D4 V2 / D9). " +
+        "Asserts all stages with `section_id` have status='done'; aggregates " +
+        "§Red-Stage Proof rows across member stages — returns " +
+        "`red_stage_coverage_pct`, `pending_count`, `unexpected_pass_count`; " +
+        "rejects with `red_stage_unexpected_pass_blocks_closeout` when any stage " +
+        "recorded an unexpected_pass proof. Sections with zero proof rows get " +
+        "`red_stage_coverage_pct: null` (grandfathered back-compat). " +
+        "Appends `ia_master_plan_change_log` row (kind='section_done'); " +
+        "releases active section claim + cascade-releases open stage claims. " +
+        "Does NOT run git. Caller (`/section-closeout`) verifies drift first. " +
+        "parallel-carcass §6.2 (D4 V2 / D9). " +
         "Schema-cache restart required after add (N4).",
       inputSchema: inputShape,
     },

@@ -51,6 +51,7 @@ export interface MasterPlanHealthRow {
   drift_events_open: number;
   sibling_collisions: string[];
   arch_drift_scan_p95_ms: number | null;
+  red_stage_coverage: number | null;
   refreshed_at: string;
   last_verify_at: string | null;
   stage_1_is_tracer: boolean;
@@ -68,6 +69,7 @@ export interface MasterPlanHealthPayload {
   drift_events_open?: number;
   sibling_collisions?: string[];
   arch_drift_scan_p95_ms?: number | null;
+  red_stage_coverage?: number | null;
   refreshed_at?: string;
   last_verify_at?: string | null;
   stage_1_is_tracer?: boolean;
@@ -153,6 +155,7 @@ interface HealthMvRow {
   drift_events_open: number;
   sibling_collisions: string[];
   arch_drift_scan_p95_ms: number | null;
+  red_stage_coverage: number | null;
   refreshed_at: Date | string;
 }
 
@@ -176,6 +179,7 @@ function rowToPayload(
     drift_events_open: r.drift_events_open,
     sibling_collisions: r.sibling_collisions ?? [],
     arch_drift_scan_p95_ms: r.arch_drift_scan_p95_ms ?? null,
+    red_stage_coverage: r.red_stage_coverage ?? null,
     refreshed_at: toIso(r.refreshed_at),
     last_verify_at: lastVerifyAt,
     stage_1_is_tracer: tracerSlugs.has(r.slug),
@@ -201,7 +205,7 @@ export async function getMasterPlanHealth(
       `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
               oldest_in_progress_age_days,
               missing_arch_surfaces, drift_events_open, sibling_collisions,
-              arch_drift_scan_p95_ms,
+              arch_drift_scan_p95_ms, red_stage_coverage,
               refreshed_at
          FROM ia_master_plan_health
         WHERE slug = $1`,
@@ -213,7 +217,7 @@ export async function getMasterPlanHealth(
     `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
             oldest_in_progress_age_days,
             missing_arch_surfaces, drift_events_open, sibling_collisions,
-            arch_drift_scan_p95_ms,
+            arch_drift_scan_p95_ms, red_stage_coverage,
             refreshed_at
        FROM ia_master_plan_health
       ORDER BY slug ASC`,
@@ -241,7 +245,11 @@ export function registerMasterPlanHealth(server: McpServer): void {
         "`{slug, n_stages, n_done, n_in_progress, n_pending, " +
         "oldest_in_progress_age_days, missing_arch_surfaces, " +
         "drift_events_open, sibling_collisions, arch_drift_scan_p95_ms, " +
+        "red_stage_coverage, " +
         "refreshed_at, last_verify_at, stage_1_is_tracer}`. " +
+        "`red_stage_coverage` (mig 0061 / TECH-10905): " +
+        "(failed_as_expected + not_applicable) / total_stages × 100; " +
+        "NULL for grandfathered plans (zero proof rows) or all-design-only plans. " +
         "`stage_1_is_tracer` (TECH-10307; predicate widened by TECH-10315) is " +
         "true when ANY stage carries non-null `tracer_slice_block` (mig 0059) " +
         "— supports both greenfield (tracer at Stage 1) and retrofit (tracer " +

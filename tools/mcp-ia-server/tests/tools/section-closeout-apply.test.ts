@@ -179,6 +179,95 @@ describe("section_closeout_apply E2E (TECH-5071)", skip, () => {
     assert.equal(await countOpenStageClaims(SLUG), 0);
   });
 
+  it("red coverage — 100% failed_as_expected → applied=true, coverage=100", async () => {
+    if (!pool) return;
+    await teardownSectionCloseoutFixture(SLUG);
+    await seedSectionCloseoutFixture(SLUG);
+
+    await flipStageDone(SLUG, STAGE_A1);
+    await flipStageDone(SLUG, STAGE_A2);
+
+    // Seed failed_as_expected proof for both stages.
+    for (const stageId of [STAGE_A1, STAGE_A2]) {
+      await pool.query(
+        `INSERT INTO ia_red_stage_proofs
+           (slug, stage_id, target_kind, anchor, proof_artifact_id, proof_status)
+         VALUES ($1, $2, 'tracer_verb', $3, gen_random_uuid(), 'failed_as_expected')`,
+        [SLUG, stageId, `test-anchor:${stageId}::SomeTest`],
+      );
+    }
+
+    const result = await applySectionCloseout({ slug: SLUG, section_id: SECTION_ID });
+    assert.equal(result.applied, true);
+    assert.equal(result.red_stage_coverage_pct, 100);
+    assert.equal(result.pending_count, 0);
+    assert.equal(result.unexpected_pass_count, 0);
+  });
+
+  it("red coverage — partial with pending rows → applied=true, coverage<100, pending_count>0", async () => {
+    if (!pool) return;
+    await teardownSectionCloseoutFixture(SLUG);
+    await seedSectionCloseoutFixture(SLUG);
+
+    await flipStageDone(SLUG, STAGE_A1);
+    await flipStageDone(SLUG, STAGE_A2);
+
+    // A1 has failed_as_expected, A2 has no proof row (pending).
+    await pool.query(
+      `INSERT INTO ia_red_stage_proofs
+         (slug, stage_id, target_kind, anchor, proof_artifact_id, proof_status)
+       VALUES ($1, $2, 'tracer_verb', $3, gen_random_uuid(), 'failed_as_expected')`,
+      [SLUG, STAGE_A1, `test-anchor:${STAGE_A1}::SomeTest`],
+    );
+
+    const result = await applySectionCloseout({ slug: SLUG, section_id: SECTION_ID });
+    assert.equal(result.applied, true);
+    assert.ok(result.red_stage_coverage_pct !== null && result.red_stage_coverage_pct < 100);
+    assert.ok(result.pending_count > 0);
+    assert.equal(result.unexpected_pass_count, 0);
+  });
+
+  it("red coverage — unexpected_pass blocks closeout → applied=false, error set, no change_log", async () => {
+    if (!pool) return;
+    await teardownSectionCloseoutFixture(SLUG);
+    await seedSectionCloseoutFixture(SLUG);
+
+    await flipStageDone(SLUG, STAGE_A1);
+    await flipStageDone(SLUG, STAGE_A2);
+
+    // A1 has unexpected_pass proof — should block closeout.
+    await pool.query(
+      `INSERT INTO ia_red_stage_proofs
+         (slug, stage_id, target_kind, anchor, proof_artifact_id, proof_status)
+       VALUES ($1, $2, 'tracer_verb', $3, gen_random_uuid(), 'unexpected_pass')`,
+      [SLUG, STAGE_A1, `test-anchor:${STAGE_A1}::SomeTest`],
+    );
+
+    const before_log = await countChangeLogRows(SLUG);
+    const result = await applySectionCloseout({ slug: SLUG, section_id: SECTION_ID });
+    assert.equal(result.applied, false);
+    assert.equal(result.error, "red_stage_unexpected_pass_blocks_closeout");
+    assert.ok(result.unexpected_pass_count > 0);
+    assert.equal(await countChangeLogRows(SLUG), before_log);
+    assert.equal(result.change_log_entry_id, null);
+  });
+
+  it("red coverage — null for grandfathered section (zero proof rows) → applied=true, coverage=null", async () => {
+    if (!pool) return;
+    await teardownSectionCloseoutFixture(SLUG);
+    await seedSectionCloseoutFixture(SLUG);
+
+    await flipStageDone(SLUG, STAGE_A1);
+    await flipStageDone(SLUG, STAGE_A2);
+
+    // No proof rows inserted — grandfathered section.
+    const result = await applySectionCloseout({ slug: SLUG, section_id: SECTION_ID });
+    assert.equal(result.applied, true);
+    assert.equal(result.red_stage_coverage_pct, null);
+    assert.equal(result.pending_count, 0);
+    assert.equal(result.unexpected_pass_count, 0);
+  });
+
   it("negative path — only 1/2 stages done → applied=false, no change_log, claims open", async () => {
     if (!pool) return;
     await teardownSectionCloseoutFixture(SLUG);

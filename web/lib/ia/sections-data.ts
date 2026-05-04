@@ -48,6 +48,11 @@ export interface PlanSectionsBundle {
   claim_heartbeat_timeout_minutes: number;
   /** True iff every carcass-role stage is `done`. */
   carcass_done: boolean;
+  /**
+   * Red-stage coverage percentage from ia_master_plan_health MV (mig 0061).
+   * null when plan has zero proof rows (grandfathered) or is all-design-only.
+   */
+  red_stage_coverage: number | null;
 }
 
 const DEFAULT_TIMEOUT_MIN = 10;
@@ -97,10 +102,17 @@ export async function getPlanSectionsBundle(
     SELECT value FROM carcass_config
     WHERE key = 'claim_heartbeat_timeout_minutes'
   `;
+
+  const healthRows = await sql<{ red_stage_coverage: number | null }[]>`
+    SELECT red_stage_coverage FROM ia_master_plan_health WHERE slug = ${slug}
+  `;
   const claim_heartbeat_timeout_minutes =
     cfgRows.length > 0
       ? parseInt(cfgRows[0].value, 10) || DEFAULT_TIMEOUT_MIN
       : DEFAULT_TIMEOUT_MIN;
+
+  const red_stage_coverage: number | null =
+    healthRows.length > 0 ? (healthRows[0].red_stage_coverage ?? null) : null;
 
   const surfaceByStage = new Map<string, string[]>();
   for (const r of surfaceRows) {
@@ -209,5 +221,6 @@ export async function getPlanSectionsBundle(
     warnings: planWarnings,
     claim_heartbeat_timeout_minutes,
     carcass_done,
+    red_stage_coverage,
   };
 }

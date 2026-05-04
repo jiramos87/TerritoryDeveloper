@@ -34,7 +34,22 @@ export default async function PlanLandingPage({
     carcass_stages,
     carcass_done,
     claim_heartbeat_timeout_minutes,
+    red_stage_coverage,
   } = bundle;
+
+  function redStageCoverageColor(coverage: number | null): string {
+    if (coverage === null) return "var(--ds-text-muted)";
+    if (coverage >= 100) return "var(--ds-bg-status-done)";
+    if (coverage >= 50) return "var(--ds-bg-status-progress)";
+    return "var(--ds-bg-status-blocked)";
+  }
+
+  const coverageDisplay =
+    red_stage_coverage !== null ? `${Math.round(red_stage_coverage)}%` : "—";
+  const coverageAriaLabel =
+    red_stage_coverage !== null
+      ? `Red-stage coverage ${Math.round(red_stage_coverage)} percent`
+      : "Red-stage coverage unknown";
 
   const heldClaims = sections.filter((s) => s.claim).length;
   const freshestHeartbeat = sections
@@ -85,7 +100,7 @@ export default async function PlanLandingPage({
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ds-text-meta)]">
               Carcass stages
@@ -107,6 +122,20 @@ export default async function PlanLandingPage({
               className="text-2xl font-semibold text-[var(--ds-text-primary)]"
             >
               {sections.length}
+            </div>
+          </div>
+
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ds-text-meta)]">
+              Red-stage coverage
+            </div>
+            <div
+              data-testid="red-stage-coverage-badge"
+              aria-label={coverageAriaLabel}
+              className="text-2xl font-semibold"
+              style={{ color: redStageCoverageColor(red_stage_coverage) }}
+            >
+              {coverageDisplay}
             </div>
           </div>
 
