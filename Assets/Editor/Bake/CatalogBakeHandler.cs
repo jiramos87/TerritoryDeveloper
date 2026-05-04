@@ -142,6 +142,10 @@ namespace TerritoryDeveloper.Editor.Bake
             public string kind;
             public string params_json;
             public string sprite_ref;
+            // Stage 2 (TECH-11930): button state sprite refs resolved from button_detail join.
+            public string hover_sprite_ref;
+            public string pressed_sprite_ref;
+            public string disabled_sprite_ref;
         }
     }
 }

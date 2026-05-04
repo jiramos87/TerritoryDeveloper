@@ -85,6 +85,15 @@ namespace TerritoryDeveloper.Editor.Bake
 
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = bgImage;
+            // Stage 2 (TECH-11930): explicit SpriteSwap transition so Unity renders state sprites.
+            btn.transition = UnityEngine.UI.Selectable.Transition.SpriteSwap;
+            btn.spriteState = new SpriteState
+            {
+                highlightedSprite = ResolveSprite(child.hover_sprite_ref),
+                pressedSprite     = ResolveSprite(child.pressed_sprite_ref),
+                disabledSprite    = ResolveSprite(child.disabled_sprite_ref),
+                // selectedSprite left null — hud-bar buttons not keyboard-selectable.
+            };
 
             // Icon child — Image only, raycast off so button receives clicks.
             var iconGo = new GameObject("Icon");
