@@ -36,16 +36,58 @@ namespace Territory.Editor.Bridge
             GameObject go = null;
             try
             {
+                // Anti-loss guard (Stage 13.7 fallout fix): refuse silent placeholder
+                // overwrite when CD truth source has no entry for this slug AND an
+                // existing prefab on disk already carries non-default RectTransform.
+                // Prevents wholesale wipe of authored positioning state across re-bakes.
+                if (!LayoutRectsLoader.HasEntry(panel.slug)
+                    && ExistingPrefabHasNonDefaultRect(assetPath))
+                {
+                    return new BakeError
+                    {
+                        code = "panel_layout_rect_missing",
+                        detail = $"panel '{panel.slug}' has no entry in layout-rects.json " +
+                                 $"AND existing prefab at '{assetPath}' carries non-default " +
+                                 $"RectTransform. Refusing overwrite — add slug to " +
+                                 $"web/design-refs/step-1-game-ui/layout-rects.json (regenerate " +
+                                 $"via tools/scripts/extract-cd-layout-rects.ts) before re-bake.",
+                    };
+                }
+
                 go = new GameObject(panel.slug);
                 var rootRect = go.AddComponent<RectTransform>();
-                // Step 11.3 — bake-time RectTransform values are placeholder; runtime ApplyKindLayout
-                // overrides anchor/sizeDelta/pivot per _kind on every OnEnable (defeats scene PrefabInstance
-                // override pin-down). Slug-suffix heuristic + unconditional VLG attach removed.
-                rootRect.anchorMin = new Vector2(0.5f, 0.5f);
-                rootRect.anchorMax = new Vector2(0.5f, 0.5f);
-                rootRect.pivot = new Vector2(0.5f, 0.5f);
-                rootRect.anchoredPosition = Vector2.zero;
-                rootRect.sizeDelta = new Vector2(600f, 800f);
+                // Stage 13.7 fallout fix: panel root anchors derive from
+                // layout-rects.json (CD truth source at 1920×1080) instead of
+                // hardcoded centered placeholder. Missing entry → fail-loud
+                // guard above already returned; here we either have a rect or
+                // fall through to a sentinel default for slugs the CD bundle
+                // legitimately doesn't cover (e.g. runtime-only debug panels).
+                if (LayoutRectsLoader.TryGetPanelRect(panel.slug, out var lr))
+                {
+                    LayoutRectsLoader.ViewportRectToCanvasAnchors(lr.ViewportRect,
+                        out var aMin, out var aMax);
+                    rootRect.anchorMin = aMin;
+                    rootRect.anchorMax = aMax;
+                    rootRect.pivot = new Vector2(0.5f, 0.5f);
+                    rootRect.anchoredPosition = Vector2.zero;
+                    rootRect.sizeDelta = Vector2.zero;
+                }
+                else
+                {
+                    // No CD truth + no existing prefab to protect — emit a small
+                    // top-left sentinel rect so the panel is visible + obviously
+                    // un-authored. NOT centered 600×800 (the old placeholder
+                    // looked like real content + masked the loss).
+                    Debug.LogWarning(
+                        $"[UiBakeHandler] panel '{panel.slug}' has no layout-rects entry; " +
+                        $"emitting top-left sentinel 200×80 rect. Add to " +
+                        $"web/design-refs/step-1-game-ui/layout-rects.json to fix.");
+                    rootRect.anchorMin = new Vector2(0f, 1f);
+                    rootRect.anchorMax = new Vector2(0f, 1f);
+                    rootRect.pivot = new Vector2(0f, 1f);
+                    rootRect.anchoredPosition = new Vector2(8f, -8f);
+                    rootRect.sizeDelta = new Vector2(200f, 80f);
+                }
                 var bgImage = go.AddComponent<Image>();
                 bgImage.color = Color.white;
                 // Stage 13.2 — chrome raycast policy: only modal kinds block input behind the panel.
@@ -953,6 +995,52 @@ namespace Territory.Editor.Bridge
                 case "chassis": return 4f;
                 default: return 3f;
             }
+        }
+
+        // ── Stage 13.7 fallout — anti-loss guard helper ────────────────────────
+        //
+        // True when an existing prefab on disk carries a non-default RectTransform
+        // root — i.e. someone (designer / earlier bake / hand-edit) authored real
+        // positioning state we must not silently overwrite when the CD truth
+        // source has no entry for this slug.
+        //
+        // "Default" means either the historical centered 600×800 placeholder
+        // (anchorMin == anchorMax == 0.5/0.5 + sizeDelta == 600×800) OR the
+        // brand-new top-left sentinel (anchorMin == anchorMax == 0/1 +
+        // sizeDelta == 200×80). Anything else = authored state worth protecting.
+        //
+        // Returns false when the asset path doesn't exist (nothing to lose) or
+        // when the asset has no root RectTransform (non-UI prefab — bake will
+        // overwrite anyway).
+        static bool ExistingPrefabHasNonDefaultRect(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath)) return false;
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (existing == null) return false;
+            var rt = existing.GetComponent<RectTransform>();
+            if (rt == null) return false;
+
+            const float eps = 0.001f;
+            bool MatchesPlaceholder600x800()
+            {
+                return Mathf.Abs(rt.anchorMin.x - 0.5f) < eps
+                    && Mathf.Abs(rt.anchorMin.y - 0.5f) < eps
+                    && Mathf.Abs(rt.anchorMax.x - 0.5f) < eps
+                    && Mathf.Abs(rt.anchorMax.y - 0.5f) < eps
+                    && Mathf.Abs(rt.sizeDelta.x - 600f) < eps
+                    && Mathf.Abs(rt.sizeDelta.y - 800f) < eps;
+            }
+            bool MatchesTopLeftSentinel200x80()
+            {
+                return Mathf.Abs(rt.anchorMin.x - 0f) < eps
+                    && Mathf.Abs(rt.anchorMin.y - 1f) < eps
+                    && Mathf.Abs(rt.anchorMax.x - 0f) < eps
+                    && Mathf.Abs(rt.anchorMax.y - 1f) < eps
+                    && Mathf.Abs(rt.sizeDelta.x - 200f) < eps
+                    && Mathf.Abs(rt.sizeDelta.y - 80f) < eps;
+            }
+
+            return !MatchesPlaceholder600x800() && !MatchesTopLeftSentinel200x80();
         }
 
     }
