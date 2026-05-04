@@ -144,6 +144,24 @@ Emit split decision in hand-off summary.
 
 Single Opus call returns a map `{ISSUE_ID → §Plan Digest body}`. Rubric injected verbatim into the authoring prompt as hard constraints — no post-author lint MCP call, no retry loop. For each Task spec:
 
+**Phase 4.0 gate runs first** — §Red-Stage Proof confirm + lint blocks Plan Digest authoring on red lint. See Phase 4.0 below.
+
+### Phase 4.0 — Confirm §Red-Stage Proof
+
+Before authoring §Plan Digest, confirm the Stage's `**§Red-Stage Proof:**` block and bind `red_test_anchor` to a concrete test path + method.
+
+**Steps:**
+1. Read `red_test_anchor`, `target_kind`, `proof_artifact_id`, `proof_status` from the Stage block `**§Red-Stage Proof:**` field (master plan stage body — proof is Stage-scoped, not Task-scoped).
+2. Resolve anchor via `tools/lib/red-stage-anchor-resolver.ts` `resolveAnchor()` semantics: parse `{anchor-kind}:{path}::{method}` from `red_test_anchor`.
+3. **In-prompt lint:** assert the parsed `{method}` contains the canonical noun phrase for the Stage's `target_kind`:
+   - `target_kind=tracer_verb` → method name MUST contain pascal-case noun phrase derived from §Tracer Slice `verb` (strip non-alphanumeric, pascal-case).
+   - `target_kind=visibility_delta` → method name MUST contain pascal-case noun phrase derived from §Visibility Delta sentence head (split on space, leading capitalised tokens; fallback = first 3 words pascal-cased).
+   - `target_kind=bug_repro` → method name MUST contain literal `BUG-NNNN` token (digits preserved).
+4. **Lint failure** → emit `RED_STAGE_PROOF_LINT_FAIL` structured error naming the failing field + halt Stage authoring (no `task_spec_section_write` call for that Stage). Return `{escalation: true, phase: 4, reason: "red_stage_proof_lint_fail", stage_id, failing_field}`.
+5. **Skip-clause:** `target_kind=design_only` AND `proof_artifact_id=n/a` AND `proof_status=not_applicable` triple-match → bypass anchor lint entirely; proceed to Phase 4.1.
+
+**Cross-link:** `ia/rules/tdd-red-green-methodology.md` — anchor grammar + enum tables for `target_kind`, `proof_status`, `red_test_anchor` format.
+
 ### 4.1 Compose §Plan Digest body
 
 Shape mirrors [`ia/templates/plan-digest-section.md`](../../templates/plan-digest-section.md). Required sub-sections in order:

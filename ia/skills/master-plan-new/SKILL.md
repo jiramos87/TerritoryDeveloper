@@ -181,6 +181,16 @@ Map Implementation Points directly to **Stages** — each = shippable compilable
 
 **Stage count target:** 2–6 Stages typical; 7+ suggests scope creep (consider splitting into sibling master plans with dependency note).
 
+**§Red-Stage Proof rules (per stage):** Each Stage block carries a `**§Red-Stage Proof:**` block between `**§Visibility Delta:**` (or `§Tracer Slice` for Stage 1.0) and `**Art:**`. Select `target_kind` as follows:
+- Stage 1.0 → `target_kind=tracer_verb`; derive `red_test_anchor` noun phrase by pascal-casing the §Tracer Slice `verb` field (strip non-alphanumeric).
+- Stages 2+ → `target_kind=visibility_delta`; derive noun phrase from first noun phrase of §Visibility Delta sentence (pascal-case head subject; fallback = first 3 words pascal-cased).
+- Stage Notes contain `BUG-\d{2,4}` → `target_kind=bug_repro`; anchor = `BUG-NNNN:{path-pending}::{BugReproMethod}`.
+- Stage has no §Tracer Slice + no §Visibility Delta + no `BUG-NNNN` in Notes → `target_kind=design_only`; `proof_artifact_id=n/a`, `proof_status=not_applicable`.
+- Default for non-design-only: `proof_artifact_id=pending`, `proof_status=pending`.
+- `{path-pending}` is a literal placeholder; downstream `/stage-file` resolves the test file path.
+
+**Cross-link:** `ia/rules/tdd-red-green-methodology.md` — anchor grammar + enum tables for `target_kind`, `proof_status`, `red_test_anchor` format.
+
 Per stage, author the canonical block shape (per MASTER-PLAN-STRUCTURE.md §3):
 
 ```markdown
@@ -199,6 +209,12 @@ Per stage, author the canonical block shape (per MASTER-PLAN-STRUCTURE.md §3):
 - {concrete observable outcome 1 — cites type / method / file path where verifiable}
 - {outcome 2}
 - {glossary row additions, if canonical terms introduced}
+
+**§Red-Stage Proof:**
+- `red_test_anchor`: {tracer-verb-test:{path-pending}::{TracerVerbNounPhrase} for Stage 1.0 | visibility-delta-test:{path-pending}::{VisibilityDeltaNounPhrase} for Stages 2+ | BUG-NNNN:{path-pending}::{BugReproMethod} for bug-tagged}
+- `target_kind`: {tracer_verb | visibility_delta | bug_repro | design_only}
+- `proof_artifact_id`: pending
+- `proof_status`: pending
 
 **Art:** {None / list of art assets needed from Design Expansion; else `None`}.
 

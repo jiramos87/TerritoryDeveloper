@@ -247,6 +247,25 @@ For each task in `PENDING_TASKS` in stage order:
 CURRENT_TASK_ID = task.task_id
 ```
 
+**Capture-before-implement invariant:** `red_stage_proof_capture` MUST resolve (Step 5.0) before any `spec-implementer` dispatch. Ordering reversal rejects Pass A entry. PASS_B_ONLY resume path (Step 4) skips Step 5 entirely — proof was already captured on the original Pass A run.
+
+### Step 5.0 — Capture §Red-Stage Proof (entry gate)
+
+Runs ONCE per Stage at Pass A entry, before any task implementation. Stage-level (one call per Stage, not per Task).
+
+1. Read `target_kind` from `**§Red-Stage Proof:**` field in master plan Stage body (loaded in Step 1 context).
+2. **Design-only skip:** if `target_kind=design_only` → skip capture + continue to Step 5.1 for first task.
+3. Call `red_stage_proof_capture({slug: SLUG, stage_id: STAGE_ID_DB, target_kind, anchor: red_test_anchor, proof_artifact_id, proof_status})`.
+4. **Unexpected-pass rejection:** if capture returns `proof_status='unexpected_pass'` → STOPPED:
+   ```
+   STOPPED at Stage {STAGE_ID} — red_stage_proof: unexpected_pass blocks Pass A entry
+   ```
+   Emit chain digest with `stage_verify: failed`, `escalation_reason: red_stage_proof_unexpected_pass`. No `spec-implementer` dispatch. No status flip. No journal entry. Human owns repair.
+5. Capture succeeded → proceed to per-task loop.
+
+**PASS_B_ONLY path:** Step 4 jumps to Step 6; Step 5.0 is NOT called (proof already captured on original Pass A run).
+**Partial Pass A resume:** capture runs only for tasks with `pass_a_required=true` (first Pass A run per Stage).
+
 **Resume skip:** if `pass_a_required == false` for this task → skip Step 5.1 + 5.2 + 5.3. Append journal entry with `pass_a_resume_skipped: true`. Continue to next task.
 
 ### Step 5.1 — Implement
@@ -326,6 +345,22 @@ Journal:
 ```
 journal_append({ phase: "pass_b.verify", payload_kind: "verify_result", payload: { verdict: "pass" } })
 ```
+
+### Step 6.2 — Finalize §Red-Stage Proof (green_status)
+
+Runs ONCE per Stage AFTER verify-loop returns `verdict=pass`, BEFORE Step 6.3 status flips.
+
+1. Read `target_kind` from `**§Red-Stage Proof:**` field in master plan Stage body.
+2. **Design-only skip:** if `target_kind=design_only` → skip finalize; proceed to Step 6.3.
+3. Derive `green_status` from verify-loop verdict:
+   - `verdict=pass` → `green_status=passed`
+   - `verdict=fail` → `green_status=failed`
+   - `verdict=escalated` → finalize NOT called (Pass B already STOPPED at Step 6.1).
+4. Call `red_stage_proof_finalize({slug: SLUG, stage_id: STAGE_ID_DB, anchor: red_test_anchor, green_status})`.
+5. Append journal entry:
+   ```
+   journal_append({ phase: "pass_b.verify", payload_kind: "red_stage_proof_finalize", payload: { slug: SLUG, stage_id: STAGE_ID_DB, green_status } })
+   ```
 
 ### Step 6.3 — Per-task status flip (verified → done)
 

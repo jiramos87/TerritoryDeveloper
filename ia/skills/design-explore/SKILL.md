@@ -308,6 +308,9 @@ Detect whether `## Design Expansion` section already exists in `{DOC_PATH}`:
   |---|---|---|
   | 2.x | {what this iteration adds} | {one sentence — what player/agent sees/feels new} |
 
+**§Red-Stage Proof seed sources (informational — emission owned by master-plan-new Phase 4, not design-explore):** The downstream master plan Stage blocks derive §Red-Stage Proof block fields from three sources produced here: §Implementation Points → per-Stage proof skeleton (one proof block per Stage); §Tracer Slice (`verb` field) → Stage 1.0 `red_test_anchor` (`target_kind=tracer_verb`); §Iteration Roadmap §Visibility Delta rows → Stages 2+ `red_test_anchor` (`target_kind=visibility_delta`). Exploration outputs these sources; master-plan-new Phase 4 binds them into each Stage block at plan authoring time.
+- See [ia/rules/tdd-red-green-methodology.md](../../rules/tdd-red-green-methodology.md) — anchor grammar + `target_kind` / `proof_status` enum tables.
+
 **Persist failure mode:** Missing or empty `### Core Prototype` OR missing/empty `### Iteration Roadmap` → skill aborts persist with structured error `design_explore_persist_contract_violation` naming the missing/empty subsection. No partial write to `{DOC_PATH}`.
 
 **Canonical reference fixture:** [`tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json`](../../../tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json) — authoring shape canonical for §Core Prototype 5-field block + §Iteration Roadmap 3-column table.
