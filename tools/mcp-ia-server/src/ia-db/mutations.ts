@@ -1956,6 +1956,60 @@ export async function mutateStageDecomposeApply(
   });
 }
 
+// ---------------------------------------------------------------------------
+// master_plan_bundle_apply — TECH-12630 (ship-protocol Stage 1.0)
+// ---------------------------------------------------------------------------
+
+export interface MasterPlanBundleApplyResult {
+  plan_slug: string;
+  stages_inserted: number;
+  tasks_inserted: number;
+}
+
+/**
+ * Atomic plan + stages + tasks insert via the Postgres function
+ * `master_plan_bundle_apply(jsonb)` (migration 0067). Function body is the
+ * single tx frame — any constraint failure raises and rolls back the whole
+ * bundle; no partial state ever persists.
+ *
+ * Boundary validation (here) ensures `bundle.plan.slug` is a non-empty
+ * string. Deeper shape validation lives inside the SQL function (mirrors
+ * existing tool pattern — boundary trust-but-document on jsonb payloads).
+ */
+export async function mutateMasterPlanBundleApply(
+  bundle: Record<string, unknown>,
+): Promise<MasterPlanBundleApplyResult> {
+  if (!bundle || typeof bundle !== "object" || Array.isArray(bundle)) {
+    throw new IaDbValidationError(
+      "bundle must be a non-null object (jsonb-shaped).",
+    );
+  }
+  const plan = (bundle as { plan?: unknown }).plan;
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
+    throw new IaDbValidationError("bundle.plan must be an object.");
+  }
+  const slug = (plan as { slug?: unknown }).slug;
+  if (typeof slug !== "string" || slug.trim().length === 0) {
+    throw new IaDbValidationError(
+      "bundle.plan.slug must be a non-empty string.",
+    );
+  }
+
+  const pool = poolOrThrow();
+  // Function frame already provides atomicity — no outer BEGIN/COMMIT needed.
+  const r = await pool.query<{ result: MasterPlanBundleApplyResult }>(
+    "SELECT master_plan_bundle_apply($1::jsonb) AS result",
+    [JSON.stringify(bundle)],
+  );
+  const row = r.rows[0];
+  if (!row) {
+    throw new IaDbValidationError(
+      "master_plan_bundle_apply returned no row (function call failed).",
+    );
+  }
+  return row.result;
+}
+
 // Re-export read helper so tools can round-trip without two imports.
 export { queryTaskBody, queryTaskState };
 export type { TaskStateDB };

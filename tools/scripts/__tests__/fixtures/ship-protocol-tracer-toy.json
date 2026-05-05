@@ -1,0 +1,26 @@
+{
+  "plan": {
+    "slug": "ship-protocol-tracer-toy",
+    "title": "Ship Protocol — Tracer Toy Plan (TECH-12631 fixture)",
+    "description": "Hand-authored 1-stage-1-task tracer fixture used by master_plan_bundle_apply atomicity test (TECH-12632). Throwaway content; teardown deletes after each test run."
+  },
+  "stages": [
+    {
+      "stage_id": "1.0",
+      "title": "Tracer toy stage",
+      "objective": "Single stage to exercise master_plan_bundle_apply atomic insert path.",
+      "exit_criteria": "Bundle apply call returns stages_inserted=1 + tasks_inserted=1; teardown leaves zero residue.",
+      "status": "pending"
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "T1.0.1",
+      "stage_id": "1.0",
+      "prefix": "TECH",
+      "title": "Tracer toy task",
+      "body": "Synthetic body — exists only to satisfy ia_tasks NOT NULL body constraint inside the fixture insert.",
+      "status": "pending"
+    }
+  ]
+}

@@ -35,6 +35,7 @@ import {
   mutateFixPlanConsume,
   mutateFixPlanWrite,
   mutateJournalAppend,
+  mutateMasterPlanBundleApply,
   mutateStageCloseoutApply,
   mutateStageVerificationFlip,
   mutateTaskCommitRecord,
@@ -857,7 +858,7 @@ export function registerFixPlanConsume(server: McpServer): void {
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
-/** Register all 11 DB-backed write tools on the IA core bucket. */
+/** Register all DB-backed write tools on the IA core bucket. */
 export function registerIaDbWriteTools(server: McpServer): void {
   registerTaskInsert(server);
   registerTaskStatusFlip(server);
@@ -870,4 +871,48 @@ export function registerIaDbWriteTools(server: McpServer): void {
   registerJournalAppend(server);
   registerFixPlanWrite(server);
   registerFixPlanConsume(server);
+  registerMasterPlanBundleApply(server);
+}
+
+// ---------------------------------------------------------------------------
+// master_plan_bundle_apply (TECH-12630 — ship-protocol Stage 1.0 tracer).
+// ---------------------------------------------------------------------------
+
+export function registerMasterPlanBundleApply(server: McpServer): void {
+  server.registerTool(
+    "master_plan_bundle_apply",
+    {
+      description:
+        "DB-backed: atomic plan + stages + tasks insert from a single jsonb bundle. Wraps the Postgres function `master_plan_bundle_apply(jsonb)` (migration 0067). Bundle shape: `{plan: {slug, title, ...}, stages: [{stage_id, ...}], tasks: [{task_key, stage_id, prefix, title, ...}]}`. Any constraint failure rolls back the whole bundle. Returns `{plan_slug, stages_inserted, tasks_inserted}`. Schema-cache restart required after adding this tool (N4).",
+      inputSchema: {
+        bundle: z
+          .record(z.string(), z.unknown())
+          .describe(
+            "jsonb-shaped bundle. Required keys: bundle.plan.slug (non-empty string). Optional: stages[], tasks[].",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_bundle_apply", async () => {
+        const envelope = await wrapTool(
+          async (
+            input: { bundle?: Record<string, unknown> } | undefined,
+          ) => {
+            const bundle = input?.bundle;
+            if (!bundle || typeof bundle !== "object" || Array.isArray(bundle)) {
+              throw {
+                code: "invalid_input",
+                message: "bundle must be a non-null object.",
+              };
+            }
+            try {
+              return await mutateMasterPlanBundleApply(bundle);
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(args as { bundle?: Record<string, unknown> } | undefined);
+        return jsonResult(envelope);
+      }),
+  );
 }
