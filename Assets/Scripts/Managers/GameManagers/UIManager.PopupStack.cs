@@ -26,6 +26,46 @@ public partial class UIManager
         popupStack.Push(type);
     }
 
+    /// <summary>
+    /// TECH-14102 / Stage 8 D9: register tool-selected escape frame. Idempotent — only pushes when frame absent from stack.
+    /// Caller responsible for push at tool-button click site (toolbar handlers).
+    /// </summary>
+    public void RegisterToolSelected()
+    {
+        if (StackContainsFrame(PopupType.ToolSelected)) return;
+        popupStack.Push(PopupType.ToolSelected);
+    }
+
+    /// <summary>TECH-14102: removes a specific frame from anywhere in the popup stack (rebuild). Used when tool deselects via path other than Esc (right-click cancel, ClearCurrentTool).</summary>
+    public void RemoveFrameFromStack(PopupType type)
+    {
+        if (!StackContainsFrame(type)) return;
+        var preserved = new System.Collections.Generic.List<PopupType>();
+        while (popupStack.Count > 0)
+        {
+            var frame = popupStack.Pop();
+            if (frame != type) preserved.Add(frame);
+        }
+        // Re-push in reverse to preserve original order.
+        for (int i = preserved.Count - 1; i >= 0; i--)
+        {
+            popupStack.Push(preserved[i]);
+        }
+    }
+
+    /// <summary>TECH-14102: read-only stack contents accessor for EditMode tests + push idempotence checks.</summary>
+    public bool StackContainsFrame(PopupType type)
+    {
+        foreach (var f in popupStack) if (f == type) return true;
+        return false;
+    }
+
+    /// <summary>TECH-14102: read-only stack depth accessor for EditMode tests.</summary>
+    public int PopupStackCount => popupStack.Count;
+
+    /// <summary>TECH-14102: read-only top-of-stack accessor for EditMode tests. Returns null when empty.</summary>
+    public PopupType? PopupStackPeek() => popupStack.Count > 0 ? popupStack.Peek() : (PopupType?)null;
+
     /// <summary>Stage 12 trigger-side helper: activate a Stage 8 modal root + register on stack. Mirror of <see cref="ClosePopup"/>. Idempotent (no-op if root null or already active).</summary>
     public void OpenPopup(PopupType type)
     {
@@ -112,6 +152,11 @@ public partial class UIManager
                 break;
             case PopupType.NewGameScreen:
                 if (newGameScreenRoot != null) newGameScreenRoot.SetActive(false);
+                break;
+            case PopupType.ToolSelected:
+                // TECH-14102 / Stage 8 D9: Esc on tool-selected frame deselects tool (no popup root).
+                // Frame already popped at ClosePopup head; ClearCurrentTool's RemoveFrameFromStack is idempotent (no-op).
+                ClearCurrentTool();
                 break;
         }
     }

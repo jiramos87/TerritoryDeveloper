@@ -237,8 +237,13 @@ public partial class UIManager
         currentSubTypeId = -1;
         ghostPreviewPrefab = null;
         ghostPreviewSize = 1;
-        cursorManager.SetDefaultCursor();
-        cursorManager.RemovePreview();
+        if (cursorManager != null)
+        {
+            cursorManager.SetDefaultCursor();
+            cursorManager.RemovePreview();
+        }
+        // TECH-14102 / Stage 8 D9: drop ToolSelected escape frame whenever tool clears (Esc dispatch already popped; idempotent for external paths).
+        RemoveFrameFromStack(PopupType.ToolSelected);
     }
 
     private void SetGhostPreview(GameObject prefab, int size)
@@ -276,6 +281,8 @@ public partial class UIManager
         ClearCurrentTool();
         cursorManager.SetBullDozerCursor();
         bulldozeMode = true;
+        // TECH-14102 / Stage 8 D9: register ToolSelected escape frame on toolbar tool activation.
+        RegisterToolSelected();
     }
 
     public bool isBulldozeMode()
@@ -293,6 +300,8 @@ public partial class UIManager
         }
         detailsMode = true;
         cursorManager.SetDetailsCursor();
+        // TECH-14102 / Stage 8 D9: register ToolSelected escape frame on toolbar tool activation.
+        RegisterToolSelected();
     }
 
     public void OnRaiseResidentialTaxButtonClicked()

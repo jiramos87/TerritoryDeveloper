@@ -28,7 +28,10 @@ public enum PopupType
     PauseMenu,
     SettingsScreen,
     SaveLoadScreen,
-    NewGameScreen
+    NewGameScreen,
+    // TECH-14102 / Stage 8 D9: tool-selected counts as escape-stack frame.
+    // Esc-stack priority newest-first: SubTypePicker > ToolSelected > {modals} > {menus} > PauseMenu (fallback).
+    ToolSelected
 }
 
 /// <summary>
@@ -374,27 +377,37 @@ public partial class UIManager : MonoBehaviour
             UpdateUI();
         }
 
-        // Esc: dismiss welcome briefing first, then last opened pop-up; if stack empty AND running (MainScene) → open pause menu (Stage 12 trigger rewire). Falls through to legacy CloseAllPopups only when not in running scene.
+        // Esc: dispatched to HandleEscapePress() — extracted for EditMode test reach (TECH-14102 / Stage 8 D9).
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (IsWelcomeBriefingVisible())
-            {
-                DismissWelcomeBriefing();
-                return;
-            }
+            HandleEscapePress();
+        }
+    }
 
-            if (popupStack.Count > 0)
-            {
-                ClosePopup(popupStack.Peek());
-            }
-            else if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 1)
-            {
-                OpenPopup(PopupType.PauseMenu);
-            }
-            else
-            {
-                CloseAllPopups();
-            }
+    /// <summary>
+    /// Iterative escape state machine (TECH-14102 / Stage 8 D9).
+    /// Frame priority newest-first via popupStack: SubTypePicker > ToolSelected > {modals} > {menus} > PauseMenu (fallback).
+    /// One press pops one frame. Pause-menu = fallback when stack empty AND running scene (buildIndex==1).
+    /// </summary>
+    public void HandleEscapePress()
+    {
+        if (IsWelcomeBriefingVisible())
+        {
+            DismissWelcomeBriefing();
+            return;
+        }
+
+        if (popupStack.Count > 0)
+        {
+            ClosePopup(popupStack.Peek());
+        }
+        else if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 1)
+        {
+            OpenPopup(PopupType.PauseMenu);
+        }
+        else
+        {
+            CloseAllPopups();
         }
     }
 
