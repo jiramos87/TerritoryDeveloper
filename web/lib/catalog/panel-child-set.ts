@@ -111,7 +111,10 @@ export async function setPanelChildTree(
         childIdStr != null && childIdStr !== "" && /^\d+$/.test(childIdStr)
           ? Number.parseInt(childIdStr, 10)
           : null;
-      const params = (c.params_json ?? {}) as Parameters<typeof sql.json>[0];
+      const callerParams = (c.params_json ?? {}) as Record<string, unknown>;
+      // Trigger `panel_child_params_json_lint` (mig 0063) requires `kind`
+      // discriminator. Inject from `child_kind` (canonical — overrides caller).
+      const params = { ...callerParams, kind: c.child_kind } as Parameters<typeof sql.json>[0];
       const childVersionId =
         body.publish === true && childIdNum != null
           ? publishedMap.get(childIdNum) ?? null

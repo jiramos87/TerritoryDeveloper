@@ -146,8 +146,8 @@ describe("POST /api/catalog/panels/[slug]/children (TECH-1888)", () => {
 
     const sql = getSql();
     await sql`
-      insert into panel_child (panel_entity_id, slot_name, order_idx, child_kind, child_entity_id)
-      values (${panelB.id}, 'body', 0, 'panel', ${panelA.id})
+      insert into panel_child (panel_entity_id, slot_name, order_idx, child_kind, child_entity_id, params_json)
+      values (${panelB.id}, 'body', 0, 'panel', ${panelA.id}, ${sql.json({ kind: "panel" })})
     `;
 
     const startedAtA = await getPanelUpdatedAt(panelA.id);

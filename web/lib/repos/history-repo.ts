@@ -40,7 +40,7 @@ const MAX_LIMIT = 100;
 const MIN_LIMIT = 1;
 
 interface DecodedCursor {
-  created_at: string;
+  created_at_us: string;
   id: string;
 }
 
@@ -59,8 +59,8 @@ export function clampLimit(input: number | null | undefined): number {
   return n;
 }
 
-export function encodeCursor(row: { created_at: string; id: string }): string {
-  const json = JSON.stringify({ created_at: row.created_at, id: row.id });
+export function encodeCursor(row: { created_at_us: string; id: string }): string {
+  const json = JSON.stringify({ created_at_us: row.created_at_us, id: row.id });
   return Buffer.from(json, "utf8").toString("base64");
 }
 
@@ -81,8 +81,9 @@ export function decodeCursor(raw: string): DecodedCursor {
     parsed == null ||
     typeof parsed !== "object" ||
     Array.isArray(parsed) ||
-    typeof (parsed as { created_at?: unknown }).created_at !== "string" ||
+    typeof (parsed as { created_at_us?: unknown }).created_at_us !== "string" ||
     typeof (parsed as { id?: unknown }).id !== "string" ||
+    !/^-?\d+$/.test((parsed as { created_at_us: string }).created_at_us) ||
     !/^\d+$/.test((parsed as { id: string }).id)
   ) {
     throw new InvalidCursorError();
@@ -115,6 +116,10 @@ export async function listVersions(
   const idNum = Number.parseInt(entityId, 10);
   const fetchN = limitClamped + 1;
 
+  // NOTE: cursor uses bigint microseconds (`extract(epoch from created_at) *
+  // 1000000`) for lossless integer comparison. postgres-js text→timestamptz
+  // binding flakes at sub-ms precision under parallel load; integer keyset
+  // bypasses the driver codec entirely. Mirrors `web/lib/repos/refs-repo.ts`.
   const rows = decodedCursor == null
     ? ((await sql`
         select
@@ -122,7 +127,8 @@ export async function listVersions(
           ev.entity_id::text                as entity_id,
           ev.version_number,
           ev.status,
-          ev.created_at,
+          to_char(ev.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at,
+          (extract(epoch from ev.created_at) * 1000000)::bigint::text as created_at_us,
           ev.parent_version_id::text        as parent_version_id,
           ev.archetype_version_id::text     as archetype_version_id
         from entity_version ev
@@ -137,19 +143,24 @@ export async function listVersions(
           ev.entity_id::text                as entity_id,
           ev.version_number,
           ev.status,
-          ev.created_at,
+          to_char(ev.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at,
+          (extract(epoch from ev.created_at) * 1000000)::bigint::text as created_at_us,
           ev.parent_version_id::text        as parent_version_id,
           ev.archetype_version_id::text     as archetype_version_id
         from entity_version ev
         join catalog_entity ce on ce.id = ev.entity_id
         where ce.kind = ${kind}
           and ev.entity_id = ${idNum}
-          and (ev.created_at, ev.id) < (${decodedCursor.created_at}::timestamptz, ${Number.parseInt(decodedCursor.id, 10)})
+          and ((extract(epoch from ev.created_at) * 1000000)::bigint, ev.id) <
+              (${decodedCursor.created_at_us}::bigint, ${Number.parseInt(decodedCursor.id, 10)}::bigint)
         order by ev.created_at desc, ev.id desc
         limit ${fetchN}
       `) as unknown as Array<Record<string, unknown>>);
 
-  const mapped: EntityVersionRow[] = rows.map((r) => ({
+  interface InternalRow extends EntityVersionRow {
+    created_at_us: string;
+  }
+  const mapped: InternalRow[] = rows.map((r) => ({
     id: r.id as string,
     entity_id: r.entity_id as string,
     version_number: Number(r.version_number),
@@ -158,17 +169,24 @@ export async function listVersions(
       r.created_at instanceof Date
         ? r.created_at.toISOString()
         : (r.created_at as string),
+    created_at_us: r.created_at_us as string,
     parent_version_id: (r.parent_version_id as string | null) ?? null,
     archetype_version_id: (r.archetype_version_id as string | null) ?? null,
   }));
+
+  const stripUs = (r: InternalRow): EntityVersionRow => {
+    const { created_at_us: _us, ...rest } = r;
+    void _us;
+    return rest;
+  };
 
   if (mapped.length > limitClamped) {
     const truncated = mapped.slice(0, limitClamped);
     const last = truncated[truncated.length - 1]!;
     return {
-      rows: truncated,
-      nextCursor: encodeCursor({ created_at: last.created_at, id: last.id }),
+      rows: truncated.map(stripUs),
+      nextCursor: encodeCursor({ created_at_us: last.created_at_us, id: last.id }),
     };
   }
-  return { rows: mapped, nextCursor: null };
+  return { rows: mapped.map(stripUs), nextCursor: null };
 }

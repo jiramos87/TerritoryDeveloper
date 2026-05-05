@@ -90,9 +90,9 @@ describe("clampLimit", () => {
 
 describe("encodeCursor / decodeCursor", () => {
   test("round-trip preserves shape", () => {
-    const enc = encodeCursor({ created_at: "2026-04-29T00:00:00.000Z", id: "42" });
+    const enc = encodeCursor({ created_at_us: "1745884800000000", id: "42" });
     const dec = decodeCursor(enc);
-    expect(dec.created_at).toBe("2026-04-29T00:00:00.000Z");
+    expect(dec.created_at_us).toBe("1745884800000000");
     expect(dec.id).toBe("42");
   });
   test("rejects garbage base64", () => {
@@ -100,7 +100,14 @@ describe("encodeCursor / decodeCursor", () => {
   });
   test("rejects non-numeric id", () => {
     const bad = Buffer.from(
-      JSON.stringify({ created_at: "2026-04-29T00:00:00.000Z", id: "abc" }),
+      JSON.stringify({ created_at_us: "1745884800000000", id: "abc" }),
+      "utf8",
+    ).toString("base64");
+    expect(() => decodeCursor(bad)).toThrow(InvalidCursorError);
+  });
+  test("rejects non-numeric created_at_us", () => {
+    const bad = Buffer.from(
+      JSON.stringify({ created_at_us: "not-a-number", id: "42" }),
       "utf8",
     ).toString("base64");
     expect(() => decodeCursor(bad)).toThrow(InvalidCursorError);
