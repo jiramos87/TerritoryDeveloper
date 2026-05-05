@@ -117,7 +117,8 @@ namespace Territory.UI.HUD
             for (int i = 0; i < buttons.Length; i++)
             {
                 var btn = buttons[i];
-                var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug : null;
+                // BUG-62 — bake handler emits PascalCase iconSpriteSlug; switch literals lowercase. Normalize on read.
+                var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug?.ToLowerInvariant() : null;
                 if (string.IsNullOrEmpty(slug)) continue;
 
                 switch (slug)
