@@ -1,6 +1,6 @@
 ---
 description: Use when an exploration doc (under docs/) needs to move from fuzzy survey to a defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Phases: compare approaches → select → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist. Triggers: "/design-explore [path]", "expand exploration", "design review [doc]", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan".
-argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR docs/foo.md --against docs/full-game-mvp-exploration.md)"
+argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] [--resume {slug}] (e.g. docs/foo.md C OR docs/foo.md --against docs/full-game-mvp-exploration.md OR --resume ship-protocol)"
 ---
 
 # /design-explore — Use before a master plan or backlog issue exists: survey approaches in an exploration doc, select one, expand with architecture + subsystem impact + implementation points + examples, review with a subagent, and persist back to the same doc.

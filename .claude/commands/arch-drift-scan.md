@@ -56,4 +56,4 @@ Forward via Agent tool with `subagent_type: "arch-drift-scan"`:
 >
 > ## Output
 >
-> Single concise caveman message per scanned plan: plan slug + title; drift count; resolutions tally (acknowledge / reword / re-plan); change-log row count appended; next step (`claude-personal "/master-plan-extend {SLUG}"` when any reword / re-plan resolved; else "no follow-up").
+> Single concise caveman message per scanned plan: plan slug + title; drift count; resolutions tally (acknowledge / reword / re-plan); change-log row count appended; next step (`claude-personal "/ship-plan --version-bump {SLUG}"` when any reword / re-plan resolved; else "no follow-up").

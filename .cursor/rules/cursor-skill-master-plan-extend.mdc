@@ -1,8 +1,0 @@
----
-description: "Use when an existing master plan needs new Stages sourced from an exploration doc (with persisted `## Design Expansion`) OR an extensions doc (e.g. `{slug}-post-mvp-extensions.md`). Appends new Stage rows to `ia_stages` — never rewrites existing Stages, never overwrites headers, never inserts BACKLOG rows. Fully decomposes every new Stage (Task table) at author time — no skeletons. 2-level hierarchy `Stage > Task`. Canonical shape: `docs/MASTER-PLAN-STRUCTURE.md`. Triggers: \"/master-plan-extend {slug} {source}\", \"extend master plan from exploration\", \"add new stages to orchestrator\", \"append from extensions doc\", \"pull deferred stage into master plan\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/master-plan-extend/SKILL.md
-
-When this skill invokes MCP mutation tools, pass `caller_agent: "master-plan-extend"`.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

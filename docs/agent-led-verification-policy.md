@@ -92,6 +92,36 @@ The **`unity_bridge_command`** / **`unity_compile`** **120 s** ceiling is enforc
 
 ---
 
+## Validator bands — fast vs deferred
+
+Two bands exist to balance pre-commit speed with full coverage:
+
+**`validate:fast` band** (runs pre-commit; stays under typical ~10 s budget):
+
+| Validator | What it checks |
+|-----------|----------------|
+| `validate:claude-imports` | Every `@`-import in `CLAUDE.md` resolves + line budget |
+| `validate:frontmatter` | SKILL.md frontmatter schema (exits 0 on warnings — gate on stdout, not exit code) |
+| `validate:cache-block-sizing` | Subagent preamble cache-block byte floors |
+| `validate:skill-drift` | Generated shadow files (`.claude/agents/`, `.claude/commands/`, `.cursor/rules/`) match SKILL.md sources |
+| `validate:retired-skill-refs` | Scans `ia/skills`, `.claude/agents`, `.claude/commands`, `.cursor/rules`, `docs` for retired-slug hits. Soft-fail (exit 0 + warn) until `2026-05-12`; hard-fail (exit 1) after. |
+| `validate:plan-digest-coverage` | Non-done tasks with empty body → exit 1; seeded tasks (backfilled marker) → exit 0 (warn) |
+| `validate:seeded-task-stale` | Backfilled tasks older than 30 days → warn (exit 0 always) |
+
+Fast band runs as part of `validate:all:readonly` (read-only; no DB writes). Run manually: `npm run validate:retired-skill-refs`, `npm run validate:plan-digest-coverage`, etc.
+
+**`test:ia` deferred band** (runs in `/ship-final` Pass B — heavier surfaces):
+
+| Surface | What it runs |
+|---------|-------------|
+| Full Jest `test:ia` suite | `ia/skills/**/__tests__/**/*.spec.ts` + `tools/scripts/__tests__/**/*.spec.ts` |
+| `compute-lib:build` | TypeScript compile check on compute-lib bundle |
+| Integration tests | DB migration smoke + bridge preflight |
+
+Rationale: fast band runs pre-commit to catch drift early; heavy band runs at plan-close time (ship-final Pass B) when the full DB state is known and the Editor is available.
+
+---
+
 ## Cursor Memory (optional)
 
 Paste the following into **Cursor → Memory** if you want the same policy across projects or sessions without opening this repo:

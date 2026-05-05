@@ -63,7 +63,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role.** Stage-atomic batch implement. One Sonnet 4.6 inference body emits all tasks of one Stage with `<!-- TASK:{ISSUE_ID} START/END -->` boundary markers. Drop-in for `/ship-stage` Pass A loop when token budget fits.
 
-**Upstream:** `stage-authoring` (populates §Plan Digest in DB). **Downstream:** `/ship-stage` Pass B (verify-loop + closeout + single commit). Pass B reuses ship-stage machinery — ship-cycle stops after `task_status_flip(implemented)` batch.
+**Upstream:** `ship-plan` (populates §Plan Digest in DB). **Downstream:** `/ship-stage` Pass B (verify-loop + closeout + single commit). Pass B reuses ship-stage machinery — ship-cycle stops after `task_status_flip(implemented)` batch.
 
 ---
 

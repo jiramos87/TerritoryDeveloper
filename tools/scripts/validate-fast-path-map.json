@@ -3,7 +3,10 @@
   "baseline": [
     "validate:frontmatter",
     "validate:claude-imports",
-    "validate:no-ir-bake-runtime-refs"
+    "validate:no-ir-bake-runtime-refs",
+    "validate:retired-skill-refs",
+    "validate:plan-digest-coverage",
+    "validate:seeded-task-stale"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [

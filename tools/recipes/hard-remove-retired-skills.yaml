@@ -1,0 +1,35 @@
+recipe: hard-remove-retired-skills
+description: >-
+  TECH-12648 Phase 1 hard-remove. Archive retired skill dirs → git rm source
+  surfaces + generated shadows → skill-drift allowlist sync → sed-sweep
+  successors → npm run skill:sync:all → validate:retired-skill-refs gate.
+  Informational reference for the Stage 5 work — actual removal landed inline
+  in ship-cycle Pass A.
+inputs:
+  type: object
+  additionalProperties: false
+  properties:
+    dry_run:
+      type: boolean
+      default: true
+      description: Default true to prevent accidental execution.
+steps:
+  - id: archive
+    description: Create ia/skills/_pre_retire_archive.tar.gz before any git rm.
+    bash: tools/scripts/recipe-engine/hard-remove-retired-skills/archive.sh
+
+  - id: git_rm_skill_dirs
+    description: git rm 6 retired skill source dirs.
+    bash: tools/scripts/recipe-engine/hard-remove-retired-skills/git-rm-skill-dirs.sh
+
+  - id: git_rm_shadows
+    description: git rm 18 generated shadow files (.claude + .cursor).
+    bash: tools/scripts/recipe-engine/hard-remove-retired-skills/git-rm-shadows.sh
+
+  - id: skill_sync
+    description: Regenerate the surviving registered set after removal.
+    bash: tools/scripts/recipe-engine/hard-remove-retired-skills/skill-sync.sh
+
+  - id: validate_refs
+    description: Run validate:retired-skill-refs to confirm 0 hits in scope.
+    gate: validate:retired-skill-refs

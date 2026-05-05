@@ -26,6 +26,7 @@ import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool } from "../envelope.js";
 import {
   IaDbUnavailableError,
+  getMasterPlanLineage,
   queryMasterPlanState,
   queryStageBundle,
   queryStageCloseoutDiagnose,
@@ -484,7 +485,42 @@ export function registerStageCloseoutDiagnose(server: McpServer): void {
   );
 }
 
-/** Register all 9 new DB-backed read tools on the IA core bucket. */
+// ---------------------------------------------------------------------------
+// master_plan_lineage (TECH-14103)
+// ---------------------------------------------------------------------------
+
+function registerMasterPlanLineage(server: McpServer): void {
+  server.registerTool(
+    "master_plan_lineage",
+    {
+      description:
+        "DB-backed: return version-ordered lineage rows for a master-plan slug. Returns [{version, parent_plan_slug, created_at, closed_at}] ASC. Requires migration 0066 (version + closed_at columns) and 0073 (backfill column). Used by design-explore --resume mode to compute target_version = existing_max_version + 1. Schema-cache restart required after adding this tool (N4).",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug (e.g. 'ship-protocol')."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_lineage", async () => {
+        const envelope = await wrapTool(
+          async (input: { slug?: string } | undefined) => {
+            const slug = (input?.slug ?? "").trim();
+            if (!slug) {
+              throw { code: "invalid_input", message: "slug is required." };
+            }
+            try {
+              const rows = await getMasterPlanLineage(slug);
+              return { slug, lineage: rows };
+            } catch (e) {
+              mapUnavailable(e);
+            }
+          },
+        )(args as { slug?: string } | undefined);
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+/** Register all DB-backed read tools on the IA core bucket. */
 export function registerIaDbReadTools(server: McpServer): void {
   registerTaskState(server);
   registerStageState(server);
@@ -495,4 +531,5 @@ export function registerIaDbReadTools(server: McpServer): void {
   registerStageBundle(server);
   registerTaskBundle(server);
   registerStageCloseoutDiagnose(server);
+  registerMasterPlanLineage(server);
 }

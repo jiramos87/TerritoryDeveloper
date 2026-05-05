@@ -23,7 +23,8 @@ Force-loaded `ia/rules/invariants.md` carries the MCP-first directive + universa
 | Architecture — agent IA / MCP / JSON interchange / bridge | `ia/specs/architecture/interchange.md` |
 | Architecture — decisions + trade-offs (DEC-A1..N) | `ia/specs/architecture/decisions.md` (DB: `arch_decisions` table) |
 | Unity C# / `GridManager` / `HeightMap` / roads / water / cliffs | `ia/rules/unity-invariants.md` (MCP `rule_content unity-invariants`; `invariants_summary` auto-merges with universal) |
-| Lifecycle commands — `/stage-file`, `/ship-stage`, `/stage-authoring`, `/plan-review`, `/audit`, `/implement`, `/verify-loop` | `docs/agent-lifecycle.md` §1 (flow) + §2 (seam → surface matrix) |
+| Lifecycle commands — `/design-explore`, `/ship-plan`, `/ship-cycle`, `/ship-final`, `/ship-stage`, `/implement`, `/verify-loop` | `docs/agent-lifecycle.md` §1 (flow) + §2 (seam → surface matrix) |
+| Explore → bulk plan-author → ship cycle skill | `ia/skills/design-explore/SKILL.md` · `ia/skills/ship-plan/SKILL.md` · `ia/skills/ship-cycle/SKILL.md` · `ia/skills/ship-final/SKILL.md` |
 | Meta / preview composite-skill behavior — `/unfold {TARGET_COMMAND} {ARGS...}` | `ia/skills/unfold/SKILL.md` (+ `docs/agent-lifecycle.md` §2 Row M) — emits decision-tree plan under `ia/plans/`; read-only, NO execution |
 | Web workspace (`web/`) | `web/README.md` — dev commands, routes, dashboard diagnostic recipe, caveman-exception boundary |
 | Web backend logic / Next.js App Router | `ia/rules/web-backend-logic.md` |

@@ -1,0 +1,24 @@
+{
+  "retired_slugs": [
+    "master-plan-new",
+    "master-plan-extend",
+    "stage-file",
+    "stage-authoring",
+    "stage-decompose"
+  ],
+  "hard_fail_after": "2026-05-12",
+  "scope_excludes": [
+    "git log",
+    "CHANGELOG.md",
+    "ia/skills/_pre_retire_archive.tar.gz",
+    "docs/explorations/ship-protocol-stage-5-design-decisions.md",
+    "tools/scripts/validators/_retired-skill-refs.config.json"
+  ],
+  "scan_paths": [
+    "ia/skills",
+    ".claude/agents",
+    ".claude/commands",
+    ".cursor/rules",
+    "docs"
+  ]
+}

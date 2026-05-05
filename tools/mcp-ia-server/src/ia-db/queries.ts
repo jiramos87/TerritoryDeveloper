@@ -903,3 +903,42 @@ export async function getStageDependsOnGraph(
     depends_on: r.depends_on ?? [],
   }));
 }
+
+// ---------------------------------------------------------------------------
+// master_plan_lineage (TECH-14103)
+// ---------------------------------------------------------------------------
+
+export interface MasterPlanLineageRow {
+  version: number;
+  parent_plan_slug: string | null;
+  created_at: string;
+  closed_at: string | null;
+}
+
+/**
+ * Return version-ordered lineage rows for a master-plan slug.
+ * Requires migration 0066 (version + closed_at columns).
+ */
+export async function getMasterPlanLineage(
+  slug: string,
+): Promise<MasterPlanLineageRow[]> {
+  const pool = poolOrThrow();
+  const res = await pool.query<{
+    version: number;
+    parent_plan_slug: string | null;
+    created_at: string;
+    closed_at: string | null;
+  }>(
+    `SELECT version, parent_plan_slug, created_at, closed_at
+       FROM ia_master_plans
+      WHERE slug = $1
+      ORDER BY version ASC`,
+    [slug],
+  );
+  return res.rows.map((r) => ({
+    version: r.version,
+    parent_plan_slug: r.parent_plan_slug,
+    created_at: r.created_at,
+    closed_at: r.closed_at,
+  }));
+}

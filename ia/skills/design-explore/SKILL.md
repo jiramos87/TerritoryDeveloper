@@ -23,8 +23,8 @@ triggers:
   - compare and select approach
   - take this exploration doc to a master plan
 argument_hint: >-
-  {DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] (e.g. docs/foo.md C OR
-  docs/foo.md --against docs/full-game-mvp-exploration.md)
+  {DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC] [--force-model {model}] [--resume {slug}]
+  (e.g. docs/foo.md C OR docs/foo.md --against docs/full-game-mvp-exploration.md OR --resume ship-protocol)
 model: inherit
 reasoning_effort: high
 tools_role: planner
@@ -58,9 +58,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 No MCP calls from skill body. Follow **Tool recipe** below (Phase 5 only) — all other phases derive from the exploration doc itself.
 
 **Position in lifecycle:** fires _before_ master plan creation or `project-new`.  
-`design-explore` → `master-plan-new` → `stage-file` → `stage-authoring` → `project-spec-implement`.
+`design-explore` → `ship-plan` → `ship-cycle` → `ship-final`.
 
-**Related:** [`project-new`](../project-new/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`project-new`](../project-new/SKILL.md) · [`ship-plan`](../ship-plan/SKILL.md) · [`ship-cycle`](../ship-cycle/SKILL.md) · [`ia/skills/README.md`](../README.md).
 
 ---
 
@@ -137,7 +137,24 @@ If the doc is a stub (no Design Expansion), run a short interview to surface hid
 
 Start with the single most important unknown — typically a scope boundary, blocking constraint the approaches don't address, or a stakeholder priority the doc leaves ambiguous.
 
-### Phase 1 — Compare
+### Phase 1 — Compare + Exit Gate
+
+**Phase 1 exit hard rule (zero unresolved decisions):** Phase 1 MUST NOT advance to Phase 2 while any decision remains unresolved. The exit gate enforces this via a `phase-1-done` token (see below).
+
+**Relentless polling loop (cross-link: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md)):**
+
+Before building the criteria matrix, run an `AskUserQuestion` loop that resolves all unresolved decisions. Loop rules:
+1. Each round: list ALL remaining unresolved decisions as a numbered preamble before posing any question.
+2. Ask 1–4 questions per round (1-4 per `agent-human-polling.md` band cap); pause after each round for the user response.
+3. Re-enter the loop while ≥1 decision remains unresolved. Do NOT advance to Phase 2 in this state.
+4. The loop body MUST enumerate outstanding decisions before each poll round — never skip the preamble.
+
+**Exit token contract:**
+- Phase 1 exits ONLY when BOTH conditions are true:
+  a. Zero unresolved decisions remain.
+  b. The human types the literal token `phase-1-done` OR picks the "close phase 1" option in a poll.
+- If zero decisions remain but the token has not been received: re-run the loop with a single confirmation poll listing 0 outstanding decisions.
+- If the token is received but decisions remain: ignore the token, re-run the loop listing the outstanding decisions.
 
 Build a criteria matrix from the problem constraints. Score each approach.
 
@@ -206,7 +223,7 @@ Detail the selected approach:
 - **Interfaces / contracts** — key function signatures, file formats, event boundaries, CLI flags
 - **Non-scope** — explicit list of what this approach does NOT do
 
-### Phase 4 — Architecture
+### Phase 4 — Architecture + Red-Stage Proofs + YAML Emitter
 
 Emit both:
 
@@ -214,6 +231,50 @@ Emit both:
 2. **Entry / exit points** — where callers invoke this system and what they receive back
 
 If Mermaid would exceed 20 nodes, produce ASCII block + a simplified Mermaid showing only top-level components.
+
+**Mandatory per-stage red-stage proof block:**
+
+For each Stage in the exploration, emit a pseudo-code proof block (5–15 lines, Python-flavoured). Block must:
+- Name the assertion being validated (e.g. `assert stage_N_visibility_delta_visible()`)
+- Name the expected failure mode if the Stage ships broken
+- Reference glossary terms only (no class names, file paths, or Unity-specific internals)
+- Appear under `### Red-Stage Proof — Stage {N}` heading in the exploration doc
+
+**Per-task red-stage proof (opt-in):**
+
+Emit a task-level proof block only when the human explicitly signals during grilling (default = no task-level block). Use heading `### Red-Stage Proof — {TASK_KEY}`.
+
+**Lean YAML frontmatter emitter:**
+
+Emit a YAML frontmatter block at the VERY TOP of the exploration doc (`docs/explorations/{slug}.md` or versioned `{slug}-v{N+1}.md` on `--resume`). Bounded by `---` fences. Required keys:
+
+```yaml
+---
+slug: {slug}
+parent_plan_slug: null  # or the parent slug on version bumps
+target_version: 1       # existing_max_version + 1 on --resume
+stages:
+  - stage_id: "1"
+    title: "{Stage 1 title}"
+    status: pending
+tasks:
+  - prefix: TECH
+    depends_on: []
+    digest_outline: "{one-line goal}"
+    touched_paths: []
+    kind: implementation
+---
+```
+
+All keys required. Each task entry carries: `prefix`, `depends_on`, `digest_outline`, `touched_paths`, `kind`.
+
+**`--resume {slug}` mode:**
+
+When invoked as `design-explore --resume {slug}`:
+1. Read existing master plan from DB via `master_plan_render` + `master_plan_lineage` MCP tools (cross-link: TECH-14103 supplies `master_plan_lineage`).
+2. Classify stages: re-grill ONLY stages where `backfilled = true` OR pre-scan band = `partial`; skip `present_complete` stages (never re-grill — preserves human-authored content).
+3. Versioned filename: if `target_version > 1`, write to `{slug}-v{N+1}.md`; v=1 stays at `{slug}.md`. Previous file remains immutable (M#11 collision guard).
+4. Exit Phase 4 with a lean YAML pointing at `target_version = existing_max_version + 1` so downstream `ship-plan --version-bump` can pick it up.
 
 ### Phase 5 — Subsystem impact
 
@@ -308,7 +369,7 @@ Detect whether `## Design Expansion` section already exists in `{DOC_PATH}`:
   |---|---|---|
   | 2.x | {what this iteration adds} | {one sentence — what player/agent sees/feels new} |
 
-**§Red-Stage Proof seed sources (informational — emission owned by master-plan-new Phase 4, not design-explore):** The downstream master plan Stage blocks derive §Red-Stage Proof block fields from three sources produced here: §Implementation Points → per-Stage proof skeleton (one proof block per Stage); §Tracer Slice (`verb` field) → Stage 1.0 `red_test_anchor` (`target_kind=tracer_verb`); §Iteration Roadmap §Visibility Delta rows → Stages 2+ `red_test_anchor` (`target_kind=visibility_delta`). Exploration outputs these sources; master-plan-new Phase 4 binds them into each Stage block at plan authoring time.
+**§Red-Stage Proof seed sources (informational — emission owned by ship-plan Phase 4, not design-explore):** The downstream master plan Stage blocks derive §Red-Stage Proof block fields from three sources produced here: §Implementation Points → per-Stage proof skeleton (one proof block per Stage); §Tracer Slice (`verb` field) → Stage 1.0 `red_test_anchor` (`target_kind=tracer_verb`); §Iteration Roadmap §Visibility Delta rows → Stages 2+ `red_test_anchor` (`target_kind=visibility_delta`). Exploration outputs these sources; ship-plan Phase 4 binds them into each Stage block at plan authoring time.
 - See [ia/rules/tdd-red-green-methodology.md](../../rules/tdd-red-green-methodology.md) — anchor grammar + `target_kind` / `proof_status` enum tables.
 
 **Persist failure mode:** Missing or empty `### Core Prototype` OR missing/empty `### Iteration Roadmap` → skill aborts persist with structured error `design_explore_persist_contract_violation` naming the missing/empty subsection. No partial write to `{DOC_PATH}`.
@@ -462,13 +523,18 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 
 After persist: if expansion validates, propose one of:
 
-- **Standard mode** — `claude-personal "/master-plan-new {DOC_PATH}"` (multi-stage) or `claude-personal "/project-new ..."` (single issue)
-- **Gap-analysis mode** — `claude-personal "/master-plan-extend {SLUG} {DOC_PATH}"` to absorb the filled gaps into the existing plan
+- **Standard mode** — `claude-personal "/ship-plan {DOC_PATH}"` (multi-stage) or `claude-personal "/project-new ..."` (single issue)
+- **Gap-analysis mode** — `claude-personal "/ship-plan --version-bump {SLUG} {DOC_PATH}"` to absorb the filled gaps into the existing plan
 
 ---
 
 ## Relentless human polling (companion to §Plan Digest)
 
-Pick-prevention is layered across design-explore → stage-authoring. This skill is the upstream-most layer: poll the human question-by-question (one open question per turn, never a batch) until every decision is locked in the design doc BEFORE the master plan is compiled. Result: by the time `stage-authoring` runs, zero picks remain; by the time §Plan Digest lint-scans for picks (`plan_digest_scan_for_picks`), leaks are exceptional. Leak = abort chain + route back to `/design-explore` (not a silent deferral).
+Pick-prevention is layered across design-explore → ship-plan. This skill is the upstream-most layer: poll the human question-by-question (one open question per turn, never a batch) until every decision is locked in the design doc BEFORE the master plan is compiled. Result: by the time `ship-plan` runs, zero picks remain; by the time §Plan Digest lint-scans for picks (`plan_digest_scan_for_picks`), leaks are exceptional. Leak = abort chain + route back to `/design-explore` (not a silent deferral).
 
-See `ia/rules/plan-digest-contract.md` rubric point 1 (zero open picks) and `ia/skills/stage-authoring/SKILL.md` lint gate.
+See `ia/rules/plan-digest-contract.md` rubric point 1 (zero open picks) and `ia/skills/ship-plan/SKILL.md` lint gate.
+
+---
+
+## Changelog
+

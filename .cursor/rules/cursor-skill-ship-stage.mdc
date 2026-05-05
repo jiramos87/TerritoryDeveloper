@@ -1,8 +1,0 @@
----
-description: "Opus orchestrator. Drives every non-terminal task of one Stage X.Y through a two-pass DB-backed chain. Pass A (per-task): implement + unity:compile-check fast-fail gate + task_status_flip(implemented). NO per-task commits — Pass A leaves a dirty worktree. Pass B (per-stage): verify-loop on cumulative HEAD diff + per-task task_status_flip(verified→done) + stage_closeout_apply + master_plan_change_log_append (audit row) + single stage commit feat({slug}-stage-X.Y) + per-task task_commit_record + stage_verification_flip(pass, commit_sha). Code-review intentionally NOT part of this chain — verify-loop + validation are the gate; standalone /code-review remains available out-of-band. Resume gate queries task_state per pending task; status='implemented' skips Pass A. PASS_B_ONLY when all tasks implemented but stage not done. On resume with new diff a fresh stage commit is created. Idle exit when all tasks done/archived AND ia_stages.status=done. Triggers: \"/ship-stage\", \"ship stage\", \"chain stage tasks\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/ship-stage/SKILL.md
-
-When this skill invokes MCP mutation tools, pass `caller_agent: "ship-stage"`.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

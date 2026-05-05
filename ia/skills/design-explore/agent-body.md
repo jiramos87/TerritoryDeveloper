@@ -9,16 +9,22 @@ Follow `ia/skills/design-explore/SKILL.md` end-to-end. Phase sequence (gated):
 0. **Load** — Read `{DOC_PATH}`. Extract problem statement, approaches list, existing recommendation, open questions. Then run **locked-doc detection**:
    - Has Approaches list → standard mode, continue Phase 1.
    - No Approaches list + `AGAINST_DOC` set → **gap-analysis mode**: skip to Phase 0b below.
-   - No Approaches list + no `AGAINST_DOC` → STOP, offer three options: (A) add Approaches section + re-run, (B) pass `--against {UMBRELLA_DOC}` for gap analysis, (C) skip to `/master-plan-extend` if no gaps expected.
+   - No Approaches list + no `AGAINST_DOC` → STOP, offer three options: (A) add Approaches section + re-run, (B) pass `--against {UMBRELLA_DOC}` for gap analysis, (C) skip to `/ship-plan --version-bump` if no gaps expected.
    - Unreadable → STOP, report path error.
 
 **Standard mode** (has Approaches list):
 
 0.5. **Interview (user gate)** — Before Phase 1, run a short interview. Ask **ONE question per turn, stop, wait for the user's answer** before asking the next. Do NOT list questions. Pull from: (1) open questions in the doc, (2) up to 3 inferred questions about scope boundaries, blocking constraints, or priority trade-offs. Max 5 questions; stop early if answers already cover remaining ones. After the last answer emit a one-paragraph summary, then proceed. No extra confirmation prompt.
-1. **Compare** — Build criteria matrix (constraint fit, effort, output control, maintainability, dependencies/risk). Emit Markdown table.
+1. **Compare + Exit Gate** — BEFORE building the criteria matrix, run a relentless `AskUserQuestion` polling loop (per [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md)) to resolve ALL unresolved decisions. Each round: list outstanding decisions as numbered preamble → ask 1-4 questions → pause. Loop re-runs while ≥1 decision remains open. Phase 1 exits ONLY when (a) zero decisions remain AND (b) human types `phase-1-done` OR picks "close phase 1" in a poll. Then build criteria matrix (constraint fit, effort, output control, maintainability, dependencies/risk) and emit Markdown table.
 2. **Select (user gate)** — If recommendation unambiguous AND no `APPROACH_HINT` → proceed. Else → present table + leading candidate, PAUSE, ask user confirm/override.
 2.5. **Architecture Decision (DEC-A15 lock)** — fires when selected approach touches `arch_surfaces` (skip-clause: zero arch hits → silent no-op). 4 sequential AskUserQuestion polls (slug → rationale → alternatives → affected `arch_surfaces[]`). MCP writes (in order): `arch_decision_write` (status=active) → `arch_changelog_append` (kind=`design_explore_decision`) → `arch_drift_scan` against open master plans. Drift report appended inline to exploration doc under `### Architecture Decision` block (sibling of `### Architecture` Phase 4 block). Stop on any MCP write failure.
-3–9. Expand → Architecture → Subsystem impact → Implementation points → Examples → Subagent review → Persist under `## Design Expansion`.
+3–9. Expand → Architecture + Red-Stage Proofs + YAML Emitter → Subsystem impact → Implementation points → Examples → Subagent review → Persist under `## Design Expansion`.
+
+**Phase 4 additions (inherit verbatim):**
+- Per-stage red-stage proof block: mandatory pseudo-code (5–15 lines, Python-flavoured), one block per Stage, under `### Red-Stage Proof — Stage {N}`. References glossary terms only.
+- Per-task proof: opt-in (emit only when human signals during grilling).
+- Lean YAML frontmatter at top of `docs/explorations/{slug}.md` (or `{slug}-v{N+1}.md` on --resume). Required keys: `slug`, `parent_plan_slug`, `target_version`, `stages[]`, `tasks[]` (each task: `prefix`, `depends_on`, `digest_outline`, `touched_paths`, `kind`). Bounded by `---` fences.
+- `--resume {slug}` mode: read existing plan via `master_plan_render` + `master_plan_lineage` MCP (TECH-14103); re-grill ONLY stages where `backfilled = true` OR band = `partial`; skip `present_complete` stages. Versioned filename: `{slug}-v{N+1}.md` when `target_version > 1`. Exit Phase 4 with YAML `target_version = existing_max_version + 1`.
 
 **Gap-analysis mode** (`--against {AGAINST_DOC}` set, locked doc):
 
@@ -64,4 +70,4 @@ Single concise caveman message:
 3. Subsystem impact summary (count touched, invariants flagged by number).
 4. Review results (BLOCKING resolved count, NON-BLOCKING carried into Review Notes).
 5. Persist diff summary (sections written / updated, line delta).
-6. Next step — standard: `master plan` or `project-new`; gap-analysis: `claude-personal "/master-plan-extend {SLUG} {DOC_PATH}"`.
+6. Next step — standard: `ship-plan` or `project-new`; gap-analysis: `claude-personal "/ship-plan --version-bump {SLUG} {DOC_PATH}"`.

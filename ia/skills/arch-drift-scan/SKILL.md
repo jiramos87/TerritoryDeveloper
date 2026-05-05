@@ -61,7 +61,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Position in lifecycle:** fires _on demand_, after architecture decisions land in `arch_changelog`. Reads only — appends one change-log row per resolved Stage. Does NOT mutate `ia_master_plans` / `ia_stages` / `ia_tasks` directly.
 
-**Related:** [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`design-explore`](../design-explore/SKILL.md) · `arch_drift_scan` MCP tool · `arch_changelog` table.
+**Related:** [`ship-plan`](../ship-plan/SKILL.md) · [`design-explore`](../design-explore/SKILL.md) · `arch_drift_scan` MCP tool · `arch_changelog` table.
 
 ---
 
@@ -130,7 +130,7 @@ Per resolved Stage → `mcp__territory-ia__master_plan_change_log_append`:
 }
 ```
 
-Plan never auto-rewritten. User runs `/master-plan-extend {SLUG}` next when resolution = `reword` / `re-plan`.
+Plan never auto-rewritten. User runs `/ship-plan --version-bump {SLUG}` next when resolution = `reword` / `re-plan`.
 
 ---
 
@@ -162,7 +162,7 @@ Single concise caveman message per scanned plan:
 2. drift count (affected stages).
 3. resolutions tally (acknowledge / reword / re-plan).
 4. change-log row count appended.
-5. next step — `claude-personal "/master-plan-extend {SLUG}"` when any Stage resolved as `reword` / `re-plan`; else "no follow-up".
+5. next step — `claude-personal "/ship-plan --version-bump {SLUG}"` when any Stage resolved as `reword` / `re-plan`; else "no follow-up".
 
 ---
 
@@ -171,5 +171,5 @@ Single concise caveman message per scanned plan:
 After scan + persist:
 
 - All Stages = `acknowledge` → no follow-up; close session.
-- ≥1 Stage = `reword` → `claude-personal "/master-plan-extend {SLUG}"` with reword scope.
-- ≥1 Stage = `re-plan` → `claude-personal "/master-plan-extend {SLUG}"` with re-plan scope (new task ids reserved + filed).
+- ≥1 Stage = `reword` → `claude-personal "/ship-plan --version-bump {SLUG}"` with reword scope.
+- ≥1 Stage = `re-plan` → `claude-personal "/ship-plan --version-bump {SLUG}"` with re-plan scope (new task ids reserved + filed).

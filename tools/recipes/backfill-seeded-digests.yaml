@@ -1,0 +1,39 @@
+recipe: backfill-seeded-digests
+description: >-
+  TECH-14103 Phase 0 backfill. Classify + seed §Plan Digest placeholders for
+  in-flight master plan stages missing task bodies. Seeds carry
+  `<!-- seeded: backfill_v1 -->` marker so ship-cycle halts on it and ship-final
+  blocks closeout when seeded_count > 0. Idempotent re-run via WHERE backfilled=false.
+inputs:
+  type: object
+  additionalProperties: false
+  properties:
+    dry_run:
+      type: boolean
+      default: false
+      description: When true, classification only — no DB writes.
+    slug:
+      type: string
+      description: Optional scope to a single master-plan slug.
+steps:
+  - id: migrate
+    description: Apply migration 0073 (backfilled column + sequence + UPSERT gate).
+    bash: tools/scripts/recipe-engine/backfill-seeded-digests/migrate.sh
+
+  - id: classify_and_seed
+    description: Classify stages by band and seed missing-band tasks (M#5).
+    bash: tools/scripts/backfill-seeded-digests.ts
+    args:
+      dry_run: ${inputs.dry_run}
+      slug: ${inputs.slug}
+
+  - id: verify_idempotency
+    description: Re-run classifier dry-run to confirm 0 newly-seedable tasks remain.
+    bash: tools/scripts/backfill-seeded-digests.ts
+    args:
+      dry_run: true
+      slug: ${inputs.slug}
+
+outputs:
+  seeded_count: ${classify_and_seed.seeded_count}
+  band_summary: ${classify_and_seed.band_summary}

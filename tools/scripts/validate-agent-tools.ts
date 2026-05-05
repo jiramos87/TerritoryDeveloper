@@ -7,8 +7,9 @@
  * (pair-seam role-baseline validator). Together they cover the full agent
  * surface: pair-seam = uniformity baseline; non-pair-seam = anti-wildcard gate.
  *
- * Targets (Stage 1.3 T1.3.1):
- *   verifier, spec-implementer, stage-decompose,
+ * Targets (Stage 1.3 T1.3.1; ship-protocol Stage 5 dropped stage-decompose
+ * after hard-remove via TECH-12648):
+ *   verifier, spec-implementer,
  *   project-new-planner, project-new-applier,
  *   design-explore, test-mode-loop
  *
@@ -39,7 +40,6 @@ const DEFAULT_AGENTS_DIR = path.join(REPO_ROOT, ".claude", "agents");
 const NARROWED_AGENTS = [
   "verifier",
   "spec-implementer",
-  "stage-decompose",
   "project-new-planner",
   "project-new-applier",
   "design-explore",

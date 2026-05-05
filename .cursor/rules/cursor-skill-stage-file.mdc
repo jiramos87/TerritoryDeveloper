@@ -1,8 +1,0 @@
----
-description: "DB-backed single-skill filing. Loads shared Stage MCP bundle once; gates cardinality (≥2 Tasks per Stage) + sizing (H1–H6); batch-verifies Depends-on ids via single `backlog_list`; resolves target BACKLOG.md section from master-plan H1 title; per-Task writes via `task_insert` MCP tool (DB-backed monotonic id from per-prefix sequence — no reserve-id.sh); appends manifest entry to `ia/state/backlog-sections.json`; bootstraps task spec body in DB via `task_spec_section_write`; runs `materialize-backlog.sh` (DB source default) — exit code is the filing gate; atomic task-table flip + R1/R2 Status flips. No yaml file written under `ia/backlog/`. Triggers: \"/stage-file {orchestrator-path} Stage 1.2\", \"file stage tasks\", \"bulk create stage issues\", \"create backlog rows for Stage X.Y\", \"bootstrap issues for pending stage tasks\", \"compress stage tasks\", \"merge draft tasks\". Argument order (explicit): SLUG first, STAGE_ID second."
-alwaysApply: false
----
-Read and follow: @ia/skills/stage-file/SKILL.md
-
-When this skill invokes MCP mutation tools, pass `caller_agent: "stage-file"`.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

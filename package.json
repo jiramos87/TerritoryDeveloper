@@ -11,7 +11,7 @@
     "validate:runtime-state": "node tools/scripts/validate-runtime-state.mjs",
     "validate:all": "npm run validate:all:mutating && npm run validate:all:readonly",
     "validate:all:mutating": "npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run validate:backfill-fixtures && npm run generate:ia-indexes -- --check && npm run test:recipe-engine && npm run smoke:seam-q5",
-    "validate:all:readonly": "run-p validate:fast-coverage validate:master-plan-status validate:plan-prototype-first validate:plan-red-stage validate:arch-coherence validate:backlog-yaml validate:web:conditional validate:telemetry-schema validate:runtime-state validate:cache-block-sizing validate:claude-imports validate:capability-coverage validate:sprite-gen-schema validate:no-ir-bake-runtime-refs validate:blob-roots validate:agent-tools-uniformity validate:agent-tools validate:skill-drift validate:skill-changelog-presence validate:mcp-readme validate:mcp-descriptor-prose validate:seam-golden validate:recipe-drift validate:skill-recipe-drift validate:mcp-catalog-coverage validate:handoff-schema",
+    "validate:all:readonly": "run-p validate:fast-coverage validate:master-plan-status validate:plan-prototype-first validate:plan-red-stage validate:arch-coherence validate:backlog-yaml validate:web:conditional validate:telemetry-schema validate:runtime-state validate:cache-block-sizing validate:claude-imports validate:capability-coverage validate:sprite-gen-schema validate:no-ir-bake-runtime-refs validate:blob-roots validate:agent-tools-uniformity validate:agent-tools validate:skill-drift validate:skill-changelog-presence validate:mcp-readme validate:mcp-descriptor-prose validate:seam-golden validate:recipe-drift validate:skill-recipe-drift validate:mcp-catalog-coverage validate:handoff-schema validate:retired-skill-refs validate:plan-digest-coverage validate:seeded-task-stale",
     "smoke:seam-q5": "node --import tsx tools/scripts/smoke-seam-q5.mjs",
     "validate:seam-golden": "node tools/scripts/validate-seam-golden.mjs",
     "validate:recipe-drift": "node tools/scripts/validate-recipe-drift.mjs",
@@ -113,7 +113,10 @@
     "validate:plan-red-stage": "node tools/scripts/validate-plan-red-stage.mjs",
     "validate:handoff-schema": "node tools/scripts/validate-handoff-schema.mjs",
     "validate:fast": "node tools/scripts/validate-fast.mjs",
-    "validate:fast-coverage": "node tools/scripts/validate-fast-coverage.mjs"
+    "validate:fast-coverage": "node tools/scripts/validate-fast-coverage.mjs",
+    "validate:retired-skill-refs": "npx tsx tools/scripts/validators/validate-retired-skill-refs.ts",
+    "validate:plan-digest-coverage": "npx tsx tools/scripts/validators/validate-plan-digest-coverage.ts",
+    "validate:seeded-task-stale": "npx tsx tools/scripts/validators/validate-seeded-task-stale.ts"
   },
   "engines": {
     "node": ">=20.6"

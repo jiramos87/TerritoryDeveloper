@@ -25,13 +25,15 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const SKILLS_DIR = path.join(REPO_ROOT, "ia", "skills");
 
 // Lifecycle SKILLs requiring `## Changelog` per Stage 3 acceptance.
+// Updated for ship-protocol Stage 5: 6 retired slugs hard-removed via TECH-12648
+// (master-plan-new, master-plan-extend, stage-file, stage-authoring, ship-stage,
+// stage-decompose). Successors (ship-plan, ship-cycle, ship-final, design-explore)
+// are the new lifecycle SKILLs requiring this gate.
 const REQUIRED_SKILLS = [
-  "stage-file",
-  "ship-stage",
-  "stage-authoring",
-  "master-plan-new",
-  "master-plan-extend",
-  "stage-decompose",
+  "design-explore",
+  "ship-plan",
+  "ship-cycle",
+  "ship-final",
 ];
 
 const CHANGELOG_HEADING_RE = /^##\s+Changelog\s*$/m;

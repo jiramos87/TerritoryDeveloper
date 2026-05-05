@@ -39,4 +39,4 @@ Single concise caveman message per scanned plan:
 2. drift count (affected stages).
 3. resolutions tally (acknowledge / reword / re-plan).
 4. change-log row count appended.
-5. next step — `claude-personal "/master-plan-extend {SLUG}"` when any `reword` / `re-plan` resolved; else "no follow-up".
+5. next step — `claude-personal "/ship-plan --version-bump {SLUG}"` when any `reword` / `re-plan` resolved; else "no follow-up".

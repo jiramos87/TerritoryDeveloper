@@ -22,7 +22,7 @@ master plan (file)
 - `#### Stage N.M` (H4) — Stages are H3, not H4.
 - `**Phases:**` checkbox blocks inside Stage — deleted. One Stage = one atomic shippable unit, decomposed directly into Tasks.
 - `Phase` column in Task table — deleted. Table is 5 columns, not 6.
-- Stage skeletons / "decomposition deferred" blocks — `master-plan-new` decomposes ALL Stages at author time. Lazy-decompose fires only when a new Stage skeleton is intentionally appended by `master-plan-extend` with a deferred marker — `stage-decompose` expands it in place.
+- Stage skeletons / "decomposition deferred" blocks — `ship-plan` decomposes ALL Stages at author time via `master_plan_bundle_apply`. Lazy-decompose fires only when a new Stage skeleton is intentionally version-bumped by `ship-plan --version-bump` with a deferred marker — expanded in place during next `ship-plan` pass.
 
 ---
 
@@ -155,10 +155,10 @@ _pending — populated by `/plan-review` when fixes are needed._
 
 | Column | Required | Type / format | Filled by | Rules |
 |--------|----------|---------------|-----------|-------|
-| `Task` | yes | string `T{N}.{M}.{K}` | `master-plan-new` / `master-plan-extend` / `stage-decompose` | Hierarchical id `T{STAGE_N}.{STAGE_M}.{TASK_K}`. Monotonic within Stage. Never renumbered after filing. |
+| `Task` | yes | string `T{N}.{M}.{K}` | `ship-plan` `master_plan_bundle_apply` tx | Hierarchical id `T{STAGE_N}.{STAGE_M}.{TASK_K}`. Monotonic within Stage. Never renumbered after filing. |
 | `Name` | yes | string ≤6 words | Author | Short handle. Also used as BACKLOG row title + project-spec file name hint. |
-| `Issue` | yes | `_pending_` OR `**{PREFIX}-NNN**` | `_pending_` at author time; `stage-file` applier pass fills with `**TECH-NNN**` (or `BUG-`, `FEAT-`, `ART-`, `AUDIO-`). Bold formatting required. |
-| `Status` | yes | enum | `stage-file` applier pass / `stage-authoring` / `spec-implementer` / `/ship-stage` Pass B | `_pending_ → Draft → In Review → In Progress → Done (archived)`. See §6.2. |
+| `Issue` | yes | `_pending_` OR `**{PREFIX}-NNN**` | `_pending_` at author time; `ship-plan` `master_plan_bundle_apply` tx fills with `**TECH-NNN**` (or `BUG-`, `FEAT-`, `ART-`, `AUDIO-`). Bold formatting required. |
+| `Status` | yes | enum | `ship-plan` tx / `ship-plan` §Plan Digest pass / `spec-implementer` / `/ship-stage` Pass B | `_pending_ → Draft → In Review → In Progress → Done (archived)`. See §6.2. |
 | `Intent` | yes | string ≤2 sentences | Author | Concrete deliverable — cite types / methods / file paths. Avoid vague verbs (`add support for X`, `improve Y`). |
 
 **Column order is fixed.** Do NOT insert extra columns (Priority, Owner, Phase, etc.). Per-Task Priority lives in the BACKLOG yaml, not the master plan table.
@@ -328,10 +328,10 @@ No other H2 headings are permitted between `## Stages` and `## Orchestration gua
 
 | Gate | Rule | Enforced by |
 |------|------|-------------|
-| Hard | ≥2 Tasks per Stage | `master-plan-new` Phase N · `master-plan-extend` Phase N · `stage-decompose` Phase N · `stage-file` planner pass re-check |
+| Hard | ≥2 Tasks per Stage | `ship-plan` lean YAML cardinality gate · `design-explore` Phase 4 task list gate |
 | Soft | ≤6 Tasks per Stage | Same skills; warn + recommend split, don't block |
-| Hard | ≥1 Stage per master plan | `master-plan-new` Phase N |
-| Hard | Every Stage has `#### §Stage File Plan` + `#### §Plan Fix` subsections (sentinel or populated) | `master-plan-new` / `master-plan-extend` / `stage-decompose` |
+| Hard | ≥1 Stage per master plan | `ship-plan` Phase 1 |
+| Hard | Every Stage has `#### §Stage File Plan` + `#### §Plan Fix` subsections (sentinel or populated) | `ship-plan` `master_plan_bundle_apply` tx |
 | Hard | Task table has exactly 5 columns (`Task | Name | Issue | Status | Intent`) | Same + `stage-file` planner pass parser |
 
 ---
@@ -346,12 +346,12 @@ Draft | In Review | In Progress — Stage N.M / TECH-XX | Final
 
 | State | Meaning | Flip trigger |
 |-------|---------|--------------|
-| `Draft` | Initial — no Task filed yet. | `master-plan-new` writes `Draft`. |
-| `In Review` | Mid-authoring — `master-plan-extend` re-author pass. | `master-plan-extend` Phase 7 (temporary). |
-| `In Progress — Stage N.M / TECH-XX` | ≥1 Task filed; plan actively worked. | `stage-file` applier pass R1 flips on first Task ever filed. |
+| `Draft` | Initial — no Task filed yet. | `ship-plan` `master_plan_bundle_apply` tx writes `Draft`. |
+| `In Review` | Mid-authoring — `ship-plan --version-bump` re-author pass. | `ship-plan --version-bump` Phase 7 (temporary). |
+| `In Progress — Stage N.M / TECH-XX` | ≥1 Task filed; plan actively worked. | `ship-plan` `master_plan_bundle_apply` tx R1 flips on first Task ever filed. |
 | `Final` | All Stages are `Final`. | `/ship-stage` Pass B inline closeout R5 on last Stage close. |
 
-`master-plan-extend` R6 demotes `Final → In Progress` when new Stages appended to a Final plan.
+`ship-plan --version-bump` R6 demotes `Final → In Progress` when new Stages appended to a Final plan.
 
 ### 6.2 Stage header `Status`
 
@@ -361,9 +361,9 @@ Draft | In Review | In Progress | Final
 
 | State | Meaning | Flip trigger |
 |-------|---------|--------------|
-| `Draft` | Authored, no Task filed. | `master-plan-new` / `master-plan-extend` writes `Draft`. |
+| `Draft` | Authored, no Task filed. | `ship-plan` `master_plan_bundle_apply` tx writes `Draft`. |
 | `In Review` | Post-`plan-review` drift scan pending fix-apply. | `plan-reviewer-mechanical` + `plan-reviewer-semantic` write `In Review` when `§Plan Fix` non-empty. |
-| `In Progress` | ≥1 Task filed in this Stage. | `stage-file` applier pass R2 flips on first Task filed in the Stage. |
+| `In Progress` | ≥1 Task filed in this Stage. | `ship-plan` `master_plan_bundle_apply` tx R2 flips on first Task filed in the Stage. |
 | `Final` | Every Task row in Stage = `Done`; closeout applied. | `/ship-stage` Pass B inline closeout R3 on last Task archived. |
 
 > **Footnote — prototype-first gate:** Stage 1.0 §Tracer Slice (§3.5) and Stages 2+ §Visibility Delta (§3.6) are mandatory subsections. The dedicated CI gate is `validate:plan-prototype-first` — it asserts (a) Stage 1.0 carries §Tracer Slice with all 5 fields non-empty, (b) every Stage 2+ carries a non-empty §Visibility Delta line, (c) §Visibility Delta lines are unique within a plan. Validator script lands in **Stage 1.3** of `prototype-first-methodology` master plan; until then, presence is contract-only (manual review). Existing 17 pending plans grandfathered until per-plan retrofit.
@@ -376,9 +376,9 @@ _pending_ → Draft → In Review → In Progress → Done (archived)
 
 | State | Meaning | Flip trigger |
 |-------|---------|--------------|
-| `_pending_` | Not yet filed — no `ia_tasks` row. | `master-plan-new` / `master-plan-extend` / `stage-decompose` writes at author time. |
-| `Draft` | `ia_tasks` row + body stub exist; stage-authoring not run. | `stage-file` applier pass flips on row materialization. |
-| `In Review` | §Plan Digest written into Task body. | `stage-authoring` bulk pass. |
+| `_pending_` | Not yet filed — no `ia_tasks` row. | `ship-plan` lean YAML task list seeds at author time. |
+| `Draft` | `ia_tasks` row + body stub exist; §Plan Digest not yet written. | `ship-plan` `master_plan_bundle_apply` tx flips on row materialization. |
+| `In Review` | §Plan Digest written into Task body. | `ship-plan` §Plan Digest bulk pass. |
 | `In Progress` | `/implement` dispatched. | `spec-implementer` Phase 0. |
 | `Done (archived)` | `ia_tasks.archived_at` set; spec deleted. | `/ship-stage` Pass B inline closeout per-Task archive op. |
 
@@ -392,19 +392,17 @@ One-line binding from skill → structural surface it mutates. Every authoring s
 
 | Skill | Reads | Writes | Section authority |
 |-------|-------|--------|------------------|
-| `master-plan-new` | Exploration doc §Design Expansion | New master plan file; all Stages + Tasks `_pending_` | §2 (file shape), §3 (Stage block), §6 (Status `Draft`) |
-| `master-plan-extend` | Exploration / extensions doc; existing master plan | Appends new Stage blocks at end | §3, §6 R6 (demote Final → In Progress) |
-| `stage-decompose` | Deferred Stage skeleton in master plan | Expands Stage skeleton into Tasks in-place | §3.3 (Task table), §5 (cardinality) |
-| `stage-file` planner pass | Stage block Tasks table `_pending_` rows | `#### §Stage File Plan` tuples | §3.4 subsection #1 |
-| `stage-file` applier pass | `§Stage File Plan` tuples | `ia_tasks` rows + body stubs; flips Task `_pending_ → Draft`; Stage `Draft → In Progress` (R2); master plan `Draft → In Progress` (R1) | §6.1 R1, §6.2 R2, §6.3 `_pending_ → Draft` |
-| `stage-authoring` | Task spec stubs post-filing | `§Plan Digest` in each Task body via `task_spec_section_write` MCP | Task status `Draft → In Review` (§6.3) |
+| `design-explore` Phase 4 | Exploration doc §Design Expansion + decision answers | Lean YAML frontmatter seed (`slug`, `stages[]`, `tasks[]`) handed to `ship-plan` | §2 (slug/version model), §3 (Stage skeleton) |
+| `ship-plan` `master_plan_bundle_apply` tx | Lean YAML seed + (on `--version-bump`) existing master plan | New master plan file or version-bumped file; all Stages + Tasks `_pending_`; `ia_master_plans` + `ia_tasks` rows | §2 (file shape), §3 (Stage block), §6 (Status `Draft`) |
+| `ship-plan` §Plan Digest bulk pass | Task spec stubs (post-materialization) | `§Plan Digest` in each Task body via `task_spec_section_write` MCP | Task status `Draft → In Review` (§6.3) |
 | `plan-reviewer-mechanical` + `plan-reviewer-semantic` | Stage + all Task specs | `#### §Plan Fix` tuples | §3.4 subsection #2 |
 | `plan-applier` Mode plan-fix | `§Plan Fix` tuples | Edits Task specs verbatim | — |
-| `spec-implementer` | Task body §Plan Digest | Source code + Task body | Task status `In Review → In Progress` (§6.3) |
+| `ship-cycle` Pass A | Task body §Plan Digest (per Stage batch) | Source code + Task body; per-task `unity:compile-check` + `task_status_flip(implemented)` | Task status `In Review → In Progress` (§6.3) |
 | `opus-code-reviewer` | Task diff vs spec | Task body §Code Review / `§Code Fix Plan` | — (intra-spec) |
 | `plan-applier` Mode code-fix | `§Code Fix Plan` tuples | Edits source code per tuples | — |
 | `/ship-stage` Pass B inline closeout (`stage_closeout_apply` MCP) | Stage block + N filed Task bodies | Sets `ia_tasks.archived_at`; deletes specs from filesystem mirror; flips Task rows `Done (archived)`; Stage `In Progress → Final` (R3); master plan `In Progress → Final` (R5); shared migration ops + N id-purge ops | §6.1 R5, §6.2 R3, §6.3 `Done (archived)` |
-| `ship-stage` | Stage block | Two-pass orchestrator — Pass A per-Task implement + compile-check + status flip; Pass B per-Stage verify-loop + code-review + inline closeout + single stage commit | — (chain) |
+| `ship-stage` | Stage block | Two-pass orchestrator — Pass A (`ship-cycle`) per-Stage batch implement; Pass B per-Stage verify-loop + code-review + inline closeout + single stage commit | — (chain) |
+| `ship-final` | All Stages Final; seeded-count=0; `test:ia` deferred band | `ia_master_plans.status = Final`; publishes ship-final digest; no per-task flips | §6.1 R5 terminal |
 
 Full seam contract: [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md). Status flip matrix: [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md).
 
@@ -420,18 +418,18 @@ Every master plan terminates with the `## Orchestration guardrails` H2. Canonica
 **Do:**
 
 - Open one Stage at a time. Next Stage opens only after current Stage closes via `/ship-stage` Pass B.
-- Run `/stage-file {this-doc} Stage N.M` to materialize `_pending_` Tasks.
+- Run `/ship-plan {this-doc}` to materialize `_pending_` Tasks via `master_plan_bundle_apply` tx.
 - Update Stage + Task `Status` via lifecycle skills — do NOT edit by hand.
 - Preserve locked decisions. Changes require explicit re-decision + sync edit to exploration + scope-boundary docs.
-- Extend via `/master-plan-extend {this-doc} {source-doc}` — do NOT hand-insert new Stage blocks.
+- Extend via `/ship-plan --version-bump {this-doc} {source-doc}` — do NOT hand-insert new Stage blocks.
 
 **Do not:**
 
 - Close the orchestrator — orchestrators are permanent (`orchestrator-vs-spec.md`). Stage close fires inline in `/ship-stage` Pass B.
 - Silently promote post-MVP items into MVP Stages — they belong in scope-boundary doc.
 - Merge partial Stage state — every Stage lands on a green bar.
-- Insert `ia_tasks` rows directly into this doc — only `stage-file` applier pass materializes them.
-- Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/master-plan-extend`.
+- Insert `ia_tasks` rows directly into this doc — only `ship-plan` `master_plan_bundle_apply` tx materializes them.
+- Hand-insert new Stages past the last persisted `### Stage N.M` block — run `/ship-plan --version-bump`.
 ```
 
 Plans MAY append plan-specific Do/Do-not bullets but MUST preserve the canonical lines.
@@ -455,11 +453,21 @@ Any structural drift (Step heading, Phase column, H4 Stage, retired `§Stage Aud
 
 - [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) — hierarchy table, cardinality rationale, lazy materialization, learnings-flow-backward, ephemeral spec lifecycle.
 - [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md) — orchestrator vs project-spec distinction + full Status flip matrix R1–R6.
-- [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) — `§Plan` tuple shape + 3 pair seams (plan-review, stage-file, code-review) + validators + escalation rule + idempotency. Closeout no longer a pair seam (folded into `/ship-stage` Pass B inline).
-- [`ia/templates/master-plan-template.md`](../templates/master-plan-template.md) — seed fixture for `master-plan-new` (conforms to this doc).
+- [`ia/rules/plan-apply-pair-contract.md`](../rules/plan-apply-pair-contract.md) — `§Plan` tuple shape + pair seams (plan-review, code-review) + validators + escalation rule + idempotency. Closeout no longer a pair seam (folded into `/ship-stage` Pass B inline). `stage-file` pair seam retired — replaced by `ship-plan master_plan_bundle_apply tx`.
+- [`ia/templates/master-plan-template.md`](../templates/master-plan-template.md) — seed fixture consumed by `ship-plan` `master_plan_bundle_apply` tx (conforms to this doc).
 - [`ia/templates/project-spec-template.md`](../templates/project-spec-template.md) — per-issue spec shape (NOT master-plan; sibling doc).
 
 ## 11. Changelog
+
+### 2026-05-05 — ship-protocol Stage 5: 4-skill pipeline retirement migration
+
+Retired `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file`, `stage-authoring` skill dirs (git-rm). Updated all authoring references to new pipeline: `design-explore → ship-plan → ship-cycle → ship-final`. Changes:
+
+- **§1 Removed block** — updated stage-skeleton note: `master-plan-new` → `ship-plan`; `master-plan-extend` → `ship-plan --version-bump`; `stage-decompose` → inline expansion during next `ship-plan` pass.
+- **§6 Status flip owners** — `stage-file applier pass` → `ship-plan master_plan_bundle_apply tx` (R1, R2); `stage-authoring bulk pass` → `ship-plan §Plan Digest bulk pass`; added `ship-final` terminal row.
+- **§7 lifecycle skill flip matrix** — replaced `master-plan-new`, `master-plan-extend`, `stage-decompose`, `stage-file planner/applier pass`, `stage-authoring` rows with `design-explore Phase 4`, `ship-plan master_plan_bundle_apply tx`, `ship-plan §Plan Digest bulk pass`, `ship-cycle Pass A`, `ship-final` rows.
+- **§8 orchestration guardrails** — `/stage-file` → `/ship-plan`; `/master-plan-extend` → `/ship-plan --version-bump`; `stage-file applier pass` → `ship-plan master_plan_bundle_apply tx`.
+- **§10 cross-references** — template seed note: `master-plan-new` → `ship-plan master_plan_bundle_apply tx`.
 
 ### 2026-04-25 — DB-primary refactor + skill-files-audit retirement scrub
 

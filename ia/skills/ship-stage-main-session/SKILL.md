@@ -15,7 +15,7 @@ description: >-
   In-session (no-subagent) wrapper around the /ship-stage chain. Read ia/skills/ship-stage/SKILL.md
   end-to-end and .claude/commands/ship-stage.md for the canonical pipeline, then execute inline:
   stage_bundle load → domain-context-load → §Plan Digest readiness gate (task_spec_section per task;
-  missing → /stage-authoring handoff) → resume gate via task_state DB query (no git scan) → Pass A per
+  missing → /ship-plan §Plan Digest handoff) → resume gate via task_state DB query (no git scan) → Pass A per
   task (spec-implementer work in-repo → npm run unity:compile-check + scene-wiring preflight →
   task_status_flip(implemented); NO commits — single stage commit at Phase 8) → Pass B per stage
   (verify-loop on git diff HEAD → per-task task_status_flip(verified) then task_status_flip(done)) →

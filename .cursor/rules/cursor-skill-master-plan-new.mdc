@@ -1,8 +1,0 @@
----
-description: "Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work needs a multi-stage plan rather than a single BACKLOG issue. Produces `ia_master_plans` row + `ia_stages` rows (orchestrator is permanent — never closeable, never deleted by automation) with ALL Stages fully decomposed into Tasks (2-level hierarchy: `Stage > Task`). Tasks seeded `_pending_` for later `stage-file`. Canonical shape authority: `docs/MASTER-PLAN-STRUCTURE.md` — file shape, Stage block shape, 5-column Task table schema, Status enums, flip matrix. Triggers: \"/master-plan-new {path}\", \"turn expanded design into master plan\", \"create orchestrator from exploration\", \"author master plan from design expansion\"."
-alwaysApply: false
----
-Read and follow: @ia/skills/master-plan-new/SKILL.md
-
-When this skill invokes MCP mutation tools, pass `caller_agent: "master-plan-new"`.
-If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
