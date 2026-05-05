@@ -90,6 +90,8 @@ namespace TerritoryDeveloper.Editor.Bake
             {
                 case "hstack":
                     return BakeHstack(panel, children, outDir);
+                case "modal":
+                    return BakeModal(panel, children, outDir);
                 default:
                     throw new NotSupportedException($"layout primitive not supported: {panel.layout}");
             }
