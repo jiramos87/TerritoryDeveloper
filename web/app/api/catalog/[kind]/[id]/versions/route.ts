@@ -27,6 +27,9 @@ import {
 import type { CatalogKind } from "@/lib/refs/types";
 
 export const dynamic = "force-dynamic";
+export const routeMeta = {
+  GET: { requires: "catalog.entity.read" },
+} as const;
 
 type Ctx = { params: Promise<{ kind: string; id: string }> };
 

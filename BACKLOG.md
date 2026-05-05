@@ -286,6 +286,10 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 
 **Master plan:** `prototype-first-methodology` — codify the meta-result already shipped in `docs/prototype-first-methodology-design.md` `## Design Expansion`: amend `design-explore` Phase 9 persist contract so future explorations emit `§Core Prototype + §Iteration Roadmap` subsections. **Stage 1.1** (self-application codified — DEC-A22 surface re-point + persist-contract v2 fixture + arch_changelog audit row).
 
+
+
+
+
 ## Architecture coherence program
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.

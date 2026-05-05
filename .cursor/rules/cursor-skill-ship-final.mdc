@@ -1,0 +1,8 @@
+---
+description: "Close a master-plan version. Phases: assert all `ia_section_claims` open rows for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` / `in_progress` / `partial`) → run `validate:all` on cumulative diff `git diff {parent_tag}..HEAD` → `git tag {slug}-v{N}` (annotated, local only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP (must precede journal_append) → `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`. Triggers: \"/ship-final {SLUG}\", \"ship final\", \"close master plan version\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ship-final/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "ship-final"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

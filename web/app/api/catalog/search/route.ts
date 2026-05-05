@@ -5,8 +5,7 @@
  *    -> 200 { ok: true, data: { results: [{entity_id, kind, slug, display_name, score}], total } }
  *    -> 400 missing_q | invalid_kind | invalid_limit
  *
- * Read-only — no capability gate (no `catalog.entity.read` exists; follows
- * refs/route.ts precedent). TODO: add gate when catalog.entity.read is seeded.
+ * Read-only — gates on `catalog.entity.read` (DEC-A33; seeded in mig 0072).
  *
  * Audit emitted when q is non-empty: action='catalog_search', target_kind=NULL,
  * payload={q, kind, result_count}.
@@ -31,6 +30,9 @@ import { getSql } from "@/lib/db/client";
 import type { CatalogKind } from "@/lib/refs/types";
 
 export const dynamic = "force-dynamic";
+export const routeMeta = {
+  GET: { requires: "catalog.entity.read" },
+} as const;
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

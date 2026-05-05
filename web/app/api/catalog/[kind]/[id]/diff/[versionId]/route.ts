@@ -31,6 +31,9 @@ import type { CatalogKind } from "@/lib/refs/types";
 import type { EntityVersionRow } from "@/lib/repos/history-repo";
 
 export const dynamic = "force-dynamic";
+export const routeMeta = {
+  GET: { requires: "catalog.entity.read" },
+} as const;
 
 type Ctx = { params: Promise<{ kind: string; id: string; versionId: string }> };
 

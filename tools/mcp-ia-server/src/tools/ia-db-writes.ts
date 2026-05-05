@@ -35,6 +35,8 @@ import {
   mutateFixPlanConsume,
   mutateFixPlanWrite,
   mutateJournalAppend,
+  mutateMasterPlanClose,
+  mutateMasterPlanVersionCreate,
   mutateStageCloseoutApply,
   mutateStageVerificationFlip,
   mutateTaskCommitRecord,
@@ -655,12 +657,54 @@ export function registerStageCloseoutApply(server: McpServer): void {
 // journal_append
 // ---------------------------------------------------------------------------
 
+/**
+ * Per-payload_kind discriminator for `version_close` (TECH-12645).
+ *
+ * Required shape: `{plan_slug, version, tag, sha, validate_all_result: {ok, scripts[]}, sections_closed[]}`.
+ * Throws `{code: 'payload_validation_failed', message}` on shape mismatch.
+ * Boundary-only — body written verbatim to jsonb on success.
+ */
+export function validateVersionClosePayload(payload: Record<string, unknown>): void {
+  const fail = (msg: string): never => {
+    throw { code: "payload_validation_failed", message: msg };
+  };
+  if (typeof payload.plan_slug !== "string" || !payload.plan_slug.trim()) {
+    fail("version_close: plan_slug must be non-empty string.");
+  }
+  if (typeof payload.version !== "number" || !Number.isFinite(payload.version) || payload.version < 1) {
+    fail("version_close: version must be positive integer.");
+  }
+  if (typeof payload.tag !== "string" || !payload.tag.trim()) {
+    fail("version_close: tag must be non-empty string.");
+  }
+  if (typeof payload.sha !== "string" || !payload.sha.trim()) {
+    fail("version_close: sha must be non-empty string.");
+  }
+  const v = payload.validate_all_result;
+  if (!v || typeof v !== "object" || Array.isArray(v)) {
+    fail("version_close: validate_all_result must be object.");
+  }
+  const vr = v as Record<string, unknown>;
+  if (typeof vr.ok !== "boolean") {
+    fail("version_close: validate_all_result.ok must be boolean.");
+  }
+  if (!Array.isArray(vr.scripts) || !vr.scripts.every((s) => typeof s === "string")) {
+    fail("version_close: validate_all_result.scripts must be string[].");
+  }
+  if (
+    !Array.isArray(payload.sections_closed) ||
+    !payload.sections_closed.every((s) => typeof s === "string")
+  ) {
+    fail("version_close: sections_closed must be string[].");
+  }
+}
+
 export function registerJournalAppend(server: McpServer): void {
   server.registerTool(
     "journal_append",
     {
       description:
-        "DB-backed: append a discriminated-union event to ia_ship_stage_journal. Canonical journal surface for agent runs. `payload_kind` must be non-empty; `payload` must be an object (jsonb). Tool-side validation is boundary only — payload body shape is trust-but-document.",
+        "DB-backed: append a discriminated-union event to ia_ship_stage_journal. Canonical journal surface for agent runs. `payload_kind` must be non-empty; `payload` must be an object (jsonb). Tool-side validation is boundary only — payload body shape is trust-but-document. Exception: `payload_kind='version_close'` (ship-final Phase 7) enforces shape `{plan_slug:string, version:int>=1, tag:string, sha:string, validate_all_result:{ok:boolean, scripts:string[]}, sections_closed:string[]}` — mismatch → `payload_validation_failed`.",
       inputSchema: {
         session_id: z.string().describe("Agent session id (uuid or slug)."),
         phase: z
@@ -711,6 +755,9 @@ export function registerJournalAppend(server: McpServer): void {
                 code: "invalid_input",
                 message: "payload must be an object (non-null, non-array).",
               };
+            }
+            if (payload_kind === "version_close") {
+              validateVersionClosePayload(input.payload);
             }
             try {
               return await mutateJournalAppend({
@@ -941,6 +988,109 @@ export function registerTaskStatusFlipBatch(server: McpServer): void {
 // ---------------------------------------------------------------------------
 
 /** Register all 11 DB-backed write tools on the IA core bucket. */
+// ---------------------------------------------------------------------------
+// master_plan_close
+// (ship-protocol Stage 4 / TECH-12644 — flips ia_master_plans.closed_at = now().
+// Idempotent: when closed_at already set, returns already_closed=true with the
+// existing timestamp; never errors. Must precede master_plan_version_create.)
+// ---------------------------------------------------------------------------
+
+export function registerMasterPlanClose(server: McpServer): void {
+  server.registerTool(
+    "master_plan_close",
+    {
+      description:
+        "DB-backed: flip ia_master_plans.closed_at = now() for `slug`. Idempotent — returns `already_closed=true` when closed_at is already non-null. Used by ship-final Phase 6 (after assert-stages-done + cumulative validate:all + git tag). MUST precede the journal_append(payload_kind='version_close') row for audit ordering.",
+      inputSchema: {
+        slug: z
+          .string()
+          .describe("Master-plan slug (matches ia_master_plans.slug)."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_close", async () => {
+        const envelope = await wrapTool(
+          async (input: { slug?: string } | undefined) => {
+            const slug = (input?.slug ?? "").trim();
+            if (!slug) {
+              throw { code: "invalid_input", message: "slug is required." };
+            }
+            try {
+              return await mutateMasterPlanClose(slug);
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(args as { slug?: string } | undefined);
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// master_plan_version_create
+// (ship-protocol Stage 4 / TECH-12644 — emit v(N+1) row chained to a closed
+// parent. Fails with `parent_not_closed` when parent.closed_at IS NULL or
+// `slug_collision` when child slug already exists.)
+// ---------------------------------------------------------------------------
+
+export function registerMasterPlanVersionCreate(server: McpServer): void {
+  server.registerTool(
+    "master_plan_version_create",
+    {
+      description:
+        "DB-backed: emit a new ia_master_plans row with parent_plan_slug=`parent_slug`, version=parent.version+1, closed_at=NULL. Fails with code `parent_not_closed` when parent.closed_at is NULL (run ship-final first). Defaults child_slug to `{parent}-v{N+1}` and title to parent.title when omitted. Use to start a new version cycle after ship-final closes the prior version.",
+      inputSchema: {
+        parent_slug: z
+          .string()
+          .describe("Closed parent master-plan slug."),
+        child_slug: z
+          .string()
+          .optional()
+          .describe(
+            "Optional override slug for the new row. Defaults to `{parent}-v{N+1}`. Must be kebab-case [a-z0-9-].",
+          ),
+        title: z
+          .string()
+          .optional()
+          .describe("Optional override title. Defaults to parent.title."),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("master_plan_version_create", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | { parent_slug?: string; child_slug?: string; title?: string }
+              | undefined,
+          ) => {
+            const parent_slug = (input?.parent_slug ?? "").trim();
+            if (!parent_slug) {
+              throw {
+                code: "invalid_input",
+                message: "parent_slug is required.",
+              };
+            }
+            try {
+              return await mutateMasterPlanVersionCreate({
+                parent_slug,
+                child_slug: input?.child_slug,
+                title: input?.title,
+              });
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | { parent_slug?: string; child_slug?: string; title?: string }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
 export function registerIaDbWriteTools(server: McpServer): void {
   registerTaskInsert(server);
   registerTaskStatusFlip(server);
@@ -954,4 +1104,6 @@ export function registerIaDbWriteTools(server: McpServer): void {
   registerJournalAppend(server);
   registerFixPlanWrite(server);
   registerFixPlanConsume(server);
+  registerMasterPlanClose(server);
+  registerMasterPlanVersionCreate(server);
 }

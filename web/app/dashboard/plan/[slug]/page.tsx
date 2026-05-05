@@ -46,6 +46,11 @@ import {
   VelocityAreaChartClient,
 } from '@/components/charts/clients';
 import type { DepNode, DepLink } from '@/components/charts/DepGraph';
+import {
+  VersionCloseEntry,
+  isVersionClosePayload,
+  type VersionClosePayload,
+} from '@/components/timeline/VersionCloseEntry';
 
 // ---------------------------------------------------------------------------
 // Status mapping helpers
@@ -636,11 +641,28 @@ export default async function PlanDetailPage({
             {journal.length === 0 ? (
               <p className="text-sm text-[var(--ds-text-muted)]">No journal events.</p>
             ) : (
-              <DataTable
-                columns={journalCols}
-                rows={journal.slice(0, 50)}
-                getRowKey={(r, i) => `${r.recorded_at}-${i}`}
-              />
+              <div className="space-y-3">
+                {journal
+                  .filter(
+                    (r) =>
+                      r.payload_kind === 'version_close' && isVersionClosePayload(r.payload),
+                  )
+                  .slice(0, 10)
+                  .map((r, i) => (
+                    <VersionCloseEntry
+                      key={`vc-${r.recorded_at}-${i}`}
+                      recorded_at={r.recorded_at}
+                      payload={r.payload as unknown as VersionClosePayload}
+                    />
+                  ))}
+                <DataTable
+                  columns={journalCols}
+                  rows={journal
+                    .filter((r) => r.payload_kind !== 'version_close')
+                    .slice(0, 50)}
+                  getRowKey={(r, i) => `${r.recorded_at}-${i}`}
+                />
+              </div>
             )}
           </div>
 

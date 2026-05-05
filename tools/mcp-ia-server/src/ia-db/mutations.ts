@@ -2081,6 +2081,154 @@ export async function mutateStageDecomposeApply(
   });
 }
 
+// ---------------------------------------------------------------------------
+// master_plan_close — flip ia_master_plans.closed_at = now()
+// (ship-protocol Stage 4 / TECH-12644 — sibling to master_plan_version_create.)
+// ---------------------------------------------------------------------------
+
+export interface MasterPlanCloseResult {
+  slug: string;
+  version: number;
+  closed_at: string;
+  /** True when closed_at was already set on entry — idempotent no-op. */
+  already_closed: boolean;
+}
+
+export async function mutateMasterPlanClose(
+  slug: string,
+): Promise<MasterPlanCloseResult> {
+  const cleanSlug = (slug ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+
+  return withTx(async (c) => {
+    const cur = await c.query<{ version: number; closed_at: string | null }>(
+      `SELECT version, closed_at::text AS closed_at
+         FROM ia_master_plans
+        WHERE slug = $1
+        FOR UPDATE`,
+      [cleanSlug],
+    );
+    if (cur.rowCount === 0) {
+      throw new IaDbValidationError(`master plan not found: ${cleanSlug}`);
+    }
+    const row = cur.rows[0]!;
+    if (row.closed_at !== null) {
+      return {
+        slug: cleanSlug,
+        version: row.version,
+        closed_at: row.closed_at,
+        already_closed: true,
+      };
+    }
+    const upd = await c.query<{ closed_at: string }>(
+      `UPDATE ia_master_plans
+          SET closed_at = now(), updated_at = now()
+        WHERE slug = $1
+        RETURNING closed_at::text AS closed_at`,
+      [cleanSlug],
+    );
+    return {
+      slug: cleanSlug,
+      version: row.version,
+      closed_at: upd.rows[0]!.closed_at,
+      already_closed: false,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// master_plan_version_create — emit v(N+1) row chained to a closed parent
+// (ship-protocol Stage 4 / TECH-12644.)
+// ---------------------------------------------------------------------------
+
+export interface MasterPlanVersionCreateInput {
+  parent_slug: string;
+  /** Optional override slug for the new version row. Defaults to `{parent}-v{N+1}`. */
+  child_slug?: string;
+  /** Optional override title for the new row. Defaults to parent title. */
+  title?: string;
+}
+
+export interface MasterPlanVersionCreateResult {
+  parent_slug: string;
+  parent_version: number;
+  child_slug: string;
+  child_version: number;
+  child_created_at: string;
+}
+
+export async function mutateMasterPlanVersionCreate(
+  input: MasterPlanVersionCreateInput,
+): Promise<MasterPlanVersionCreateResult> {
+  const parentSlug = (input.parent_slug ?? "").trim();
+  if (!parentSlug) throw new IaDbValidationError("parent_slug is required");
+
+  return withTx(async (c) => {
+    const parent = await c.query<{
+      version: number;
+      closed_at: string | null;
+      title: string;
+    }>(
+      `SELECT version, closed_at::text AS closed_at, title
+         FROM ia_master_plans
+        WHERE slug = $1
+        FOR UPDATE`,
+      [parentSlug],
+    );
+    if (parent.rowCount === 0) {
+      throw new IaDbValidationError(`parent plan not found: ${parentSlug}`);
+    }
+    const p = parent.rows[0]!;
+    if (p.closed_at === null) {
+      // Closure must precede new-version creation — guards version-chain audit.
+      const e = new IaDbValidationError(
+        `parent_not_closed: ${parentSlug} has closed_at=NULL — run ship-final first`,
+      );
+      e.code = "parent_not_closed";
+      throw e;
+    }
+
+    const childVersion = p.version + 1;
+    const childSlug =
+      (input.child_slug ?? "").trim() || `${parentSlug}-v${childVersion}`;
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(childSlug)) {
+      throw new IaDbValidationError(
+        `child_slug must be kebab-case [a-z0-9-]: ${childSlug}`,
+      );
+    }
+
+    const collide = await c.query(
+      `SELECT 1 FROM ia_master_plans WHERE slug = $1`,
+      [childSlug],
+    );
+    if ((collide.rowCount ?? 0) > 0) {
+      const e = new IaDbValidationError(
+        `slug_collision: ${childSlug} already exists`,
+      );
+      e.code = "slug_collision";
+      throw e;
+    }
+
+    const childTitle = (input.title ?? "").trim() || p.title;
+
+    const ins = await c.query<{ created_at: string }>(
+      `INSERT INTO ia_master_plans
+         (slug, title, parent_plan_slug, version, closed_at)
+       VALUES ($1, $2, $3, $4, NULL)
+       RETURNING created_at::text AS created_at`,
+      [childSlug, childTitle, parentSlug, childVersion],
+    );
+
+    return {
+      parent_slug: parentSlug,
+      parent_version: p.version,
+      child_slug: childSlug,
+      child_version: childVersion,
+      child_created_at: ins.rows[0]!.created_at,
+    };
+  });
+}
+
 // Re-export read helper so tools can round-trip without two imports.
 export { queryTaskBody, queryTaskState };
 export type { TaskStateDB };

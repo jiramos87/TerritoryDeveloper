@@ -85,6 +85,7 @@ export interface PlanDetailJournalRow {
   stage_id: string | null;
   phase: string;
   payload_kind: string;
+  payload: Record<string, unknown> | null;
   recorded_at: string;
 }
 
@@ -193,7 +194,7 @@ export async function loadPlanDetail(
         LIMIT 200
       `,
       sql<PlanDetailJournalRow[]>`
-        SELECT task_id, stage_id, phase, payload_kind, recorded_at
+        SELECT task_id, stage_id, phase, payload_kind, payload, recorded_at
         FROM ia_ship_stage_journal
         WHERE slug = ${slug}
         ORDER BY recorded_at DESC
