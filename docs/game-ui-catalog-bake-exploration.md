@@ -265,6 +265,8 @@ When this stub is fed into `/design-explore`:
 | D6 | Claude-design = sketchpad only; agent translates sketch → catalog upsert manually; no automated import; files stay under `web/design-refs/` flagged advisory | locked | 2026-05-04 | grill 6 picked B |
 | D7 | Review gate = per-Stage closeout; bridge screenshots bundled with §Visibility Delta into closeout digest; Javier signs off → Pass B fires; reject → agent re-vibes within Stage | locked | 2026-05-04 | grill 7 picked B |
 
+**Conclusion:** IR demoted — see master plan Stage 6 (game-ui-catalog-bake; closed 2026-05-05; LayoutRectsLoader severed; `web/design-refs/**` sketchpad-only; red test `validate:no-ir-bake-runtime-refs` locks the demotion).
+
 ### Architecture Decision
 
 - **Slug:** `DEC-A24` — `game-ui-catalog-bake`

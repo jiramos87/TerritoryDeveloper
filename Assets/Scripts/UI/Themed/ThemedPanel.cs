@@ -54,10 +54,8 @@ namespace Territory.UI.Themed
         {
             // RectTransform writes intentionally removed (Stage 13.7 fallout). Authored
             // anchors / pivot / sizeDelta on the prefab are the truth source — see
-            // `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs` SavePanelPrefab +
-            // `LayoutRectsLoader` for bake-time derivation from
-            // `web/design-refs/step-1-game-ui/layout-rects.json`. This switch only
-            // attaches the kind-appropriate LayoutGroup; layout itself is anchor-driven.
+            // `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs` SavePanelPrefab. This switch
+            // only attaches the kind-appropriate LayoutGroup; layout itself is anchor-driven.
             switch (_kind)
             {
                 case PanelKind.Modal:

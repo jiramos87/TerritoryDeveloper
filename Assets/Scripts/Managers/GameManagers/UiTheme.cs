@@ -11,8 +11,8 @@ namespace Territory.UI
     /// </summary>
     /// <remarks>
     /// Stage 2 (T2.1) extension: dictionary-shaped token caches (palette / frame_style / font_face /
-    /// motion_curve / illumination) keyed by slug. Field names mirror IR schema verbatim
-    /// (<see cref="https://example.invalid">tools/scripts/ir-schema.ts</see>) for deterministic bake.
+    /// motion_curve / illumination) keyed by slug. Field names mirror the historical sketchpad
+    /// token shape so JsonUtility round-trips stay deterministic.
     /// Legacy flat-Color fields preserved for transition; consumers that already cache this SO in
     /// <c>Awake</c>/<c>Start</c> stay valid. Do NOT call <c>FindObjectOfType&lt;UiTheme&gt;</c> per frame
     /// (invariant #3) — cache the reference once.
@@ -68,7 +68,7 @@ namespace Territory.UI
         [SerializeField] private int panelPadding = 16;
 
         // ----- Stage 2 (T2.1) dict-shaped token caches -----
-        // Field names mirror `tools/scripts/ir-schema.ts` verbatim for deterministic bake parity.
+        // Field names mirror the historical sketchpad token shape for deterministic bake parity.
 
         [Header("IR token caches (Stage 2 — bake target)")]
         [SerializeField] private List<PaletteKv> paletteEntries = new List<PaletteKv>();
@@ -255,7 +255,7 @@ namespace Territory.UI
             _iconCache = dict;
         }
 
-        // ----- DTO struct types. Field names mirror `tools/scripts/ir-schema.ts` verbatim. -----
+        // ----- DTO struct types. Field names mirror the historical sketchpad token shape. -----
 
         /// <summary>Palette ramp = ordered hex stops (low → high). Mirrors `IrTokenPalette.ramp`.</summary>
         [Serializable]

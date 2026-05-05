@@ -37,58 +37,39 @@ namespace Territory.Editor.Bridge
             try
             {
                 // Anti-loss guard (Stage 13.7 fallout fix): refuse silent placeholder
-                // overwrite when CD truth source has no entry for this slug AND an
-                // existing prefab on disk already carries non-default RectTransform.
-                // Prevents wholesale wipe of authored positioning state across re-bakes.
-                if (!LayoutRectsLoader.HasEntry(panel.slug)
-                    && ExistingPrefabHasNonDefaultRect(assetPath))
+                // overwrite when an existing prefab on disk already carries non-default
+                // RectTransform. Prevents wholesale wipe of authored positioning state
+                // across re-bakes. Per DEC-A24 §6 (Stage 6 IR demotion), runtime no
+                // longer reads any external rect catalog — authoring lives on the
+                // prefab itself; rect catalog re-introduction is a follow-up Task.
+                if (ExistingPrefabHasNonDefaultRect(assetPath))
                 {
                     return new BakeError
                     {
                         error = "panel_layout_rect_missing",
-                        details = $"panel '{panel.slug}' has no entry in layout-rects.json " +
-                                  $"AND existing prefab at '{assetPath}' carries non-default " +
-                                  $"RectTransform. Refusing overwrite — add slug to " +
-                                  $"web/design-refs/step-1-game-ui/layout-rects.json (regenerate " +
-                                  $"via tools/scripts/extract-cd-layout-rects.ts) before re-bake.",
+                        details = $"panel '{panel.slug}' would overwrite existing prefab at '{assetPath}' " +
+                                  $"which carries non-default RectTransform. Refusing overwrite — " +
+                                  $"hand-edit the prefab anchors in the Unity Inspector or wait for " +
+                                  $"the catalog-snapshot rect surface (DEC-A24 §3 D2) before re-bake.",
                         path = assetPath,
                     };
                 }
 
                 go = new GameObject(panel.slug);
                 var rootRect = go.AddComponent<RectTransform>();
-                // Stage 13.7 fallout fix: panel root anchors derive from
-                // layout-rects.json (CD truth source at 1920×1080) instead of
-                // hardcoded centered placeholder. Missing entry → fail-loud
-                // guard above already returned; here we either have a rect or
-                // fall through to a sentinel default for slugs the CD bundle
-                // legitimately doesn't cover (e.g. runtime-only debug panels).
-                if (LayoutRectsLoader.TryGetPanelRect(panel.slug, out var lr))
-                {
-                    LayoutRectsLoader.ViewportRectToCanvasAnchors(lr.ViewportRect,
-                        out var aMin, out var aMax);
-                    rootRect.anchorMin = aMin;
-                    rootRect.anchorMax = aMax;
-                    rootRect.pivot = new Vector2(0.5f, 0.5f);
-                    rootRect.anchoredPosition = Vector2.zero;
-                    rootRect.sizeDelta = Vector2.zero;
-                }
-                else
-                {
-                    // No CD truth + no existing prefab to protect — emit a small
-                    // top-left sentinel rect so the panel is visible + obviously
-                    // un-authored. NOT centered 600×800 (the old placeholder
-                    // looked like real content + masked the loss).
-                    Debug.LogWarning(
-                        $"[UiBakeHandler] panel '{panel.slug}' has no layout-rects entry; " +
-                        $"emitting top-left sentinel 200×80 rect. Add to " +
-                        $"web/design-refs/step-1-game-ui/layout-rects.json to fix.");
-                    rootRect.anchorMin = new Vector2(0f, 1f);
-                    rootRect.anchorMax = new Vector2(0f, 1f);
-                    rootRect.pivot = new Vector2(0f, 1f);
-                    rootRect.anchoredPosition = new Vector2(8f, -8f);
-                    rootRect.sizeDelta = new Vector2(200f, 80f);
-                }
+                // Per DEC-A24 §6: runtime no longer reads an external rect catalog.
+                // New prefabs ship with a top-left sentinel so the panel is visible
+                // and obviously un-authored — designer hand-edits anchors in the
+                // Unity Inspector. NOT centered 600×800 (the old placeholder looked
+                // like real content + masked the loss).
+                rootRect.anchorMin = new Vector2(0f, 1f);
+                rootRect.anchorMax = new Vector2(0f, 1f);
+                rootRect.pivot = new Vector2(0f, 1f);
+                rootRect.anchoredPosition = new Vector2(8f, -8f);
+                rootRect.sizeDelta = new Vector2(200f, 80f);
+                Debug.LogWarning(
+                    $"[UiBakeHandler] panel '{panel.slug}' baked with top-left sentinel 200×80 rect. " +
+                    $"Hand-edit anchors in the Inspector; rect catalog wiring is a follow-up Task.");
                 var bgImage = go.AddComponent<Image>();
                 bgImage.color = Color.white;
                 // Stage 13.2 — chrome raycast policy: only modal kinds block input behind the panel.

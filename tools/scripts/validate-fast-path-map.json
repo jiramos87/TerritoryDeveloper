@@ -2,7 +2,8 @@
   "_comment": "validate-fast scoped runner: maps touched paths to validator subsets. Runner = union(baseline, scoped). Coverage meta-gate (validate-fast-coverage.mjs) asserts every script in package.json validate:all chain appears either in baseline or under >=1 glob. Edit shape: {baseline: [scriptId, ...], path_globs: {glob: [scriptId, ...]}}. Glob semantics = micromatch. TECH-12640.",
   "baseline": [
     "validate:frontmatter",
-    "validate:claude-imports"
+    "validate:claude-imports",
+    "validate:no-ir-bake-runtime-refs"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [

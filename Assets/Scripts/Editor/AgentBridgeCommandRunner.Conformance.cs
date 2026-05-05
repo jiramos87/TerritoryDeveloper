@@ -860,7 +860,7 @@ public static partial class AgentBridgeCommandRunner
 
     static string PanelKindEnumIdxToIrName(int idx)
     {
-        // Mirrors PanelKind enum order in `ThemedPanel.cs` + IR token in `ir-schema.ts`.
+        // Mirrors PanelKind enum order in `ThemedPanel.cs`.
         switch (idx)
         {
             case 0: return "modal";

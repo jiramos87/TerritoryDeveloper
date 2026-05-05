@@ -18,7 +18,7 @@ namespace Territory.Editor.Bridge
     {
         // ── StudioControl interactive bake (Stage 4 T4.5) ───────────────────────
 
-        /// <summary>Known StudioControl kind slugs — kept in sync with `tools/scripts/ir-schema.ts` <c>StudioControlKind</c>.</summary>
+        /// <summary>Known StudioControl kind slugs — Stage 4 T4.5 archetype roster.</summary>
         static readonly HashSet<string> _knownKinds = new HashSet<string>
         {
             "knob", "fader", "detent-ring",
@@ -394,7 +394,7 @@ namespace Territory.Editor.Bridge
 
         // ── Juice attachment (Stage 5 T5.5) ────────────────────────────────────
 
-        /// <summary>Juice slug constants — kept in sync with `tools/scripts/ir-schema.ts` Stage 5 IR juice DTO (post-MVP additive field).</summary>
+        /// <summary>Juice slug constants — Stage 5 juice attachment roster (post-MVP additive field).</summary>
         public const string JuiceKindNeedleBallistics = "needle-ballistics";
         public const string JuiceKindOscilloscopeSweep = "oscilloscope-sweep";
         public const string JuiceKindPulseOnEvent = "pulse-on-event";

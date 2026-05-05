@@ -20,17 +20,17 @@ namespace Territory.Editor.Bridge
     /// <summary>
     /// IR JSON → UiTheme.asset bake handler. Editor-only. Stage 2 of Game UI Design System MVP.
     ///
-    /// Field names mirror <c>tools/scripts/ir-schema.ts</c> verbatim so JsonUtility round-trips
-    /// match the Stage 1 transcribe pipeline output. Polymorphic shapes use Unity-friendly
-    /// optional-with-zero-default fields (JsonUtility cannot model discriminated unions natively).
+    /// DTO field names mirror the historical Stage 1 sketchpad shape so JsonUtility round-trips
+    /// stay deterministic. Polymorphic shapes use Unity-friendly optional-with-zero-default fields
+    /// (JsonUtility cannot model discriminated unions natively).
     ///
     /// T2.2 lands DTOs + Parse + ValidateSlotAcceptRules + Bake skeleton; T2.4 fills the bake body.
     /// </summary>
     public static partial class UiBakeHandler
     {
-        // ── DTOs (mirror tools/scripts/ir-schema.ts) ────────────────────────────
+        // ── DTOs (Stage 1 sketchpad shape — JsonUtility-friendly) ───────────────
 
-        /// <summary>Top-level IR JSON shape — single output of `transcribe:cd-game-ui`.</summary>
+        /// <summary>Top-level IR JSON shape — single bake-input root.</summary>
         [Serializable]
         public class IrRoot
         {
@@ -170,7 +170,7 @@ namespace Territory.Editor.Bridge
             public int defaultTabIndex;
         }
 
-        /// <summary>Stage 13.1+ — IR v2 tab descriptor (mirrors `IrTab` in tools/scripts/ir-schema.ts). Drives ThemedTabBar.pages[] wiring at bake time.</summary>
+        /// <summary>Stage 13.1+ — IR v2 tab descriptor. Drives ThemedTabBar.pages[] wiring at bake time.</summary>
         [Serializable]
         public class IrTab
         {
@@ -181,7 +181,7 @@ namespace Territory.Editor.Bridge
             public string iconSlug;
         }
 
-        /// <summary>Stage 13.1+ — IR v2 row descriptor (mirrors `IrRow` in tools/scripts/ir-schema.ts). Flat list per panel; `kind` discriminates render shape.</summary>
+        /// <summary>Stage 13.1+ — IR v2 row descriptor. Flat list per panel; `kind` discriminates render shape.</summary>
         [Serializable]
         public class IrRow
         {
@@ -222,7 +222,7 @@ namespace Territory.Editor.Bridge
         public class IrInteractive
         {
             public string slug;
-            /// <summary>StudioControl archetype slug — see ir-schema.ts `StudioControlKind`.</summary>
+            /// <summary>StudioControl archetype slug — see <see cref="UiBakeHandler"/>._knownKinds for the roster.</summary>
             public string kind;
             // `detail` is open-ended (Record&lt;string,unknown&gt; in TS); not modeled in C# DTO since
             // bridge-side bake at this stage does not consume it. T3+ will introduce typed details.
@@ -360,8 +360,8 @@ namespace Territory.Editor.Bridge
 
         /// <summary>
         /// Validate that every <see cref="IrPanelSlot.children"/> entry appears in <see cref="IrPanelSlot.accepts"/>.
-        /// Mirrors `validateSlotAccept` in `tools/scripts/ir-schema.ts` — bridge parity guarantees
-        /// transcribe-time and bake-time guards reject identical inputs.
+        /// Bake-time slot-accept guard — rejects panels whose slot children violate the
+        /// declared accept rule before any prefab write.
         ///
         /// Returns <c>null</c> on pass; populated <see cref="BakeError"/> on first violation found.
         /// </summary>
@@ -427,10 +427,9 @@ namespace Territory.Editor.Bridge
                 };
             }
 
-            // Anti-loss invariant — every bake re-reads layout-rects.json + overrides from
-            // disk. Static cache survived prior session where override file did not yet
-            // exist → stale base coords leaked through to prefabs (off-viewport anchors).
-            LayoutRectsLoader.Invalidate();
+            // DEC-A24 §6 D6 — claude-design IR JSON pipeline demoted (sketchpad-only).
+            // LayoutRectsLoader severed (Stage 6 game-ui-catalog-bake).
+            // Frame-bake now emits sentinel rects with anti-loss prefab-overwrite guard.
 
             if (string.IsNullOrEmpty(args.ir_path))
             {

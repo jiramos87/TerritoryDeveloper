@@ -37,6 +37,8 @@ hard_boundaries: []
 
 # UI fidelity review — IR + theme conformance loop
 
+> **RETIRED — replaced by catalog-bake** (DEC-A24 §6 D6; game-ui-catalog-bake Stage 6 closeout, 2026-05-05). Claude-design IR JSON pipeline demoted to sketchpad-only (`web/design-refs/**`). `LayoutRectsLoader` deleted; `bake_ui_from_ir` runtime tether severed; red test `validate:no-ir-bake-runtime-refs` locks the demotion. New conformance loop = `CatalogBakeHandler` snapshot diff + bridge `screenshot_game_view` (per master plan `game-ui-catalog-bake` Stage 6+). IR paths below preserved for historical context only.
+
 Closed-loop diff between baked prefab/scene and claude-design IR (`ir.json`) + UiTheme ScriptableObject. Composes Stage 12 Step 14.1 (`prefab_inspect`) + 14.2 (`ui_tree_walk`) + 14.3 (`claude_design_conformance`) bridge kinds plus the existing `bake_ui_from_ir` mutation. Read-mostly: only mutation is `bake_ui_from_ir` (re-baking on iterate).
 
 **Not** a substitute for [`close-dev-loop`](../close-dev-loop/SKILL.md) (Play Mode anomaly diff at seed cells) or [`debug-sorting-order`](../debug-sorting-order/SKILL.md) (sorting math). Use this skill when the question is **UI panel fidelity vs claude-design intent** — palette ramp binding, font face binding, frame style binding, panel kind, caption text, contrast ratio.

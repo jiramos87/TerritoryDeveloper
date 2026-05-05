@@ -22,7 +22,7 @@ namespace Territory.UI.EditorTools
         /// </summary>
         public static readonly string[] CanonicalIconSlugs =
         {
-            // 22 currently shipped in cd-bundle/icons.svg
+            // 22 canonical slugs (sketchpad-derived; PNG availability set by ThemedIcon importer)
             "icon-select",
             "icon-road",
             "icon-zone-residential",
