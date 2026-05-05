@@ -49,6 +49,7 @@ import { registerPlanDigestLint } from "./tools/plan-digest-lint.js";
 import { registerVerifyClassify } from "./tools/verify-classify.js";
 import { registerIssueContextBundle } from "./tools/issue-context-bundle.js";
 import { registerLifecycleStageContext } from "./tools/lifecycle-stage-context.js";
+import { registerTaskBundleBatch } from "./tools/task-bundle-batch.js";
 import { registerPlanDigestGateAuthorHelper } from "./tools/plan-digest-gate-author-helper.js";
 import { registerCatalogList } from "./tools/catalog-list.js";
 import { registerCatalogGet } from "./tools/catalog-get.js";
@@ -161,6 +162,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerVerifyClassify(server);
   registerIssueContextBundle(server, registry);
   registerLifecycleStageContext(server, registry);
+  registerTaskBundleBatch(server, registry);
   registerPlanDigestGateAuthorHelper(server);
   registerCatalogList(server);
   registerCatalogGet(server);

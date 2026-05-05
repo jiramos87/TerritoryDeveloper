@@ -1,0 +1,8 @@
+---
+description: "Single-skill bulk plan author. Input = lean handoff YAML frontmatter at top of `docs/explorations/{slug}.md` (emitted by `design-explore` Phase 4). One Opus xhigh pass pre-fetches glossary + router + invariants once per plan, builds a 3-section §Plan Digest body per task (§Goal + §Red-Stage Proof + §Work Items, ~30 lines), inlines anchor expansion at digest write, runs synchronous drift lint, and dispatches one `master_plan_bundle_apply(jsonb)` MCP call. No filesystem mirror — DB sole source of truth. Replaces the `stage-file` + `stage-authoring` two-step roundtrip. Triggers: \"/ship-plan {SLUG}\", \"ship plan\", \"bulk-author plan from handoff yaml\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ship-plan/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "ship-plan"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
