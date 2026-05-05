@@ -1,0 +1,8 @@
+---
+description: "Stage-atomic batch ship-cycle. One Sonnet 4.6 inference body emits ALL tasks of one Stage with `<!-- TASK:{ISSUE_ID} START/END -->` boundary markers. Replaces `/ship-stage` Pass A per-task loop when stage fits one window. Per-task `unity:compile-check` gate + `task_status_flip(implemented)` after batch lands. Pass B (`verify-loop` + closeout) reuses `/ship-stage` machinery. Failure mode = `ia_stages.status='partial'` (mig 0069); resume re-enters at first non-done task. Token budget hard cap 80k input. Validate gate = `validate:fast` (TECH-12640) on cumulative stage diff. Triggers: \"/ship-cycle {SLUG} {STAGE_ID}\", \"ship cycle stage\", \"stage-atomic batch ship\". Argument order (explicit): SLUG first, STAGE_ID second."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ship-cycle/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "ship-cycle"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

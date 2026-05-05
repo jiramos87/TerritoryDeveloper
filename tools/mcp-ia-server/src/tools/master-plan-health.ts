@@ -45,6 +45,7 @@ export interface MasterPlanHealthRow {
   n_stages: number;
   n_done: number;
   n_in_progress: number;
+  n_partial: number;
   n_pending: number;
   oldest_in_progress_age_days: number | null;
   missing_arch_surfaces: string[];
@@ -63,6 +64,7 @@ export interface MasterPlanHealthPayload {
   n_stages?: number;
   n_done?: number;
   n_in_progress?: number;
+  n_partial?: number;
   n_pending?: number;
   oldest_in_progress_age_days?: number | null;
   missing_arch_surfaces?: string[];
@@ -149,6 +151,7 @@ interface HealthMvRow {
   n_stages: number;
   n_done: number;
   n_in_progress: number;
+  n_partial: number;
   n_pending: number;
   oldest_in_progress_age_days: number | null;
   missing_arch_surfaces: string[];
@@ -173,6 +176,7 @@ function rowToPayload(
     n_stages: r.n_stages,
     n_done: r.n_done,
     n_in_progress: r.n_in_progress,
+    n_partial: r.n_partial,
     n_pending: r.n_pending,
     oldest_in_progress_age_days: r.oldest_in_progress_age_days,
     missing_arch_surfaces: r.missing_arch_surfaces ?? [],
@@ -202,7 +206,7 @@ export async function getMasterPlanHealth(
   }
   if (slug !== undefined) {
     const res = await pool.query<HealthMvRow>(
-      `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
+      `SELECT slug, n_stages, n_done, n_in_progress, n_partial, n_pending,
               oldest_in_progress_age_days,
               missing_arch_surfaces, drift_events_open, sibling_collisions,
               arch_drift_scan_p95_ms, red_stage_coverage,
@@ -214,7 +218,7 @@ export async function getMasterPlanHealth(
     return res.rows;
   }
   const res = await pool.query<HealthMvRow>(
-    `SELECT slug, n_stages, n_done, n_in_progress, n_pending,
+    `SELECT slug, n_stages, n_done, n_in_progress, n_partial, n_pending,
             oldest_in_progress_age_days,
             missing_arch_surfaces, drift_events_open, sibling_collisions,
             arch_drift_scan_p95_ms, red_stage_coverage,
@@ -242,7 +246,7 @@ export function registerMasterPlanHealth(server: McpServer): void {
         "`ia_master_plans`. Slug-given returns single per-slug payload, " +
         "or `{slug, error: 'not_found'}` when slug absent. " +
         "Per-slug payload shape: " +
-        "`{slug, n_stages, n_done, n_in_progress, n_pending, " +
+        "`{slug, n_stages, n_done, n_in_progress, n_partial, n_pending, " +
         "oldest_in_progress_age_days, missing_arch_surfaces, " +
         "drift_events_open, sibling_collisions, arch_drift_scan_p95_ms, " +
         "red_stage_coverage, " +

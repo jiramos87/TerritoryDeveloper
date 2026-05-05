@@ -493,6 +493,131 @@ export async function mutateTaskStatusFlip(
 }
 
 // ---------------------------------------------------------------------------
+// task_status_flip_batch (ship-protocol Stage 3 / TECH-12642)
+// ---------------------------------------------------------------------------
+
+export interface TaskStatusFlipBatchInput {
+  slug: string;
+  stage_id: string;
+  new_status: TaskRowDB["status"];
+  task_ids?: string[];
+}
+
+export interface TaskStatusFlipBatchResult {
+  flipped: Array<{
+    task_id: string;
+    prev_status: TaskRowDB["status"];
+    new_status: TaskRowDB["status"];
+  }>;
+  skipped: Array<{
+    task_id: string;
+    reason: "not_found" | "already_target" | "not_in_stage";
+  }>;
+}
+
+/**
+ * Single-tx batch flip of N tasks belonging to one (slug, stage_id) Stage.
+ * Used by ship-cycle (Sonnet stage-atomic batch) to flip all stage tasks
+ * `pending → implemented` (or `implemented → done`) in one DB roundtrip.
+ *
+ * Behavior:
+ *   - When `task_ids` omitted → operate on ALL non-terminal tasks of stage.
+ *   - When `task_ids` provided → filter to that subset; ids not in stage land
+ *     in `skipped[].reason='not_in_stage'`; missing ids → `not_found`.
+ *   - Already-target ids → `skipped[].reason='already_target'`.
+ *   - Single Postgres tx wraps SELECT FOR UPDATE + UPDATE (row-level locks).
+ *   - `completed_at` / `archived_at` stamps applied uniformly per row.
+ */
+export async function mutateTaskStatusFlipBatch(
+  input: TaskStatusFlipBatchInput,
+): Promise<TaskStatusFlipBatchResult> {
+  if (!VALID_STATUSES.includes(input.new_status)) {
+    throw new IaDbValidationError(`invalid status: ${input.new_status}`);
+  }
+  const slug = input.slug.trim();
+  const stage_id = input.stage_id.trim();
+  if (!slug || !stage_id) {
+    throw new IaDbValidationError("slug and stage_id are required");
+  }
+  const requestedIds = (input.task_ids ?? []).map((s) =>
+    s.trim().toUpperCase(),
+  );
+
+  return withTx(async (c) => {
+    const stageRows = await c.query<{ task_id: string; status: string }>(
+      `SELECT task_id, status::text AS status
+         FROM ia_tasks
+        WHERE slug = $1 AND stage_id = $2
+        FOR UPDATE`,
+      [slug, stage_id],
+    );
+    const stageMap = new Map<string, string>();
+    for (const r of stageRows.rows) {
+      stageMap.set(r.task_id, r.status);
+    }
+
+    const flipped: TaskStatusFlipBatchResult["flipped"] = [];
+    const skipped: TaskStatusFlipBatchResult["skipped"] = [];
+
+    let workingIds: string[];
+    if (requestedIds.length > 0) {
+      workingIds = [];
+      for (const id of requestedIds) {
+        if (!stageMap.has(id)) {
+          // Distinguish never-existing vs in-other-stage by probing whole table.
+          const probe = await c.query<{ task_id: string }>(
+            `SELECT task_id FROM ia_tasks WHERE task_id = $1`,
+            [id],
+          );
+          skipped.push({
+            task_id: id,
+            reason: probe.rowCount === 0 ? "not_found" : "not_in_stage",
+          });
+          continue;
+        }
+        workingIds.push(id);
+      }
+    } else {
+      // No filter → all non-terminal stage tasks.
+      workingIds = [];
+      for (const [id, status] of stageMap.entries()) {
+        if (status !== "done" && status !== "archived") {
+          workingIds.push(id);
+        }
+      }
+    }
+
+    for (const id of workingIds) {
+      const prev = stageMap.get(id) as TaskRowDB["status"];
+      if (prev === input.new_status) {
+        skipped.push({ task_id: id, reason: "already_target" });
+        continue;
+      }
+      const completedClause =
+        input.new_status === "done" ? ", completed_at = now()" : "";
+      const archivedClause =
+        input.new_status === "archived" ? ", archived_at = now()" : "";
+      await c.query(
+        `UPDATE ia_tasks
+            SET status = $2::task_status,
+                updated_at = now()
+                ${completedClause}
+                ${archivedClause}
+          WHERE task_id = $1`,
+        [id, input.new_status],
+      );
+      flipped.push({
+        task_id: id,
+        prev_status: prev,
+        new_status: input.new_status,
+      });
+    }
+
+    return { flipped, skipped };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // task_spec_section_write
 // ---------------------------------------------------------------------------
 
@@ -1240,7 +1365,7 @@ export interface StageInsertInput {
   objective?: string | null;
   exit_criteria?: string | null;
   body?: string | null;
-  status?: "pending" | "in_progress" | "done";
+  status?: "pending" | "in_progress" | "partial" | "done";
   /**
    * Optional list of `arch_surfaces.slug` values to link this Stage to in
    * the `stage_arch_surfaces` join table (DEC-A12 — link-table storage
@@ -1276,7 +1401,7 @@ export async function mutateStageInsert(
     );
   }
   const status = input.status ?? "pending";
-  if (!["pending", "in_progress", "done"].includes(status)) {
+  if (!["pending", "in_progress", "partial", "done"].includes(status)) {
     throw new IaDbValidationError(`invalid status: ${status}`);
   }
   return withTx(async (c) => {
@@ -1954,60 +2079,6 @@ export async function mutateStageDecomposeApply(
       stage_id_resolved: stage_id,
     };
   });
-}
-
-// ---------------------------------------------------------------------------
-// master_plan_bundle_apply — TECH-12630 (ship-protocol Stage 1.0)
-// ---------------------------------------------------------------------------
-
-export interface MasterPlanBundleApplyResult {
-  plan_slug: string;
-  stages_inserted: number;
-  tasks_inserted: number;
-}
-
-/**
- * Atomic plan + stages + tasks insert via the Postgres function
- * `master_plan_bundle_apply(jsonb)` (migration 0067). Function body is the
- * single tx frame — any constraint failure raises and rolls back the whole
- * bundle; no partial state ever persists.
- *
- * Boundary validation (here) ensures `bundle.plan.slug` is a non-empty
- * string. Deeper shape validation lives inside the SQL function (mirrors
- * existing tool pattern — boundary trust-but-document on jsonb payloads).
- */
-export async function mutateMasterPlanBundleApply(
-  bundle: Record<string, unknown>,
-): Promise<MasterPlanBundleApplyResult> {
-  if (!bundle || typeof bundle !== "object" || Array.isArray(bundle)) {
-    throw new IaDbValidationError(
-      "bundle must be a non-null object (jsonb-shaped).",
-    );
-  }
-  const plan = (bundle as { plan?: unknown }).plan;
-  if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
-    throw new IaDbValidationError("bundle.plan must be an object.");
-  }
-  const slug = (plan as { slug?: unknown }).slug;
-  if (typeof slug !== "string" || slug.trim().length === 0) {
-    throw new IaDbValidationError(
-      "bundle.plan.slug must be a non-empty string.",
-    );
-  }
-
-  const pool = poolOrThrow();
-  // Function frame already provides atomicity — no outer BEGIN/COMMIT needed.
-  const r = await pool.query<{ result: MasterPlanBundleApplyResult }>(
-    "SELECT master_plan_bundle_apply($1::jsonb) AS result",
-    [JSON.stringify(bundle)],
-  );
-  const row = r.rows[0];
-  if (!row) {
-    throw new IaDbValidationError(
-      "master_plan_bundle_apply returned no row (function call failed).",
-    );
-  }
-  return row.result;
 }
 
 // Re-export read helper so tools can round-trip without two imports.

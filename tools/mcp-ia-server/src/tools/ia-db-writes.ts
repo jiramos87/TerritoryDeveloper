@@ -35,7 +35,6 @@ import {
   mutateFixPlanConsume,
   mutateFixPlanWrite,
   mutateJournalAppend,
-  mutateMasterPlanBundleApply,
   mutateStageCloseoutApply,
   mutateStageVerificationFlip,
   mutateTaskCommitRecord,
@@ -44,6 +43,7 @@ import {
   mutateTaskRawMarkdownWrite,
   mutateTaskSpecSectionWrite,
   mutateTaskStatusFlip,
+  mutateTaskStatusFlipBatch,
 } from "../ia-db/mutations.js";
 
 // ---------------------------------------------------------------------------
@@ -855,13 +855,96 @@ export function registerFixPlanConsume(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// task_status_flip_batch (ship-protocol Stage 3 / TECH-12642)
+// ---------------------------------------------------------------------------
+
+export function registerTaskStatusFlipBatch(server: McpServer): void {
+  server.registerTool(
+    "task_status_flip_batch",
+    {
+      description:
+        "DB-backed: single-tx batch flip of N tasks belonging to one (slug, stage_id) Stage. Used by ship-cycle (Sonnet stage-atomic batch) to atomically flip all stage tasks pending→implemented (or implemented→done). When task_ids omitted → flips ALL non-terminal tasks of the stage. Returns `{flipped: [{task_id, prev_status, new_status}], skipped: [{task_id, reason}]}` where reason ∈ not_found | already_target | not_in_stage. Single Postgres tx with row-level locks (SELECT FOR UPDATE). Stamps completed_at when status=done, archived_at when status=archived. Schema-cache restart required after adding this tool (N4).",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug e.g. 'ship-protocol'."),
+        stage_id: z.string().describe("Stage id e.g. '3'."),
+        new_status: STATUS_ENUM.describe(
+          "Target status: pending|implemented|verified|done|archived.",
+        ),
+        task_ids: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Subset filter. Omit → all non-terminal tasks of the stage.",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("task_status_flip_batch", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | {
+                  slug?: string;
+                  stage_id?: string;
+                  new_status?:
+                    | "pending"
+                    | "implemented"
+                    | "verified"
+                    | "done"
+                    | "archived";
+                  task_ids?: string[];
+                }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            const ns = input?.new_status;
+            if (!slug || !stage_id || !ns) {
+              throw {
+                code: "invalid_input",
+                message: "slug, stage_id, new_status are required.",
+              };
+            }
+            try {
+              return await mutateTaskStatusFlipBatch({
+                slug,
+                stage_id,
+                new_status: ns,
+                task_ids: input?.task_ids,
+              });
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | {
+                slug?: string;
+                stage_id?: string;
+                new_status?:
+                  | "pending"
+                  | "implemented"
+                  | "verified"
+                  | "done"
+                  | "archived";
+                task_ids?: string[];
+              }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Bucket registrar.
 // ---------------------------------------------------------------------------
 
-/** Register all DB-backed write tools on the IA core bucket. */
+/** Register all 11 DB-backed write tools on the IA core bucket. */
 export function registerIaDbWriteTools(server: McpServer): void {
   registerTaskInsert(server);
   registerTaskStatusFlip(server);
+  registerTaskStatusFlipBatch(server);
   registerTaskSpecSectionWrite(server);
   registerTaskRawMarkdownWrite(server);
   registerTaskDepRegister(server);
@@ -871,48 +954,4 @@ export function registerIaDbWriteTools(server: McpServer): void {
   registerJournalAppend(server);
   registerFixPlanWrite(server);
   registerFixPlanConsume(server);
-  registerMasterPlanBundleApply(server);
-}
-
-// ---------------------------------------------------------------------------
-// master_plan_bundle_apply (TECH-12630 — ship-protocol Stage 1.0 tracer).
-// ---------------------------------------------------------------------------
-
-export function registerMasterPlanBundleApply(server: McpServer): void {
-  server.registerTool(
-    "master_plan_bundle_apply",
-    {
-      description:
-        "DB-backed: atomic plan + stages + tasks insert from a single jsonb bundle. Wraps the Postgres function `master_plan_bundle_apply(jsonb)` (migration 0067). Bundle shape: `{plan: {slug, title, ...}, stages: [{stage_id, ...}], tasks: [{task_key, stage_id, prefix, title, ...}]}`. Any constraint failure rolls back the whole bundle. Returns `{plan_slug, stages_inserted, tasks_inserted}`. Schema-cache restart required after adding this tool (N4).",
-      inputSchema: {
-        bundle: z
-          .record(z.string(), z.unknown())
-          .describe(
-            "jsonb-shaped bundle. Required keys: bundle.plan.slug (non-empty string). Optional: stages[], tasks[].",
-          ),
-      },
-    },
-    async (args) =>
-      runWithToolTiming("master_plan_bundle_apply", async () => {
-        const envelope = await wrapTool(
-          async (
-            input: { bundle?: Record<string, unknown> } | undefined,
-          ) => {
-            const bundle = input?.bundle;
-            if (!bundle || typeof bundle !== "object" || Array.isArray(bundle)) {
-              throw {
-                code: "invalid_input",
-                message: "bundle must be a non-null object.",
-              };
-            }
-            try {
-              return await mutateMasterPlanBundleApply(bundle);
-            } catch (e) {
-              mapDbErrors(e);
-            }
-          },
-        )(args as { bundle?: Record<string, unknown> } | undefined);
-        return jsonResult(envelope);
-      }),
-  );
 }

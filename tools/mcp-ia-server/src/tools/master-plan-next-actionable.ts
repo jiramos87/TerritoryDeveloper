@@ -60,7 +60,7 @@ const inputShape = {
 export interface ResolvedDep {
   slug: string;
   stage_id: string;
-  status: "pending" | "in_progress" | "done" | "unknown";
+  status: "pending" | "in_progress" | "partial" | "done" | "unknown";
 }
 
 export interface NextActionableEntry {

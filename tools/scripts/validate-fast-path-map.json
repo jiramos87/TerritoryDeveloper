@@ -1,0 +1,150 @@
+{
+  "_comment": "validate-fast scoped runner: maps touched paths to validator subsets. Runner = union(baseline, scoped). Coverage meta-gate (validate-fast-coverage.mjs) asserts every script in package.json validate:all chain appears either in baseline or under >=1 glob. Edit shape: {baseline: [scriptId, ...], path_globs: {glob: [scriptId, ...]}}. Glob semantics = micromatch. TECH-12640.",
+  "baseline": [
+    "validate:frontmatter",
+    "validate:claude-imports"
+  ],
+  "path_globs": {
+    "docs/**/*master-plan*.md": [
+      "validate:master-plan-status",
+      "validate:plan-prototype-first",
+      "validate:plan-red-stage"
+    ],
+    "ia/specs/architecture/**": [
+      "validate:arch-coherence"
+    ],
+    "db/migrations/**": [
+      "validate:arch-coherence",
+      "validate:blob-roots"
+    ],
+    "ia/backlog/**": [
+      "validate:backlog-yaml"
+    ],
+    "ia/backlog-archive/**": [
+      "validate:backlog-yaml"
+    ],
+    "tools/compute-lib/**": [
+      "compute-lib:build",
+      "test:ia"
+    ],
+    "tools/mcp-ia-server/**": [
+      "test:ia",
+      "validate:fixtures",
+      "validate:mcp-readme",
+      "validate:mcp-descriptor-prose",
+      "validate:mcp-catalog-coverage"
+    ],
+    "tools/mcp-ia-server/fixtures/**": [
+      "validate:fixtures",
+      "validate:backfill-fixtures"
+    ],
+    "tools/postgres-ia/**": [
+      "test:ia"
+    ],
+    "tools/scripts/test/backfill-locator-fixtures.sh": [
+      "validate:backfill-fixtures"
+    ],
+    "ia/specs/**": [
+      "generate:ia-indexes"
+    ],
+    "ia/rules/**": [
+      "generate:ia-indexes"
+    ],
+    "ia/specs/glossary.md": [
+      "generate:ia-indexes"
+    ],
+    "web/**": [
+      "validate:web:conditional"
+    ],
+    "tools/mcp-ia-server/src/telemetry/**": [
+      "validate:telemetry-schema"
+    ],
+    "tools/scripts/validate-telemetry-schema.mjs": [
+      "validate:telemetry-schema"
+    ],
+    "ia/state/runtime-state.json": [
+      "validate:runtime-state"
+    ],
+    "tools/scripts/validate-runtime-state.mjs": [
+      "validate:runtime-state"
+    ],
+    "ia/skills/**": [
+      "validate:cache-block-sizing",
+      "validate:capability-coverage",
+      "validate:agent-tools-uniformity",
+      "validate:agent-tools",
+      "validate:skill-drift",
+      "validate:skill-changelog-presence",
+      "validate:skill-recipe-drift",
+      "validate:handoff-schema"
+    ],
+    "ia/skills/_preamble/**": [
+      "validate:cache-block-sizing"
+    ],
+    ".claude/agents/**": [
+      "validate:cache-block-sizing",
+      "validate:capability-coverage",
+      "validate:agent-tools-uniformity",
+      "validate:agent-tools",
+      "validate:skill-drift"
+    ],
+    ".claude/commands/**": [
+      "validate:capability-coverage",
+      "validate:skill-drift"
+    ],
+    "CLAUDE.md": [
+      "validate:claude-imports"
+    ],
+    "web/lib/catalog/**": [
+      "validate:sprite-gen-schema"
+    ],
+    "tools/scripts/validate-sprite-gen-schema.ts": [
+      "validate:sprite-gen-schema"
+    ],
+    "Assets/UI/**": [
+      "validate:ui-prefab-layout-coverage"
+    ],
+    "web/lib/ui/**": [
+      "validate:ui-prefab-layout-coverage"
+    ],
+    "tools/scripts/validate/validate-blob-roots.ts": [
+      "validate:blob-roots"
+    ],
+    "docs/mcp-ia-server.md": [
+      "validate:mcp-readme",
+      "validate:mcp-catalog-coverage"
+    ],
+    "ia/seams/**": [
+      "validate:seam-golden",
+      "smoke:seam-q5"
+    ],
+    "tools/seams/**": [
+      "validate:seam-golden",
+      "smoke:seam-q5"
+    ],
+    "tools/scripts/smoke-seam-q5.mjs": [
+      "smoke:seam-q5"
+    ],
+    "tools/scripts/validate-seam-golden.mjs": [
+      "validate:seam-golden"
+    ],
+    "tools/recipe-engine/**": [
+      "validate:recipe-drift",
+      "test:recipe-engine"
+    ],
+    "ia/recipes/**": [
+      "validate:recipe-drift",
+      "validate:skill-recipe-drift"
+    ],
+    "ia/state/**": [
+      "validate:handoff-schema"
+    ],
+    "tools/scripts/validate-handoff-schema.mjs": [
+      "validate:handoff-schema"
+    ],
+    "package.json": [
+      "validate:claude-imports",
+      "validate:frontmatter"
+    ]
+  }
+}
