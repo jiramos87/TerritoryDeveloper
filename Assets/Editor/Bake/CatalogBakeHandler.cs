@@ -92,6 +92,8 @@ namespace TerritoryDeveloper.Editor.Bake
                     return BakeHstack(panel, children, outDir);
                 case "modal":
                     return BakeModal(panel, children, outDir);
+                case "vstack":
+                    return BakeVstack(panel, children, outDir);
                 default:
                     throw new NotSupportedException($"layout primitive not supported: {panel.layout}");
             }
@@ -135,6 +137,7 @@ namespace TerritoryDeveloper.Editor.Bake
             public string layout;
             public int gap_px;
             public string padding_json;
+            public string params_json;
         }
 
         [Serializable]

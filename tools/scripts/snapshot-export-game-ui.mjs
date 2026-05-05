@@ -56,7 +56,8 @@ const PANELS_QUERY = `
     pe.slug            AS panel_slug,
     pd.layout          AS panel_layout,
     pd.gap_px          AS panel_gap_px,
-    pd.padding_json    AS panel_padding_json
+    pd.padding_json    AS panel_padding_json,
+    pd.params_json     AS panel_params_json
   FROM catalog_entity pe
   JOIN panel_detail pd ON pd.entity_id = pe.id
   WHERE pe.kind = 'panel'
@@ -111,6 +112,9 @@ async function main() {
           padding_json: typeof p.panel_padding_json === 'string'
             ? p.panel_padding_json
             : JSON.stringify(p.panel_padding_json ?? {}),
+          params_json: typeof p.panel_params_json === 'string'
+            ? p.panel_params_json
+            : JSON.stringify(p.panel_params_json ?? {}),
         },
         children,
       });

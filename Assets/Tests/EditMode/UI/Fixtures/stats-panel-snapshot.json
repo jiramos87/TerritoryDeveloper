@@ -1,0 +1,38 @@
+{
+  "snapshot_id": "stage4-stats-panel-fixture",
+  "kind": "panels",
+  "schema_version": 1,
+  "items": [
+    {
+      "panel": {
+        "slug": "stats_panel_city",
+        "layout": "vstack",
+        "gap_px": 4,
+        "padding_json": "{\"top\":8,\"right\":8,\"bottom\":8,\"left\":8}",
+        "params_json": "{\"scroll\":true}"
+      },
+      "children": [
+        { "ord": 1, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":1}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 2, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":2}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 3, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":3}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 4, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":4}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 5,  "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Treasury\",\"value\":\"0\",\"vu\":\"$\",\"delta\":\"+0\"}",       "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 6,  "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Income\",\"value\":\"0\",\"vu\":\"$/mo\",\"delta\":\"+0\"}",     "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 7,  "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Expenses\",\"value\":\"0\",\"vu\":\"$/mo\",\"delta\":\"-0\"}",   "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 8,  "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Bond debt\",\"value\":\"0\",\"vu\":\"$\",\"delta\":\"+0\"}",    "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 9,  "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Population\",\"value\":\"0\",\"vu\":\"\",\"delta\":\"+0\"}",   "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 10, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Workers\",\"value\":\"0\",\"vu\":\"\",\"delta\":\"+0\"}",      "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 11, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Happiness\",\"value\":\"0\",\"vu\":\"%\",\"delta\":\"+0\"}",   "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 12, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Migration\",\"value\":\"0\",\"vu\":\"/mo\",\"delta\":\"+0\"}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 13, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Total cells\",\"value\":\"0\",\"vu\":\"\",\"delta\":\"+0\"}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 14, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Zoned\",\"value\":\"0\",\"vu\":\"\",\"delta\":\"+0\"}",        "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 15, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Reserved\",\"value\":\"0\",\"vu\":\"\",\"delta\":\"+0\"}",     "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 16, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Roads\",\"value\":\"0\",\"vu\":\"km\",\"delta\":\"+0\"}",      "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 17, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Power\",\"value\":\"0\",\"vu\":\"MW\",\"delta\":\"+0\"}",       "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 18, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Water\",\"value\":\"0\",\"vu\":\"m3\",\"delta\":\"+0\"}",      "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 19, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Pollution\",\"value\":\"0\",\"vu\":\"%\",\"delta\":\"+0\"}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 20, "kind": "row", "params_json": "{\"kind\":\"row\",\"label\":\"Coverage\",\"value\":\"0\",\"vu\":\"%\",\"delta\":\"+0\"}",   "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" }
+      ]
+    }
+  ]
+}
