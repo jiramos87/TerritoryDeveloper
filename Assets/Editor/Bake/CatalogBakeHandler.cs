@@ -94,6 +94,10 @@ namespace TerritoryDeveloper.Editor.Bake
                     return BakeModal(panel, children, outDir);
                 case "vstack":
                     return BakeVstack(panel, children, outDir);
+                case "grid":
+                    return BakeGrid(panel, children, outDir);
+                case "free":
+                    return BakeFree(panel, children, outDir);
                 default:
                     throw new NotSupportedException($"layout primitive not supported: {panel.layout}");
             }

@@ -1,0 +1,21 @@
+{
+  "snapshot_id": "stage5-free-panel-fixture",
+  "kind": "panels",
+  "schema_version": 1,
+  "items": [
+    {
+      "panel": {
+        "slug": "resource_info_popup",
+        "layout": "free",
+        "gap_px": 0,
+        "padding_json": "{}",
+        "params_json": "{\"width_px\":240,\"height_px\":120}"
+      },
+      "children": [
+        { "ord": 1, "kind": "sprite", "params_json": "{\"x_px\":12,\"y_px\":12,\"w_px\":32,\"h_px\":32}",                    "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 2, "kind": "text",   "params_json": "{\"x_px\":56,\"y_px\":16,\"w_px\":160,\"h_px\":24,\"text\":\"Wood\"}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 3, "kind": "text",   "params_json": "{\"x_px\":56,\"y_px\":48,\"w_px\":160,\"h_px\":24,\"text\":\"42\"}",   "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" }
+      ]
+    }
+  ]
+}

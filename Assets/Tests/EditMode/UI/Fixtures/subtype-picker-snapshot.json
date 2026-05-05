@@ -1,0 +1,30 @@
+{
+  "snapshot_id": "stage5-subtype-picker-fixture",
+  "kind": "panels",
+  "schema_version": 1,
+  "items": [
+    {
+      "panel": {
+        "slug": "subtype_picker_rcis",
+        "layout": "grid",
+        "gap_px": 0,
+        "padding_json": "{\"top\":4,\"right\":4,\"bottom\":4,\"left\":4}",
+        "params_json": "{\"grid_cols\":4,\"cell_w_px\":72,\"cell_h_px\":72,\"spacing_x_px\":4,\"spacing_y_px\":4}"
+      },
+      "children": [
+        { "ord": 1,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":1}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 2,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":2}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 3,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":3}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 4,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":4}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 5,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":5}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 6,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":6}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 7,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":7}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 8,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":8}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 9,  "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":9}",  "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 10, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":10}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 11, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":11}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" },
+        { "ord": 12, "kind": "button", "params_json": "{\"kind\":\"button\",\"ord\":12}", "sprite_ref": "", "hover_sprite_ref": "", "pressed_sprite_ref": "", "disabled_sprite_ref": "" }
+      ]
+    }
+  ]
+}
