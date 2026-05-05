@@ -56,6 +56,11 @@ export function SearchBar() {
   );
 
   const [activeIdx, setActiveIdx] = useState(-1);
+  const [prevResults, setPrevResults] = useState(results);
+  if (prevResults !== results) {
+    setPrevResults(results);
+    setActiveIdx(-1);
+  }
   const activeRowId =
     activeIdx >= 0 && flatRows[activeIdx]
       ? `search-row-${flatRows[activeIdx]!.entity_id}`
@@ -73,10 +78,6 @@ export function SearchBar() {
   }, []);
 
   useGlobalHotkey({ onTrigger: openPanel, disabled: open });
-
-  useEffect(() => {
-    setActiveIdx(-1);
-  }, [results]);
 
   useEffect(() => {
     if (!open) return;

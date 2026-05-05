@@ -46,10 +46,11 @@ export function useSearchDebounce(q: string): SearchState {
     }
   }, []);
 
+  const trimmed = q.trim();
+
   useEffect(() => {
-    if (!q.trim()) {
+    if (!trimmed) {
       abortRef.current?.abort();
-      setState({ results: [], loading: false, error: null });
       return;
     }
 
@@ -57,11 +58,14 @@ export function useSearchDebounce(q: string): SearchState {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      void fetchResults(q, controller.signal);
+      void fetchResults(trimmed, controller.signal);
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [q, fetchResults]);
+  }, [trimmed, fetchResults]);
 
+  if (!trimmed) {
+    return { results: [], loading: false, error: null };
+  }
   return state;
 }

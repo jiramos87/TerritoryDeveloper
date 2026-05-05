@@ -30,7 +30,7 @@ describe("useSearchDebounce debounce semantics (fake timers)", () => {
 
   it("cancelling prior timer before debounce elapses = only final fires", () => {
     let count = 0;
-    let t1 = setTimeout(() => { count++; }, DEBOUNCE_MS);
+    const t1 = setTimeout(() => { count++; }, DEBOUNCE_MS);
     vi.advanceTimersByTime(DEBOUNCE_MS - 50);
     clearTimeout(t1);
     const t2 = setTimeout(() => { count++; }, DEBOUNCE_MS);
