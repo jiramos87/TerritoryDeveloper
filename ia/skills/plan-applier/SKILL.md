@@ -19,6 +19,8 @@ triggers:
   - plan-applier
   - apply §Plan Fix tuples
 model: inherit
+input_token_budget: 120000
+pre_split_threshold: 100000
 tools_role: pair-tail
 tools_extra: []
 caveman_exceptions:

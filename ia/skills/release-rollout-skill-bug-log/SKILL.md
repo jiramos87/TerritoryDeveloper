@@ -21,6 +21,8 @@ triggers:
   - release-rollout-skill-bug-log
   - skill iteration log entry
 model: inherit
+input_token_budget: 120000
+pre_split_threshold: 100000
 tools_role: lifecycle-helper
 tools_extra: []
 caveman_exceptions:

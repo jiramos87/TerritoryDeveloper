@@ -29,6 +29,8 @@ triggers:
   - dry-run skill plan
 argument_hint: {TARGET_COMMAND} {TARGET_ARGS...} [--out PATH] [--depth N] [--format md|yaml]
 model: inherit
+input_token_budget: 120000
+pre_split_threshold: 100000
 tools_role: standalone-pipeline
 tools_extra: []
 caveman_exceptions:

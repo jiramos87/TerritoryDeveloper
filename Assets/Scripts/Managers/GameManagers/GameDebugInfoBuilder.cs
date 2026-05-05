@@ -343,7 +343,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
                         ? $"Surface: {ctx.SurfaceHeight} ({ctx.Classification} id={ctx.WaterBodyId})"
                         : $"Surface: {ctx.SurfaceHeight}";
                 else
-                    surfaceLine = "Surface: dry";
+                    surfaceLine = $"Surface: {h}";
             }
 
             CityCell cell = gridManager.GetCell(x, y);

@@ -1,0 +1,12 @@
+{
+  "task_id": "TECH-10316",
+  "task_spec_stub": "",
+  "stage_bundle": {
+    "master_plan_slug": "prototype-first-methodology",
+    "stage_id": "1.6",
+    "stage_objectives": "Close the methodology iteration loop. Append \"Prototype-first deltas\" H2 to `docs/master-plan-execution-friction-log.md` per D12 — captures Stage 1.0 thinness misjudgments, §Iteration Roadmap unimplementables, retrofit cost vs benefit (Stage 1.5 first data point), validator false positives/negatives, author friction with §Tracer Slice / §Visibility Delta requirements. Apply §11 glossary deltas (Tracer Slice / Slice Fattening / Prototype-pillar discipline) via `npm run generate:ia-indexes`. Extract canonical rule doc to `ia/rules/prototype-first-methodology.md` (referenced from `agent-principles.md` per §8.2). `/skill-train` integration loop activated by friction-log section presence — no new skill code, but `/skill-train` retrospective now picks up methodology drift signals.",
+    "stage_exit": "- `docs/master-plan-execution-friction-log.md` carries new H2 section \"Prototype-first deltas\" per D12; section seeded with Stage 1.5 retrofit cost data point.\n- `ia/specs/glossary.md` carries 3 new rows (Tracer Slice, Slice Fattening, Prototype-pillar discipline) per §11 verbatim. `npm run generate:ia-indexes` clean exit.\n- `ia/rules/prototype-first-methodology.md` shipped as canonical rule doc (force-loaded — invariant **#12** compliant). Content extracted from §1, §4, §6 D8/D9/D10 lockdowns + §Tracer Slice / §Visibility Delta authoring guidance.\n- `ia/rules/agent-principles.md` carries new \"Prototype-first\" subsection under \"Spec authoring + validators\" linking to new rule doc per §8.2.\n- DEC-A22 surface_id re-confirmed pointing at `rules/prototype-first-methodology` (Stage 1.1 set the path-as-promise; Stage 1.6 lands the file at that path).\n- `npm run validate:all` green (rule doc + glossary + agent-principles edits all pass existing validators).\n- `/skill-train` dispatched once on friction-log new section as smoke; confirms retrospective loop picks up new drift signal source."
+  },
+  "work_items": [],
+  "invariants": []
+}

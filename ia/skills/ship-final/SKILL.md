@@ -33,6 +33,8 @@ triggers:
 argument_hint: "{SLUG}"
 model: opus
 reasoning_effort: high
+input_token_budget: 180000
+pre_split_threshold: 160000
 tools_role: pair-head
 tools_extra:
   - mcp__territory-ia__master_plan_state

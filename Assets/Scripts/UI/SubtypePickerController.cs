@@ -77,30 +77,73 @@ namespace Territory.UI
             if (panelRoot != null) return;
             Canvas canvas = FindObjectOfType<Canvas>();
             if (canvas == null) return;
+
+            // Bottom-strip horizontal picker (TECH-10500 + post-9.1 polish). Anchor bottom-stretch
+            // with right inset reserved for vertical toolbar strip on right edge of canvas.
             GameObject root = new GameObject("SubtypePickerRoot");
             root.transform.SetParent(transform, false);
             root.transform.SetAsLastSibling();
             RectTransform rt = root.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(360, 420);
-            rt.anchoredPosition = Vector2.zero;
-            var img = root.AddComponent<Image>();
-            img.color = uiTheme != null ? uiTheme.SurfaceCardHud : new Color(0.08f, 0.08f, 0.1f, 0.96f);
-            var v = root.AddComponent<VerticalLayoutGroup>();
-            v.spacing = 4;
-            v.padding = new RectOffset(10, 10, 10, 10);
-            v.childAlignment = TextAnchor.UpperCenter;
-            v.childControlWidth = true;
-            v.childControlHeight = false;
-            v.childForceExpandWidth = true;
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.sizeDelta = new Vector2(-200f, 140f);
+            rt.anchoredPosition = new Vector2(-100f, 24f);
+            var bg = root.AddComponent<Image>();
+            bg.color = uiTheme != null ? uiTheme.SurfaceCardHud : new Color(0.08f, 0.08f, 0.1f, 0.96f);
+
+            // Viewport — masked rect for horizontal scroll.
+            GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+            viewport.transform.SetParent(root.transform, false);
+            RectTransform vrt = viewport.GetComponent<RectTransform>();
+            vrt.anchorMin = Vector2.zero;
+            vrt.anchorMax = Vector2.one;
+            vrt.offsetMin = new Vector2(8f, 8f);
+            vrt.offsetMax = new Vector2(-8f, -8f);
+            var vbg = viewport.GetComponent<Image>();
+            vbg.color = new Color(1f, 1f, 1f, 0.04f);
+            var mask = viewport.GetComponent<Mask>();
+            mask.showMaskGraphic = true;
+
+            // Content — horizontal strip; ContentSizeFitter expands width to row count.
+            GameObject content = new GameObject("Content", typeof(RectTransform));
+            content.transform.SetParent(viewport.transform, false);
+            RectTransform crt = content.GetComponent<RectTransform>();
+            crt.anchorMin = new Vector2(0f, 0f);
+            crt.anchorMax = new Vector2(0f, 1f);
+            crt.pivot = new Vector2(0f, 0.5f);
+            crt.sizeDelta = new Vector2(0f, 0f);
+            crt.anchoredPosition = Vector2.zero;
+            var hlg = content.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 8;
+            hlg.padding = new RectOffset(8, 8, 6, 6);
+            hlg.childAlignment = TextAnchor.MiddleLeft;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = true;
+            var fitter = content.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            // ScrollRect drives horizontal scroll.
+            var scroll = root.AddComponent<ScrollRect>();
+            scroll.horizontal = true;
+            scroll.vertical = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 24f;
+            scroll.viewport = vrt;
+            scroll.content = crt;
+
             panelRoot = root;
+            rowContainer = content.transform;
         }
 
         private void EnsureUiBuilt()
         {
             if (uiBuilt) return;
             uiBuilt = true;
+            // rowContainer wired by EnsureRuntimePanelRootIfNeeded; legacy fallback for serialized panelRoot.
             if (rowContainer == null && panelRoot != null)
                 rowContainer = panelRoot.transform;
         }
@@ -156,26 +199,31 @@ namespace Territory.UI
 
         private void AddDensityRow(string label, System.Action onClick)
         {
-            GameObject row = new GameObject($"PickerRow_{spawnedRows.Count}", typeof(RectTransform), typeof(Button), typeof(Image));
+            // Tile in horizontal strip — fixed width, theme-tinted, single-line caption.
+            GameObject row = new GameObject($"PickerTile_{spawnedRows.Count}", typeof(RectTransform), typeof(Button), typeof(Image));
             row.transform.SetParent(rowContainer, false);
             var img = row.GetComponent<Image>();
             img.color = uiTheme != null ? uiTheme.SurfaceElevated : new Color(0.16f, 0.16f, 0.2f, 1f);
             var le = row.AddComponent<LayoutElement>();
-            le.minHeight = 36;
-            le.flexibleWidth = 1;
+            le.preferredWidth = 140;
+            le.minWidth = 120;
+            le.flexibleWidth = 0;
 
             GameObject labelObj = new GameObject("Label", typeof(RectTransform), typeof(Text));
             labelObj.transform.SetParent(row.transform, false);
             var lrt = labelObj.GetComponent<RectTransform>();
             lrt.anchorMin = Vector2.zero;
             lrt.anchorMax = Vector2.one;
-            lrt.sizeDelta = Vector2.zero;
+            lrt.offsetMin = new Vector2(6f, 6f);
+            lrt.offsetMax = new Vector2(-6f, -6f);
             var t = labelObj.GetComponent<Text>();
             t.text = label;
-            t.fontSize = 14;
+            t.fontSize = 13;
             t.alignment = TextAnchor.MiddleCenter;
             t.color = uiTheme != null ? uiTheme.TextPrimary : Color.white;
             t.raycastTarget = false;
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            t.verticalOverflow = VerticalWrapMode.Truncate;
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font != null) t.font = font;
 

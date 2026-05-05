@@ -35,6 +35,8 @@ triggers:
 argument_hint: "{slug} [--force-model {model}]"
 model: opus
 reasoning_effort: high
+input_token_budget: 180000
+pre_split_threshold: 160000
 tools_role: pair-head
 tools_extra:
   - mcp__territory-ia__router_for_task
@@ -48,6 +50,8 @@ tools_extra:
   - mcp__territory-ia__master_plan_bundle_apply
   - mcp__territory-ia__task_bundle_batch
   - mcp__territory-ia__plan_digest_verify_paths
+  - mcp__territory-ia__journal_append
+  - mcp__territory-ia__master_plan_change_log_append
 caveman_exceptions:
   - code
   - commits
@@ -59,7 +63,8 @@ hard_boundaries:
   - "Do NOT write `## §Plan Author` section — retired."
   - "Do NOT call `task_insert` / `stage_insert` / `master_plan_insert` / `task_spec_section_write` per row — single `master_plan_bundle_apply` only."
   - "Do NOT regress to per-Task authoring on token overflow — split into ⌈N/2⌉ bulk sub-passes; bundle still dispatches once after the last sub-pass."
-  - "Do NOT skip drift lint — anchor + glossary + retired-surface lint runs synchronously before bundle dispatch."
+  - "Do NOT skip drift lint — anchor + glossary + retired-surface lint runs synchronously before bundle dispatch. Findings go to in-memory buffer, NOT inline ctx preamble."
+  - "Do NOT write drift_lint_summary row before master_plan_bundle_apply succeeds — version row FK required (Review Note 5)."
   - "Do NOT call `lifecycle_stage_context` per Task — pre-fetch once at Phase 3."
   - "Do NOT write code, run verify, or flip Task status — handoff to `/ship-cycle` (or legacy `/ship-stage`) handles execution."
   - "Do NOT edit `ia/specs/glossary.md` — propose candidates in handoff `notes:` field only."
@@ -117,9 +122,33 @@ Schema validated by `tools/scripts/validate-handoff-schema.mjs` (TECH-12634).
 
 ## Phase 1 — Parse handoff YAML frontmatter
 
-Read `docs/explorations/{SLUG}.md`. Extract leading YAML block delimited by `---` lines. Parse with `yaml` module. Required top-level keys: `slug`, `target_version`, `stages[]`. Each stage requires `id`, `title`, `exit`, `red_stage_proof`, `tasks[]`. Each task requires `id`, `title`, `prefix`, `digest_outline`, `kind`. Optional: `parent_plan_id`, `depends_on`, `touched_paths`.
+Read `docs/explorations/{SLUG}.md`. Extract leading YAML block delimited by `---` lines. Parse with `yaml` module. Required top-level keys: `slug`, `target_version`, `stages[]`. Each stage requires `id`, `title`, `exit`, `red_stage_proof`, `tasks[]`. Each task requires `id`, `title`, `prefix`, `digest_outline`, `kind`. Optional: `parent_plan_slug`, `depends_on`, `touched_paths`.
 
 Missing frontmatter → halt with `STOPPED — handoff_yaml_missing: docs/explorations/{SLUG}.md`. `slug` mismatch → halt with `STOPPED — slug_mismatch: arg={SLUG} yaml={yaml.slug}`.
+
+### Phase 1 resume hook — phase_checkpoint read
+
+After parsing YAML, derive `resolved_phases` set:
+
+```
+IF yaml.target_version > 1 AND yaml.parent_plan_slug IS NOT NULL:
+    rows = journal_get(slug=SLUG, payload_kind="phase_checkpoint")
+    resolved_phases = { row.payload.phase_id for row in rows }
+ELSE:
+    resolved_phases = {}   # New plan — skip read entirely
+```
+
+Later phases (6, 7) check `if "ship-plan.{N}.{label}" in resolved_phases: skip`. Resume reader is read-only; no write at this point.
+
+Prior drift summary read (when `parent_plan_slug` non-null):
+
+```sql
+SELECT id, payload FROM ia_master_plan_change_log
+WHERE slug = $1 AND kind = 'drift_lint_summary'
+ORDER BY recorded_at DESC LIMIT 1
+```
+
+If row exists → Phase 6 may skip already-resolved drift items (use `payload.n_unresolved` as gate: 0 → drift clean from prior run).
 
 ---
 
@@ -191,7 +220,40 @@ Total input tokens (handoff YAML + SHARED_CONTEXT + TASK_BATCH) > 180k → split
 
 ## Phase 6 — Drift lint (synchronous; per task before bundle dispatch)
 
+**Ctx-discipline: in-memory buffer, not inline preamble.** Collect ALL drift findings into an in-memory
+`drift_findings` buffer object (do NOT append verbose findings to the author-prompt context). Buffer shape
+mirrors `drift_lint_summary` payload schema (`ia/rules/ship-stage-journal-schema.md §drift_lint_summary`).
+Phase 7 dispatches `master_plan_bundle_apply` FIRST, then writes `master_plan_change_log_append` row from
+the buffer. Author prompt at Phase 7 receives only: `drift_lint_summary_id={row_id} ({n_resolved} resolved,
+{n_unresolved} unresolved)` — the 1-line ref, not the full findings.
+
+**Resume read (parent_plan_slug non-null):** Phase 1 resume hook already queried prior `drift_lint_summary`
+row. If prior row has `n_unresolved=0` → drift clean from prior run; Phase 6 may skip re-lint of previously
+passing tasks. Flag each task: `"skip_drift_lint": true` when prior `decisions_resolved` includes the task
+anchor.
+
 Per composed §Plan Digest body, run three sub-lints:
+
+After completing all three sub-lints, write a phase checkpoint:
+
+```json
+{
+  "session_id": "{SESSION_ID}",
+  "slug": "{SLUG}",
+  "stage_id": "{first stage id}",
+  "phase": "ship-plan.6.drift_lint",
+  "payload_kind": "phase_checkpoint",
+  "payload": {
+    "phase_id": "ship-plan.6.drift_lint",
+    "decisions_resolved": ["drift_lint:anchor_pass", "drift_lint:glossary_pass", "drift_lint:retired_surface_pass"],
+    "pending_decisions": [],
+    "next_phase": "ship-plan.7.bundle_apply",
+    "ctx_drop_hint": ["drift_lint_inline_log"]
+  }
+}
+```
+
+Note: drift findings buffer is held **in-memory** at this point. Do NOT write `drift_lint_summary` row here — write AFTER `master_plan_bundle_apply` succeeds at Phase 7 (Review Note 5 — version row must exist first).
 
 ### 6.1 Anchor lint
 
@@ -248,6 +310,30 @@ Build the bundle jsonb shape:
 
 Single call: `mcp__territory-ia__master_plan_bundle_apply({ bundle })`. Returns `{plan_slug, stages_inserted, tasks_inserted}`. Any constraint failure rolls back the whole tx — re-author offending field then re-dispatch.
 
+After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drift lint summary in order:
+
+1. `journal_append` with `payload_kind=phase_checkpoint`:
+
+```json
+{
+  "session_id": "{SESSION_ID}",
+  "slug": "{SLUG}",
+  "phase": "ship-plan.7.bundle_apply",
+  "payload_kind": "phase_checkpoint",
+  "payload": {
+    "phase_id": "ship-plan.7.bundle_apply",
+    "decisions_resolved": ["bundle_apply:ok", "plan:{SLUG}:v{VERSION}:inserted"],
+    "pending_decisions": [],
+    "next_phase": "ship-plan.8.handoff",
+    "ctx_drop_hint": ["bundle_jsonb", "task_digest_bodies"]
+  }
+}
+```
+
+2. `master_plan_change_log_append` with `kind=drift_lint_summary` (payload = in-memory drift findings buffer from Phase 6). Returns `row_id`. Ref `drift_lint_summary_id={row_id}` stored for Phase 8 summary line.
+
+Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
+
 `task_key` is allocated by the Postgres function (per-prefix monotonic id from `ia_id_sequences`). `digest_body` is persisted to `ia_task_specs` rows under heading `§Plan Digest` — DB sole source of truth.
 
 ---
@@ -264,8 +350,8 @@ Per-stage:
 Per-task:
   {task_key}: §Plan Digest written ({n_work_items} work items); fold: {n_term_replacements}/{n_retired_refs_replaced}; glossary_warnings: {n_glossary_warnings}
   ...
-drift_warnings: {true|false}
-DB writes: 1 master_plan_bundle_apply OK; 0 task_spec_section_write (replaced by bundle).
+drift_lint_summary_id: {row_id} ({n_resolved} resolved, {n_unresolved} unresolved)
+DB writes: 1 master_plan_bundle_apply OK; 1 master_plan_change_log_append (drift_lint_summary); 0 task_spec_section_write (replaced by bundle).
 next=ship-cycle Stage 1.0
 ```
 

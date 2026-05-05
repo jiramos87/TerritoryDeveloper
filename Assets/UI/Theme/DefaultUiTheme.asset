@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a7f6e5d4c3b2a1098f7e6d5c4b3a201, type: 3}
   m_Name: DefaultUiTheme
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   primaryButtonColor: {r: 0.15686275, g: 0.17254902, b: 0.20784314, a: 1}
   primaryButtonTextColor: {r: 0.9098039, g: 0.91764706, b: 0.9411765, a: 1}
   primaryButtonFontSize: 18
@@ -36,6 +36,11 @@ MonoBehaviour:
   spacingUnit: 4
   panelPadding: 16
   paletteEntries:
+  - slug: canvas
+    value:
+      ramp:
+      - '#0a0e1a'
+      - '#1a2540'
   - slug: chassis-graphite
     value:
       ramp:
@@ -102,6 +107,12 @@ MonoBehaviour:
       - '#8e8772'
       - '#d8cfb6'
   frameStyleEntries:
+  - slug: panel
+    value:
+      edge: single
+      innerShadowAlpha: 0.4
+      catalog_sprite_slug: panel
+      sprite_ref_fallback: {fileID: 0}
   - slug: bezel
     value:
       edge: bezel
@@ -127,31 +138,45 @@ MonoBehaviour:
       catalog_sprite_slug: thin
       sprite_ref_fallback: {fileID: 0}
   fontFaceEntries:
+  - slug: display
+    value:
+      family: Inter
+      weight: 600
+      font_catalog_slug:
+      font_ref: {fileID: 0}
   - slug: engraved
     value:
       family: Helvetica Neue
       weight: 600
-      font_catalog_slug: 
+      font_catalog_slug:
       font_ref: {fileID: 0}
   - slug: faceplate
     value:
       family: Helvetica Neue
       weight: 500
-      font_catalog_slug: 
+      font_catalog_slug:
       font_ref: {fileID: 0}
   - slug: segmented
     value:
       family: Menlo
       weight: 700
-      font_catalog_slug: 
+      font_catalog_slug:
       font_ref: {fileID: 0}
   - slug: silkscreen
     value:
       family: Helvetica Neue
       weight: 600
-      font_catalog_slug: 
+      font_catalog_slug:
       font_ref: {fileID: 0}
   motionCurveEntries:
+  - slug: spring-soft
+    value:
+      kind: spring
+      stiffness: 220
+      damping: 18
+      c1: []
+      c2: []
+      durationMs: 0
   - slug: detent-click
     value:
       kind: cubic-bezier
@@ -213,6 +238,14 @@ MonoBehaviour:
       - 1
       durationMs: 200
   illuminationEntries:
+  - slug: led-amber
+    value:
+      color: '#fcb84a'
+      haloRadiusPx: 4
+  - slug: led-green
+    value:
+      color: '#4afc8a'
+      haloRadiusPx: 6
   - slug: amber
     value:
       color: '#ffb742'

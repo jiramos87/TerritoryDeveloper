@@ -26,6 +26,8 @@ export interface SkillFrontmatter {
   argument_hint?: string;
   model?: "opus" | "sonnet" | "haiku" | "inherit";
   reasoning_effort?: "low" | "medium" | "high";
+  input_token_budget?: number;
+  pre_split_threshold?: number;
   tools_role: string;
   tools_extra: string[];
   caveman_exceptions: string[];
@@ -249,6 +251,20 @@ export function validateFrontmatter(raw: Record<string, unknown>): SkillFrontmat
     errors.push(`reasoning_effort: invalid "${reasoning_effort}"`);
   }
 
+  const optionalPositiveInt = (key: string): number | undefined => {
+    const v = raw[key];
+    if (v === undefined) return undefined;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n <= 0) {
+      errors.push(`${key}: must be positive integer`);
+      return undefined;
+    }
+    return n;
+  };
+
+  const input_token_budget = optionalPositiveInt("input_token_budget");
+  const pre_split_threshold = optionalPositiveInt("pre_split_threshold");
+
   if (errors.length > 0) {
     throw new Error(`Frontmatter validation failed:\n  - ${errors.join("\n  - ")}`);
   }
@@ -265,6 +281,8 @@ export function validateFrontmatter(raw: Record<string, unknown>): SkillFrontmat
     argument_hint: optionalString("argument_hint"),
     model: model as SkillFrontmatter["model"] | undefined,
     reasoning_effort: reasoning_effort as SkillFrontmatter["reasoning_effort"] | undefined,
+    input_token_budget,
+    pre_split_threshold,
     tools_role,
     tools_extra,
     caveman_exceptions,

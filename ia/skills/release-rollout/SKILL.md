@@ -28,6 +28,8 @@ argument_hint: >-
   {UMBRELLA_SLUG} {ROW_SLUG} [OPERATION] (e.g. full-game-mvp zone-s-economy
   advance | status | next)
 model: inherit
+input_token_budget: 160000
+pre_split_threshold: 140000
 reasoning_effort: high
 tools_role: planner
 tools_extra:

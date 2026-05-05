@@ -89,6 +89,17 @@ function runChecks(slug: string, fm: SkillFrontmatter, findings: LintFinding[]):
   const commandPath = path.join(REPO_ROOT, ".claude", "commands", `${fm.name}.md`);
   const cursorPath = path.join(REPO_ROOT, ".cursor", "rules", `cursor-skill-${fm.name}.mdc`);
 
+  // Check 8: caller_agent-bearing skills SHOULD declare input_token_budget.
+  // MVP severity = warning; promote to error once all caller_agent skills carry budgets (Stage 6.B lockdown).
+  if (fm.caller_agent && fm.input_token_budget === undefined) {
+    findings.push({
+      slug,
+      check: "input-token-budget-required",
+      severity: "warning",
+      message: `skill has caller_agent="${fm.caller_agent}" but missing input_token_budget frontmatter field`,
+    });
+  }
+
   // Surfaceless subskill: no agent file → tools list moot. Skip tools-baseline.
   const hasAgentSurface = fs.existsSync(agentPath);
   if (hasAgentSurface) {

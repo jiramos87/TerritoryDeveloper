@@ -27,6 +27,8 @@ triggers:
 argument_hint: {ISSUE_ID} (e.g. TECH-42, BUG-17, FEAT-9)
 model: opus
 reasoning_effort: high
+input_token_budget: 180000
+pre_split_threshold: 160000
 tools_role: standalone-pipeline
 tools_extra:
   - mcp__territory-ia__backlog_issue

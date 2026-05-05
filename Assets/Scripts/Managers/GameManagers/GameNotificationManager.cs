@@ -88,6 +88,17 @@ public class GameNotificationManager : MonoBehaviour
     /// </summary>
     private void InitializeComponents()
     {
+        // Validate required components first — Inspector wiring may be missing on a freshly-baked HUD root.
+        if (notificationPanel == null)
+        {
+            Debug.LogError("GameNotificationManager: notificationPanel is not assigned — notifications disabled until SerializeField is wired in scene.");
+            return;
+        }
+        if (notificationText == null)
+        {
+            Debug.LogError("GameNotificationManager: notificationText is not assigned!");
+        }
+
         // Get or add CanvasGroup for fade effects
         notificationCanvasGroup = notificationPanel.GetComponent<CanvasGroup>();
         if (notificationCanvasGroup == null)
@@ -98,16 +109,6 @@ public class GameNotificationManager : MonoBehaviour
         // Start with notifications hidden
         notificationPanel.SetActive(false);
         notificationCanvasGroup.alpha = 0f;
-
-        // Validate required components
-        if (notificationText == null)
-        {
-            Debug.LogError("GameNotificationManager: notificationText is not assigned!");
-        }
-        if (notificationPanel == null)
-        {
-            Debug.LogError("GameNotificationManager: notificationPanel is not assigned!");
-        }
     }
 
     /// <summary>
@@ -154,6 +155,12 @@ public class GameNotificationManager : MonoBehaviour
     /// <param name="customDuration">Display duration (seconds).</param>
     public void PostNotification(string message, NotificationType type, float customDuration)
     {
+        // Skip silently when UI refs missing — avoids NRE in Awake propagating into game logic event paths.
+        if (notificationPanel == null || notificationText == null)
+        {
+            return;
+        }
+
         // Validate input
         if (string.IsNullOrEmpty(message))
         {
@@ -298,7 +305,7 @@ public class GameNotificationManager : MonoBehaviour
             currentDisplayCoroutine = null;
         }
 
-        notificationPanel.SetActive(false);
+        if (notificationPanel != null) notificationPanel.SetActive(false);
         isDisplayingMessage = false;
     }
 

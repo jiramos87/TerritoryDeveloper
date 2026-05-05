@@ -256,6 +256,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "skill-training::4",
   "skill-training::5",
   "skill-training::6",
+  "ship-protocol-v2::6",
   "sprite-gen::1",
   "sprite-gen::1.4",
   "sprite-gen::10",

@@ -130,6 +130,19 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         if (cameraController == null) cameraController = FindObjectOfType<CameraController>();
         if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
         if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
+
+        // Polish: enforce square panel ≥360×360 anchored bottom-right (Stage 9.1 collateral fix).
+        GameObject panelGo = miniMapPanel != null ? miniMapPanel : gameObject;
+        RectTransform panelRt = panelGo.GetComponent<RectTransform>();
+        if (panelRt != null)
+        {
+            panelRt.anchorMin = new Vector2(1f, 0f);
+            panelRt.anchorMax = new Vector2(1f, 0f);
+            panelRt.pivot = new Vector2(1f, 0f);
+            panelRt.sizeDelta = new Vector2(360f, 360f);
+            panelRt.anchoredPosition = new Vector2(-24f, 24f);
+            panelRt.localScale = Vector3.one;
+        }
     }
 
     void Start()

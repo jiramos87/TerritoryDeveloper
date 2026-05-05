@@ -27,6 +27,8 @@ argument_hint: >-
   (e.g. docs/foo.md C OR docs/foo.md --against docs/full-game-mvp-exploration.md OR --resume ship-protocol)
 model: inherit
 reasoning_effort: high
+input_token_budget: 160000
+pre_split_threshold: 140000
 tools_role: planner
 tools_extra:
   - Agent

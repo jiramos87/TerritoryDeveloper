@@ -28,6 +28,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnMediumResidentialButtonClicked()
@@ -36,6 +37,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnHeavyResidentialButtonClicked()
@@ -44,6 +46,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnLightCommercialButtonClicked()
@@ -52,6 +55,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnMediumCommercialButtonClicked()
@@ -60,6 +64,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnHeavyCommercialButtonClicked()
@@ -68,6 +73,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnLightIndustrialButtonClicked()
@@ -76,6 +82,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnMediumIndustrialButtonClicked()
@@ -84,6 +91,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     public void OnHeavyIndustrialButtonClicked()
@@ -92,6 +100,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RegisterToolSelected();
     }
 
     private void CheckAndShowDemandFeedback(Zone.ZoneType zoneType)
@@ -136,6 +145,7 @@ public partial class UIManager
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.StateServiceLightZoning;
         currentSubTypeId = -1;
+        RegisterToolSelected();
         ShowSubtypePicker(ToolFamily.StateService);
     }
 
@@ -169,12 +179,14 @@ public partial class UIManager
         {
             SetGhostPreview(gridManager.roadManager.roadTilePrefab1, 1);
         }
+        RegisterToolSelected();
     }
 
     public void OnGrassButtonClicked()
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Grass;
+        RegisterToolSelected();
     }
 
     public void OnNuclearPowerPlantButtonClicked()
@@ -189,6 +201,7 @@ public partial class UIManager
         selectedBuilding = powerPlant;
 
         cursorManager.ShowBuildingPreview(powerPlantAPrefab, 3);
+        RegisterToolSelected();
     }
 
     public Zone.ZoneType GetSelectedZoneType()

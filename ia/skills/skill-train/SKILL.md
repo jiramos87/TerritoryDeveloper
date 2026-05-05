@@ -23,6 +23,8 @@ triggers:
   - skill improvement proposal
 argument_hint: {SKILL_NAME} [--since YYYY-MM-DD] [--all] [--threshold N]
 model: inherit
+input_token_budget: 120000
+pre_split_threshold: 100000
 tools_role: lifecycle-helper
 tools_extra:
   - Write

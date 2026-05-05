@@ -1,7 +1,7 @@
 ---
 name: ship-cycle
-description: Stage-atomic batch ship-cycle. One Sonnet 4.6 inference body emits ALL tasks of one Stage with `<!-- TASK:{ISSUE_ID} START/END -->` boundary markers. Replaces `/ship-stage` Pass A per-task loop when stage fits one window. Per-task `unity:compile-check` gate + `task_status_flip(implemented)` after batch lands. Pass B (`verify-loop` + closeout) reuses `/ship-stage` machinery. Failure mode = `ia_stages.status='partial'` (mig 0069); resume re-enters at first non-done task. Token budget hard cap 80k input. Validate gate = `validate:fast` (TECH-12640) on cumulative stage diff. Triggers: "/ship-cycle {SLUG} {STAGE_ID}", "ship cycle stage", "stage-atomic batch ship". Argument order (explicit): SLUG first, STAGE_ID second.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__stage_bundle, mcp__territory-ia__task_spec_body, mcp__territory-ia__task_status_flip, mcp__territory-ia__task_status_flip_batch, mcp__territory-ia__unity_compile, mcp__territory-ia__journal_append
+description: Stage-atomic ship-cycle — full Pass A + Pass B. One inference emits all Tasks of one Stage with `<!-- TASK:{ISSUE_ID} START/END -->` boundary markers, flips each `pending → implemented`, then runs verify-loop on cumulative `git diff HEAD`, flips each `implemented → verified → done`, fires inline `stage_closeout_apply` + `master_plan_change_log_append({kind:'stage_closed'})` audit row, lands a single stage commit `feat({slug}-stage-{stage_id_db})`, records per-Task commit sha via `task_commit_record`, and writes `stage_verification_flip(verdict='pass', commit_sha)`. Failure mode = `ia_stages.status='partial'` (mig 0069); resume re-enters at first non-done task (DB `task_state` query, no git scan). Token budget hard cap 80k input on Pass A inference; over cap = fallback `/ship-stage-main-session` legacy two-pass adapter (kept as a separate surface, not part of new chain). Validate gate = `validate:fast` (TECH-12640) on cumulative stage diff. Triggers: "/ship-cycle {SLUG} {STAGE_ID}", "ship cycle stage", "stage-atomic batch ship". Argument order (explicit): SLUG first, STAGE_ID second.
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__stage_bundle, mcp__territory-ia__task_state, mcp__territory-ia__task_spec_body, mcp__territory-ia__task_status_flip, mcp__territory-ia__task_status_flip_batch, mcp__territory-ia__task_commit_record, mcp__territory-ia__stage_closeout_apply, mcp__territory-ia__stage_verification_flip, mcp__territory-ia__master_plan_change_log_append, mcp__territory-ia__master_plan_state, mcp__territory-ia__master_plan_next_pending, mcp__territory-ia__unity_compile, mcp__territory-ia__journal_append
 model: sonnet
 reasoning_effort: low
 ---
@@ -19,15 +19,20 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 
 # Mission
 
-Run `ia/skills/ship-cycle/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{SLUG}`. Stage-atomic batch ship-cycle: one Sonnet 4.6 inference emits ALL tasks of one Stage with boundary markers `<!-- TASK:{ISSUE_ID} START/END -->`. Per-task `unity:compile-check` gate + `task_status_flip(implemented)` after batch. Pass B (verify-loop + closeout + commit) handed to `/ship-stage` resume gate. Token budget hard cap 80k input — over cap = fallback ship-stage two-pass.
+Run `ia/skills/ship-cycle/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{SLUG}`. Stage-atomic full ship — Pass A (bulk emit + per-task compile + `task_status_flip(implemented)`) AND Pass B (verify-loop + verified→done flips + inline closeout + single stage commit + `stage_verification_flip`). Sole stage-driver in chain `design-explore → ship-plan → ship-cycle → ship-final`. Token budget hard cap 80k input on Pass A inference — over cap = fallback `/ship-stage-main-session` legacy two-pass adapter.
 
 # Phase sequence (matches SKILL frontmatter `phases:`)
 
 1. Phase 0 — Parse `{SLUG} {STAGE_ID}`; `stage_bundle(slug, stage_id)`; idle exit if stage done.
-2. Phase 1 — Token-budget preflight: sum bundle + per-task §Plan Digest bytes; over 80k → STOPPED + fallback handoff.
-3. Phase 2 — Single inference body emits all tasks with boundary markers.
-4. Phase 3 — Per task: `unity:compile-check` (when Assets/**/*.cs touched) → `task_status_flip(implemented)` → `journal_append`.
-5. Phase 4 — Hand off `Next: /ship-stage {SLUG} Stage {STAGE_ID}` for Pass B (verify-loop + closeout + single stage commit).
+2. Phase 1 — Token-budget preflight: sum bundle + per-task §Plan Digest bytes; over 80k → STOPPED + fallback handoff to `/ship-stage-main-session`.
+3. Phase 2 — Resume gate (DB `task_state` per task): pending → Pass A required; all implemented → PASS_B_ONLY; all terminal → idle exit.
+4. Phase 3 — Pass A — single inference body emits all tasks with boundary markers `<!-- TASK:{ISSUE_ID} START/END -->`.
+5. Phase 4 — Pass A — per task: `unity:compile-check` (when Assets/**/*.cs touched) → `task_status_flip(implemented)` → `journal_append(payload_kind=phase_checkpoint)`. NO per-task commits.
+6. Phase 5 — Pass B — verify-loop on cumulative `git diff HEAD`. Verdict pass required; fail → `STAGE_VERIFY_FAIL` (no rollback).
+7. Phase 6 — Pass B — per task: `task_status_flip(verified)` then `task_status_flip(done)`.
+8. Phase 7 — Pass B — inline closeout: `stage_closeout_apply(slug, stage_id)` + `master_plan_change_log_append({kind:'stage_closed'})`.
+9. Phase 8 — Pass B — single stage commit `feat({slug}-stage-{stage_id_db}): ...` + per-task `task_commit_record(commit_sha)` + `stage_verification_flip(verdict='pass', commit_sha)`.
+10. Phase 9 — Chain digest + next-stage resolver via `master_plan_state(slug)`: filed Stage → `/ship-cycle Stage N.M`; all done → `/ship-final {SLUG}`.
 
 # Boundary marker contract
 
@@ -41,20 +46,22 @@ HTML comments — invisible in rendered markdown, greppable by code-review / val
 
 # Hard boundaries
 
-- Do NOT bypass token-budget preflight — over cap → fallback ship-stage two-pass.
-- Do NOT commit per task — Pass B owns single stage commit.
+- Do NOT bypass token-budget preflight — over cap → fallback `/ship-stage-main-session`.
+- Pass A NEVER commits per Task — single stage commit at Phase 8 covers all Pass A + Pass B diffs.
 - Do NOT skip `unity:compile-check` per task on Assets/**/*.cs touched.
 - Do NOT cross stage boundary — strictly one Stage per invocation.
-- Do NOT flip status outside `pending → implemented` in Pass-A-equivalent.
-- Do NOT run `verify-loop` here — handed to ship-stage Pass B.
+- Pass A flips strictly `pending → implemented`; Pass B flips strictly `implemented → verified → done`.
+- Inline closeout (Phase 7) MANDATORY on green Pass B — never defer.
+- On Pass B verify-loop fail → `STAGE_VERIFY_FAIL` + worktree stays dirty + no rollback of Pass A flips.
+- Do NOT chain `/code-review` — operator runs out-of-band per Task (lifecycle row 9).
 - Do NOT write task spec bodies to filesystem — DB sole source of truth.
 
 # Escalation shape
 
 ```json
-{"escalation": true, "phase": <int>, "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed", "task_id": "<opt>", "stderr": "<opt>"}
+{"escalation": true, "phase": <int>, "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed | stage_verify_fail | closeout_apply_failed | commit_failed | verification_flip_failed", "task_id": "<opt>", "stderr": "<opt>"}
 ```
 
 # Output
 
-Caveman summary: `ship-cycle done. STAGE_ID={S} BATCH_SIZE={N} IMPLEMENTED={K} SKIPPED={M}` + per-task rows + token usage + `Next:` handoff.
+Caveman summary: `ship-cycle done. STAGE_ID={S} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff (`/ship-cycle Stage N.M` next | `/ship-final {SLUG}` | fallback `/ship-stage-main-session`).

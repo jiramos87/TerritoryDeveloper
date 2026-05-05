@@ -212,6 +212,9 @@ namespace Territory.UI
         /// </summary>
         private void EnsureCellDataPanelChrome()
         {
+            // Post-Stage-9.1 wrapper-flatten dropped GridCoordinatesText; rebuild in-code when SerializeField null.
+            EnsureCellDataPanelTextField();
+
             if (gridCoordinatesText == null)
                 return;
 
@@ -249,7 +252,7 @@ namespace Territory.UI
             chromeRtNew.anchorMax = textRt.anchorMax;
             chromeRtNew.pivot = textRt.pivot;
             chromeRtNew.anchoredPosition = textRt.anchoredPosition;
-            chromeRtNew.sizeDelta = textRt.sizeDelta + new Vector2(36f, 18f);
+            chromeRtNew.sizeDelta = textRt.sizeDelta + new Vector2(54f, 28f);
             chromeRtNew.localScale = textRt.localScale;
 
             GameObject bgGo = new GameObject("CellDataPanelBg", typeof(RectTransform), typeof(Image));
@@ -272,6 +275,52 @@ namespace Territory.UI
             EnsureCellDataPanelHudMount(chromeRtNew);
             AlignCellDataPanel(chromeRtNew);
             UpdateCellDataPanelScrollLayout(chromeRtNew, gridCoordinatesText);
+        }
+
+        /// <summary>
+        /// Rebuild lost legacy <c>GridCoordinatesText</c> when SerializeField null (Stage 9.1 wrapper-flatten collateral).
+        /// Mounts under same HUD layout root that hosts ControlPanel/MiniMapPanel.
+        /// </summary>
+        private void EnsureCellDataPanelTextField()
+        {
+            if (gridCoordinatesText != null) return;
+            Transform hudLayoutRoot = FindHudLayoutRootForRebuild();
+            if (hudLayoutRoot == null) return;
+
+            GameObject textGo = new GameObject("GridCoordinatesText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            textGo.transform.SetParent(hudLayoutRoot, false);
+            Text txt = textGo.GetComponent<Text>();
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (txt.font == null) txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            txt.fontSize = 18;
+            txt.color = Color.white;
+            txt.alignment = TextAnchor.UpperLeft;
+            txt.horizontalOverflow = HorizontalWrapMode.Wrap;
+            txt.verticalOverflow = VerticalWrapMode.Overflow;
+            txt.text = string.Empty;
+
+            RectTransform rt = textGo.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(1f, 0.5f);
+            rt.sizeDelta = new Vector2(270f, 270f);
+            rt.anchoredPosition = new Vector2(-16f, 0f);
+
+            gridCoordinatesText = txt;
+        }
+
+        /// <summary>
+        /// Parameterless HUD layout root resolver for in-code rebuild paths
+        /// (no anchor Transform available — walks the active scene by name).
+        /// </summary>
+        private static Transform FindHudLayoutRootForRebuild()
+        {
+            GameObject mm = GameObject.Find("MiniMapPanel");
+            if (mm != null && mm.transform.parent != null) return mm.transform.parent;
+            GameObject cp = GameObject.Find(ControlPanelObjectName);
+            if (cp != null && cp.transform.parent != null) return cp.transform.parent;
+            Canvas c = UnityEngine.Object.FindObjectOfType<Canvas>();
+            return c != null ? c.transform : null;
         }
 
         /// <summary>
@@ -666,7 +715,7 @@ namespace Territory.UI
             if (gridCoordinatesText == null)
                 return;
             gridCoordinatesText.color = Color.white;
-            gridCoordinatesText.fontSize = hudUiTheme != null ? Mathf.Max(hudUiTheme.FontSizeCaption, 11) : 12;
+            gridCoordinatesText.fontSize = hudUiTheme != null ? Mathf.Max(hudUiTheme.FontSizeCaption + 6, 17) : 18;
             gridCoordinatesText.horizontalOverflow = HorizontalWrapMode.Wrap;
             gridCoordinatesText.verticalOverflow = VerticalWrapMode.Overflow;
             // Scene default was MiddleLeft — large vertical chrome looked like "padding" while copy stayed flush left.

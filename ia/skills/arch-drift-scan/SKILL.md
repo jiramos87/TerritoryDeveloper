@@ -28,6 +28,8 @@ argument_hint: >-
   {SLUG?} — optional master-plan slug. Omit → scan all open plans (one report per plan).
 model: opus
 reasoning_effort: high
+input_token_budget: 160000
+pre_split_threshold: 140000
 tools_role: lifecycle-helper
 tools_extra:
   - mcp__territory-ia__arch_drift_scan

@@ -1,0 +1,1 @@
+{"run_id":"000e14ae63f09e45","recipe_slug":"noop-smoke","step_id":"echo_message","parent_path":"","kind":"bash","status":"ok","input_hash":"00617763a63cd8b6","output_hash":"542b557b89c4d118","started_at":"2026-04-29T12:33:01.434Z","finished_at":"2026-04-29T12:33:01.440Z","error_code":null}

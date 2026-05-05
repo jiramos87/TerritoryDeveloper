@@ -23,6 +23,8 @@ triggers:
   - claim section row
   - take section claim
 model: inherit
+input_token_budget: 120000
+pre_split_threshold: 100000
 tools_role: planner
 tools_extra:
   - mcp__territory-ia__section_claim

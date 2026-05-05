@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 using Territory.Economy;
 using Territory.Simulation;
 using Territory.Timing;
@@ -66,6 +67,7 @@ namespace Territory.UI.HUD
         [Header("Stats + MiniMap roots — toggle on click")]
         [SerializeField] private GameObject _cityStatsRoot;
         [SerializeField] private GameObject _miniMapRoot;
+        [SerializeField] private MiniMapController _miniMapController;
 
         [Header("Speed cluster — index 0 = paused, 1..4 = 0.5x/1x/2x/4x")]
         [SerializeField] private IlluminatedButton[] _speedButtons; // length 5: paused / 0.5x / 1x / 2x / 4x
@@ -83,12 +85,31 @@ namespace Territory.UI.HUD
             if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
 
+            // Post-Stage-9.1 wrapper-flatten: _miniMapRoot SerializeField slot left null in baked hud-bar.
+            // Resolve via MiniMapController.miniMapPanel (controller may live ON the panel itself).
+            if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>(true);
+            if (_miniMapRoot == null && _miniMapController != null)
+            {
+                _miniMapRoot = _miniMapController.miniMapPanel != null
+                    ? _miniMapController.miniMapPanel
+                    : _miniMapController.gameObject;
+            }
+
             // Self-wire button slots by IR iconSpriteSlug — resilient against bake-time reordering
             // of physical button instances. Inspector slots referencing legacy buttons (no slug match)
             // are preserved as-is.
             RebindButtonsByIconSlug();
 
             WireClickHandlers();
+
+            // Cleanup: destroy any pre-existing RuntimeMiniMapButton from prior builds (corner button retired).
+            Canvas hostCanvas = GetComponentInParent<Canvas>(true);
+            if (hostCanvas == null) hostCanvas = FindObjectOfType<Canvas>();
+            if (hostCanvas != null)
+            {
+                var stale = hostCanvas.transform.Find("RuntimeMiniMapButton");
+                if (stale != null) Destroy(stale.gameObject);
+            }
         }
 
         // Slug-to-slot map for hud-bar IR. Adapter clears ALL Inspector array slots, then walks child
@@ -119,7 +140,18 @@ namespace Territory.UI.HUD
                 var btn = buttons[i];
                 // BUG-62 — bake handler emits PascalCase iconSpriteSlug; switch literals lowercase. Normalize on read.
                 var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug?.ToLowerInvariant() : null;
-                if (string.IsNullOrEmpty(slug)) continue;
+                if (string.IsNullOrEmpty(slug))
+                {
+                    // Caption-text fallback — empty slug buttons (MAP, AUTO) bake with TMP caption only.
+                    var capTmp = btn != null ? btn.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+                    var cap = capTmp != null ? capTmp.text?.Trim().ToUpperInvariant() : null;
+                    if (!string.IsNullOrEmpty(cap))
+                    {
+                        if (cap == "MAP" && _miniMapButton == null) _miniMapButton = btn;
+                        else if (cap == "AUTO" && _autoButton == null) _autoButton = btn;
+                    }
+                    continue;
+                }
 
                 switch (slug)
                 {
@@ -135,6 +167,8 @@ namespace Territory.UI.HUD
                     // Sprite art pending; bake handler Step 16.G renders TMP "AUTO" caption fallback.
                     // Drives both AutoZoningManager + AutoRoadBuilder via HandleAutoClick.
                     case "auto-button-64": _autoButton = btn; break;
+                    // Bug #4 — preventive: bind if/when bake handler emits a minimap-button slug.
+                    case "minimap-button-64": _miniMapButton = btn; break;
                 }
             }
         }
@@ -257,6 +291,11 @@ namespace Territory.UI.HUD
 
         private void HandleMiniMapClick()
         {
+            if (_miniMapController != null)
+            {
+                _miniMapController.SetVisible(!_miniMapController.IsVisible);
+                return;
+            }
             if (_miniMapRoot != null) _miniMapRoot.SetActive(!_miniMapRoot.activeSelf);
         }
 
