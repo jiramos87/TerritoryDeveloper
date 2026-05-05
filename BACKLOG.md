@@ -355,6 +355,26 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 
 - [ ] **TECH-8950 — Game UI Stage 11 T11.4 — Cross-scene full-flow PlayMode smoke + verify:local Stage close** — Author `Assets/Scripts/Tests/UI/FullFlowSmokeTest.cs` PlayMode test addressing Stage 12 cross-scene gap. Load `Assets/Scenes/MainMenu.unity` → click Options (themed chrome post BUG-* fix) → click NewGame → assert `MainScene.unity` loaded → assert Stage 8 themed modal roots reachable (`Assets/Scenes/MainScene.unity:5824-5828`); drive splash → onboarding (assert `PlayerPrefs` `onboarding-complete` flipped) → tooltip hover → glossary panel open + ThemedList scroll → city-stats handoff. Assert per step: `Image.color.a > 0`; `TMP_Text.text` non-empty; no console errors; no `MissingReferenceException`; no legacy chrome GameObjects (`HUDBar/CityNameLabel`, `Toolbar/BuildingIcons`) in hierarchy. Run via `npm run unity:testmode-batch`. `npm run verify:local` exits 0. Stage close = MVP UI complete; player-visible checkpoint hit end-to-end. (`game-ui-design-system` Stage 11)
 
+- [ ] **TECH-14446 — Game UI catalog-bake Stage 9.1 T9.1.1 — Audit + path rewrite preflight** — `ui_tree_walk` snapshot of `UI Canvas` root + Grep `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` for `UI Canvas/Canvas/` scene-path literals; produce re-parent map (child name -> new parent path). Touches ≤2 files. (`game-ui-catalog-bake` Stage 9.1)
+  - Type: tech-debt / preflight
+  - Files: `Assets/Scenes/MainScene.unity` (read-only via bridge), `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` (grep targets)
+  - Notes: `ui_tree_walk` snapshot of UI Canvas root + Grep for `UI Canvas/Canvas/` scene-path literals; produce re-parent map (child name -> new parent path). Output = working memory anchor for T9.1.2.
+  - Acceptance: re-parent map captured (child -> new parent path) for every legacy descendant under `UI Canvas/Canvas/`; code path-literal occurrences enumerated in §Plan Digest §Work Items.
+
+- [ ] **TECH-14447 — Game UI catalog-bake Stage 9.1 T9.1.2 — Flatten + re-parent legacy UI children + delete wrapper GameObjects** — Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)`; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Touches `MainScene.unity` + any code path-rewrites surfaced by T9.1.1 (2-3 files). (`game-ui-catalog-bake` Stage 9.1)
+  - Type: tech-debt / scene mutation
+  - Files: `Assets/Scenes/MainScene.unity`, code paths surfaced by T9.1.1
+  - Notes: Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on wrapper Canvas hosts; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Re-parent map from T9.1.1 drives bridge calls.
+  - Acceptance: every legacy child re-parented under `UI Canvas` root (no `Canvas/` wrapper segment); `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)` deleted; DateText Canvas + CanvasScaler stripped; T8.5 `CellDataPanelBindingTest` still green; `npm run unity:compile-check` exits 0.
+  - Depends on: TECH-14446 (re-parent map from preflight)
+
+- [ ] **TECH-14448 — Game UI catalog-bake Stage 9.1 T9.1.3 — Tighten SingleRootCanvasTest invariant + add descendant-ban test** — Rewrite `MainScene_HasSingleRootCanvas_NamedUiCanvas` to assert `Object.FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` AND root name == `UI Canvas`. Add `MainScene_NoDescendantCanvases_UnderRoot` asserting every Canvas's `transform.parent == null`. Touches `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs` (1 file). (`game-ui-catalog-bake` Stage 9.1)
+  - Type: tech-debt / test invariant
+  - Files: `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs`
+  - Notes: Rewrite existing assertion to use `FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` + root name check. Add second test asserting `transform.parent == null` for every Canvas. Closes Stage 8 D9 letter-vs-spirit gap (current test filters by `transform.parent == null` so descendant Canvases slip through).
+  - Acceptance: tightened invariant test green on flat MainScene; descendant-ban test green on flat scene; both fail-loudly if wrapper Canvas re-introduced; `npm run unity:compile-check` exits 0.
+  - Depends on: TECH-14447 (flat MainScene state required for tightened invariant to pass)
+
 ## Economic depth lane
 
 Transform economy from "money goes up forever" → genuine city-builder sim w/ tension, feedback loops, player-visible consequences. **Sequential dependency order:** dynamic happiness (done — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **tax→demand feedback** (shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) + **FEAT-53** (districts) extend spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.

@@ -279,3 +279,67 @@ Post-mutation scene state: 0 refs to dead snake GUID (`a726c90beca40467aabc8e894
 | Bridge mutations | none — read-only inventory pass |
 
 **Ship status:** Pass A complete (T8.1 + T8.2 + T8.4 + T8.5 + T8.6 + T8.3 all implemented). Resume → Pass B verify-loop + Phase 7 closeout + Phase 8 stage commit.
+
+**Pass B + closeout findings (Stage 8):**
+
+| Phase | Result | Detail |
+|---|---|---|
+| Compile gate | pass | `unity_compile(action=request_compile_and_wait)` against running Editor → `compilation_failed: false` |
+| EditMode test gate | pass (Stage 8 surface) | `npm run unity:test-editmode` → 211 passed / 22 skipped / 6 failed; all 5 Stage 8 tests green (`SingleRootCanvasTest`, `HudBarDedupTest`, `SubTypePickerParityTest`, `CellDataPanelBindingTest`, `EscStackStateMachineTest`) |
+| Out-of-scope failures | 6 (pre-existing) | 5 Economy fails (`MaintenanceRegistryTests.Contributors_Sorted_By_Id_Ordinal`, 3× `TreasuryFloorClampServiceTests`, `ZoneSubTypeRegistryCatalogBackedTests.SubTypeIds_CatalogBacked_DisplayAndCents_MatchFixture`) + 1 `HudBarBakeDeterminismTest` (Stage 5/6 bake-test hygiene gap — sibling tests don't clean Unity-auto-renamed numbered duplicates in TearDown) — all pre-Stage-8 |
+| HudBarDedupTest fix | scrub-then-assert | Test body scrubs numbered `_test_HudBar*` siblings before asserting count=0; root cause = sibling bake tests' TearDown gap (out of Stage 8 scope) |
+| Per-task verified→done | 6 flips OK | TECH-14097..14102 all flipped via `task_status_flip` (verified → done) |
+| Stage closeout | DB OK | `stage_closeout_apply(slug, stage_id=8)` → `archived_task_count=6`, `stage_status=done` |
+| Stage commit | sha `30123f21` | 19 files: 4 modified + 2 deleted + 13 new (5 tests + 5 .meta + 2 docs + 1 BACKLOG.md whitespace) |
+| Per-task commit records | 6 OK | `task_commit_record(task_id, commit_sha=30123f21)` × 6 |
+| Stage verification flip | pass | `stage_verification_flip(verdict=pass, commit_sha=30123f21)` |
+| Change-log audit | entry 2507 | `master_plan_change_log_append(kind=stage_closed, sha=30123f21)` |
+
+**Stage 8 — DONE.** Master plan `game-ui-catalog-bake` Stage 8 fully shipped via `/ship-stage-main-session` no-subagent path.
+
+---
+
+## Stage 9 — Canvas wrapper flatten + UI re-parent
+
+Post-Stage-8 user-surfaced gap. Stage 8 D9 invariant pinned single ROOT Canvas (`transform.parent == null`) but did NOT ban descendant Canvas components. `ui_tree_walk` on MainScene returned `canvas_count: 4` — one root (`UI Canvas`, 1920×1080 ScreenSpaceOverlay) plus three vestigial wrappers under it. Legacy hand-authored game-UI children (CellDataPanel, ControlPanel, BuildingSelectorPopupPanel, DataPanelButtons) sit under the wrapper `UI Canvas/Canvas` (800×600) — children position relative to wrapper rect, not root rect. Visible game-view symptom: CellDataPanel renders centered relative to wrapper instead of anchored relative to UI Canvas root.
+
+### Chosen Approach
+
+Flatten the wrapper Canvas chain in MainScene via Unity bridge mutations. Re-parent every legacy child of `UI Canvas/Canvas/...` directly under `UI Canvas/...`, delete the two empty / near-empty wrapper GameObjects (`UI Canvas/Canvas`, `UI Canvas/Canvas (Game UI)`) plus the inactive WorldSpace `Canvas` micro-opt on `DateText`, then tighten `SingleRootCanvasTest` to assert `Object.FindObjectsOfType<Canvas>().Length == 1` (no descendants). Outcome: every UI child anchors against the 1920×1080 root rect; visible repositioning of CellDataPanel + ControlPanel + DataPanelButtons under correct root anchors; root-canvas test enforces flatten in CI.
+
+### Architecture
+
+Entry / exit points (touched surfaces):
+
+- `Assets/Scenes/MainScene.unity` — wrapper hierarchy `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)` + `UI Canvas/Canvas/DataPanelButtons/DatePanel/DateText` Canvas component.
+- `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs` — current root-only assertion at lines 22–49.
+- `Assets/Scripts/UI/UIManager.cs` partial set — any code that references `UI Canvas/Canvas/...` paths needs path-rewrite (audit via Grep before re-parent).
+- `mcp__territory-ia__unity_bridge_command` kinds used: `ui_tree_walk` (audit) → `set_gameobject_parent` (re-parent each legacy child) → `delete_gameobject` (drop wrappers) → `save_scene` (persist).
+
+### Subsystem Impact
+
+- **UI scene graph** — anchor chain shifts for every re-parented child; `RectTransform` `anchoredPosition` may need rebake against root rect after re-parent (Unity preserves world position with `worldPositionStays=true` but anchors recompute against new parent rect).
+- **Catalog-baked prefabs** — already direct children of `UI Canvas` (not affected). Only legacy hand-authored children move.
+- **Tests** — `SingleRootCanvasTest.cs` invariant tightens; sibling EditMode tests scoped to specific scene paths may need path updates if they reference `UI Canvas/Canvas/...`.
+- **Invariants** — touches Unity invariant 11 (UI hierarchy stability for binding tests). Re-parent must preserve scene-path references in `T8.5 CellDataPanelBindingTest.cs` (`UIManager` Inspector field bindings).
+
+### Implementation Points
+
+1. **Audit + path rewrite preflight** — `ui_tree_walk` snapshot of `UI Canvas` root; Grep `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` for any `UI Canvas/Canvas/` literal strings or scene-path refs; produce re-parent map (child name → new parent path).
+2. **Flatten + re-parent** — bridge `set_gameobject_parent({target_path: "UI Canvas/Canvas/{Child}", new_parent_path: "UI Canvas", world_position_stays: true})` per legacy child (CellDataPanel, ControlPanel, BuildingSelectorPopupPanel, DataPanelButtons + siblings). Delete `UI Canvas/Canvas`, `UI Canvas/Canvas (Game UI)` GameObjects via `delete_gameobject`. Remove dead `Canvas` + `CanvasScaler` components from `DateText` via `remove_component`. `save_scene`.
+3. **Tighten test** — rewrite `SingleRootCanvasTest.MainScene_HasSingleRootCanvas_NamedUiCanvas` to assert `Object.FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` (no descendant Canvas allowed) AND root name == "UI Canvas". Add second test `MainScene_NoDescendantCanvases_UnderRoot` asserting every Canvas's `transform.parent == null`.
+
+Stage cardinality: 3 tasks (audit + flatten + test-tighten). Sized 2-5 files each per master-plan task heuristic.
+
+### Locked decisions
+
+- **Re-parent over delete-and-rebuild.** Preserving Inspector field bindings on legacy children avoids regressing T8.5 binding test + scene wiring already pinned by Stage 8 audit.
+- **`world_position_stays: true`** on every re-parent call — keeps visible position stable mid-mutation; anchor rebake is the explicit deliverable, not an accidental side-effect.
+- **Test tightens, not loosens.** New invariant: `Canvas` component count globally == 1, not just root count. Closes Stage 8 D9 letter-vs-spirit gap.
+
+### Findings log (Stage 9)
+
+| Date | Task | Finding |
+|---|---|---|
+| 2026-05-05 | T9.1.1 (TECH-14446) | Audit doc shipped at `docs/game-ui-catalog-bake-stage-9-canvas-flatten.md`. Re-parent map: 4 children under `UI Canvas/Canvas` (ControlPanel, DebugPanel, ProposalUI, MiniMapPanel) — all `world_position_stays: true`. Wrapper deletes: `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)` (latter empty leaf). Component-removal: `DateText` Canvas + CanvasScaler at post-re-parent path `UI Canvas/ControlPanel/DataPanelButtons/DatePanel/DateText`. Code path-rewrite scan: zero hits in `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` — pure scene-graph mutation, no source edits required. |
+
