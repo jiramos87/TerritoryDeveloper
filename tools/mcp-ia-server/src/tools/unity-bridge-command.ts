@@ -218,7 +218,9 @@ const unityBridgeCommandInputShape = {
   value: z
     .string()
     .optional()
-    .describe("assign_serialized_field: primitive value as string (int, float, bool, string, vector3 as 'x,y,z') or short component type name when value_kind=component_ref."),
+    .describe(
+      "primitive value as string (int/float/bool/string; vector3 'x,y,z'); short component type name when value_kind=component_ref.",
+    ),
   value_object_path: z
     .string()
     .optional()
