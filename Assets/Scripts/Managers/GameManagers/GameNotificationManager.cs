@@ -26,6 +26,10 @@ public class GameNotificationManager : MonoBehaviour
     [SerializeField] private float fadeOutDuration = 0.5f;
     [SerializeField] private int maxQueueSize = 5;
 
+    [Header("SFX — TECH-15225")]
+    [SerializeField] private AudioClip sfxNotificationShow;
+    [SerializeField] private AudioClip sfxErrorFeedback;
+
     [Header("Message Categories")]
     [SerializeField] private Color errorColor = Color.red;
     [SerializeField] private Color warningColor = Color.yellow;
@@ -228,8 +232,9 @@ public class GameNotificationManager : MonoBehaviour
         // Setup message content and styling
         SetupNotificationDisplay(notification);
 
-        // Fade in
+        // Fade in + panel-show SFX (TECH-15225).
         notificationPanel.SetActive(true);
+        UiSfxPlayer.Play(notification.type == NotificationType.Error ? sfxErrorFeedback : sfxNotificationShow);
         yield return StartCoroutine(FadeCanvasGroup(notificationCanvasGroup, 0f, 1f, fadeInDuration));
 
         // Display duration
