@@ -303,7 +303,7 @@ Build the bundle jsonb shape:
     { "stage_id": "{id}", "title": "{title}", "exit_criteria": "{exit}", "red_stage_proof": "{red_stage_proof}", ... }
   ],
   "tasks": [
-    { "task_key": "{prefix}-{id}", "stage_id": "{stage_id}", "prefix": "{prefix}", "title": "{title}", "depends_on": [...], "kind": "{kind}", "touched_paths": [...], "digest_body": "{composed §Plan Digest body}" }
+    { "task_key": "{prefix}-{id}", "stage_id": "{stage_id}", "prefix": "{prefix}", "title": "{title}", "depends_on": [...], "kind": "{kind}", "touched_paths": [...], "body": "{composed §Plan Digest body}" }
   ]
 }
 ```
@@ -334,7 +334,7 @@ After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drif
 
 Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
 
-`task_key` is allocated by the Postgres function (per-prefix monotonic id from `ia_id_sequences`). `digest_body` is persisted to `ia_task_specs` rows under heading `§Plan Digest` — DB sole source of truth.
+`task_key` is allocated by the Postgres function (per-prefix monotonic id from `ia_id_sequences`). The composed §Plan Digest is sent in the `body` field per task and persisted to `ia_tasks.body` — DB sole source of truth (read back via `task_spec_body` MCP).
 
 ---
 
