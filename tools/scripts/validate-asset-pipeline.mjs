@@ -87,6 +87,44 @@ async function main() {
       faults.push(`orphaned asset_detail rows (entity_id not in catalog_entity): ${ids}`);
     }
 
+    // ── sprite-catalog schema check ──────────────────────────────────────────
+    // TECH-15233 — Stage 9.6 game-ui-catalog-bake.
+    // Validates sprite_catalog rows: slug non-empty, kind=sprite, path file-prefix plausible.
+    let spriteFaults = [];
+    let spriteTotal = 0;
+    try {
+      const { rows: spriteRows } = await client.query(
+        `SELECT id, slug, kind, path, tier FROM sprite_catalog`,
+      );
+      spriteTotal = spriteRows.length;
+      for (const row of spriteRows) {
+        const prefix = `[sprite/${row.slug ?? "<null>"}]`;
+        if (!row.slug || row.slug.trim() === "") {
+          spriteFaults.push(`${prefix} slug empty or null`);
+        }
+        if (row.kind !== "sprite") {
+          spriteFaults.push(`${prefix} kind="${row.kind}" expected "sprite"`);
+        }
+        if (!row.path || row.path.trim() === "") {
+          spriteFaults.push(`${prefix} path empty or null`);
+        } else if (!row.path.startsWith("Assets/")) {
+          spriteFaults.push(`${prefix} path="${row.path}" does not start with "Assets/"`);
+        }
+        if (row.tier !== "sprite-catalog") {
+          spriteFaults.push(`${prefix} tier="${row.tier}" expected "sprite-catalog"`);
+        }
+      }
+    } catch (err) {
+      // sprite_catalog table absent (pre-migration run) — skip gracefully.
+      if (err.message && err.message.includes("sprite_catalog")) {
+        console.log("asset-pipeline: sprite-catalog table absent — skipping sprite-catalog check");
+      } else {
+        spriteFaults.push(`sprite-catalog query error: ${err.message}`);
+      }
+    }
+
+    faults.push(...spriteFaults);
+
     if (faults.length > 0) {
       console.error(`asset-pipeline: FAIL — ${faults.length} fault(s):`);
       for (const f of faults) console.error(`  ${f}`);
@@ -94,7 +132,9 @@ async function main() {
     }
 
     const total = rows.length;
-    console.log(`asset-pipeline: green (${total} row${total !== 1 ? "s" : ""} validated)`);
+    console.log(
+      `asset-pipeline: green (${total} asset-registry row${total !== 1 ? "s" : ""} + ${spriteTotal} sprite-catalog row${spriteTotal !== 1 ? "s" : ""} validated)`,
+    );
     process.exit(0);
   } finally {
     await client.end();
