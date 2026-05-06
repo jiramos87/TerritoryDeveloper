@@ -26,6 +26,16 @@ import yaml from "js-yaml";
 const PREFIX_ENUM = new Set(["TECH", "FEAT", "BUG", "ART", "AUDIO"]);
 const KIND_ENUM = new Set(["code", "doc-only", "mcp-only"]);
 
+// Wrong-key aliases that masquerade as handoff frontmatter. If any of these
+// appear without canonical `slug`, treat as authoring drift (not silent skip).
+const WRONG_KEY_ALIASES = {
+  plan_slug: "slug",
+  plan_title: "(no canonical equivalent — drop; title lives in `master_plan_state`)",
+  plan_shape: "(no canonical equivalent — drop)",
+  parent_tag: "parent_plan_id",
+  ship_plan_ready: "(no canonical equivalent — drop; readiness is implicit when frontmatter validates)",
+};
+
 function emitError(file, field, expected, got) {
   process.stderr.write(
     JSON.stringify({ file, field, expected, got }) + "\n"
@@ -67,6 +77,21 @@ function validateTopLevel(file, fm, errors) {
   // Skip non-handoff frontmatter (exploration docs may carry other YAML shapes too).
   // Heuristic: must carry `slug` AND (`stages` OR `target_version`) to be considered a handoff.
   if (!("slug" in fm)) {
+    // Catch wrong-key aliases before silent-skip: if frontmatter looks like an
+    // attempted handoff (uses any known alias), emit explicit error instead of
+    // silently treating as a non-handoff doc.
+    const aliasesFound = Object.keys(WRONG_KEY_ALIASES).filter((k) => k in fm);
+    if (aliasesFound.length > 0) {
+      for (const alias of aliasesFound) {
+        emitError(
+          file,
+          `<frontmatter>.${alias}`,
+          `canonical key '${WRONG_KEY_ALIASES[alias]}'`,
+          `wrong-key alias '${alias}' (frontmatter looks like a handoff but uses non-canonical schema; rewrite to canonical shape per ship-plan SKILL.md Phase 1)`
+        );
+      }
+      return true;
+    }
     // Not a handoff doc — silent pass. Allows exploration docs without handoff.
     return false;
   }
@@ -129,6 +154,10 @@ function validateStage(file, stage, idx, errors) {
 
 function validateTask(file, task, sIdx, tIdx) {
   const ctx = `stages[${sIdx}].tasks[${tIdx}]`;
+  if (task === null || typeof task !== "object" || Array.isArray(task)) {
+    emitError(file, ctx, "task object", typeof task === "string" ? `string '${task}' (tasks must be objects with id/title/prefix/digest_outline/kind, not bare slug strings)` : String(task));
+    return;
+  }
   for (const k of ["id", "title", "prefix", "digest_outline", "kind"]) {
     if (!(k in task)) {
       emitError(file, `${ctx}.${k}`, "non-empty string", "undefined");

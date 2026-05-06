@@ -7,7 +7,8 @@
     "validate:retired-skill-refs",
     "validate:plan-digest-coverage",
     "validate:seeded-task-stale",
-    "validate:asset-pipeline"
+    "validate:asset-pipeline",
+    "validate:drift-lint"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [
@@ -105,6 +106,15 @@
     ],
     "tools/scripts/validate-sprite-gen-schema.ts": [
       "validate:sprite-gen-schema"
+    ],
+    "Assets/Scripts/**/*.cs": [
+      "validate:single-esc-handler"
+    ],
+    "tools/scripts/validate-single-esc-handler.mjs": [
+      "validate:single-esc-handler"
+    ],
+    "tools/scripts/validate-drift-lint.mjs": [
+      "validate:drift-lint"
     ],
     "Assets/UI/**": [
       "validate:ui-prefab-layout-coverage"

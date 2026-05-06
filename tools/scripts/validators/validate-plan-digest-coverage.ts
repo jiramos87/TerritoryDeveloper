@@ -61,12 +61,19 @@ async function main() {
       process.exit(0);
     }
 
+    // Scope: only tasks whose parent master plan is active (not grandfathered,
+    // not closed). Drops null-slug orphans + grandfather-plan tasks that
+    // predate the §Plan Digest requirement. Mirrors the partition pattern
+    // in `validate-plan-red-stage.mjs` (TECH-10896).
     const res = await pool.query<TaskCoverageRow>(
-      `SELECT task_id, slug, stage_id, title,
-              COALESCE(body, '') AS body
-         FROM ia_tasks
-        WHERE status NOT IN ('done', 'archived')
-        ORDER BY slug, stage_id, task_id`,
+      `SELECT t.task_id, t.slug, t.stage_id, t.title,
+              COALESCE(t.body, '') AS body
+         FROM ia_tasks t
+         JOIN ia_master_plans p ON p.slug = t.slug
+        WHERE t.status NOT IN ('done', 'archived')
+          AND COALESCE(p.tdd_red_green_grandfathered, FALSE) = FALSE
+          AND p.closed_at IS NULL
+        ORDER BY t.slug, t.stage_id, t.task_id`,
     );
 
     const missing: TaskCoverageRow[] = [];
