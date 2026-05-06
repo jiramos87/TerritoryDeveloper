@@ -41,6 +41,9 @@ namespace Territory.UI
         /// <summary>Stage 9.8 (TECH-15897) — contributor registry for Roads/Forests/Power/Water families. Inspector first; Awake falls back (invariant #4).</summary>
         [SerializeField] private ContributorArchetypeRegistry contributorArchetypeRegistry;
 
+        /// <summary>Stage 9.8 fix-in-place — scene zone prefab source for R/C/I picker tile sprite. Awake fallback to FindObjectOfType.</summary>
+        [SerializeField] private ZoneManager zoneManager;
+
         [Header("SFX — TECH-15225")]
         [SerializeField] private AudioClip sfxPanelOpen;
         [SerializeField] private AudioClip sfxPanelClose;
@@ -63,8 +66,17 @@ namespace Territory.UI
                 registry = FindObjectOfType<ZoneSubTypeRegistry>();
             if (uiAssetCatalog == null)
                 uiAssetCatalog = FindObjectOfType<UiAssetCatalog>();
+            if (uiAssetCatalog == null)
+            {
+                // Stage 9.7 missed scene-wiring; lazy-spawn host so picker panel/archetype defaults
+                // (matching 0080 seed) become available without a scene edit.
+                var go = new GameObject("UiAssetCatalog");
+                uiAssetCatalog = go.AddComponent<UiAssetCatalog>();
+            }
             if (contributorArchetypeRegistry == null)
                 contributorArchetypeRegistry = FindObjectOfType<ContributorArchetypeRegistry>();
+            if (zoneManager == null)
+                zoneManager = FindObjectOfType<ZoneManager>();
             EnsureRuntimePanelRootIfNeeded();
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -195,74 +207,51 @@ namespace Territory.UI
             }
         }
 
-        /// <summary>Stage 9.8 (TECH-15897) — emit one tile per <see cref="ContributorArchetypeRegistry"/> entry for the given family.</summary>
+        /// <summary>
+        /// Stage 9.8 fix-in-place — scene-prefab-driven family rows.
+        /// Picker tile sprite = SpriteRenderer.sprite from same prefab the player will place.
+        /// Bypasses broken contributor-json prefabPath="Buildings/*" (those prefabs live in Assets/Prefabs/, not Resources/).
+        /// </summary>
         private void BuildContributorRows(ToolFamily family)
         {
-            if (contributorArchetypeRegistry == null)
+            if (uiManager == null) return;
+            switch (family)
             {
-                Debug.LogWarning($"[SubtypePickerController] ContributorArchetypeRegistry null — no tiles for {family}.");
-                return;
-            }
-            var entries = contributorArchetypeRegistry.GetEntries(family);
-            for (int i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-                int key = i;
-                string label = entry.subtype;
-                Sprite icon = null;
-                if (uiAssetCatalog != null && !string.IsNullOrEmpty(entry.iconSlug))
-                    uiAssetCatalog.TryGetSprite(entry.iconSlug, out icon);
-
-                // Capture entry for closure.
-                var capturedEntry = entry;
-                Action onConfirm = () => OnContributorTileConfirmed(capturedEntry);
-                AddIconTile(key, label, icon, onConfirm);
+                case ToolFamily.Power:
+                    AddPrefabTile(0, "Power Plant", uiManager.powerPlantAPrefab, () => uiManager.OnNuclearPowerPlantButtonClicked());
+                    break;
+                case ToolFamily.Water:
+                    AddPrefabTile(0, "Water Pump", uiManager.waterPumpPrefab, () => uiManager.OnMediumWaterPumpPlantButtonClicked());
+                    break;
+                case ToolFamily.Forests:
+                    AddPrefabTile(0, "Sparse",  uiManager.sparseForestPrefab, () => uiManager.OnSparseForestButtonClicked());
+                    AddPrefabTile(1, "Medium",  uiManager.mediumForestPrefab, () => uiManager.OnMediumForestButtonClicked());
+                    AddPrefabTile(2, "Dense",   uiManager.denseForestPrefab,  () => uiManager.OnDenseForestButtonClicked());
+                    break;
+                case ToolFamily.Roads:
+                {
+                    GameObject roadPrefab = null;
+                    if (uiManager.gridManager != null && uiManager.gridManager.roadManager != null)
+                        roadPrefab = uiManager.gridManager.roadManager.roadTilePrefab1;
+                    AddPrefabTile(0, "Two-Way", roadPrefab, () => uiManager.OnTwoWayRoadButtonClicked());
+                    break;
+                }
             }
         }
 
-        private void OnContributorTileConfirmed(ContributorArchetypeRegistry.Entry entry)
+        /// <summary>Tile sprite ripped from prefab's SpriteRenderer (same sprite the player will place on the grid).</summary>
+        private void AddPrefabTile(int key, string label, GameObject prefab, Action onClick)
         {
-            if (uiManager == null) return;
-            // Manager-hook route (Roads subtypes).
-            if (!string.IsNullOrEmpty(entry.managerHook))
-            {
-                switch (entry.managerHook)
-                {
-                    case "RoadManager.TwoWay":
-                        uiManager.OnTwoWayRoadButtonClicked();
-                        break;
-                    case "InterstateManager":
-                        // Interstate entry point deferred; fall through to road for now.
-                        uiManager.OnTwoWayRoadButtonClicked();
-                        break;
-                    default:
-                        Debug.LogWarning($"[SubtypePickerController] Unknown managerHook: {entry.managerHook}");
-                        break;
-                }
-            }
-            else if (!string.IsNullOrEmpty(entry.prefabPath))
-            {
-                // Prefab route — load + set selected building via BuildingPlacementService (invariant 5).
-                // Power: set as selected building with ghost preview.
-                // Water/Forests: mirror existing handler path.
-                ToolFamily fam = ToolFamily.Power;
-                if (Enum.TryParse(entry.family, true, out ToolFamily parsed)) fam = parsed;
-                switch (fam)
-                {
-                    case ToolFamily.Power:
-                        uiManager.OnPowerFamilySubtypeConfirmed(entry.prefabPath, entry.baseCost);
-                        break;
-                    case ToolFamily.Water:
-                        uiManager.OnWaterSubtypeConfirmed(entry.prefabPath, entry.baseCost);
-                        break;
-                    case ToolFamily.Forests:
-                        uiManager.OnForestsSubtypeConfirmed(entry.prefabPath, entry.baseCost);
-                        break;
-                    default:
-                        Debug.LogWarning($"[SubtypePickerController] No handler for prefab-path family: {fam}");
-                        break;
-                }
-            }
+            Sprite sprite = GetPrefabSprite(prefab);
+            AddIconTile(key, label, sprite, onClick);
+        }
+
+        private static Sprite GetPrefabSprite(GameObject prefab)
+        {
+            if (prefab == null) return null;
+            var sr = prefab.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = prefab.GetComponentInChildren<SpriteRenderer>(true);
+            return sr != null ? sr.sprite : null;
         }
 
         private void BuildStateServiceRows()
@@ -277,10 +266,8 @@ namespace Territory.UI
                     label = line;
                 else
                     label = entries[i].displayName;
-                // sprite-catalog slug for state: picker-state-{key}-icon-72
-                string spriteSlug = $"picker-state-{i}-icon-72";
-                Sprite icon = null;
-                if (uiAssetCatalog != null) uiAssetCatalog.TryGetSprite(spriteSlug, out icon);
+                // Sprite ripped from prefab — same building the player will place.
+                Sprite icon = GetPrefabSprite(entries[i].prefab);
                 AddIconTile(subTypeId, label, icon, () => OnStateServiceRowSelected(subTypeId));
             }
         }
@@ -294,17 +281,14 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Catalog-driven zoning tile. Sprite sourced from sprite-catalog slug
-        /// <c>picker-{family}-{tier}-icon-72</c>. No SpriteRenderer yank.
+        /// Stage 9.8 fix-in-place — zoning tile uses real zone prefab sprite.
+        /// Sprite source = same prefab <see cref="ZoneManager.GetRandomZonePrefab"/> picks at placement time.
         /// </summary>
         private void AddZoningTile(int key, string label, string family, string tier, Action onClick)
         {
-            Sprite sprite = null;
-            if (uiAssetCatalog != null)
-            {
-                string slug = $"picker-{family}-{tier}-icon-72";
-                uiAssetCatalog.TryGetSprite(slug, out sprite);
-            }
+            Zone.ZoneType zt = (Zone.ZoneType)key;
+            GameObject prefab = (zoneManager != null) ? zoneManager.GetRandomZonePrefab(zt, 1) : null;
+            Sprite sprite = GetPrefabSprite(prefab);
             AddIconTile(key, label, sprite, onClick);
         }
 
