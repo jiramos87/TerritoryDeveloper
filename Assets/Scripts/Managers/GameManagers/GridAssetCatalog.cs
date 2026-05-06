@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>Loads the grid-asset catalog snapshot (TECH-663 JSON) at boot, exposes query APIs for Stage 2.3+.</summary>
-public partial class GridAssetCatalog
+public partial class GridAssetCatalog : MonoBehaviour
 {
     [Header("Snapshot")]
     [Tooltip("Legacy v1 single-file path under Application.streamingAssetsPath. Superseded by per-kind exports under catalog/ + CatalogLoader (Stage 13.1, TECH-2675); leave empty unless reviving v1 in a fixture scene.")]
@@ -22,7 +22,7 @@ public partial class GridAssetCatalog
     {
         if (string.IsNullOrEmpty(_streamingRelativePath))
         {
-            Debug.LogError("[GridAssetCatalog] Streaming relative path is not set.");
+            // v1 path superseded by per-kind exports + CatalogLoader (Stage 13.1, TECH-2675). Empty = expected.
             return;
         }
 

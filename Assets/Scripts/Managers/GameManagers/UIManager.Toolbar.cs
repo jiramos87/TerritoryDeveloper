@@ -149,25 +149,25 @@ public partial class UIManager
         ShowSubtypePicker(ToolFamily.StateService);
     }
 
-    /// <summary>TECH-10500: Residential family picker entry — picker rows commit Light/Medium/Heavy via existing density handlers.</summary>
+    /// <summary>TECH-10500: Residential family picker entry — auto-picks Light tier (ghost+tool) and opens picker w/ Light highlighted.</summary>
     public void OnResidentialFamilyButtonClicked()
     {
-        ClearCurrentTool();
-        ShowSubtypePicker(ToolFamily.Residential);
+        OnLightResidentialButtonClicked();
+        ShowSubtypePicker(ToolFamily.Residential, (int)Zone.ZoneType.ResidentialLightZoning);
     }
 
-    /// <summary>TECH-10500: Commercial family picker entry.</summary>
+    /// <summary>TECH-10500: Commercial family picker entry — auto-picks Light tier and opens picker.</summary>
     public void OnCommercialFamilyButtonClicked()
     {
-        ClearCurrentTool();
-        ShowSubtypePicker(ToolFamily.Commercial);
+        OnLightCommercialButtonClicked();
+        ShowSubtypePicker(ToolFamily.Commercial, (int)Zone.ZoneType.CommercialLightZoning);
     }
 
-    /// <summary>TECH-10500: Industrial family picker entry.</summary>
+    /// <summary>TECH-10500: Industrial family picker entry — auto-picks Light tier and opens picker.</summary>
     public void OnIndustrialFamilyButtonClicked()
     {
-        ClearCurrentTool();
-        ShowSubtypePicker(ToolFamily.Industrial);
+        OnLightIndustrialButtonClicked();
+        ShowSubtypePicker(ToolFamily.Industrial, (int)Zone.ZoneType.IndustrialLightZoning);
     }
 
     /// <summary>Stage 9.8 (TECH-15894): Power family picker entry — opens coal/solar/wind picker.</summary>

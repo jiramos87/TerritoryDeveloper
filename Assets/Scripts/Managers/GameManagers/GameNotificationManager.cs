@@ -96,19 +96,20 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Init UI components + verify setup.
+    /// Init UI components + verify setup. Lazy-creates panel + text child under active Canvas
+    /// when SerializeFields are unassigned (survives baked HUD reroots / domain reloads).
     /// </summary>
     private void InitializeComponents()
     {
-        // Validate required components first — Inspector wiring may be missing on a freshly-baked HUD root.
+        if (notificationPanel == null || notificationText == null)
+        {
+            LazyCreateNotificationUi();
+        }
+
         if (notificationPanel == null)
         {
-            Debug.LogError("GameNotificationManager: notificationPanel is not assigned — notifications disabled until SerializeField is wired in scene.");
+            Debug.LogError("GameNotificationManager: failed to lazy-create notificationPanel (no active Canvas in scene).");
             return;
-        }
-        if (notificationText == null)
-        {
-            Debug.LogError("GameNotificationManager: notificationText is not assigned!");
         }
 
         // Get or add CanvasGroup for fade effects
@@ -121,6 +122,56 @@ public class GameNotificationManager : MonoBehaviour
         // Start with notifications hidden
         notificationPanel.SetActive(false);
         notificationCanvasGroup.alpha = 0f;
+    }
+
+    /// <summary>
+    /// Build a hidden notification panel + text child under the first active Canvas in the scene.
+    /// </summary>
+    private void LazyCreateNotificationUi()
+    {
+        Canvas canvas = null;
+        foreach (var c in Object.FindObjectsOfType<Canvas>())
+        {
+            if (c.isActiveAndEnabled && c.renderMode != RenderMode.WorldSpace)
+            {
+                canvas = c;
+                break;
+            }
+        }
+        if (canvas == null) return;
+
+        if (notificationPanel == null)
+        {
+            var panelGo = new GameObject("NotificationPanel", typeof(RectTransform), typeof(Image));
+            panelGo.transform.SetParent(canvas.transform, worldPositionStays: false);
+            var rt = (RectTransform)panelGo.transform;
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -32f);
+            rt.sizeDelta = new Vector2(480f, 56f);
+            var img = panelGo.GetComponent<Image>();
+            img.color = new Color(0f, 0f, 0f, 0.65f);
+            img.raycastTarget = false;
+            notificationPanel = panelGo;
+        }
+
+        if (notificationText == null)
+        {
+            var textGo = new GameObject("NotificationText", typeof(RectTransform));
+            textGo.transform.SetParent(notificationPanel.transform, worldPositionStays: false);
+            var trt = (RectTransform)textGo.transform;
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = new Vector2(12f, 8f);
+            trt.offsetMax = new Vector2(-12f, -8f);
+            var tmp = textGo.AddComponent<TextMeshProUGUI>();
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 18f;
+            tmp.color = infoColor;
+            tmp.raycastTarget = false;
+            notificationText = tmp;
+        }
     }
 
     /// <summary>

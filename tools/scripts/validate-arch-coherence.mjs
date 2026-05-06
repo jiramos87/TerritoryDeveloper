@@ -403,6 +403,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "asset-tree-reorg-and-rename::5",
   // game-ui-catalog-bake: continued bake pipeline stages.
   "game-ui-catalog-bake::9.11",
+  "game-ui-catalog-bake::9.12",
 ]);
 
 // ---------------------------------------------------------------------------

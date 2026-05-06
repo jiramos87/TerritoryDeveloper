@@ -47,6 +47,20 @@ const ALLOWED_KIND_SUFFIXES = new Set([
 const CHECKED_KINDS = new Set(["button", "panel", "sprite", "token", "asset"]);
 
 /**
+ * Per-slug allow-list — slugs exempted from the kind-suffix check.
+ * Use sparingly: only for canonical slugs that predate the naming convention
+ * and whose rename would break established prefab/asset paths.
+ * Each entry MUST have an inline comment citing the rationale.
+ */
+const SLUG_ALLOWLIST = new Set([
+  // TECH-19061 (game-ui-catalog-bake Stage 9.12) — 'hud-bar' is the canonical
+  // panel slug used in hud-bar.prefab, panels.json, and HudBar* Unity tests.
+  // Renaming to 'hud-bar-panel' would break prefab file references, snapshot
+  // keys, and multiple EditMode tests. Exempted as established pre-convention slug.
+  "hud-bar",
+]);
+
+/**
  * Validate one slug. Returns array of violation strings (empty = valid).
  * Exported for unit testing.
  * @param {string} slug
@@ -54,6 +68,11 @@ const CHECKED_KINDS = new Set(["button", "panel", "sprite", "token", "asset"]);
  */
 export function validateSlug(slug, catalogKind) {
   const violations = [];
+
+  // Per-slug allow-list: canonical slugs exempt from kind-suffix check.
+  if (SLUG_ALLOWLIST.has(slug)) {
+    return violations;
+  }
 
   if (!SLUG_RE.test(slug)) {
     if (/\(\d+\)/.test(slug)) {

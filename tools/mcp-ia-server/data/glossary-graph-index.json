@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-06T23:25:52.624Z",
+  "last_generated": "2026-05-06T23:37:19.868Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [

@@ -237,12 +237,15 @@ public partial class UIManager : MonoBehaviour
     public ZoneSService ZoneSService => zoneSService;
 
     /// <summary>TECH-10500: open the unified subtype picker for the given tool family (R/C/I density tiers or Zone S catalog).</summary>
-    public void ShowSubtypePicker(ToolFamily family)
+    public void ShowSubtypePicker(ToolFamily family) => ShowSubtypePicker(family, int.MinValue);
+
+    /// <summary>TECH-10500: open picker with a pre-selected default tile (key = (int)Zone.ZoneType for R/C/I, subTypeId for State).</summary>
+    public void ShowSubtypePicker(ToolFamily family, int defaultKey)
     {
         EnsureSubtypePickerRuntimeWiring();
         if (subtypePickerController != null)
         {
-            subtypePickerController.Show(this, family);
+            subtypePickerController.Show(this, family, defaultKey);
             RegisterPopupOpened(PopupType.SubTypePicker);
         }
     }

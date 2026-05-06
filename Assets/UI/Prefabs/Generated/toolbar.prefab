@@ -783,9 +783,9 @@ MonoBehaviour:
   _slug: illuminated-button (4)
   _themeRef: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   _detail:
-    illuminationSlug: 
-    pulseOnEvent: 
-    iconSpriteSlug: Bulldoze-button-64
+    illuminationSlug:
+    pulseOnEvent:
+    iconSpriteSlug: State-button-64
   _onClick:
     m_PersistentCalls:
       m_Calls: []
@@ -2937,7 +2937,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d93dc313f038745f08788a85d536c06c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 18ca6daaa17814c328968632c785b744, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

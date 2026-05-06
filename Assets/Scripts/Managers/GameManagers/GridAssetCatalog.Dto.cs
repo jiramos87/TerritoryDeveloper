@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// DTOs and JSON parse for the catalog snapshot (TECH-663 envelope). See <c>web/lib/catalog/build-catalog-snapshot.ts</c>.
 /// </summary>
-public partial class GridAssetCatalog : MonoBehaviour
+public partial class GridAssetCatalog
 {
     /// <summary>Parse a snapshot JSON string into a root DTO. Uses <see cref="JsonUtility"/>; field names match export keys (snake_case where applicable).</summary>
     public static bool TryParseSnapshotJson(string json, out GridAssetSnapshotRoot root, out string err)

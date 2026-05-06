@@ -124,7 +124,7 @@ namespace Territory.UI
 
             if (string.IsNullOrEmpty(_streamingRelativePath))
             {
-                Debug.LogError("[TokenCatalog] Streaming relative path is not set.");
+                // v1 path superseded by per-kind exports + CatalogLoader (Stage 13.1, TECH-2675). Empty = expected.
                 return;
             }
 
