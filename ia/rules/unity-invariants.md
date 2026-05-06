@@ -30,6 +30,9 @@ alwaysApply: false
 - IF creating a new manager → THEN MonoBehaviour scene component, never `new`
 - IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
 - IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
+- IF writing a partial-class MonoBehaviour → THEN declaration `: MonoBehaviour` MUST live in the file whose stem matches the class name (e.g. `GridAssetCatalog.cs`); secondary partial files declare `partial class X` with no base spec. Mismatch → Unity fails to resolve script reference at scene load → "missing script" GUID bind error.
+- IF a notification/overlay manager requires a scene panel reference → THEN prefer code-side lazy-init (`LazyCreateNotificationUi` pattern: build hidden panel + TextMeshProUGUI child under first active screen-space Canvas on first use) over `[SerializeField]` wiring. Managers using lazy-init MUST be omitted from EditMode test fixtures — `FindObjectOfType` collision + Awake NPE on null panel. Assert return value + scene state instead of queue-count delta.
+- IF a toolbar/prefab slot shows wrong icon after bake → THEN inspect bake output (`iconSpriteSlug` in `_detail` export) as source of truth — NOT the authoring scene or bake source YAML. In-place prefab YAML slot fix is valid for one-off corrections; touch bake source only when the wrong slug recurs across bake runs.
 
 # Bridge + tooling patterns
 
@@ -39,7 +42,6 @@ alwaysApply: false
 - `AgentBridgeCommandRunner.Mutations.cs` pattern: bridge kind expansions go in sibling partial class — isolates mutation dispatch, keeps diff reviewable. Reuse for future bridge additions.
 - `JsonUtility.FromJson` + `value_kind` string + flat `string value` = polymorphic DTOs without Newtonsoft. DTOs must be `[Serializable]` + public fields; interpret at runtime in the switch.
 - `AppDomain.CurrentDomain.GetAssemblies()` resolves component type names across Territory + third-party assemblies. Return `type_ambiguous:<name>;candidates=<csv>` on multi-hit, not silent first-match.
-- `GameNotificationManager` omits from EditMode fixtures — `Awake` NPEs on null `notificationPanel`. Assert return value + state unchanged instead of queue-count delta.
 - Manager-init race: gate consumer's tick block (not whole `Update`) on producer's `IsInitialized` — keeps UI responsive during load while blocking sim-state reads.
 
 # How loaded

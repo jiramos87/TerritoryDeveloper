@@ -6,7 +6,8 @@
     "validate:no-ir-bake-runtime-refs",
     "validate:retired-skill-refs",
     "validate:plan-digest-coverage",
-    "validate:seeded-task-stale"
+    "validate:seeded-task-stale",
+    "validate:asset-pipeline"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [
