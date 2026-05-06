@@ -149,6 +149,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   "game-ui-catalog-bake::9.4",
   "game-ui-catalog-bake::9.5",
   "game-ui-catalog-bake::9.6",
+  "game-ui-catalog-bake::9.9",
   "game-ui-design-system::1",
   "game-ui-design-system::2",
   "game-ui-design-system::3",

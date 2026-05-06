@@ -1,7 +1,6 @@
 using UnityEngine;
 using TMPro;
 using Territory.Economy;
-using Territory.Simulation;
 using Territory.Timing;
 using Territory.UI.Juice;
 using Territory.UI.StudioControls;
@@ -30,10 +29,6 @@ namespace Territory.UI.HUD
         [SerializeField] private EconomyManager _economyManager;
         [SerializeField] private TimeManager _timeManager;
 
-        [Header("Sim controllers (AUTO toggle target)")]
-        [SerializeField] private AutoZoningManager _autoZoningManager;
-        [SerializeField] private AutoRoadBuilder _autoRoadBuilder;
-
         [Header("UI handlers")]
         [SerializeField] private UIManager _uiManager;
         [SerializeField] private CameraController _cameraController;
@@ -59,10 +54,15 @@ namespace Territory.UI.HUD
 
         [Header("Consumers — right cluster (controls)")]
         [SerializeField] private IlluminatedButton _autoButton;
+        [SerializeField] private IlluminatedButton _budgetButton; // FEAT-59 — left of AUTO; opens growth-budget panel.
         [SerializeField] private IlluminatedButton _zoomInButton;
         [SerializeField] private IlluminatedButton _zoomOutButton;
         [SerializeField] private IlluminatedButton _statsButton;
         [SerializeField] private IlluminatedButton _miniMapButton;
+
+        [Header("Growth budget panel (FEAT-59)")]
+        [SerializeField] private GrowthBudgetPanelController _budgetPanelController;
+        [SerializeField] private GameObject _growthBudgetPanelRoot; // optional Inspector slot; controller self-spawns when null.
 
         [Header("Stats + MiniMap roots — toggle on click")]
         [SerializeField] private GameObject _cityStatsRoot;
@@ -80,10 +80,17 @@ namespace Territory.UI.HUD
             if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
             if (_timeManager == null) _timeManager = FindObjectOfType<TimeManager>();
             if (_cityStats == null) _cityStats = FindObjectOfType<CityStats>();
-            if (_autoZoningManager == null) _autoZoningManager = FindObjectOfType<AutoZoningManager>();
-            if (_autoRoadBuilder == null) _autoRoadBuilder = FindObjectOfType<AutoRoadBuilder>();
             if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
+
+            // FEAT-59 — growth-budget panel controller (Inspector first, FindObjectOfType fallback,
+            // lazy-spawn host so panel/archetype defaults are reachable without scene wiring).
+            if (_budgetPanelController == null) _budgetPanelController = FindObjectOfType<GrowthBudgetPanelController>(true);
+            if (_budgetPanelController == null)
+            {
+                var go = new GameObject("GrowthBudgetPanelController");
+                _budgetPanelController = go.AddComponent<GrowthBudgetPanelController>();
+            }
 
             // Post-Stage-9.1 wrapper-flatten: _miniMapRoot SerializeField slot left null in baked hud-bar.
             // Resolve via MiniMapController.miniMapPanel (controller may live ON the panel itself).
@@ -126,6 +133,7 @@ namespace Territory.UI.HUD
             _saveButton = null;
             _loadButton = null;
             _autoButton = null;
+            _budgetButton = null;
             _zoomInButton = null;
             _zoomOutButton = null;
             _statsButton = null;
@@ -149,6 +157,8 @@ namespace Territory.UI.HUD
                     {
                         if (cap == "MAP" && _miniMapButton == null) _miniMapButton = btn;
                         else if (cap == "AUTO" && _autoButton == null) _autoButton = btn;
+                        // FEAT-59 — caption-text fallback for BUDGET (sprite art deferred per Stage 9.9 B1c).
+                        else if (cap == "BUDGET" && _budgetButton == null) _budgetButton = btn;
                     }
                     continue;
                 }
@@ -167,6 +177,9 @@ namespace Territory.UI.HUD
                     // Sprite art pending; bake handler Step 16.G renders TMP "AUTO" caption fallback.
                     // Drives both AutoZoningManager + AutoRoadBuilder via HandleAutoClick.
                     case "auto-button-64": _autoButton = btn; break;
+                    // FEAT-59 (Stage 9.9) — BUDGET button left of AUTO. Migration 0087 sprite slug.
+                    // Bake handler renders TMP "BUDGET" caption fallback (B1c — PNG art deferred).
+                    case "hud_bar_icon_budget": _budgetButton = btn; break;
                     // Bug #4 — preventive: bind if/when bake handler emits a minimap-button slug.
                     case "minimap-button-64": _miniMapButton = btn; break;
                 }
@@ -208,6 +221,11 @@ namespace Territory.UI.HUD
             {
                 _autoButton.OnClick.RemoveListener(HandleAutoClick);
                 _autoButton.OnClick.AddListener(HandleAutoClick);
+            }
+            if (_budgetButton != null)
+            {
+                _budgetButton.OnClick.RemoveListener(HandleBudgetClick);
+                _budgetButton.OnClick.AddListener(HandleBudgetClick);
             }
             if (_zoomInButton != null)
             {
@@ -267,11 +285,17 @@ namespace Territory.UI.HUD
 
         private void HandleAutoClick()
         {
-            // Single toggle drives both auto-zoning + auto-road-building.
-            // Read state from AutoZoningManager (treated as primary); flip both to inverse.
-            bool enable = _autoZoningManager == null ? true : !_autoZoningManager.enabled;
-            if (_autoZoningManager != null) _autoZoningManager.enabled = enable;
-            if (_autoRoadBuilder != null) _autoRoadBuilder.enabled = enable;
+            // BUG-63 — flip cityStats.simulateGrowth (single source of truth ProcessTick gate).
+            // AutoZoningManager + AutoRoadBuilder both read this bool — no MonoBehaviour.enabled flip needed.
+            if (_cityStats == null) return;
+            _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
+        }
+
+        private void HandleBudgetClick()
+        {
+            // FEAT-59 — toggle growth-budget panel; controller self-spawns its panelRoot on first Show.
+            if (_budgetPanelController == null) return;
+            _budgetPanelController.Toggle();
         }
 
         private void HandleZoomInClick()
@@ -332,10 +356,16 @@ namespace Territory.UI.HUD
                 }
             }
 
-            // AUTO illumination mirrors AutoZoningManager.enabled (treated as primary).
-            if (_autoButton != null && _autoZoningManager != null)
+            // AUTO illumination mirrors cityStats.simulateGrowth (BUG-63).
+            if (_autoButton != null && _cityStats != null)
             {
-                _autoButton.IlluminationAlpha = _autoZoningManager.enabled ? 1f : 0f;
+                _autoButton.IlluminationAlpha = _cityStats.simulateGrowth ? 1f : 0f;
+            }
+
+            // BUDGET illumination mirrors panel visibility (FEAT-59).
+            if (_budgetButton != null && _budgetPanelController != null)
+            {
+                _budgetButton.IlluminationAlpha = _budgetPanelController.IsVisible ? 1f : 0f;
             }
 
             // speed channel — exactly-one-illuminated mirroring TimeManager.CurrentTimeSpeedIndex

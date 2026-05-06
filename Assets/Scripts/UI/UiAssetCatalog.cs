@@ -38,6 +38,14 @@ namespace Territory.UI
         public float captionHeight;
         /// <summary>motion.hover enum value: tint | glow | scale.</summary>
         public string motionHover;
+
+        // Stage 9.9 — slider-row archetype geometry (slider_row_2). Picker tiles ignore these.
+        /// <summary>Row height for slider-row archetypes (slider_row_2).</summary>
+        public float rowHeight;
+        /// <summary>Left label column width for slider-row archetypes.</summary>
+        public float labelWidth;
+        /// <summary>Right value column width for slider-row archetypes.</summary>
+        public float valueWidth;
     }
 
     /// <summary>
@@ -136,6 +144,17 @@ namespace Territory.UI
                 pivot     = new Vector2(0.5f, 0f),
                 padding   = new Vector4(10f, 10f, 8f, 8f), // left, right, top, bottom
                 spacing   = 8f,
+            },
+            // Stage 9.9 (TECH-16992) — growth-budget panel. Top-right anchor near hud-bar BUDGET button.
+            new UiPanelDef
+            {
+                slug      = "growth_budget_panel",
+                sizeDelta = new Vector2(360f, 220f),
+                anchorMin = new Vector2(1f, 1f),
+                anchorMax = new Vector2(1f, 1f),
+                pivot     = new Vector2(1f, 1f),
+                padding   = new Vector4(12f, 12f, 12f, 12f),
+                spacing   = 6f,
             }
         };
 
@@ -150,6 +169,15 @@ namespace Territory.UI
                 iconOffsetMax = new Vector2(-6f, -6f),
                 captionHeight = 12f,
                 motionHover   = "tint",
+            },
+            // Stage 9.9 (TECH-16992) — slider-row archetype for growth-budget panel.
+            new UiArchetypeDef
+            {
+                slug        = "slider_row_2",
+                rowHeight   = 40f,
+                labelWidth  = 110f,
+                valueWidth  = 48f,
+                motionHover = "tint",
             }
         };
     }

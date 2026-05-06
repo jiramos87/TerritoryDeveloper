@@ -30,7 +30,7 @@ LEFT JOIN (
       WHERE dep_t.status NOT IN ('done', 'archived')
     )::INT AS unresolved_dep_count
   FROM ia_task_deps d
-  JOIN ia_tasks dep_t ON dep_t.task_id = d.depends_on_task_id
+  JOIN ia_tasks dep_t ON dep_t.task_id = d.depends_on_id
   WHERE d.kind = 'depends_on'
   GROUP BY d.task_id
 ) dep_counts ON dep_counts.task_id = t.task_id
