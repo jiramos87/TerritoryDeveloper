@@ -25,6 +25,10 @@ const pgRequire = createRequire(path.join(REPO_ROOT, "tools/postgres-ia/package.
 const pg = pgRequire("pg");
 
 const ALLOWED_MOTION_VALUES = new Set(["fade", "slide", "none"]);
+// motion.hover admits tint|glow|scale in addition to enter/exit set (0079 migration — TECH-15892).
+const ALLOWED_HOVER_VALUES = new Set(["fade", "slide", "none", "tint", "glow", "scale"]);
+// Archetype slugs that carry tile-role hover semantics.
+const TILE_ROLE_KINDS = new Set(["archetype"]);
 const ASSET_REGISTRY_KINDS = ["panel", "button", "token", "archetype"];
 
 async function main() {
@@ -65,13 +69,44 @@ async function main() {
         faults.push(`${prefix} motion missing or non-object`);
         continue;
       }
-      for (const key of ["enter", "exit", "hover"]) {
+      for (const key of ["enter", "exit"]) {
         if (!(key in m)) {
           faults.push(`${prefix} motion.${key} missing`);
         } else if (!ALLOWED_MOTION_VALUES.has(m[key])) {
           faults.push(`${prefix} motion.${key}="${m[key]}" not in allowed set {fade,slide,none}`);
         }
       }
+      // motion.hover: tile-role archetypes allow {tint,glow,scale}; all others use base set.
+      if (!("hover" in m)) {
+        faults.push(`${prefix} motion.hover missing`);
+      } else {
+        const hoverAllowed = TILE_ROLE_KINDS.has(row.kind) ? ALLOWED_HOVER_VALUES : ALLOWED_MOTION_VALUES;
+        if (!hoverAllowed.has(m["hover"])) {
+          faults.push(
+            `${prefix} motion.hover="${m["hover"]}" not in allowed set {${[...hoverAllowed].join(",")}}`,
+          );
+        }
+      }
+    }
+
+    // ── motion.hover archetype-row sub-validator (TECH-15892) ─────────────────
+    // Every tile-role archetype row must carry motion.hover ∈ {tint,glow,scale}.
+    const TILE_HOVER_SET = new Set(["tint", "glow", "scale"]);
+    let archetypeHoverOk = 0;
+    for (const row of rows) {
+      if (row.kind !== "archetype") continue;
+      const m = row.motion;
+      if (!m || !("hover" in m)) continue;
+      if (!TILE_HOVER_SET.has(m["hover"])) {
+        faults.push(
+          `[archetype/${row.slug}] motion.hover="${m["hover"]}" must be in {tint,glow,scale} for tile-role archetypes`,
+        );
+      } else {
+        archetypeHoverOk++;
+      }
+    }
+    if (archetypeHoverOk > 0) {
+      console.log(`motion.hover: ok(${archetypeHoverOk} archetype row${archetypeHoverOk !== 1 ? "s" : ""})`);
     }
 
     // 2. Orphaned asset_detail check (spot-check FK integrity for asset-registry kinds).

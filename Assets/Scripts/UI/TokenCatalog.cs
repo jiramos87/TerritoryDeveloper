@@ -70,6 +70,20 @@ namespace Territory.UI
         public bool TryGetSemantic(string slug, out SemanticTokenDto row) => _semantics.TryGetValue(slug ?? string.Empty, out row);
 
         /// <summary>
+        /// Read <c>motion.hover</c> enum from a motion token by archetype slug.
+        /// Delegates to the motion token index; <c>MotionTokenDto.curve</c> carries the hover kind string
+        /// when authored as archetype-scoped motion tokens (TECH-15891 / Stage 9.7).
+        /// Returns false when slug absent or <c>curve</c> empty.
+        /// </summary>
+        public bool TryGetMotionHover(string archetypeSlug, out string hoverEnum)
+        {
+            hoverEnum = null;
+            if (!_motions.TryGetValue(archetypeSlug ?? string.Empty, out var row)) return false;
+            hoverEnum = row.curve;
+            return !string.IsNullOrEmpty(hoverEnum);
+        }
+
+        /// <summary>
         /// Walk the semantic alias chain starting at <paramref name="slug"/> up to
         /// <see cref="SemanticDepthCap"/> hops, returning the terminal target slug
         /// + <c>token_role</c>. Returns <c>false</c> when slug missing, alias
