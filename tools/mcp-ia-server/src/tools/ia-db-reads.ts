@@ -29,6 +29,7 @@ import {
   getMasterPlanLineage,
   queryMasterPlanState,
   queryStageBundle,
+  queryStageBundleCached,
   queryStageCloseoutDiagnose,
   queryStageState,
   queryTaskBody,
@@ -382,7 +383,7 @@ export function registerStageBundle(server: McpServer): void {
               };
             }
             try {
-              const row = await queryStageBundle(slug, stage_id);
+              const row = await queryStageBundleCached(slug, stage_id);
               if (!row) {
                 throw {
                   code: "stage_not_found",

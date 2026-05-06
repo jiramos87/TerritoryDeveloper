@@ -205,6 +205,9 @@ All 16 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`).
 | **`red_stage_proof_list`** | Aggregate proof row counts by `(stage_id, proof_status)` for a whole plan slug. Returns `{ok:true, payload:{counts:[]}}` for unknown slug. |
 | **`seams_run`** | Phase E: validate seam input / output payloads and optionally dispatch LLM via plan-covered subagent. `dispatch_mode=subagent` (default) invokes LLM; `dispatch_mode=validate-only` is schema-gate only. Returns `dispatch_unavailable:true` when subagent env not available (not an error — recipe step falls back). |
 | **`next_migration_id`** | Scan `db/migrations/` and return the next available 4-digit migration id (`max(prefix) + 1`, zero-padded). Used at author time to lock the migration id in spec stubs / plan digests without shelling out. Returns `{next_id, next_id_int, current_head, current_head_int, migrations_dir, scanned_count}`. Errors: `invalid_input` (dir missing or not a directory). |
+| **`git_diff_anomaly_scan`** | Regex-pack classifier over git diff text (TECH-15906). Replaces LLM diff review (~25k tokens) in ship-cycle Pass B pre-verify. Pass `diff` (git diff HEAD output) or `diff_ref` (e.g. 'HEAD'). Returns `{ok, anomaly_count, anomalies: [{kind, description, match}]}`. Kinds: `debug_log`, `meta_delete`, `large_hunk`, `retired_symbol`. |
+| **`mcp_cache_get`** | Read a cached value by key from `ia_mcp_context_cache`. Returns `{ok, hit, key, payload}`. `hit=false` when key absent or expired. |
+| **`mcp_cache_set`** | Write (upsert) a cached value by key into `ia_mcp_context_cache` with optional `ttl_seconds`. Returns `{ok, key, stored_at}`. |
 
 All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative.
 

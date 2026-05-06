@@ -108,6 +108,8 @@ const EXPLICIT_NONE_STAGES = new Set([
   "backlog-yaml-mcp-alignment::7",
   "backlog-yaml-mcp-alignment::8",
   "backlog-yaml-mcp-alignment::9",
+  "chain-token-cut::2",
+  "chain-token-cut::3",
   "city-sim-depth::1",
   "city-sim-depth::10",
   "city-sim-depth::11",

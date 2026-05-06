@@ -75,6 +75,7 @@ import {
   registerStageDecomposeApply,
 } from "./tools/task-batch-and-decompose.js";
 import { registerTaskDiffAnomalyScan } from "./tools/task-diff-anomaly-scan.js";
+import { registerGitDiffAnomalyScan } from "./tools/git-diff-anomaly-scan.js";
 import { registerMasterPlanSections } from "./tools/master-plan-sections.js";
 import { registerSectionClaimTools } from "./tools/section-claim.js";
 import { registerStageClaimTools } from "./tools/stage-claim.js";
@@ -187,6 +188,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerTaskBatchInsert(server);
   registerStageDecomposeApply(server);
   registerTaskDiffAnomalyScan(server);
+  registerGitDiffAnomalyScan(server);
   registerMasterPlanSections(server);
   registerSectionClaimTools(server);
   registerStageClaimTools(server);

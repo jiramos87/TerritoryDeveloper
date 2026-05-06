@@ -6,6 +6,11 @@
  * Input:  { plan: string, stage?: string }
  * Output: { issue_id: string | null, task_key: string, row_line: number, status: string } | null
  *
+ * DB path (use_db=true, TECH-15908): reads ia_stage_facet_view and returns
+ * all parallel-ready tasks via Kahn's algorithm (in-degree zero).
+ * Input:  { slug: string, stage_id?: string, use_db: true }
+ * Output: { parallel_ready: [{task_id, title, stage_id}], slug }
+ *
  * `issue_id` is null when the Issue cell is `_pending_` (task not yet filed).
  * Returns null when no pending / Draft rows exist (not an error).
  *
@@ -21,6 +26,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool } from "../envelope.js";
+import { getIaDatabasePool } from "../ia-db/pool.js";
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -29,9 +35,10 @@ import { wrapTool } from "../envelope.js";
 const inputShape = {
   plan: z
     .string()
+    .optional()
     .describe(
       "Path to the master-plan file. Absolute path or REPO_ROOT-relative " +
-        "(e.g. \"ia/projects/foo-master-plan.md\").",
+        "(e.g. \"ia/projects/foo-master-plan.md\"). Required when use_db=false (default).",
     ),
   stage: z
     .string()
@@ -41,6 +48,22 @@ const inputShape = {
         "When given, only the matching `#### Stage X.Y` section is searched. " +
         "Missing stage heading → returns null (poller-friendly, not an error).",
     ),
+  // DB path (TECH-15908 — Kahn's algorithm via ia_stage_facet_view)
+  use_db: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, reads from ia_stage_facet_view (DB) instead of the plan file. " +
+        "Returns all parallel-ready tasks (Kahn's in-degree-zero). Requires `slug`.",
+    ),
+  slug: z
+    .string()
+    .optional()
+    .describe("Master-plan slug. Required when use_db=true."),
+  stage_id: z
+    .string()
+    .optional()
+    .describe("Stage id filter for DB path (e.g. '2'). Optional when use_db=true."),
 };
 
 // ---------------------------------------------------------------------------
@@ -196,10 +219,81 @@ export function findNextPendingRow(
 }
 
 // ---------------------------------------------------------------------------
+// DB path — Kahn's algorithm via ia_stage_facet_view (TECH-15908)
+// ---------------------------------------------------------------------------
+
+export interface ParallelReadyTask {
+  task_id: string;
+  title: string;
+  stage_id: string | null;
+  dep_count: number;
+  unresolved_dep_count: number;
+}
+
+export interface KahnReadyResult {
+  slug: string;
+  stage_id: string | null;
+  parallel_ready: ParallelReadyTask[];
+}
+
+/**
+ * Kahn's algorithm in-degree-zero resolver via ia_stage_facet_view.
+ * Returns all tasks with status='pending' AND unresolved_dep_count=0
+ * for the given slug (optionally filtered to one stage_id).
+ *
+ * Reads from the MV directly — single query, no N+1 dep checks.
+ * MV is refreshed after each task_status_flip (TECH-15907).
+ */
+export async function findParallelReadyTasksDB(
+  slug: string,
+  stage_id?: string,
+): Promise<KahnReadyResult> {
+  const pool = getIaDatabasePool();
+  if (!pool) {
+    throw { code: "ia_db_unavailable", message: "DATABASE_URL not configured." };
+  }
+
+  const params: unknown[] = [slug];
+  let stageFilter = "";
+  if (stage_id) {
+    params.push(stage_id);
+    stageFilter = `AND stage_id = $${params.length}`;
+  }
+
+  const res = await pool.query<{
+    task_id: string;
+    title: string;
+    stage_id: string | null;
+    dep_count: number;
+    unresolved_dep_count: number;
+  }>(
+    `SELECT task_id, title, stage_id, dep_count, unresolved_dep_count
+       FROM ia_stage_facet_view
+      WHERE slug = $1
+        AND parallel_ready = TRUE
+        ${stageFilter}
+      ORDER BY task_id ASC`,
+    params,
+  );
+
+  return {
+    slug,
+    stage_id: stage_id ?? null,
+    parallel_ready: res.rows,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
 
-type NextPendingArgs = { plan?: string; stage?: string };
+type NextPendingArgs = {
+  plan?: string;
+  stage?: string;
+  use_db?: boolean;
+  slug?: string;
+  stage_id?: string;
+};
 
 /**
  * Register the master_plan_next_pending tool.
@@ -228,6 +322,9 @@ export function registerMasterPlanNextPending(server: McpServer): void {
         "`issue_id` is null when the Issue cell is `_pending_` (task not yet filed via /project-new). " +
         "Returns null when no pending/Draft rows exist (stage or plan fully Done). " +
         "Errors: invalid_input (empty plan), plan_not_found (path absent on disk). " +
+        "DB path (use_db=true, TECH-15908): requires `slug`; reads `ia_stage_facet_view` via " +
+        "Kahn's algorithm and returns all parallel-ready tasks (in-degree zero). " +
+        "Result shape when use_db=true: { slug, stage_id, parallel_ready: [{task_id, title, stage_id, dep_count, unresolved_dep_count}] }. " +
         "Schema-cache restart required after adding this tool (N4): " +
         "restart Claude Code or run `tsx tools/mcp-ia-server/src/index.ts`.",
       inputSchema: inputShape,
@@ -237,7 +334,17 @@ export function registerMasterPlanNextPending(server: McpServer): void {
         const envelope = await wrapTool(
           async (
             input: NextPendingArgs | undefined,
-          ): Promise<NextPendingResult | null> => {
+          ): Promise<NextPendingResult | KahnReadyResult | null> => {
+            // DB path — Kahn's algorithm (TECH-15908)
+            if (input?.use_db === true) {
+              const slug = (input?.slug ?? "").trim();
+              if (!slug) {
+                throw { code: "invalid_input", message: "slug is required when use_db=true." };
+              }
+              return findParallelReadyTasksDB(slug, input?.stage_id);
+            }
+
+            // Filesystem path (original behavior)
             const plan = (input?.plan ?? "").trim();
             if (!plan) {
               throw { code: "invalid_input", message: "plan is required." };

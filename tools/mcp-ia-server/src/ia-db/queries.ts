@@ -488,6 +488,64 @@ export async function queryStageBundle(
 }
 
 // ---------------------------------------------------------------------------
+// Stage-bundle cache (TECH-15904) — hash-gated, no TTL.
+// ---------------------------------------------------------------------------
+
+import { createHash } from "crypto";
+
+/**
+ * Deterministic content-hash for a StageBundleDB payload.
+ * Hashes task ids + statuses + stage updated_at so any task flip invalidates.
+ */
+function stageBundleContentHash(bundle: StageBundleDB): string {
+  const parts = [
+    bundle.slug,
+    bundle.stage_id,
+    bundle.updated_at ?? "",
+    (bundle.tasks as Array<{ task_id: string; status: string }>)
+      .map((t) => `${t.task_id}:${t.status}`)
+      .join(","),
+  ];
+  return createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 16);
+}
+
+/**
+ * Cache-wrapped stage_bundle query.
+ * On hit: returns cached payload from ia_stage_bundle_cache.
+ * On miss: fetches live, writes cache row (ON CONFLICT DO NOTHING), returns live.
+ */
+export async function queryStageBundleCached(
+  slug: string,
+  stage_id: string,
+): Promise<StageBundleDB | null> {
+  const live = await queryStageBundle(slug, stage_id);
+  if (!live) return null;
+
+  const hash = stageBundleContentHash(live);
+  const pool = poolOrThrow();
+
+  // Try cache hit first.
+  const cacheRes = await pool.query<{ payload: StageBundleDB }>(
+    `SELECT payload FROM ia_stage_bundle_cache
+     WHERE slug = $1 AND stage_id = $2 AND content_hash = $3
+     LIMIT 1`,
+    [slug, stage_id, hash],
+  );
+  if (cacheRes.rowCount! > 0) {
+    return cacheRes.rows[0]!.payload as StageBundleDB;
+  }
+
+  // Cache miss — persist and return live.
+  await pool.query(
+    `INSERT INTO ia_stage_bundle_cache (slug, stage_id, content_hash, payload)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (stage_id, slug, content_hash) DO NOTHING`,
+    [slug, stage_id, hash, JSON.stringify(live)],
+  );
+  return live;
+}
+
+// ---------------------------------------------------------------------------
 // Master-plan + stage RENDER surfaces.
 //
 // Render canonical master-plan + stage markdown views from structured columns

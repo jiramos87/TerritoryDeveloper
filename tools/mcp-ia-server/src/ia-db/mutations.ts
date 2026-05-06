@@ -483,12 +483,26 @@ export async function mutateTaskStatusFlip(
       [task_id, new_status],
     );
 
-    return {
+    const result = {
       task_id,
       prev_status: prev,
       new_status,
       updated_at: upd.rows[0]!.updated_at,
     };
+
+    // Refresh ia_stage_facet_view (TECH-15907) after status flip.
+    // REFRESH CONCURRENTLY cannot run inside a transaction — fire best-effort
+    // outside the tx via a separate pool query. Ignore failures (MV optional).
+    setImmediate(() => {
+      const pool = getIaDatabasePool();
+      if (pool) {
+        pool
+          .query("REFRESH MATERIALIZED VIEW CONCURRENTLY ia_stage_facet_view")
+          .catch(() => {/* best-effort — view may not exist yet during migrations */});
+      }
+    });
+
+    return result;
   });
 }
 
