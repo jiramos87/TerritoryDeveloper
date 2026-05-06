@@ -26,6 +26,10 @@ namespace Territory.UI.CityStatsHandoff
         [SerializeField] private CityStats _cityStats;
         [SerializeField] private CityStatsFacade _facade;
 
+        // DS-* token audit — TECH-15227: city-stats surface.
+        // Stat label colors + bar-fill gradients use ad-hoc Inspector Color literals in downstream renderers.
+        // Migrate to UiTheme palette entries (ds-text-primary, ds-accent-positive, ds-accent-negative) in Stage N token-bake.
+
         private readonly Dictionary<string, Func<object>> _bindings = new Dictionary<string, Func<object>>(64);
         private bool _bindingsBuilt;
         private int _refreshVersion;

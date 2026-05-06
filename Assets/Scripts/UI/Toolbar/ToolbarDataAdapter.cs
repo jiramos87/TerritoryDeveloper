@@ -33,6 +33,10 @@ namespace Territory.UI.Toolbar
         [Header("Theme")]
         [SerializeField] private UiTheme _uiTheme;
 
+        // DS-* token audit — TECH-15227: toolbar surface.
+        // Active-tool illumination + toolbar strip background use ad-hoc Inspector Color literals.
+        // Migrate to _uiTheme palette entries (ds-surface-toolbar, ds-accent-active) in Stage N token-bake.
+
         // ── Consumer refs (IlluminatedButton variants on baked toolbar prefab)
 
         /// <summary>Index 0..2 = Residential L/M/H Zoning; 3..5 = Commercial L/M/H Zoning; 6..8 = Industrial L/M/H Zoning; 9 = StateService Zoning.</summary>

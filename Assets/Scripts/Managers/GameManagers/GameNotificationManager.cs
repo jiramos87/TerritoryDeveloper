@@ -30,6 +30,14 @@ public class GameNotificationManager : MonoBehaviour
     [SerializeField] private AudioClip sfxNotificationShow;
     [SerializeField] private AudioClip sfxErrorFeedback;
 
+    // DS-* token audit — TECH-15227: notification surface.
+    // errorColor → ds-accent-negative; warningColor → ds-accent-warning;
+    // infoColor → ds-text-primary; successColor → ds-accent-positive.
+    // Stage 9.5 marks ad-hoc Color literals for migration to UiTheme palette entries.
+    [Header("DS Tokens — TECH-15227")]
+    [Tooltip("Assign UiTheme SO — ds-* palette entries replace ad-hoc Color literals below in Stage N token-bake.")]
+    [SerializeField] private UiTheme _dsTheme;
+
     [Header("Message Categories")]
     [SerializeField] private Color errorColor = Color.red;
     [SerializeField] private Color warningColor = Color.yellow;

@@ -49,6 +49,10 @@ namespace Territory.UI
         [SerializeField] private AudioClip sfxPanelClose;
         [SerializeField] private AudioClip sfxPickerConfirm;
 
+        // DS-* token audit — TECH-15227: picker surface.
+        // Picker panel background + tile selected-state tint use ad-hoc Color values from UiAssetCatalog.
+        // Migrate to uiTheme palette entries (ds-surface-elevated, ds-accent-primary) in Stage N token-bake.
+
         private UIManager uiManager;
         private ToolFamily currentFamily;
         private bool isVisible;
