@@ -1,0 +1,45 @@
+{
+  "families": {
+    "residential": {
+      "regex": "^(house|light-residential|medium-residential|heavy-residential|residential)[-_]",
+      "description": "Residential buildings and zoning sprites"
+    },
+    "commercial": {
+      "regex": "^(commercial|shop|market|office|mall)[-_]",
+      "description": "Commercial buildings and zoning sprites"
+    },
+    "industrial": {
+      "regex": "^(industrial|factory|warehouse|plant|workshop)[-_]",
+      "description": "Industrial buildings and zoning sprites"
+    },
+    "power": {
+      "regex": "^(power|powerplant|power-plant|generator|substation|windmill|solar)[-_]",
+      "description": "Power infrastructure sprites"
+    },
+    "water": {
+      "regex": "^(water|waterplant|water-plant|pump|reservoir|pipe|aqueduct)[-_]",
+      "description": "Water infrastructure sprites"
+    },
+    "roads": {
+      "regex": "^(road|roads|street|highway|intersection|crossing|sign)[-_]",
+      "description": "Road network sprites"
+    },
+    "forest": {
+      "regex": "^(forest|tree|bush|grove|woodland|pine|oak)[-_]",
+      "description": "Natural forest and vegetation sprites"
+    },
+    "terrain": {
+      "regex": "^(terrain|ground|grass|soil|dirt|sand|cliff|slope)[-_]",
+      "description": "Terrain and landscape sprites"
+    },
+    "ui": {
+      "regex": "^(ui|button|icon|hud|panel|badge|indicator|cursor|tooltip)[-_]",
+      "description": "UI and HUD sprites"
+    },
+    "fx": {
+      "regex": "^(fx|effect|particle|smoke|fire|glow|sparkle|aura|vfx)[-_]",
+      "description": "Visual effects sprites"
+    }
+  },
+  "exempt_path_substrings": ["Generated/", "Placeholders/"]
+}
