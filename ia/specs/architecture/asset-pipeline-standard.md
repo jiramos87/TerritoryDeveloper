@@ -124,14 +124,81 @@ Re-run `npm run validate:asset-pipeline` → still green.
 
 ### Drift cases (Phase B lessons)
 
-**Drift case: partial-class MonoBehaviour binding**
-Unity binds `: MonoBehaviour` to the file whose stem matches the class name. Secondary partial files MUST NOT redeclare the base. Symptom: component shows "missing script" at scene load. Fix: move `: MonoBehaviour` to the canonical file stem.
+Each entry: **symptom** → **root cause** → **fix recipe**.
 
-**Drift case: bake-output-truth**
-When a toolbar slot shows wrong icon, audit the bake output (`_detail.iconSpriteSlug`) NOT the bake source YAML. In-place prefab edits are valid for one-off fixes; bake source touched only on pattern recurrence.
+---
 
-**Drift case: empty `_streamingRelativePath` benign**
-v1 catalog snapshot path superseded by per-kind exports + `CatalogLoader` (TECH-2675). `Debug.LogError` on empty = stale dev noise. Pattern: silent early return + comment referencing supersession ticket.
+#### DC-1 — Partial-class MonoBehaviour binding
 
-**Drift case: bridge mutations ephemeral without `save_scene`**
-`create_gameobject` / `attach_component` / `assign_serialized_field` apply to in-memory scene only. Any C# edit triggers domain reload discarding unsaved mutations. Always chain `save_scene` immediately after mutation batch, before C# edits. Prefer code-side lazy-init over scene authoring.
+**Symptom.** Component shows "missing script" at scene load (Inspector → yellow warning). `m_Script` GUID may already point to the correct `.meta` file yet bind fails. `[ZoneSubTypeRegistry] GridAssetCatalog not found in scene` in console.
+
+**Root cause.** Unity resolves `: MonoBehaviour` by matching the declaration file stem to the class name. If the base class declaration lives in a secondary partial file (`GridAssetCatalog.Dto.cs` instead of `GridAssetCatalog.cs`), Unity cannot bind the script reference at scene load even when both files compile cleanly.
+
+**Fix recipe.**
+1. Move `: MonoBehaviour` (and any other base specs) to the file whose stem matches the class name (canonical file).
+2. Secondary partial files: `partial class X` only — no base spec.
+3. Update scene `m_Script` GUID to the `.meta` of the canonical file if it drifted.
+4. Verify: `prefab_manifest` or scene reopen → `is_missing_script: false`.
+
+---
+
+#### DC-2 — Bake output is the truth for slot ordering
+
+**Symptom.** Toolbar slot renders wrong icon (e.g., S-zoning slot shows Bulldoze icon). Bake source YAML looks correct.
+
+**Root cause.** Bake output (`_detail.iconSpriteSlug` in generated prefab YAML) diverged from the intended slot mapping. The bake source and output are separate artifacts — bake output wins at runtime.
+
+**Fix recipe.**
+1. Inspect the bake output prefab YAML (e.g., `toolbar.prefab` lines near the suspect slot) — read `iconSpriteSlug` + `m_Sprite GUID`.
+2. For a one-off fix: edit `iconSpriteSlug` and `m_Sprite` in-place in the generated prefab YAML (valid; bake output is a derived file).
+3. Touch bake source only if the wrong mapping recurs after a re-bake (indicates upstream config fault).
+4. Verify: Play Mode → slot renders correct icon.
+
+---
+
+#### DC-3 — Empty `_streamingRelativePath` is benign
+
+**Symptom.** `Debug.LogError` fires at runtime: `"_streamingRelativePath is empty"` from `GridAssetCatalog` or `TokenCatalog`. No functional breakage observed.
+
+**Root cause.** v1 catalog snapshot path (`_streamingRelativePath`) is superseded by per-kind exports + `CatalogLoader` (Stage 13.1, TECH-2675). The field is populated only in legacy flows. Empty = expected production state.
+
+**Fix recipe.**
+1. Replace `Debug.LogError` with a silent early return.
+2. Add inline comment: `// _streamingRelativePath empty = expected; superseded by CatalogLoader (TECH-2675).`
+3. Do NOT add runtime fallback logic — the field is intentionally unused.
+4. Verify: Play Mode console → LogError gone; no functional regression.
+
+---
+
+#### DC-4 — Lazy-init notification panel (SerializeField unwired)
+
+**Symptom.** `LogError` on Awake: `"notificationPanel is null"` (or similar). `GameNotificationManager` present in scene but panel reference unset. Notification overlay non-functional.
+
+**Root cause.** `SerializeField` `notificationPanel` was never wired in the Inspector (or was discarded during a domain reload without `save_scene`). Bridge scene mutations are ephemeral without an explicit save (see DC-Bridge below).
+
+**Fix recipe.**
+1. Implement code-side lazy-init in the manager's Awake / first-use path: `LazyCreateNotificationUi()` — create a hidden Canvas child + `TextMeshProUGUI` at runtime if the field is null.
+2. Tag the created object so domain reloads can find + reuse it (`FindObjectsByType` scan before create).
+3. Do NOT rely on `[ExecuteAlways]` `OnEnable` to wire RectTransform fields — this is the ThemedPanel anti-pattern.
+4. Verify: Play Mode → notification overlay renders; no `LogError` on Awake.
+
+---
+
+## §Retrospective — Bake stages 1.0–9.1 + Phase B
+
+Lessons synthesized from all bake stages and Phase B ad-hoc sweep. Format: lesson | symptom that triggered it | mitigation now encoded in pipeline or §Playbook.
+
+| Lesson | Symptom | Mitigation |
+|---|---|---|
+| DB-wins contract must be established on day 0 | Stage 1.0: prefab edits lost on re-bake; team edited derived output | §Authority DB-wins contract; bake = deterministic derived artifact |
+| Bake output is the slot-ordering truth | Toolbar slot rendered wrong icon; bake source looked correct | DC-2: audit `_detail.iconSpriteSlug` in output, not source |
+| `CanvasWrapper` flatten is mandatory before descendant-ban | Stage 9.1: nested Canvas children blocked `validate:asset-pipeline` | `UiBakeHandler` now flattens `CanvasWrapper` subtree before emitting IR |
+| Single-canvas root prevents HUD dedup errors | Stage 8: HUD bar duplicated across bake runs | Bake enforces single Canvas root per panel; dedup gate in validator |
+| Partial-class base declaration must match file stem | Phase B: `GridAssetCatalog` showed "missing script" at scene load | DC-1 + `validate:asset-pipeline` schema gate on MonoBehaviour file stem |
+| Bridge mutations require `save_scene` before any C# edit | Phase B: `create_gameobject` results discarded on domain reload | DC-4 + architectural principle: prefer code-side lazy-init over scene authoring |
+| Empty `_streamingRelativePath` is expected post-v1 | Phase B: spurious `Debug.LogError` on every Play Mode enter | DC-3: silent early return + supersession comment; stale error removed |
+| Lazy-init over scene wiring for runtime-only UI | Phase B: notification panel null on Awake (Inspector field never set) | DC-4 recipe: `LazyCreateNotificationUi()` pattern; ThemedPanel anti-pattern doc |
+| `[ExecuteAlways]` OnEnable must NOT mutate RectTransform | Stage bake audit: bake authoring clobbered by runtime `OnEnable` override | MEMORY entry: ThemedPanel runtime rect anti-pattern; blocked in coding conventions |
+| IR coverage must span all published panels | Stage 9.1 coverage gap: 9 IR panels sentinel-baked, 8 off-viewport | Deferred TECH follow-up; `prefab_manifest` walk as spot-check recipe |
+| Prototype-first tracer slice required before full bake scope | Stages 2+ planned without tracer → late integration pain | Stage 1.0 tracer mandate in `prototype-first-methodology.md` |
+| `validate:asset-pipeline` must run pre-land not post-land | Early stages: schema faults discovered post-merge | CI gate in `validate:all`; blocks PR merge on non-zero exit |
