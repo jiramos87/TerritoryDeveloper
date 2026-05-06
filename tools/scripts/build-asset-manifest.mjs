@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 /**
  * build-asset-manifest.mjs
- * Stage 1.0 tracer — Pass 0 manifest + preflight builder.
+ * Pass 0 manifest + preflight builder.
+ * Pass 2 (--pass=2): regenerate kebab-case target_name per family rule, emit rename-only rows.
  *
  * Usage:
- *   node build-asset-manifest.mjs [--family=residential] [--dry-run]
+ *   node build-asset-manifest.mjs [--pass=0|2] [--family=residential] [--dry-run]
  *
- * Outputs: tools/scripts/asset-tree-reorg/manifest.csv
+ * Pass 0 (default): full manifest with preflight checks.
+ *   Outputs: tools/scripts/asset-tree-reorg/manifest.csv
+ * Pass 2: rename-only rows (current_name != target_name), skip Generated/ + Placeholders/.
+ *   Outputs: tools/scripts/asset-tree-reorg/manifest-pass2.csv
+ *
  * Columns: current_path,target_path,current_name,target_name,family,reason,meta_guid
+ * target_name regex (pass 2): ^[a-z]+(-[a-z0-9]+)*\.(png|prefab)$
  *
- * Preflight steps (run before manifest build):
+ * Preflight steps (Pass 0 only):
  *   1. Orphan .meta scan — every asset has sibling .meta and vice versa (TECH-16995)
  *   2. Resources.Load audit — zero in-scope Sprites/* / Prefabs/* string hits (TECH-16996)
  *   3. Slug-string audit — old filename stems in ia/ + BACKLOG.md (TECH-16997)
@@ -30,6 +36,7 @@ const SPRITES_ROOT = join(REPO_ROOT, 'Assets', 'Sprites');
 const PREFABS_ROOT = join(REPO_ROOT, 'Assets', 'Prefabs');
 const OUT_DIR = join(__dirname, 'asset-tree-reorg');
 const OUT_CSV = join(OUT_DIR, 'manifest.csv');
+const OUT_PASS2_CSV = join(OUT_DIR, 'manifest-pass2.csv');
 const PASS_25_CSV = join(OUT_DIR, 'pass-2-5-slug-hits.csv');
 
 // 10-family flat taxonomy
@@ -66,13 +73,21 @@ const FOLDER_FAMILY_OVERRIDE = {
   Buttons: 'ui',
   Icons: 'ui',
   State: 'terrain',
-  Generated: null, // skip Generated/
+  Generated: null,    // skip Generated/
+  Placeholders: null, // skip Placeholders/
 };
 
 // ── CLI args ───────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const passArg = args.find(a => a.startsWith('--pass='))?.split('=')[1] ?? '0';
+const pass = parseInt(passArg, 10);
+if (![0, 2].includes(pass)) {
+  console.error(`ERROR: --pass must be 0 or 2 (got "${passArg}")`);
+  process.exit(1);
+}
+const isPass2 = pass === 2;
 const familyFilter = args.find(a => a.startsWith('--family='))?.split('=')[1] ?? null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -138,13 +153,22 @@ function inferFamily(filePath) {
  * Current pass (Pass 0) target_path = same location (no moves yet; Pass 1 moves folders).
  */
 function toKebabCase(name) {
-  // Already kebab-case if all lowercase with hyphens
-  // Convert PascalCase / underscores → kebab-case
-  return name
+  // Split on last dot to isolate extension from stem
+  const lastDot = name.lastIndexOf('.');
+  const stem = lastDot >= 0 ? name.slice(0, lastDot) : name;
+  const ext = lastDot >= 0 ? name.slice(lastDot) : '';
+
+  const kebabStem = stem
     .replace(/_/g, '-')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
     .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+    // Collapse any accidental double-hyphens from dots/underscores in stem
+    .replace(/\.+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-|-$/g, '')
     .toLowerCase();
+
+  return kebabStem + ext.toLowerCase();
 }
 
 /**
@@ -265,9 +289,13 @@ function runSlugStringAudit(manifestRows) {
   return hits;
 }
 
+// ── Kebab-case regex (Pass 2 validation) ─────────────────────────────────────
+
+const KEBAB_REGEX = /^[a-z][a-z0-9]*(-[a-z0-9]+)*\.(png|prefab)$/;
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 
-console.log('build-asset-manifest.mjs — Pass 0 preflight + manifest builder');
+console.log(`build-asset-manifest.mjs — Pass ${pass} ${isPass2 ? '(kebab rename manifest)' : 'preflight + manifest builder'}`);
 console.log(`  dryRun=${dryRun}  familyFilter=${familyFilter ?? 'all'}`);
 console.log('');
 
@@ -275,6 +303,89 @@ console.log('');
 const allSprites = walkDir(SPRITES_ROOT);
 const allPrefabs = walkDir(PREFABS_ROOT);
 const allFiles = [...allSprites, ...allPrefabs];
+
+if (isPass2) {
+  // ── Pass 2 path: kebab rename manifest (no preflight audits) ───────────────
+
+  console.log('[1/2] Building Pass 2 rename rows (current_name != target_name)...');
+
+  const ASSET_EXTENSIONS = new Set(['.png', '.prefab']);
+  const renameRows = [];
+
+  for (const filePath of allFiles) {
+    const ext = extname(filePath);
+    if (!ASSET_EXTENSIONS.has(ext)) continue;
+
+    const family = inferFamily(filePath);
+    if (family === null) continue; // skip Generated/ + Placeholders/
+
+    if (familyFilter && family !== familyFilter) continue;
+
+    const currentName = basename(filePath);
+    const targetName = toKebabCase(currentName);
+
+    // Pass 2: only emit rows that need renaming
+    if (currentName === targetName) continue;
+
+    const currentPathRel = relative(REPO_ROOT, filePath);
+    const dir = currentPathRel.replace(/[^/]+$/, '').replace(/\/$/, '');
+    // target_path = same directory, but with target_name as filename
+    const targetPathRel = dir ? `${dir}/${targetName}` : targetName;
+
+    const metaPath = filePath + '.meta';
+    const metaGuid = readMetaGuid(metaPath);
+    const reason = family === 'unknown' ? 'needs-manual-review' : 'family-inferred';
+
+    renameRows.push({
+      current_path: currentPathRel,
+      target_path: targetPathRel,
+      current_name: currentName,
+      target_name: targetName,
+      family,
+      reason,
+      meta_guid: metaGuid,
+    });
+  }
+
+  console.log(`  ${renameRows.length} rename rows (family=${familyFilter ?? 'all'})`);
+
+  // Validate kebab-case regex on all target_names
+  console.log('[2/2] Validating kebab-case regex on target_name...');
+  const escapees = renameRows.filter(r => !KEBAB_REGEX.test(r.target_name));
+  if (escapees.length > 0) {
+    console.error(`ABORT — ${escapees.length} target_name(s) fail kebab-case regex:`);
+    for (const r of escapees) {
+      console.error(`  ${r.current_name} → ${r.target_name}`);
+    }
+    process.exit(1);
+  }
+  console.log('  OK — all target_name values match kebab-case regex');
+
+  const CSV_HEADER = 'current_path,target_path,current_name,target_name,family,reason,meta_guid';
+  const csvLines = [
+    CSV_HEADER,
+    ...renameRows.map(r =>
+      [r.current_path, r.target_path, r.current_name, r.target_name, r.family, r.reason, r.meta_guid]
+        .map(v => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',')
+    ),
+  ];
+
+  if (!dryRun) {
+    mkdirSync(OUT_DIR, { recursive: true });
+    writeFileSync(OUT_PASS2_CSV, csvLines.join('\n') + '\n', 'utf-8');
+    console.log(`\nPass 2 manifest written: ${relative(REPO_ROOT, OUT_PASS2_CSV)} (${renameRows.length} rows)`);
+  } else {
+    console.log('\n[dry-run] No files written.');
+    console.log('CSV preview (first 5 rows):');
+    csvLines.slice(0, 6).forEach(l => console.log(' ', l));
+  }
+
+  console.log('\nDone. Pass 2 manifest green.');
+  process.exit(0);
+}
+
+// ── Pass 0 path: full preflight + manifest ────────────────────────────────────
 
 // ── Step 1: Orphan .meta scan ─────────────────────────────────────────────────
 console.log('[1/4] Orphan .meta scan...');
@@ -311,7 +422,7 @@ for (const filePath of allFiles) {
   if (!ASSET_EXTENSIONS.has(ext)) continue;
 
   const family = inferFamily(filePath);
-  if (family === null) continue; // skip Generated/
+  if (family === null) continue; // skip Generated/ + Placeholders/
 
   if (familyFilter && family !== familyFilter) continue;
 

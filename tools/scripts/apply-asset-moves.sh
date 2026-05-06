@@ -2,15 +2,16 @@
 # apply-asset-moves.sh — execute git mv for asset reorg passes
 # Usage: apply-asset-moves.sh [--pass=1|2] [--family=<name>] [--dry-run]
 #
-# Reads tools/scripts/asset-tree-reorg/manifest.csv.
-# Pass 1: folder moves only (rows where current_path != target_path, names unchanged).
-# Pass 2: file renames only (rows where current_name != target_name, folder unchanged).
-# Each git mv is paired: asset + asset.meta.
+# Pass 1: reads manifest.csv — folder moves only (current_path != target_path, name unchanged).
+# Pass 2: reads manifest-pass2.csv — file renames only (current_name != target_name).
+#         Run build-asset-manifest.mjs --pass=2 first to regenerate manifest-pass2.csv.
+# Each git mv is paired: asset + asset.meta (GUID preservation).
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MANIFEST="$REPO_ROOT/tools/scripts/asset-tree-reorg/manifest.csv"
+MANIFEST_PASS1="$REPO_ROOT/tools/scripts/asset-tree-reorg/manifest.csv"
+MANIFEST_PASS2="$REPO_ROOT/tools/scripts/asset-tree-reorg/manifest-pass2.csv"
 
 PASS=""
 FAMILY=""
@@ -30,8 +31,18 @@ if [[ -z "$PASS" ]]; then
   exit 1
 fi
 
+# Select manifest per pass
+case "$PASS" in
+  1) MANIFEST="$MANIFEST_PASS1" ;;
+  2) MANIFEST="$MANIFEST_PASS2" ;;
+  *) echo "ERROR: --pass must be 1 or 2" >&2; exit 1 ;;
+esac
+
 if [[ ! -f "$MANIFEST" ]]; then
   echo "ERROR: manifest not found at $MANIFEST" >&2
+  if [[ "$PASS" == "2" ]]; then
+    echo "  Run: node tools/scripts/build-asset-manifest.mjs --pass=2" >&2
+  fi
   exit 1
 fi
 
@@ -69,7 +80,7 @@ while IFS=, read -r current_path target_path current_name target_name family rea
 
   case "$PASS" in
     1)
-      # Pass 1: folder moves only — skip if already in right folder
+      # Pass 1: folder moves only — skip rows already in canonical folder
       if ! $folder_move; then
         skip_count=$((skip_count + 1))
         continue
@@ -80,21 +91,18 @@ while IFS=, read -r current_path target_path current_name target_name family rea
       dst_meta="${dst}.meta"
       ;;
     2)
-      # Pass 2: name renames only — skip if names match
+      # Pass 2: file renames only — manifest-pass2.csv supplies correct target_path.
+      # Rows are pre-filtered by build-asset-manifest.mjs --pass=2 (current_name != target_name).
+      # Skip defensive check for name_change == false (manifest already filtered).
       if ! $name_change; then
         skip_count=$((skip_count + 1))
         continue
       fi
-      # For pass 2 the folder is already canonical (post pass 1)
       src="$REPO_ROOT/$current_path"
-      # target_path for pass 2 carries the renamed file in its current folder
+      # target_path from manifest-pass2.csv = dirname(current_path)/target_name
       dst="$REPO_ROOT/$target_path"
       src_meta="${src}.meta"
       dst_meta="${dst}.meta"
-      ;;
-    *)
-      echo "ERROR: --pass must be 1 or 2" >&2
-      exit 1
       ;;
   esac
 
