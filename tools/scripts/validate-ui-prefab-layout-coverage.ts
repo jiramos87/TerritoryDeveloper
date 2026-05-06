@@ -1,23 +1,18 @@
 /**
  * validate-ui-prefab-layout-coverage.ts
  *
- * Stage 13.7 fallout — build-time half of the anti-loss guard around
- * `UiBakeHandler.SavePanelPrefab`. The runtime half (in
- * `Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs`) refuses to overwrite
- * a Generated UI prefab when CD truth source `layout-rects.json` has no entry
- * for the panel slug AND the existing prefab carries non-default
- * `RectTransform`. This validator is the proactive heads-up: enumerates IR
- * panel slugs from `web/design-refs/step-1-game-ui/ir.json` + cross-checks
- * against panel-kind entries in `web/design-refs/step-1-game-ui/layout-rects.json`,
- * surfacing slugs that the next bake would have to fall back to a sentinel
- * 200×80 top-left rect for.
+ * Stage 13.7 — build-time anti-loss guard for baked Generated UI prefabs.
+ * Stage 9.10 — source switched from ir.json (retired) to panels.json (DB snapshot).
+ *              Extends coverage check to include layout_json.zone field on children.
+ *
+ * Enumerates panel slugs from `Assets/UI/Snapshots/panels.json` (schema_version 3)
+ * + cross-checks against `layout-rects.json` / `layout-rects-overrides.json`,
+ * surfacing slugs that the next bake would fall back to a sentinel 200×80 rect for.
  *
  * Exit codes:
- *   0  every IR panel either has a layout-rects entry OR no existing prefab
+ *   0  every panels.json panel either has a layout-rects entry OR no existing prefab
  *      to lose (warn-only output for uncovered slugs lacking on-disk prefabs)
- *   1  one or more IR panels are uncovered AND have an existing prefab on
- *      disk — designer must add to layout-rects.json (regenerate via
- *      `tools/scripts/extract-cd-layout-rects.ts`) before next bake
+ *   1  one or more panels are uncovered AND have an existing prefab on disk
  *   2  internal error (malformed JSON, missing source files, schema drift)
  *
  * Usage:
@@ -32,12 +27,14 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
-const IR_PATH = path.join(
+
+// Stage 9.10: read from panels.json (DB snapshot) — ir.json retained on disk as design-ref archive.
+const PANELS_PATH = path.join(
   REPO_ROOT,
-  "web",
-  "design-refs",
-  "step-1-game-ui",
-  "ir.json",
+  "Assets",
+  "UI",
+  "Snapshots",
+  "panels.json",
 );
 const LAYOUT_RECTS_PATH = path.join(
   REPO_ROOT,
@@ -61,8 +58,31 @@ const GENERATED_PREFAB_DIR = path.join(
   "Generated",
 );
 
-type IrPanel = { slug: string };
-type Ir = { panels?: IrPanel[] };
+// panels.json schema_version 3 types (top-level slug + fields + children shape).
+type PanelSnapshotFields = {
+  layout_template?: string;
+  layout?: string;
+  gap_px?: number;
+};
+
+type PanelSnapshotChild = {
+  ord?: number;
+  kind?: string;
+  layout_json?: { zone?: string } | null;
+};
+
+type PanelSnapshotItem = {
+  slug?: string;
+  fields?: PanelSnapshotFields;
+  // Legacy panel block (v1/v2); may coexist with top-level slug.
+  panel?: { slug?: string };
+  children?: PanelSnapshotChild[];
+};
+
+type PanelsSnapshot = {
+  schema_version?: number;
+  items?: PanelSnapshotItem[];
+};
 
 type LayoutNode = {
   node_kind: string;
@@ -78,22 +98,28 @@ type LayoutRectsOverrides = {
   panels?: LayoutRectsOverridePanel[];
 };
 
+const VALID_ZONES = new Set(["left", "center", "right"]);
+
 function readJson<T>(file: string): T {
   const raw = fs.readFileSync(file, "utf-8");
   return JSON.parse(raw) as T;
 }
 
 function main(): number {
-  let ir: Ir;
+  let panels: PanelsSnapshot;
   let layoutRects: LayoutRects;
+
+  // Load panels.json.
   try {
-    ir = readJson<Ir>(IR_PATH);
+    panels = readJson<PanelsSnapshot>(PANELS_PATH);
   } catch (e) {
     console.error(
-      `[validate:ui-prefab-layout-coverage] cannot read IR at ${IR_PATH}: ${(e as Error).message}`,
+      `[validate:ui-prefab-layout-coverage] cannot read panels.json at ${PANELS_PATH}: ${(e as Error).message}`,
     );
     return 2;
   }
+
+  // Load layout-rects.json.
   try {
     layoutRects = readJson<LayoutRects>(LAYOUT_RECTS_PATH);
   } catch (e) {
@@ -103,10 +129,7 @@ function main(): number {
     return 2;
   }
 
-  // Optional override file — hand-authored canonical viewport coords for
-  // panels whose CD-bundle entry is off-viewport (horizontal-strip artifact)
-  // or absent. Loaded by LayoutRectsLoader.cs AFTER base file; entries here
-  // count as covered for the purpose of this validator.
+  // Optional override file.
   let layoutOverrides: LayoutRectsOverrides | null = null;
   if (fs.existsSync(LAYOUT_RECTS_OVERRIDES_PATH)) {
     try {
@@ -119,12 +142,13 @@ function main(): number {
     }
   }
 
-  if (!Array.isArray(ir.panels)) {
+  if (!Array.isArray(panels.items)) {
     console.error(
-      `[validate:ui-prefab-layout-coverage] IR has no panels[] array — schema drift?`,
+      `[validate:ui-prefab-layout-coverage] panels.json has no items[] array — schema drift?`,
     );
     return 2;
   }
+
   if (!Array.isArray(layoutRects.nodes)) {
     console.error(
       `[validate:ui-prefab-layout-coverage] layout-rects has no nodes[] array — schema drift?`,
@@ -132,9 +156,11 @@ function main(): number {
     return 2;
   }
 
-  const irSlugs: string[] = ir.panels
-    .map((p) => p?.slug)
+  // Resolve slug from each item — prefer top-level slug (v3), fall back to panel.slug (v1/v2).
+  const panelSlugs: string[] = panels.items
+    .map((item) => item?.slug ?? item?.panel?.slug)
     .filter((s): s is string => typeof s === "string" && s.length > 0);
+
   const layoutPanelSlugs = new Set<string>(
     layoutRects.nodes
       .filter((n) => n?.node_kind === "panel" && typeof n.cd_slug === "string")
@@ -147,9 +173,10 @@ function main(): number {
   );
   const coveredSlugs = new Set<string>([...layoutPanelSlugs, ...overrideSlugs]);
 
+  // Layout-rects coverage check.
   const uncoveredWithPrefab: string[] = [];
   const uncoveredNoPrefab: string[] = [];
-  for (const slug of irSlugs) {
+  for (const slug of panelSlugs) {
     if (coveredSlugs.has(slug)) continue;
     const prefabPath = path.join(GENERATED_PREFAB_DIR, `${slug}.prefab`);
     if (fs.existsSync(prefabPath)) {
@@ -159,19 +186,44 @@ function main(): number {
     }
   }
 
+  // Stage 9.10: layout_json.zone coverage check.
+  // Warn when a child carries a non-standard zone (not left/center/right).
+  const zoneViolations: string[] = [];
+  for (const item of panels.items) {
+    const slug = item?.slug ?? item?.panel?.slug ?? "(unknown)";
+    if (!Array.isArray(item?.children)) continue;
+    for (const child of item.children!) {
+      if (child?.layout_json == null) continue;
+      const zone = child.layout_json.zone;
+      if (zone !== undefined && !VALID_ZONES.has(zone)) {
+        zoneViolations.push(`${slug} child ord=${child.ord} zone="${zone}"`);
+      }
+    }
+  }
+
   console.log(
-    `[validate:ui-prefab-layout-coverage] IR panels: ${irSlugs.length}; layout-rects panel entries: ${layoutPanelSlugs.size}; override entries: ${overrideSlugs.size}; uncovered+prefab: ${uncoveredWithPrefab.length}; uncovered+no-prefab: ${uncoveredNoPrefab.length}`,
+    `[validate:ui-prefab-layout-coverage] panels.json items: ${panelSlugs.length}; layout-rects panel entries: ${layoutPanelSlugs.size}; override entries: ${overrideSlugs.size}; uncovered+prefab: ${uncoveredWithPrefab.length}; uncovered+no-prefab: ${uncoveredNoPrefab.length}; zone-violations: ${zoneViolations.length}`,
   );
 
   if (uncoveredNoPrefab.length > 0) {
     console.log(
-      `[validate:ui-prefab-layout-coverage] notice — IR panels without layout-rects/override entry AND no existing prefab (next bake will emit top-left 200×80 sentinel): ${uncoveredNoPrefab.join(", ")}`,
+      `[validate:ui-prefab-layout-coverage] notice — panels without layout-rects/override entry AND no existing prefab (next bake emits 200×80 sentinel): ${uncoveredNoPrefab.join(", ")}`,
     );
+  }
+
+  if (zoneViolations.length > 0) {
+    console.error(
+      `[validate:ui-prefab-layout-coverage] WARN — ${zoneViolations.length} child(ren) carry layout_json.zone values outside {left, center, right}:`,
+    );
+    for (const v of zoneViolations) {
+      console.error(`  - ${v}`);
+    }
+    // Zone violations are warnings only — do not fail the build; bake defaults to center with warning log.
   }
 
   if (uncoveredWithPrefab.length > 0) {
     console.error(
-      `[validate:ui-prefab-layout-coverage] FAIL — ${uncoveredWithPrefab.length} IR panel(s) lack a layout-rects.json/overrides entry but have an existing prefab on disk. Next bake risks clobbering authored RectTransform state. Either regenerate via tools/scripts/extract-cd-layout-rects.ts OR add to web/design-refs/step-1-game-ui/layout-rects-overrides.json before re-baking:`,
+      `[validate:ui-prefab-layout-coverage] FAIL — ${uncoveredWithPrefab.length} panel(s) lack a layout-rects.json/overrides entry but have an existing prefab on disk. Next bake risks clobbering authored RectTransform state. Either regenerate via tools/scripts/extract-cd-layout-rects.ts OR add to web/design-refs/step-1-game-ui/layout-rects-overrides.json:`,
     );
     for (const slug of uncoveredWithPrefab) {
       console.error(`  - ${slug}  (prefab: Assets/UI/Prefabs/Generated/${slug}.prefab)`);
@@ -180,7 +232,7 @@ function main(): number {
   }
 
   console.log(
-    `[validate:ui-prefab-layout-coverage] OK — every IR panel either has a layout-rects entry or no existing prefab to protect.`,
+    `[validate:ui-prefab-layout-coverage] OK — every panels.json panel either has a layout-rects entry or no existing prefab to protect.`,
   );
   return 0;
 }

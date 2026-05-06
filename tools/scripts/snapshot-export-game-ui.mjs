@@ -43,7 +43,7 @@ import { resolveDatabaseUrl } from '../postgres-ia/resolve-database-url.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 const OUT_REL = 'Assets/UI/Snapshots/panels.json';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 3;
 
 const require = createRequire(import.meta.url);
 const pgRequire = createRequire(join(REPO_ROOT, 'tools/postgres-ia/package.json'));
@@ -52,12 +52,13 @@ const pg = pgRequire('pg');
 /** Pull published panels + their ordered children + per-child sprite ref. */
 const PANELS_QUERY = `
   SELECT
-    pe.id              AS panel_entity_id,
-    pe.slug            AS panel_slug,
-    pd.layout          AS panel_layout,
-    pd.gap_px          AS panel_gap_px,
-    pd.padding_json    AS panel_padding_json,
-    pd.params_json     AS panel_params_json
+    pe.id                  AS panel_entity_id,
+    pe.slug                AS panel_slug,
+    pd.layout_template     AS panel_layout_template,
+    pd.layout              AS panel_layout,
+    pd.gap_px              AS panel_gap_px,
+    pd.padding_json        AS panel_padding_json,
+    pd.params_json         AS panel_params_json
   FROM catalog_entity pe
   JOIN panel_detail pd ON pd.entity_id = pe.id
   WHERE pe.kind = 'panel'
@@ -71,7 +72,8 @@ const CHILDREN_QUERY = `
     pc.order_idx                 AS ord,
     pc.child_kind                AS kind,
     pc.params_json               AS params_json,
-    sd.assets_path               AS sprite_ref
+    sd.assets_path               AS sprite_ref,
+    pc.layout_json               AS layout_json
   FROM panel_child pc
   LEFT JOIN button_detail bd ON bd.entity_id = pc.child_entity_id
   LEFT JOIN sprite_detail sd ON sd.entity_id = bd.sprite_icon_entity_id
@@ -102,12 +104,27 @@ async function main() {
         kind: k.kind,
         params_json: typeof k.params_json === 'string' ? k.params_json : JSON.stringify(k.params_json ?? {}),
         sprite_ref: k.sprite_ref ?? '',
+        layout_json: k.layout_json ?? null,
       }));
       totalChildren += children.length;
       items.push({
+        slug: p.panel_slug,
+        fields: {
+          layout_template: p.panel_layout_template ?? p.panel_layout ?? 'vstack',
+          layout: p.panel_layout ?? '',
+          gap_px: p.panel_gap_px,
+          padding_json: typeof p.panel_padding_json === 'string'
+            ? p.panel_padding_json
+            : JSON.stringify(p.panel_padding_json ?? {}),
+          params_json: typeof p.panel_params_json === 'string'
+            ? p.panel_params_json
+            : JSON.stringify(p.panel_params_json ?? {}),
+        },
+        // Legacy shape kept for backwards compat readers.
         panel: {
           slug: p.panel_slug,
-          layout: p.panel_layout,
+          layout_template: p.panel_layout_template ?? p.panel_layout ?? 'vstack',
+          layout: p.panel_layout ?? '',
           gap_px: p.panel_gap_px,
           padding_json: typeof p.panel_padding_json === 'string'
             ? p.panel_padding_json

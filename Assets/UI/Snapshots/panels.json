@@ -1,69 +1,95 @@
 {
-  "snapshot_id": "2026-05-04T20:14:09.120Z",
+  "snapshot_id": "2026-05-06T00:00:00.000Z",
   "kind": "panels",
-  "schema_version": 1,
+  "schema_version": 3,
   "items": [
     {
-      "panel": {
-        "slug": "hud_bar",
+      "slug": "hud_bar",
+      "fields": {
+        "layout_template": "hstack",
         "layout": "hstack",
         "gap_px": 8,
-        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}"
+        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "params_json": "{}"
+      },
+      "panel": {
+        "slug": "hud_bar",
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "params_json": "{}"
       },
       "children": [
         {
           "ord": 1,
           "kind": "button",
           "params_json": "{\"ord\":1,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_1.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_budget.png",
+          "layout_json": { "zone": "left" }
         },
         {
           "ord": 2,
           "kind": "button",
           "params_json": "{\"ord\":2,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_2.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_1.png",
+          "layout_json": { "zone": "left" }
         },
         {
           "ord": 3,
           "kind": "button",
           "params_json": "{\"ord\":3,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_3.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_2.png",
+          "layout_json": { "zone": "left" }
         },
         {
           "ord": 4,
           "kind": "button",
           "params_json": "{\"ord\":4,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_4.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_3.png",
+          "layout_json": { "zone": "center" }
         },
         {
           "ord": 5,
           "kind": "button",
           "params_json": "{\"ord\":5,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_5.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_4.png",
+          "layout_json": { "zone": "center" }
         },
         {
           "ord": 6,
           "kind": "button",
           "params_json": "{\"ord\":6,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_6.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_5.png",
+          "layout_json": { "zone": "center" }
         },
         {
           "ord": 7,
           "kind": "button",
           "params_json": "{\"ord\":7,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_7.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_6.png",
+          "layout_json": { "zone": "right" }
         },
         {
           "ord": 8,
           "kind": "button",
           "params_json": "{\"ord\":8,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_8.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_7.png",
+          "layout_json": { "zone": "right" }
         },
         {
           "ord": 9,
           "kind": "button",
           "params_json": "{\"ord\":9,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_9.png"
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_8.png",
+          "layout_json": { "zone": "right" }
+        },
+        {
+          "ord": 10,
+          "kind": "button",
+          "params_json": "{\"ord\":10,\"kind\":\"button\"}",
+          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_9.png",
+          "layout_json": { "zone": "right" }
         }
       ]
     }

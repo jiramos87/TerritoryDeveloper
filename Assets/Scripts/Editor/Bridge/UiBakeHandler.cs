@@ -258,8 +258,54 @@ namespace Territory.Editor.Bridge
         public class BakeArgs
         {
             public string ir_path;
+            /// <summary>Stage 9.10 — canonical panels snapshot path (panels.json). Takes precedence over ir_path when set.</summary>
+            public string panels_path;
             public string out_dir;
             public string theme_so;
+        }
+
+        // ── Stage 9.10 — PanelSnapshot DTOs (JsonUtility-friendly, no Newtonsoft) ─
+
+        /// <summary>Top-level panels.json snapshot shape (schema_version 3).</summary>
+        [Serializable]
+        public class PanelSnapshot
+        {
+            public string snapshot_id;
+            public string kind;
+            public int schema_version;
+            public PanelSnapshotItem[] items;
+        }
+
+        /// <summary>One panel item in panels.json items[].</summary>
+        [Serializable]
+        public class PanelSnapshotItem
+        {
+            public string slug;
+            public PanelSnapshotFields fields;
+            public PanelSnapshotChild[] children;
+        }
+
+        /// <summary>Panel fields block — mirrors panel_detail columns projected by exporter.</summary>
+        [Serializable]
+        public class PanelSnapshotFields
+        {
+            public string layout_template;
+            public string layout;
+            public float gap_px;
+            public string padding_json;
+            public string params_json;
+        }
+
+        /// <summary>Per-child row in panels.json children[]. layout_json is a JSON string (JsonUtility cannot model nested objects).</summary>
+        [Serializable]
+        public class PanelSnapshotChild
+        {
+            public int ord;
+            public string kind;
+            public string params_json;
+            public string sprite_ref;
+            /// <summary>JSON string of layout routing metadata, e.g. {\"zone\":\"left\"}. Null/empty = no zone routing.</summary>
+            public string layout_json;
         }
 
         /// <summary>Structured bake error — round-trips through bridge `{ok: false, error, details, path}` payload.</summary>
@@ -287,6 +333,101 @@ namespace Territory.Editor.Bridge
         /// </summary>
         /// <summary>Last raw IR JSON text passed to <see cref="Parse"/>; used by <see cref="ExtractInteractiveDetailJson"/> for per-row detail substring capture (JsonUtility cannot model open-shape detail block).</summary>
         private static string _lastRawIrJson;
+
+        // ── Stage 9.10 — PanelSnapshot parse + layout primitive map ─────────────
+
+        /// <summary>
+        /// Parse panels.json snapshot JSON via JsonUtility. Returns <c>(snapshot, error=null)</c>
+        /// on success or <c>(null, error)</c> on schema fault. Missing layout_template fails
+        /// hard with <c>bake.layout_template_missing</c> error code.
+        /// </summary>
+        public static (PanelSnapshot snapshot, BakeError error) ParsePanelSnapshot(string jsonText)
+        {
+            if (string.IsNullOrWhiteSpace(jsonText))
+            {
+                return (null, new BakeError
+                {
+                    error = "schema_violation",
+                    details = "empty_or_whitespace_json",
+                    path = "$",
+                });
+            }
+
+            PanelSnapshot parsed;
+            try
+            {
+                parsed = JsonUtility.FromJson<PanelSnapshot>(jsonText);
+            }
+            catch (Exception ex)
+            {
+                return (null, new BakeError
+                {
+                    error = "schema_violation",
+                    details = ex.Message,
+                    path = "$",
+                });
+            }
+
+            if (parsed == null)
+            {
+                return (null, new BakeError
+                {
+                    error = "schema_violation",
+                    details = "json_parsed_null",
+                    path = "$",
+                });
+            }
+
+            if (parsed.items == null || parsed.items.Length == 0)
+            {
+                return (null, new BakeError
+                {
+                    error = "schema_violation",
+                    details = "items_missing_or_empty",
+                    path = "$.items",
+                });
+            }
+
+            return (parsed, null);
+        }
+
+        /// <summary>
+        /// Map <c>layout_template</c> string to LayoutGroup component type.
+        /// Throws <see cref="BakeError"/> (<c>bake.layout_template_missing</c>) when null or empty —
+        /// no silent vstack fallback per Stage 9.10 spec.
+        /// </summary>
+        /// <param name="layoutTemplate">Value from <see cref="PanelSnapshotFields.layout_template"/>.</param>
+        /// <param name="panelSlug">Panel slug for error context.</param>
+        /// <returns>Type of LayoutGroup component to add (<c>HorizontalLayoutGroup</c> / <c>VerticalLayoutGroup</c> / <c>GridLayoutGroup</c>).</returns>
+        /// <exception cref="Exception">Throws formatted exception with <c>bake.layout_template_missing</c> when template absent.</exception>
+        public static System.Type MapLayoutTemplate(string layoutTemplate, string panelSlug)
+        {
+            if (string.IsNullOrEmpty(layoutTemplate))
+            {
+                throw new Exception($"bake.layout_template_missing: {panelSlug}");
+            }
+            switch (layoutTemplate)
+            {
+                case "hstack": return typeof(HorizontalLayoutGroup);
+                case "vstack": return typeof(VerticalLayoutGroup);
+                case "grid":   return typeof(GridLayoutGroup);
+                default:
+                    Debug.LogWarning($"[UiBakeHandler] layout_template '{layoutTemplate}' unrecognised — falling back to vstack for panel '{panelSlug}'");
+                    return typeof(VerticalLayoutGroup);
+            }
+        }
+
+        /// <summary>
+        /// Extract layout_json.zone from a <see cref="PanelSnapshotChild"/> layout_json string.
+        /// Returns null when layout_json absent or zone key missing.
+        /// </summary>
+        public static string ExtractZone(string layoutJsonStr)
+        {
+            if (string.IsNullOrEmpty(layoutJsonStr)) return null;
+            var match = System.Text.RegularExpressions.Regex.Match(layoutJsonStr, "\"zone\"\\s*:\\s*\"([^\"]+)\"");
+            if (match.Success) return match.Groups[1].Value;
+            return null;
+        }
 
         public static BakeResult Parse(string jsonText)
         {
@@ -427,23 +568,57 @@ namespace Territory.Editor.Bridge
                 };
             }
 
-            // DEC-A24 §6 D6 — claude-design IR JSON pipeline demoted (sketchpad-only).
-            // LayoutRectsLoader severed (Stage 6 game-ui-catalog-bake).
-            // Frame-bake now emits sentinel rects with anti-loss prefab-overwrite guard.
+            // Stage 9.10 — panels_path (DB snapshot) is the canonical input.
+            // ir_path (legacy sketchpad IR) read-path retired. BakeArgs.ir_path
+            // field retained for bridge backwards-compat; value forwarded to
+            // panels_path when panels_path absent (old callers still work during
+            // transition).
+            if (!string.IsNullOrEmpty(args.panels_path))
+            {
+                return BakeFromPanelSnapshot(args);
+            }
 
-            if (string.IsNullOrEmpty(args.ir_path))
+            // Fallback: caller passed only ir_path (deprecated bridge clients).
+            // Treat ir_path as panels_path so callers don't hard-fail at runtime
+            // while the C# bridge is updated to send panels_path.
+            if (!string.IsNullOrEmpty(args.ir_path))
+            {
+                var redirectArgs = new BakeArgs
+                {
+                    panels_path = args.ir_path,
+                    out_dir = args.out_dir,
+                    theme_so = args.theme_so,
+                };
+                return BakeFromPanelSnapshot(redirectArgs);
+            }
+
+            return new BakeResult
+            {
+                root = null,
+                error = new BakeError { error = "missing_arg", details = "panels_path", path = "$.panels_path" },
+            };
+        }
+
+        /// <summary>
+        /// Stage 9.10 — bake from panels.json snapshot (PanelSnapshot DTOs).
+        /// Reads panels_path, parses into <see cref="PanelSnapshot"/>, bakes each panel item.
+        /// Fails hard when layout_template missing.
+        /// </summary>
+        public static BakeResult BakeFromPanelSnapshot(BakeArgs args)
+        {
+            if (args == null || string.IsNullOrEmpty(args.panels_path))
             {
                 return new BakeResult
                 {
                     root = null,
-                    error = new BakeError { error = "missing_arg", details = "ir_path", path = "$.ir_path" },
+                    error = new BakeError { error = "missing_arg", details = "panels_path", path = "$.panels_path" },
                 };
             }
 
             string jsonText;
             try
             {
-                jsonText = System.IO.File.ReadAllText(args.ir_path);
+                jsonText = System.IO.File.ReadAllText(args.panels_path);
             }
             catch (Exception ex)
             {
@@ -452,23 +627,16 @@ namespace Territory.Editor.Bridge
                     root = null,
                     error = new BakeError
                     {
-                        error = "ir_path_not_readable",
+                        error = "panels_path_not_readable",
                         details = ex.Message,
-                        path = args.ir_path,
+                        path = args.panels_path,
                     },
                 };
             }
 
-            var parseResult = Parse(jsonText);
-            if (parseResult.error != null) return parseResult;
+            var (snapshot, parseError) = ParsePanelSnapshot(jsonText);
+            if (parseError != null) return new BakeResult { root = null, error = parseError };
 
-            var slotError = ValidateSlotAcceptRules(parseResult.root);
-            if (slotError != null)
-            {
-                return new BakeResult { root = parseResult.root, error = slotError };
-            }
-
-            // T2.4 — populate UiTheme SO + write placeholder prefabs.
             var soPath = string.IsNullOrEmpty(args.theme_so)
                 ? "Assets/UI/Theme/DefaultUiTheme.asset"
                 : args.theme_so;
@@ -478,7 +646,7 @@ namespace Territory.Editor.Bridge
             {
                 return new BakeResult
                 {
-                    root = parseResult.root,
+                    root = null,
                     error = new BakeError
                     {
                         error = "theme_so_not_found",
@@ -488,18 +656,152 @@ namespace Territory.Editor.Bridge
                 };
             }
 
-            PopulateThemeFromIr(theme, parseResult.root);
-            EditorUtility.SetDirty(theme);
-            AssetDatabase.SaveAssets();
+            var prefabError = WritePanelSnapshotPrefabs(snapshot, args.out_dir, theme);
+            if (prefabError != null) return new BakeResult { root = null, error = prefabError };
 
-            var prefabError = WritePlaceholderPrefabs(parseResult.root, args.out_dir, theme);
-            if (prefabError != null)
+            AssetDatabase.Refresh();
+            return new BakeResult { root = null, error = null };
+        }
+
+        /// <summary>
+        /// Write prefabs for each item in a <see cref="PanelSnapshot"/>.
+        /// Dispatches per-item to <see cref="SavePanelSnapshotPrefab"/>.
+        /// </summary>
+        static BakeError WritePanelSnapshotPrefabs(PanelSnapshot snapshot, string outDir, UiTheme theme)
+        {
+            var dir = string.IsNullOrEmpty(outDir) ? "Assets/UI/Prefabs/Generated" : outDir;
+
+            try { Directory.CreateDirectory(dir); }
+            catch (Exception ex)
             {
-                return new BakeResult { root = parseResult.root, error = prefabError };
+                return new BakeError { error = "out_dir_not_creatable", details = ex.Message, path = dir };
             }
 
             AssetDatabase.Refresh();
-            return new BakeResult { root = parseResult.root, error = null };
+
+            foreach (var item in snapshot.items)
+            {
+                if (item == null || string.IsNullOrEmpty(item.slug)) continue;
+                var assetPath = $"{dir.TrimEnd('/')}/{item.slug}.prefab";
+                var err = SavePanelSnapshotPrefab(item, assetPath, theme);
+                if (err != null) return err;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Bake one <see cref="PanelSnapshotItem"/> into a prefab.
+        /// Root LayoutGroup type determined by <c>fields.layout_template</c> via
+        /// <see cref="MapLayoutTemplate"/>. Missing layout_template fails hard.
+        /// Children iterated with slot-wrapper routing for hud-bar archetype (T4).
+        /// </summary>
+        static BakeError SavePanelSnapshotPrefab(PanelSnapshotItem item, string assetPath, UiTheme theme)
+        {
+            if (ExistingPrefabHasNonDefaultRect(assetPath))
+            {
+                return new BakeError
+                {
+                    error = "panel_layout_rect_missing",
+                    details = $"panel '{item.slug}' would overwrite existing prefab at '{assetPath}' which carries non-default RectTransform.",
+                    path = assetPath,
+                };
+            }
+
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(item.slug);
+                var rootRect = go.AddComponent<RectTransform>();
+                rootRect.anchorMin = new Vector2(0f, 1f);
+                rootRect.anchorMax = new Vector2(0f, 1f);
+                rootRect.pivot = new Vector2(0f, 1f);
+                rootRect.anchoredPosition = new Vector2(8f, -8f);
+                rootRect.sizeDelta = new Vector2(200f, 80f);
+
+                var bgImage = go.AddComponent<Image>();
+                bgImage.color = Color.white;
+                bgImage.raycastTarget = false;
+
+                var themedPanel = go.AddComponent<ThemedPanel>();
+                WireThemeRef(themedPanel, theme);
+
+                // Map layout_template → root LayoutGroup. Hard fail on missing.
+                System.Type layoutGroupType;
+                string layoutTemplate = item.fields?.layout_template ?? string.Empty;
+                try
+                {
+                    layoutGroupType = MapLayoutTemplate(layoutTemplate, item.slug);
+                }
+                catch (Exception ex)
+                {
+                    return new BakeError
+                    {
+                        error = "bake.layout_template_missing",
+                        details = ex.Message,
+                        path = $"$.items[{item.slug}].fields.layout_template",
+                    };
+                }
+
+                go.AddComponent(layoutGroupType);
+
+                // Slot-wrapper iteration + children (T4 fills archetype dispatch).
+                BakePanelSnapshotChildren(item, go, theme);
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "prefab_write_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Iterate children[] for a snapshot panel item.
+        /// Called by <see cref="SavePanelSnapshotPrefab"/>; archetype slot-wrapper
+        /// dispatch extended in T4 (<see cref="BakePanelSnapshotArchetype"/>).
+        /// </summary>
+        static void BakePanelSnapshotChildren(PanelSnapshotItem item, GameObject panelRoot, UiTheme theme)
+        {
+            if (item?.children == null || item.children.Length == 0) return;
+
+            // Build slot-wrapper map via archetype dispatch (T4 extension).
+            var slotWrappers = BakePanelSnapshotArchetype(item, panelRoot, theme);
+
+            foreach (var child in item.children)
+            {
+                if (child == null) continue;
+                string zone = ExtractZone(child.layout_json);
+                Transform parent = panelRoot.transform;
+                if (slotWrappers != null && zone != null)
+                {
+                    if (!slotWrappers.TryGetValue(zone, out var wrapper) || wrapper == null)
+                    {
+                        Debug.LogWarning(
+                            $"[UiBakeHandler] panel={item.slug} child ord={child.ord} zone='{zone}' has no matching slot wrapper — defaulting to Center");
+                        slotWrappers.TryGetValue("center", out wrapper);
+                        if (wrapper != null) parent = wrapper;
+                    }
+                    else
+                    {
+                        parent = wrapper;
+                    }
+                }
+
+                // Spawn a minimal placeholder child for each snapshot child row.
+                var childGo = new GameObject($"child_{child.ord}", typeof(RectTransform));
+                childGo.transform.SetParent(parent, worldPositionStays: false);
+            }
         }
 
         // ── Token bake ──────────────────────────────────────────────────────────

@@ -74,8 +74,10 @@ namespace TerritoryDeveloper.Editor.Bake
             var written = new List<string>(snapshot.items.Length);
             foreach (var item in snapshot.items)
             {
-                if (item == null || item.panel == null) continue;
-                var path = DispatchOne(item.panel, item.children ?? Array.Empty<PanelChildRow>(), outDir);
+                if (item == null) continue;
+                var effectivePanel = item.EffectivePanelRow();
+                if (effectivePanel == null) continue;
+                var path = DispatchOne(effectivePanel, item.children ?? Array.Empty<PanelChildRow>(), outDir);
                 if (!string.IsNullOrEmpty(path)) written.Add(path);
             }
 
@@ -127,11 +129,50 @@ namespace TerritoryDeveloper.Editor.Bake
             public PanelItem[] items;
         }
 
+        /// <summary>
+        /// panels.json item row. Stage 9.10 (schema_version 3) adds top-level `slug` + `fields`
+        /// alongside legacy `panel` block. JsonUtility reads both; code prefers `fields` when slug
+        /// is set at item level (new shape), falls back to `panel.slug` for schema_version 1/2.
+        /// </summary>
         [Serializable]
         public class PanelItem
         {
+            /// <summary>Stage 9.10 — top-level slug (new shape). Empty in v1/v2 snapshots.</summary>
+            public string slug;
+            /// <summary>Stage 9.10 — panel fields block (new shape). Null in v1/v2 snapshots.</summary>
+            public PanelFields fields;
+            /// <summary>Legacy panel block (schema_version 1/2).</summary>
             public PanelRow panel;
             public PanelChildRow[] children;
+
+            /// <summary>Resolve the effective panel row for dispatch. Prefers new shape when slug set.</summary>
+            public PanelRow EffectivePanelRow()
+            {
+                if (!string.IsNullOrEmpty(slug) && fields != null)
+                {
+                    return new PanelRow
+                    {
+                        slug = slug,
+                        layout = fields.layout_template ?? fields.layout ?? "vstack",
+                        gap_px = fields.gap_px,
+                        padding_json = fields.padding_json,
+                        params_json = fields.params_json,
+                        layout_template = fields.layout_template ?? fields.layout ?? "vstack",
+                    };
+                }
+                return panel;
+            }
+        }
+
+        /// <summary>Stage 9.10 — fields block in panels.json items[] (schema_version 3).</summary>
+        [Serializable]
+        public class PanelFields
+        {
+            public string layout_template;
+            public string layout;
+            public int gap_px;
+            public string padding_json;
+            public string params_json;
         }
 
         [Serializable]
@@ -139,6 +180,8 @@ namespace TerritoryDeveloper.Editor.Bake
         {
             public string slug;
             public string layout;
+            /// <summary>Stage 9.10 — canonical layout primitive key from panel_detail.layout_template.</summary>
+            public string layout_template;
             public int gap_px;
             public string padding_json;
             public string params_json;
@@ -155,6 +198,8 @@ namespace TerritoryDeveloper.Editor.Bake
             public string hover_sprite_ref;
             public string pressed_sprite_ref;
             public string disabled_sprite_ref;
+            /// <summary>Stage 9.10 — per-child layout routing metadata JSON string, e.g. {"zone":"left"}. Null on non-zoned children.</summary>
+            public string layout_json;
         }
     }
 }

@@ -1032,6 +1032,43 @@ namespace Territory.Editor.Bridge
             }
         }
 
+        // ── Stage 9.10 T4 — PanelSnapshot archetype slot-wrapper dispatch ────────
+
+        /// <summary>
+        /// Emit slot-wrapper GameObjects for a <see cref="PanelSnapshotItem"/> based on panel slug.
+        /// Returns a zone→Transform map for use by <see cref="BakePanelSnapshotChildren"/> to route
+        /// per-child layout_json.zone values. Returns null for non-archetype-mapped panels (flat spawn).
+        ///
+        /// Arm <c>hud-bar</c>: emits Left / Center / Right child GameObjects each with
+        /// <see cref="HorizontalLayoutGroup"/>. Children are routed by zone; missing zone defaults
+        /// to Center with <c>bake.zone_default</c> warning.
+        /// </summary>
+        static Dictionary<string, Transform> BakePanelSnapshotArchetype(PanelSnapshotItem item, GameObject panelRoot, UiTheme theme)
+        {
+            if (item == null || string.IsNullOrEmpty(item.slug)) return null;
+
+            switch (item.slug)
+            {
+                case "hud_bar":
+                {
+                    var map = new Dictionary<string, Transform>(3, StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var zone in new[] { "left", "center", "right" })
+                    {
+                        var name = char.ToUpperInvariant(zone[0]) + zone.Substring(1); // Left / Center / Right
+                        var go = new GameObject(name, typeof(RectTransform));
+                        go.transform.SetParent(panelRoot.transform, worldPositionStays: false);
+                        go.AddComponent<HorizontalLayoutGroup>();
+                        map[zone] = go.transform;
+                    }
+
+                    return map;
+                }
+                default:
+                    return null;
+            }
+        }
+
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
 
         /// <summary>
