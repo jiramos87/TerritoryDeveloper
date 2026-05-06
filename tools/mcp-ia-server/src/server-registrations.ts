@@ -88,6 +88,8 @@ import { registerRedStageProofMine } from "./tools/red-stage-proof-mine.js";
 import { registerMcpCacheGet, registerMcpCacheSet } from "./tools/mcp-cache-tools.js";
 import { registerDbReadBatch } from "./tools/db-read-batch.js";
 import { registerThemePropose } from "./tools/theme-propose.js";
+import { registerCronAuditLogEnqueue } from "./tools/cron-audit-log.js";
+import { registerCronJournalAppendEnqueue } from "./tools/cron-journal-append.js";
 
 // Bridge + compute tools
 import {
@@ -205,6 +207,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerMcpCacheSet(server);
   registerDbReadBatch(server);
   registerThemePropose(server);
+  registerCronAuditLogEnqueue(server);
+  registerCronJournalAppendEnqueue(server);
 }
 
 /**

@@ -62,6 +62,8 @@ tools_extra:
   - mcp__territory-ia__master_plan_next_pending
   - mcp__territory-ia__unity_compile
   - mcp__territory-ia__journal_append
+  - mcp__territory-ia__cron_audit_log_enqueue
+  - mcp__territory-ia__cron_journal_append_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -135,7 +137,7 @@ For each task in batch (skip if already `implemented`):
 
 1. `unity:compile-check` if `Assets/**/*.cs` touched in this task's marker block.
 2. `task_status_flip(task_id, implemented)`.
-3. `journal_append` with `payload_kind=phase_checkpoint`:
+3. `cron_journal_append_enqueue` with `payload_kind=phase_checkpoint` (fire-and-forget; enqueue < 100 ms; cron supervisor drains to `ia_ship_stage_journal`):
 
 ```json
 {
@@ -182,7 +184,7 @@ Enum walk requires both — DB CHECK refuses `implemented → done` direct.
 ### Phase 7 — Pass B — inline closeout (DB-only)
 
 1. `stage_closeout_apply(slug, stage_id)` — atomic: shared migration ops deduped + N per-Task `archived_at` set + Stage / Plan Status rolled up per R3 / R5 + `materialize-backlog.sh` + `validate:all` run once at end.
-2. `master_plan_change_log_append(slug, version, "stage_closed", body)` — audit row.
+2. `cron_audit_log_enqueue({slug, audit_kind:'stage_closed', body, stage_id, commit_sha})` — fire-and-forget audit row (enqueue < 100 ms; cron supervisor drains to `ia_master_plan_change_log` within 90 s).
 
 No filesystem mv. Closeout MANDATORY on green Pass B — never defer.
 

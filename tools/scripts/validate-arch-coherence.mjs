@@ -391,6 +391,18 @@ const EXPLICIT_NONE_STAGES = new Set([
   // ship-cycle-db-read-efficiency: doc-only/mcp-only skill guardrail edits — no arch_surfaces.
   "ship-cycle-db-read-efficiency::1",
   "ship-cycle-db-read-efficiency::2",
+  // async-cron-jobs: pure IA/DB cron supervisor + MCP tools — no Unity arch_surfaces.
+  "async-cron-jobs::1",
+  "async-cron-jobs::2",
+  "async-cron-jobs::3",
+  "async-cron-jobs::4",
+  "async-cron-jobs::5",
+  "async-cron-jobs::6",
+  // asset-tree-reorg-and-rename: file rename / folder org — no arch_surfaces.
+  "asset-tree-reorg-and-rename::4",
+  "asset-tree-reorg-and-rename::5",
+  // game-ui-catalog-bake: continued bake pipeline stages.
+  "game-ui-catalog-bake::9.11",
 ]);
 
 // ---------------------------------------------------------------------------
