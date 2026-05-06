@@ -210,6 +210,7 @@ All 16 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`).
 | **`git_diff_anomaly_scan`** | Regex-pack classifier over git diff text (TECH-15906). Replaces LLM diff review (~25k tokens) in ship-cycle Pass B pre-verify. Pass `diff` (git diff HEAD output) or `diff_ref` (e.g. 'HEAD'). Returns `{ok, anomaly_count, anomalies: [{kind, description, match}]}`. Kinds: `debug_log`, `meta_delete`, `large_hunk`, `retired_symbol`. |
 | **`mcp_cache_get`** | Read a cached value by key from `ia_mcp_context_cache`. Returns `{ok, hit, key, payload}`. `hit=false` when key absent or expired. |
 | **`mcp_cache_set`** | Write (upsert) a cached value by key into `ia_mcp_context_cache` with optional `ttl_seconds`. Returns `{ok, key, stored_at}`. |
+| **`db_read_batch`** | Read-only batch SQL executor + cache write-through. Accepts up to 20 named SQL queries (`{plan_id, queries: [{name, sql}]}`), runs inside a single PG connection with `SET TRANSACTION READ ONLY`, writes each result through `ia_mcp_context_cache`. Returns `{[name]: {rows, cache_hit}}`. Rejects DML/DDL tokens. Error codes: `db_read_batch_disallowed_sql`, `db_read_batch_too_many_queries`, `db_read_batch_pg_error`, `db_read_batch_db_unavailable`. |
 
 All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative.
 

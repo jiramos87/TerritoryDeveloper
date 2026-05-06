@@ -86,6 +86,7 @@ import { registerNextMigrationId } from "./tools/next-migration-id.js";
 import { registerRedStageProofTools } from "./red-stage-proof/index.js";
 import { registerRedStageProofMine } from "./tools/red-stage-proof-mine.js";
 import { registerMcpCacheGet, registerMcpCacheSet } from "./tools/mcp-cache-tools.js";
+import { registerDbReadBatch } from "./tools/db-read-batch.js";
 import { registerThemePropose } from "./tools/theme-propose.js";
 
 // Bridge + compute tools
@@ -202,6 +203,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerRedStageProofMine(server);
   registerMcpCacheGet(server);
   registerMcpCacheSet(server);
+  registerDbReadBatch(server);
   registerThemePropose(server);
 }
 
