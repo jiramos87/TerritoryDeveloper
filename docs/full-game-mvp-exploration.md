@@ -113,6 +113,16 @@ Grouped by surface so the bucket map downstream is legible.
 - **Crime simulation** — 0–100 per-cell score; sources = low happiness + low desirability + low policing; sink = police service coverage radius. Feeds happiness and desirability negatively. Drives protest / violence animations on hotspots.
 - **Traffic flow abstraction** — SimCity 2000 style. Road-density-dependent animations on road strokes, not per-vehicle pathing. Each road cell picks a "traffic level" (low / medium / high / jammed) from a neighborhood-sum heuristic and swaps the animated variant.
 - **Industrial specialisation** — agriculture, manufacturing, tech, tourism. Each I sub-type carries different pollution weights + desirability requirements + tax yield.
+- **Toolbar family subtype enumeration (MVP picker scope).** Canonical list of subtypes per toolbar family — drives `SubtypePicker` rows + sprite-catalog seed + prefab authoring. Every family except Bulldoze opens the picker (forward-compat — single-subtype families still show 1 tile). Source-of-truth lives here + glossary; downstream master plans (`game-ui-catalog-bake` Stages 9.7 / 9.8, `utilities-master-plan`) consume.
+  - **R (Residential)** — light / medium / heavy density tiers (3).
+  - **C (Commercial)** — light / medium / heavy density tiers (3).
+  - **I (Industrial)** — light / medium / heavy density tiers (3) **and** specialisations (agriculture / manufacturing / tech / tourism, 4) — picker layering deferred (Bucket 2 spec); MVP picker shows the 3 tiers only.
+  - **S (Zone S)** — police, fire, education, health, parks, public housing, public offices (7) — sourced from `ZoneSubTypeRegistry`.
+  - **Power plants** — coal / solar / wind (3) — locks utilities-exploration v1 contributor archetypes; gas / nuclear / hydro deferred post-MVP.
+  - **Water plants** — water treatment (1) — single subtype v1; sewage treatment is a separate family, not a Water plant subtype.
+  - **Roads** — street / interstate (2) — shipped tiers; avenue / arterial / tunnels / elevated deferred (line 106 above remains the post-MVP roadmap).
+  - **Forests** — forest (1) — single subtype v1; tree-types (oak / pine / palm) deferred as cosmetic-only post-MVP.
+  - **Bulldoze** — no subtypes; family button = direct-tool select. Only family that bypasses the picker.
 - **Landmarks (gated progression)** — two parallel progression paths:
   1. **Scale-unlock rewards.** Reach a city threshold → unlock region scale + earn a placeable city landmark. Same city→region→country.
   2. **Saved-for projects.** 1–2 very expensive commissioned public buildings per scale. Player saves budget, commits budget to a months-long build, receives the landmark as a placeable.

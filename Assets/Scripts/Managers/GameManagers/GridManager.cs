@@ -352,22 +352,11 @@ public class GridManager : MonoBehaviour, IGridManager
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                if (uiManager.isBulldozeMode())
-                {
-                    uiManager.ExitBulldozeMode();
-                }
-                else if (uiManager.IsDetailsMode())
-                {
-                    uiManager.ExitDetailsMode();
-                }
-                else if (uiManager.IsBuildingPlacementMode())
-                {
-                    uiManager.ExitBuildingPlacementMode();
-                }
-                buildingSelectorMenuController.DeselectAndUnpressAllButtons();
-            }
+            // Esc routing: single owner = UIManager.HandleEscapePress() (TECH-14102 / Stage 8 D9).
+            // Pre-Stage-8, GridManager handled Esc directly + popped tool frame, BUT UIManager
+            // also runs HandleEscapePress() on the same frame → empty stack → pause menu opens.
+            // Removed the local handler; UIManager.PopupStack ClosePopup(ToolSelected) → ClearCurrentTool
+            // covers all 3 modes (bulldoze, details, building-placement) + button visual reset.
 
             Vector2 worldPoint = ScreenPointToWorldOnGridPlane(cachedCamera, Input.mousePosition);
 
