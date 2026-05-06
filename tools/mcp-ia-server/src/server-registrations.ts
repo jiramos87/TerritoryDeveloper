@@ -90,6 +90,9 @@ import { registerDbReadBatch } from "./tools/db-read-batch.js";
 import { registerThemePropose } from "./tools/theme-propose.js";
 import { registerCronAuditLogEnqueue } from "./tools/cron-audit-log.js";
 import { registerCronJournalAppendEnqueue } from "./tools/cron-journal-append.js";
+import { registerCronTaskCommitRecordEnqueue } from "./tools/cron-task-commit-record.js";
+import { registerCronStageVerificationFlipEnqueue } from "./tools/cron-stage-verification-flip.js";
+import { registerCronArchChangelogAppendEnqueue } from "./tools/cron-arch-changelog-append.js";
 
 // Bridge + compute tools
 import {
@@ -209,6 +212,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerThemePropose(server);
   registerCronAuditLogEnqueue(server);
   registerCronJournalAppendEnqueue(server);
+  registerCronTaskCommitRecordEnqueue(server);
+  registerCronStageVerificationFlipEnqueue(server);
+  registerCronArchChangelogAppendEnqueue(server);
 }
 
 /**

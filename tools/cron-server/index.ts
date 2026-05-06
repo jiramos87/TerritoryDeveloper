@@ -13,8 +13,14 @@ import cron from "node-cron";
 import { claimBatch, markDone, markFailed } from "./lib/index.js";
 import { run as runAuditLog } from "./handlers/audit-log-cron-handler.js";
 import { run as runJournalAppend } from "./handlers/journal-append-cron-handler.js";
+import { run as runTaskCommitRecord } from "./handlers/task-commit-record-cron-handler.js";
+import { run as runStageVerificationFlip } from "./handlers/stage-verification-flip-cron-handler.js";
+import { run as runArchChangelogAppend } from "./handlers/arch-changelog-append-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
+import type { TaskCommitRecordJobRow } from "./handlers/task-commit-record-cron-handler.js";
+import type { StageVerificationFlipJobRow } from "./handlers/stage-verification-flip-cron-handler.js";
+import type { ArchChangelogAppendJobRow } from "./handlers/arch-changelog-append-cron-handler.js";
 
 // Load DATABASE_URL from .env if not already set.
 const { config } = await import("dotenv");
@@ -42,6 +48,24 @@ const KINDS: KindConfig[] = [
     table: "cron_journal_append_jobs",
     cadence: "* * * * *", // every minute
     handler: (row) => runJournalAppend(row as unknown as JournalAppendJobRow),
+    claimLimit: 50,
+  },
+  {
+    table: "cron_task_commit_record_jobs",
+    cadence: "* * * * *", // every minute (hot audit-trail)
+    handler: (row) => runTaskCommitRecord(row as unknown as TaskCommitRecordJobRow),
+    claimLimit: 50,
+  },
+  {
+    table: "cron_stage_verification_flip_jobs",
+    cadence: "* * * * *", // every minute (hot audit-trail)
+    handler: (row) => runStageVerificationFlip(row as unknown as StageVerificationFlipJobRow),
+    claimLimit: 50,
+  },
+  {
+    table: "cron_arch_changelog_append_jobs",
+    cadence: "* * * * *", // every minute (hot audit-trail)
+    handler: (row) => runArchChangelogAppend(row as unknown as ArchChangelogAppendJobRow),
     claimLimit: 50,
   },
 ];

@@ -54,9 +54,7 @@ tools_extra:
   - mcp__territory-ia__task_spec_body
   - mcp__territory-ia__task_status_flip
   - mcp__territory-ia__task_status_flip_batch
-  - mcp__territory-ia__task_commit_record
   - mcp__territory-ia__stage_closeout_apply
-  - mcp__territory-ia__stage_verification_flip
   - mcp__territory-ia__master_plan_change_log_append
   - mcp__territory-ia__master_plan_state
   - mcp__territory-ia__master_plan_next_pending
@@ -64,6 +62,8 @@ tools_extra:
   - mcp__territory-ia__journal_append
   - mcp__territory-ia__cron_audit_log_enqueue
   - mcp__territory-ia__cron_journal_append_enqueue
+  - mcp__territory-ia__cron_task_commit_record_enqueue
+  - mcp__territory-ia__cron_stage_verification_flip_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -203,8 +203,8 @@ No filesystem mv. Closeout MANDATORY on green Pass B — never defer.
    Resume note: if `git diff HEAD` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse `git rev-parse HEAD` as `STAGE_COMMIT_SHA`.
 
 2. Capture `STAGE_COMMIT_SHA = git rev-parse HEAD`.
-3. Per task: `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`.
-4. `stage_verification_flip(slug, stage_id, verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-cycle")` — history-preserving INSERT.
+3. Per task: `cron_task_commit_record_enqueue(task_id, commit_sha=STAGE_COMMIT_SHA, commit_kind="feat", ...)` — fire-and-forget; returns `{job_id, status:'queued'}` < 100 ms; cron drains to `ia_task_commits` within 90 s.
+4. `cron_stage_verification_flip_enqueue(slug, stage_id, verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-cycle")` — fire-and-forget; history-preserving INSERT via cron drain.
 
 Pre-commit hook fail → `STOPPED at commit — pre-commit hook failed: {reason}` (investigate; do NOT amend or `--no-verify`).
 

@@ -34,6 +34,7 @@ tools_extra:
   - Agent
   - mcp__territory-ia__spec_outline
   - mcp__territory-ia__list_specs
+  - mcp__territory-ia__cron_arch_changelog_append_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -235,13 +236,13 @@ Read `plan_shape` from working memory (set in Phase 0 plan-shape gate).
 
 Then:
 
-4. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug: "plan-{slug}-boundaries", body, commit_sha: null })`
+4. `cron_arch_changelog_append_enqueue({ kind: 'design_explore_decision', decision_slug: "plan-{slug}-boundaries", body, commit_sha: null })` — fire-and-forget; returns `{job_id, status:'queued'}` < 100 ms.
 5. `arch_drift_scan({ open_plans_only: true })`
 
 **When `plan_shape=flat`** — legacy single DEC-A15 path (unchanged):
 
 1. `arch_decision_write({ slug: "architecture-lock-{slug}", title, rationale, alternatives, surface_slugs[], status: 'active' })`
-2. `arch_changelog_append({ kind: 'design_explore_decision', decision_slug, body, commit_sha: null })`
+2. `cron_arch_changelog_append_enqueue({ kind: 'design_explore_decision', decision_slug, body, commit_sha: null })` — fire-and-forget; returns `{job_id, status:'queued'}` < 100 ms.
 3. `arch_drift_scan({ open_plans_only: true })`
 
 **Drift report render target:** append to exploration doc under sibling section `### Architecture Decision` (peer of `### Architecture` block authored in Phase 4 → §Persist). Block contains: decision row summary + rendered drift report (per-plan breakdown).
