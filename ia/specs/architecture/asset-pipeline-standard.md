@@ -24,6 +24,41 @@ Canonical mechanism for authoring, baking, validating, and rendering game UI ass
 
 ---
 
+## §Canonical asset paths
+
+Canonical location for every new sprite, prefab, or audio asset in the Unity project. Onboarding agent reads this section to resolve "where does X go" without reading code.
+
+### Family taxonomy
+
+| # | Family | Unity path prefix | Example |
+|---|--------|-------------------|---------|
+| 1 | ui-panel | `Assets/UI/Prefabs/Generated/` | `demo-panel.prefab` |
+| 2 | ui-button | `Assets/UI/Prefabs/Generated/Buttons/` | `confirm-button.prefab` |
+| 3 | ui-icon | `Assets/Art/Sprites/UI/Icons/` | `bulldoze-icon.png` |
+| 4 | terrain-sprite | `Assets/Art/Sprites/Terrain/` | `grass-flat.png` |
+| 5 | road-sprite | `Assets/Art/Sprites/Roads/` | `road-h.png` |
+| 6 | building-sprite | `Assets/Art/Sprites/Buildings/` | `residential-sm.png` |
+| 7 | water-sprite | `Assets/Art/Sprites/Water/` | `lake-shore-n.png` |
+| 8 | audio-sfx | `Assets/Audio/SFX/` | `bulldoze-hit.wav` |
+| 9 | audio-music | `Assets/Audio/Music/` | `city-ambient.ogg` |
+| 10 | vfx-particle | `Assets/Art/VFX/` | `dust-puff.prefab` |
+
+### Naming convention
+
+All file stems MUST match:
+
+```
+^[a-z0-9]+(-[a-z0-9]+)*$
+```
+
+Kebab-case; lowercase alphanumeric segments only; no underscores, spaces, or uppercase. Suffix = Unity-native extension (`.prefab`, `.png`, `.wav`, `.ogg`).
+
+### Validator
+
+`validate:asset-tree-canonical` — checks every file under `Assets/Art/`, `Assets/Audio/`, `Assets/UI/Prefabs/Generated/` against the family path prefixes + naming regex above. Exits non-zero on first violation. Integrated into `validate:all`.
+
+---
+
 ## §Authority
 
 **DB-wins contract (non-negotiable):**

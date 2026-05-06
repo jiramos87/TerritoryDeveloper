@@ -68,6 +68,34 @@ Cross-cutting effort: reference spec [`ia/specs/ui-design-system.md`](../ui-desi
 
 `WaterMap` stores per-cell body ids; `WaterBody` holds surface height. Procedural lakes (depression-fill), procedural rivers (after lakes, before interstate), shore/cliff/cascade visuals. **`TerrainManager`** **`PlaceCliffWalls`** seals **south**/**east** **map border** voids with brown **cliff** stacks to **`MIN_HEIGHT`**, and skips duplicate brown faces toward void when the cell uses **water-shore** primary art. See geography spec §5.7, §11–§12.
 
+## Canonical asset paths
+
+Where every new sprite, prefab, or audio asset lives in the Unity project. Governs file placement + naming across all 10 asset families. Validated by `validate:asset-tree-canonical` (integrated in `validate:all`).
+
+### Tree skeleton
+
+```
+Assets/
+  Art/
+    Sprites/
+      UI/
+        Icons/          ← family: ui-icon
+      Terrain/          ← family: terrain-sprite
+      Roads/            ← family: road-sprite
+      Buildings/        ← family: building-sprite
+      Water/            ← family: water-sprite
+    VFX/                ← family: vfx-particle
+  Audio/
+    SFX/                ← family: audio-sfx
+    Music/              ← family: audio-music
+  UI/
+    Prefabs/
+      Generated/        ← family: ui-panel
+        Buttons/        ← family: ui-button
+```
+
+All file stems: `^[a-z0-9]+(-[a-z0-9]+)*$` (kebab-case). Enforced by `validate:asset-tree-canonical`. Full family table + naming regex: [`asset-pipeline-standard.md §Canonical asset paths`](asset-pipeline-standard.md).
+
 ## Isometric geography (canonical spec)
 
 [`ia/specs/isometric-geography-system.md`](../isometric-geography-system.md) — single source of truth for grid math, heights, slopes, water/shore/cliffs, sorting, terraform, roads, pathfinding. When another doc disagrees, update the spec or code.

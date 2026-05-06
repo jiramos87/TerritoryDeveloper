@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-06T12:51:22.742Z",
+  "last_generated": "2026-05-06T23:25:52.624Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -84,19 +84,19 @@
       "related": [
         "Agent test mode batch",
         "archetype_version",
+        "asset family",
         "asset-pipeline-standard",
-        "asset-registry",
-        "Backlog record"
+        "asset-registry"
       ],
       "cited_in": []
     },
     "archetype_version": {
       "related": [
+        "catalog_entity",
         "render_run",
         "entity_version",
         "panel_child",
-        "pool_member",
-        "Junction"
+        "pool_member"
       ],
       "cited_in": [
         {
@@ -136,13 +136,39 @@
         }
       ]
     },
+    "asset family": {
+      "related": [
+        "Cell",
+        "Cardinal neighbor",
+        "Interstate",
+        "Agent test mode batch",
+        "Alignment gate"
+      ],
+      "cited_in": [
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "3",
+          "section_title": "3. Terrain Slope Types"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "3.3",
+          "section_title": "3.3 Slope Categories"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "3.3.2",
+          "section_title": "3.3.2 Orthogonal (Cardinal) Slopes — N, S, E, W"
+        }
+      ]
+    },
     "asset-pipeline-standard": {
       "related": [
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-registry",
-        "Backlog record"
+        "asset family",
+        "asset-registry"
       ],
       "cited_in": []
     },
@@ -151,8 +177,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "Backlog record"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -182,8 +208,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -192,8 +218,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -487,8 +513,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": [
         {
@@ -814,6 +840,16 @@
         }
       ]
     },
+    "canonical asset path": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "asset family",
+        "asset-pipeline-standard"
+      ],
+      "cited_in": []
+    },
     "capability": {
       "related": [
         "snapshot",
@@ -994,6 +1030,72 @@
           "spec": "water-terrain-system",
           "section_id": "key-files",
           "section_title": "Key files"
+        }
+      ]
+    },
+    "catalog_entity": {
+      "related": [
+        "entity_version",
+        "archetype_version",
+        "panel_child",
+        "pool_member",
+        "render_run"
+      ],
+      "cited_in": [
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2",
+          "section_title": "2. Spine + Detail pattern"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "2.1",
+          "section_title": "2.1 Spine — `catalog_entity`"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3",
+          "section_title": "3. Entity version lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.1",
+          "section_title": "3.1 `entity_version` table"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "3.2",
+          "section_title": "3.2 Lifecycle stages"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6",
+          "section_title": "6. Composition junctions"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.1",
+          "section_title": "6.1 `panel_child`"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "6.2",
+          "section_title": "6.2 `pool_member`"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7",
+          "section_title": "7. Render run lifecycle"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7.1",
+          "section_title": "7.1 Tables"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "7.2",
+          "section_title": "7.2 Replay semantics"
         }
       ]
     },
@@ -1414,8 +1516,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -1725,8 +1827,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -1735,8 +1837,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -2093,11 +2195,11 @@
     },
     "entity_version": {
       "related": [
+        "catalog_entity",
         "snapshot",
         "archetype_version",
         "publish_lint_rule",
-        "panel_child",
-        "pool_member"
+        "panel_child"
       ],
       "cited_in": [
         {
@@ -3003,8 +3105,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -3404,6 +3506,16 @@
           "section_title": "AUTO street placement rules"
         }
       ]
+    },
+    "kebab-case asset name": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "asset family",
+        "asset-pipeline-standard"
+      ],
+      "cited_in": []
     },
     "Lake exclusion": {
       "related": [
@@ -3824,8 +3936,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -3834,8 +3946,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -3851,11 +3963,11 @@
     },
     "panel_child": {
       "related": [
+        "catalog_entity",
         "Junction",
         "pool_member",
         "archetype_version",
-        "snapshot",
-        "entity_version"
+        "snapshot"
       ],
       "cited_in": [
         {
@@ -4003,8 +4115,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4022,8 +4134,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4199,8 +4311,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4209,8 +4321,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4219,8 +4331,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4292,11 +4404,11 @@
     },
     "pool_member": {
       "related": [
+        "catalog_entity",
         "panel_child",
         "archetype_version",
         "Junction",
-        "entity_version",
-        "snapshot"
+        "entity_version"
       ],
       "cited_in": [
         {
@@ -4336,8 +4448,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4367,8 +4479,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -4378,7 +4490,7 @@
         "archetype_version",
         "Agent test mode batch",
         "Alignment gate",
-        "asset-pipeline-standard"
+        "asset family"
       ],
       "cited_in": [
         {
@@ -4590,10 +4702,10 @@
     "render_run": {
       "related": [
         "archetype_version",
+        "catalog_entity",
         "Agent test mode batch",
         "Alignment gate",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family"
       ],
       "cited_in": [
         {
@@ -5050,8 +5162,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5060,8 +5172,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5087,7 +5199,7 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard"
+        "asset family"
       ],
       "cited_in": []
     },
@@ -5178,8 +5290,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5189,7 +5301,7 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard"
+        "asset family"
       ],
       "cited_in": [
         {
@@ -5230,8 +5342,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5468,8 +5580,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5478,8 +5590,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5488,8 +5600,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5508,18 +5620,18 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
     "Slope categories": {
       "related": [
         "Cell",
+        "asset family",
         "Bay",
         "Cardinal neighbor",
-        "Cliff",
-        "Cliff face visibility"
+        "Cliff"
       ],
       "cited_in": [
         {
@@ -5571,8 +5683,8 @@
         "Cell",
         "entity_version",
         "Water map",
-        "HeightMap",
-        "wire_asset_from_catalog"
+        "catalog_entity",
+        "HeightMap"
       ],
       "cited_in": [
         {
@@ -5844,8 +5956,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -5971,8 +6083,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -6238,8 +6350,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "archetype_version",
-        "asset-pipeline-standard",
-        "asset-registry"
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },
@@ -6692,10 +6804,10 @@
     "wire_asset_from_catalog": {
       "related": [
         "snapshot",
+        "catalog_entity",
         "entity_version",
         "rollback_token",
-        "Agent test mode batch",
-        "Alignment gate"
+        "Agent test mode batch"
       ],
       "cited_in": [
         {
