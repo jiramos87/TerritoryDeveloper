@@ -1,0 +1,45 @@
+{
+  "tokens": {
+    "palette": [
+      { "slug": "ds-surface-1", "ramp": ["#1a2540", "#243058"] },
+      { "slug": "ds-border-subtle", "ramp": ["#2e3d60", "#3a4d78"] },
+      { "slug": "ds-text-primary", "ramp": ["#e8eaf6", "#ffffff"] }
+    ],
+    "frame_style": [
+      { "slug": "ds-frame-panel", "edge": "single", "innerShadowAlpha": 0.35 }
+    ],
+    "font_face": [
+      { "slug": "ds-font-body", "family": "Inter", "weight": 400 }
+    ],
+    "motion_curve": [
+      { "slug": "ds-motion-fade", "kind": "cubic-bezier", "durationMs": 180, "c1": [0.4, 0.0], "c2": [0.2, 1.0] }
+    ],
+    "illumination": []
+  },
+  "panels": [
+    {
+      "slug": "demo-panel",
+      "archetype": "panel",
+      "kind": "panel",
+      "frame_style_slug": "ds-frame-panel",
+      "illumination_slug": "",
+      "slots": [
+        {
+          "name": "content",
+          "accepts": ["label"],
+          "children": ["label"],
+          "labels": ["Demo Panel — Stage 9.2 tracer"],
+          "iconSpriteSlugs": []
+        }
+      ],
+      "rows": [
+        { "kind": "header", "label": "Demo Panel", "value": "", "segments": 0, "fontSlug": "ds-font-body", "iconSlug": "" },
+        { "kind": "stat", "label": "ds-tokens", "value": "applied", "segments": 0, "fontSlug": "ds-font-body", "iconSlug": "" },
+        { "kind": "detail", "label": "motion.enter", "value": "fade", "segments": 0, "fontSlug": "ds-font-body", "iconSlug": "" }
+      ],
+      "tabs": [],
+      "defaultTabIndex": 0
+    }
+  ],
+  "interactives": []
+}
