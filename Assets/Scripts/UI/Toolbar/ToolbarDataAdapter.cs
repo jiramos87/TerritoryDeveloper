@@ -237,15 +237,20 @@ namespace Territory.UI.Toolbar
         private void OnZoningClick(int index)
         {
             if (_uiManager == null) return;
+            // Slots 0/3/6/9 = Family entry buttons (single icon per family in IR — TECH-10500).
+            // Family click opens SubtypePicker for L/M/H tier selection; picker rows commit via
+            // density handlers. Slots 1/2/4/5/7/8 stay null after RebindButtonsByIconSlug because
+            // single-tier IR carries no per-density slugs — defensive density routes preserved
+            // for legacy multi-tier rebake compatibility.
             switch (index)
             {
-                case 0: _uiManager.OnLightResidentialButtonClicked(); break;
+                case 0: _uiManager.OnResidentialFamilyButtonClicked(); break;
                 case 1: _uiManager.OnMediumResidentialButtonClicked(); break;
                 case 2: _uiManager.OnHeavyResidentialButtonClicked(); break;
-                case 3: _uiManager.OnLightCommercialButtonClicked(); break;
+                case 3: _uiManager.OnCommercialFamilyButtonClicked(); break;
                 case 4: _uiManager.OnMediumCommercialButtonClicked(); break;
                 case 5: _uiManager.OnHeavyCommercialButtonClicked(); break;
-                case 6: _uiManager.OnLightIndustrialButtonClicked(); break;
+                case 6: _uiManager.OnIndustrialFamilyButtonClicked(); break;
                 case 7: _uiManager.OnMediumIndustrialButtonClicked(); break;
                 case 8: _uiManager.OnHeavyIndustrialButtonClicked(); break;
                 case 9: _uiManager.OnStateServiceZoningButtonClicked(); break;
@@ -255,7 +260,8 @@ namespace Territory.UI.Toolbar
         private void OnRoadClick()
         {
             if (_uiManager == null) return;
-            _uiManager.OnTwoWayRoadButtonClicked();
+            // Stage 9.8 (TECH-15897) — re-routes to family picker (universal-rule conformance).
+            _uiManager.OnRoadsFamilyButtonClicked();
         }
 
         private void OnGrassClick()
@@ -267,19 +273,22 @@ namespace Territory.UI.Toolbar
         private void OnBuildingClick(int index)
         {
             if (_uiManager == null) return;
+            // Stage 9.8 (TECH-15897) — re-routes to family pickers (universal-rule conformance).
             switch (index)
             {
-                case 0: _uiManager.OnNuclearPowerPlantButtonClicked(); break;
-                case 1: _uiManager.OnMediumWaterPumpPlantButtonClicked(); break;
+                case 0: _uiManager.OnPowerFamilyButtonClicked(); break;
+                case 1: _uiManager.OnWaterFamilyButtonClicked(); break;
             }
         }
 
         private void OnForestClick(int index)
         {
             if (_uiManager == null) return;
+            // Stage 9.8 (TECH-15897) — index 0 (sparse/primary) re-routes to family picker.
             switch (index)
             {
-                case 0: _uiManager.OnSparseForestButtonClicked(); break;
+                case 0: _uiManager.OnForestsFamilyButtonClicked(); break;
+                // Legacy multi-tier paths preserved for rebake compatibility.
                 case 1: _uiManager.OnMediumForestButtonClicked(); break;
                 case 2: _uiManager.OnDenseForestButtonClicked(); break;
             }

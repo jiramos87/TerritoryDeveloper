@@ -1,0 +1,54 @@
+{
+  "entries": [
+    {
+      "family": "Power",
+      "subtype": "coal",
+      "prefabPath": "Buildings/PowerPlantCoal",
+      "iconSlug": "picker-power-coal-icon-72",
+      "baseCost": 5000,
+      "pollution": "high"
+    },
+    {
+      "family": "Power",
+      "subtype": "solar",
+      "prefabPath": "Buildings/PowerPlantSolar",
+      "iconSlug": "picker-power-solar-icon-72",
+      "baseCost": 8000,
+      "pollution": "zero"
+    },
+    {
+      "family": "Power",
+      "subtype": "wind",
+      "prefabPath": "Buildings/PowerPlantWind",
+      "iconSlug": "picker-power-wind-icon-72",
+      "baseCost": 6000,
+      "pollution": "zero"
+    },
+    {
+      "family": "Roads",
+      "subtype": "street",
+      "managerHook": "RoadManager.TwoWay",
+      "iconSlug": "picker-roads-street-icon-72"
+    },
+    {
+      "family": "Roads",
+      "subtype": "interstate",
+      "managerHook": "InterstateManager",
+      "iconSlug": "picker-roads-interstate-icon-72"
+    },
+    {
+      "family": "Water",
+      "subtype": "water-treatment",
+      "prefabPath": "Buildings/WaterPlant",
+      "iconSlug": "picker-water-treatment-icon-72",
+      "baseCost": 3000
+    },
+    {
+      "family": "Forests",
+      "subtype": "forest",
+      "prefabPath": "Forests/Forest",
+      "iconSlug": "picker-forest-forest-icon-72",
+      "baseCost": 500
+    }
+  ]
+}

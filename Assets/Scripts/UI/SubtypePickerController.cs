@@ -7,13 +7,17 @@ using Territory.Zones;
 
 namespace Territory.UI
 {
-    /// <summary>Family that drives <see cref="SubtypePickerController"/> row enumeration. R/C/I = density tiers; StateService = catalog rows.</summary>
+    /// <summary>Family that drives <see cref="SubtypePickerController"/> row enumeration. R/C/I = density tiers; StateService = catalog rows; Stage 9.8 adds Roads/Forests/Power/Water.</summary>
     public enum ToolFamily
     {
         Residential,
         Commercial,
         Industrial,
-        StateService
+        StateService,
+        Roads,
+        Forests,
+        Power,
+        Water
     }
 
     /// <summary>
@@ -34,6 +38,9 @@ namespace Territory.UI
         /// <summary>UI asset catalog — Inspector first; Awake falls back to FindObjectOfType (invariant #4).</summary>
         [SerializeField] private UiAssetCatalog uiAssetCatalog;
 
+        /// <summary>Stage 9.8 (TECH-15897) — contributor registry for Roads/Forests/Power/Water families. Inspector first; Awake falls back (invariant #4).</summary>
+        [SerializeField] private ContributorArchetypeRegistry contributorArchetypeRegistry;
+
         [Header("SFX — TECH-15225")]
         [SerializeField] private AudioClip sfxPanelOpen;
         [SerializeField] private AudioClip sfxPanelClose;
@@ -43,6 +50,9 @@ namespace Territory.UI
         private ToolFamily currentFamily;
         private bool isVisible;
         private bool uiBuilt;
+
+        /// <summary>Stage 9.8 (TECH-15898) — smoke test readable picker visibility state.</summary>
+        public bool IsPickerVisible => isVisible;
         private readonly List<GameObject> spawnedRows = new List<GameObject>();
         private readonly List<int> spawnedRowKeys = new List<int>();
         private int selectedKey = int.MinValue;
@@ -53,6 +63,8 @@ namespace Territory.UI
                 registry = FindObjectOfType<ZoneSubTypeRegistry>();
             if (uiAssetCatalog == null)
                 uiAssetCatalog = FindObjectOfType<UiAssetCatalog>();
+            if (contributorArchetypeRegistry == null)
+                contributorArchetypeRegistry = FindObjectOfType<ContributorArchetypeRegistry>();
             EnsureRuntimePanelRootIfNeeded();
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -173,6 +185,83 @@ namespace Territory.UI
                 case ToolFamily.StateService:
                     BuildStateServiceRows();
                     break;
+                // Stage 9.8 — contributor-registry-driven families.
+                case ToolFamily.Roads:
+                case ToolFamily.Forests:
+                case ToolFamily.Power:
+                case ToolFamily.Water:
+                    BuildContributorRows(family);
+                    break;
+            }
+        }
+
+        /// <summary>Stage 9.8 (TECH-15897) — emit one tile per <see cref="ContributorArchetypeRegistry"/> entry for the given family.</summary>
+        private void BuildContributorRows(ToolFamily family)
+        {
+            if (contributorArchetypeRegistry == null)
+            {
+                Debug.LogWarning($"[SubtypePickerController] ContributorArchetypeRegistry null — no tiles for {family}.");
+                return;
+            }
+            var entries = contributorArchetypeRegistry.GetEntries(family);
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                int key = i;
+                string label = entry.subtype;
+                Sprite icon = null;
+                if (uiAssetCatalog != null && !string.IsNullOrEmpty(entry.iconSlug))
+                    uiAssetCatalog.TryGetSprite(entry.iconSlug, out icon);
+
+                // Capture entry for closure.
+                var capturedEntry = entry;
+                Action onConfirm = () => OnContributorTileConfirmed(capturedEntry);
+                AddIconTile(key, label, icon, onConfirm);
+            }
+        }
+
+        private void OnContributorTileConfirmed(ContributorArchetypeRegistry.Entry entry)
+        {
+            if (uiManager == null) return;
+            // Manager-hook route (Roads subtypes).
+            if (!string.IsNullOrEmpty(entry.managerHook))
+            {
+                switch (entry.managerHook)
+                {
+                    case "RoadManager.TwoWay":
+                        uiManager.OnTwoWayRoadButtonClicked();
+                        break;
+                    case "InterstateManager":
+                        // Interstate entry point deferred; fall through to road for now.
+                        uiManager.OnTwoWayRoadButtonClicked();
+                        break;
+                    default:
+                        Debug.LogWarning($"[SubtypePickerController] Unknown managerHook: {entry.managerHook}");
+                        break;
+                }
+            }
+            else if (!string.IsNullOrEmpty(entry.prefabPath))
+            {
+                // Prefab route — load + set selected building via BuildingPlacementService (invariant 5).
+                // Power: set as selected building with ghost preview.
+                // Water/Forests: mirror existing handler path.
+                ToolFamily fam = ToolFamily.Power;
+                if (Enum.TryParse(entry.family, true, out ToolFamily parsed)) fam = parsed;
+                switch (fam)
+                {
+                    case ToolFamily.Power:
+                        uiManager.OnPowerFamilySubtypeConfirmed(entry.prefabPath, entry.baseCost);
+                        break;
+                    case ToolFamily.Water:
+                        uiManager.OnWaterSubtypeConfirmed(entry.prefabPath, entry.baseCost);
+                        break;
+                    case ToolFamily.Forests:
+                        uiManager.OnForestsSubtypeConfirmed(entry.prefabPath, entry.baseCost);
+                        break;
+                    default:
+                        Debug.LogWarning($"[SubtypePickerController] No handler for prefab-path family: {fam}");
+                        break;
+                }
             }
         }
 

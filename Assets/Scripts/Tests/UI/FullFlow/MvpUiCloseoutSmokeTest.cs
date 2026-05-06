@@ -161,23 +161,146 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
             uiManager.ShowSubtypePicker(ToolFamily.StateService);
             yield return null;
 
+            // Regression guard (Stage 9.1 silent-drop): controller MUST exist after Show — runtime
+            // fallback wiring (UIManager.EnsureSubtypePickerRuntimeWiring) creates the GO under
+            // Canvas if MainScene authoring lost it. Null here = controller not wired AND fallback
+            // failed (no Canvas in scene) — both are bugs we want to surface, not silently skip.
             var picker = uiManager.SubtypePickerController;
-            if (picker != null)
+            Assert.That(picker, Is.Not.Null,
+                "SubtypePickerController missing after ShowSubtypePicker(StateService) — " +
+                "MainScene authoring dropped the controller GO AND runtime fallback failed.");
+            Assert.That(picker.gameObject.activeInHierarchy, Is.True,
+                "SubtypePickerController root not active after ShowSubtypePicker(StateService)");
+            picker.Hide(cancelled: true);
+            yield return null;
+            Assert.That(uiManager.GetSelectedZoneType(), Is.EqualTo(Zone.ZoneType.Grass),
+                "SubtypePicker cancel did not reset tool to Grass");
+
+            // ─────────────────────────────────────────────────────────────
+            // 7. Toolbar dispatch wiring guard — invokes the ACTUAL dispatch path that toolbar
+            //    button clicks travel through (ToolbarDataAdapter.OnZoningClick). Catches the
+            //    Phase B regression class where IR was rebaked to single Family icons but the
+            //    dispatch switch still routed slot 0 to the density handler, bypassing
+            //    ShowSubtypePicker entirely. Slots 0/3/6 must open the picker for R/C/I family.
+            // ─────────────────────────────────────────────────────────────
+            var toolbarAdapter = Object.FindObjectOfType<Territory.UI.Toolbar.ToolbarDataAdapter>(includeInactive: true);
+            if (toolbarAdapter != null)
             {
-                Assert.That(picker.gameObject.activeInHierarchy, Is.True,
-                    "SubtypePickerController root not active after ShowSubtypePicker(StateService)");
-                picker.Hide(cancelled: true);
+                AssertToolbarSlotOpensPicker(uiManager, toolbarAdapter, 0, ToolFamily.Residential);
                 yield return null;
-                Assert.That(uiManager.GetSelectedZoneType(), Is.EqualTo(Zone.ZoneType.Grass),
-                    "SubtypePicker cancel did not reset tool to Grass");
+                AssertToolbarSlotOpensPicker(uiManager, toolbarAdapter, 3, ToolFamily.Commercial);
+                yield return null;
+                AssertToolbarSlotOpensPicker(uiManager, toolbarAdapter, 6, ToolFamily.Industrial);
+                yield return null;
+            }
+
+            // ─────────────────────────────────────────────────────────────
+            // 8. Universal-rule smoke (Stage 9.8 TECH-15898) — every non-Bulldoze toolbar
+            //    family slot must open the picker. Walks baked toolbar prefab IlluminatedButtons
+            //    by iconSpriteSlug; dispatches via ToolbarDataAdapter reflection; asserts
+            //    SubtypePickerController.IsPickerVisible per family.
+            // ─────────────────────────────────────────────────────────────
+            if (toolbarAdapter != null)
+            {
+                yield return AssertEveryNonBulldozeFamilyOpensPicker(uiManager, toolbarAdapter);
             }
 
             LogAssert.NoUnexpectedReceived();
         }
 
+        private static IEnumerator AssertEveryNonBulldozeFamilyOpensPicker(
+            UIManager uiManager,
+            Territory.UI.Toolbar.ToolbarDataAdapter adapter)
+        {
+            // Slug → (methodName, args) dispatch map matching ToolbarDataAdapter private methods.
+            // isBulldoze flag drives the expected picker_visible assertion.
+            var slugDispatchMap = new System.Collections.Generic.Dictionary<string, (string method, object[] args, bool isBulldoze)>
+            {
+                { "residential-button-64",  ("OnZoningClick",   new object[]{ 0 }, false) },
+                { "commercial-button-64",   ("OnZoningClick",   new object[]{ 3 }, false) },
+                { "industrial-button-64",   ("OnZoningClick",   new object[]{ 6 }, false) },
+                { "state-button-64",        ("OnZoningClick",   new object[]{ 9 }, false) },
+                { "power-buildings-button-64", ("OnBuildingClick", new object[]{ 0 }, false) },
+                { "water-buildings-button-64", ("OnBuildingClick", new object[]{ 1 }, false) },
+                { "roads-button-64",        ("OnRoadClick",     System.Array.Empty<object>(), false) },
+                { "forest-button-64",       ("OnForestClick",   new object[]{ 0 }, false) },
+                { "bulldoze-button-64",     ("OnBulldozeClick", System.Array.Empty<object>(), true) },
+            };
+
+            var adapterType = typeof(Territory.UI.Toolbar.ToolbarDataAdapter);
+            const System.Reflection.BindingFlags bf =
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            foreach (var kv in slugDispatchMap)
+            {
+                string slug = kv.Key;
+                string methodName = kv.Value.method;
+                object[] args = kv.Value.args;
+                bool expectBulldoze = kv.Value.isBulldoze;
+
+                var method = adapterType.GetMethod(methodName, bf);
+                if (method == null)
+                {
+                    Debug.LogWarning($"[SmokeTest] {methodName} not found via reflection — skipping slug={slug}");
+                    continue;
+                }
+
+                uiManager.OnGrassButtonClicked();
+                method.Invoke(adapter, args);
+
+                var picker = uiManager.SubtypePickerController;
+                bool expectedVisible = !expectBulldoze;
+
+                if (expectedVisible)
+                {
+                    Assert.That(picker, Is.Not.Null,
+                        $"Universal-rule fail: slug={slug} dispatch did not produce SubtypePickerController");
+                    Assert.That(picker.IsPickerVisible, Is.True,
+                        $"Universal-rule fail: slug={slug} expected picker_visible=true (non-Bulldoze family)");
+                    picker.Hide(cancelled: true);
+                }
+                else
+                {
+                    // Bulldoze: picker must NOT be visible.
+                    bool pickerVisible = picker != null && picker.IsPickerVisible;
+                    Assert.That(pickerVisible, Is.False,
+                        $"Universal-rule fail: slug={slug} (Bulldoze) expected picker_visible=false");
+                }
+
+                yield return null;
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────
         // Helpers
         // ─────────────────────────────────────────────────────────────────
+
+        private static void AssertToolbarSlotOpensPicker(
+            UIManager uiManager,
+            Territory.UI.Toolbar.ToolbarDataAdapter adapter,
+            int slot,
+            ToolFamily expectedFamily)
+        {
+            // OnZoningClick is private — reflection avoids exposing test seam in production code.
+            var dispatch = typeof(Territory.UI.Toolbar.ToolbarDataAdapter).GetMethod(
+                "OnZoningClick",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.That(dispatch, Is.Not.Null, "ToolbarDataAdapter.OnZoningClick reflection lookup failed");
+
+            // Reset to Grass before each slot test so the assertion is unambiguous.
+            uiManager.OnGrassButtonClicked();
+
+            dispatch.Invoke(adapter, new object[] { slot });
+
+            var picker = uiManager.SubtypePickerController;
+            Assert.That(picker, Is.Not.Null,
+                $"Toolbar slot {slot} ({expectedFamily}) dispatch did not produce a SubtypePickerController. " +
+                "Likely cause: ToolbarDataAdapter.OnZoningClick routes to a density handler instead of " +
+                $"On{expectedFamily}FamilyButtonClicked → ShowSubtypePicker.");
+            Assert.That(picker.gameObject.activeInHierarchy, Is.True,
+                $"Toolbar slot {slot} ({expectedFamily}) dispatched but picker root not active.");
+            picker.Hide(cancelled: true);
+        }
 
         private static IEnumerator ExerciseModal(UIManager uiManager, PopupType type)
         {

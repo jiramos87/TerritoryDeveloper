@@ -170,6 +170,80 @@ public partial class UIManager
         ShowSubtypePicker(ToolFamily.Industrial);
     }
 
+    /// <summary>Stage 9.8 (TECH-15894): Power family picker entry — opens coal/solar/wind picker.</summary>
+    public void OnPowerFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Power);
+    }
+
+    /// <summary>Stage 9.8 (TECH-15895): Roads family picker entry — opens street/interstate picker.</summary>
+    public void OnRoadsFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Roads);
+    }
+
+    /// <summary>Stage 9.8 (TECH-15896): Water family picker entry — opens water-treatment picker.</summary>
+    public void OnWaterFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Water);
+    }
+
+    /// <summary>Stage 9.8 (TECH-15896): Forests family picker entry — opens forest picker.</summary>
+    public void OnForestsFamilyButtonClicked()
+    {
+        ClearCurrentTool();
+        ShowSubtypePicker(ToolFamily.Forests);
+    }
+
+    /// <summary>Stage 9.8 (TECH-15897) — confirm Power subtype from picker (prefab-path route).</summary>
+    public void OnPowerFamilySubtypeConfirmed(string prefabPath, int baseCost)
+    {
+        ClearCurrentTool();
+        var prefab = Resources.Load<GameObject>(prefabPath);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[UIManager] Power subtype prefab not found: {prefabPath}");
+            return;
+        }
+        var go = Instantiate(prefab);
+        var building = go.GetComponent<IBuilding>();
+        if (building == null)
+            building = go.AddComponent<Territory.Buildings.PowerPlantBuilding>();
+        selectedBuilding = building;
+        cursorManager.ShowBuildingPreview(prefab, building.BuildingSize > 0 ? building.BuildingSize : 3);
+        RegisterToolSelected();
+    }
+
+    /// <summary>Stage 9.8 (TECH-15897) — confirm Water subtype from picker.</summary>
+    public void OnWaterSubtypeConfirmed(string prefabPath, int baseCost)
+    {
+        ClearCurrentTool();
+        var prefab = Resources.Load<GameObject>(prefabPath);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[UIManager] Water subtype prefab not found: {prefabPath}");
+            return;
+        }
+        var go = Instantiate(prefab);
+        var building = go.GetComponent<IBuilding>();
+        if (building != null)
+        {
+            selectedBuilding = building;
+            cursorManager.ShowBuildingPreview(prefab, building.BuildingSize > 0 ? building.BuildingSize : 2);
+        }
+        RegisterToolSelected();
+    }
+
+    /// <summary>Stage 9.8 (TECH-15897) — confirm Forests subtype from picker.</summary>
+    public void OnForestsSubtypeConfirmed(string prefabPath, int baseCost)
+    {
+        // Forests route through selectedForest / ForestSelectionData — reuse sparse handler.
+        OnSparseForestButtonClicked();
+    }
+
     public void OnTwoWayRoadButtonClicked()
     {
         ClearCurrentTool();
@@ -257,6 +331,12 @@ public partial class UIManager
         }
         // TECH-14102 / Stage 8 D9: drop ToolSelected escape frame whenever tool clears (Esc dispatch already popped; idempotent for external paths).
         RemoveFrameFromStack(PopupType.ToolSelected);
+        // Reset toolbar button visuals — moved here from removed GridManager Esc handler so any
+        // tool-clear path (Esc, programmatic, switching tool) keeps button strip in sync.
+        if (buildingSelectorMenuController != null)
+        {
+            buildingSelectorMenuController.DeselectAndUnpressAllButtons();
+        }
     }
 
     private void SetGhostPreview(GameObject prefab, int size)
