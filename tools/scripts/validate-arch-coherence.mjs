@@ -388,6 +388,9 @@ const EXPLICIT_NONE_STAGES = new Set([
   // tdd-pilot-plan: methodology validation artifact — pure IA/DB; no arch_surfaces.
   "tdd-pilot-plan::1",
   "tdd-pilot-plan::2",
+  // ship-cycle-db-read-efficiency: doc-only/mcp-only skill guardrail edits — no arch_surfaces.
+  "ship-cycle-db-read-efficiency::1",
+  "ship-cycle-db-read-efficiency::2",
 ]);
 
 // ---------------------------------------------------------------------------

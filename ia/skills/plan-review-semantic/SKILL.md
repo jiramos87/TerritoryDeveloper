@@ -81,6 +81,12 @@ If zero semantic failures → emit `PASS — no semantic drift found (checks 1�
 **Combined verdict:** PASS | FAIL (mechanical: {PASS|FAIL}, semantic: {PASS|FAIL})
 ```
 
+# Guardrails
+
+## DB read batching guardrail
+
+Before issuing the first DB read, list every question needed for this phase. Batch into one `db_read_batch` MCP call OR one typed MCP slice (`catalog_panel_get`, `catalog_archetype_get`, `master_plan_state`, `task_bundle_batch`, `spec_section`). Sequential reads only when query N depends on result of N-1.
+
 # Hard boundaries
 
 - Do NOT run mechanical checks (3–8).

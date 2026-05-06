@@ -266,6 +266,25 @@ Followed by caveman summary block: `ship-cycle done. STAGE_ID={S} BATCH_SIZE={N}
 
 ---
 
+## Guardrails
+
+### DB read batching guardrail
+
+Before issuing the first DB read, list every question needed for this phase. Batch into one `db_read_batch` MCP call OR one typed MCP slice (`catalog_panel_get`, `catalog_archetype_get`, `master_plan_state`, `task_bundle_batch`, `spec_section`). Sequential reads only when query N depends on result of N-1.
+
+### Pass A MCP slice banner
+
+When Pass A inference body needs DB context for multiple tables or queries, use the following typed MCP alternatives before falling back to ad-hoc `db_read_batch`:
+
+- `master_plan_state` — plan + stage rollup
+- `task_bundle_batch` — all task contexts for a stage in one call
+- `spec_section` — single spec slice
+- `catalog_panel_get` / `catalog_archetype_get` — catalog lookups
+
+For ad-hoc multi-query DB state (anything not covered by the above): one `db_read_batch` call covers all questions. Do NOT issue sequential `psql` shell calls or N sequential MCP reads when a single batch covers it.
+
+---
+
 ## Changelog
 
 - 2026-05-05 — Pass B absorbed (verify-loop + verified→done flips + closeout + stage commit + verification flip). Chain prose updated: `design-explore → ship-plan → ship-cycle → ship-final`. `/ship-stage-main-session` retained as legacy fallback for token-budget-exceeded path; not chained.

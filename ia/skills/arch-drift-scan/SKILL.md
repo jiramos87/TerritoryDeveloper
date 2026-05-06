@@ -154,6 +154,10 @@ Plan never auto-rewritten. User runs `/ship-plan --version-bump {SLUG}` next whe
 - IF plan markdown referenced in stage body has been edited mid-scan → re-fetch via `master_plan_state` before polling that Stage.
 - Never overwrite Stage objective / exit / task list — change-log is the only persistence path.
 
+### DB read batching guardrail
+
+Before issuing the first DB read, list every question needed for this phase. Batch into one `db_read_batch` MCP call OR one typed MCP slice (`catalog_panel_get`, `catalog_archetype_get`, `master_plan_state`, `task_bundle_batch`, `spec_section`). Sequential reads only when query N depends on result of N-1.
+
 ---
 
 ## Output

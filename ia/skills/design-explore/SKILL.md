@@ -571,6 +571,10 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 - IF touched subsystem spec unavailable via MCP → note gap in Subsystem Impact, continue
 - Never commit changes — user decides when to commit the enriched doc
 
+### DB read batching guardrail
+
+Before issuing the first DB read, list every question needed for this phase. Batch into one `db_read_batch` MCP call OR one typed MCP slice (`catalog_panel_get`, `catalog_archetype_get`, `master_plan_state`, `task_bundle_batch`, `spec_section`). Sequential reads only when query N depends on result of N-1.
+
 ---
 
 ## Next step
