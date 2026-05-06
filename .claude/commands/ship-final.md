@@ -1,9 +1,9 @@
 ---
-description: Close a master-plan version. Phases: assert all `ia_section_claims` open rows for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` / `in_progress` / `partial`) → run `validate:all` on cumulative diff `git diff {parent_tag}..HEAD` → `git tag {slug}-v{N}` (annotated, local only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP (must precede journal_append) → `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}", "ship final", "close master plan version".
+description: Close a master-plan version. Phases: assert all `ia_section_claims` open rows for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` / `in_progress` / `partial`) → run plan-scoped `validate:fast --diff-paths` on union of paths touched by `ia_task_commits` rows for slug (fallback: `validate:fast` HEAD-diff when DB unreachable / no commits recorded) → `git tag {slug}-v{N}` (annotated, local only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP (must precede journal_append) → `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}", "ship final", "close master plan version".
 argument-hint: "{SLUG}"
 ---
 
-# /ship-final — Close a master-plan version: assert sections closed → assert all stages done (no `partial`) → run `validate:all` on cumulative parent-tag-to-HEAD diff → `git tag {slug}-v{N}` → flip `ia_master_plans.closed_at` → journal closeout row. Final gate of the ship-protocol cycle. Mechanical — no decisions.
+# /ship-final — Close a master-plan version: assert sections closed → assert all stages done (no `partial`) → run `validate:fast --diff-paths` scoped to plan's task commits (paths derived from `ia_task_commits` for slug; falls back to HEAD-diff if DB unreachable) → `git tag {slug}-v{N}` → flip `ia_master_plans.closed_at` → journal closeout row. Final gate of the ship-protocol cycle. Mechanical — no decisions.
 
 Drive `$ARGUMENTS` via the [`ship-final`](../agents/ship-final.md) subagent.
 

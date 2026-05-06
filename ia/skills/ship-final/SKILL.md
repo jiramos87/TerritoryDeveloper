@@ -2,18 +2,22 @@
 name: ship-final
 purpose: >-
   Close a master-plan version: assert sections closed → assert all stages done
-  (no `partial`) → run `validate:all` on cumulative parent-tag-to-HEAD diff →
-  `git tag {slug}-v{N}` → flip `ia_master_plans.closed_at` → journal closeout
-  row. Final gate of the ship-protocol cycle. Mechanical — no decisions.
+  (no `partial`) → run `validate:fast --diff-paths` scoped to plan's task
+  commits (paths derived from `ia_task_commits` for slug; falls back to
+  HEAD-diff if DB unreachable) → `git tag {slug}-v{N}` → flip
+  `ia_master_plans.closed_at` → journal closeout row. Final gate of the
+  ship-protocol cycle. Mechanical — no decisions.
 audience: agent
 loaded_by: "skill:ship-final"
 slices_via: master_plan_locate, master_plan_state, spec_section
 description: >-
   Close a master-plan version. Phases: assert all `ia_section_claims` open rows
   for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` /
-  `in_progress` / `partial`) → run `validate:all` on cumulative diff
-  `git diff {parent_tag}..HEAD` → `git tag {slug}-v{N}` (annotated, local
-  only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP
+  `in_progress` / `partial`) → run plan-scoped `validate:fast --diff-paths`
+  on union of paths touched by `ia_task_commits` rows for slug (fallback:
+  `validate:fast` HEAD-diff when DB unreachable / no commits recorded) →
+  `git tag {slug}-v{N}` (annotated, local only) → flip
+  `ia_master_plans.closed_at = now()` via `master_plan_close` MCP
   (must precede journal_append) → `journal_append(phase=version-close,
   payload_kind=version_close, payload={plan_slug, version, tag, sha,
   validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}",
@@ -22,7 +26,7 @@ phases:
   - Parse SLUG + load master_plan_state
   - Assert sections closed (open ia_section_claims = 0)
   - Assert all stages done (no partial / pending / in_progress)
-  - Cumulative diff validate:all (git diff {parent_tag}..HEAD)
+  - Plan-scoped validate:fast (paths from ia_task_commits for slug; HEAD-diff fallback)
   - Git tag {slug}-v{N} (annotated, local)
   - Flip closed_at via master_plan_close MCP
   - Journal append (payload_kind=version_close)
@@ -51,7 +55,7 @@ caveman_exceptions:
 hard_boundaries:
   - IF any `ia_section_claims` row open for slug → STOP. Run /section-closeout first.
   - IF any `ia_stages.status` ≠ `done` (incl. `partial`, `pending`, `in_progress`) → STOP. Ship remaining stages first.
-  - IF `validate:all` exits non-zero on cumulative diff → STOP. Fix + re-run.
+  - IF plan-scoped `validate:fast` exits non-zero → STOP. Fix + re-run. Scope is the union of paths in `ia_task_commits` for slug — drift in unrelated plans CANNOT block this close.
   - IF `closed_at` already set on parent → STOP. Version already closed.
   - Do NOT push tag — local only. User decides remote push.
   - Do NOT create v(N+1) row — that is `master_plan_version_create` (separate MCP).
@@ -98,7 +102,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 1. **`load_plan`** — `master_plan_state(slug)` → `{version, closed_at, stages[]}`.
 2. **`assert_sections_closed`** — bash: count `ia_section_claims` open rows for slug. STOP on `> 0`.
 3. **`assert_stages_done`** — bash: assert every `stages[].status === 'done'`. STOP on any `partial` / `pending` / `in_progress`.
-4. **`cumulative_validate`** — bash: `git diff {parent_tag}..HEAD` + `npm run validate:all`. STOP on non-zero exit.
+4. **`cumulative_validate`** — bash: query `ia_task_commits` for plan's task shas → union `git show --name-only` paths → `npm run validate:fast -- --diff-paths <csv>` (path-map scoped, TECH-12640). Drift in unrelated plans does NOT block this close. Fallback: HEAD-diff `validate:fast` when DB unreachable. STOP on non-zero exit.
 5. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
 6. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede journal_append.
 7. **`journal_close`** — MCP: `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
@@ -109,7 +113,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 
 - Open section claim → recipe stops at `assert_sections_closed` (exit 1). Run `/section-closeout {SLUG} {SECTION_ID}` for each open section, retry.
 - Stage not done → recipe stops at `assert_stages_done` (exit 1). Ship remaining stages, retry.
-- `validate:all` red → recipe stops at `cumulative_validate` (exit 1). Fix surface + re-run.
+- Plan-scoped `validate:fast` red → recipe stops at `cumulative_validate` (exit 1). Fix surface + re-run. Scope = paths in `ia_task_commits` for slug; unrelated-plan drift cannot block.
 - Re-run on partial failure: idempotent at DB level — `master_plan_close` is no-op when `closed_at` already set; recipe stops with `version_already_closed` error from MCP layer.
 - Tag exists → `git tag` fails fast with native error. Manual `git tag -d` only when retry needed (destructive-op confirmation).
 
@@ -119,7 +123,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 
 - IF open section claim → STOP. `/section-closeout` first.
 - IF any stage `status ≠ done` → STOP. `/ship-stage` remaining stages first.
-- IF `validate:all` red → STOP. Fix + re-run.
+- IF plan-scoped `validate:fast` red → STOP. Fix + re-run. Scope is plan's task-commit paths only; unrelated-plan drift cannot trigger this stop.
 - IF `closed_at` already set → STOP with `version_already_closed`.
 - Do NOT push tag — local only. Pushing is a human-gated step.
 - Do NOT mutate code / specs / schemas — closure is metadata-only (tag + closed_at + journal row).
@@ -151,3 +155,5 @@ Do NOT push tag. Do NOT create v(N+1) row. Do NOT commit source.
 | Date | Change | Trigger |
 |------|--------|---------|
 | 2026-05-05 | NEW skill — ship-protocol Stage 4 (TECH-12643). 7 steps: load_plan + assert_sections_closed + assert_stages_done + cumulative_validate + git_tag + close_plan + journal_close. | `docs/explorations/ship-protocol-exploration.md` Stage 4 |
+| 2026-05-06 | Phase 4 cumulative_validate switched from whole-repo `validate:all` to plan-scoped `validate:fast --diff-paths <csv>` (paths derived by unioning `git show --name-only` across `ia_task_commits` shas for slug). Whole-repo gate red-blocked closes when unrelated-plan handoff drift was present. New behavior fails ONLY on drift in this plan's edits. Fallback to HEAD-diff `validate:fast` when DB unreachable. | Force-close override on `ship-cycle-db-read-efficiency` v1 close — handoff-schema drift in `chain-token-cut.md` + `async-cron-jobs.md` blocked unrelated plan close. |
+| 2026-05-06 | Path-map sub-fix — `validate:fast` runner extended to accept entries shaped `{id, scope:"matched"}` which forward matched touched paths as positional args (`npm run script -- path1 path2`). `docs/explorations/**` entry rewritten to scoped form so plan-scoped runs only validate touched handoff docs. `ia/skills/ship-plan/**` → handoff-schema mapping removed (whole-tree on SKILL.md edit re-collapsed scope; validate:all chain still covers schema-source changes). `validate-fast-coverage.mjs` updated to handle object entries. | Smoke test of patched cumulative-validate.sh on this plan re-failed on whole-tree handoff scan — touched skill files triggered bare-string entry. |

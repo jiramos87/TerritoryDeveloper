@@ -1,5 +1,5 @@
 {
-  "_comment": "validate-fast scoped runner: maps touched paths to validator subsets. Runner = union(baseline, scoped). Coverage meta-gate (validate-fast-coverage.mjs) asserts every script in package.json validate:all chain appears either in baseline or under >=1 glob. Edit shape: {baseline: [scriptId, ...], path_globs: {glob: [scriptId, ...]}}. Glob semantics = micromatch. TECH-12640.",
+  "_comment": "validate-fast scoped runner: maps touched paths to validator subsets. Runner = union(baseline, scoped). Coverage meta-gate (validate-fast-coverage.mjs) asserts every script in package.json validate:all chain appears either in baseline or under >=1 glob. Entry shape: bare string scriptId (whole-tree run) OR object {id, scope:'matched'} which forwards the matched touched paths as positional args (`npm run script -- path1 path2`). Mixed entries for the same id collapse to whole-tree to preserve correctness. Glob semantics = micromatch. TECH-12640.",
   "baseline": [
     "validate:frontmatter",
     "validate:claude-imports",
@@ -81,8 +81,10 @@
       "validate:agent-tools",
       "validate:skill-drift",
       "validate:skill-changelog-presence",
-      "validate:skill-recipe-drift",
-      "validate:handoff-schema"
+      "validate:skill-recipe-drift"
+    ],
+    "docs/explorations/**": [
+      { "id": "validate:handoff-schema", "scope": "matched" }
     ],
     "ia/skills/_preamble/**": [
       "validate:cache-block-sizing"

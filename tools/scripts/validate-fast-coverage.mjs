@@ -92,10 +92,14 @@ function loadPathMap() {
   return JSON.parse(raw);
 }
 
+function entryId(entry) {
+  return typeof entry === "string" ? entry : entry.id;
+}
+
 function pathMapScriptUniverse(pathMap) {
   const all = new Set(pathMap.baseline);
   for (const list of Object.values(pathMap.path_globs)) {
-    for (const s of list) all.add(s);
+    for (const s of list) all.add(entryId(s));
   }
   return all;
 }

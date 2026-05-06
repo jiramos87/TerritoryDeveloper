@@ -1,10 +1,12 @@
 recipe: ship-final
 description: >-
   Close a master-plan version. Phases: assert sections closed → assert all
-  stages done (no `partial`) → cumulative `validate:all` on parent-tag-to-HEAD
-  diff → annotated git tag `{slug}-v{N}` (local only) → `master_plan_close`
-  MCP flips `closed_at` → `journal_append(payload_kind=version_close)`.
-  Final gate of ship-protocol cycle. Mechanical — no decisions.
+  stages done (no `partial`) → plan-scoped `validate:fast --diff-paths` on
+  union of paths in `ia_task_commits` for slug (HEAD-diff fallback when DB
+  unreachable) → annotated git tag `{slug}-v{N}` (local only) →
+  `master_plan_close` MCP flips `closed_at` →
+  `journal_append(payload_kind=version_close)`. Final gate of ship-protocol
+  cycle. Mechanical — no decisions.
 inputs:
   type: object
   additionalProperties: false
@@ -49,9 +51,11 @@ steps:
 
   - id: cumulative_validate
     description: >-
-      Phase 4 — run `npm run validate:all` against cumulative diff
-      `git diff {parent_tag}..HEAD` (parent_tag = `{slug}-v{version-1}`;
-      empty parent_tag for v1 = full HEAD diff). Stops on non-zero exit.
+      Phase 4 — plan-scoped `validate:fast`. Queries `ia_task_commits` for
+      this plan's task shas, unions paths via `git show --name-only`, runs
+      `npm run validate:fast -- --diff-paths <csv>` (path-map scoped runner,
+      TECH-12640). Drift in unrelated plans does NOT block close. Fallback:
+      `validate:fast` HEAD-diff when DB unreachable. Stops on non-zero exit.
     bash: tools/scripts/recipe-engine/ship-final/cumulative-validate.sh
     args:
       slug: ${inputs.slug}
