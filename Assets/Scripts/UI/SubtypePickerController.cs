@@ -62,6 +62,7 @@ namespace Territory.UI
         public bool IsPickerVisible => isVisible;
         private readonly List<GameObject> spawnedRows = new List<GameObject>();
         private readonly List<int> spawnedRowKeys = new List<int>();
+        private readonly List<Action> spawnedRowActions = new List<Action>();
         private int selectedKey = int.MinValue;
 
         private void Awake()
@@ -103,6 +104,20 @@ namespace Territory.UI
             panelRoot.SetActive(true);
             isVisible = true;
             UiSfxPlayer.Play(sfxPanelOpen);
+            // Auto-select first tile so cursor prefab attaches + tool ready to place default subtype.
+            // Caller-provided defaultKey wins if it matches a built row; else fall back to first key.
+            if (spawnedRowKeys.Count > 0)
+            {
+                int idx = 0;
+                if (selectedKey != int.MinValue)
+                {
+                    int found = spawnedRowKeys.IndexOf(selectedKey);
+                    if (found >= 0) idx = found;
+                }
+                selectedKey = spawnedRowKeys[idx];
+                spawnedRowActions[idx]?.Invoke();
+                RefreshSelectionVisuals();
+            }
         }
 
         /// <summary>Close picker. Cancelled = ESC / outside-click → reset to Grass tool.</summary>
@@ -402,6 +417,7 @@ namespace Territory.UI
 
             spawnedRows.Add(tile);
             spawnedRowKeys.Add(key);
+            spawnedRowActions.Add(onClick);
         }
 
         private static Color LerpToward(Color from, Color target, float t)
@@ -433,6 +449,7 @@ namespace Territory.UI
             }
             spawnedRows.Clear();
             spawnedRowKeys.Clear();
+            spawnedRowActions.Clear();
         }
     }
 }
