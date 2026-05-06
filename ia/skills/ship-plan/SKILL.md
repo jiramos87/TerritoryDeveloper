@@ -183,28 +183,13 @@ Call `mcp__territory-ia__task_bundle_batch({ slug: "{SLUG}", task_keys: yaml.sta
 
 ## Phase 5 — Compose 3-section digest per task with inline anchor expansion
 
-Per task, build `§Plan Digest` body with exactly 3 sub-sections (~30 lines):
+Per task, build `§Plan Digest` body with exactly 3 sub-sections by reading the file-based Markdown templates (TECH-15901) under `ia/templates/digest-sections/` and filling `{{slot}}` values:
 
-```markdown
-## §Plan Digest
+- `ia/templates/digest-sections/goal.md` — slots: `{{intent_one_liner}}`, `{{primary_surface}}`, `{{glossary_terms}}`
+- `ia/templates/digest-sections/red-stage-proof.md` — slots: `{{anchor_kind}}`, `{{path}}`, `{{method}}`, `{{description}}`, `{{failing_baseline}}`, `{{green_criteria}}`
+- `ia/templates/digest-sections/work-items.md` — slot: `{{work_item_lines}}` (bullet list)
 
-### §Goal
-
-{1-3 sentences — task outcome in product/domain terms; glossary-aligned.}
-
-### §Red-Stage Proof
-
-{anchor-kind}:{path}::{method} — {1-line description of failing test that the task makes pass}
-
-(pseudo-code body inherited from stage `red_stage_proof` when task lacks own;
-override here when task narrows the test scope.)
-
-### §Work Items
-
-- `{repo-relative-path}`: {1-line what + why}
-- `{repo-relative-path}`: {1-line what + why}
-- ...
-```
+Concatenate the three filled templates under a `## §Plan Digest` heading. Structure is identical across FEAT/BUG/TECH tasks — only slot values differ.
 
 **Drop sections** (vs legacy 7-section relaxed shape): §Acceptance, §Pending Decisions, §Implementer Latitude, §Test Blueprint, §Invariants & Gate. §Acceptance subsumed by §Red-Stage Proof. §Invariants & Gate moved to stage exit criteria. §Pending Decisions resolved upstream at design-explore Phase 1 (zero unresolved decisions reach ship-plan — hard rule).
 
@@ -335,6 +320,18 @@ After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drif
 Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
 
 `task_key` is allocated by the Postgres function (per-prefix monotonic id from `ia_id_sequences`). The composed §Plan Digest is sent in the `body` field per task and persisted to `ia_tasks.body` — DB sole source of truth (read back via `task_spec_body` MCP).
+
+---
+
+## Phase 7.5 — Post-bundle glossary back-link enrich (TECH-15903)
+
+After `master_plan_bundle_apply` succeeds, invoke the back-link enricher:
+
+```
+node tools/scripts/glossary-backlink-enrich.mjs --plan-id {slug}
+```
+
+Scans `ia_tasks.body` for glossary term mentions → upserts `ia_glossary_backlinks` rows keyed `(plan_id, term, section_id)`. Cache-backed via `ia_mcp_context_cache` (TECH-15902). Non-blocking: failure emits a warning log but does not halt the plan.
 
 ---
 

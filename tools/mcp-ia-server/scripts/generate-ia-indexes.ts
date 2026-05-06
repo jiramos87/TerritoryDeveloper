@@ -1,8 +1,10 @@
 /**
  * Generate I1 (spec index) and I2 (glossary → spec anchor) JSON under tools/mcp-ia-server/data/.
+ * With --write-anchors: also upserts ia_spec_anchors rows into Postgres (TECH-15899).
  */
 
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +16,7 @@ import {
 } from "../src/parser/markdown-parser.js";
 import { parseGlossary } from "../src/parser/glossary-parser.js";
 import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
+import { getIaDatabasePool } from "../src/ia-db/pool.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -295,9 +298,65 @@ function assertIndexesMatchCommitted(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Anchor DB population pass (TECH-15899).
+// Walks ia/specs/** and upserts rows into ia_spec_anchors.
+// Invoked when --write-anchors flag is passed.
+// ---------------------------------------------------------------------------
+
+async function writeSpecAnchors(): Promise<void> {
+  const pool = getIaDatabasePool();
+  if (!pool) {
+    console.warn("generate-ia-indexes --write-anchors: DATABASE_URL not set — skipping anchor upsert");
+    return;
+  }
+
+  const specsDir = path.join(repoRoot, "ia", "specs");
+  const names = fs
+    .readdirSync(specsDir)
+    .filter((n) => n.endsWith(".md"))
+    .sort();
+
+  let upserted = 0;
+
+  for (const name of names) {
+    const filePath = path.join(specsDir, name);
+    const raw = fs.readFileSync(filePath, "utf8");
+    const sha256 = crypto.createHash("sha256").update(raw).digest("hex");
+    const slug = path.basename(name, ".md").toLowerCase();
+
+    const doc = parseDocument(filePath);
+    const lines = splitLines(raw);
+    const flat = flattenHeadingTree(doc.headings);
+
+    for (const h of flat) {
+      if (h.depth < 1) continue;
+      const end = h.lineEnd ?? lines.length;
+      const bodyLines = lines.slice(h.lineStart - 1, end);
+      const bodyText = bodyLines.join("\n").trimEnd();
+      if (!bodyText.trim()) continue;
+
+      await pool.query(
+        `INSERT INTO ia_spec_anchors (slug, section_id, sha256, body_text, last_indexed_at)
+         VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (slug, section_id)
+         DO UPDATE SET sha256 = EXCLUDED.sha256,
+                       body_text = EXCLUDED.body_text,
+                       last_indexed_at = now()`,
+        [slug, h.sectionId, sha256, bodyText],
+      );
+      upserted++;
+    }
+  }
+
+  console.log(`generate-ia-indexes --write-anchors: upserted ${upserted} ia_spec_anchors rows`);
+  await pool.end();
+}
+
 function main(): void {
   loadRepoDotenvIfNotCi(repoRoot);
   const check = process.argv.includes("--check");
+  const writeAnchors = process.argv.includes("--write-anchors");
 
   process.env.REPO_ROOT = repoRoot;
 
@@ -325,6 +384,13 @@ function main(): void {
   console.log(`Wrote ${path.relative(repoRoot, specIndexPath)}`);
   console.log(`Wrote ${path.relative(repoRoot, glossaryIndexPath)}`);
   console.log(`Wrote ${path.relative(repoRoot, glossaryGraphIndexPath)}`);
+
+  if (writeAnchors) {
+    writeSpecAnchors().catch((err) => {
+      console.error("generate-ia-indexes --write-anchors failed:", err);
+      process.exit(1);
+    });
+  }
 }
 
 main();
