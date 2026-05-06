@@ -162,6 +162,12 @@
     "package.json": [
       "validate:claude-imports",
       "validate:frontmatter"
+    ],
+    "tools/scripts/validate-catalog-naming.mjs": [
+      "validate:catalog-naming"
+    ],
+    "db/migrations/*catalog*": [
+      "validate:catalog-naming"
     ]
   }
 }

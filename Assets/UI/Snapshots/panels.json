@@ -1,97 +1,67 @@
 {
-  "snapshot_id": "2026-05-06T00:00:00.000Z",
+  "snapshot_id": "2026-05-06T22:43:45.100Z",
   "kind": "panels",
   "schema_version": 3,
   "items": [
     {
-      "slug": "hud_bar",
+      "slug": "growth-budget-panel",
       "fields": {
-        "layout_template": "hstack",
-        "layout": "hstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 12,
+        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16}",
         "params_json": "{}"
       },
       "panel": {
-        "slug": "hud_bar",
-        "layout_template": "hstack",
-        "layout": "hstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "slug": "growth-budget-panel",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 12,
+        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16}",
         "params_json": "{}"
       },
       "children": [
         {
           "ord": 1,
-          "kind": "button",
-          "params_json": "{\"ord\":1,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_budget.png",
-          "layout_json": { "zone": "left" }
+          "kind": "row",
+          "params_json": "{\"ord\":1,\"kind\":\"row\",\"role\":\"total\",\"archetype\":\"slider_row_2\"}",
+          "sprite_ref": "",
+          "layout_json": null
         },
         {
           "ord": 2,
-          "kind": "button",
-          "params_json": "{\"ord\":2,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_1.png",
-          "layout_json": { "zone": "left" }
+          "kind": "row",
+          "params_json": "{\"ord\":2,\"kind\":\"row\",\"role\":\"zoning\",\"archetype\":\"slider_row_2\"}",
+          "sprite_ref": "",
+          "layout_json": null
         },
         {
           "ord": 3,
-          "kind": "button",
-          "params_json": "{\"ord\":3,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_2.png",
-          "layout_json": { "zone": "left" }
-        },
-        {
-          "ord": 4,
-          "kind": "button",
-          "params_json": "{\"ord\":4,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_3.png",
-          "layout_json": { "zone": "center" }
-        },
-        {
-          "ord": 5,
-          "kind": "button",
-          "params_json": "{\"ord\":5,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_4.png",
-          "layout_json": { "zone": "center" }
-        },
-        {
-          "ord": 6,
-          "kind": "button",
-          "params_json": "{\"ord\":6,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_5.png",
-          "layout_json": { "zone": "center" }
-        },
-        {
-          "ord": 7,
-          "kind": "button",
-          "params_json": "{\"ord\":7,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_6.png",
-          "layout_json": { "zone": "right" }
-        },
-        {
-          "ord": 8,
-          "kind": "button",
-          "params_json": "{\"ord\":8,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_7.png",
-          "layout_json": { "zone": "right" }
-        },
-        {
-          "ord": 9,
-          "kind": "button",
-          "params_json": "{\"ord\":9,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_8.png",
-          "layout_json": { "zone": "right" }
-        },
-        {
-          "ord": 10,
-          "kind": "button",
-          "params_json": "{\"ord\":10,\"kind\":\"button\"}",
-          "sprite_ref": "Assets/UI/Sprites/hud_bar_icon_9.png",
-          "layout_json": { "zone": "right" }
+          "kind": "row",
+          "params_json": "{\"ord\":3,\"kind\":\"row\",\"role\":\"roads\",\"archetype\":\"slider_row_2\"}",
+          "sprite_ref": "",
+          "layout_json": null
         }
       ]
+    },
+    {
+      "slug": "subtype-picker",
+      "fields": {
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":10,\"right\":10,\"bottom\":8}",
+        "params_json": "{}"
+      },
+      "panel": {
+        "slug": "subtype-picker",
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":10,\"right\":10,\"bottom\":8}",
+        "params_json": "{}"
+      },
+      "children": []
     }
   ]
 }

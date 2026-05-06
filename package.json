@@ -11,7 +11,7 @@
     "validate:runtime-state": "node tools/scripts/validate-runtime-state.mjs",
     "validate:all": "npm run validate:all:mutating && npm run validate:all:readonly",
     "validate:all:mutating": "npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run validate:backfill-fixtures && npm run generate:ia-indexes -- --check && npm run test:recipe-engine && npm run smoke:seam-q5",
-    "validate:all:readonly": "run-p validate:fast-coverage validate:master-plan-status validate:plan-prototype-first validate:plan-red-stage validate:arch-coherence validate:backlog-yaml validate:web:conditional validate:telemetry-schema validate:runtime-state validate:cache-block-sizing validate:claude-imports validate:capability-coverage validate:sprite-gen-schema validate:no-ir-bake-runtime-refs validate:blob-roots validate:agent-tools-uniformity validate:agent-tools validate:skill-drift validate:skill-changelog-presence validate:mcp-readme validate:mcp-descriptor-prose validate:seam-golden validate:recipe-drift validate:skill-recipe-drift validate:mcp-catalog-coverage validate:handoff-schema validate:retired-skill-refs validate:plan-digest-coverage validate:seeded-task-stale validate:asset-pipeline validate:single-esc-handler validate:drift-lint",
+    "validate:all:readonly": "run-p validate:fast-coverage validate:master-plan-status validate:plan-prototype-first validate:plan-red-stage validate:arch-coherence validate:backlog-yaml validate:web:conditional validate:telemetry-schema validate:runtime-state validate:cache-block-sizing validate:claude-imports validate:capability-coverage validate:sprite-gen-schema validate:no-ir-bake-runtime-refs validate:blob-roots validate:agent-tools-uniformity validate:agent-tools validate:skill-drift validate:skill-changelog-presence validate:mcp-readme validate:mcp-descriptor-prose validate:seam-golden validate:recipe-drift validate:skill-recipe-drift validate:mcp-catalog-coverage validate:handoff-schema validate:retired-skill-refs validate:plan-digest-coverage validate:seeded-task-stale validate:asset-pipeline validate:single-esc-handler validate:drift-lint validate:catalog-naming",
     "validate:asset-pipeline": "node tools/scripts/validate-asset-pipeline.mjs",
     "validate:drift-lint": "node tools/scripts/validate-drift-lint.mjs",
     "validate:single-esc-handler": "node tools/scripts/validate-single-esc-handler.mjs",
@@ -47,6 +47,7 @@
     "test:web:e2e": "npm --prefix web run test:e2e",
     "validate:backlog-yaml": "npx tsx tools/validate-backlog-yaml.ts",
     "validate:catalog-dto": "node tools/scripts/catalog-dto-migration-check.mjs",
+    "validate:catalog-naming": "node tools/scripts/validate-catalog-naming.mjs",
     "validate:catalog-spine": "npx tsx tools/postgres-ia/validate-catalog-spine.ts",
     "catalog:export": "npm --prefix web run catalog:export",
     "catalog:export:check": "npm --prefix web run catalog:export:check",
@@ -119,7 +120,9 @@
     "validate:fast-coverage": "node tools/scripts/validate-fast-coverage.mjs",
     "validate:retired-skill-refs": "npx tsx tools/scripts/validators/validate-retired-skill-refs.ts",
     "validate:plan-digest-coverage": "npx tsx tools/scripts/validators/validate-plan-digest-coverage.ts",
-    "validate:seeded-task-stale": "npx tsx tools/scripts/validators/validate-seeded-task-stale.ts"
+    "validate:seeded-task-stale": "npx tsx tools/scripts/validators/validate-seeded-task-stale.ts",
+    "validate:ui-prefab-layout-coverage": "npx tsx tools/scripts/validate-ui-prefab-layout-coverage.ts",
+    "dev:all": "concurrently 'npm --prefix web run dev' 'npx tsx tools/cron-server/index.ts'"
   },
   "engines": {
     "node": ">=20.6"
@@ -131,6 +134,7 @@
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@types/babel__traverse": "^7.28.0",
+    "concurrently": "^9.0.0",
     "glob": "^13.0.6",
     "npm-run-all2": "^8.0.4",
     "playwright": "^1.59.1",
