@@ -50,18 +50,18 @@
 **Exit criteria:**
 
 - `python -m sprite_gen render --all` completes for ≥5 archetype specs with 4 variants × 17 slope terrain values without error
-- Promoted sprite in `Assets/Sprites/Generated/` loads in Unity with PPU=64, pivot computed as `(0.5, 16/canvas_height)`, Point filter, no compression — validated against `Assets/Sprites/Residential/House1-64.png` reference
+- Promoted sprite in `Assets/Sprites/Generated/` loads in Unity with PPU=64, pivot computed as `(0.5, 16/canvas_height)`, Point filter, no compression — validated against `Assets/Sprites/Residential/house1-64.png` reference
 - `palette extract residential` reproduces per-class ramp that matches existing sprite class look (eyeball test passes)
 - `iso_stepped_foundation` renders clean bridge from sloped ground to flat building base on all 17 land slope variants (slope codes match `Assets/Sprites/Slopes/` naming per **Slope variant naming** glossary)
 - `promote` / `reject` CLI round-trips without manual `.meta` editing
 
-**Art:** `Assets/Sprites/Residential/House1-64.png` — palette extraction reference (existing). `Assets/Sprites/Slopes/` — slope code reference (existing, 17 land variants). `Assets/Sprites/Generated/` — promote destination (new).
+**Art:** `Assets/Sprites/Residential/house1-64.png` — palette extraction reference (existing). `Assets/Sprites/Slopes/` — slope code reference (existing, 17 land variants). `Assets/Sprites/Generated/` — promote destination (new).
 
 **Relevant surfaces (load when step opens):**
 - `docs/isometric-sprite-generator-exploration.md` §3 Architecture, §4 Canvas math, §5 Primitives, §6 Palette, §7 Slope-aware foundation, §8 YAML schema, §9 Folder layout, §10 CLI, §11 Curation — ground truth
 - `Assets/Scripts/Managers/GameManagers/GridManager.cs:59` — tileWidth/tileHeight (**Tile dimensions**) cross-check for canvas math
 - `Assets/Sprites/Slopes/` — slope filename naming convention (**Slope variant naming**): `{CODE}-slope.png` where CODE ∈ {N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay}
-- `Assets/Sprites/Residential/House1-64.png` — K-means palette extraction source + promote/pivot validation reference
+- `Assets/Sprites/Residential/house1-64.png` — K-means palette extraction source + promote/pivot validation reference
 - `tools/sprite-gen/` — (new) all tool source lives here
 
 ---
@@ -138,7 +138,7 @@
 
 **Status:** Done (all 9 tasks **TECH-153** through **TECH-158** complete; T1.3.3+T1.3.4 merged into **TECH-155**; T1.3.7+T1.3.8+T1.3.9 merged into **TECH-158**)
 
-**Objectives:** Implement K-means palette extraction from existing sprites, per-class palette JSON files, and 3-level ramp enforcement at composition time. Wire palette into `compose.py` so each primitive face pulls correct ramp color from the loaded palette. Bootstrap `palettes/residential.json` from `Assets/Sprites/Residential/House1-64.png`. Add Aseprite `.gpl` round-trip (Tier 1 editor integration) so human-curated palettes can override K-means output per class.
+**Objectives:** Implement K-means palette extraction from existing sprites, per-class palette JSON files, and 3-level ramp enforcement at composition time. Wire palette into `compose.py` so each primitive face pulls correct ramp color from the loaded palette. Bootstrap `palettes/residential.json` from `Assets/Sprites/Residential/house1-64.png`. Add Aseprite `.gpl` round-trip (Tier 1 editor integration) so human-curated palettes can override K-means output per class.
 
 **Exit:**
 
@@ -167,7 +167,7 @@
 | T1.3.3 | Palette apply_ramp | 2 | **TECH-155** | Done (archived) | `src/palette.py` — `load_palette(cls) → dict`: read `palettes/{cls}.json`; `apply_ramp(palette, material_name, face) → (R,G,B)`: face ∈ {'top','south','east'} → bright/mid/dark; raise `PaletteKeyError` if material_name not in palette (caught by compose layer, exits code 2 per §10). **Merged with T1.3.4 into TECH-155** — API + sole consumer land atomic. |
 | T1.3.4 | Palette-driven compose | 2 | **TECH-155** | Done (archived) | Update `src/compose.py` to call `load_palette(spec['palette'])` once per sprite, pass palette to each primitive call; primitives accept `material: str` + `palette: dict` replacing stub color; `compose_sprite` now fully palette-driven. **Merged with T1.3.3 into TECH-155**. |
 | T1.3.5 | Palette unit tests | 3 | **TECH-156** | Done (archived) | `tests/test_palette.py` — mock K-means centroids (3 fixed RGB values), assert 3-level ramp values (bright = centroid HSV-V ×1.2 clamped, dark ×0.6); assert `apply_ramp(palette, 'wall_brick_red', 'top')` returns bright tuple; assert `apply_ramp(..., 'east')` returns dark tuple |
-| T1.3.6 | Bootstrap residential palette | 3 | **TECH-157** | Done (archived) | Run `palette extract residential --sources "Assets/Sprites/Residential/House1-64.png"` (or equivalent direct call); hand-name 8 clusters → produce `tools/sprite-gen/palettes/residential.json` with at minimum: wall_brick_red, roof_tile_brown, window_glass, concrete; check in JSON file |
+| T1.3.6 | Bootstrap residential palette | 3 | **TECH-157** | Done (archived) | Run `palette extract residential --sources "Assets/Sprites/Residential/house1-64.png"` (or equivalent direct call); hand-name 8 clusters → produce `tools/sprite-gen/palettes/residential.json` with at minimum: wall_brick_red, roof_tile_brown, window_glass, concrete; check in JSON file |
 | T1.3.7 | GPL export command | 4 | **TECH-158** | Done (archived) | `src/palette.py` — `export_gpl(cls, dest_path=None) → str`: read `palettes/{cls}.json`, emit GIMP palette format (`GIMP Palette` header + `Name:` + `Columns:` + `R G B name` rows); swatch naming `{material}_{level}` where level ∈ {bright,mid,dark}; 3N rows for N materials; `src/cli.py` — `palette export {class}` command writes `palettes/{class}.gpl`; add `.gpl` to `.gitignore` (JSON is source of truth). **Merged with T1.3.8+T1.3.9 into TECH-158** — round-trip symmetry. |
 | T1.3.8 | GPL import command | 4 | **TECH-158** | Done (archived) | `src/palette.py` — `import_gpl(cls, gpl_path) → dict`: parse `.gpl` (skip header, read R G B name rows), group rows by material name (strip `_bright/_mid/_dark` suffix), emit JSON in Stage 1.3 schema; raise `GplParseError` on malformed rows; `src/cli.py` — `palette import {class} --gpl path` command writes/overwrites `palettes/{class}.json`, prints diff vs prior JSON. **Merged into TECH-158**. |
 | T1.3.9 | GPL round-trip test | 4 | **TECH-158** | Done (archived) | `tests/test_palette_gpl.py` — round-trip test: start from fixture `palettes/residential.json` → `export_gpl` → parse back with `import_gpl` → assert deep-equal with original (every material × face RGB identical); assert `.gpl` output contains `GIMP Palette` header + 12 swatch rows for 4 materials; assert malformed `.gpl` raises `GplParseError`. **Merged into TECH-158**. |
