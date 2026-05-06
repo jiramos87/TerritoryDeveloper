@@ -141,6 +141,18 @@ Start with the single most important unknown — typically a scope boundary, blo
 
 ### Phase 1 — Compare + Exit Gate
 
+**Polling template lookup (Phase 1 + Phase 2):**
+
+When `core_prototype.verb` is set in working memory, load the matching template before building polls:
+
+```
+ia/templates/polling/{verb}.json
+```
+
+Supported verbs: `trim`, `add`, `replace`, `refactor`, `integrate`. If the verb is missing or the file is absent, fall back to LLM-authored polls (no error — template is advisory).
+
+Template shape: `{ verb, question, plain_language_preface, options[{id,label,tradeoff}], recommended, recommended_rationale, slot_keys[] }`. Fill `{{slot}}` placeholders from working memory before rendering. Emit the `plain_language_preface` + `Recommended:` line verbatim (with slots filled) — do NOT paraphrase them.
+
 **Phase 1 exit hard rule (zero unresolved decisions):** Phase 1 MUST NOT advance to Phase 2 while any decision remains unresolved. The exit gate enforces this via a `phase-1-done` token (see below).
 
 **Relentless polling loop (cross-link: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md)):**
@@ -184,12 +196,32 @@ Per DEC-A15 (`arch-authoring-via-design-explore`): if the selected approach touc
 
 **Skip-clause:** phase no-ops when Phase 5 subsystem-impact returns zero `arch_surfaces[]` hits. Heuristic: any selected component whose spec home falls under `ia/specs/architecture/**` OR matches an existing `arch_surfaces.spec_path` row triggers the phase. Code-only / UI-only / tooling-only explorations skip this phase silently.
 
-**Polling shape (4 sequential AskUserQuestion turns — one question per turn per `agent-human-polling.md`; each poll carries plain-language preface + `Recommended:` line per the same rule):**
+**Polling shape — single combined form (TECH-15913):**
 
-1. **Decision slug** — kebab-case, prefixed `DEC-A{N}` where `{N}` = next free in `arch_decisions`. Designer/player wording in question stem ("How should we name this design choice?"); slug rendered in option label.
-2. **Rationale** — ≤250 chars (DEC-A17 row budget). Single short paragraph explaining trade-off rationale.
-3. **Alternatives considered** — ≤3 entries, semicolon-separated. Names of approaches NOT chosen + why.
-4. **Affected `arch_surfaces[]`** — list of slugs from `arch_surfaces` (e.g. `layers/full-dependency-map`, `interchange/agent-ia`). Implementer derives candidate list from Phase 3 component → spec_path mapping; user confirms / trims via multi-select.
+Load `ia/templates/polling/arch-decision.json`. Fill `{{topic}}` slot with the decision topic (derived from Phase 3 component name or the selected approach name).
+
+Emit **one `AskUserQuestion`** carrying all 4 axes as a single form:
+
+```
+[plain_language_preface with {{topic}} filled]
+
+Please fill in all four fields:
+
+1. Problem statement (≤250 chars): What design question are we answering?
+2. Chosen approach (≤250 chars): Which option + one-line rationale.
+3. Alternatives considered (≤400 chars): ≤3 options NOT chosen + why. Semicolon-separated.
+4. Consequences (≤300 chars): What changes downstream?
+
+Return as a JSON block with keys: problem, chosen, alternatives, consequences.
+```
+
+Parse the user's JSON response. If any field is `"?"` or empty, re-poll for that field only (one follow-up per missing field; max 2 follow-ups total).
+
+After all 4 axes are resolved, derive the decision slug from the `problem` field: kebab-case summary prefixed `DEC-A{N}` where `{N}` = next free in `arch_decisions`.
+
+> **Legacy (pre-TECH-15913):** 4 sequential AskUserQuestion turns (one per axis). Retained for reference; single-form replaces it.
+
+**Affected `arch_surfaces[]`** — separate single poll (not part of form-fill) after axes are locked: list candidate slugs from Phase 3 component → spec_path mapping; user confirms / trims.
 
 **MCP writes (after polling) — shape-branched:**
 
@@ -330,6 +362,26 @@ Concrete I/O for the most non-obvious part of the design:
 - ≥1 edge case with expected behavior
 
 ### Phase 8 — Subagent review
+
+**Skip-gate (TECH-15912 — both gates required):**
+
+Before spawning the subagent, run the skip-gate check:
+
+1. **YAML format gate** — run `validate:design-explore-yaml` against the exploration doc:
+   ```
+   node tools/scripts/validate-design-explore-yaml.mjs {DOC_PATH}
+   ```
+   Exit code 0 = YAML clean. Exit code 1 = schema violation → do NOT skip.
+
+2. **MCP warning gate** — count MCP tool warnings emitted during Phases 0–7. Zero warnings = gate passes.
+
+**When both gates pass:** skip subagent invocation. Record outcome inline as:
+```
+> Phase 8 skipped — YAML format gate: clean, MCP warnings: 0. Subagent review not required.
+```
+Proceed directly to Phase 9.
+
+**When either gate fails:** fire subagent as normal (see prompt below). Log which gate failed.
 
 Spawn a `Plan` subagent via the Agent tool. Prompt template:
 

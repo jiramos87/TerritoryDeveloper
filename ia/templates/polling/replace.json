@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "replace",
+  "question": "How should the old {{target}} be replaced by the new {{replacement}}?",
+  "plain_language_preface": "We're replacing {{target}} with {{replacement}}. The replacement strategy determines whether callers break during transition and how easy rollback is.",
+  "options": [
+    {
+      "id": "A",
+      "label": "Hard swap — delete old, insert new in one migration",
+      "tradeoff": "Clean; no backwards-compat shim needed. No rollback path."
+    },
+    {
+      "id": "B",
+      "label": "Alias — keep old name, point to new implementation",
+      "tradeoff": "Zero caller breakage; alias debt accumulates."
+    },
+    {
+      "id": "C",
+      "label": "Parallel run — both old + new active; switch via feature flag",
+      "tradeoff": "Safe experimentation; flag + dual-maintenance overhead."
+    },
+    {
+      "id": "D",
+      "label": "Staged deprecation — mark old deprecated, replace in next stage",
+      "tradeoff": "Gradual; callers get migration window. Requires two-stage plan."
+    },
+    {
+      "id": "E",
+      "label": "Skip replace — patch old in place",
+      "tradeoff": "Fastest; accrues tech debt."
+    }
+  ],
+  "recommended": "D",
+  "recommended_rationale": "Staged deprecation gives callers a migration window and avoids breaking changes; use hard swap (A) only for internal-only symbols with no external callers.",
+  "slot_keys": ["target", "replacement"]
+}

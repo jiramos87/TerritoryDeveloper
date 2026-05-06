@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "integrate",
+  "question": "How tightly should {{target}} be integrated with {{system}}?",
+  "plain_language_preface": "We're integrating {{target}} with {{system}}. Integration depth determines coupling, testability in isolation, and how hard it is to swap {{target}} later.",
+  "options": [
+    {
+      "id": "A",
+      "label": "Event-driven — {{target}} publishes events; {{system}} subscribes",
+      "tradeoff": "Loose coupling; debugging event chains is harder."
+    },
+    {
+      "id": "B",
+      "label": "Direct call — {{system}} calls {{target}} interface synchronously",
+      "tradeoff": "Simple mental model; tight coupling — swapping {{target}} requires refactor."
+    },
+    {
+      "id": "C",
+      "label": "Adapter layer — thin wrapper translates between both surfaces",
+      "tradeoff": "Swappable; adapter maintenance adds a new file + test surface."
+    },
+    {
+      "id": "D",
+      "label": "Shared data — both read from a common data contract (no direct call)",
+      "tradeoff": "Decoupled; contract schema becomes a new dependency."
+    },
+    {
+      "id": "E",
+      "label": "Skip integration — mock {{target}} surface for now",
+      "tradeoff": "Fastest to ship; real integration deferred to next stage."
+    }
+  ],
+  "recommended": "A",
+  "recommended_rationale": "Event-driven integration has the lowest blast radius when either side changes; use direct call (B) only for performance-critical hot paths.",
+  "slot_keys": ["target", "system"]
+}

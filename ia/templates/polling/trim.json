@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "trim",
+  "question": "Which part of the {{target}} should we trim to reduce token cost?",
+  "plain_language_preface": "We're about to trim {{target}} to cut down size and cost. Choosing the right cut point avoids breaking callers while hitting the token budget.",
+  "options": [
+    {
+      "id": "A",
+      "label": "Drop oldest entries first (time-ordered trim)",
+      "tradeoff": "Preserves recent context; loses historical audit trail."
+    },
+    {
+      "id": "B",
+      "label": "Drop lowest-weight entries (score-ordered trim)",
+      "tradeoff": "Preserves high-signal entries; scoring may be imprecise."
+    },
+    {
+      "id": "C",
+      "label": "Drop duplicate / near-duplicate entries (dedup trim)",
+      "tradeoff": "Safe — zero loss of unique signal; may under-trim."
+    },
+    {
+      "id": "D",
+      "label": "Truncate tail to hard byte cap",
+      "tradeoff": "Deterministic; may cut a sentence mid-token."
+    },
+    {
+      "id": "E",
+      "label": "Skip trim — accept current size",
+      "tradeoff": "No risk; token cost unchanged."
+    }
+  ],
+  "recommended": "C",
+  "recommended_rationale": "Dedup trim has zero information loss risk and is reversible; choose score-ordered (B) only when a reliable weight signal exists.",
+  "slot_keys": ["target"]
+}

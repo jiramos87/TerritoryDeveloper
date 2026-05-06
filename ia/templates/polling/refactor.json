@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "refactor",
+  "question": "What is the primary goal of refactoring {{target}}?",
+  "plain_language_preface": "We're refactoring {{target}}. Clarifying the primary goal focuses the refactor scope and prevents scope creep that inflates stage cost.",
+  "options": [
+    {
+      "id": "A",
+      "label": "Extract — pull shared logic into a reusable unit",
+      "tradeoff": "High reuse value; new abstraction must be named + documented."
+    },
+    {
+      "id": "B",
+      "label": "Inline — collapse thin wrappers / remove indirection",
+      "tradeoff": "Reduces call-graph depth; harder to test in isolation after."
+    },
+    {
+      "id": "C",
+      "label": "Rename + reorganise — improve discoverability with no logic change",
+      "tradeoff": "Zero behaviour change; high diff noise for reviewers."
+    },
+    {
+      "id": "D",
+      "label": "Split — divide oversized unit into focused sub-units",
+      "tradeoff": "Better SRP; callers must be updated to new split surface."
+    },
+    {
+      "id": "E",
+      "label": "Defer — log tech-debt note, skip refactor this stage",
+      "tradeoff": "Zero stage cost; debt row added to backlog."
+    }
+  ],
+  "recommended": "A",
+  "recommended_rationale": "Extraction has the highest reuse ROI and is testable in isolation; inline (B) only when the abstraction adds zero value.",
+  "slot_keys": ["target"]
+}

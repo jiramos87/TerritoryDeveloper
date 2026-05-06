@@ -84,7 +84,9 @@ import { registerSectionCloseoutApply } from "./tools/section-closeout-apply.js"
 import { registerMasterPlanLockArch } from "./tools/master-plan-lock-arch.js";
 import { registerNextMigrationId } from "./tools/next-migration-id.js";
 import { registerRedStageProofTools } from "./red-stage-proof/index.js";
+import { registerRedStageProofMine } from "./tools/red-stage-proof-mine.js";
 import { registerMcpCacheGet, registerMcpCacheSet } from "./tools/mcp-cache-tools.js";
+import { registerThemePropose } from "./tools/theme-propose.js";
 
 // Bridge + compute tools
 import {
@@ -197,8 +199,10 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerMasterPlanLockArch(server);
   registerNextMigrationId(server);
   registerRedStageProofTools(server);
+  registerRedStageProofMine(server);
   registerMcpCacheGet(server);
   registerMcpCacheSet(server);
+  registerThemePropose(server);
 }
 
 /**

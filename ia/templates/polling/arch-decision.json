@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "arch-decision",
+  "question": "Please fill in all four fields for the architecture decision about {{topic}}:",
+  "plain_language_preface": "We need to lock one architecture decision for {{topic}}. All four axes are collected in a single form — fill in what you know; leave any field as '?' if uncertain and we'll refine after.",
+  "form_axes": [
+    {
+      "id": "problem",
+      "label": "Problem statement",
+      "hint": "What design question are we answering? ≤1 sentence.",
+      "max_chars": 250
+    },
+    {
+      "id": "chosen",
+      "label": "Chosen approach",
+      "hint": "Which option did we select and the one-line rationale.",
+      "max_chars": 250
+    },
+    {
+      "id": "alternatives",
+      "label": "Alternatives considered",
+      "hint": "≤3 other options NOT chosen + why each was rejected. Semicolon-separated.",
+      "max_chars": 400
+    },
+    {
+      "id": "consequences",
+      "label": "Consequences",
+      "hint": "What changes downstream? What becomes harder or easier?",
+      "max_chars": 300
+    }
+  ],
+  "instructions": "Return as JSON with keys: problem, chosen, alternatives, consequences. Example:\n{\n  \"problem\": \"Should we use event-driven or direct-call integration?\",\n  \"chosen\": \"Event-driven — lower coupling, easier to extend.\",\n  \"alternatives\": \"Direct-call — simpler but tight coupling; Shared-data — decoupled but schema drift risk.\",\n  \"consequences\": \"Publishers must not assume subscriber order. New handlers registered in EventBus.\"\n}",
+  "recommended": null,
+  "recommended_rationale": "No recommendation — this form captures the decision you have already made, not a new choice.",
+  "slot_keys": ["topic"]
+}

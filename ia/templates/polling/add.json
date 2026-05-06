@@ -1,0 +1,36 @@
+{
+  "$schema": "./polling-template.schema.json",
+  "verb": "add",
+  "question": "Where should the new {{target}} be added relative to existing {{context}}?",
+  "plain_language_preface": "We're adding {{target}} to the system. Placement affects dependency order, test isolation, and rollback blast radius.",
+  "options": [
+    {
+      "id": "A",
+      "label": "Prepend — add before existing entries",
+      "tradeoff": "Simplest rollback (delete head); may shift indices."
+    },
+    {
+      "id": "B",
+      "label": "Append — add after existing entries",
+      "tradeoff": "No index shift; rollback = delete tail."
+    },
+    {
+      "id": "C",
+      "label": "Inline — insert at logical dependency position",
+      "tradeoff": "Correct ordering; harder rollback if mid-list."
+    },
+    {
+      "id": "D",
+      "label": "Parallel — add as sibling in new namespace/module",
+      "tradeoff": "Zero blast radius to existing; requires callers to opt-in."
+    },
+    {
+      "id": "E",
+      "label": "Skip add — use existing entry with a flag",
+      "tradeoff": "Minimal surface; flag proliferation risk."
+    }
+  ],
+  "recommended": "D",
+  "recommended_rationale": "Parallel placement has zero blast radius and supports incremental opt-in; switch to C only when ordering is load-bearing.",
+  "slot_keys": ["target", "context"]
+}
