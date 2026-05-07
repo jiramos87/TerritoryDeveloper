@@ -51,11 +51,9 @@ steps:
 
   - id: cumulative_validate
     description: >-
-      Phase 4 — plan-scoped `validate:fast`. Queries `ia_task_commits` for
-      this plan's task shas, unions paths via `git show --name-only`, runs
-      `npm run validate:fast -- --diff-paths <csv>` (path-map scoped runner,
-      TECH-12640). Drift in unrelated plans does NOT block close. Fallback:
-      `validate:fast` HEAD-diff when DB unreachable. Stops on non-zero exit.
+      Phase 4 — plan-scoped `validate:fast --diff-paths <csv>` over union of
+      `ia_task_commits` paths for slug. HEAD-diff fallback when DB unreachable.
+      Stops on non-zero exit.
     bash: tools/scripts/recipe-engine/ship-final/cumulative-validate.sh
     args:
       slug: ${inputs.slug}

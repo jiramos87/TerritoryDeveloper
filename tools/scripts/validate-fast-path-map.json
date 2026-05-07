@@ -153,9 +153,6 @@
       "validate:recipe-drift",
       "validate:skill-recipe-drift"
     ],
-    "ia/state/**": [
-      "validate:handoff-schema"
-    ],
     "tools/scripts/validate-handoff-schema.mjs": [
       "validate:handoff-schema"
     ],

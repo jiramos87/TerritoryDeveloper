@@ -80,6 +80,10 @@ fi
 
 echo "cumulative-validate: parent_tag=${parent_tag} plan_commits=$(echo "$shas" | grep -c .) touched_paths=$(echo "$diff_paths_csv" | tr ',' '\n' | grep -c .)" >&2
 
+# Plan-scope opt-in for global-scan validators (e.g. validate:arch-coherence).
+# Default validate:all stays global; ship-final closure is bounded to this slug.
+export VALIDATE_SCOPE_SLUG="$slug"
+
 if [[ -n "$diff_paths_csv" ]]; then
   if npm run validate:fast -- --diff-paths "$diff_paths_csv" >&2; then
     echo "result={\"ok\":true,\"parent_tag\":\"${parent_tag}\",\"scripts\":[\"validate:fast\"],\"scope\":\"plan-commits\"}"

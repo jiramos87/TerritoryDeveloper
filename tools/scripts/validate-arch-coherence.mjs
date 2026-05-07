@@ -595,11 +595,18 @@ const unlinked = await client.query(
 //   pcr-drift-bench-*           — ephemeral benchmark stages (auto-generated slug).
 const EXEMPT_SLUG_PREFIXES = ["__test_", "pcr-drift-bench-"];
 
+// Plan-scope opt-in — when `VALIDATE_SCOPE_SLUG` is set (ship-final
+// cumulative-validate path), restrict Check 2 to stages owned by that slug.
+// Cross-plan drift is gated by `validate:all` in CI / branch reviews; ship-final
+// closure must not be blocked by drift in unrelated open plans.
+const SCOPE_SLUG = (process.env.VALIDATE_SCOPE_SLUG ?? "").trim();
+
 const unlinkedFiltered = unlinked.rows.filter(
   (r) =>
     !EXPLICIT_NONE_PLANS.has(r.slug) &&
     !EXPLICIT_NONE_STAGES.has(`${r.slug}::${r.stage_id}`) &&
-    !EXEMPT_SLUG_PREFIXES.some((pfx) => r.slug.startsWith(pfx)),
+    !EXEMPT_SLUG_PREFIXES.some((pfx) => r.slug.startsWith(pfx)) &&
+    (SCOPE_SLUG === "" || r.slug === SCOPE_SLUG),
 );
 if (unlinkedFiltered.length > 0) {
   console.error(

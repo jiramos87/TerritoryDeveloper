@@ -282,7 +282,7 @@ const unityBridgeCommandInputShape = {
   prefab_path: z
     .string()
     .optional()
-    .describe("instantiate_prefab + prefab_inspect + claude_design_conformance + scene_replace_with_prefab: prefab asset path (e.g. 'Assets/Prefabs/Foo.prefab')."),
+    .describe("Prefab asset path for instantiate/inspect/conformance/replace ops (e.g. 'Assets/Prefabs/Foo.prefab')."),
   // Asset lifecycle
   type_name: z
     .string()

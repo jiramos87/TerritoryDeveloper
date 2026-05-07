@@ -89,6 +89,8 @@ export interface MasterPlanRowDB {
   description: string | null;
   created_at: string;
   updated_at: string;
+  version: number;
+  closed_at: string | null;
 }
 
 export interface MasterPlanStateDB extends MasterPlanRowDB {
@@ -257,7 +259,8 @@ export async function queryMasterPlanState(
 ): Promise<MasterPlanStateDB | null> {
   const pool = poolOrThrow();
   const planRes = await pool.query<MasterPlanRowDB>(
-    `SELECT slug, title, description, created_at, updated_at
+    `SELECT slug, title, description, created_at, updated_at,
+            version, closed_at::text AS closed_at
        FROM ia_master_plans
       WHERE slug = $1`,
     [slug],
