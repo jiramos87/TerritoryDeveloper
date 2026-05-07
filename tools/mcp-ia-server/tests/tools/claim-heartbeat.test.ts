@@ -33,6 +33,7 @@ import {
   seedCarcassHealthFixture,
   teardownCarcassHealthFixture,
 } from "../fixtures/parallel-carcass-health-mv.fixture.js";
+import { withFixtureLock } from "../fixtures/serialize-fixture.js";
 
 const pool = getIaDatabasePool();
 const skip = pool === null ? { skip: "DB pool unavailable" } : {};
@@ -153,36 +154,42 @@ describe("claim_heartbeat + claims_sweep (TECH-4829)", skip, () => {
 
   it("sweep releases stale rows past timeout — cascades both tables", async () => {
     if (!pool) return;
-    await resetClaims();
+    // Lock spans backdate → applySweep → assertions because applySweep is
+    // global (not slug-scoped). Without serialization, a parallel worker's
+    // applySweep can release this slug's rows before our applySweep runs,
+    // leaving result.{section,stage}_claims_released = 0.
+    await withFixtureLock(pool, async () => {
+      await resetClaims();
 
-    await applySectionClaim({ slug: SLUG, section_id: SECTION_ID });
-    await applyStageClaim({ slug: SLUG, stage_id: STAGE_ID });
+      await applySectionClaim({ slug: SLUG, section_id: SECTION_ID });
+      await applyStageClaim({ slug: SLUG, stage_id: STAGE_ID });
 
-    // Breach default 10-min timeout by a wide margin (60 min). Default
-    // applies if carcass_config row absent (src fallback).
-    await freezeRowsToPast(SLUG, SECTION_ID, STAGE_ID, "1 hour");
+      // Breach default 10-min timeout by a wide margin (60 min). Default
+      // applies if carcass_config row absent (src fallback).
+      await freezeRowsToPast(SLUG, SECTION_ID, STAGE_ID, "1 hour");
 
-    const result = await applySweep();
-    assert.ok(
-      result.section_claims_released >= 1,
-      `expected ≥1 section release, got ${result.section_claims_released}`,
-    );
-    assert.ok(
-      result.stage_claims_released >= 1,
-      `expected ≥1 stage release, got ${result.stage_claims_released}`,
-    );
+      const result = await applySweep();
+      assert.ok(
+        result.section_claims_released >= 1,
+        `expected ≥1 section release, got ${result.section_claims_released}`,
+      );
+      assert.ok(
+        result.stage_claims_released >= 1,
+        `expected ≥1 stage release, got ${result.stage_claims_released}`,
+      );
 
-    const sec = await readSectionRow(SLUG, SECTION_ID);
-    const stg = await readStageRow(SLUG, STAGE_ID);
-    assert.ok(sec !== null && stg !== null);
-    assert.ok(
-      sec.released_at !== null,
-      "section row must be released after sweep",
-    );
-    assert.ok(
-      stg.released_at !== null,
-      "stage row must be released after sweep",
-    );
+      const sec = await readSectionRow(SLUG, SECTION_ID);
+      const stg = await readStageRow(SLUG, STAGE_ID);
+      assert.ok(sec !== null && stg !== null);
+      assert.ok(
+        sec.released_at !== null,
+        "section row must be released after sweep",
+      );
+      assert.ok(
+        stg.released_at !== null,
+        "stage row must be released after sweep",
+      );
+    });
   });
 
   it("missing target — heartbeat without stage_id or section_id throws", async () => {

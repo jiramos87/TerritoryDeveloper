@@ -28,6 +28,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
+import { withFixtureLock } from "../fixtures/serialize-fixture.js";
 
 const THIS_DIR = fileURLToPath(new URL(".", import.meta.url));
 const REPO_ROOT = resolve(THIS_DIR, "../../../../");
@@ -45,33 +46,40 @@ const skip = pool === null ? { skip: "DB pool unavailable" } : {};
 
 async function seedFixture(): Promise<void> {
   if (!pool) return;
-  await teardownFixture();
-  await pool.query(
-    `INSERT INTO ia_master_plans (slug, title)
-       VALUES ($1, 'sandbox ship-final assert-stages plan')
-     ON CONFLICT (slug) DO NOTHING`,
-    [SLUG],
-  );
-  await pool.query(
-    `INSERT INTO ia_stages (slug, stage_id, title, status)
-       VALUES ($1, $2, 'sandbox done stage', 'done')
-     ON CONFLICT (slug, stage_id) DO UPDATE
-       SET status = EXCLUDED.status`,
-    [SLUG, STAGE_DONE],
-  );
-  await pool.query(
-    `INSERT INTO ia_stages (slug, stage_id, title, status)
-       VALUES ($1, $2, 'sandbox partial stage', 'partial')
-     ON CONFLICT (slug, stage_id) DO UPDATE
-       SET status = EXCLUDED.status`,
-    [SLUG, STAGE_OPEN],
-  );
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
+    await pool.query(`DELETE FROM ia_tasks WHERE slug = $1`, [SLUG]);
+    await pool.query(`DELETE FROM ia_master_plans WHERE slug = $1`, [SLUG]);
+    await pool.query(
+      `INSERT INTO ia_master_plans (slug, title)
+         VALUES ($1, 'sandbox ship-final assert-stages plan')
+       ON CONFLICT (slug) DO NOTHING`,
+      [SLUG],
+    );
+    await pool.query(
+      `INSERT INTO ia_stages (slug, stage_id, title, status)
+         VALUES ($1, $2, 'sandbox done stage', 'done')
+       ON CONFLICT (slug, stage_id) DO UPDATE
+         SET status = EXCLUDED.status`,
+      [SLUG, STAGE_DONE],
+    );
+    await pool.query(
+      `INSERT INTO ia_stages (slug, stage_id, title, status)
+         VALUES ($1, $2, 'sandbox partial stage', 'partial')
+       ON CONFLICT (slug, stage_id) DO UPDATE
+         SET status = EXCLUDED.status`,
+      [SLUG, STAGE_OPEN],
+    );
+  });
 }
 
 async function teardownFixture(): Promise<void> {
   if (!pool) return;
-  await pool.query(`DELETE FROM ia_tasks WHERE slug = $1`, [SLUG]);
-  await pool.query(`DELETE FROM ia_master_plans WHERE slug = $1`, [SLUG]);
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
+    await pool.query(`DELETE FROM ia_tasks WHERE slug = $1`, [SLUG]);
+    await pool.query(`DELETE FROM ia_master_plans WHERE slug = $1`, [SLUG]);
+  });
 }
 
 async function flipStageDone(stageId: string): Promise<void> {

@@ -16,11 +16,15 @@ import { run as runJournalAppend } from "./handlers/journal-append-cron-handler.
 import { run as runTaskCommitRecord } from "./handlers/task-commit-record-cron-handler.js";
 import { run as runStageVerificationFlip } from "./handlers/stage-verification-flip-cron-handler.js";
 import { run as runArchChangelogAppend } from "./handlers/arch-changelog-append-cron-handler.js";
+import { run as runMaterializeBacklog } from "./handlers/materialize-backlog-cron-handler.js";
+import { run as runRegenIndexes } from "./handlers/regen-indexes-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
 import type { TaskCommitRecordJobRow } from "./handlers/task-commit-record-cron-handler.js";
 import type { StageVerificationFlipJobRow } from "./handlers/stage-verification-flip-cron-handler.js";
 import type { ArchChangelogAppendJobRow } from "./handlers/arch-changelog-append-cron-handler.js";
+import type { MaterializeBacklogJobRow } from "./handlers/materialize-backlog-cron-handler.js";
+import type { RegenIndexesJobRow } from "./handlers/regen-indexes-cron-handler.js";
 
 // Load DATABASE_URL from .env if not already set.
 const { config } = await import("dotenv");
@@ -67,6 +71,18 @@ const KINDS: KindConfig[] = [
     cadence: "* * * * *", // every minute (hot audit-trail)
     handler: (row) => runArchChangelogAppend(row as unknown as ArchChangelogAppendJobRow),
     claimLimit: 50,
+  },
+  {
+    table: "cron_materialize_backlog_jobs",
+    cadence: "*/2 * * * *", // every 2 min — heavy script, low concurrency
+    handler: (row) => runMaterializeBacklog(row as unknown as MaterializeBacklogJobRow),
+    claimLimit: 1,
+  },
+  {
+    table: "cron_regen_indexes_jobs",
+    cadence: "*/5 * * * *", // every 5 min — slower, index regen
+    handler: (row) => runRegenIndexes(row as unknown as RegenIndexesJobRow),
+    claimLimit: 1,
   },
 ];
 

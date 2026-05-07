@@ -147,21 +147,22 @@ describe("section_closeout_apply E2E (TECH-5071)", skip, () => {
     assert.equal(result.applied, true);
     assert.equal(result.stages_total, 2);
     assert.equal(result.stages_done, 2);
-    assert.notEqual(result.change_log_entry_id, null);
+    assert.equal(result.change_log_entry_id, -1, "change_log_entry_id must be -1 (queued async)");
     assert.equal(result.section_claim_released, true);
     assert.equal(result.cascaded_stage_releases, 2);
     assert.equal(result.error, undefined);
 
-    const cl = await readChangeLog(SLUG, result.change_log_entry_id!);
-    assert.ok(cl !== null, "change_log row must exist");
-    assert.equal(cl.kind, "section_done");
-    const body = JSON.parse(cl.body) as {
-      section_id: string;
-      stages: string[];
-    };
-    assert.equal(body.section_id, SECTION_ID);
-    assert.equal(body.stages.length, 2);
-    assert.deepEqual([...body.stages].sort(), [STAGE_A1, STAGE_A2]);
+    // Verify cron_audit_log_jobs row was enqueued for the section_done change_log write.
+    const cronRow = await pool!.query<{ audit_kind: string; body: string }>(
+      `SELECT audit_kind, body
+         FROM cron_audit_log_jobs
+        WHERE slug = $1 AND audit_kind = 'section_done'
+        ORDER BY enqueued_at DESC
+        LIMIT 1`,
+      [SLUG],
+    );
+    assert.ok(cronRow.rows.length > 0, "cron_audit_log_jobs row must exist for section_done");
+    assert.equal(cronRow.rows[0]!.audit_kind, "section_done");
 
     const drift = await runArchDriftScan(pool, {
       plan_id: SLUG,

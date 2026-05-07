@@ -93,6 +93,8 @@ import { registerCronJournalAppendEnqueue } from "./tools/cron-journal-append.js
 import { registerCronTaskCommitRecordEnqueue } from "./tools/cron-task-commit-record.js";
 import { registerCronStageVerificationFlipEnqueue } from "./tools/cron-stage-verification-flip.js";
 import { registerCronArchChangelogAppendEnqueue } from "./tools/cron-arch-changelog-append.js";
+import { registerCronMaterializeBacklogEnqueue } from "./tools/cron-materialize-backlog.js";
+import { registerCronRegenIndexesEnqueue } from "./tools/cron-regen-indexes.js";
 
 // Bridge + compute tools
 import {
@@ -215,6 +217,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCronTaskCommitRecordEnqueue(server);
   registerCronStageVerificationFlipEnqueue(server);
   registerCronArchChangelogAppendEnqueue(server);
+  registerCronMaterializeBacklogEnqueue(server);
+  registerCronRegenIndexesEnqueue(server);
 }
 
 /**

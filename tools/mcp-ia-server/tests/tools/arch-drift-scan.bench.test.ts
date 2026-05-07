@@ -15,6 +15,7 @@ import test, { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
 import { runArchDriftScan } from "../../src/tools/arch.js";
+import { withFixtureLock } from "../fixtures/serialize-fixture.js";
 
 const pool = getIaDatabasePool();
 const skip = pool === null ? { skip: "DB pool unavailable" } : {};
@@ -32,58 +33,67 @@ function surfaceSlug(i: number): string {
 
 async function seedBenchFixture(): Promise<void> {
   if (!pool) return;
-  await pool.query(
-    `INSERT INTO ia_master_plans (slug, title) VALUES ($1, $2) ON CONFLICT (slug) DO NOTHING`,
-    [BENCH_SLUG, "arch_drift_scan perf bench fixture"],
-  );
-  for (let i = 0; i < N_STAGES; i++) {
-    const stageId = `bench.${i + 1}`;
-    const sectionId = `bench-sec-${(i % N_SECTIONS) + 1}`;
+  // Serialize parallel-worker fixture seeds via PG advisory lock.
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
     await pool.query(
-      `INSERT INTO ia_stages (slug, stage_id, title, status, section_id)
-         VALUES ($1, $2, $3, 'pending', $4)
-         ON CONFLICT (slug, stage_id) DO NOTHING`,
-      [BENCH_SLUG, stageId, `bench stage ${stageId}`, sectionId],
+      `INSERT INTO ia_master_plans (slug, title) VALUES ($1, $2) ON CONFLICT (slug) DO NOTHING`,
+      [BENCH_SLUG, "arch_drift_scan perf bench fixture"],
     );
-    const surf = surfaceSlug(i);
-    await pool.query(
-      `INSERT INTO arch_surfaces (slug, kind, spec_path)
-         VALUES ($1, 'contract', 'bench/bench.md')
-         ON CONFLICT (slug) DO NOTHING`,
-      [surf],
-    );
-    await pool.query(
-      `INSERT INTO stage_arch_surfaces (slug, stage_id, surface_slug)
-         VALUES ($1, $2, $3)
-         ON CONFLICT DO NOTHING`,
-      [BENCH_SLUG, stageId, surf],
-    );
-  }
-  // Changelog rows one year in the past — below every stage cutoff so
-  // driftSql always returns [] (exercises per-stage query overhead only).
-  for (let i = 0; i < N_CHANGELOG; i++) {
-    const surf = surfaceSlug(i % N_STAGES);
-    await pool.query(
-      `INSERT INTO arch_changelog (kind, surface_slug, created_at)
-         VALUES ('edit', $1, NOW() - INTERVAL '1 year')`,
-      [surf],
-    );
-  }
+    for (let i = 0; i < N_STAGES; i++) {
+      const stageId = `bench.${i + 1}`;
+      const sectionId = `bench-sec-${(i % N_SECTIONS) + 1}`;
+      await pool.query(
+        `INSERT INTO ia_stages (slug, stage_id, title, status, section_id)
+           VALUES ($1, $2, $3, 'pending', $4)
+           ON CONFLICT (slug, stage_id) DO NOTHING`,
+        [BENCH_SLUG, stageId, `bench stage ${stageId}`, sectionId],
+      );
+      const surf = surfaceSlug(i);
+      await pool.query(
+        `INSERT INTO arch_surfaces (slug, kind, spec_path)
+           VALUES ($1, 'contract', 'bench/bench.md')
+           ON CONFLICT (slug) DO NOTHING`,
+        [surf],
+      );
+      await pool.query(
+        `INSERT INTO stage_arch_surfaces (slug, stage_id, surface_slug)
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING`,
+        [BENCH_SLUG, stageId, surf],
+      );
+    }
+    // Changelog rows one year in the past — below every stage cutoff so
+    // driftSql always returns [] (exercises per-stage query overhead only).
+    for (let i = 0; i < N_CHANGELOG; i++) {
+      const surf = surfaceSlug(i % N_STAGES);
+      await pool.query(
+        `INSERT INTO arch_changelog (kind, surface_slug, created_at)
+           VALUES ('edit', $1, NOW() - INTERVAL '1 year')`,
+        [surf],
+      );
+    }
+  });
 }
 
 async function teardownBenchFixture(): Promise<void> {
   if (!pool) return;
-  for (let i = 0; i < N_STAGES; i++) {
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
+    for (let i = 0; i < N_STAGES; i++) {
+      await pool.query(
+        `DELETE FROM arch_changelog WHERE surface_slug = $1`,
+        [surfaceSlug(i)],
+      );
+    }
     await pool.query(
-      `DELETE FROM arch_changelog WHERE surface_slug = $1`,
-      [surfaceSlug(i)],
+      `DELETE FROM arch_surfaces WHERE slug LIKE $1`,
+      [`__bench_${BENCH_SLUG}_%`],
     );
-  }
-  await pool.query(
-    `DELETE FROM arch_surfaces WHERE slug LIKE $1`,
-    [`__bench_${BENCH_SLUG}_%`],
-  );
-  await pool.query(`DELETE FROM ia_master_plans WHERE slug = $1`, [BENCH_SLUG]);
+    await pool.query(`DELETE FROM ia_master_plans WHERE slug = $1`, [
+      BENCH_SLUG,
+    ]);
+  });
 }
 
 describe("arch_drift_scan.bench — P95 < 200ms on 50-stage 5-section fixture (TECH-5250)", skip, () => {

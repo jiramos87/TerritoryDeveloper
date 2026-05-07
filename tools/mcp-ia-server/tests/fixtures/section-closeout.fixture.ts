@@ -32,6 +32,7 @@
 
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
 import { mutateTaskInsert } from "../../src/ia-db/mutations.js";
+import { withFixtureLock } from "./serialize-fixture.js";
 
 export interface SectionCloseoutFixtureHandle {
   slug: string;
@@ -56,51 +57,56 @@ export async function seedSectionCloseoutFixture(
   const pool = getIaDatabasePool();
   if (pool === null) return handle;
 
-  await pool.query(
-    `INSERT INTO ia_master_plans (slug, title)
-       VALUES ($1, 'sandbox section-closeout plan')
-     ON CONFLICT (slug) DO NOTHING`,
-    [slug],
-  );
+  // Serialize parallel-worker fixture seeds via PG advisory lock — prevents
+  // deadlocks + FK races between concurrent cascade DELETEs/INSERTs across
+  // overlapping FK-bound tables.
+  await withFixtureLock(pool, async () => {
+    await pool.query(
+      `INSERT INTO ia_master_plans (slug, title)
+         VALUES ($1, 'sandbox section-closeout plan')
+       ON CONFLICT (slug) DO NOTHING`,
+      [slug],
+    );
 
-  // Carcass stage — done, no section_id.
-  await pool.query(
-    `INSERT INTO ia_stages
-       (slug, stage_id, title, status, carcass_role, section_id)
-     VALUES ($1, $2, 'sandbox carcass stage', 'done', 'carcass', NULL)
-     ON CONFLICT (slug, stage_id) DO UPDATE
-       SET carcass_role = EXCLUDED.carcass_role,
-           section_id   = EXCLUDED.section_id,
-           status       = EXCLUDED.status`,
-    [slug, handle.carcass_stage_id],
-  );
-
-  // Section stages — pending, section_id='A'.
-  for (const stageId of handle.section_stage_ids) {
+    // Carcass stage — done, no section_id.
     await pool.query(
       `INSERT INTO ia_stages
          (slug, stage_id, title, status, carcass_role, section_id)
-       VALUES ($1, $2, $3, 'pending', 'section', 'A')
+       VALUES ($1, $2, 'sandbox carcass stage', 'done', 'carcass', NULL)
        ON CONFLICT (slug, stage_id) DO UPDATE
          SET carcass_role = EXCLUDED.carcass_role,
              section_id   = EXCLUDED.section_id,
              status       = EXCLUDED.status`,
-      [slug, stageId, `sandbox section stage ${stageId}`],
+      [slug, handle.carcass_stage_id],
     );
-  }
 
-  // 1 task per section stage. Use mutateTaskInsert to allocate monotonic
-  // TECH ids from per-prefix sequence; bind each task to its stage.
-  for (const stageId of handle.section_stage_ids) {
-    const ins = await mutateTaskInsert({
-      prefix: "TECH",
-      slug,
-      stage_id: stageId,
-      title: `sandbox task for ${stageId}`,
-      status: "pending",
-    });
-    handle.task_ids.push(ins.task_id);
-  }
+    // Section stages — pending, section_id='A'.
+    for (const stageId of handle.section_stage_ids) {
+      await pool.query(
+        `INSERT INTO ia_stages
+           (slug, stage_id, title, status, carcass_role, section_id)
+         VALUES ($1, $2, $3, 'pending', 'section', 'A')
+         ON CONFLICT (slug, stage_id) DO UPDATE
+           SET carcass_role = EXCLUDED.carcass_role,
+               section_id   = EXCLUDED.section_id,
+               status       = EXCLUDED.status`,
+        [slug, stageId, `sandbox section stage ${stageId}`],
+      );
+    }
+
+    // 1 task per section stage. Use mutateTaskInsert to allocate monotonic
+    // TECH ids from per-prefix sequence; bind each task to its stage.
+    for (const stageId of handle.section_stage_ids) {
+      const ins = await mutateTaskInsert({
+        prefix: "TECH",
+        slug,
+        stage_id: stageId,
+        title: `sandbox task for ${stageId}`,
+        status: "pending",
+      });
+      handle.task_ids.push(ins.task_id);
+    }
+  });
 
   return handle;
 }
@@ -116,12 +122,16 @@ export async function teardownSectionCloseoutFixture(
   // `ia_stages` → `ia_tasks`. Delete tasks explicitly, then plan;
   // remaining cascades reach ia_stages + stage_carcass_signals +
   // ia_section_claims + ia_stage_claims via ON DELETE CASCADE.
-  await pool.query(
-    `DELETE FROM ia_tasks WHERE slug = $1`,
-    [slug],
-  );
-  await pool.query(
-    `DELETE FROM ia_master_plans WHERE slug = $1`,
-    [slug],
-  );
+  // Wrapped in advisory lock — concurrent cascade DELETEs in parallel
+  // workers race row/table locks across the FK chain → deadlock.
+  await withFixtureLock(pool, async () => {
+    await pool.query(
+      `DELETE FROM ia_tasks WHERE slug = $1`,
+      [slug],
+    );
+    await pool.query(
+      `DELETE FROM ia_master_plans WHERE slug = $1`,
+      [slug],
+    );
+  });
 }

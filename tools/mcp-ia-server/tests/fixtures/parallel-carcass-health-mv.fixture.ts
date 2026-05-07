@@ -25,6 +25,7 @@
  */
 
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
+import { withFixtureLock } from "./serialize-fixture.js";
 
 export const CARCASS_FIXTURE_SLUG = "__test_carcass__";
 
@@ -46,48 +47,54 @@ export async function seedCarcassHealthFixture(
   const pool = getIaDatabasePool();
   if (pool === null) return handle;
 
-  await pool.query(
-    `INSERT INTO ia_master_plans (slug, title)
-       VALUES ($1, 'sandbox carcass health plan')
-     ON CONFLICT (slug) DO NOTHING`,
-    [handle.slug],
-  );
-
-  // Carcass stages — section_id NULL by D19; carcass_role='carcass'.
-  for (const stageId of handle.carcassStageIds) {
+  // Serialize parallel-worker fixture seeds via PG advisory lock — prevents
+  // deadlocks + FK races between concurrent cascade DELETEs/INSERTs across
+  // overlapping FK-bound tables (`ia_stages`, `stage_carcass_signals`,
+  // `ia_section_claims`, `ia_stage_claims`).
+  await withFixtureLock(pool, async () => {
     await pool.query(
-      `INSERT INTO ia_stages
-         (slug, stage_id, title, status, carcass_role, section_id)
-       VALUES ($1, $2, $3, 'pending', 'carcass', NULL)
-       ON CONFLICT (slug, stage_id) DO UPDATE
-         SET carcass_role = EXCLUDED.carcass_role,
-             section_id   = EXCLUDED.section_id,
-             status       = EXCLUDED.status`,
-      [handle.slug, stageId, `carcass stage ${stageId}`],
+      `INSERT INTO ia_master_plans (slug, title)
+         VALUES ($1, 'sandbox carcass health plan')
+       ON CONFLICT (slug) DO NOTHING`,
+      [handle.slug],
     );
-  }
 
-  // Section stages — section_id='A'; carcass_role='section'.
-  for (const stageId of handle.sectionStageIds) {
+    // Carcass stages — section_id NULL by D19; carcass_role='carcass'.
+    for (const stageId of handle.carcassStageIds) {
+      await pool.query(
+        `INSERT INTO ia_stages
+           (slug, stage_id, title, status, carcass_role, section_id)
+         VALUES ($1, $2, $3, 'pending', 'carcass', NULL)
+         ON CONFLICT (slug, stage_id) DO UPDATE
+           SET carcass_role = EXCLUDED.carcass_role,
+               section_id   = EXCLUDED.section_id,
+               status       = EXCLUDED.status`,
+        [handle.slug, stageId, `carcass stage ${stageId}`],
+      );
+    }
+
+    // Section stages — section_id='A'; carcass_role='section'.
+    for (const stageId of handle.sectionStageIds) {
+      await pool.query(
+        `INSERT INTO ia_stages
+           (slug, stage_id, title, status, carcass_role, section_id)
+         VALUES ($1, $2, $3, 'pending', 'section', 'A')
+         ON CONFLICT (slug, stage_id) DO UPDATE
+           SET carcass_role = EXCLUDED.carcass_role,
+               section_id   = EXCLUDED.section_id,
+               status       = EXCLUDED.status`,
+        [handle.slug, stageId, `section stage ${stageId}`],
+      );
+    }
+
+    // Bind carcass.1 to dev_loop_affordance signal kind.
     await pool.query(
-      `INSERT INTO ia_stages
-         (slug, stage_id, title, status, carcass_role, section_id)
-       VALUES ($1, $2, $3, 'pending', 'section', 'A')
-       ON CONFLICT (slug, stage_id) DO UPDATE
-         SET carcass_role = EXCLUDED.carcass_role,
-             section_id   = EXCLUDED.section_id,
-             status       = EXCLUDED.status`,
-      [handle.slug, stageId, `section stage ${stageId}`],
+      `INSERT INTO stage_carcass_signals (slug, stage_id, signal_kind)
+         VALUES ($1, 'carcass.1', 'dev_loop_affordance')
+       ON CONFLICT (slug, stage_id, signal_kind) DO NOTHING`,
+      [handle.slug],
     );
-  }
-
-  // Bind carcass.1 to dev_loop_affordance signal kind.
-  await pool.query(
-    `INSERT INTO stage_carcass_signals (slug, stage_id, signal_kind)
-       VALUES ($1, 'carcass.1', 'dev_loop_affordance')
-     ON CONFLICT (slug, stage_id, signal_kind) DO NOTHING`,
-    [handle.slug],
-  );
+  });
 
   return handle;
 }
@@ -100,8 +107,12 @@ export async function teardownCarcassHealthFixture(
 
   // Cascade chain: ia_master_plans → ia_stages → stage_carcass_signals
   // + ia_section_claims (FK ON DELETE CASCADE per mig 0049 + 0052).
-  await pool.query(
-    `DELETE FROM ia_master_plans WHERE slug = $1`,
-    [slug],
-  );
+  // Wrapped in advisory lock — concurrent cascade DELETEs in parallel
+  // workers race row/table locks across the FK chain → deadlock.
+  await withFixtureLock(pool, async () => {
+    await pool.query(
+      `DELETE FROM ia_master_plans WHERE slug = $1`,
+      [slug],
+    );
+  });
 }

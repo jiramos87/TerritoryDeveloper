@@ -26,6 +26,7 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import { getIaDatabasePool } from "../../src/ia-db/pool.js";
+import { withFixtureLock } from "../fixtures/serialize-fixture.js";
 // @ts-expect-error — .mjs import, no type defs
 import { runSweepTick } from "../../../scripts/claims-sweep-tick.mjs";
 
@@ -48,33 +49,37 @@ interface ChangeLogRow {
 
 async function seedSandbox(): Promise<void> {
   if (!pool) return;
-  await pool.query(
-    `INSERT INTO ia_master_plans (slug, title)
-       VALUES ($1, 'sandbox claims-sweep scheduled plan')
-     ON CONFLICT (slug) DO NOTHING`,
-    [SLUG],
-  );
-  // Carcass stage first — DB-level trigger blocks section-only plans
-  // ("section stages but zero carcass stages"). Carcass stages have
-  // section_id NULL by D19.
-  await pool.query(
-    `INSERT INTO ia_stages
-       (slug, stage_id, title, status, carcass_role, section_id)
-     VALUES ($1, 'carcass.1', 'sandbox carcass stage', 'pending', 'carcass', NULL)
-     ON CONFLICT (slug, stage_id) DO UPDATE
-       SET section_id = EXCLUDED.section_id,
-           carcass_role = EXCLUDED.carcass_role`,
-    [SLUG],
-  );
-  await pool.query(
-    `INSERT INTO ia_stages
-       (slug, stage_id, title, status, carcass_role, section_id)
-     VALUES ($1, $2, 'sandbox section stage', 'pending', 'section', $3)
-     ON CONFLICT (slug, stage_id) DO UPDATE
-       SET section_id = EXCLUDED.section_id,
-           carcass_role = EXCLUDED.carcass_role`,
-    [SLUG, STAGE_ID, SECTION_ID],
-  );
+  // Serialize parallel-worker fixture seeds via PG advisory lock.
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
+    await pool.query(
+      `INSERT INTO ia_master_plans (slug, title)
+         VALUES ($1, 'sandbox claims-sweep scheduled plan')
+       ON CONFLICT (slug) DO NOTHING`,
+      [SLUG],
+    );
+    // Carcass stage first — DB-level trigger blocks section-only plans
+    // ("section stages but zero carcass stages"). Carcass stages have
+    // section_id NULL by D19.
+    await pool.query(
+      `INSERT INTO ia_stages
+         (slug, stage_id, title, status, carcass_role, section_id)
+       VALUES ($1, 'carcass.1', 'sandbox carcass stage', 'pending', 'carcass', NULL)
+       ON CONFLICT (slug, stage_id) DO UPDATE
+         SET section_id = EXCLUDED.section_id,
+             carcass_role = EXCLUDED.carcass_role`,
+      [SLUG],
+    );
+    await pool.query(
+      `INSERT INTO ia_stages
+         (slug, stage_id, title, status, carcass_role, section_id)
+       VALUES ($1, $2, 'sandbox section stage', 'pending', 'section', $3)
+       ON CONFLICT (slug, stage_id) DO UPDATE
+         SET section_id = EXCLUDED.section_id,
+             carcass_role = EXCLUDED.carcass_role`,
+      [SLUG, STAGE_ID, SECTION_ID],
+    );
+  });
 }
 
 async function teardownSandbox(): Promise<void> {
@@ -82,22 +87,27 @@ async function teardownSandbox(): Promise<void> {
   // Order: change_log first (no FK back to plan but row is plan-scoped),
   // then claims (FK on slug + (section_id|stage_id)), then plan (cascades
   // ia_stages). Keeps teardown deterministic across parallel workers.
-  await pool.query(
-    `DELETE FROM ia_master_plan_change_log WHERE slug = $1`,
-    [SLUG],
-  );
-  await pool.query(
-    `DELETE FROM ia_stage_claims WHERE slug = $1`,
-    [SLUG],
-  );
-  await pool.query(
-    `DELETE FROM ia_section_claims WHERE slug = $1`,
-    [SLUG],
-  );
-  await pool.query(
-    `DELETE FROM ia_master_plans WHERE slug = $1`,
-    [SLUG],
-  );
+  // Wrapped in advisory lock — concurrent cascade DELETEs in parallel
+  // workers race row/table locks across the FK chain → deadlock.
+  await withFixtureLock(pool, async () => {
+    if (!pool) return;
+    await pool.query(
+      `DELETE FROM ia_master_plan_change_log WHERE slug = $1`,
+      [SLUG],
+    );
+    await pool.query(
+      `DELETE FROM ia_stage_claims WHERE slug = $1`,
+      [SLUG],
+    );
+    await pool.query(
+      `DELETE FROM ia_section_claims WHERE slug = $1`,
+      [SLUG],
+    );
+    await pool.query(
+      `DELETE FROM ia_master_plans WHERE slug = $1`,
+      [SLUG],
+    );
+  });
 }
 
 async function seedBackdatedClaims(): Promise<void> {
@@ -182,59 +192,65 @@ describe("claims-sweep.scheduled (TECH-5253)", skip, () => {
 
   it("tick releases backdated rows + emits one change_log row per slug", async () => {
     if (!pool) return;
-    await seedBackdatedClaims();
+    // Lock spans seed → runSweepTick → assertions because runSweepTick is
+    // global. A parallel worker's sweep call can release this slug's rows
+    // between seedBackdatedClaims() + runSweepTick(), leaving our tick
+    // with zero rows to release for our slug.
+    await withFixtureLock(pool, async () => {
+      await seedBackdatedClaims();
 
-    const result = await runSweepTick();
+      const result = await runSweepTick();
 
-    assert.ok(
-      result.released_count_total >= 2,
-      `expected >= 2 total releases, got ${result.released_count_total}`,
-    );
-    assert.ok(
-      result.affected_slugs.includes(SLUG),
-      `expected sandbox slug ${SLUG} in affected_slugs, got ${JSON.stringify(result.affected_slugs)}`,
-    );
+      assert.ok(
+        result.released_count_total >= 2,
+        `expected >= 2 total releases, got ${result.released_count_total}`,
+      );
+      assert.ok(
+        result.affected_slugs.includes(SLUG),
+        `expected sandbox slug ${SLUG} in affected_slugs, got ${JSON.stringify(result.affected_slugs)}`,
+      );
 
-    const sec = await readSectionRow();
-    const stg = await readStageRow();
-    assert.ok(sec !== null && stg !== null, "claim rows must exist post-sweep");
-    assert.ok(
-      sec.released_at !== null,
-      "section claim row must be released after sweep tick",
-    );
-    assert.ok(
-      stg.released_at !== null,
-      "stage claim row must be released after sweep tick",
-    );
+      const sec = await readSectionRow();
+      const stg = await readStageRow();
+      assert.ok(sec !== null && stg !== null, "claim rows must exist post-sweep");
+      assert.ok(
+        sec.released_at !== null,
+        "section claim row must be released after sweep tick",
+      );
+      assert.ok(
+        stg.released_at !== null,
+        "stage claim row must be released after sweep tick",
+      );
 
-    const rows = await readChangeLogRows();
-    // Exactly one row per affected slug — sandbox slug owns one row.
-    assert.equal(
-      rows.length,
-      1,
-      `expected exactly one claim_swept change_log row for sandbox slug, got ${rows.length}`,
-    );
-    const parsed = JSON.parse(rows[0]!.body) as {
-      released_count: number;
-      section_released: string[];
-      stage_released: string[];
-      timeout_minutes: number;
-    };
-    assert.ok(
-      parsed.released_count >= 2,
-      `metadata.released_count expected >= 2, got ${parsed.released_count}`,
-    );
-    assert.ok(
-      Array.isArray(parsed.section_released) &&
-        parsed.section_released.length >= 1,
-      `metadata.section_released[] missing or empty: ${JSON.stringify(parsed.section_released)}`,
-    );
-    assert.ok(
-      Array.isArray(parsed.stage_released) &&
-        parsed.stage_released.length >= 1,
-      `metadata.stage_released[] missing or empty: ${JSON.stringify(parsed.stage_released)}`,
-    );
-    assert.equal(rows[0]!.kind, "claim_swept");
-    assert.equal(rows[0]!.actor, "claims-sweep-tick");
+      const rows = await readChangeLogRows();
+      // Exactly one row per affected slug — sandbox slug owns one row.
+      assert.equal(
+        rows.length,
+        1,
+        `expected exactly one claim_swept change_log row for sandbox slug, got ${rows.length}`,
+      );
+      const parsed = JSON.parse(rows[0]!.body) as {
+        released_count: number;
+        section_released: string[];
+        stage_released: string[];
+        timeout_minutes: number;
+      };
+      assert.ok(
+        parsed.released_count >= 2,
+        `metadata.released_count expected >= 2, got ${parsed.released_count}`,
+      );
+      assert.ok(
+        Array.isArray(parsed.section_released) &&
+          parsed.section_released.length >= 1,
+        `metadata.section_released[] missing or empty: ${JSON.stringify(parsed.section_released)}`,
+      );
+      assert.ok(
+        Array.isArray(parsed.stage_released) &&
+          parsed.stage_released.length >= 1,
+        `metadata.stage_released[] missing or empty: ${JSON.stringify(parsed.stage_released)}`,
+      );
+      assert.equal(rows[0]!.kind, "claim_swept");
+      assert.equal(rows[0]!.actor, "claims-sweep-tick");
+    });
   });
 });

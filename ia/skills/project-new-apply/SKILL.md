@@ -2,14 +2,14 @@
 name: project-new-apply
 purpose: >-
   Sonnet pair-tail: reads /project-new command args directly; reserves id + writes yaml + spec stub;
-  runs materialize + validate:dead-project-specs; hands off to stage-authoring at N=1.
+  enqueues cron_materialize_backlog_enqueue + validate:dead-project-specs; hands off to stage-authoring at N=1.
 audience: agent
 loaded_by: "skill:project-new-apply"
 slices_via: none
 description: >-
   Sonnet pair-tail skill. Reads args directly from /project-new command (no §Project-New Plan
   pair-head read). Runs reserve-id.sh, writes ia/backlog/{id}.yaml, writes ia/projects/{id}.md stub
-  from project-spec-template, runs materialize-backlog.sh + validate:dead-project-specs. Single-issue
+  from project-spec-template, enqueues cron_materialize_backlog_enqueue + validate:dead-project-specs. Single-issue
   path — no tuple iteration, no task-table flip. Hands off to stage-authoring at N=1 for spec-body
   authoring. Triggers: "project-new-apply", "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}",
   "apply project new", "pair-tail project new", "materialize single issue". Argument order (explicit):
@@ -28,7 +28,8 @@ triggers:
   - materialize single issue
 model: inherit
 tools_role: custom
-tools_extra: []
+tools_extra:
+  - mcp__territory-ia__cron_materialize_backlog_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -137,11 +138,11 @@ Idempotency: overwrite if file exists.
 
 ## Phase 5 — Post-write: materialize + validate + handoff
 
-1. **Materialize BACKLOG:**
-   ```bash
-   bash tools/scripts/materialize-backlog.sh
-   ```
-   Non-zero exit → escalate: `{escalation: true, reason: "materialize-backlog.sh failed: {stderr}"}`.
+1. **Materialize BACKLOG (async enqueue):**
+   Call `mcp__territory-ia__cron_materialize_backlog_enqueue({triggered_by: "project-new-apply"})`.
+   Returns `{job_id, status:'queued'}` in <100ms — cron supervisor drains within ~2 min.
+   MCP unavailable → fallback: `bash tools/scripts/materialize-backlog.sh` (sync).
+   Non-zero exit on fallback → escalate: `{escalation: true, reason: "materialize-backlog.sh failed: {stderr}"}`.
 
 2. **Validate:**
    ```bash
@@ -171,7 +172,8 @@ Sonnet pair-tail NEVER guesses. Immediate escalation triggers:
 | Unknown prefix | `{escalation: true, reason: "unknown prefix: {PREFIX}"}` |
 | Invalid priority | `{escalation: true, reason: "invalid priority: {PRIORITY}"}` |
 | `reserve-id.sh` non-zero exit | `{escalation: true, reason: "reserve-id.sh failed: {stderr}"}` |
-| `materialize-backlog.sh` non-zero | `{escalation: true, reason: "materialize failed: {stderr}"}` |
+| `cron_materialize_backlog_enqueue` MCP error | `{escalation: true, reason: "enqueue failed: {stderr}"}` |
+| `materialize-backlog.sh` non-zero (fallback) | `{escalation: true, reason: "materialize failed: {stderr}"}` |
 | `validate:dead-project-specs` non-zero | `{escalation: true, reason: "validator failed: {exit_code} {stderr}"}` |
 
 ---

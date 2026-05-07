@@ -24,6 +24,11 @@ Supervisor loads `DATABASE_URL` from repo `.env` (falls back to `postgresql://po
 |---|---|---|---|---|
 | `audit-log` | `cron_audit_log_jobs` | `ia_master_plan_change_log` | `* * * * *` (every 1 min) | `cron_audit_log_enqueue` |
 | `journal-append` | `cron_journal_append_jobs` | `ia_ship_stage_journal` | `* * * * *` (every 1 min) | `cron_journal_append_enqueue` |
+| `task-commit-record` | `cron_task_commit_record_jobs` | `ia_task_commits` | `* * * * *` (every 1 min) | `cron_task_commit_record_enqueue` |
+| `stage-verification-flip` | `cron_stage_verification_flip_jobs` | `ia_stage_verifications` | `* * * * *` (every 1 min) | `cron_stage_verification_flip_enqueue` |
+| `arch-changelog-append` | `cron_arch_changelog_append_jobs` | `ia_arch_changelog` | `* * * * *` (every 1 min) | `cron_arch_changelog_append_enqueue` |
+| `materialize-backlog` | `cron_materialize_backlog_jobs` | (filesystem — `BACKLOG.md`) | `*/2 * * * *` (every 2 min) | `cron_materialize_backlog_enqueue` |
+| `regen-indexes` | `cron_regen_indexes_jobs` | (filesystem — `data/*.json`) | `*/5 * * * *` (every 5 min) | `cron_regen_indexes_enqueue` |
 
 ---
 
@@ -93,8 +98,32 @@ UPDATE cron_audit_log_jobs SET status = 'queued', error = NULL WHERE job_id = '<
 
 ---
 
+## Enqueue patterns — Stage 3 kinds
+
+`project-new-apply` enqueues materialize-backlog instead of shelling inline:
+```json
+// cron_materialize_backlog_enqueue
+{ "triggered_by": "project-new-apply" }
+```
+
+`arch-drift-scan` Phase 5 enqueues audit-log instead of `master_plan_change_log_append`:
+```json
+// cron_audit_log_enqueue
+{ "slug": "{SLUG}", "audit_kind": "arch_drift_scan", "body": "...", "stage_id": "{STAGE_ID}" }
+```
+
+`section_closeout_apply` post-tx enqueues section_done change_log async:
+```json
+// cron_audit_log_jobs row (enqueued internally, not via MCP tool)
+{ "audit_kind": "section_done", "body": "{...}" }
+```
+
+---
+
 ## Stage history
 
 | Stage | Kinds live |
 |---|---|
 | Stage 1 (tracer) | `audit-log` (→ `ia_master_plan_change_log`), `journal-append` (→ `ia_ship_stage_journal`) |
+| Stage 2 | + `task-commit-record` (→ `ia_task_commits`), `stage-verification-flip` (→ `ia_stage_verifications`), `arch-changelog-append` (→ `ia_arch_changelog`) |
+| Stage 3 | + `materialize-backlog` (→ `BACKLOG.md` filesystem), `regen-indexes` (→ `data/*.json` filesystem) |

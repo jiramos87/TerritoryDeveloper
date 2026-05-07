@@ -187,21 +187,10 @@ export async function applySectionCloseout(
   }
 
   const client = await pool.connect();
+  let releasedSection = false;
+  let cascaded = 0;
   try {
     await client.query("BEGIN");
-
-    const body = JSON.stringify({
-      section_id,
-      stages: stages.rows.map((r) => r.stage_id),
-    });
-    const ins = await client.query<{ entry_id: number }>(
-      `INSERT INTO ia_master_plan_change_log
-         (slug, kind, body, actor, commit_sha)
-       VALUES ($1, 'section_done', $2, $3, $4)
-       RETURNING entry_id`,
-      [slug, body, actor ?? null, commit_sha ?? null],
-    );
-    const entry_id = ins.rows[0]!.entry_id;
 
     // V2 row-only: release section claim by row key alone, cascade to stage claims.
     const upd = await client.query(
@@ -211,7 +200,7 @@ export async function applySectionCloseout(
           AND released_at IS NULL`,
       [slug, section_id],
     );
-    const releasedSection = (upd.rowCount ?? 0) > 0;
+    releasedSection = (upd.rowCount ?? 0) > 0;
 
     const cas = await client.query(
       `UPDATE ia_stage_claims sc
@@ -224,29 +213,55 @@ export async function applySectionCloseout(
           AND sc.released_at IS NULL`,
       [slug, section_id],
     );
-    const cascaded = cas.rowCount ?? 0;
+    cascaded = cas.rowCount ?? 0;
 
     await client.query("COMMIT");
-
-    return {
-      slug,
-      section_id,
-      applied: true,
-      stages_total: total,
-      stages_done: done,
-      change_log_entry_id: entry_id,
-      section_claim_released: releasedSection,
-      cascaded_stage_releases: cascaded,
-      red_stage_coverage_pct,
-      pending_count,
-      unexpected_pass_count,
-    };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     throw err;
   } finally {
     client.release();
   }
+
+  // Post-commit: enqueue change_log write async (fire-and-forget, best-effort).
+  // change_log_entry_id = -1 signals "queued async" to callers.
+  const changeLogBody = JSON.stringify({
+    section_id,
+    stages: stages.rows.map((r) => r.stage_id),
+  });
+  try {
+    await pool.query(
+      `INSERT INTO cron_audit_log_jobs (slug, audit_kind, body, stage_id)
+       VALUES ($1, $2, $3::jsonb, $4)`,
+      [
+        slug,
+        "section_done",
+        JSON.stringify({
+          kind: "section_done",
+          body: changeLogBody,
+          actor: actor ?? null,
+          commit_sha: commit_sha ?? null,
+        }),
+        null,
+      ],
+    );
+  } catch {
+    // best-effort — do not fail closeout
+  }
+
+  return {
+    slug,
+    section_id,
+    applied: true,
+    stages_total: total,
+    stages_done: done,
+    change_log_entry_id: -1,
+    section_claim_released: releasedSection,
+    cascaded_stage_releases: cascaded,
+    red_stage_coverage_pct,
+    pending_count,
+    unexpected_pass_count,
+  };
 }
 
 export function registerSectionCloseoutApply(server: McpServer): void {
@@ -261,8 +276,8 @@ export function registerSectionCloseoutApply(server: McpServer): void {
         "rejects with `red_stage_unexpected_pass_blocks_closeout` when any stage " +
         "recorded an unexpected_pass proof. Sections with zero proof rows get " +
         "`red_stage_coverage_pct: null` (grandfathered back-compat). " +
-        "Appends `ia_master_plan_change_log` row (kind='section_done'); " +
-        "releases active section claim + cascade-releases open stage claims. " +
+        "Enqueues async `ia_master_plan_change_log` write (kind='section_done') via cron_audit_log_jobs — returns `change_log_entry_id: -1` as queued proxy. " +
+        "Releases active section claim + cascade-releases open stage claims inside a sync Postgres tx. " +
         "Does NOT run git. Caller (`/section-closeout`) verifies drift first. " +
         "parallel-carcass §6.2 (D4 V2 / D9). " +
         "Schema-cache restart required after add (N4).",
