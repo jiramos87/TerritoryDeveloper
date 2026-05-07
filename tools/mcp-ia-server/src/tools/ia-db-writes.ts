@@ -1,14 +1,19 @@
 /**
  * MCP tools (write/mutation, DB-backed) — Step 4 of ia-dev-db-refactor.
  *
- * Registers 11 mutation tools on the IA core server bucket:
+ * Registers DB-backed mutation tools on the IA core server bucket:
  *   - task_insert, task_status_flip, task_spec_section_write
  *   - task_raw_markdown_write
  *   - task_dep_register
- *   - task_commit_record
- *   - stage_verification_flip, stage_closeout_apply
- *   - journal_append
+ *   - stage_closeout_apply
  *   - fix_plan_write, fix_plan_consume
+ *   - master_plan_close, master_plan_version_create
+ *   - task_status_flip_batch
+ *
+ * Deleted (async-cron-jobs Stage 6 — async replacements via cron_*_enqueue):
+ *   - task_commit_record → cron_task_commit_record_enqueue
+ *   - stage_verification_flip → cron_stage_verification_flip_enqueue
+ *   - journal_append → cron_journal_append_enqueue
  *
  * All mutations transactional (BEGIN/COMMIT/ROLLBACK). Id reservation uses
  * per-prefix DB sequences (no filesystem `reserve-id.sh`). Row-level locks
@@ -19,10 +24,6 @@
  *   - `invalid_input`   — caller arg validation failed (missing/unknown fks,
  *                         bad enum, non-terminal stage closeout, etc.).
  *   - `db_error`        — bare exception fallthrough inside withTx.
- *
- * Source of truth for decisions: docs/ia-dev-db-refactor-implementation.md
- * §Step 4. After editing this descriptor, restart Claude Code to refresh the
- * in-memory schema cache (N4).
  */
 
 import { z } from "zod";
@@ -34,12 +35,9 @@ import {
   IaDbValidationError,
   mutateFixPlanConsume,
   mutateFixPlanWrite,
-  mutateJournalAppend,
   mutateMasterPlanClose,
   mutateMasterPlanVersionCreate,
   mutateStageCloseoutApply,
-  mutateStageVerificationFlip,
-  mutateTaskCommitRecord,
   mutateTaskDepRegister,
   mutateTaskInsert,
   mutateTaskRawMarkdownWrite,
@@ -465,152 +463,8 @@ export function registerTaskRawMarkdownWrite(server: McpServer): void {
   );
 }
 
-// ---------------------------------------------------------------------------
-// task_commit_record
-// ---------------------------------------------------------------------------
-
-export function registerTaskCommitRecord(server: McpServer): void {
-  server.registerTool(
-    "task_commit_record",
-    {
-      description:
-        "DB-backed: append (or upsert) a commit row into ia_task_commits. UNIQUE(task_id, commit_sha) — re-record updates kind + message. Replaces yaml sidecars that tracked per-task commits.",
-      inputSchema: {
-        task_id: z.string().describe("Task id e.g. TECH-776."),
-        commit_sha: z.string().describe("Git commit sha (short or full)."),
-        commit_kind: COMMIT_KIND_ENUM.describe(
-          "Conventional-commit prefix: feat|fix|chore|docs|refactor|test.",
-        ),
-        message: z
-          .string()
-          .optional()
-          .describe("Optional commit subject line."),
-      },
-    },
-    async (args) =>
-      runWithToolTiming("task_commit_record", async () => {
-        const envelope = await wrapTool(
-          async (
-            input:
-              | {
-                  task_id?: string;
-                  commit_sha?: string;
-                  commit_kind?:
-                    | "feat"
-                    | "fix"
-                    | "chore"
-                    | "docs"
-                    | "refactor"
-                    | "test";
-                  message?: string;
-                }
-              | undefined,
-          ) => {
-            const id = (input?.task_id ?? "").trim().toUpperCase();
-            const sha = (input?.commit_sha ?? "").trim();
-            const kind = input?.commit_kind;
-            if (!id || !sha || !kind) {
-              throw {
-                code: "invalid_input",
-                message: "task_id, commit_sha, and commit_kind are required.",
-              };
-            }
-            try {
-              return await mutateTaskCommitRecord(id, sha, kind, input?.message);
-            } catch (e) {
-              mapDbErrors(e);
-            }
-          },
-        )(
-          args as
-            | {
-                task_id?: string;
-                commit_sha?: string;
-                commit_kind?:
-                  | "feat"
-                  | "fix"
-                  | "chore"
-                  | "docs"
-                  | "refactor"
-                  | "test";
-                message?: string;
-              }
-            | undefined,
-        );
-        return jsonResult(envelope);
-      }),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// stage_verification_flip
-// ---------------------------------------------------------------------------
-
-export function registerStageVerificationFlip(server: McpServer): void {
-  server.registerTool(
-    "stage_verification_flip",
-    {
-      description:
-        "DB-backed: append a stage-verification row (pass|fail|partial) to ia_stage_verifications (history-preserving — no upsert). Latest row is what stage_state surfaces. Used at ship-stage Pass B end.",
-      inputSchema: {
-        slug: z.string().describe("Master-plan slug."),
-        stage_id: z.string().describe("Stage id e.g. `7` or `3.1`."),
-        verdict: VERDICT_ENUM.describe("Verdict: pass|fail|partial."),
-        commit_sha: z.string().optional().describe("Stage commit sha."),
-        notes: z.string().optional().describe("Short caveman note."),
-        actor: z.string().optional().describe("Who recorded the verdict."),
-      },
-    },
-    async (args) =>
-      runWithToolTiming("stage_verification_flip", async () => {
-        const envelope = await wrapTool(
-          async (
-            input:
-              | {
-                  slug?: string;
-                  stage_id?: string;
-                  verdict?: "pass" | "fail" | "partial";
-                  commit_sha?: string;
-                  notes?: string;
-                  actor?: string;
-                }
-              | undefined,
-          ) => {
-            const slug = (input?.slug ?? "").trim();
-            const stage_id = (input?.stage_id ?? "").trim();
-            const verdict = input?.verdict;
-            if (!slug || !stage_id || !verdict) {
-              throw {
-                code: "invalid_input",
-                message: "slug, stage_id, and verdict are required.",
-              };
-            }
-            try {
-              return await mutateStageVerificationFlip(slug, stage_id, verdict, {
-                commit_sha: input?.commit_sha,
-                notes: input?.notes,
-                actor: input?.actor,
-              });
-            } catch (e) {
-              mapDbErrors(e);
-            }
-          },
-        )(
-          args as
-            | {
-                slug?: string;
-                stage_id?: string;
-                verdict?: "pass" | "fail" | "partial";
-                commit_sha?: string;
-                notes?: string;
-                actor?: string;
-              }
-            | undefined,
-        );
-        return jsonResult(envelope);
-      }),
-  );
-}
+// task_commit_record — DELETED (async-cron-jobs Stage 6). Use cron_task_commit_record_enqueue.
+// stage_verification_flip — DELETED (async-cron-jobs Stage 6). Use cron_stage_verification_flip_enqueue.
 
 // ---------------------------------------------------------------------------
 // stage_closeout_apply
@@ -653,143 +507,7 @@ export function registerStageCloseoutApply(server: McpServer): void {
   );
 }
 
-// ---------------------------------------------------------------------------
-// journal_append
-// ---------------------------------------------------------------------------
-
-/**
- * Per-payload_kind discriminator for `version_close` (TECH-12645).
- *
- * Required shape: `{plan_slug, version, tag, sha, validate_all_result: {ok, scripts[]}, sections_closed[]}`.
- * Throws `{code: 'payload_validation_failed', message}` on shape mismatch.
- * Boundary-only — body written verbatim to jsonb on success.
- */
-export function validateVersionClosePayload(payload: Record<string, unknown>): void {
-  const fail = (msg: string): never => {
-    throw { code: "payload_validation_failed", message: msg };
-  };
-  if (typeof payload.plan_slug !== "string" || !payload.plan_slug.trim()) {
-    fail("version_close: plan_slug must be non-empty string.");
-  }
-  if (typeof payload.version !== "number" || !Number.isFinite(payload.version) || payload.version < 1) {
-    fail("version_close: version must be positive integer.");
-  }
-  if (typeof payload.tag !== "string" || !payload.tag.trim()) {
-    fail("version_close: tag must be non-empty string.");
-  }
-  if (typeof payload.sha !== "string" || !payload.sha.trim()) {
-    fail("version_close: sha must be non-empty string.");
-  }
-  const v = payload.validate_all_result;
-  if (!v || typeof v !== "object" || Array.isArray(v)) {
-    fail("version_close: validate_all_result must be object.");
-  }
-  const vr = v as Record<string, unknown>;
-  if (typeof vr.ok !== "boolean") {
-    fail("version_close: validate_all_result.ok must be boolean.");
-  }
-  if (!Array.isArray(vr.scripts) || !vr.scripts.every((s) => typeof s === "string")) {
-    fail("version_close: validate_all_result.scripts must be string[].");
-  }
-  if (
-    !Array.isArray(payload.sections_closed) ||
-    !payload.sections_closed.every((s) => typeof s === "string")
-  ) {
-    fail("version_close: sections_closed must be string[].");
-  }
-}
-
-export function registerJournalAppend(server: McpServer): void {
-  server.registerTool(
-    "journal_append",
-    {
-      description:
-        "DB-backed: append a discriminated-union event to ia_ship_stage_journal. Canonical journal surface for agent runs. `payload_kind` must be non-empty; `payload` must be an object (jsonb). Tool-side validation is boundary only — payload body shape is trust-but-document. Exception: `payload_kind='version_close'` (ship-final Phase 7) enforces shape `{plan_slug:string, version:int>=1, tag:string, sha:string, validate_all_result:{ok:boolean, scripts:string[]}, sections_closed:string[]}` — mismatch → `payload_validation_failed`.",
-      inputSchema: {
-        session_id: z.string().describe("Agent session id (uuid or slug)."),
-        phase: z
-          .string()
-          .describe("Phase name e.g. `pass_a.implement`, `pass_b.verify`."),
-        payload_kind: z
-          .string()
-          .describe("Discriminator e.g. `tool_call`, `verify_result`, `fix_apply`."),
-        payload: z
-          .record(z.string(), z.unknown())
-          .describe("Event-body object (jsonb)."),
-        task_id: z.string().optional().describe("Task context (optional)."),
-        slug: z.string().optional().describe("Master-plan slug (optional)."),
-        stage_id: z.string().optional().describe("Stage id (optional)."),
-      },
-    },
-    async (args) =>
-      runWithToolTiming("journal_append", async () => {
-        const envelope = await wrapTool(
-          async (
-            input:
-              | {
-                  session_id?: string;
-                  phase?: string;
-                  payload_kind?: string;
-                  payload?: Record<string, unknown>;
-                  task_id?: string;
-                  slug?: string;
-                  stage_id?: string;
-                }
-              | undefined,
-          ) => {
-            const session_id = (input?.session_id ?? "").trim();
-            const phase = (input?.phase ?? "").trim();
-            const payload_kind = (input?.payload_kind ?? "").trim();
-            if (!session_id || !phase || !payload_kind) {
-              throw {
-                code: "invalid_input",
-                message: "session_id, phase, and payload_kind are required.",
-              };
-            }
-            if (
-              !input?.payload ||
-              typeof input.payload !== "object" ||
-              Array.isArray(input.payload)
-            ) {
-              throw {
-                code: "invalid_input",
-                message: "payload must be an object (non-null, non-array).",
-              };
-            }
-            if (payload_kind === "version_close") {
-              validateVersionClosePayload(input.payload);
-            }
-            try {
-              return await mutateJournalAppend({
-                session_id,
-                phase,
-                payload_kind,
-                payload: input.payload,
-                task_id: input?.task_id ?? null,
-                slug: input?.slug ?? null,
-                stage_id: input?.stage_id ?? null,
-              });
-            } catch (e) {
-              mapDbErrors(e);
-            }
-          },
-        )(
-          args as
-            | {
-                session_id?: string;
-                phase?: string;
-                payload_kind?: string;
-                payload?: Record<string, unknown>;
-                task_id?: string;
-                slug?: string;
-                stage_id?: string;
-              }
-            | undefined,
-        );
-        return jsonResult(envelope);
-      }),
-  );
-}
+// journal_append — DELETED (async-cron-jobs Stage 6). Use cron_journal_append_enqueue.
 
 // ---------------------------------------------------------------------------
 // fix_plan_write
@@ -1098,10 +816,7 @@ export function registerIaDbWriteTools(server: McpServer): void {
   registerTaskSpecSectionWrite(server);
   registerTaskRawMarkdownWrite(server);
   registerTaskDepRegister(server);
-  registerTaskCommitRecord(server);
-  registerStageVerificationFlip(server);
   registerStageCloseoutApply(server);
-  registerJournalAppend(server);
   registerFixPlanWrite(server);
   registerFixPlanConsume(server);
   registerMasterPlanClose(server);

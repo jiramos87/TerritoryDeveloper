@@ -81,7 +81,8 @@
       "validate:agent-tools",
       "validate:skill-drift",
       "validate:skill-changelog-presence",
-      "validate:skill-recipe-drift"
+      "validate:skill-recipe-drift",
+      "validate:cron-call-site-coverage"
     ],
     "docs/explorations/**": [
       { "id": "validate:handoff-schema", "scope": "matched" }
@@ -172,6 +173,35 @@
     ],
     "db/migrations/*catalog*": [
       "validate:catalog-naming"
+    ],
+    "Assets/UI/**": [
+      "validate:catalog-panel-coverage"
+    ],
+    "tools/scripts/validate-catalog-panel-coverage.mjs": [
+      "validate:catalog-panel-coverage"
+    ],
+    "tools/scripts/validate-red-stage-proof-anchor.mjs": [
+      "validate:red-stage-proof-anchor"
+    ],
+    "ia/projects/**": [
+      "validate:red-stage-proof-anchor"
+    ],
+    "tools/scripts/validate-asset-tree-canonical.mjs": [
+      "validate:asset-tree-canonical"
+    ],
+    "tools/cron-server/**": [
+      "validate:cron-handler-coverage",
+      "validate:cron-cadence-coverage",
+      "validate:cron-call-site-coverage"
+    ],
+    "tools/scripts/validate-cron-handler-coverage.mjs": [
+      "validate:cron-handler-coverage"
+    ],
+    "tools/scripts/validate-cron-cadence-coverage.mjs": [
+      "validate:cron-cadence-coverage"
+    ],
+    "tools/scripts/validate-cron-call-site-coverage.mjs": [
+      "validate:cron-call-site-coverage"
     ]
   }
 }

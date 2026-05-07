@@ -137,14 +137,15 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
  * task_spec_section, task_spec_search, stage_bundle, task_bundle
  * (8 DB-backed reads — Step 3 of ia-dev-db-refactor),
  * task_insert, task_status_flip, task_spec_section_write,
- * task_commit_record, stage_verification_flip, stage_closeout_apply,
- * journal_append, fix_plan_write, fix_plan_consume
- * (9 DB-backed writes — Step 4 of ia-dev-db-refactor),
+ * stage_closeout_apply, fix_plan_write, fix_plan_consume
+ * (DB-backed writes — Step 4 of ia-dev-db-refactor;
+ * task_commit_record / stage_verification_flip / journal_append deleted
+ * in async-cron-jobs Stage 6 — use cron_*_enqueue counterparts),
  * master_plan_render, stage_render, master_plan_preamble_write,
- * master_plan_description_write, master_plan_change_log_append
- * (4 DB-backed render + change-log surfaces — Step 9.6.8 of
- * ia-dev-db-refactor; replace `ia/projects/{slug}/{index.md, stage-*.md}`
- * filesystem reads/writes ahead of Step 9.6.11 folder bulk-delete).
+ * master_plan_description_write
+ * (DB-backed render surfaces — Step 9.6.8 of ia-dev-db-refactor;
+ * master_plan_change_log_append deleted in async-cron-jobs Stage 6
+ * — use cron_audit_log_enqueue).
  */
 export function registerIaCoreTools(server: McpServer, registry: Registry): void {
   registerListSpecs(server, registry);

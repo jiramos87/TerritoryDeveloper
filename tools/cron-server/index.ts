@@ -23,6 +23,7 @@ import { run as runAnchorReindex } from "./handlers/anchor-reindex-cron-handler.
 import { run as runDriftLint } from "./handlers/drift-lint-cron-handler.js";
 import { run as runCacheWarm } from "./handlers/cache-warm-cron-handler.js";
 import { run as runCacheBust } from "./handlers/cache-bust-cron-handler.js";
+import { runStaleSweep } from "./handlers/stale-sweep-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
 import type { TaskCommitRecordJobRow } from "./handlers/task-commit-record-cron-handler.js";
@@ -164,5 +165,11 @@ for (const kind of KINDS) {
   });
   console.log(`[cron] registered kind=${kind.table} cadence="${kind.cadence}"`);
 }
+
+// Stale-sweep: runs every minute across all tables — not a queue-drain handler.
+cron.schedule("* * * * *", () => {
+  void runStaleSweep();
+});
+console.log(`[cron] registered stale-sweep cadence="* * * * *"`);
 
 console.log("[cron] supervisor running. Ctrl+C to stop.");

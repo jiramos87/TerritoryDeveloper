@@ -29,7 +29,6 @@ import {
 } from "../ia-db/queries.js";
 import {
   IaDbValidationError,
-  mutateMasterPlanChangeLogAppend,
   mutateMasterPlanDescriptionWrite,
   mutateMasterPlanInsert,
   mutateMasterPlanPreambleWrite,
@@ -277,84 +276,7 @@ export function registerMasterPlanPreambleWrite(server: McpServer): void {
   );
 }
 
-// ---------------------------------------------------------------------------
-// master_plan_change_log_append
-// ---------------------------------------------------------------------------
-
-export function registerMasterPlanChangeLogAppend(server: McpServer): void {
-  server.registerTool(
-    "master_plan_change_log_append",
-    {
-      description:
-        "DB-backed: append one append-only history row to ia_master_plan_change_log. UNIQUE (slug, stage_id, kind, commit_sha) — duplicate inserts return `deduped: true` with `entry_id: null` (idempotent for re-run closeout / sha-backfill chains).",
-      inputSchema: {
-        slug: z.string().describe("Master-plan slug."),
-        kind: z
-          .string()
-          .describe(
-            "Short tag e.g. `closeout-digest`, `sha-backfill`, `status-flip`, `retired-skill`.",
-          ),
-        body: z.string().describe("Markdown body of the entry."),
-        actor: z.string().optional().describe("Who recorded the entry."),
-        commit_sha: z.string().optional().describe("Commit sha (optional)."),
-        stage_id: z
-          .string()
-          .optional()
-          .describe(
-            "Stage id (optional). Distinguishes per-stage entries from plan-scope rows under same kind+sha.",
-          ),
-      },
-    },
-    async (args) =>
-      runWithToolTiming("master_plan_change_log_append", async () => {
-        const envelope = await wrapTool(
-          async (
-            input:
-              | {
-                  slug?: string;
-                  kind?: string;
-                  body?: string;
-                  actor?: string;
-                  commit_sha?: string;
-                  stage_id?: string;
-                }
-              | undefined,
-          ) => {
-            const slug = (input?.slug ?? "").trim();
-            const kind = (input?.kind ?? "").trim();
-            const body = input?.body ?? "";
-            if (!slug || !kind || !body) {
-              throw {
-                code: "invalid_input",
-                message: "slug, kind, and body are required.",
-              };
-            }
-            try {
-              return await mutateMasterPlanChangeLogAppend(slug, kind, body, {
-                actor: input?.actor ?? null,
-                commit_sha: input?.commit_sha ?? null,
-                stage_id: input?.stage_id ?? null,
-              });
-            } catch (e) {
-              mapDbErrors(e);
-            }
-          },
-        )(
-          args as
-            | {
-                slug?: string;
-                kind?: string;
-                body?: string;
-                actor?: string;
-                commit_sha?: string;
-                stage_id?: string;
-              }
-            | undefined,
-        );
-        return jsonResult(envelope);
-      }),
-  );
-}
+// master_plan_change_log_append — DELETED (async-cron-jobs Stage 6). Use cron_audit_log_enqueue.
 
 // ---------------------------------------------------------------------------
 // master_plan_insert
@@ -804,7 +726,6 @@ export function registerMasterPlanRenderTools(server: McpServer): void {
   registerMasterPlanRender(server);
   registerStageRender(server);
   registerMasterPlanPreambleWrite(server);
-  registerMasterPlanChangeLogAppend(server);
   registerMasterPlanInsert(server);
   registerMasterPlanDescriptionWrite(server);
   registerStageInsert(server);

@@ -842,100 +842,7 @@ export function registerArchDecisionWrite(server: McpServer): void {
   );
 }
 
-// ---------------------------------------------------------------------------
-// arch_changelog_append (Stage 1.4 / TECH-2563).
-// ---------------------------------------------------------------------------
-
-const ARCH_CHANGELOG_KIND_VALUES = [
-  "edit",
-  "decide",
-  "supersede",
-  "spec_edit_commit",
-  "design_explore_decision",
-  "design_explore_persist_contract_v2",
-] as const;
-
-type ArchChangelogKind = (typeof ARCH_CHANGELOG_KIND_VALUES)[number];
-
-const archChangelogAppendInputSchema = z.object({
-  kind: z
-    .enum(ARCH_CHANGELOG_KIND_VALUES)
-    .describe("Audit row kind."),
-  surface_slug: z.string().optional(),
-  decision_slug: z.string().optional(),
-  commit_sha: z.string().optional(),
-  spec_path: z.string().optional(),
-  body: z.string().optional(),
-  plan_slug: z
-    .string()
-    .min(1)
-    .optional()
-    .describe(
-      "Optional master-plan slug attribution. Stored in `arch_changelog.plan_slug` (migration 0058) for per-plan filtering of audit rows.",
-    ),
-});
-
-export async function runArchChangelogAppend(
-  pool: Pool,
-  input: {
-    kind?: ArchChangelogKind;
-    surface_slug?: string;
-    decision_slug?: string;
-    commit_sha?: string;
-    spec_path?: string;
-    body?: string;
-    plan_slug?: string;
-  },
-): Promise<{ id: number; created_at: string; deduped: boolean }> {
-  if (!input.kind) {
-    throw { code: "invalid_input" as const, message: "kind is required." };
-  }
-  const ins = await pool.query(
-    `INSERT INTO arch_changelog (kind, surface_slug, decision_slug, commit_sha, spec_path, body, plan_slug)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     ON CONFLICT (commit_sha, spec_path) WHERE commit_sha IS NOT NULL AND spec_path IS NOT NULL
-     DO NOTHING
-     RETURNING id, created_at::text AS created_at`,
-    [
-      input.kind,
-      input.surface_slug ?? null,
-      input.decision_slug ?? null,
-      input.commit_sha ?? null,
-      input.spec_path ?? null,
-      input.body ?? null,
-      input.plan_slug ?? null,
-    ],
-  );
-  if (ins.rowCount === 0) {
-    return { id: -1, created_at: "", deduped: true };
-  }
-  return {
-    id: Number(ins.rows[0].id),
-    created_at: ins.rows[0].created_at,
-    deduped: false,
-  };
-}
-
-export function registerArchChangelogAppend(server: McpServer): void {
-  server.registerTool(
-    "arch_changelog_append",
-    {
-      title: "arch_changelog_append",
-      description:
-        "DB-backed: INSERT one arch_changelog row. Stage 1.4 / TECH-2563. Idempotent on (commit_sha, spec_path) via UNIQUE partial index (migration 0038); returns `deduped: true` when row already exists. kind: edit | decide | supersede | spec_edit_commit | design_explore_decision | design_explore_persist_contract_v2 (migration 0058 / prototype-first-methodology Stage 1.1). Optional `plan_slug` attaches per-plan attribution (migration 0058 column).",
-      inputSchema: archChangelogAppendInputSchema.shape,
-    },
-    async (args) =>
-      runWithToolTiming("arch_changelog_append", async () => {
-        const envelope = await wrapTool(async (input: z.infer<typeof archChangelogAppendInputSchema>) => {
-          const pool = getIaDatabasePool();
-          if (!pool) throw dbUnconfiguredError();
-          return await runArchChangelogAppend(pool, input);
-        })(archChangelogAppendInputSchema.parse(args ?? {}));
-        return jsonResult(envelope);
-      }),
-  );
-}
+// arch_changelog_append — DELETED (async-cron-jobs Stage 6). Use cron_arch_changelog_append_enqueue.
 
 // ---------------------------------------------------------------------------
 // arch_surface_write (prototype-first-methodology Stage 1.1 / TECH-10297 +
@@ -1067,12 +974,13 @@ export function registerArchSurfaceWrite(server: McpServer): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Register all eight architecture-coherence MCP tools on the given server:
+ * Register architecture-coherence MCP tools on the given server:
  * Stage 1.3 read tools (arch_decision_get, arch_decision_list,
  * arch_surface_resolve, arch_drift_scan, arch_changelog_since) +
- * Stage 1.4 write tools (arch_decision_write, arch_changelog_append) +
+ * Stage 1.4 write tool (arch_decision_write) +
  * prototype-first-methodology Stage 1.1 / migration 0058 write tool
  * (arch_surface_write).
+ * Deleted: arch_changelog_append (async-cron-jobs Stage 6 — use cron_arch_changelog_append_enqueue).
  */
 export function registerArchTools(server: McpServer): void {
   registerArchDecisionGet(server);
@@ -1081,6 +989,5 @@ export function registerArchTools(server: McpServer): void {
   registerArchDriftScan(server);
   registerArchChangelogSince(server);
   registerArchDecisionWrite(server);
-  registerArchChangelogAppend(server);
   registerArchSurfaceWrite(server);
 }
