@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using Territory.Economy;
 using Territory.Timing;
+using Territory.UI;
 using Territory.UI.Juice;
 using Territory.UI.StudioControls;
 using Territory.UI.Themed;
@@ -37,6 +38,11 @@ namespace Territory.UI.HUD
 
         [Header("Theme")]
         [SerializeField] private UiTheme _uiTheme;
+
+        // ── Catalog reference (Stage 9.13 — AUTO toggle + hud-bar button slug resolution)
+        // Inspector-assigned; FindObjectOfType fallback in Awake (invariant #4).
+        [Header("Catalog (Stage 9.13)")]
+        [SerializeField] private UiAssetCatalog _catalog;
 
         // ── Consumer refs (StudioControl variants on baked hud-bar prefab)
 
@@ -76,6 +82,9 @@ namespace Territory.UI.HUD
 
         private void Awake()
         {
+            // Catalog — Inspector first, FindObjectOfType fallback (invariant #4).
+            if (_catalog == null) _catalog = FindObjectOfType<UiAssetCatalog>();
+
             // MonoBehaviour producers — Inspector first, FindObjectOfType fallback (invariant #4).
             if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
             if (_timeManager == null) _timeManager = FindObjectOfType<TimeManager>();
@@ -140,6 +149,23 @@ namespace Territory.UI.HUD
             _miniMapButton = null;
             _speedButtons = null;
 
+            // Resolve AUTO toggle display_name from catalog slug (Stage 9.13 / TECH-19975).
+            // Falls back to hardcoded "AUTO" when catalog absent (invariant #4 null-tolerant).
+            string autoDisplayName = "AUTO";
+            if (_catalog != null && _catalog.TryGetButtonEntry("hud-bar-auto-toggle", out var autoEntry)
+                && !string.IsNullOrEmpty(autoEntry.displayName))
+            {
+                autoDisplayName = autoEntry.displayName.ToUpperInvariant();
+            }
+
+            // Resolve MAP display_name from catalog slug.
+            string mapDisplayName = "MAP";
+            if (_catalog != null && _catalog.TryGetButtonEntry("hud-bar-map-button", out var mapEntry)
+                && !string.IsNullOrEmpty(mapEntry.displayName))
+            {
+                mapDisplayName = mapEntry.displayName.ToUpperInvariant();
+            }
+
             var buttons = GetComponentsInChildren<IlluminatedButton>(true);
             if (buttons == null || buttons.Length == 0) return;
 
@@ -151,12 +177,13 @@ namespace Territory.UI.HUD
                 if (string.IsNullOrEmpty(slug))
                 {
                     // Caption-text fallback — empty slug buttons (MAP, AUTO) bake with TMP caption only.
+                    // Caption resolved via catalog display_name when catalog available (Stage 9.13).
                     var capTmp = btn != null ? btn.GetComponentInChildren<TextMeshProUGUI>(true) : null;
                     var cap = capTmp != null ? capTmp.text?.Trim().ToUpperInvariant() : null;
                     if (!string.IsNullOrEmpty(cap))
                     {
-                        if (cap == "MAP" && _miniMapButton == null) _miniMapButton = btn;
-                        else if (cap == "AUTO" && _autoButton == null) _autoButton = btn;
+                        if (cap == mapDisplayName && _miniMapButton == null) _miniMapButton = btn;
+                        else if (cap == autoDisplayName && _autoButton == null) _autoButton = btn;
                         // FEAT-59 — caption-text fallback for BUDGET (sprite art deferred per Stage 9.9 B1c).
                         else if (cap == "BUDGET" && _budgetButton == null) _budgetButton = btn;
                     }

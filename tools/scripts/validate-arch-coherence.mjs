@@ -404,6 +404,7 @@ const EXPLICIT_NONE_STAGES = new Set([
   // game-ui-catalog-bake: continued bake pipeline stages.
   "game-ui-catalog-bake::9.11",
   "game-ui-catalog-bake::9.12",
+  "game-ui-catalog-bake::9.13",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -589,10 +590,16 @@ const unlinked = await client.query(
     GROUP BY s.slug, s.stage_id
     ORDER BY s.slug, s.stage_id`,
 );
+// Slug prefixes that are exempt from the arch-surfaces requirement:
+//   __test_* / __test_sandbox__ — transient test harness stages (left by test suites).
+//   pcr-drift-bench-*           — ephemeral benchmark stages (auto-generated slug).
+const EXEMPT_SLUG_PREFIXES = ["__test_", "pcr-drift-bench-"];
+
 const unlinkedFiltered = unlinked.rows.filter(
   (r) =>
     !EXPLICIT_NONE_PLANS.has(r.slug) &&
-    !EXPLICIT_NONE_STAGES.has(`${r.slug}::${r.stage_id}`),
+    !EXPLICIT_NONE_STAGES.has(`${r.slug}::${r.stage_id}`) &&
+    !EXEMPT_SLUG_PREFIXES.some((pfx) => r.slug.startsWith(pfx)),
 );
 if (unlinkedFiltered.length > 0) {
   console.error(

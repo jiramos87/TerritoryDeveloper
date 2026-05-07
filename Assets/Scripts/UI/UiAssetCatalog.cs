@@ -5,6 +5,18 @@ using UnityEngine;
 namespace Territory.UI
 {
     /// <summary>
+    /// Button/toggle catalog entry — display_name and catalog slug from catalog_entity rows.
+    /// Consumed by HudBarDataAdapter to resolve AUTO toggle caption from catalog instead of
+    /// hardcoded string (TECH-19975 / Stage 9.13 AUTO toggle catalog wiring).
+    /// </summary>
+    [Serializable]
+    public class UiButtonCatalogEntry
+    {
+        public string slug;
+        public string displayName;
+    }
+
+    /// <summary>
     /// Panel shape DTO read from asset-registry panel row (subtype-picker).
     /// Fields mirror catalog_entity + panel_detail seed values (0080 migration).
     /// </summary>
@@ -69,8 +81,12 @@ namespace Territory.UI
         [Header("Archetype definitions (asset-registry)")]
         [SerializeField] private UiArchetypeDef[] _archetypes = DefaultArchetypes();
 
+        [Header("Button catalog entries (Stage 9.13 — hud-bar controls)")]
+        [SerializeField] private UiButtonCatalogEntry[] _buttons = DefaultButtons();
+
         private Dictionary<string, UiPanelDef> _panelIndex;
         private Dictionary<string, UiArchetypeDef> _archetypeIndex;
+        private Dictionary<string, UiButtonCatalogEntry> _buttonIndex;
         private bool _indexed;
 
         private void Awake() => EnsureIndex();
@@ -81,6 +97,7 @@ namespace Territory.UI
             _indexed = true;
             _panelIndex = new Dictionary<string, UiPanelDef>(StringComparer.Ordinal);
             _archetypeIndex = new Dictionary<string, UiArchetypeDef>(StringComparer.Ordinal);
+            _buttonIndex = new Dictionary<string, UiButtonCatalogEntry>(StringComparer.Ordinal);
             if (_panels != null)
                 foreach (var p in _panels)
                     if (p != null && !string.IsNullOrEmpty(p.slug))
@@ -89,6 +106,10 @@ namespace Territory.UI
                 foreach (var a in _archetypes)
                     if (a != null && !string.IsNullOrEmpty(a.slug))
                         _archetypeIndex[a.slug] = a;
+            if (_buttons != null)
+                foreach (var b in _buttons)
+                    if (b != null && !string.IsNullOrEmpty(b.slug))
+                        _buttonIndex[b.slug] = b;
         }
 
         /// <summary>Resolve panel def by slug. Returns false when not found (no fallback).</summary>
@@ -131,7 +152,41 @@ namespace Territory.UI
             return !string.IsNullOrEmpty(hoverEnum);
         }
 
-        // ── Defaults match 0080 seed migration ──
+        /// <summary>
+        /// Resolve button catalog entry by catalog slug.
+        /// Used by <see cref="Territory.UI.HUD.HudBarDataAdapter"/> to get
+        /// AUTO toggle display_name from catalog (TECH-19975 Stage 9.13).
+        /// Returns false when slug not registered.
+        /// </summary>
+        public bool TryGetButtonEntry(string slug, out UiButtonCatalogEntry entry)
+        {
+            EnsureIndex();
+            return _buttonIndex.TryGetValue(slug ?? string.Empty, out entry);
+        }
+
+        // ── Defaults match seed migrations ──
+
+        /// <summary>
+        /// Default button catalog entries for hud-bar controls (Stage 9.13 / TECH-19975).
+        /// Slug values match catalog_entity rows inserted by migration 0098.
+        /// </summary>
+        private static UiButtonCatalogEntry[] DefaultButtons() => new[]
+        {
+            new UiButtonCatalogEntry { slug = "hud-bar-build-residential-button", displayName = "Build Residential" },
+            new UiButtonCatalogEntry { slug = "hud-bar-build-commercial-button",  displayName = "Build Commercial" },
+            new UiButtonCatalogEntry { slug = "hud-bar-build-industrial-button",  displayName = "Build Industrial" },
+            new UiButtonCatalogEntry { slug = "hud-bar-auto-toggle",              displayName = "AUTO" },
+            new UiButtonCatalogEntry { slug = "hud-bar-budget-plus-button",       displayName = "Budget +" },
+            new UiButtonCatalogEntry { slug = "hud-bar-budget-minus-button",      displayName = "Budget -" },
+            new UiButtonCatalogEntry { slug = "hud-bar-budget-graph-button",      displayName = "Budget Graph" },
+            new UiButtonCatalogEntry { slug = "hud-bar-map-button",               displayName = "Map" },
+            new UiButtonCatalogEntry { slug = "hud-bar-pause-button",             displayName = "Pause" },
+            new UiButtonCatalogEntry { slug = "hud-bar-play-button",              displayName = "Play" },
+            new UiButtonCatalogEntry { slug = "hud-bar-speed-1-button",           displayName = "Speed 1" },
+            new UiButtonCatalogEntry { slug = "hud-bar-speed-2-button",           displayName = "Speed 2" },
+            new UiButtonCatalogEntry { slug = "hud-bar-speed-3-button",           displayName = "Speed 3" },
+            new UiButtonCatalogEntry { slug = "hud-bar-speed-4-button",           displayName = "Speed 4" },
+        };
 
         private static UiPanelDef[] DefaultPanels() => new[]
         {
