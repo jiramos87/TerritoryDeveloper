@@ -95,6 +95,8 @@ import { registerCronStageVerificationFlipEnqueue } from "./tools/cron-stage-ver
 import { registerCronArchChangelogAppendEnqueue } from "./tools/cron-arch-changelog-append.js";
 import { registerCronMaterializeBacklogEnqueue } from "./tools/cron-materialize-backlog.js";
 import { registerCronRegenIndexesEnqueue } from "./tools/cron-regen-indexes.js";
+import { registerCronGlossaryBacklinksEnqueue } from "./tools/cron-glossary-backlinks.js";
+import { registerCronAnchorReindexEnqueue } from "./tools/cron-anchor-reindex.js";
 
 // Bridge + compute tools
 import {
@@ -219,6 +221,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCronArchChangelogAppendEnqueue(server);
   registerCronMaterializeBacklogEnqueue(server);
   registerCronRegenIndexesEnqueue(server);
+  registerCronGlossaryBacklinksEnqueue(server);
+  registerCronAnchorReindexEnqueue(server);
 }
 
 /**

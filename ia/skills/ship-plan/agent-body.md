@@ -16,6 +16,9 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
      - Unresolvable ref → leave token literal + push to `DRIFT_WARNINGS[]` so Phase 6 lint catches it.
 6. Phase 6 — Drift lint per task: anchor resolution + glossary alignment + retired-surface scan. 2-retry budget per failure mode; halt with structured escalation on persistent failure.
 7. Phase 7 — Dispatch single `mcp__territory-ia__master_plan_bundle_apply({ bundle })` Postgres tx. Bundle shape: `{plan, stages[], tasks[]}` with `digest_body` per task. Constraint violation → re-author offending field; second failure escalates.
+7.5. Phase 7.5 — Post-bundle async enqueues (fire-and-forget; failure = warning, not halt):
+     - `mcp__territory-ia__cron_glossary_backlinks_enqueue({ slug, plan_id })` — cron drains within 5 min; upserts `ia_glossary_backlinks`.
+     - `mcp__territory-ia__cron_anchor_reindex_enqueue({ paths: ["ia/specs/glossary.md"] })` — cron drains within 5 min; upserts `ia_spec_anchors`.
 8. Phase 8 — Hand-off summary + next-step handoff (`/ship-cycle {SLUG} Stage {first_stage}`).
 
 # Hard boundaries

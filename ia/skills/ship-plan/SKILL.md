@@ -52,6 +52,8 @@ tools_extra:
   - mcp__territory-ia__plan_digest_verify_paths
   - mcp__territory-ia__journal_append
   - mcp__territory-ia__master_plan_change_log_append
+  - mcp__territory-ia__cron_glossary_backlinks_enqueue
+  - mcp__territory-ia__cron_anchor_reindex_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -325,13 +327,21 @@ Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
 
 ## Phase 7.5 — Post-bundle glossary back-link enrich (TECH-15903)
 
-After `master_plan_bundle_apply` succeeds, invoke the back-link enricher:
+After `master_plan_bundle_apply` succeeds, enqueue the back-link enricher (async — fire-and-forget):
 
 ```
-node tools/scripts/glossary-backlink-enrich.mjs --plan-id {slug}
+mcp__territory-ia__cron_glossary_backlinks_enqueue({ slug: {slug}, plan_id: {plan_uuid} })
 ```
 
-Scans `ia_tasks.body` for glossary term mentions → upserts `ia_glossary_backlinks` rows keyed `(plan_id, term, section_id)`. Cache-backed via `ia_mcp_context_cache` (TECH-15902). Non-blocking: failure emits a warning log but does not halt the plan.
+Cron supervisor drains the job by shelling to `node tools/scripts/glossary-backlink-enrich.mjs --plan-id {slug}` (cadence `*/5 * * * *`; drains within 5 min). Upserts `ia_glossary_backlinks` rows keyed `(plan_id, term, section_id)`. Cache-backed via `ia_mcp_context_cache` (TECH-15902). Enqueue returns < 100 ms. Non-blocking: enqueue failure emits a warning log but does not halt the plan.
+
+Also enqueue an anchor reindex to sync `ia_spec_anchors` after the new task spec bodies land:
+
+```
+mcp__territory-ia__cron_anchor_reindex_enqueue({ paths: ["ia/specs/glossary.md"] })
+```
+
+Cron supervisor drains by running `npm run generate:ia-indexes -- --write-anchors` (cadence `*/5 * * * *`; drains within 5 min). Non-blocking: enqueue failure emits a warning log but does not halt the plan.
 
 ---
 

@@ -18,6 +18,8 @@ import { run as runStageVerificationFlip } from "./handlers/stage-verification-f
 import { run as runArchChangelogAppend } from "./handlers/arch-changelog-append-cron-handler.js";
 import { run as runMaterializeBacklog } from "./handlers/materialize-backlog-cron-handler.js";
 import { run as runRegenIndexes } from "./handlers/regen-indexes-cron-handler.js";
+import { run as runGlossaryBacklinks } from "./handlers/glossary-backlinks-cron-handler.js";
+import { run as runAnchorReindex } from "./handlers/anchor-reindex-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
 import type { TaskCommitRecordJobRow } from "./handlers/task-commit-record-cron-handler.js";
@@ -25,6 +27,8 @@ import type { StageVerificationFlipJobRow } from "./handlers/stage-verification-
 import type { ArchChangelogAppendJobRow } from "./handlers/arch-changelog-append-cron-handler.js";
 import type { MaterializeBacklogJobRow } from "./handlers/materialize-backlog-cron-handler.js";
 import type { RegenIndexesJobRow } from "./handlers/regen-indexes-cron-handler.js";
+import type { GlossaryBacklinksJobRow } from "./handlers/glossary-backlinks-cron-handler.js";
+import type { AnchorReindexJobRow } from "./handlers/anchor-reindex-cron-handler.js";
 
 // Load DATABASE_URL from .env if not already set.
 const { config } = await import("dotenv");
@@ -82,6 +86,18 @@ const KINDS: KindConfig[] = [
     table: "cron_regen_indexes_jobs",
     cadence: "*/5 * * * *", // every 5 min — slower, index regen
     handler: (row) => runRegenIndexes(row as unknown as RegenIndexesJobRow),
+    claimLimit: 1,
+  },
+  {
+    table: "cron_glossary_backlinks_jobs",
+    cadence: "*/5 * * * *", // every 5 min — rebuild job, moderate latency tolerance
+    handler: (row) => runGlossaryBacklinks(row as unknown as GlossaryBacklinksJobRow),
+    claimLimit: 1,
+  },
+  {
+    table: "cron_anchor_reindex_jobs",
+    cadence: "*/5 * * * *", // every 5 min — rebuild job, moderate latency tolerance
+    handler: (row) => runAnchorReindex(row as unknown as AnchorReindexJobRow),
     claimLimit: 1,
   },
 ];

@@ -1,7 +1,7 @@
 ---
 name: ship-plan
 description: Single-skill bulk plan author. Input = lean handoff YAML frontmatter at top of `docs/explorations/{slug}.md` (emitted by `design-explore` Phase 4). One Opus xhigh pass pre-fetches glossary + router + invariants once per plan, builds a 3-section §Plan Digest body per task (§Goal + §Red-Stage Proof + §Work Items, ~30 lines), inlines anchor expansion at digest write, runs synchronous drift lint, and dispatches one `master_plan_bundle_apply(jsonb)` MCP call. No filesystem mirror — DB sole source of truth. Replaces the `stage-file` + `stage-authoring` two-step roundtrip. Triggers: "/ship-plan {SLUG}", "ship plan", "bulk-author plan from handoff yaml".
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__master_plan_state, mcp__territory-ia__master_plan_bundle_apply, mcp__territory-ia__task_bundle_batch, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__journal_append, mcp__territory-ia__master_plan_change_log_append
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__router_for_task, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup, mcp__territory-ia__invariants_summary, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__backlog_issue, mcp__territory-ia__master_plan_locate, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__master_plan_state, mcp__territory-ia__master_plan_bundle_apply, mcp__territory-ia__task_bundle_batch, mcp__territory-ia__plan_digest_verify_paths, mcp__territory-ia__journal_append, mcp__territory-ia__master_plan_change_log_append, mcp__territory-ia__cron_glossary_backlinks_enqueue, mcp__territory-ia__cron_anchor_reindex_enqueue
 model: opus
 reasoning_effort: high
 ---
@@ -35,6 +35,9 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
      - Unresolvable ref → leave token literal + push to `DRIFT_WARNINGS[]` so Phase 6 lint catches it.
 6. Phase 6 — Drift lint per task: anchor resolution + glossary alignment + retired-surface scan. 2-retry budget per failure mode; halt with structured escalation on persistent failure.
 7. Phase 7 — Dispatch single `mcp__territory-ia__master_plan_bundle_apply({ bundle })` Postgres tx. Bundle shape: `{plan, stages[], tasks[]}` with `digest_body` per task. Constraint violation → re-author offending field; second failure escalates.
+7.5. Phase 7.5 — Post-bundle async enqueues (fire-and-forget; failure = warning, not halt):
+     - `mcp__territory-ia__cron_glossary_backlinks_enqueue({ slug, plan_id })` — cron drains within 5 min; upserts `ia_glossary_backlinks`.
+     - `mcp__territory-ia__cron_anchor_reindex_enqueue({ paths: ["ia/specs/glossary.md"] })` — cron drains within 5 min; upserts `ia_spec_anchors`.
 8. Phase 8 — Hand-off summary + next-step handoff (`/ship-cycle {SLUG} Stage {first_stage}`).
 
 # Hard boundaries
