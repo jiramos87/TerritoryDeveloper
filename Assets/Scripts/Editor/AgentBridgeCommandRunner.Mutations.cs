@@ -117,6 +117,11 @@ public static partial class AgentBridgeCommandRunner
                 RunSetPanelVisible(repoRoot, commandId, requestJson);
                 return true;
 
+            // ── Scene mutation (Stage 9.14 / TECH-22667) ─────────────────
+            case "scene_replace_with_prefab":
+                RunSceneReplaceWithPrefab(repoRoot, commandId, requestJson);
+                return true;
+
             default:
                 return false;
         }

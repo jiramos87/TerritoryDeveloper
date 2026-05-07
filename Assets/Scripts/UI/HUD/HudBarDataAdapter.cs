@@ -312,8 +312,16 @@ namespace Territory.UI.HUD
 
         private void HandleAutoClick()
         {
-            // BUG-63 — flip cityStats.simulateGrowth (single source of truth ProcessTick gate).
-            // AutoZoningManager + AutoRoadBuilder both read this bool — no MonoBehaviour.enabled flip needed.
+            // Stage 9.14 / TECH-22667 — AUTO toggle opens the GrowthBudget panel.
+            // GrowthBudgetPanelController.Toggle() self-spawns its panelRoot on first Show
+            // (EnsureRuntimePanelRootIfNeeded); when _panelRoot is scene-wired it uses
+            // the existing BudgetPanel GameObject instead.
+            if (_budgetPanelController != null)
+            {
+                _budgetPanelController.Toggle();
+                return;
+            }
+            // Fallback: flip cityStats.simulateGrowth when no panel controller reachable.
             if (_cityStats == null) return;
             _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
         }

@@ -22,6 +22,7 @@ alwaysApply: true
 
 - All agent prose → caveman format. Exceptions: `ia/rules/agent-output-caveman.md §exceptions`.
 - No multi-paragraph docstrings — one short line max.
+- Only general principles, do not reference specific files, plans, stages, tasks, etc.
 
 ## Commits + mutations
 
@@ -38,6 +39,7 @@ alwaysApply: true
 - `validate:frontmatter` exits 0 on warnings — gate on stdout, not exit code.
 - Run `npm run generate:ia-indexes` after any glossary edit.
 - Prototype-first methodology — every master plan ships a Stage 1.0 tracer slice + Stages 2+ §Visibility Delta lines. See [`prototype-first-methodology.md`](prototype-first-methodology.md) — `rule_content prototype-first-methodology`.
+- `validate:red-stage-proof-anchor` (Stage 9.14 / TECH-22668): anchor drift gate. §Red-Stage Proof anchor `{file}::{method}` in task spec → method body must reference surface keywords from anchor prose. Drift → exit 1. Prevents false-pass: test name matching spec while body asserts wrong surface (9.12 recurrence pattern).
 
 ## On-demand hints
 
