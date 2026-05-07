@@ -1,6 +1,6 @@
 # Mission
 
-Detect drift between open master-plan Stage `arch_surfaces` declarations and `arch_changelog` entries that landed after each Stage was filed. Args: `SLUG?` (optional master-plan slug). Output: drift report + AskUserQuestion polling per affected Stage + `master_plan_change_log_append` rows. Plan markdown never rewritten.
+Detect drift between open master-plan Stage `arch_surfaces` declarations and `arch_changelog` entries that landed after each Stage was filed. Args: `SLUG?` (optional master-plan slug). Output: drift report + AskUserQuestion polling per affected Stage + `cron_audit_log_enqueue` rows (drained async). Plan markdown never rewritten.
 
 # Recipe
 
@@ -10,7 +10,7 @@ Follow `ia/skills/arch-drift-scan/SKILL.md` end-to-end. Phase sequence (gated):
 2. **Call arch_drift_scan** — `mcp__territory-ia__arch_drift_scan({ slug })`. Returns array of `{ stage_id, drifted_surfaces, changelog_kind, question }`. Empty → emit "no drift" line + skip Phases 3–5.
 3. **Render drift report** — Markdown table: `| Stage | Drifted surfaces | Kind | Suggested resolution |`. Print before polling.
 4. **AskUserQuestion polling per Stage** — ONE `AskUserQuestion` per affected Stage. Stem describes what drifted (decision / surface) + which Stage. Options fixed (3): `acknowledge` (Stage stays as-is) | `reword` (Stage objective / exit needs re-authoring) | `re-plan` (Stage tasks need split / reorder / new tasks). Stem + option labels use product/domain wording per `ia/rules/agent-human-polling.md` — NO tool / api / db jargon. Wait for answer; do NOT batch.
-5. **Append change-log per resolution** — per resolved Stage: `mcp__territory-ia__master_plan_change_log_append({ slug, kind: "arch_drift_scan", actor: "arch-drift-scan", body: "Stage {stage_id} drift: {drifted_surfaces} | resolution: {acknowledge|reword|re-plan}" })`.
+5. **Append change-log per resolution** — per resolved Stage: `mcp__territory-ia__cron_audit_log_enqueue({ slug, audit_kind: "arch_drift_scan", actor: "arch-drift-scan", body: "Stage {stage_id} drift: {drifted_surfaces} | resolution: {acknowledge|reword|re-plan}" })` (cron drains to `ia_master_plan_change_log`).
 
 # Tool recipe
 
@@ -18,7 +18,7 @@ Follow `ia/skills/arch-drift-scan/SKILL.md` end-to-end. Phase sequence (gated):
 2. `mcp__territory-ia__arch_drift_scan` — affected stages + suggested questions.
 3. `mcp__territory-ia__arch_decision_get` / `arch_decision_list` — decision details for richer stems (optional).
 4. `mcp__territory-ia__arch_changelog_since` — narrative context (optional).
-5. `mcp__territory-ia__master_plan_change_log_append` — one append per resolved Stage.
+5. `mcp__territory-ia__cron_audit_log_enqueue` — one enqueue per resolved Stage.
 
 # Hard boundaries
 
@@ -29,7 +29,7 @@ Follow `ia/skills/arch-drift-scan/SKILL.md` end-to-end. Phase sequence (gated):
 - Do NOT load whole plan markdown when `master_plan_state` slice suffices.
 - Do NOT commit — user decides.
 - IF AskUserQuestion times out / user cancels → STOP, do NOT append for that Stage; carry pending Stages forward.
-- IF `master_plan_change_log_append` rejects → STOP, surface error code.
+- IF `cron_audit_log_enqueue` rejects → STOP, surface error code.
 
 # Output
 

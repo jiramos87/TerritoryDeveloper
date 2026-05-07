@@ -47,15 +47,15 @@ Phases (matches `ia/skills/ship-stage-main-session/SKILL.md` frontmatter `phases
 6. **Phase 5 — Pass A per-task loop** (sequential, fail-fast, **NO commits**):
    - `spec-implementer` work inline — read `§Plan Digest` via `task_spec_section`, apply edits in declared order, resolve anchors via `plan_digest_resolve_anchor`.
    - `npm run unity:compile-check` (~15 s fast-fail) + scene-wiring preflight when §Plan Digest carries Scene Wiring step.
-   - `task_status_flip(task_id, "implemented")` + `journal_append(phase: "pass_a.implemented")`.
+   - `task_status_flip(task_id, "implemented")` + `cron_journal_append_enqueue(phase: "pass_a.implemented")`.
    - **NO per-task commits** (single stage commit at Phase 8).
 7. **Phase 6 — Pass B per-stage** (runs ONCE):
    - **6.1 verify-loop** — full Path A + Path B on cumulative `git diff HEAD` (Pass A worktree dirty). `verdict == pass` required; fail → `STAGE_VERIFY_FAIL` + chain digest, no rollback, worktree stays dirty.
    - **6.2 per-task verified→done flips** — for each task in `STAGE_TASK_IDS` (skip if already terminal): `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both).
 
    No code-review in chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9).
-8. **Phase 7 — Inline closeout (DB-only)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `master_plan_change_log_append(slug, "stage_closed", body)` audit row. No filesystem mv.
-9. **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL Pass A diffs after verify-loop pass. Resume note: if `git diff HEAD` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse `git rev-parse HEAD` as `STAGE_COMMIT_SHA`. Capture `STAGE_COMMIT_SHA`. Per-task `task_commit_record(task_id, commit_sha=STAGE_COMMIT_SHA, "feat", ...)`. `stage_verification_flip(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")`.
+8. **Phase 7 — Inline closeout (DB-only)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `cron_audit_log_enqueue({slug, audit_kind:"stage_closed", body, stage_id, commit_sha})` audit row (fire-and-forget; cron drains to `ia_master_plan_change_log` within 90 s). No filesystem mv.
+9. **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL Pass A diffs after verify-loop pass. Resume note: if `git diff HEAD` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse `git rev-parse HEAD` as `STAGE_COMMIT_SHA`. Capture `STAGE_COMMIT_SHA`. Per-task `cron_task_commit_record_enqueue(task_id, commit_sha=STAGE_COMMIT_SHA, commit_kind="feat", ...)` — fire-and-forget < 100 ms. `cron_stage_verification_flip_enqueue(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")` — fire-and-forget < 100 ms; cron drains to `ia_stage_verifications` within 90 s.
 10. **Phase 9** — Chain digest (JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block).
 11. **Phase 10** — Next-stage resolver via `master_plan_state(slug)` — 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → no further command (plan complete; inline `stage_closeout_apply` already recorded per-stage). Skeleton stages → `STOPPED — skeleton stage encountered`.
 
@@ -73,7 +73,7 @@ Phases (matches `ia/skills/ship-stage-main-session/SKILL.md` frontmatter `phases
 
 Emit exactly one of:
 
-- `SHIP_STAGE {STAGE_ID}: PASSED` — **only** after Phase 7 closeout + Phase 8 stage commit + `stage_verification_flip` succeed. Include `Next:` from Phase 10 resolver.
+- `SHIP_STAGE {STAGE_ID}: PASSED` — **only** after Phase 7 closeout + Phase 8 stage commit + `cron_stage_verification_flip_enqueue` succeed. Include `Next:` from Phase 10 resolver.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` — include `Next: /stage-authoring {SLUG} Stage {STAGE_ID}` line.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — stage not found in DB` — include `Next: /stage-file ...` line.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean. ...` — manual-repair directive.

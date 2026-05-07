@@ -50,8 +50,8 @@ tools_extra:
   - mcp__territory-ia__master_plan_bundle_apply
   - mcp__territory-ia__task_bundle_batch
   - mcp__territory-ia__plan_digest_verify_paths
-  - mcp__territory-ia__journal_append
-  - mcp__territory-ia__master_plan_change_log_append
+  - mcp__territory-ia__cron_journal_append_enqueue
+  - mcp__territory-ia__cron_audit_log_enqueue
   - mcp__territory-ia__cron_glossary_backlinks_enqueue
   - mcp__territory-ia__cron_anchor_reindex_enqueue
 caveman_exceptions:
@@ -66,7 +66,7 @@ hard_boundaries:
   - "Do NOT call `task_insert` / `stage_insert` / `master_plan_insert` / `task_spec_section_write` per row — single `master_plan_bundle_apply` only."
   - "Do NOT regress to per-Task authoring on token overflow — split into ⌈N/2⌉ bulk sub-passes; bundle still dispatches once after the last sub-pass."
   - "Do NOT skip drift lint — anchor + glossary + retired-surface lint runs synchronously before bundle dispatch. Findings go to in-memory buffer, NOT inline ctx preamble."
-  - "Do NOT write drift_lint_summary row before master_plan_bundle_apply succeeds — version row FK required (Review Note 5)."
+  - "Do NOT write drift_lint_summary row before master_plan_bundle_apply succeeds — version row FK required (Review Note 5). Use `cron_audit_log_enqueue` (audit_kind=drift_lint_summary)."
   - "Do NOT call `lifecycle_stage_context` per Task — pre-fetch once at Phase 3."
   - "Do NOT write code, run verify, or flip Task status — handoff to `/ship-cycle` (or legacy `/ship-stage`) handles execution."
   - "Do NOT edit `ia/specs/glossary.md` — propose candidates in handoff `notes:` field only."
@@ -210,7 +210,7 @@ Total input tokens (handoff YAML + SHARED_CONTEXT + TASK_BATCH) > 180k → split
 **Ctx-discipline: in-memory buffer, not inline preamble.** Collect ALL drift findings into an in-memory
 `drift_findings` buffer object (do NOT append verbose findings to the author-prompt context). Buffer shape
 mirrors `drift_lint_summary` payload schema (`ia/rules/ship-stage-journal-schema.md §drift_lint_summary`).
-Phase 7 dispatches `master_plan_bundle_apply` FIRST, then writes `master_plan_change_log_append` row from
+Phase 7 dispatches `master_plan_bundle_apply` FIRST, then enqueues `cron_audit_log_enqueue` (audit_kind=drift_lint_summary) row from
 the buffer. Author prompt at Phase 7 receives only: `drift_lint_summary_id={row_id} ({n_resolved} resolved,
 {n_unresolved} unresolved)` — the 1-line ref, not the full findings.
 
@@ -299,7 +299,7 @@ Single call: `mcp__territory-ia__master_plan_bundle_apply({ bundle })`. Returns 
 
 After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drift lint summary in order:
 
-1. `journal_append` with `payload_kind=phase_checkpoint`:
+1. `cron_journal_append_enqueue` with `payload_kind=phase_checkpoint` (cron drains async to `ia_ship_stage_journal`):
 
 ```json
 {
@@ -317,7 +317,7 @@ After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drif
 }
 ```
 
-2. `master_plan_change_log_append` with `kind=drift_lint_summary` (payload = in-memory drift findings buffer from Phase 6). Returns `row_id`. Ref `drift_lint_summary_id={row_id}` stored for Phase 8 summary line.
+2. `cron_audit_log_enqueue` with `audit_kind=drift_lint_summary` (body = in-memory drift findings buffer from Phase 6, JSON-stringified). Cron drains to `ia_master_plan_change_log`. Returns `job_id`. Ref `drift_lint_summary_job_id={job_id}` stored for Phase 8 summary line.
 
 Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
 
@@ -357,8 +357,8 @@ Per-stage:
 Per-task:
   {task_key}: §Plan Digest written ({n_work_items} work items); fold: {n_term_replacements}/{n_retired_refs_replaced}; glossary_warnings: {n_glossary_warnings}
   ...
-drift_lint_summary_id: {row_id} ({n_resolved} resolved, {n_unresolved} unresolved)
-DB writes: 1 master_plan_bundle_apply OK; 1 master_plan_change_log_append (drift_lint_summary); 0 task_spec_section_write (replaced by bundle).
+drift_lint_summary_job_id: {job_id} ({n_resolved} resolved, {n_unresolved} unresolved)
+DB writes: 1 master_plan_bundle_apply OK; 1 cron_audit_log_enqueue (drift_lint_summary, drained async); 0 task_spec_section_write (replaced by bundle).
 next=ship-cycle Stage 1.0
 ```
 

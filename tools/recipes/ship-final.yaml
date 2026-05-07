@@ -5,7 +5,7 @@ description: >-
   union of paths in `ia_task_commits` for slug (HEAD-diff fallback when DB
   unreachable) → annotated git tag `{slug}-v{N}` (local only) →
   `master_plan_close` MCP flips `closed_at` →
-  `journal_append(payload_kind=version_close)`. Final gate of ship-protocol
+  `cron_journal_append_enqueue(payload_kind=version_close)`. Final gate of ship-protocol
   cycle. Mechanical — no decisions.
 inputs:
   type: object
@@ -19,8 +19,8 @@ inputs:
     session_id:
       type: string
       description: >-
-        Optional agent session id for journal_append. Defaults to recipe-run
-        auto-generated id.
+        Optional agent session id for cron_journal_append_enqueue. Defaults to
+        recipe-run auto-generated id.
     actor:
       type: string
       description: Optional actor for journal payload.
@@ -71,7 +71,7 @@ steps:
   - id: close_plan
     description: >-
       Phase 6 — flip ia_master_plans.closed_at = now(). Must precede
-      journal_append for audit ordering. Idempotent — returns
+      cron_journal_append_enqueue for audit ordering. Idempotent — returns
       `version_already_closed` when closed_at non-null.
     mcp: master_plan_close
     args:
@@ -79,9 +79,9 @@ steps:
 
   - id: journal_close
     description: >-
-      Phase 7 — append version_close row to ia_ship_stage_journal. Payload:
-      {plan_slug, version, tag, sha, validate_all_result, sections_closed[]}.
-    mcp: journal_append
+      Phase 7 — enqueue version_close row. Cron drains to ia_ship_stage_journal.
+      Payload: {plan_slug, version, tag, sha, validate_all_result, sections_closed[]}.
+    mcp: cron_journal_append_enqueue
     args:
       session_id: ${inputs.session_id}
       slug: ${inputs.slug}
@@ -101,4 +101,4 @@ outputs:
   tag: ${git_tag.tag}
   sha: ${git_tag.sha}
   closed_at: ${close_plan.closed_at}
-  journal_id: ${journal_close.id}
+  journal_job_id: ${journal_close.job_id}

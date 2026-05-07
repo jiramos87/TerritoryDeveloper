@@ -3,14 +3,14 @@ name: arch-drift-scan
 purpose: >-
   Manual drift detector for architecture-coherence-system. Calls arch_drift_scan MCP, renders drift
   report, polls user via AskUserQuestion per affected Stage, persists resolutions to plan via
-  master_plan_change_log_append (kind=arch_drift_scan). Plan never auto-rewritten.
+  cron_audit_log_enqueue (audit_kind=arch_drift_scan). Plan never auto-rewritten.
 audience: both
 loaded_by: on-demand
 slices_via: ""
 description: >-
   Use when the user runs /arch-drift-scan {slug?} to check whether open master plans have drifted from
   arch_changelog entries written after each Stage was filed. Phases: load plan → call arch_drift_scan
-  → render drift report → AskUserQuestion polling per affected Stage → master_plan_change_log_append
+  → render drift report → AskUserQuestion polling per affected Stage → cron_audit_log_enqueue
   per resolution. Triggers: "/arch-drift-scan", "drift scan", "architecture drift". No plan rewrite —
   change-log only.
 phases:
@@ -39,7 +39,7 @@ tools_extra:
   - mcp__territory-ia__arch_changelog_since
   - mcp__territory-ia__master_plan_render
   - mcp__territory-ia__master_plan_state
-  - mcp__territory-ia__master_plan_change_log_append
+  - mcp__territory-ia__cron_audit_log_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -121,12 +121,12 @@ Wait for user answer before moving to next Stage. Do NOT batch.
 
 ### Phase 5 — Append change-log per resolution
 
-Per resolved Stage → `mcp__territory-ia__master_plan_change_log_append`:
+Per resolved Stage → `mcp__territory-ia__cron_audit_log_enqueue` (fire-and-forget; cron supervisor drains to `ia_master_plan_change_log`):
 
 ```json
 {
   "slug": "{SLUG}",
-  "kind": "arch_drift_scan",
+  "audit_kind": "arch_drift_scan",
   "actor": "arch-drift-scan",
   "body": "Stage {stage_id} drift: {drifted_surfaces} | resolution: {acknowledge|reword|re-plan}"
 }
@@ -142,7 +142,7 @@ Plan never auto-rewritten. User runs `/ship-plan --version-bump {SLUG}` next whe
 2. `mcp__territory-ia__arch_drift_scan({ slug })` — get affected stages + suggested questions.
 3. `mcp__territory-ia__arch_decision_get` / `arch_decision_list` — fetch decision details for richer question stems (optional).
 4. `mcp__territory-ia__arch_changelog_since` — context on what changed since plan was filed (optional, for narrative).
-5. `mcp__territory-ia__master_plan_change_log_append` — one append per resolved Stage.
+5. `mcp__territory-ia__cron_audit_log_enqueue` — one enqueue per resolved Stage (drained async to `ia_master_plan_change_log`).
 
 ---
 
@@ -150,7 +150,7 @@ Plan never auto-rewritten. User runs `/ship-plan --version-bump {SLUG}` next whe
 
 - IF `arch_drift_scan` returns empty → no polling, no append, emit "no drift" line.
 - IF AskUserQuestion times out / user cancels → STOP, do NOT append change-log for that Stage; carry pending Stages forward in output.
-- IF `master_plan_change_log_append` rejects → STOP, surface error code.
+- IF `cron_audit_log_enqueue` rejects → STOP, surface error code.
 - IF plan markdown referenced in stage body has been edited mid-scan → re-fetch via `master_plan_state` before polling that Stage.
 - Never overwrite Stage objective / exit / task list — change-log is the only persistence path.
 

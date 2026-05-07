@@ -3,7 +3,7 @@ name: ship-cycle
 purpose: >-
   Stage-atomic full ship: one inference body emits ALL tasks of one Stage with
   boundary markers (Pass A) AND drives verify-loop + verified→done flips +
-  inline closeout + single stage commit + stage_verification_flip (Pass B).
+  inline closeout + single stage commit + cron_stage_verification_flip_enqueue (Pass B).
   Sole stage-driver in the new chain (design-explore → ship-plan → ship-cycle
   → ship-final). Falls back to /ship-stage-main-session legacy adapter only
   when batch exceeds token cap.
@@ -15,10 +15,12 @@ description: >-
   of one Stage with `<!-- TASK:{ISSUE_ID} START/END -->` boundary markers,
   flips each `pending → implemented`, then runs verify-loop on cumulative
   `git diff HEAD`, flips each `implemented → verified → done`, fires inline
-  `stage_closeout_apply` + `master_plan_change_log_append({kind:'stage_closed'})`
-  audit row, lands a single stage commit `feat({slug}-stage-{stage_id_db})`,
-  records per-Task commit sha via `task_commit_record`, and writes
-  `stage_verification_flip(verdict='pass', commit_sha)`. Failure mode =
+  `stage_closeout_apply` + `cron_audit_log_enqueue({audit_kind:'stage_closed'})`
+  audit row (cron-drained), lands a single stage commit
+  `feat({slug}-stage-{stage_id_db})`, records per-Task commit sha via
+  `cron_task_commit_record_enqueue`, and writes
+  `cron_stage_verification_flip_enqueue(verdict='pass', commit_sha)`.
+  Failure mode =
   `ia_stages.status='partial'` (mig 0069); resume re-enters at first non-done
   task (DB `task_state` query, no git scan). Token budget hard cap 80k input
   on Pass A inference; over cap = fallback `/ship-stage-main-session` legacy
@@ -35,8 +37,8 @@ phases:
   - Pass A — per-task unity:compile-check gate + task_status_flip(implemented) + phase_checkpoint journal
   - Pass B — verify-loop on cumulative git diff HEAD (verdict==pass required)
   - Pass B — per-task verified→done flips
-  - Pass B — inline closeout (stage_closeout_apply + master_plan_change_log_append)
-  - Pass B — single stage commit + per-task task_commit_record + stage_verification_flip
+  - Pass B — inline closeout (stage_closeout_apply + cron_audit_log_enqueue)
+  - Pass B — single stage commit + per-task cron_task_commit_record_enqueue + cron_stage_verification_flip_enqueue
   - Chain digest + next-stage resolver
 triggers:
   - /ship-cycle {SLUG} {STAGE_ID}
@@ -55,11 +57,9 @@ tools_extra:
   - mcp__territory-ia__task_status_flip
   - mcp__territory-ia__task_status_flip_batch
   - mcp__territory-ia__stage_closeout_apply
-  - mcp__territory-ia__master_plan_change_log_append
   - mcp__territory-ia__master_plan_state
   - mcp__territory-ia__master_plan_next_pending
   - mcp__territory-ia__unity_compile
-  - mcp__territory-ia__journal_append
   - mcp__territory-ia__cron_audit_log_enqueue
   - mcp__territory-ia__cron_journal_append_enqueue
   - mcp__territory-ia__cron_task_commit_record_enqueue
@@ -87,7 +87,7 @@ caller_agent: ship-cycle
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role.** Stage-atomic full ship — owns BOTH Pass A (implement+compile+`task_status_flip(implemented)` for all Tasks of one Stage in a single inference with boundary markers) AND Pass B (verify-loop + verified→done flips + inline closeout + single stage commit + `stage_verification_flip`). Sole stage-driver in the new chain `design-explore → ship-plan → ship-cycle → ship-final`.
+**Role.** Stage-atomic full ship — owns BOTH Pass A (implement+compile+`task_status_flip(implemented)` for all Tasks of one Stage in a single inference with boundary markers) AND Pass B (verify-loop + verified→done flips + inline closeout + single stage commit + `cron_stage_verification_flip_enqueue`). Sole stage-driver in the new chain `design-explore → ship-plan → ship-cycle → ship-final`.
 
 **Upstream:** `ship-plan` (populates §Plan Digest in DB). **Downstream:** `/ship-final {SLUG}` (when Stage was last filed Stage of plan) OR next `/ship-cycle {SLUG} Stage {N+1}` invocation.
 

@@ -18,7 +18,7 @@ description: >-
   `validate:fast` HEAD-diff when DB unreachable / no commits recorded) →
   `git tag {slug}-v{N}` (annotated, local only) → flip
   `ia_master_plans.closed_at = now()` via `master_plan_close` MCP
-  (must precede journal_append) → `journal_append(phase=version-close,
+  (must precede cron_journal_append_enqueue) → `cron_journal_append_enqueue(phase=version-close,
   payload_kind=version_close, payload={plan_slug, version, tag, sha,
   validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}",
   "ship final", "close master plan version".
@@ -44,7 +44,7 @@ tools_extra:
   - mcp__territory-ia__master_plan_state
   - mcp__territory-ia__master_plan_locate
   - mcp__territory-ia__master_plan_close
-  - mcp__territory-ia__journal_append
+  - mcp__territory-ia__cron_journal_append_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -59,7 +59,7 @@ hard_boundaries:
   - IF `closed_at` already set on parent → STOP. Version already closed.
   - Do NOT push tag — local only. User decides remote push.
   - Do NOT create v(N+1) row — that is `master_plan_version_create` (separate MCP).
-  - Do NOT skip closed_at flip on green validate — must precede journal_append.
+  - Do NOT skip closed_at flip on green validate — must precede cron_journal_append_enqueue.
   - Do NOT commit — closeout is a tag + DB flip, no source mutations.
 caller_agent: ship-final
 ---
@@ -104,8 +104,8 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 3. **`assert_stages_done`** — bash: assert every `stages[].status === 'done'`. STOP on any `partial` / `pending` / `in_progress`.
 4. **`cumulative_validate`** — bash: query `ia_task_commits` for plan's task shas → union `git show --name-only` paths → `npm run validate:fast -- --diff-paths <csv>` (path-map scoped, TECH-12640). Drift in unrelated plans does NOT block this close. Fallback: HEAD-diff `validate:fast` when DB unreachable. STOP on non-zero exit.
 5. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
-6. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede journal_append.
-7. **`journal_close`** — MCP: `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
+6. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede cron_journal_append_enqueue.
+7. **`journal_close`** — MCP: `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
 
 ---
 
@@ -128,7 +128,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 - Do NOT push tag — local only. Pushing is a human-gated step.
 - Do NOT mutate code / specs / schemas — closure is metadata-only (tag + closed_at + journal row).
 - Do NOT call `master_plan_version_create` from this skill — separate MCP, separate human gate (start of v2).
-- Do NOT skip `closed_at` flip on green validate — flip MUST precede journal_append for audit ordering.
+- Do NOT skip `closed_at` flip on green validate — flip MUST precede cron_journal_append_enqueue for audit ordering.
 
 ---
 

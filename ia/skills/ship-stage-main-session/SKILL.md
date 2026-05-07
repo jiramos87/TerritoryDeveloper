@@ -4,7 +4,7 @@ purpose: >-
   Main-session adapter for /ship-stage: executes the full DB-backed two-pass chain (stage_bundle →
   §Plan Digest gate → resume gate via task_state → Pass A per-task
   implement+compile+task_status_flip(implemented) NO COMMITS → Pass B per-stage verify-loop +
-  verified→done flips + inline stage_closeout_apply + single stage commit + stage_verification_flip)
+  verified→done flips + inline stage_closeout_apply + single stage commit + cron_stage_verification_flip_enqueue)
   inline (no subagents). No code-review in chain (operator may run standalone /code-review out-of-band).
   Use when caller agent (Cursor Composer-2 / Claude Code main session) must do the work itself rather
   than dispatch via Agent/Task tool.
@@ -19,9 +19,9 @@ description: >-
   task (spec-implementer work in-repo → npm run unity:compile-check + scene-wiring preflight →
   task_status_flip(implemented); NO commits — single stage commit at Phase 8) → Pass B per stage
   (verify-loop on git diff HEAD → per-task task_status_flip(verified) then task_status_flip(done)) →
-  inline stage_closeout_apply + master_plan_change_log_append audit row → single stage commit
-  feat({SLUG}-stage-{STAGE_ID_DB}) (or reused sha on empty resume diff) → per-task task_commit_record
-  → stage_verification_flip(pass, commit_sha). No code-review in chain — operator may run standalone
+  inline stage_closeout_apply + cron_audit_log_enqueue audit row → single stage commit
+  feat({SLUG}-stage-{STAGE_ID_DB}) (or reused sha on empty resume diff) → per-task cron_task_commit_record_enqueue
+  → cron_stage_verification_flip_enqueue(pass, commit_sha). No code-review in chain — operator may run standalone
   /code-review {ISSUE_ID} out-of-band (lifecycle row 9). Closeout is MANDATORY on green — do not emit
   PASSED or defer closeout. Use territory-ia MCP and bash per the skill; never dispatch via Agent/Task
   tool. Triggers: "/ship-stage-main-session {slug} {stage}", "execute ship-stage in this session",
@@ -35,7 +35,7 @@ phases:
   - Pass A per-task (implement + compile + task_status_flip; NO commits)
   - Pass B per-stage (verify-loop + verified→done flips)
   - Inline closeout (stage_closeout_apply DB-only)
-  - Stage commit + per-task commit record + stage_verification_flip
+  - Stage commit + per-task cron_task_commit_record_enqueue + cron_stage_verification_flip_enqueue
 triggers:
   - /ship-stage-main-session {slug} {stage}
   - execute ship-stage in this session
@@ -83,20 +83,20 @@ Missing either positional → print usage + abort: `/ship-stage-main-session {SL
    - **Phase 5 — Pass A per-task loop** (sequential, fail-fast, NO commits):
      1. spec-implementer work inline — read `§Plan Digest` via `task_spec_section`, apply edits in declared order, resolve anchors via `plan_digest_resolve_anchor`.
      2. `npm run unity:compile-check` (~15 s fast-fail) + scene-wiring preflight when §Plan Digest carries Scene Wiring step (verify worktree diff includes `Assets/Scenes/*.unity` edit).
-     3. `task_status_flip(task_id, "implemented")` + `journal_append(phase: "pass_a.implemented")`.
+     3. `task_status_flip(task_id, "implemented")` + `cron_journal_append_enqueue(phase: "pass_a.implemented")`.
      4. **NO per-task commits** (single stage commit at Phase 8).
    - **Phase 6 — Pass B per-stage** (runs ONCE):
      1. **6.1 verify-loop** — full Path A+B on cumulative `git diff HEAD` (Pass A worktree dirty). `verdict == pass` required; fail → `STAGE_VERIFY_FAIL` + chain digest, no rollback, worktree stays dirty.
      2. **6.2 per-task verified→done flips** — for each task in `STAGE_TASK_IDS` (skip if already terminal): `task_status_flip(task_id, "verified")` then `task_status_flip(task_id, "done")` (enum walk requires both).
 
      No code-review in chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9).
-   - **Phase 7 — Inline closeout (DB-only)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `master_plan_change_log_append(slug, "stage_closed", body)` audit row. No filesystem mv.
+   - **Phase 7 — Inline closeout (DB-only)** — `stage_closeout_apply(slug, stage_id)` (DB-backed atomic) + `cron_audit_log_enqueue({slug, audit_kind:"stage_closed", body, stage_id, commit_sha})` audit row (fire-and-forget; cron drains to `ia_master_plan_change_log` within 90 s). No filesystem mv.
    - **Phase 8 — Stage commit + verification record** — single commit `feat({SLUG}-stage-{STAGE_ID_DB}): ...` covers ALL Pass A diffs after verify-loop pass. Resume note: if `git diff HEAD` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse `git rev-parse HEAD` as `STAGE_COMMIT_SHA`. Capture `STAGE_COMMIT_SHA`. Per-task `cron_task_commit_record_enqueue(task_id, commit_sha=STAGE_COMMIT_SHA, commit_kind="feat", ...)` — fire-and-forget < 100 ms. `cron_stage_verification_flip_enqueue(verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-stage-main-session")` — fire-and-forget < 100 ms; cron drains to `ia_stage_verifications` within 90 s.
    - **Phase 9 — Chain digest** — JSON header `chain_stage_digest: true` + caveman summary + `next_handoff` block.
    - **Phase 10 — Next-stage resolver** — `master_plan_state(slug)`; 3 cases priority: filed → `/ship-stage`; pending → `/stage-file`; umbrella-done → no further command (plan complete; inline `stage_closeout_apply` already recorded per-stage). Skeleton stages (no tasks) → `STOPPED — skeleton stage encountered`.
 
 3. **Tooling:**
-   - territory-ia MCP: `master_plan_state`, `stage_bundle`, `task_state`, `task_bundle`, `task_spec_section`, `task_status_flip`, `stage_closeout_apply`, `master_plan_change_log_append`, `cron_task_commit_record_enqueue`, `cron_stage_verification_flip_enqueue`, `journal_append`, `glossary_lookup`, `invariants_summary`, `plan_digest_resolve_anchor` (Pass A spec-implementer work), `backlog_issue`, `router_for_task`.
+   - territory-ia MCP: `master_plan_state`, `stage_bundle`, `task_state`, `task_bundle`, `task_spec_section`, `task_status_flip`, `stage_closeout_apply`, `cron_audit_log_enqueue`, `cron_task_commit_record_enqueue`, `cron_stage_verification_flip_enqueue`, `cron_journal_append_enqueue`, `glossary_lookup`, `invariants_summary`, `plan_digest_resolve_anchor` (Pass A spec-implementer work), `backlog_issue`, `router_for_task`.
    - `bash` / repo scripts per the skill (`npm run unity:compile-check`, `npm run validate:*`).
    - Direct file edits (Unity sources under `Assets/`, IA edits, code changes); `git add -A` + `git commit` only at Phase 8.
 
@@ -113,7 +113,7 @@ Missing either positional → print usage + abort: `/ship-stage-main-session {SL
 
 End with one of:
 
-- `SHIP_STAGE {STAGE_ID}: PASSED` — **only** after Phase 7 closeout + Phase 8 stage commit + `stage_verification_flip` succeed. Include `Next:` from Phase 10 resolver.
+- `SHIP_STAGE {STAGE_ID}: PASSED` — **only** after Phase 7 closeout + Phase 8 stage commit + `cron_stage_verification_flip_enqueue` succeed. Include `Next:` from Phase 10 resolver.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — prerequisite: §Plan Digest not populated for {ISSUE_ID_LIST}` — include `Next: /stage-authoring {SLUG} Stage {STAGE_ID}` line.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — stage not found in DB` — include `Next: /stage-file ...` line.
 - `SHIP_STAGE {STAGE_ID}: STOPPED — PASS_B_ONLY but worktree clean. ...` — manual-repair directive.

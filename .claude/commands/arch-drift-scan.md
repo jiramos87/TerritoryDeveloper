@@ -1,9 +1,9 @@
 ---
-description: Use when the user runs /arch-drift-scan {slug?} to check whether open master plans have drifted from arch_changelog entries written after each Stage was filed. Phases: load plan → call arch_drift_scan → render drift report → AskUserQuestion polling per affected Stage → master_plan_change_log_append per resolution. Triggers: "/arch-drift-scan", "drift scan", "architecture drift". No plan rewrite — change-log only.
+description: Use when the user runs /arch-drift-scan {slug?} to check whether open master plans have drifted from arch_changelog entries written after each Stage was filed. Phases: load plan → call arch_drift_scan → render drift report → AskUserQuestion polling per affected Stage → cron_audit_log_enqueue per resolution. Triggers: "/arch-drift-scan", "drift scan", "architecture drift". No plan rewrite — change-log only.
 argument-hint: "{SLUG?} — optional master-plan slug. Omit → scan all open plans (one report per plan)."
 ---
 
-# /arch-drift-scan — Manual drift detector for architecture-coherence-system. Calls arch_drift_scan MCP, renders drift report, polls user via AskUserQuestion per affected Stage, persists resolutions to plan via master_plan_change_log_append (kind=arch_drift_scan). Plan never auto-rewritten.
+# /arch-drift-scan — Manual drift detector for architecture-coherence-system. Calls arch_drift_scan MCP, renders drift report, polls user via AskUserQuestion per affected Stage, persists resolutions to plan via cron_audit_log_enqueue (audit_kind=arch_drift_scan). Plan never auto-rewritten.
 
 Drive `$ARGUMENTS` via the [`arch-drift-scan`](../agents/arch-drift-scan.md) subagent.
 
@@ -35,7 +35,7 @@ Forward via Agent tool with `subagent_type: "arch-drift-scan"`:
 > 2. **Call arch_drift_scan** — per plan. Empty array → emit "no drift" line + skip Phases 3–5.
 > 3. **Render drift report** — Markdown table: Stage | Drifted surfaces | Kind | Suggested resolution.
 > 4. **AskUserQuestion polling per Stage** — ONE call per affected Stage. Stem + options use product/domain wording, NO tool/api jargon. Options fixed: `acknowledge` | `reword` | `re-plan`. Wait for answer; do NOT batch.
-> 5. **Append change-log per resolution** — `master_plan_change_log_append({ slug, kind: "arch_drift_scan", actor: "arch-drift-scan", body: "Stage {stage_id} drift: {drifted_surfaces} | resolution: {x}" })`.
+> 5. **Append change-log per resolution** — `cron_audit_log_enqueue({ slug, audit_kind: "arch_drift_scan", actor: "arch-drift-scan", body: "Stage {stage_id} drift: {drifted_surfaces} | resolution: {x}" })` (cron drains async to `ia_master_plan_change_log`).
 >
 > ## Tool recipe
 >
@@ -43,7 +43,7 @@ Forward via Agent tool with `subagent_type: "arch-drift-scan"`:
 > 2. `mcp__territory-ia__arch_drift_scan` — affected stages + suggested questions.
 > 3. `mcp__territory-ia__arch_decision_get` / `arch_decision_list` — decision details for richer stems (optional).
 > 4. `mcp__territory-ia__arch_changelog_since` — narrative context (optional).
-> 5. `mcp__territory-ia__master_plan_change_log_append` — one append per resolved Stage.
+> 5. `mcp__territory-ia__cron_audit_log_enqueue` — one enqueue per resolved Stage.
 >
 > ## Hard boundaries
 >

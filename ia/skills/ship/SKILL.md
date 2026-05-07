@@ -60,7 +60,7 @@ tools_extra:
   - mcp__territory-ia__unity_bridge_get
   - mcp__territory-ia__findobjectoftype_scan
   - mcp__territory-ia__verify_classify
-  - mcp__territory-ia__journal_append
+  - mcp__territory-ia__cron_journal_append_enqueue
 caveman_exceptions:
   - code
   - commits

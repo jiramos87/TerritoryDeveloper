@@ -19,7 +19,7 @@ Recipe steps:
 4. `cumulative_validate` — `git diff {parent_tag}..HEAD` + `npm run validate:all`. STOP on non-zero exit.
 5. `git_tag` — `git tag -a {slug}-v{N} -m "Close {slug} v{N}"` (local only).
 6. `close_plan` — `master_plan_close(slug)` MCP — flips `closed_at`. Must precede journal.
-7. `journal_close` — `journal_append(payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
+7. `journal_close` — `cron_journal_append_enqueue(payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
 
 ## Hard boundaries
 

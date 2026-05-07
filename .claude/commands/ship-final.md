@@ -1,5 +1,5 @@
 ---
-description: Close a master-plan version. Phases: assert all `ia_section_claims` open rows for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` / `in_progress` / `partial`) → run plan-scoped `validate:fast --diff-paths` on union of paths touched by `ia_task_commits` rows for slug (fallback: `validate:fast` HEAD-diff when DB unreachable / no commits recorded) → `git tag {slug}-v{N}` (annotated, local only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP (must precede journal_append) → `journal_append(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}", "ship final", "close master plan version".
+description: Close a master-plan version. Phases: assert all `ia_section_claims` open rows for the slug = 0 → assert all `ia_stages.status` ∈ {`done`} (no `pending` / `in_progress` / `partial`) → run plan-scoped `validate:fast --diff-paths` on union of paths touched by `ia_task_commits` rows for slug (fallback: `validate:fast` HEAD-diff when DB unreachable / no commits recorded) → `git tag {slug}-v{N}` (annotated, local only) → flip `ia_master_plans.closed_at = now()` via `master_plan_close` MCP (must precede cron_journal_append_enqueue) → `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`. Triggers: "/ship-final {SLUG}", "ship final", "close master plan version".
 argument-hint: "{SLUG}"
 ---
 
@@ -37,7 +37,7 @@ Recipe steps:
 4. `cumulative_validate` — `git diff {parent_tag}..HEAD` + `npm run validate:all`. STOP on non-zero exit.
 5. `git_tag` — `git tag -a {slug}-v{N} -m "Close {slug} v{N}"` (local only).
 6. `close_plan` — `master_plan_close(slug)` MCP — flips `closed_at`. Must precede journal.
-7. `journal_close` — `journal_append(payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
+7. `journal_close` — `cron_journal_append_enqueue(payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
 
 ## Hard boundaries
 
