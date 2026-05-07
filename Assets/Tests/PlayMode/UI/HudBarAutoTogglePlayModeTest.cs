@@ -24,7 +24,7 @@ namespace Territory.Tests.PlayMode.UI
     /// <summary>
     /// PlayMode test: AUTO button click toggles GrowthBudgetPanel visibility.
     /// Self-contained — spawns minimal MonoBehaviour graph (Canvas + HudBarDataAdapter +
-    /// GrowthBudgetPanelController + IlluminatedButton), does NOT load MainScene.
+    /// GrowthBudgetPanelController + IlluminatedButton), does NOT load CityScene.
     /// </summary>
     public sealed class HudBarAutoTogglePlayModeTest
     {

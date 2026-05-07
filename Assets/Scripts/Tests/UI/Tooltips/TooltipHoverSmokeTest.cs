@@ -24,7 +24,7 @@ namespace Territory.Tests.PlayMode.UI.Tooltips
     /// </summary>
     public sealed class TooltipHoverSmokeTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
         private const string ProbeText = "hover-me";
 
         private TooltipController _controller;

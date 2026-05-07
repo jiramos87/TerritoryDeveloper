@@ -1268,7 +1268,7 @@
         {
           "type": "issue",
           "id": "TECH-2901",
-          "checklist_line": "- [ ] **TECH-2901 — HudBar scene wiring + legacy decommission (Stage 6 T6.3)** — Place `HudBar.prefab` instance under `Game Managers` parent in `MainScene.unity` via `unity_bridge_command instantiate_prefab` + `set_gameobject_parent` + `attach_component` + `assign_serialized_field`. Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.",
+          "checklist_line": "- [ ] **TECH-2901 — HudBar scene wiring + legacy decommission (Stage 6 T6.3)** — Place `HudBar.prefab` instance under `Game Managers` parent in `CityScene.unity` via `unity_bridge_command instantiate_prefab` + `set_gameobject_parent` + `attach_component` + `assign_serialized_field`. Legacy HUD GameObjects + scripts removed; scene saved; Scene Wiring evidence block emitted per `ia/rules/unity-scene-wiring.md`.",
           "trailing_blanks": 1
         },
         {
@@ -1298,7 +1298,7 @@
         {
           "type": "issue",
           "id": "TECH-2966",
-          "checklist_line": "- [ ] **TECH-2966 — Game UI Stage 10 T10.4 — UI Canvas scene root** — Add scene-level `UI Canvas` GameObject to `MainScene.unity` via bridge mutations: `Canvas` (Render Mode = Screen Space — Overlay) + `CanvasScaler` (Scale-With-Screen-Size, reference resolution + match value sourced from `UiTheme`) + `GraphicRaycaster`. Sibling `EventSystem` GameObject (StandaloneInputModule). Distinct from `Game Managers` / `World` parents. Reference resolution sourced from `UiTheme` per invariant #3 (cached in `Awake`). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.",
+          "checklist_line": "- [ ] **TECH-2966 — Game UI Stage 10 T10.4 — UI Canvas scene root** — Add scene-level `UI Canvas` GameObject to `CityScene.unity` via bridge mutations: `Canvas` (Render Mode = Screen Space — Overlay) + `CanvasScaler` (Scale-With-Screen-Size, reference resolution + match value sourced from `UiTheme`) + `GraphicRaycaster`. Sibling `EventSystem` GameObject (StandaloneInputModule). Distinct from `Game Managers` / `World` parents. Reference resolution sourced from `UiTheme` per invariant #3 (cached in `Awake`). Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`.",
           "trailing_blanks": 1
         },
         {
@@ -1346,7 +1346,7 @@
         {
           "type": "issue",
           "id": "TECH-3236",
-          "checklist_line": "- [ ] **TECH-3236 — Scene wiring + parity test (Stage 7 T7.4)** — Place `Toolbar.prefab` + `OverlayToggleStrip.prefab` into `MainScene.unity` under scene-level `UI Canvas` GameObject via `set_gameobject_parent` + `attach_component` + `assign_serialized_field` bridge mutations. Decommission legacy toolbar/overlay GameObjects.",
+          "checklist_line": "- [ ] **TECH-3236 — Scene wiring + parity test (Stage 7 T7.4)** — Place `Toolbar.prefab` + `OverlayToggleStrip.prefab` into `CityScene.unity` under scene-level `UI Canvas` GameObject via `set_gameobject_parent` + `attach_component` + `assign_serialized_field` bridge mutations. Decommission legacy toolbar/overlay GameObjects.",
           "trailing_blanks": 1
         },
         {
@@ -1388,7 +1388,7 @@
         {
           "type": "issue",
           "id": "TECH-4189",
-          "checklist_line": "- [ ] **TECH-4189 — Game UI Stage 8 T8.6 — Scene wiring + modal-stack integration + parity test** — Place `InfoPanel.prefab` + `PauseMenu.prefab` + `SettingsScreen.prefab` + `SaveLoadScreen.prefab` + `NewGameScreen.prefab` into `MainScene.unity` under scene-level `UI Canvas` GameObject (Stage 10 T10.4 — distinct from `Game Managers` / `World` parents) via `set_gameobject_parent` bridge mutations. Attach `InfoPanelDataAdapter` + `PauseMenuDataAdapter` + `SettingsScreenDataAdapter` + `SaveLoadScreenDataAdapter` + `NewGameScreenDataAdapter` MonoBehaviours; bind producer slots (`DetailsPopupController` / `MainMenuController` / `GameSaveManager` / settings-state surface refs) and consumer arrays (ThemedLabel[] / ThemedButton[] / ThemedSlider[] / ThemedToggle[] / ThemedList) via `assign_serialized_field` bridge mutations. Extend `UIManager.PopupStack.cs` `PopupType` enum with new entries (`InfoPanel`, `PauseMenu`, `SettingsScreen`, `SaveLoadScreen`, `NewGameScreen`) — or planner-picked sealed-via-shim — so each baked modal registers via `RegisterPopupOpened` + closes via existing `ClosePopup` switch + Esc close-last-first path. Modal blocker (input capture / focus) sealed per planner pass — `EventSystem` interplay validated (full-screen GraphicRaycaster pass-through deny vs per-modal `Selectable` focus). Decommission legacy modal/screen GameObjects from `MainScene.unity` once parity green. Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`. PlayMode parity test under `Assets/Scripts/Tests/UI/Modals/` (single combined test or per-surface per planner pass): each modal opens via legacy trigger, commits values to legacy persistence (settings round-trip via `PlayerPrefs`, save-load via `GameSaveManager` round-trip, new-game via `MainMenuController` flow), closes preserving `popupStack` ordering. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
+          "checklist_line": "- [ ] **TECH-4189 — Game UI Stage 8 T8.6 — Scene wiring + modal-stack integration + parity test** — Place `InfoPanel.prefab` + `PauseMenu.prefab` + `SettingsScreen.prefab` + `SaveLoadScreen.prefab` + `NewGameScreen.prefab` into `CityScene.unity` under scene-level `UI Canvas` GameObject (Stage 10 T10.4 — distinct from `Game Managers` / `World` parents) via `set_gameobject_parent` bridge mutations. Attach `InfoPanelDataAdapter` + `PauseMenuDataAdapter` + `SettingsScreenDataAdapter` + `SaveLoadScreenDataAdapter` + `NewGameScreenDataAdapter` MonoBehaviours; bind producer slots (`DetailsPopupController` / `MainMenuController` / `GameSaveManager` / settings-state surface refs) and consumer arrays (ThemedLabel[] / ThemedButton[] / ThemedSlider[] / ThemedToggle[] / ThemedList) via `assign_serialized_field` bridge mutations. Extend `UIManager.PopupStack.cs` `PopupType` enum with new entries (`InfoPanel`, `PauseMenu`, `SettingsScreen`, `SaveLoadScreen`, `NewGameScreen`) — or planner-picked sealed-via-shim — so each baked modal registers via `RegisterPopupOpened` + closes via existing `ClosePopup` switch + Esc close-last-first path. Modal blocker (input capture / focus) sealed per planner pass — `EventSystem` interplay validated (full-screen GraphicRaycaster pass-through deny vs per-modal `Selectable` focus). Decommission legacy modal/screen GameObjects from `CityScene.unity` once parity green. Emit Scene Wiring evidence block per `ia/rules/unity-scene-wiring.md`. PlayMode parity test under `Assets/Scripts/Tests/UI/Modals/` (single combined test or per-surface per planner pass): each modal opens via legacy trigger, commits values to legacy persistence (settings round-trip via `PlayerPrefs`, save-load via `GameSaveManager` round-trip, new-game via `MainMenuController` flow), closes preserving `popupStack` ordering. Run via `npm run unity:testmode-batch`; smoke through `npm run verify:local`.",
           "trailing_blanks": 1
         },
         {
@@ -1532,7 +1532,7 @@
         {
           "type": "issue",
           "id": "TECH-8948",
-          "checklist_line": "- [ ] **TECH-8948 — Game UI Stage 11 T11.2 — Legacy MainScene HUD chrome decommission** — Locate legacy `City Name` label + original toolbar building-icons GameObjects in `Assets/Scenes/MainScene.unity` via `find_gameobject`; delete via `delete_gameobject` bridge. Prune driving code under `Assets/Scripts/Managers/GameManagers/UIManager.Hud.cs` (raw HUD bar) + `UIManager.ToolbarChrome.cs` (chrome icons) + `UIManager.Toolbar.cs` (legacy toolbar) + `UIManager.Theme.cs` (chrome theme refs) + `UIManager.cs` partial root. Themed `HudBarDataAdapter` becomes sole HUD producer. No console errors. Emit Scene Wiring evidence block. `npm run unity:compile-check` exits 0. Parallels Stage 6 `UIManager.Hud.cs` decommission. (`game-ui-design-system` Stage 11)",
+          "checklist_line": "- [ ] **TECH-8948 — Game UI Stage 11 T11.2 — Legacy CityScene HUD chrome decommission** — Locate legacy `City Name` label + original toolbar building-icons GameObjects in `Assets/Scenes/CityScene.unity` via `find_gameobject`; delete via `delete_gameobject` bridge. Prune driving code under `Assets/Scripts/Managers/GameManagers/UIManager.Hud.cs` (raw HUD bar) + `UIManager.ToolbarChrome.cs` (chrome icons) + `UIManager.Toolbar.cs` (legacy toolbar) + `UIManager.Theme.cs` (chrome theme refs) + `UIManager.cs` partial root. Themed `HudBarDataAdapter` becomes sole HUD producer. No console errors. Emit Scene Wiring evidence block. `npm run unity:compile-check` exits 0. Parallels Stage 6 `UIManager.Hud.cs` decommission. (`game-ui-design-system` Stage 11)",
           "trailing_blanks": 1
         },
         {
@@ -1544,7 +1544,7 @@
         {
           "type": "issue",
           "id": "TECH-8950",
-          "checklist_line": "- [ ] **TECH-8950 — Game UI Stage 11 T11.4 — Cross-scene full-flow PlayMode smoke + verify:local Stage close** — Author `Assets/Scripts/Tests/UI/FullFlowSmokeTest.cs` PlayMode test addressing Stage 12 cross-scene gap. Load `Assets/Scenes/MainMenu.unity` → click Options (themed chrome post BUG-* fix) → click NewGame → assert `MainScene.unity` loaded → assert Stage 8 themed modal roots reachable (`Assets/Scenes/MainScene.unity:5824-5828`); drive splash → onboarding (assert `PlayerPrefs` `onboarding-complete` flipped) → tooltip hover → glossary panel open + ThemedList scroll → city-stats handoff. Assert per step: `Image.color.a > 0`; `TMP_Text.text` non-empty; no console errors; no `MissingReferenceException`; no legacy chrome GameObjects (`HUDBar/CityNameLabel`, `Toolbar/BuildingIcons`) in hierarchy. Run via `npm run unity:testmode-batch`. `npm run verify:local` exits 0. Stage close = MVP UI complete; player-visible checkpoint hit end-to-end. (`game-ui-design-system` Stage 11)",
+          "checklist_line": "- [ ] **TECH-8950 — Game UI Stage 11 T11.4 — Cross-scene full-flow PlayMode smoke + verify:local Stage close** — Author `Assets/Scripts/Tests/UI/FullFlowSmokeTest.cs` PlayMode test addressing Stage 12 cross-scene gap. Load `Assets/Scenes/MainMenu.unity` → click Options (themed chrome post BUG-* fix) → click NewGame → assert `CityScene.unity` loaded → assert Stage 8 themed modal roots reachable (`Assets/Scenes/CityScene.unity:5824-5828`); drive splash → onboarding (assert `PlayerPrefs` `onboarding-complete` flipped) → tooltip hover → glossary panel open + ThemedList scroll → city-stats handoff. Assert per step: `Image.color.a > 0`; `TMP_Text.text` non-empty; no console errors; no `MissingReferenceException`; no legacy chrome GameObjects (`HUDBar/CityNameLabel`, `Toolbar/BuildingIcons`) in hierarchy. Run via `npm run unity:testmode-batch`. `npm run verify:local` exits 0. Stage close = MVP UI complete; player-visible checkpoint hit end-to-end. (`game-ui-design-system` Stage 11)",
           "trailing_blanks": 1
         },
         {
@@ -1556,13 +1556,13 @@
         {
           "type": "issue",
           "id": "TECH-14447",
-          "checklist_line": "- [ ] **TECH-14447 — Game UI catalog-bake Stage 9.1 T9.1.2 — Flatten + re-parent legacy UI children + delete wrapper GameObjects** — Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)`; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Touches `MainScene.unity` + any code path-rewrites surfaced by T9.1.1 (2-3 files). (`game-ui-catalog-bake` Stage 9.1)",
+          "checklist_line": "- [ ] **TECH-14447 — Game UI catalog-bake Stage 9.1 T9.1.2 — Flatten + re-parent legacy UI children + delete wrapper GameObjects** — Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)`; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Touches `CityScene.unity` + any code path-rewrites surfaced by T9.1.1 (2-3 files). (`game-ui-catalog-bake` Stage 9.1)",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-14448",
-          "checklist_line": "- [ ] **TECH-14448 — Game UI catalog-bake Stage 9.1 T9.1.3 — Tighten SingleRootCanvasTest invariant + add descendant-ban test** — Rewrite `MainScene_HasSingleRootCanvas_NamedUiCanvas` to assert `Object.FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` AND root name == `UI Canvas`. Add `MainScene_NoDescendantCanvases_UnderRoot` asserting every Canvas's `transform.parent == null`. Touches `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs` (1 file). (`game-ui-catalog-bake` Stage 9.1)",
+          "checklist_line": "- [ ] **TECH-14448 — Game UI catalog-bake Stage 9.1 T9.1.3 — Tighten SingleRootCanvasTest invariant + add descendant-ban test** — Rewrite `CityScene_HasSingleRootCanvas_NamedUiCanvas` to assert `Object.FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` AND root name == `UI Canvas`. Add `CityScene_NoDescendantCanvases_UnderRoot` asserting every Canvas's `transform.parent == null`. Touches `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs` (1 file). (`game-ui-catalog-bake` Stage 9.1)",
           "trailing_blanks": 1
         }
       ]
@@ -1827,7 +1827,7 @@
         {
           "type": "issue",
           "id": "TECH-1678",
-          "checklist_line": "- [ ] **TECH-1678 — Scene wiring + scheduler registration** — Wire 4 new MonoBehaviours into MainScene.unity Inspector + append to SignalTickScheduler producer/consumer lists via unity_bridge_command.",
+          "checklist_line": "- [ ] **TECH-1678 — Scene wiring + scheduler registration** — Wire 4 new MonoBehaviours into CityScene.unity Inspector + append to SignalTickScheduler producer/consumer lists via unity_bridge_command.",
           "trailing_blanks": 1
         },
         {
@@ -1857,13 +1857,13 @@
         {
           "type": "issue",
           "id": "TECH-1713",
-          "checklist_line": "- [ ] **TECH-1713 — Scene wiring + scheduler registration** — Wire DesirabilityComposer into MainScene.unity Inspector via unity_bridge_command attach_component + append to SignalTickScheduler.consumerList + set AutoZoningManager + ZoneManager Inspector refs + save_scene; useSignalDesirability stays false-by-default.",
+          "checklist_line": "- [ ] **TECH-1713 — Scene wiring + scheduler registration** — Wire DesirabilityComposer into CityScene.unity Inspector via unity_bridge_command attach_component + append to SignalTickScheduler.consumerList + set AutoZoningManager + ZoneManager Inspector refs + save_scene; useSignalDesirability stays false-by-default.",
           "trailing_blanks": 1
         },
         {
           "type": "issue",
           "id": "TECH-1714",
-          "checklist_line": "- [ ] **TECH-1714 — Step 4 shell MonoBehaviours** — Author ConstructionStageController.cs + DensityEvolutionTicker.cs shell MonoBehaviours under Assets/Scripts/Simulation/ with no-op SetDesirabilitySource stubs + DesirabilityComposer Inspector refs + Awake fallback + empty Update; wire both into MainScene.unity via unity_bridge_command + save_scene.",
+          "checklist_line": "- [ ] **TECH-1714 — Step 4 shell MonoBehaviours** — Author ConstructionStageController.cs + DensityEvolutionTicker.cs shell MonoBehaviours under Assets/Scripts/Simulation/ with no-op SetDesirabilitySource stubs + DesirabilityComposer Inspector refs + Awake fallback + empty Update; wire both into CityScene.unity via unity_bridge_command + save_scene.",
           "trailing_blanks": 1
         },
         {

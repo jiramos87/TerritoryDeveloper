@@ -19,7 +19,7 @@ namespace Territory.Tests.PlayMode.SubtypePicker
     ///   4. Archetype motionHover field accessible via TryGetMotionHover.
     /// </para>
     /// <para>
-    /// Scope: self-contained MonoBehaviour graph; no MainScene mutation.
+    /// Scope: self-contained MonoBehaviour graph; no CityScene mutation.
     /// Sprites not loaded (Resources path not wired in test runner) — icon stays null → placeholder dim.
     /// validate:asset-pipeline shell-out omitted (no subprocess in PlayMode runner).
     /// </para>

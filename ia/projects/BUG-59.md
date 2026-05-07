@@ -22,7 +22,7 @@ slices_via: none
 
 ## 1. Summary
 
-Restore MainMenu click handlers (Options + NewGame) to legacy MainMenu-scoped panels. Stage 12 broke handlers by calling UIManager.Instance (only in MainScene) from MainMenu scene where UIManager absent.
+Restore MainMenu click handlers (Options + NewGame) to legacy MainMenu-scoped panels. Stage 12 broke handlers by calling UIManager.Instance (only in CityScene) from MainMenu scene where UIManager absent.
 
 ## 2. Goals and Non-Goals
 
@@ -55,7 +55,7 @@ Observed: MainMenu Options + NewGame buttons silent. UIManager.Instance == null 
 
 Backlog Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs` (lines 557, 693).
 
-Related: Stage 8 modal handlers (PauseMenu, InfoPanel) use UIManager via MainScene context.
+Related: Stage 8 modal handlers (PauseMenu, InfoPanel) use UIManager via CityScene context.
 
 ### 4.3 Implementation investigation notes
 
@@ -73,7 +73,7 @@ Options button click → optionsPanel appears (MainMenu-scoped, legacy path). Ne
 
 ### 5.2 Architecture / implementation
 
-OnOptionsClicked + OnNewGameClicked call legacy panel activation methods instead of UIManager.Instance. MainMenu scene GameObject references preserved. Stage 8 UIManager flows isolated to MainScene.
+OnOptionsClicked + OnNewGameClicked call legacy panel activation methods instead of UIManager.Instance. MainMenu scene GameObject references preserved. Stage 8 UIManager flows isolated to CityScene.
 
 ### 5.3 Method / algorithm notes
 
@@ -88,7 +88,7 @@ OnOptionsClicked():
 
 | Date | Decision | Rationale | Alternatives considered |
 |------|----------|-----------|------------------------|
-| 2026-04-29 | Revert to legacy MainMenu panels | UIManager only in MainScene; MainMenu scene needs self-contained modals | Refactor UIManager to MainMenu (larger scope, deferred to Stage 14) |
+| 2026-04-29 | Revert to legacy MainMenu panels | UIManager only in CityScene; MainMenu scene needs self-contained modals | Refactor UIManager to MainMenu (larger scope, deferred to Stage 14) |
 
 ## 7. Implementation Plan
 
@@ -113,7 +113,7 @@ OnOptionsClicked():
 | Handlers revert to legacy MainMenu paths | Code review | Manual inspection of MainMenuController.cs lines 557, 693 | Validate against Stage 8 modal spec |
 | Play mode: Options button responsive | Unity Play | Click MainMenu Options → optionsPanel visible | No null-ref in console |
 | Play mode: NewGame button responsive | Unity Play | Click MainMenu NewGame → newGamePanel visible | No null-ref in console |
-| Stage 8 in-game modals unaffected | Unity Play | Esc → PauseMenu; Alt+click → InfoPanel | UIManager paths isolated to MainScene |
+| Stage 8 in-game modals unaffected | Unity Play | Esc → PauseMenu; Alt+click → InfoPanel | UIManager paths isolated to CityScene |
 
 ## 8. Acceptance Criteria
 

@@ -8,7 +8,7 @@
 // Post-implementation: migration 0096 registers catalog_entity + re-export lands hud-bar
 // in panels.json → test passes.
 //
-// Scene-baked swap (MainScene hud-bar GameObject → DB-baked prefab instance) is a
+// Scene-baked swap (CityScene hud-bar GameObject → DB-baked prefab instance) is a
 // manual Editor step (bake + scene wire). This test validates the catalog side:
 // snapshot contains 'hud-bar' + correct zone distribution.
 

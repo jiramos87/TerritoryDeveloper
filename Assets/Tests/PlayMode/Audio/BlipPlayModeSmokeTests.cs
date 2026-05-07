@@ -166,29 +166,29 @@ namespace Territory.Tests.PlayMode.Audio
     }
 
     /// <summary>
-    /// Direct-scene-load smoke — loads MainScene.unity without going through
+    /// Direct-scene-load smoke — loads CityScene.unity without going through
     /// MainMenu, verifying that EnsureInstance (RuntimeInitializeOnLoadMethod
     /// BeforeSceneLoad) spun up BlipBootstrap before scene Awake.
     /// </summary>
     public sealed class BlipBootstrapDirectLoadSmokeTests
     {
         [UnityTest]
-        public IEnumerator DirectLoad_MainScene_BlipBootstrap_IsPresent_And_Play_DoesNotThrow()
+        public IEnumerator DirectLoad_CityScene_BlipBootstrap_IsPresent_And_Play_DoesNotThrow()
         {
             // EnsureInstance fires BeforeSceneLoad — BlipBootstrap.Instance should
-            // already be non-null when we enter this frame, but load MainScene
+            // already be non-null when we enter this frame, but load CityScene
             // first to prove the audio root survives a non-boot scene entry.
-            yield return SceneManager.LoadSceneAsync("MainScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync("CityScene", LoadSceneMode.Single);
             yield return null; // BlipCatalog.Awake cascade
             yield return null; // BlipCatalog.IsReady flag
 
             // Bootstrap present via Resources/ self-init.
             Assert.IsNotNull(BlipBootstrap.Instance,
-                "BlipBootstrap.Instance null after direct MainScene load — EnsureInstance may not have fired");
+                "BlipBootstrap.Instance null after direct CityScene load — EnsureInstance may not have fired");
 
             // BlipEngine.Play must not throw when bootstrap is present.
             Assert.DoesNotThrow(() => BlipEngine.Play(BlipId.UiButtonClick),
-                "BlipEngine.Play(UiButtonClick) threw after direct MainScene load");
+                "BlipEngine.Play(UiButtonClick) threw after direct CityScene load");
 
             yield return null; // drain AudioSource.Play side-effects
         }

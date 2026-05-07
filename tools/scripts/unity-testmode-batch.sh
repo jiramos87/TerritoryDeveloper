@@ -44,7 +44,7 @@ Exit codes (shell):
   1  Bad script args or missing scenario
   2  Unity binary not found / not executable
   3  --quit-editor-first failed (lock still held)
-  4  Propagated from batch runner: bad args, missing save, MainScene open failure
+  4  Propagated from batch runner: bad args, missing save, CityScene open failure
   6  Load / simulation failure inside Unity
   7  Timed out waiting for Play Mode to stop (C# runner)
   8  Golden CityStats snapshot mismatch (-testGoldenPath)

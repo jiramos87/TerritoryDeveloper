@@ -46,7 +46,7 @@ Source: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`. Single asset instance
 
 ### UI prefabs in scope
 
-Source: `Assets/UI/Prefabs/*.prefab`. 10-surface scope = `HUD / info-panel / pause / settings / save-load / new-game / tooltip / toolbar / city-stats / onboarding`. **Most surfaces are scene-baked into `MainScene.unity` / `MainMenu.unity`, not prefab-instantiated** — only 4 generic shells under `Assets/UI/Prefabs/`. Scene-baked surfaces flagged below.
+Source: `Assets/UI/Prefabs/*.prefab`. 10-surface scope = `HUD / info-panel / pause / settings / save-load / new-game / tooltip / toolbar / city-stats / onboarding`. **Most surfaces are scene-baked into `CityScene.unity` / `MainMenu.unity`, not prefab-instantiated** — only 4 generic shells under `Assets/UI/Prefabs/`. Scene-baked surfaces flagged below.
 
 | Prefab / surface | Chrome | Slot count | Control archetype hint | Consumer | Notes |
 |---|---|---|---|---|---|
@@ -54,7 +54,7 @@ Source: `Assets/UI/Prefabs/*.prefab`. 10-surface scope = `HUD / info-panel / pau
 | `UI_ScrollListShell.prefab` | rectangular panel + viewport + content frame | 1 (scrolled list body) | scrollable list container | reused by `city-stats.png` row list, `info-panel-subtype.png` subtype tile row | 320×400 default size; vertical scroll |
 | `UI_ToolButton.prefab` | square icon tile with text label below | 1 (text + icon) | button | reused by toolbar `BuildingSelector` (per `toolbar-building-selector.png`) | green-outline accent on selected state |
 | `UI_StatRow.prefab` | horizontal row: icon + key label + value + (optional) demand bar | 4 (Key + value + bar + icon) | readout row | reused by `city-stats.png` 16-row list | Key + Value + horizontal bar slots; demand rows enable inline bar |
-| HUD top-bar (scene-baked) | flat bar across top of `MainScene.unity`; left tabs + center city name + right cluster | 8+ (tabs / name / AUTO / zoom / graph / minimap / money / speed) | container + readouts + steppers | `UIManager.Hud` | not a prefab; scene-rooted Canvas tree |
+| HUD top-bar (scene-baked) | flat bar across top of `CityScene.unity`; left tabs + center city name + right cluster | 8+ (tabs / name / AUTO / zoom / graph / minimap / money / speed) | container + readouts + steppers | `UIManager.Hud` | not a prefab; scene-rooted Canvas tree |
 | HUD top-right cluster (scene-baked) | sub-bar inside top-bar | 6 (AUTO toggle / +/− zoom / graph / minimap / money / speed) | toggle + steppers + readouts | `UIManager.Hud` | per `hud-top-right.png` |
 | Minimap floating panel (scene-baked) | rectangular panel + top toggle row + minimap render | 6 (5 layer toggles + map view) | toggles + image readout | `UIManager.Hud` | per `minimap.png` (St / Zn / Fr / De / Ct toggles) |
 | BuildingSelector floating panel (scene-baked) | dark navy panel + 3×3 icon grid + spillover row + subtype info row | 10+ (per icon tile + subtype tiles) | button grid + container | `UIManager.ToolbarChrome` | per `toolbar-building-selector.png` + `info-panel-subtype.png` |

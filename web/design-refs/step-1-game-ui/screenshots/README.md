@@ -6,7 +6,7 @@ Build captures only — no mockups, no Figma, no synthetic compositions. Annotat
 
 - `main-menu.png` — MainMenu scene, vertical button stack (Continue / New Game / Load City / Options) on flat navy panel — surface: new-game
 - `settings.png` — Options modal: title + SFX volume slider + Mute SFX toggle + Back button on rounded dark panel — surface: settings
-- `city-scene-overview.png` — Full MainScene HUD: top-bar tabs left + city name center + AUTO/zoom/graph/MiniMap/money/speed-controls right, BuildingSelector floating left, City Stats tabs floating bottom-right — surface: hud
+- `city-scene-overview.png` — Full CityScene HUD: top-bar tabs left + city name center + AUTO/zoom/graph/MiniMap/money/speed-controls right, BuildingSelector floating left, City Stats tabs floating bottom-right — surface: hud
 - `toolbar-building-selector.png` — BuildingSelector full grid: 3×3 + 1 spillover icon tiles (residential / commercial / industrial / blank / road / forest / power / water / construction) with green outline + dark navy background — surface: toolbar
 - `hud-top-right.png` — Top-right HUD detail at funded state: AUTO red toggle / +/− zoom / graph icon / Mini Map / $20,000 (+$0) money readout / play-speed control row — surface: hud
 - `minimap.png` — Minimap panel: row of layer toggles (St / Zn / Fr / De / Ct) over scaled isometric grid with colored cell overlays — surface: hud

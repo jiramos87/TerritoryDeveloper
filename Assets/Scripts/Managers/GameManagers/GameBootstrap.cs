@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 namespace Territory.Persistence
 {
 /// <summary>
-/// Runs in MainScene → handle game start intent from MainMenu. Detects <see cref="GameStartInfo"/>
+/// Runs in CityScene → handle game start intent from MainMenu. Detects <see cref="GameStartInfo"/>
 /// (NewGame or Load) + invokes appropriate <see cref="GameManager"/> action after managers ready.
 /// </summary>
 public class GameBootstrap : MonoBehaviour

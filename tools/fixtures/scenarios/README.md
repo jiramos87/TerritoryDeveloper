@@ -23,7 +23,7 @@ For ad-hoc **agent**-produced **`GameSaveData`** JSON (not committed), use a **r
 ## **32×32** test map policy
 
 - Reference scenarios for **TECH-31** stage **31a** use a **32×32** grid (`gridWidth` / `gridHeight` and `gridData` bounds must agree).
-- The **MainScene** `GridManager` may still default to a larger Inspector size; **load** overwrites `width` / `height` from the save before `ResetGridForLoad`.
+- The **CityScene** `GridManager` may still default to a larger Inspector size; **load** overwrites `width` / `height` from the save before `ResetGridForLoad`.
 - After changing grid size, verify **camera** framing and **chunk culling** (`chunkSize` vs map) in Play Mode if anything looks off.
 
 ## Scenario builder (**scenario_descriptor_v1**)
@@ -97,7 +97,7 @@ Optional simulation steps after **`GameSaveManager.LoadGame`** (same entry point
 
 `tools/fixtures/scenarios/.queued-test-scenario-id`
 
-Then enter **Play Mode** (or enqueue **`unity_bridge_command`** `enter_play_mode`). On the first loaded scene, `TestModeCommandLineBootstrap` resolves the id, **deletes** the file, sets **`GameStartInfo`**, and loads **MainScene** like CLI mode. The file is **gitignored**.
+Then enter **Play Mode** (or enqueue **`unity_bridge_command`** `enter_play_mode`). On the first loaded scene, `TestModeCommandLineBootstrap` resolves the id, **deletes** the file, sets **`GameStartInfo`**, and loads **CityScene** like CLI mode. The file is **gitignored**.
 
 ## Golden **CityStats** snapshots (**Agent test mode batch**)
 

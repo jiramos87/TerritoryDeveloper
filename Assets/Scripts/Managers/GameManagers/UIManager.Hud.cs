@@ -26,7 +26,7 @@ public partial class UIManager
         // money / happiness) decommissioned — now driven by HudBarDataAdapter into baked
         // StudioControl SO refs on hud-bar prefab.
         // Stage 11 (game-ui-design-system): legacy power/water HUD chrome decommissioned in
-        // T11.2 MainScene deletes — fields may now be unwired. Guard each ref to keep
+        // T11.2 CityScene deletes — fields may now be unwired. Guard each ref to keep
         // surviving non-hudbar HUD surfaces (date/tax/employment/demand/surplus) live.
 
         if (cityPowerOutputText != null)

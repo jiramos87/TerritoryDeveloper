@@ -1,12 +1,12 @@
 {
   "request": {
     "kind": "save_scene",
-    "scene_path": "Assets/Scenes/MainScene.unity"
+    "scene_path": "Assets/Scenes/CityScene.unity"
   },
   "response": {
     "ok": true,
     "response": {
-      "scene_path": "Assets/Scenes/MainScene.unity",
+      "scene_path": "Assets/Scenes/CityScene.unity",
       "message": "scene saved"
     },
     "error": null

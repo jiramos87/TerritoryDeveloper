@@ -34,7 +34,7 @@ namespace Territory.Tests.PlayMode.UI.HUD
     /// </summary>
     public sealed class AutoModeAndGrowthBudgetTracerTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private HudBarDataAdapter _adapter;
         private CityStats _cityStats;

@@ -1268,7 +1268,7 @@ class SetPanelVisibleParamsDto
 [Serializable]
 class SaveSceneParamsDto
 {
-    /// <summary>Asset path to scene, e.g. "Assets/Scenes/MainScene.unity". Omit for active scene.</summary>
+    /// <summary>Asset path to scene, e.g. "Assets/Scenes/CityScene.unity". Omit for active scene.</summary>
     public string scene_path;
 }
 

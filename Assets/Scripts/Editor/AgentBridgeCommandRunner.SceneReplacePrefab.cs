@@ -128,7 +128,7 @@ public static partial class AgentBridgeCommandRunner
 [Serializable]
 class SceneReplaceWithPrefabParamsDto
 {
-    /// <summary>Asset path to the scene to open (e.g. 'Assets/Scenes/MainScene.unity'). Optional — uses active scene if omitted.</summary>
+    /// <summary>Asset path to the scene to open (e.g. 'Assets/Scenes/CityScene.unity'). Optional — uses active scene if omitted.</summary>
     public string scene_path;
     /// <summary>Name of the root GameObject to replace.</summary>
     public string target_object_name;

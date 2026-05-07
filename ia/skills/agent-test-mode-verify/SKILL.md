@@ -114,7 +114,7 @@ Load pipeline: `TestModeCommandLineBootstrap` consumes queue file; load remains 
 | | 2 | Unity binary missing — set `UNITY_EDITOR_PATH` |
 | | 3 | Lock still held after quit attempt |
 | | Other | Propagated Unity/`EditorApplication.Exit` code |
-| `AgentTestModeBatchRunner` | 4 | Bad/missing scenario; golden file missing; MainScene failure |
+| `AgentTestModeBatchRunner` | 4 | Bad/missing scenario; golden file missing; CityScene failure |
 | | 6 | Play Mode/grid wait failure; LoadGame/simulation exception |
 | | 7 | Timed out waiting for Play Mode stop |
 | | 8 | Golden CityStats mismatch |

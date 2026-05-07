@@ -1,7 +1,7 @@
 namespace Territory.Persistence
 {
 /// <summary>
-/// Static holder → pass game start intent from MainMenu to MainScene. Set before scene transition
+/// Static holder → pass game start intent from MainMenu to CityScene. Set before scene transition
 /// to signal load-save vs new-game vs continue-last-save.
 /// </summary>
 public static class GameStartInfo

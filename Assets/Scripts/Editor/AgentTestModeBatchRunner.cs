@@ -15,7 +15,7 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// <b>Editor</b> <c>-batchmode</c> entry. Flow: open <see cref="MainScenePath"/> → enter <b>Play Mode</b> →
+    /// <b>Editor</b> <c>-batchmode</c> entry. Flow: open <see cref="CityScenePath"/> → enter <b>Play Mode</b> →
     /// resolve <b>test mode</b> scenario args via <see cref="TestModeCommandLineBootstrap.TryParse"/> →
     /// load through <see cref="GameSaveManager.LoadGame"/> only → optionally run bounded <see cref="SimulationManager.ProcessSimulationTick"/> →
     /// write <c>tools/reports/agent-testmode-batch-*.json</c> → exit via <see cref="EditorApplication.Exit"/>.
@@ -54,7 +54,7 @@ namespace Territory.Testing
         /// </summary>
         public const int ExitCodeHeightIntegrityFail = 9;
 
-        public const string MainScenePath = "Assets/Scenes/MainScene.unity";
+        public const string CityScenePath = "Assets/Scenes/CityScene.unity";
 
         /// <summary>Transient state file under <c>tools/reports/</c>; dotfile, gitignored by <c>tools/reports/**</c>.</summary>
         public const string StateFileName = ".agent-testmode-batch-state.json";
@@ -338,11 +338,11 @@ namespace Territory.Testing
                 }
                 try
                 {
-                    EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+                    EditorSceneManager.OpenScene(CityScenePath, OpenSceneMode.Single);
                 }
                 catch (Exception ex)
                 {
-                    FailImmediate(4, $"Could not open MainScene: {ex.Message}");
+                    FailImmediate(4, $"Could not open CityScene: {ex.Message}");
                     return;
                 }
                 var ngState = new AgentTestModeBatchStateDto
@@ -391,11 +391,11 @@ namespace Territory.Testing
 
             try
             {
-                EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+                EditorSceneManager.OpenScene(CityScenePath, OpenSceneMode.Single);
             }
             catch (Exception ex)
             {
-                FailImmediate(4, $"Could not open MainScene: {ex.Message}");
+                FailImmediate(4, $"Could not open CityScene: {ex.Message}");
                 return;
             }
 

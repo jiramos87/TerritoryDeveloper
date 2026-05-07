@@ -1,7 +1,7 @@
 // TECH-14097 / game-ui-catalog-bake Stage 8 §Red-Stage Proof.
 // TECH-14448 / game-ui-catalog-bake Stage 9.1 — tightened to scene-wide single-Canvas (descendant ban).
 //
-// Asserts MainScene carries exactly ONE Canvas component scene-wide (T9.1 D9 tightening):
+// Asserts CityScene carries exactly ONE Canvas component scene-wide (T9.1 D9 tightening):
 //   1. Root-level Canvas count == 1, named "UI Canvas".
 //   2. Scene-wide Canvas count == 1 (no descendant Canvases under root).
 //   3. Every Canvas in the scene has transform.parent == null.
@@ -23,18 +23,18 @@ namespace Territory.Tests.EditMode.UI
 {
     public class SingleRootCanvasTest
     {
-        private const string MainScenePath = "Assets/Scenes/MainScene.unity";
+        private const string CityScenePath = "Assets/Scenes/CityScene.unity";
         private const string ExpectedRootCanvasName = "UI Canvas";
 
         [Test]
-        public void MainScene_HasSingleRootCanvas_NamedUiCanvas()
+        public void CityScene_HasSingleRootCanvas_NamedUiCanvas()
         {
-            if (!File.Exists(MainScenePath))
+            if (!File.Exists(CityScenePath))
             {
-                Assert.Ignore("MainScene.unity missing — skipping single-root-canvas probe");
+                Assert.Ignore("CityScene.unity missing — skipping single-root-canvas probe");
             }
 
-            Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+            Scene scene = EditorSceneManager.OpenScene(CityScenePath, OpenSceneMode.Single);
             try
             {
                 Canvas[] all = Object.FindObjectsOfType<Canvas>(includeInactive: true);
@@ -43,7 +43,7 @@ namespace Territory.Tests.EditMode.UI
                     .ToArray();
 
                 Assert.AreEqual(1, roots.Length,
-                    $"MainScene must carry exactly 1 root-level Canvas (D9 invariant). Found {roots.Length}: " +
+                    $"CityScene must carry exactly 1 root-level Canvas (D9 invariant). Found {roots.Length}: " +
                     string.Join(", ", roots.Select(c => c.name)));
 
                 Assert.AreEqual(ExpectedRootCanvasName, roots[0].name,
@@ -56,20 +56,20 @@ namespace Territory.Tests.EditMode.UI
         }
 
         [Test]
-        public void MainScene_HasExactlyOneCanvas_SceneWide()
+        public void CityScene_HasExactlyOneCanvas_SceneWide()
         {
-            if (!File.Exists(MainScenePath))
+            if (!File.Exists(CityScenePath))
             {
-                Assert.Ignore("MainScene.unity missing — skipping scene-wide canvas probe");
+                Assert.Ignore("CityScene.unity missing — skipping scene-wide canvas probe");
             }
 
-            Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+            Scene scene = EditorSceneManager.OpenScene(CityScenePath, OpenSceneMode.Single);
             try
             {
                 Canvas[] all = Object.FindObjectsOfType<Canvas>(includeInactive: true);
 
                 Assert.AreEqual(1, all.Length,
-                    $"MainScene must carry exactly 1 Canvas component scene-wide (T9.1 D9 tightening). Found {all.Length}: " +
+                    $"CityScene must carry exactly 1 Canvas component scene-wide (T9.1 D9 tightening). Found {all.Length}: " +
                     string.Join(", ", all.Select(c =>
                     {
                         string path = c.name;
@@ -85,14 +85,14 @@ namespace Territory.Tests.EditMode.UI
         }
 
         [Test]
-        public void MainScene_NoDescendantCanvases_UnderRoot()
+        public void CityScene_NoDescendantCanvases_UnderRoot()
         {
-            if (!File.Exists(MainScenePath))
+            if (!File.Exists(CityScenePath))
             {
-                Assert.Ignore("MainScene.unity missing — skipping descendant-canvas probe");
+                Assert.Ignore("CityScene.unity missing — skipping descendant-canvas probe");
             }
 
-            Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+            Scene scene = EditorSceneManager.OpenScene(CityScenePath, OpenSceneMode.Single);
             try
             {
                 Canvas[] all = Object.FindObjectsOfType<Canvas>(includeInactive: true);

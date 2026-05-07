@@ -11,7 +11,7 @@ alwaysApply: false
 
 **Principle:** A Stage that ships a runtime object which must live in a Unity scene has NOT shipped until that object is wired into the scene and committed. Agents executing `/ship-stage` (or `/ship` for N=1) own this wiring end-to-end — it is **not** a human follow-up.
 
-Historical gap: `grid-asset-visual-registry` Stage 2.2 landed `GridAssetCatalog` C# scripts + tests + closeout without adding the object to `Assets/Scenes/MainScene.unity`. The Stage reported PASSED but the runtime path was dead until a human asked about wiring. This rule closes that gap.
+Historical gap: `grid-asset-visual-registry` Stage 2.2 landed `GridAssetCatalog` C# scripts + tests + closeout without adding the object to `Assets/Scenes/CityScene.unity`. The Stage reported PASSED but the runtime path was dead until a human asked about wiring. This rule closes that gap.
 
 ---
 
@@ -35,12 +35,12 @@ Historical gap: `grid-asset-visual-registry` Stage 2.2 landed `GridAssetCatalog`
 
 | Object kind | Default scene | Notes |
 |-------------|---------------|-------|
-| Game-runtime manager / catalog / service (MonoBehaviour that feeds gameplay) | `Assets/Scenes/MainScene.unity` under `Game Managers` parent | Sibling of `EconomyManager`, `GridManager`, `CityManager`. |
+| Game-runtime manager / catalog / service (MonoBehaviour that feeds gameplay) | `Assets/Scenes/CityScene.unity` under `Game Managers` parent | Sibling of `EconomyManager`, `GridManager`, `CityManager`. |
 | Main-menu-only UI / controller | `Assets/Scenes/MainMenu.unity` | Examples: menu-specific widgets. |
 | Test-only harness component | `Assets/Scenes/SampleScene.unity` | Rare; only when gameplay doesn't need it. |
 | Needed in both menu + main | Boot prefab under `Assets/Prefabs/Boot/**` referenced by both scenes | Escalate to user before introducing — keeps scene delta minimal. |
 
-**Default:** `MainScene.unity` → `Game Managers` parent. Escalate to user only when the object is menu-only or needs boot-prefab treatment.
+**Default:** `CityScene.unity` → `Game Managers` parent. Escalate to user only when the object is menu-only or needs boot-prefab treatment.
 
 ---
 
@@ -118,10 +118,10 @@ Missing block when a trigger fired = `critical` verdict on Stage code review.
 **Ran this Stage (grid-asset-visual-registry 2.2):**
 
 - Trigger #1: `GridAssetCatalog` is a new runtime MonoBehaviour with `[SerializeField] _streamingRelativePath`.
-- Target scene: `Assets/Scenes/MainScene.unity`.
+- Target scene: `Assets/Scenes/CityScene.unity`.
 - Parent: `Game Managers` (sibling of `EconomyManager`, `GridManager`).
 - Fields: `_streamingRelativePath = catalog/grid-asset-catalog-snapshot.json`; `_missingSpriteDevPlaceholder = none`; `_onCatalogReloaded = empty UnityEvent`.
-- Commit message: `fix(unity): add GridAssetCatalog to MainScene under Game Managers`.
+- Commit message: `fix(unity): add GridAssetCatalog to CityScene under Game Managers`.
 
 **Does NOT fire (sprite-gen master plan Stage 5):**
 
@@ -146,8 +146,8 @@ Missing block when a trigger fired = `critical` verdict on Stage code review.
 
 ### 2026-04-22 — Rule introduced
 
-**Symptom:** `grid-asset-visual-registry` Stage 2.2 shipped `GridAssetCatalog` scripts + tests + closeout, emitted `SHIP_STAGE 2.2: PASSED`, but the runtime path was inert because no agent wired the catalog into `MainScene.unity`. Human caught the gap on the next turn.
+**Symptom:** `grid-asset-visual-registry` Stage 2.2 shipped `GridAssetCatalog` scripts + tests + closeout, emitted `SHIP_STAGE 2.2: PASSED`, but the runtime path was inert because no agent wired the catalog into `CityScene.unity`. Human caught the gap on the next turn.
 
 **Root cause:** No skill owned scene wiring. `stage-authoring` (and predecessor pair `plan-author` / `plan-digest`) did not author a wiring step; `project-spec-implement` had no Task-exit check for `.unity` edits; `opus-code-review` did not flag missing scene wiring as critical; `/ship-stage` Pass 2 acceptance reference did not require the evidence block.
 
-**Fix:** This rule + cross-references added to the five skills above. Every lifecycle surface now knows the trigger → scene wiring → evidence flow. `grid-asset-visual-registry` Stage 2.2 follow-up commit `7143d72` (`fix(unity): add GridAssetCatalog to MainScene under Game Managers`) is the canonical example.
+**Fix:** This rule + cross-references added to the five skills above. Every lifecycle surface now knows the trigger → scene wiring → evidence flow. `grid-asset-visual-registry` Stage 2.2 follow-up commit `7143d72` (`fix(unity): add GridAssetCatalog to CityScene under Game Managers`) is the canonical example.

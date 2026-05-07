@@ -173,7 +173,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// HUD layout root parenting <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in MainScene).
+        /// HUD layout root parenting <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in CityScene).
         /// </summary>
         private static Transform FindHudLayoutRoot(Transform from)
         {

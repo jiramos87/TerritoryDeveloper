@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Unity <c>-batchmode</c> entry. Flow: open <see cref="AgentTestModeBatchRunner.MainScenePath"/> → enter <b>Play Mode</b> →
+    /// Unity <c>-batchmode</c> entry. Flow: open <see cref="AgentTestModeBatchRunner.CityScenePath"/> → enter <b>Play Mode</b> →
     /// load base <b>Save data</b> → apply <see cref="ScenarioDescriptorRuntimeApplier"/> → write <see cref="GameSaveData"/> JSON
     /// to <c>-outputScenarioSavePath</c> → exit Editor.
     /// </summary>
@@ -155,11 +155,11 @@ namespace Territory.Testing
 
             try
             {
-                EditorSceneManager.OpenScene(AgentTestModeBatchRunner.MainScenePath, OpenSceneMode.Single);
+                EditorSceneManager.OpenScene(AgentTestModeBatchRunner.CityScenePath, OpenSceneMode.Single);
             }
             catch (Exception ex)
             {
-                FailImmediate(4, $"Could not open MainScene: {ex.Message}");
+                FailImmediate(4, $"Could not open CityScene: {ex.Message}");
                 return;
             }
 

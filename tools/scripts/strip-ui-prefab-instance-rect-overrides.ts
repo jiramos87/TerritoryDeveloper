@@ -1,6 +1,6 @@
 /**
  * Strip RectTransform property overrides + repoint duplicate-slug PrefabInstances
- * in MainScene.unity for baked Generated UI prefabs.
+ * in CityScene.unity for baked Generated UI prefabs.
  *
  * Why: scene PrefabInstances accumulated stale m_Modifications (Modal-default
  * 0.5/0.5/600x800 rect) from the pre-anti-loss bake era. These clobber prefab
@@ -16,7 +16,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
-const SCENE_PATH = path.join(REPO_ROOT, "Assets", "Scenes", "MainScene.unity");
+const SCENE_PATH = path.join(REPO_ROOT, "Assets", "Scenes", "CityScene.unity");
 const PREFAB_DIR = path.join(REPO_ROOT, "Assets", "UI", "Prefabs", "Generated");
 
 // Property paths on RectTransform that must NOT carry scene overrides — prefab is truth.

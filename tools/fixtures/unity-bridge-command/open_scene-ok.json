@@ -1,13 +1,13 @@
 {
   "request": {
     "kind": "open_scene",
-    "scene_path": "Assets/Scenes/MainScene.unity",
+    "scene_path": "Assets/Scenes/CityScene.unity",
     "scene_mode": "single"
   },
   "response": {
     "ok": true,
     "response": {
-      "scene_path": "Assets/Scenes/MainScene.unity",
+      "scene_path": "Assets/Scenes/CityScene.unity",
       "scene_mode": "single",
       "message": "scene opened"
     },

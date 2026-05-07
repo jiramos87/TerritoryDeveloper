@@ -27,7 +27,7 @@ namespace Territory.Tests.PlayMode.UI.HUD
     public sealed class HudBarParityTest
     {
         private const string FixturePath = "Assets/Tests/Fixtures/UI/HUD/HudParityFixture.asset";
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private HudParityFixture _fixture;
         private HudBarDataAdapter _adapter;

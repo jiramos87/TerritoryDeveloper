@@ -19,7 +19,7 @@ namespace Territory.Tests.PlayMode.UI.Modals
     /// </summary>
     public sealed class ModalParityTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private InfoPanelDataAdapter _infoPanel;
         private PauseMenuDataAdapter _pauseMenu;

@@ -25,7 +25,7 @@ public static class UiInventoryReportsMenu
     static readonly string[] SceneAllowlist =
     {
         "Assets/Scenes/MainMenu.unity",
-        "Assets/Scenes/MainScene.unity",
+        "Assets/Scenes/CityScene.unity",
     };
 
     static int _nodesEmitted;

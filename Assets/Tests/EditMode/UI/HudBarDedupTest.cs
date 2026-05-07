@@ -19,7 +19,7 @@ namespace Territory.Tests.EditMode.UI
         private const string SurvivorPath = "Assets/UI/Prefabs/Generated/hud-bar.prefab";
         private const string DeadSnakePath = "Assets/UI/Prefabs/Generated/hud_bar.prefab";
         private const string DeadSnakeGuid = "a726c90beca40467aabc8e894c85acf4";
-        private const string MainScenePath = "Assets/Scenes/MainScene.unity";
+        private const string CityScenePath = "Assets/Scenes/CityScene.unity";
 
         [Test]
         public void HudBarSurvivor_KebabPrefabExists()
@@ -84,16 +84,16 @@ namespace Territory.Tests.EditMode.UI
         }
 
         [Test]
-        public void MainScene_NoRefsToDeadSnakeGuid()
+        public void CityScene_NoRefsToDeadSnakeGuid()
         {
-            if (!File.Exists(MainScenePath))
+            if (!File.Exists(CityScenePath))
             {
-                Assert.Ignore("MainScene.unity missing — skipping dead-guid probe");
+                Assert.Ignore("CityScene.unity missing — skipping dead-guid probe");
             }
 
-            string sceneText = File.ReadAllText(MainScenePath);
+            string sceneText = File.ReadAllText(CityScenePath);
             Assert.IsFalse(sceneText.Contains(DeadSnakeGuid),
-                $"MainScene contains refs to retired snake hud_bar guid {DeadSnakeGuid} — dedup leaked");
+                $"CityScene contains refs to retired snake hud_bar guid {DeadSnakeGuid} — dedup leaked");
         }
     }
 }

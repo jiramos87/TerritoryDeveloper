@@ -2,7 +2,7 @@
  * Stage 9 (TECH-8548) — one-shot scene-wire of TooltipController.
  *
  * Sequence:
- *   1. open_scene Assets/Scenes/MainScene.unity
+ *   1. open_scene Assets/Scenes/CityScene.unity
  *   2. find UI Canvas (target_path "UI Canvas")
  *   3. create_gameobject "TooltipController" parent_path "UI Canvas"
  *   4. attach_component TooltipController to "UI Canvas/TooltipController"
@@ -31,7 +31,7 @@ async function step(label: string, body: Record<string, unknown>): Promise<unkno
 }
 
 async function main() {
-  await step("open_scene", { kind: "open_scene", scene_path: "Assets/Scenes/MainScene.unity", scene_mode: "single" });
+  await step("open_scene", { kind: "open_scene", scene_path: "Assets/Scenes/CityScene.unity", scene_mode: "single" });
 
   let exists = false;
   try {
@@ -69,7 +69,7 @@ async function main() {
     value_object_path: "Assets/UI/Theme/DefaultUiTheme.asset",
   });
 
-  await step("save_scene", { kind: "save_scene", scene_path: "Assets/Scenes/MainScene.unity" });
+  await step("save_scene", { kind: "save_scene", scene_path: "Assets/Scenes/CityScene.unity" });
 
   console.log("wire-tooltip-controller: DONE");
   process.exit(0);

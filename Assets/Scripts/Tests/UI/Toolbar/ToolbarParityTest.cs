@@ -28,12 +28,12 @@ namespace Territory.Tests.PlayMode.UI.Toolbar
     /// </summary>
     /// <remarks>
     /// Mirrors <see cref="Territory.Tests.PlayMode.UI.HUD.HudBarParityTest"/> — UnitySetUp loads
-    /// MainScene in PlayMode, ignores baseline runtime LogError noise, then drives the adapters'
+    /// CityScene in PlayMode, ignores baseline runtime LogError noise, then drives the adapters'
     /// SerializeField slots via reflection.
     /// </remarks>
     public sealed class ToolbarParityTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private ToolbarDataAdapter _toolbarAdapter;
         private OverlayToggleDataAdapter _overlayAdapter;

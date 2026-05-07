@@ -3,7 +3,7 @@
 // §Red-Stage Proof (Anchor 1):
 // Assets/Tests/EditMode/UI/HudBarSceneSwapTest.cs::HudBar_Root_IsCatalogPrefabInstance
 //
-// Red: Pre-swap — MainScene hud-bar root has no CatalogPrefabRef component
+// Red: Pre-swap — CityScene hud-bar root has no CatalogPrefabRef component
 //      AND/OR descendants named "illuminated-button (N)" exist.
 // Green: Post-swap via scene_replace_with_prefab bridge — root carries
 //        CatalogPrefabRef.slug=="hud-bar" AND zero illuminated-button(N) descendants.
@@ -19,7 +19,7 @@ namespace Territory.Tests.EditMode.UI
 {
     public class HudBarSceneSwapTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
         private static readonly Regex IlluminatedButtonNameRx =
             new Regex(@"^illuminated-button( \(\d+\))?$", RegexOptions.Compiled);
 
@@ -33,7 +33,7 @@ namespace Territory.Tests.EditMode.UI
         }
 
         /// <summary>
-        /// Asserts hud-bar root in MainScene carries CatalogPrefabRef.slug=='hud-bar'
+        /// Asserts hud-bar root in CityScene carries CatalogPrefabRef.slug=='hud-bar'
         /// AND has zero descendants whose name matches /^illuminated-button( \(\d+\))?$/.
         /// Red: scene has no CatalogPrefabRef or still has generic illuminated-button (N) children.
         /// Green: prefab swap via scene_replace_with_prefab bridge landed; CatalogPrefabRef attached with slug hud-bar.
@@ -43,13 +43,13 @@ namespace Territory.Tests.EditMode.UI
         {
             // §Red-Stage Proof surface keywords: PrefabUtility, InstantiatePrefab, Green (post-swap state).
             var hudBar = GameObject.Find("hud-bar");
-            Assert.IsNotNull(hudBar, "hud-bar GameObject not found in MainScene.");
+            Assert.IsNotNull(hudBar, "hud-bar GameObject not found in CityScene.");
 
             // Assert CatalogPrefabRef present with correct slug.
             var catalogRef = hudBar.GetComponent<CatalogPrefabRef>();
             Assert.IsNotNull(catalogRef,
                 "hud-bar root missing CatalogPrefabRef component — prefab swap not yet applied. " +
-                "Run scene_replace_with_prefab bridge (scene_path='Assets/Scenes/MainScene.unity', " +
+                "Run scene_replace_with_prefab bridge (scene_path='Assets/Scenes/CityScene.unity', " +
                 "target_object_name='hud-bar', prefab_path='Assets/UI/Prefabs/Generated/hud-bar.prefab').");
 
             Assert.AreEqual("hud-bar", catalogRef.slug,

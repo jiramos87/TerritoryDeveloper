@@ -8,11 +8,11 @@ slices_via: spec_section
 
 ## Overview
 
-This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. The **UI-as-code program** (IDE- and agent-friendly **UI** workflows) is **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**; **codebase inventory (uGUI)** lives in **this spec** (**Codebase inventory (uGUI)** below). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)); the JSON was last promoted from **Postgres** **`editor_export_ui_inventory`** (export row **id** **8**, repo **git** **`2245403e3531b5779c52b3480be6bd0ba085946c`**). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
+This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. The **UI-as-code program** (IDE- and agent-friendly **UI** workflows) is **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**; **codebase inventory (uGUI)** lives in **this spec** (**Codebase inventory (uGUI)** below). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)); the JSON was last promoted from **Postgres** **`editor_export_ui_inventory`** (export row **id** **8**, repo **git** **`2245403e3531b5779c52b3480be6bd0ba085946c`**). **Scenes:** **UI** spans **`MainMenu`**, **`CityScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
 
 ### As-built vs target
 
-- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Primary **city** snapshot: **`MainScene.unity`** → **`UI/City/Canvas`** (paths in JSON are relative to that **Canvas** root, e.g. `Canvas/ControlPanel`). **Main menu:** **`MainMenu.unity`** ships a serialized **`MainMenuCanvas`** (**Screen Space Overlay**, **1280×720** scaler) with **`MainMenuController`** on **`MenuBootstrap`**; overlay panels (**Load City**, **Options**) are still created at runtime when their **Inspector** references are **null** — see **`MainMenuController`**. If **all** **Button** references are **null**, **`BuildUI()`** remains the dev fallback (**§3.0**).
+- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Primary **city** snapshot: **`CityScene.unity`** → **`UI/City/Canvas`** (paths in JSON are relative to that **Canvas** root, e.g. `Canvas/ControlPanel`). **Main menu:** **`MainMenu.unity`** ships a serialized **`MainMenuCanvas`** (**Screen Space Overlay**, **1280×720** scaler) with **`MainMenuController`** on **`MenuBootstrap`**; overlay panels (**Load City**, **Options**) are still created at runtime when their **Inspector** references are **null** — see **`MainMenuController`**. If **all** **Button** references are **null**, **`BuildUI()`** remains the dev fallback (**§3.0**).
 - **Target (planned):** Future layout or tokens defined by **BACKLOG** issues (e.g. **FEAT-** polish rows). Keep **Target** subsections or labeled rows **alongside** **as-built** so refactors stay traceable.
 
 ### Domain vocabulary
@@ -31,7 +31,7 @@ Backlog items and player-facing copy that name gameplay systems should use [`glo
 | Popup controllers | `Assets/Scripts/Controllers/UnitControllers/*Popup*.cs`, `DetailsPopupController.cs`, `DataPopupController.cs`, etc. |
 | HUD / stats | `CityStatsUIController.cs`, `UIManager.cs` (many legacy `Text` references) |
 | Input vs UI | `EventSystem`, `CameraController.cs`, `GridManager.cs` (`IsPointerOverGameObject` patterns) |
-| **City** scene asset | `Assets/Scenes/MainScene.unity` — **`UI/City/Canvas`** hierarchy (authoritative in **Editor**) |
+| **City** scene asset | `Assets/Scenes/CityScene.unity` — **`UI/City/Canvas`** hierarchy (authoritative in **Editor**) |
 | **Main menu** scene asset | `Assets/Scenes/MainMenu.unity` — serialized **`MainMenuCanvas`** / **`MainMenuRoot`** / menu **Buttons** + **`EventSystem`**; **`MenuBootstrap`** holds **`MainMenuController`** |
 | **As-built** JSON (committed) | [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) — bounded **`scenes[]`** sample |
 
@@ -55,7 +55,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Controllers (representative)** — **`GameControllers/`**: **`CameraController.cs`** (zoom vs UI scroll), **`CityStatsUIController.cs`**, **`MiniMapController.cs`**. **`UnitControllers/`**: **`BuildingSelectorMenuController`**, **`DetailsPopupController`**, **`DataPopupController`**, **`GrowthBudgetSlidersController`**, **`SpeedButtonsController`**, **`*SelectorButton.cs`**, **`MiniMapLayerButton`**, **`ShowStatsButton`**, **`ShowTaxes`**, **`SimulateGrowthToggle`**, etc. Other managers feed **HUD** data (**`StatisticsManager`**, **`EconomyManager`**, **`TimeManager`**) without owning every widget.
 
-**City scene and `ControlPanel`:** Primary layout **`Assets/Scenes/MainScene.unity`** (or future **`CityScene.unity`**). **City** **Canvas** root in scene: **`UI/City/Canvas`** (**Screen Space Overlay**; **Canvas Scaler** reference **800×600** in **UI** inventory export). **`ControlPanel`**: **left**-docked **vertical** construction **toolbar** (category rows, **horizontal** tool groups per row); wired via **`UIManager`** and **`UnitControllers/*SelectorButton.cs`**. **Normative layout:** **§3.3**. **`SampleScene.unity`** also lives under **`Assets/Scenes/`** (default **Unity** template); it is **not** on **`UiInventoryReportsMenu`** **`SceneAllowlist`** — **as-built** docs and the committed baseline cover **MainScene** + **MainMenu** only.
+**City scene and `ControlPanel`:** Primary layout **`Assets/Scenes/CityScene.unity`** (or future **`CityScene.unity`**). **City** **Canvas** root in scene: **`UI/City/Canvas`** (**Screen Space Overlay**; **Canvas Scaler** reference **800×600** in **UI** inventory export). **`ControlPanel`**: **left**-docked **vertical** construction **toolbar** (category rows, **horizontal** tool groups per row); wired via **`UIManager`** and **`UnitControllers/*SelectorButton.cs`**. **Normative layout:** **§3.3**. **`SampleScene.unity`** also lives under **`Assets/Scenes/`** (default **Unity** template); it is **not** on **`UiInventoryReportsMenu`** **`SceneAllowlist`** — **as-built** docs and the committed baseline cover **CityScene** + **MainMenu** only.
 
 **Main menu scene:** **`Assets/Scenes/MainMenu.unity`** — scene YAML may contain **no** serialized **Canvas** in older flows; **`MainMenuController`** wires **Inspector** **Button**s and/or **`MainMenuCanvas`**; **`BuildUI()`** remains a dev fallback when strip references are **null**. **Edit Mode** **UI** inventory export should include **`MainMenuCanvas`** when present; use **§3.0** + code for **as-built** menu **UI**.
 
@@ -69,7 +69,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 ## 1. Foundations
 
-**Traceability:** Color and typography frequency tables below are deduplicated from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (**MainScene** **`canvases[0].nodes`**). Row **Usage** cites representative **`Canvas/…`** paths (relative to **`UI/City/Canvas`** in the scene).
+**Traceability:** Color and typography frequency tables below are deduplicated from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (**CityScene** **`canvases[0].nodes`**). Row **Usage** cites representative **`Canvas/…`** paths (relative to **`UI/City/Canvas`** in the scene).
 
 ### 1.1 Color
 
@@ -105,7 +105,7 @@ Re-run **Export UI Inventory** after wide **Graphic.color** edits so **as-built*
 
 **Product stack (target):** **Shipped decision:** Keep **legacy `UnityEngine.UI.Text`** for **existing** **city** **HUD** / panels until a future issue scopes a **TMP** migration wave. **New** work may use **TMP** only when the issue explicitly chooses it (avoid mixed stacks on the same row). **Main menu** strip uses **legacy `Text`** + **`UiTheme`** font sizes.
 
-**Target (`UiTheme` typography):** `fontSizeDisplay` (hero stats), `fontSizeHeading`, `fontSizeBody`, `fontSizeCaption` on **`DefaultUiTheme.asset`**; **`UIManager`** applies them on **Start** when **`hudUiTheme`** is assigned (**`MainScene`**).
+**Target (`UiTheme` typography):** `fontSizeDisplay` (hero stats), `fontSizeHeading`, `fontSizeBody`, `fontSizeCaption` on **`DefaultUiTheme.asset`**; **`UIManager`** applies them on **Start** when **`hudUiTheme`** is assigned (**`CityScene`**).
 
 **As-built:** The **city** scene uses **legacy `UnityEngine.UI.Text`** heavily (`UIManager` serialized fields). **`TextMeshProUGUI`** appears sporadically (e.g. some `Text (Legacy)` sibling naming in hierarchy; export shows **`LiberationSans SDF`** / **`LiberationSans`** on a small number of nodes).
 
@@ -119,13 +119,13 @@ Re-run **Export UI Inventory** after wide **Graphic.color** edits so **as-built*
 ### 1.3 Spacing and layout
 
 - **Main menu (code-built):** When `MainMenuController.BuildUI()` runs, vertical stack uses **button** size **200×40**, **spacing 10** px, centered anchor — see `MainMenuController.cs`.
-- **City scene:** **Toolbar** **`Canvas/ControlPanel`** is a **left**-docked **vertical** panel: **one row per category** (demolition, roads, utilities, **RCI** zoning, environment, etc.) with **horizontal** **Button** groups per row (**LayoutGroup** as authored in **`MainScene.unity`**). **LayoutGroups** also appear under scroll views (**BuildingSelector**, **LoadGame**).
+- **City scene:** **Toolbar** **`Canvas/ControlPanel`** is a **left**-docked **vertical** panel: **one row per category** (demolition, roads, utilities, **RCI** zoning, environment, etc.) with **horizontal** **Button** groups per row (**LayoutGroup** as authored in **`CityScene.unity`**). **LayoutGroups** also appear under scroll views (**BuildingSelector**, **LoadGame**).
 - **Grid / token spacing:** No single **4px/8px** token is enforced globally — treat **as-built** as **per-panel** until a **theme** helper or **§5.2** token work lands.
 - **Anchors:** **Stats** and **date** clusters live under **`Canvas/DataPanelButtons`** with mixed anchors (see JSON **`anchor_min` / `anchor_max`** per node).
 
 #### 1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)
 
-Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP** path references, and **Transform.Find** stay reliable. **New** work should follow these. Track **implementation** drift in [`BACKLOG.md`](../../BACKLOG.md) under **§ UI-as-code program** (open **TECH-** row with a linked `ia/projects/{ISSUE_ID}.md` when used). **Backlog id policy:** **TECH** numbers increase monotonically; **do not reuse** a **TECH** id that already appears in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) for a different program — e.g. **TECH-60** there is the **completed** **spec pipeline & verification program** umbrella, not **HUD** hygiene work.
+Norms for **CityScene** / **MainMenu** hierarchies so **Editor** exports, **MCP** path references, and **Transform.Find** stay reliable. **New** work should follow these. Track **implementation** drift in [`BACKLOG.md`](../../BACKLOG.md) under **§ UI-as-code program** (open **TECH-** row with a linked `ia/projects/{ISSUE_ID}.md` when used). **Backlog id policy:** **TECH** numbers increase monotonically; **do not reuse** a **TECH** id that already appears in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) for a different program — e.g. **TECH-60** there is the **completed** **spec pipeline & verification program** umbrella, not **HUD** hygiene work.
 
 - **Canvas vs leaf graphics:** Keep **Canvas** + **CanvasScaler** on the **root** overlay (or a documented world-space root). Do **not** add **Canvas** + **CanvasScaler** on the same **GameObject** as ordinary **HUD** **Text** / **Image** leaves unless there is an explicit, documented reason.
 - **`Transform.Find` depth:** **`Transform.Find`** only searches **immediate children**. Align sibling **HUD** widgets under the same parent (or cache a **hud root** reference) instead of assuming deep discovery by name.
@@ -231,9 +231,9 @@ Slug convention: `{Concept}-button-64` (e.g. `Residential-button-64`, `Commercia
 
 ### 3.3 Tool selection / toolbar
 
-- **Scene path:** **`Canvas/ControlPanel`** under **`UI/City/Canvas`** (**MainScene**).
+- **Scene path:** **`Canvas/ControlPanel`** under **`UI/City/Canvas`** (**CityScene**).
 - **Inventory and constraints:** **Codebase inventory (uGUI)** (this spec, **Related files**).
-- **As-built (current):** **Left**-docked **vertical** **toolbar**: category **rows** (e.g. demolition, roads, utilities, **RCI** zoning, environment) with **horizontal** tool **`Button`** groups per row; dependent overlays (e.g. zoning density) re-anchored to the sidebar; avoid overlapping **mini-map** and corner **HUD** (**Editor**-authored layout in **`MainScene.unity`**).
+- **As-built (current):** **Left**-docked **vertical** **toolbar**: category **rows** (e.g. demolition, roads, utilities, **RCI** zoning, environment) with **horizontal** tool **`Button`** groups per row; dependent overlays (e.g. zoning density) re-anchored to the sidebar; avoid overlapping **mini-map** and corner **HUD** (**Editor**-authored layout in **`CityScene.unity`**).
 - **Implementation note:** Prefer documented **LayoutGroup** hierarchy when refactoring; confirm **`Canvas Scaler`** (**§4.3**) at reference resolutions. Refresh [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) after hierarchy changes ([`docs/reports/README.md`](../../docs/reports/README.md)).
 
 ### 3.4 Feedback and errors
@@ -270,13 +270,13 @@ Slug convention: `{Concept}-button-64` (e.g. `Residential-button-64`, `Commercia
 
 | Scene | Canvas path (scene / code) | `RenderMode` | **Canvas Scaler** (as-built) |
 |-------|----------------------------|--------------|------------------------------|
-| **MainScene** | `UI/City/Canvas` | **Screen Space Overlay** | **Scale With Screen Size**, reference **800×600**, **match** **0.5** — from **UI** inventory baseline export |
+| **CityScene** | `UI/City/Canvas` | **Screen Space Overlay** | **Scale With Screen Size**, reference **800×600**, **match** **0.5** — from **UI** inventory baseline export |
 | **MainMenu** | Serialized **`MainMenuCanvas`** | **Screen Space Overlay** | **Scale With Screen Size**, reference **1280×720**, **match** **0.5** |
 | **MainMenu** | Runtime: root **`Canvas`** (when `BuildUI()` only) | **Screen Space Overlay** | Same as above — dev fallback |
 
 **Acceptance matrix (spot-check in Play Mode):**
 
-| Resolution | **MainScene** (**HUD** + **ControlPanel**) | **MainMenu** |
+| Resolution | **CityScene** (**HUD** + **ControlPanel**) | **MainMenu** |
 |------------|--------------------------------------------|--------------|
 | **800×600** | Toolbar clears **mini-map** / corners; readable **Stats** cluster | Menu stack centered; no clipped **Buttons** |
 | **1280×720** | Baseline for **toolbar** layout (**§3.3**) | Reference resolution for scaler |
@@ -413,4 +413,4 @@ These patterns apply to both the **in-game HUD** (Unity uGUI) and the **web plat
 ### Machine-readable traceability (UI inventory baseline)
 
 - **Committed snapshot:** [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) — refresh from **Postgres** `editor_export_ui_inventory` or **Territory Developer → Reports → Export UI Inventory (JSON)** when **UI** hierarchies change (see [`docs/reports/README.md`](../../docs/reports/README.md)).
-- **Field mapping:** JSON node **`path`** is relative to the sampled **Canvas** root (`Canvas/…`); full scene path is **`UI/City/Canvas`** + **`path`** for **MainScene**.
+- **Field mapping:** JSON node **`path`** is relative to the sampled **Canvas** root (`Canvas/…`); full scene path is **`UI/City/Canvas`** + **`path`** for **CityScene**.

@@ -24,7 +24,7 @@ namespace Territory.Tests.PlayMode.UI.Modals
     /// </summary>
     public sealed class ModalTriggerPathsSmokeTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private UIManager _uiManager;
         private InfoPanelDataAdapter _infoPanel;

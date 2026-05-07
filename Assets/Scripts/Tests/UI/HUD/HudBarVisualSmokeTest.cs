@@ -31,7 +31,7 @@ namespace Territory.Tests.PlayMode.UI.HUD
     /// </summary>
     public sealed class HudBarVisualSmokeTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
         private const string HudBarName = "hud-bar";
         private const float NeedleAngleToleranceDegrees = 2.0f;
         private const float DefaultMinAngle = 45f;

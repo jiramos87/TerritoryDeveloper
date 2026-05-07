@@ -11,13 +11,13 @@ using Territory.Persistence;
 namespace Territory.UI
 {
 /// <summary>
-/// Main menu UI: Continue, New Game, Load City, Options. Scene transition → MainScene
+/// Main menu UI: Continue, New Game, Load City, Options. Scene transition → CityScene
 /// with appropriate <see cref="GameStartInfo"/>.
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
     private const string LastSavePathKey = "LastSavePath";
-    private const int MainSceneBuildIndex = 1;
+    private const int CitySceneBuildIndex = 1;
 
     [Header("Optional: assign in Inspector to use pre-built UI")]
     [SerializeField] private Button continueButton;
@@ -551,14 +551,14 @@ public class MainMenuController : MonoBehaviour
         if (string.IsNullOrEmpty(path))
             return;
         GameStartInfo.SetPendingLoadPath(path);
-        SceneManager.LoadScene(MainSceneBuildIndex);
+        SceneManager.LoadScene(CitySceneBuildIndex);
     }
 
     public void OnNewGameClicked()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
         GameStartInfo.SetStartModeNewGame();
-        SceneManager.LoadScene(MainSceneBuildIndex);
+        SceneManager.LoadScene(CitySceneBuildIndex);
     }
 
     public void OnLoadCityClicked()
@@ -681,7 +681,7 @@ public class MainMenuController : MonoBehaviour
     {
         CloseLoadCityPanel();
         GameStartInfo.SetPendingLoadPath(saveFilePath);
-        SceneManager.LoadScene(MainSceneBuildIndex);
+        SceneManager.LoadScene(CitySceneBuildIndex);
     }
 
     private void CloseLoadCityPanel()
@@ -736,7 +736,7 @@ public class MainMenuController : MonoBehaviour
     {
         BlipEngine.Play(BlipId.UiButtonClick);
         Territory.Persistence.GameStartInfo.SetStartModeNewGame(mapSize, seed, scenarioIndex);
-        SceneManager.LoadScene(MainSceneBuildIndex);
+        SceneManager.LoadScene(CitySceneBuildIndex);
     }
 
     public void ResumeGame() { }

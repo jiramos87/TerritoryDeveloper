@@ -24,7 +24,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
     /// <summary>
     /// Stage 11 close gate (TECH-8950) — cross-scene PlayMode smoke covering the player-visible
     /// MVP UI checkpoint:
-    ///   <c>MainMenu.unity</c> Options click → NewGame click → <c>MainScene.unity</c> loaded →
+    ///   <c>MainMenu.unity</c> Options click → NewGame click → <c>CityScene.unity</c> loaded →
     ///   splash → onboarding (consume + dismiss) → tooltip hover → glossary panel open →
     ///   city-stats handoff panel open → in-game themed modal trigger.
     /// Mirrors <c>ModalTriggerPathsSmokeTest</c> click-driver + assertion shape (Button.onClick.Invoke
@@ -34,8 +34,8 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
     public sealed class FullFlowSmokeTest
     {
         private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string MainScenePath = "Assets/Scenes/MainScene.unity";
-        private const string MainSceneName = "MainScene";
+        private const string CityScenePath = "Assets/Scenes/CityScene.unity";
+        private const string CitySceneName = "CityScene";
         private const string TooltipProbeText = "fullflow-hover";
 
         private Application.LogCallback _logHandler;
@@ -74,7 +74,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
         }
 
         [UnityTest]
-        public IEnumerator FullFlow_MainMenu_To_MainScene_Modals()
+        public IEnumerator FullFlow_MainMenu_To_CityScene_Modals()
         {
 #if UNITY_EDITOR
             EditorSceneManager.LoadSceneInPlayMode(MainMenuScenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -102,22 +102,22 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
                 AssertSurfaceVisible(optionsPanelGo, "MainMenu.OptionsPanel");
             }
 
-            // NewGame click — triggers SceneManager.LoadScene(MainScene). Poll for active scene
+            // NewGame click — triggers SceneManager.LoadScene(CityScene). Poll for active scene
             // name flip rather than gating on sceneLoaded event (matches existing PlayMode test
             // convention — yield-poll is safer than event subscription teardown).
             mainMenu.OnNewGameClicked();
             yield return null;
 
             int sceneWaitFrames = 0;
-            while (SceneManager.GetActiveScene().name != MainSceneName && sceneWaitFrames < 240)
+            while (SceneManager.GetActiveScene().name != CitySceneName && sceneWaitFrames < 240)
             {
                 sceneWaitFrames++;
                 yield return null;
             }
-            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(MainSceneName),
-                "MainScene did not become active after NewGame click");
+            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(CitySceneName),
+                "CityScene did not become active after NewGame click");
 
-            // Allow MainScene Awake/OnEnable cascade.
+            // Allow CityScene Awake/OnEnable cascade.
             yield return null;
             yield return null;
             yield return null;
@@ -204,13 +204,13 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
             var uiManager = UIManager.Instance != null
                 ? UIManager.Instance
                 : Object.FindObjectOfType<UIManager>(includeInactive: true);
-            Assert.That(uiManager, Is.Not.Null, "UIManager not resolvable in MainScene");
+            Assert.That(uiManager, Is.Not.Null, "UIManager not resolvable in CityScene");
 
             uiManager.OpenPopup(PopupType.PauseMenu);
             yield return null;
 
             var pauseMenu = Object.FindObjectOfType<PauseMenuDataAdapter>(includeInactive: true);
-            Assert.That(pauseMenu, Is.Not.Null, "PauseMenuDataAdapter not resolvable in MainScene");
+            Assert.That(pauseMenu, Is.Not.Null, "PauseMenuDataAdapter not resolvable in CityScene");
             AssertSurfaceVisible(pauseMenu.gameObject, "PauseMenu (in-game modal trigger)");
 
             uiManager.ClosePopup(PopupType.PauseMenu);

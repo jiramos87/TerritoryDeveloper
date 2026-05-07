@@ -2,7 +2,7 @@
 
 > **Role.** Definitive scope of what ships in the first release of Territory Developer. Single source of truth for "what the player can do." Derives the UI element catalog (panels, buttons, readouts) — every UI element must trace back to a feature listed here.
 >
-> **Status.** **LOCKED 2026-05-07** — D1–D35 polled + folded in. Source: `docs/full-game-mvp-exploration.md` (Framing F) + `docs/full-game-mvp-rollout-tracker.md` + DB master plan `full-game-mvp` (umbrella). Next workstreams: MainScene→CityScene rename (§7) + UI panel grilling against this locked scope (§6 inventory).
+> **Status.** **LOCKED 2026-05-07** — D1–D36 polled + folded in. Source: `docs/full-game-mvp-exploration.md` (Framing F) + `docs/full-game-mvp-rollout-tracker.md` + DB master plan `full-game-mvp` (umbrella). MainScene→CityScene rename DONE 2026-05-07 (§7). Next workstreams: UI panel grilling against this locked scope (§6 inventory).
 >
 > **Frame.** Polished Ambitious MVP. Twenty to fifty curated dev-savvy testers. macOS + Windows native. English only. Mouse + keyboard.
 
@@ -521,18 +521,18 @@ Derived from §3 features. Inventory of panels the grilling must lock. Each pane
 
 ---
 
-## 7. Companion workstream — `MainScene` → `CityScene` rename
+## 7. Companion workstream — `MainScene` → `CityScene` rename — DONE 2026-05-07
 
-86 files reference `MainScene`. The rename is **out-of-scope for the UI grilling** but is a precondition for the multi-scale split (RegionScene + CountryScene siblings).
+Rename completed 2026-05-07. Precondition for the multi-scale split (RegionScene + CountryScene siblings) cleared.
 
-Rename catalog (high level):
-- Unity scene file + meta + ProjectSettings build settings.
+Surfaces touched:
+- Unity scene file + meta (`Assets/Scenes/CityScene.unity`) + ProjectSettings build settings.
 - C# code refs (managers, controllers, tests).
 - IA docs + agent rules + skill bodies.
 - Test fixtures + bridge command runners.
-- BACKLOG + archive yaml.
+- BACKLOG live row prose (archive YAML left frozen — historical).
 
-**Rename plan ownership:** track as a separate `/project-new` BACKLOG row (`TECH-` prefix) before Bucket 1 Step 4 (scale transitions) starts. Not blocking for City UI grilling — UI grilling refers to the scale by name "City" + its scene as **CityScene** in all new docs / catalogs going forward.
+Historical references to the prior name remain in `ia/state/pre-refactor-snapshot/**`, archived BACKLOG rows, completed stage docs, and exploration / postmortem docs (frozen-in-time surfaces).
 
 ---
 

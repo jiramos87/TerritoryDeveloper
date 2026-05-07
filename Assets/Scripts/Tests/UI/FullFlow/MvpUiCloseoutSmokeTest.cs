@@ -18,7 +18,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
 {
     /// <summary>
     /// Stage 13.7 closeout (TECH-9876) — MVP UI close gate. Drives the full player-visible
-    /// flow in MainScene:
+    /// flow in CityScene:
     ///   HUD readouts → toolbar entries (Light Residential / Two-Way Road / Grass) →
     ///   CityStatsHandoff panel + binding-key sweep → StatsScaleSwitcher City→Region rebind →
     ///   Stage 12 modal triggers (PauseMenu / SettingsScreen / SaveLoadScreen / NewGameScreen /
@@ -28,7 +28,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
     /// </summary>
     public sealed class MvpUiCloseoutSmokeTest
     {
-        private const string ScenePath = "Assets/Scenes/MainScene.unity";
+        private const string ScenePath = "Assets/Scenes/CityScene.unity";
 
         private Application.LogCallback _logHandler;
 
@@ -72,7 +72,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
             var uiManager = UIManager.Instance != null
                 ? UIManager.Instance
                 : Object.FindObjectOfType<UIManager>(includeInactive: true);
-            Assert.That(uiManager, Is.Not.Null, "UIManager not resolvable in MainScene");
+            Assert.That(uiManager, Is.Not.Null, "UIManager not resolvable in CityScene");
 
             // ─────────────────────────────────────────────────────────────
             // 1. HUD readouts — any active Canvas root must carry > 0 child Image with alpha > 0.
@@ -163,12 +163,12 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
 
             // Regression guard (Stage 9.1 silent-drop): controller MUST exist after Show — runtime
             // fallback wiring (UIManager.EnsureSubtypePickerRuntimeWiring) creates the GO under
-            // Canvas if MainScene authoring lost it. Null here = controller not wired AND fallback
+            // Canvas if CityScene authoring lost it. Null here = controller not wired AND fallback
             // failed (no Canvas in scene) — both are bugs we want to surface, not silently skip.
             var picker = uiManager.SubtypePickerController;
             Assert.That(picker, Is.Not.Null,
                 "SubtypePickerController missing after ShowSubtypePicker(StateService) — " +
-                "MainScene authoring dropped the controller GO AND runtime fallback failed.");
+                "CityScene authoring dropped the controller GO AND runtime fallback failed.");
             Assert.That(picker.gameObject.activeInHierarchy, Is.True,
                 "SubtypePickerController root not active after ShowSubtypePicker(StateService)");
             picker.Hide(cancelled: true);
@@ -368,7 +368,7 @@ namespace Territory.Tests.PlayMode.UI.FullFlow
             // Loose check: at least one Canvas root with at least one visible Image > alpha 0.
             // HUD wiring is scene-author; smoke gate confirms the canvas tree is alive.
             var canvases = Object.FindObjectsOfType<Canvas>(includeInactive: false);
-            Assert.That(canvases.Length, Is.GreaterThan(0), "No active Canvas found in MainScene");
+            Assert.That(canvases.Length, Is.GreaterThan(0), "No active Canvas found in CityScene");
 
             bool sawVisible = false;
             foreach (var canvas in canvases)

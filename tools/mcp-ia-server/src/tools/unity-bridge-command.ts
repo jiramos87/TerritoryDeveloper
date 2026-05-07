@@ -269,7 +269,7 @@ const unityBridgeCommandInputShape = {
   scene_path: z
     .string()
     .optional()
-    .describe("save_scene / open_scene: scene asset path (e.g. 'Assets/Scenes/MainScene.unity'). Omit = active scene."),
+    .describe("save_scene / open_scene: scene asset path (e.g. 'Assets/Scenes/CityScene.unity'). Omit = active scene."),
   scene_mode: z
     .enum(["single", "additive"])
     .optional()
