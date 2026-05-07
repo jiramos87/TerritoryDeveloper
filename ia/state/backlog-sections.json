@@ -830,6 +830,156 @@
           "id": "TECH-10315",
           "checklist_line": "Validator pass + drift re-scan",
           "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10316",
+          "checklist_line": "- [ ] **TECH-10316** — Author canonical rule doc",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10317",
+          "checklist_line": "- [ ] **TECH-10317** — Glossary delta + index regen",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10318",
+          "checklist_line": "- [ ] **TECH-10318** — Friction-log section seed",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10319",
+          "checklist_line": "- [ ] **TECH-10319** — agent-principles link + skill-train smoke",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10888",
+          "checklist_line": "- [ ] **TECH-10888** — Author tdd-red-green-methodology rule doc",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10889",
+          "checklist_line": "- [ ] **TECH-10889** — Migration 0030 — ia_red_stage_proofs table",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10890",
+          "checklist_line": "- [ ] **TECH-10890** — Stub red_stage_proof_capture MCP + failing test",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10891",
+          "checklist_line": "- [ ] **TECH-10891** — Register 6 deferred arch_surfaces under DEC-A23",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10892",
+          "checklist_line": "- [ ] **TECH-10892** — Apply migration 0030 + DB schema test",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10893",
+          "checklist_line": "- [ ] **TECH-10893** — Implement red_stage_proof_capture (real)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10894",
+          "checklist_line": "- [ ] **TECH-10894** — Implement red_stage_proof_get + list",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10895",
+          "checklist_line": "- [ ] **TECH-10895** — Implement red_stage_proof_finalize",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10896",
+          "checklist_line": "- [ ] **TECH-10896** — Author validate:plan-red-stage script",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10897",
+          "checklist_line": "- [ ] **TECH-10897** — Author red-stage anchor resolver lib",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10898",
+          "checklist_line": "- [ ] **TECH-10898** — Wire validate:plan-red-stage into validate:all",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10899",
+          "checklist_line": "- [ ] **TECH-10899** — Update MASTER-PLAN-STRUCTURE schema + skip-clause",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10900",
+          "checklist_line": "- [ ] **TECH-10900** — master-plan-new Phase 4 emits §Red-Stage Proof",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10901",
+          "checklist_line": "- [ ] **TECH-10901** — stage-authoring Phase 4 confirm + lint",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10902",
+          "checklist_line": "- [ ] **TECH-10902** — ship-stage Pass A entry-gate + Pass B finalize",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10903",
+          "checklist_line": "- [ ] **TECH-10903** — design-explore §Persist mentions §Red-Stage Proof seed",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10904",
+          "checklist_line": "- [ ] **TECH-10904** — Extend section_closeout_apply with red coverage",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10905",
+          "checklist_line": "- [ ] **TECH-10905** — Migration 0031 — master_plan_health red_stage_coverage column",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10906",
+          "checklist_line": "- [ ] **TECH-10906** — Web dashboard plan card red coverage badge",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10907",
+          "checklist_line": "- [ ] **TECH-10907** — Retrofit policy + grandfather field migration 0032",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-10908",
+          "checklist_line": "- [ ] **TECH-10908** — End-to-end pilot on fresh master plan",
+          "trailing_blanks": 1
         }
       ]
     },

@@ -72,7 +72,6 @@ namespace Territory.Tests.PlayMode.CityStats
             {
                 "money.balance",
                 "money.envelope.total",
-                "money.bond.debt",
                 "people.population",
                 "people.happiness",
                 "people.pollution",

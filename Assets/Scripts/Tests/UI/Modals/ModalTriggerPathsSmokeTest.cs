@@ -48,7 +48,7 @@ namespace Territory.Tests.PlayMode.UI.Modals
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            // Pre-existing scene init noise (TokenCatalog manifest, BondLedgerService, GridAssetCatalog
+            // Pre-existing scene init noise (TokenCatalog manifest, GridAssetCatalog
             // missing-script reference, ThemedPrimitive theme bindings) is orthogonal to Stage 12 trigger
             // paths. Strict log mode would block SetUp before assertions run; visibility assertions
             // (AssertModalVisible) are the actual Stage 12 contract.

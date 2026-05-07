@@ -9,7 +9,7 @@
  * Exit code = number of drift-lint errors (0 = clean), matching validate-drift-lint.mjs.
  *
  * Used by: tools/cron-server/handlers/drift-lint-cron-handler.ts
- * Cadence: */10 * * * * (every 10 min — low urgency sweep)
+ * Cadence: every 10 min — low urgency sweep (cron expression "*\/10 * * * *")
  *
  * TECH-18105 / async-cron-jobs Stage 5.0.2
  */

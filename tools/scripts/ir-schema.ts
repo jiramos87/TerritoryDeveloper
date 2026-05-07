@@ -135,6 +135,16 @@ export type PanelKind = 'modal' | 'screen' | 'hud' | 'toolbar';
 
 export const PANEL_KINDS: readonly PanelKind[] = ['modal', 'screen', 'hud', 'toolbar'] as const;
 
+/**
+ * Known panel archetypes — informational only; `IrPanel.archetype` remains a freeform string
+ * (CD partner extends as needed). Authoritative archetype names land here so transcribe + bake
+ * authors discover the canonical slug instead of inventing variants.
+ *
+ * - `subtype-picker` → TECH-10500 unified RCIS subtype picker (R/C/I density tiers + Zone S
+ *   catalog rows). Panel `kind=modal`; rows render as `illuminated-button` interactives.
+ */
+export const KNOWN_PANEL_ARCHETYPES: readonly string[] = ['subtype-picker'] as const;
+
 export interface IrPanelSlot {
   /** Slot name unique within owning panel. */
   name: string;

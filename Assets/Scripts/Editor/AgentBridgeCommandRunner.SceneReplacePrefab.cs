@@ -29,8 +29,8 @@ public static partial class AgentBridgeCommandRunner
             var activeScene = SceneManager.GetActiveScene();
             if (activeScene.path != dto.scene_path)
             {
-                var scene = EditorSceneManager.OpenScene(dto.scene_path, OpenSceneMode.Single);
-                if (!scene.IsValid())
+                var openedScene = EditorSceneManager.OpenScene(dto.scene_path, OpenSceneMode.Single);
+                if (!openedScene.IsValid())
                 {
                     TryFinalizeFailed(repoRoot, commandId, $"scene_not_found:{dto.scene_path}");
                     return;
@@ -120,19 +120,6 @@ public static partial class AgentBridgeCommandRunner
         var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "scene_replace_with_prefab");
         resp.mutation_result = $"{{\"replaced_object_name\":\"{dto.target_object_name}\",\"prefab_path\":\"{dto.prefab_path}\",\"sibling_index\":{siblingIndex},\"parent_path\":\"{parentPath}\",\"instance_name\":\"{instance.name}\"}}";
         CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
-    }
-
-    static string GetGameObjectPath(GameObject go)
-    {
-        if (go == null) return "";
-        var sb = new System.Text.StringBuilder(go.name);
-        var t = go.transform.parent;
-        while (t != null)
-        {
-            sb.Insert(0, t.name + "/");
-            t = t.parent;
-        }
-        return sb.ToString();
     }
 }
 

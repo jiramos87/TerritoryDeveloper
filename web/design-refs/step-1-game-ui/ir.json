@@ -235,6 +235,16 @@
             "illuminated-button",
             "illuminated-button",
             "illuminated-button"
+          ],
+          "iconSpriteSlugs": [
+            "zoom-in-button-1-64",
+            "zoom-out-button-1-64",
+            "stats-button-64"
+          ],
+          "labels": [
+            "",
+            "",
+            ""
           ]
         },
         {
@@ -258,13 +268,28 @@
             "segmented-readout"
           ],
           "children": [
-            "segmented-readout",
-            "vu-meter",
+            "illuminated-button",
             "illuminated-button",
             "illuminated-button",
             "illuminated-button",
             "illuminated-button",
             "illuminated-button"
+          ],
+          "iconSpriteSlugs": [
+            "pause-button-1-64",
+            "speed-1-button-1-64",
+            "speed-2-button-1-64",
+            "speed-3-button-1-64",
+            "speed-4-button-1-64",
+            "auto-button-64"
+          ],
+          "labels": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "AUTO"
           ]
         }
       ]
@@ -554,104 +579,6 @@
             "illuminated-button",
             "illuminated-button"
           ]
-        }
-      ]
-    },
-    {
-      "slug": "city-stats",
-      "archetype": "city-stats",
-      "slots": [
-        {
-          "name": "row-list",
-          "accepts": [
-            "knob",
-            "fader",
-            "vu-meter",
-            "illuminated-button",
-            "segmented-readout"
-          ],
-          "children": [
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout",
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout",
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout",
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout",
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout",
-            "illuminated-button",
-            "vu-meter",
-            "segmented-readout"
-          ]
-        }
-      ],
-      "rows": [
-        {
-          "kind": "stat",
-          "label": "POPULATION",
-          "value": "12,408"
-        },
-        {
-          "kind": "stat",
-          "label": "MONEY",
-          "value": "$20,000"
-        },
-        {
-          "kind": "stat",
-          "label": "HAPPINESS",
-          "value": "50/100"
-        },
-        {
-          "kind": "stat",
-          "label": "POWER OUT",
-          "value": "84 MW"
-        },
-        {
-          "kind": "stat",
-          "label": "POWER CONS",
-          "value": "62 MW"
-        },
-        {
-          "kind": "stat",
-          "label": "UNEMPLOYMENT",
-          "value": "4.2%"
-        },
-        {
-          "kind": "stat",
-          "label": "TOTAL JOBS",
-          "value": "3,120"
-        },
-        {
-          "kind": "stat",
-          "label": "RESID. DEMAND",
-          "value": "OVERSUPPLY"
-        },
-        {
-          "kind": "stat",
-          "label": "COMM. DEMAND",
-          "value": "BALANCED"
-        },
-        {
-          "kind": "stat",
-          "label": "INDUS. DEMAND",
-          "value": "VERY HIGH"
-        },
-        {
-          "kind": "stat",
-          "label": "WATER OUT",
-          "value": "1,200 KL"
-        },
-        {
-          "kind": "stat",
-          "label": "WATER CONS",
-          "value": "  840 KL"
         }
       ]
     },

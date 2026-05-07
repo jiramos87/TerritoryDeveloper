@@ -37,11 +37,6 @@ public class CityStatsUIController : MonoBehaviour
     private Label unemploymentLabel;
     private Label envelopeCapLabel;
     private Label envelopeRemainingLabel;
-#if BONDS_ENABLED
-    // BUG-61 W4 — bond labels hidden behind feature flag (default OFF) for MVP.
-    private Label bondDebtLabel;
-    private Label bondMonthlyLabel;
-#endif
     private VisualElement statsContainer;
     private Button toggleStatsButton;
 
@@ -99,11 +94,6 @@ public class CityStatsUIController : MonoBehaviour
         envelopeRemainingLabel.style.paddingLeft = 10;
         envelopeRemainingLabel.style.paddingRight = 10;
         envelopeRemainingLabel.style.whiteSpace = WhiteSpace.Normal;
-#if BONDS_ENABLED
-        // BUG-61 W4 — bond label create hidden behind feature flag (default OFF) for MVP.
-        bondDebtLabel = CreateStatLabel("Bond debt (approx.)", "$0");
-        bondMonthlyLabel = CreateStatLabel("Bond repayment / mo", "$0");
-#endif
 
         // Create toggle button
         toggleStatsButton = new Button(ToggleStatsVisibility);
@@ -117,11 +107,6 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.Add(unemploymentLabel);
         statsContainer.Add(envelopeCapLabel);
         statsContainer.Add(envelopeRemainingLabel);
-#if BONDS_ENABLED
-        // BUG-61 W4 — bond label add hidden behind feature flag (default OFF) for MVP.
-        statsContainer.Add(bondDebtLabel);
-        statsContainer.Add(bondMonthlyLabel);
-#endif
 
         root.Add(statsContainer);
         root.Add(toggleStatsButton);
@@ -259,13 +244,6 @@ public class CityStatsUIController : MonoBehaviour
                     envelopeRemainingLabel.text = sb.ToString().TrimEnd();
                 }
             }
-#if BONDS_ENABLED
-            // BUG-61 W4 — bond label refresh hidden behind feature flag (default OFF) for MVP.
-            if (bondDebtLabel != null)
-                bondDebtLabel.text = $"Bond debt (approx.): ${cityStats.activeBondDebt:N0}";
-            if (bondMonthlyLabel != null)
-                bondMonthlyLabel.text = $"Bond repayment / mo: ${cityStats.monthlyBondRepayment:N0}";
-#endif
         }
         catch (System.Exception)
         {

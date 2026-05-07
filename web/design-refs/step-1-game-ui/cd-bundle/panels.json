@@ -317,42 +317,6 @@
     ]
   },
   {
-    "slug": "city-stats",
-    "archetype": "city-stats",
-    "slots": [
-      {
-        "name": "row-list",
-        "accepts": [
-          "knob",
-          "fader",
-          "vu-meter",
-          "illuminated-button",
-          "segmented-readout"
-        ],
-        "children": [
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout",
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout",
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout",
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout",
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout",
-          "illuminated-button",
-          "vu-meter",
-          "segmented-readout"
-        ]
-      }
-    ]
-  },
-  {
     "slug": "onboarding",
     "archetype": "onboarding",
     "slots": [

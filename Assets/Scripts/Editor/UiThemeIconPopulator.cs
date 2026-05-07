@@ -45,11 +45,10 @@ namespace Territory.UI.EditorTools
             "icon-info",
             "icon-success",
             "icon-autosave",
-            // 5 reserved-slug hooks awaiting designer SVG handoff
+            // 4 reserved-slug hooks awaiting designer SVG handoff
             "icon-happiness",
             "icon-population",
             "icon-money",
-            "icon-bond",
             "icon-envelope",
         };
 

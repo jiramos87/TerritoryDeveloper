@@ -110,10 +110,17 @@
       "validate:sprite-gen-schema"
     ],
     "Assets/Scripts/**/*.cs": [
-      "validate:single-esc-handler"
+      "validate:single-esc-handler",
+      "validate:csharp-fast"
+    ],
+    "Assets/Tests/**/*.cs": [
+      "validate:csharp-fast"
     ],
     "tools/scripts/validate-single-esc-handler.mjs": [
       "validate:single-esc-handler"
+    ],
+    "tools/scripts/validate-csharp-fast.mjs": [
+      "validate:csharp-fast"
     ],
     "tools/scripts/validate-drift-lint.mjs": [
       "validate:drift-lint"

@@ -9,8 +9,6 @@ namespace Territory.Economy
     /// Commits via <see cref="BudgetAllocationService.SetEnvelopePct"/>; UI re-reads
     /// normalized values after commit so sliders reflect stored state.
     /// </summary>
-    // BUG-61 W3 — bond UI surfaces stripped (Issue bond / Bond status buttons + Global Cap row).
-    // Bond data layer hidden behind #if BONDS_ENABLED (W4); UI never reachable in MVP build.
     public class BudgetPanel : MonoBehaviour
     {
         [SerializeField] private BudgetAllocationService budgetAllocation;

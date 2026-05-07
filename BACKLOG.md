@@ -286,6 +286,111 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 
 **Master plan:** `prototype-first-methodology` — codify the meta-result already shipped in `docs/prototype-first-methodology-design.md` `## Design Expansion`: amend `design-explore` Phase 9 persist contract so future explorations emit `§Core Prototype + §Iteration Roadmap` subsections. **Stage 1.1** (self-application codified — DEC-A22 surface re-point + persist-contract v2 fixture + arch_changelog audit row).
 
+- [ ] **TECH-10888** — Author tdd-red-green-methodology rule doc
+  - Type: technical / rule authoring
+  - Files: ia/rules/tdd-red-green-methodology.md (new)
+  - Notes: T1.0.1 — Author ia/rules/tdd-red-green-methodology.md with §Red-Stage Proof 4-field schema (red_test_anchor, target_kind, proof_artifact_id, proof_status), anchor grammar (4 forms: tracer-verb-test:{path}::{method} / visibility-delta-test:{path}::{method} / BUG-NNNN:{path}::{method} / literal n/a), target_kind enum (tracer_verb / visibility_delta / bug_repro / design_only), proof_status enum (pending / failed_as_expected / unexpected_pass / not_applicable), command_kind allowlist (npm-test / dotnet-test / unity-testmode-batch). Slug tdd-red-green-methodology Stage 1.0.
+
+- [ ] **TECH-10889** — Migration 0030 — ia_red_stage_proofs table
+  - Type: technical / migration authoring
+  - Files: tools/db/migrations/0030_red_stage_proofs.sql (new)
+  - Notes: T1.0.2 — Author tools/db/migrations/0030_red_stage_proofs.sql: CREATE TABLE ia_red_stage_proofs with columns (slug TEXT, stage_id TEXT, target_kind TEXT NOT NULL, anchor TEXT NOT NULL, proof_artifact_id UUID NOT NULL, proof_status TEXT NOT NULL DEFAULT 'pending', green_status TEXT, captured_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (slug, stage_id, anchor)); FK (slug, stage_id) REFERENCES ia_stages(slug, stage_id) ON DELETE CASCADE; CHECK constraints for target_kind / proof_status / green_status enums. Slug tdd-red-green-methodology Stage 1.0.
+
+- [ ] **TECH-10890** — Stub red_stage_proof_capture MCP + failing test
+  - Type: technical / MCP tool stub + failing test
+  - Files: tools/mcp-ia-server/src/index.ts, tools/mcp-ia-server/test/red-stage-proof.test.ts (new)
+  - Notes: T1.0.3 — Register red_stage_proof_capture stub in tools/mcp-ia-server/src/index.ts returning {status:'unexpected_pass'} for fixed UUID. Author Vitest failing-first test asserting capture rejects when status === 'unexpected_pass' — test fails first run, passes after stub adds throw. Tracer-verb-test anchor: tracer-verb-test:tools/mcp-ia-server/test/red-stage-proof.test.ts::TracerCapturesUnexpectedPass. Slug tdd-red-green-methodology Stage 1.0.
+
+- [ ] **TECH-10891** — Register 6 deferred arch_surfaces under DEC-A23
+  - Type: technical / arch surface registration
+  - Files: arch_surfaces table (DB write via arch_surface_write MCP × 6)
+  - Notes: T1.0.4 — Call arch_surface_write × 6: red-stage-proof-rule (kind=rule, path=ia/rules/tdd-red-green-methodology.md), red-stage-proof-table (kind=db_table, path=tools/db/migrations/0030_red_stage_proofs.sql), red-stage-proof-mcp-capture (kind=mcp_tool), red-stage-proof-mcp-finalize (kind=mcp_tool, deferred body), red-stage-proof-validator (kind=script, path=tools/scripts/validate-plan-red-stage.mjs, deferred), red-stage-coverage-mv (kind=db_view, deferred). All bound to DEC-A23. Slug tdd-red-green-methodology Stage 1.0.
+
+- [ ] **TECH-10892** — Apply migration 0030 + DB schema test
+  - Type: technical / migration verification
+  - Files: tools/db/migrations/0030_red_stage_proofs.sql, tools/mcp-ia-server/test/red-stage-proof.test.ts
+  - Notes: T2.1 — Run npm run db:migrate to apply 0030. Vitest in tools/mcp-ia-server/test/red-stage-proof.test.ts opens DB, asserts table + FK + CHECK constraints present. Slug tdd-red-green-methodology Stage 2.
+
+- [ ] **TECH-10893** — Implement red_stage_proof_capture (real)
+  - Type: technical / MCP tool implementation
+  - Files: tools/mcp-ia-server/src/index.ts, tools/mcp-ia-server/src/tools/red-stage-proof.ts
+  - Notes: T2.2 — Replace stub: validate enums, parse anchor grammar, INSERT row, reject proof_status='unexpected_pass' with RedStageProofError. Validate command_kind allowlist (npm-test/dotnet-test/unity-testmode-batch). Slug tdd-red-green-methodology Stage 2.
+
+- [ ] **TECH-10894** — Implement red_stage_proof_get + list
+  - Type: technical / MCP tool implementation
+  - Files: tools/mcp-ia-server/src/index.ts, tools/mcp-ia-server/src/tools/red-stage-proof.ts
+  - Notes: T2.3 — red_stage_proof_get({slug, stage_id}) returns sorted proof array. red_stage_proof_list({slug}) returns aggregate {stage_id, proof_status, count}. Cover with Vitest. Slug tdd-red-green-methodology Stage 2.
+
+- [ ] **TECH-10895** — Implement red_stage_proof_finalize
+  - Type: technical / MCP tool implementation
+  - Files: tools/mcp-ia-server/src/index.ts, tools/mcp-ia-server/src/tools/red-stage-proof.ts
+  - Notes: T2.4 — red_stage_proof_finalize({slug, stage_id, anchor, green_status}) mutates green_status. Rejects passed if prior proof_status='unexpected_pass'. Vitest covers rejection path. Slug tdd-red-green-methodology Stage 2.
+
+- [ ] **TECH-10896** — Author validate:plan-red-stage script
+  - Type: technical / validator script
+  - Files: tools/scripts/validate-plan-red-stage.mjs
+  - Notes: T3.1 — query DB for ia_master_plans.status != 'closed', list each plan's stages, assert red_stage_proof_get(slug, stage_id) returns ≥1 row per stage with all 4 fields set OR Stage body has §Red-Stage Proof block with 4 filled lines. Skip-clause: target_kind=design_only allowed proof_artifact_id=n/a. Exit 1 on violation. Slug tdd-red-green-methodology Stage 3.
+
+- [ ] **TECH-10897** — Author red-stage anchor resolver lib
+  - Type: technical / lib + tests
+  - Files: tools/lib/red-stage-anchor-resolver.ts, tools/lib/test/red-stage-anchor-resolver.test.ts
+  - Notes: T3.2 — resolveAnchor(anchor) parses 4 grammar forms (tracer-verb-test:{path}::{method}, visibility-delta-test:{path}::{method}, BUG-NNNN:{path}::{method}, literal n/a), validates path resolves on disk for non-n/a forms, returns structured tuple or throws RedStageAnchorParseError. Vitest coverage. Slug tdd-red-green-methodology Stage 3.
+
+- [ ] **TECH-10898** — Wire validate:plan-red-stage into validate:all
+  - Type: technical / CI wiring
+  - Files: package.json, docs/agent-led-verification-policy.md
+  - Notes: T3.3 — add validate:plan-red-stage line to package.json validate:all chain (alongside validate:plan-prototype-first if present). Update docs/agent-led-verification-policy.md validate chain table. Visibility-delta-test anchor: visibility-delta-test:tools/scripts/test/validate-plan-red-stage.test.mjs::CIRedOnEmptyRedStageProofBlock. Slug tdd-red-green-methodology Stage 3.
+
+- [ ] **TECH-10899** — Update MASTER-PLAN-STRUCTURE schema + skip-clause
+  - Type: documentation / schema reference
+  - Files: docs/MASTER-PLAN-STRUCTURE.md
+  - Notes: T3.4 — edit Stage block schema table to add §Red-Stage Proof row (4-field shape: red_test_anchor, target_kind, proof_artifact_id, proof_status; grammar table; skip-clause target_kind=design_only allowed proof_artifact_id=n/a). Cross-link to ia/rules/tdd-red-green-methodology.md. Slug tdd-red-green-methodology Stage 3.
+
+- [ ] **TECH-10900** — master-plan-new Phase 4 emits §Red-Stage Proof
+  - Type: technical / skill edit
+  - Files: ia/skills/master-plan-new/SKILL.md
+  - Notes: T4.1 — Edit ia/skills/master-plan-new/SKILL.md Phase 4 (Stage decomposition): per-Stage block emits §Red-Stage Proof with 4 placeholder fields. Pre-fills target_kind=tracer_verb for Stage 1.0 (binds to §Tracer Slice verb), target_kind=visibility_delta for Stages 2+ (binds to §Visibility Delta), target_kind=bug_repro when Stage tagged bugfix. proof_artifact_id=pending, proof_status=pending. Slug tdd-red-green-methodology Stage 4.
+
+- [ ] **TECH-10901** — stage-authoring Phase 4 confirm + lint
+  - Type: technical / skill edit + lint
+  - Files: ia/skills/stage-authoring/SKILL.md
+  - Notes: T4.2 — Edit ia/skills/stage-authoring/SKILL.md Phase 4: confirm §Red-Stage Proof block — bind red_test_anchor to concrete test path + method name. Lint asserts test method name contains tracer-verb noun phrase (Stage 1.0) / visibility-delta noun phrase (Stages 2+) / BUG-NNNN literal (bug_repro). Lint fails → Stage authoring blocked. Slug tdd-red-green-methodology Stage 4.
+
+- [ ] **TECH-10902** — ship-stage Pass A entry-gate + Pass B finalize
+  - Type: technical / skill edit
+  - Files: ia/skills/ship-stage/SKILL.md
+  - Notes: T4.3 — Edit ia/skills/ship-stage/SKILL.md: Pass A entry-gate sequence MUST be red_stage_proof_capture BEFORE spec-implementer dispatch. unexpected_pass → emit red_stage_proof_unexpected_pass error + reject Pass A entry. Pass B post-verify: call red_stage_proof_finalize per Stage with green_status from verify-loop result. Add invariant note: ordering rejects code-before-proof. Slug tdd-red-green-methodology Stage 4.
+
+- [ ] **TECH-10903** — design-explore §Persist mentions §Red-Stage Proof seed
+  - Type: technical / skill edit
+  - Files: ia/skills/design-explore/SKILL.md
+  - Notes: T4.4 — Edit ia/skills/design-explore/SKILL.md §Persist phase: mention §Red-Stage Proof seeds — §Implementation Points → per-Stage skeleton; §Tracer Slice → first red_test_anchor; §Visibility Delta → subsequent anchors. Cross-link to ia/rules/tdd-red-green-methodology.md. Slug tdd-red-green-methodology Stage 4.
+
+- [ ] **TECH-10904** — Extend section_closeout_apply with red coverage
+  - Type: technical / MCP extension
+  - Files: tools/mcp-ia-server/src/index.ts
+  - Notes: T5.1 — Edit section_closeout_apply handler. Per section_id, query red_stage_proof_list filtered to member stages. Compute red_stage_coverage_pct = (failed_as_expected + not_applicable) / total_stages × 100. Expose {red_stage_coverage_pct, pending_count, unexpected_pass_count} in payload. Reject closeout when unexpected_pass_count > 0. Slug tdd-red-green-methodology Stage 5.
+
+- [ ] **TECH-10905** — Migration 0031 — master_plan_health red_stage_coverage column
+  - Type: technical / DB migration
+  - Files: tools/db/migrations/0031_master_plan_health_red_coverage.sql, tools/mcp-ia-server/src/index.ts
+  - Notes: T5.2 — Author migration 0031 adding red_stage_coverage NUMERIC column to master_plan_health MV. Populated from same formula as T5.1. NULL allowed for plans with all target_kind=design_only. npm run db:migrate applies. Update stage_closeout_digest MCP to include the column. Slug tdd-red-green-methodology Stage 5.
+
+- [ ] **TECH-10906** — Web dashboard plan card red coverage badge
+  - Type: technical / web UI
+  - Files: web/components/PlanCard.tsx
+  - Notes: T5.3 — Locate web/components/PlanCard.tsx (or web/app/(dashboard)/plans/[slug]/page.tsx) via Glob. Add red_stage_coverage display: green badge ≥100, amber 50-99, red <50. Read column via existing dashboard data fetch. Visibility-delta-test anchor: visibility-delta-test:web/components/__tests__/PlanCard.test.tsx::RendersRedStageCoverageBadge. Slug tdd-red-green-methodology Stage 5.
+
+- [ ] **TECH-10907** — Retrofit policy + grandfather field migration 0032
+  - Type: technical / migration + rule edit
+  - Files: tools/db/migrations/0032_master_plan_grandfathered.sql (new), ia/rules/tdd-red-green-methodology.md, tools/scripts/validate-plan-red-stage.mjs
+  - Notes: T6.1 — Author migration tools/db/migrations/0032_master_plan_grandfathered.sql adding tdd_red_green_grandfathered BOOLEAN DEFAULT FALSE to ia_master_plans. Backfill TRUE for existing rows + this plan's slug tdd-red-green-methodology. Edit ia/rules/tdd-red-green-methodology.md §Retrofit policy: forward-only enforcement; Pass A entry-gate skips capture for grandfathered plans. Edit validate:plan-red-stage to honor field. Slug tdd-red-green-methodology Stage 6.
+
+- [ ] **TECH-10908** — End-to-end pilot on fresh master plan
+  - Type: technical / pilot run
+  - Files: pilot exploration doc (TBD), ia_master_plan_change_log row for tdd-red-green-methodology
+  - Notes: T6.2 — Pilot run on a fresh master plan (TBD pilot exploration doc): drive /design-explore → /master-plan-new → /stage-file → /stage-authoring → /ship-stage Pass A entry-gate. Verify red_stage_proof_capture rejects unexpected_pass, accepts failed_as_expected. Pass B finalize flips green_status=passed. validate:plan-red-stage exits 0 with pilot plan in scope. Write closeout note to master_plan_change_log for tdd-red-green-methodology. Slug tdd-red-green-methodology Stage 6.
+
 ## Architecture coherence program
 
 **Master plan:** `architecture-coherence-system` — split `ARCHITECTURE.md` into `ia/specs/architecture/{layers,data-flows,interchange,decisions}.md` sub-specs, DB-index arch surfaces + decisions + changelog, ship `/arch-drift-scan` skill + `/design-explore` Architecture Decision phase + 4 MCP tools to keep planning aligned. **Stage 1.1** (doc split + migration 0032) + **Stage 1.2** (plan-arch backfill + Stage block schema) shipped. **Stage 1.3** in progress: 4 read-side MCP tools + drift-scan skill.
@@ -354,26 +459,6 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
 - [ ] **TECH-8949 — Game UI Stage 11 T11.3 — Legacy city-stats deep-dive panel decommission + lessons-learned migration** — Resolve target at task time: search city-stats panel code under `Assets/Scripts/Managers/GameManagers/UIManager.*.cs` (likely inline in `UIManager.cs` / `UIManager.Hud.cs` / `UIManager.Theme.cs` / `UIManager.Utilities.cs`; standalone `UIManager.CityStats.cs` does NOT exist). Migrate lessons-learned (panel layout, data binding) to `ia/specs/glossary.md` or `docs/agent-lifecycle.md` BEFORE delete (per IF→THEN guardrail in `ia/rules/invariants.md`). Delete partial OR remove inline city-stats block; update `UIManager.cs` partial root + lifecycle. `CityStatsHandoffAdapter` (T11.1) becomes sole consumer. `npm run unity:compile-check` exits 0. (`game-ui-design-system` Stage 11)
 
 - [ ] **TECH-8950 — Game UI Stage 11 T11.4 — Cross-scene full-flow PlayMode smoke + verify:local Stage close** — Author `Assets/Scripts/Tests/UI/FullFlowSmokeTest.cs` PlayMode test addressing Stage 12 cross-scene gap. Load `Assets/Scenes/MainMenu.unity` → click Options (themed chrome post BUG-* fix) → click NewGame → assert `MainScene.unity` loaded → assert Stage 8 themed modal roots reachable (`Assets/Scenes/MainScene.unity:5824-5828`); drive splash → onboarding (assert `PlayerPrefs` `onboarding-complete` flipped) → tooltip hover → glossary panel open + ThemedList scroll → city-stats handoff. Assert per step: `Image.color.a > 0`; `TMP_Text.text` non-empty; no console errors; no `MissingReferenceException`; no legacy chrome GameObjects (`HUDBar/CityNameLabel`, `Toolbar/BuildingIcons`) in hierarchy. Run via `npm run unity:testmode-batch`. `npm run verify:local` exits 0. Stage close = MVP UI complete; player-visible checkpoint hit end-to-end. (`game-ui-design-system` Stage 11)
-
-- [ ] **TECH-14446 — Game UI catalog-bake Stage 9.1 T9.1.1 — Audit + path rewrite preflight** — `ui_tree_walk` snapshot of `UI Canvas` root + Grep `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` for `UI Canvas/Canvas/` scene-path literals; produce re-parent map (child name -> new parent path). Touches ≤2 files. (`game-ui-catalog-bake` Stage 9.1)
-  - Type: tech-debt / preflight
-  - Files: `Assets/Scenes/MainScene.unity` (read-only via bridge), `Assets/Scripts/**/*.cs` + `Assets/Tests/**/*.cs` (grep targets)
-  - Notes: `ui_tree_walk` snapshot of UI Canvas root + Grep for `UI Canvas/Canvas/` scene-path literals; produce re-parent map (child name -> new parent path). Output = working memory anchor for T9.1.2.
-  - Acceptance: re-parent map captured (child -> new parent path) for every legacy descendant under `UI Canvas/Canvas/`; code path-literal occurrences enumerated in §Plan Digest §Work Items.
-
-- [ ] **TECH-14447 — Game UI catalog-bake Stage 9.1 T9.1.2 — Flatten + re-parent legacy UI children + delete wrapper GameObjects** — Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)`; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Touches `MainScene.unity` + any code path-rewrites surfaced by T9.1.1 (2-3 files). (`game-ui-catalog-bake` Stage 9.1)
-  - Type: tech-debt / scene mutation
-  - Files: `Assets/Scenes/MainScene.unity`, code paths surfaced by T9.1.1
-  - Notes: Bridge `set_gameobject_parent` per legacy child with `world_position_stays: true`; `delete_gameobject` on wrapper Canvas hosts; `remove_component` Canvas + CanvasScaler from DateText; `save_scene`. Re-parent map from T9.1.1 drives bridge calls.
-  - Acceptance: every legacy child re-parented under `UI Canvas` root (no `Canvas/` wrapper segment); `UI Canvas/Canvas` + `UI Canvas/Canvas (Game UI)` deleted; DateText Canvas + CanvasScaler stripped; T8.5 `CellDataPanelBindingTest` still green; `npm run unity:compile-check` exits 0.
-  - Depends on: TECH-14446 (re-parent map from preflight)
-
-- [ ] **TECH-14448 — Game UI catalog-bake Stage 9.1 T9.1.3 — Tighten SingleRootCanvasTest invariant + add descendant-ban test** — Rewrite `MainScene_HasSingleRootCanvas_NamedUiCanvas` to assert `Object.FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` AND root name == `UI Canvas`. Add `MainScene_NoDescendantCanvases_UnderRoot` asserting every Canvas's `transform.parent == null`. Touches `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs` (1 file). (`game-ui-catalog-bake` Stage 9.1)
-  - Type: tech-debt / test invariant
-  - Files: `Assets/Tests/EditMode/UI/SingleRootCanvasTest.cs`
-  - Notes: Rewrite existing assertion to use `FindObjectsOfType<Canvas>(includeInactive: true).Length == 1` + root name check. Add second test asserting `transform.parent == null` for every Canvas. Closes Stage 8 D9 letter-vs-spirit gap (current test filters by `transform.parent == null` so descendant Canvases slip through).
-  - Acceptance: tightened invariant test green on flat MainScene; descendant-ban test green on flat scene; both fail-loudly if wrapper Canvas re-introduced; `npm run unity:compile-check` exits 0.
-  - Depends on: TECH-14447 (flat MainScene state required for tightened invariant to pass)
 
 ## Economic depth lane
 
