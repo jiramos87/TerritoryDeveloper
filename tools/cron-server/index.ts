@@ -20,6 +20,9 @@ import { run as runMaterializeBacklog } from "./handlers/materialize-backlog-cro
 import { run as runRegenIndexes } from "./handlers/regen-indexes-cron-handler.js";
 import { run as runGlossaryBacklinks } from "./handlers/glossary-backlinks-cron-handler.js";
 import { run as runAnchorReindex } from "./handlers/anchor-reindex-cron-handler.js";
+import { run as runDriftLint } from "./handlers/drift-lint-cron-handler.js";
+import { run as runCacheWarm } from "./handlers/cache-warm-cron-handler.js";
+import { run as runCacheBust } from "./handlers/cache-bust-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
 import type { TaskCommitRecordJobRow } from "./handlers/task-commit-record-cron-handler.js";
@@ -29,6 +32,9 @@ import type { MaterializeBacklogJobRow } from "./handlers/materialize-backlog-cr
 import type { RegenIndexesJobRow } from "./handlers/regen-indexes-cron-handler.js";
 import type { GlossaryBacklinksJobRow } from "./handlers/glossary-backlinks-cron-handler.js";
 import type { AnchorReindexJobRow } from "./handlers/anchor-reindex-cron-handler.js";
+import type { DriftLintJobRow } from "./handlers/drift-lint-cron-handler.js";
+import type { CacheWarmJobRow } from "./handlers/cache-warm-cron-handler.js";
+import type { CacheBustJobRow } from "./handlers/cache-bust-cron-handler.js";
 
 // Load DATABASE_URL from .env if not already set.
 const { config } = await import("dotenv");
@@ -99,6 +105,24 @@ const KINDS: KindConfig[] = [
     cadence: "*/5 * * * *", // every 5 min — rebuild job, moderate latency tolerance
     handler: (row) => runAnchorReindex(row as unknown as AnchorReindexJobRow),
     claimLimit: 1,
+  },
+  {
+    table: "cron_drift_lint_jobs",
+    cadence: "*/10 * * * *", // every 10 min — sweep, low urgency
+    handler: (row) => runDriftLint(row as unknown as DriftLintJobRow),
+    claimLimit: 1,
+  },
+  {
+    table: "cron_cache_warm_jobs",
+    cadence: "*/5 * * * *", // every 5 min — warm hot db_read_batch keys
+    handler: (row) => runCacheWarm(row as unknown as CacheWarmJobRow),
+    claimLimit: 10,
+  },
+  {
+    table: "cron_cache_bust_jobs",
+    cadence: "* * * * *", // every minute — post-write invalidation must be hot
+    handler: (row) => runCacheBust(row as unknown as CacheBustJobRow),
+    claimLimit: 50,
   },
 ];
 

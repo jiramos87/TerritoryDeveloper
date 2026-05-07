@@ -97,6 +97,9 @@ import { registerCronMaterializeBacklogEnqueue } from "./tools/cron-materialize-
 import { registerCronRegenIndexesEnqueue } from "./tools/cron-regen-indexes.js";
 import { registerCronGlossaryBacklinksEnqueue } from "./tools/cron-glossary-backlinks.js";
 import { registerCronAnchorReindexEnqueue } from "./tools/cron-anchor-reindex.js";
+import { registerCronDriftLintEnqueue } from "./tools/cron-drift-lint.js";
+import { registerCronCacheWarmEnqueue } from "./tools/cron-cache-warm.js";
+import { registerCronCacheBustEnqueue } from "./tools/cron-cache-bust.js";
 
 // Bridge + compute tools
 import {
@@ -223,6 +226,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCronRegenIndexesEnqueue(server);
   registerCronGlossaryBacklinksEnqueue(server);
   registerCronAnchorReindexEnqueue(server);
+  registerCronDriftLintEnqueue(server);
+  registerCronCacheWarmEnqueue(server);
+  registerCronCacheBustEnqueue(server);
 }
 
 /**

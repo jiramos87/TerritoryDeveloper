@@ -32,6 +32,32 @@ import {
 import { tarjanScc } from "./tarjan-scc.js";
 
 // ---------------------------------------------------------------------------
+// Cache-bust helper (TECH-18106 / async-cron-jobs Stage 5.0.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * enqueueCacheBust — fire-and-forget INSERT into cron_cache_bust_jobs.
+ *
+ * Called post-commit via setImmediate so the enqueue cannot roll back the
+ * originating write. Errors are swallowed (best-effort invalidation).
+ *
+ * cache_key_pattern: SQL LIKE pattern matching keys in ia_mcp_context_cache.
+ * E.g. 'db_read_batch:%' busts all cached db_read_batch results.
+ */
+function enqueueCacheBust(cache_kind: string, cache_key_pattern: string): void {
+  setImmediate(() => {
+    const pool = getIaDatabasePool();
+    if (!pool) return;
+    pool
+      .query(
+        `INSERT INTO cron_cache_bust_jobs (cache_kind, cache_key_pattern) VALUES ($1, $2)`,
+        [cache_kind, cache_key_pattern],
+      )
+      .catch(() => { /* best-effort — enqueue failure is non-fatal */ });
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Shared helpers.
 // ---------------------------------------------------------------------------
 
@@ -502,6 +528,10 @@ export async function mutateTaskStatusFlip(
       }
     });
 
+    // Cache-bust: task status change invalidates any cached db_read_batch results
+    // that may have included task state rows (TECH-18106).
+    enqueueCacheBust("db_read_batch", "db_read_batch:%");
+
     return result;
   });
 }
@@ -627,6 +657,10 @@ export async function mutateTaskStatusFlipBatch(
       });
     }
 
+    // Cache-bust post-commit: batch flip invalidates task state in db_read_batch cache (TECH-18106).
+    if (flipped.length > 0) {
+      enqueueCacheBust("db_read_batch", "db_read_batch:%");
+    }
     return { flipped, skipped };
   });
 }
@@ -995,6 +1029,9 @@ export async function mutateStageCloseoutApply(
     for (const row of trail) {
       await appendCloseoutAuditRow(slug, stage_id, row.step_name, row.ok, row.error ?? null);
     }
+    // Cache-bust: stage closeout changes stage + task state — invalidate
+    // cached db_read_batch results (TECH-18106).
+    enqueueCacheBust("db_read_batch", "db_read_batch:%");
     return result;
   } catch (e) {
     // Flush partial trail + failure marker for the failed step. Best-effort —

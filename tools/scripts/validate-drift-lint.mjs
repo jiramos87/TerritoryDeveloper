@@ -8,6 +8,11 @@
  *
  * Used by: npm run validate:drift-lint (wired into validate:all:readonly chain).
  *
+ * Config-toggleable async mode (TECH-18106):
+ *   DRIFT_LINT_ASYNC=1  — enqueues cron_drift_lint_jobs row + exits 0.
+ *                         Sweep runs asynchronously (cadence: every 10 min).
+ *                         Set this in CI to move drift-lint off the critical path.
+ *
  * Checks:
  *   1. Anchor refs `{kind}:{path}::{method}` in §Red-Stage Proof sections
  *      must resolve in ia_spec_anchors (slug + section_id present).
@@ -33,6 +38,27 @@ const { resolveDatabaseUrl } = await import(
 
 const DATABASE_URL = resolveDatabaseUrl(repoRoot) ??
   "postgres://postgres:postgres@localhost:5434/territory_ia_dev";
+
+// ---------------------------------------------------------------------------
+// Async mode (TECH-18106): DRIFT_LINT_ASYNC=1 enqueues cron job + exits 0.
+// ---------------------------------------------------------------------------
+
+if (process.env.DRIFT_LINT_ASYNC === "1") {
+  // Enqueue a cron_drift_lint_jobs row so the cron supervisor runs the sweep.
+  const client = new pg.Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+    const res = await client.query(
+      `INSERT INTO cron_drift_lint_jobs (commit_sha) VALUES ($1) RETURNING job_id`,
+      [process.env.GIT_SHA ?? null],
+    );
+    const jobId = res.rows[0]?.job_id ?? "(unknown)";
+    console.log(`validate:drift-lint: async mode — enqueued job_id=${jobId}. Sweep runs at */10.`);
+  } finally {
+    await client.end().catch(() => {});
+  }
+  process.exit(0);
+}
 
 // Retired surface patterns: known removed/renamed symbols.
 // Add entries when surfaces are formally retired (via /design-explore retire path).
