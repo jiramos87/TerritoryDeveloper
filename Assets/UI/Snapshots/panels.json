@@ -1,67 +1,179 @@
 {
-  "snapshot_id": "2026-05-06T22:43:45.100Z",
+  "snapshot_id": "2026-05-07T10:23:28.746Z",
   "kind": "panels",
-  "schema_version": 3,
+  "schema_version": 4,
   "items": [
     {
-      "slug": "growth-budget-panel",
+      "slug": "hud-bar",
       "fields": {
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 12,
-        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16}",
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4}",
         "params_json": "{}"
       },
       "panel": {
-        "slug": "growth-budget-panel",
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 12,
-        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16}",
+        "slug": "hud-bar",
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4}",
         "params_json": "{}"
       },
       "children": [
         {
           "ord": 1,
-          "kind": "row",
-          "params_json": "{\"ord\":1,\"kind\":\"row\",\"role\":\"total\",\"archetype\":\"slider_row_2\"}",
+          "kind": "button",
+          "params_json": "{\"icon\":\"zoom-in\",\"kind\":\"illuminated-button\"}",
           "sprite_ref": "",
-          "layout_json": null
+          "layout_json": "{\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-zoom-in-button"
         },
         {
           "ord": 2,
-          "kind": "row",
-          "params_json": "{\"ord\":2,\"kind\":\"row\",\"role\":\"zoning\",\"archetype\":\"slider_row_2\"}",
+          "kind": "button",
+          "params_json": "{\"icon\":\"zoom-out\",\"kind\":\"illuminated-button\"}",
           "sprite_ref": "",
-          "layout_json": null
+          "layout_json": "{\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-zoom-out-button"
         },
         {
           "ord": 3,
-          "kind": "row",
-          "params_json": "{\"ord\":3,\"kind\":\"row\",\"role\":\"roads\",\"archetype\":\"slider_row_2\"}",
+          "kind": "button",
+          "params_json": "{\"icon\":\"recenter\",\"kind\":\"illuminated-button\"}",
           "sprite_ref": "",
-          "layout_json": null
+          "layout_json": "{\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-recenter-button"
+        },
+        {
+          "ord": 4,
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-city-name-label"
+        },
+        {
+          "ord": 5,
+          "kind": "button",
+          "params_json": "{\"icon\":\"auto\",\"kind\":\"illuminated-button\",\"label\":\"AUTO\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-auto-toggle"
+        },
+        {
+          "ord": 6,
+          "kind": "button",
+          "params_json": "{\"icon\":\"budget-plus\",\"kind\":\"illuminated-button\",\"label\":\"+\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-budget-plus-button"
+        },
+        {
+          "ord": 7,
+          "kind": "button",
+          "params_json": "{\"icon\":\"budget-minus\",\"kind\":\"illuminated-button\",\"label\":\"-\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-budget-minus-button"
+        },
+        {
+          "ord": 8,
+          "kind": "button",
+          "params_json": "{\"icon\":\"budget-graph\",\"kind\":\"illuminated-button\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-budget-graph-button"
+        },
+        {
+          "ord": 9,
+          "kind": "button",
+          "params_json": "{\"icon\":\"map\",\"kind\":\"illuminated-button\",\"label\":\"MAP\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-map-button"
+        },
+        {
+          "ord": 10,
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-budget-readout-label"
+        },
+        {
+          "ord": 11,
+          "kind": "button",
+          "params_json": "{\"icon\":\"pause\",\"kind\":\"illuminated-button\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-pause-button"
+        },
+        {
+          "ord": 12,
+          "kind": "button",
+          "params_json": "{\"icon\":\"speed-1\",\"kind\":\"illuminated-button\",\"label\":\"1x\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-speed-1-button"
+        },
+        {
+          "ord": 13,
+          "kind": "button",
+          "params_json": "{\"icon\":\"speed-2\",\"kind\":\"illuminated-button\",\"label\":\"2x\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-speed-2-button"
+        },
+        {
+          "ord": 14,
+          "kind": "button",
+          "params_json": "{\"icon\":\"speed-3\",\"kind\":\"illuminated-button\",\"label\":\"3x\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-speed-3-button"
+        },
+        {
+          "ord": 15,
+          "kind": "button",
+          "params_json": "{\"icon\":\"speed-4\",\"kind\":\"illuminated-button\",\"label\":\"4x\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-speed-4-button"
+        },
+        {
+          "ord": 16,
+          "kind": "button",
+          "params_json": "{\"icon\":\"speed-5\",\"kind\":\"illuminated-button\",\"label\":\"5x\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-speed-5-button"
+        },
+        {
+          "ord": 17,
+          "kind": "button",
+          "params_json": "{\"icon\":\"play\",\"kind\":\"illuminated-button\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-play-button"
+        },
+        {
+          "ord": 18,
+          "kind": "button",
+          "params_json": "{\"icon\":\"build-residential\",\"kind\":\"illuminated-button\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-build-residential-button"
+        },
+        {
+          "ord": 19,
+          "kind": "button",
+          "params_json": "{\"icon\":\"build-commercial\",\"kind\":\"illuminated-button\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-build-commercial-button"
         }
       ]
-    },
-    {
-      "slug": "subtype-picker",
-      "fields": {
-        "layout_template": "hstack",
-        "layout": "hstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":10,\"right\":10,\"bottom\":8}",
-        "params_json": "{}"
-      },
-      "panel": {
-        "slug": "subtype-picker",
-        "layout_template": "hstack",
-        "layout": "hstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":10,\"right\":10,\"bottom\":8}",
-        "params_json": "{}"
-      },
-      "children": []
     }
   ]
 }

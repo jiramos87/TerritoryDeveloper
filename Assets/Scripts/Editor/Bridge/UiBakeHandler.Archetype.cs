@@ -735,6 +735,20 @@ namespace Territory.Editor.Bridge
                 var found = AssetDatabase.LoadAssetAtPath<Sprite>(path);
                 if (found != null) return found;
             }
+            // F11 (bake-fix-2026-05-07) — variant-suffix shape `{slug}-button-{variant}-{size}-target.png`.
+            // Existing icon catalogue under Assets/Sprites/Buttons follows this naming
+            // (zoom-in-button-1-64-target.png, pause-button-1-64-target.png, etc).
+            var variantGuids = AssetDatabase.FindAssets($"{slug}-button t:Sprite", new[] { "Assets/Sprites" });
+            for (int i = 0; i < variantGuids.Length; i++)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(variantGuids[i]);
+                if (string.IsNullOrEmpty(path)) continue;
+                var fname = System.IO.Path.GetFileName(path);
+                if (!fname.StartsWith($"{slug}-button-", System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (!fname.EndsWith("-target.png", System.StringComparison.OrdinalIgnoreCase)) continue;
+                var found = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (found != null) return found;
+            }
             return null;
         }
 
@@ -1049,7 +1063,8 @@ namespace Territory.Editor.Bridge
 
             switch (item.slug)
             {
-                case "hud_bar":
+                case "hud-bar":
+                case "hud_bar": // legacy slug alias — kept for backwards compat
                 {
                     var map = new Dictionary<string, Transform>(3, StringComparer.OrdinalIgnoreCase);
 
@@ -1058,7 +1073,35 @@ namespace Territory.Editor.Bridge
                         var name = char.ToUpperInvariant(zone[0]) + zone.Substring(1); // Left / Center / Right
                         var go = new GameObject(name, typeof(RectTransform));
                         go.transform.SetParent(panelRoot.transform, worldPositionStays: false);
-                        go.AddComponent<HorizontalLayoutGroup>();
+
+                        // F3 (bake-fix-2026-05-07): zone wrappers must flex inside parent HLG.
+                        // Root HLG.childControlWidth=true sizes us — anchors within the row stay center.
+                        // LayoutElement(flexibleWidth=1) gives equal width share when forceExpandWidth toggled off.
+                        var rt = (RectTransform)go.transform;
+                        rt.anchorMin = new Vector2(0f, 0f);
+                        rt.anchorMax = new Vector2(0f, 1f);
+                        rt.pivot = new Vector2(0f, 0.5f);
+                        rt.anchoredPosition = Vector2.zero;
+                        rt.sizeDelta = new Vector2(0f, 0f);
+
+                        var le = go.AddComponent<LayoutElement>();
+                        le.flexibleWidth = 1f;
+                        le.flexibleHeight = 1f;
+                        le.minHeight = 0f;
+
+                        var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                        hlg.spacing = 8;
+                        hlg.padding = new RectOffset(4, 4, 0, 0);
+                        hlg.childControlWidth = false;
+                        hlg.childControlHeight = false;
+                        hlg.childForceExpandWidth = false;
+                        hlg.childForceExpandHeight = false;
+                        hlg.childAlignment = zone == "left"
+                            ? TextAnchor.MiddleLeft
+                            : zone == "right"
+                                ? TextAnchor.MiddleRight
+                                : TextAnchor.MiddleCenter;
+
                         map[zone] = go.transform;
                     }
 

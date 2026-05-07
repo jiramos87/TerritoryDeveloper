@@ -306,6 +306,8 @@ namespace Territory.Editor.Bridge
             public string sprite_ref;
             /// <summary>JSON string of layout routing metadata, e.g. {\"zone\":\"left\"}. Null/empty = no zone routing.</summary>
             public string layout_json;
+            /// <summary>Stage 9.15 — per-child semantic slug (e.g. "hud-bar-zoom-in-button"). Null/empty falls back to "child_{ord}" naming.</summary>
+            public string instance_slug;
         }
 
         /// <summary>Structured bake error — round-trips through bridge `{ok: false, error, details, path}` payload.</summary>
@@ -415,6 +417,134 @@ namespace Territory.Editor.Bridge
                     Debug.LogWarning($"[UiBakeHandler] layout_template '{layoutTemplate}' unrecognised — falling back to vstack for panel '{panelSlug}'");
                     return typeof(VerticalLayoutGroup);
             }
+        }
+
+        // F1 (bake-fix-2026-05-07): map layout_template → PanelKind so bake-time _kind
+        // matches the LayoutGroup attached at root, preventing OnEnable from stripping it.
+        internal static PanelKind MapLayoutTemplateToPanelKind(string layoutTemplate, string panelSlug)
+        {
+            switch (layoutTemplate)
+            {
+                case "hstack": return PanelKind.Hud;
+                case "vstack": return PanelKind.Modal;
+                case "grid":   return PanelKind.Toolbar;
+                default:       return PanelKind.Modal;
+            }
+        }
+
+        // F1: SerializedObject write — ThemedPanel._kind is private serialized field.
+        internal static void AssignPanelKind(ThemedPanel themedPanel, PanelKind kind)
+        {
+            if (themedPanel == null) return;
+            var so = new SerializedObject(themedPanel);
+            var prop = so.FindProperty("_kind");
+            if (prop == null) return;
+            prop.intValue = (int)kind;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // F2: per-kind anchor/size defaults. Hud=bottom-strip stretch, Modal=center,
+        // Toolbar=left-rail, SideRail=right-rail, Screen=full stretch.
+        internal static void ApplyPanelKindRectDefaults(RectTransform rect, PanelKind kind)
+        {
+            if (rect == null) return;
+            switch (kind)
+            {
+                case PanelKind.Hud:
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(1f, 0f);
+                    rect.pivot = new Vector2(0.5f, 0f);
+                    rect.anchoredPosition = new Vector2(0f, 8f);
+                    rect.sizeDelta = new Vector2(-16f, 80f); // stretch full width minus 8px padding each side
+                    break;
+                case PanelKind.Toolbar:
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(0f, 1f);
+                    rect.pivot = new Vector2(0f, 0.5f);
+                    rect.anchoredPosition = new Vector2(8f, 0f);
+                    rect.sizeDelta = new Vector2(96f, -16f);
+                    break;
+                case PanelKind.SideRail:
+                    rect.anchorMin = new Vector2(1f, 0f);
+                    rect.anchorMax = new Vector2(1f, 1f);
+                    rect.pivot = new Vector2(1f, 0.5f);
+                    rect.anchoredPosition = new Vector2(-8f, 0f);
+                    rect.sizeDelta = new Vector2(96f, -16f);
+                    break;
+                case PanelKind.Screen:
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(1f, 1f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = Vector2.zero;
+                    rect.sizeDelta = Vector2.zero;
+                    break;
+                case PanelKind.Modal:
+                default:
+                    rect.anchorMin = new Vector2(0.5f, 0.5f);
+                    rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = Vector2.zero;
+                    rect.sizeDelta = new Vector2(480f, 320f);
+                    break;
+            }
+        }
+
+        // F3 (bake-fix-2026-05-07): configure root LayoutGroup so children fill row evenly,
+        // pull padding from fields.padding_json + spacing from fields.gap_px.
+        internal static void ApplyRootLayoutGroupConfig(LayoutGroup layoutGroup, PanelKind kind, PanelSnapshotFields fields)
+        {
+            if (layoutGroup == null) return;
+            int padTop = 4, padBottom = 4, padLeft = 8, padRight = 8;
+            float gap = fields?.gap_px ?? 8f;
+            var padJson = fields?.padding_json;
+            if (!string.IsNullOrEmpty(padJson))
+            {
+                ParsePaddingJson(padJson, ref padTop, ref padRight, ref padBottom, ref padLeft);
+            }
+            layoutGroup.padding = new RectOffset(padLeft, padRight, padTop, padBottom);
+
+            switch (layoutGroup)
+            {
+                case HorizontalLayoutGroup hlg:
+                    hlg.spacing = gap;
+                    hlg.childControlWidth = true;
+                    hlg.childControlHeight = true;
+                    hlg.childForceExpandWidth = (kind == PanelKind.Hud);
+                    hlg.childForceExpandHeight = true;
+                    hlg.childAlignment = TextAnchor.MiddleCenter;
+                    break;
+                case VerticalLayoutGroup vlg:
+                    vlg.spacing = gap;
+                    vlg.childControlWidth = true;
+                    vlg.childControlHeight = true;
+                    vlg.childForceExpandWidth = true;
+                    vlg.childForceExpandHeight = false;
+                    vlg.childAlignment = TextAnchor.UpperCenter;
+                    break;
+                case GridLayoutGroup grid:
+                    grid.spacing = new Vector2(gap, gap);
+                    grid.cellSize = new Vector2(80f, 80f);
+                    grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+                    grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+                    grid.childAlignment = TextAnchor.UpperLeft;
+                    break;
+            }
+        }
+
+        // Lightweight padding_json reader — accepts {"top":N,"right":N,"bottom":N,"left":N}.
+        private static void ParsePaddingJson(string padJson, ref int top, ref int right, ref int bottom, ref int left)
+        {
+            top    = ReadIntField(padJson, "top",    top);
+            right  = ReadIntField(padJson, "right",  right);
+            bottom = ReadIntField(padJson, "bottom", bottom);
+            left   = ReadIntField(padJson, "left",   left);
+        }
+
+        private static int ReadIntField(string json, string key, int fallback)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(json, "\"" + key + "\"\\s*:\\s*(-?\\d+)");
+            if (!m.Success) return fallback;
+            return int.TryParse(m.Groups[1].Value, out var v) ? v : fallback;
         }
 
         /// <summary>
@@ -713,11 +843,13 @@ namespace Territory.Editor.Bridge
             {
                 go = new GameObject(item.slug);
                 var rootRect = go.AddComponent<RectTransform>();
-                rootRect.anchorMin = new Vector2(0f, 1f);
-                rootRect.anchorMax = new Vector2(0f, 1f);
-                rootRect.pivot = new Vector2(0f, 1f);
-                rootRect.anchoredPosition = new Vector2(8f, -8f);
-                rootRect.sizeDelta = new Vector2(200f, 80f);
+
+                // F1+F2 (bake-fix-2026-05-07) — derive PanelKind from layout_template,
+                // assign per-kind anchor/size defaults so OnEnable's ApplyKindLayout
+                // attaches the matching LayoutGroup instead of stripping it back to VLG.
+                string layoutTemplate = item.fields?.layout_template ?? string.Empty;
+                var panelKind = MapLayoutTemplateToPanelKind(layoutTemplate, item.slug);
+                ApplyPanelKindRectDefaults(rootRect, panelKind);
 
                 var bgImage = go.AddComponent<Image>();
                 bgImage.color = Color.white;
@@ -725,10 +857,10 @@ namespace Territory.Editor.Bridge
 
                 var themedPanel = go.AddComponent<ThemedPanel>();
                 WireThemeRef(themedPanel, theme);
+                AssignPanelKind(themedPanel, panelKind);
 
                 // Map layout_template → root LayoutGroup. Hard fail on missing.
                 System.Type layoutGroupType;
-                string layoutTemplate = item.fields?.layout_template ?? string.Empty;
                 try
                 {
                     layoutGroupType = MapLayoutTemplate(layoutTemplate, item.slug);
@@ -743,7 +875,18 @@ namespace Territory.Editor.Bridge
                     };
                 }
 
-                go.AddComponent(layoutGroupType);
+                // F8 (bake-fix-2026-05-07) — ThemedPanel.OnEnable fires at AddComponent
+                // time with default _kind=Modal=0 → ApplyKindLayout attaches a VLG before
+                // AssignPanelKind has a chance to set the right kind. Strip whatever
+                // LayoutGroup that pass added so the bake-driven AddComponent below ends
+                // up as the sole root LayoutGroup matching layout_template.
+                foreach (var stale in go.GetComponents<LayoutGroup>())
+                {
+                    UnityEngine.Object.DestroyImmediate(stale);
+                }
+
+                var layoutGroup = (LayoutGroup)go.AddComponent(layoutGroupType);
+                ApplyRootLayoutGroupConfig(layoutGroup, panelKind, item.fields);
 
                 // Slot-wrapper iteration + children (T4 fills archetype dispatch).
                 BakePanelSnapshotChildren(item, go, theme);
@@ -798,9 +941,182 @@ namespace Territory.Editor.Bridge
                     }
                 }
 
-                // Spawn a minimal placeholder child for each snapshot child row.
-                var childGo = new GameObject($"child_{child.ord}", typeof(RectTransform));
+                // Spawn child — semantic name from instance_slug when present; fallback child_{ord}.
+                string childName = !string.IsNullOrEmpty(child.instance_slug)
+                    ? child.instance_slug
+                    : $"child_{child.ord}";
+                var childGo = new GameObject(childName, typeof(RectTransform));
                 childGo.transform.SetParent(parent, worldPositionStays: false);
+
+                // F4 (bake-fix-2026-05-07): wrapper RectTransform default size so HLG can space.
+                // Default 64×64; overwritten below when a button prefab is nested + its size is known.
+                var childRect = (RectTransform)childGo.transform;
+                childRect.anchorMin = new Vector2(0f, 0.5f);
+                childRect.anchorMax = new Vector2(0f, 0.5f);
+                childRect.pivot = new Vector2(0.5f, 0.5f);
+                childRect.anchoredPosition = Vector2.zero;
+                childRect.sizeDelta = new Vector2(64f, 64f);
+                ApplyChildLayoutJsonSize(childRect, child.layout_json);
+
+                // Attach CatalogPrefabRef when instance_slug carries semantic identity.
+                if (!string.IsNullOrEmpty(child.instance_slug))
+                {
+                    var childRef = childGo.AddComponent<CatalogPrefabRef>();
+                    childRef.slug = child.instance_slug;
+                }
+
+                // Instantiate illuminated-button prefab for `button` kind children.
+                if (child.kind == "button")
+                {
+                    var btnPrefabPath = "Assets/UI/Prefabs/Generated/illuminated-button.prefab";
+                    var btnPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(btnPrefabPath);
+                    if (btnPrefab != null)
+                    {
+                        var instance = (GameObject)PrefabUtility.InstantiatePrefab(btnPrefab, childGo.transform);
+                        if (instance != null)
+                        {
+                            // F12 (bake-fix-2026-05-07) — unpack nested prefab connection so added
+                            // children (icon GameObject from F10) survive SaveAsPrefabAsset on the
+                            // outer panel root. Without this, added objects sit as nested-prefab
+                            // overrides that get filtered out when the panel is saved as a fresh
+                            // prefab asset.
+                            PrefabUtility.UnpackPrefabInstance(
+                                instance,
+                                PrefabUnpackMode.Completely,
+                                InteractionMode.AutomatedAction);
+
+                            // F4: copy prefab's natural size onto wrapper so zone HLG spaces correctly,
+                            // then stretch instance to fill wrapper.
+                            var instRect = instance.GetComponent<RectTransform>();
+                            if (instRect != null)
+                            {
+                                if (instRect.sizeDelta.x > 0f && instRect.sizeDelta.y > 0f)
+                                {
+                                    childRect.sizeDelta = instRect.sizeDelta;
+                                }
+                                instRect.anchorMin = Vector2.zero;
+                                instRect.anchorMax = Vector2.one;
+                                instRect.pivot = new Vector2(0.5f, 0.5f);
+                                instRect.anchoredPosition = Vector2.zero;
+                                instRect.sizeDelta = Vector2.zero;
+                            }
+
+                            if (!string.IsNullOrEmpty(child.instance_slug))
+                            {
+                                instance.name = child.instance_slug;
+                                var instRef = instance.GetComponent<CatalogPrefabRef>();
+                                if (instRef == null) instRef = instance.AddComponent<CatalogPrefabRef>();
+                                instRef.slug = child.instance_slug;
+                            }
+
+                            // F6 (bake-fix-2026-05-07): propagate UiTheme ref onto every nested
+                            // theme-aware component (JuiceBase / PulseOnEvent / ThemedPrimitiveBase
+                            // / StudioControlBase) on the instantiated prefab tree.
+                            PropagateThemeRefRecursive(instance, theme);
+
+                            // F10 (bake-fix-2026-05-07) — wire icon sprite. panels.json carries
+                            // sprite_ref="" (button_detail.sprite_icon_entity_id null in DB) so the
+                            // icon slug rides in params_json.icon. Extract slug → Resolve via
+                            // existing Buttons/* search → spawn/find icon child + assign Image.sprite,
+                            // then ApplyDetail so the renderer reads the slug back at runtime.
+                            var iconSlug = ExtractParamsJsonIconSlug(child.params_json);
+                            if (!string.IsNullOrEmpty(iconSlug))
+                            {
+                                WireIlluminatedButtonIcon(instance, iconSlug);
+                                var btnComp = instance.GetComponent<IlluminatedButton>();
+                                if (btnComp != null)
+                                {
+                                    btnComp.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSlug });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // F10 (bake-fix-2026-05-07) — pull "icon" string out of a params_json blob.
+        // Naive scan, no JsonUtility dep — params_json shape is open and varies per child kind.
+        private static string ExtractParamsJsonIconSlug(string paramsJson)
+        {
+            if (string.IsNullOrEmpty(paramsJson)) return null;
+            var m = System.Text.RegularExpressions.Regex.Match(
+                paramsJson, "\"icon\"\\s*:\\s*\"([^\"]+)\"");
+            return m.Success ? m.Groups[1].Value : null;
+        }
+
+        // F10 — find/create "icon" child under instantiated illuminated-button prefab + assign sprite.
+        // Mirrors SpawnIlluminatedButtonRenderTargets icon block (Archetype.cs ~line 644) so the snapshot
+        // bake path produces the same render contract (body → icon → halo siblings) as the IR-flow bake.
+        private static void WireIlluminatedButtonIcon(GameObject instance, string iconSlug)
+        {
+            if (instance == null || string.IsNullOrEmpty(iconSlug)) return;
+            var sprite = ResolveButtonIconSprite(iconSlug);
+            if (sprite == null)
+            {
+                Debug.LogWarning(
+                    $"[UiBakeHandler] illuminated-button icon sprite not found (slug={iconSlug}); "
+                    + "expected Assets/Sprites/Buttons/{slug}-target.png or sibling-folder fallback.");
+                return;
+            }
+            var iconT = instance.transform.Find("icon");
+            UnityEngine.UI.Image iconImage;
+            if (iconT == null)
+            {
+                var icon = new GameObject("icon", typeof(RectTransform));
+                icon.transform.SetParent(instance.transform, worldPositionStays: false);
+                var ir = (RectTransform)icon.transform;
+                ir.anchorMin = new Vector2(0.5f, 0.5f);
+                ir.anchorMax = new Vector2(0.5f, 0.5f);
+                ir.pivot = new Vector2(0.5f, 0.5f);
+                ir.anchoredPosition = Vector2.zero;
+                ir.sizeDelta = new Vector2(64f, 64f);
+                iconImage = icon.AddComponent<UnityEngine.UI.Image>();
+                iconImage.raycastTarget = false; // body owns hit-testing
+                iconImage.preserveAspect = true;
+            }
+            else
+            {
+                iconImage = iconT.GetComponent<UnityEngine.UI.Image>();
+                if (iconImage == null) iconImage = iconT.gameObject.AddComponent<UnityEngine.UI.Image>();
+            }
+            iconImage.sprite = sprite;
+            // Re-assert render order body → icon → halo so halo always draws on top.
+            var haloT = instance.transform.Find("halo");
+            if (haloT != null) haloT.SetAsLastSibling();
+        }
+
+        // F4: read layout_json {"size":{"w":N,"h":N}} into RectTransform.sizeDelta when present.
+        private static void ApplyChildLayoutJsonSize(RectTransform rect, string layoutJson)
+        {
+            if (rect == null || string.IsNullOrEmpty(layoutJson)) return;
+            var w = TryReadFloatPath(layoutJson, "size", "w");
+            var h = TryReadFloatPath(layoutJson, "size", "h");
+            if (w.HasValue && h.HasValue)
+            {
+                rect.sizeDelta = new Vector2(w.Value, h.Value);
+            }
+        }
+
+        private static float? TryReadFloatPath(string json, string outerKey, string innerKey)
+        {
+            // Naive nested-object scan — `"outer":{"inner":N}`. Ignores whitespace variation gracefully.
+            var pat = "\"" + outerKey + "\"\\s*:\\s*\\{[^}]*\"" + innerKey + "\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)";
+            var m = System.Text.RegularExpressions.Regex.Match(json, pat);
+            if (!m.Success) return null;
+            return float.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : (float?)null;
+        }
+
+        // F6: recursively wire UiTheme ref onto every Component on root + descendants
+        // that exposes a `_themeRef` SerializedProperty.
+        private static void PropagateThemeRefRecursive(GameObject root, UiTheme theme)
+        {
+            if (root == null || theme == null) return;
+            var components = root.GetComponentsInChildren<Component>(true);
+            foreach (var c in components)
+            {
+                if (c == null) continue;
+                WireThemeRef(c, theme);
             }
         }
 
@@ -936,7 +1252,10 @@ namespace Territory.Editor.Bridge
         {
             if (component == null || theme == null) return;
             var so = new SerializedObject(component);
-            var prop = so.FindProperty("_themeRef");
+            // ThemedPanel / ThemedPrimitiveBase / StudioControlBase / TooltipController
+            // serialize as `_themeRef`; JuiceBase (+ derived PulseOnEvent etc.) uses
+            // `themeRef`. Try both — silent no-op if neither exists.
+            var prop = so.FindProperty("_themeRef") ?? so.FindProperty("themeRef");
             if (prop == null) return;
             prop.objectReferenceValue = theme;
             so.ApplyModifiedPropertiesWithoutUndo();

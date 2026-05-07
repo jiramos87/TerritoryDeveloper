@@ -77,11 +77,33 @@ test('hud-bar children have at least one left, center, and right zone', () => {
 
 test('hud-bar item has slug and fields.layout_template', () => {
   const snapshot = loadPanels();
-  const hudBar = snapshot.items.find((i) => i.slug === 'hud_bar');
-  assert.ok(hudBar, 'top-level slug field must exist on hud_bar item');
+  const hudBar = snapshot.items.find((i) => i.slug === 'hud_bar' || i.slug === 'hud-bar');
+  assert.ok(hudBar, 'top-level slug field must exist on hud_bar/hud-bar item');
   assert.ok(hudBar.fields, 'fields block must exist');
   assert.ok(
     typeof hudBar.fields.layout_template === 'string' && hudBar.fields.layout_template.length > 0,
     'fields.layout_template must be non-empty string',
   );
+});
+
+test('schema_version is 4 (instance_slug era)', () => {
+  const snapshot = loadPanels();
+  assert.strictEqual(snapshot.schema_version, 4, 'expected schema_version 4 after instance_slug extension');
+});
+
+test('hud-bar children with instance_slug surface it on output rows', () => {
+  const snapshot = loadPanels();
+  const hudBar = snapshot.items.find((i) => i.slug === 'hud-bar' || i.slug === 'hud_bar');
+  if (!hudBar) return; // skip when hud-bar not yet seeded in committed snapshot
+  const withSlug = hudBar.children.filter((c) => c.instance_slug && c.instance_slug.length > 0);
+  assert.ok(
+    withSlug.length > 0,
+    'expected at least one hud-bar child with instance_slug set — check migration 0104 + seed migration',
+  );
+  for (const c of withSlug) {
+    assert.ok(
+      c.instance_slug.startsWith('hud-bar-'),
+      `child ord=${c.ord} instance_slug="${c.instance_slug}" must start with "hud-bar-"`,
+    );
+  }
 });

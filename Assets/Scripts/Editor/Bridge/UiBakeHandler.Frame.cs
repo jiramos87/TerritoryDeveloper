@@ -997,6 +997,12 @@ namespace Territory.Editor.Bridge
         static bool ExistingPrefabHasNonDefaultRect(string assetPath)
         {
             if (string.IsNullOrEmpty(assetPath)) return false;
+            // Pipeline output dir — always overwritable. Hand-authored prefabs
+            // live elsewhere; "Generated/" by convention = bake output only.
+            if (assetPath.IndexOf("/Generated/", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return false;
+            }
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
             if (existing == null) return false;
             var rt = existing.GetComponent<RectTransform>();

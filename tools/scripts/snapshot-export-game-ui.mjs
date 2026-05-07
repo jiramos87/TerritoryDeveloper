@@ -43,7 +43,7 @@ import { resolveDatabaseUrl } from '../postgres-ia/resolve-database-url.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 const OUT_REL = 'Assets/UI/Snapshots/panels.json';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const require = createRequire(import.meta.url);
 const pgRequire = createRequire(join(REPO_ROOT, 'tools/postgres-ia/package.json'));
@@ -73,7 +73,8 @@ const CHILDREN_QUERY = `
     pc.child_kind                AS kind,
     pc.params_json               AS params_json,
     sd.assets_path               AS sprite_ref,
-    pc.layout_json               AS layout_json
+    pc.layout_json               AS layout_json,
+    pc.instance_slug             AS instance_slug
   FROM panel_child pc
   LEFT JOIN button_detail bd ON bd.entity_id = pc.child_entity_id
   LEFT JOIN sprite_detail sd ON sd.entity_id = bd.sprite_icon_entity_id
@@ -104,7 +105,12 @@ async function main() {
         kind: k.kind,
         params_json: typeof k.params_json === 'string' ? k.params_json : JSON.stringify(k.params_json ?? {}),
         sprite_ref: k.sprite_ref ?? '',
-        layout_json: k.layout_json ?? null,
+        layout_json: k.layout_json == null
+          ? null
+          : typeof k.layout_json === 'string'
+            ? k.layout_json
+            : JSON.stringify(k.layout_json),
+        instance_slug: k.instance_slug ?? null,
       }));
       totalChildren += children.length;
       items.push({
