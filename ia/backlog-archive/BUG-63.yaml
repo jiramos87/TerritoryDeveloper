@@ -1,0 +1,31 @@
+id: BUG-63
+type: BUG
+title: "ship-cycle Pass B should AssetDatabase.Refresh before git add -A so generated .meta files land in stage commit"
+priority: P1
+status: done
+closed: "2026-05-08T00:00:00Z"
+section: null
+spec: null
+resolution: "Fix landed in ia/skills/ship-cycle/SKILL.md Phase 8 step 0 (regenerated agent-body.md + .claude/agents/ship-cycle.md): unity_bridge_command(kind=\"refresh_asset_database\") runs before git add -A when stage diff touches Assets/**. Bridge handler exists at Assets/Scripts/Editor/AgentBridgeCommandRunner.Mutations.cs:87. Worked outside backlog flow on 2026-05-08; not via /author + /ship BUG-63."
+files:
+  - "ia/skills/ship-cycle/SKILL.md"
+  - "tools/scripts/unity-compile-check.sh"
+  - "tools/mcp-ia-server/src/index.ts"
+notes: |
+  Reproduce: /ship-cycle on plan that creates new Assets/Scripts/*.cs files. Stage commit lands without .meta GUID siblings. Unity Editor (interactive, user-owned) generates .meta on its own reimport tick AFTER commit → orphan untracked .meta files accumulate across stages.
+
+  Cause: unity:compile-check runs Unity -batchmode -quit but does not call territory_if_locked_save_quit_and_wait first; when project lock held by user's live Editor the batch process runs in second-instance mode (compile-only, no AssetDatabase write).
+
+  Fix: ship-cycle Pass B calls mcp__territory-ia__unity_bridge_command kind='asset_database_refresh' (new bridge tool) after Pass A edits + before git add -A. Live Editor writes .meta synchronously; stage commit captures them.
+
+  Alt: extend unity-compile-check.sh to call territory_if_locked_save_quit_and_wait when lock held (slower; quits user's Editor every cycle).
+
+  Acceptance: ship-cycle stage commit on a plan creating N new .cs files contains N matching .meta siblings; no orphan .meta drift after stage.
+
+  Recurrence evidence: large-file-atomization-refactor stages 2–15, 65 orphan .meta swept in chore commit bd153cc3 on 2026-05-08.
+acceptance: "ship-cycle stage commit on a plan creating N new .cs files contains N matching .meta siblings; no orphan .meta drift after stage."
+depends_on: []
+depends_on_raw: ""
+related: []
+created: "2026-05-08T00:00:00Z"
+raw_markdown: ""

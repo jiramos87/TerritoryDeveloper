@@ -12,8 +12,8 @@ Run `ia/skills/ship-cycle/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{SLUG}`
 6. Phase 5 — Pass B — verify-loop on cumulative `git diff HEAD`. Verdict pass required; fail → `STAGE_VERIFY_FAIL` (no rollback).
 7. Phase 6 — Pass B — per task: `task_status_flip(verified)` then `task_status_flip(done)`.
 8. Phase 7 — Pass B — inline closeout: `stage_closeout_apply(slug, stage_id)` + `cron_audit_log_enqueue({audit_kind:'stage_closed'})`.
-9. Phase 8 — Pass B — single stage commit `feat({slug}-stage-{stage_id_db}): ...` + per-task `cron_task_commit_record_enqueue(commit_sha)` + `cron_stage_verification_flip_enqueue(verdict='pass', commit_sha)`.
-10. Phase 9 — Chain digest + next-stage resolver via `master_plan_state(slug)`: filed Stage → `/ship-cycle Stage N.M`; all done → `/ship-final {SLUG}`.
+9. Phase 8 — Pass B — when stage diff touches `Assets/**`: `unity_bridge_command(kind="refresh_asset_database")` BEFORE `git add -A` so live Editor writes `.meta` siblings synchronously into the stage commit (skip when no `Assets/**` paths). Then single stage commit `feat({slug}-stage-{stage_id_db}): ...` + per-task `cron_task_commit_record_enqueue(commit_sha)` + `cron_stage_verification_flip_enqueue(verdict='pass', commit_sha)`.
+10. Phase 9 — Chain digest + next-stage resolver via `master_plan_state(slug)`: capture `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` from `stages[]` (length = total, 1-based index of `{STAGE_ID}` = position); filed Stage → `/ship-cycle Stage N.M`; all done → `/ship-final {SLUG}`.
 
 # Boundary marker contract
 
@@ -33,6 +33,7 @@ HTML comments — invisible in rendered markdown, greppable by code-review / val
 - Do NOT cross stage boundary — strictly one Stage per invocation.
 - Pass A flips strictly `pending → implemented`; Pass B flips strictly `implemented → verified → done`.
 - Inline closeout (Phase 7) MANDATORY on green Pass B — never defer.
+- Phase 8 step 0: refresh_asset_database bridge call BEFORE git add -A whenever stage diff touches Assets/** — never skip when Assets/** present (orphan .meta drift recurrence).
 - On Pass B verify-loop fail → `STAGE_VERIFY_FAIL` + worktree stays dirty + no rollback of Pass A flips.
 - Do NOT chain `/code-review` — operator runs out-of-band per Task (lifecycle row 9).
 - Do NOT write task spec bodies to filesystem — DB sole source of truth.
@@ -45,4 +46,4 @@ HTML comments — invisible in rendered markdown, greppable by code-review / val
 
 # Output
 
-Caveman summary: `ship-cycle done. STAGE_ID={S} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff (`/ship-cycle Stage N.M` next | `/ship-final {SLUG}` | fallback `/ship-stage-main-session`).
+Caveman summary: `ship-cycle done. STAGE_ID={S} STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff (`/ship-cycle Stage N.M` next | `/ship-final {SLUG}` | fallback `/ship-stage-main-session`). Always emit `STAGE_PROGRESS` (every branch) so operator sees plan position.

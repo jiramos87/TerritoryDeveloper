@@ -51,6 +51,7 @@ input_token_budget: 80000
 pre_split_threshold: 70000
 tools_role: pair-head
 tools_extra:
+  - mcp__territory-ia__unity_bridge_command
   - mcp__territory-ia__stage_bundle
   - mcp__territory-ia__task_state
   - mcp__territory-ia__task_spec_body
@@ -190,6 +191,8 @@ No filesystem mv. Closeout MANDATORY on green Pass B — never defer.
 
 ### Phase 8 — Pass B — stage commit + per-task commit record + verification flip
 
+0. **AssetDatabase refresh pre-commit gate** — when stage diff touched `Assets/**` (any file under Unity asset roots): call `unity_bridge_command(kind="refresh_asset_database")` BEFORE `git add -A`. Live Editor writes `.meta` GUID siblings synchronously for any new `.cs` / asset files Pass A created — without this gate, `unity:compile-check` (batchmode + second-instance when project lock held) skips AssetDatabase writes, leaving orphan untracked `.meta` files outside the stage commit. Skip this step when `git diff HEAD --name-only` shows zero `Assets/**` paths. On bridge failure (Editor not running / lease unavailable) → fall back to `unity:compile-check` (which now hits batchmode AssetDatabase since user can quit Editor) OR `STOPPED at refresh — bridge_unavailable` so operator can resume after starting Editor.
+
 1. `git add -A` + single commit:
 
    ```
@@ -210,7 +213,13 @@ Pre-commit hook fail → `STOPPED at commit — pre-commit hook failed: {reason}
 
 ### Phase 9 — Chain digest + next-stage resolver
 
-`master_plan_state(slug)` — 3 cases:
+`master_plan_state(slug)` — capture `stages[]` for both progress counter + next-stage resolution:
+
+- `TOTAL_STAGES = stages.length`
+- `STAGE_INDEX = 1-based index of {STAGE_ID} in stages[]` (use `stage_id` match)
+- `STAGE_PROGRESS = "{STAGE_INDEX}/{TOTAL_STAGES}"` — emitted in chain digest summary.
+
+3 next-handoff cases:
 
 - Filed Stage with `pending` Tasks remaining → `Next: /ship-cycle {SLUG} Stage {N.M}`.
 - All Stages `done` → `Next: /ship-final {SLUG}`.
@@ -264,7 +273,9 @@ Emit exactly one of:
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}` — DB-drift repair directive.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at commit — pre-commit hook failed: {reason}` — investigate hook.
 
-Followed by caveman summary block: `ship-cycle done. STAGE_ID={S} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff.
+Followed by caveman summary block: `ship-cycle done. STAGE_ID={S} STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff.
+
+`STAGE_PROGRESS` derived from `master_plan_state(slug).stages[]` — length = `TOTAL_STAGES`, 1-based index of `{STAGE_ID}` = `STAGE_INDEX`. Always emit (idle exit + STOPPED branches included) so operator sees plan position at every handoff.
 
 ---
 
@@ -290,3 +301,5 @@ For ad-hoc multi-query DB state (anything not covered by the above): one `db_rea
 ## Changelog
 
 - 2026-05-05 — Pass B absorbed (verify-loop + verified→done flips + closeout + stage commit + verification flip). Chain prose updated: `design-explore → ship-plan → ship-cycle → ship-final`. `/ship-stage-main-session` retained as legacy fallback for token-budget-exceeded path; not chained.
+- 2026-05-08 — `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` added to Phase 9 chain digest summary. Derived from `master_plan_state(slug).stages[]` — operator sees plan position at every handoff (e.g. `12/19`).
+- 2026-05-08 (BUG-63) — Phase 8 step 0 added: `unity_bridge_command(kind="refresh_asset_database")` runs before `git add -A` when stage diff touches `Assets/**`. Live Editor writes `.meta` siblings synchronously into stage commit; eliminates orphan `.meta` drift accumulated when batchmode `unity:compile-check` runs in second-instance mode (project lock held by user's Editor → AssetDatabase writes skipped). Recurrence evidence: large-file-atomization-refactor stages 2–15, 65 orphan `.meta` swept in chore commit `bd153cc3`.
