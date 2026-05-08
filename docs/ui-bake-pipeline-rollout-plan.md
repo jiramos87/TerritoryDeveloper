@@ -105,6 +105,30 @@
 
 **Exit criteria.** Agent grilling produces ≥85%-match panel definitions on novel surfaces using only IA + DB context.
 
+### Track E close
+
+**UI rollout greenlight: 2026-05-08 — infra ready, convergence test pending Region UI candidate**
+
+Rubric algorithm + weights v1 authored (`docs/ui-grill-convergence-rubric.md`). Grill skill formalized (`ia/skills/ui-element-grill/SKILL.md`). Calibration MCP slices live. Design-system spec locked. Infrastructure end-to-end proven across Tracks A–D. Convergence gate test (TECH-24417 agent grill run + TECH-24418 rubric scoring + TECH-24415 novel panel pick) deferred to future Region UI master plan — no Region UI candidate selected yet. When Region UI master plan kicks off: run E.1–E.5 against chosen panel; declare autonomous if score ≥0.85.
+
+---
+
+## Closeout digest — Tracks B→E lessons (Stage 6.0, 2026-05-08)
+
+**What shipped:**
+- Track B: doc alignment + corpus/verdicts jsonl seeded from hud-bar grilling decisions.
+- Track C: calibration MCP slices live (`ui_def_drift_scan`, `ui_calibration_corpus_query`, `ui_calibration_verdict_record`, `ui_panel_*`, `ui_token_*`, `ui_component_*`). CI drift gate on `docs/ui-element-definitions.md` ↔ DB.
+- Track D: design-system spec promoted (`ia/specs/ui-design-system.md`), 20 tokens + 6 components locked. Grill skill formalized + synced.
+- Track E infra: rubric algorithm + weights v1 authored. Convergence test deferred — no Region UI candidate.
+
+**Key lessons:**
+1. **Drift gate value.** `ui_def_drift_scan` CI gate caught doc↔DB divergence early. Pattern: ship drift gate in same stage as the surface it guards.
+2. **Hybrid-incremental seed pattern.** Seeding corpus from prior human decisions (hud-bar rebake-1..7) was more valuable than starting from scratch. Always seed from completed grilling work before first agent grill run.
+3. **Late-skill-formalization timing.** Deferring `ui-element-grill/SKILL.md` until calibration tools landed (Track D after C) was correct — skill body references MCP tool names that didn't exist in Track B. Pattern: formalize skill AFTER its tool dependencies ship.
+4. **Rubric weights v1 — defer tuning.** Equal 1/3 weights sufficient for first run. Real deviation expected on `structure_match` (rect IoU sensitive to px-exact authoring). Review at Region UI master-plan kickoff with ≥3 scored panels.
+
+**Convergence test deferred marker.** TECH-24415 + TECH-24417 + TECH-24418 archived. Re-file under Region UI master plan when candidate panel selected. Rubric doc preserved as reusable artifact.
+
 ---
 
 ## Cross-track dependencies
@@ -149,3 +173,4 @@ D provides the skill E exercises.
 |---|---|
 | 2026-05-08 | Plan created. Tracks A–E enumerated. Track A starting same session. |
 | 2026-05-08 | Stage-2.AUDIT: §References added. Cross-links to definitions + grilling-ideas + state files wired. |
+| 2026-05-08 | Stage-6.0: Track E close + closeout digest added. UI rollout greenlight marker written. Convergence test deferred to Region UI master plan. |

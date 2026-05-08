@@ -6,6 +6,16 @@
 
 ---
 
+## [Stage-6.AUDIT] — ui-implementation-mvp-rest Stage 6.0 closeout (2026-05-08)
+
+- **Infra readiness confirmed**: All Tracks A–E infrastructure shipped (DB-first bake, calibration corpus/verdicts, MCP slices, design-system spec, grill skill). End-to-end pipeline proven for known panels.
+- **Rubric**: `docs/ui-grill-convergence-rubric.md` authored. Three sub-scores (structure-match, token-coverage, action-match), equal weights v1, threshold 0.85, iteration policy documented.
+- **Convergence test deferred**: TECH-24415 (novel panel pick) + TECH-24417 (agent grill run) + TECH-24418 (rubric scoring test) archived. No Region UI candidate selected. These re-file under future Region UI master plan.
+- **Rollout greenlight**: `docs/ui-bake-pipeline-rollout-plan.md §Track E close` carries `UI rollout greenlight: 2026-05-08 — infra ready, convergence test pending Region UI candidate`. Closeout digest captures B→E lessons.
+- **Region UI master-plan trigger**: When Region UI master plan kicks off, re-run E.1–E.5 against chosen panel using rubric. Declare agent-autonomous if score ≥0.85. Rubric weights v1 review at that kickoff.
+
+---
+
 ## [Stage-5.AUDIT] — ui-implementation-mvp-rest Stage 5.0 closeout (2026-05-08)
 
 - **Tokens**: 20 consumer tokens locked in `ia/specs/ui-design-system.md §Tokens` (LOCKED-COUNT: 20). DB: `catalog_entity(kind='token')` + `token_detail`. MCP slices live: `ui_token_get` / `ui_token_list` / `ui_token_publish` (`tools/mcp-ia-server/src/tools/ui-token.ts`).
