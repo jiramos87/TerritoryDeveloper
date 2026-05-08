@@ -1,0 +1,22 @@
+id: TECH-818
+type: TECH
+title: Imp-4 — Bake validation gate (pre-flight contract checks)
+priority: P2
+status: pending
+section: UI bake pipeline
+files:
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+notes: |
+  Before child-iter, validate every child against an archetype contract table.
+  Per panel slug, declare expected child kinds + required keys.
+  Validation failure → BakeError, abort prefab write (no half-baked output).
+  Prevents future seed migration typos from silently emitting empty cells.
+acceptance:
+  - Contract table declared per archetype (button/label/readout minimum required keys)
+  - Pre-flight validation pass before child-iter
+  - Validation failure → BakeError + abort
+  - Compile-check green
+depends_on: [TECH-817]
+depends_on_raw: TECH-817
+related: [TECH-816, TECH-817]
+created: '2026-05-08'

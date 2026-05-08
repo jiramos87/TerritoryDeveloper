@@ -1,0 +1,31 @@
+id: TECH-821
+type: TECH
+title: Imp-7 — File/partial-class re-split by responsibility
+priority: P3
+status: pending
+section: UI bake pipeline
+files:
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Snapshot.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Components.cs
+  - Assets/Scripts/Editor/Bridge/UiBakeHandler.Layout.cs
+notes: |
+  Re-split 4-file ~4100-line partial class by responsibility:
+  UiBakeHandler.cs — entry points (SavePanelSnapshotPrefab, BakePanelIr, error types)
+  UiBakeHandler.Snapshot.cs — snapshot path child-iter
+  UiBakeHandler.Frame.cs — IR/Frame path (kept)
+  UiBakeHandler.Components.cs — shared kind spawners (button/readout/label)
+  UiBakeHandler.Layout.cs — anchor/zone/RT helpers + JSON readers
+  Pure move-by-region; no logic change. Run after green re-bake.
+acceptance:
+  - 5-file split matches responsibility map above
+  - No logic changes — pure region move
+  - Compile-check green after split
+  - WireIlluminatedButtonIcon no longer duplicated cross-file
+depends_on: [TECH-816, TECH-817, TECH-820]
+depends_on_raw: TECH-816, TECH-817, TECH-820
+related: []
+created: '2026-05-08'

@@ -1,0 +1,23 @@
+id: TECH-823
+type: TECH
+title: ui_def_drift_scan MCP slice — wraps validate-ui-def-drift.mjs
+priority: P1
+status: pending
+section: UI MCP slices
+files:
+  - tools/mcp-ia-server/src/tools/ui-def-drift-scan.ts
+  - tools/mcp-ia-server/src/server-registrations.ts
+  - tools/mcp-ia-server/__tests__/ui-slices.test.ts
+notes: |
+  MCP tool wraps validate-ui-def-drift.mjs logic.
+  Schema: input none (or optional slug filter); output {drifts: [{slug, field, db_value, snapshot_value}], total_panels, total_drifts}.
+  Implemented in Stage 3.0 (TECH-24401). This yaml is the backlog tracking record.
+  Schema cache restart needed after registration.
+acceptance:
+  - Tool callable as mcp__territory-ia__ui_def_drift_scan
+  - Returns {drifts, total_panels, total_drifts} on green DB+snapshot pair
+  - Fixture-driven test in ui-slices.test.ts passes
+depends_on: []
+depends_on_raw: ''
+related: [TECH-824, TECH-825]
+created: '2026-05-08'

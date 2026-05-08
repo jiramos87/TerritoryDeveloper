@@ -100,6 +100,9 @@ import { registerCronAnchorReindexEnqueue } from "./tools/cron-anchor-reindex.js
 import { registerCronDriftLintEnqueue } from "./tools/cron-drift-lint.js";
 import { registerCronCacheWarmEnqueue } from "./tools/cron-cache-warm.js";
 import { registerCronCacheBustEnqueue } from "./tools/cron-cache-bust.js";
+import { registerUiDefDriftScan } from "./tools/ui-def-drift-scan.js";
+import { registerUiCalibrationCorpusQuery, registerUiCalibrationVerdictRecord } from "./tools/ui-calibration-corpus.js";
+import { registerUiPanelGet, registerUiPanelList, registerUiPanelPublish } from "./tools/ui-panel.js";
 
 // Bridge + compute tools
 import {
@@ -230,6 +233,12 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCronDriftLintEnqueue(server);
   registerCronCacheWarmEnqueue(server);
   registerCronCacheBustEnqueue(server);
+  registerUiDefDriftScan(server);
+  registerUiCalibrationCorpusQuery(server);
+  registerUiCalibrationVerdictRecord(server);
+  registerUiPanelGet(server);
+  registerUiPanelList(server);
+  registerUiPanelPublish(server);
 }
 
 /**

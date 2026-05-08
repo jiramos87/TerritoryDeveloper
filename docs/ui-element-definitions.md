@@ -2135,6 +2135,36 @@ Single panel currently lives in the bottom of the game view: `hud-bar`.
 
 ---
 
+## [Stage-3.AUDIT]
+
+> Stage 3 in-stage shape additions confirmed. Track C MCP slices shipped. Dual audit checkpoint (agent + human) per Q7 process lock.
+
+### Tooling — Stage 3 MCP slices
+
+| Tool | File | Description |
+| --- | --- | --- |
+| `ui_def_drift_scan` | `tools/mcp-ia-server/src/tools/ui-def-drift-scan.ts` | DB ↔ panels.json rect_json drift gate. Returns `{drifts, total_panels, total_drifts}`. |
+| `ui_calibration_corpus_query` | `tools/mcp-ia-server/src/tools/ui-calibration-corpus.ts` | Read-side filter on `ia/state/ui-calibration-corpus.jsonl`. Filters by `panel_slug`, `agent_or_human`, `decision_id`. |
+| `ui_calibration_verdict_record` | `tools/mcp-ia-server/src/tools/ui-calibration-corpus.ts` | Append-side idempotent verdict record to `ia/state/ui-calibration-verdicts.jsonl`. Idempotent on `(panel_slug, rebake_n)`. |
+| `ui_panel_get` | `tools/mcp-ia-server/src/tools/ui-panel.ts` | Get one panel by slug — `panel_detail` row + linked corpus rows. |
+| `ui_panel_list` | `tools/mcp-ia-server/src/tools/ui-panel.ts` | List all panels — slug + display_name + `current_published_version_id` + `rect_json` summary. |
+| `ui_panel_publish` | `tools/mcp-ia-server/src/tools/ui-panel.ts` | Publish a panel — increment `current_published_version_id` + flag snapshot regen. |
+
+All six tools registered in `tools/mcp-ia-server/src/server-registrations.ts`. Schema cache restart required after MCP host reboot.
+
+### Audit checks
+
+| Check | Status |
+| --- | --- |
+| `ui_def_drift_scan` registered + test shape passes | ✅ `UiDefDriftScanReturnsShape` in `ui-slices.test.ts` |
+| `ui_calibration_corpus_query` filters by `panel_slug` | ✅ `CorpusQueryFiltersWork` in `ui-slices.test.ts` |
+| `ui_calibration_verdict_record` idempotent on `(panel_slug, rebake_n)` | ✅ `VerdictRecordIdempotency` in `ui-slices.test.ts` |
+| `ui_panel_get` / `list` / `publish` round-trip | ✅ `UiPanelGetListPublishRoundtrip` in `ui-slices.test.ts` |
+| `ia/state/ui-calibration-corpus.jsonl` + `verdicts.jsonl` cross-linked | ✅ from Stage 2.AUDIT |
+| Backlog issues filed — Imp-1/2/4..8 + ui_* slices | ✅ TECH-816..TECH-827 in `ia/backlog/` |
+
+---
+
 ## Changelog
 
 | Date | Change | Notes |

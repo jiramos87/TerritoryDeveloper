@@ -1,0 +1,25 @@
+id: TECH-825
+type: TECH
+title: ui_panel_get + ui_panel_list + ui_panel_publish MCP slices
+priority: P1
+status: pending
+section: UI MCP slices
+files:
+  - tools/mcp-ia-server/src/tools/ui-panel.ts
+  - tools/mcp-ia-server/src/server-registrations.ts
+  - tools/mcp-ia-server/__tests__/ui-slices.test.ts
+notes: |
+  Three-sub-tool MCP slice for panel CRUD.
+  get(slug): panel_detail row + linked corpus rows.
+  list(): slug + status + rect summary.
+  publish(slug): increments current_published_version_id + flags snapshot regen.
+  Implemented in Stage 3.0 (TECH-24403). This yaml is the backlog tracking record.
+acceptance:
+  - ui_panel_get returns row + corpus rows for hud-bar
+  - ui_panel_list returns >=2 slugs (hud-bar + toolbar)
+  - ui_panel_publish increments current_published_version_id
+  - Tests cover all three sub-tools
+depends_on: [TECH-823]
+depends_on_raw: TECH-823
+related: [TECH-823, TECH-824]
+created: '2026-05-08'
