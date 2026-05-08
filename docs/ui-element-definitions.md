@@ -514,6 +514,38 @@ hud-bar  (hstack, full-width, top-anchored)
 3. **Geography-init gate non-bypass.** Sim-state reads gated by `geographyManager.IsInitialized`. HUD time accumulator + key input remain active during init for responsiveness. Rebake MUST keep this split.
 4. **Caption-text fallback survives.** MAP / AUTO / BUDGET bake without sprite art today; caption-text fallback in slug-walk is the resolution path. If rebake adds sprite art, slug-walk MUST still match by slug FIRST + fall back to caption — both paths coexist.
 
+#### DB shape achieved
+
+> Migration `0108_seed_hud_bar_panel_v2` (entity_id=41, slug=`hud-bar`). DB row 1:1 with locked definition.
+
+| Field | Value |
+| --- | --- |
+| migration | `0108_seed_hud_bar_panel_v2` |
+| entity_id | 41 |
+| slug | `hud-bar` |
+| layout_template | `hstack` |
+| layout | `hstack` |
+| rect_json | `{"pivot":[0.5,1],"anchor_min":[0,1],"anchor_max":[1,1],"size_delta":[-16,144],"anchored_position":[0,-8]}` |
+
+**schema_v4 children list** (14 rows, `panel_child` table, all slot_name=`main`):
+
+| order_idx | instance_slug | child_kind |
+| --- | --- | --- |
+| 1 | `hud-bar-new-button` | button |
+| 2 | `hud-bar-save-button` | button |
+| 3 | `hud-bar-load-button` | button |
+| 4 | `hud-bar-city-name-label` | label |
+| 5 | `hud-bar-sim-date-readout` | label |
+| 6 | `hud-bar-population-readout` | label |
+| 7 | `hud-bar-zoom-in-button` | button |
+| 8 | `hud-bar-zoom-out-button` | button |
+| 9 | `hud-bar-budget-button` | button |
+| 10 | `hud-bar-play-pause-button` | button |
+| 11 | `hud-bar-speed-cycle-button` | button |
+| 12 | `hud-bar-stats-button` | button |
+| 13 | `hud-bar-auto-button` | button |
+| 14 | `hud-bar-map-button` | button |
+
 ---
 
 ### toolbar
@@ -644,6 +676,21 @@ toolbar  (vstack, left-anchored, top-aligned)
 - **Toolbar height / overflow.** 11 active + 1 disabled = 6 rows × 2 cols + 3 separators. Need to verify viewport-height fit at minimum supported resolution. Flag → layout responsive audit.
 - **StateZoning subtype mechanism.** Each `StateZoning` subtype (park, plaza, civic, etc.) paints area + spawns subtype-pool buildings + uses subtype-specific grey-shade tile variant. Subtype pool + tile variants not yet implemented. Flag → simulation + sprite-catalog tasks.
 - **Sprite catalog gaps.** 12 icon slugs listed; verify each exists in `catalog_sprite` rows pre-bake. Flag → catalog audit task.
+
+#### DB shape achieved
+
+> Migration `0110_seed_toolbar_panel` (entity_id=100, slug=`toolbar`). Root rect seeded. Children deferred per Track A scope (hand-authored on prefab until later track).
+
+| Field | Value |
+| --- | --- |
+| migration | `0110_seed_toolbar_panel` |
+| entity_id | 100 |
+| slug | `toolbar` |
+| layout_template | `vstack` |
+| layout | `vstack` |
+| rect_json | `{"pivot":[0,0.5],"anchor_min":[0,0],"anchor_max":[0,1],"size_delta":[220,-352],"anchored_position":[12,24]}` |
+
+**schema_v4 children note:** `panel_child` rows deferred — Track A only seeds root rect. Children stay hand-authored on `Assets/UI/Prefabs/Generated/toolbar.prefab` until a later track migrates them to DB.
 
 ---
 
@@ -1946,6 +1993,73 @@ Toast cards are runtime-instantiated by `GameNotificationManager`; no static chi
 
 ---
 
+## Calibration ledger
+
+> Schema-lock section. Locked BEFORE seed tasks (Stage 2.0.3 / 2.0.4). These shapes are the contract; seed rows MUST conform. State file paths: `ia/state/ui-calibration-corpus.jsonl` + `ia/state/ui-calibration-verdicts.jsonl`.
+
+### Corpus row schema
+
+One row per grilling decision. Append-only. Consumed by Stage 3 MCP slice `ui_calibration_corpus_query`.
+
+```json
+{
+  "ts":                "ISO-8601",
+  "panel_slug":        "string",
+  "decision_id":       "D001",
+  "prompt":            "product-language question asked",
+  "resolution":        "chosen option or typed value",
+  "rationale":         "why this option was picked",
+  "agent|human":       "agent | human",
+  "parent_decision_id": "D0XX | null"
+}
+```
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `ts` | ISO-8601 string | yes | UTC timestamp of decision |
+| `panel_slug` | string | yes | e.g. `hud-bar` |
+| `decision_id` | string | yes | monotonic `D001`..`D999` per panel |
+| `prompt` | string | yes | exact product-language question text |
+| `resolution` | string | yes | chosen option (product terms) |
+| `rationale` | string | yes | agent-side translation + why |
+| `agent\|human` | enum | yes | who authored: `agent` or `human` |
+| `parent_decision_id` | string | no | when decision refines another |
+
+### Verdict row schema
+
+One row per rebake iteration verdict. Append-only. Consumed by Stage 3 MCP slice `ui_calibration_verdict_record`.
+
+```json
+{
+  "ts":              "ISO-8601",
+  "panel_slug":      "string",
+  "rebake_n":        1,
+  "bug_ids":         ["A", "B"],
+  "improvement_ids": ["Imp-3"],
+  "resolution_path": "prose describing what was changed",
+  "outcome":         "pass | partial | fail"
+}
+```
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `ts` | ISO-8601 string | yes | UTC timestamp |
+| `panel_slug` | string | yes | e.g. `hud-bar` |
+| `rebake_n` | integer | yes | 1-based rebake sequence number |
+| `bug_ids` | string[] | yes | bugs fixed this rebake (e.g. `["A","B"]`) — empty array `[]` if none |
+| `improvement_ids` | string[] | yes | improvements landed (e.g. `["Imp-3"]`) — empty array `[]` if none |
+| `resolution_path` | string | yes | prose: what changed (files, logic) |
+| `outcome` | enum | yes | `pass` / `partial` / `fail` |
+
+### State file paths
+
+| File | Role |
+| --- | --- |
+| `ia/state/ui-calibration-corpus.jsonl` | One row per grilling decision; append-only |
+| `ia/state/ui-calibration-verdicts.jsonl` | One row per rebake verdict; append-only |
+
+---
+
 ## Interactions
 
 > Cross-panel rules: modal stacking, input routing priority, focus trapping, cross-panel triggers, hotkey conflicts.
@@ -1991,6 +2105,33 @@ Single panel currently lives in the bottom of the game view: `hud-bar`.
 | B3 | Several buttons (build-residential, budget-graph) lack clear UX function from the icon alone | every button needs a tooltip + a clear action binding documented in Phase 2 |
 | B4 | Speed cluster (1x..5x + play + pause) = 7 controls for one concept | candidate to collapse into single time-control sub-component |
 | B5 | Sprite catalogue gap = 10 missing icons | sprite-author work, tracked separately; not blocking definition phase |
+
+---
+
+## References
+
+| Doc | Role |
+| --- | --- |
+| `docs/ui-bake-pipeline-rollout-plan.md` | Process plan — Tracks A–E, bake iteration log, status tracker |
+| `docs/ideas/ui-elements-grilling.md` | Process spec — grilling protocol, polling templates, calibration design vision |
+| `ia/state/ui-calibration-corpus.jsonl` | Grilling decision ledger — append-only corpus rows (schema: §Calibration ledger) |
+| `ia/state/ui-calibration-verdicts.jsonl` | Rebake verdict ledger — append-only verdict rows (schema: §Calibration ledger) |
+
+---
+
+## [Stage-2.AUDIT]
+
+> Stage 2 in-stage shape additions confirmed. Dual audit checkpoint (agent + human) per Q7 process lock.
+
+| Check | Status |
+| --- | --- |
+| `§ hud-bar` carries `#### DB shape achieved` sub-block | ✅ mig id `0108_seed_hud_bar_panel_v2`, entity_id=41, rect_json + 14 children listed |
+| `§ toolbar` carries `#### DB shape achieved` sub-block | ✅ mig id `0110_seed_toolbar_panel`, entity_id=100, rect_json; children deferred per Track A scope |
+| `§ Calibration ledger` schema section added | ✅ corpus row + verdict row schemas locked; state file paths cross-linked |
+| `ia/state/ui-calibration-corpus.jsonl` exists | ✅ 14 rows, all panel_slug=hud-bar, D001..D014 |
+| `ia/state/ui-calibration-verdicts.jsonl` exists | ✅ 7 rows, rebake_n 1..7 |
+| Three-doc cross-link triple wired | ✅ definitions ↔ rollout-plan ↔ grilling-ideas §References in each doc |
+| State file paths cited in all three docs | ✅ corpus.jsonl + verdicts.jsonl named in §References of each doc |
 
 ---
 

@@ -132,8 +132,20 @@ D provides the skill E exercises.
 
 ---
 
+## References
+
+| Doc | Role |
+| --- | --- |
+| `docs/ui-element-definitions.md` | Panel definitions + DB-shape annotation + Calibration ledger schema (Stage 2 source of truth) |
+| `docs/ideas/ui-elements-grilling.md` | Process spec — grilling protocol, polling templates, calibration design vision |
+| `ia/state/ui-calibration-corpus.jsonl` | Grilling decision ledger — append-only corpus rows |
+| `ia/state/ui-calibration-verdicts.jsonl` | Rebake verdict ledger — append-only verdict rows |
+
+---
+
 ## Changelog
 
 | Date | Change |
 |---|---|
 | 2026-05-08 | Plan created. Tracks A–E enumerated. Track A starting same session. |
+| 2026-05-08 | Stage-2.AUDIT: §References added. Cross-links to definitions + grilling-ideas + state files wired. |

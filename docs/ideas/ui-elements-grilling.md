@@ -434,4 +434,15 @@ Process decisions all locked in §8. On user "go", agent will:
 4. Begin **Phase 1 — panel definition** via `AskUserQuestion` polling, one panel at a time, simple product language. Each turn: user picks options → agent writes prose + appends JSON block.
 5. After all panels through Phase 4: regenerate single idempotent seed migration → apply to DB → bake all → screenshot diff → calibrate.
 
+---
+
+## 12. References
+
+| Doc | Role |
+| --- | --- |
+| `docs/ui-element-definitions.md` | Primary output — panel definitions, DB-shape sub-blocks, Calibration ledger schema |
+| `docs/ui-bake-pipeline-rollout-plan.md` | Process plan — Tracks A–E, stage task table, status tracker |
+| `ia/state/ui-calibration-corpus.jsonl` | Grilling decision ledger — one row per decision (prompt → resolution → rationale) |
+| `ia/state/ui-calibration-verdicts.jsonl` | Rebake verdict ledger — one row per bake-eyeball iteration |
+
 No grilling fires until user says "go".
