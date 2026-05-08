@@ -2,7 +2,7 @@
   "schema_version": 1,
   "created": "2026-04-18",
   "branch": "feature/lifecycle-collapse-cognitive-split",
-  "snapshot_path": "ia/state/pre-refactor-snapshot/",
+  "snapshot_path": ".archive/pre-refactor-snapshot/",
   "phases": {
     "M0": {
       "status": "done",
@@ -1140,8 +1140,8 @@
       ]
     }
   },
-  "snapshot_root": "ia/state/pre-refactor-snapshot/",
-  "snapshot_manifest": "ia/state/pre-refactor-snapshot/manifest.json",
+  "snapshot_root": ".archive/pre-refactor-snapshot/",
+  "snapshot_manifest": ".archive/pre-refactor-snapshot/manifest.json",
   "snapshot_git_sha": "48656d2f1ed4b8088cda5a64e4274846b8e34877",
   "snapshot_at": "2026-04-19T04:55:10.150Z"
 }

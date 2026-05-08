@@ -25,6 +25,7 @@ alwaysApply: true
 - **Unity invariants.** Rules 1–11 + Unity-specific IF→THEN live in `ia/rules/unity-invariants.md` (`loaded_by: on-demand`). Touching `Assets/Scripts/**/*.cs`, `GridManager`, `HeightMap`, roads, water, cliffs → fetch via `rule_content unity-invariants` or `invariants_summary` (merges both files). Not needed for web/ / docs/ / IA / MCP-server tasks.
 - **Hook denylist.** Bash PreToolUse hook blocks `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Scripts + rationale: `.claude/settings.json` + `tools/scripts/claude-hooks/`.
 - **No invented skill flags / tool names.** Fetch schemas via MCP `list_*` / skill SKILL.md body; do not guess from `docs/mcp-ia-server.md` alone (catalog can lag).
+- **`.archive/` = frozen historical.** `.ignore` hides from Grep; Glob may surface. Never edit, never cite as current.
 
 # Numbering
 

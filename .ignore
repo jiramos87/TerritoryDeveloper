@@ -1,0 +1,5 @@
+# Ripgrep / Grep tool exclusions (independent of .gitignore — files stay tracked in git)
+# Purpose: hide frozen / generated payload from default agent searches to reduce context pressure.
+# Override with `rg --no-ignore` or explicit path arg.
+
+.archive/

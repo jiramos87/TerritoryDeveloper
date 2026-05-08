@@ -1,6 +1,6 @@
 # Compaction-Loop Mitigation — Infrastructure Approaches
 
-> **Status (2026-05-08):** Tier A4 shipped (TECH-846). Tier A1+A3+C4 bundle filed (TECH-847), deferred to atomization mid-sweep. Tier A2 dropped (harness gap). Tier B3 in flight as `large-file-atomization-refactor` master plan (Stages 1–5 shipped).
+> **Status (2026-05-08):** Tier A4 shipped (TECH-846). Tier A1+A3+C4 bundle filed (TECH-847), deferred to atomization mid-sweep. Tier A2 dropped (harness gap). Tier B3 in flight as `large-file-atomization-refactor` master plan (Stages 1–5 shipped). **Tier D4 shipped inline (2026-05-08): `ia/state/pre-refactor-snapshot/` → `.archive/pre-refactor-snapshot/` + `.ignore` excludes from default Glob/Grep.**
 
 ## Problem
 

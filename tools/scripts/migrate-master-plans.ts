@@ -5,7 +5,7 @@
  * Transform master plans from 4-level (Step > Stage > Phase > Task) schema to
  * 2-level (Stage > Task) schema.
  *
- * Input:  ia/state/pre-refactor-snapshot/{plan-path}  (read-only snapshot)
+ * Input:  .archive/pre-refactor-snapshot/{plan-path}  (read-only snapshot — moved 2026-05-08, was ia/state/)
  * Output: {plan-path} at repo root (atomic overwrite via tempfile + rename)
  * State:  ia/state/lifecycle-refactor-migration.json  (M2 per-file status)
  *
@@ -37,7 +37,7 @@ import * as path from 'path';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const MIGRATION_JSON = path.join(REPO_ROOT, 'ia', 'state', 'lifecycle-refactor-migration.json');
-const SNAPSHOT_ROOT = path.join(REPO_ROOT, 'ia', 'state', 'pre-refactor-snapshot');
+const SNAPSHOT_ROOT = path.join(REPO_ROOT, '.archive', 'pre-refactor-snapshot');
 
 // ---------------------------------------------------------------------------
 // Types
