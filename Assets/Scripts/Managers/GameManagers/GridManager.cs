@@ -47,6 +47,7 @@ public class GridManager : MonoBehaviour, IGridManager
     private BuildingPlacementService placementService;
     private ChunkCullingSystem chunkCulling;
     private RoadCacheService roadCache;
+    private Domains.Grid.Services.CellAccessService cellAccessService;
 
     /// <summary>Fired when urban cells (buildings) bulldozed. Args: grid positions list.</summary>
     public System.Action<System.Collections.Generic.IReadOnlyList<Vector2Int>> onUrbanCellsBulldozed;
@@ -247,6 +248,7 @@ public class GridManager : MonoBehaviour, IGridManager
         pathfinder = new GridPathfinder(this);
         placementService = new BuildingPlacementService(this, sortingService);
         chunkCulling = new ChunkCullingSystem(this, chunkSize, cachedCamera);
+        cellAccessService = new Domains.Grid.Services.CellAccessService(this);
         chunkCulling.chunkObjects = chunkObjects;
         chunkCulling.chunkActiveState = chunkActiveState;
         roadCache = new RoadCacheService(this);
@@ -445,69 +447,39 @@ public class GridManager : MonoBehaviour, IGridManager
     /// True if cell occupied by building (any tile of multi-cell footprint).
     /// </summary>
     public bool IsCellOccupiedByBuilding(int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height)
-            return false;
-        CityCell cell = cellArray[x, y];
-        if (cell == null) return false;
-        return cell.occupiedBuilding != null || IsZoneTypeBuilding(cell.zoneType);
-    }
+        => cellAccessService != null
+            ? cellAccessService.IsCellOccupiedByBuilding(x, y)
+            : (x >= 0 && x < width && y >= 0 && y < height && cellArray[x, y] != null &&
+               (cellArray[x, y].occupiedBuilding != null || IsZoneTypeBuilding(cellArray[x, y].zoneType)));
 
     bool IsZoneTypeBuilding(Zone.ZoneType zoneType)
-    {
-        return zoneType == Zone.ZoneType.Building ||
+        => cellAccessService != null
+            ? cellAccessService.IsZoneTypeBuilding(zoneType)
+            : (zoneType == Zone.ZoneType.Building ||
                zoneType == Zone.ZoneType.ResidentialLightBuilding || zoneType == Zone.ZoneType.ResidentialMediumBuilding || zoneType == Zone.ZoneType.ResidentialHeavyBuilding ||
                zoneType == Zone.ZoneType.CommercialLightBuilding || zoneType == Zone.ZoneType.CommercialMediumBuilding || zoneType == Zone.ZoneType.CommercialHeavyBuilding ||
-               zoneType == Zone.ZoneType.IndustrialLightBuilding || zoneType == Zone.ZoneType.IndustrialMediumBuilding || zoneType == Zone.ZoneType.IndustrialHeavyBuilding;
-    }
+               zoneType == Zone.ZoneType.IndustrialLightBuilding || zoneType == Zone.ZoneType.IndustrialMediumBuilding || zoneType == Zone.ZoneType.IndustrialHeavyBuilding);
 
     /// <summary>
     /// Footprint offset for building (even = 0,0; odd = buildingSize/2).
     /// </summary>
     public void GetBuildingFootprintOffset(int buildingSize, out int offsetX, out int offsetY)
     {
-        if (buildingSize % 2 == 0)
+        if (cellAccessService != null)
         {
-            offsetX = 0;
-            offsetY = 0;
+            cellAccessService.GetBuildingFootprintOffset(buildingSize, out offsetX, out offsetY);
+            return;
         }
-        else
-        {
-            offsetX = buildingSize / 2;
-            offsetY = buildingSize / 2;
-        }
+        // Stateless fallback before InitializeGrid called
+        offsetX = buildingSize % 2 == 0 ? 0 : buildingSize / 2;
+        offsetY = buildingSize % 2 == 0 ? 0 : buildingSize / 2;
     }
 
     /// <summary>
     /// Return pivot cell of multi-cell building. If given cell inside footprint, find + return pivot (isPivot=true).
     /// </summary>
     public GameObject GetBuildingPivotCell(CityCell cell)
-    {
-        if (cell == null)
-            return null;
-        if (cell.occupiedBuilding == null || cell.buildingSize <= 1)
-            return gridArray[(int)cell.x, (int)cell.y];
-
-        int size = cell.buildingSize;
-        int cx = (int)cell.x;
-        int cy = (int)cell.y;
-
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                int px = cx - i;
-                int py = cy - j;
-                if (px >= 0 && px < width && py >= 0 && py < height)
-                {
-                    CityCell pivotCandidate = cellArray[px, py];
-                    if (pivotCandidate != null && pivotCandidate.isPivot)
-                        return gridArray[px, py];
-                }
-            }
-        }
-        return gridArray[cx, cy];
-    }
+        => cellAccessService != null ? cellAccessService.GetBuildingPivotCell(cell) : null;
     #endregion
 
     #region Input and Placement Handlers
@@ -1573,14 +1545,11 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="gridPos">Grid coords.</param>
     /// <returns>CityCell GameObject, or null.</returns>
     public GameObject GetGridCell(Vector2 gridPos)
-    {
-        if (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
-            gridPos.y < 0 || gridPos.y >= gridArray.GetLength(1))
-        {
-            return null;
-        }
-        return gridArray[(int)gridPos.x, (int)gridPos.y];
-    }
+        => cellAccessService != null
+            ? cellAccessService.GetGridCell(gridPos)
+            : (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
+               gridPos.y < 0 || gridPos.y >= gridArray.GetLength(1)
+               ? null : gridArray[(int)gridPos.x, (int)gridPos.y]);
 
     /// <summary>
     /// Set terrain height of cell at grid pos.
@@ -2163,13 +2132,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="y">Grid Y.</param>
     /// <returns>CityCell component, or null.</returns>
     public CityCell GetCell(int x, int y)
-    {
-        if (x >= 0 && x < width && y >= 0 && y < height)
-        {
-            return cellArray[x, y];
-        }
-        return null;
-    }
+        => cellAccessService != null
+            ? cellAccessService.GetCell(x, y)
+            : (x >= 0 && x < width && y >= 0 && y < height ? cellArray[x, y] : null);
 
     /// <summary>
     /// Typed accessor for CellBase subclasses at grid coords.
@@ -2180,31 +2145,16 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="y">Grid Y.</param>
     /// <returns>Cell cast to T, or null if out-of-range or type mismatch.</returns>
     public T GetCell<T>(int x, int y) where T : CellBase
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return null;
-        return cellArray[x, y] as T;
-    }
+        => cellAccessService != null
+            ? cellAccessService.GetCell<T>(x, y)
+            : (x < 0 || x >= width || y < 0 || y >= height ? null : cellArray[x, y] as T);
 
     /// <summary>
     /// Serialize every cell in grid → list of CellData for saving.
     /// </summary>
     /// <returns>List containing one CellData per grid cell.</returns>
     public List<CellData> GetGridData()
-    {
-        List<CellData> gridData = new List<CellData>();
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                CityCell cellComponent = cellArray[x, y];
-                CellData cellData = cellComponent.GetCellData();
-                gridData.Add(cellData);
-            }
-        }
-
-        return gridData;
-    }
+        => cellAccessService != null ? cellAccessService.GetGridData() : new List<CellData>();
 
     /// <summary>
     /// True if cell on outer edge of grid (first or last row/column).
@@ -2213,13 +2163,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="y">Grid Y.</param>
     /// <returns>True if cell on grid border.</returns>
     public bool isBorderCell(int x, int y)
-    {
-        if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
-        {
-            return true;
-        }
-        return false;
-    }
+        => cellAccessService != null
+            ? cellAccessService.IsBorderCell(x, y)
+            : (x == 0 || x == width - 1 || y == 0 || y == height - 1);
     #endregion
 
     #region Road Cache and Pathfinding
