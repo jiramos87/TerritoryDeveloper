@@ -1,0 +1,19 @@
+{
+    "name": "Economy.Tests.EditMode.Atomization",
+    "rootNamespace": "Territory.Tests.EditMode.Atomization.Economy",
+    "references": [
+        "Economy"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

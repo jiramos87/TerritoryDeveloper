@@ -1,0 +1,13 @@
+{
+    "name": "Economy",
+    "rootNamespace": "Domains.Economy",
+    "references": [],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": true
+}
