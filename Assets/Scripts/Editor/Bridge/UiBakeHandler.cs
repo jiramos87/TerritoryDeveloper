@@ -13,6 +13,7 @@ using Territory.UI.Themed;
 using Territory.UI.Themed.Renderers;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -736,6 +737,99 @@ namespace Territory.Editor.Bridge
                 rect.sizeDelta = new Vector2(rj.size_delta[0], rj.size_delta[1]);
         }
 
+        // Track A.3 — DB-rect-only mode for non-bake-spawned panels (e.g. toolbar).
+        // Panel is published with empty `panel_child` rows; prefab is hand-authored
+        // and lives under Assets/UI/Prefabs/Generated/{slug}.prefab. Bake skips prefab
+        // regeneration (root rect would clobber the hand-authored hierarchy) and instead
+        // syncs `panel_detail.rect_json` onto every live PrefabInstance of the prefab in
+        // Assets/Scenes/**/*.unity. Result: PrefabInstance overrides on root rect come
+        // from DB programmatically, not hand-edited yaml. (docs/ui-bake-pipeline-rollout-plan.md.)
+        static BakeError ApplyDbRectToScenePrefabInstances(string slug, string assetPath, string rectJson)
+        {
+            if (string.IsNullOrWhiteSpace(rectJson))
+            {
+                // No DB rect to apply — DB-rect-only mode requires a rect_json to be useful.
+                // Treat as no-op (panel published but rect not yet seeded).
+                return null;
+            }
+
+            var prefabAssetRoot = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefabAssetRoot == null)
+            {
+                return new BakeError
+                {
+                    error = "panel_prefab_load_failed",
+                    details = $"could not load prefab asset for slug '{slug}' at '{assetPath}'",
+                    path = assetPath,
+                };
+            }
+
+            var sceneSetupBefore = EditorSceneManager.GetSceneManagerSetup();
+            try
+            {
+                var sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" });
+                foreach (var guid in sceneGuids)
+                {
+                    var scenePath = AssetDatabase.GUIDToAssetPath(guid);
+                    if (string.IsNullOrEmpty(scenePath)) continue;
+
+                    var deps = AssetDatabase.GetDependencies(scenePath, false);
+                    bool referencesPrefab = false;
+                    foreach (var dep in deps)
+                    {
+                        if (string.Equals(dep, assetPath, StringComparison.Ordinal)) { referencesPrefab = true; break; }
+                    }
+                    if (!referencesPrefab) continue;
+
+                    var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                    if (!scene.IsValid()) continue;
+
+                    bool sceneTouched = false;
+                    foreach (var root in scene.GetRootGameObjects())
+                    {
+                        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                        {
+                            var go = t.gameObject;
+                            if (!PrefabUtility.IsAnyPrefabInstanceRoot(go)) continue;
+                            var src = PrefabUtility.GetCorrespondingObjectFromSource(go) as GameObject;
+                            if (src == null) continue;
+                            if (src != prefabAssetRoot) continue;
+                            var rect = go.GetComponent<RectTransform>();
+                            if (rect == null) continue;
+                            ApplyPanelRectJsonOverlay(rect, rectJson);
+                            PrefabUtility.RecordPrefabInstancePropertyModifications(rect);
+                            sceneTouched = true;
+                        }
+                    }
+
+                    if (sceneTouched)
+                    {
+                        EditorSceneManager.MarkSceneDirty(scene);
+                        EditorSceneManager.SaveScene(scene);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "panel_db_rect_sync_failed",
+                    details = ex.Message,
+                    path = assetPath,
+                };
+            }
+            finally
+            {
+                if (sceneSetupBefore != null && sceneSetupBefore.Length > 0)
+                {
+                    try { EditorSceneManager.RestoreSceneManagerSetup(sceneSetupBefore); }
+                    catch { /* swallow — restore is best-effort */ }
+                }
+            }
+
+            return null;
+        }
+
         // F3 (bake-fix-2026-05-07): configure root LayoutGroup so children fill row evenly,
         // pull padding from fields.padding_json + spacing from fields.gap_px.
         internal static void ApplyRootLayoutGroupConfig(LayoutGroup layoutGroup, PanelKind kind, PanelSnapshotFields fields)
@@ -1054,6 +1148,19 @@ namespace Territory.Editor.Bridge
             {
                 if (item == null || string.IsNullOrEmpty(item.slug)) continue;
                 var assetPath = $"{dir.TrimEnd('/')}/{item.slug}.prefab";
+
+                // DB-rect-only mode — panel published with empty children list:
+                // prefab is hand-authored, DB owns root rect only. Skip prefab
+                // regeneration; sync rect_json onto live PrefabInstance(s) in scenes.
+                // (Track A.3, docs/ui-bake-pipeline-rollout-plan.md.)
+                bool dbRectOnly = (item.children == null || item.children.Length == 0);
+                if (dbRectOnly && File.Exists(assetPath))
+                {
+                    var syncErr = ApplyDbRectToScenePrefabInstances(item.slug, assetPath, item.fields?.rect_json);
+                    if (syncErr != null) return syncErr;
+                    continue;
+                }
+
                 var err = SavePanelSnapshotPrefab(item, assetPath, theme);
                 if (err != null) return err;
             }
