@@ -1,13 +1,16 @@
 using UnityEngine;
 using Territory.Zones;
 using Territory.Terrain;
+using Territory.Core;
 
-namespace Territory.Core
+namespace Domains.Grid.Services
 {
     /// <summary>
     /// Sprite sorting orders for all tile types (terrain, zoning, buildings, roads, sea-level)
     /// via height-aware formulas from <see cref="TerrainManager"/>. Extracted from <see cref="GridManager"/>
     /// to reduce responsibilities.
+    /// Moved from Territory.Core to Domains.Grid.Services per Strategy γ atomization (TECH-23774).
+    /// Invariant #5 carve-out: holds GridManager composition ref; may access grid.cellArray/gridArray directly.
     /// </summary>
     public class GridSortingOrderService
     {

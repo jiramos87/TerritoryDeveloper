@@ -1,0 +1,17 @@
+{
+    "name": "Grid.Editor",
+    "rootNamespace": "Domains.Grid.Editor",
+    "references": [
+        "Grid"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

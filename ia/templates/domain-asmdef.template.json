@@ -1,0 +1,13 @@
+{
+    "name": "{DOMAIN_NAME}",
+    "rootNamespace": "Domains.{DOMAIN_NAME}",
+    "references": [],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

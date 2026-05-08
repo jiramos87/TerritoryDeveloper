@@ -1,0 +1,41 @@
+# .editorconfig — Territory Developer
+# C# soft caps enforced by tools/scripts/run-csharp-lint.mjs
+# Suppress lint error with: // long-method-allowed: {reason}
+# Suppress file LOC error with: // long-file-allowed: {reason}
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+# C# naming conventions
+dotnet_naming_rule.private_members_underscore.symbols = private_fields
+dotnet_naming_rule.private_members_underscore.style = underscore_prefix
+dotnet_naming_rule.private_members_underscore.severity = suggestion
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+dotnet_naming_style.underscore_prefix.required_prefix = _
+
+# Soft caps (enforced by run-csharp-lint.mjs, not native .editorconfig analyzers)
+# method_warn=40, method_err=80
+# line_warn=120, line_err=160
+# file_warn=400, file_err=700
+# Escape hatch: // long-method-allowed: {reason}
+
+[*.{json,asmdef}]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.mjs,*.ts,*.tsx]
+indent_size = 2

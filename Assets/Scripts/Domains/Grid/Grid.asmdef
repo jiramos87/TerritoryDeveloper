@@ -1,0 +1,13 @@
+{
+    "name": "Grid",
+    "rootNamespace": "Domains.Grid",
+    "references": [],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

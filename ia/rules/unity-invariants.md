@@ -13,7 +13,7 @@ alwaysApply: false
 2. After road modification → call `InvalidateRoadCache()`
 3. No `FindObjectOfType` in `Update` or per-frame loops — cache in `Awake`/`Start`
 4. No new singletons — use Inspector + `FindObjectOfType` pattern
-5. No direct `gridArray`/`cellArray` access outside `GridManager` — use `GetCell(x, y)`. Carve-out: helper services under `Assets/Scripts/Managers/GameManagers/*Service.cs` extracted from `GridManager` per invariant #6 (hold a `GridManager grid` composition reference) share the owning class's trust boundary and may touch `grid.cellArray` / `grid.gridArray` directly; document the rationale at the touch site.
+5. No direct `gridArray`/`cellArray` access outside `GridManager` — use `GetCell(x, y)`. Carve-out: helper services under `Assets/Scripts/Managers/GameManagers/*Service.cs` OR `Assets/Scripts/Domains/*/Services/*Service.cs` extracted from `GridManager` per invariant #6 (hold a `GridManager grid` composition reference) share the owning class's trust boundary and may touch `grid.cellArray` / `grid.gridArray` directly; document the rationale at the touch site.
 6. Do not add responsibilities to `GridManager` — extract to helper classes
 7. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of neighbor water cells
 8. Rivers: `H_bed` monotonically non-increasing toward exit

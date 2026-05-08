@@ -337,6 +337,22 @@ Section shortcuts: mgrs §Zones / §Demand / §World / §Notifications / §Metri
 | Toolbar family subtype enumeration (MVP) | Canonical subtype list per toolbar family driving `SubtypePicker` rows + sprite-catalog seed + prefab authoring. R = light/medium/heavy (3); C = light/medium/heavy (3); I = light/medium/heavy (3, specialisation layering deferred); S = 7 entries via `ZoneSubTypeRegistry`; Power = coal/solar/wind (3); Water = water treatment (1); Roads = street/interstate (2); Forests = forest (1). Bulldoze = no subtypes (only family bypassing picker). | [mvp#toolbar-family-subtype-enumeration-mvp-picker-scope](../../docs/full-game-mvp-exploration.md) |
 | Picker universal rule | Every toolbar family button opens `SubtypePicker` — Bulldoze is the only family that bypasses (direct-tool select). Survives subtype-count changes — adding/removing subtypes never re-introduces direct-tool dispatch on a non-Bulldoze family. Single-subtype families show 1-tile picker for forward-compat. | [mvp#toolbar-family-subtype-enumeration-mvp-picker-scope](../../docs/full-game-mvp-exploration.md) |
 
+## Code architecture (atomization)
+
+| Term | Definition | Spec |
+|------|-----------|------|
+| atomization | The process of splitting a C# mega-file (>400 LOC) into a domain folder per Strategy γ: facade interface + facade impl MonoBehaviour + POCO services + per-domain asmdef. See `componentization`. | `docs/large-file-atomization-componentization-strategy.md §Strategy γ` |
+| componentization | Broader term for applying Strategy γ across the full `Managers/` sweep — all mega-files migrate to `Domains/{X}/` shape over Stage 2..N. Distinct from Unity component system. | `docs/large-file-atomization-componentization-strategy.md §Strategy γ` |
+| service facade | The public `I{X}.cs` interface + `{X}.cs` MonoBehaviour implementation pair that is the sole outward-facing API for a domain. Consumers depend on `I{X}`, not concrete services. See `facade interface`. | `docs/post-atomization-architecture.md §Domain catalog table` |
+| concern boundary | The logical grouping of methods/fields that belong to a single `{Concern}Service.cs`. One concern = one POCO class. Concerns within a domain must not call each other directly — they compose through the facade. | `docs/large-file-atomization-componentization-strategy.md §Folder shape` |
+| asmdef boundary | A Unity assembly definition (`{X}.asmdef`) that enforces compile-time separation between domains. No cross-domain runtime asmdef references — consumers depend on facade interfaces only. See `asmdef boundary rule`. | `docs/post-atomization-architecture.md §Asmdef boundary rule` |
+| domain folder | The `Assets/Scripts/Domains/{X}/` folder containing a domain's facade interface, facade impl, services, data, editor helpers, and asmdef. One per domain (Terrain/Roads/Grid/Water/Zones/UI/Bridge/Economy/Geography). | `docs/post-atomization-architecture.md §Domain catalog table` |
+| facade interface | The `I{X}.cs` file in `Assets/Scripts/Domains/{X}/` declaring the public API contract for domain `{X}`. Mandatory per Strategy γ — facade-interface validator (`npm run validate:domain-facades`) enforces its presence. | `docs/large-file-atomization-componentization-strategy.md §Naming rules` |
+| sub-stage decomposition | The rule that splits atomization of a large file across multiple ship-cycle sub-stages: file >2500 LOC = 2 sub-stages; >3500 LOC = 3 sub-stages. Prevents diff overload. | `ia/skills/atomize-file/SKILL.md §Sub-stage decomposition threshold table` |
+| soft cap | A lint threshold that emits a warning (not an error) when crossed. In the C# lint stack: method warn=40 / file warn=400 LOC. Hard cap = error. Suppressed per escape-hatch comment grammar. | `docs/large-file-atomization-componentization-strategy.md §Anti-patterns` |
+| escape hatch | `// long-method-allowed: {reason}` or `// long-file-allowed: {reason}` comment that suppresses the hard-cap lint error; still emits a warning. Reviewer approves at PR stage. See `soft cap`. | `docs/large-file-atomization-componentization-strategy.md §Anti-patterns` |
+| trust boundary | The domain of `gridArray`/`cellArray` access granted to services extracted from `GridManager` per invariant #5 carve-out. Services holding a `GridManager grid` composition ref share `GridManager`'s trust boundary and may touch `grid.cellArray`/`grid.gridArray` directly. See `carve-out`. | `ia/rules/unity-invariants.md §5` |
+
 ## Retired terms — do not use
 
 | Term | Replacement | Note |

@@ -1,0 +1,8 @@
+---
+description: "Use when a C# file in Assets/Scripts/Managers/ needs atomization per Strategy γ (docs/large-file-atomization-componentization-strategy.md). Phases: 1) read csharp_class_summary; 2) derive concerns + sub-stage count from LOC threshold (<=2500=1, >2500=2, >3500=3); 3) seed Domains/{X}/ folder + I{X}.cs facade interface + {X}.cs facade impl + {X}.asmdef; 4) extract services loop (one per concern, namespace Domains.{X}.Services); 5) extend composed test; 6) verify validators green (validate:all + lint:csharp + validate:domain-facades + unity:compile-check); 7) hand off to /ship-cycle. Sub-stage decomposition rule: file >2500 LOC = 2 sub-stages; >3500 LOC = 3 sub-stages. Triggers: \"/atomize-file {FILE_PATH}\", \"atomize {CLASS_NAME}\", \"extract domains from {FILE}\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/atomize-file/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
