@@ -201,6 +201,23 @@ catalog_snapshot                   -- migration 0040_catalog_snapshot.sql
 
 `is_pinned` flag on `entity_version` derives from join with `catalog_snapshot.entity_versions[]` — pinned versions are GC-protected (DEC-A29).
 
+### 5.6 DriftGate
+
+Protected pair: `panel_detail.rect_json` (DB jsonb) ↔ `Assets/UI/Snapshots/panels.json` (`items[].fields.rect_json`).
+
+Enforcement: `npm run validate:ui-drift` (`tools/scripts/validate-ui-def-drift.mjs`).
+- Compares per-slug `rect_json` deep equality: DB rows vs snapshot items.
+- Exit 0 = match. Exit 1 = drift; stdout lists offending slugs (`drift: {slug} field={field}`).
+- Wired into `validate:all` CI chain after `validate:catalog-naming`.
+- Hard-fail only (Q4) — no warning mode.
+- DB unreachable in CI (no DATABASE_URL) → exit 0 with info line (skip-graceful).
+
+Locked baseline: `hud-bar`, `toolbar` panels seeded in migrations 0109, 0110.
+
+Future expansion: per-kind snapshots (`tokens.json`, `components.json`) — Stage 4 surface.
+
+See also: [`docs/explorations/ui-implementation-mvp-rest.md`](../../docs/explorations/ui-implementation-mvp-rest.md).
+
 ## 6. Composition junctions
 
 ### 6.1 `panel_child`
