@@ -69,7 +69,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 ## Tokens
 
-> **Stage 4 (2026-05-08).** Canonical token spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='token')` + `token_detail`. Snapshot: `Assets/UI/Snapshots/tokens.json`.
+> **Stage 5 (2026-05-08). LOCKED-COUNT: 20 tokens.** Canonical token spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='token')` + `token_detail`. Snapshot: `Assets/UI/Snapshots/tokens.json`. MCP slices: `ui_token_get` / `ui_token_list` / `ui_token_publish`.
 
 ### Namespace conventions
 
@@ -116,7 +116,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 ## Components
 
-> **Stage 4 (2026-05-08).** Canonical component spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='component')` + `component_detail`. Snapshot: `Assets/UI/Snapshots/components.json`.
+> **Stage 5 (2026-05-08). LOCKED-COUNT: 6 components.** Canonical component spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='component')` + `component_detail`. Snapshot: `Assets/UI/Snapshots/components.json`. MCP slices: `ui_component_get` / `ui_component_list` / `ui_component_publish`.
 
 ### Component table
 

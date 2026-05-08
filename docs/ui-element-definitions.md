@@ -6,6 +6,18 @@
 
 ---
 
+## [Stage-5.AUDIT] — ui-implementation-mvp-rest Stage 5.0 closeout (2026-05-08)
+
+- **Tokens**: 20 consumer tokens locked in `ia/specs/ui-design-system.md §Tokens` (LOCKED-COUNT: 20). DB: `catalog_entity(kind='token')` + `token_detail`. MCP slices live: `ui_token_get` / `ui_token_list` / `ui_token_publish` (`tools/mcp-ia-server/src/tools/ui-token.ts`).
+- **Components**: 6 components locked in `ia/specs/ui-design-system.md §Components` (LOCKED-COUNT: 6). DB: `catalog_entity(kind='component')` + `component_detail`. MCP slices live: `ui_component_get` / `ui_component_list` / `ui_component_publish` (`tools/mcp-ia-server/src/tools/ui-component.ts`).
+- **Skill artifacts**: `ia/skills/ui-element-grill/SKILL.md` + `agent-body.md` filed (5-phase grill: load corpus → poll → draft → bake+verdicts → publish). `.claude/agents/ui-element-grill.md` + `.claude/commands/ui-element-grill.md` generated via `npm run skill:sync:all`. `validate:skill-drift` green (0 errors, 0 warnings).
+- **Spec finalized**: `ia/specs/ui-design-system.md` token + component section headers updated with LOCKED-COUNT annotations and MCP slice references.
+- **Tests**: Suite 5 (UiTokenGetListPublish) + Suite 6 (UiComponentGetListPublish) added to `tools/mcp-ia-server/tests/tools/ui-slices.test.ts`. Spec-shape test: `ia/specs/__tests__/ui-design-system-spec-shape.test.mjs`.
+
+---
+
+---
+
 ## Tokens
 
 > **Promoted (Stage 4).** Canonical spec: `ia/specs/ui-design-system.md §Tokens`. Consumer token table, namespace conventions, and DB snapshot reference live there. JSON seed source below retained for migration authoring reference.

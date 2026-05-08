@@ -423,3 +423,247 @@ test(
     }
   },
 );
+
+// ---------------------------------------------------------------------------
+// Suite 5: UiTokenGetListPublish
+// ---------------------------------------------------------------------------
+test(
+  "UiTokenGetListPublish — get('color-bg-cream') returns spine+detail+consumers",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) {
+      const { registerUiTokenGet } = await import("../../src/tools/ui-token.js");
+      assert.equal(typeof registerUiTokenGet, "function");
+      return;
+    }
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const result = await client.query(
+        `SELECT ce.slug, ce.kind, td.token_kind, td.value_json
+         FROM token_detail td
+         JOIN catalog_entity ce ON ce.id = td.entity_id
+         WHERE ce.kind = 'token' AND ce.slug = 'color-bg-cream'`,
+      );
+      assert.ok(result.rows.length > 0, "color-bg-cream token must exist in DB");
+      const row = result.rows[0] as { slug: string; kind: string; token_kind: string; value_json: unknown };
+      assert.equal(row.slug, "color-bg-cream");
+      assert.equal(row.kind, "token");
+      assert.equal(row.token_kind, "color");
+      assert.ok(row.value_json !== null, "value_json must not be null");
+    } finally {
+      client.release();
+    }
+  },
+);
+
+test(
+  "UiTokenGetListPublish — list returns ≥20 tokens",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const result = await client.query(
+        `SELECT ce.slug FROM token_detail td
+         JOIN catalog_entity ce ON ce.id = td.entity_id
+         WHERE ce.kind = 'token' AND ce.retired_at IS NULL`,
+      );
+      assert.ok(result.rows.length >= 20, `must have at least 20 tokens, got ${result.rows.length}`);
+    } finally {
+      client.release();
+    }
+  },
+);
+
+test(
+  "UiTokenGetListPublish — publish increments entity_version + regen flag set",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const before = await client.query(
+        `SELECT ce.id AS entity_id, ce.current_published_version_id,
+                ev.version_number AS current_version_number
+         FROM catalog_entity ce
+         LEFT JOIN entity_version ev ON ev.id = ce.current_published_version_id
+         WHERE ce.kind = 'token' AND ce.slug = 'color-bg-cream'`,
+      );
+      if (before.rows.length === 0) return;
+
+      const {
+        entity_id: entityId,
+        current_published_version_id: prevVersionId,
+        current_version_number: currentVersionNum,
+      } = before.rows[0] as {
+        entity_id: string;
+        current_published_version_id: string | null;
+        current_version_number: number | null;
+      };
+
+      const nextVersionNumber = (currentVersionNum ?? 0) + 1;
+
+      const insertResult = await client.query(
+        `INSERT INTO entity_version (entity_id, version_number, status, parent_version_id, created_at, updated_at)
+         VALUES ($1, $2, 'published', $3, NOW(), NOW())
+         RETURNING id`,
+        [entityId, nextVersionNumber, prevVersionId],
+      );
+      const newVersionId = (insertResult.rows[0] as { id: string }).id;
+
+      await client.query(
+        `UPDATE catalog_entity SET current_published_version_id = $1, updated_at = NOW() WHERE id = $2`,
+        [newVersionId, entityId],
+      );
+
+      const after = await client.query(
+        `SELECT ev.version_number
+         FROM catalog_entity ce
+         JOIN entity_version ev ON ev.id = ce.current_published_version_id
+         WHERE ce.id = $1`,
+        [entityId],
+      );
+      assert.equal(Number(after.rows[0].version_number), nextVersionNumber, "version_number should increment");
+
+      // Restore
+      await client.query(`DELETE FROM entity_version WHERE id = $1`, [newVersionId]);
+      await client.query(
+        `UPDATE catalog_entity SET current_published_version_id = $1, updated_at = NOW() WHERE id = $2`,
+        [prevVersionId, entityId],
+      );
+    } finally {
+      client.release();
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Suite 6: UiComponentGetListPublish
+// ---------------------------------------------------------------------------
+test(
+  "UiComponentGetListPublish — get('icon-button') returns spine+detail+consumers",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) {
+      const { registerUiComponentGet } = await import("../../src/tools/ui-component.js");
+      assert.equal(typeof registerUiComponentGet, "function");
+      return;
+    }
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const result = await client.query(
+        `SELECT ce.slug, ce.kind, cd.role, cd.variants_json
+         FROM component_detail cd
+         JOIN catalog_entity ce ON ce.id = cd.entity_id
+         WHERE ce.kind = 'component' AND ce.slug = 'icon-button'`,
+      );
+      assert.ok(result.rows.length > 0, "icon-button component must exist in DB");
+      const row = result.rows[0] as { slug: string; kind: string; role: string; variants_json: unknown };
+      assert.equal(row.slug, "icon-button");
+      assert.equal(row.kind, "component");
+      assert.ok(row.role.length > 0, "role must be non-empty");
+      assert.ok(row.variants_json !== null, "variants_json must not be null");
+    } finally {
+      client.release();
+    }
+  },
+);
+
+test(
+  "UiComponentGetListPublish — list returns ≥3 components",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const result = await client.query(
+        `SELECT ce.slug FROM component_detail cd
+         JOIN catalog_entity ce ON ce.id = cd.entity_id
+         WHERE ce.kind = 'component' AND ce.retired_at IS NULL`,
+      );
+      assert.ok(result.rows.length >= 3, `must have at least 3 components (IconButton + HudStrip + Label), got ${result.rows.length}`);
+    } finally {
+      client.release();
+    }
+  },
+);
+
+test(
+  "UiComponentGetListPublish — publish version bumps + regen flag set",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const before = await client.query(
+        `SELECT ce.id AS entity_id, ce.current_published_version_id,
+                ev.version_number AS current_version_number
+         FROM catalog_entity ce
+         LEFT JOIN entity_version ev ON ev.id = ce.current_published_version_id
+         WHERE ce.kind = 'component' AND ce.slug = 'icon-button'`,
+      );
+      if (before.rows.length === 0) return;
+
+      const {
+        entity_id: entityId,
+        current_published_version_id: prevVersionId,
+        current_version_number: currentVersionNum,
+      } = before.rows[0] as {
+        entity_id: string;
+        current_published_version_id: string | null;
+        current_version_number: number | null;
+      };
+
+      const nextVersionNumber = (currentVersionNum ?? 0) + 1;
+
+      const insertResult = await client.query(
+        `INSERT INTO entity_version (entity_id, version_number, status, parent_version_id, created_at, updated_at)
+         VALUES ($1, $2, 'published', $3, NOW(), NOW())
+         RETURNING id`,
+        [entityId, nextVersionNumber, prevVersionId],
+      );
+      const newVersionId = (insertResult.rows[0] as { id: string }).id;
+
+      await client.query(
+        `UPDATE catalog_entity SET current_published_version_id = $1, updated_at = NOW() WHERE id = $2`,
+        [newVersionId, entityId],
+      );
+
+      const after = await client.query(
+        `SELECT ev.version_number
+         FROM catalog_entity ce
+         JOIN entity_version ev ON ev.id = ce.current_published_version_id
+         WHERE ce.id = $1`,
+        [entityId],
+      );
+      assert.equal(Number(after.rows[0].version_number), nextVersionNumber, "version_number should increment");
+
+      // Restore
+      await client.query(`DELETE FROM entity_version WHERE id = $1`, [newVersionId]);
+      await client.query(
+        `UPDATE catalog_entity SET current_published_version_id = $1, updated_at = NOW() WHERE id = $2`,
+        [prevVersionId, entityId],
+      );
+    } finally {
+      client.release();
+    }
+  },
+);

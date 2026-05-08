@@ -1,0 +1,8 @@
+---
+description: "Guided 5-phase grill for UI element definition authoring. Phase 1 loads corpus + design-system spec. Phase 2 polls user for panel intent + variants. Phase 3 drafts the definition shape (DB rows + seed JSON). Phase 4 runs bake + verdicts loop (ui_calibration_verdict_record). Phase 5 publishes + cross-links docs. MCP slice usage order: ui_panel_list → ui_calibration_corpus_query → ui_token_list → ui_component_list → ui_panel_publish. Late-formalized per Q2 — corpus + verdicts + MCP slices proven by Stage 4 close. Triggers: \"/ui-element-grill\", \"ui element grill\", \"grill ui panel\", \"define panel\", \"author panel definition\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/ui-element-grill/SKILL.md
+
+When this skill invokes MCP tools, follow its Tool recipe order exactly.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
