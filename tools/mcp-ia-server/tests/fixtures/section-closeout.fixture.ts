@@ -122,9 +122,17 @@ export async function teardownSectionCloseoutFixture(
   // `ia_stages` → `ia_tasks`. Delete tasks explicitly, then plan;
   // remaining cascades reach ia_stages + stage_carcass_signals +
   // ia_section_claims + ia_stage_claims via ON DELETE CASCADE.
+  // Drop pending cron_audit_log_jobs rows first — closeout enqueues
+  // fire-and-forget async writes against ia_master_plan_change_log
+  // (FK on slug). Leaving them stranded after master-plan delete
+  // surfaces as orphan FK-violation failures on the cron drain.
   // Wrapped in advisory lock — concurrent cascade DELETEs in parallel
   // workers race row/table locks across the FK chain → deadlock.
   await withFixtureLock(pool, async () => {
+    await pool.query(
+      `DELETE FROM cron_audit_log_jobs WHERE slug = $1`,
+      [slug],
+    );
     await pool.query(
       `DELETE FROM ia_tasks WHERE slug = $1`,
       [slug],
