@@ -1,0 +1,15 @@
+{
+    "name": "UI.Editor",
+    "rootNamespace": "Domains.UI.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": true
+}
