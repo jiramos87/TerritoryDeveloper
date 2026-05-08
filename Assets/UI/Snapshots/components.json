@@ -1,0 +1,49 @@
+{
+  "snapshot_id": "2026-05-08T18:14:26.533Z",
+  "kind": "components",
+  "schema_version": 1,
+  "items": [
+    {
+      "slug": "hud-strip",
+      "display_name": "HudStrip",
+      "role": "Anchored full-width strip with named zones (left/center/right)",
+      "default_props_json": "{\"h\":{\"type\":\"size\",\"default\":\"size.strip.h\"},\"bg\":{\"type\":\"color\",\"default\":\"color.bg.cream\"},\"side\":{\"type\":\"enum\",\"values\":[\"top\",\"bottom\",\"left\",\"right\"],\"default\":\"bottom\"},\"zones\":{\"type\":\"array\",\"default\":[\"left\",\"center\",\"right\"]}}",
+      "variants_json": "[\"idle\",\"dimmed\"]"
+    },
+    {
+      "slug": "icon-button",
+      "display_name": "IconButton",
+      "role": "Icon-only button with optional label",
+      "default_props_json": "{\"icon\":{\"type\":\"string\",\"required\":true},\"size\":{\"type\":\"enum\",\"values\":[\"icon\",\"tall\",\"short\"],\"default\":\"icon\"},\"slug\":{\"type\":\"string\",\"required\":true},\"action\":{\"type\":\"string\",\"required\":true},\"hotkey\":{\"type\":\"string\",\"default\":null},\"tooltip\":{\"type\":\"string\",\"default\":null},\"variant\":{\"type\":\"string\",\"default\":\"amber\"}}",
+      "variants_json": "[\"default\",\"hover\",\"pressed\",\"disabled\",\"active\"]"
+    },
+    {
+      "slug": "ui-label",
+      "display_name": "Label",
+      "role": "Static or data-bound text label",
+      "default_props_json": "{\"bind\":{\"type\":\"string\",\"default\":null},\"font\":{\"type\":\"enum\",\"values\":[\"display\",\"body\",\"mono\"],\"default\":\"body\"},\"slug\":{\"type\":\"string\",\"required\":true},\"align\":{\"type\":\"enum\",\"values\":[\"start\",\"center\",\"end\"],\"default\":\"center\"}}",
+      "variants_json": "[]"
+    },
+    {
+      "slug": "ui-modal",
+      "display_name": "Modal",
+      "role": "Overlay panel with focus-trap + Esc-close",
+      "default_props_json": "{\"slug\":{\"type\":\"string\",\"required\":true},\"trapFocus\":{\"type\":\"bool\",\"default\":true},\"closeOnEsc\":{\"type\":\"bool\",\"default\":true}}",
+      "variants_json": "[\"closed\",\"opening\",\"open\",\"closing\"]"
+    },
+    {
+      "slug": "ui-readout",
+      "display_name": "Readout",
+      "role": "Live data text with format + cadence",
+      "default_props_json": "{\"bind\":{\"type\":\"string\",\"required\":true},\"slug\":{\"type\":\"string\",\"required\":true},\"format\":{\"type\":\"enum\",\"values\":[\"text\",\"currency\",\"percent\",\"integer\"],\"default\":\"text\"},\"cadence\":{\"type\":\"enum\",\"values\":[\"frame\",\"tick\",\"event\"],\"default\":\"tick\"}}",
+      "variants_json": "[]"
+    },
+    {
+      "slug": "ui-toggle",
+      "display_name": "Toggle",
+      "role": "On/off toggle bound to setting",
+      "default_props_json": "{\"bind\":{\"type\":\"string\",\"required\":true},\"slug\":{\"type\":\"string\",\"required\":true}}",
+      "variants_json": "[\"default\",\"hover\",\"on\",\"disabled\"]"
+    }
+  ]
+}

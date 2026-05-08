@@ -21,6 +21,8 @@
  *     ]
  *   }
  *
+ * Also writes tokens.json and components.json snapshots.
+ *
  * Published-row gate: catalog_entity.kind='panel' AND
  * current_published_version_id IS NOT NULL AND retired_at IS NULL.
  * Children ordered by panel_child.order_idx ASC.
@@ -29,7 +31,7 @@
  * sprite_detail.assets_path (Unity-relative path string).
  *
  * Exit codes:
- *   0  wrote panels.json
+ *   0  wrote panels.json + tokens.json + components.json
  *   1  DB error or write failure
  */
 
@@ -43,11 +45,44 @@ import { resolveDatabaseUrl } from '../postgres-ia/resolve-database-url.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 const OUT_REL = 'Assets/UI/Snapshots/panels.json';
+const OUT_TOKENS_REL = 'Assets/UI/Snapshots/tokens.json';
+const OUT_COMPONENTS_REL = 'Assets/UI/Snapshots/components.json';
 const SCHEMA_VERSION = 4;
 
 const require = createRequire(import.meta.url);
 const pgRequire = createRequire(join(REPO_ROOT, 'tools/postgres-ia/package.json'));
 const pg = pgRequire('pg');
+
+/** Pull all component catalog_entity rows + component_detail. */
+const COMPONENTS_QUERY = `
+  SELECT
+    ce.id           AS entity_id,
+    ce.slug         AS slug,
+    ce.display_name AS display_name,
+    cd.role         AS role,
+    cd.default_props_json AS default_props_json,
+    cd.variants_json      AS variants_json
+  FROM catalog_entity ce
+  JOIN component_detail cd ON cd.entity_id = ce.id
+  WHERE ce.kind = 'component'
+    AND ce.retired_at IS NULL
+  ORDER BY ce.slug ASC
+`;
+
+/** Pull all token catalog_entity rows + token_detail. */
+const TOKENS_QUERY = `
+  SELECT
+    ce.id        AS entity_id,
+    ce.slug      AS slug,
+    ce.display_name AS display_name,
+    td.token_kind   AS token_kind,
+    td.value_json   AS value_json
+  FROM catalog_entity ce
+  JOIN token_detail td ON td.entity_id = ce.id
+  WHERE ce.kind = 'token'
+    AND ce.retired_at IS NULL
+  ORDER BY ce.slug ASC
+`;
 
 /** Pull published panels + their ordered children + per-child sprite ref. */
 const PANELS_QUERY = `
@@ -159,6 +194,51 @@ async function main() {
     writeFileSync(outAbs, JSON.stringify(snapshot, null, 2) + '\n', 'utf8');
 
     console.log(`wrote panels.json (${items.length} panels, ${totalChildren} children)`);
+
+    // ── Tokens snapshot ──────────────────────────────────────────────────────
+    const tokenRows = (await client.query(TOKENS_QUERY)).rows;
+    const tokenItems = tokenRows.map((r) => ({
+      slug: r.slug,
+      display_name: r.display_name,
+      token_kind: r.token_kind,
+      value_json: typeof r.value_json === 'string' ? r.value_json : JSON.stringify(r.value_json ?? {}),
+    }));
+
+    const tokensSnapshot = {
+      snapshot_id: new Date().toISOString(),
+      kind: 'tokens',
+      schema_version: 1,
+      items: tokenItems,
+    };
+
+    const tokensOutAbs = join(REPO_ROOT, OUT_TOKENS_REL);
+    writeFileSync(tokensOutAbs, JSON.stringify(tokensSnapshot, null, 2) + '\n', 'utf8');
+    console.log(`wrote tokens.json (${tokenItems.length} tokens)`);
+
+    // ── Components snapshot ──────────────────────────────────────────────────
+    const componentRows = (await client.query(COMPONENTS_QUERY)).rows;
+    const componentItems = componentRows.map((r) => ({
+      slug: r.slug,
+      display_name: r.display_name,
+      role: r.role,
+      default_props_json: typeof r.default_props_json === 'string'
+        ? r.default_props_json
+        : JSON.stringify(r.default_props_json ?? {}),
+      variants_json: typeof r.variants_json === 'string'
+        ? r.variants_json
+        : JSON.stringify(r.variants_json ?? []),
+    }));
+
+    const componentsSnapshot = {
+      snapshot_id: new Date().toISOString(),
+      kind: 'components',
+      schema_version: 1,
+      items: componentItems,
+    };
+
+    const componentsOutAbs = join(REPO_ROOT, OUT_COMPONENTS_REL);
+    writeFileSync(componentsOutAbs, JSON.stringify(componentsSnapshot, null, 2) + '\n', 'utf8');
+    console.log(`wrote components.json (${componentItems.length} components)`);
   } finally {
     await client.end();
   }

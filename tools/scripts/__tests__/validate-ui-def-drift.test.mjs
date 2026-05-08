@@ -2,7 +2,8 @@
  * validate-ui-def-drift.test.mjs
  * Unit tests for validate-ui-def-drift.mjs.
  * Tests: HudBar_GreenBaseline_ExitsZero, DriftScan_FlagsRectJsonMismatch,
- *        SnapshotMissing_ExitsOneFatal, ExtraFieldInDb_DetectedAsDrift
+ *        SnapshotMissing_ExitsOneFatal, ExtraFieldInDb_DetectedAsDrift,
+ *        TokenDriftAndComponentDriftDetected
  */
 
 import assert from 'node:assert';
@@ -18,6 +19,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..', '..');
 const SCRIPT_PATH = join(REPO_ROOT, 'tools', 'scripts', 'validate-ui-def-drift.mjs');
 const SNAPSHOT_PATH = join(REPO_ROOT, 'Assets', 'UI', 'Snapshots', 'panels.json');
+const TOKENS_SNAPSHOT_PATH = join(REPO_ROOT, 'Assets', 'UI', 'Snapshots', 'tokens.json');
+const COMPONENTS_SNAPSHOT_PATH = join(REPO_ROOT, 'Assets', 'UI', 'Snapshots', 'components.json');
 
 /** Resolve DATABASE_URL for live-DB tests. */
 async function getDbUrl() {
@@ -202,5 +205,106 @@ test('ExtraFieldInDb_DetectedAsDrift', async () => {
       `, [typeof originalRect === 'string' ? originalRect : JSON.stringify(originalRect)]);
     }
     await pool.end().catch(() => {});
+  }
+});
+
+// ─── Test 5 ──────────────────────────────────────────────────────────────────
+
+test('TokenDriftAndComponentDriftDetected', async () => {
+  const dbUrl = await getDbUrl();
+  if (!dbUrl) {
+    // CI without DB — skip
+    return;
+  }
+
+  if (!existsSync(TOKENS_SNAPSHOT_PATH) || !existsSync(COMPONENTS_SNAPSHOT_PATH)) {
+    // Snapshots not yet emitted — skip
+    return;
+  }
+
+  const pg = require('pg');
+  const Pool = pg.Pool ?? pg.default?.Pool;
+  const pool = new Pool({ connectionString: dbUrl });
+
+  // ── Token drift ──────────────────────────────────────────────────────────
+  let originalTokenValue;
+  let tokenEntityId;
+  try {
+    const { rows } = await pool.query(`
+      SELECT ce.id, td.value_json
+      FROM token_detail td
+      JOIN catalog_entity ce ON ce.id = td.entity_id
+      WHERE ce.kind = 'token' AND ce.slug = 'color-bg-cream'
+    `);
+    if (!rows.length) {
+      await pool.end();
+      return;
+    }
+    tokenEntityId = rows[0].id;
+    originalTokenValue = rows[0].value_json;
+
+    // Inject drift: change the color value
+    await pool.query(
+      `UPDATE token_detail SET value_json = $1::jsonb WHERE entity_id = $2`,
+      [JSON.stringify({ value: '#000000' }), tokenEntityId]
+    );
+
+    const r = runValidator();
+    assert.strictEqual(r.status, 1, `expected exit 1 on token drift\nstdout: ${r.stdout}\nstderr: ${r.stderr}`);
+    assert.ok(
+      r.stdout.includes('color-bg-cream'),
+      `expected stdout to contain 'color-bg-cream'\nstdout: ${r.stdout}`
+    );
+  } finally {
+    if (originalTokenValue !== undefined && tokenEntityId !== undefined) {
+      await pool.query(
+        `UPDATE token_detail SET value_json = $1::jsonb WHERE entity_id = $2`,
+        [typeof originalTokenValue === 'string' ? originalTokenValue : JSON.stringify(originalTokenValue), tokenEntityId]
+      );
+    }
+    await pool.end().catch(() => {});
+  }
+
+  // ── Component drift ──────────────────────────────────────────────────────
+  const pool2 = new Pool({ connectionString: dbUrl });
+  let originalProps;
+  let componentEntityId;
+  try {
+    const { rows } = await pool2.query(`
+      SELECT ce.id, cd.default_props_json
+      FROM component_detail cd
+      JOIN catalog_entity ce ON ce.id = cd.entity_id
+      WHERE ce.kind = 'component' AND ce.slug = 'icon-button'
+    `);
+    if (!rows.length) {
+      await pool2.end();
+      return;
+    }
+    componentEntityId = rows[0].id;
+    originalProps = rows[0].default_props_json;
+
+    // Inject drift: add extra field
+    const mutated = typeof originalProps === 'string' ? JSON.parse(originalProps) : { ...originalProps };
+    mutated.__drift_test__ = true;
+
+    await pool2.query(
+      `UPDATE component_detail SET default_props_json = $1::jsonb WHERE entity_id = $2`,
+      [JSON.stringify(mutated), componentEntityId]
+    );
+
+    const r2 = runValidator();
+    assert.strictEqual(r2.status, 1, `expected exit 1 on component drift\nstdout: ${r2.stdout}\nstderr: ${r2.stderr}`);
+    assert.ok(
+      r2.stdout.includes('icon-button'),
+      `expected stdout to contain 'icon-button'\nstdout: ${r2.stdout}`
+    );
+  } finally {
+    if (originalProps !== undefined && componentEntityId !== undefined) {
+      await pool2.query(
+        `UPDATE component_detail SET default_props_json = $1::jsonb WHERE entity_id = $2`,
+        [typeof originalProps === 'string' ? originalProps : JSON.stringify(originalProps), componentEntityId]
+      );
+    }
+    await pool2.end().catch(() => {});
   }
 });

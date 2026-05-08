@@ -8,19 +8,7 @@
 
 ## Tokens
 
-Named values referenced by panels + components. Seeded from `docs/ideas/ui-elements-grilling.md §4.1` at process lock 2026-05-07.
-
-### Prose summary
-
-| Group | Tokens |
-| --- | --- |
-| Color — backgrounds | `color.bg.cream` `#f5e6c8` (button body), `color.bg.cream-pressed` `#d9c79c` |
-| Color — borders | `color.border.tan` `#a37b3a` |
-| Color — icons / text | `color.icon.indigo` `#4a3aff`, `color.text.dark` `#1a1a1a` |
-| Color — alerts | `color.alert.red` `#c53030` |
-| Sizing | `size.icon` 64, `size.button.tall` 72, `size.button.short` 48, `size.strip.h` 80, `size.panel.card` 320 |
-| Spacing | `gap.tight` 4, `gap.default` 8, `gap.loose` 16, `pad.button` `[4,8,4,8]` (TRBL) |
-| Layers (z-index) | `z.world` 0, `z.hud` 10, `z.toast` 20, `z.modal` 30, `z.overlay` 40 |
+> **Promoted (Stage 4).** Canonical spec: `ia/specs/ui-design-system.md §Tokens`. Consumer token table, namespace conventions, and DB snapshot reference live there. JSON seed source below retained for migration authoring reference.
 
 ### JSON (seed source)
 
@@ -58,25 +46,7 @@ Named values referenced by panels + components. Seeded from `docs/ideas/ui-eleme
 
 ## Components
 
-Reusable atoms + molecules. Seeded from `docs/ideas/ui-elements-grilling.md §4.2`.
-
-### Prose summary
-
-| Component | Role | Default props |
-| --- | --- | --- |
-| `<HudStrip>` | anchored full-width strip with named zones | `side`, `h`, `bg`, zones=`{left,center,right}` |
-| `<IconButton>` | icon-only button, optional label | `slug`, `icon`, `size`, `variant`, `hotkey`, `action`, `tooltip` |
-| `<Label>` | static or bound text | `slug`, `bind?`, `font`, `align` |
-| `<Readout>` | live data text with format + cadence | `slug`, `bind`, `format`, `cadence` |
-| `<Toggle>` | on/off bound to setting | `slug`, `bind` |
-| `<Modal>` | overlay panel with focus-trap + esc-close | `slug`, `trapFocus`, `closeOnEsc` |
-
-### Variants (state machine per component)
-
-```
-IconButton.variants = { default | hover | pressed | disabled | active }
-HudStrip.variants   = { idle | dimmed }   // dimmed when modal on top
-```
+> **Promoted (Stage 4).** Canonical spec: `ia/specs/ui-design-system.md §Components`. Component table, default props, variants, and DB snapshot reference live there. JSON seed source below retained for migration authoring reference.
 
 ### JSON (seed source)
 

@@ -67,6 +67,83 @@ Add prefab paths under `Assets/` as they are standardized.
 
 ---
 
+## Tokens
+
+> **Stage 4 (2026-05-08).** Canonical token spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='token')` + `token_detail`. Snapshot: `Assets/UI/Snapshots/tokens.json`.
+
+### Namespace conventions
+
+| Namespace | Pattern | Purpose |
+|-----------|---------|---------|
+| `color.bg.*` | `color-bg-{name}` slug | Background fills |
+| `color.border.*` | `color-border-{name}` slug | Border strokes |
+| `color.icon.*` | `color-icon-{name}` slug | Icon tints |
+| `color.text.*` | `color-text-{name}` slug | Text colors |
+| `color.alert.*` | `color-alert-{name}` slug | Alert / warning fills |
+| `size.*` | `size-{name}` slug | Pixel dimensions |
+| `gap.*` | `gap-{name}` slug | Layout gaps |
+| `pad.*` | `pad-{name}` slug | Padding arrays |
+| `layer.*` | `layer-{name}` slug | Z-index / sort order (maps to `z.*` design tokens) |
+
+### Consumer token table (hud-bar + toolbar)
+
+| Design token | DB slug | Kind | Value |
+|---|---|---|---|
+| `color.bg.cream` | `color-bg-cream` | color | `#f5e6c8` |
+| `color.bg.cream-pressed` | `color-bg-cream-pressed` | color | `#d9c79c` |
+| `color.border.tan` | `color-border-tan` | color | `#a37b3a` |
+| `color.icon.indigo` | `color-icon-indigo` | color | `#4a3aff` |
+| `color.text.dark` | `color-text-dark` | color | `#1a1a1a` |
+| `color.alert.red` | `color-alert-red` | color | `#c53030` |
+| `size.icon` | `size-icon` | spacing | `64` |
+| `size.button.tall` | `size-button-tall` | spacing | `72` |
+| `size.button.short` | `size-button-short` | spacing | `48` |
+| `size.strip.h` | `size-strip-h` | spacing | `80` |
+| `size.panel.card` | `size-panel-card` | spacing | `320` |
+| `gap.tight` | `gap-tight` | spacing | `4` |
+| `gap.default` | `gap-default` | spacing | `8` |
+| `gap.loose` | `gap-loose` | spacing | `16` |
+| `pad.button` | `pad-button` | spacing | `[4,8,4,8]` |
+| `z.world` | `layer-world` | spacing | `0` |
+| `z.hud` | `layer-hud` | spacing | `10` |
+| `z.toast` | `layer-toast` | spacing | `20` |
+| `z.modal` | `layer-modal` | spacing | `30` |
+| `z.overlay` | `layer-overlay` | spacing | `40` |
+
+> JSON seed source: `docs/ui-element-definitions.md §Tokens §JSON (seed source)`. Migration: `db/migrations/0111_seed_ui_tokens.sql`.
+
+---
+
+## Components
+
+> **Stage 4 (2026-05-08).** Canonical component spec for hud-bar + toolbar consumer panels (hybrid-incremental per Q7). DB source: `catalog_entity (kind='component')` + `component_detail`. Snapshot: `Assets/UI/Snapshots/components.json`.
+
+### Component table
+
+| Slug | Display name | Role |
+|---|---|---|
+| `hud-strip` | HudStrip | Anchored full-width strip with named zones (left/center/right) |
+| `icon-button` | IconButton | Icon-only button with optional label |
+| `ui-label` | Label | Static or data-bound text label |
+| `ui-readout` | Readout | Live data text with format + cadence |
+| `ui-toggle` | Toggle | On/off toggle bound to setting |
+| `ui-modal` | Modal | Overlay panel with focus-trap + Esc-close |
+
+### Default props
+
+| Slug | `default_props_json` (key fields) | Variants |
+|---|---|---|
+| `hud-strip` | `side` (top/bottom/left/right, default bottom), `h` (size-strip-h), `bg` (color-bg-cream), `zones` ([left,center,right]) | idle, dimmed |
+| `icon-button` | `slug` (required), `icon` (required), `size` (icon/tall/short), `variant` (amber), `hotkey`, `action` (required), `tooltip` | default, hover, pressed, disabled, active |
+| `ui-label` | `slug` (required), `bind`, `font` (display/body/mono), `align` (start/center/end) | — |
+| `ui-readout` | `slug` (required), `bind` (required), `format` (text/currency/percent/integer), `cadence` (frame/tick/event) | — |
+| `ui-toggle` | `slug` (required), `bind` (required) | default, hover, on, disabled |
+| `ui-modal` | `slug` (required), `trapFocus` (true), `closeOnEsc` (true) | closed, opening, open, closing |
+
+> JSON seed source: `docs/ui-element-definitions.md §Components §JSON (seed source)`. Migration: `db/migrations/0112_seed_ui_components.sql`.
+
+---
+
 ## 1. Foundations
 
 **Traceability:** Color and typography frequency tables below are deduplicated from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (**CityScene** **`canvases[0].nodes`**). Row **Usage** cites representative **`Canvas/…`** paths (relative to **`UI/City/Canvas`** in the scene).
@@ -409,6 +486,7 @@ These patterns apply to both the **in-game HUD** (Unity uGUI) and the **web plat
 | 2026-04-11 | **§3.5** touch / **WASD** **UI** blocking note; **§5.3** shipped **UiTheme** / **HUD** polish implementation patterns (migrated from closed project spec) |
 | 2026-04-14 | **§7** Target visual language (inferred from reference images) — dark-first, data-dense, semantic color, stat bars, entity cards, heat/bubble overlays. Cross-linked to `web-ui-design-system.md`. |
 | 2026-05-04 | **§3.6** Stats panel pattern — D1-D9 closeout (4 tabs, region weighted-mean aggregation, IR v2 cutover, presenter pipeline, City+Region scale enum, DEC-A21). **§3.7** RCIS subtype picker pattern — legacy `SubTypePickerModal` decommissioned, IR-baked replacement. Migrated from `docs/game-ui-design-system-mvp-closeout-extensions.md` (preserved as historical record). |
+| 2026-05-08 | **§Tokens** + **§Components** promoted from `docs/ui-element-definitions.md` (Stage 4 / TECH-24405 + TECH-24406). 20 consumer tokens + 6 component rows; DB source via migrations 0111 + 0112; snapshot in `Assets/UI/Snapshots/`. |
 
 ### Machine-readable traceability (UI inventory baseline)
 
