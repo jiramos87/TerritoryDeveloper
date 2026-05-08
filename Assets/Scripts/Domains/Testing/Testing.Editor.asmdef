@@ -1,0 +1,15 @@
+{
+    "name": "Testing.Editor",
+    "rootNamespace": "Domains.Testing",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}
