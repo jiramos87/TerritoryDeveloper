@@ -14,7 +14,7 @@ namespace Territory.Forests
 /// Manage forest placement, removal, env effects in city sim.
 /// Works with <c>IForest</c> → supports forest types (Sparse, Dense, Dense).
 /// </summary>
-public class ForestManager : MonoBehaviour
+public class ForestManager : MonoBehaviour, IForestManager
 {
     #region Dependencies
     [Header("References")]

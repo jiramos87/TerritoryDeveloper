@@ -39,6 +39,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     private HeightMap heightMap;
     public ZoneManager zoneManager;
     public WaterManager waterManager;
+    /// <summary>ITerrainManager.Water — IWaterManager surface for Domains.* core-leaf consumers.</summary>
+    public IWaterManager Water => waterManager;
     #endregion
 
     #region Slope Prefabs

@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using Territory.Core;
 using Territory.Roads;
 using Territory.Economy;
+using Territory.Simulation;
 using Territory.Terrain;
 using Territory.Zones;
 using Territory.Utilities;
+using Random = UnityEngine.Random;
 
 namespace Domains.Roads.Services
 {
@@ -20,15 +22,15 @@ namespace Domains.Roads.Services
 public class AutoBuildService
 {
     #region Dependencies (injected via constructor)
-    private GridManager _gridManager;
-    private RoadManager _roadManager;
-    private GrowthBudgetManager _growthBudgetManager;
-    private CityStats _cityStats;
-    private InterstateManager _interstateManager;
-    private TerrainManager _terrainManager;
-    private TerraformingService _terraformingService;
-    private AutoZoningManager _autoZoningManager;
-    private UrbanCentroidService _urbanCentroidService;
+    private IGridManager _gridManager;
+    private IRoadManager _roadManager;
+    private IGrowthBudgetManager _growthBudgetManager;
+    private ICityStatsAuto _cityStats;
+    private IInterstate _interstateManager;
+    private ITerrainManager _terrainManager;
+    private ITerraformingService _terraformingService;
+    private object _autoZoningManager;
+    private IUrbanCentroidService _urbanCentroidService;
     #endregion
 
     #region Config params (bound from facade fields at Start)
@@ -85,15 +87,15 @@ public class AutoBuildService
     /// Segment callbacks (OnSegmentCompleted, OnTickStart) must be registered by facade before ProcessTick.
     /// </summary>
     public AutoBuildService(
-        GridManager gridManager,
-        RoadManager roadManager,
-        GrowthBudgetManager growthBudgetManager,
-        CityStats cityStats,
-        InterstateManager interstateManager,
-        TerrainManager terrainManager,
-        TerraformingService terraformingService,
-        AutoZoningManager autoZoningManager,
-        UrbanCentroidService urbanCentroidService,
+        IGridManager gridManager,
+        IRoadManager roadManager,
+        IGrowthBudgetManager growthBudgetManager,
+        ICityStatsAuto cityStats,
+        IInterstate interstateManager,
+        ITerrainManager terrainManager,
+        ITerraformingService terraformingService,
+        object autoZoningManager,
+        IUrbanCentroidService urbanCentroidService,
         HashSet<Vector2Int> expropriatedCellsPendingRoad)
     {
         _gridManager = gridManager;
@@ -110,15 +112,15 @@ public class AutoBuildService
 
     /// <summary>Update all dependency refs (called after facade's Start resolves FindObjectOfType).</summary>
     public void RefreshDependencies(
-        GridManager gridManager,
-        RoadManager roadManager,
-        GrowthBudgetManager growthBudgetManager,
-        CityStats cityStats,
-        InterstateManager interstateManager,
-        TerrainManager terrainManager,
-        TerraformingService terraformingService,
-        AutoZoningManager autoZoningManager,
-        UrbanCentroidService urbanCentroidService)
+        IGridManager gridManager,
+        IRoadManager roadManager,
+        IGrowthBudgetManager growthBudgetManager,
+        ICityStatsAuto cityStats,
+        IInterstate interstateManager,
+        ITerrainManager terrainManager,
+        ITerraformingService terraformingService,
+        object autoZoningManager,
+        IUrbanCentroidService urbanCentroidService)
     {
         _gridManager = gridManager;
         _roadManager = roadManager;
@@ -131,7 +133,7 @@ public class AutoBuildService
         _urbanCentroidService = urbanCentroidService;
     }
 
-    private bool PlaceRoadTileInBatch(RoadPrefabResolver.ResolvedRoadTile resolved)
+    private bool PlaceRoadTileInBatch(ResolvedRoadTile resolved)
     {
         _roadManager.PlaceRoadTileFromResolved(resolved);
         _batchPlacedFromResolvedRoadCells.Add(resolved.gridPos);
@@ -169,7 +171,7 @@ public class AutoBuildService
         int edgeCount = edges.Count;
 
         int available = _growthBudgetManager.GetAvailableBudget(GrowthCategory.Roads);
-        int costPerTile = RoadManager.RoadCostPerTile;
+        int costPerTile = RoadConstants.RoadCostPerTile;
         int maxByBudget = costPerTile > 0 ? available / costPerTile : 0;
         int toPlace = Mathf.Min(MaxPerTickSafetyCap, maxByBudget);
 
@@ -292,7 +294,7 @@ public class AutoBuildService
             plan = new PathTerraformPlan { isValid = false };
             return false;
         }
-        expandedPath = pathVec2.Count >= 2 ? TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2) : pathVec2;
+        expandedPath = pathVec2.Count >= 2 ? Domains.Terrain.Services.TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2) : pathVec2;
         plan = _terraformingService != null ? _terraformingService.ComputePathPlan(expandedPath) : new PathTerraformPlan { isValid = false };
         return plan.isValid;
     }
@@ -380,11 +382,11 @@ public class AutoBuildService
         if (atomicWaterBridge && (_roadManager == null || !_roadManager.StrokeLastCellIsFirmDryLand(expandedPath)))
             return 0;
 
-        List<RoadPrefabResolver.ResolvedRoadTile> resolvedPreApply = null;
+        List<ResolvedRoadTile> resolvedPreApply = null;
         if (atomicWaterBridge && _roadManager != null && !plan.HasTerraformHeightMutation())
             resolvedPreApply = _roadManager.ResolvePathForRoads(expandedPath, plan);
 
-        int CountNonRoadTilesOnResolved(List<RoadPrefabResolver.ResolvedRoadTile> r)
+        int CountNonRoadTilesOnResolved(List<ResolvedRoadTile> r)
         {
             if (r == null || _gridManager == null) return 0;
             int n = 0;
@@ -420,7 +422,7 @@ public class AutoBuildService
         if (heightMap != null && !plan.Apply(heightMap, _terrainManager))
             return 0;
 
-        var resolved = _roadManager != null ? _roadManager.ResolvePathForRoads(expandedPath, plan) : new List<RoadPrefabResolver.ResolvedRoadTile>();
+        var resolved = _roadManager != null ? _roadManager.ResolvePathForRoads(expandedPath, plan) : new List<ResolvedRoadTile>();
         if (resolved.Count == 0)
             return 0;
 
@@ -435,7 +437,7 @@ public class AutoBuildService
                 return 0;
             }
 
-            int lumpCost = tilesToPlace * RoadManager.RoadCostPerTile;
+            int lumpCost = tilesToPlace * RoadConstants.RoadCostPerTile;
             if (tilesToPlace > 0)
             {
                 if (_growthBudgetManager == null || !_growthBudgetManager.TrySpend(GrowthCategory.Roads, lumpCost))
@@ -464,7 +466,7 @@ public class AutoBuildService
         {
             for (int i = 0; i < resolved.Count && budgetRemaining > 0; i++)
             {
-                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) break;
+                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadConstants.RoadCostPerTile)) break;
                 if (PlaceRoadTileInBatch(resolved[i]))
                 {
                     placed++;
@@ -681,7 +683,7 @@ public class AutoBuildService
                 string bt = c.GetBuildingType();
                 if (bt == "PowerPlant" || bt == "WaterPlant") continue;
 
-                if (_gridManager.DemolishCellAt(new Vector2(cell.x, cell.y), showAnimation: false))
+                if (_gridManager.DemolishCellAt(new Vector2(cell.x, cell.y), withAnimation: false))
                 {
                     demolished.Add(cell);
                     _expropriatedCellsPendingRoad.Add(cell);
@@ -708,7 +710,7 @@ public class AutoBuildService
                 continue;
             }
             if (!IsCellPlaceableForRoad(pos.x, pos.y)) continue;
-            if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) continue;
+            if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadConstants.RoadCostPerTile)) continue;
             if (PlaceRoadTileInBatch(new Vector2(pos.x, pos.y)))
             {
                 _expropriatedCellsPendingRoad.Remove(pos);
@@ -737,7 +739,7 @@ public class AutoBuildService
                     continue;
                 if (!IsCellPlaceableForRoad(nx, ny))
                     continue;
-                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile))
+                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadConstants.RoadCostPerTile))
                     continue;
                 if (PlaceRoadTileInBatch(new Vector2(nx, ny)))
                     return 1;
@@ -1149,7 +1151,7 @@ public class AutoBuildService
             return 0;
 
         var resolved = _roadManager.ResolvePathForRoads(expandedPath, plan);
-        var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
+        var resolvedByPos = new Dictionary<Vector2Int, ResolvedRoadTile>();
         for (int j = 0; j < resolved.Count; j++)
             resolvedByPos[resolved[j].gridPos] = resolved[j];
 
@@ -1170,7 +1172,7 @@ public class AutoBuildService
             Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
             if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
                 continue;
-            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
+            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadConstants.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
             {
                 placed++;
                 roadSet.Add(p);
@@ -1248,7 +1250,7 @@ public class AutoBuildService
             return 0;
 
         var resolved = _roadManager.ResolvePathForRoads(expandedPath, plan);
-        var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
+        var resolvedByPos = new Dictionary<Vector2Int, ResolvedRoadTile>();
         for (int j = 0; j < resolved.Count; j++)
             resolvedByPos[resolved[j].gridPos] = resolved[j];
 
@@ -1269,7 +1271,7 @@ public class AutoBuildService
             Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
             if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
                 continue;
-            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
+            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadConstants.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
             {
                 placed++;
                 roadSet.Add(p);

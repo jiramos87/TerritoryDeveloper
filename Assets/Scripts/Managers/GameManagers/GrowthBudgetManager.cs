@@ -3,13 +3,13 @@ using Territory.Economy;
 
 namespace Territory.Simulation
 {
-public enum GrowthCategory { Roads, Energy, Water, Zoning }
+// GrowthCategory enum lifted to Core (Assets/Scripts/Core/Economy/GrowthCategory.cs) — same ns Territory.Simulation.
 
 /// <summary>
 /// Growth budget allocation across roads, energy, water, zoning. Monthly pool derived from projected
 /// net cash flow (tax − maintenance) when positive, else from treasury.
 /// </summary>
-public class GrowthBudgetManager : MonoBehaviour
+public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
 {
     public CityStats cityStats;
     public EconomyManager economyManager;

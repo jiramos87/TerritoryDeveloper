@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Territory.Zones;
+using Territory.Terrain;
 
 namespace Territory.Core
 {
@@ -44,5 +45,11 @@ public interface IGridManager
     /// or <c>null</c> if none registered on that side. Null is a valid (non-error) result.
     /// </summary>
     NeighborCityStub? GetNeighborStub(BorderSide side);
+    int width { get; }
+    int height { get; }
+    int CountRoadNeighbors(int x, int y);
+    void SetCellHeight(Vector2 gridPos, int height, bool skipWaterMembershipRefresh = false);
+    void GetBuildingFootprintOffset(int buildingSize, out int offsetX, out int offsetY);
+    ITerrainManager Terrain { get; }
 }
 }

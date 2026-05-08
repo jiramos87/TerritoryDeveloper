@@ -149,13 +149,13 @@ namespace Domains.Terrain.Services
                 {
                     int x = (int)path[i].x;
                     int y = (int)path[i].y;
-                    int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : Territory.Terrain.TerrainManager.MIN_HEIGHT;
+                    int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : HeightMap.MIN_HEIGHT;
 
                     var cellPlan = new Territory.Terrain.PathTerraformPlan.CellPlan
                     {
                         position = new Vector2Int(x, y),
-                        action = Territory.Terrain.TerraformingService.TerraformAction.Flatten,
-                        direction = Territory.Terrain.TerraformingService.OrthogonalDirection.North,
+                        action = TerraformAction.Flatten,
+                        direction = OrthogonalDirection.North,
                         originalHeight = h,
                         targetHeight = plan.baseHeight,
                         postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat
@@ -163,7 +163,7 @@ namespace Domains.Terrain.Services
 
                     if (!heightMap.IsValidPosition(x, y) || _shouldSkipRoadTerraformSurfaceAt(x, y, heightMap))
                     {
-                        cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                        cellPlan.action = TerraformAction.None;
                         cellPlan.targetHeight = h;
                     }
 
@@ -194,13 +194,13 @@ namespace Domains.Terrain.Services
             {
                 int x = (int)path[i].x;
                 int y = (int)path[i].y;
-                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : Territory.Terrain.TerrainManager.MIN_HEIGHT;
+                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : HeightMap.MIN_HEIGHT;
 
                 var cellPlan = new Territory.Terrain.PathTerraformPlan.CellPlan
                 {
                     position = new Vector2Int(x, y),
-                    action = Territory.Terrain.TerraformingService.TerraformAction.None,
-                    direction = Territory.Terrain.TerraformingService.OrthogonalDirection.North,
+                    action = TerraformAction.None,
+                    direction = OrthogonalDirection.North,
                     originalHeight = h,
                     targetHeight = h,
                     postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat
@@ -257,13 +257,13 @@ namespace Domains.Terrain.Services
                 {
                     if (segmentOneStepLand)
                     {
-                        cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                        cellPlan.action = TerraformAction.None;
                         cellPlan.targetHeight = h;
                         cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                         plan.pathCells.Add(cellPlan);
                         continue;
                     }
-                    cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.Flatten;
+                    cellPlan.action = TerraformAction.Flatten;
                     cellPlan.targetHeight = plan.baseHeight;
                     cellPlan.postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat;
                     plan.pathCells.Add(cellPlan);
@@ -278,7 +278,7 @@ namespace Domains.Terrain.Services
 
                 if ((isDiagonalSlope || isCornerSlope) && (dx != 0 && dy != 0))
                 {
-                    cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.Flatten;
+                    cellPlan.action = TerraformAction.Flatten;
                     cellPlan.targetHeight = plan.baseHeight;
                     cellPlan.postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat;
                     plan.pathCells.Add(cellPlan);
@@ -290,26 +290,26 @@ namespace Domains.Terrain.Services
                 {
                     if (isCornerSlope)
                     {
-                        cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                        cellPlan.action = TerraformAction.None;
                         cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                     }
                     else
                     {
                         if (segmentOneStepLand)
                         {
-                            cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                            cellPlan.action = TerraformAction.None;
                             cellPlan.targetHeight = h;
                             cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                         }
                         else if (preferSlopeClimb && dSeg == 0)
                         {
-                            cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                            cellPlan.action = TerraformAction.None;
                             cellPlan.targetHeight = h;
                             cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                         }
                         else
                         {
-                            cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.Flatten;
+                            cellPlan.action = TerraformAction.Flatten;
                             cellPlan.targetHeight = plan.baseHeight;
                             cellPlan.postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat;
                             AddAdjacentFlattenCells(plan, path, heightMap, x, y, plan.baseHeight, h);
@@ -324,12 +324,12 @@ namespace Domains.Terrain.Services
                     bool isLower = IsLowerInSlopePair(heightMap, x, y, slopeType);
                     if (isLower && preferSlopeClimb && dSeg == 1)
                     {
-                        cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.None;
+                        cellPlan.action = TerraformAction.None;
                         cellPlan.targetHeight = h;
                     }
                     else if (isLower)
                     {
-                        cellPlan.action = Territory.Terrain.TerraformingService.TerraformAction.Flatten;
+                        cellPlan.action = TerraformAction.Flatten;
                         cellPlan.targetHeight = plan.baseHeight;
                     }
                     cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
@@ -343,7 +343,7 @@ namespace Domains.Terrain.Services
             bool anyFlattenScheduled = false;
             for (int pi = 0; pi < plan.pathCells.Count; pi++)
             {
-                if (plan.pathCells[pi].action == Territory.Terrain.TerraformingService.TerraformAction.Flatten)
+                if (plan.pathCells[pi].action == TerraformAction.Flatten)
                 {
                     anyFlattenScheduled = true;
                     break;
@@ -353,7 +353,7 @@ namespace Domains.Terrain.Services
             {
                 for (int ai = 0; ai < plan.adjacentCells.Count; ai++)
                 {
-                    if (plan.adjacentCells[ai].action == Territory.Terrain.TerraformingService.TerraformAction.Flatten)
+                    if (plan.adjacentCells[ai].action == TerraformAction.Flatten)
                     {
                         anyFlattenScheduled = true;
                         break;
@@ -461,7 +461,7 @@ namespace Domains.Terrain.Services
             for (int i = 0; i < plan.adjacentCells.Count; i++)
             {
                 var c = plan.adjacentCells[i];
-                if (c.action != Territory.Terrain.TerraformingService.TerraformAction.Flatten) continue;
+                if (c.action != TerraformAction.Flatten) continue;
                 if (!Inside(c.position.x, c.position.y)) return false;
             }
 
@@ -479,12 +479,12 @@ namespace Domains.Terrain.Services
             var toFlatten = new HashSet<Vector2Int>();
             foreach (var cell in plan.pathCells)
             {
-                if (cell.action == Territory.Terrain.TerraformingService.TerraformAction.Flatten)
+                if (cell.action == TerraformAction.Flatten)
                     toFlatten.Add(cell.position);
             }
             foreach (var cell in plan.adjacentCells)
             {
-                if (cell.action == Territory.Terrain.TerraformingService.TerraformAction.Flatten)
+                if (cell.action == TerraformAction.Flatten)
                     toFlatten.Add(cell.position);
             }
 
@@ -527,8 +527,8 @@ namespace Domains.Terrain.Services
                         plan.adjacentCells.Add(new Territory.Terrain.PathTerraformPlan.CellPlan
                         {
                             position = new Vector2Int(nx, ny),
-                            action = Territory.Terrain.TerraformingService.TerraformAction.Flatten,
-                            direction = Territory.Terrain.TerraformingService.OrthogonalDirection.North,
+                            action = TerraformAction.Flatten,
+                            direction = OrthogonalDirection.North,
                             originalHeight = nh,
                             targetHeight = baseHeight,
                             postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat
@@ -617,8 +617,8 @@ namespace Domains.Terrain.Services
                 var adj = new Territory.Terrain.PathTerraformPlan.CellPlan
                 {
                     position = new Vector2Int(nx, ny),
-                    action = Territory.Terrain.TerraformingService.TerraformAction.Flatten,
-                    direction = Territory.Terrain.TerraformingService.OrthogonalDirection.North,
+                    action = TerraformAction.Flatten,
+                    direction = OrthogonalDirection.North,
                     originalHeight = nh,
                     targetHeight = baseHeight,
                     postTerraformSlopeType = Territory.Terrain.TerrainSlopeType.Flat

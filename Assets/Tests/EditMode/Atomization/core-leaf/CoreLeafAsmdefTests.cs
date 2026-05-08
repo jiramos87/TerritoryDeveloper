@@ -16,16 +16,10 @@ namespace Territory.Tests.EditMode.Atomization.CoreLeaf
 public class CoreLeafAsmdefTests
 {
     private const string GameGuid = "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a";
-    private const string CoreGuid = "GUID:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+    private const string CoreGuid = "GUID:c52fc744255e341e2b7c46b44439a244";
     private static readonly string RepoRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
     private static readonly string CoreAsmdefPath = "Assets/Scripts/Core/Territory.Core.asmdef";
     private static readonly string DomainsRoot = "Assets/Scripts/Domains";
-
-    // Roads retains Game GUID until AutoBuildService is interface-abstracted.
-    private static readonly HashSet<string> KnownRoadsException = new HashSet<string>
-    {
-        "Assets/Scripts/Domains/Roads/Roads.asmdef"
-    };
 
     // ---- T20.1: Core asmdef structure ----
 
@@ -106,9 +100,14 @@ public class CoreLeafAsmdefTests
     }
 
     [Test]
+    public void Roads_Asmdef_Has_Zero_Game_Refs()
+    {
+        AssertNoGameGuid("Assets/Scripts/Domains/Roads/Roads.asmdef");
+    }
+
+    [Test]
     public void Roads_Asmdef_References_Core()
     {
-        // Roads retains Game GUID (known exception). Assert at least Core is present.
         AssertHasCoreGuid("Assets/Scripts/Domains/Roads/Roads.asmdef");
     }
 
@@ -154,14 +153,13 @@ public class CoreLeafAsmdefTests
         Assert.AreEqual(0, coreRefs.Length,
             $"Territory.Core must be a leaf with references:[]. Found: {string.Join(", ", coreRefs)}");
 
-        // (b) Every Domain asmdef has zero Game GUID back-ref (except Roads known exception).
+        // (b) Every Domain asmdef has zero Game GUID back-ref.
         string domainsFullPath = Path.Combine(RepoRoot, DomainsRoot);
         var domainAsmdefs = Directory.GetFiles(domainsFullPath, "*.asmdef", SearchOption.AllDirectories);
         var violations = new List<string>();
         foreach (string absPath in domainAsmdefs)
         {
             string repoRel = absPath.Substring(RepoRoot.Length + 1).Replace('\\', '/');
-            if (KnownRoadsException.Contains(repoRel)) continue;
             string[] refs = GetReferences(ReadAsmdefFromPath(absPath));
             if (refs.Contains(GameGuid))
                 violations.Add(repoRel);

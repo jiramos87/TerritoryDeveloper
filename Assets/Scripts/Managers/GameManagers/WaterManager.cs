@@ -16,7 +16,7 @@ namespace Territory.Terrain
 /// Legacy sea-level threshold kept for paint tool / old save restore. Coordinates with GridManager,
 /// TerrainManager, ZoneManager. <see cref="LakeFillSettings"/> built in code (not Inspector) until terrain UI exists.
 /// </summary>
-public partial class WaterManager : MonoBehaviour
+public partial class WaterManager : MonoBehaviour, IWaterManager
 {
     public GridManager gridManager;
     public TerrainManager terrainManager;

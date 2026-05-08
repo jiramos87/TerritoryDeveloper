@@ -1,7 +1,7 @@
 {
     "name": "Tests.EditMode.Economy",
     "rootNamespace": "Territory.Tests.EditMode.Economy",
-    "references": ["TerritoryDeveloper.Game"],
+    "references": ["TerritoryDeveloper.Game", "GUID:c52fc744255e341e2b7c46b44439a244", "Zones"],
     "includePlatforms": [
         "Editor"
     ],

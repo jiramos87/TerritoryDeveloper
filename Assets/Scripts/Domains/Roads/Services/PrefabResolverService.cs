@@ -23,38 +23,23 @@ public class PrefabResolverService
         Junction
     }
 
-    private readonly GridManager gridManager;
-    private readonly TerrainManager terrainManager;
-    private readonly RoadManager roadManager;
+    private readonly IGridManager gridManager;
+    private readonly ITerrainManager terrainManager;
+    private readonly IRoadManager roadManager;
 
     private readonly List<Vector2Int> scratchHighDeckBridgeNormals = new List<Vector2Int>(4);
 
     private static readonly int[] DirX = { 1, -1, 0, 0 };
     private static readonly int[] DirY = { 0, 0, 1, -1 };
 
-    public PrefabResolverService(GridManager grid, TerrainManager terrain, RoadManager roads)
+    public PrefabResolverService(IGridManager grid, ITerrainManager terrain, IRoadManager roads)
     {
         gridManager = grid;
         terrainManager = terrain;
         roadManager = roads;
     }
 
-    /// <summary>
-    /// Prefab resolution result: prefab to instantiate, world position, sorting order.
-    /// </summary>
-    public struct ResolvedRoadTile
-    {
-        public Vector2Int gridPos;
-        public GameObject prefab;
-        public Vector2 worldPos;
-        public int sortingOrder;
-        public bool hasSegmentPrevHint;
-        public Vector2Int segmentPrevGridPos;
-        public bool hasSegmentNextHint;
-        public Vector2Int segmentNextGridPos;
-        public Vector2Int routeEntryStep;
-        public Vector2Int routeExitStep;
-    }
+    // ResolvedRoadTile struct lifted to Core (Assets/Scripts/Core/Roads/ResolvedRoadTile.cs) — Territory.Roads ns. Canonical replaces legacy nested.
 
     /// <summary>Resolve prefabs for full path via terraform plan.</summary>
     public List<ResolvedRoadTile> ResolveForPath(List<Vector2> path, PathTerraformPlan plan)
@@ -84,7 +69,7 @@ public class PrefabResolverService
             TerrainSlopeType postSlope = cellPlan.postTerraformSlopeType;
 
             bool allowLiveSlopeFallback = plan != null && !plan.isCutThrough && plan.pathCells != null && i < plan.pathCells.Count
-                && cellPlan.action == TerraformingService.TerraformAction.None;
+                && cellPlan.action == TerraformAction.None;
 
             HeightMap pathHeightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
             GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback, plan, pathHeightMap, pathOnlyNeighbors: true);
@@ -175,7 +160,7 @@ public class PrefabResolverService
             prefab = SelectFromConnectivity(prevGridPos, currGridPos, hasLeft, hasRight, hasUp, hasDown, height);
 
             HeightMap hm = terrainManager != null ? terrainManager.GetHeightMap() : null;
-            WaterManager wm = ResolveWaterManagerForBridge();
+            IWaterManager wm = ResolveWaterManagerForBridge();
             if (hm != null && wm != null && terrainManager != null
                 && height > 0
                 && !terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsWaterSlopeCell(x, y)
@@ -413,13 +398,12 @@ public class PrefabResolverService
         return false;
     }
 
-    WaterManager ResolveWaterManagerForBridge()
+    IWaterManager ResolveWaterManagerForBridge()
     {
-        if (terrainManager != null && terrainManager.waterManager != null) return terrainManager.waterManager;
-        return Object.FindObjectOfType<WaterManager>();
+        return terrainManager?.Water;
     }
 
-    bool DryCellTouchesRegisteredWaterMoore(int x, int y, WaterManager wm)
+    bool DryCellTouchesRegisteredWaterMoore(int x, int y, IWaterManager wm)
     {
         if (terrainManager == null) return false;
         if (terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)) return true;
@@ -433,7 +417,7 @@ public class PrefabResolverService
         return false;
     }
 
-    bool LowerCardinalQualifiesAsHighDeckWaterStep(int nx, int ny, int hn, int lipHeight, WaterManager wm)
+    bool LowerCardinalQualifiesAsHighDeckWaterStep(int nx, int ny, int hn, int lipHeight, IWaterManager wm)
     {
         if (hn >= lipHeight) return false;
         if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny)) return true;
@@ -443,7 +427,7 @@ public class PrefabResolverService
     bool DryLandCardinalLowerTouchesRegisteredWater(int x, int y, int h, HeightMap heightMap)
     {
         if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y)) return false;
-        WaterManager wm = ResolveWaterManagerForBridge();
+        IWaterManager wm = ResolveWaterManagerForBridge();
         int[] cdx = { 1, -1, 0, 0 };
         int[] cdy = { 0, 0, 1, -1 };
         for (int d = 0; d < 4; d++)
@@ -458,7 +442,7 @@ public class PrefabResolverService
 
     Vector2 InferStrongestCardinalTowardQualifyingLowerNeighbor(int x, int y, int h, HeightMap heightMap)
     {
-        WaterManager wm = ResolveWaterManagerForBridge();
+        IWaterManager wm = ResolveWaterManagerForBridge();
         int bestDelta = -1;
         Vector2 best = Vector2.right;
         int[] cdx = { 1, -1, 0, 0 };
@@ -479,7 +463,7 @@ public class PrefabResolverService
     {
         outNormals.Clear();
         if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y)) return;
-        WaterManager wm = ResolveWaterManagerForBridge();
+        IWaterManager wm = ResolveWaterManagerForBridge();
         int[] cdx = { 1, -1, 0, 0 };
         int[] cdy = { 0, 0, 1, -1 };
         for (int d = 0; d < 4; d++)

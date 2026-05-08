@@ -465,7 +465,7 @@ namespace Territory.Terrain
         /// </summary>
         /// <param name="restoredCells">Cells converted lake → dry (for terrain restore + post–lake-shore height fix).</param>
         /// <returns><c>true</c> if any cell converted.</returns>
-        public bool ApplyLakeHighToRiverLowContactFallback(HeightMap heightMap, GridManager gridManager, out List<(int x, int y, int lakeSurface)> restoredCells)
+        public bool ApplyLakeHighToRiverLowContactFallback(HeightMap heightMap, IGridManager gridManager, out List<(int x, int y, int lakeSurface)> restoredCells)
         {
             restoredCells = new List<(int, int, int)>();
             if (heightMap == null)
@@ -753,7 +753,7 @@ namespace Territory.Terrain
         /// when <paramref name="gridManager"/> non-null.
         /// </summary>
         /// <returns><c>true</c> if any cell or height changed.</returns>
-        public bool ApplyWaterSurfaceJunctionMerge(HeightMap heightMap, GridManager gridManager, out int dirtyMinX, out int dirtyMinY, out int dirtyMaxX, out int dirtyMaxY)
+        public bool ApplyWaterSurfaceJunctionMerge(HeightMap heightMap, IGridManager gridManager, out int dirtyMinX, out int dirtyMinY, out int dirtyMaxX, out int dirtyMaxY)
         {
             dirtyMinX = dirtyMinY = dirtyMaxX = dirtyMaxY = 0;
             if (heightMap == null)
@@ -913,7 +913,7 @@ namespace Territory.Terrain
         /// Multiple lower neighbors qualify → prefers lowest <c>S_low</c> then lowest body id.
         /// Skips cells still having cardinal neighbor on same logical surface (upper-segment continuity at cascades).
         /// </summary>
-        private bool TryReassignUpperWaterCellsMatchingLowerContactBed(HeightMap hm, GridManager grid, System.Action<int, int> expandDirty)
+        private bool TryReassignUpperWaterCellsMatchingLowerContactBed(HeightMap hm, IGridManager grid, System.Action<int, int> expandDirty)
         {
             int[] d4x = { 1, -1, 0, 0 };
             int[] d4y = { 0, 0, 1, -1 };
@@ -985,7 +985,7 @@ namespace Territory.Terrain
         /// Moves one upper-pool water cell to lower neighbor’s body. Upper bed still above lower cell’s bed →
         /// aligns <see cref="HeightMap"/> (+ <see cref="GridManager.SetCellHeight"/>) to lower bed first.
         /// </summary>
-        private bool TryReassignSingleUpperWaterCellToLowerBody(int hx, int hy, int lx, int ly, HeightMap hm, GridManager grid)
+        private bool TryReassignSingleUpperWaterCellToLowerBody(int hx, int hy, int lx, int ly, HeightMap hm, IGridManager grid)
         {
             int sHigh = GetSurfaceHeightAt(hx, hy);
             int sLow = GetSurfaceHeightAt(lx, ly);
@@ -1045,7 +1045,7 @@ namespace Territory.Terrain
         /// Registers dry cell on lower surface body + aligns its bed to adjacent lower-surface water.
         /// Does not take cells from other water bodies. Skips cells with placed building.
         /// </summary>
-        private bool TryAbsorbDryCellIntoLowerBody(int x, int y, int targetBodyId, int sLow, HeightMap hm, GridManager grid, out bool changed)
+        private bool TryAbsorbDryCellIntoLowerBody(int x, int y, int targetBodyId, int sLow, HeightMap hm, IGridManager grid, out bool changed)
         {
             changed = false;
             if (!IsValidPosition(x, y) || !bodies.TryGetValue(targetBodyId, out WaterBody targetBody) || targetBody.SurfaceHeight != sLow)

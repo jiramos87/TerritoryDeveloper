@@ -6,16 +6,16 @@ using Territory.Zones;
 namespace Domains.Grid.Services
 {
     /// <summary>
-    /// Pure cell-access queries extracted from <see cref="GridManager"/>.
-    /// Reads cellArray + gridArray via composition ref; no MonoBehaviour lifecycle.
-    /// Invariant #5: holds GridManager composition ref (same pattern as GridSortingOrderService).
+    /// Pure cell-access queries extracted from <see cref="IGridManager"/>.
+    /// Holds <see cref="IGridManager"/> ref via composition; no MonoBehaviour lifecycle.
     /// Stage 5 carve-out: GetCell / GetGridData / footprint helpers / building-occupancy queries.
+    /// Domain-leaf: refs Core only (no Game asmdef dep).
     /// </summary>
     public class CellAccessService
     {
-        private readonly GridManager grid;
+        private readonly IGridManager grid;
 
-        public CellAccessService(GridManager grid)
+        public CellAccessService(IGridManager grid)
         {
             this.grid = grid;
         }
@@ -24,7 +24,7 @@ namespace Domains.Grid.Services
         public CityCell GetCell(int x, int y)
         {
             if (x >= 0 && x < grid.width && y >= 0 && y < grid.height)
-                return grid.cellArray[x, y];
+                return grid.GetCell(x, y);
             return null;
         }
 
@@ -32,16 +32,16 @@ namespace Domains.Grid.Services
         public T GetCell<T>(int x, int y) where T : CellBase
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return null;
-            return grid.cellArray[x, y] as T;
+            return grid.GetCell(x, y) as T;
         }
 
         /// <summary>GameObject for cell at pos, or null if out of bounds.</summary>
         public GameObject GetGridCell(Vector2 gridPos)
         {
-            if (gridPos.x < 0 || gridPos.x >= grid.gridArray.GetLength(0) ||
-                gridPos.y < 0 || gridPos.y >= grid.gridArray.GetLength(1))
+            if (gridPos.x < 0 || gridPos.x >= grid.width ||
+                gridPos.y < 0 || gridPos.y >= grid.height)
                 return null;
-            return grid.gridArray[(int)gridPos.x, (int)gridPos.y];
+            return grid.GetGridCell(gridPos);
         }
 
         /// <summary>Serialize every cell in grid to CellData list for saving.</summary>
@@ -52,7 +52,7 @@ namespace Domains.Grid.Services
             {
                 for (int y = 0; y < grid.height; y++)
                 {
-                    CityCell cellComponent = grid.cellArray[x, y];
+                    CityCell cellComponent = grid.GetCell(x, y);
                     gridData.Add(cellComponent.GetCellData());
                 }
             }
@@ -69,7 +69,7 @@ namespace Domains.Grid.Services
         public bool IsCellOccupiedByBuilding(int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
-            CityCell cell = grid.cellArray[x, y];
+            CityCell cell = grid.GetCell(x, y);
             if (cell == null) return false;
             return cell.occupiedBuilding != null || IsZoneTypeBuilding(cell.zoneType);
         }
@@ -109,7 +109,7 @@ namespace Domains.Grid.Services
         {
             if (cell == null) return null;
             if (cell.occupiedBuilding == null || cell.buildingSize <= 1)
-                return grid.gridArray[(int)cell.x, (int)cell.y];
+                return grid.GetGridCell(new Vector2(cell.x, cell.y));
 
             int size = cell.buildingSize;
             int cx = (int)cell.x;
@@ -123,13 +123,13 @@ namespace Domains.Grid.Services
                     int py = cy - j;
                     if (px >= 0 && px < grid.width && py >= 0 && py < grid.height)
                     {
-                        CityCell pivotCandidate = grid.cellArray[px, py];
+                        CityCell pivotCandidate = grid.GetCell(px, py);
                         if (pivotCandidate != null && pivotCandidate.isPivot)
-                            return grid.gridArray[px, py];
+                            return grid.GetGridCell(new Vector2(px, py));
                     }
                 }
             }
-            return grid.gridArray[cx, cy];
+            return grid.GetGridCell(new Vector2(cx, cy));
         }
     }
 }

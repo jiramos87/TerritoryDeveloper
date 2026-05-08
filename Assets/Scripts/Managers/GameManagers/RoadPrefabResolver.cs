@@ -42,26 +42,7 @@ public class RoadPrefabResolver
         roadManager = roads;
     }
 
-    /// <summary>
-    /// Prefab resolution result: prefab to instantiate, world position, sorting order.
-    /// </summary>
-    public struct ResolvedRoadTile
-    {
-        public Vector2Int gridPos;
-        public GameObject prefab;
-        public Vector2 worldPos;
-        public int sortingOrder;
-        /// <summary>True → <see cref="segmentPrevGridPos"/> is path predecessor cell for this tile (refresh alignment).</summary>
-        public bool hasSegmentPrevHint;
-        public Vector2Int segmentPrevGridPos;
-        /// <summary>True → <see cref="segmentNextGridPos"/> is path successor cell (route-first refresh).</summary>
-        public bool hasSegmentNextHint;
-        public Vector2Int segmentNextGridPos;
-        /// <summary>Grid step <c>curr - prev</c> on path (cardinal); zero if unknown.</summary>
-        public Vector2Int routeEntryStep;
-        /// <summary>Grid step <c>next - curr</c> on path (cardinal); zero if last cell.</summary>
-        public Vector2Int routeExitStep;
-    }
+    // ResolvedRoadTile struct lifted to Core (Assets/Scripts/Core/Roads/ResolvedRoadTile.cs) — Territory.Roads ns. Canonical replaces legacy nested.
 
     /// <summary>
     /// Resolve prefabs for full path via terraform plan. Uses postTerraformSlopeType
@@ -101,7 +82,7 @@ public class RoadPrefabResolver
             TerrainSlopeType postSlope = cellPlan.postTerraformSlopeType;
 
             bool allowLiveSlopeFallback = plan != null && !plan.isCutThrough && plan.pathCells != null && i < plan.pathCells.Count
-                && cellPlan.action == TerraformingService.TerraformAction.None;
+                && cellPlan.action == TerraformAction.None;
 
             HeightMap pathHeightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
             GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback, plan, pathHeightMap, pathOnlyNeighbors: true);

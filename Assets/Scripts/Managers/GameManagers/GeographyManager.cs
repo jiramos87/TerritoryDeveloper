@@ -15,6 +15,7 @@ using Territory.Utilities;
 using Territory.Persistence;
 using Domains.Geography;
 using Domains.Geography.Services;
+using Domains.Grid.Services;
 
 namespace Territory.Geography
 {
@@ -1064,80 +1065,5 @@ public class GeographyManager : MonoBehaviour, IGeography
         return count;
     }
     #endregion
-}
-
-public enum PlacementType
-{
-    Forest,
-    Water,
-    Building,
-    Zone,
-    Infrastructure
-}
-
-[System.Serializable]
-public struct EnvironmentalBonus
-{
-    public float desirability;
-    public int adjacentForests;
-    public int adjacentWater;
-    public Forest.ForestType forestType;
-
-    public float GetTotalBonus()
-    {
-        float bonus = desirability + (adjacentForests * 2f) + (adjacentWater * 3f);
-
-        // Add bonus based on forest type on this cell
-        switch (forestType)
-        {
-            case Forest.ForestType.Sparse:
-                bonus += 1f;
-                break;
-            case Forest.ForestType.Medium:
-                bonus += 2f;
-                break;
-            case Forest.ForestType.Dense:
-                bonus += 3f;
-                break;
-        }
-
-        return bonus;
-    }
-}
-
-[System.Serializable]
-public struct GeographyData
-{
-    [Header("Terrain Data")]
-    public bool hasTerrainData;
-    public int terrainWidth;
-    public int terrainHeight;
-
-    [Header("Water Data")]
-    public bool hasWaterData;
-    public int waterCellCount;
-
-    [Header("Forest Data")]
-    public bool hasForestData;
-    public int forestCellCount;
-    public float forestCoveragePercentage;
-    public int sparseForestCount;
-    public int mediumForestCount;
-    public int denseForestCount;
-}
-
-[System.Serializable]
-public struct ForestRegionInfo
-{
-    public int sparseCount;
-    public int mediumCount;
-    public int denseCount;
-    public int totalCells;
-    public float forestCoverage;
-
-    public int GetTotalForests()
-    {
-        return sparseCount + mediumCount + denseCount;
-    }
 }
 }

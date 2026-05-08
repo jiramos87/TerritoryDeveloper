@@ -25,7 +25,7 @@ namespace Territory.Utilities
         /// Land cells AUTO may route roads through: grass, forest, or empty light zoning.
         /// Excludes: road, interstate, buildings, water, non-light zoning.
         /// </summary>
-        public static bool IsAutoRoadLandCell(GridManager grid, int x, int y)
+        public static bool IsAutoRoadLandCell(IGridManager grid, int x, int y)
         {
             if (grid == null) return false;
             CityCell c = grid.GetCell(x, y);

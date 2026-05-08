@@ -2,7 +2,7 @@
     "name": "Terrain",
     "rootNamespace": "Domains.Terrain",
     "references": [
-        "GUID:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+        "GUID:c52fc744255e341e2b7c46b44439a244"
     ],
     "includePlatforms": [],
     "allowUnsafeCode": false,

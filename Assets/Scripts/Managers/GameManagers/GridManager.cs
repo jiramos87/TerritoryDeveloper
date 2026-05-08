@@ -13,6 +13,7 @@ using Territory.Roads;
 using Territory.Timing;
 using Territory.Utilities.Compute;
 using Territory.Audio;
+using Domains.Grid.Services;
 
 namespace Territory.Core
 {
@@ -32,6 +33,8 @@ public class GridManager : MonoBehaviour, IGridManager
     public CityStats cityStats;
     public CursorManager cursorManager;
     public TerrainManager terrainManager;
+    /// <summary>Interface accessor for cross-asmdef consumers (Domains.* / Core.*) that can't ref concrete TerrainManager.</summary>
+    public ITerrainManager Terrain => terrainManager;
     public DemandManager demandManager;
     public WaterManager waterManager;
     public GameNotificationManager GameNotificationManager;
@@ -58,6 +61,10 @@ public class GridManager : MonoBehaviour, IGridManager
 
     #region Grid Configuration
     public int width, height;
+    /// <summary>Explicit IGridManager bridge — field-to-property for cross-asmdef consumers.</summary>
+    int IGridManager.width => width;
+    /// <summary>Explicit IGridManager bridge — field-to-property for cross-asmdef consumers.</summary>
+    int IGridManager.height => height;
     public float tileWidth = 1f; // Full width of the tile
     public float tileHeight = 0.5f; // Effective height due to isometric perspective
 

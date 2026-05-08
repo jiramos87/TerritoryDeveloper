@@ -14,15 +14,6 @@ using Territory.Audio;
 namespace Territory.Roads
 {
 /// <summary>
-/// Shared terraform validation opts: manual draw, interstate, auto-road (same rules via <see cref="RoadManager.TryPrepareRoadPlacementPlan"/>).
-/// </summary>
-public struct RoadPathValidationContext
-{
-    /// <summary>True (interstate) → paths needing cut-through hill flattening invalid.</summary>
-    public bool forbidCutThrough;
-}
-
-/// <summary>
 /// Manage road placement, drawing, prefab selection on grid. Handles preview during drag,
 /// picks road prefab by neighbor connectivity, coordinates with TerrainManager (slope adapt)
 /// + InterstateManager (highway connect). Shared terraform validation:
@@ -51,7 +42,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     private static readonly int[] DirX = { 1, -1, 0, 0 };
     private static readonly int[] DirY = { 0, 0, 1, -1 };
     private RoadPrefabResolver roadPrefabResolver;
-    private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
+    private List<ResolvedRoadTile> previewResolvedTiles = new List<ResolvedRoadTile>();
     private HashSet<Vector2> placementPathPositions;
     /// <summary>Last grid cell under cursor during manual drag (for mouse-up when release cell invalid).</summary>
     private Vector2 currentDrawCursorGrid;
@@ -85,6 +76,26 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public GameObject roadTilePrefabWestSlope;
     public GameObject roadTilePrefabNorthSlope;
     public GameObject roadTilePrefabSouthSlope;
+
+    // Explicit IRoadManager bridges — field-to-property for cross-asmdef consumers (Domains.Roads.Services).
+    GameObject IRoadManager.roadTilePrefab1 => roadTilePrefab1;
+    GameObject IRoadManager.roadTilePrefab2 => roadTilePrefab2;
+    GameObject IRoadManager.roadTilePrefabCrossing => roadTilePrefabCrossing;
+    GameObject IRoadManager.roadTilePrefabTIntersectionUp => roadTilePrefabTIntersectionUp;
+    GameObject IRoadManager.roadTilePrefabTIntersectionDown => roadTilePrefabTIntersectionDown;
+    GameObject IRoadManager.roadTilePrefabTIntersectionLeft => roadTilePrefabTIntersectionLeft;
+    GameObject IRoadManager.roadTilePrefabTIntersectionRight => roadTilePrefabTIntersectionRight;
+    GameObject IRoadManager.roadTilePrefabElbowUpLeft => roadTilePrefabElbowUpLeft;
+    GameObject IRoadManager.roadTilePrefabElbowUpRight => roadTilePrefabElbowUpRight;
+    GameObject IRoadManager.roadTilePrefabElbowDownLeft => roadTilePrefabElbowDownLeft;
+    GameObject IRoadManager.roadTilePrefabElbowDownRight => roadTilePrefabElbowDownRight;
+    GameObject IRoadManager.roadTileBridgeVertical => roadTileBridgeVertical;
+    GameObject IRoadManager.roadTileBridgeHorizontal => roadTileBridgeHorizontal;
+    GameObject IRoadManager.roadTilePrefabEastSlope => roadTilePrefabEastSlope;
+    GameObject IRoadManager.roadTilePrefabWestSlope => roadTilePrefabWestSlope;
+    GameObject IRoadManager.roadTilePrefabNorthSlope => roadTilePrefabNorthSlope;
+    GameObject IRoadManager.roadTilePrefabSouthSlope => roadTilePrefabSouthSlope;
+
     private List<GameObject> previewRoadTiles = new List<GameObject>();
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
 
@@ -314,9 +325,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return false;
         }
 
-        List<RoadPrefabResolver.ResolvedRoadTile> resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
+        List<ResolvedRoadTile> resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         placementPathPositions = new HashSet<Vector2>();
-        foreach (RoadPrefabResolver.ResolvedRoadTile r in resolved)
+        foreach (ResolvedRoadTile r in resolved)
             placementPathPositions.Add(new Vector2(r.gridPos.x, r.gridPos.y));
         for (int i = 0; i < resolved.Count; i++)
         {
@@ -2706,7 +2717,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <summary>
     /// Place single road tile from resolved prefab. Used by path pipeline (manual draw, interstate, AutoRoadBuilder).
     /// </summary>
-    public void PlaceRoadTileFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
+    public void PlaceRoadTileFromResolved(ResolvedRoadTile resolved)
     {
         int x = resolved.gridPos.x;
         int y = resolved.gridPos.y;
@@ -2736,7 +2747,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>Copy path route hints from resolved placement for route-first refresh alignment.</summary>
-    static void ApplyRoadRouteHintsFromResolved(CityCell cell, RoadPrefabResolver.ResolvedRoadTile resolved)
+    static void ApplyRoadRouteHintsFromResolved(CityCell cell, ResolvedRoadTile resolved)
     {
         if (cell == null)
             return;
@@ -2951,11 +2962,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <summary>
     /// Resolve road prefabs for path using terraform plan. Used by AutoRoadBuilder for path-based placement.
     /// </summary>
-    public List<RoadPrefabResolver.ResolvedRoadTile> ResolvePathForRoads(List<Vector2> path, PathTerraformPlan plan)
+    public List<ResolvedRoadTile> ResolvePathForRoads(List<Vector2> path, PathTerraformPlan plan)
     {
         if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
-        if (roadPrefabResolver == null) return new List<RoadPrefabResolver.ResolvedRoadTile>();
+        if (roadPrefabResolver == null) return new List<ResolvedRoadTile>();
         return roadPrefabResolver.ResolveForPath(path, plan);
     }
 
@@ -3031,7 +3042,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <summary>
     /// Place interstate tile from resolved road tile. Apply interstate tint + set isInterstate on cell.
     /// </summary>
-    public void PlaceInterstateFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
+    public void PlaceInterstateFromResolved(ResolvedRoadTile resolved)
     {
         int x = resolved.gridPos.x;
         int y = resolved.gridPos.y;

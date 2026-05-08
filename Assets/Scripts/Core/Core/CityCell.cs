@@ -320,7 +320,15 @@ public class CityCell : CellBase
         if (HasForest())
         {
             // Notify ForestManager to update statistics and adjacent desirability
-            ForestManager forestManager = FindObjectOfType<ForestManager>();
+            IForestManager forestManager = null;
+            foreach (MonoBehaviour mb in Object.FindObjectsOfType<MonoBehaviour>())
+            {
+                if (mb is IForestManager fm)
+                {
+                    forestManager = fm;
+                    break;
+                }
+            }
             if (forestManager != null)
             {
                 forestManager.RemoveForestFromCell(x, y, false); // false = don't refund cost since it's automatic removal

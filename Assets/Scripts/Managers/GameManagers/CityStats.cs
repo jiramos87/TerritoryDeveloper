@@ -17,7 +17,7 @@ namespace Territory.Economy
 /// water/power capacity + consumption, zone counts, resource budgets. Many managers read
 /// from <see cref="CityStats"/> to decide. Updated by <see cref="TimeManager"/>, <see cref="WaterManager"/>, <see cref="ForestManager"/>.
 /// </summary>
-public class CityStats : MonoBehaviour, ICityStats
+public class CityStats : MonoBehaviour, ICityStats, ICityStatsAuto
 {
     #region Dependencies
     public TimeManager timeManager;
@@ -94,6 +94,8 @@ public class CityStats : MonoBehaviour, ICityStats
 
     public int cityPowerConsumption;
     public int cityPowerOutput;
+    /// <summary>Explicit ICityStatsAuto bridge — field-to-property for cross-asmdef consumers.</summary>
+    int ICityStatsAuto.cityPowerOutput => cityPowerOutput;
 
     private List<PowerPlant> powerPlants = new List<PowerPlant>();
 
@@ -108,6 +110,8 @@ public class CityStats : MonoBehaviour, ICityStats
 
     [Header("Simulation")]
     public bool simulateGrowth = false;
+    /// <summary>Explicit ICityStatsAuto bridge — field-to-property for cross-asmdef consumers.</summary>
+    bool ICityStatsAuto.simulateGrowth => simulateGrowth;
     public List<CommuneData> communes = new List<CommuneData>();
 
     [Header("Economy read-model (envelope)")]

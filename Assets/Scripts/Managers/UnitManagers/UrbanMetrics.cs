@@ -6,17 +6,7 @@ using Territory.Utilities.Compute;
 
 namespace Territory.Simulation
 {
-/// <summary>
-/// Urban ring classification for density gradient + sector-based zoning.
-/// Inner=urban center (dense, no industrial), Mid=residential, Outer=transition to rural, Rural=sparse.
-/// </summary>
-public enum UrbanRing
-{
-    Inner,
-    Mid,
-    Outer,
-    Rural
-}
+// UrbanRing enum lifted to Core (Assets/Scripts/Core/Economy/UrbanRing.cs) — same ns Territory.Simulation.
 
 /// <summary>
 /// Base zone type probs (R, C, I) per urban ring for sector-coherent auto-zoning.
@@ -40,18 +30,7 @@ public struct RingZoningDensity
     [Range(0f, 1f)] public float heavyProb;
 }
 
-/// <summary>
-/// Street extension params per urban ring for density gradient.
-/// </summary>
-[System.Serializable]
-public struct RingStreetParams
-{
-    public int minLength;
-    public int maxLength;
-    public int parallelSpacing;
-    public int parallelSpacingMin;
-    public int parallelSpacingMax;
-}
+// RingStreetParams struct lifted to Core (Assets/Scripts/Core/Economy/RingStreetParams.cs) — same ns Territory.Simulation.
 
 /// <summary>
 /// Track urban centroid + radius. Classify cells by urban ring.

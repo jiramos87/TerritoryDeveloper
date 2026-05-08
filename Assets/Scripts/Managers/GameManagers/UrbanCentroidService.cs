@@ -1,5 +1,6 @@
 using UnityEngine;
 using Territory.Core;
+using Territory.Economy;
 using Territory.Zones;
 
 namespace Territory.Simulation
@@ -9,7 +10,7 @@ namespace Territory.Simulation
 /// centroid, ring, street/zone params. Consumers: <c>AutoZoningManager</c>, <c>AutoRoadBuilder</c>,
 /// <c>UrbanizationProposalManager</c>, <c>MiniMapController</c>. Recalc from grid each simulation tick.
 /// </summary>
-public class UrbanCentroidService : MonoBehaviour
+public class UrbanCentroidService : MonoBehaviour, IUrbanCentroidService
 {
     public GridManager gridManager;
 

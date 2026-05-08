@@ -6,13 +6,14 @@ using Domains.Grid.Services;
 namespace Domains.Grid
 {
     /// <summary>
-    /// Facade impl for the Grid domain. Thin orchestrator — MonoBehaviour; holds GridManager ref.
+    /// Facade impl for the Grid domain. Thin orchestrator — MonoBehaviour; holds IGridManager ref.
     /// Stage 1: GridSortingOrderService (sorting-order concerns).
     /// Stage 5: CellAccessService (cell-query concerns).
+    /// Domain-leaf: refs Core only — IGridManager resolved via runtime FindObjectsOfType filter.
     /// </summary>
     public class Grid : MonoBehaviour, IGrid
     {
-        [SerializeField] private GridManager gridManager;
+        private IGridManager gridManager;
 
         private GridSortingOrderService _sortingOrderService;
         private CellAccessService _cellAccessService;
@@ -20,7 +21,12 @@ namespace Domains.Grid
         private void Awake()
         {
             if (gridManager == null)
-                gridManager = FindObjectOfType<GridManager>();
+            {
+                foreach (MonoBehaviour mb in Object.FindObjectsOfType<MonoBehaviour>())
+                {
+                    if (mb is IGridManager gm) { gridManager = gm; break; }
+                }
+            }
 
             if (gridManager != null)
             {
@@ -148,7 +154,14 @@ namespace Domains.Grid
 
         private void EnsureServices()
         {
-            if (gridManager == null) return;
+            if (gridManager == null)
+            {
+                foreach (MonoBehaviour mb in Object.FindObjectsOfType<MonoBehaviour>())
+                {
+                    if (mb is IGridManager gm) { gridManager = gm; break; }
+                }
+                if (gridManager == null) return;
+            }
             if (_sortingOrderService == null)
                 _sortingOrderService = new GridSortingOrderService(gridManager);
             if (_cellAccessService == null)

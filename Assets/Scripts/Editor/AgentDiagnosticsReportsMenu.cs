@@ -212,7 +212,9 @@ public static class AgentDiagnosticsReportsMenu
         sb.AppendLine($"- `TERRAIN_BASE_ORDER` = {TerrainManager.TERRAIN_BASE_ORDER}");
         sb.AppendLine($"- `DEPTH_MULTIPLIER` = {TerrainManager.DEPTH_MULTIPLIER}");
         sb.AppendLine($"- `HEIGHT_MULTIPLIER` = {TerrainManager.HEIGHT_MULTIPLIER}");
-        sb.AppendLine($"- `GridSortingOrderService.ROAD_SORTING_OFFSET` = {GridSortingOrderService.ROAD_SORTING_OFFSET}");
+        // ROAD_SORTING_OFFSET literal mirrors Domains.Grid.Services.GridSortingOrderService.ROAD_SORTING_OFFSET (106).
+        // Inlined because predefined Editor assembly cannot ref Grid asmdef (autoReferenced=false).
+        sb.AppendLine($"- `GridSortingOrderService.ROAD_SORTING_OFFSET` = 106");
         sb.AppendLine();
 
         foreach (Vector2Int p in cells)

@@ -10,7 +10,7 @@ namespace Territory.Terrain
 /// When path has only scalable land steps (|Δh| ≤ 1 between consecutive path cells),
 /// ascending segments prefer slope alignment (no flatten to base) → avoid spurious cut-through visuals. Used by RoadManager, AutoRoadBuilder, InterstateManager.
 /// </summary>
-public class TerraformingService : MonoBehaviour
+public class TerraformingService : MonoBehaviour, ITerraformingService
 {
     #region Dependencies
     public TerrainManager terrainManager;
@@ -25,22 +25,7 @@ public class TerraformingService : MonoBehaviour
     public int cutThroughMinCellsFromMapEdge = 2;
     #endregion
 
-    /// <summary>Action to perform when terraforming cell.</summary>
-    public enum TerraformAction
-    {
-        None,
-        Flatten,
-        DiagonalToOrthogonal
-    }
-
-    /// <summary>Orthogonal direction for DiagonalToOrthogonal. Matches TerrainSlopeType cardinal values.</summary>
-    public enum OrthogonalDirection
-    {
-        North,
-        South,
-        East,
-        West
-    }
+    // TerraformAction + OrthogonalDirection enums lifted to Core (Assets/Scripts/Core/Terrain/) — Territory.Terrain ns.
 
     void Awake()
     {

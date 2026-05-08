@@ -7,19 +7,19 @@ namespace Domains.Grid.Services
 {
     /// <summary>
     /// Sprite sorting orders for all tile types (terrain, zoning, buildings, roads, sea-level)
-    /// via height-aware formulas from <see cref="TerrainManager"/>. Extracted from <see cref="GridManager"/>
+    /// via height-aware formulas from <see cref="ITerrainManager"/>. Extracted from <see cref="IGridManager"/>
     /// to reduce responsibilities.
-    /// Moved from Territory.Core to Domains.Grid.Services per Strategy γ atomization (TECH-23774).
-    /// Invariant #5 carve-out: holds GridManager composition ref; may access grid.cellArray/gridArray directly.
+    /// Moved from Territory.Core to Domains.Grid.Services per Strategy γ atomization.
+    /// Domain-leaf: refs Core only via <see cref="IGridManager"/> + <see cref="ITerrainManager"/>.
     /// </summary>
     public class GridSortingOrderService
     {
-        private readonly GridManager grid;
+        private readonly IGridManager grid;
 
         /// <summary>Offset so roads render above adjacent terrain (depth step = 100). Prevents "buried" interstate/road look.</summary>
         public const int ROAD_SORTING_OFFSET = 106;
 
-        public GridSortingOrderService(GridManager grid)
+        public GridSortingOrderService(IGridManager grid)
         {
             this.grid = grid;
         }
@@ -31,30 +31,31 @@ namespace Domains.Grid.Services
         /// </summary>
         void SyncCellTerrainLayersBelowBuilding(int cellX, int cellY)
         {
-            if (grid.terrainManager == null || grid.cellArray == null || grid.gridArray == null) return;
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null) return;
             if (cellX < 0 || cellX >= grid.width || cellY < 0 || cellY >= grid.height) return;
 
-            CityCell cell = grid.cellArray[cellX, cellY];
-            GameObject cellGo = grid.gridArray[cellX, cellY];
+            CityCell cell = grid.GetCell(cellX, cellY);
+            GameObject cellGo = grid.GetGridCell(new Vector2(cellX, cellY));
             if (cell == null || cellGo == null) return;
 
             int h = cell.height;
-            if (grid.terrainManager.GetHeightMap() != null)
-                h = grid.terrainManager.GetHeightMap().GetHeight(cellX, cellY);
+            if (terrain.GetHeightMap() != null)
+                h = terrain.GetHeightMap().GetHeight(cellX, cellY);
 
             foreach (Transform child in cellGo.transform)
             {
                 GameObject go = child.gameObject;
-                if (grid.terrainManager.IsWaterSlopeObject(go) || grid.terrainManager.IsShoreBayObject(go))
+                if (terrain.IsWaterSlopeObject(go) || terrain.IsShoreBayObject(go))
                     continue;
 
                 Zone zone = go.GetComponent<Zone>();
                 if (zone == null || zone.zoneType != Zone.ZoneType.Grass)
                     continue;
 
-                int terrainOrder = grid.terrainManager.IsLandSlopeObject(go)
-                    ? grid.terrainManager.CalculateSlopeSortingOrder(cellX, cellY, h)
-                    : grid.terrainManager.CalculateTerrainSortingOrder(cellX, cellY, h);
+                int terrainOrder = terrain.IsLandSlopeObject(go)
+                    ? terrain.CalculateSlopeSortingOrder(cellX, cellY, h)
+                    : terrain.CalculateTerrainSortingOrder(cellX, cellY, h);
 
                 SpriteRenderer[] srs = go.GetComponentsInChildren<SpriteRenderer>(true);
                 foreach (SpriteRenderer sr in srs)
@@ -73,12 +74,13 @@ namespace Domains.Grid.Services
         private int GetCellMaxContentSortingOrder(int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return int.MinValue;
-            if (grid.terrainManager == null) return int.MinValue;
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null) return int.MinValue;
 
-            CityCell cell = (x >= 0 && x < grid.width && y >= 0 && y < grid.height) ? grid.cellArray[x, y] : null;
+            CityCell cell = (x >= 0 && x < grid.width && y >= 0 && y < grid.height) ? grid.GetCell(x, y) : null;
             if (cell == null) return int.MinValue;
 
-            int terrainOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
+            int terrainOrder = terrain.CalculateTerrainSortingOrder(x, y, cell.height);
             int maxOrder = terrainOrder;
 
             if (cell.GetComponent<SpriteRenderer>() != null)
@@ -90,10 +92,10 @@ namespace Domains.Grid.Services
                 if (child.GetComponent<SpriteRenderer>() == null) continue;
 
                 int order;
-                if (grid.terrainManager.IsWaterSlopeObject(child))
-                    order = grid.terrainManager.CalculateWaterSlopeSortingOrder(x, y);
-                else if (grid.terrainManager.IsShoreBayObject(child))
-                    order = grid.terrainManager.CalculateShoreBaySortingOrder(x, y);
+                if (terrain.IsWaterSlopeObject(child))
+                    order = terrain.CalculateWaterSlopeSortingOrder(x, y);
+                else if (terrain.IsShoreBayObject(child))
+                    order = terrain.CalculateShoreBaySortingOrder(x, y);
                 else if (cell.forestObject != null && cell.forestObject == child)
                     order = terrainOrder + 5;
                 else
@@ -104,7 +106,7 @@ namespace Domains.Grid.Services
                         if (zone.zoneType == Zone.ZoneType.Road)
                         {
                             int effectiveHeight = (cell.height == 0) ? 1 : cell.height;  // Bridge over water
-                            order = grid.terrainManager.CalculateTerrainSortingOrder(x, y, effectiveHeight) + ROAD_SORTING_OFFSET;
+                            order = terrain.CalculateTerrainSortingOrder(x, y, effectiveHeight) + ROAD_SORTING_OFFSET;
                         }
                         else if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
                         else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
@@ -119,11 +121,11 @@ namespace Domains.Grid.Services
         }
 
         /// <summary>
-        /// Legacy formula based on grid position. New code → prefer <see cref="TerrainManager"/>-based methods.
+        /// Legacy formula based on grid position. New code → prefer <see cref="ITerrainManager"/>-based methods.
         /// </summary>
         public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
         {
-            Vector3 gridPos = grid.GetGridPosition(tile.transform.position);
+            Vector2 gridPos = grid.GetGridPosition(tile.transform.position);
 
             int x = (int)gridPos.x;
             int y = (int)gridPos.y;
@@ -132,7 +134,7 @@ namespace Domains.Grid.Services
                 return -1001;
             }
 
-            CityCell cell = grid.cellArray[x, y];
+            CityCell cell = grid.GetCell(x, y);
             tile.transform.SetParent(cell.gameObject.transform);
             SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
 
@@ -154,28 +156,29 @@ namespace Domains.Grid.Services
         }
 
         /// <summary>
-        /// Zoning tile (RCI overlay) sorting via <see cref="TerrainManager"/> → renders below forest + buildings.
+        /// Zoning tile (RCI overlay) sorting via <see cref="ITerrainManager"/> → renders below forest + buildings.
         /// </summary>
         public void SetZoningTileSortingOrder(GameObject tile, int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            CityCell cell = grid.cellArray[x, y];
+            CityCell cell = grid.GetCell(x, y);
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
 
-            if (grid.terrainManager == null)
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null)
             {
                 SetTileSortingOrder(tile, Zone.ZoneType.Grass);
                 return;
             }
 
             int cellHeight = cell.height;
-            if (grid.terrainManager.GetHeightMap() != null)
-                cellHeight = grid.terrainManager.GetHeightMap().GetHeight(x, y);
+            if (terrain.GetHeightMap() != null)
+                cellHeight = terrain.GetHeightMap().GetHeight(x, y);
 
-            int sortingOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, cellHeight);
+            int sortingOrder = terrain.CalculateTerrainSortingOrder(x, y, cellHeight);
 
             SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
             foreach (SpriteRenderer sr in renderers)
@@ -186,28 +189,29 @@ namespace Domains.Grid.Services
         }
 
         /// <summary>
-        /// Zone building (RCI) sorting via <see cref="TerrainManager"/> → renders above forest + terrain.
+        /// Zone building (RCI) sorting via <see cref="ITerrainManager"/> → renders above forest + terrain.
         /// </summary>
         public void SetZoneBuildingSortingOrder(GameObject tile, int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            CityCell cell = grid.cellArray[x, y];
+            CityCell cell = grid.GetCell(x, y);
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
 
-            if (grid.terrainManager == null)
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null)
             {
                 SetTileSortingOrder(tile, Zone.ZoneType.Building);
                 return;
             }
 
             int cellHeight = cell.height;
-            if (grid.terrainManager.GetHeightMap() != null)
-                cellHeight = grid.terrainManager.GetHeightMap().GetHeight(x, y);
+            if (terrain.GetHeightMap() != null)
+                cellHeight = terrain.GetHeightMap().GetHeight(x, y);
 
-            int sortingOrder = grid.terrainManager.CalculateBuildingSortingOrder(x, y, cellHeight);
+            int sortingOrder = terrain.CalculateBuildingSortingOrder(x, y, cellHeight);
 
             SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
             foreach (SpriteRenderer sr in renderers)
@@ -231,10 +235,11 @@ namespace Domains.Grid.Services
                 return;
             }
             if (pivotX < 0 || pivotX >= grid.width || pivotY < 0 || pivotY >= grid.height) return;
-            CityCell pivotCell = grid.cellArray[pivotX, pivotY];
+            CityCell pivotCell = grid.GetCell(pivotX, pivotY);
             if (pivotCell == null) return;
             tile.transform.SetParent(pivotCell.gameObject.transform);
-            if (grid.terrainManager == null)
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null)
             {
                 SetTileSortingOrder(tile, Zone.ZoneType.Building);
                 return;
@@ -254,12 +259,12 @@ namespace Domains.Grid.Services
                     int gridX = pivotX + x - offsetX;
                     int gridY = pivotY + y - offsetY;
                     if (gridX < 0 || gridX >= grid.width || gridY < 0 || gridY >= grid.height) continue;
-                    CityCell cell = grid.cellArray[gridX, gridY];
+                    CityCell cell = grid.GetCell(gridX, gridY);
                     if (cell == null) continue;
                     int cellHeight = cell.height;
-                    if (grid.terrainManager.GetHeightMap() != null)
-                        cellHeight = grid.terrainManager.GetHeightMap().GetHeight(gridX, gridY);
-                    int order = grid.terrainManager.CalculateBuildingSortingOrder(gridX, gridY, cellHeight);
+                    if (terrain.GetHeightMap() != null)
+                        cellHeight = terrain.GetHeightMap().GetHeight(gridX, gridY);
+                    int order = terrain.CalculateBuildingSortingOrder(gridX, gridY, cellHeight);
                     if (order > maxOrder) maxOrder = order;
                 }
             }
@@ -325,10 +330,11 @@ namespace Domains.Grid.Services
         public int GetRoadSortingOrderForCell(int x, int y, int height)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return 0;
-            if (grid.terrainManager == null) return 0;
-            int roadSortingOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null) return 0;
+            int roadSortingOrder = terrain.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
 
-            var heightMap = grid.terrainManager.GetHeightMap();
+            var heightMap = terrain.GetHeightMap();
             if (heightMap != null)
             {
                 int[] adx = { 1, -1, 0, 0, 1, 1, -1, -1 };
@@ -355,40 +361,41 @@ namespace Domains.Grid.Services
         }
 
         /// <summary>
-        /// Road tile sorting via <see cref="TerrainManager"/> → renders above grass, below forest/buildings.
+        /// Road tile sorting via <see cref="ITerrainManager"/> → renders above grass, below forest/buildings.
         /// Forces grass + other terrain in same cell below road.
         /// </summary>
         public void SetRoadSortingOrder(GameObject tile, int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            CityCell cell = grid.cellArray[x, y];
+            CityCell cell = grid.GetCell(x, y);
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
             tile.transform.SetAsLastSibling();
 
-            if (grid.terrainManager == null)
+            ITerrainManager terrain = grid.Terrain;
+            if (terrain == null)
             {
                 SetTileSortingOrder(tile, Zone.ZoneType.Road);
                 return;
             }
 
             int cellHeight = cell.height;
-            if (grid.terrainManager.GetHeightMap() != null)
-                cellHeight = grid.terrainManager.GetHeightMap().GetHeight(x, y);
+            if (terrain.GetHeightMap() != null)
+                cellHeight = terrain.GetHeightMap().GetHeight(x, y);
 
-            int terrainOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, cellHeight);
+            int terrainOrder = terrain.CalculateTerrainSortingOrder(x, y, cellHeight);
             int roadSortingOrder = terrainOrder + ROAD_SORTING_OFFSET;
 
             if (cellHeight == 0)
             {
-                int bridgeOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, 1) + ROAD_SORTING_OFFSET;
+                int bridgeOrder = terrain.CalculateTerrainSortingOrder(x, y, 1) + ROAD_SORTING_OFFSET;
                 roadSortingOrder = Mathf.Max(roadSortingOrder, bridgeOrder);
             }
 
             // Cut-through: road at lower height must render behind adjacent higher terrain that is "in front"
-            var heightMap = grid.terrainManager.GetHeightMap();
+            var heightMap = terrain.GetHeightMap();
             if (heightMap != null)
             {
                 int[] adx = { 1, -1, 0, 0, 1, 1, -1, -1 };

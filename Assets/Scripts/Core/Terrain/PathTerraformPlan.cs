@@ -16,8 +16,8 @@ public class PathTerraformPlan
     public struct CellPlan
     {
         public Vector2Int position;
-        public TerraformingService.TerraformAction action;
-        public TerraformingService.OrthogonalDirection direction;
+        public TerraformAction action;
+        public OrthogonalDirection direction;
         public int originalHeight;
         public int targetHeight;
         public TerrainSlopeType postTerraformSlopeType;
@@ -48,11 +48,11 @@ public class PathTerraformPlan
     /// <summary>
     /// Phase 1 only: write planned terraform heights. Skips registered open water + water-slope cells (same rules as <see cref="Apply"/>; geography spec water map).
     /// </summary>
-    void WritePhase1TerraformHeights(HeightMap heightMap, TerrainManager terrainManager)
+    void WritePhase1TerraformHeights(HeightMap heightMap, ITerrainManager terrainManager)
     {
         foreach (var cell in pathCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
             {
                 if (terrainManager.ShouldSkipRoadTerraformSurfaceAt(cell.position.x, cell.position.y, heightMap))
                     continue;
@@ -61,7 +61,7 @@ public class PathTerraformPlan
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
             {
                 if (terrainManager.ShouldSkipRoadTerraformSurfaceAt(cell.position.x, cell.position.y, heightMap))
                     continue;
@@ -75,12 +75,12 @@ public class PathTerraformPlan
     {
         foreach (var cell in pathCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
         }
     }
@@ -91,7 +91,7 @@ public class PathTerraformPlan
     /// </summary>
     /// <param name="logPhase1HeightFailure">On validation fail, invoked once with failing cardinal edge (or null if unknown).</param>
     /// <param name="logDryCliffPhase1Detail">If non-null, emits verbose lines for strict Phase1 |Δh|&gt;1 edges + dry-cliff skip decisions. Use with road diagnostic cursor only.</param>
-    public bool TryValidatePhase1Heights(HeightMap heightMap, TerrainManager terrainManager, Action<string> logPhase1HeightFailure = null, Action<string> logDryCliffPhase1Detail = null)
+    public bool TryValidatePhase1Heights(HeightMap heightMap, ITerrainManager terrainManager, Action<string> logPhase1HeightFailure = null, Action<string> logDryCliffPhase1Detail = null)
     {
         if (heightMap == null || terrainManager == null) return false;
         WritePhase1TerraformHeights(heightMap, terrainManager);
@@ -133,7 +133,7 @@ public class PathTerraformPlan
     /// Uses forceFlat/forceSlopeType → terrain matches plan regardless of apply order.
     /// Return false on validation fail (|Δh|&gt;1); reverts + skips Phase 2.
     /// </summary>
-    public bool Apply(HeightMap heightMap, TerrainManager terrainManager)
+    public bool Apply(HeightMap heightMap, ITerrainManager terrainManager)
     {
         if (heightMap == null || terrainManager == null) return false;
 
@@ -162,7 +162,7 @@ public class PathTerraformPlan
             if (!heightMap.IsValidPosition(cell.position.x, cell.position.y)) continue;
             if (terrainManager.ShouldSkipRoadTerraformSurfaceAt(cell.position.x, cell.position.y, heightMap))
                 continue;
-            if (cell.action != TerraformingService.TerraformAction.None)
+            if (cell.action != TerraformAction.None)
             {
                 bool flat = cell.postTerraformSlopeType == TerrainSlopeType.Flat;
                 bool orthogonalSlope = IsOrthogonalRampSlopeType(cell.postTerraformSlopeType);
@@ -181,7 +181,7 @@ public class PathTerraformPlan
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
             {
                 if (terrainManager.ShouldSkipRoadTerraformSurfaceAt(cell.position.x, cell.position.y, heightMap))
                     continue;
@@ -195,7 +195,7 @@ public class PathTerraformPlan
             refreshed.Add(cell.position);
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None)
+            if (cell.action != TerraformAction.None)
                 refreshed.Add(cell.position);
         }
 
@@ -213,12 +213,12 @@ public class PathTerraformPlan
         var set = new HashSet<Vector2Int>();
         foreach (var cell in pathCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None)
+            if (cell.action != TerraformAction.None)
                 set.Add(cell.position);
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None)
+            if (cell.action != TerraformAction.None)
                 set.Add(cell.position);
         }
         return set;
@@ -230,13 +230,13 @@ public class PathTerraformPlan
     /// <summary>
     /// Phase 3 neighbor refresh: skip open water, registered water, water-slope tiles (FEAT-44 bridge — avoids grass pillars in river).
     /// </summary>
-    static bool ShouldSkipPhase3NeighborTerrainRefresh(HeightMap heightMap, TerrainManager terrainManager, int x, int y)
+    static bool ShouldSkipPhase3NeighborTerrainRefresh(HeightMap heightMap, ITerrainManager terrainManager, int x, int y)
     {
         if (terrainManager == null) return true;
         return terrainManager.ShouldSkipRoadTerraformSurfaceAt(x, y, heightMap);
     }
 
-    static void RefreshTerrainNeighborWaves(HeightMap heightMap, TerrainManager terrainManager, HashSet<Vector2Int> touchedCore, HashSet<Vector2Int> cutCorridorCells, int waveCount)
+    static void RefreshTerrainNeighborWaves(HeightMap heightMap, ITerrainManager terrainManager, HashSet<Vector2Int> touchedCore, HashSet<Vector2Int> cutCorridorCells, int waveCount)
     {
         if (heightMap == null || terrainManager == null || touchedCore == null || waveCount < 1)
             return;
@@ -273,7 +273,7 @@ public class PathTerraformPlan
     /// Skip edges where stroke sits on high ground + cardinal neighbor is dry land strictly lower (pre-existing cliff); same rule as FEAT-44 relaxed Phase1 for water bridges.
     /// Also skip high dry land (on or beside stroke) dropping to lower registered water-slope shore cell → manual roads preview to cliff lips above NorthSlopeWaterPrefab tiles without full water-bridge relaxation.
     /// </summary>
-    bool ValidateNoHeightDiffGreaterThanOne(HeightMap heightMap, TerrainManager terrainManager, out string failureDetail, Action<string> logDryCliffPhase1Detail = null)
+    bool ValidateNoHeightDiffGreaterThanOne(HeightMap heightMap, ITerrainManager terrainManager, out string failureDetail, Action<string> logDryCliffPhase1Detail = null)
     {
         failureDetail = null;
         if (heightMap == null) return true;
@@ -354,7 +354,7 @@ public class PathTerraformPlan
     /// Strict Phase1: allow |Δh|&gt;1 when higher cell is dry (not open water / not water-slope) on or beside stroke + lower cell is registered water-slope shore (e.g. NorthSlopeWaterPrefab below grass cliff lip).
     /// </summary>
     static bool HighDryLandToWaterSlopeSkipsPhase1Strict(
-        HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
+        HeightMap heightMap, ITerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
     {
         explain = string.Empty;
         if (heightMap == null || terrainManager == null || pathCellsOnly == null)
@@ -415,7 +415,7 @@ public class PathTerraformPlan
 
     /// <summary>
     /// True if any path or adjacent cell would write terraform height after water/shore skips in <see cref="WritePhase1TerraformHeights"/>.
-    /// Deck-only water bridge plans return false (all <see cref="TerraformingService.TerraformAction.None"/> on path cells).
+    /// Deck-only water bridge plans return false (all <see cref="TerraformAction.None"/> on path cells).
     /// </summary>
     public bool HasTerraformHeightMutation() => PlanHasTerraformHeightMutation();
 
@@ -423,12 +423,12 @@ public class PathTerraformPlan
     {
         for (int i = 0; i < pathCells.Count; i++)
         {
-            if (pathCells[i].action != TerraformingService.TerraformAction.None)
+            if (pathCells[i].action != TerraformAction.None)
                 return true;
         }
         for (int i = 0; i < adjacentCells.Count; i++)
         {
-            if (adjacentCells[i].action != TerraformingService.TerraformAction.None)
+            if (adjacentCells[i].action != TerraformAction.None)
                 return true;
         }
         return false;
@@ -439,7 +439,7 @@ public class PathTerraformPlan
     /// or water-slope shore, or <b>both</b> ends on planned path cells (deck spans natural |Δh|&gt;1 along stroke). FEAT-44 bridge preview/commit.
     /// Only edges incident to ≥1 <see cref="pathCells"/> position checked → recursive <c>adjacentCells</c> blobs cannot fail plan far from stroke.
     /// </summary>
-    bool ValidateNoHeightDiffGreaterThanOneWaterBridgeRelaxed(HeightMap heightMap, TerrainManager terrainManager, out string failureDetail)
+    bool ValidateNoHeightDiffGreaterThanOneWaterBridgeRelaxed(HeightMap heightMap, ITerrainManager terrainManager, out string failureDetail)
     {
         failureDetail = null;
         if (heightMap == null || terrainManager == null) return true;
@@ -501,7 +501,7 @@ public class PathTerraformPlan
     /// True when natural dry cliff drops away from road stroke: higher tile on stroke OR cardinally adjacent to stroke,
     /// lower tile off stroke + not water, higher strictly above lower. Matches FEAT-44 relaxed “deck beside gorge” intent for strict Phase1 when stroke ends one tile short of cliff lip (P3 ring pulls lip into checkSet).
     /// </summary>
-    static bool DryLandCliffDropsAwayFromPathStroke(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
+    static bool DryLandCliffDropsAwayFromPathStroke(HeightMap heightMap, ITerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
     {
         explain = string.Empty;
         if (heightMap == null || terrainManager == null || pathCellsOnly == null)
@@ -562,7 +562,7 @@ public class PathTerraformPlan
     /// <summary>
     /// FEAT-44 Phase1: skip |Δh|&gt;1 checks for intentionally steep edges (water, shore, full path deck span, or dry cliff dropping away from deck).
     /// </summary>
-    static bool WaterBridgeRelaxationSkipsHeightEdge(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCorridor)
+    static bool WaterBridgeRelaxationSkipsHeightEdge(HeightMap heightMap, ITerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCorridor)
     {
         if (pathCorridor != null
             && pathCorridor.Contains(new Vector2Int(x0, y0))
@@ -581,19 +581,19 @@ public class PathTerraformPlan
     /// Revert terraform plan: restore original heights + refresh terrain visuals.
     /// Call on preview cancel. Two-phase like Apply → terrain sees correct neighbor heights.
     /// </summary>
-    public void Revert(HeightMap heightMap, TerrainManager terrainManager)
+    public void Revert(HeightMap heightMap, ITerrainManager terrainManager)
     {
         if (heightMap == null || terrainManager == null) return;
 
         // Phase 1: Restore all heights
         foreach (var cell in pathCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action != TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
         }
 
@@ -608,7 +608,7 @@ public class PathTerraformPlan
         }
         foreach (var cell in adjacentCells)
         {
-            if (cell.action == TerraformingService.TerraformAction.None || !heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            if (cell.action == TerraformAction.None || !heightMap.IsValidPosition(cell.position.x, cell.position.y))
                 continue;
             if (terrainManager.ShouldSkipRoadTerraformSurfaceAt(cell.position.x, cell.position.y, heightMap))
                 continue;
@@ -621,7 +621,7 @@ public class PathTerraformPlan
             refreshed.Add(cell.position);
         foreach (var cell in adjacentCells)
         {
-            if (cell.action != TerraformingService.TerraformAction.None)
+            if (cell.action != TerraformAction.None)
                 refreshed.Add(cell.position);
         }
 
