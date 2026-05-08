@@ -1,5 +1,7 @@
 # Compaction-Loop Mitigation — Infrastructure Approaches
 
+> **Status (2026-05-08):** Tier A4 shipped (TECH-846). Tier A1+A3+C4 bundle filed (TECH-847), deferred to atomization mid-sweep. Tier A2 dropped (harness gap). Tier B3 in flight as `large-file-atomization-refactor` master plan (Stages 1–5 shipped).
+
 ## Problem
 
 Claude Code auto-compaction summarizes prior turns when context fills. Summary itself can be huge (the hud-bar audit summary = ~9KB dense prose: file:line citations, verbatim quotes, full bug catalog inline, multi-file recaps). Once summary alone consumes 15–20% of fresh context, second compaction triggers near-immediately = compaction loop. Agent burns turns re-summarizing instead of working.
@@ -17,52 +19,61 @@ Claude Code auto-compaction summarizes prior turns when context fills. Summary i
 
 ### Tier A — high leverage, low cost
 
-| # | Approach | Surface | Mechanism |
-|---|---|---|---|
-| A1 | **`scratchpad_ledger` MCP tool** | `tools/mcp-ia-server/src/index.ts` + new `ia_scratchpad_ledgers` table | Append-only structured rows `(session_id, slug, kind, payload_json)` for active investigations. Kinds: `file_read`, `decision`, `bug_found`, `pending_task`. Skill `audit-mode` requires every finding → `scratchpad_ledger_append`. Compaction summary = pointer `scratchpad_ledger_get("hud-bar-audit")` instead of inline catalog. Cuts 9KB → ~300 bytes. |
-| A2 | **Pre-compact warning hook** | `.claude/settings.json` PreToolUse + new `tools/scripts/claude-hooks/context-pressure.sh` | Hook reads token-count signal (Claude Code emits `transcript_token_count` in hook env), injects system reminder at 70% / 85% thresholds: "persist findings to ledger before compact". Forces explicit checkpoint. |
-| A3 | **`audit-mode` skill** | `ia/skills/audit-mode/SKILL.md` | Wraps "find all bugs in X" pattern. Phases: enumerate target files → per-file read+ledger-append → final doc render from ledger. Doc rendered from DB rows = deterministic size. Replaces ad-hoc audit prose. |
-| A4 | **Force `csharp_class_summary` for big files** | `tools/scripts/claude-hooks/big-file-read-warn.sh` PreToolUse | Hook intercepts `Read` on `Assets/**/*.cs` >800 lines; suggests `csharp_class_summary` first. Optional `BIG_FILE_READ_OK=1` escape. |
+| # | Approach | Surface | Mechanism | Status |
+|---|---|---|---|---|
+| A1 | **`scratchpad_ledger` MCP tool** | `tools/mcp-ia-server/src/index.ts` + new `ia_scratchpad_ledger` table (mig 0111) | Append-only structured rows `(session_id, slug, kind, payload_json)` for active investigations. Kinds: `file_read`, `decision`, `bug_found`, `pending_task`. Skill `audit-mode` requires every finding → `scratchpad_ledger_append`. Compaction summary = pointer `scratchpad_ledger_get("hud-bar-audit")` instead of inline catalog. Cuts 9KB → ~300 bytes. | **TECH-847 filed** — deferred to atomization mid-sweep (~Stage 10) |
+| A2 | ~~Pre-compact warning hook~~ | ~~`.claude/settings.json` PreToolUse + new `tools/scripts/claude-hooks/context-pressure.sh`~~ | ~~Hook reads token-count signal~~ | **DROPPED** — `transcript_token_count` not exposed to Claude Code hooks. Substituted with C4. |
+| A3 | **`audit-mode` skill** | `ia/skills/audit-mode/SKILL.md` | Wraps "find all bugs in X" pattern. Phases: enumerate target files → per-file read+ledger-append → final doc render from ledger. Doc rendered from DB rows = deterministic size. Replaces ad-hoc audit prose. | **TECH-847 filed** — bundled with A1 + C4 |
+| A4 | **Force `csharp_class_summary` for big files** | `tools/scripts/claude-hooks/big-file-read-warn.sh` PreToolUse | Hook intercepts `Read` on `Assets/**/*.cs` >800 lines; suggests `csharp_class_summary` first. Optional `BIG_FILE_READ_OK=1` escape. | **SHIPPED — TECH-846** (commit `2277a5f3`). Restart Claude Code to load Read matcher. |
 
 ### Tier B — medium leverage, medium cost
 
-| # | Approach | Surface | Mechanism |
-|---|---|---|---|
-| B1 | **`context_checkpoint` MCP tool** | New table `ia_context_checkpoints` | Agent calls explicitly before risky multi-file reads. Stores `{slug, summary_md, refs[]}` rows. Compaction summary cites checkpoint id; harness can re-inject checkpoint markdown verbatim post-compact. |
-| B2 | **Force-subagent dispatch for bulk reads** | New skill `bulk-read-broker` | If task needs >3 files >500 lines: skill dispatches subagent (`Explore` / `general-purpose`), main session sees only return summary. Same pattern as `release-rollout` already uses. |
-| B3 | **Mega-file split refactor** | TECH issue: split `UiBakeHandler.cs` (1361) + `Archetype.cs` (1159) into per-concern files (panel-bake, child-bake, archetype-bake, sprite-resolve, theme-wire). | Direct: smaller files = smaller reads = smaller compactions. Side benefit: easier maintenance. |
-| B4 | **`session_state` MCP slice** | Extend `runtime_state` tool | Per-session JSON store keyed by session_id. Agent saves working hypothesis + open threads. Compaction includes only the key. |
+| # | Approach | Surface | Mechanism | Status |
+|---|---|---|---|---|
+| B1 | **`context_checkpoint` MCP tool** | New table `ia_context_checkpoints` | Agent calls explicitly before risky multi-file reads. Stores `{slug, summary_md, refs[]}` rows. Compaction summary cites checkpoint id; harness can re-inject checkpoint markdown verbatim post-compact. | Deferred — revisit only if A-tier ROI insufficient |
+| B2 | **Force-subagent dispatch for bulk reads** | New skill `bulk-read-broker` | If task needs >3 files >500 lines: skill dispatches subagent (`Explore` / `general-purpose`), main session sees only return summary. Same pattern as `release-rollout` already uses. | Deferred — partial overlap with existing subagent dispatch |
+| B3 | **Mega-file split refactor** | Strategy γ atomization sweep — split `TerrainManager.cs`, `RoadManager.cs`, `WaterMap.cs`, `GridManager.cs`, `UiBakeHandler.cs` etc. into Domains/{X}/ folder shape with facade interface + per-concern services. | Direct: smaller files = smaller reads = smaller compactions. Side benefit: easier maintenance. | **IN FLIGHT** — `large-file-atomization-refactor` master plan, Stages 1–5 shipped (Terrain/Roads/Water/GridManager). ~25–30 stages total. |
+| B4 | **`session_state` MCP slice** | Extend `runtime_state` tool | Per-session JSON store keyed by session_id. Agent saves working hypothesis + open threads. Compaction includes only the key. | Deferred — partial overlap with A1 ledger; revisit post-A-tier |
 
 ### Tier C — exploratory / structural
 
-| # | Approach | Surface | Mechanism |
-|---|---|---|---|
-| C1 | **Auto-evict file reads from chat** | Hook PostToolUse on Read | After Read, if file >N lines, hook truncates the tool result to head/tail + footer "full content cached at `.claude/file-cache/{hash}.md`". Forces summary discipline. Risky: agents may need full content for next step. |
-| C2 | **Dedicated investigation subagent** | New `.claude/agents/investigator.md` | Long-running audits delegated wholesale. Subagent owns bug catalog. Returns final doc + 200-token summary. Main session never sees raw findings. |
-| C3 | **Compaction-aware preamble** | `ia/skills/_preamble/stable-block.md` extension | Add tier "if you are summarizing for compaction → emit pointer-only shape, refer agent to ledger/checkpoint". Trains compaction LLM to produce smaller summaries. Effect uncertain — compaction prompt is harness-side. |
-| C4 | **Output-style: `audit-summary`** | `.claude/output-styles/audit-summary.md` | Force structured table shape for audit output. Deterministic compression vs free-form prose. |
+| # | Approach | Surface | Mechanism | Status |
+|---|---|---|---|---|
+| C1 | **Auto-evict file reads from chat** | Hook PostToolUse on Read | After Read, if file >N lines, hook truncates the tool result to head/tail + footer "full content cached at `.claude/file-cache/{hash}.md`". Forces summary discipline. Risky: agents may need full content for next step. | Deferred — risky |
+| C2 | **Dedicated investigation subagent** | New `.claude/agents/investigator.md` | Long-running audits delegated wholesale. Subagent owns bug catalog. Returns final doc + 200-token summary. Main session never sees raw findings. | Deferred — A3 `audit-mode` covers this lane |
+| C3 | **Compaction-aware preamble** | `ia/skills/_preamble/stable-block.md` extension | Add tier "if you are summarizing for compaction → emit pointer-only shape, refer agent to ledger/checkpoint". Trains compaction LLM to produce smaller summaries. Effect uncertain — compaction prompt is harness-side. | Deferred — effect uncertain, revisit after A-tier ROI measured |
+| C4 | **Output-style: `audit-summary`** | `.claude/output-styles/audit-summary.md` | Force structured table shape for audit output. Deterministic compression vs free-form prose. | **TECH-847 filed** — A2 substitute (table-shape forcing covers what pre-compact warn would have) |
 
-## Recommendation
+## Decision log (2026-05-08)
 
-Ship **A1 + A2 + A3** as one TECH initiative:
+User-locked decisions after live exploration:
 
-1. `scratchpad_ledger_*` MCP tools + table (mig 0109).
-2. Pre-compact warn hook reading transcript token count.
-3. `audit-mode` skill + matching slash command, ledger-required.
+1. **Ship A4 standalone first** as quick win during active atomization sweep — TECH-846, shipped commit `2277a5f3`.
+2. **Bundle A1 + A3 + C4** (with C4 substituting for dropped A2) as one umbrella TECH — TECH-847 filed, deferred to atomization mid-sweep (~Stage 10).
+3. **Drop A2** — `transcript_token_count` not exposed to Claude Code PreToolUse hook env. C4 (`audit-summary` output-style table-shape forcing) substitutes for the deterministic-compression slice A2 would have provided.
+4. **Ledger rows carry both `session_id` and `slug` (nullable)** — enables cross-session handoff via slug-keyed re-entry while preserving session-scoped queries.
+5. **Ledger TTL: durable** initially. Revisit if `ia_scratchpad_ledger` row count exceeds 100K.
+6. **A2 revival path** — additive PreToolUse retrofit if Anthropic harness later exposes `transcript_token_count`. Track in TECH-847 changelog.
 
-Net effect: long investigations write findings to DB rows; compaction summary degenerates to "session_id=X, ledger=hud-bar-audit, 23 entries". Re-entry post-compact = `scratchpad_ledger_get` restores full catalog deterministically. Compaction loop broken because summary size becomes O(turn_count) not O(finding_size × turn_count).
+Net effect once TECH-847 ships: long investigations write findings to DB rows; compaction summary degenerates to "session_id=X, ledger=hud-bar-audit, 23 entries". Re-entry post-compact = `scratchpad_ledger_get` restores full catalog deterministically. Compaction loop broken because summary size becomes O(turn_count) not O(finding_size × turn_count).
 
-Tier B follow-up if A insufficient. Tier C only if structural problems persist.
+## Sequencing relative to atomization sweep
 
-## Open questions
+1. **Stages 1–5 (shipped)**: Terrain / Roads / Water / GridManager domains atomized via Strategy γ. TECH-846 hook now nudges every subsequent stage toward `csharp_class_summary` first. Immediate token savings during the remaining ~20–25 stages.
+2. **Stage ~10 (mid-sweep)**: start TECH-847 (A1 + A3 + C4 bundle). Ledger discipline absorbs remaining audit-style explorations between stages.
+3. **Sweep completion**: revisit Tier B B1 (`context_checkpoint`) and B4 (`session_state`) only if A-tier insufficient.
 
-- Does Claude Code expose `transcript_token_count` to hooks? Verify before A2 spec.
-- Compaction prompt — is it harness-controlled or model-default? If harness, C3 viable; if not, output-style (C4) is closest lever.
-- Ledger TTL: per-session vs per-slug. Per-slug survives session boundary = handoff between sessions.
+## Open questions (resolved unless flagged)
+
+- ~~Does Claude Code expose `transcript_token_count` to hooks?~~ **NO** — A2 dropped, C4 substituted.
+- Compaction prompt — is it harness-controlled or model-default? If harness, C3 viable; if not, output-style (C4) is closest lever. **Status: open** — irrelevant to TECH-847 scope (C4 path forced).
+- ~~Ledger TTL: per-session vs per-slug.~~ **Resolved: both nullable, durable retention.**
 
 ## Next
 
-Stand up `/project-new` for TECH-{next} "Scratchpad ledger + compaction pressure hook + audit-mode skill". Reference this doc as exploration seed. After approval → `/design-explore` then `/master-plan-new`.
+- TECH-846 — ship `2277a5f3` lands; user restart Claude Code so Read matcher activates.
+- TECH-847 — pick up at atomization mid-sweep (~Stage 10). Run `/stage-authoring --task TECH-847` to populate §Plan Digest, then `/ship TECH-847`.
+- Plan-of-record: `~/.claude-personal/plans/create-a-plan-for-splendid-fountain.md`.
 
 ## Appendix — repo size baseline (2026-05-08)
 
