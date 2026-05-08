@@ -175,7 +175,7 @@ namespace Territory.UI
             new UiButtonCatalogEntry { slug = "hud-bar-build-residential-button", displayName = "Build Residential" },
             new UiButtonCatalogEntry { slug = "hud-bar-build-commercial-button",  displayName = "Build Commercial" },
             new UiButtonCatalogEntry { slug = "hud-bar-build-industrial-button",  displayName = "Build Industrial" },
-            new UiButtonCatalogEntry { slug = "hud-bar-auto-toggle",              displayName = "AUTO" },
+            new UiButtonCatalogEntry { slug = "hud-bar-auto-button",              displayName = "AUTO" },
             new UiButtonCatalogEntry { slug = "hud-bar-budget-plus-button",       displayName = "Budget +" },
             new UiButtonCatalogEntry { slug = "hud-bar-budget-minus-button",      displayName = "Budget -" },
             new UiButtonCatalogEntry { slug = "hud-bar-budget-graph-button",      displayName = "Budget Graph" },

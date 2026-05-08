@@ -661,12 +661,13 @@ namespace Territory.Editor.Bridge
                     // Step 16.D — IR-side icon sprite slug + per-button identity injected via parallel-array
                     // slot.iconSpriteSlugs[c]; persists onto detail row so renderer/render reads back.
                     btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSpriteSlug });
-                    // Step 16.G — caption fallback. Fires when slot.labels[c] is set AND no icon sprite
-                    // resolved (slug empty OR ResolveButtonIconSprite missed the asset). BUG-61 W6+W7
-                    // extension: previously gated on slug-empty only; now also covers placeholder slugs
-                    // (e.g. "auto-button-64") whose target sprite is pending — the slug stays on detail
-                    // for switch routing while the caption signals function visually.
-                    if (!iconSpriteResolved && !string.IsNullOrEmpty(label))
+                    // Step 16.G — caption fallback. Fires when slot.labels[c] is set AND either (a) no
+                    // icon sprite resolved OR (b) slug is the canonical placeholder ("empty"). The
+                    // placeholder DOES resolve a sprite (empty-button-64-target.png) so the gate must
+                    // also check the slug literal — otherwise AUTO/MAP/speed-cycle buttons render the
+                    // placeholder face with no caption. Bug-fix-2026-05-08 (Imp-6 inline form).
+                    bool isPlaceholderSlug = string.IsNullOrEmpty(iconSpriteSlug) || iconSpriteSlug == "empty";
+                    if ((!iconSpriteResolved || isPlaceholderSlug) && !string.IsNullOrEmpty(label))
                     {
                         SpawnIlluminatedButtonCaption(childGo, label);
                     }

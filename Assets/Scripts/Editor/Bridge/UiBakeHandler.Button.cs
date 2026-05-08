@@ -339,6 +339,10 @@ namespace Territory.Editor.Bridge
                 t.text = string.Empty;
                 t.alignment = TextAlignmentOptions.Center;
                 t.fontSize = 14f;
+                t.enableAutoSizing = true;
+                t.fontSizeMin = 8f;
+                t.fontSizeMax = 18f;
+                t.color = Color.white;
                 t.raycastTarget = false;
                 tmp = t;
             }

@@ -107,46 +107,9 @@ namespace Territory.Tests.EditMode.UI
             Assert.AreEqual("schema_violation", error.error);
         }
 
-        // ── ExtractZone tests ────────────────────────────────────────────────────
-
-        [Test]
-        public void test_extract_zone_left()
-        {
-            string zone = UiBakeHandler.ExtractZone("{\"zone\":\"left\"}");
-            Assert.AreEqual("left", zone);
-        }
-
-        [Test]
-        public void test_extract_zone_center()
-        {
-            string zone = UiBakeHandler.ExtractZone("{\"zone\":\"center\"}");
-            Assert.AreEqual("center", zone);
-        }
-
-        [Test]
-        public void test_extract_zone_right()
-        {
-            string zone = UiBakeHandler.ExtractZone("{\"zone\":\"right\"}");
-            Assert.AreEqual("right", zone);
-        }
-
-        [Test]
-        public void test_extract_zone_null_input_returns_null()
-        {
-            Assert.IsNull(UiBakeHandler.ExtractZone(null));
-        }
-
-        [Test]
-        public void test_extract_zone_empty_input_returns_null()
-        {
-            Assert.IsNull(UiBakeHandler.ExtractZone(string.Empty));
-        }
-
-        [Test]
-        public void test_extract_zone_missing_key_returns_null()
-        {
-            Assert.IsNull(UiBakeHandler.ExtractZone("{\"other\":\"value\"}"));
-        }
+        // ExtractZone tests retired — regex helper replaced by
+        // TryParseTypedJson<PanelChildLayoutJson> (Imp-2, bake-fix-2026-05-08).
+        // Zone routing covered by integration via BakePanelSnapshotChildren.
 
         // ── MapLayoutTemplate tests ──────────────────────────────────────────────
 

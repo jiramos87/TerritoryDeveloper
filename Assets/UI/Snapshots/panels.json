@@ -1,5 +1,5 @@
 {
-  "snapshot_id": "2026-05-07T10:23:28.746Z",
+  "snapshot_id": "2026-05-08T13:12:46.953Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
@@ -10,7 +10,8 @@
         "layout": "hstack",
         "gap_px": 8,
         "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4}",
-        "params_json": "{}"
+        "params_json": "{}",
+        "rect_json": "{\"pivot\":[0.5,1],\"anchor_max\":[1,1],\"anchor_min\":[0,1],\"size_delta\":[-16,144],\"anchored_position\":[0,-8]}"
       },
       "panel": {
         "slug": "hud-bar",
@@ -24,154 +25,114 @@
         {
           "ord": 1,
           "kind": "button",
-          "params_json": "{\"icon\":\"zoom-in\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-zoom-in-button"
+          "params_json": "{\"icon\":\"new-game\",\"kind\":\"illuminated-button\",\"label\":\"NEW\",\"action\":\"action.game-new\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/new-game-button-target.png",
+          "layout_json": "{\"ord\":0,\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-new-button"
         },
         {
           "ord": 2,
           "kind": "button",
-          "params_json": "{\"icon\":\"zoom-out\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-zoom-out-button"
+          "params_json": "{\"icon\":\"save-game\",\"kind\":\"illuminated-button\",\"label\":\"SAVE\",\"action\":\"action.game-save\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/save-game-button-target.png",
+          "layout_json": "{\"ord\":1,\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-save-button"
         },
         {
           "ord": 3,
           "kind": "button",
-          "params_json": "{\"icon\":\"recenter\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-recenter-button"
+          "params_json": "{\"icon\":\"load-game\",\"kind\":\"illuminated-button\",\"label\":\"LOAD\",\"action\":\"action.game-load\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/load-game-button-target.png",
+          "layout_json": "{\"ord\":2,\"zone\":\"left\"}",
+          "instance_slug": "hud-bar-load-button"
         },
         {
           "ord": 4,
           "kind": "label",
-          "params_json": "{\"kind\":\"label\"}",
+          "params_json": "{\"bind\":\"cityStats.cityName\",\"font\":\"display\",\"kind\":\"label\",\"align\":\"center\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
+          "layout_json": "{\"row\":0,\"zone\":\"center\"}",
           "instance_slug": "hud-bar-city-name-label"
         },
         {
           "ord": 5,
-          "kind": "button",
-          "params_json": "{\"icon\":\"auto\",\"kind\":\"illuminated-button\",\"label\":\"AUTO\"}",
+          "kind": "label",
+          "params_json": "{\"bind\":\"timeManager.currentDate\",\"kind\":\"readout\",\"format\":\"text\",\"cadence\":\"tick\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-auto-toggle"
+          "layout_json": "{\"row\":1,\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-sim-date-readout"
         },
         {
           "ord": 6,
-          "kind": "button",
-          "params_json": "{\"icon\":\"budget-plus\",\"kind\":\"illuminated-button\",\"label\":\"+\"}",
+          "kind": "label",
+          "params_json": "{\"bind\":\"cityStats.population\",\"kind\":\"readout\",\"format\":\"integer\",\"cadence\":\"tick\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-budget-plus-button"
+          "layout_json": "{\"row\":2,\"zone\":\"center\"}",
+          "instance_slug": "hud-bar-population-readout"
         },
         {
           "ord": 7,
           "kind": "button",
-          "params_json": "{\"icon\":\"budget-minus\",\"kind\":\"illuminated-button\",\"label\":\"-\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-budget-minus-button"
+          "params_json": "{\"icon\":\"zoom-in\",\"kind\":\"illuminated-button\",\"action\":\"action.camera-zoom-in\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/zoom-in-button-1-64-target.png",
+          "layout_json": "{\"col\":0,\"row\":0,\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-zoom-in-button"
         },
         {
           "ord": 8,
           "kind": "button",
-          "params_json": "{\"icon\":\"budget-graph\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-budget-graph-button"
+          "params_json": "{\"icon\":\"zoom-out\",\"kind\":\"illuminated-button\",\"action\":\"action.camera-zoom-out\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/zoom-out-button-1-64-target.png",
+          "layout_json": "{\"col\":0,\"row\":1,\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-zoom-out-button"
         },
         {
           "ord": 9,
           "kind": "button",
-          "params_json": "{\"icon\":\"map\",\"kind\":\"illuminated-button\",\"label\":\"MAP\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-map-button"
+          "params_json": "{\"bind\":\"economyManager.totalBudget\",\"icon\":\"long\",\"kind\":\"illuminated-button\",\"action\":\"action.budget-panel-toggle\",\"format\":\"currency\",\"sub_bind\":\"economyManager.budgetDelta\",\"sub_format\":\"currency-delta\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/long-button-256-64-target.png",
+          "layout_json": "{\"col\":1,\"row\":0,\"zone\":\"right\"}",
+          "instance_slug": "hud-bar-budget-button"
         },
         {
           "ord": 10,
-          "kind": "label",
-          "params_json": "{\"kind\":\"label\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-budget-readout-label"
+          "kind": "button",
+          "params_json": "{\"icon\":\"pause\",\"kind\":\"illuminated-button\",\"action\":\"action.time-play-pause-toggle\",\"alt_icon\":\"pause\",\"bind_state\":\"timeManager.isPaused\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/pause-button-1-64-target.png",
+          "layout_json": "{\"col\":1,\"row\":1,\"zone\":\"right\",\"sub_col\":0}",
+          "instance_slug": "hud-bar-play-pause-button"
         },
         {
           "ord": 11,
           "kind": "button",
-          "params_json": "{\"icon\":\"pause\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"center\"}",
-          "instance_slug": "hud-bar-pause-button"
+          "params_json": "{\"icon\":\"empty\",\"kind\":\"illuminated-button\",\"action\":\"action.time-speed-cycle\",\"label_bind\":\"timeManager.currentTimeSpeedLabel\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
+          "layout_json": "{\"col\":1,\"row\":1,\"zone\":\"right\",\"sub_col\":1}",
+          "instance_slug": "hud-bar-speed-cycle-button"
         },
         {
           "ord": 12,
           "kind": "button",
-          "params_json": "{\"icon\":\"speed-1\",\"kind\":\"illuminated-button\",\"label\":\"1x\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-speed-1-button"
+          "params_json": "{\"icon\":\"stats\",\"kind\":\"illuminated-button\",\"action\":\"action.stats-panel-toggle\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/stats-button-64-target.png",
+          "layout_json": "{\"col\":2,\"row\":0,\"zone\":\"right\",\"rowSpan\":2}",
+          "instance_slug": "hud-bar-stats-button"
         },
         {
           "ord": 13,
           "kind": "button",
-          "params_json": "{\"icon\":\"speed-2\",\"kind\":\"illuminated-button\",\"label\":\"2x\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-speed-2-button"
+          "params_json": "{\"icon\":\"empty\",\"kind\":\"illuminated-button\",\"label\":\"AUTO\",\"action\":\"action.auto-mode-toggle\",\"bind_state\":\"uiManager.isAutoMode\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
+          "layout_json": "{\"col\":3,\"row\":0,\"zone\":\"right\",\"rowSpan\":2}",
+          "instance_slug": "hud-bar-auto-button"
         },
         {
           "ord": 14,
           "kind": "button",
-          "params_json": "{\"icon\":\"speed-3\",\"kind\":\"illuminated-button\",\"label\":\"3x\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-speed-3-button"
-        },
-        {
-          "ord": 15,
-          "kind": "button",
-          "params_json": "{\"icon\":\"speed-4\",\"kind\":\"illuminated-button\",\"label\":\"4x\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-speed-4-button"
-        },
-        {
-          "ord": 16,
-          "kind": "button",
-          "params_json": "{\"icon\":\"speed-5\",\"kind\":\"illuminated-button\",\"label\":\"5x\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-speed-5-button"
-        },
-        {
-          "ord": 17,
-          "kind": "button",
-          "params_json": "{\"icon\":\"play\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-play-button"
-        },
-        {
-          "ord": 18,
-          "kind": "button",
-          "params_json": "{\"icon\":\"build-residential\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-build-residential-button"
-        },
-        {
-          "ord": 19,
-          "kind": "button",
-          "params_json": "{\"icon\":\"build-commercial\",\"kind\":\"illuminated-button\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"right\"}",
-          "instance_slug": "hud-bar-build-commercial-button"
+          "params_json": "{\"icon\":\"empty\",\"kind\":\"illuminated-button\",\"label\":\"MAP\",\"action\":\"action.map-panel-toggle\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
+          "layout_json": "{\"col\":4,\"row\":0,\"zone\":\"right\",\"rowSpan\":2}",
+          "instance_slug": "hud-bar-map-button"
         }
       ]
     }

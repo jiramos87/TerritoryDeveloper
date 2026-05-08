@@ -997,7 +997,21 @@ public static partial class AgentBridgeCommandRunner
         }
 
         var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "bake_ui_from_ir");
-        resp.mutation_result = $"{{\"ir_path\":\"{EscapeJsonString(dto.ir_path)}\",\"theme_so\":\"{EscapeJsonString(dto.theme_so)}\",\"out_dir\":\"{EscapeJsonString(dto.out_dir)}\"}}";
+        // Imp-3 — surface non-fatal warnings to MCP response.
+
+        var warningsJson = new System.Text.StringBuilder();
+        warningsJson.Append("[");
+        if (result.warnings != null)
+        {
+            for (int i = 0; i < result.warnings.Count; i++)
+            {
+                var w = result.warnings[i];
+                if (i > 0) warningsJson.Append(",");
+                warningsJson.Append($"{{\"error\":\"{EscapeJsonString(w.error)}\",\"details\":\"{EscapeJsonString(w.details)}\",\"path\":\"{EscapeJsonString(w.path)}\"}}");
+            }
+        }
+        warningsJson.Append("]");
+        resp.mutation_result = $"{{\"ir_path\":\"{EscapeJsonString(dto.ir_path)}\",\"theme_so\":\"{EscapeJsonString(dto.theme_so)}\",\"out_dir\":\"{EscapeJsonString(dto.out_dir)}\",\"warnings\":{warningsJson}}}";
         CompleteOrFail(repoRoot, commandId, UnityEngine.JsonUtility.ToJson(resp, true));
     }
 

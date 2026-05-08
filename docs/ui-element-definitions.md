@@ -143,9 +143,156 @@ HudStrip.variants   = { idle | dimmed }   // dimmed when modal on top
 
 ---
 
-## Panels
+## Primitives
 
-> One `### {slug}` per panel. Each panel = prose meta + children list + JSON definition (exact DB shape) + **wiring contract** (MCP-tool calibration surface).
+> Component-level surfaces (not panels). Cross-cut all panels. Same lock format as panels (prose meta + JSON definition + wiring contract).
+
+### tooltip
+
+**Role.** Hover-driven hint primitive. Cross-cut concern — every interactive element (button / card / toggle / readout-button) opts in by declaring a `tooltip` field. Sole discoverability channel post-D36 (glossary-panel dropped). Per D28 lock.
+
+**Trigger.** Pointer-rest on element for 500 ms. Pointer-fly-by under threshold = no tooltip. Pointer-leave at any point during the dwell timer cancels. Touch / long-press fallback **deferred post-MVP** (desktop-first).
+
+**Content shape.**
+- **Default.** Single line — element name string (e.g. `"Recenter camera"`, `"Bulldoze"`, `"Toggle minimap"`). Sourced from per-element `tooltip` field on the catalog row (button / card / toggle params_json).
+- **Override.** When element is in `disabled` variant (or otherwise opted in via `tooltip_override`), the override **replaces** the default tooltip — never appended. Used for "Cannot afford — Need $X / cell", "Coming soon", per-family blocked-state copy.
+- **Wrap.** Max width 240 px, wraps to a 2nd line. No 3rd line. Strings exceeding 2 lines are an authoring bug — fail catalog validation.
+
+**Position.** Auto-anchor — default above element, flips below when element is near top edge of viewport. Horizontal align centered on element; clamp left / right to keep tooltip on-screen with 8 px viewport margin.
+
+**Visual.** Cream / paper background (`color.bg.cream`) + dark indigo text (`color.text.indigo`) + 1 px tan border (`color.border.tan`) + 4 px corner radius. Padding 8 px horizontal × 6 px vertical. Body font (not display). 12 px gap between tooltip edge and source element.
+
+**Z-order.** Topmost UI layer (`z.tooltip` — above modals, info-panel, notifications-toast, hud-bar). Nothing should ever obscure a tooltip.
+
+**Animation.** Fade-in ~120 ms on dwell-threshold reach; fade-out ~120 ms on pointer-leave or click. No slide.
+
+**Dismiss paths.**
+- Pointer leaves source element → fade out.
+- Pointer-down (click) on source element → instant hide (action takes priority).
+- Source element variant transitions to `disabled` while hovered → tooltip swaps to override copy without re-fade.
+
+**Pause-time behavior.** Tooltips fire in all sim-states — running, paused, modal-open. Pure UI primitive; sim-state-agnostic.
+
+**Source field.** Each interactive element declares its tooltip explicitly in its catalog row (`params_json.tooltip` / `params_json.tooltip_override`). No auto-generation from slug. No glossary fallback. Missing `tooltip` field on a tooltip-eligible element = **authoring bug** (catalog validator surfaces it).
+
+#### JSON (DB shape — not a panel row, but tooltip field consumers reference this contract)
+
+```json
+{
+  "primitives": {
+    "tooltip": {
+      "props": {
+        "trigger":      { "type": "enum",   "values": ["hover-dwell"], "default": "hover-dwell" },
+        "dwell_ms":     { "type": "number", "default": 500 },
+        "position":     { "type": "enum",   "values": ["auto-flip"], "default": "auto-flip" },
+        "max_width_px": { "type": "number", "default": 240 },
+        "max_lines":    { "type": "number", "default": 2 },
+        "fade_ms":      { "type": "number", "default": 120 },
+        "z_layer":      { "type": "string", "default": "z.tooltip" }
+      },
+      "variants": ["hidden", "fading-in", "visible", "fading-out"]
+    }
+  }
+}
+```
+
+**Field on consumer rows** (button / card / toggle / readout-button):
+
+```json
+{
+  "params_json": {
+    "tooltip":          "Recenter camera",
+    "tooltip_override": null
+  }
+}
+```
+
+#### Wiring contract
+
+```json
+{
+  "wiring": {
+    "bake_requirements": {
+      "sprites":    [],
+      "tokens":     ["color.bg.cream", "color.text.indigo", "color.border.tan", "z.tooltip", "size.tooltip.padding-x", "size.tooltip.padding-y", "size.tooltip.gap", "size.tooltip.maxwidth"],
+      "archetypes": ["tooltip-card"]
+    },
+    "actions_referenced":  [],
+    "binds_referenced":    ["tooltip.text", "tooltip.target", "tooltip.visible"],
+    "hotkeys":             [],
+    "verification_hooks":  ["bridge.tooltip-state-get"],
+    "variant_transitions": [
+      {"from": "hidden",      "to": "fading-in",  "trigger": "pointer.rest.500ms"},
+      {"from": "fading-in",   "to": "visible",    "trigger": "fade.complete"},
+      {"from": "visible",     "to": "fading-out", "trigger": "pointer.leave OR pointer.down"},
+      {"from": "fading-out",  "to": "hidden",     "trigger": "fade.complete"},
+      {"from": "fading-in",   "to": "fading-out", "trigger": "pointer.leave"},
+      {"from": "visible",     "to": "visible",    "trigger": "source.variant.disabled (text swap)"}
+    ]
+  }
+}
+```
+
+#### Drift flagged
+
+- **NEW archetype `tooltip-card`** — cream-paper card with tan border + corner radius. Used only by tooltip primitive.
+- **NEW tokens** — `z.tooltip` (above all UI), `size.tooltip.padding-x` (8 px), `size.tooltip.padding-y` (6 px), `size.tooltip.gap` (12 px source-to-tooltip), `size.tooltip.maxwidth` (240 px).
+- **Bind registry** — 3 new bind paths: `tooltip.text` (string), `tooltip.target` (element ref / null), `tooltip.visible` (bool). Singleton tooltip controller; one tooltip rendered at a time.
+- **EXTEND existing `TooltipController`** (`Assets/Scripts/UI/Tooltips/TooltipController.cs`) — already implemented + working. **Preserve as-is:** `Instance` static singleton resolved in `Awake`; `_themeRef` + `_canvasRect` cached per invariants #3 / #4; `HandleEnter(TooltipText, PointerEventData)` spawns prefab as `_canvasRect` child at pointer screen-point (via `RectTransformUtility.ScreenPointToLocalPointInRectangle`); `HandleExit` destroys when current trigger matches; single-instance lifecycle (new enter destroys prior). `TooltipText` marker component on tooltip-eligible elements survives unchanged. **Add (extension):** 500 ms hover-dwell timer (currently spawns instantly on enter), fade 120 ms in / out (currently instant Instantiate / Destroy), position auto-flip (above default → below near top edge), disabled-variant `tooltip_override` text swap path. **Do NOT:** create a second singleton, switch to `IPointerEnterHandler` per-element listener (already routed through `TooltipText`), reparent away from `_canvasRect`.
+- **Catalog validator extension** — new rule: every catalog row with `tooltip-eligible: true` (buttons / cards / toggles / readout-buttons) MUST declare `tooltip` field non-empty. Override-only (no default) = bake error.
+- **Disabled-variant tooltip swap** — source element transitioning between `default ↔ disabled` while tooltip visible = swap text in place, no fade. Affordability tier on subtype-picker cards re-uses this path.
+- **Modal-coexistence** — tooltip layer above modals means modal-internal hover (e.g. budget-panel slider thumbs) can show tooltips. Confirm with budget-panel + stats-panel + pause-menu locks (slider thumbs / save-row buttons may want tooltips).
+- **i18n** — tooltip strings are user-facing copy. Per-element `tooltip` field will route through string-table at localization pass. Defer to localization workstream.
+- **Motion canon** — 120 ms fade matches notifications-toast (200 ms in / 300 ms out) but is shorter. Tooltips need to feel snappy; toasts feel arrival-y. Keep distinct.
+- **Cross-cut audit** — every locked panel declared a tooltip field on at least one child. Catalog audit pass after primitive locks: enumerate every interactive child across hud-bar / toolbar / tool-subtype-picker / budget-panel / stats-panel / map-panel / info-panel / pause-menu / notifications-toast → confirm `tooltip` field populated. Surface gaps as authoring tasks.
+- **Touch fallback (post-MVP)** — long-press 500 ms dwell → tooltip show; touch-up → fade out. Same primitive shell, alternate trigger. Track as follow-up.
+
+---
+
+### audio-cues
+
+**Role.** Behavior-freeze registry for UI/UX audio. Cross-cuts every panel. Authoritative source of truth — bake pipeline + UI rebake MUST preserve every emit-site listed below. Missing emit on rebake = regression.
+
+**Two engines, one registry:**
+
+- **`BlipEngine` + `BlipId` enum** (`Assets/Scripts/Audio/Blip/`) — procedural / sampled UI cues, master + SFX bus volumes, PlayerPrefs persistence (`BlipBootstrap.SfxVolumeDbKey` + `BlipMutedKey`). 10 cues registered.
+- **`UiSfxPlayer.Play(clip, volume?)`** (`Assets/Scripts/UI/UiSfxPlayer.cs`) — stateless `AudioSource.PlayClipAtPoint` fallback for AudioClip refs that aren't in the Blip catalogue. Used by `SubtypePickerController` (3 clips). No-op on null.
+
+**Cue table (locked).**
+
+| Cue | Engine | Trigger source class | Fire event | Panel host | Preserve verdict |
+| --- | --- | --- | --- | --- | --- |
+| `BlipId.UiButtonHover` | BlipEngine | `ThemedButton` (auto via PointerEnter) + `MainMenuController` (entry callback) | Pointer enters any `ThemedButton` | every panel with buttons | KEEP — ThemedButton owns auto-emit; rebake MUST route every interactive button through `ThemedButton` to inherit |
+| `BlipId.UiButtonClick` | BlipEngine | `ThemedButton` (auto on click) + `MainMenuController` (explicit on Continue / NewGame / Load / Settings / Quit / Back / scenario-toggle) | Click commit | every panel with buttons | KEEP — ThemedButton auto + MainMenuController explicit emits both survive |
+| `BlipId.ToolRoadTick` | BlipEngine | `RoadManager` | Per-cell tick during road stroke paint | toolbar (Road tool active) | KEEP — sim-side, not UI; rebake of toolbar MUST NOT bypass `RoadManager` |
+| `BlipId.ToolRoadComplete` | BlipEngine | `RoadManager` | Road stroke commit | toolbar (Road tool) | KEEP — same |
+| `BlipId.ToolBuildingPlace` | BlipEngine | `BuildingPlacementService` | Successful building placement | toolbar / tool-subtype-picker (any build family) | KEEP — placement-service-owned |
+| `BlipId.ToolBuildingDenied` | BlipEngine | `BuildingPlacementService` | Placement rejected (insufficient funds / invalid cell / blocked) | toolbar / tool-subtype-picker | KEEP — denied-feedback critical UX |
+| `BlipId.WorldCellSelected` | BlipEngine | `GridManager` | World click resolves to a cell selection | info-panel (auto-open trigger) | KEEP — selection-resolver emit must survive `WorldSelectionResolver` extraction (info-panel drift item) |
+| `BlipId.EcoMoneyEarned` | BlipEngine | `EconomyManager` | Positive treasury delta (income) | hud-bar money readout / budget-panel | KEEP |
+| `BlipId.EcoMoneySpent` | BlipEngine | `EconomyManager` | Negative treasury delta with `notifyInsufficientFunds` flag | hud-bar money readout / toolbar (denied buy) | KEEP |
+| `BlipId.SysSaveGame` | BlipEngine | `GameSaveManager` (2 emit-sites: `SaveGame()` + `SaveGame(string)`) | Save file commit (autosave + named-save) | save-load-view (Save button) | KEEP — both emit-sites must survive `GameSaveManager` API additions (`DeleteSave` / `GetSaveFiles` / `HasAnySave`) |
+| `sfxPanelOpen` (AudioClip) | UiSfxPlayer | `SubtypePickerController` | Picker becomes visible | tool-subtype-picker | KEEP — SubtypePickerController-owned; rebake of picker MUST preserve open emit |
+| `sfxPanelClose` (AudioClip) | UiSfxPlayer | `SubtypePickerController` | Picker dismisses (ESC / same-tool re-click) | tool-subtype-picker | KEEP |
+| `sfxPickerConfirm` (AudioClip) | UiSfxPlayer | `SubtypePickerController` | Subtype card click commits selection | tool-subtype-picker | KEEP |
+| `sfxNotificationShow` (AudioClip) | direct AudioSource | `GameNotificationManager` | Non-error toast posted (Info / Success / Warning) | notifications-toast | KEEP — already in toast lock, anchored here for cross-ref |
+| `sfxErrorFeedback` (AudioClip) | direct AudioSource | `GameNotificationManager` | Error toast posted | notifications-toast | KEEP — already in toast lock |
+
+**Behavior-freeze rules.**
+
+1. **Auto-emit invariance.** `ThemedButton` owns hover + click Blips for every button across every panel. Rebake MUST route all baked buttons through `ThemedButton` (not raw `UnityEngine.UI.Button`). Drift = silent loss of every UI Blip cue.
+2. **Sim-side emits never reroute through UI layer.** `RoadManager` / `BuildingPlacementService` / `GridManager` / `EconomyManager` / `GameSaveManager` own their own emits. UI panels receive consequences via binds; they do NOT replay these cues.
+3. **Volume + mute persistence.** `BlipBootstrap.SfxVolumeDbKey` + `BlipBootstrap.SfxMutedKey` PlayerPrefs are read on Awake and applied to BlipMixer SfxVolume param. `settings-view` SFX-volume slider (locked) drives these keys via dB↔linear util in `SettingsScreenDataAdapter`. Master + Music volume keys distinct. Rebake of settings-view MUST preserve the dB↔linear mapping.
+4. **No silent muting.** `BlipEngine.Play(BlipId.None)` is a no-op by design (None = 0). Other emits assume valid registered patches.
+
+**Pending follow-ups.**
+
+- **Toast-tier expansion (already locked in `notifications-toast`).** Adds 3 new clips (`sfxSuccess` chime, `sfxWarning` low-pulse, `sfxMilestone` gold-flourish) — not yet authored. Authoring task tracked separately.
+- **Pause-menu + modals (budget / stats / pause-menu / save-load-view).** No open / close cue today. Decision deferred — candidates: reuse `sfxPanelOpen` / `sfxPanelClose`, or add `BlipId.UiModalOpen` / `UiModalClose`. Lock during interactions phase.
+- **Tooltip primitive.** No audio (intentional — 500 ms dwell + visual fade is the channel). Lock = silent.
+- **Subtype picker confirm vs button click overlap.** When user clicks a subtype card, `sfxPickerConfirm` fires AND the underlying button auto-emits `UiButtonClick`. Audit if double-emit is intentional — flag for interactions phase.
+
+---
 
 ### Per-panel wiring contract — template
 
@@ -222,10 +369,11 @@ hud-bar  (hstack, full-width, top-anchored)
     │       ├─ play-pause-button   (illuminated-button, icon swap on bind)
     │       └─ speed-cycle-button  (illuminated-button, label cycles 1×→2×→3×→4×)
     ├─ col 2: stats-button (illuminated-button, tall, spans 2 rows)
-    └─ col 3: map-button   (illuminated-button, tall, spans 2 rows)
+    ├─ col 3: auto-button  (illuminated-button, tall, spans 2 rows) — auto-mode toggler (caption-only "AUTO" until icon authored)
+    └─ col 4: map-button   (illuminated-button, tall, spans 2 rows)
 ```
 
-11 leaf elements + 6 grouping containers.
+12 leaf elements + 6 grouping containers.
 
 #### JSON (seed source — DB shape)
 
@@ -253,7 +401,8 @@ hud-bar  (hstack, full-width, top-anchored)
     { "ord": 10, "kind": "button",  "instance_slug": "hud-bar-play-pause-button",  "params_json": "{\"icon\":\"icon-play\",\"alt_icon\":\"icon-pause\",\"kind\":\"illuminated-button\",\"bind_state\":\"timeManager.isPaused\",\"action\":\"action.time-play-pause-toggle\"}",                                                                "layout_json": "{\"zone\":\"right\",\"col\":1,\"row\":1,\"sub_col\":0}" },
     { "ord": 11, "kind": "button",  "instance_slug": "hud-bar-speed-cycle-button", "params_json": "{\"kind\":\"illuminated-button\",\"label_bind\":\"timeManager.currentTimeSpeedLabel\",\"action\":\"action.time-speed-cycle\"}",                                                                                                            "layout_json": "{\"zone\":\"right\",\"col\":1,\"row\":1,\"sub_col\":1}" },
     { "ord": 12, "kind": "button",  "instance_slug": "hud-bar-stats-button",       "params_json": "{\"icon\":\"icon-stats\",\"kind\":\"illuminated-button\",\"action\":\"action.stats-panel-toggle\"}",                                                                                                                                       "layout_json": "{\"zone\":\"right\",\"col\":2,\"row\":0,\"rowSpan\":2}" },
-    { "ord": 13, "kind": "button",  "instance_slug": "hud-bar-map-button",         "params_json": "{\"icon\":\"icon-map\",\"kind\":\"illuminated-button\",\"action\":\"action.map-panel-toggle\"}",                                                                                                                                          "layout_json": "{\"zone\":\"right\",\"col\":3,\"row\":0,\"rowSpan\":2}" }
+    { "ord": 13, "kind": "button",  "instance_slug": "hud-bar-auto-button",        "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"AUTO\",\"bind_state\":\"uiManager.isAutoMode\",\"action\":\"action.auto-mode-toggle\"}",                                                                                                       "layout_json": "{\"zone\":\"right\",\"col\":3,\"row\":0,\"rowSpan\":2}" },
+    { "ord": 14, "kind": "button",  "instance_slug": "hud-bar-map-button",         "params_json": "{\"icon\":\"icon-map\",\"kind\":\"illuminated-button\",\"action\":\"action.map-panel-toggle\"}",                                                                                                                                          "layout_json": "{\"zone\":\"right\",\"col\":4,\"row\":0,\"rowSpan\":2}" }
   ]
 }
 ```
@@ -285,7 +434,8 @@ hud-bar  (hstack, full-width, top-anchored)
       "action.budget-panel-toggle",
       "action.time-play-pause-toggle", "action.time-speed-cycle",
       "action.time-speed-set-1", "action.time-speed-set-2", "action.time-speed-set-3", "action.time-speed-set-4",
-      "action.stats-panel-toggle", "action.map-panel-toggle"
+      "action.stats-panel-toggle", "action.map-panel-toggle",
+      "action.auto-mode-toggle"
     ],
     "binds_referenced": [
       "cityStats.cityName",
@@ -294,7 +444,8 @@ hud-bar  (hstack, full-width, top-anchored)
       "timeManager.isPaused",
       "timeManager.currentTimeSpeedLabel",
       "economyManager.totalBudget",
-      "economyManager.budgetDelta"
+      "economyManager.budgetDelta",
+      "uiManager.isAutoMode"
     ],
     "hotkeys": [
       { "key": "Space",  "action": "action.time-play-pause-toggle" },
@@ -328,6 +479,40 @@ hud-bar  (hstack, full-width, top-anchored)
 - **Action registry source-of-truth.** None of the `action.*` strings exist in C# yet. Need `UiActionRegistry` static class + bake-time validator + MCP `action_registry_list` slice. Flag → code task.
 - **Bind registry source-of-truth.** `cityStats.*` / `timeManager.*` / `economyManager.*` paths need a runtime bind dispatcher. Flag → code task.
 - **Sprite catalog gaps.** 10 icon slugs listed; verify each exists in `catalog_sprite` rows pre-bake. Flag → catalog audit task.
+
+#### Existing Implementation (preserve)
+
+> Behavior-freeze inventory. Every entry below is **working production code** that the rebake MUST extend, not replace. Drift list above describes ADDITIONS / EXTENSIONS layered on top of these.
+
+**1. `HudBarDataAdapter` (`Assets/Scripts/UI/HUD/HudBarDataAdapter.cs`)** — bake-to-sim bridge. PRESERVE:
+
+- **Producer cache in `Awake`** (invariants #3 + #4) — `CityStats` SO + `EconomyManager` + `TimeManager` + `UIManager` + `CameraController` + `UiAssetCatalog` + `MiniMapController` + `GrowthBudgetPanelController`. Inspector first, `FindObjectOfType` fallback. Rebake MUST keep this caching contract.
+- **`RebindButtonsByIconSlug()`** — hard-resets all `IlluminatedButton` Inspector slots (`_newButton` / `_saveButton` / `_loadButton` / `_autoButton` / `_budgetButton` / `_zoomInButton` / `_zoomOutButton` / `_statsButton` / `_miniMapButton` / `_speedButtons[5]`) then walks child `IlluminatedButton` components matching `IlluminatedButtonDetail.iconSpriteSlug`. Lowercase normalization for BUG-62. Caption-text fallback for sprite-less buttons (MAP / AUTO / BUDGET) via `TextMeshProUGUI`. Catalog-resolved display names for AUTO + MAP toggles. **CRITICAL:** drop this method = every click handler fires stale action against re-baked button. Rebake MUST keep slug-walk + caption-fallback.
+- **`WireClickHandlers()`** — binds every `IlluminatedButton.OnClicked` to its action handler (zoom / minimap-toggle / stats-toggle / budget-toggle / speed slot / play-pause). Rebake MUST preserve these bindings.
+- **`EnsureSpeedSlot(index, button)`** — populates `_speedButtons` array by canonical slug (`pause-button-1-64` / `speed-1..4-button-1-64`), index 0..4 maps to pause / 0.5× / 1× / 2× / 4×. PRESERVE.
+- **Stale-button cleanup** — `RuntimeMiniMapButton` GameObject destroyed on Awake (legacy corner button retired). PRESERVE.
+- **Lazy-spawn `GrowthBudgetPanelController`** when Inspector slot empty (FEAT-59). PRESERVE.
+
+**2. `MiniMapController` (`Assets/Scripts/Controllers/GameControllers/MiniMapController.cs`)** — minimap canvas + click/drag camera nav. PRESERVE every existing behavior; lock at `map-panel` says "EXTEND for layer toggles + drag-pan". Rebake of hud-bar's `hud-bar-map-button` MUST call existing `MiniMapController` API (toggle / SetVisible) — NOT replace it.
+
+**3. `SpeedButtonsController` (`Assets/Scripts/Controllers/UnitControllers/SpeedButtonsController.cs`)** — 5 speed buttons + `OnSpeedChangedExternally(int)` callback wired by `TimeManager`. PRESERVE. Rebake of hud-bar's speed cluster MUST keep `TimeManager.SetTimeSpeedIndex(int)` as the sole mutation path (HUD click + keyboard `Space` / `Alpha1..4` both route here per `TimeManager.HandleOnKeyInput`).
+
+**4. `TimeManager` (`Assets/Scripts/Managers/GameManagers/TimeManager.cs`)** — sim-tick driver + speed state owner. PRESERVE: `currentTimeSpeedIndex` / `timeSpeeds[5]` / `SetTimeSpeedIndex(int)` / `CurrentTimeSpeedIndex` getter / `HandleOnKeyInput()` / `GetCurrentDate()` / `GetCurrentTimeMultiplier()`. Hud-bar speed-cycle button binds against `currentTimeSpeedLabel` (locked above). Geography-init gate (`geographyManager.IsInitialized`) survives — UI must remain responsive during init even when sim-tick blocked.
+
+**5. `CityStats` SO** — `cityName` + `population` producer. Rebake of city-name label + population readout MUST bind to existing fields (no shadow producer). Drift list above already calls out `CityStats.SetCityName` API addition for new-game-form.
+
+**6. `EconomyManager`** — `totalBudget` + `budgetDelta` producer. Hud-bar budget-button readout-button binds here. PRESERVE. `BlipId.EcoMoneyEarned` / `EcoMoneySpent` emit-sites preserved (see audio-cues registry).
+
+**7. `IlluminatedButton` + `IlluminatedButtonDetail`** — bake-time button archetype carrying `iconSpriteSlug` field used by slug-walk above. PRESERVE both, including `OnClicked` UnityEvent surface.
+
+**8. `UiAssetCatalog`** — slug → display-name resolution (Stage 9.13). PRESERVE `TryGetButtonEntry(slug, out entry)` API.
+
+**Behavior-freeze rules (hud-bar specific).**
+
+1. **Slug-walk owns slot binding.** Inspector array slots are scratch space; runtime authority = `RebindButtonsByIconSlug` matching baked `iconSpriteSlug`. Rebake MUST maintain slug stability — renaming a baked icon = breaks slot resolution silently.
+2. **Speed mutation single-path.** `TimeManager.SetTimeSpeedIndex` is the ONLY write path. HUD click + keyboard hotkey both route here. Rebake MUST NOT add a parallel mutator.
+3. **Geography-init gate non-bypass.** Sim-state reads gated by `geographyManager.IsInitialized`. HUD time accumulator + key input remain active during init for responsiveness. Rebake MUST keep this split.
+4. **Caption-text fallback survives.** MAP / AUTO / BUDGET bake without sprite art today; caption-text fallback in slug-walk is the resolution path. If rebake adds sprite art, slug-walk MUST still match by slug FIRST + fall back to caption — both paths coexist.
 
 ---
 
@@ -475,6 +660,7 @@ toolbar  (vstack, left-anchored, top-aligned)
   - **Close trigger.** ESC OR re-clicking the same active toolbar tool → strip unmounts + tool deselects. **No other dismissal.** World clicks paint freely; HUD clicks do not dismiss; clicking another card swaps subtype + keeps strip open; clicking another toolbar tool swaps strip variant in place.
   - **No-picker mode.** Toolbar tools with `picker_variant: none` (only `DemolishCell` in MVP) → strip stays unmounted; tool acts standalone.
 - **Card content (3-line).** Icon + name + cost. **No capacity line** on the card; capacity surfaces in the post-placement info-panel only.
+- **Sprite source policy (preview reuse).** Each card's icon = the same in-world isometric diamond tile sprite the placed cell will render with after commit. Picker = visual preview of the placed result; no separate picker-only artwork. `catalog_sprite` rows for picker subtype slugs (e.g. `r-light`, `c-medium`, `forest-sparse`) point at the same `Assets/Sprites/{Family}/{kind}-zoning-64.png` files used by the in-world tile renderer.
 - **Cost label per family.** Single-click families (Power / Water / Sewage / Landmark) → flat $. Drag-paint + stroke + mode-driven families (R / C / I / StateZoning / Road / Forests) → $/cell.
 - **Affordability state.** Live-bound to budget. Unaffordable cards render greyed + non-interactive + tooltip override `Cannot afford` / `Need $X / cell`. Affordable cards render normal cream body.
 - **Active-card visual.** Armed card = pressed-cream body + 2 px indigo highlight ring. Other cards = default cream body. Hover = cream-pressed body.
@@ -490,7 +676,7 @@ toolbar  (vstack, left-anchored, top-aligned)
 | Commercial     | 3        | `cards-density`  | `c-light`, `c-medium`, `c-heavy`                                                           | drag-paint    | $/cell     |
 | Industrial     | 3        | `cards-density`  | `i-light`, `i-medium`, `i-heavy`                                                           | drag-paint    | $/cell     |
 | StateZoning    | 7        | `cards-kind`     | `s-police`, `s-fire`, `s-edu`, `s-health`, `s-parks`, `s-public-housing`, `s-public-offices` | drag-paint    | $/cell     |
-| Road           | 4        | `cards-kind`     | `road-2`, `road-4`, `road-6`, `road-highway`                                               | stroke        | $/cell     |
+| Road           | 1        | `cards-kind`     | `road-highway` (elbows / bridges / T-intersections auto-derived from placement context — not exposed as picker subtypes) | stroke        | $/cell     |
 | Power          | 2        | `cards-kind`     | `power-coal`, `power-solar`                                                                | single-click  | flat $     |
 | Water          | 2        | `cards-kind`     | `water-reservoir`, `water-desal`                                                           | single-click  | flat $     |
 | Sewage         | 2        | `cards-kind`     | `sewage-basic`, `sewage-treated`                                                           | single-click  | flat $     |
@@ -538,7 +724,7 @@ R/C/I cards lock density tier on placement. Sim evolves the placed cell *within*
 | Sprites — strip arrows | `scroll-left`, `scroll-right`                                                                                                                            | `catalog_sprite`                                           |
 | Sprites — R/C/I cards  | `r-light`, `r-medium`, `r-heavy`, `c-light`, `c-medium`, `c-heavy`, `i-light`, `i-medium`, `i-heavy`                                                     | `catalog_sprite`                                           |
 | Sprites — StateZoning  | `s-police`, `s-fire`, `s-edu`, `s-health`, `s-parks`, `s-public-housing`, `s-public-offices`                                                             | `catalog_sprite`                                           |
-| Sprites — Road         | `road-2`, `road-4`, `road-6`, `road-highway`                                                                                                             | `catalog_sprite`                                           |
+| Sprites — Road         | `road-highway`                                                                                                                                           | `catalog_sprite`                                           |
 | Sprites — Utility      | `power-coal`, `power-solar`, `water-reservoir`, `water-desal`, `sewage-basic`, `sewage-treated`                                                          | `catalog_sprite`                                           |
 | Sprites — Landmark     | `lmk-city-1`, `lmk-city-2`, `lmk-region-1`, `lmk-region-2`                                                                                               | `catalog_sprite`                                           |
 | Sprites — Forests      | `forest-sparse`, `forest-medium`, `forest-dense`, `mode-single`, `mode-spray`                                                                            | `catalog_sprite`                                           |
@@ -557,7 +743,7 @@ R/C/I cards lock density tier on placement. Sim evolves the placed cell *within*
 - **Bind registry source-of-truth.** 5 new binds; same dependency on bind-dispatcher design task. `toolSelection.affordable.*` keyed by subtype-slug = wildcard pattern → registry must support pattern subscriptions.
 - **Industrial subtype assignment.** Picker exposes 3 density cards (light/medium/heavy). Agri/Manuf/Tech subtype determination post-placement is undefined in MVP. Flag → sim spec task (likely deferred to post-MVP).
 - **StateZoning subtype pool + tile variants.** Each of 7 kinds needs a building spawn pool + a grey-shade tile variant for paint preview. Inherits drift flag from toolbar block.
-- **Sprite catalog gaps.** ~36 picker-card sprite slugs listed (9 R/C/I + 7 StateZoning + 4 Road + 6 Utility + 4 Landmark + 5 Forests + 2 arrows). Catalog audit must verify each row exists pre-bake or scaffold a placeholder family. Flag → catalog audit (consolidate with toolbar audit).
+- **Sprite catalog gaps.** ~34 picker-card sprite slugs listed (9 R/C/I + 7 StateZoning + 1 Road + 6 Utility + 4 Landmark + 5 Forests + 2 arrows). Catalog audit must verify each row exists pre-bake or scaffold a placeholder family. Flag → catalog audit (consolidate with toolbar audit).
 - **Children flattening at bake time.** JSON above shows a single `card-template` row, not literal cards. Bake handler must expand `children` per active variant into N actual rows. Specify expansion rule as part of bake schema. Flag → bake handler task.
 - **Forests mode-button placement.** Mode buttons (`mode-single`, `mode-spray`) sit alongside cards or in a separate sub-zone? Need UX answer + visual mock. Flag → follow-up design poll.
 - **Affordability tooltip copy localization.** "Cannot afford" + "Need $X / cell" need i18n surface — defer to localization pass. Flag.
@@ -960,6 +1146,584 @@ Field sets per type:
 
 ---
 
+### main-menu
+
+**Role.** Pre-game title-screen surface. Single panel with 5 root buttons (Continue / New Game / Load / Settings / Quit) that swaps its center content between root / new-game-form / load-list / settings sub-views. Entry point into CityScene; pause-menu's "Main menu" returns here. Lives in its own scene (`MainMenu.unity`, build index 0); CityScene = build index 1.
+
+**Anchor + sim policy.** Full-screen panel; no sim running yet (title screen, no game state). Plain themed cream/sand background — full-screen color fill from `color.bg.menu` token. No hero art, no audio, no live preview in MVP. Static layout, no animation on bg.
+
+**Layout (locked).**
+- Title strip top-center: game name large (`size.text.title-display`).
+- Branding strip bottom-left + bottom-right corners: studio name `Bacayo Studio` (left) + version string `v0.X.Y` (right). Both small, muted (`color.text.muted`).
+- Center area: vertical button stack centered horizontally + vertically. Buttons full-width within 320 px column. 12 px gap between buttons. 5 buttons in fixed order top-to-bottom: Continue / New Game / Load / Settings / Quit.
+- Sub-view: same center area swaps in sub-view content (form fields / list / settings rows). Title + branding strips stay constant across all views.
+
+**Navigation model (locked).** Single panel, content-swap navigation. `main-menu.contentScreen` enum bind drives which view fills center: `root` / `new-game-form` / `load-list` / `settings`. Click a root button → bind flips → center re-renders. No prefab swap, no modal stack. Title + branding never re-render.
+
+**Back navigation (locked).** Persistent back-arrow button top-left of every sub-view (NOT visible on root). Click back → `contentScreen` flips to `root`. ESC key bound to same action when on sub-view; ESC on root = no-op (not a modal — nothing to close).
+
+**Button behaviors (locked).**
+| Button | Action | Notes |
+| --- | --- | --- |
+| Continue | `mainmenu.continue` → auto-load most-recent save → fade out → CityScene | Disabled (greyed) when no save exists; tooltip override `No save found`. No intermediate splash — instant transition. |
+| New Game | `mainmenu.openNewGame` → `contentScreen = new-game-form` | In-place swap. Form Submit → load CityScene with new-game params. |
+| Load | `mainmenu.openLoad` → `contentScreen = load-list` | In-place swap. List item click → load that save → CityScene. |
+| Settings | `mainmenu.openSettings` → `contentScreen = settings` | In-place swap. Same settings-view shared with pause-menu. |
+| Quit | `mainmenu.quit.confirm` (1st click) → `mainmenu.quit` (2nd within 3 s) → `Application.Quit` | Inline 3 s confirm; reuses `ConfirmButton` primitive shared with info-panel demolish + pause-menu Quit / Main-menu. Editor branch: `EditorApplication.ExitPlaymode`. |
+
+**View reuse with pause-menu.** `settings-view` + `load-list-view` are reusable subpanels. From main-menu they swap into the menu surface. From pause-menu they open as nested modal content-replacement. Single source of truth for fields + layout. Bake emits one shared `settings-view` + `load-list-view` archetype; host (main-menu OR pause-menu) determines mount point + decoration.
+
+**New-game-form view.** Locked separately under `### new-game-form` (next phase 1 surface). Hosted by main-menu in MVP; no other host.
+
+**Continue-disabled detection.** On main-menu open: scan `Application.persistentDataPath` for `*.json` save files (existing `GameSaveManager.GetSaveFiles()` API). Empty list → `mainmenu.continue.enabled = false` bind → Continue button greys + tooltip override engages. Non-empty → enabled, click loads `GameSaveManager.GetMostRecentSave()`.
+
+**Quit confirm.** Identical pattern to info-panel demolish + pause-menu Quit. 1st click: button morphs to red bg + countdown bar (3 s) + label `Click again to confirm`. 2nd click within 3 s → `Application.Quit`. Timeout → reverts to default.
+
+**Pause-menu return path.** When CityScene's pause-menu fires `pause.toMainMenu` (after its own 3 s confirm), runtime calls `SceneManager.LoadScene(0)` → main-menu loads fresh. Player must Save before returning or unsaved progress is lost (matches pause-menu confirm copy).
+
+**Existing implementation reused.**
+- Adapter: `Assets/Scripts/UI/Modals/MainMenuController.cs` (existing — drives 5 buttons, scene index 0/1 logic).
+- Sub-adapters: `NewGameScreenDataAdapter.cs` · `SaveLoadScreenDataAdapter.cs` (mode = Load) · `SettingsScreenDataAdapter.cs` (all reusable across main-menu + pause-menu hosts).
+- Save layer: `GameSaveManager.GetSaveFiles()` + `GameSaveManager.GetMostRecentSave()` + `GameSaveManager.LoadGame()`.
+- Quit confirm primitive: shared `ConfirmButton` (info-panel demolish + pause-menu).
+
+#### JSON DB shape — main-menu
+
+```jsonc
+{
+  "panels": {
+    "main-menu": {
+      "layout_template": "fullscreen-stack",
+      "layout": "fullscreen-stack",
+      "params_json": "{\"bg_color_token\":\"color.bg.menu\"}",
+      "children": [
+        { "ord": 1, "kind": "label",          "instance_slug": "main-menu-title-label",       "params_json": "{\"size_token\":\"size.text.title-display\",\"zone\":\"top\"}" },
+        { "ord": 2, "kind": "label",          "instance_slug": "main-menu-studio-label",      "params_json": "{\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\",\"zone\":\"bottom-left\"}" },
+        { "ord": 3, "kind": "label",          "instance_slug": "main-menu-version-label",     "params_json": "{\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\",\"zone\":\"bottom-right\"}" },
+        { "ord": 4, "kind": "button",         "instance_slug": "main-menu-continue-button",   "params_json": "{\"kind\":\"primary-button\",\"label\":\"Continue\",\"action\":\"mainmenu.continue\",\"disabled_bind\":\"mainmenu.continue.disabled\",\"tooltip\":\"Resume your most recent city.\",\"tooltip_override_when_disabled\":\"No save found.\",\"zone\":\"center\"}" },
+        { "ord": 5, "kind": "button",         "instance_slug": "main-menu-new-game-button",   "params_json": "{\"kind\":\"primary-button\",\"label\":\"New Game\",\"action\":\"mainmenu.openNewGame\",\"tooltip\":\"Start a new city.\",\"zone\":\"center\"}" },
+        { "ord": 6, "kind": "button",         "instance_slug": "main-menu-load-button",       "params_json": "{\"kind\":\"primary-button\",\"label\":\"Load\",\"action\":\"mainmenu.openLoad\",\"tooltip\":\"Open the load list.\",\"zone\":\"center\"}" },
+        { "ord": 7, "kind": "button",         "instance_slug": "main-menu-settings-button",   "params_json": "{\"kind\":\"primary-button\",\"label\":\"Settings\",\"action\":\"mainmenu.openSettings\",\"tooltip\":\"Open settings.\",\"zone\":\"center\"}" },
+        { "ord": 8, "kind": "confirm-button", "instance_slug": "main-menu-quit-button",       "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Quit\",\"confirm_label\":\"Click again to confirm\",\"confirm_window_ms\":3000,\"action_confirm\":\"mainmenu.quit.confirm\",\"action\":\"mainmenu.quit\",\"tooltip\":\"Exit to desktop.\",\"zone\":\"center\"}" },
+        { "ord": 9, "kind": "button",         "instance_slug": "main-menu-back-button",       "params_json": "{\"kind\":\"icon-button\",\"icon\":\"back-arrow\",\"action\":\"mainmenu.back\",\"visible_bind\":\"mainmenu.back.visible\",\"tooltip\":\"Back to menu.\",\"zone\":\"top-left\"}" },
+        { "ord": 10, "kind": "view-slot",     "instance_slug": "main-menu-content-slot",      "params_json": "{\"slot_bind\":\"mainmenu.contentScreen\",\"views\":[\"root\",\"new-game-form\",\"load-list\",\"settings\"],\"default\":\"root\",\"zone\":\"center\"}" }
+      ]
+    }
+  }
+}
+```
+
+#### Wiring contract — main-menu
+
+```yaml
+bake_requirements:
+  - layout_template: fullscreen-stack
+  - children: [title-label, studio-label, version-label, continue-button, new-game-button, load-button, settings-button, quit-button (confirm), back-button (sub-view only), content-slot]
+  - shared_views: [new-game-form, load-list-view, settings-view]
+  - reuses: ConfirmButton primitive (info-panel demolish, pause-menu)
+
+actions_referenced:
+  - mainmenu.continue        # auto-load most recent save → CityScene
+  - mainmenu.openNewGame     # contentScreen = new-game-form
+  - mainmenu.openLoad        # contentScreen = load-list
+  - mainmenu.openSettings    # contentScreen = settings
+  - mainmenu.back            # contentScreen = root
+  - mainmenu.quit.confirm    # 1st click — stage 3s confirm
+  - mainmenu.quit            # 2nd click within 3s — Application.Quit
+
+binds_referenced:
+  - mainmenu.contentScreen           # enum: root | new-game-form | load-list | settings
+  - mainmenu.continue.disabled       # bool — true when no saves exist
+  - mainmenu.back.visible            # bool — true when contentScreen != root
+  - mainmenu.title.text              # string — game name
+  - mainmenu.version.text            # string — v0.X.Y
+  - mainmenu.studio.text             # string — Bacayo Studio
+
+hotkeys:
+  - ESC on sub-view → mainmenu.back
+  - ESC on root → no-op
+
+verification_hooks:
+  - test:mainmenu.continue.disabled-when-no-saves
+  - test:mainmenu.continue.enabled-when-saves-exist
+  - test:mainmenu.contentSwap.new-game-form
+  - test:mainmenu.contentSwap.load-list
+  - test:mainmenu.contentSwap.settings
+  - test:mainmenu.contentSwap.back-returns-to-root
+  - test:mainmenu.quit.requires-2-clicks-within-3s
+  - test:mainmenu.quit.confirm-times-out-after-3s
+  - test:mainmenu.continue.loads-most-recent-save
+
+variant_transitions:
+  - root ⇄ new-game-form (via mainmenu.openNewGame / mainmenu.back)
+  - root ⇄ load-list      (via mainmenu.openLoad / mainmenu.back)
+  - root ⇄ settings       (via mainmenu.openSettings / mainmenu.back)
+  - quit-button: idle → armed (3s countdown) → idle (timeout) | quit (2nd click)
+```
+
+**Drift flagged.**
+- **Shared `settings-view` + `load-list-view` archetypes.** New archetype kind `view-slot` for content-swap mounts; `settings-view` + `load-list-view` + `new-game-form` reusable across main-menu + pause-menu hosts. Flag → archetype catalog audit + lock with `### settings-modal` / `### load-modal` / `### new-game-form`.
+- **`mainmenu.contentScreen` enum-bind.** Mirrors `pause.contentScreen` from pause-menu. Reuse same enum-bind dispatcher pattern. Flag → bind dispatcher pattern.
+- **`view-slot` primitive.** New archetype kind not yet in component catalog. Renders one of N declared sub-views based on enum bind value. Flag → component archetype audit.
+- **`mainmenu.continue.disabled` detection.** Need lightweight `GameSaveManager.HasAnySave()` API (avoid scanning files on every bind read). Flag → `GameSaveManager` API audit.
+- **`GameSaveManager.GetMostRecentSave()`.** Need API returning newest save by `File.GetLastWriteTime`. Flag → `GameSaveManager` API audit.
+- **Pre-game scene split.** `MainMenu.unity` (build index 0) vs `CityScene.unity` (build index 1). Confirm `MainMenuController` does NOT load any sim managers (no GridManager / GeographyManager / etc. in MainMenu scene). Flag → MainMenu scene composition audit.
+- **Background color token.** New token `color.bg.menu` (cream / sand). Flag → token catalog audit.
+- **Title typography token.** New `size.text.title-display` (large display weight for game name). Flag → token catalog audit.
+- **Version string source.** Reads `Application.version` (Unity Player Settings); studio name = const. Flag → version pipeline.
+- **No music / SFX (MVP).** Audio system not wired in main-menu. Title-screen music deferred post-MVP. Flag → audio MVP scope.
+- **No hero art (MVP).** Plain `color.bg.menu` fill only; static illustration / live CityScene preview / animated gradient deferred post-MVP. Flag → art MVP scope.
+- **Action registry expansion.** New actions: `mainmenu.continue` · `mainmenu.openNewGame` · `mainmenu.openLoad` · `mainmenu.openSettings` · `mainmenu.back` · `mainmenu.quit.confirm` · `mainmenu.quit`. Flag → action registry.
+- **Bind registry expansion.** New binds: `mainmenu.contentScreen` (enum) · `mainmenu.continue.disabled` (bool) · `mainmenu.back.visible` (bool) · `mainmenu.title.text` · `mainmenu.version.text` · `mainmenu.studio.text`. Flag → bind dispatcher pattern.
+- **`MainMenuController` retrofit.** Existing controller already wires 5 buttons + scene-load logic. Needs refactor: drop direct `Application.Quit` call → route through `ConfirmButton` primitive; drop direct sub-screen prefab activate → drive via `mainmenu.contentScreen` bind. Flag → controller refactor audit.
+- **Tooltip-override on Continue.** Per locked tooltip primitive: disabled state replaces default tooltip. Confirm tooltip bake includes both default + override strings. Flag → tooltip catalog audit.
+- **i18n.** All button labels + title + studio + version-prefix + tooltip strings are user-facing. Flag → string-table.
+- **Motion.** Open / close = instant scene transition. Sub-view swap = instant. Continue → CityScene = fade out current scene + fade in CityScene (TBD duration; reuse scene transition primitive if exists). Flag → motion spec confirmation + scene transition primitive audit.
+
+---
+
+### new-game-form
+
+**Role.** Pre-game character-sheet for a new city. Hosted as a sub-view of `main-menu` via `view-slot` (NOT a top-level panel; NOT a modal; NOT reachable from in-game pause-menu). Player picks 3 params (map size · starting budget · city name), clicks Start, CityScene loads with those params. Locks D18 + D30.
+
+**Anchor + sim policy.** Mounted into `main-menu-content-slot` when `mainmenu.contentScreen = new-game-form`. Inherits main-menu's full-screen frame: title strip + branding strips stay constant; back-arrow top-left visible. No sim running yet (pre-game).
+
+**Fields (locked — D18).**
+| Field | Control | Values | Default |
+| --- | --- | --- | --- |
+| Map size | 3 preset cards | Small 64×64 (4 096 cells) / Medium 128×128 (16 384 cells) / Large 256×256 (65 536 cells) | Medium |
+| Starting budget | 3 preset chips | Tight $10 000 / Standard $50 000 / Generous $200 000 | Standard |
+| City name | Single-line text input | 1–32 chars; allowlist `[A-Za-z0-9 \-]`; emoji + control chars stripped | Random pick from `city-name-pool-es` (100 fictional Spanish names) |
+
+Seed is NOT exposed in UI (player choice — round 1). Generated server-side per new game; recorded in save metadata for reproducibility / debugging.
+
+Difficulty is NOT exposed (D18 lock — single sim tuning across all new games).
+
+**Layout (locked).**
+- Top: back-arrow (inherited from main-menu host).
+- Center column, 480 px wide, vertical flow:
+  1. Section header `Map size` → row of 3 cards (160 × 120 px each, 12 px gap). Each card = icon + size label (Small/Medium/Large) + cell-count subtitle (e.g. `64×64 — 4 096 cells`).
+  2. Section header `Starting budget` → row of 3 chips (140 × 56 px, 12 px gap). Each chip = label (Tight/Standard/Generous) + $ amount.
+  3. Section header `City name` → text input field (full column width, 48 px tall) with placeholder = pre-rolled name + small `↻ Reroll name` icon-button on right edge.
+  4. Start button (full column width, 56 px tall, primary-button kind, label `Start`).
+- 24 px gap between sections.
+- All sections always visible (no progressive disclosure).
+
+**Selected state (locked).** Selected map-card + selected budget-chip render with cream-highlight bg (`color.bg.selected`) + 2 px tan border (`color.border.selected`) + dark text (`color.text.dark`). Unselected = default panel-card surface. Reuses toolbar pressed-active idiom.
+
+**City-name input.**
+- Pre-filled on form open with random pick from `city-name-pool-es` (100 names, see drift).
+- Validation: live trim + char-allowlist filter; shows live char count `N/32` on right edge inside input.
+- Empty input on Start click → re-roll auto-name silently (Start never blocked by empty name).
+- `↻ Reroll name` icon-button → picks a different random name from pool (different from current; never same twice in a row).
+
+**Start button (locked).**
+- Always enabled (defaults pre-selected; name always non-empty after re-roll fallback).
+- Click → `mainmenu.startNewGame` action with payload `{mapSize, budget, cityName, seed: <random>}` → fade out main-menu scene → CityScene loads → sim spins up with params.
+- Instant load (no confirm). Non-destructive at title screen — no save to overwrite, no progress to lose.
+
+**Back navigation.** Inherits main-menu host: top-left back arrow + ESC → `mainmenu.back` → `mainmenu.contentScreen = root`. Form state (selections + name) discarded on back.
+
+**Existing implementation reused / refactored.**
+- Adapter: `Assets/Scripts/UI/Modals/NewGameScreenDataAdapter.cs` exists. Current shape uses 2 sliders (map / seed) + scenario toggles — DOES NOT match locked design. Needs refactor: replace sliders + scenario toggles with 3-card map picker + 3-chip budget picker + city-name input; drop seed slider entirely; drop scenario toggles entirely.
+- Prefab: `Assets/UI/Prefabs/Generated/new-game-screen.prefab` + `new-game.prefab` (placeholders; need full bake from new catalog row).
+- Producer call: `MainMenuController.StartNewGame(mapSize, seed, scenarioIndex)` — refactor signature to `StartNewGame(mapSize, startingBudget, cityName, seed)`; drop scenarioIndex.
+
+#### JSON DB shape — new-game-form
+
+```jsonc
+{
+  "panels": {
+    "new-game-form": {
+      "layout_template": "vertical-form",
+      "layout": "vertical-form",
+      "host": "main-menu",
+      "host_slot": "main-menu-content-slot",
+      "params_json": "{\"width_px\":480,\"section_gap_px\":24}",
+      "children": [
+        { "ord": 1,  "kind": "label",            "instance_slug": "new-game-form-map-size-header",       "params_json": "{\"text\":\"Map size\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 2,  "kind": "card-picker",      "instance_slug": "new-game-form-map-size-picker",       "params_json": "{\"bind\":\"newgame.mapSize\",\"default\":\"medium\",\"layout\":\"hstack\",\"gap_px\":12,\"options\":[{\"value\":\"small\",\"label\":\"Small\",\"subtitle\":\"64\u00d764 \u2014 4 096 cells\",\"icon\":\"map-size-small\"},{\"value\":\"medium\",\"label\":\"Medium\",\"subtitle\":\"128\u00d7128 \u2014 16 384 cells\",\"icon\":\"map-size-medium\"},{\"value\":\"large\",\"label\":\"Large\",\"subtitle\":\"256\u00d7256 \u2014 65 536 cells\",\"icon\":\"map-size-large\"}]}" },
+        { "ord": 3,  "kind": "label",            "instance_slug": "new-game-form-budget-header",         "params_json": "{\"text\":\"Starting budget\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 4,  "kind": "chip-picker",      "instance_slug": "new-game-form-budget-picker",         "params_json": "{\"bind\":\"newgame.budget\",\"default\":\"standard\",\"layout\":\"hstack\",\"gap_px\":12,\"options\":[{\"value\":\"tight\",\"label\":\"Tight\",\"subtitle\":\"$10 000\",\"amount\":10000},{\"value\":\"standard\",\"label\":\"Standard\",\"subtitle\":\"$50 000\",\"amount\":50000},{\"value\":\"generous\",\"label\":\"Generous\",\"subtitle\":\"$200 000\",\"amount\":200000}]}" },
+        { "ord": 5,  "kind": "label",            "instance_slug": "new-game-form-city-name-header",      "params_json": "{\"text\":\"City name\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 6,  "kind": "text-input",       "instance_slug": "new-game-form-city-name-input",       "params_json": "{\"bind\":\"newgame.cityName\",\"max_length\":32,\"allowlist_regex\":\"[A-Za-z0-9 \\\\-]\",\"placeholder_pool\":\"city-name-pool-es\",\"show_char_count\":true,\"trailing_action\":{\"icon\":\"reroll\",\"action\":\"newgame.cityName.reroll\",\"tooltip\":\"Pick a new random name.\"}}" },
+        { "ord": 7,  "kind": "button",           "instance_slug": "new-game-form-start-button",          "params_json": "{\"kind\":\"primary-button\",\"label\":\"Start\",\"action\":\"mainmenu.startNewGame\",\"tooltip\":\"Start a new city with these settings.\"}" }
+      ]
+    }
+  },
+  "pools": {
+    "city-name-pool-es": {
+      "kind": "string-pool",
+      "lang": "es",
+      "values_count": 100,
+      "values_inline_sample": ["Bahía Bacayo", "Nueva Castilla del Mar", "San Lorenzo de los Robles", "Puerto Cendrales", "Villa Atalaya"]
+    }
+  }
+}
+```
+
+#### Wiring contract — new-game-form
+
+```yaml
+bake_requirements:
+  - layout_template: vertical-form
+  - host: main-menu (mounted via main-menu-content-slot when mainmenu.contentScreen = new-game-form)
+  - children: [map-size-header, map-size-picker (3 cards), budget-header, budget-picker (3 chips), city-name-header, city-name-input (with reroll trailing action), start-button]
+  - new archetypes: card-picker, chip-picker, text-input
+  - new pools: city-name-pool-es (100 fictional Spanish city names)
+  - new sprite slugs: map-size-small, map-size-medium, map-size-large, reroll
+  - new tokens: color.bg.selected, color.border.selected, color.text.dark, size.text.section-header
+
+actions_referenced:
+  - newgame.mapSize.set        # card click → bind.set
+  - newgame.budget.set          # chip click → bind.set
+  - newgame.cityName.reroll     # trailing-action click → re-roll from pool
+  - mainmenu.startNewGame       # Start button click → load CityScene with payload
+  - mainmenu.back               # ESC / back arrow (inherited from host)
+
+binds_referenced:
+  - newgame.mapSize             # enum: small | medium | large
+  - newgame.budget              # enum: tight | standard | generous
+  - newgame.cityName            # string
+
+hotkeys:
+  - ESC → mainmenu.back (inherited from host)
+
+verification_hooks:
+  - test:newgame.defaults-on-open (medium + standard + non-empty name)
+  - test:newgame.mapSize.card-click-flips-bind
+  - test:newgame.budget.chip-click-flips-bind
+  - test:newgame.cityName.reroll-picks-different-value
+  - test:newgame.cityName.allowlist-strips-emoji
+  - test:newgame.cityName.max-length-32
+  - test:newgame.cityName.empty-on-start-rerolls-silently
+  - test:newgame.start.payload-shape (mapSize + budget + cityName + seed)
+  - test:newgame.start.seed-is-random-per-game
+  - test:newgame.back-discards-form-state
+
+variant_transitions:
+  - map-card: idle ⇄ selected (one selected at a time across the row)
+  - budget-chip: idle ⇄ selected (one selected at a time across the row)
+  - city-name-input: empty / typing / valid (validation reflected in char-count color)
+```
+
+**Drift flagged.**
+- **NEW `card-picker` archetype.** Row of N cards, single-select, drives one enum bind. Used by map-size; reusable for any single-pick row. Flag → archetype catalog audit.
+- **NEW `chip-picker` archetype.** Row of N chips, single-select, drives one enum bind. Like card-picker but smaller geometry. Reusable for budget + future short-list pickers. Flag → archetype catalog audit.
+- **NEW `text-input` archetype.** Single-line input with bind, max-length, allowlist regex, placeholder pool, optional trailing action button. Currently no other panel needs text input — this is the first. Flag → archetype catalog audit + form primitive lock.
+- **`placeholder_pool` mechanism.** `text-input` reads a string-pool ref on mount + picks random value. New pool kind `string-pool` (lang-tagged). Flag → catalog kind extension + pool resolver.
+- **`city-name-pool-es` content authoring.** 100 fictional Spanish city names — needs creative authoring pass. Catalog row owns the full list; placeholder seed values in JSON above. Flag → name-pool authoring.
+- **`MainMenuController.StartNewGame` signature refactor.** Current: `(mapSize, seed, scenarioIndex)`. Target: `(mapSize, startingBudget, cityName, seed)`. Drop `scenarioIndex`. Add `startingBudget` int + `cityName` string params. Wire to `EconomyManager.SetStartingFunds(int)` + `CityStats.SetCityName(string)`. Flag → controller refactor audit.
+- **`NewGameScreenDataAdapter` refactor.** Current: 2 sliders + scenario toggles. Target: 3 enum binds (mapSize / budget / cityName) read from card-picker / chip-picker / text-input + writes payload via `MainMenuController.StartNewGame`. Replace inspector slots: drop `_mapSizeSlider` + `_seedSlider` + `_scenarioToggles`; add bind-driven dispatch. Flag → adapter refactor audit.
+- **Cell-count → world-grid mapping.** 64 / 128 / 256 chosen as locked counts. Confirm `GridManager.SetGridSize(int width, int height)` accepts these AND that geography pipeline + chunk loader perf-test cleanly at 256×256. Flag → grid + geography perf audit at Large.
+- **Starting budget wiring.** `EconomyManager` needs `SetStartingFunds(int)` API (or equivalent). Confirm existing `EconomyManager.startingTreasury` field is mutable pre-game-start. Flag → economy API audit.
+- **City name persistence.** Confirm `CityStats.cityName` (or equivalent) accepts string + persists to save. Existing `hud-bar-city-name-label` reads from this surface. Flag → city-name surface trace.
+- **Seed generation.** `mainmenu.startNewGame` payload includes `seed: <random>`. Source = `System.Random` at action-fire moment. Persist into save metadata for replay / debug. Flag → save metadata schema audit.
+- **Pre-game vs post-game state separation.** Form binds (`newgame.*`) live in pre-game scene (`MainMenu.unity`); discarded on scene transition. Confirm bind dispatcher supports scene-scoped binds (no leak to CityScene). Flag → bind lifecycle audit.
+- **Reroll never-twice-in-a-row policy.** `newgame.cityName.reroll` action must avoid picking same name as current. Simple: pick from pool minus current. Flag → reroll util.
+- **Action registry expansion.** New actions: `newgame.mapSize.set` · `newgame.budget.set` · `newgame.cityName.reroll` · `mainmenu.startNewGame`. Flag → action registry.
+- **Bind registry expansion.** New binds: `newgame.mapSize` (enum) · `newgame.budget` (enum) · `newgame.cityName` (string). Flag → bind dispatcher pattern.
+- **Tooltip strings.** Start button + reroll button need tooltip copy. Flag → tooltip catalog.
+- **i18n.** All section headers + card / chip labels + subtitles + Start label + tooltip strings + name pool are user-facing. Pool is Spanish-only by design (developer flavour) — does NOT translate. Other strings need string-table. Flag → string-table + i18n policy for in-game proper nouns.
+- **Motion.** Section appearance = instant on view-mount. Card / chip selection = instant bg+border swap. Start click → main-menu fade out → CityScene fade in (shared scene-transition primitive flagged on main-menu lock).
+
+---
+
+### settings-view
+
+**Role.** Shared sub-view archetype for player preferences. Mounted by main-menu (when `mainmenu.contentScreen = settings`) AND by pause-menu (when `pause.contentScreen = settings`). 9 controls across 3 sections: Gameplay (3) / Audio (3) / Display (3). Single source of truth for fields + layout — host wires mount point + back-destination only.
+
+**Anchor + sim policy.** Inherits host frame. From main-menu: full-screen content slot, no sim. From pause-menu: nested inside pause-menu modal, sim paused (TimeManager modal-pause owner = `pause-menu`). Both hosts: back-arrow top-left visible.
+
+**Sections + controls (locked).**
+
+| Section | Control | Kind | Range / values | Default | PlayerPrefs key |
+| --- | --- | --- | --- | --- | --- |
+| Gameplay | Scroll-edge-pan | toggle | on / off | on | `ScrollEdgePanKey` (existing) |
+| Gameplay | Monthly-budget notifications | toggle | on / off | on | `MonthlyBudgetNotificationsKey` (NEW) |
+| Gameplay | Auto-save | toggle | on / off | on | `AutoSaveKey` (NEW) |
+| Audio | Master volume | slider | 0–100 % | 80 | `MasterVolumeKey` (existing) |
+| Audio | Music volume | slider | 0–100 % | 60 | `MusicVolumeKey` (existing) |
+| Audio | SFX volume | slider | 0–100 % | 80 | `SfxVolumeDbKey` (existing in `BlipBootstrap` — needs surface) |
+| Display | Resolution | dropdown | 1280×720 / 1920×1080 / 2560×1440 / 3840×2160 (hardcoded 4) | match closest current `Screen.currentResolution` | `ResolutionIndexKey` (existing) |
+| Display | Fullscreen | toggle | on / off | on | `FullscreenKey` (existing) |
+| Display | VSync | toggle | on / off | on | `VSyncKey` (existing) |
+
+**Layout (locked).**
+- Top: back-arrow (host-wired destination).
+- Center column, 480 px wide, vertical flow:
+  - Section header `Gameplay` → 3 control rows.
+  - 24 px gap.
+  - Section header `Audio` → 3 control rows.
+  - 24 px gap.
+  - Section header `Display` → 3 control rows.
+  - 32 px gap.
+  - Footer: `Reset to defaults` button (full column width, 48 px tall, secondary-button kind, inline 1 s confirm primitive).
+- Each control row: 56 px tall = label (left) + control (right). Volume sliders show live `NN %` readout on right edge inside the slider.
+
+**Apply mode (locked).** Instant apply. Each control change writes to PlayerPrefs immediately + dispatches the matching action (e.g. `settings.master.set` → `AudioListener.volume` + PlayerPrefs). No staging buffer, no Apply button, no Cancel — back arrow simply navigates away (changes already persisted).
+
+**Reset to defaults (locked).** Footer button. 1 s inline confirm (lighter than 3 s destructive — settings reset is recoverable). On confirm: every control reverts to factory default + PlayerPrefs writes flush + every dependent system applies (audio mixer / Screen.SetResolution / `CameraController.scrollEdgePanEnabled`).
+
+**Volume mapping (locked).** Slider value 0–100 % → internal dB curve via `LinearToDecibel(percent / 100f)` on each set. UI shows `NN %`; mixer / `AudioListener.volume` receives mapped value. Existing `SettingsScreenDataAdapter` already does this for Master / Music; SFX needs surface from `BlipBootstrap.SfxVolumeDbKey`.
+
+**Resolution dropdown (locked).** Hardcoded 4 entries: `1280×720` · `1920×1080` · `2560×1440` · `3840×2160`. On open: pick closest match to `Screen.currentResolution.width` as default selection. On change: `Screen.SetResolution(w, h, fullscreen, refreshRate=Screen.currentResolution.refreshRate)`. Display refresh rate NOT user-controlled in MVP.
+
+**Back navigation (locked, host-aware).**
+- From main-menu host: back / ESC → `mainmenu.back` → `mainmenu.contentScreen = root`.
+- From pause-menu host: back / ESC → `pause.back` → `pause.contentScreen = root`.
+- Same primitive (settings-view emits abstract `settings.back` event); host-side adapter wires the destination.
+
+**Existing implementation reused / refactored.**
+- Adapter: `Assets/Scripts/UI/Modals/SettingsScreenDataAdapter.cs` (existing — wires Master / Music / Resolution / Fullscreen / VSync / Scroll-edge-pan to PlayerPrefs lines 11–101). Needs additions: SFX slider surface, monthly-budget-notifications toggle, auto-save toggle, Reset-to-defaults button. Existing inspector slots for the 6 existing controls preserved.
+- PlayerPrefs keys: existing 6 (`MasterVolumeKey` · `MusicVolumeKey` · `ResolutionIndexKey` · `FullscreenKey` · `VSyncKey` · `ScrollEdgePanKey`) + 3 NEW (`SfxVolumeKey` reflowing existing dB key · `MonthlyBudgetNotificationsKey` · `AutoSaveKey`).
+- Prefab: `Assets/UI/Prefabs/Generated/settings-screen.prefab` (placeholder; needs full bake from new catalog row).
+- Volume mapping: `BlipBootstrap.SfxVolumeDbKey` already uses dB; reuse mapping helper for all 3 sliders.
+
+#### JSON DB shape — settings-view
+
+```jsonc
+{
+  "panels": {
+    "settings-view": {
+      "layout_template": "vertical-form",
+      "layout": "vertical-form",
+      "host_slots": ["main-menu-content-slot", "pause-menu-content-slot"],
+      "params_json": "{\"width_px\":480,\"section_gap_px\":24}",
+      "children": [
+        { "ord": 1,  "kind": "label",         "instance_slug": "settings-view-gameplay-header",          "params_json": "{\"text\":\"Gameplay\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 2,  "kind": "toggle-row",    "instance_slug": "settings-view-scroll-edge-pan-toggle",   "params_json": "{\"label\":\"Scroll-edge-pan\",\"bind\":\"settings.scrollEdgePan\",\"action\":\"settings.scrollEdgePan.set\",\"prefs_key\":\"ScrollEdgePanKey\",\"default\":true}" },
+        { "ord": 3,  "kind": "toggle-row",    "instance_slug": "settings-view-monthly-notif-toggle",     "params_json": "{\"label\":\"Monthly-budget notifications\",\"bind\":\"settings.monthlyBudgetNotifications\",\"action\":\"settings.monthlyBudgetNotifications.set\",\"prefs_key\":\"MonthlyBudgetNotificationsKey\",\"default\":true}" },
+        { "ord": 4,  "kind": "toggle-row",    "instance_slug": "settings-view-auto-save-toggle",         "params_json": "{\"label\":\"Auto-save\",\"bind\":\"settings.autoSave\",\"action\":\"settings.autoSave.set\",\"prefs_key\":\"AutoSaveKey\",\"default\":true}" },
+        { "ord": 5,  "kind": "label",         "instance_slug": "settings-view-audio-header",             "params_json": "{\"text\":\"Audio\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 6,  "kind": "slider-row",    "instance_slug": "settings-view-master-slider",            "params_json": "{\"label\":\"Master volume\",\"bind\":\"settings.masterVolume\",\"action\":\"settings.masterVolume.set\",\"prefs_key\":\"MasterVolumeKey\",\"min\":0,\"max\":100,\"step\":1,\"default\":80,\"readout_suffix\":\"%\",\"db_mapping\":true}" },
+        { "ord": 7,  "kind": "slider-row",    "instance_slug": "settings-view-music-slider",             "params_json": "{\"label\":\"Music volume\",\"bind\":\"settings.musicVolume\",\"action\":\"settings.musicVolume.set\",\"prefs_key\":\"MusicVolumeKey\",\"min\":0,\"max\":100,\"step\":1,\"default\":60,\"readout_suffix\":\"%\",\"db_mapping\":true}" },
+        { "ord": 8,  "kind": "slider-row",    "instance_slug": "settings-view-sfx-slider",               "params_json": "{\"label\":\"SFX volume\",\"bind\":\"settings.sfxVolume\",\"action\":\"settings.sfxVolume.set\",\"prefs_key\":\"SfxVolumeKey\",\"min\":0,\"max\":100,\"step\":1,\"default\":80,\"readout_suffix\":\"%\",\"db_mapping\":true}" },
+        { "ord": 9,  "kind": "label",         "instance_slug": "settings-view-display-header",           "params_json": "{\"text\":\"Display\",\"size_token\":\"size.text.section-header\"}" },
+        { "ord": 10, "kind": "dropdown-row",  "instance_slug": "settings-view-resolution-dropdown",      "params_json": "{\"label\":\"Resolution\",\"bind\":\"settings.resolutionIndex\",\"action\":\"settings.resolutionIndex.set\",\"prefs_key\":\"ResolutionIndexKey\",\"options\":[{\"value\":0,\"label\":\"1280\u00d7720\"},{\"value\":1,\"label\":\"1920\u00d71080\"},{\"value\":2,\"label\":\"2560\u00d71440\"},{\"value\":3,\"label\":\"3840\u00d72160\"}],\"default\":\"closest-to-screen-current\"}" },
+        { "ord": 11, "kind": "toggle-row",    "instance_slug": "settings-view-fullscreen-toggle",        "params_json": "{\"label\":\"Fullscreen\",\"bind\":\"settings.fullscreen\",\"action\":\"settings.fullscreen.set\",\"prefs_key\":\"FullscreenKey\",\"default\":true}" },
+        { "ord": 12, "kind": "toggle-row",    "instance_slug": "settings-view-vsync-toggle",             "params_json": "{\"label\":\"VSync\",\"bind\":\"settings.vsync\",\"action\":\"settings.vsync.set\",\"prefs_key\":\"VSyncKey\",\"default\":true}" },
+        { "ord": 13, "kind": "confirm-button","instance_slug": "settings-view-reset-button",             "params_json": "{\"kind\":\"secondary-confirm-button\",\"label\":\"Reset to defaults\",\"confirm_label\":\"Click again to reset\",\"confirm_window_ms\":1000,\"action_confirm\":\"settings.reset.confirm\",\"action\":\"settings.reset\",\"tooltip\":\"Restore all settings to factory defaults.\"}" }
+      ]
+    }
+  }
+}
+```
+
+#### Wiring contract — settings-view
+
+```yaml
+bake_requirements:
+  - layout_template: vertical-form
+  - hosts: [main-menu (via main-menu-content-slot), pause-menu (via pause-menu-content-slot)]
+  - children: 3 section headers + 3 toggle-rows (gameplay) + 3 slider-rows (audio) + 1 dropdown-row + 2 toggle-rows (display) + 1 confirm-button (reset)
+  - new archetypes: toggle-row, slider-row, dropdown-row (form-row family)
+  - reuses: confirm-button (with 1 s window for non-destructive reset)
+
+actions_referenced:
+  - settings.scrollEdgePan.set
+  - settings.monthlyBudgetNotifications.set
+  - settings.autoSave.set
+  - settings.masterVolume.set
+  - settings.musicVolume.set
+  - settings.sfxVolume.set
+  - settings.resolutionIndex.set
+  - settings.fullscreen.set
+  - settings.vsync.set
+  - settings.reset.confirm
+  - settings.reset
+  - settings.back   # abstract — host adapter wires to mainmenu.back OR pause.back
+
+binds_referenced:
+  - settings.scrollEdgePan (bool)
+  - settings.monthlyBudgetNotifications (bool)
+  - settings.autoSave (bool)
+  - settings.masterVolume (int 0–100)
+  - settings.musicVolume (int 0–100)
+  - settings.sfxVolume (int 0–100)
+  - settings.resolutionIndex (int 0–3)
+  - settings.fullscreen (bool)
+  - settings.vsync (bool)
+
+hotkeys:
+  - ESC → settings.back (host-wired)
+
+verification_hooks:
+  - test:settings.instant-apply (each control writes prefs + applies on change)
+  - test:settings.reset.restores-all-9-defaults
+  - test:settings.reset.requires-confirm-within-1s
+  - test:settings.volume.percent-to-db-mapping
+  - test:settings.resolution.closest-default-on-open
+  - test:settings.back.host-aware (main-menu vs pause-menu)
+  - test:settings.host-mount.pause-menu-pauses-sim
+
+variant_transitions:
+  - reset-button: idle → armed (1s countdown) → idle (timeout) | reset (2nd click)
+  - resolution-dropdown: closed ⇄ open (4 options visible)
+  - sliders + toggles: bind value reflects live state
+```
+
+**Drift flagged.**
+- **3 NEW form-row archetypes.** `toggle-row` (label + toggle, 56 px) · `slider-row` (label + slider + readout, 56 px) · `dropdown-row` (label + dropdown, 56 px). Reusable across settings-view + future form panels. Flag → archetype catalog audit + form-row family lock.
+- **3 NEW PlayerPrefs keys.** `MonthlyBudgetNotificationsKey` (bool) · `AutoSaveKey` (bool) · `SfxVolumeKey` (int 0–100; reflows existing dB-only key). Flag → PlayerPrefs schema migration.
+- **`SettingsScreenDataAdapter` extension.** Add: SFX slider wiring, monthly-budget-notifications toggle, auto-save toggle, Reset-to-defaults button + confirm primitive, dB↔percent mapping helper exposed to all 3 volume sliders. Drop direct prefab serialized refs in favor of bind dispatcher reads. Flag → adapter refactor audit.
+- **Auto-save sim hook.** `AutoSaveKey = true` → save every N in-game minutes (or N real seconds). Need scheduler in CityScene tick loop calling `GameSaveManager.SaveGame(autoSaveName)`. Auto-save name = `<city>-autosave-N` rotation (3-slot ring buffer recommended). Flag → auto-save scheduler design.
+- **Monthly-budget-notifications routing.** When `false`, suppress the monthly-close toast event surface from `notifications-toast`. Need filter in `notifications-toast` event-emitter chain. Flag → toast filter wiring.
+- **Reset-to-defaults factory values.** Locked defaults table above is the factory source. Action `settings.reset` writes all 9 defaults + flushes prefs + dispatches each `settings.*.set` to apply. Flag → reset action body + factory-defaults const table.
+- **Host-aware `settings.back`.** Same primitive emits abstract `settings.back`; host adapter listens + dispatches `mainmenu.back` OR `pause.back`. Flag → bind dispatcher pattern (event routing).
+- **Resolution closest-match heuristic.** On view-open, find dropdown index whose w×h is closest to `Screen.currentResolution.width × height`. Tie-break: pick higher resolution. Flag → resolution match util.
+- **`secondary-confirm-button` variant.** Existing `confirm-button` primitive locked at 3 s window for destructive actions. Settings reset uses 1 s window (recoverable). Need variant in primitive. Flag → confirm-button primitive variants.
+- **Volume slider during pause-menu mount.** From pause-menu host, sim paused but audio continues. Sliders apply live during pause (mixer reflects changes). Confirm AudioListener / mixer not also paused. Flag → audio + pause coupling audit.
+- **Action registry expansion.** New actions: 9 `settings.*.set` + `settings.reset.confirm` + `settings.reset` + `settings.back` (abstract). Flag → action registry.
+- **Bind registry expansion.** 9 settings.* binds (3 bool + 3 int volume + 1 int dropdown + 2 bool display). Flag → bind dispatcher pattern.
+- **Tooltip strings.** Reset button needs tooltip; toggles + sliders + dropdown rely on row labels (no per-control tooltip in MVP). Flag → tooltip catalog.
+- **i18n.** All section headers + control labels + Reset label + tooltip strings + dropdown options are user-facing. Resolution labels (`1280×720` etc.) are technical strings — likely safe to leave untranslated. Flag → string-table.
+- **Motion.** Section appearance = instant on view-mount. Slider drag = live readout update. Dropdown open = instant. Toggle flip = instant bg swap. Reset confirm = 1 s countdown bar (smaller variant of pause-menu Quit primitive).
+
+---
+
+### save-load-view
+
+**Role.** Shared sub-view archetype for saving + loading game state. Mode-driven (`saveload.mode` enum: `save` | `load`). Mounted by main-menu (load-only — no game running to save) AND by pause-menu (both modes via separate Save game / Load game buttons in pause-menu root). Same screen, mode bind hides save controls in load-only host. Wraps existing `GameSaveManager` (file I/O at `Application.persistentDataPath`).
+
+**Anchor + sim policy.** Inherits host frame. From main-menu (load-only): full-screen content slot, no sim. From pause-menu: nested inside pause-menu modal, sim paused. Both hosts: back-arrow top-left visible.
+
+**Mode policy (locked).**
+- `mode = save` → save-controls strip visible (top); save-list visible (below); per-row click = stage overwrite confirm; per-row trash = delete confirm. Pause-menu host only.
+- `mode = load` → save-controls strip HIDDEN; save-list visible (full height); per-row click = highlight + footer Load button enables; per-row trash = delete confirm. Both hosts.
+- Mode is set by host on mount: main-menu → `load`. Pause-menu → set by which root button was clicked (Save game → `save`, Load game → `load`).
+
+**Layout (locked).**
+- Top: back-arrow (host-wired destination).
+- Center column, 560 px wide, vertical flow:
+  - **Save-controls strip** (visible only when `mode = save`) — 64 px tall: name input (full width, 48 px tall, placeholder = pre-rolled `<city>-YYYY-MM-DD-HHmm`) + Save button on right (96 px wide, primary-button kind).
+  - **Save-list** — flex height (fills remaining space up to ~480 px), vertical scroll. Each row 56 px tall = save name (left, primary text) + date+time (right, muted text, format `2026-05-07 14:23`) + per-row trash icon-button (right edge, hover-revealed).
+  - **Footer** — visible only when `mode = load` AND a row is selected: Load button (full column width, 48 px tall, primary-button kind, disabled until selection).
+- 12 px gap between controls. Save-list scrolls; sticky save-controls + footer outside scroll viewport.
+
+**Save mode interactions (locked).**
+- Name input pre-fills with `<cityName>-YYYY-MM-DD-HHmm` on view-mount + every Save click (re-rolls timestamp). Player can override.
+- Validation: same allowlist as new-game-form city-name (`[A-Za-z0-9 \-]`, 1–32 chars). Save button disabled when name invalid.
+- Save click: file does NOT exist → write directly. File exists → stage 3 s overwrite confirm on the Save button.
+- List row click (save mode): stage 3 s overwrite confirm on that row's name (treat row name as target file name).
+- Trash icon click: stage 3 s delete confirm on that row.
+
+**Load mode interactions (locked).**
+- List row click: highlights row (cream-highlight bg + 2 px tan border, same idiom as map-card / budget-chip selected state). Footer Load button enables.
+- Footer Load click: loads selected file → close save-load-view → resume / load CityScene with that save.
+- Trash icon click: stage 3 s delete confirm on that row.
+
+**Save list rendering (locked).**
+- Source: `GameSaveManager.GetSaveFiles()` (existing API) — list of save metadata {name, mtime}.
+- Sort: newest first (by `mtime` descending).
+- Cap: unlimited; vertical scroll engages when list exceeds container height.
+- Empty state: full-list area shows centered muted text `No saves yet.` (load mode from main-menu when player has never saved).
+
+**Auto-name format (locked).** `<cityName>-YYYY-MM-DD-HHmm` — example: `Bahía Bacayo-2026-05-07-1423`. Spaces in city name preserved (existing save-name allowlist accepts).
+
+**Back navigation (locked, host-aware).** Same primitive as settings-view: emits abstract `saveload.back`; host wires to `mainmenu.back` OR `pause.back`.
+
+**Existing implementation reused / refactored.**
+- Adapter: `Assets/Scripts/UI/Modals/SaveLoadScreenDataAdapter.cs` (existing — drives existing save-load screen). Needs additions: mode bind, name input, per-row trash + 3 s confirm primitives, footer Load button, list selection highlight, sort newest-first.
+- Save layer: `GameSaveManager.SaveGame(string customSaveName)` (existing lines 69–82) + `GameSaveManager.LoadGame()` + new `GameSaveManager.GetSaveFiles()` API (returns sorted metadata) + new `GameSaveManager.DeleteSave(string fileName)` API.
+- Prefab: `Assets/UI/Prefabs/Generated/save-load-screen.prefab` (placeholder; needs full bake from new catalog row).
+
+#### JSON DB shape — save-load-view
+
+```jsonc
+{
+  "panels": {
+    "save-load-view": {
+      "layout_template": "vertical-form",
+      "layout": "vertical-form",
+      "host_slots": ["main-menu-content-slot", "pause-menu-content-slot"],
+      "params_json": "{\"width_px\":560,\"row_gap_px\":12}",
+      "children": [
+        { "ord": 1, "kind": "save-controls-strip", "instance_slug": "save-load-view-controls-strip",  "params_json": "{\"visible_bind\":\"saveload.mode.is.save\",\"name_input_bind\":\"saveload.nameInput\",\"name_input_placeholder_pattern\":\"<cityName>-YYYY-MM-DD-HHmm\",\"name_input_max_length\":32,\"name_input_allowlist_regex\":\"[A-Za-z0-9 \\\\-]\",\"save_button_action\":\"saveload.save\",\"save_button_action_confirm\":\"saveload.save.confirm\",\"save_button_confirm_window_ms\":3000}" },
+        { "ord": 2, "kind": "save-list",            "instance_slug": "save-load-view-list",            "params_json": "{\"items_bind\":\"saveload.list\",\"selection_bind\":\"saveload.selectedSlot\",\"empty_text\":\"No saves yet.\",\"sort\":\"mtime-desc\",\"row_height_px\":56,\"row_actions\":{\"click_save_mode\":{\"action_confirm\":\"saveload.overwrite.confirm\",\"action\":\"saveload.overwrite\",\"confirm_window_ms\":3000},\"click_load_mode\":{\"action\":\"saveload.selectSlot\"},\"trash\":{\"action_confirm\":\"saveload.delete.confirm\",\"action\":\"saveload.delete\",\"confirm_window_ms\":3000}}}" },
+        { "ord": 3, "kind": "button",               "instance_slug": "save-load-view-load-button",     "params_json": "{\"kind\":\"primary-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"visible_bind\":\"saveload.mode.is.load\",\"enabled_bind\":\"saveload.selectedSlot.exists\",\"tooltip\":\"Load the selected save.\"}" }
+      ]
+    }
+  }
+}
+```
+
+#### Wiring contract — save-load-view
+
+```yaml
+bake_requirements:
+  - layout_template: vertical-form
+  - hosts: [main-menu (load-only mode), pause-menu (both modes)]
+  - children: save-controls-strip (mode-gated visible) + save-list (scrollable, sort newest-first) + Load button (mode-gated visible + selection-gated enabled)
+  - new archetypes: save-controls-strip, save-list (with row-action map)
+  - reuses: confirm-button (3s destructive window for overwrite + delete)
+
+actions_referenced:
+  - saveload.save.confirm        # save mode: save button 1st click (only if name collides existing file)
+  - saveload.save                # save mode: save button confirmed click → GameSaveManager.SaveGame(name)
+  - saveload.overwrite.confirm   # save mode: existing-row click 1st
+  - saveload.overwrite           # save mode: existing-row click 2nd within 3s → GameSaveManager.SaveGame(rowName)
+  - saveload.selectSlot          # load mode: row click → bind selectedSlot
+  - saveload.load                # load mode: footer Load button click → GameSaveManager.LoadGame(selectedSlot)
+  - saveload.delete.confirm      # any mode: trash icon 1st click
+  - saveload.delete              # any mode: trash icon 2nd click within 3s → GameSaveManager.DeleteSave(name)
+  - saveload.back                # abstract — host wires
+
+binds_referenced:
+  - saveload.mode               # enum: save | load (set by host on mount)
+  - saveload.mode.is.save       # derived bool — true when mode == save
+  - saveload.mode.is.load       # derived bool — true when mode == load
+  - saveload.list               # array of {name, mtime} sorted newest-first
+  - saveload.selectedSlot       # string | null — currently highlighted slot
+  - saveload.selectedSlot.exists # derived bool — true when selectedSlot != null
+  - saveload.nameInput          # string — save-mode name input value
+
+hotkeys:
+  - ESC → saveload.back (host-wired)
+
+verification_hooks:
+  - test:saveload.list.sort-newest-first
+  - test:saveload.list.empty-state
+  - test:saveload.save.new-name-saves-directly
+  - test:saveload.save.existing-name-stages-3s-confirm
+  - test:saveload.save.confirm-times-out-after-3s
+  - test:saveload.overwrite.row-click-stages-3s-confirm
+  - test:saveload.delete.trash-stages-3s-confirm-then-removes
+  - test:saveload.load.footer-button-disabled-without-selection
+  - test:saveload.load.loads-selected-then-closes-view
+  - test:saveload.mode.save-controls-hidden-in-load-mode
+  - test:saveload.host-mount.main-menu-forces-load-mode
+  - test:saveload.auto-name.format-is-cityName-YYYY-MM-DD-HHmm
+  - test:saveload.back.host-aware
+
+variant_transitions:
+  - mode: save ⇄ load (set by host, bind toggles strip + footer visibility)
+  - row: idle → highlighted (load mode) | idle → armed-overwrite (save mode 1st click) | idle → armed-delete (trash 1st click)
+  - save-button: idle → armed (3s on existing-name collision) → idle (timeout) | save (2nd click)
+```
+
+**Drift flagged.**
+- **2 NEW archetypes.** `save-controls-strip` (name input + save button, mode-gated visible) · `save-list` (scrollable list with per-row action map). Flag → archetype catalog audit.
+- **`GameSaveManager.GetSaveFiles()` API.** Returns sorted metadata `{name, mtime}[]` newest-first. Existing manager only exposes save / load — needs metadata enumeration. Flag → save manager API audit.
+- **`GameSaveManager.DeleteSave(name)` API.** New. Deletes file at `Application.persistentDataPath/<name>.json` (or whatever extension). Flag → save manager API audit.
+- **`GameSaveManager.HasAnySave()` API.** New (cross-cut with main-menu lock). Returns bool — drives `mainmenu.continue.disabled`. Flag → save manager API audit.
+- **Save-name auto-format helper.** `SaveNameFormatter.AutoName(cityName, dateTime)` → `<cityName>-YYYY-MM-DD-HHmm`. Reuse existing `cityName` allowlist for whole-string validation. Flag → save name util.
+- **Save-name collision detection.** On Save click: check if file exists at target name → if yes, route through 3 s confirm; if no, write directly. Flag → save action body.
+- **Mode-gated visibility binds.** `saveload.mode.is.save` + `saveload.mode.is.load` — derived bools (computed from `saveload.mode` enum). Reusable derivation pattern for any enum-driven visibility. Flag → bind derivation pattern.
+- **Host forces mode on mount.** Main-menu host: `saveload.mode = load` (locked, never `save` from main-menu — no game running). Pause-menu host: sets per-button (`pause.openSave` → `save`; `pause.openLoad` → `load`). Mode change WHILE mounted is not supported in MVP (player navigates back + reopens to switch). Flag → mode-set-on-mount semantics.
+- **Selection state lifecycle.** `saveload.selectedSlot` reset to null on view-mount + on view-unmount + on delete (when selected). Flag → selection lifecycle.
+- **Trash icon hover-reveal.** Per-row trash icon shown only on row hover (or always on touch / non-hover platforms). Flag → row-hover state + accessibility.
+- **Row action priority.** Save mode + click on row body → overwrite-confirm. Save mode + click on trash icon → delete-confirm. Click target dispatcher must route correctly (icon takes precedence over row body). Flag → click-routing.
+- **Auto-save filename rotation.** `<city>-autosave-1` / `<city>-autosave-2` / `<city>-autosave-3` ring buffer. Auto-saves appear in same list as manual saves but visually marked (small auto-save icon). Flag → auto-save row rendering + cross-cut with settings-view.auto-save toggle.
+- **Empty-state copy.** `No saves yet.` shown when list empty. Localized. Flag → string-table.
+- **Action registry expansion.** New actions: `saveload.save.confirm` · `saveload.save` · `saveload.overwrite.confirm` · `saveload.overwrite` · `saveload.selectSlot` · `saveload.load` · `saveload.delete.confirm` · `saveload.delete` · `saveload.back`. Flag → action registry.
+- **Bind registry expansion.** 5 binds (mode enum + 2 derived bools + list array + selectedSlot string + nameInput string + selectedSlot.exists derived bool). Flag → bind dispatcher pattern.
+- **Tooltip strings.** Save / Load / trash icons need tooltip copy. Flag → tooltip catalog.
+- **i18n.** Save / Load button labels + auto-name template + empty-state copy + tooltip strings are user-facing. Save names themselves (player input + city names) are NOT translated — they're proper nouns / user content. Flag → string-table + i18n policy for user-content strings.
+- **Motion.** View mount = instant. Row hover = trash fade-in (120 ms). Selection highlight = instant bg+border swap. Save / overwrite / delete confirms = 3 s countdown bar (shared with info-panel demolish + main-menu Quit + pause-menu Main-menu / Quit primitive).
+
+---
+
 ### pause-menu
 
 **Role.** ESC-triggered center modal hub that pauses the sim and exposes 6 game-state actions (Resume / Settings / Save / Load / Main menu / Quit). Hosts 3 sub-screens (Settings / Save-Load / pause-menu root) inside a single modal root via content-replacement navigation. Mutually exclusive with `budget-panel` + `stats-panel`.
@@ -1244,4 +2008,10 @@ Single panel currently lives in the bottom of the game view: `hud-bar`.
 | 2026-05-07 | `map-panel` locked | Always-on persistent HUD minimap (NOT a modal — sim runs). Bottom-right corner, 360 × 360 px, 24 px right + bottom margins. `hud-bar-map-button` toggles visibility (open ⇄ collapsed). City-only top-down render at fixed scale; water always rendered as base. 5 multi-select layers: Streets / Zones / Forests / Desirability / Centroid (defaults Streets + Zones). Layer-toggle UI = row of 5 icon-only buttons in 36 px header strip on top (render area = 360 × 324). Click anywhere on render → `cameraController.MoveCameraToMapCenter`; black viewport rect overlay shows main-camera frustum (cyan ring when Centroid layer active). NEW behavior: drag-on-rect to pan continuously. No close button (visibility owned by hud button). No hotkeys. Drift flagged: `hud-bar-map-button` action assignment + `MiniMapController.SetVisible` API, NEW `minimap-canvas` archetype, header strip layout retrofit (existing prefab body-only), `MiniMapController.SetLayerActive` API, `OnDrag` handler + `CameraController.PanCameraTo`, drag-state cleanup on toggle, 5 NEW sprite slugs (`layer-streets/zones/forests/desirability/centroid`), action registry (`minimap.toggle` · `minimap.layer.set` · `minimap.click` · `minimap.drag`), bind dispatcher (per-layer bools + render texture + viewport-rect Rect + visible bool), tooltip primitive cross-cut, modal-coexistence pointer-event routing, region-minimap post-MVP, i18n + motion. |
 | 2026-05-07 | `info-panel` locked | Right-edge inspect dock, 320 px wide, top-anchored under hud-bar, full remaining height, vertical scroll on overflow. Sim runs (NOT a modal). 6 selection types: zoned-building / road / utility-tile / forest / bare-cell / landmark. Big card per type — header (icon + name + type tag + close X) → bind-driven `field-list` body (per-type field set) → footer action zone (inline Demolish for demolish-able types). Auto-open on plain world click when no tool active; `Alt+Click` opens without firing tool when tool active. Selection swap re-renders content in-place (no animation). 4 close paths: X / ESC (modal-priority guarded) / empty-tile click / selection swap. Inline Demolish = first click stages red 3 s confirm, second click within 3 s fires `world.demolish` (wraps `GridManager.HandleBulldozerMode`). Drift flagged: deprecate `DetailsPopupController` + 5-tuple `OnCellInfoShown`, NEW archetypes (`info-dock` · `field-list`), `WorldSelectionResolver` extraction from `GridManager`, 6 per-type field-set adapters, demolish-without-tool API (`GridManager.DemolishAt(grid)` or programmatic mode-set), `Alt+Click` modifier in input routing, ESC hotkey-stack priority (modals first), action registry (`info.close` · `info.demolish.confirm` · `world.select` · `world.deselect` · `world.demolish`), bind registry with array-bind support for `info.selection.fields`, 6 NEW type-icon sprite slugs, post-MVP Upgrade / production / transit-to-this action stubs, sticky header / footer scroll behavior, i18n + motion (instant SetActive + 3 s confirm tween). |
 | 2026-05-07 | `pause-menu` locked | ESC-triggered center modal hub. Geometry inherited from existing `pause-menu.prefab`. Sim pauses (TimeManager modal-pause owner = `pause-menu`), mutually exclusive with budget-panel + stats-panel. 6 buttons (existing `PauseMenuDataAdapter`): Resume / Settings / Save game / Load game / Main menu / Quit to desktop. Sub-screens (Settings / Save-Load) replace pause-menu content via single modal root; ESC at sub-screen returns to root, ESC at root closes + resumes sim. Settings sub-screen = 7 controls (Master / Music / NEW SFX / Resolution / Fullscreen / VSync / Scroll-edge-pan; existing `SettingsScreenDataAdapter` PlayerPrefs keys + new SFX from `BlipBootstrap.SfxVolumeDbKey`). Save-Load sub-screen = same screen two modes (Save = name input + saves list + Save button + per-slot overwrite confirm; Load = list + Load button); free-text save name via existing `GameSaveManager.SaveGame(string)`. Inline 3 s destructive confirm on Main menu + Quit (reuses info-panel demolish primitive). Open trigger: ESC fallback in TECH-14102 LIFO stack only (no HUD button). Close paths: Resume / ESC at root / backdrop click / terminal action. Drift flagged: `TimeManager.SetModalPauseOwner` API NOT YET IMPLEMENTED (needed for budget + stats + pause-menu), `ModalCoordinator` mutual-exclusion enforcement, shared `ConfirmButton` primitive across panels, sub-screen content-replace mechanism (prefab swap vs single-root-with-slot), `GameSaveManager.DeleteSave(path)` addition, save-name `SaveTimestampFormatter`, SFX volume dB↔linear mapping in `SettingsScreenDataAdapter`, CityScene→CityScene rename audit (`CitySceneBuildIndex`), `Application.Quit` editor-branch confirmation, action registry (~13 new actions inc. `pause.resume` · `pause.openSettings` · `pause.openSave` · `pause.openLoad` · `pause.toMainMenu.confirm` · `pause.quit.confirm` · `pause.back` · `settings.*.set` × 7 · `save.save/delete/load`), bind registry with enum-bind support (`pause.contentScreen` · `save.mode`) + array-bind (`save.list`), `modal-card` shared archetype with budget/stats, i18n + motion (instant + 3 s confirm tween). |
+| 2026-05-07 | `tooltip` primitive locked | Hover-dwell 500 ms hint. Single line element name; max 240 px wrap to 2 lines. Position auto-flip (above default, below near top edge). Cream/paper bg + dark indigo text + tan 1 px border, fade 120 ms in/out. Z-layer above modals. Disabled variant → `tooltip_override` REPLACES default (never appended). Source = per-element `params_json.tooltip` field — no slug auto-gen, no glossary fallback. Pause-time agnostic. Pointer-leave + click both dismiss. Touch / long-press deferred post-MVP. Drift flagged: NEW `tooltip-card` archetype, 5 NEW tokens (z.tooltip + 4 size.tooltip.*), 3 NEW binds (tooltip.text / target / visible), EXTEND existing `TooltipController` (preserve singleton + canvas-reparent + TMP injection + TooltipText marker; add 500ms dwell + 120ms fade + auto-flip + disabled-variant override), catalog validator rule (every tooltip-eligible row must declare non-empty `tooltip`), modal-coexistence tooltips inside budget/stats/pause sub-controls, cross-cut audit pass to enumerate every interactive child across 9 locked panels for missing tooltip strings, distinct motion from toast (snappy 120 ms vs arrival 200/300 ms), i18n via string-table. |
+| 2026-05-07 | `main-menu` locked | Pre-game title-screen panel, full-screen plain themed bg (`color.bg.menu` cream/sand, no hero art / no audio / no live preview MVP). Title top-center + version bottom-right + studio bottom-left strips constant across all views. Center area = vertical button stack (Continue / New Game / Load / Settings / Quit) on root view, swaps to new-game-form / load-list / settings sub-views via `mainmenu.contentScreen` enum-bind. Single panel, content-swap navigation (no prefab swap, no modal stack). Back button top-left + ESC bound on sub-views; ESC no-op on root. Continue: auto-loads most recent save, instant scene fade to CityScene; greyed + tooltip-override `No save found` when `GameSaveManager.HasAnySave() = false`. New Game / Load / Settings: in-place center swap. Settings + Load views = SHARED archetypes with pause-menu (single source of truth, host determines mount point). Quit: inline 3 s confirm reusing `ConfirmButton` primitive (info-panel demolish + pause-menu); editor branch via `EditorApplication.ExitPlaymode`. Pause-menu's `pause.toMainMenu` returns to MainMenu.unity (build index 0) after its own 3 s confirm. Drift flagged: NEW `view-slot` archetype + shared `settings-view` / `load-list-view` / `new-game-form` archetypes, `GameSaveManager.HasAnySave()` + `GetMostRecentSave()` API additions, `MainMenu.unity` scene composition audit (no sim managers), `color.bg.menu` + `size.text.title-display` token adds, `MainMenuController` refactor (drop direct `Application.Quit` + direct sub-screen activate; route via `ConfirmButton` + `mainmenu.contentScreen` bind), action registry (`mainmenu.continue` · `openNewGame` · `openLoad` · `openSettings` · `back` · `quit.confirm` · `quit`), bind registry (`mainmenu.contentScreen` enum · `continue.disabled` bool · `back.visible` bool + 3 string binds), tooltip-override on Continue, scene-transition fade primitive, audio + hero art MVP scope, version-string from `Application.version`, i18n string-table. |
+| 2026-05-07 | `new-game-form` locked | Sub-view of main-menu (mounted via `view-slot` when `mainmenu.contentScreen = new-game-form`; NOT a top-level panel; NOT reachable from in-game pause-menu). 3 visible fields locked from D18: map size = 3 preset cards (Small 64×64 / Medium 128×128 / Large 256×256, default Medium); starting budget = 3 preset chips (Tight $10k / Standard $50k / Generous $200k, default Standard); city name = single-line text input (1–32 chars, allowlist `[A-Za-z0-9 \-]`, pre-rolled from new `city-name-pool-es` 100 fictional Spanish names — developer flavour; never translates) + trailing reroll icon-button. Seed HIDDEN — random per game, recorded in save metadata. Difficulty DROPPED. Layout: vertical 480 px column — section headers + map cards row → budget chips row → city name input → Start button. Selected state = cream-highlight bg + 2 px tan border + dark text (reuses toolbar pressed-active idiom). Start = instant CityScene load (no confirm; non-destructive at title screen). Empty city-name on Start → silent reroll (Start never blocked). Back = inherited from main-menu host (top-left arrow + ESC; form state discarded). Drift flagged: 3 NEW archetypes (`card-picker` · `chip-picker` · `text-input`) + new `string-pool` catalog kind + `placeholder_pool` mechanism, `city-name-pool-es` 100-name authoring pass, `MainMenuController.StartNewGame` signature refactor (drop scenarioIndex, add startingBudget + cityName), `NewGameScreenDataAdapter` refactor (drop seed slider + scenario toggles, add 3 bind-driven pickers), GridManager + geography perf audit at 256×256, `EconomyManager.SetStartingFunds` + `CityStats.SetCityName` API surface trace, seed generation + save-metadata schema audit, scene-scoped bind lifecycle (`newgame.*` discarded on scene transition), reroll never-twice-in-a-row util, action registry (`newgame.mapSize.set` · `newgame.budget.set` · `newgame.cityName.reroll` · `mainmenu.startNewGame`), bind registry (`newgame.mapSize` enum · `newgame.budget` enum · `newgame.cityName` string), tooltip catalog adds, i18n string-table for headers + labels + tooltips (pool itself is Spanish-only by design), motion shared with main-menu scene-transition primitive. |
+| 2026-05-07 | `settings-view` locked | Shared sub-view archetype mounted by main-menu (`mainmenu.contentScreen = settings`) + pause-menu (`pause.contentScreen = settings`); single source of truth across both hosts. 480 px vertical column, 3 grouped sections separated by thin tan bars: Gameplay (3 toggles — Scroll-edge-pan / Monthly-budget notifications / Auto-save) + Audio (3 sliders 0–100% with live readout — Master / Music / SFX, dB↔linear mapping in adapter) + Display (Resolution dropdown 4 hardcoded entries 1280×720 / 1920×1080 / 2560×1440 / 3840×2160 default = closest-to-current; Fullscreen toggle; VSync toggle). Instant apply on every change (no commit button); footer Reset = 1 s confirm primitive (resets all 9 controls to defaults). Back = host-aware: main-menu host returns to root view, pause-menu host returns to pause root. ESC mirrors Back. Drift flagged: 3 NEW PlayerPrefs keys (SfxVolumeKey reflowed from BlipBootstrap.SfxVolumeDbKey, MonthlyBudgetNotificationsKey, AutoSaveKey), `SettingsScreenDataAdapter` extension (3 new toggles + SFX slider + dB↔linear util + Reset method), 3 NEW archetypes (`form-row-toggle` · `form-row-slider` · `form-row-dropdown`), AutoSaveScheduler service design (cadence + filename pattern + replace-vs-rotate policy), MonthlyBudgetNotifier event subscriber (hooks `EconomyManager.ProcessDailyEconomy` month-rollover), Resolution dropdown index-↔-Resolution-struct util, hardcoded resolution list constant + closest-default util, 3-section thin-bar separator reuse from toolbar, ConfirmButton primitive 1s variant (recoverable vs 3s destructive), action registry (`settings.scrollEdgePan.set` · `settings.monthlyBudgetNotifs.set` · `settings.autoSave.set` · `settings.master.set` · `settings.music.set` · `settings.sfx.set` · `settings.resolution.set` · `settings.fullscreen.set` · `settings.vsync.set` · `settings.reset.confirm`), bind registry (9 setting binds — 3 bool + 3 float + 1 int + 2 bool), i18n string-table for section headers + labels + tooltips, motion (instant + 1s confirm tween). |
+| 2026-05-07 | `save-load-view` locked | Shared sub-view archetype mounted by main-menu (load-only; `mainmenu.contentScreen = load`) + pause-menu (both modes; `pause.contentScreen = saveload`); host forces `saveload.mode` ∈ `save` \| `load` on mount. 560 px vertical column. 3 zones: save-controls strip (mode-gated visible only in `save` mode — name input single-line + Save button; auto-name format `<cityName>-YYYY-MM-DD-HHmm`) + scrollable save-list (56 px compact rows — name + date only, no thumbnails / no city stats; sort newest-first; unlimited scroll) + footer Load button (mode-gated visible in `load` mode + selection-gated). Click row = highlight (cream bg + tan border, reuses toolbar pressed-active idiom). Save mode interactions: type or accept auto-name → click Save → if name collides existing slot → 3 s overwrite confirm; else instant write. Trash icon per row = 3 s destructive confirm primitive (deletes save file). Load mode interactions: click row to highlight → click footer Load → instant scene transition to CityScene with restored state. Back = host-aware (main-menu / pause-menu root). ESC mirrors Back. Drift flagged: 2 NEW archetypes (`save-row` 56 px compact · `save-controls-strip` mode-gated), `GameSaveManager` API additions (`GetSaveFiles()` returns sorted metadata list · `DeleteSave(name)` · `HasAnySave()`), save-metadata schema (cityName + timestamp + seed + mapSize + budget snapshot for list-row rendering), `SaveLoadScreenDataAdapter` refactor (drop hardcoded slot count, drive list from `save.list` array-bind), `saveload.mode` enum-bind + mode-gated visibility binds (`save.controls.visible` · `load.button.visible`), auto-name SaveTimestampFormatter util + cityName fallback, ConfirmButton 3 s destructive variant reuse (overwrite + delete), filename collision detector, list-row click selection state (`save.selectedName` string bind), action registry (`save.save` · `save.overwrite.confirm` · `save.delete.confirm` · `load.load` · `save.list.select`), bind registry (`save.list` array · `save.mode` enum · `save.selectedName` string · `save.controls.visible` bool · `load.button.visible` bool · `save.nameInput` string), i18n string-table for placeholder + labels + confirm prompts + tooltips, motion (instant + 3 s confirm tween). |
+| 2026-05-07 | `audio-cues` registry locked | Cross-cutting behavior-freeze table covering all 10 `BlipId` cues + 3 `UiSfxPlayer` AudioClips + 2 `GameNotificationManager` clips. Names trigger source class + fire event + panel host + KEEP verdict per cue. Locks 4 invariance rules: ThemedButton owns auto hover/click emits (rebake MUST route every button through ThemedButton), sim-side emits never reroute through UI layer (RoadManager / BuildingPlacementService / GridManager / EconomyManager / GameSaveManager own their emits), BlipBootstrap PlayerPrefs persistence (SfxVolumeDbKey + SfxMutedKey via dB↔linear util in SettingsScreenDataAdapter), BlipId.None no-op invariance. Pending follow-ups: 3 unauthored toast clips, modal open/close cue lock, tooltip silent confirmed, picker double-emit audit. |
 | 2026-05-07 | `notifications-toast` locked | Always-on transient feedback channel. Top-right corner stack under hud-bar, 320 px wide cards, 8 px gap, max 5 visible, growing downward, highest z-order (overlays info-panel). Reuses existing production-ready `GameNotificationManager` (queue + lazy UI + fade coroutines + 2 existing SFX). 5 severity tiers — Info(blue,4s) / Success(green,4s) / Warning(amber,6s) / Error(red,8s) / Milestone(gold-pulse,sticky-until-clicked). Click on toast with `cellRef` jumps camera + dismisses. Event surfaces (MVP, multi-select): city-population milestones (1k/5k/10k/25k/50k/100k → sticky Milestone) + service-coverage drops (below 40 %, debounced one-per-service-per-30-days → Warning). NOT in scope: treasury balance, disasters. SFX mapping: reuse 2 existing (sfxNotificationShow, sfxErrorFeedback) + add 3 new (sfxSuccess chime, sfxWarning low-pulse, sfxMilestone gold-flourish). Drift flagged: `PostMilestone` API + `NotificationType.Milestone` enum extension + sticky-queue semantics, NEW archetypes (`toast-stack` · `toast-card` 5-tier variants), `CityStats.OnPopulationMilestone` Action<int> emitter + threshold const, per-service coverage threshold-crosser util + 30-day debounce field, `cameraController.MoveCameraToCell(Vector2Int)` audit, deprecate `alerts-panel.prefab` placeholder, 5 tier-color tokens (milestone = pulse), 5 tier-icon sprite slugs (milestone = crown), action registry (`notification.dismiss` · `notification.click`), bind registry with array-bind (`notification.queue`) + bool (`notification.visible`), queue real-time vs sim-time fade decision (lock = real-time, fades during modal pause), no save/load persistence (in-memory only), i18n string-table integration, motion (200ms fade-in / 300ms fade-out / 1.2s pulse loop). |

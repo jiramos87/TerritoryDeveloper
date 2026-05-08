@@ -116,6 +116,10 @@ namespace Territory.UI.HUD
             // are preserved as-is.
             RebindButtonsByIconSlug();
 
+            // Same hard-reset rebind for non-button consumers (label / readout). Pre-bake Inspector
+            // refs go dangling after delete_gameobject + instantiate_prefab; re-walk by slug.
+            RebindCenterConsumersBySlug();
+
             WireClickHandlers();
 
             // Cleanup: destroy any pre-existing RuntimeMiniMapButton from prior builds (corner button retired).
@@ -152,7 +156,7 @@ namespace Territory.UI.HUD
             // Resolve AUTO toggle display_name from catalog slug (Stage 9.13 / TECH-19975).
             // Falls back to hardcoded "AUTO" when catalog absent (invariant #4 null-tolerant).
             string autoDisplayName = "AUTO";
-            if (_catalog != null && _catalog.TryGetButtonEntry("hud-bar-auto-toggle", out var autoEntry)
+            if (_catalog != null && _catalog.TryGetButtonEntry("hud-bar-auto-button", out var autoEntry)
                 && !string.IsNullOrEmpty(autoEntry.displayName))
             {
                 autoDisplayName = autoEntry.displayName.ToUpperInvariant();
@@ -174,9 +178,10 @@ namespace Territory.UI.HUD
                 var btn = buttons[i];
                 // BUG-62 — bake handler emits PascalCase iconSpriteSlug; switch literals lowercase. Normalize on read.
                 var slug = btn != null && btn.Detail != null ? btn.Detail.iconSpriteSlug?.ToLowerInvariant() : null;
-                if (string.IsNullOrEmpty(slug))
+                if (string.IsNullOrEmpty(slug) || slug == "empty")
                 {
                     // Caption-text fallback — empty slug buttons (MAP, AUTO) bake with TMP caption only.
+                    // hud-bar v2 (mig 0108): bake emits iconSpriteSlug="empty" for placeholder square buttons (AUTO/MAP/speed-cycle).
                     // Caption resolved via catalog display_name when catalog available (Stage 9.13).
                     var capTmp = btn != null ? btn.GetComponentInChildren<TextMeshProUGUI>(true) : null;
                     var cap = capTmp != null ? capTmp.text?.Trim().ToUpperInvariant() : null;
@@ -192,23 +197,41 @@ namespace Territory.UI.HUD
 
                 switch (slug)
                 {
-                    case "stats-button-64": _statsButton = btn; break;
-                    case "zoom-in-button-1-64": _zoomInButton = btn; break;
-                    case "zoom-out-button-1-64": _zoomOutButton = btn; break;
-                    case "pause-button-1-64": EnsureSpeedSlot(0, btn); break;
-                    case "speed-1-button-1-64": EnsureSpeedSlot(1, btn); break;
-                    case "speed-2-button-1-64": EnsureSpeedSlot(2, btn); break;
-                    case "speed-3-button-1-64": EnsureSpeedSlot(3, btn); break;
-                    case "speed-4-button-1-64": EnsureSpeedSlot(4, btn); break;
-                    // BUG-61 W6+W7 — AUTO toggle baked into hud-bar right slot via IR iconSpriteSlugs[].
-                    // Sprite art pending; bake handler Step 16.G renders TMP "AUTO" caption fallback.
-                    // Drives both AutoZoningManager + AutoRoadBuilder via HandleAutoClick.
-                    case "auto-button-64": _autoButton = btn; break;
-                    // FEAT-59 (Stage 9.9) — BUDGET button left of AUTO. Migration 0087 sprite slug.
-                    // Bake handler renders TMP "BUDGET" caption fallback (B1c — PNG art deferred).
-                    case "hud_bar_icon_budget": _budgetButton = btn; break;
-                    // Bug #4 — preventive: bind if/when bake handler emits a minimap-button slug.
-                    case "minimap-button-64": _miniMapButton = btn; break;
+                    // hud-bar v2 (mig 0108) icon slugs from panels.json params_json.icon.
+                    case "new-game": _newButton = btn; break;
+                    case "save-game": _saveButton = btn; break;
+                    case "load-game": _loadButton = btn; break;
+                    case "stats": _statsButton = btn; break;
+                    case "zoom-in": _zoomInButton = btn; break;
+                    case "zoom-out": _zoomOutButton = btn; break;
+                    case "pause": EnsureSpeedSlot(0, btn); break;
+                    // BUDGET button uses long-button sprite (panels.json icon="long").
+                    case "long": _budgetButton = btn; break;
+                }
+            }
+        }
+
+        // Walk CatalogPrefabRef children — slug match → bind ThemedLabel / SegmentedReadout slot.
+        // Mirror of RebindButtonsByIconSlug for label/readout kinds (no IlluminatedButton.Detail).
+        private void RebindCenterConsumersBySlug()
+        {
+            _cityNameLabel = null;
+            _populationReadout = null;
+
+            var refs = GetComponentsInChildren<CatalogPrefabRef>(true);
+            if (refs == null || refs.Length == 0) return;
+            for (int i = 0; i < refs.Length; i++)
+            {
+                var r = refs[i];
+                if (r == null || string.IsNullOrEmpty(r.slug)) continue;
+                switch (r.slug)
+                {
+                    case "hud-bar-city-name-label":
+                        if (_cityNameLabel == null) _cityNameLabel = r.GetComponent<ThemedLabel>();
+                        break;
+                    case "hud-bar-population-readout":
+                        if (_populationReadout == null) _populationReadout = r.GetComponent<SegmentedReadout>();
+                        break;
                 }
             }
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using TMPro;
 using Territory.UI;
@@ -650,11 +651,11 @@ namespace Territory.Editor.Bridge
                     var icon = new GameObject("icon", typeof(RectTransform));
                     icon.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
                     var ir = (RectTransform)icon.transform;
-                    ir.anchorMin = new Vector2(0.5f, 0.5f);
-                    ir.anchorMax = new Vector2(0.5f, 0.5f);
+                    ir.anchorMin = Vector2.zero;
+                    ir.anchorMax = Vector2.one;
                     ir.pivot = new Vector2(0.5f, 0.5f);
                     ir.anchoredPosition = Vector2.zero;
-                    ir.sizeDelta = new Vector2(64f, 64f);
+                    ir.sizeDelta = Vector2.zero;
                     iconImage = icon.AddComponent<Image>();
                     iconImage.raycastTarget = false; // body owns hit-testing.
                     iconImage.preserveAspect = true;
@@ -864,11 +865,14 @@ namespace Territory.Editor.Bridge
             tr.sizeDelta = Vector2.zero;
 
             var tmp = textGo.AddComponent<TextMeshProUGUI>();
-            tmp.text = string.Empty;
+            // bake-fix-2026-05-08: placeholder digits visible at bake-time so visual smoke
+            // can verify readout shape before runtime ApplyDetail binds the live value.
+            tmp.text = "0";
             tmp.alignment = TextAlignmentOptions.Center;
             int digits = detail != null && detail.digits > 0 ? detail.digits : 1;
             // Width hint in font size — ~24pt per digit floor; renderer will populate text on ApplyDetail.
             tmp.fontSize = 24f;
+            tmp.color = Color.white;
             // Ensure raycast surface stays minimal; readouts are non-interactive.
             tmp.raycastTarget = false;
             // digits unused at spawn time except as future width hint (current impl uses anchor stretch).
@@ -1050,14 +1054,16 @@ namespace Territory.Editor.Bridge
 
         /// <summary>
         /// Emit slot-wrapper GameObjects for a <see cref="PanelSnapshotItem"/> based on panel slug.
-        /// Returns a zone→Transform map for use by <see cref="BakePanelSnapshotChildren"/> to route
-        /// per-child layout_json.zone values. Returns null for non-archetype-mapped panels (flat spawn).
+        /// Returns an ord→Transform map keyed by <c>child.ord</c> so <see cref="BakePanelSnapshotChildren"/>
+        /// can flatten its iteration — the archetype owns the full sub-grid structure (zones, cols,
+        /// rows, sub_cols). Returns null for non-archetype-mapped panels (flat spawn).
         ///
-        /// Arm <c>hud-bar</c>: emits Left / Center / Right child GameObjects each with
-        /// <see cref="HorizontalLayoutGroup"/>. Children are routed by zone; missing zone defaults
-        /// to Center with <c>bake.zone_default</c> warning.
+        /// Arm <c>hud-bar</c> (bake-fix-2026-05-08):
+        ///   Left   = HLG of buttons (zone=left)
+        ///   Center = VLG of stacked label rows (zone=center, ordered by layout.row)
+        ///   Right  = HLG of cols; each col = VLG of rows; row with ≥2 children = HLG of sub_cols.
         /// </summary>
-        static Dictionary<string, Transform> BakePanelSnapshotArchetype(PanelSnapshotItem item, GameObject panelRoot, UiTheme theme)
+        static Dictionary<int, Transform> BakePanelSnapshotArchetype(PanelSnapshotItem item, GameObject panelRoot, UiTheme theme)
         {
             if (item == null || string.IsNullOrEmpty(item.slug)) return null;
 
@@ -1065,51 +1071,179 @@ namespace Territory.Editor.Bridge
             {
                 case "hud-bar":
                 case "hud_bar": // legacy slug alias — kept for backwards compat
-                {
-                    var map = new Dictionary<string, Transform>(3, StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var zone in new[] { "left", "center", "right" })
-                    {
-                        var name = char.ToUpperInvariant(zone[0]) + zone.Substring(1); // Left / Center / Right
-                        var go = new GameObject(name, typeof(RectTransform));
-                        go.transform.SetParent(panelRoot.transform, worldPositionStays: false);
-
-                        // F3 (bake-fix-2026-05-07): zone wrappers must flex inside parent HLG.
-                        // Root HLG.childControlWidth=true sizes us — anchors within the row stay center.
-                        // LayoutElement(flexibleWidth=1) gives equal width share when forceExpandWidth toggled off.
-                        var rt = (RectTransform)go.transform;
-                        rt.anchorMin = new Vector2(0f, 0f);
-                        rt.anchorMax = new Vector2(0f, 1f);
-                        rt.pivot = new Vector2(0f, 0.5f);
-                        rt.anchoredPosition = Vector2.zero;
-                        rt.sizeDelta = new Vector2(0f, 0f);
-
-                        var le = go.AddComponent<LayoutElement>();
-                        le.flexibleWidth = 1f;
-                        le.flexibleHeight = 1f;
-                        le.minHeight = 0f;
-
-                        var hlg = go.AddComponent<HorizontalLayoutGroup>();
-                        hlg.spacing = 8;
-                        hlg.padding = new RectOffset(4, 4, 0, 0);
-                        hlg.childControlWidth = false;
-                        hlg.childControlHeight = false;
-                        hlg.childForceExpandWidth = false;
-                        hlg.childForceExpandHeight = false;
-                        hlg.childAlignment = zone == "left"
-                            ? TextAnchor.MiddleLeft
-                            : zone == "right"
-                                ? TextAnchor.MiddleRight
-                                : TextAnchor.MiddleCenter;
-
-                        map[zone] = go.transform;
-                    }
-
-                    return map;
-                }
+                    return BuildHudBarArchetype(item, panelRoot);
                 default:
                     return null;
             }
+        }
+
+        /// <summary>
+        /// Build hud-bar zone wrappers + per-ord parent map. See <see cref="BakePanelSnapshotArchetype"/>.
+        /// </summary>
+        static Dictionary<int, Transform> BuildHudBarArchetype(PanelSnapshotItem item, GameObject panelRoot)
+        {
+            var parentByOrd = new Dictionary<int, Transform>(item.children?.Length ?? 0);
+
+            // Pre-parse child layouts once so zone/col/row/sub_col is available without re-parse.
+            var parsed = new List<(PanelSnapshotChild child, PanelChildLayoutJson layout)>();
+            if (item.children != null)
+            {
+                foreach (var c in item.children)
+                {
+                    if (c == null) continue;
+                    var layout = TryParseTypedJson<PanelChildLayoutJson>(c.layout_json) ?? new PanelChildLayoutJson();
+                    parsed.Add((c, layout));
+                }
+            }
+
+            // ── Left zone — HLG, flat list ───────────────────────────────────────
+            var leftWrapper = CreateZoneWrapper(panelRoot.transform, "Left", TextAnchor.MiddleLeft);
+            foreach (var (c, _) in parsed.Where(p => string.Equals(p.layout.zone, "left", StringComparison.OrdinalIgnoreCase))
+                                          .OrderBy(p => p.layout.ord)
+                                          .ThenBy(p => p.child.ord))
+            {
+                parentByOrd[c.ord] = leftWrapper;
+            }
+
+            // ── Center zone — VLG, stacked rows ──────────────────────────────────
+            var centerWrapper = CreateZoneWrapperVertical(panelRoot.transform, "Center", TextAnchor.MiddleCenter);
+            foreach (var (c, _) in parsed.Where(p => string.Equals(p.layout.zone, "center", StringComparison.OrdinalIgnoreCase))
+                                          .OrderBy(p => p.layout.row)
+                                          .ThenBy(p => p.child.ord))
+            {
+                parentByOrd[c.ord] = centerWrapper;
+            }
+
+            // ── Right zone — HLG of cols; each col = VLG of rows; row with ≥2 children = HLG of sub_cols ─
+            var rightWrapper = CreateZoneWrapper(panelRoot.transform, "Right", TextAnchor.MiddleRight);
+
+            var rightChildren = parsed.Where(p => string.Equals(p.layout.zone, "right", StringComparison.OrdinalIgnoreCase)).ToList();
+            var byCol = rightChildren.GroupBy(p => p.layout.col).OrderBy(g => g.Key);
+
+            foreach (var colGroup in byCol)
+            {
+                var colGo = new GameObject($"Col{colGroup.Key}", typeof(RectTransform));
+                colGo.transform.SetParent(rightWrapper, worldPositionStays: false);
+                ConfigureSubWrapperRect(colGo);
+                var colVlg = colGo.AddComponent<VerticalLayoutGroup>();
+                colVlg.spacing = 4;
+                colVlg.padding = new RectOffset(0, 0, 0, 0);
+                colVlg.childControlWidth = true;
+                colVlg.childControlHeight = true;
+                colVlg.childForceExpandWidth = false;
+                colVlg.childForceExpandHeight = false;
+                colVlg.childAlignment = TextAnchor.MiddleCenter;
+
+                // bake-fix-2026-05-08: always wrap rows so VLG sibling order = ascending row
+                // (children created in BakePanelSnapshotChildren flat-iter would otherwise interleave
+                // with row wrappers built during archetype phase → Col1 BUDGET fell below Row1).
+                var byRow = colGroup.GroupBy(p => p.layout.row).OrderBy(g => g.Key);
+                foreach (var rowGroup in byRow)
+                {
+                    var rowList = rowGroup.OrderBy(p => p.layout.sub_col).ThenBy(p => p.child.ord).ToList();
+                    var rowGo = new GameObject($"Row{rowGroup.Key}", typeof(RectTransform));
+                    rowGo.transform.SetParent(colGo.transform, worldPositionStays: false);
+                    ConfigureSubWrapperRect(rowGo);
+                    var rowHlg = rowGo.AddComponent<HorizontalLayoutGroup>();
+                    rowHlg.spacing = 4;
+                    rowHlg.padding = new RectOffset(0, 0, 0, 0);
+                    rowHlg.childControlWidth = true;
+                    rowHlg.childControlHeight = true;
+                    rowHlg.childForceExpandWidth = false;
+                    rowHlg.childForceExpandHeight = false;
+                    rowHlg.childAlignment = TextAnchor.MiddleCenter;
+                    foreach (var (c, _) in rowList) parentByOrd[c.ord] = rowGo.transform;
+                }
+            }
+
+            return parentByOrd;
+        }
+
+        /// <summary>
+        /// Create a zone-level HLG wrapper under <paramref name="parent"/>. Used for Left + Right zones
+        /// of hud-bar — flexible width share, transparent, fixed-row alignment.
+        /// </summary>
+        static Transform CreateZoneWrapper(Transform parent, string name, TextAnchor align)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, worldPositionStays: false);
+
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(0f, 0f);
+
+            var le = go.AddComponent<LayoutElement>();
+            le.flexibleWidth = 1f;
+            le.flexibleHeight = 1f;
+            le.minHeight = 0f;
+
+            var hlg = go.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 8;
+            hlg.padding = new RectOffset(4, 4, 0, 0);
+            // Drive Col / button widths from preferred size so wrappers + buttons size correctly.
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+            hlg.childAlignment = align;
+
+            return go.transform;
+        }
+
+        /// <summary>
+        /// Create a zone-level VLG wrapper. Center zone of hud-bar stacks city-name / sim-date / population
+        /// readouts top-to-bottom — VLG with MiddleCenter alignment.
+        /// </summary>
+        static Transform CreateZoneWrapperVertical(Transform parent, string name, TextAnchor align)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, worldPositionStays: false);
+
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(0f, 0f);
+
+            var le = go.AddComponent<LayoutElement>();
+            le.flexibleWidth = 1f;
+            le.flexibleHeight = 1f;
+            le.minHeight = 0f;
+
+            var vlg = go.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 2;
+            vlg.padding = new RectOffset(0, 0, 0, 0);
+            // Center labels stretch to zone width so the readouts span the full middle column.
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.childAlignment = align;
+
+            return go.transform;
+        }
+
+        /// <summary>
+        /// Configure a sub-wrapper RectTransform — fit-to-content, no anchor stretch, used inside
+        /// Right zone for col/row sub-wrappers. ContentSizeFitter wraps the wrapper to its
+        /// LayoutGroup-driven preferred size so Col/Row collapse to button bounds.
+        /// </summary>
+        static void ConfigureSubWrapperRect(GameObject go)
+        {
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = Vector2.zero;
+
+            var fitter = go.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
