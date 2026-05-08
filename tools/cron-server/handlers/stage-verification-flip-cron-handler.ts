@@ -20,6 +20,25 @@ export interface StageVerificationFlipJobRow {
 export async function run(row: StageVerificationFlipJobRow): Promise<void> {
   const pool = getCronDbPool();
 
+  // Resolve canonical stage_id form against ia_stages — producers (e.g. ship-cycle)
+  // sometimes drop the trailing ".0" on dotted ids; the FK to ia_stages would then
+  // fail. Try exact match, then ${stage_id}.0 fallback. If neither resolves, fall
+  // through to INSERT which will surface the original FK error.
+  let resolvedStageId = row.stage_id ?? null;
+  if (row.slug && row.stage_id) {
+    const resolved = await pool.query<{ stage_id: string }>(
+      `SELECT stage_id FROM ia_stages
+        WHERE slug = $1
+          AND stage_id IN ($2, $2 || '.0')
+        ORDER BY (stage_id = $2) DESC
+        LIMIT 1`,
+      [row.slug, row.stage_id],
+    );
+    if (resolved.rowCount && resolved.rows[0]) {
+      resolvedStageId = resolved.rows[0].stage_id;
+    }
+  }
+
   // Mirror the INSERT shape from mutateStageVerificationFlip.
   // History-preserving — every cron row becomes a distinct ia_stage_verifications row.
   await pool.query(
@@ -28,7 +47,7 @@ export async function run(row: StageVerificationFlipJobRow): Promise<void> {
      VALUES ($1, $2, $3::stage_verdict, $4, $5, $6)`,
     [
       row.slug ?? null,
-      row.stage_id ?? null,
+      resolvedStageId,
       row.verdict ?? "pass",
       row.commit_sha ?? null,
       row.notes ?? null,
