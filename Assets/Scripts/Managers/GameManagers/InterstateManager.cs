@@ -11,8 +11,9 @@ namespace Territory.Roads
 /// <summary>
 /// Manage Interstate Highway: gen at game start, connectivity checks, validation for player road placement (streets must grow from interstate).
 /// Border entry/exit candidates ranked by flat land toward interior → routes avoid harsh corner climbs when alternatives exist.
+/// Implements Domains.Roads.IInterstate facade (atomization Stage 16 / TECH-23789).
 /// </summary>
-public class InterstateManager : MonoBehaviour
+public class InterstateManager : MonoBehaviour, Domains.Roads.IInterstate
 {
     #region Dependencies
     public GridManager gridManager;
