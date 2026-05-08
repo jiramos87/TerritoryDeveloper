@@ -1,0 +1,1281 @@
+using UnityEngine;
+using System;
+using System.Collections.Generic;
+using Territory.Core;
+using Territory.Roads;
+using Territory.Economy;
+using Territory.Terrain;
+using Territory.Zones;
+using Territory.Utilities;
+
+namespace Domains.Roads.Services
+{
+/// <summary>
+/// Pure POCO service extracted from AutoRoadBuilder MonoBehaviour (Stage 10 atomization).
+/// Uses Action callbacks for segment completion events so the facade owns the segment lists
+/// (avoids circular assembly dependency; AutoZoningManager mutations on facade lists survive).
+/// No MonoBehaviour, no SerializeField. Facade AutoRoadBuilder composes this in Start().
+/// Invariant #2 (InvalidateRoadCache) + #10 (PathTerraformPlan) preserved via GridManager/RoadManager refs.
+/// </summary>
+public class AutoBuildService
+{
+    #region Dependencies (injected via constructor)
+    private GridManager _gridManager;
+    private RoadManager _roadManager;
+    private GrowthBudgetManager _growthBudgetManager;
+    private CityStats _cityStats;
+    private InterstateManager _interstateManager;
+    private TerrainManager _terrainManager;
+    private TerraformingService _terraformingService;
+    private AutoZoningManager _autoZoningManager;
+    private UrbanCentroidService _urbanCentroidService;
+    #endregion
+
+    #region Config params (bound from facade fields at Start)
+    public int maxTilesPerTick;
+    public int minStreetLength;
+    public int minStreetLengthRecovery;
+    public int maxStreetLength;
+    public int maxActiveProjects;
+    public int minParallelSpacingFromEdge;
+    public int minEdgeSpacing;
+    public int minRoadSpacingWhenConnecting;
+    public int coreInnerExtraProjects;
+    public int coreInnerMinEdgeSpacing;
+    public const int MaxBridgeWaterTiles = 5;
+    private const int MaxPerTickSafetyCap = 300;
+    #endregion
+
+    #region Callbacks (facade registers these to receive segment events)
+    /// <summary>
+    /// Called when a segment is completed: (origin, dir, length, ring).
+    /// Facade adds to CompletedSegmentsThisTick + PendingZoningSegments.
+    /// </summary>
+    public Action<Vector2Int, Vector2Int, int, UrbanRing> OnSegmentCompleted;
+
+    /// <summary>
+    /// Called at tick start to clear CompletedSegmentsThisTick.
+    /// Facade clears its own list.
+    /// </summary>
+    public Action OnTickStart;
+    #endregion
+
+    #region Internal state (service-private, not shared with facade)
+    private readonly List<Vector2Int> _batchPlacedFromResolvedRoadCells = new List<Vector2Int>();
+    #endregion
+
+    #region Expropriated cells (shared via direct ref from facade)
+    // Facade passes its own HashSet reference; service mutates it directly.
+    // AutoZoningManager does not read ExpropriatedCellsPendingRoad, so no external mutation concern.
+    private readonly HashSet<Vector2Int> _expropriatedCellsPendingRoad;
+    #endregion
+
+    private struct StreetProject
+    {
+        public Vector2Int tip;
+        public Vector2Int dir;
+        public int targetLength;
+    }
+
+    private static readonly int[] Dx = { 1, -1, 0, 0 };
+    private static readonly int[] Dy = { 0, 0, 1, -1 };
+
+    /// <summary>
+    /// Construct service. Pass facade's ExpropriatedCellsPendingRoad as a shared reference.
+    /// Segment callbacks (OnSegmentCompleted, OnTickStart) must be registered by facade before ProcessTick.
+    /// </summary>
+    public AutoBuildService(
+        GridManager gridManager,
+        RoadManager roadManager,
+        GrowthBudgetManager growthBudgetManager,
+        CityStats cityStats,
+        InterstateManager interstateManager,
+        TerrainManager terrainManager,
+        TerraformingService terraformingService,
+        AutoZoningManager autoZoningManager,
+        UrbanCentroidService urbanCentroidService,
+        HashSet<Vector2Int> expropriatedCellsPendingRoad)
+    {
+        _gridManager = gridManager;
+        _roadManager = roadManager;
+        _growthBudgetManager = growthBudgetManager;
+        _cityStats = cityStats;
+        _interstateManager = interstateManager;
+        _terrainManager = terrainManager;
+        _terraformingService = terraformingService;
+        _autoZoningManager = autoZoningManager;
+        _urbanCentroidService = urbanCentroidService;
+        _expropriatedCellsPendingRoad = expropriatedCellsPendingRoad;
+    }
+
+    /// <summary>Update all dependency refs (called after facade's Start resolves FindObjectOfType).</summary>
+    public void RefreshDependencies(
+        GridManager gridManager,
+        RoadManager roadManager,
+        GrowthBudgetManager growthBudgetManager,
+        CityStats cityStats,
+        InterstateManager interstateManager,
+        TerrainManager terrainManager,
+        TerraformingService terraformingService,
+        AutoZoningManager autoZoningManager,
+        UrbanCentroidService urbanCentroidService)
+    {
+        _gridManager = gridManager;
+        _roadManager = roadManager;
+        _growthBudgetManager = growthBudgetManager;
+        _cityStats = cityStats;
+        _interstateManager = interstateManager;
+        _terrainManager = terrainManager;
+        _terraformingService = terraformingService;
+        _autoZoningManager = autoZoningManager;
+        _urbanCentroidService = urbanCentroidService;
+    }
+
+    private bool PlaceRoadTileInBatch(RoadPrefabResolver.ResolvedRoadTile resolved)
+    {
+        _roadManager.PlaceRoadTileFromResolved(resolved);
+        _batchPlacedFromResolvedRoadCells.Add(resolved.gridPos);
+        return true;
+    }
+
+    private bool PlaceRoadTileInBatch(Vector2 pos)
+    {
+        return _roadManager.PlaceRoadTileAt(pos);
+    }
+
+    public void FlushBatchRoadPrefabRefresh()
+    {
+        if (_batchPlacedFromResolvedRoadCells.Count == 0 || _roadManager == null)
+            return;
+        _roadManager.RefreshRoadPrefabsAfterBatchPlacement(_batchPlacedFromResolvedRoadCells);
+        _batchPlacedFromResolvedRoadCells.Clear();
+    }
+
+    public void ProcessTick()
+    {
+        if (_growthBudgetManager == null || _roadManager == null || _gridManager == null || _cityStats == null)
+            return;
+        if (!_cityStats.simulateGrowth)
+            return;
+        if (_cityStats.cityPowerOutput > 0 && !_cityStats.GetCityPowerAvailability())
+            return;
+
+        OnTickStart?.Invoke();
+        _batchPlacedFromResolvedRoadCells.Clear();
+
+        var edges = _gridManager.GetRoadEdgePositions();
+        var allRoads = _gridManager.GetAllRoadPositions();
+        var roadSet = new HashSet<Vector2Int>(allRoads);
+        int edgeCount = edges.Count;
+
+        int available = _growthBudgetManager.GetAvailableBudget(GrowthCategory.Roads);
+        int costPerTile = RoadManager.RoadCostPerTile;
+        int maxByBudget = costPerTile > 0 ? available / costPerTile : 0;
+        int toPlace = Mathf.Min(MaxPerTickSafetyCap, maxByBudget);
+
+        int placed = 0;
+        int effectiveMinStreetLength = edgeCount < 4 ? minStreetLengthRecovery : minStreetLength;
+
+        if (_interstateManager != null && !_interstateManager.IsConnectedToInterstate)
+        {
+            placed = TryConnectToInterstate(toPlace, allRoads);
+            if (placed > 0)
+            {
+                FlushBatchRoadPrefabRefresh();
+                _gridManager.InvalidateRoadCache();
+                return;
+            }
+        }
+
+        List<List<Vector2Int>> clusters = GetRoadClusters(allRoads);
+        if (clusters.Count > 1)
+        {
+            placed = TryConnectDisconnected(clusters, toPlace);
+            if (placed > 0)
+            {
+                FlushBatchRoadPrefabRefresh();
+                _gridManager.InvalidateRoadCache();
+                return;
+            }
+        }
+
+        int innerEdgeCount = CountInnerEdges(edges);
+        int effectiveMaxProjects = maxActiveProjects + (innerEdgeCount >= 2 ? coreInnerExtraProjects : 0);
+
+        int newProjectsStarted = 0;
+        while (toPlace > 0 && newProjectsStarted < effectiveMaxProjects)
+        {
+            if (!TryStartNewStreetProject(ref toPlace, effectiveMinStreetLength, edges, roadSet))
+                break;
+            newProjectsStarted++;
+        }
+        if (newProjectsStarted == 0 && toPlace > 0 && effectiveMinStreetLength > minStreetLengthRecovery)
+        {
+            if (TryStartNewStreetProject(ref toPlace, minStreetLengthRecovery, edges, roadSet))
+                newProjectsStarted++;
+        }
+
+        if (newProjectsStarted > 0)
+        {
+            _gridManager.InvalidateRoadCache();
+            edges = _gridManager.GetRoadEdgePositions();
+            roadSet = new HashSet<Vector2Int>(_gridManager.GetAllRoadPositions());
+        }
+
+        if (newProjectsStarted == 0 && toPlace > 0)
+        {
+            if (TryExpropriateForLongBlockedSegment(edges, roadSet))
+            {
+                _gridManager.InvalidateRoadCache();
+                int placedExp = PlaceRoadsInExpropriatedCells(ref toPlace);
+                if (placedExp > 0)
+                    placed += placedExp;
+                edges = _gridManager.GetRoadEdgePositions();
+                roadSet = new HashSet<Vector2Int>(_gridManager.GetAllRoadPositions());
+                if (TryStartNewStreetProject(ref toPlace, effectiveMinStreetLength, edges, roadSet))
+                    newProjectsStarted++;
+            }
+        }
+
+        if (toPlace > 0 && _expropriatedCellsPendingRoad.Count > 0)
+        {
+            int placedExp = PlaceRoadsInExpropriatedCells(ref toPlace);
+            if (placedExp > 0)
+                placed += placedExp;
+        }
+
+        FlushBatchRoadPrefabRefresh();
+        if (placed > 0 || newProjectsStarted > 0)
+            _gridManager.InvalidateRoadCache();
+    }
+
+    bool TryGetStreetPlacementPlan(List<Vector2> pathVec2, Vector2Int? straightBuildDirection, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        if (_roadManager != null)
+        {
+            int hint = 0;
+            var ctx = new RoadPathValidationContext { forbidCutThrough = false };
+            bool prefixOk = _roadManager.TryPrepareRoadPlacementPlanLongestValidPrefix(pathVec2, ctx, false, ref hint, out expandedPath, out plan, out _);
+            bool progOk = false;
+            List<Vector2> progExpanded = null;
+            PathTerraformPlan progPlan = null;
+            if (straightBuildDirection.HasValue)
+                progOk = _roadManager.TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord(pathVec2, straightBuildDirection.Value, ctx, out progExpanded, out progPlan);
+
+            if (!prefixOk && progOk)
+            {
+                expandedPath = progExpanded;
+                plan = progPlan;
+                return true;
+            }
+            if (!prefixOk && !progOk)
+            {
+                expandedPath = null;
+                plan = null;
+                return false;
+            }
+            if (prefixOk && !progOk)
+                return true;
+
+            bool strokeWet = _roadManager.StrokeHasWaterOrWaterSlopeCells(pathVec2);
+            bool preferProg = strokeWet || (progExpanded != null && expandedPath != null && progExpanded.Count > expandedPath.Count);
+            if (preferProg)
+            {
+                expandedPath = progExpanded;
+                plan = progPlan;
+            }
+            return true;
+        }
+        if (pathVec2 == null || pathVec2.Count == 0)
+        {
+            expandedPath = pathVec2;
+            plan = new PathTerraformPlan { isValid = false };
+            return false;
+        }
+        expandedPath = pathVec2.Count >= 2 ? TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2) : pathVec2;
+        plan = _terraformingService != null ? _terraformingService.ComputePathPlan(expandedPath) : new PathTerraformPlan { isValid = false };
+        return plan.isValid;
+    }
+
+    private int BuildFullSegmentInOneTick(StreetProject p, ref int budgetRemaining, HashSet<Vector2Int> roadSet)
+    {
+        Vector2Int origin = p.tip;
+        Vector2Int dir = p.dir;
+        int w = _gridManager.width, h = _gridManager.height;
+
+        var path = new List<Vector2Int>();
+        int x = origin.x, y = origin.y;
+        int maxLen = Mathf.Min(p.targetLength, budgetRemaining);
+
+        for (int i = 0; i < maxLen; i++)
+        {
+            if (x < 0 || x >= w || y < 0 || y >= h) break;
+            CityCell c = _gridManager.GetCell(x, y);
+            if (c != null && c.zoneType == Zone.ZoneType.Road) break;
+            if (!IsCellPlaceableForRoad(x, y)) break;
+            if (!IsSuitableForRoad(x, y, dir)) break;
+            path.Add(new Vector2Int(x, y));
+            x += dir.x;
+            y += dir.y;
+        }
+
+        if (path.Count == 0) return 0;
+
+        var pathVec2 = new List<Vector2>();
+        for (int i = 0; i < path.Count; i++)
+            pathVec2.Add(new Vector2(path[i].x, path[i].y));
+
+        if (_roadManager != null && _roadManager.TryExtendCardinalStreetPathWithBridgeChord(pathVec2, dir))
+        {
+            for (int i = path.Count; i < pathVec2.Count; i++)
+                path.Add(new Vector2Int((int)pathVec2[i].x, (int)pathVec2[i].y));
+        }
+
+        const int maxShortenAttempts = 3;
+        int shortenCount = 0;
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count >= 1 && shortenCount < maxShortenAttempts)
+        {
+            if (TryGetStreetPlacementPlan(pathVec2, dir, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
+            if (path.Count <= 1) break;
+            path.RemoveAt(path.Count - 1);
+            pathVec2.RemoveAt(pathVec2.Count - 1);
+            shortenCount++;
+        }
+
+        if (!(plan != null && plan.isValid) && path.Count >= 2)
+        {
+            Vector2Int edge = new Vector2Int(origin.x - dir.x, origin.y - dir.y);
+            Vector2Int target = path[path.Count - 1];
+            var aStarPath = _gridManager.FindPathForAutoSimulation(edge, target);
+            if (aStarPath != null && aStarPath.Count >= 2)
+            {
+                path.Clear();
+                pathVec2.Clear();
+                for (int i = 0; i < aStarPath.Count; i++)
+                {
+                    if (aStarPath[i] == edge) continue;
+                    path.Add(aStarPath[i]);
+                    pathVec2.Add(new Vector2(aStarPath[i].x, aStarPath[i].y));
+                }
+                if (path.Count > 0)
+                {
+                    if (!TryGetStreetPlacementPlan(pathVec2, dir, out expandedPath, out plan) || plan == null || !plan.isValid)
+                    {
+                        path.Clear();
+                        pathVec2.Clear();
+                    }
+                }
+            }
+        }
+
+        if (path.Count == 0 || plan == null || !plan.isValid || expandedPath == null) return 0;
+
+        var heightMap = _terrainManager != null ? _terrainManager.GetHeightMap() : null;
+
+        bool waterCrossing = _roadManager != null && _roadManager.StrokeHasWaterOrWaterSlopeCells(expandedPath);
+        bool atomicWaterBridge = waterCrossing;
+        if (atomicWaterBridge && (_roadManager == null || !_roadManager.StrokeLastCellIsFirmDryLand(expandedPath)))
+            return 0;
+
+        List<RoadPrefabResolver.ResolvedRoadTile> resolvedPreApply = null;
+        if (atomicWaterBridge && _roadManager != null && !plan.HasTerraformHeightMutation())
+            resolvedPreApply = _roadManager.ResolvePathForRoads(expandedPath, plan);
+
+        int CountNonRoadTilesOnResolved(List<RoadPrefabResolver.ResolvedRoadTile> r)
+        {
+            if (r == null || _gridManager == null) return 0;
+            int n = 0;
+            for (int i = 0; i < r.Count; i++)
+            {
+                CityCell c = _gridManager.GetCell(r[i].gridPos.x, r[i].gridPos.y);
+                if (c != null && c.zoneType != Zone.ZoneType.Road)
+                    n++;
+            }
+            return n;
+        }
+
+        int CountNonRoadTilesOnExpandedPath()
+        {
+            int n = 0;
+            for (int i = 0; i < expandedPath.Count; i++)
+            {
+                int ex = (int)expandedPath[i].x, ey = (int)expandedPath[i].y;
+                CityCell c = _gridManager.GetCell(ex, ey);
+                if (c != null && c.zoneType != Zone.ZoneType.Road)
+                    n++;
+            }
+            return n;
+        }
+
+        if (atomicWaterBridge && _growthBudgetManager != null)
+        {
+            int needPre = resolvedPreApply != null ? CountNonRoadTilesOnResolved(resolvedPreApply) : CountNonRoadTilesOnExpandedPath();
+            if (needPre > budgetRemaining)
+                return 0;
+        }
+
+        if (heightMap != null && !plan.Apply(heightMap, _terrainManager))
+            return 0;
+
+        var resolved = _roadManager != null ? _roadManager.ResolvePathForRoads(expandedPath, plan) : new List<RoadPrefabResolver.ResolvedRoadTile>();
+        if (resolved.Count == 0)
+            return 0;
+
+        int placed = 0;
+        if (atomicWaterBridge)
+        {
+            int tilesToPlace = CountNonRoadTilesOnResolved(resolved);
+            if (tilesToPlace > budgetRemaining)
+            {
+                if (heightMap != null)
+                    plan.Revert(heightMap, _terrainManager);
+                return 0;
+            }
+
+            int lumpCost = tilesToPlace * RoadManager.RoadCostPerTile;
+            if (tilesToPlace > 0)
+            {
+                if (_growthBudgetManager == null || !_growthBudgetManager.TrySpend(GrowthCategory.Roads, lumpCost))
+                {
+                    if (heightMap != null)
+                        plan.Revert(heightMap, _terrainManager);
+                    return 0;
+                }
+                budgetRemaining -= tilesToPlace;
+            }
+
+            for (int i = 0; i < resolved.Count; i++)
+            {
+                CityCell c = _gridManager.GetCell(resolved[i].gridPos.x, resolved[i].gridPos.y);
+                if (c != null && c.zoneType == Zone.ZoneType.Road)
+                    continue;
+                PlaceRoadTileInBatch(resolved[i]);
+                placed++;
+                roadSet.Add(resolved[i].gridPos);
+            }
+
+            if (placed == 0)
+                return 0;
+        }
+        else
+        {
+            for (int i = 0; i < resolved.Count && budgetRemaining > 0; i++)
+            {
+                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) break;
+                if (PlaceRoadTileInBatch(resolved[i]))
+                {
+                    placed++;
+                    budgetRemaining--;
+                    roadSet.Add(resolved[i].gridPos);
+                }
+            }
+
+            if (placed == 0) return 0;
+        }
+
+        UrbanRing ring = _urbanCentroidService != null ? _urbanCentroidService.GetUrbanRing(new Vector2(origin.x, origin.y)) : UrbanRing.Mid;
+        // Notify facade via callback — facade owns the typed lists
+        OnSegmentCompleted?.Invoke(origin, dir, placed, ring);
+        return placed;
+    }
+
+    private bool TryStartNewStreetProject(ref int budgetRemaining, int effectiveMinStreetLength, List<Vector2Int> edges, HashSet<Vector2Int> roadSet)
+    {
+        if (edges.Count == 0) return false;
+
+        RingStreetParams fallbackParams = new RingStreetParams
+        {
+            minLength = effectiveMinStreetLength,
+            maxLength = maxStreetLength,
+            parallelSpacing = minParallelSpacingFromEdge,
+            parallelSpacingMin = minParallelSpacingFromEdge,
+            parallelSpacingMax = minParallelSpacingFromEdge
+        };
+
+        var withScore = new List<KeyValuePair<Vector2Int, float>>(edges.Count);
+        bool centroidShifted = _urbanCentroidService != null && _urbanCentroidService.CentroidShiftedRecently;
+        foreach (Vector2Int e in edges)
+        {
+            UrbanRing eRing = _urbanCentroidService != null ? _urbanCentroidService.GetUrbanRing(new Vector2(e.x, e.y)) : UrbanRing.Mid;
+            int ringPriority = _urbanCentroidService != null ? GetRingPriority(eRing) : 4;
+            if (centroidShifted && (eRing == UrbanRing.Inner))
+                ringPriority += 3;
+            int grass = CountGrassNeighbors(e);
+            RingStreetParams edgeParams = _urbanCentroidService != null ? _urbanCentroidService.GetStreetParamsForRing(eRing) : fallbackParams;
+            int spacing = GetEffectiveParallelSpacing(edgeParams);
+            float bestUtil = 0f;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = e.x + Dx[d], ny = e.y + Dy[d];
+                if (nx < 0 || nx >= _gridManager.width || ny < 0 || ny >= _gridManager.height) continue;
+                if (!IsCellPlaceableForRoad(nx, ny)) continue;
+                Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
+                if (!IsSuitableForRoad(nx, ny, dir)) continue;
+                Vector2Int rdE = GetRoadDirectionAtEdge(e, roadSet);
+                Vector2Int? exclE = (rdE.x != 0 || rdE.y != 0) && (dir.x * rdE.x + dir.y * rdE.y) == 0 ? (Vector2Int?)rdE : null;
+                if (HasParallelRoadTooClose(e, dir, spacing, roadSet, exclE)) continue;
+                Vector2Int tip = new Vector2Int(nx, ny);
+                int len = HowFarWeCanBuild(tip, dir);
+                int scoreMin = edgeParams.minLength;
+                if (IsEdgeOnInterstate(e)) scoreMin = Mathf.Min(scoreMin, 2);
+                if (len < scoreMin && len >= 2 && IsDirectionBlockedBySlopeOrWater(tip, dir, len)) scoreMin = 2;
+                if (len < scoreMin) continue;
+                float u = CalculateDirectionUtility(e, dir, 5, spacing, roadSet);
+                if (u > bestUtil) bestUtil = u;
+            }
+            float score = ringPriority * 100f + grass * 5f + bestUtil * 10f;
+            withScore.Add(new KeyValuePair<Vector2Int, float>(e, score));
+        }
+        withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
+        var consideredEdges = new HashSet<Vector2Int>();
+
+        foreach (var kv in withScore)
+        {
+            Vector2Int edge = kv.Key;
+
+            UrbanRing edgeRing = _urbanCentroidService != null ? _urbanCentroidService.GetUrbanRing(new Vector2(edge.x, edge.y)) : UrbanRing.Mid;
+            RingStreetParams @params = fallbackParams;
+            if (_urbanCentroidService != null)
+            {
+                @params = _urbanCentroidService.GetStreetParamsForRing(edgeRing);
+                if (edgeRing != UrbanRing.Inner)
+                    @params.minLength = Mathf.Max(@params.minLength, effectiveMinStreetLength);
+                if (edgeRing == UrbanRing.Mid || edgeRing == UrbanRing.Outer || edgeRing == UrbanRing.Rural)
+                    @params.minLength = Mathf.Max(@params.minLength, 3);
+            }
+            else
+            {
+                @params.parallelSpacing = minParallelSpacingFromEdge;
+                @params.parallelSpacingMin = minParallelSpacingFromEdge;
+                @params.parallelSpacingMax = minParallelSpacingFromEdge;
+            }
+            if (IsEdgeOnInterstate(edge))
+                @params.minLength = Mathf.Min(@params.minLength, 2);
+
+            int effectiveEdgeSpacing = GetEffectiveMinEdgeSpacing(edgeRing);
+            if (effectiveEdgeSpacing > 0)
+            {
+                bool tooCloseToConsidered = false;
+                foreach (Vector2Int c in consideredEdges)
+                {
+                    if (Mathf.Abs(edge.x - c.x) + Mathf.Abs(edge.y - c.y) < effectiveEdgeSpacing)
+                    {
+                        tooCloseToConsidered = true;
+                        break;
+                    }
+                }
+                if (tooCloseToConsidered) continue;
+                consideredEdges.Add(edge);
+            }
+
+            var validDirections = new List<(Vector2Int dir, Vector2Int tip, int len)>();
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
+                if (nx < 0 || nx >= _gridManager.width || ny < 0 || ny >= _gridManager.height)
+                    continue;
+                if (!IsCellPlaceableForRoad(nx, ny))
+                    continue;
+                Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
+                Vector2Int tip = new Vector2Int(nx, ny);
+                if (!IsSuitableForRoad(nx, ny, dir))
+                    continue;
+                int spacing = GetEffectiveParallelSpacing(@params);
+                Vector2Int rdEdge = GetRoadDirectionAtEdge(edge, roadSet);
+                Vector2Int? exclEdge = (rdEdge.x != 0 || rdEdge.y != 0) && (dir.x * rdEdge.x + dir.y * rdEdge.y) == 0 ? (Vector2Int?)rdEdge : null;
+                if (HasParallelRoadTooClose(edge, dir, spacing, roadSet, exclEdge))
+                    continue;
+                int len = HowFarWeCanBuild(tip, dir);
+                int effectiveMin = @params.minLength;
+                if (len < effectiveMin && len >= 2 && IsDirectionBlockedBySlopeOrWater(tip, dir, len))
+                    effectiveMin = 2;
+                if (len < effectiveMin)
+                    continue;
+                validDirections.Add((dir, tip, len));
+            }
+
+            if (validDirections.Count > 0)
+            {
+                UrbanRing ringForSort = edgeRing;
+                Vector2Int roadDir = GetRoadDirectionAtEdge(edge, roadSet);
+                int sortSpacing = GetEffectiveParallelSpacing(@params);
+                validDirections.Sort((a, b) =>
+                {
+                    if (ringForSort == UrbanRing.Inner)
+                    {
+                        bool aPerp = roadDir.x == 0 && roadDir.y == 0 ? false : (a.dir.x * roadDir.x + a.dir.y * roadDir.y) == 0;
+                        bool bPerp = roadDir.x == 0 && roadDir.y == 0 ? false : (b.dir.x * roadDir.x + b.dir.y * roadDir.y) == 0;
+                        if (aPerp != bPerp) return aPerp ? -1 : 1;
+                    }
+                    float utilA = CalculateDirectionUtility(edge, a.dir, 5, sortSpacing, roadSet);
+                    float utilB = CalculateDirectionUtility(edge, b.dir, 5, sortSpacing, roadSet);
+                    return utilB.CompareTo(utilA);
+                });
+            }
+
+            foreach (var (dir, tip, len) in validDirections)
+            {
+                int targetLen = Mathf.Clamp(Random.Range(@params.minLength, @params.maxLength + 1), @params.minLength, len);
+                var project = new StreetProject { tip = tip, dir = dir, targetLength = targetLen };
+                int placed = BuildFullSegmentInOneTick(project, ref budgetRemaining, roadSet);
+                if (placed > 0)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryExpropriateForLongBlockedSegment(List<Vector2Int> edges, HashSet<Vector2Int> roadSet)
+    {
+        var segments = GetStraightSegmentsFromGrid(roadSet, edges);
+        int w = _gridManager.width, h = _gridManager.height;
+
+        foreach (var (origin, dir, length) in segments)
+        {
+            Vector2 mid = new Vector2(origin.x + (length / 2) * dir.x, origin.y + (length / 2) * dir.y);
+            UrbanRing ring = _urbanCentroidService != null ? _urbanCentroidService.GetUrbanRing(mid) : UrbanRing.Mid;
+            RingStreetParams ringParams = _urbanCentroidService != null ? _urbanCentroidService.GetStreetParamsForRing(ring) : new RingStreetParams { minLength = 4, maxLength = 20 };
+
+            if (length <= ringParams.maxLength) continue;
+            if (!IsSegmentFullyBlocked(origin, dir, length, roadSet)) continue;
+
+            Vector2Int end = new Vector2Int(origin.x + (length - 1) * dir.x, origin.y + (length - 1) * dir.y);
+            int roadNeighborsOrigin = _gridManager.CountRoadNeighbors(origin.x, origin.y);
+            int roadNeighborsEnd = _gridManager.CountRoadNeighbors(end.x, end.y);
+
+            Vector2Int intersection;
+            Vector2Int anchorDir;
+            if (roadNeighborsEnd >= 2)
+            {
+                intersection = end;
+                anchorDir = new Vector2Int(-dir.x, -dir.y);
+            }
+            else if (roadNeighborsOrigin >= 2)
+            {
+                intersection = origin;
+                anchorDir = dir;
+            }
+            else
+                continue;
+
+            int L = Mathf.Clamp(Random.Range(ringParams.minLength, Mathf.Min(ringParams.minLength + 2, ringParams.maxLength)), 1, length - 1);
+            Vector2Int anchor = new Vector2Int(intersection.x + L * anchorDir.x, intersection.y + L * anchorDir.y);
+            if (!roadSet.Contains(anchor)) continue;
+
+            Vector2Int perp = new Vector2Int(-dir.y, dir.x);
+            int perpSign = Random.value < 0.5f ? 1 : -1;
+
+            var demolished = new List<Vector2Int>();
+            for (int j = 1; j <= L; j++)
+            {
+                Vector2Int cell = new Vector2Int(anchor.x + perpSign * j * perp.x, anchor.y + perpSign * j * perp.y);
+                if (cell.x < 0 || cell.x >= w || cell.y < 0 || cell.y >= h) continue;
+
+                CityCell c = _gridManager.GetCell(cell.x, cell.y);
+                if (c == null) continue;
+                if (c.GetCellInstanceHeight() == 0) continue;
+                string bt = c.GetBuildingType();
+                if (bt == "PowerPlant" || bt == "WaterPlant") continue;
+
+                if (_gridManager.DemolishCellAt(new Vector2(cell.x, cell.y), showAnimation: false))
+                {
+                    demolished.Add(cell);
+                    _expropriatedCellsPendingRoad.Add(cell);
+                }
+            }
+
+            if (demolished.Count > 0)
+                return true;
+        }
+        return false;
+    }
+
+    private int PlaceRoadsInExpropriatedCells(ref int budgetRemaining)
+    {
+        int placed = 0;
+        var toPlace = new List<Vector2Int>(_expropriatedCellsPendingRoad);
+        foreach (Vector2Int pos in toPlace)
+        {
+            if (budgetRemaining <= 0) break;
+            CityCell c = _gridManager.GetCell(pos.x, pos.y);
+            if (c == null || c.zoneType == Zone.ZoneType.Road)
+            {
+                _expropriatedCellsPendingRoad.Remove(pos);
+                continue;
+            }
+            if (!IsCellPlaceableForRoad(pos.x, pos.y)) continue;
+            if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) continue;
+            if (PlaceRoadTileInBatch(new Vector2(pos.x, pos.y)))
+            {
+                _expropriatedCellsPendingRoad.Remove(pos);
+                placed++;
+                budgetRemaining--;
+            }
+        }
+        return placed;
+    }
+
+    private int TryPlaceOneTileFromEdges(List<Vector2Int> edges)
+    {
+        if (edges.Count == 0)
+            return 0;
+        var withScore = new List<KeyValuePair<Vector2Int, int>>(edges.Count);
+        foreach (Vector2Int e in edges)
+            withScore.Add(new KeyValuePair<Vector2Int, int>(e, CountGrassNeighbors(e)));
+        withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
+        foreach (var kv in withScore)
+        {
+            Vector2Int edge = kv.Key;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
+                if (nx < 0 || nx >= _gridManager.width || ny < 0 || ny >= _gridManager.height)
+                    continue;
+                if (!IsCellPlaceableForRoad(nx, ny))
+                    continue;
+                if (!_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile))
+                    continue;
+                if (PlaceRoadTileInBatch(new Vector2(nx, ny)))
+                    return 1;
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    private int HowFarWeCanBuild(Vector2Int start, Vector2Int dir)
+    {
+        int count = 0;
+        int x = start.x, y = start.y;
+        int w = _gridManager.width, h = _gridManager.height;
+        while (x >= 0 && x < w && y >= 0 && y < h)
+        {
+            if (!IsCellPlaceableForRoad(x, y))
+                break;
+            if (!IsSuitableForRoad(x, y, dir))
+                break;
+            CityCell c = _gridManager.GetCell(x, y);
+            bool isWater = c != null && c.GetCellInstanceHeight() == 0;
+            if (isWater)
+            {
+                int landStep = -1;
+                for (int k = 1; k <= MaxBridgeWaterTiles; k++)
+                {
+                    int nx = x + k * dir.x, ny = y + k * dir.y;
+                    if (nx < 0 || nx >= w || ny < 0 || ny >= h) break;
+                    CityCell nc = _gridManager.GetCell(nx, ny);
+                    if (nc == null || nc.GetCellInstanceHeight() == 0) continue;
+                    if (!IsCellPlaceableForRoad(nx, ny) || !IsSuitableForRoad(nx, ny, dir)) continue;
+                    landStep = k;
+                    break;
+                }
+                if (landStep < 0)
+                    break;
+                count += (1 + landStep);
+                x += (landStep + 1) * dir.x;
+                y += (landStep + 1) * dir.y;
+                continue;
+            }
+            count++;
+            x += dir.x;
+            y += dir.y;
+        }
+        return count;
+    }
+
+    private float GetAverageDesirabilityInDirection(Vector2Int start, Vector2Int dir, int sampleCount)
+    {
+        float sum = 0f;
+        int count = 0;
+        int x = start.x, y = start.y;
+        int w = _gridManager.width, h = _gridManager.height;
+        for (int k = 0; k < sampleCount; k++)
+        {
+            x += dir.x;
+            y += dir.y;
+            if (x < 0 || x >= w || y < 0 || y >= h) break;
+            CityCell c = _gridManager.GetCell(x, y);
+            if (c != null)
+            {
+                sum += c.desirability;
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : 0f;
+    }
+
+    private Vector2Int GetRoadDirectionAtEdge(Vector2Int edge, HashSet<Vector2Int> roadSet)
+    {
+        int roadX = 0, roadY = 0;
+        for (int d = 0; d < 4; d++)
+        {
+            var n = new Vector2Int(edge.x + Dx[d], edge.y + Dy[d]);
+            if (roadSet.Contains(n))
+            {
+                roadX += Dx[d];
+                roadY += Dy[d];
+            }
+        }
+        if (roadX == 0 && roadY == 0) return Vector2Int.zero;
+        if (Mathf.Abs(roadX) >= Mathf.Abs(roadY))
+            return new Vector2Int(roadX > 0 ? 1 : -1, 0);
+        return new Vector2Int(0, roadY > 0 ? 1 : -1);
+    }
+
+    private static int GetRingPriority(UrbanRing ring)
+    {
+        switch (ring)
+        {
+            case UrbanRing.Inner: return 6;
+            case UrbanRing.Mid: return 5;
+            case UrbanRing.Outer: return 4;
+            case UrbanRing.Rural: return 3;
+            default: return 4;
+        }
+    }
+
+    private int GetEffectiveMinEdgeSpacing(UrbanRing ring)
+    {
+        if ((ring == UrbanRing.Inner) && minEdgeSpacing > coreInnerMinEdgeSpacing)
+            return minEdgeSpacing - coreInnerMinEdgeSpacing;
+        return minEdgeSpacing;
+    }
+
+    private int CountInnerEdges(List<Vector2Int> edges)
+    {
+        if (_urbanCentroidService == null || edges == null) return 0;
+        int count = 0;
+        foreach (Vector2Int e in edges)
+        {
+            UrbanRing ring = _urbanCentroidService.GetUrbanRing(new Vector2(e.x, e.y));
+            if (ring == UrbanRing.Inner)
+                count++;
+        }
+        return count;
+    }
+
+    private static int GetEffectiveParallelSpacing(RingStreetParams p)
+    {
+        return p.parallelSpacingMax > p.parallelSpacingMin
+            ? Random.Range(p.parallelSpacingMin, p.parallelSpacingMax + 1)
+            : p.parallelSpacing;
+    }
+
+    private List<(Vector2Int origin, Vector2Int dir, int length)> GetStraightSegmentsFromGrid(HashSet<Vector2Int> roadSet, List<Vector2Int> edges)
+    {
+        var segments = new List<(Vector2Int origin, Vector2Int dir, int length)>();
+        var seen = new HashSet<(int ox, int oy, int dx, int dy)>();
+        int w = _gridManager.width, h = _gridManager.height;
+
+        foreach (Vector2Int edge in edges)
+        {
+            Vector2Int roadDir = GetRoadDirectionAtEdge(edge, roadSet);
+            if (roadDir.x == 0 && roadDir.y == 0) continue;
+
+            Vector2Int pos = edge;
+            while (true)
+            {
+                int px = pos.x - roadDir.x, py = pos.y - roadDir.y;
+                if (px < 0 || px >= w || py < 0 || py >= h) break;
+                Vector2Int prev = new Vector2Int(px, py);
+                if (!roadSet.Contains(prev)) break;
+                pos = prev;
+            }
+            Vector2Int origin = pos;
+
+            int length = 0;
+            pos = origin;
+            while (pos.x >= 0 && pos.x < w && pos.y >= 0 && pos.y < h && roadSet.Contains(pos))
+            {
+                length++;
+                pos = new Vector2Int(pos.x + roadDir.x, pos.y + roadDir.y);
+            }
+
+            if (length < 2) continue;
+
+            Vector2Int end = new Vector2Int(origin.x + (length - 1) * roadDir.x, origin.y + (length - 1) * roadDir.y);
+            Vector2Int canonOrigin = (origin.x < end.x || (origin.x == end.x && origin.y <= end.y)) ? origin : end;
+            Vector2Int canonDir = (origin.x < end.x || (origin.x == end.x && origin.y <= end.y)) ? roadDir : new Vector2Int(-roadDir.x, -roadDir.y);
+            var key = (canonOrigin.x, canonOrigin.y, canonDir.x, canonDir.y);
+            if (seen.Contains(key)) continue;
+            seen.Add(key);
+
+            segments.Add((canonOrigin, canonDir, length));
+        }
+        return segments;
+    }
+
+    private bool IsSegmentFullyBlocked(Vector2Int origin, Vector2Int dir, int length, HashSet<Vector2Int> roadSet)
+    {
+        Vector2Int perp = new Vector2Int(-dir.y, dir.x);
+        int w = _gridManager.width, h = _gridManager.height;
+
+        for (int k = 0; k <= length - 2; k++)
+        {
+            for (int j = 1; j <= 4; j++)
+            {
+                Vector2Int left = new Vector2Int(origin.x + k * dir.x + j * perp.x, origin.y + k * dir.y + j * perp.y);
+                Vector2Int right = new Vector2Int(origin.x + k * dir.x - j * perp.x, origin.y + k * dir.y - j * perp.y);
+
+                foreach (Vector2Int cell in new[] { left, right })
+                {
+                    if (cell.x < 0 || cell.x >= w || cell.y < 0 || cell.y >= h) continue;
+                    if (roadSet.Contains(cell)) continue;
+
+                    CityCell c = _gridManager.GetCell(cell.x, cell.y);
+                    if (c == null) return false;
+                    if (c.GetCellInstanceHeight() == 0) continue;
+                    if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private int CountUnzonedCellsNearPath(Vector2Int start, Vector2Int dir, int sampleLen, int radius)
+    {
+        int count = 0;
+        int w = _gridManager.width, h = _gridManager.height;
+        int x = start.x, y = start.y;
+        for (int k = 0; k < sampleLen; k++)
+        {
+            x += dir.x;
+            y += dir.y;
+            if (x < 0 || x >= w || y < 0 || y >= h) break;
+            for (int rx = -radius; rx <= radius; rx++)
+            {
+                for (int ry = -radius; ry <= radius; ry++)
+                {
+                    int nx = x + rx, ny = y + ry;
+                    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                    CityCell c = _gridManager.GetCell(nx, ny);
+                    if (c != null && (c.zoneType == Zone.ZoneType.Grass || c.HasForest()))
+                        count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private bool IsDirectionEnclosed(Vector2Int edge, Vector2Int dir, int parallelSpacing, HashSet<Vector2Int> roadSet)
+    {
+        Vector2Int perp = new Vector2Int(-dir.y, dir.x);
+        bool hasRoadLeft = false, hasRoadRight = false;
+        for (int s = 1; s <= Mathf.Min(parallelSpacing, 5); s++)
+        {
+            int x = edge.x + dir.x * s, y = edge.y + dir.y * s;
+            if (x < 0 || x >= _gridManager.width || y < 0 || y >= _gridManager.height) break;
+            Vector2Int left = new Vector2Int(edge.x + perp.x * s, edge.y + perp.y * s);
+            Vector2Int right = new Vector2Int(edge.x - perp.x * s, edge.y - perp.y * s);
+            if (left.x >= 0 && left.x < _gridManager.width && left.y >= 0 && left.y < _gridManager.height && roadSet.Contains(left))
+                hasRoadLeft = true;
+            if (right.x >= 0 && right.x < _gridManager.width && right.y >= 0 && right.y < _gridManager.height && roadSet.Contains(right))
+                hasRoadRight = true;
+        }
+        return hasRoadLeft && hasRoadRight;
+    }
+
+    private float CalculateDirectionUtility(Vector2Int edge, Vector2Int dir, int sampleLen, int parallelSpacing, HashSet<Vector2Int> roadSet)
+    {
+        float desir = GetAverageDesirabilityInDirection(edge, dir, sampleLen);
+        int unzoned = CountUnzonedCellsNearPath(edge, dir, sampleLen, 2);
+        bool enclosed = IsDirectionEnclosed(edge, dir, parallelSpacing, roadSet);
+        return desir * 2f + unzoned * 1f - (enclosed ? 50f : 0f);
+    }
+
+    private bool IsCellPlaceableForRoad(int x, int y)
+    {
+        CityCell c = _gridManager.GetCell(x, y);
+        if (c == null || c.zoneType == Zone.ZoneType.Road) return false;
+        if (_gridManager.IsCellOccupiedByBuilding(x, y) || c.isInterstate) return false;
+        bool isLandPlaceable = AutoSimulationRoadRules.IsAutoRoadLandCell(_gridManager, x, y);
+        bool isWaterForBridge = c.GetCellInstanceHeight() == 0;
+        if (!isLandPlaceable && !isWaterForBridge) return false;
+        if (_terrainManager == null) return false;
+        return _terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
+    }
+
+    private string GetCellPlaceableRejectReason(int x, int y)
+    {
+        CityCell c = _gridManager.GetCell(x, y);
+        if (c == null) return "null cell";
+        if (c.zoneType == Zone.ZoneType.Road) return "already road";
+        if (_gridManager.IsCellOccupiedByBuilding(x, y)) return "building";
+        if (c.isInterstate) return "interstate";
+        bool isLand = AutoSimulationRoadRules.IsAutoRoadLandCell(_gridManager, x, y);
+        bool isWater = c.GetCellInstanceHeight() == 0;
+        if (!isLand && !isWater) return "zone not grass/light-zoning/water";
+        if (_terrainManager != null && !_terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true)) return "terrain/slope";
+        return "unknown";
+    }
+
+    private int CountGrassNeighbors(Vector2Int roadPos)
+    {
+        int count = 0;
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = roadPos.x + Dx[i], ny = roadPos.y + Dy[i];
+            if (nx < 0 || nx >= _gridManager.width || ny < 0 || ny >= _gridManager.height) continue;
+            CityCell c = _gridManager.GetCell(nx, ny);
+            if (c != null && (c.zoneType == Zone.ZoneType.Grass || c.HasForest())) count++;
+        }
+        return count;
+    }
+
+    private bool IsEdgeOnInterstate(Vector2Int edge)
+    {
+        CityCell c = _gridManager.GetCell(edge.x, edge.y);
+        return c != null && c.isInterstate;
+    }
+
+    private bool IsDirectionBlockedBySlopeOrWater(Vector2Int tip, Vector2Int dir, int len)
+    {
+        int bx = tip.x + len * dir.x, by = tip.y + len * dir.y;
+        if (bx < 0 || bx >= _gridManager.width || by < 0 || by >= _gridManager.height) return false;
+        CityCell c = _gridManager.GetCell(bx, by);
+        if (c == null) return false;
+        if (c.GetCellInstanceHeight() == 0) return true;
+        if (_terrainManager == null) return false;
+        TerrainSlopeType slope = _terrainManager.GetTerrainSlopeTypeAt(bx, by);
+        return slope != TerrainSlopeType.Flat;
+    }
+
+    private bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
+    {
+        CityCell c = _gridManager.GetCell(x, y);
+        if (c != null && c.GetCellInstanceHeight() == 0)
+            return true;
+        if (_terrainManager != null && _terrainManager.IsWaterSlopeCell(x, y))
+            return _terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
+        if (_terrainManager == null) return true;
+        TerrainSlopeType slope = _terrainManager.GetTerrainSlopeTypeAt(x, y);
+        switch (slope)
+        {
+            case TerrainSlopeType.Flat:
+            case TerrainSlopeType.North:
+            case TerrainSlopeType.South:
+            case TerrainSlopeType.East:
+            case TerrainSlopeType.West:
+            case TerrainSlopeType.NorthEast:
+            case TerrainSlopeType.NorthWest:
+            case TerrainSlopeType.SouthEast:
+            case TerrainSlopeType.SouthWest:
+            case TerrainSlopeType.NorthEastUp:
+            case TerrainSlopeType.NorthWestUp:
+            case TerrainSlopeType.SouthEastUp:
+            case TerrainSlopeType.SouthWestUp:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private bool HasParallelRoadTooClose(Vector2Int edge, Vector2Int dir, int minSpacing, HashSet<Vector2Int> roadSet, Vector2Int? excludeAlongDir = null)
+    {
+        Vector2Int perp = new Vector2Int(-dir.y, dir.x);
+        HashSet<Vector2Int> excludeSet = null;
+        if (excludeAlongDir.HasValue)
+        {
+            excludeSet = new HashSet<Vector2Int>();
+            Vector2Int e = excludeAlongDir.Value;
+            for (int k = -minSpacing; k <= minSpacing; k++)
+            {
+                if (k == 0) continue;
+                Vector2Int p = new Vector2Int(edge.x + e.x * k, edge.y + e.y * k);
+                excludeSet.Add(p);
+            }
+        }
+        for (int s = 1; s <= minSpacing; s++)
+        {
+            Vector2Int offset = new Vector2Int(edge.x + perp.x * s, edge.y + perp.y * s);
+            if (offset.x < 0 || offset.x >= _gridManager.width || offset.y < 0 || offset.y >= _gridManager.height)
+                continue;
+            if (excludeSet != null && excludeSet.Contains(offset)) continue;
+            if (roadSet.Contains(offset))
+                return true;
+            Vector2Int otherSide = new Vector2Int(edge.x - perp.x * s, edge.y - perp.y * s);
+            if (otherSide.x >= 0 && otherSide.x < _gridManager.width && otherSide.y >= 0 && otherSide.y < _gridManager.height)
+            {
+                if (excludeSet != null && excludeSet.Contains(otherSide)) continue;
+                if (roadSet.Contains(otherSide))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private int TryConnectToInterstate(int maxTiles, List<Vector2Int> roadPositions)
+    {
+        if (_interstateManager == null || _gridManager == null || _roadManager == null || _terraformingService == null || _terrainManager == null) return 0;
+        if (roadPositions.Count == 0) return 0;
+        var interstatePositions = _interstateManager.InterstatePositions;
+        if (interstatePositions == null || interstatePositions.Count == 0) return 0;
+
+        Vector2Int from = roadPositions[Random.Range(0, roadPositions.Count)];
+        Vector2Int to = interstatePositions[Random.Range(0, interstatePositions.Count)];
+        var path = minRoadSpacingWhenConnecting > 0
+            ? _gridManager.FindPathWithRoadSpacingForAutoSimulation(from, to, minRoadSpacingWhenConnecting)
+            : _gridManager.FindPathForAutoSimulation(from, to);
+        if (path == null || path.Count <= 1)
+        {
+            if (minRoadSpacingWhenConnecting > 0)
+                path = _gridManager.FindPathForAutoSimulation(from, to);
+            if (path == null || path.Count <= 1) return 0;
+        }
+        var roadSet = new HashSet<Vector2Int>(_gridManager.GetAllRoadPositions());
+        int minParallel = Mathf.Max(3, minRoadSpacingWhenConnecting);
+
+        var pathVec2 = new List<Vector2>();
+        for (int i = 0; i < path.Count; i++)
+            pathVec2.Add(new Vector2(path[i].x, path[i].y));
+
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count > 1)
+        {
+            if (TryGetStreetPlacementPlan(pathVec2, null, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
+            path.RemoveAt(path.Count - 1);
+            pathVec2.RemoveAt(pathVec2.Count - 1);
+        }
+        if (path.Count <= 1 || expandedPath == null || plan == null || !plan.isValid) return 0;
+
+        var heightMap = _terrainManager.GetHeightMap();
+        if (heightMap == null || !plan.Apply(heightMap, _terrainManager))
+            return 0;
+
+        var resolved = _roadManager.ResolvePathForRoads(expandedPath, plan);
+        var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
+        for (int j = 0; j < resolved.Count; j++)
+            resolvedByPos[resolved[j].gridPos] = resolved[j];
+
+        var expandedPathInt = new List<Vector2Int>();
+        for (int k = 0; k < expandedPath.Count; k++)
+            expandedPathInt.Add(new Vector2Int((int)expandedPath[k].x, (int)expandedPath[k].y));
+
+        int placed = 0;
+        for (int i = 1; i < expandedPathInt.Count && placed < maxTiles; i++)
+        {
+            Vector2Int p = expandedPathInt[i];
+            if (!resolvedByPos.TryGetValue(p, out var resolvedTile)) continue;
+            if (_gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road)
+            {
+                roadSet.Add(p);
+                continue;
+            }
+            Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
+            if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
+                continue;
+            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
+            {
+                placed++;
+                roadSet.Add(p);
+            }
+        }
+        return placed;
+    }
+
+    private List<List<Vector2Int>> GetRoadClusters(List<Vector2Int> all)
+    {
+        var roadSet = new HashSet<Vector2Int>(all);
+        var visited = new HashSet<Vector2Int>();
+        var clusters = new List<List<Vector2Int>>();
+        foreach (Vector2Int p in all)
+        {
+            if (visited.Contains(p)) continue;
+            var cluster = new List<Vector2Int>();
+            var queue = new Queue<Vector2Int>();
+            queue.Enqueue(p);
+            while (queue.Count > 0)
+            {
+                Vector2Int c = queue.Dequeue();
+                if (visited.Contains(c)) continue;
+                visited.Add(c);
+                cluster.Add(c);
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = c.x + Dx[i], ny = c.y + Dy[i];
+                    var n = new Vector2Int(nx, ny);
+                    if (roadSet.Contains(n) && !visited.Contains(n))
+                        queue.Enqueue(n);
+                }
+            }
+            if (cluster.Count > 0)
+                clusters.Add(cluster);
+        }
+        return clusters;
+    }
+
+    private int TryConnectDisconnected(List<List<Vector2Int>> clusters, int maxTiles)
+    {
+        if (clusters.Count < 2) return 0;
+        if (_terraformingService == null || _terrainManager == null || _roadManager == null) return 0;
+        Vector2Int a = clusters[0][Random.Range(0, clusters[0].Count)];
+        Vector2Int b = clusters[1][Random.Range(0, clusters[1].Count)];
+        var path = minRoadSpacingWhenConnecting > 0
+            ? _gridManager.FindPathWithRoadSpacingForAutoSimulation(a, b, minRoadSpacingWhenConnecting)
+            : _gridManager.FindPathForAutoSimulation(a, b);
+        if (path == null || path.Count <= 1)
+        {
+            if (minRoadSpacingWhenConnecting > 0)
+                path = _gridManager.FindPathForAutoSimulation(a, b);
+            if (path == null || path.Count <= 1) return 0;
+        }
+        var roadSet = new HashSet<Vector2Int>(_gridManager.GetAllRoadPositions());
+        int minParallel = Mathf.Max(3, minRoadSpacingWhenConnecting);
+
+        var pathVec2 = new List<Vector2>();
+        for (int i = 0; i < path.Count; i++)
+            pathVec2.Add(new Vector2(path[i].x, path[i].y));
+
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count > 1)
+        {
+            if (TryGetStreetPlacementPlan(pathVec2, null, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
+            path.RemoveAt(path.Count - 1);
+            pathVec2.RemoveAt(pathVec2.Count - 1);
+        }
+        if (path.Count <= 1 || expandedPath == null || plan == null || !plan.isValid) return 0;
+
+        var heightMap = _terrainManager.GetHeightMap();
+        if (heightMap == null || !plan.Apply(heightMap, _terrainManager))
+            return 0;
+
+        var resolved = _roadManager.ResolvePathForRoads(expandedPath, plan);
+        var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
+        for (int j = 0; j < resolved.Count; j++)
+            resolvedByPos[resolved[j].gridPos] = resolved[j];
+
+        var expandedPathInt = new List<Vector2Int>();
+        for (int k = 0; k < expandedPath.Count; k++)
+            expandedPathInt.Add(new Vector2Int((int)expandedPath[k].x, (int)expandedPath[k].y));
+
+        int placed = 0;
+        for (int i = 1; i < expandedPathInt.Count && placed < maxTiles; i++)
+        {
+            Vector2Int p = expandedPathInt[i];
+            if (!resolvedByPos.TryGetValue(p, out var resolvedTile)) continue;
+            if (_gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road)
+            {
+                roadSet.Add(p);
+                continue;
+            }
+            Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
+            if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
+                continue;
+            if (_growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
+            {
+                placed++;
+                roadSet.Add(p);
+            }
+        }
+        return placed;
+    }
+}
+}
