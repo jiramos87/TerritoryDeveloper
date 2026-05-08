@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-05-07T02:30:03.754Z",
+  "last_generated": "2026-05-08T21:30:01.715Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -774,6 +774,50 @@
     "Subtype picker (RCIS)": {
       "spec_key": "ui-design-system",
       "anchor": "3.7"
+    },
+    "atomization": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-strategy"
+    },
+    "componentization": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-strategy"
+    },
+    "service facade": {
+      "spec_key": "docs",
+      "anchor": "post-atomization-architecture-md-domain-catalog-table"
+    },
+    "concern boundary": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-folder-shape"
+    },
+    "asmdef boundary": {
+      "spec_key": "docs",
+      "anchor": "post-atomization-architecture-md-asmdef-boundary-rule"
+    },
+    "domain folder": {
+      "spec_key": "docs",
+      "anchor": "post-atomization-architecture-md-domain-catalog-table"
+    },
+    "facade interface": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-naming-rules"
+    },
+    "sub-stage decomposition": {
+      "spec_key": "ia",
+      "anchor": "skills-atomize-file-skill-md-sub-stage-decomposition-threshold-table"
+    },
+    "soft cap": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-anti-patterns"
+    },
+    "escape hatch": {
+      "spec_key": "docs",
+      "anchor": "large-file-atomization-componentization-strategy-md-anti-patterns"
+    },
+    "trust boundary": {
+      "spec_key": "ia",
+      "anchor": "rules-unity-invariants-md-5"
     }
   }
 }

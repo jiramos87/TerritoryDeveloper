@@ -7,22 +7,7 @@ using Territory.Persistence;
 
 namespace Territory.Terrain
 {
-public enum TerrainSlopeType
-{
-    Flat,
-    North,
-    South,
-    East,
-    West,
-    NorthEast,
-    NorthWest,
-    SouthEast,
-    SouthWest,
-    NorthEastUp,
-    NorthWestUp,
-    SouthEastUp,
-    SouthWestUp
-}
+// TerrainSlopeType enum moved to Territory.Core leaf (Assets/Scripts/Core/Terrain/TerrainSlopeType.cs) — Stage 20.
 
 /// <summary>
 /// Generate + manage terrain heightmap, slope types, terrain tile prefab selection.

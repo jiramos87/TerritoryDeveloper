@@ -1,7 +1,6 @@
 using UnityEngine;
 using Territory.Zones;
 using Territory.Forests;
-using Territory.Buildings;
 using Territory.Terrain;
 
 namespace Territory.Core
@@ -46,8 +45,8 @@ public class CityCell : CellBase
     /// <summary>Optional second terrain/shore prefab name (multi-child shore cells).</summary>
     public string secondaryPrefabName;
     public bool isPivot;
-    public PowerPlant powerPlant { get; set; }
-    public WaterPlant waterPlant { get; set; }
+    public MonoBehaviour powerPlant { get; set; }
+    public MonoBehaviour waterPlant { get; set; }
     public GameObject occupiedBuilding { get; set; }
     public GameObject prefab { get; set; }
 

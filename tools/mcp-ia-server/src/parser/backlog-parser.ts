@@ -399,23 +399,31 @@ export function parseAllBacklogIssues(
 
 /**
  * Parse all issues from BACKLOG.md and/or BACKLOG-ARCHIVE.md.
- * Prefers yaml dirs when present.
- * Returns { records, parseErrorCount } — parseErrorCount is 0 on markdown-fallback path.
+ * Merges yaml dir records with markdown records when yaml dir present.
+ * yaml wins on issue_id collision; markdown-only ids fill the gaps until full migration.
+ * Returns { records, parseErrorCount } — parseErrorCount inherited from yaml loader path.
  */
 export function parseAllBacklogIssuesWithMeta(
   repoRoot: string,
   scope: "open" | "archive" | "all" = "all",
 ): LoadAllYamlResult {
-  // Prefer yaml loader when yaml dirs are present
-  if (yamlBacklogExists(repoRoot)) {
-    return loadAllYamlIssues(repoRoot, scope);
-  }
-  const records: ParsedBacklogIssue[] = [];
+  const markdownRecords: ParsedBacklogIssue[] = [];
   if (scope === "open" || scope === "all") {
-    records.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_FILE));
+    markdownRecords.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_FILE));
   }
   if (scope === "archive" || scope === "all") {
-    records.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_ARCHIVE_FILE));
+    markdownRecords.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_ARCHIVE_FILE));
   }
-  return { records, parseErrorCount: 0 };
+
+  if (!yamlBacklogExists(repoRoot)) {
+    return { records: markdownRecords, parseErrorCount: 0 };
+  }
+
+  const yamlResult = loadAllYamlIssues(repoRoot, scope);
+  const yamlIds = new Set(yamlResult.records.map((r) => r.issue_id));
+  const merged = [
+    ...yamlResult.records,
+    ...markdownRecords.filter((r) => !yamlIds.has(r.issue_id)),
+  ];
+  return { records: merged, parseErrorCount: yamlResult.parseErrorCount };
 }

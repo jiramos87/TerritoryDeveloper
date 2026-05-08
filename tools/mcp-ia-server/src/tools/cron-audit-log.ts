@@ -87,14 +87,14 @@ export function registerCronAuditLogEnqueue(server: McpServer): void {
             const res = await pool.query<{ job_id: string }>(
               `INSERT INTO cron_audit_log_jobs
                  (slug, version, audit_kind, body, actor, commit_sha, stage_id, idempotency_key)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+               VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)
                ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
                RETURNING job_id::text`,
               [
                 slug,
                 input?.version ?? 1,
                 audit_kind,
-                body,
+                JSON.stringify(body),
                 input?.actor ?? null,
                 input?.commit_sha ?? null,
                 input?.stage_id ?? null,

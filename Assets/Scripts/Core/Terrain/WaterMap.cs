@@ -515,7 +515,7 @@ namespace Territory.Terrain
                     continue;
 
                 ClearWaterAt(x, y);
-                int clampedSurface = Mathf.Clamp(sLake, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                int clampedSurface = Mathf.Clamp(sLake, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT);
                 heightMap.SetHeight(x, y, clampedSurface);
                 if (gridManager != null)
                     gridManager.SetCellHeight(new Vector2(x, y), heightMap.GetHeight(x, y));
@@ -710,7 +710,7 @@ namespace Territory.Terrain
 
                     if (targetBed == int.MaxValue)
                         continue;
-                    int clamped = Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                    int clamped = Mathf.Clamp(targetBed, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT);
                     if (hm.GetHeight(x, y) == clamped)
                         continue;
                     hm.SetHeight(x, y, clamped);
@@ -1000,7 +1000,7 @@ namespace Territory.Terrain
                 return false;
             if (hH > hL)
             {
-                int clamped = Mathf.Clamp(hL, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                int clamped = Mathf.Clamp(hL, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT);
                 hm.SetHeight(hx, hy, clamped);
                 if (grid != null)
                     grid.SetCellHeight(new Vector2(hx, hy), hm.GetHeight(hx, hy));
@@ -1069,10 +1069,10 @@ namespace Territory.Terrain
             }
 
             int targetBed = ProposeLowerJunctionBedHeight(x, y, sLow, hm);
-            int maxBed = Mathf.Min(TerrainManager.MAX_HEIGHT, sLow - 1);
-            if (maxBed < TerrainManager.MIN_HEIGHT)
+            int maxBed = Mathf.Min(HeightMap.MAX_HEIGHT, sLow - 1);
+            if (maxBed < HeightMap.MIN_HEIGHT)
                 return false;
-            targetBed = Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, maxBed);
+            targetBed = Mathf.Clamp(targetBed, HeightMap.MIN_HEIGHT, maxBed);
 
             hm.SetHeight(x, y, targetBed);
             int flat = ToFlat(x, y);
@@ -1936,12 +1936,12 @@ namespace Territory.Terrain
 
         private bool ResolveSurfaceForNewLake(int x0, int y0, int rw, int rh, int maxTerrainH, int seaLevel, out int surfaceOut)
         {
-            surfaceOut = Mathf.Min(TerrainManager.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxTerrainH + 1));
+            surfaceOut = Mathf.Min(HeightMap.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxTerrainH + 1));
             for (int bump = 0; bump < 16; bump++)
             {
                 if (surfaceOut <= seaLevel)
                     return false;
-                if (surfaceOut > TerrainManager.MAX_HEIGHT)
+                if (surfaceOut > HeightMap.MAX_HEIGHT)
                     return false;
                 if (!HasCardinalNeighborOutsideRectWithSameSurface(x0, y0, rw, rh, surfaceOut))
                     return true;
@@ -2040,7 +2040,7 @@ namespace Territory.Terrain
 
                 int cur = heightMap.GetHeight(x, y);
                 if (cur > surface)
-                    heightMap.SetHeight(x, y, Mathf.Clamp(surface, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT));
+                    heightMap.SetHeight(x, y, Mathf.Clamp(surface, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT));
             }
         }
 
@@ -2087,7 +2087,7 @@ namespace Territory.Terrain
                 }
             }
 
-            int maxHBefore = TerrainManager.MIN_HEIGHT;
+            int maxHBefore = HeightMap.MIN_HEIGHT;
             for (int ox = 0; ox < rw; ox++)
             {
                 for (int oy = 0; oy < rh; oy++)
@@ -2103,9 +2103,9 @@ namespace Territory.Terrain
             int minCardinalOutside = GetMinCardinalHeightOutsideRectangle(heightMap, x0, y0, rw, rh);
             int bowlFloorCap;
             if (minCardinalOutside == int.MaxValue)
-                bowlFloorCap = Mathf.Max(TerrainManager.MIN_HEIGHT, maxHBefore - 1);
+                bowlFloorCap = Mathf.Max(HeightMap.MIN_HEIGHT, maxHBefore - 1);
             else
-                bowlFloorCap = Mathf.Max(TerrainManager.MIN_HEIGHT, minCardinalOutside - 1);
+                bowlFloorCap = Mathf.Max(HeightMap.MIN_HEIGHT, minCardinalOutside - 1);
 
             for (int ox = 0; ox < rw; ox++)
             {
@@ -2119,7 +2119,7 @@ namespace Territory.Terrain
                 }
             }
 
-            int maxHPost = TerrainManager.MIN_HEIGHT;
+            int maxHPost = HeightMap.MIN_HEIGHT;
             for (int ox = 0; ox < rw; ox++)
             {
                 for (int oy = 0; oy < rh; oy++)
@@ -2131,7 +2131,7 @@ namespace Territory.Terrain
 
             // Surface must reflect post-carve terrain so PlaceWater aligns with the basin floor.
             if (!ResolveSurfaceForNewLake(x0, y0, rw, rh, maxHPost, seaLevel, out int surface))
-                surface = Mathf.Min(TerrainManager.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxHPost + 1));
+                surface = Mathf.Min(HeightMap.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxHPost + 1));
 
             CoerceDiagonalCornerRimForArtificialLake(heightMap, x0, y0, rw, rh, surface);
 

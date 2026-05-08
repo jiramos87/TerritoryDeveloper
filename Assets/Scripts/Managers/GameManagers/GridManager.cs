@@ -677,13 +677,13 @@ public class GridManager : MonoBehaviour, IGridManager
 
         if (buildingType == "PowerPlant")
         {
-            PowerPlant powerPlant = cellComponent.powerPlant;
+            PowerPlant powerPlant = (PowerPlant)cellComponent.powerPlant;
             cityStats.UnregisterPowerPlant(powerPlant);
         }
 
         if (buildingType == "WaterPlant")
         {
-            WaterPlant waterPlant = cellComponent.waterPlant;
+            WaterPlant waterPlant = (WaterPlant)cellComponent.waterPlant;
             if (waterManager != null && waterPlant != null)
             {
                 waterManager.UnregisterWaterPlant(waterPlant);

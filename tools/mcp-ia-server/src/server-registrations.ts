@@ -38,6 +38,7 @@ import { registerBacklogSearch } from "./tools/backlog-search.js";
 import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
 import { registerCsharpClassSummary } from "./tools/csharp-class-summary.js";
 import { registerMasterPlanLocate } from "./tools/master-plan-locate.js";
+import { registerMasterPlanBundleApply } from "./tools/master-plan-bundle-apply.js";
 import { registerMasterPlanNextPending } from "./tools/master-plan-next-pending.js";
 import { registerPlanApplyValidate } from "./tools/plan-apply-validate.js";
 import { registerRuntimeState } from "./tools/runtime-state.js";
@@ -174,6 +175,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerInvariantPreflight(server, registry);
   registerCsharpClassSummary(server);
   registerMasterPlanLocate(server);
+  registerMasterPlanBundleApply(server);
   registerMasterPlanNextPending(server);
   registerPlanApplyValidate(server);
   registerRuntimeState(server);

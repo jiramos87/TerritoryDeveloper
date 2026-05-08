@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-07T02:30:03.911Z",
+  "last_generated": "2026-05-08T21:30:01.889Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -136,6 +136,16 @@
         }
       ]
     },
+    "asmdef boundary": {
+      "related": [
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder",
+        "escape hatch"
+      ],
+      "cited_in": []
+    },
     "asset family": {
       "related": [
         "Cell",
@@ -179,6 +189,16 @@
         "archetype_version",
         "asset family",
         "asset-pipeline-standard"
+      ],
+      "cited_in": []
+    },
+    "atomization": {
+      "related": [
+        "asmdef boundary",
+        "componentization",
+        "concern boundary",
+        "domain folder",
+        "escape hatch"
       ],
       "cited_in": []
     },
@@ -1036,10 +1056,10 @@
     "catalog_entity": {
       "related": [
         "entity_version",
+        "snapshot",
         "archetype_version",
         "panel_child",
-        "pool_member",
-        "render_run"
+        "pool_member"
       ],
       "cited_in": [
         {
@@ -1096,6 +1116,16 @@
           "spec": "catalog-architecture",
           "section_id": "7.2",
           "section_title": "7.2 Replay semantics"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "tokens",
+          "section_title": "Tokens"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "components",
+          "section_title": "Components"
         }
       ]
     },
@@ -1842,6 +1872,26 @@
       ],
       "cited_in": []
     },
+    "componentization": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "concern boundary",
+        "domain folder",
+        "escape hatch"
+      ],
+      "cited_in": []
+    },
+    "concern boundary": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "domain folder",
+        "escape hatch"
+      ],
+      "cited_in": []
+    },
     "Connurbation": {
       "related": [
         "AUTO systems",
@@ -2183,6 +2233,16 @@
         }
       ]
     },
+    "domain folder": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "escape hatch"
+      ],
+      "cited_in": []
+    },
     "Dormant scale": {
       "related": [
         "Active scale",
@@ -2270,6 +2330,16 @@
         }
       ]
     },
+    "escape hatch": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
+    },
     "Evolution algorithm": {
       "related": [
         "Active scale",
@@ -2307,6 +2377,16 @@
         "Child-scale entity",
         "City / Region / Country cell",
         "Dormant scale"
+      ],
+      "cited_in": []
+    },
+    "facade interface": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
       ],
       "cited_in": []
     },
@@ -5337,6 +5417,16 @@
         }
       ]
     },
+    "service facade": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
+    },
     "Ship-stage dispatcher": {
       "related": [
         "Agent test mode batch",
@@ -5680,11 +5770,11 @@
     },
     "snapshot": {
       "related": [
+        "Stage",
+        "catalog_entity",
         "Cell",
         "entity_version",
-        "Water map",
-        "catalog_entity",
-        "HeightMap"
+        "Water map"
       ],
       "cited_in": [
         {
@@ -5736,6 +5826,11 @@
           "spec": "catalog-architecture",
           "section_id": "5.4",
           "section_title": "5.4 Export driver"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5.6",
+          "section_title": "5.6 DriftGate"
         },
         {
           "spec": "catalog-architecture",
@@ -5804,6 +5899,16 @@
         },
         {
           "spec": "ui-design-system",
+          "section_id": "tokens",
+          "section_title": "Tokens"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "components",
+          "section_title": "Components"
+        },
+        {
+          "spec": "ui-design-system",
           "section_id": "6",
           "section_title": "6. Revision history"
         },
@@ -5828,6 +5933,16 @@
           "section_title": "10. Editor agent diagnostics (machine-readable exports)"
         }
       ]
+    },
+    "soft cap": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
     },
     "Sorting components": {
       "related": [
@@ -5985,10 +6100,10 @@
     "Stage": {
       "related": [
         "Phase",
+        "snapshot",
         "Gate",
         "Pollution",
-        "Zone",
-        "Cell"
+        "Zone"
       ],
       "cited_in": [
         {
@@ -6037,6 +6152,16 @@
           "section_title": "10. Cross-refs"
         },
         {
+          "spec": "catalog-architecture",
+          "section_id": "5",
+          "section_title": "5. Snapshot export contract"
+        },
+        {
+          "spec": "catalog-architecture",
+          "section_id": "5.6",
+          "section_title": "5.6 DriftGate"
+        },
+        {
           "spec": "simulation-signals",
           "section_id": "purpose-and-scope",
           "section_title": "Purpose and scope"
@@ -6053,6 +6178,16 @@
         },
         {
           "spec": "ui-design-system",
+          "section_id": "tokens",
+          "section_title": "Tokens"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "components",
+          "section_title": "Components"
+        },
+        {
+          "spec": "ui-design-system",
           "section_id": "5",
           "section_title": "5. Acceptance criteria (per issue)"
         },
@@ -6065,6 +6200,11 @@
           "spec": "ui-design-system",
           "section_id": "3.7",
           "section_title": "3.7 RCIS subtype picker pattern"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "6",
+          "section_title": "6. Revision history"
         },
         {
           "spec": "web-ui-design-system",
@@ -6180,6 +6320,16 @@
           "section_title": "Deprecated prose → canonical terms (authoring)"
         }
       ]
+    },
+    "sub-stage decomposition": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
     },
     "Subtype picker (RCIS)": {
       "related": [
@@ -6395,6 +6545,16 @@
           "section_title": "Key implementation files (non-normative)"
         }
       ]
+    },
+    "trust boundary": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
     },
     "Type offsets": {
       "related": [

@@ -114,7 +114,7 @@ namespace Territory.Terrain
             if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1)
                 return;
 
-            int center = TerrainManager.MIN_HEIGHT + 1;
+            int center = HeightMap.MIN_HEIGHT + 1;
             int rim = center + 1;
             hm.SetHeight(x, y, center);
             hm.SetHeight(x + 1, y, Mathf.Max(hm.GetHeight(x + 1, y), rim));

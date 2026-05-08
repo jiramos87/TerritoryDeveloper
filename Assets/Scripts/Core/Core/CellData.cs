@@ -1,7 +1,6 @@
 using UnityEngine;
 using Territory.Zones;
 using Territory.Forests;
-using Territory.Buildings;
 using Territory.Terrain;
 
 namespace Territory.Core
@@ -41,8 +40,8 @@ public class CellData
     public GameObject occupiedBuilding;
     public string occupiedBuildingName;
     public bool isPivot;
-    public PowerPlant powerPlant;
-    public WaterPlant waterPlant;
+    public MonoBehaviour powerPlant;
+    public MonoBehaviour waterPlant;
     public Vector2 transformPosition;
     [Header("Grid Position")]
     public int x;

@@ -1,0 +1,346 @@
+{
+  "plan": {
+    "slug": "large-file-atomization-refactor",
+    "title": "Large-file atomization refactor",
+    "description": "Sweep across the ~21 mega-files (>1000 LOC) of the territory-developer codebase, atomizing each into per-concern files via Strategy γ (service-extraction + facade interface + per-domain folder + asmdef). Stage 1 = preflight (lock strategy + tooling + tracer slice). Stages 2..22 = one per file, full §Plan Digest authored just-in-time per stage via /ship-cycle.",
+    "preamble": "Methodological stack reference: docs/ship-plan-methodological-stack.md. Composed-test discipline: ONE composed test script per Stage at Assets/Tests/EditMode/Atomization/{StageSlug}/, extended task-by-task. Architecture decision: large-file-atomization-folder-shape-v1 (active 2026-05-08). Folder shape: Assets/Scripts/Domains/{X}/{I{X}.cs, {X}.cs facade, Services/, Data/, Editor/, Tests/, {X}.asmdef}.",
+    "version": 1,
+    "parent_plan_slug": null
+  },
+  "stages": [
+    {
+      "stage_id": "1",
+      "title": "Preflight + tracer slice",
+      "objective": "Lock componentization strategy doc + final architecture doc + lint stack + facade-interface validator + atomize-file skill + invariant #5 amendment + asmdef template + glossary amendment + tracer slice on GridSortingOrderService.cs (~453 LOC) end-to-end.",
+      "exit_criteria": "All 9 preflight artefacts land + tracer slice compiles + composed test passes + validate:all green + invariant #5 path glob amended for Domains/{X}/Services/*Service.cs.",
+      "carcass_role": "carcass",
+      "visibility_delta": "Tracer-only — Domains/Grid/ folder appears with IGrid + Grid facade + GridSortingOrderService relocated; no end-user-visible behavior change."
+    },
+    {
+      "stage_id": "2",
+      "title": "Atomize TerrainManager.cs (4273 LOC, 3 sub-stages)",
+      "objective": "Extract HeightMapService + CliffService + TerrainSerializer; facade ITerrain. Sub-stage A=HeightMap, B=Cliff, C=Serializer.",
+      "exit_criteria": "TerrainManager.cs → Domains/Terrain/ + 3 services + facade + composed test green. Invariant #1 (HeightMap/Cell sync), #7 (shore band), #9 (cliff faces) preserved."
+    },
+    {
+      "stage_id": "3",
+      "title": "Atomize RoadManager.cs (3215 LOC, 2 sub-stages)",
+      "objective": "Extract StrokeService + RoadCacheService; facade IRoads. Sub-stage A=Stroke+cache, B=AutoBuild integration.",
+      "exit_criteria": "RoadManager.cs → Domains/Roads/ + services + facade + composed test green. Invariant #2 (InvalidateRoadCache), #10 (PathTerraformPlan) preserved."
+    },
+    {
+      "stage_id": "4",
+      "title": "Atomize WaterMap.cs (2325 LOC, 1 sub-stage)",
+      "objective": "Extract WaterMapService + ShoreService; facade IWater.",
+      "exit_criteria": "WaterMap.cs → Domains/Water/ + services + facade + composed test green. Invariant #7 (shore band), #8 (river bed monotonic), guardrail #6 (RefreshShoreTerrainAfterWaterUpdate) preserved."
+    },
+    {
+      "stage_id": "5",
+      "title": "Atomize GridManager.cs (2319 LOC, 1 sub-stage)",
+      "objective": "Extract CellAccessService + remaining grid helpers; facade IGrid (extends tracer-slice IGrid from Stage 1).",
+      "exit_criteria": "GridManager.cs → Domains/Grid/ services merged; facade IGrid. Invariant #5 (cellArray carve-out via composition ref), #6 (no GridManager responsibilities) preserved."
+    },
+    {
+      "stage_id": "6",
+      "title": "Atomize tools/mcp-ia-server/src/ia-db/mutations.ts (2285 LOC)",
+      "objective": "TS module split mutations/{cluster}.ts. Re-export barrel preserves import surface.",
+      "exit_criteria": "mutations.ts → mutations/ folder + cluster files + barrel index.ts. eslint stack green; existing import sites unchanged."
+    },
+    {
+      "stage_id": "7",
+      "title": "Atomize AgentBridgeCommandRunner.cs family (1754+1386+1219 LOC)",
+      "objective": "Convert .Mutations partial → MutationDispatchService; .Conformance partial → ConformanceService. Domains/Bridge/ Editor-only.",
+      "exit_criteria": "Bridge runner → Domains/Bridge/ + services + facade IBridge (Editor-only). Guardrail #14 mutation dispatch shape preserved."
+    },
+    {
+      "stage_id": "8",
+      "title": "Atomize ZoneManager.cs (1449 LOC)",
+      "objective": "Extract per-concern zone services; facade IZones. Static lint blocks UrbanizationProposal references.",
+      "exit_criteria": "ZoneManager.cs → Domains/Zones/ + services + facade. Invariant #11 (UrbanizationProposal never re-enable) preserved + lint-enforced."
+    },
+    {
+      "stage_id": "9",
+      "title": "Atomize UiBakeHandler.cs family (1440+1159+? LOC)",
+      "objective": "Re-evaluate per Stage 1 strategy: partial-class collapse vs Services. Move to Domains/UI/Editor/UiBake/.",
+      "exit_criteria": "UiBakeHandler family → Domains/UI/ Editor sub-asmdef + composed test green. Guardrail #5 (partial-class declaration file) preserved if α retained."
+    },
+    {
+      "stage_id": "10",
+      "title": "Atomize AutoRoadBuilder.cs (1318 LOC)",
+      "objective": "Merge into Domains/Roads/Services/AutoBuildService.cs; composed under Roads facade.",
+      "exit_criteria": "AutoRoadBuilder → Roads/Services/AutoBuildService.cs; composed test green; invariant #2, #10 preserved."
+    },
+    {
+      "stage_id": "11",
+      "title": "Atomize CityStats.cs (1284 LOC)",
+      "objective": "Move to Domains/Economy/Services/CityStatsService.cs (new domain or merge into Zones/Economy per Stage 1.2 architecture doc).",
+      "exit_criteria": "CityStats → Domains/Economy/ + service + facade IEconomy; composed test green."
+    },
+    {
+      "stage_id": "12",
+      "title": "Atomize tools/mcp-ia-server/src/tools/unity-bridge-command.ts (1267 LOC)",
+      "objective": "TS module split unity-bridge-command/. Re-export barrel preserves import surface.",
+      "exit_criteria": "unity-bridge-command.ts → folder split + barrel; eslint green; existing import sites unchanged."
+    },
+    {
+      "stage_id": "13",
+      "title": "Atomize AgentTestModeBatchRunner.cs (1221 LOC)",
+      "objective": "Extract per-concern test-mode services; integrate with Bridge facade where overlap exists.",
+      "exit_criteria": "AgentTestModeBatchRunner → Domains/Bridge/Services/ or Domains/Testing/ per architecture doc; composed test green."
+    },
+    {
+      "stage_id": "14",
+      "title": "Atomize tools/sprite-gen/src/compose.py (1212 LOC)",
+      "objective": "Python module split tools/sprite-gen/src/compose/. __init__.py barrel; ruff stack.",
+      "exit_criteria": "compose.py → folder split + __init__.py barrel; ruff green; existing import sites unchanged."
+    },
+    {
+      "stage_id": "15",
+      "title": "Atomize GeographyManager.cs (1160 LOC)",
+      "objective": "Move to Domains/Geography/ (or merge into Terrain per Stage 1.2 architecture doc deliverable).",
+      "exit_criteria": "GeographyManager → Domains/Geography/ + services + facade; composed test green; invariant #1, #7, #8, #9 preserved."
+    },
+    {
+      "stage_id": "16",
+      "title": "Atomize InterstateManager.cs (1148 LOC)",
+      "objective": "Move to Domains/Roads/Services/InterstateService.cs; composed under Roads facade.",
+      "exit_criteria": "InterstateManager → Roads/Services/InterstateService.cs; composed test green; invariant #10 preserved."
+    },
+    {
+      "stage_id": "17",
+      "title": "Atomize RoadPrefabResolver.cs (1121 LOC)",
+      "objective": "Move to Domains/Roads/Services/PrefabResolverService.cs; composed under Roads facade.",
+      "exit_criteria": "RoadPrefabResolver → Roads/Services/PrefabResolverService.cs; composed test green; invariant #2 preserved."
+    },
+    {
+      "stage_id": "18",
+      "title": "Atomize TerraformingService.cs (1095 LOC)",
+      "objective": "Move to Domains/Terrain/Services/TerraformingService.cs; composed under Terrain facade.",
+      "exit_criteria": "TerraformingService → Terrain/Services/TerraformingService.cs; composed test green; invariant #1, #7 preserved."
+    },
+    {
+      "stage_id": "19",
+      "title": "Atomize UIManager.Theme.cs (1004 LOC)",
+      "objective": "Re-evaluate per Stage 1 strategy: ThemeService extraction vs partial retention. Move to Domains/UI/Services/ThemeService.cs.",
+      "exit_criteria": "UIManager.Theme → Domains/UI/Services/ThemeService.cs; composed test green; guardrail #5 preserved if α retained."
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "1.1",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Lock componentization strategy doc",
+      "type": "doc",
+      "body": "## §Goal\n\nLock the common componentization strategy for the long atomization sweep — codify Strategy γ shape (mandatory facade interface + per-domain folder + Services/ subfolder for POCO concerns + Data/ + Editor/ + per-domain asmdef).\n\n**Surface:** docs/large-file-atomization-componentization-strategy.md\n**Glossary:** atomization, componentization, service facade, concern boundary, asmdef boundary, domain folder, facade interface\n\n## §Red-Stage Proof\n\nunit-test:Assets/Tests/EditMode/Atomization/_meta/StrategyDocPresenceTests.cs::strategy_doc_exists_and_has_required_sections — assert docs/large-file-atomization-componentization-strategy.md exists + carries §Strategy γ + §Folder shape + §Naming + §Asmdef + §Anti-patterns headings.\n\nFailing baseline: doc absent → test asserts File.Exists fails. Green: doc lands with all 5 required headings + per-tier carve-out rules + escape-hatch comment grammar (`// long-method-allowed: {reason}`).\n\n## §Work Items\n\n- Author docs/large-file-atomization-componentization-strategy.md with sections: §Strategy γ rationale, §Folder shape (Domains/{X}/{I{X}.cs, {X}.cs, Services/, Data/, Editor/, Tests/, {X}.asmdef}), §Naming rules ({Concern}Service.cs POCO), §Asmdef boundary rule (one per domain), §Anti-patterns + escape-hatch grammar.\n- Reference selected strategy γ rationale from docs/explorations/large-file-atomization-refactor.md §Design Expansion §Chosen Approach.\n- Compose presence test at Assets/Tests/EditMode/Atomization/_meta/StrategyDocPresenceTests.cs.\n- Run validate:all + verify doc compiles markdown + presence test green.\n- Hand off: Stage 1.2 architecture doc author reads this doc as upstream input."
+    },
+    {
+      "task_key": "1.2",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Author final architecture doc",
+      "type": "doc",
+      "body": "## §Goal\n\nAuthor the final post-atomization architecture doc — full domain folder catalog + asmdef edges + cross-domain refs + Editor sub-asmdef boundary + non-domain top-level layout.\n\n**Surface:** docs/post-atomization-architecture.md\n**Glossary:** atomization, componentization, domain folder, asmdef boundary, facade interface\n\n## §Red-Stage Proof\n\nunit-test:Assets/Tests/EditMode/Atomization/_meta/ArchitectureDocPresenceTests.cs::architecture_doc_exists_and_lists_every_planned_domain — assert each Stage 2..N target file maps to a domain folder declared in the architecture doc.\n\nFailing baseline: doc absent OR doc missing any Stage 2..N domain → test fails. Green: doc lands with full Mermaid diagram + §Domain catalog table + §Cross-domain refs + §Top-level non-domain (Audio/Catalog/Simulation/Utilities/Testing) + §Non-Unity tracks (mcp-ia-server/sprite-gen).\n\n## §Work Items\n\n- Author docs/post-atomization-architecture.md mirroring §Architecture Mermaid block from docs/explorations/large-file-atomization-refactor.md §Design Expansion.\n- §Domain catalog table: rows = each domain (Terrain/Roads/Grid/Water/Zones/UI/Bridge/Economy/Geography), cols = facade interface + services + asmdef name + cross-domain refs.\n- §Cross-domain refs section codifies edges (Roads→Grid, Roads→Terrain, Water→Grid, Water→Terrain shore-write, Zones→Grid, Zones→Roads, UI→facades, Bridge→Domains).\n- §Editor sub-asmdef rule: each domain may carry Editor/ child folder + sub-asmdef.\n- Compose presence test at Assets/Tests/EditMode/Atomization/_meta/ArchitectureDocPresenceTests.cs.\n- Run validate:all + presence test green.\n- Lock doc before Stage 2 first move."
+    },
+    {
+      "task_key": "1.3",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Lint stack rollout — .editorconfig + Roslynator + StyleCop with soft caps",
+      "type": "tooling",
+      "body": "## §Goal\n\nRoll out C# lint stack with soft caps (method warn 40 / err 80 LOC; line warn 120 / err 160; file warn 400 / err 700) + escape-hatch comment grammar `// long-method-allowed: {reason}`. Wrap in tools/scripts/run-csharp-lint.mjs + wire into validate:all.\n\n**Surface:** .editorconfig, tools/scripts/run-csharp-lint.mjs, package.json (validate:all chain)\n**Glossary:** soft cap, escape hatch\n\n## §Red-Stage Proof\n\nunit-test:tools/scripts/__tests__/run-csharp-lint.test.mjs::lint_caps_warn_at_threshold_and_err_at_hard_cap — assert lint runs against a synthetic 90-LOC method + a 200-LOC method + asserts warn vs err output classification matches caps.\n\nFailing baseline: lint script absent OR caps not enforced → test fails. Green: script enforces 40/80/120/160/400/700 caps + escape-hatch comment suppresses err but logs warning + validate:all chain calls run-csharp-lint.\n\n## §Work Items\n\n- Author .editorconfig at repo root with C# soft-cap rules (method LOC, line length, file LOC).\n- Pull Roslynator + StyleCop analyzer NuGet refs into Assets/ + tools.\n- Author tools/scripts/run-csharp-lint.mjs wrapping `dotnet format --verify-no-changes` + Roslynator CLI.\n- Implement escape-hatch comment parser: `// long-method-allowed: {reason}` suppresses err, emits warn with reason.\n- Wire `npm run lint:csharp` into validate:all (package.json scripts).\n- Compose unit test at tools/scripts/__tests__/run-csharp-lint.test.mjs with synthetic 90+200 LOC fixtures.\n- Run validate:all + lint test green."
+    },
+    {
+      "task_key": "1.4",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Facade-interface validator",
+      "type": "tooling",
+      "body": "## §Goal\n\nFacade-interface validator: assert every Domains/{X}/ folder carries I{X}.cs declaring the public API. Wire into validate:all.\n\n**Surface:** tools/scripts/validate-domain-facade-interfaces.mjs, package.json\n**Glossary:** facade interface, domain folder\n\n## §Red-Stage Proof\n\nunit-test:tools/scripts/__tests__/validate-domain-facade-interfaces.test.mjs::validator_fails_on_missing_facade_interface — assert validator rejects a synthetic Domains/Foo/ folder lacking IFoo.cs and accepts one carrying IFoo.cs.\n\nFailing baseline: validator absent OR no enforcement → test fails. Green: validator scans Domains/*/ + asserts I{StemName}.cs presence + interface declares non-empty public surface; failure exits 1.\n\n## §Work Items\n\n- Author tools/scripts/validate-domain-facade-interfaces.mjs.\n- Logic: glob `Assets/Scripts/Domains/*/`, for each folder X assert `I{X}.cs` exists + parses as `public interface I{X}`.\n- Edge case: empty Domains/ on initial run = pass (no domains yet).\n- Wire into validate:all chain (package.json `validate:domain-facades` script).\n- Compose unit test with synthetic Domains/Foo/ + Domains/Bar/IBar.cs fixtures.\n- Run validate:all + validator test green.\n- Doc: add row to docs/agent-led-verification-policy.md if validator gates ship-cycle Pass A."
+    },
+    {
+      "task_key": "1.5",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Sub-stage decomposition rule + atomize-file skill",
+      "type": "skill",
+      "body": "## §Goal\n\nAuthor /atomize-file skill: orchestrates per-stage atomization flow (csharp_class_summary read → concern derive → service-extraction loop → composed-test growth → invariant compliance). Codify sub-stage decomposition rule: file >2500 LOC = 2 sub-stages; >3500 LOC = 3 sub-stages.\n\n**Surface:** ia/skills/atomize-file/SKILL.md, ia/skills/atomize-file/agent-body.md\n**Glossary:** atomization, sub-stage decomposition\n\n## §Red-Stage Proof\n\nunit-test:tools/scripts/__tests__/skill-train-validate.test.mjs::atomize_file_skill_frontmatter_validates — assert SKILL.md frontmatter passes skill-frontmatter validator + lists required phases + sub-stage threshold table present.\n\nFailing baseline: SKILL.md absent OR frontmatter invalid → test fails. Green: skill registers via `npm run skill:sync:all`, slash command + subagent generated, frontmatter validates.\n\n## §Work Items\n\n- Author ia/skills/atomize-file/SKILL.md with frontmatter (name, purpose, description, phases, triggers, model, tools_extra).\n- Phases: 1) read csharp_class_summary → 2) derive concerns + sub-stage count from LOC threshold → 3) seed Domains/{X}/ folder + facade + asmdef → 4) extract services loop (one per concern) → 5) extend composed test → 6) verify validators green → 7) hand off to /ship-cycle.\n- Author ia/skills/atomize-file/agent-body.md with caveman-tech body.\n- Run `npm run skill:sync:all` to generate .claude/agents/atomize-file.md + .claude/commands/atomize-file.md.\n- Compose validation in tools/scripts/__tests__/skill-train-validate.test.mjs.\n- Run validate:all + skill drift validator green."
+    },
+    {
+      "task_key": "1.6",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Amend invariant #5 path glob for Domains/{X}/Services/*Service.cs",
+      "type": "rule",
+      "body": "## §Goal\n\nAmend Unity invariant #5 carve-out path glob to cover the new Domains/{X}/Services/*Service.cs shape (currently only Assets/Scripts/Managers/GameManagers/*Service.cs). Must land before Stage 2 first move so atomized helper services keep their cellArray trust boundary.\n\n**Surface:** ia/rules/unity-invariants.md\n**Glossary:** carve-out, trust boundary, GridManager, cellArray\n\n## §Red-Stage Proof\n\nunit-test:tools/scripts/__tests__/invariant-glob-update.test.mjs::invariant_5_glob_matches_new_domains_path — assert MCP `invariants_summary` returns invariant #5 text containing both legacy `Managers/GameManagers/*Service.cs` AND new `Domains/*/Services/*Service.cs` globs.\n\nFailing baseline: only legacy glob present → test fails. Green: invariant text amended + invariants_summary MCP slice returns updated body + tests pass.\n\n## §Work Items\n\n- Edit ia/rules/unity-invariants.md invariant #5 — amend carve-out clause to read `helper services under Assets/Scripts/Managers/GameManagers/*Service.cs OR Assets/Scripts/Domains/*/Services/*Service.cs extracted from GridManager...`.\n- Update glossary entry if `carve-out` term touched.\n- Run `npm run generate:ia-indexes` to refresh MCP index.\n- Compose unit test at tools/scripts/__tests__/invariant-glob-update.test.mjs hitting MCP invariants_summary.\n- Run validate:all + verify MCP returns updated invariant text.\n- This task gates Stage 2 — no Domains/{X}/Services/ move may land before this completes."
+    },
+    {
+      "task_key": "1.7",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Asmdef template + bootstrap Grid.asmdef for tracer",
+      "type": "code",
+      "body": "## §Goal\n\nAuthor the asmdef template that every Domains/{X}/ folder will use; bootstrap the first asmdef (Grid.asmdef) at Assets/Scripts/Domains/Grid/ for the tracer slice (Stage 1.9). Editor sub-asmdef supported via Domains/{X}/Editor/ child folder.\n\n**Surface:** Assets/Scripts/Domains/Grid/Grid.asmdef, ia/templates/domain-asmdef.template.json\n**Glossary:** asmdef boundary, domain folder\n\n## §Red-Stage Proof\n\nunit-test:Assets/Tests/EditMode/Atomization/grid-tracer/AsmdefBootstrapTests.cs::grid_asmdef_compiles_in_isolation — assert Grid.asmdef declares no runtime refs to legacy Managers/ asmdef + compiles standalone + Editor sub-asmdef references it cleanly.\n\nFailing baseline: asmdef absent OR cyclic ref → Unity compile-check fails. Green: Grid.asmdef + Editor sub-asmdef compile clean; unity:compile-check exits 0.\n\n## §Work Items\n\n- Author ia/templates/domain-asmdef.template.json with placeholder name + references.\n- Bootstrap Assets/Scripts/Domains/Grid/Grid.asmdef from template.\n- Reference Unity engine + UI essentials only (no legacy Managers/ ref) — facade composition pattern bridges old code in Stage 1.9.\n- Author Assets/Scripts/Domains/Grid/Editor/Grid.Editor.asmdef sub-asmdef referencing Grid.asmdef.\n- Compose AsmdefBootstrapTests.cs at Assets/Tests/EditMode/Atomization/grid-tracer/.\n- Run unity:compile-check + validate:all.\n- Hand off: Stage 1.9 tracer slice consumes this asmdef."
+    },
+    {
+      "task_key": "1.8",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Glossary amendment — componentization terms",
+      "type": "doc",
+      "body": "## §Goal\n\nAdd componentization vocabulary to ia/specs/glossary.md: atomization, componentization, service facade, concern boundary, asmdef boundary, domain folder, facade interface, sub-stage decomposition, soft cap, escape hatch, trust boundary (carve-out).\n\n**Surface:** ia/specs/glossary.md, ia/state/change-log/glossary-changes.md\n**Glossary:** (this task seeds the new entries)\n\n## §Red-Stage Proof\n\nunit-test:tools/scripts/__tests__/glossary-amendment.test.mjs::new_componentization_terms_resolvable_via_mcp — assert MCP glossary_lookup resolves each new term + glossary_discover surfaces them on query 'atomization componentization'.\n\nFailing baseline: glossary_discover returns 0 hits for atomization vocab (current state — confirmed during ship-plan pre-fetch) → test fails. Green: each new term resolves via glossary_lookup; glossary_discover scores ≥ 2.0 on relevant queries.\n\n## §Work Items\n\n- Edit ia/specs/glossary.md — add 11 new entries with definition + spec-reference + category (Architecture / Refactor).\n- Cross-link entries: `service facade` → `facade interface`; `concern boundary` → `asmdef boundary`; `atomization` → `componentization`.\n- Update ia/state/change-log/glossary-changes.md with append row.\n- Run `npm run generate:ia-indexes` to refresh MCP graph.\n- Run cron_glossary_backlinks_enqueue + cron_anchor_reindex_enqueue post-write.\n- Compose unit test at tools/scripts/__tests__/glossary-amendment.test.mjs hitting MCP glossary_lookup + glossary_discover.\n- Run validate:all + glossary tests green."
+    },
+    {
+      "task_key": "1.9",
+      "stage_id": "1",
+      "prefix": "TECH",
+      "title": "Tracer slice — atomize GridSortingOrderService.cs end-to-end",
+      "type": "code",
+      "body": "## §Goal\n\nProve the entire atomization pipeline (preflight script → service-extraction → facade IGrid → asmdef compile → composed test → lint → facade-validator) on the smallest available service file: GridSortingOrderService.cs (~453 LOC). Final tracer artefact = Domains/Grid/ folder live + tracer test green + all validators pass.\n\n**Surface:** Assets/Scripts/Domains/Grid/Services/GridSortingOrderService.cs, Assets/Scripts/Domains/Grid/IGrid.cs, Assets/Scripts/Domains/Grid/Grid.cs, Assets/Tests/EditMode/Atomization/grid-tracer/GridSortingOrderServiceAtomizationTests.cs\n**Glossary:** atomization, tracer slice, facade interface, service facade\n\n## §Red-Stage Proof\n\ntracer-test:Assets/Tests/EditMode/Atomization/grid-tracer/GridSortingOrderServiceAtomizationTests.cs::GridSortingOrderService_extracts_to_domain_services_folder — assert typeof(Domains.Grid.Services.GridSortingOrderService).Assembly.GetName().Name == \"Grid\" + IGrid facade exposes GetSortingOrder method + behavior parity with pre-refactor implementation.\n\nFailing baseline: file still at Assets/Scripts/Managers/GameManagers/GridSortingOrderService.cs + no IGrid.cs + Grid.asmdef carries no service → test asserts fail (assembly name mismatch / type missing). Green: post-refactor — assembly = Grid; namespace = Domains.Grid.Services; behavior parity preserved; .meta GUIDs preserved via separate `git mv` per guardrail #11.\n\n## §Work Items\n\n- `git mv Assets/Scripts/Managers/GameManagers/GridSortingOrderService.cs Assets/Scripts/Domains/Grid/Services/GridSortingOrderService.cs` (and `.meta` separately per guardrail #11).\n- Adjust namespace: `Domains.Grid.Services`.\n- Author Assets/Scripts/Domains/Grid/IGrid.cs declaring public facade methods (GetSortingOrder + minimal Stage-1 surface).\n- Author Assets/Scripts/Domains/Grid/Grid.cs MonoBehaviour facade impl composing GridSortingOrderService + holding `GridManager grid` ref for invariant #5 carve-out.\n- Seed Assets/Tests/EditMode/Atomization/grid-tracer/GridSortingOrderServiceAtomizationTests.cs with 2 [Test] methods (assembly name + IGrid facade method presence).\n- Run unity:compile-check + validate:all + npm run lint:csharp + facade-interface validator + composed test green.\n- Document any friction surfaced in /atomize-file SKILL.md changelog (lessons → skill iteration before Stage 2)."
+    },
+    {
+      "task_key": "2.1",
+      "stage_id": "2",
+      "prefix": "TECH",
+      "title": "Atomize TerrainManager.cs (3 sub-stages: HeightMap + Cliff + Serializer)",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract HeightMapService + CliffService + TerrainSerializer from Assets/Scripts/Managers/GameManagers/TerrainManager.cs (4273 LOC) into Domains/Terrain/ + facade ITerrain.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/terrain/TerrainManagerAtomizationTests.cs::* (anchor placeholder; full anchor authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 2 via /stage-decompose + /atomize-file."
+    },
+    {
+      "task_key": "3.1",
+      "stage_id": "3",
+      "prefix": "TECH",
+      "title": "Atomize RoadManager.cs (2 sub-stages: Stroke+cache + AutoBuild)",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract StrokeService + RoadCacheService from Assets/Scripts/Managers/GameManagers/RoadManager.cs (3215 LOC) into Domains/Roads/ + facade IRoads.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/roads/RoadManagerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 3."
+    },
+    {
+      "task_key": "4.1",
+      "stage_id": "4",
+      "prefix": "TECH",
+      "title": "Atomize WaterMap.cs (WaterMapService + ShoreService)",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract WaterMapService + ShoreService from Assets/Scripts/Managers/UnitManagers/WaterMap.cs (2325 LOC) into Domains/Water/ + facade IWater.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/water/WaterMapAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 4."
+    },
+    {
+      "task_key": "5.1",
+      "stage_id": "5",
+      "prefix": "TECH",
+      "title": "Atomize GridManager.cs (CellAccessService + grid helpers)",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract CellAccessService + remaining grid helpers from Assets/Scripts/Managers/GameManagers/GridManager.cs (2319 LOC) into Domains/Grid/ + facade IGrid (extends Stage 1.9 tracer surface).\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/grid/GridManagerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 5."
+    },
+    {
+      "task_key": "6.1",
+      "stage_id": "6",
+      "prefix": "TECH",
+      "title": "Atomize tools/mcp-ia-server/src/ia-db/mutations.ts",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: split tools/mcp-ia-server/src/ia-db/mutations.ts (2285 LOC) into mutations/{cluster}.ts modules + barrel index.ts preserving import surface.\n\n§Red-Stage Proof: unit-test:tools/mcp-ia-server/tests/mutations-split.test.ts::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 6."
+    },
+    {
+      "task_key": "7.1",
+      "stage_id": "7",
+      "prefix": "TECH",
+      "title": "Atomize AgentBridgeCommandRunner.cs family",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: convert AgentBridgeCommandRunner.cs + .Mutations + .Conformance partials (1754+1386+1219 LOC) into Domains/Bridge/ Editor-only + MutationDispatchService + ConformanceService + facade IBridge.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/bridge/AgentBridgeCommandRunnerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 7."
+    },
+    {
+      "task_key": "8.1",
+      "stage_id": "8",
+      "prefix": "TECH",
+      "title": "Atomize ZoneManager.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract per-concern zone services from Assets/Scripts/Managers/GameManagers/ZoneManager.cs (1449 LOC) into Domains/Zones/ + facade IZones; lint blocks UrbanizationProposal references.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/zones/ZoneManagerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 8."
+    },
+    {
+      "task_key": "9.1",
+      "stage_id": "9",
+      "prefix": "TECH",
+      "title": "Atomize UiBakeHandler.cs family",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: re-evaluate UiBakeHandler.cs + .Archetype + .Button + .Frame partials (1440+1159+? LOC) under Strategy γ. Move to Domains/UI/Editor/UiBake/ — partial-class collapse OR Services per concern leak analysis.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/ui-bake/UiBakeHandlerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 9."
+    },
+    {
+      "task_key": "10.1",
+      "stage_id": "10",
+      "prefix": "TECH",
+      "title": "Atomize AutoRoadBuilder.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: merge Assets/Scripts/Managers/GameManagers/AutoRoadBuilder.cs (1318 LOC) into Domains/Roads/Services/AutoBuildService.cs composed under Roads facade.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/roads/AutoRoadBuilderAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 10."
+    },
+    {
+      "task_key": "11.1",
+      "stage_id": "11",
+      "prefix": "TECH",
+      "title": "Atomize CityStats.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: move Assets/Scripts/Managers/GameManagers/CityStats.cs (1284 LOC) to Domains/Economy/Services/CityStatsService.cs (new domain or merge per Stage 1.2 architecture doc).\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/economy/CityStatsAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 11."
+    },
+    {
+      "task_key": "12.1",
+      "stage_id": "12",
+      "prefix": "TECH",
+      "title": "Atomize tools/mcp-ia-server/src/tools/unity-bridge-command.ts",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: split tools/mcp-ia-server/src/tools/unity-bridge-command.ts (1267 LOC) into module folder + barrel preserving import surface.\n\n§Red-Stage Proof: unit-test:tools/mcp-ia-server/tests/unity-bridge-command-split.test.ts::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 12."
+    },
+    {
+      "task_key": "13.1",
+      "stage_id": "13",
+      "prefix": "TECH",
+      "title": "Atomize AgentTestModeBatchRunner.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: extract per-concern test-mode services from Assets/Scripts/Editor/AgentTestModeBatchRunner.cs (1221 LOC) into Domains/Bridge/Services/ or Domains/Testing/ per architecture doc.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/testmode/AgentTestModeBatchRunnerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 13."
+    },
+    {
+      "task_key": "14.1",
+      "stage_id": "14",
+      "prefix": "TECH",
+      "title": "Atomize tools/sprite-gen/src/compose.py",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: split tools/sprite-gen/src/compose.py (1212 LOC) into compose/ module + __init__.py barrel; ruff stack green.\n\n§Red-Stage Proof: unit-test:tools/sprite-gen/tests/compose_split_test.py::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 14."
+    },
+    {
+      "task_key": "15.1",
+      "stage_id": "15",
+      "prefix": "TECH",
+      "title": "Atomize GeographyManager.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: move Assets/Scripts/Managers/GameManagers/GeographyManager.cs (1160 LOC) to Domains/Geography/ (or merge into Terrain per Stage 1.2 architecture doc).\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/geography/GeographyManagerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 15."
+    },
+    {
+      "task_key": "16.1",
+      "stage_id": "16",
+      "prefix": "TECH",
+      "title": "Atomize InterstateManager.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: move Assets/Scripts/Managers/GameManagers/InterstateManager.cs (1148 LOC) to Domains/Roads/Services/InterstateService.cs composed under Roads facade.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/roads/InterstateManagerAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 16."
+    },
+    {
+      "task_key": "17.1",
+      "stage_id": "17",
+      "prefix": "TECH",
+      "title": "Atomize RoadPrefabResolver.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: move Assets/Scripts/Managers/GameManagers/RoadPrefabResolver.cs (1121 LOC) to Domains/Roads/Services/PrefabResolverService.cs composed under Roads facade.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/roads/RoadPrefabResolverAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 17."
+    },
+    {
+      "task_key": "18.1",
+      "stage_id": "18",
+      "prefix": "TECH",
+      "title": "Atomize TerraformingService.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: move Assets/Scripts/Managers/GameManagers/TerraformingService.cs (1095 LOC) to Domains/Terrain/Services/TerraformingService.cs composed under Terrain facade.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/terrain/TerraformingServiceAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 18."
+    },
+    {
+      "task_key": "19.1",
+      "stage_id": "19",
+      "prefix": "TECH",
+      "title": "Atomize UIManager.Theme.cs",
+      "type": "code",
+      "body": "## §Plan Digest\n\n§Goal: re-evaluate Assets/Scripts/Managers/GameManagers/UIManager.Theme.cs (1004 LOC) under Strategy γ — ThemeService extraction vs partial retention. Move to Domains/UI/Services/ThemeService.cs.\n\n§Red-Stage Proof: tracer-test:Assets/Tests/EditMode/Atomization/ui/UIManagerThemeAtomizationTests.cs::* (anchor placeholder; authored at /ship-cycle time).\n\n§Work Items: TBD — authored just-in-time at /ship-cycle Stage 19."
+    }
+  ]
+}

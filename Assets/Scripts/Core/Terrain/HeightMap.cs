@@ -4,9 +4,15 @@ namespace Territory.Terrain
 {
 /// <summary>
 /// Generate + store terrain height grid via Perlin noise. Height query + modify for terrain system.
+/// Constants MIN_HEIGHT/MAX_HEIGHT inlined here; TerrainManager matches these values.
 /// </summary>
 public class HeightMap
 {
+    /// <summary>Minimum valid terrain height. Must match MIN_HEIGHT.</summary>
+    public const int MIN_HEIGHT = 0;
+    /// <summary>Maximum valid terrain height. Must match MAX_HEIGHT.</summary>
+    public const int MAX_HEIGHT = 5;
+
     private int[,] heights;
     private int width;
     private int height;
@@ -43,8 +49,8 @@ public class HeightMap
             for (int y = 0; y < height; y++)
             {
                 heights[x, y] = Mathf.Clamp(newHeights[x, y],
-                    TerrainManager.MIN_HEIGHT,
-                    TerrainManager.MAX_HEIGHT);
+                    MIN_HEIGHT,
+                    MAX_HEIGHT);
             }
         }
     }
@@ -53,7 +59,7 @@ public class HeightMap
     {
         if (!IsValidPosition(x, y))
         {
-            return TerrainManager.MIN_HEIGHT; // Return minimum height for invalid positions
+            return MIN_HEIGHT; // Return minimum height for invalid positions
         }
         return heights[x, y];
     }
@@ -66,8 +72,8 @@ public class HeightMap
         }
 
         heights[x, y] = Mathf.Clamp(newHeight,
-            TerrainManager.MIN_HEIGHT,
-            TerrainManager.MAX_HEIGHT);
+            MIN_HEIGHT,
+            MAX_HEIGHT);
     }
 
     public bool IsValidPosition(int x, int y)
