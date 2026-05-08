@@ -13,6 +13,8 @@ using Territory.Economy;
 using Territory.UI;
 using Territory.Utilities;
 using Territory.Persistence;
+using Domains.Geography;
+using Domains.Geography.Services;
 
 namespace Territory.Geography
 {
@@ -22,8 +24,9 @@ namespace Territory.Geography
 /// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>, <see cref="useFlatTerrainOnNewGame"/>.
 /// Optional interchange: <see cref="loadGeographyInitParamsFromStreamingAssets"/> loads <c>geography_init_params</c> from StreamingAssets.
 /// Diagnostics: <see cref="BuildGeographyInitReportJson"/> for harness export (<c>tools/reports/last-geography-init.json</c>).
+/// Implements <see cref="IGeography"/> facade (Domains.Geography Stage 15 atomization).
 /// </summary>
-public class GeographyManager : MonoBehaviour
+public class GeographyManager : MonoBehaviour, IGeography
 {
     #region Dependencies
     [Header("Manager References")]
@@ -324,37 +327,17 @@ public class GeographyManager : MonoBehaviour
 
     /// <summary>
     /// Populate <c>closeWaterCount</c> for all cells + recalc desirability.
+    /// Delegates to <see cref="GeographyWaterDesirabilityService.Apply"/> (Domains.Geography Stage 15).
     /// Call after <see cref="ForestManager.InitializeForestMap"/> → both forest + water contribute to desirability.
     /// </summary>
     private void InitializeWaterDesirability()
     {
         if (gridManager == null || waterManager == null) return;
-
-        int[] dx = { 1, -1, 0, 0 };
-        int[] dy = { 0, 0, 1, -1 };
-
-        for (int x = 0; x < gridManager.width; x++)
-        {
-            for (int y = 0; y < gridManager.height; y++)
-            {
-                CityCell cell = gridManager.GetCell(x, y);
-                if (cell == null) continue;
-
-                int count = 0;
-                for (int d = 0; d < 4; d++)
-                {
-                    int nx = x + dx[d];
-                    int ny = y + dy[d];
-                    if (nx >= 0 && nx < gridManager.width && ny >= 0 && ny < gridManager.height &&
-                        waterManager.IsWaterAt(nx, ny))
-                    {
-                        count++;
-                    }
-                }
-                cell.closeWaterCount = count;
-                cell.UpdateDesirability();
-            }
-        }
+        GeographyWaterDesirabilityService.Apply(
+            gridManager.width,
+            gridManager.height,
+            (x, y) => gridManager.GetCell(x, y),
+            (x, y) => waterManager.IsWaterAt(x, y));
     }
 
     private GeographyData CreateGeographyData()

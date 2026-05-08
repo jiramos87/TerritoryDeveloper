@@ -1,0 +1,20 @@
+{
+    "name": "Geography.Tests.EditMode.Atomization",
+    "rootNamespace": "Territory.Tests.EditMode.Atomization.Geography",
+    "references": [
+        "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a",
+        "Geography"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
