@@ -48,5 +48,10 @@ public interface IRoadManager
     bool StrokeLastCellIsFirmDryLand(IList<Vector2> stroke);
     bool TryExtendCardinalStreetPathWithBridgeChord(List<Vector2> pathVec2, Vector2Int dir);
     List<ResolvedRoadTile> ResolvePathForRoads(List<Vector2> path, PathTerraformPlan plan);
+
+    // Interstate-specific: consumed by Domains.Roads.Services.InterstateService (cutover Stage 1.0 / TECH-26630).
+    bool ValidateBridgePath(List<Vector2Int> path, HeightMap heightMap);
+    bool ValidateInterstatePathForPlacement(List<Vector2Int> path);
+    bool PlaceInterstateFromPath(List<Vector2Int> path);
 }
 }

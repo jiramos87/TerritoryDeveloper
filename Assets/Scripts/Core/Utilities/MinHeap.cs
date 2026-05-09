@@ -7,7 +7,7 @@ namespace Territory.Core
     /// Min-heap for A* pathfinding. Stores (position, fScore); O(log n) Enqueue/Dequeue.
     /// Replaces List+Sort → efficient priority queue.
     /// </summary>
-    internal class MinHeap
+    public class MinHeap
     {
         private readonly List<(Vector2Int pos, int f)> heap = new List<(Vector2Int, int)>();
 
