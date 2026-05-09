@@ -33,6 +33,9 @@ namespace Territory.Editor.Bridge
             "themed-tooltip",
             // Wave A1 (TECH-27064) archetypes.
             "view-slot", "confirm-button",
+            // Wave A2 (TECH-27069) form + settings archetypes.
+            "card-picker", "chip-picker", "text-input",
+            "toggle-row", "slider-row", "dropdown-row", "section-header",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -111,6 +114,22 @@ namespace Territory.Editor.Bridge
                 return BakeViewSlot(irRow, assetPath, theme);
             if (irRow.kind == "confirm-button")
                 return BakeConfirmButton(irRow, assetPath, theme);
+
+            // Wave A2 (TECH-27069) — form + settings archetypes.
+            if (irRow.kind == "card-picker")
+                return BakeCardPicker(irRow, assetPath, theme);
+            if (irRow.kind == "chip-picker")
+                return BakeChipPicker(irRow, assetPath, theme);
+            if (irRow.kind == "text-input")
+                return BakeTextInput(irRow, assetPath, theme);
+            if (irRow.kind == "toggle-row")
+                return BakeToggleRow(irRow, assetPath, theme);
+            if (irRow.kind == "slider-row")
+                return BakeSliderRow(irRow, assetPath, theme);
+            if (irRow.kind == "dropdown-row")
+                return BakeDropdownRow(irRow, assetPath, theme);
+            if (irRow.kind == "section-header")
+                return BakeSectionHeader(irRow, assetPath, theme);
 
             GameObject go = null;
             try
@@ -1357,6 +1376,449 @@ namespace Territory.Editor.Bridge
             public string action;
             public string confirm_action;
             public int confirm_seconds = 3;
+        }
+
+        // ── Wave A2 (TECH-27069) — form + settings archetype bake methods ────────
+
+        /// <summary>Bake card-picker: 3-N card grid with selected-bind. Root HLG + N card children.</summary>
+        static BakeError BakeCardPicker(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childAlignment = TextAnchor.MiddleCenter;
+                var bg = go.AddComponent<UnityEngine.UI.Image>();
+                bg.color = new Color(0f, 0f, 0f, 0f);
+                bg.raycastTarget = false;
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Bake chip-picker: compact horizontal chips. Root HLG + transparent background.</summary>
+        static BakeError BakeChipPicker(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 4;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childAlignment = TextAnchor.MiddleLeft;
+                var bg = go.AddComponent<UnityEngine.UI.Image>();
+                bg.color = new Color(0f, 0f, 0f, 0f);
+                bg.raycastTarget = false;
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake text-input: label + TMP_InputField + optional reroll button.
+        /// Root VLG; children: Label (TMP_Text), InputField, optional RerollButton.
+        /// </summary>
+        static BakeError BakeTextInput(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var vlg = go.AddComponent<VerticalLayoutGroup>();
+                vlg.spacing = 4;
+                vlg.childControlWidth = true;
+                vlg.childControlHeight = true;
+                vlg.childForceExpandWidth = true;
+                vlg.childForceExpandHeight = false;
+
+                // Label child.
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                labelTmp.text = "City Name";
+                labelTmp.fontSize = 14f;
+                labelTmp.color = Color.white;
+                labelTmp.raycastTarget = false;
+
+                // InputField child.
+                var inputGo = new GameObject("InputField", typeof(RectTransform));
+                inputGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var inputRect = (RectTransform)inputGo.transform;
+                inputRect.sizeDelta = new Vector2(0f, 36f);
+                var inputBg = inputGo.AddComponent<UnityEngine.UI.Image>();
+                inputBg.color = new Color(0.12f, 0.12f, 0.18f, 1f);
+                var inputField = inputGo.AddComponent<TMPro.TMP_InputField>();
+
+                // Placeholder child inside InputField.
+                var phGo = new GameObject("Placeholder", typeof(RectTransform));
+                phGo.transform.SetParent(inputGo.transform, worldPositionStays: false);
+                var phRect = (RectTransform)phGo.transform;
+                phRect.anchorMin = Vector2.zero; phRect.anchorMax = Vector2.one;
+                phRect.offsetMin = new Vector2(8f, 0f); phRect.offsetMax = new Vector2(-8f, 0f);
+                var phTmp = phGo.AddComponent<TMPro.TextMeshProUGUI>();
+                phTmp.text = "Enter city name...";
+                phTmp.fontSize = 14f;
+                phTmp.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+                phTmp.raycastTarget = false;
+
+                // Text child inside InputField.
+                var textGo = new GameObject("Text", typeof(RectTransform));
+                textGo.transform.SetParent(inputGo.transform, worldPositionStays: false);
+                var textRect = (RectTransform)textGo.transform;
+                textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = new Vector2(8f, 0f); textRect.offsetMax = new Vector2(-8f, 0f);
+                var textTmp = textGo.AddComponent<TMPro.TextMeshProUGUI>();
+                textTmp.fontSize = 14f;
+                textTmp.color = Color.white;
+
+                inputField.textComponent = textTmp;
+                inputField.placeholder = phTmp;
+                inputField.targetGraphic = inputBg;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake toggle-row: label + Unity Toggle side-by-side in HLG.
+        /// Children: Label (TMP_Text), ToggleBox (Image + Toggle).
+        /// </summary>
+        static BakeError BakeToggleRow(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childAlignment = TextAnchor.MiddleLeft;
+
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var le = labelGo.AddComponent<LayoutElement>();
+                le.flexibleWidth = 1f;
+                var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                labelTmp.text = string.Empty;
+                labelTmp.fontSize = 14f;
+                labelTmp.color = Color.white;
+                labelTmp.raycastTarget = false;
+
+                var toggleGo = new GameObject("Toggle", typeof(RectTransform));
+                toggleGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var toggleRect = (RectTransform)toggleGo.transform;
+                toggleRect.sizeDelta = new Vector2(28f, 28f);
+                var bgImg = toggleGo.AddComponent<UnityEngine.UI.Image>();
+                bgImg.color = new Color(0.22f, 0.22f, 0.32f, 1f);
+                var toggle = toggleGo.AddComponent<UnityEngine.UI.Toggle>();
+                toggle.targetGraphic = bgImg;
+                toggle.isOn = false;
+
+                var checkGo = new GameObject("Checkmark", typeof(RectTransform));
+                checkGo.transform.SetParent(toggleGo.transform, worldPositionStays: false);
+                var checkRect = (RectTransform)checkGo.transform;
+                checkRect.anchorMin = new Vector2(0.15f, 0.15f);
+                checkRect.anchorMax = new Vector2(0.85f, 0.85f);
+                checkRect.offsetMin = checkRect.offsetMax = Vector2.zero;
+                var checkImg = checkGo.AddComponent<UnityEngine.UI.Image>();
+                checkImg.color = new Color(0.35f, 0.55f, 0.95f, 1f);
+                toggle.graphic = checkImg;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake slider-row: label + Unity Slider in HLG. Carries min/max/step in IR detail;
+        /// LinearToDecibel flag for audio sliders.
+        /// </summary>
+        static BakeError BakeSliderRow(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childAlignment = TextAnchor.MiddleLeft;
+
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var le = labelGo.AddComponent<LayoutElement>();
+                le.minWidth = 60f;
+                var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                labelTmp.text = string.Empty;
+                labelTmp.fontSize = 14f;
+                labelTmp.color = Color.white;
+                labelTmp.raycastTarget = false;
+
+                var sliderGo = new GameObject("Slider", typeof(RectTransform));
+                sliderGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var sle = sliderGo.AddComponent<LayoutElement>();
+                sle.flexibleWidth = 1f;
+                sle.minHeight = 20f;
+                var slider = sliderGo.AddComponent<UnityEngine.UI.Slider>();
+                slider.minValue = 0f;
+                slider.maxValue = 1f;
+                slider.value = 1f;
+
+                // Track background.
+                var bgGo = new GameObject("Background", typeof(RectTransform));
+                bgGo.transform.SetParent(sliderGo.transform, worldPositionStays: false);
+                var bgRect = (RectTransform)bgGo.transform;
+                bgRect.anchorMin = new Vector2(0f, 0.25f);
+                bgRect.anchorMax = new Vector2(1f, 0.75f);
+                bgRect.offsetMin = bgRect.offsetMax = Vector2.zero;
+                bgGo.AddComponent<UnityEngine.UI.Image>().color = new Color(0.22f, 0.22f, 0.32f, 1f);
+
+                // Fill area.
+                var fillAreaGo = new GameObject("Fill Area", typeof(RectTransform));
+                fillAreaGo.transform.SetParent(sliderGo.transform, worldPositionStays: false);
+                var faRect = (RectTransform)fillAreaGo.transform;
+                faRect.anchorMin = new Vector2(0f, 0.25f);
+                faRect.anchorMax = new Vector2(1f, 0.75f);
+                faRect.offsetMin = new Vector2(5f, 0f); faRect.offsetMax = new Vector2(-5f, 0f);
+                var fillGo = new GameObject("Fill", typeof(RectTransform));
+                fillGo.transform.SetParent(fillAreaGo.transform, worldPositionStays: false);
+                var fillRect = (RectTransform)fillGo.transform;
+                fillRect.anchorMin = Vector2.zero; fillRect.anchorMax = Vector2.one;
+                fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
+                fillGo.AddComponent<UnityEngine.UI.Image>().color = new Color(0.35f, 0.55f, 0.95f, 1f);
+                slider.fillRect = fillRect;
+
+                // Handle.
+                var haGo = new GameObject("Handle Slide Area", typeof(RectTransform));
+                haGo.transform.SetParent(sliderGo.transform, worldPositionStays: false);
+                var haRect = (RectTransform)haGo.transform;
+                haRect.anchorMin = Vector2.zero; haRect.anchorMax = Vector2.one;
+                haRect.offsetMin = new Vector2(10f, 0f); haRect.offsetMax = new Vector2(-10f, 0f);
+                var handleGo = new GameObject("Handle", typeof(RectTransform));
+                handleGo.transform.SetParent(haGo.transform, worldPositionStays: false);
+                var handleRect = (RectTransform)handleGo.transform;
+                handleRect.anchorMin = handleRect.anchorMax = new Vector2(0f, 0.5f);
+                handleRect.sizeDelta = new Vector2(20f, 20f);
+                var handleImg = handleGo.AddComponent<UnityEngine.UI.Image>();
+                handleImg.color = Color.white;
+                slider.handleRect = handleRect;
+                slider.targetGraphic = handleImg;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake dropdown-row: label + TMP_Dropdown in HLG.
+        /// </summary>
+        static BakeError BakeDropdownRow(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childAlignment = TextAnchor.MiddleLeft;
+
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var le = labelGo.AddComponent<LayoutElement>();
+                le.minWidth = 80f;
+                var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                labelTmp.text = string.Empty;
+                labelTmp.fontSize = 14f;
+                labelTmp.color = Color.white;
+                labelTmp.raycastTarget = false;
+
+                var dropGo = new GameObject("Dropdown", typeof(RectTransform));
+                dropGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var dRect = (RectTransform)dropGo.transform;
+                dRect.sizeDelta = new Vector2(160f, 30f);
+                var dropBg = dropGo.AddComponent<UnityEngine.UI.Image>();
+                dropBg.color = new Color(0.12f, 0.12f, 0.18f, 1f);
+                var dropdown = dropGo.AddComponent<TMPro.TMP_Dropdown>();
+                dropdown.targetGraphic = dropBg;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake section-header: single TMP_Text child at section-header size token.
+        /// </summary>
+        static BakeError BakeSectionHeader(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+                var bg = go.AddComponent<UnityEngine.UI.Image>();
+                bg.color = new Color(0f, 0f, 0f, 0f);
+                bg.raycastTarget = false;
+                var tmp = go.AddComponent<TMPro.TextMeshProUGUI>();
+                tmp.text = string.Empty;
+                tmp.fontSize = 16f; // size-text-section-header token value
+                tmp.fontStyle = TMPro.FontStyles.Bold;
+                tmp.color = Color.white;
+                tmp.raycastTarget = false;
+                tmp.alignment = TMPro.TextAlignmentOptions.MidlineLeft;
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        // ── Wave A2 IR DTOs (TECH-27069) ─────────────────────────────────────────
+
+        /// <summary>IR DTO for card-picker archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class CardPickerDetail
+        {
+            public string bind;
+            public string value;
+            public string label;
+            public string description;
+        }
+
+        /// <summary>IR DTO for chip-picker archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class ChipPickerDetail
+        {
+            public string bind;
+            public string value;
+            public string label;
+        }
+
+        /// <summary>IR DTO for text-input archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class TextInputDetail
+        {
+            public string bind;
+            public string placeholder;
+            public string reroll_action;
+        }
+
+        /// <summary>IR DTO for toggle-row archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class ToggleRowDetail
+        {
+            public string bind;
+            public string label;
+        }
+
+        /// <summary>IR DTO for slider-row archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class SliderRowDetail
+        {
+            public string bind;
+            public string label;
+            public float min;
+            public float max = 1f;
+            public float step = 0.01f;
+            public bool linearToDecibel;
+        }
+
+        /// <summary>IR DTO for dropdown-row archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class DropdownRowDetail
+        {
+            public string bind;
+            public string label;
+            public string options_action;
+        }
+
+        /// <summary>IR DTO for section-header archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class SectionHeaderDetail
+        {
+            public string label;
+            public string size_token;
         }
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────

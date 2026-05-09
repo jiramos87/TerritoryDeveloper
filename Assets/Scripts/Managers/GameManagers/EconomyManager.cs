@@ -286,6 +286,23 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Set initial treasury before the first sim tick (Wave A2 TECH-27071).
+    /// Writes directly to <see cref="CityStats.money"/> so the value is authoritative
+    /// before any <see cref="ProcessMonthlyTax"/> run overwrites it. Call from
+    /// <see cref="MainMenuController.StartNewGame"/> prior to scene transition.
+    /// </summary>
+    public void SetStartingFunds(int amount)
+    {
+        if (cityStats == null)
+        {
+            Debug.LogWarning("[EconomyManager] SetStartingFunds: CityStats not available — deferred.");
+            return;
+        }
+        if (amount < 0) amount = 0;
+        cityStats.money = amount;
+    }
+
+    /// <summary>
     /// Add money to city treasury.
     /// </summary>
     /// <param name="amount">Amount to add.</param>

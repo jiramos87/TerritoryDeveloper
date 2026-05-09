@@ -824,6 +824,29 @@ public class MainMenuController : MonoBehaviour
         trig.triggers.Add(entry);
     }
 
+    /// <summary>
+    /// Wave A2 (TECH-27071) — 4-arg overload: launches CityScene with chosen budget, city name + seed.
+    /// Wires <see cref="Territory.Economy.EconomyManager.SetStartingFunds"/> +
+    /// <see cref="Territory.Economy.CityStats.SetCityName"/> before scene transition when managers available.
+    /// </summary>
+    public void StartNewGame(int mapSize, int startingBudget, string cityName, int seed)
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+
+        // Apply pre-game-start values to managers if already loaded in scene.
+        var eco = FindObjectOfType<Territory.Economy.EconomyManager>();
+        if (eco != null) eco.SetStartingFunds(startingBudget);
+        var stats = FindObjectOfType<Territory.Economy.CityStats>();
+        if (stats != null) stats.SetCityName(cityName);
+
+        // Store in GameStartInfo for CityScene Awake to consume (budget + name + seed).
+        Territory.Persistence.GameStartInfo.SetStartModeNewGame(mapSize, seed, 0);
+        Territory.Persistence.GameStartInfo.SetPendingNewGameConfig(startingBudget, cityName);
+        SceneManager.LoadScene(CitySceneBuildIndex);
+    }
+
+    /// <summary>Legacy 3-arg overload kept for one ship cycle.</summary>
+    [System.Obsolete("Use 4-arg overload; remove next ship cycle.")]
     public void StartNewGame(int mapSize, int seed, int scenarioIndex)
     {
         BlipEngine.Play(BlipId.UiButtonClick);

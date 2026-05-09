@@ -18,6 +18,10 @@ public static class GameStartInfo
     public static int MapSize { get; set; }
     public static int Seed { get; set; }
     public static int ScenarioIndex { get; set; }
+    /// <summary>Wave A2 (TECH-27071) — starting treasury from new-game-form budget picker.</summary>
+    public static int StartingBudget { get; set; }
+    /// <summary>Wave A2 (TECH-27071) — city name from new-game-form text-input or reroll.</summary>
+    public static string CityName { get; set; }
 
     /// <summary>Set load path + mode=Load.</summary>
     public static void SetPendingLoadPath(string path)
@@ -42,6 +46,13 @@ public static class GameStartInfo
         SetStartModeNewGame();
     }
 
+    /// <summary>Wave A2 (TECH-27071) — store budget + city name for CityScene Awake consumption.</summary>
+    public static void SetPendingNewGameConfig(int startingBudget, string cityName)
+    {
+        StartingBudget = startingBudget;
+        CityName       = cityName ?? string.Empty;
+    }
+
     /// <summary>Clear start info after consumption.</summary>
     public static void Clear()
     {
@@ -50,6 +61,9 @@ public static class GameStartInfo
         MapSize = 0;
         Seed = 0;
         ScenarioIndex = 0;
+        StartingBudget = 0;
+        CityName = null;
     }
+}
 }
 }
