@@ -106,6 +106,7 @@ import { registerUiCalibrationCorpusQuery, registerUiCalibrationVerdictRecord } 
 import { registerUiPanelGet, registerUiPanelList, registerUiPanelPublish } from "./tools/ui-panel.js";
 import { registerUiTokenGet, registerUiTokenList, registerUiTokenPublish } from "./tools/ui-token.js";
 import { registerUiComponentGet, registerUiComponentList, registerUiComponentPublish } from "./tools/ui-component.js";
+import { registerActionRegistryList, registerBindRegistryList } from "./tools/ui-registry.js";
 
 // Bridge + compute tools
 import {
@@ -249,6 +250,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerUiComponentGet(server);
   registerUiComponentList(server);
   registerUiComponentPublish(server);
+  // Wave A0 (TECH-27061) — action+bind registry read-only slices
+  registerActionRegistryList(server);
+  registerBindRegistryList(server);
 }
 
 /**
