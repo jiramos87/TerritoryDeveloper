@@ -81,6 +81,7 @@ hard_boundaries:
   - Do NOT write task spec bodies to filesystem — DB sole source of truth.
   - Do NOT chain `/code-review` — operator runs out-of-band per Task (lifecycle row 9).
   - On Pass B verify-loop fail → `STAGE_VERIFY_FAIL` + worktree stays dirty + no rollback of Pass A flips.
+  - Phase 8 step 0a (live-Editor compile poll) MANDATORY when step 0 ran — never fire-and-forget `refresh_asset_database` without polling `get_compilation_status` to terminal state before commit.
 caller_agent: ship-cycle
 ---
 
@@ -193,6 +194,19 @@ No filesystem mv. Closeout MANDATORY on green Pass B — never defer.
 
 0. **AssetDatabase refresh pre-commit gate** — when stage diff touched `Assets/**` (any file under Unity asset roots): call `unity_bridge_command(kind="refresh_asset_database")` BEFORE `git add -A`. Live Editor writes `.meta` GUID siblings synchronously for any new `.cs` / asset files Pass A created — without this gate, `unity:compile-check` (batchmode + second-instance when project lock held) skips AssetDatabase writes, leaving orphan untracked `.meta` files outside the stage commit. Skip this step when `git diff HEAD --name-only` shows zero `Assets/**` paths. On bridge failure (Editor not running / lease unavailable) → fall back to `unity:compile-check` (which now hits batchmode AssetDatabase since user can quit Editor) OR `STOPPED at refresh — bridge_unavailable` so operator can resume after starting Editor.
 
+0a. **Live-Editor compile poll (post-refresh gate)** — immediately after step 0 `refresh_asset_database` succeeds, poll `unity_bridge_command(kind="get_compilation_status")` until `compilation_status ∈ {idle, compilation_succeeded}` OR ceiling reached. Refresh triggers live Editor recompile asynchronously; without this poll, ship-cycle proceeds to commit while live Editor compile may still fail — Pass A `unity:compile-check` (batchmode 2nd-instance under project lock) can pass with stale assembly cache while live Editor surfaces real errors only after refresh.
+
+   Poll loop:
+   - Initial wait 2 s (refresh → recompile latency); then poll every 2 s.
+   - Ceiling: 60 s (30 polls). Configurable via `UNITY_COMPILE_POLL_CEILING_S`.
+   - Terminal states:
+     - `compilation_status == "idle"` OR `"compilation_succeeded"` → continue Phase 8 step 1 (`git add -A`).
+     - `compilation_status == "compilation_failed"` → `STOPPED at refresh — live_editor_compile_failed` + emit `last_error_excerpt` + `recent_error_messages` from response. Worktree stays dirty. No commit. Operator fixes errors in Editor → re-runs `/ship-cycle {SLUG} {STAGE_ID}` (resume gate sees `implemented` → re-enters Phase 5 verify-loop).
+     - Ceiling exhausted with `compilation_status == "compiling"` → `STOPPED at refresh — compile_poll_ceiling_exceeded` (rare; manual investigation).
+   - Bridge unavailable for poll → same fallback as step 0 (`unity:compile-check` batchmode OR `STOPPED at refresh — bridge_unavailable`).
+
+   This gate is MANDATORY when step 0 ran. Skipping it = same blind spot BUG-63 closed for `.meta` drift, but for compile state — fire-and-forget refresh leaks compile errors past the stage boundary into the user's next Editor session.
+
 1. `git add -A` + single commit:
 
    ```
@@ -254,7 +268,7 @@ Emit chain digest JSON header `chain_stage_digest: true` + caveman summary + `ne
 {
   "escalation": true,
   "phase": <int>,
-  "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed | stage_verify_fail | closeout_apply_failed | commit_failed | verification_flip_failed",
+  "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed | stage_verify_fail | closeout_apply_failed | commit_failed | verification_flip_failed | live_editor_compile_failed | compile_poll_ceiling_exceeded | bridge_unavailable",
   "task_id": "<optional>",
   "stderr": "<optional>"
 }
@@ -272,6 +286,9 @@ Emit exactly one of:
 - `SHIP_CYCLE {STAGE_ID}: STAGE_VERIFY_FAIL` — Pass B verify-loop failed; worktree stays dirty; manual fix then re-run.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}` — DB-drift repair directive.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at commit — pre-commit hook failed: {reason}` — investigate hook.
+- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — live_editor_compile_failed` — Phase 8 step 0a poll surfaced live Editor compile errors after `refresh_asset_database`. Worktree dirty; no commit. Operator fixes errors → resume `/ship-cycle {SLUG} {STAGE_ID}`.
+- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — compile_poll_ceiling_exceeded` — Phase 8 step 0a poll exhausted ceiling (60 s default) with `compilation_status == "compiling"`. Manual investigation.
+- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — bridge_unavailable` — bridge / Editor unavailable for refresh or poll. Operator starts Editor + re-runs.
 
 Followed by caveman summary block: `ship-cycle done. STAGE_ID={S} STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff.
 
@@ -296,6 +313,16 @@ When Pass A inference body needs DB context for multiple tables or queries, use 
 
 For ad-hoc multi-query DB state (anything not covered by the above): one `db_read_batch` call covers all questions. Do NOT issue sequential `psql` shell calls or N sequential MCP reads when a single batch covers it.
 
+### Stage_id literal match guardrail
+
+`stage_id` propagated to `stage_closeout_apply`, `cron_stage_verification_flip_enqueue`, `cron_task_commit_record_enqueue`, `cron_audit_log_enqueue`, and the stage commit subject MUST be the literal value stored in `ia_stages.stage_id` for the slug — NOT a free-typed approximation.
+
+Resolve once at Phase 0 / Phase 1 entry via `master_plan_state(slug).stages[]`: pick the row matching the user-supplied `{STAGE_ID}` arg (lookup must be tolerant — accept `3`, `3.0`, `stage-3-foo` and resolve to canonical) then propagate the canonical literal verbatim through all downstream phases. Per-plan formats vary (`N.M` for `ui-implementation-mvp-rest`, bare-int + slug-style mix for `large-file-atomization-refactor`, slug-style for `large-file-atomization-cutover-refactor`). No global format invariant.
+
+Why. Cron drainer enforces strict FK `ia_stage_verifications_stage_fk(slug, stage_id) → ia_stages(slug, stage_id)`. MCP enqueue tool inserts verbatim — no pre-check, no normalization. Mismatch surfaces only after async drain: row stuck `status=done` with `error` populated, no retry. Recurrence evidence: 2026-05-08 `cron_stage_verification_flip_jobs.job_id=6436292f`, slug `ui-implementation-mvp-rest`, agent passed `"3"` when canonical was `"3.0"`; manually replayed.
+
+How to apply. (a) Phase 0 — capture `STAGE_ID_DB = master_plan_state(slug).stages[i].stage_id` (canonical literal) before any other DB write. (b) Phases 7–9 — pass `STAGE_ID_DB` verbatim to closeout / cron-flip / commit subject. (c) NEVER concatenate stage_id from chat or BACKLOG row text — resolve from DB.
+
 ---
 
 ## Changelog
@@ -303,3 +330,5 @@ For ad-hoc multi-query DB state (anything not covered by the above): one `db_rea
 - 2026-05-05 — Pass B absorbed (verify-loop + verified→done flips + closeout + stage commit + verification flip). Chain prose updated: `design-explore → ship-plan → ship-cycle → ship-final`. `/ship-stage-main-session` retained as legacy fallback for token-budget-exceeded path; not chained.
 - 2026-05-08 — `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` added to Phase 9 chain digest summary. Derived from `master_plan_state(slug).stages[]` — operator sees plan position at every handoff (e.g. `12/19`).
 - 2026-05-08 (BUG-63) — Phase 8 step 0 added: `unity_bridge_command(kind="refresh_asset_database")` runs before `git add -A` when stage diff touches `Assets/**`. Live Editor writes `.meta` siblings synchronously into stage commit; eliminates orphan `.meta` drift accumulated when batchmode `unity:compile-check` runs in second-instance mode (project lock held by user's Editor → AssetDatabase writes skipped). Recurrence evidence: large-file-atomization-refactor stages 2–15, 65 orphan `.meta` swept in chore commit `bd153cc3`.
+- 2026-05-08 — Stage_id literal match guardrail added (Guardrails §). `stage_id` propagated to closeout / cron flip / cron commit-record / audit / stage commit MUST be canonical literal from `ia_stages.stage_id` (resolved via `master_plan_state(slug).stages[]`). Recurrence evidence: `cron_stage_verification_flip_jobs.job_id=6436292f` 2026-05-08, slug `ui-implementation-mvp-rest`, agent emitted `"3"` vs canonical `"3.0"`; FK `ia_stage_verifications_stage_fk` violation surfaced only at async cron drain (row stuck `done` with `error`); manually replayed. Per-plan format inconsistency observed (`N.M` vs bare-int vs `stage-N-...`) — no global invariant; agent must resolve per slug. Server-side FK pre-check tracked separately (TECH issue).
+- 2026-05-08 — Phase 8 step 0a added: post-refresh live-Editor compile poll. `refresh_asset_database` (step 0) was fire-and-forget — refresh kicks off async live-Editor recompile, but ship-cycle proceeded to commit + closeout while compile may still fail. Pass A `unity:compile-check` (batchmode 2nd-instance under project lock) passed with stale assembly cache while live Editor surfaced real errors only after refresh. Step 0a polls `get_compilation_status` every 2 s (initial wait 2 s, ceiling 60 s, configurable via `UNITY_COMPILE_POLL_CEILING_S`) until terminal state. New failure modes: `live_editor_compile_failed`, `compile_poll_ceiling_exceeded`, `bridge_unavailable`. Recurrence evidence: large-file-atomization-cutover-refactor stage-6-bridge-mutations shipped clean per ship-cycle but live Editor blocked on compile errors at next session start.

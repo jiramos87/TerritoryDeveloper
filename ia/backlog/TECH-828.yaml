@@ -1,0 +1,77 @@
+id: TECH-828
+type: TECH
+title: Strict (slug, stage_id) and (task_id) FK pre-check + descriptive error in cron enqueue MCP tools
+priority: P3
+status: open
+section: cron-server verification-history bridge
+files:
+  - tools/mcp-ia-server/src/tools/cron-stage-verification-flip.ts
+  - tools/mcp-ia-server/src/tools/cron-task-commit-record.ts
+  - tools/mcp-ia-server/src/tools/cron-journal-append.ts
+  - tools/mcp-ia-server/src/tools/cron-audit-log.ts
+notes: |
+  Server-only fix; no Unity / web touched. Depends on: none.
+  Failure mode = silent FK-violation post-drain → verification-history gap.
+  Glossary anchors flagged as missing — seed §Open-Questions row "add glossary entries for ia_stages / ia_stage_verifications / cron_stage_verification_flip_enqueue / cron_jobs_all".
+
+  Stub seeds (do NOT bulk-author full §1/§2/§4/§5/§7 — stub skeleton only; spec body lives at /ship later):
+
+  Summary seed:
+    Cron enqueue MCP tools (cron_stage_verification_flip_enqueue + siblings under
+    tools/mcp-ia-server/src/tools/cron-*.ts) insert (slug, stage_id) / (task_id) verbatim
+    with NO FK pre-check. Drainer hits FK violation, job row stuck status=done with error
+    populated, no synchronous signal to caller. Async-drain FK-violation = silent
+    verification-history gap. Server-side belt-and-suspenders beyond ship-cycle agent-side
+    guardrail "Stage_id literal match" added 2026-05-08.
+
+  Goals seed:
+    - Synchronous (slug, stage_id) ∈ ia_stages pre-check in cron_stage_verification_flip_enqueue
+      → reject {code:stage_not_found, message: canonical-list}
+    - Symmetric (task_id) ∈ ia_tasks pre-check in cron_task_commit_record_enqueue
+      → {code:task_not_found}
+    - Audit + add FK pre-check to all cron-*.ts enqueue tools where drain target FK to
+      ia_stages / ia_tasks
+    - Out of scope: drainer-side pre-check, partial-index migration
+
+  Systems map seed:
+    files:
+      - tools/mcp-ia-server/src/tools/cron-stage-verification-flip.ts:81-96
+      - tools/mcp-ia-server/src/tools/cron-task-commit-record.ts
+      - tools/mcp-ia-server/src/tools/cron-journal-append.ts
+      - tools/mcp-ia-server/src/tools/cron-audit-log.ts
+      - tools/mcp-ia-server/src/tools/cron-*.ts (full audit)
+    fk_targets:
+      ia_stages: [ia_tasks, ia_stage_verifications, stage_arch_surfaces, stage_carcass_signals, ia_stage_claims, ia_red_stage_proofs]
+      ia_tasks: [ia_task_deps, ia_task_spec_history, ia_task_commits, ia_ship_stage_journal, ia_fix_plan_tuples]
+
+  Acceptance seed:
+    - Enqueue with non-existent (slug, stage_id) → synchronous invalid_input-class error,
+      no row in job table
+    - Existing valid enqueue path unchanged, P95 < 100 ms preserved
+    - FK-violation drain rate = 0 for newly-enqueued rows post-rollout
+
+  Failure evidence (concrete):
+    - cron_stage_verification_flip_jobs.job_id=6436292f-a901-43f5-94e8-f386dd20df74
+    - slug=ui-implementation-mvp-rest, stage_id="3" (canonical was "3.0")
+    - error: insert or update on table "ia_stage_verifications" violates foreign key
+      constraint "ia_stage_verifications_stage_fk"
+    - operator manually replayed 2026-05-08 with stage_id="3.0"
+
+  Open questions (seed §Open-Questions):
+    - Glossary rows missing for ia_stages / cron_jobs_all / cron_stage_verification_flip_enqueue
+      → add as part of this issue or separate?
+    - Pre-check via db_read_batch tool reuse vs raw SELECT in same pool? (P95 < 100 ms target)
+    - Error code shape: invalid_input class (existing) vs new stage_not_found / task_not_found
+      subclass?
+
+  Related context (NOT a backlog id; doc reference only):
+    - ship-cycle/SKILL.md guardrail "Stage_id literal match" (added 2026-05-08) = agent-side
+      mitigation; this issue = server-side belt-and-suspenders.
+acceptance:
+  - Enqueue with non-existent (slug, stage_id) → synchronous invalid_input-class error, no row in job table
+  - Existing valid enqueue path unchanged, P95 < 100 ms preserved
+  - FK-violation drain rate = 0 for newly-enqueued rows post-rollout
+depends_on: []
+depends_on_raw: ''
+related: []
+created: '2026-05-08'
