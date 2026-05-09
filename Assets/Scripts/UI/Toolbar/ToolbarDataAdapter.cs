@@ -2,6 +2,7 @@ using UnityEngine;
 using Territory.Forests;
 using Territory.Zones;
 using Territory.UI.StudioControls;
+using Territory.UI.Registry;
 
 namespace Territory.UI.Toolbar
 {
@@ -27,6 +28,16 @@ namespace Territory.UI.Toolbar
 
         [Header("Producer")]
         [SerializeField] private UIManager _uiManager;
+
+        // ── Wave B1 (TECH-27080) — action + bind registries + picker root.
+        // Inspector-first; Awake fallback to FindObjectOfType when null.
+
+        [Header("Wave B1 — Action + Bind registries")]
+        [SerializeField] private UiActionRegistry _actionRegistry;
+        [SerializeField] private UiBindRegistry _bindRegistry;
+
+        [Header("Wave B1 — Subtype Picker root (mount under toolbar root)")]
+        [SerializeField] private GameObject _subtypePickerRoot;
 
         // ── Theme cache (invariant #3 — caching contract)
 
@@ -71,12 +82,20 @@ namespace Territory.UI.Toolbar
             // UiTheme is a ScriptableObject — Inspector-only assignment per StudioControlBase pattern.
             // No FindObjectOfType for SOs (Stage 6 precedent).
 
+            // Wave B1 (TECH-27080) — registry fallbacks.
+            if (_actionRegistry == null) _actionRegistry = FindObjectOfType<UiActionRegistry>();
+            if (_bindRegistry == null) _bindRegistry = FindObjectOfType<UiBindRegistry>();
+
             // Self-wire button slots by IR iconSpriteSlug — resilient against bake-time reordering.
             // Maps single-tier baked icons to canonical adapter slot indices (residential→0,
             // commercial→3, industrial→6, state→9; power→0, water→1; forest sparse→0).
             RebindButtonsByIconSlug();
 
             SubscribeClicks();
+
+            // Wave B1 (TECH-27080) — register toolbar action ids + picker visibility bind.
+            RegisterActions();
+            InitPickerBinds();
         }
 
         private void RebindButtonsByIconSlug()
@@ -302,6 +321,100 @@ namespace Territory.UI.Toolbar
         {
             if (_uiManager == null) return;
             _uiManager.OnBulldozeButtonClicked();
+        }
+
+        // ── Wave B1 (TECH-27080) — action registry + picker subscription ─────────
+
+        /// <summary>
+        /// Register Wave A0 registry action ids for toolbar + subtype-picker surface.
+        /// action.tool-select   — toolbar slot click with tool_family payload.
+        /// action.tool-deselect — ESC or same-tool re-click.
+        /// action.subtype-open  — picker requests open (emitted by picker-strip on tool-select).
+        /// action.subtype-pick  — card confirmed (payload: {family, subtype}).
+        /// action.subtype-arm   — alias consumed by SubtypePickerController (same payload shape).
+        /// action.subtype-disarm — picker closed, tool deselected.
+        /// </summary>
+        private void RegisterActions()
+        {
+            if (_actionRegistry == null) return;
+
+            // tool.select — toolbar slot click; payload = tool family string.
+            _actionRegistry.Register("action.tool-select", OnActionToolSelect);
+            // tool.deselect — ESC or same-tool re-click; payload ignored.
+            _actionRegistry.Register("action.tool-deselect", OnActionToolDeselect);
+            // subtype open/pick/arm/disarm — picker lifecycle.
+            _actionRegistry.Register("action.subtype-open",  OnActionSubtypeOpen);
+            _actionRegistry.Register("action.subtype-pick",  OnActionSubtypePick);
+            _actionRegistry.Register("action.subtype-arm",   OnActionSubtypeArm);
+            _actionRegistry.Register("action.subtype-disarm", OnActionSubtypeDisarm);
+        }
+
+        /// <summary>Initialize picker visibility bind in UiBindRegistry (false = hidden default).</summary>
+        private void InitPickerBinds()
+        {
+            if (_bindRegistry == null) return;
+            _bindRegistry.Set("toolSelection.activeFamily", string.Empty);
+            _bindRegistry.Set("toolSelection.activeSubtype", string.Empty);
+            _bindRegistry.Set("toolSelection.stripVisible", false);
+
+            // Subscribe to stripVisible changes to mount/unmount picker root.
+            _bindRegistry.Subscribe<bool>("toolSelection.stripVisible", OnPickerVisibilityChanged);
+        }
+
+        private void OnPickerVisibilityChanged(bool visible)
+        {
+            if (_subtypePickerRoot != null)
+                _subtypePickerRoot.SetActive(visible);
+        }
+
+        // ── Action handlers ──────────────────────────────────────────────────────
+
+        private void OnActionToolSelect(object payload)
+        {
+            // payload = tool family string (e.g. "ResidentialZoning").
+            var family = payload as string ?? string.Empty;
+            if (_bindRegistry != null)
+            {
+                _bindRegistry.Set("toolSelection.activeFamily", family);
+                // Open picker for families that declare a picker_variant != none.
+                // DemolishCell is the only no-picker family in MVP.
+                bool hasVariant = !string.IsNullOrEmpty(family) && family != "DemolishCell" && family != "DemolishArea";
+                _bindRegistry.Set("toolSelection.stripVisible", hasVariant);
+            }
+        }
+
+        private void OnActionToolDeselect(object payload)
+        {
+            if (_bindRegistry != null)
+            {
+                _bindRegistry.Set("toolSelection.activeFamily", string.Empty);
+                _bindRegistry.Set("toolSelection.activeSubtype", string.Empty);
+                _bindRegistry.Set("toolSelection.stripVisible", false);
+            }
+        }
+
+        private void OnActionSubtypeOpen(object payload)
+        {
+            if (_bindRegistry != null)
+                _bindRegistry.Set("toolSelection.stripVisible", true);
+        }
+
+        private void OnActionSubtypePick(object payload)
+        {
+            // payload = subtype string.
+            if (_bindRegistry != null)
+                _bindRegistry.Set("toolSelection.activeSubtype", payload as string ?? string.Empty);
+        }
+
+        private void OnActionSubtypeArm(object payload)
+        {
+            // Alias for subtype-pick consumed by SubtypePickerController.
+            OnActionSubtypePick(payload);
+        }
+
+        private void OnActionSubtypeDisarm(object payload)
+        {
+            OnActionToolDeselect(payload);
         }
 
         // ── Active-tool mirror (Update) ──

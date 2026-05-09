@@ -38,6 +38,8 @@ namespace Territory.Editor.Bridge
             "toggle-row", "slider-row", "dropdown-row", "section-header",
             // Wave A3 (TECH-27074) save-load-view archetypes.
             "save-controls-strip", "save-list",
+            // Wave B1 (TECH-27079) subtype-picker-strip archetype.
+            "subtype-picker-strip",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -138,6 +140,10 @@ namespace Territory.Editor.Bridge
                 return BakeSaveControlsStrip(irRow, assetPath, theme);
             if (irRow.kind == "save-list")
                 return BakeSaveList(irRow, assetPath, theme);
+
+            // Wave B1 (TECH-27079) — subtype-picker-strip archetype.
+            if (irRow.kind == "subtype-picker-strip")
+                return BakeSubtypePickerStrip(irRow, assetPath, theme);
 
             GameObject go = null;
             try
@@ -1945,6 +1951,101 @@ namespace Territory.Editor.Bridge
             {
                 if (go != null) UnityEngine.Object.DestroyImmediate(go);
             }
+        }
+
+        /// <summary>
+        /// Wave B1 (TECH-27079) — bake subtype-picker-strip archetype.
+        /// HorizontalLayoutGroup root (hidden_default=true) + 3 child slot stubs:
+        /// arrow-left, card-strip (HLG), arrow-right. Runtime expands card-strip with N cards
+        /// per active picker_variant. JsonUtility round-trip DTO: <see cref="SubtypePickerStripDetail"/>.
+        /// </summary>
+        static BakeError BakeSubtypePickerStrip(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "subtype-picker-strip");
+                var rt = go.AddComponent<RectTransform>();
+                // Anchor bottom-left; strip height = 96 px; width = 0 (driven at runtime).
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(0f, 0f);
+                rt.pivot = new Vector2(0f, 0f);
+                rt.sizeDelta = new Vector2(0f, 96f);
+                rt.anchoredPosition = new Vector2(8f, 8f);
+
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8f;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.padding = new RectOffset(8, 8, 8, 8);
+
+                // Background image stub (runtime tints with theme dark translucent).
+                var bg = go.AddComponent<UnityEngine.UI.Image>();
+                bg.color = new Color(0.1f, 0.1f, 0.1f, 0.85f);
+
+                // Hidden by default (open_trigger = action.tool-select from toolbar).
+                go.SetActive(false);
+
+                // ── Child: arrow-left (overflow affordance, hidden unless overflow).
+                var arrowLeft = new GameObject("arrow-left", typeof(RectTransform));
+                arrowLeft.transform.SetParent(go.transform, false);
+                var arrowLeftImg = arrowLeft.AddComponent<UnityEngine.UI.Image>();
+                arrowLeftImg.color = new Color(0.9f, 0.9f, 0.8f, 1f);
+                var arrowLeftBtn = arrowLeft.AddComponent<UnityEngine.UI.Button>();
+                arrowLeft.SetActive(false); // hidden unless overflow at runtime.
+                var alRt = arrowLeft.GetComponent<RectTransform>();
+                alRt.sizeDelta = new Vector2(24f, 80f);
+
+                // ── Child: card-strip (runtime-expanded card container).
+                var cardStrip = new GameObject("card-strip", typeof(RectTransform));
+                cardStrip.transform.SetParent(go.transform, false);
+                var cardHlg = cardStrip.AddComponent<HorizontalLayoutGroup>();
+                cardHlg.spacing = 8f;
+                cardHlg.childForceExpandWidth = false;
+                cardHlg.childForceExpandHeight = false;
+                cardHlg.childControlWidth = true;
+                cardHlg.childControlHeight = true;
+                var csRt = cardStrip.GetComponent<RectTransform>();
+                var csLe = cardStrip.AddComponent<UnityEngine.UI.LayoutElement>();
+                csLe.flexibleWidth = 1f;
+
+                // ── Child: arrow-right (overflow affordance, hidden unless overflow).
+                var arrowRight = new GameObject("arrow-right", typeof(RectTransform));
+                arrowRight.transform.SetParent(go.transform, false);
+                var arrowRightImg = arrowRight.AddComponent<UnityEngine.UI.Image>();
+                arrowRightImg.color = new Color(0.9f, 0.9f, 0.8f, 1f);
+                var arrowRightBtn = arrowRight.AddComponent<UnityEngine.UI.Button>();
+                arrowRight.SetActive(false); // hidden unless overflow at runtime.
+                var arRt = arrowRight.GetComponent<RectTransform>();
+                arRt.sizeDelta = new Vector2(24f, 80f);
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Wave B1 (TECH-27079) — IR DTO for subtype-picker-strip bake params. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class SubtypePickerStripDetail
+        {
+            public string picker_variant;
+            public string layout;
+            public int strip_h_px;
+            public int card_w_px;
+            public int card_h_px;
+            public int gap_px;
+            public string anchor;
+            public bool hidden_default;
         }
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
