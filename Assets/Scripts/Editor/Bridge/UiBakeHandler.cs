@@ -372,6 +372,19 @@ namespace Territory.Editor.Bridge
             public string sub_bind;
             public string sub_format;
             public string shape;
+            // main-menu fullscreen-stack additions (docs/ui-element-definitions.md lines 1239-1248).
+            public string text_static;
+            public string size_token;
+            public string color_token;
+            public string disabled_bind;
+            public string visible_bind;
+            public string tooltip;
+            public string tooltip_override_when_disabled;
+            public string action_confirm;
+            public string confirm_label;
+            public int    confirm_window_ms;
+            public string slot_bind;
+            public string @default;
         }
 
         /// <summary>Typed view of panel-level params_json on PanelSnapshotFields. Open shape — fields optional.</summary>
@@ -422,10 +435,20 @@ namespace Territory.Editor.Bridge
             {
                 if (innerKind == "readout") return "segmented-readout";
                 if (innerKind == "label") return "themed-label";
+                // main-menu fullscreen-stack aliases (docs/ui-element-definitions.md lines 1239-1248):
+                //   destructive-confirm-button → confirm-button (visual = illuminated-button +
+                //     ConfirmButton runtime; deferred runtime wiring uses confirm-button kind tag).
+                //   icon-button → illuminated-button (visual identical; iconSlug-only render path
+                //     already supported by IlluminatedButton renderer).
+                if (innerKind == "destructive-confirm-button") return "confirm-button";
+                if (innerKind == "icon-button") return "illuminated-button";
+                if (innerKind == "view-slot") return "view-slot";
                 return innerKind;
             }
             if (outerKind == "button") return "illuminated-button";
             if (outerKind == "label") return "themed-label";
+            if (outerKind == "confirm-button") return "confirm-button";
+            if (outerKind == "view-slot") return "view-slot";
             return outerKind;
         }
 
@@ -454,6 +477,7 @@ namespace Territory.Editor.Bridge
                     bool iconResolved = SpawnIlluminatedButtonRenderTargets(childGo, iconSlug, out var bodyImg, out var haloImg);
                     WireIlluminatedButtonHoverAndPress(childGo, btnRend, bodyImg, haloImg, theme);
                     btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSlug });
+                    AttachUiActionTrigger(childGo, pj?.action);
                     // Caption fallback when icon sprite missing OR slug is the placeholder "empty" — both
                     // need the label to communicate function while real art is pending.
                     bool isPlaceholder = string.IsNullOrEmpty(iconSlug) || iconSlug == "empty";
@@ -482,7 +506,42 @@ namespace Territory.Editor.Bridge
                     var lbl = childGo.AddComponent<ThemedLabel>();
                     WireThemeRef(lbl, theme);
                     SpawnThemedLabelChild(childGo, out var labelTmp);
-                    if (labelTmp != null) labelTmp.text = string.IsNullOrEmpty(label) ? "--" : label;
+                    // text_static (branding strips) wins over generic label; "--" placeholder is
+                    // last-resort default when neither static text nor a label was authored.
+                    string staticText = pj?.text_static;
+                    string resolvedText = !string.IsNullOrEmpty(staticText)
+                        ? staticText
+                        : (string.IsNullOrEmpty(label) ? "--" : label);
+                    if (labelTmp != null)
+                    {
+                        labelTmp.text = resolvedText;
+                        // size_token mapping (size.text.title-display / .caption / .body) — keeps
+                        // branding strips visually distinct from inline labels. Autosize disabled
+                        // when an explicit size_token is provided; theme palette + color_token
+                        // override default white when "color.text.muted".
+                        if (!string.IsNullOrEmpty(pj?.size_token))
+                        {
+                            labelTmp.enableAutoSizing = false;
+                            labelTmp.fontSize = pj.size_token switch
+                            {
+                                "size.text.title-display" => 64f,
+                                "size.text.title"         => 32f,
+                                "size.text.body"          => 16f,
+                                "size.text.caption"       => 12f,
+                                _                         => labelTmp.fontSize,
+                            };
+                        }
+                        if (string.Equals(pj?.color_token, "color.text.muted", StringComparison.Ordinal))
+                        {
+                            labelTmp.color = new Color(0.62f, 0.62f, 0.62f, 1f);
+                        }
+                        if (string.Equals(pj?.align, "center", StringComparison.Ordinal))
+                            labelTmp.alignment = TextAlignmentOptions.Center;
+                        else if (string.Equals(pj?.align, "right", StringComparison.Ordinal))
+                            labelTmp.alignment = TextAlignmentOptions.Right;
+                        else if (string.Equals(pj?.align, "left", StringComparison.Ordinal))
+                            labelTmp.alignment = TextAlignmentOptions.Left;
+                    }
                     var lblSo = new SerializedObject(lbl);
                     var tmpProp = lblSo.FindProperty("_tmpText");
                     if (tmpProp != null) tmpProp.objectReferenceValue = labelTmp;
@@ -490,6 +549,43 @@ namespace Territory.Editor.Bridge
                     if (lblPalette != null) lblPalette.stringValue = "silkscreen";
                     lblSo.ApplyModifiedPropertiesWithoutUndo();
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    break;
+                }
+                case "confirm-button":
+                {
+                    // Visual identical to illuminated-button; runtime confirm-window wiring lives
+                    // on a future ConfirmButton MonoBehaviour. For now bake renders the button +
+                    // caption fallback so the destructive Quit row is visible + clickable.
+                    var btn = childGo.AddComponent<IlluminatedButton>();
+                    WireThemeRef(btn, theme);
+                    var btnRend = childGo.GetComponent<IlluminatedButtonRenderer>();
+                    if (btnRend == null) btnRend = childGo.AddComponent<IlluminatedButtonRenderer>();
+                    WireThemeRef(btnRend, theme);
+                    bool iconResolved = SpawnIlluminatedButtonRenderTargets(childGo, iconSlug, out var bodyImg, out var haloImg);
+                    WireIlluminatedButtonHoverAndPress(childGo, btnRend, bodyImg, haloImg, theme);
+                    btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSlug });
+                    AttachUiActionTrigger(childGo, pj?.action);
+                    bool isPlaceholder = string.IsNullOrEmpty(iconSlug) || iconSlug == "empty";
+                    if ((!iconResolved || isPlaceholder) && !string.IsNullOrEmpty(label))
+                    {
+                        SpawnIlluminatedButtonCaption(childGo, label);
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: preferredWidth, preferredHeight: preferredHeight, flexibleWidth: 0f);
+                    break;
+                }
+                case "view-slot":
+                {
+                    // Sub-view mount point. No visible primitive — runtime swaps a child prefab
+                    // into this transform when slot_bind value changes (root | new-game-form |
+                    // load-list | settings). Rect filled by parent Zone_Center stretch.
+                    var rect = childGo.GetComponent<RectTransform>();
+                    if (rect != null)
+                    {
+                        rect.anchorMin = new Vector2(0f, 0f);
+                        rect.anchorMax = new Vector2(1f, 1f);
+                        rect.offsetMin = rect.offsetMax = Vector2.zero;
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
                     break;
                 }
                 default:
@@ -633,12 +729,17 @@ namespace Territory.Editor.Bridge
         {
             switch (layoutTemplate)
             {
-                case "hstack": return PanelKind.Hud;
-                case "vstack": return PanelKind.Modal;
-                case "grid":   return PanelKind.Toolbar;
-                default:       return PanelKind.Modal;
+                case "hstack":           return PanelKind.Hud;
+                case "vstack":           return PanelKind.Modal;
+                case "grid":             return PanelKind.Toolbar;
+                case "fullscreen-stack": return PanelKind.Screen;
+                default:                 return PanelKind.Modal;
             }
         }
+
+        /// <summary>True when layout_template requires zone-wrapper routing instead of a single root LayoutGroup.</summary>
+        internal static bool IsFullscreenStackTemplate(string layoutTemplate)
+            => string.Equals(layoutTemplate, "fullscreen-stack", StringComparison.Ordinal);
 
         // F1: SerializedObject write — ThemedPanel._kind is private serialized field.
         internal static void AssignPanelKind(ThemedPanel themedPanel, PanelKind kind)
@@ -876,6 +977,101 @@ namespace Territory.Editor.Bridge
                     grid.childAlignment = TextAnchor.UpperLeft;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Build per-zone wrapper RectTransforms for a fullscreen-stack panel (main-menu shape per
+        /// docs/ui-element-definitions.md lines 1188-1248). Five wrappers:
+        ///   top           — anchored top-center, branding title strip.
+        ///   top-left      — anchored top-left, back icon-button corner (48×48).
+        ///   bottom-left   — anchored bottom-left, studio caption.
+        ///   bottom-right  — anchored bottom-right, version caption.
+        ///   center        — full-screen stretch with VLG MiddleCenter, 320 px wide column,
+        ///                   12 px gap; primary buttons + confirm + view-slot stack here.
+        /// Returns dictionary keyed by zone slug → Transform of the wrapper.
+        /// </summary>
+        internal static Dictionary<string, Transform> BuildFullscreenStackZoneWrappers(GameObject panelRoot)
+        {
+            var dict = new Dictionary<string, Transform>(StringComparer.Ordinal);
+            if (panelRoot == null) return dict;
+
+            // top — branding title strip, anchored top-edge stretching across full width.
+            dict["top"] = MakeZoneWrapper(panelRoot, "Zone_Top",
+                anchorMin: new Vector2(0f, 1f), anchorMax: new Vector2(1f, 1f),
+                pivot: new Vector2(0.5f, 1f),
+                anchoredPosition: new Vector2(0f, -32f), sizeDelta: new Vector2(-64f, 80f),
+                addVerticalLayout: true, alignment: TextAnchor.MiddleCenter, gap: 4f);
+
+            // top-left — back icon-button corner, fixed 48×48 with small inset.
+            dict["top-left"] = MakeZoneWrapper(panelRoot, "Zone_TopLeft",
+                anchorMin: new Vector2(0f, 1f), anchorMax: new Vector2(0f, 1f),
+                pivot: new Vector2(0f, 1f),
+                anchoredPosition: new Vector2(16f, -16f), sizeDelta: new Vector2(64f, 64f),
+                addVerticalLayout: false);
+
+            // bottom-left — studio caption.
+            dict["bottom-left"] = MakeZoneWrapper(panelRoot, "Zone_BottomLeft",
+                anchorMin: new Vector2(0f, 0f), anchorMax: new Vector2(0f, 0f),
+                pivot: new Vector2(0f, 0f),
+                anchoredPosition: new Vector2(16f, 16f), sizeDelta: new Vector2(240f, 32f),
+                addVerticalLayout: true, alignment: TextAnchor.LowerLeft, gap: 0f);
+
+            // bottom-right — version caption.
+            dict["bottom-right"] = MakeZoneWrapper(panelRoot, "Zone_BottomRight",
+                anchorMin: new Vector2(1f, 0f), anchorMax: new Vector2(1f, 0f),
+                pivot: new Vector2(1f, 0f),
+                anchoredPosition: new Vector2(-16f, 16f), sizeDelta: new Vector2(240f, 32f),
+                addVerticalLayout: true, alignment: TextAnchor.LowerRight, gap: 0f);
+
+            // center — full-stretch vertical column 320 px wide, MiddleCenter, 12 px gap.
+            // Buttons + confirm-button + view-slot stack here. childForceExpand = false so each
+            // child honours its LayoutElement.preferred dims (320×56 from layout_json.size).
+            var centerGo = MakeZoneWrapper(panelRoot, "Zone_Center",
+                anchorMin: new Vector2(0.5f, 0.5f), anchorMax: new Vector2(0.5f, 0.5f),
+                pivot: new Vector2(0.5f, 0.5f),
+                anchoredPosition: Vector2.zero, sizeDelta: new Vector2(320f, 480f),
+                addVerticalLayout: true, alignment: TextAnchor.MiddleCenter, gap: 12f);
+            // Override center VLG: childControlWidth+ChildControlHeight true, childForceExpand off,
+            // so preferred sizes win (320×56 buttons stay narrow).
+            var centerVlg = centerGo.GetComponent<VerticalLayoutGroup>();
+            if (centerVlg != null)
+            {
+                centerVlg.childForceExpandWidth = false;
+                centerVlg.childForceExpandHeight = false;
+                centerVlg.childControlWidth = true;
+                centerVlg.childControlHeight = true;
+            }
+            // ContentSizeFitter on center column so VLG expands to fit children — keeps MiddleCenter
+            // alignment honest when the column is taller than the actual stack.
+            dict["center"] = centerGo.transform;
+
+            return dict;
+        }
+
+        private static Transform MakeZoneWrapper(GameObject panelRoot, string name,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot,
+            Vector2 anchoredPosition, Vector2 sizeDelta,
+            bool addVerticalLayout, TextAnchor alignment = TextAnchor.MiddleCenter, float gap = 0f)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(panelRoot.transform, worldPositionStays: false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = pivot;
+            rt.anchoredPosition = anchoredPosition;
+            rt.sizeDelta = sizeDelta;
+            if (addVerticalLayout)
+            {
+                var vlg = go.AddComponent<VerticalLayoutGroup>();
+                vlg.spacing = gap;
+                vlg.childAlignment = alignment;
+                vlg.childControlWidth = true;
+                vlg.childControlHeight = true;
+                vlg.childForceExpandWidth = true;
+                vlg.childForceExpandHeight = false;
+            }
+            return go.GetComponent<RectTransform>();
         }
 
         // Imp-2 (bake-fix-2026-05-08): regex JSON helpers (ParsePaddingJson, ReadIntField, ExtractZone)
@@ -1214,19 +1410,25 @@ namespace Territory.Editor.Bridge
                 AssignPanelKind(themedPanel, panelKind);
 
                 // Map layout_template → root LayoutGroup. Hard fail on missing.
-                System.Type layoutGroupType;
-                try
+                // fullscreen-stack mode: no root LayoutGroup; child rows route into per-zone
+                // wrappers built below (top, top-left, bottom-left, bottom-right, center).
+                bool fullscreenStack = IsFullscreenStackTemplate(layoutTemplate);
+                System.Type layoutGroupType = null;
+                if (!fullscreenStack)
                 {
-                    layoutGroupType = MapLayoutTemplate(layoutTemplate, item.slug);
-                }
-                catch (Exception ex)
-                {
-                    return new BakeError
+                    try
                     {
-                        error = "bake.layout_template_missing",
-                        details = ex.Message,
-                        path = $"$.items[{item.slug}].fields.layout_template",
-                    };
+                        layoutGroupType = MapLayoutTemplate(layoutTemplate, item.slug);
+                    }
+                    catch (Exception ex)
+                    {
+                        return new BakeError
+                        {
+                            error = "bake.layout_template_missing",
+                            details = ex.Message,
+                            path = $"$.items[{item.slug}].fields.layout_template",
+                        };
+                    }
                 }
 
                 // F8 (bake-fix-2026-05-07) — ThemedPanel.OnEnable fires at AddComponent
@@ -1239,8 +1441,11 @@ namespace Territory.Editor.Bridge
                     UnityEngine.Object.DestroyImmediate(stale);
                 }
 
-                var layoutGroup = (LayoutGroup)go.AddComponent(layoutGroupType);
-                ApplyRootLayoutGroupConfig(layoutGroup, panelKind, item.fields);
+                if (!fullscreenStack)
+                {
+                    var layoutGroup = (LayoutGroup)go.AddComponent(layoutGroupType);
+                    ApplyRootLayoutGroupConfig(layoutGroup, panelKind, item.fields);
+                }
 
                 // Slot-wrapper iteration + children (T4 fills archetype dispatch).
                 BakePanelSnapshotChildren(item, go, theme);
@@ -1288,6 +1493,14 @@ namespace Territory.Editor.Bridge
             // stays mechanical.
             var parentByOrd = BakePanelSnapshotArchetype(item, panelRoot, theme);
 
+            // Fullscreen-stack zone wrappers: built once on first sight of a layout_json.zone child,
+            // shared across all subsequent zone-routed children.
+            string layoutTemplate = item.fields?.layout_template ?? string.Empty;
+            bool fullscreenStack = IsFullscreenStackTemplate(layoutTemplate);
+            Dictionary<string, Transform> parentByZone = fullscreenStack
+                ? BuildFullscreenStackZoneWrappers(panelRoot)
+                : null;
+
             foreach (var child in item.children)
             {
                 if (child == null) continue;
@@ -1298,6 +1511,11 @@ namespace Territory.Editor.Bridge
                 if (parentByOrd != null && parentByOrd.TryGetValue(child.ord, out var resolved) && resolved != null)
                 {
                     parent = resolved;
+                }
+                if (parentByZone != null && !string.IsNullOrEmpty(layout?.zone)
+                    && parentByZone.TryGetValue(layout.zone, out var zoneParent) && zoneParent != null)
+                {
+                    parent = zoneParent;
                 }
 
                 string childName = !string.IsNullOrEmpty(child.instance_slug)
@@ -1340,6 +1558,16 @@ namespace Territory.Editor.Bridge
                 string innerKind = NormalizeChildKind(child.kind, pj.kind);
                 BakeChildByKind(childGo, innerKind, pj, theme, prefW, prefH);
                 PropagateThemeRefRecursive(childGo, theme);
+
+                // visible_bind → toggles GameObject.SetActive on bool bind id changes. Defaults
+                // to hidden when the bind id has not yet been seeded; the runtime registry seed
+                // (e.g. MainMenuRegistrySeed.cs) declares initial state. Without this, the
+                // back-button (visible only on sub-views) would always render on the root view.
+                if (!string.IsNullOrEmpty(pj.visible_bind))
+                {
+                    var binder = childGo.AddComponent<Territory.UI.Registry.UiVisibilityBinder>();
+                    binder.Initialize(pj.visible_bind);
+                }
             }
         }
 

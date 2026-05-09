@@ -30,6 +30,7 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 | 2 | Poll user | (human interaction) |
 | 3 | Draft definition | `ui_token_get`, `ui_component_get` |
 | 4 | Bake + verdicts | `ui_calibration_verdict_record` |
+| 4.5 | Bake-vs-design conformance | `unity_bridge_command(bake_ui_from_ir)`, `unity_bridge_command(capture_screenshot)`, `ui_calibration_verdict_record` |
 | 5 | Publish + cross-link | `ui_panel_publish` |
 
 ## Phase 1 — Load corpus + design-system spec
@@ -74,12 +75,25 @@ Wait for confirmation. On edit: revise and re-show. On yes: proceed.
 
 Verdicts loop (up to 2 iterations): if definition review surfaces a gap, revise Phase 3 draft → re-record verdict. Stop after 2 iterations without convergence; escalate with gap description.
 
+## Phase 4.5 — Bake-vs-design conformance
+
+DB-row-only PASS ≠ visual conformance. Phase 4 verdicts can pass schema + corpus checks while Unity renders the panel wrong (zone routing skipped, binds unwired, sizes ignored, sounds missing). Phase 4.5 closes the loop on what Unity actually renders.
+
+1. Re-bake the panel: `unity_bridge_command(refresh_asset_database)` → `unity_bridge_command(bake_ui_from_ir, panel_slug={slug})` → confirm Generated prefab updated.
+2. Capture render proof:
+   - Prefab path: `unity_bridge_command(prefab_inspect, path=Assets/UI/Prefabs/Generated/{slug}.prefab)` — dumps child hierarchy, components, RectTransform anchors, sizes.
+   - Play-Mode screenshot when scene reachable: `unity_bridge_command(enter_play_mode)` → `unity_bridge_command(capture_screenshot)`. Edit-Mode fallback when scene cannot enter play (missing GridManager etc).
+3. Diff against design definition: open `docs/ui-element-definitions.md §{PanelName}` lines (line range cited in Phase 1). For each visible defect surface in the design (layout zone, child kind, params_json key, layout_json key, bind, sound), confirm prefab/screenshot evidence matches.
+4. Record one verdict per defect surface: `ui_calibration_verdict_record(panel_slug={slug}, rebake_n={N}, outcome=pass|fail, surface={zone|kind|size|bind|sound}, evidence={path|screenshot})`. Fail outcome blocks Phase 5.
+5. Publish gate: every defect-surface verdict = pass. Any fail → revise Phase 3 draft (DB seed migration) → re-bake → re-record. Up to 2 iterations; escalate after.
+
 ## Phase 5 — Publish + cross-link
 
 Gates before publish:
 - Phase 2 polling complete.
 - At least one verdict row recorded.
 - User confirmed Phase 3 draft.
+- Phase 4.5 bake-vs-design conformance: every visible-defect-surface verdict = pass (prefab inspect or screenshot evidence on file).
 
 Actions:
 1. `ui_panel_publish(slug={slug}, regen_snapshot=true)` — increment entity_version + flag snapshot regen.
@@ -103,5 +117,10 @@ next: {Phase N+1 action or done}
 
 ```markdown
 Run ui-element-grill (`ia/skills/ui-element-grill/SKILL.md`) for {panel_slug}.
-Phase 1: load corpus + token/component lists. Phase 2: poll me for panel intent + variants (5 questions, product language). Phase 3: draft definition shape + show me for confirmation. Phase 4: bake + verdicts loop (record ≥1 verdict). Phase 5: publish + cross-link docs on my explicit "yes". Hard boundaries: no auto-publish, no Phase 2 skip.
+Phase 1: load corpus + token/component lists + design-definition line range. Phase 2: poll me for panel intent + variants (5 questions, product language). Phase 3: draft definition shape + show me for confirmation. Phase 4: bake + verdicts loop (record ≥1 verdict). Phase 4.5: re-bake → prefab inspect or Play-Mode screenshot → diff against design line range → record one verdict per visible defect surface (zone, kind, size, bind, sound). Phase 5: publish + cross-link docs on my explicit "yes". Hard boundaries: no auto-publish, no Phase 2 skip, no DB-row-only PASS without render proof.
 ```
+
+## Changelog
+
+- `cityscene-mainmenu-panel-rollout 2.0` — main-menu shipped 7 visible defects (sibling Quit-confirm, inline back-button, branding `--`, full-width buttons, missing rounded body, lost blip sounds) despite Phase 4 verdicts marked PASS. Skill produced DB rows that satisfied schema + corpus checks but never validated what Unity actually rendered. **Lesson:** corpus + verdicts ≠ visual conformance. Phase 4 ended too early — DB row PASS treated as terminal. Added Phase 4.5 bake-vs-design conformance pass: rebake → prefab inspect or screenshot → diff against design definition line range → record one verdict per visible defect surface (zone, kind, size, bind, sound). Hard boundary added: DB-row-only PASS without render proof = blocked publish.
+- `cityscene-mainmenu-panel-rollout 2.0` post-bake — buttons rendered correctly but **inert on click**. Three latent gaps surfaced only at runtime: (1) **action-wire gap** — bake handler dropped `params_json.action` on the floor; no `UiActionTrigger` MonoBehaviour existed to subscribe `IlluminatedButton.OnClick → UiActionRegistry.Dispatch`; (2) **action-id drift** — `panels.json` (canonical Wave A0) used `mainmenu.openSettings` / `openLoad` / `openNewGame` / `quit.confirm`, scene-side `MainMenuController` registered `mainmenu.settings` / `load` / `new-game` / `quit-confirmed` — silent dispatch miss, no compile error; (3) **second wire-site drift** — bake handler had two switch cases for button kinds (`illuminated-button` + `confirm-button`); first edit only patched one, quit-button remained inert until second case got the same `AttachUiActionTrigger` call. **Lesson:** Phase 4.5 visual diff still passed because pixels were correct — runtime click was outside the conformance frame. Add Phase 4.6 **action-wire conformance**: for every panel child with `params_json.action`, prefab_inspect must show a `UiActionTrigger` component with `_actionId` matching the seed canonical. Diff `panels.json` action ids vs scene-side `actionRegistry.Register` calls (one source of truth = panels.json — controllers register against it, not the other way). Hard boundary: action_id mismatch ≥ 1 = blocked publish. Cross-cutting: any new button-kind switch case in bake handler must include action-wire helper call — drift surface flagged in `validate:bake-handler-action-coverage` (TBD).

@@ -92,13 +92,15 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        actionRegistry.Register("mainmenu.continue",      _ => OnContinueClicked());
-        actionRegistry.Register("mainmenu.new-game",      _ => OnNewGameClicked());
-        actionRegistry.Register("mainmenu.load",          _ => OnLoadCityClicked());
-        actionRegistry.Register("mainmenu.settings",      _ => OnOptionsClicked());
-        actionRegistry.Register("mainmenu.quit",          _ => OnQuitClicked());
-        actionRegistry.Register("mainmenu.quit-confirmed",_ => OnQuitConfirmed());
-        actionRegistry.Register("mainmenu.back",          _ => OnBackClicked());
+        // Action ids are canonical Wave A0 (TECH-27059) — see MainMenuRegistrySeed +
+        // Assets/UI/Snapshots/panels.json params_json.action. Drift here = silent dispatch miss.
+        actionRegistry.Register("mainmenu.continue",     _ => OnContinueClicked());
+        actionRegistry.Register("mainmenu.openNewGame",  _ => OnNewGameClicked());
+        actionRegistry.Register("mainmenu.openLoad",     _ => OnLoadCityClicked());
+        actionRegistry.Register("mainmenu.openSettings", _ => OnOptionsClicked());
+        actionRegistry.Register("mainmenu.quit",         _ => OnQuitClicked());
+        actionRegistry.Register("mainmenu.quit.confirm", _ => OnQuitConfirmed());
+        actionRegistry.Register("mainmenu.back",         _ => OnBackClicked());
 
         if (bindRegistry != null)
         {

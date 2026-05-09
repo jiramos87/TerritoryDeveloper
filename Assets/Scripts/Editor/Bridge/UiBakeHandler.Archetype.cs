@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using TMPro;
 using Territory.UI;
 using Territory.UI.Juice;
+using Territory.UI.Registry;
 using Territory.UI.StudioControls;
 using Territory.UI.StudioControls.Renderers;
 using Territory.UI.Themed;
@@ -679,6 +680,20 @@ namespace Territory.Editor.Bridge
             else
             {
                 bodyImage = bodyT.GetComponent<Image>();
+                if (bodyImage == null) bodyImage = bodyT.gameObject.AddComponent<Image>();
+            }
+
+            // Body visual default — rounded 9-slice sprite + cream fill (per design spec line 339:
+            // "cream body + tan border + indigo icon"). UISprite.psd ships with Unity as a 9-slice
+            // rounded-corner asset; same primitive UiBakeHandler.Frame uses for border strips.
+            // Idempotent: only assign when sprite slot is empty so authored prefabs / future custom
+            // body sprites are never clobbered. Color drives _mainImage on the renderer.
+            if (bodyImage != null && bodyImage.sprite == null)
+            {
+                bodyImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+                bodyImage.type = Image.Type.Sliced;
+                bodyImage.color = new Color(0.96f, 0.92f, 0.83f, 1f); // cream
+                bodyImage.raycastTarget = true; // body owns hit-testing.
             }
 
             // icon child — Step 16.D human-art sprite host. Layered between body + halo so the click
@@ -722,20 +737,25 @@ namespace Territory.Editor.Bridge
             }
 
             // halo child — radial pulse target. Drawn on top of body + icon.
+            // Stretches to fill parent rect with a small outset so hover/press alpha covers
+            // the entire button (not a fixed 64 px square at center). offsetMin/Max negative
+            // values bleed the halo a few px beyond the body edge for a soft glow look.
             var haloT = prefabRoot.transform.Find("halo");
             if (haloT == null)
             {
                 var halo = new GameObject("halo", typeof(RectTransform));
                 halo.transform.SetParent(prefabRoot.transform, worldPositionStays: false);
                 var hr = (RectTransform)halo.transform;
-                hr.anchorMin = new Vector2(0.5f, 0.5f);
-                hr.anchorMax = new Vector2(0.5f, 0.5f);
+                hr.anchorMin = new Vector2(0f, 0f);
+                hr.anchorMax = new Vector2(1f, 1f);
                 hr.pivot = new Vector2(0.5f, 0.5f);
                 hr.anchoredPosition = Vector2.zero;
-                hr.sizeDelta = new Vector2(64f, 64f);
+                hr.offsetMin = new Vector2(-4f, -4f);
+                hr.offsetMax = new Vector2(4f, 4f);
                 var img = halo.AddComponent<Image>();
-                var color = img.color;
-                color.a = 0f; // Halo idle alpha; renderer animates 1→0 on click.
+                img.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+                img.type = Image.Type.Sliced;
+                var color = new Color(1f, 0.95f, 0.78f, 0f); // warm halo, idle alpha 0.
                 img.color = color;
                 img.raycastTarget = false;
                 haloImage = img;
@@ -743,6 +763,20 @@ namespace Territory.Editor.Bridge
             else
             {
                 haloImage = haloT.GetComponent<Image>();
+                if (haloImage != null && haloImage.sprite == null)
+                {
+                    haloImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+                    haloImage.type = Image.Type.Sliced;
+                }
+                // Re-bake: re-stretch halo to fill parent (prior bakes used fixed 64×64 centered
+                // which made hover/press alpha visible only as a small square at button center).
+                var hr = (RectTransform)haloT;
+                hr.anchorMin = new Vector2(0f, 0f);
+                hr.anchorMax = new Vector2(1f, 1f);
+                hr.pivot = new Vector2(0.5f, 0.5f);
+                hr.anchoredPosition = Vector2.zero;
+                hr.offsetMin = new Vector2(-4f, -4f);
+                hr.offsetMax = new Vector2(4f, 4f);
             }
 
             // Ensure render order: body (back) → icon → halo (front). SetAsLastSibling on halo
@@ -841,6 +875,25 @@ namespace Territory.Editor.Bridge
             _ = theme; // Palette no longer consumed here — renderer reads body alpha from IlluminatedButton.IlluminationAlpha.
         }
 
+        /// <summary>Wave A0 follow-up — bake-time wiring for params_json.action. Attaches a
+        /// <see cref="UiActionTrigger"/> to the host so the rendered button dispatches via
+        /// <see cref="UiActionRegistry"/> at runtime. SerializedObject persistence keeps the
+        /// actionId on the prefab without scene-side hand-edit. No-op when actionId is empty.</summary>
+        static void AttachUiActionTrigger(GameObject hostGo, string actionId)
+        {
+            if (hostGo == null) return;
+            if (string.IsNullOrEmpty(actionId)) return;
+            var trigger = hostGo.GetComponent<UiActionTrigger>();
+            if (trigger == null) trigger = hostGo.AddComponent<UiActionTrigger>();
+            var so = new SerializedObject(trigger);
+            var prop = so.FindProperty("_actionId");
+            if (prop != null)
+            {
+                prop.stringValue = actionId;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
         /// <summary>Step 16.G — caption fallback for illuminated-button slots that carry a label
         /// in IR but no human-art icon sprite (e.g. AUTO, MAP). Spawns a centered, raycast-inert
         /// TMP_Text child stretched to fill the body so the button still signals its function
@@ -879,7 +932,10 @@ namespace Territory.Editor.Bridge
             tmp.enableAutoSizing = true;
             tmp.fontSizeMin = 8f;
             tmp.fontSizeMax = 18f;
-            tmp.color = Color.white;
+            // Caption fallback contrasts against default white body Image (no sprite art assigned).
+            // Dark slate keeps labels legible on either white-default or themed pale-tone bodies;
+            // when human-art sprite art lands the icon child covers body and caption usually drops.
+            tmp.color = new Color(0.10f, 0.12f, 0.16f, 1f);
             tmp.raycastTarget = false; // body owns hit-testing.
 
             // Re-assert render order: caption sits above body, halo stays on top.

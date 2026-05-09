@@ -107,6 +107,14 @@ stages:
     exit: "..."
     red_stage_proof: |
       pseudo-code test...
+    # Optional — fills the 4-field §Red-Stage Proof validator block in the
+    # stage body. Omit for mechanical / pass-through stages → Phase 7 seeds
+    # the skip-clause (target_kind=design_only, proof_status=not_applicable).
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:Assets/Scripts/X.cs::TestName
+      target_kind: tracer_verb           # tracer_verb | visibility_delta | bug_repro | unit | design_only
+      proof_artifact_id: tools/scripts/test/x-spec.test.ts
+      proof_status: failed_as_expected   # failed_as_expected | green | not_applicable
     tasks:
       - id: 1.0.1
         title: "..."
@@ -124,7 +132,7 @@ Schema validated by `tools/scripts/validate-handoff-schema.mjs` (TECH-12634).
 
 ## Phase 1 — Parse handoff YAML frontmatter
 
-Read `docs/explorations/{SLUG}.md`. Extract leading YAML block delimited by `---` lines. Parse with `yaml` module. Required top-level keys: `slug`, `target_version`, `stages[]`. Each stage requires `id`, `title`, `exit`, `red_stage_proof`, `tasks[]`. Each task requires `id`, `title`, `prefix`, `digest_outline`, `kind`. Optional: `parent_plan_slug`, `depends_on`, `touched_paths`.
+Read `docs/explorations/{SLUG}.md`. Extract leading YAML block delimited by `---` lines. Parse with `yaml` module. Required top-level keys: `slug`, `target_version`, `stages[]`. Each stage requires `id`, `title`, `exit`, `red_stage_proof`, `tasks[]`. Each task requires `id`, `title`, `prefix`, `digest_outline`, `kind`. Optional per stage: `red_stage_proof_block` (4-field object — see Phase 7.0). Optional per task: `depends_on`, `touched_paths`.
 
 Missing frontmatter → halt with `STOPPED — handoff_yaml_missing: docs/explorations/{SLUG}.md`. `slug` mismatch → halt with `STOPPED — slug_mismatch: arg={SLUG} yaml={yaml.slug}`.
 
@@ -276,6 +284,47 @@ Retired-surface rule list also consulted via `mcp__territory-ia__rule_content({ 
 
 ## Phase 7 — Dispatch master_plan_bundle_apply (atomic Postgres tx)
 
+### 7.0 Compose stage body with §Red-Stage Proof block (mig 0113)
+
+Per stage, compose `body` text with a 4-field §Red-Stage Proof block. `validate:plan-red-stage` (mig 0060 / TECH-10896) scans `ia_stages.body` for these 4 fields at `/ship-final` Phase 4. Empty body = halt.
+
+Resolution rule per stage:
+
+```
+IF yaml.stages[i].red_stage_proof_block IS NOT NULL:
+    proof = yaml.stages[i].red_stage_proof_block   # literal 4-field shape
+ELSE:
+    # Skip-clause default — legitimate for mechanical refactor / pass-through
+    # stages with no behavioural delta. design_only + not_applicable satisfies
+    # the validator's skip-clause (parseRedStageProofBlock + validateProofFields).
+    proof = {
+      red_test_anchor:   "n/a",
+      target_kind:       "design_only",
+      proof_artifact_id: "n/a",
+      proof_status:      "not_applicable"
+    }
+```
+
+Stage body template (markdown):
+
+```
+## §Stage {id} — {title}
+
+Exit: {exit_criteria}
+
+§Red-Stage Proof
+red_test_anchor: {proof.red_test_anchor}
+target_kind: {proof.target_kind}
+proof_artifact_id: {proof.proof_artifact_id}
+proof_status: {proof.proof_status}
+
+{yaml.stages[i].red_stage_proof prose, if present}
+```
+
+The §Red-Stage Proof header MUST be exactly `§Red-Stage Proof` on its own line (no `#`, no `**`); each field on its own `field: value` line. Validator regex `parseRedStageProofBlock` requires this shape.
+
+### 7.1 Build bundle jsonb
+
 Build the bundle jsonb shape:
 
 ```json
@@ -287,7 +336,12 @@ Build the bundle jsonb shape:
     "version": {target_version}
   },
   "stages": [
-    { "stage_id": "{id}", "title": "{title}", "exit_criteria": "{exit}", "red_stage_proof": "{red_stage_proof}", ... }
+    {
+      "stage_id": "{id}",
+      "title": "{title}",
+      "exit_criteria": "{exit}",
+      "body": "{composed stage body from 7.0}"
+    }
   ],
   "tasks": [
     { "task_key": "{prefix}-{id}", "stage_id": "{stage_id}", "prefix": "{prefix}", "title": "{title}", "depends_on": [...], "kind": "{kind}", "touched_paths": [...], "body": "{composed §Plan Digest body}" }
@@ -400,4 +454,5 @@ Before issuing the first DB read, list every question needed for this phase. Bat
 
 ## Changelog
 
-(empty — populated on first ship-plan run + by future skill-train passes)
+- 2026-05-08 — fix: stage body emit drift (`/ship-final` Phase 4 plan-red-stage halt). Phase 7.0 added — composes stage `body` with 4-field §Red-Stage Proof block; defaults skip-clause (`target_kind=design_only`, `proof_status=not_applicable`) when handoff yaml omits `stages[].red_stage_proof_block`. Companion mig 0113 extends `master_plan_bundle_apply` SQL fn to accept `stages[].body`. Source: bug-log (large-file-atomization-cutover-refactor v1; 6 violations halted /ship-final).
+- 2026-05-09 — lesson: `cityscene-mainmenu-panel-rollout 2.0` Wave A0 → bake → runtime gap. Stage 1.0 task specs registered `UiActionRegistry` shell + `MainMenuRegistrySeed` canonical action ids but never gated **action-wire conformance** in §Red-Stage Proof — bake handler had no `UiActionTrigger` attach helper, controller-side action ids drifted from `panels.json` canonical (silent dispatch miss, compile-clean). For UI-bake stages, §Red-Stage Proof must include a runtime click-fires-handler assertion (Path A bridge or Play-Mode test), NOT just DB row + bake screenshot. Add handoff-yaml convention `stages[].action_wire_proof: required|skip` for any stage that emits `params_json.action`. Drift gates to mention in §Work Items: (a) `panels.json` action id ≡ controller register id (one source of truth = panels.json); (b) every button-kind switch case in `UiBakeHandler` includes `AttachUiActionTrigger` (validator stub `validate:bake-handler-action-coverage`). Pending stages of any UI-bake plan that ship visible buttons → flag the same gates upstream so handoff yaml carries them.
