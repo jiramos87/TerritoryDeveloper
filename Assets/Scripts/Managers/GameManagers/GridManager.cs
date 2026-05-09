@@ -454,10 +454,8 @@ public class GridManager : MonoBehaviour, IGridManager
     /// True if cell occupied by building (any tile of multi-cell footprint).
     /// </summary>
     public bool IsCellOccupiedByBuilding(int x, int y)
-        => cellAccessService != null
-            ? cellAccessService.IsCellOccupiedByBuilding(x, y)
-            : (x >= 0 && x < width && y >= 0 && y < height && cellArray[x, y] != null &&
-               (cellArray[x, y].occupiedBuilding != null || IsZoneTypeBuilding(cellArray[x, y].zoneType)));
+        => x >= 0 && x < width && y >= 0 && y < height && cellArray[x, y] != null &&
+           (cellArray[x, y].occupiedBuilding != null || IsZoneTypeBuilding(cellArray[x, y].zoneType));
 
     bool IsZoneTypeBuilding(Zone.ZoneType zoneType)
         => cellAccessService != null
@@ -486,7 +484,31 @@ public class GridManager : MonoBehaviour, IGridManager
     /// Return pivot cell of multi-cell building. If given cell inside footprint, find + return pivot (isPivot=true).
     /// </summary>
     public GameObject GetBuildingPivotCell(CityCell cell)
-        => cellAccessService != null ? cellAccessService.GetBuildingPivotCell(cell) : null;
+    {
+        if (cell == null) return null;
+        if (cell.occupiedBuilding == null || cell.buildingSize <= 1)
+            return GetGridCell(new Vector2(cell.x, cell.y));
+
+        int size = cell.buildingSize;
+        int cx = (int)cell.x;
+        int cy = (int)cell.y;
+
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                int px = cx - i;
+                int py = cy - j;
+                if (px >= 0 && px < width && py >= 0 && py < height)
+                {
+                    CityCell pivotCandidate = cellArray[px, py];
+                    if (pivotCandidate != null && pivotCandidate.isPivot)
+                        return GetGridCell(new Vector2(px, py));
+                }
+            }
+        }
+        return GetGridCell(new Vector2(cx, cy));
+    }
     #endregion
 
     #region Input and Placement Handlers
@@ -1552,11 +1574,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="gridPos">Grid coords.</param>
     /// <returns>CityCell GameObject, or null.</returns>
     public GameObject GetGridCell(Vector2 gridPos)
-        => cellAccessService != null
-            ? cellAccessService.GetGridCell(gridPos)
-            : (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
-               gridPos.y < 0 || gridPos.y >= gridArray.GetLength(1)
-               ? null : gridArray[(int)gridPos.x, (int)gridPos.y]);
+        => gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
+           gridPos.y < 0 || gridPos.y >= gridArray.GetLength(1)
+           ? null : gridArray[(int)gridPos.x, (int)gridPos.y];
 
     /// <summary>
     /// Set terrain height of cell at grid pos.
@@ -2139,9 +2159,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="y">Grid Y.</param>
     /// <returns>CityCell component, or null.</returns>
     public CityCell GetCell(int x, int y)
-        => cellAccessService != null
-            ? cellAccessService.GetCell(x, y)
-            : (x >= 0 && x < width && y >= 0 && y < height ? cellArray[x, y] : null);
+        => x >= 0 && x < width && y >= 0 && y < height ? cellArray[x, y] : null;
 
     /// <summary>
     /// Typed accessor for CellBase subclasses at grid coords.
@@ -2152,16 +2170,25 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="y">Grid Y.</param>
     /// <returns>Cell cast to T, or null if out-of-range or type mismatch.</returns>
     public T GetCell<T>(int x, int y) where T : CellBase
-        => cellAccessService != null
-            ? cellAccessService.GetCell<T>(x, y)
-            : (x < 0 || x >= width || y < 0 || y >= height ? null : cellArray[x, y] as T);
+        => x < 0 || x >= width || y < 0 || y >= height ? null : cellArray[x, y] as T;
 
     /// <summary>
     /// Serialize every cell in grid → list of CellData for saving.
     /// </summary>
     /// <returns>List containing one CellData per grid cell.</returns>
     public List<CellData> GetGridData()
-        => cellAccessService != null ? cellAccessService.GetGridData() : new List<CellData>();
+    {
+        var gridData = new List<CellData>();
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                CityCell cell = cellArray[x, y];
+                if (cell != null) gridData.Add(cell.GetCellData());
+            }
+        }
+        return gridData;
+    }
 
     /// <summary>
     /// True if cell on outer edge of grid (first or last row/column).
