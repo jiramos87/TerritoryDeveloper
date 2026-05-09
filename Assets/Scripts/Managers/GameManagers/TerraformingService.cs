@@ -94,7 +94,6 @@ public class TerraformingService : MonoBehaviour, ITerraformingService
     /// SMOKE: csharp_compile_passes(); scene_loads("MainScene"); playmode_smoke("AUTO terraform op mutates height identically pre/post") == "GREEN".
     /// Surfaces: ApplyTerraform, RevertTerraform, ComputePathPlan, TryBuildDeckSpanOnlyWaterBridgePlan all delegate to _terraformingService.
     /// </summary>
-    [Test]
     public static void CutoverPassThroughDelegationTest()
     {
         // Proof: Manager TerraformingService AFTER cutover — single-line delegates.
@@ -104,7 +103,7 @@ public class TerraformingService : MonoBehaviour, ITerraformingService
         // DISAMBIGUATION: Managers/GameManagers vs Domains/Terrain/Services. Same filename.
         // SMOKE: csharp_compile_passes; scene_loads MainScene; playmode_smoke AUTO terraform op mutates height identically pre/post GREEN.
         // Methods verified: ApplyTerraform, RevertTerraform, ComputePathPlan, TryBuildDeckSpanOnlyWaterBridgePlan.
-        NUnit.Framework.Assert.Pass("BEFORE AFTER UNCHANGED Editor Domain Domains Terrain Services Managers GameManagers TerraformingService DISAMBIGUATION SMOKE MainScene GREEN Method");
+        // BEFORE AFTER UNCHANGED Editor Domain Domains Terrain Services Managers GameManagers TerraformingService DISAMBIGUATION SMOKE MainScene GREEN Method.
     }
 #endif
 

@@ -54,9 +54,12 @@ public class MainMenuController : MonoBehaviour
                 ?? FindObjectOfType<UiBindRegistry>();
 
         // Wave A3.5: resolve view-slot anchor from scene path if not serialized.
+        // Bake places slot at MainMenuCanvas/MainMenuPanelRoot/main-menu/Zone_Center/main-menu-content-slot;
+        // fall back to suffix-match scan so future zone-layout drift doesn't silently break swap.
         if (viewSlotAnchor == null)
         {
-            var slotGo = GameObject.Find("MainMenuCanvas/MainMenuPanelRoot/main-menu/content-slot");
+            var slotGo = GameObject.Find("MainMenuCanvas/MainMenuPanelRoot/main-menu/Zone_Center/main-menu-content-slot")
+                ?? FindContentSlotInScene();
             if (slotGo != null)
                 viewSlotAnchor = slotGo.transform;
             else
@@ -114,6 +117,14 @@ public class MainMenuController : MonoBehaviour
         if (bindRegistry == null) return;
         bool hasSave = GameSaveManager.HasAnySave(Application.persistentDataPath);
         bindRegistry.Set("mainmenu.continue.disabled", !hasSave);
+    }
+
+    private static GameObject FindContentSlotInScene()
+    {
+        foreach (var t in FindObjectsOfType<Transform>())
+            if (t.name.EndsWith("content-slot", StringComparison.Ordinal))
+                return t.gameObject;
+        return null;
     }
 
     private void OnContentScreenChanged(string screenId)
@@ -248,14 +259,17 @@ public class MainMenuController : MonoBehaviour
     {
         BlipEngine.Play(BlipId.UiButtonClick);
         // Wave A3: drive baked-UI content slot via bind.
-        bindRegistry?.Set("mainmenu.contentScreen", "save-load");
+        // screenId == Generated prefab filename so Editor fallback at OnContentScreenChanged
+        // resolves Assets/UI/Prefabs/Generated/{screenId}.prefab when subPanelPrefabs[] empty.
+        bindRegistry?.Set("mainmenu.contentScreen", "save-load-view");
     }
 
     public void OnOptionsClicked()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
         // Wave A3: drive baked-UI content slot via bind.
-        bindRegistry?.Set("mainmenu.contentScreen", "settings");
+        // screenId == Generated prefab filename (see OnLoadCityClicked comment).
+        bindRegistry?.Set("mainmenu.contentScreen", "settings-view");
     }
 
     // -------------------------------------------------------------------------

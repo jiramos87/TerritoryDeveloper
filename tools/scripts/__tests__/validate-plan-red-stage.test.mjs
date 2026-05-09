@@ -232,6 +232,51 @@ test("nonGrandfatheredEmptyProofBlocked — tdd_red_green_grandfathered=false + 
 });
 
 // ---------------------------------------------------------------------------
+// shipPlanSkipClauseDefaultBodyPasses — locks /ship-plan Phase 7.0 mig 0113.
+//
+// /ship-plan composes stage body via Phase 7.0 template when handoff yaml omits
+// `stages[].red_stage_proof_block`. The body is emitted with skip-clause
+// defaults: red_test_anchor=n/a, target_kind=design_only, proof_artifact_id=n/a,
+// proof_status=not_applicable. This test mirrors the EXACT body string the SKILL
+// composes + persists via `master_plan_bundle_apply` (mig 0113 accepts `body`),
+// confirming validate:plan-red-stage passes net-new plans authored by ship-plan
+// without explicit red-stage frontmatter.
+//
+// Repro context: 2026-05-08 ship-plan drift halted /ship-final Phase 4
+// cumulative_validate on `large-file-atomization-cutover-refactor` (6 stages
+// with empty bodies → 6 red_stage_proof_required violations).
+// ---------------------------------------------------------------------------
+test("shipPlanSkipClauseDefaultBodyPasses — Phase 7.0 default body → exit 0", () => {
+  // Verbatim Phase 7.0 template output for a stage where handoff yaml omits
+  // red_stage_proof_block. Header on its own line, fields on own lines.
+  const shipPlanBody =
+    "## §Stage 6 — pass-through cutover\n\n" +
+    "Exit: facade returns service result\n\n" +
+    "§Red-Stage Proof\n" +
+    "red_test_anchor: n/a\n" +
+    "target_kind: design_only\n" +
+    "proof_artifact_id: n/a\n" +
+    "proof_status: not_applicable\n";
+  const res = runValidator({
+    plans: [{ slug: "fx-ship-plan-skip", created_at: "2026-06-01" }],
+    stages: [
+      {
+        slug: "fx-ship-plan-skip",
+        stage_id: "6",
+        status: "pending",
+        body: shipPlanBody,
+      },
+    ],
+    proofs: [],
+  });
+  assert.strictEqual(
+    res.status,
+    0,
+    `expected 0; stderr=${res.stderr}; stdout=${res.stdout}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
 // CIRedOnEmptyRedStageProofBlock — visibility-delta-test anchor
 // Proves the CI gate fires. This is the anchor cited in TECH-10898 wire-in.
 // ---------------------------------------------------------------------------

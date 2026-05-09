@@ -1,4 +1,5 @@
 using System.Collections;
+using Territory.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -54,6 +55,10 @@ namespace Territory.UI.StudioControls.Renderers
         {
             _isHover = true;
             ApplyHaloState();
+            // Parity with ThemedButton hover blip — main-menu buttons (illuminated-button bake
+            // path) also need UiButtonHover. Without this, the panel renders correct visuals
+            // but ships silent.
+            BlipEngine.Play(BlipId.UiButtonHover);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -135,6 +140,9 @@ namespace Territory.UI.StudioControls.Renderers
 
         private void OnClicked()
         {
+            // Parity with ThemedButton click blip — fires on every confirmed left-click via
+            // _button.OnClick.Invoke (driven from OnPointerClick).
+            BlipEngine.Play(BlipId.UiButtonClick);
             if (_haloImage == null) return;
             if (_haloCoroutine != null)
             {

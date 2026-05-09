@@ -1,16 +1,9 @@
 -- 0123_seed_save_load_view.sql
 -- Wave A3 (TECH-27073) — save-load-view panel seed.
 --
--- Panel children:
---   save-controls-strip (archetype: save-controls-strip)
---   save-list           (archetype: save-list)
---   footer-load-button  (themed-button)
---   save-name-input     (text-input)
---
--- host_slots: main-menu-content-slot, pause-menu-content-slot
--- Mode bind: saveload.mode drives save vs load variant.
---
--- Idempotent: ON CONFLICT DO NOTHING / DO UPDATE throughout.
+-- Conforms to actual panel_detail + panel_child schema (0116_seed_main_menu pattern).
+-- host_slots + mode bind stored in params_json.
+-- Idempotent: ON CONFLICT DO NOTHING throughout.
 
 BEGIN;
 
@@ -22,43 +15,21 @@ ON CONFLICT (kind, slug) DO NOTHING;
 
 -- ─── 2. panel_detail ─────────────────────────────────────────────────────────
 
-INSERT INTO panel_detail (entity_id, panel_kind, host_slots_json, params_json)
+INSERT INTO panel_detail (entity_id, layout_template, layout, padding_json, gap_px, params_json)
 SELECT
   ce.id,
-  'screen',
-  '["main-menu-content-slot","pause-menu-content-slot"]'::jsonb,
-  '{"modeBindId":"saveload.mode","defaultMode":"load"}'::jsonb
+  'vstack',
+  'vstack',
+  '{"top":8,"left":8,"right":8,"bottom":8}'::jsonb,
+  8,
+  '{"panel_kind":"screen","host_slots":["main-menu-content-slot","pause-menu-content-slot"],"modeBindId":"saveload.mode","defaultMode":"load"}'::jsonb
 FROM catalog_entity ce
 WHERE ce.kind = 'panel' AND ce.slug = 'save-load-view'
 ON CONFLICT (entity_id) DO UPDATE
-  SET panel_kind       = EXCLUDED.panel_kind,
-      host_slots_json  = EXCLUDED.host_slots_json,
-      params_json      = EXCLUDED.params_json,
-      updated_at       = now();
+  SET params_json = EXCLUDED.params_json,
+      updated_at  = now();
 
--- ─── 3. panel_child rows ─────────────────────────────────────────────────────
-
-INSERT INTO panel_child (entity_id, child_slug, archetype_slug, sort_order, params_json)
-SELECT
-  ce.id,
-  m.child_slug,
-  m.archetype_slug,
-  m.sort_order,
-  m.params_json::jsonb
-FROM (VALUES
-  ('save-controls-strip', 'save-controls-strip', 1, '{"bindId":"saveload.mode"}'),
-  ('save-list',           'save-list',            2, '{"listBindId":"saveload.list","selectedSlotBindId":"saveload.selectedSlot","trashAction":"saveload.delete","selectAction":"saveload.selectSlot"}'),
-  ('save-name-input',     'text-input',           3, '{"bind":"saveload.saveName","placeholder":"City-YYYY-MM-DD-HHmm"}'),
-  ('footer-load-button',  'themed-button',        4, '{"label":"Load","action":"saveload.load","disabledBindId":"saveload.loadDisabled"}')
-) AS m(child_slug, archetype_slug, sort_order, params_json)
-JOIN catalog_entity ce ON ce.kind = 'panel' AND ce.slug = 'save-load-view'
-ON CONFLICT (entity_id, child_slug) DO UPDATE
-  SET archetype_slug = EXCLUDED.archetype_slug,
-      sort_order     = EXCLUDED.sort_order,
-      params_json    = EXCLUDED.params_json,
-      updated_at     = now();
-
--- ─── 4. entity_version + publish ─────────────────────────────────────────────
+-- ─── 3. entity_version + publish ─────────────────────────────────────────────
 
 INSERT INTO entity_version (entity_id, version_number, status, params_json, lint_overrides_json, migration_hint_json)
 SELECT
@@ -77,6 +48,36 @@ WHERE ev.entity_id = ce.id
   AND ce.slug = 'save-load-view'
   AND ce.current_published_version_id IS NULL;
 
+-- ─── 4. panel_child rows ─────────────────────────────────────────────────────
+-- 4 children: save-controls-strip, save-list, save-name-input, footer-load-button
+
+DO $$
+DECLARE
+  v_panel_id bigint;
+  v_ver_id   bigint;
+BEGIN
+  SELECT ce.id INTO v_panel_id FROM catalog_entity ce WHERE ce.kind='panel' AND ce.slug='save-load-view';
+  IF v_panel_id IS NULL THEN RAISE EXCEPTION '0123: save-load-view entity missing'; END IF;
+  SELECT ev.id INTO v_ver_id FROM entity_version ev WHERE ev.entity_id=v_panel_id AND ev.version_number=1;
+  IF v_ver_id IS NULL THEN RAISE EXCEPTION '0123: save-load-view entity_version missing'; END IF;
+
+  DELETE FROM panel_child WHERE panel_entity_id = v_panel_id;
+
+  INSERT INTO panel_child (panel_entity_id, panel_version_id, slot_name, order_idx, child_kind, instance_slug, params_json, layout_json)
+  VALUES
+    (v_panel_id, v_ver_id, 'save-controls-strip', 1, 'panel', 'save-controls-strip',
+     '{"kind":"save-controls-strip","bindId":"saveload.mode"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'save-list',           2, 'panel', 'save-list',
+     '{"kind":"save-list","listBindId":"saveload.list","selectedSlotBindId":"saveload.selectedSlot","trashAction":"saveload.delete","selectAction":"saveload.selectSlot"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'save-name-input',     3, 'panel', 'save-name-input',
+     '{"kind":"text-input","bind":"saveload.saveName","placeholder":"City-YYYY-MM-DD-HHmm"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'footer-load-button',  4, 'button', 'footer-load-button',
+     '{"kind":"themed-button","label":"Load","action":"saveload.load","disabledBindId":"saveload.loadDisabled"}'::jsonb, '{}'::jsonb);
+
+  RAISE NOTICE '0123 OK: save-load-view panel seeded with 4 children (panel_id=%)', v_panel_id;
+END;
+$$;
+
 -- ─── 5. Sanity assertions ─────────────────────────────────────────────────────
 
 DO $$
@@ -85,7 +86,7 @@ DECLARE
 BEGIN
   SELECT COUNT(*) INTO n_children
   FROM panel_child pc
-  JOIN catalog_entity ce ON ce.id = pc.entity_id
+  JOIN catalog_entity ce ON ce.id = pc.panel_entity_id
   WHERE ce.kind = 'panel' AND ce.slug = 'save-load-view';
 
   IF n_children <> 4 THEN
@@ -97,9 +98,3 @@ END;
 $$;
 
 COMMIT;
-
--- Rollback (dev only):
---   DELETE FROM entity_version WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug='save-load-view');
---   DELETE FROM panel_child WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug='save-load-view');
---   DELETE FROM panel_detail WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug='save-load-view');
---   DELETE FROM catalog_entity WHERE kind='panel' AND slug='save-load-view';

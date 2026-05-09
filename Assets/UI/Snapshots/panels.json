@@ -1,5 +1,5 @@
 {
-  "snapshot_id": "2026-05-09T13:07:08.401Z",
+  "snapshot_id": "2026-05-09T17:04:00.085Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
@@ -139,16 +139,16 @@
     {
       "slug": "main-menu",
       "fields": {
-        "layout_template": "vstack",
+        "layout_template": "fullscreen-stack",
         "layout": "vstack",
         "gap_px": 0,
         "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
         "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"color-bg-menu\"}",
-        "rect_json": "{}"
+        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[1,1],\"anchor_min\":[0,0],\"size_delta\":[0,0],\"anchored_position\":[0,0]}"
       },
       "panel": {
         "slug": "main-menu",
-        "layout_template": "vstack",
+        "layout_template": "fullscreen-stack",
         "layout": "vstack",
         "gap_px": 0,
         "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
@@ -157,91 +157,83 @@
       "children": [
         {
           "ord": 1,
-          "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.continue\",\"disabled_bind\":\"mainmenu.continue.disabled\"}",
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"size.text.title-display\",\"text_static\":\"Territory\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"main\"}",
-          "instance_slug": "continue"
+          "layout_json": "{\"zone\":\"top\"}",
+          "instance_slug": "main-menu-title-label"
         },
         {
           "ord": 2,
-          "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.new-game\"}",
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\",\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\",\"text_static\":\"Bacayo Studio\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"main\"}",
-          "instance_slug": "new-game"
+          "layout_json": "{\"zone\":\"bottom-left\"}",
+          "instance_slug": "main-menu-studio-label"
         },
         {
           "ord": 3,
-          "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.load\"}",
+          "kind": "label",
+          "params_json": "{\"bind\":\"mainmenu.version.text\",\"kind\":\"label\",\"align\":\"right\",\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"main\"}",
-          "instance_slug": "load"
+          "layout_json": "{\"zone\":\"bottom-right\"}",
+          "instance_slug": "main-menu-version-label"
         },
         {
           "ord": 4,
           "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.settings\"}",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Continue\",\"action\":\"mainmenu.continue\",\"tooltip\":\"Resume your most recent city.\",\"disabled_bind\":\"mainmenu.continue.disabled\",\"tooltip_override_when_disabled\":\"No save found.\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"main\"}",
-          "instance_slug": "settings"
+          "layout_json": "{\"size\":{\"h\":56,\"w\":320},\"zone\":\"center\"}",
+          "instance_slug": "main-menu-continue-button"
         },
         {
           "ord": 5,
           "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.quit\"}",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"New Game\",\"action\":\"mainmenu.openNewGame\",\"tooltip\":\"Start a new city.\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"main\"}",
-          "instance_slug": "quit"
+          "layout_json": "{\"size\":{\"h\":56,\"w\":320},\"zone\":\"center\"}",
+          "instance_slug": "main-menu-new-game-button"
         },
         {
           "ord": 6,
           "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.quit-confirm\",\"confirm_action\":\"mainmenu.quit-confirmed\",\"confirm_seconds\":3}",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Load\",\"action\":\"mainmenu.openLoad\",\"tooltip\":\"Open the load list.\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"confirm\"}",
-          "instance_slug": "quit-confirm"
+          "layout_json": "{\"size\":{\"h\":56,\"w\":320},\"zone\":\"center\"}",
+          "instance_slug": "main-menu-load-button"
         },
         {
           "ord": 7,
           "kind": "button",
-          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.back\"}",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Settings\",\"action\":\"mainmenu.openSettings\",\"tooltip\":\"Open settings.\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"nav\"}",
-          "instance_slug": "back"
+          "layout_json": "{\"size\":{\"h\":56,\"w\":320},\"zone\":\"center\"}",
+          "instance_slug": "main-menu-settings-button"
         },
         {
           "ord": 8,
-          "kind": "label",
-          "params_json": "{\"kind\":\"label\",\"text_token\":\"size-text-title-display\"}",
+          "kind": "confirm-button",
+          "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Quit\",\"action\":\"mainmenu.quit\",\"tooltip\":\"Exit to desktop.\",\"confirm_label\":\"Click again to confirm\",\"action_confirm\":\"mainmenu.quit.confirm\",\"confirm_window_ms\":3000}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"branding\"}",
-          "instance_slug": "title"
+          "layout_json": "{\"size\":{\"h\":56,\"w\":320},\"zone\":\"center\"}",
+          "instance_slug": "main-menu-quit-button"
         },
         {
           "ord": 9,
-          "kind": "label",
-          "params_json": "{\"bind\":\"mainmenu.version\",\"kind\":\"label\"}",
+          "kind": "button",
+          "params_json": "{\"icon\":\"back-arrow\",\"kind\":\"icon-button\",\"label\":\"Back\",\"action\":\"mainmenu.back\",\"tooltip\":\"Back to menu.\",\"visible_bind\":\"mainmenu.back.visible\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"branding\"}",
-          "instance_slug": "version"
+          "layout_json": "{\"size\":{\"h\":48,\"w\":48},\"zone\":\"top-left\"}",
+          "instance_slug": "main-menu-back-button"
         },
         {
           "ord": 10,
-          "kind": "label",
-          "params_json": "{\"kind\":\"label\",\"text_static\":\"Bacayo Studio\"}",
+          "kind": "view-slot",
+          "params_json": "{\"kind\":\"view-slot\",\"views\":[\"root\",\"new-game-form\",\"load-list\",\"settings\"],\"default\":\"root\",\"slot_bind\":\"mainmenu.contentScreen\"}",
           "sprite_ref": "",
-          "layout_json": "{\"zone\":\"branding\"}",
-          "instance_slug": "studio"
-        },
-        {
-          "ord": 11,
-          "kind": "panel",
-          "params_json": "{\"bind\":\"mainmenu.contentScreen\",\"kind\":\"panel\"}",
-          "sprite_ref": "",
-          "layout_json": "{\"zone\":\"content\"}",
-          "instance_slug": "content-slot"
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "main-menu-content-slot"
         }
       ]
     },

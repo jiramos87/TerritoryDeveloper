@@ -123,8 +123,24 @@ export async function runRecipe(name: string, options: RunRecipeOptions = {}): P
     };
   }
 
-  const run_id = options.run_id ?? crypto.randomBytes(8).toString("hex");
-  const inputs = options.inputs ?? {};
+  // run_id MUST be a valid Postgres uuid: ship-final → cron_journal_append_enqueue
+  // casts session_id to ::uuid (`tools/mcp-ia-server/src/tools/cron-journal-append.ts`).
+  // Hex-16 from randomBytes(8) failed the cast — switched to randomUUID().
+  const run_id = options.run_id ?? crypto.randomUUID();
+  const inputs: Record<string, unknown> = { ...(options.inputs ?? {}) };
+  // Auto-inject session_id = run_id when recipe declares it optional and caller
+  // omitted it. Wires up the "Defaults to recipe-run auto-generated id" contract
+  // declared in tools/recipes/ship-final.yaml — previously promised, never wired.
+  const inputProps = (recipe.inputs as { properties?: Record<string, unknown>; required?: string[] } | undefined)?.properties;
+  const inputRequired = (recipe.inputs as { required?: string[] } | undefined)?.required ?? [];
+  if (
+    inputProps &&
+    "session_id" in inputProps &&
+    !inputRequired.includes("session_id") &&
+    inputs.session_id === undefined
+  ) {
+    inputs.session_id = run_id;
+  }
   if (recipe.inputs) {
     const ajv = new Ajv({ allErrors: true, strict: false });
     const inputValidate = ajv.compile({ type: "object", ...recipe.inputs });

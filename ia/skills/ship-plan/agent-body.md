@@ -15,7 +15,7 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
      - Replace ref token with fenced embed `<!-- @{kind}:{slug}#{section} -->\n```\n{body}\n```` (provenance comment + body block). Resulting digest carries zero `@anchor` literals.
      - Unresolvable ref → leave token literal + push to `DRIFT_WARNINGS[]` so Phase 6 lint catches it.
 6. Phase 6 — Drift lint per task: anchor resolution + glossary alignment + retired-surface scan. 2-retry budget per failure mode; halt with structured escalation on persistent failure.
-7. Phase 7 — Dispatch single `mcp__territory-ia__master_plan_bundle_apply({ bundle })` Postgres tx. Bundle shape: `{plan, stages[], tasks[]}` with `digest_body` per task. Constraint violation → re-author offending field; second failure escalates.
+7. Phase 7 — Compose stage `body` (§Red-Stage Proof 4-field block per Phase 7.0; skip-clause defaults `target_kind=design_only` / `proof_status=not_applicable` when `red_stage_proof_block` absent in handoff yaml). Dispatch single `mcp__territory-ia__master_plan_bundle_apply({ bundle })` Postgres tx. Bundle shape: `{plan, stages[] (with body), tasks[]}` with `digest_body` per task. Constraint violation → re-author offending field; second failure escalates.
 7.5. Phase 7.5 — Post-bundle async enqueues (fire-and-forget; failure = warning, not halt):
      - `mcp__territory-ia__cron_glossary_backlinks_enqueue({ slug, plan_id })` — cron drains within 5 min; upserts `ia_glossary_backlinks`.
      - `mcp__territory-ia__cron_anchor_reindex_enqueue({ paths: ["ia/specs/glossary.md"] })` — cron drains within 5 min; upserts `ia_spec_anchors`.
@@ -41,3 +41,7 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
 # Output
 
 Caveman summary: `ship-plan done. SLUG={S} VERSION={V} STAGES={n} TASKS={n}` + per-stage red_stage_proof anchor + per-task §Plan Digest counts + drift_warnings + DB writes + next=ship-cycle Stage 1.0. Full shape: see SKILL.md §Phase 8 Hand-off. Escalation: JSON `{escalation:true,phase,reason,...}`.
+
+# Changelog
+
+- `cityscene-mainmenu-panel-rollout 2.0` — main-menu shipped with 7 visible defects (sibling Quit-confirm, inline back-button, branding `--`, full-width buttons, missing rounded body, lost blip sounds). §Plan Digest body never named `layout_template` / zone routing / design-spec line range. **Lesson:** when handoff yaml `notes:` references `docs/ui-element-definitions.md`, Phase 5 §Goal must cite the design line span (e.g. `lines 1188-1322`) + enumerate `child_kind`s + zones; §Red-Stage Proof must anchor a screenshot or `prefab_inspect`-diff test that fails until the spec lines render verbatim. Drift lint (Phase 6) should reject digests citing `ui-element-definitions.md` without an explicit line range or zone list.

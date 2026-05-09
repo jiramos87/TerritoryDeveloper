@@ -55,6 +55,7 @@ hard_boundaries:
   - Never auto-publish without explicit human confirmation in Phase 5.
   - Do not skip Phase 2 polling — panel intent drives definition correctness.
   - Verdicts loop (Phase 4) must record at least one verdict before publish.
+  - Phase 4.5 bake-vs-design conformance pass mandatory — re-bake the panel, capture prefab inspect or screenshot, diff against design definition spec line range, record at least one verdict per visible defect surface (layout zones, child kinds, sizes, binds, sounds). DB-row-only PASS without render proof = blocked publish.
 ---
 
 @ia/skills/ui-element-grill/agent-body.md

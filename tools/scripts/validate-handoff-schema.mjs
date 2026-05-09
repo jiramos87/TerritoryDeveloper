@@ -25,6 +25,24 @@ import yaml from "js-yaml";
 
 const PREFIX_ENUM = new Set(["TECH", "FEAT", "BUG", "ART", "AUDIO"]);
 const KIND_ENUM = new Set(["code", "doc-only", "mcp-only"]);
+const TARGET_KIND_ENUM = new Set([
+  "tracer_verb",
+  "visibility_delta",
+  "bug_repro",
+  "unit",
+  "design_only",
+]);
+const PROOF_STATUS_ENUM = new Set([
+  "failed_as_expected",
+  "green",
+  "not_applicable",
+]);
+const PROOF_BLOCK_FIELDS = [
+  "red_test_anchor",
+  "target_kind",
+  "proof_artifact_id",
+  "proof_status",
+];
 
 // Wrong-key aliases that masquerade as handoff frontmatter. If any of these
 // appear without canonical `slug`, treat as authoring drift (not silent skip).
@@ -133,6 +151,60 @@ function validateStage(file, stage, idx, errors) {
       emitError(file, `${ctx}.${k}`, "non-empty string", "undefined");
     } else if (typeof stage[k] !== "string" || stage[k].trim().length === 0) {
       emitError(file, `${ctx}.${k}`, "non-empty string", String(stage[k]));
+    }
+  }
+  // Optional `red_stage_proof_block` — 4-field object filling the stage body
+  // §Red-Stage Proof validator block (Phase 7.0). When omitted, ship-plan
+  // seeds skip-clause defaults (target_kind=design_only).
+  if ("red_stage_proof_block" in stage && stage.red_stage_proof_block !== null) {
+    const block = stage.red_stage_proof_block;
+    if (typeof block !== "object" || Array.isArray(block)) {
+      emitError(
+        file,
+        `${ctx}.red_stage_proof_block`,
+        "object {red_test_anchor, target_kind, proof_artifact_id, proof_status}",
+        Array.isArray(block) ? "array" : typeof block
+      );
+    } else {
+      for (const k of PROOF_BLOCK_FIELDS) {
+        if (!(k in block)) {
+          emitError(
+            file,
+            `${ctx}.red_stage_proof_block.${k}`,
+            "non-empty string",
+            "undefined"
+          );
+        } else if (typeof block[k] !== "string" || block[k].trim().length === 0) {
+          emitError(
+            file,
+            `${ctx}.red_stage_proof_block.${k}`,
+            "non-empty string",
+            String(block[k])
+          );
+        }
+      }
+      if (
+        typeof block.target_kind === "string" &&
+        !TARGET_KIND_ENUM.has(block.target_kind)
+      ) {
+        emitError(
+          file,
+          `${ctx}.red_stage_proof_block.target_kind`,
+          "one of tracer_verb | visibility_delta | bug_repro | unit | design_only",
+          block.target_kind
+        );
+      }
+      if (
+        typeof block.proof_status === "string" &&
+        !PROOF_STATUS_ENUM.has(block.proof_status)
+      ) {
+        emitError(
+          file,
+          `${ctx}.red_stage_proof_block.proof_status`,
+          "one of failed_as_expected | green | not_applicable",
+          block.proof_status
+        );
+      }
     }
   }
   if (!("tasks" in stage)) {

@@ -1,10 +1,12 @@
 -- 0119_seed_new_game_settings_panels.sql
--- Wave A2 (TECH-27068) — seed new-game-form + settings-view panels with host_slots wiring.
+-- Wave A2 (TECH-27068) — seed new-game-form + settings-view panels.
 --
--- new-game-form  : 3-card map picker + 3-chip budget picker + text-input cityName + section-headers.
--- settings-view  : host_slots=[main-menu-content-slot, pause-menu-content-slot] + 9 controls
---                  (3 toggles + 3 sliders + 1 dropdown + 1 reset-button + section-headers).
+-- Conforms to actual panel_detail + panel_child schema (0116_seed_main_menu pattern).
+-- panel_detail columns: entity_id, layout_template, layout, padding_json, gap_px, params_json
+-- panel_child columns: panel_entity_id, panel_version_id, slot_name, order_idx, child_kind,
+--                      child_entity_id, instance_slug, params_json, layout_json
 --
+-- host_slots + panel_kind stored in params_json (no dedicated columns in actual schema).
 -- Idempotent: ON CONFLICT DO NOTHING throughout.
 
 BEGIN;
@@ -19,88 +21,28 @@ ON CONFLICT (kind, slug) DO NOTHING;
 
 -- ─── 2. panel_detail rows ────────────────────────────────────────────────────
 
-INSERT INTO panel_detail (entity_id, panel_kind, host_slots_json, params_json)
+INSERT INTO panel_detail (entity_id, layout_template, layout, padding_json, gap_px, params_json)
 SELECT
   ce.id,
-  m.panel_kind,
-  m.host_slots_json::jsonb,
+  'vstack',
+  'vstack',
+  '{"top":8,"left":8,"right":8,"bottom":8}'::jsonb,
+  8,
   m.params_json::jsonb
 FROM (VALUES
   ('new-game-form',
-   'screen',
-   '["main-menu-content-slot"]',
-   '{"title":"New Game","bind_enum":"mainmenu.contentScreen","bind_value":"new-game"}'
+   '{"panel_kind":"screen","host_slots":["main-menu-content-slot"],"title":"New Game","bind_enum":"mainmenu.contentScreen","bind_value":"new-game"}'
   ),
   ('settings-view',
-   'screen',
-   '["main-menu-content-slot","pause-menu-content-slot"]',
-   '{"title":"Settings","bind_enum":"mainmenu.contentScreen","bind_value":"settings"}'
+   '{"panel_kind":"screen","host_slots":["main-menu-content-slot","pause-menu-content-slot"],"title":"Settings","bind_enum":"mainmenu.contentScreen","bind_value":"settings"}'
   )
-) AS m(slug, panel_kind, host_slots_json, params_json)
+) AS m(slug, params_json)
 JOIN catalog_entity ce ON ce.kind = 'panel' AND ce.slug = m.slug
 ON CONFLICT (entity_id) DO UPDATE
-  SET panel_kind       = EXCLUDED.panel_kind,
-      host_slots_json  = EXCLUDED.host_slots_json,
-      params_json      = EXCLUDED.params_json,
-      updated_at       = now();
+  SET params_json = EXCLUDED.params_json,
+      updated_at  = now();
 
--- ─── 3. panel_child rows — new-game-form ─────────────────────────────────────
--- Children: section-header (Map Size) + 3 map cards + section-header (Starting Budget) +
---           3 budget chips + section-header (City Name) + text-input cityName
-
-INSERT INTO panel_child (entity_id, ord, child_slug, child_kind, layout_json)
-SELECT
-  ce.id,
-  m.ord,
-  m.child_slug,
-  m.child_kind,
-  m.layout_json::jsonb
-FROM (VALUES
-  (1,  'map-size-header',    'section-header',  '{"label":"Map Size"}'),
-  (2,  'map-small-card',     'card-picker',     '{"bind":"newgame.mapSize","value":"small","label":"Small","description":"64×64"}'),
-  (3,  'map-medium-card',    'card-picker',     '{"bind":"newgame.mapSize","value":"medium","label":"Medium","description":"128×128"}'),
-  (4,  'map-large-card',     'card-picker',     '{"bind":"newgame.mapSize","value":"large","label":"Large","description":"256×256"}'),
-  (5,  'budget-header',      'section-header',  '{"label":"Starting Budget"}'),
-  (6,  'budget-low-chip',    'chip-picker',     '{"bind":"newgame.budget","value":"low","label":"$10,000"}'),
-  (7,  'budget-mid-chip',    'chip-picker',     '{"bind":"newgame.budget","value":"medium","label":"$50,000"}'),
-  (8,  'budget-high-chip',   'chip-picker',     '{"bind":"newgame.budget","value":"high","label":"$200,000"}'),
-  (9,  'cityname-header',    'section-header',  '{"label":"City Name"}'),
-  (10, 'cityname-input',     'text-input',      '{"bind":"newgame.cityName","placeholder":"Enter city name...","reroll_action":"newgame.cityName.reroll"}')
-) AS m(ord, child_slug, child_kind, layout_json)
-JOIN catalog_entity ce ON ce.kind = 'panel' AND ce.slug = 'new-game-form'
-ON CONFLICT (entity_id, ord) DO NOTHING;
-
--- ─── 4. panel_child rows — settings-view ─────────────────────────────────────
--- Children: section-header (Audio) + 3 volume sliders + section-header (Display) +
---           fullscreen toggle + vsync toggle + resolution dropdown +
---           section-header (Gameplay) + scroll-edge toggle + reset-to-defaults button
-
-INSERT INTO panel_child (entity_id, ord, child_slug, child_kind, layout_json)
-SELECT
-  ce.id,
-  m.ord,
-  m.child_slug,
-  m.child_kind,
-  m.layout_json::jsonb
-FROM (VALUES
-  (1,  'audio-header',         'section-header',  '{"label":"Audio"}'),
-  (2,  'master-volume-slider', 'slider-row',       '{"bind":"settings.masterVolume","label":"Master","min":0,"max":1,"step":0.01}'),
-  (3,  'music-volume-slider',  'slider-row',       '{"bind":"settings.musicVolume","label":"Music","min":0,"max":1,"step":0.01,"linearToDecibel":true}'),
-  (4,  'sfx-volume-slider',    'slider-row',       '{"bind":"settings.sfxVolume","label":"SFX","min":0,"max":1,"step":0.01,"linearToDecibel":true}'),
-  (5,  'display-header',       'section-header',  '{"label":"Display"}'),
-  (6,  'fullscreen-toggle',    'toggle-row',       '{"bind":"settings.fullscreen","label":"Fullscreen"}'),
-  (7,  'vsync-toggle',         'toggle-row',       '{"bind":"settings.vsync","label":"VSync"}'),
-  (8,  'resolution-dropdown',  'dropdown-row',     '{"bind":"settings.resolution","label":"Resolution","options_action":"settings.resolution.options"}'),
-  (9,  'gameplay-header',      'section-header',  '{"label":"Gameplay"}'),
-  (10, 'scroll-edge-toggle',   'toggle-row',       '{"bind":"settings.scrollEdgePan","label":"Edge Scroll"}'),
-  (11, 'monthly-notif-toggle', 'toggle-row',       '{"bind":"settings.monthlyBudgetNotifications","label":"Budget Alerts"}'),
-  (12, 'auto-save-toggle',     'toggle-row',       '{"bind":"settings.autoSave","label":"Auto-Save"}'),
-  (13, 'reset-button',         'confirm-button',   '{"action":"settings.reset","confirm_action":"settings.reset.confirmed","confirm_seconds":3,"label":"Reset to Defaults"}')
-) AS m(ord, child_slug, child_kind, layout_json)
-JOIN catalog_entity ce ON ce.kind = 'panel' AND ce.slug = 'settings-view'
-ON CONFLICT (entity_id, ord) DO NOTHING;
-
--- ─── 5. entity_version + publish ─────────────────────────────────────────────
+-- ─── 3. entity_version + publish ─────────────────────────────────────────────
 
 INSERT INTO entity_version (entity_id, version_number, status, params_json, lint_overrides_json, migration_hint_json)
 SELECT
@@ -120,49 +62,126 @@ WHERE ev.entity_id = ce.id
   AND ce.slug IN ('new-game-form', 'settings-view')
   AND ce.current_published_version_id IS NULL;
 
+-- ─── 4. panel_child rows — new-game-form ─────────────────────────────────────
+
+DO $$
+DECLARE
+  v_panel_id bigint;
+  v_ver_id   bigint;
+BEGIN
+  SELECT ce.id INTO v_panel_id FROM catalog_entity ce WHERE ce.kind='panel' AND ce.slug='new-game-form';
+  IF v_panel_id IS NULL THEN RAISE EXCEPTION '0119: new-game-form entity missing'; END IF;
+  SELECT ev.id INTO v_ver_id FROM entity_version ev WHERE ev.entity_id=v_panel_id AND ev.version_number=1;
+  IF v_ver_id IS NULL THEN RAISE EXCEPTION '0119: new-game-form entity_version missing'; END IF;
+
+  DELETE FROM panel_child WHERE panel_entity_id = v_panel_id;
+
+  INSERT INTO panel_child (panel_entity_id, panel_version_id, slot_name, order_idx, child_kind, instance_slug, params_json, layout_json)
+  VALUES
+    (v_panel_id, v_ver_id, 'map-size-header',    1,  'label', 'map-size-header',
+     '{"kind":"section-header","label":"Map Size"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'map-small-card',     2,  'panel', 'map-small-card',
+     '{"kind":"card-picker","bind":"newgame.mapSize","value":"small","label":"Small","description":"64x64"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'map-medium-card',    3,  'panel', 'map-medium-card',
+     '{"kind":"card-picker","bind":"newgame.mapSize","value":"medium","label":"Medium","description":"128x128"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'map-large-card',     4,  'panel', 'map-large-card',
+     '{"kind":"card-picker","bind":"newgame.mapSize","value":"large","label":"Large","description":"256x256"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'budget-header',      5,  'label', 'budget-header',
+     '{"kind":"section-header","label":"Starting Budget"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'budget-low-chip',    6,  'panel', 'budget-low-chip',
+     '{"kind":"chip-picker","bind":"newgame.budget","value":"low","label":"$10,000"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'budget-mid-chip',    7,  'panel', 'budget-mid-chip',
+     '{"kind":"chip-picker","bind":"newgame.budget","value":"medium","label":"$50,000"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'budget-high-chip',   8,  'panel', 'budget-high-chip',
+     '{"kind":"chip-picker","bind":"newgame.budget","value":"high","label":"$200,000"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'cityname-header',    9,  'label', 'cityname-header',
+     '{"kind":"section-header","label":"City Name"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'cityname-input',     10, 'panel', 'cityname-input',
+     '{"kind":"text-input","bind":"newgame.cityName","placeholder":"Enter city name...","reroll_action":"newgame.cityName.reroll"}'::jsonb, '{}'::jsonb);
+
+  RAISE NOTICE '0119 OK: new-game-form children seeded (panel_id=%)', v_panel_id;
+END;
+$$;
+
+-- ─── 5. panel_child rows — settings-view ─────────────────────────────────────
+
+DO $$
+DECLARE
+  v_panel_id bigint;
+  v_ver_id   bigint;
+BEGIN
+  SELECT ce.id INTO v_panel_id FROM catalog_entity ce WHERE ce.kind='panel' AND ce.slug='settings-view';
+  IF v_panel_id IS NULL THEN RAISE EXCEPTION '0119: settings-view entity missing'; END IF;
+  SELECT ev.id INTO v_ver_id FROM entity_version ev WHERE ev.entity_id=v_panel_id AND ev.version_number=1;
+  IF v_ver_id IS NULL THEN RAISE EXCEPTION '0119: settings-view entity_version missing'; END IF;
+
+  DELETE FROM panel_child WHERE panel_entity_id = v_panel_id;
+
+  INSERT INTO panel_child (panel_entity_id, panel_version_id, slot_name, order_idx, child_kind, instance_slug, params_json, layout_json)
+  VALUES
+    (v_panel_id, v_ver_id, 'audio-header',         1,  'label', 'audio-header',
+     '{"kind":"section-header","label":"Audio"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'master-volume-slider', 2,  'panel', 'master-volume-slider',
+     '{"kind":"slider-row","bind":"settings.masterVolume","label":"Master","min":0,"max":1,"step":0.01}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'music-volume-slider',  3,  'panel', 'music-volume-slider',
+     '{"kind":"slider-row","bind":"settings.musicVolume","label":"Music","min":0,"max":1,"step":0.01,"linearToDecibel":true}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'sfx-volume-slider',    4,  'panel', 'sfx-volume-slider',
+     '{"kind":"slider-row","bind":"settings.sfxVolume","label":"SFX","min":0,"max":1,"step":0.01,"linearToDecibel":true}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'display-header',       5,  'label', 'display-header',
+     '{"kind":"section-header","label":"Display"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'fullscreen-toggle',    6,  'panel', 'fullscreen-toggle',
+     '{"kind":"toggle-row","bind":"settings.fullscreen","label":"Fullscreen"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'vsync-toggle',         7,  'panel', 'vsync-toggle',
+     '{"kind":"toggle-row","bind":"settings.vsync","label":"VSync"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'resolution-dropdown',  8,  'panel', 'resolution-dropdown',
+     '{"kind":"dropdown-row","bind":"settings.resolution","label":"Resolution","options_action":"settings.resolution.options"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'gameplay-header',      9,  'label', 'gameplay-header',
+     '{"kind":"section-header","label":"Gameplay"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'scroll-edge-toggle',   10, 'panel', 'scroll-edge-toggle',
+     '{"kind":"toggle-row","bind":"settings.scrollEdgePan","label":"Edge Scroll"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'monthly-notif-toggle', 11, 'panel', 'monthly-notif-toggle',
+     '{"kind":"toggle-row","bind":"settings.monthlyBudgetNotifications","label":"Budget Alerts"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'auto-save-toggle',     12, 'panel', 'auto-save-toggle',
+     '{"kind":"toggle-row","bind":"settings.autoSave","label":"Auto-Save"}'::jsonb, '{}'::jsonb),
+    (v_panel_id, v_ver_id, 'reset-button',         13, 'button', 'reset-button',
+     '{"kind":"confirm-button","action":"settings.reset","confirm_action":"settings.reset.confirmed","confirm_seconds":3,"label":"Reset to Defaults"}'::jsonb, '{}'::jsonb);
+
+  RAISE NOTICE '0119 OK: settings-view children seeded (panel_id=%)', v_panel_id;
+END;
+$$;
+
 -- ─── 6. Sanity assertions ─────────────────────────────────────────────────────
 
 DO $$
 DECLARE
   n_panels int;
-  n_children_ngf int;
-  n_children_sv int;
+  n_ngf    int;
+  n_sv     int;
 BEGIN
   SELECT COUNT(*) INTO n_panels
   FROM catalog_entity ce
   JOIN panel_detail pd ON pd.entity_id = ce.id
-  WHERE ce.kind = 'panel'
-    AND ce.slug IN ('new-game-form', 'settings-view');
-
+  WHERE ce.kind = 'panel' AND ce.slug IN ('new-game-form', 'settings-view');
   IF n_panels <> 2 THEN
     RAISE EXCEPTION '0119: expected 2 panel rows with panel_detail, got %', n_panels;
   END IF;
 
-  SELECT COUNT(*) INTO n_children_ngf
+  SELECT COUNT(*) INTO n_ngf
   FROM panel_child pc
-  JOIN catalog_entity ce ON ce.id = pc.entity_id AND ce.kind = 'panel' AND ce.slug = 'new-game-form';
-
-  IF n_children_ngf < 10 THEN
-    RAISE EXCEPTION '0119: expected >=10 new-game-form children, got %', n_children_ngf;
+  JOIN catalog_entity ce ON ce.id = pc.panel_entity_id AND ce.slug = 'new-game-form';
+  IF n_ngf < 10 THEN
+    RAISE EXCEPTION '0119: expected >=10 new-game-form children, got %', n_ngf;
   END IF;
 
-  SELECT COUNT(*) INTO n_children_sv
+  SELECT COUNT(*) INTO n_sv
   FROM panel_child pc
-  JOIN catalog_entity ce ON ce.id = pc.entity_id AND ce.kind = 'panel' AND ce.slug = 'settings-view';
-
-  IF n_children_sv < 13 THEN
-    RAISE EXCEPTION '0119: expected >=13 settings-view children, got %', n_children_sv;
+  JOIN catalog_entity ce ON ce.id = pc.panel_entity_id AND ce.slug = 'settings-view';
+  IF n_sv < 13 THEN
+    RAISE EXCEPTION '0119: expected >=13 settings-view children, got %', n_sv;
   END IF;
 
-  RAISE NOTICE '0119 OK: new-game-form (% children) + settings-view (% children) seeded',
-    n_children_ngf, n_children_sv;
+  RAISE NOTICE '0119 OK: new-game-form (% children) + settings-view (% children) seeded', n_ngf, n_sv;
 END;
 $$;
 
 COMMIT;
-
--- Rollback (dev only):
---   DELETE FROM panel_child WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug IN ('new-game-form','settings-view'));
---   DELETE FROM panel_detail WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug IN ('new-game-form','settings-view'));
---   DELETE FROM entity_version WHERE entity_id IN (SELECT id FROM catalog_entity WHERE kind='panel' AND slug IN ('new-game-form','settings-view'));
---   DELETE FROM catalog_entity WHERE kind='panel' AND slug IN ('new-game-form','settings-view');
