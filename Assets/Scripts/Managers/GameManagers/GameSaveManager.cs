@@ -182,6 +182,40 @@ public class GameSaveManager : MonoBehaviour
         return saveData;
     }
 
+    // ── Wave A1 (TECH-27066) — save-discovery read-only API ──────────────────
+
+    /// <summary>
+    /// Returns true when at least one .json save file exists in <paramref name="saveDir"/>.
+    /// Read-only — no side effects. Drives Continue button disabled-state.
+    /// </summary>
+    public static bool HasAnySave(string saveDir)
+    {
+        if (!Directory.Exists(saveDir)) return false;
+        string[] files = Directory.GetFiles(saveDir, "*.json");
+        return files != null && files.Length > 0;
+    }
+
+    /// <summary>
+    /// Returns the most recent save in <paramref name="saveDir"/> by <c>realWorldSaveTimeTicks</c>,
+    /// falling back to file mtime. Returns null when the directory is empty or absent.
+    /// </summary>
+    public static SaveFileMeta GetMostRecentSave(string saveDir)
+    {
+        if (!Directory.Exists(saveDir)) return null;
+        string[] files = Directory.GetFiles(saveDir, "*.json");
+        if (files == null || files.Length == 0) return null;
+
+        SaveFileMeta best = null;
+        foreach (string path in files)
+        {
+            var meta = GetSaveMetadata(path);
+            if (meta.displayName == null) continue;
+            if (best == null || meta.sortDate > best.SortDate)
+                best = new SaveFileMeta(path, meta.displayName, meta.sortDate);
+        }
+        return best;
+    }
+
     /// <summary>
     /// Read save file metadata for display + sorting. Uses <c>realWorldSaveTimeTicks</c> when present,
     /// else falls back to file last-write time (older saves).
@@ -490,6 +524,23 @@ public class GameSaveManager : MonoBehaviour
         UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
         if (proposalManager != null)
             proposalManager.RestorePendingProposals(new List<UrbanizationProposal>());
+    }
+}
+
+/// <summary>
+/// Wave A1 (TECH-27066) — lightweight save file descriptor returned by
+/// <see cref="GameSaveManager.GetMostRecentSave"/>. Immutable value type.
+/// </summary>
+public sealed class SaveFileMeta
+{
+    public readonly string FilePath;
+    public readonly string DisplayName;
+    public readonly DateTime SortDate;
+    public SaveFileMeta(string filePath, string displayName, DateTime sortDate)
+    {
+        FilePath    = filePath;
+        DisplayName = displayName;
+        SortDate    = sortDate;
     }
 }
 

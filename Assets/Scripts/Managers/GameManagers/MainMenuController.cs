@@ -7,12 +7,14 @@ using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using Territory.Audio;
 using Territory.Persistence;
+using Territory.UI.Registry;
 
 namespace Territory.UI
 {
 /// <summary>
 /// Main menu UI: Continue, New Game, Load City, Options. Scene transition → CityScene
 /// with appropriate <see cref="GameStartInfo"/>.
+/// Wave A1 (TECH-27065): also acts as bind-dispatcher consumer when useBakedUi=true.
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
@@ -26,20 +28,51 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button optionsButton;
     [Header("Theme (optional)")]
     [SerializeField] private UiTheme menuTheme;
-    [SerializeField] private GameObject loadCityPanel;
     [SerializeField] private Transform savedGamesListContainer;
     [SerializeField] private GameObject savedGameButtonPrefab;
-    [SerializeField] private Button loadCityBackButton;
-    [SerializeField] private GameObject optionsPanel;
-    [SerializeField] private Button optionsBackButton;
+    // Wave A1 (TECH-27065): transition flag — flip permanently after Wave A3 verification.
+    [SerializeField] private bool useBakedUi = true;
+    // Wave A1 (TECH-27065): optional explicit wires; resolved via GetComponent when null.
+    [SerializeField] private UiActionRegistry actionRegistry;
+    [SerializeField] private UiBindRegistry bindRegistry;
+
     private BlipVolumeController _volumeController;
     private GameObject _menuStripRoot;
+    // Legacy panels kept for useBakedUi=false path.
+    private GameObject _loadCityPanel;
+    private Button _loadCityBackButton;
+    private GameObject _optionsPanel;
+    private Button _optionsBackButton;
 
     private string saveFolderPath;
+
+    void Awake()
+    {
+        if (!useBakedUi)
+            return;
+        // Resolve registries from scene if not serialized.
+        if (actionRegistry == null)
+            actionRegistry = GetComponentInParent<UiActionRegistry>()
+                ?? FindObjectOfType<UiActionRegistry>();
+        if (bindRegistry == null)
+            bindRegistry = GetComponentInParent<UiBindRegistry>()
+                ?? FindObjectOfType<UiBindRegistry>();
+
+        RegisterBakedUiHandlers();
+        UpdateContinueButtonStateBaked();
+    }
 
     void Start()
     {
         saveFolderPath = Application.persistentDataPath;
+
+        if (useBakedUi)
+        {
+            // Baked path: no legacy BuildUI/WireExistingUI.
+            ApplyMenuThemeIfAny();
+            WireHoverBlips();
+            return;
+        }
 
         if (continueButton == null)
             BuildUI();
@@ -53,6 +86,65 @@ public class MainMenuController : MonoBehaviour
         ApplyMenuOverlayPanelsFromTheme();
         UpdateContinueButtonState();
         WireHoverBlips();
+    }
+
+    // ── Wave A1 baked-UI bind-dispatcher path ─────────────────────────────────
+
+    /// <summary>Register 7 action handlers + subscribe contentScreen enum bind.</summary>
+    private void RegisterBakedUiHandlers()
+    {
+        if (actionRegistry == null)
+        {
+            Debug.LogWarning("[MainMenuController] UiActionRegistry not found — baked-UI handlers skipped.");
+            return;
+        }
+
+        actionRegistry.Register("mainmenu.continue",      _ => OnContinueClicked());
+        actionRegistry.Register("mainmenu.new-game",      _ => OnNewGameClicked());
+        actionRegistry.Register("mainmenu.load",          _ => OnLoadCityClicked());
+        actionRegistry.Register("mainmenu.settings",      _ => OnOptionsClicked());
+        actionRegistry.Register("mainmenu.quit",          _ => OnQuitClicked());
+        actionRegistry.Register("mainmenu.quit-confirmed",_ => OnQuitConfirmed());
+        actionRegistry.Register("mainmenu.back",          _ => OnBackClicked());
+
+        if (bindRegistry != null)
+        {
+            bindRegistry.Subscribe<string>("mainmenu.contentScreen", OnContentScreenChanged);
+        }
+    }
+
+    /// <summary>Drive mainmenu.continue.disabled bind from HasAnySave.</summary>
+    private void UpdateContinueButtonStateBaked()
+    {
+        if (bindRegistry == null) return;
+        bool hasSave = GameSaveManager.HasAnySave(Application.persistentDataPath);
+        bindRegistry.Set("mainmenu.continue.disabled", !hasSave);
+    }
+
+    private void OnContentScreenChanged(string screenId)
+    {
+        // Sub-view visibility driven by bind — host renders declared sub-view.
+        // Placeholder: log; Wave A2+ will drive real sub-view swap.
+        Debug.Log($"[MainMenuController] contentScreen → {screenId}");
+    }
+
+    private void OnQuitClicked()
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+        // Trigger confirm-button countdown via bind; confirm-button archetype handles.
+        bindRegistry?.Set("mainmenu.contentScreen", "quit-confirm");
+    }
+
+    private void OnQuitConfirmed()
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+        Application.Quit();
+    }
+
+    private void OnBackClicked()
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+        bindRegistry?.Set("mainmenu.contentScreen", "main");
     }
 
     /// <summary>
@@ -93,8 +185,8 @@ public class MainMenuController : MonoBehaviour
     {
         if (menuTheme == null)
             return;
-        ApplyOverlayToPanelRoot(loadCityPanel);
-        ApplyOverlayToPanelRoot(optionsPanel);
+        ApplyOverlayToPanelRoot(_loadCityPanel);
+        ApplyOverlayToPanelRoot(_optionsPanel);
     }
 
     private void ApplyOverlayToPanelRoot(GameObject panelRoot)
@@ -121,10 +213,10 @@ public class MainMenuController : MonoBehaviour
             return;
 
         Transform canvasTransform = canvas.transform;
-        if (loadCityPanel == null)
-            loadCityPanel = CreateLoadCityPanel(canvasTransform);
-        if (optionsPanel == null)
-            optionsPanel = CreateOptionsPanel(canvasTransform);
+        if (_loadCityPanel == null)
+            _loadCityPanel = CreateLoadCityPanel(canvasTransform);
+        if (_optionsPanel == null)
+            _optionsPanel = CreateOptionsPanel(canvasTransform);
 
         // Detect the menu strip container — parent of the buttons unless it is the Canvas itself.
         if (continueButton != null)
@@ -134,10 +226,10 @@ public class MainMenuController : MonoBehaviour
                 _menuStripRoot = parent;
         }
 
-        if (loadCityPanel != null)
-            loadCityPanel.SetActive(false);
-        if (optionsPanel != null)
-            optionsPanel.SetActive(false);
+        if (_loadCityPanel != null)
+            _loadCityPanel.SetActive(false);
+        if (_optionsPanel != null)
+            _optionsPanel.SetActive(false);
     }
 
     private void WireExistingUI()
@@ -150,15 +242,15 @@ public class MainMenuController : MonoBehaviour
             loadCityButton.onClick.AddListener(OnLoadCityClicked);
         if (optionsButton != null)
             optionsButton.onClick.AddListener(OnOptionsClicked);
-        if (loadCityBackButton != null)
-            loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
-        if (optionsBackButton != null)
-            optionsBackButton.onClick.AddListener(CloseOptionsPanel);
+        if (_loadCityBackButton != null)
+            _loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
+        if (_optionsBackButton != null)
+            _optionsBackButton.onClick.AddListener(CloseOptionsPanel);
 
-        if (loadCityPanel != null)
-            loadCityPanel.SetActive(false);
-        if (optionsPanel != null)
-            optionsPanel.SetActive(false);
+        if (_loadCityPanel != null)
+            _loadCityPanel.SetActive(false);
+        if (_optionsPanel != null)
+            _optionsPanel.SetActive(false);
     }
 
     private void BuildUI()
@@ -197,8 +289,8 @@ public class MainMenuController : MonoBehaviour
         optionsButton = CreateButton(root.transform, "Options", new Vector2(0, startY - 3 * (buttonHeight + spacing)), buttonWidth, buttonHeight);
         optionsButton.onClick.AddListener(OnOptionsClicked);
 
-        loadCityPanel = CreateLoadCityPanel(canvasObj.transform);
-        optionsPanel = CreateOptionsPanel(canvasObj.transform);
+        _loadCityPanel = CreateLoadCityPanel(canvasObj.transform);
+        _optionsPanel = CreateOptionsPanel(canvasObj.transform);
 
         if (GameObject.Find("EventSystem") == null)
         {
@@ -309,8 +401,8 @@ public class MainMenuController : MonoBehaviour
 
         savedGamesListContainer = listContent.transform;
 
-        loadCityBackButton = CreateButton(content.transform, "Back", new Vector2(0, -210), 120, 35);
-        loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
+        _loadCityBackButton = CreateButton(content.transform, "Back", new Vector2(0, -210), 120, 35);
+        _loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
 
         panel.SetActive(false);
         return panel;
@@ -363,8 +455,8 @@ public class MainMenuController : MonoBehaviour
         var sfxToggle = CreateToggleWithVisuals(card.transform, posX: 2f, posY: -18f);
 
         // Back button — same factory as main menu buttons so style matches.
-        optionsBackButton = CreateButton(card.transform, "Back", new Vector2(0f, -70f), 110f, 34f);
-        optionsBackButton.onClick.AddListener(CloseOptionsPanel);
+        _optionsBackButton = CreateButton(card.transform, "Back", new Vector2(0f, -70f), 110f, 34f);
+        _optionsBackButton.onClick.AddListener(CloseOptionsPanel);
 
         var controller = panel.AddComponent<BlipVolumeController>();
         controller.Bind(sfxSlider, sfxToggle);
@@ -564,9 +656,9 @@ public class MainMenuController : MonoBehaviour
     public void OnLoadCityClicked()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
-        if (loadCityPanel != null)
+        if (_loadCityPanel != null)
         {
-            loadCityPanel.SetActive(true);
+            _loadCityPanel.SetActive(true);
             PopulateSavedGamesList();
         }
     }
@@ -687,23 +779,23 @@ public class MainMenuController : MonoBehaviour
     private void CloseLoadCityPanel()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
-        if (loadCityPanel != null)
-            loadCityPanel.SetActive(false);
+        if (_loadCityPanel != null)
+            _loadCityPanel.SetActive(false);
     }
 
     public void OnOptionsClicked()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
         ShowMenuStrip(false);
-        if (optionsPanel != null)
-            optionsPanel.SetActive(true);
+        if (_optionsPanel != null)
+            _optionsPanel.SetActive(true);
     }
 
     private void CloseOptionsPanel()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
-        if (optionsPanel != null)
-            optionsPanel.SetActive(false);
+        if (_optionsPanel != null)
+            _optionsPanel.SetActive(false);
         ShowMenuStrip(true);
     }
 
@@ -757,8 +849,8 @@ public class MainMenuController : MonoBehaviour
         AddHoverBlip(newGameButton);
         AddHoverBlip(loadCityButton);
         AddHoverBlip(optionsButton);
-        AddHoverBlip(loadCityBackButton);
-        AddHoverBlip(optionsBackButton);
+        AddHoverBlip(_loadCityBackButton);
+        AddHoverBlip(_optionsBackButton);
     }
 }
 }

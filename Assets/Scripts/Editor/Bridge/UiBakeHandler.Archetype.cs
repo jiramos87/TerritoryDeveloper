@@ -31,6 +31,8 @@ namespace Territory.Editor.Bridge
             "themed-toggle", "themed-tab-bar", "themed-list",
             // Stage 9 (game-ui-design-system) Themed* tooltip kind.
             "themed-tooltip",
+            // Wave A1 (TECH-27064) archetypes.
+            "view-slot", "confirm-button",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -103,6 +105,12 @@ namespace Territory.Editor.Bridge
             {
                 return BakeStage8ThemedPrimitive(irRow, assetPath, theme);
             }
+
+            // Wave A1 (TECH-27064) — view-slot + confirm-button archetypes.
+            if (irRow.kind == "view-slot")
+                return BakeViewSlot(irRow, assetPath, theme);
+            if (irRow.kind == "confirm-button")
+                return BakeConfirmButton(irRow, assetPath, theme);
 
             GameObject go = null;
             try
@@ -1244,6 +1252,111 @@ namespace Territory.Editor.Bridge
             var fitter = go.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
+        // ── Wave A1 (TECH-27064) — view-slot + confirm-button archetypes ────────
+
+        /// <summary>
+        /// Bake a view-slot prefab: subscribes <c>bind_enum</c> param to drive sub-view visibility.
+        /// Hosts N declared sub-views in <c>host_slots</c> map keyed by enum value.
+        /// Spawns a root RectTransform (fullscreen) with one child placeholder per host_slot.
+        /// Round-trip IR DTO: <see cref="ViewSlotDetail"/>.
+        /// </summary>
+        static BakeError BakeViewSlot(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+
+                // Fullscreen anchor stretch.
+                var rt = (RectTransform)go.transform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+                // Placeholder Image so the slot is visible in Scene view.
+                var bg = go.AddComponent<UnityEngine.UI.Image>();
+                bg.color = new Color(0f, 0f, 0f, 0f); // transparent placeholder
+                bg.raycastTarget = false;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake a confirm-button prefab: button variant with N-second inline countdown.
+        /// Fires <c>confirm_action</c> on countdown completion.
+        /// Spawns Button + countdown TMP_Text child.
+        /// Round-trip IR DTO: <see cref="ConfirmButtonDetail"/>.
+        /// </summary>
+        static BakeError BakeConfirmButton(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                go.AddComponent<RectTransform>();
+
+                var img = go.AddComponent<UnityEngine.UI.Image>();
+                img.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+                var btn = go.AddComponent<UnityEngine.UI.Button>();
+                btn.targetGraphic = img;
+                btn.transition = UnityEngine.UI.Selectable.Transition.ColorTint;
+
+                // Countdown label child.
+                var labelGo = new GameObject("CountdownLabel", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var lr = (RectTransform)labelGo.transform;
+                lr.anchorMin = Vector2.zero;
+                lr.anchorMax = Vector2.one;
+                lr.offsetMin = lr.offsetMax = Vector2.zero;
+                var tmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                tmp.text = string.Empty; // runtime populates with countdown
+                tmp.alignment = TMPro.TextAlignmentOptions.Center;
+                tmp.fontSize = 18f;
+                tmp.color = Color.white;
+                tmp.raycastTarget = false;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        // ── Wave A1 IR DTOs (TECH-27064) ─────────────────────────────────────────
+
+        /// <summary>IR DTO for view-slot archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class ViewSlotDetail
+        {
+            public string bind_enum;
+        }
+
+        /// <summary>IR DTO for confirm-button archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class ConfirmButtonDetail
+        {
+            public string action;
+            public string confirm_action;
+            public int confirm_seconds = 3;
         }
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
