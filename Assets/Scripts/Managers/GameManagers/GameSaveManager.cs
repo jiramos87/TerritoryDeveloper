@@ -182,6 +182,44 @@ public class GameSaveManager : MonoBehaviour
         return saveData;
     }
 
+    // ── Wave A3 (TECH-27076) — full save-file list + delete APIs ────────────
+
+    /// <summary>
+    /// Returns all <c>.json</c> save files in <paramref name="saveDir"/>, sorted newest-first.
+    /// Read-only — no side effects. Returns empty array when directory absent.
+    /// </summary>
+    public static SaveFileMeta[] GetSaveFiles(string saveDir)
+    {
+        if (!Directory.Exists(saveDir)) return System.Array.Empty<SaveFileMeta>();
+        string[] files = Directory.GetFiles(saveDir, "*.json");
+        if (files == null || files.Length == 0) return System.Array.Empty<SaveFileMeta>();
+
+        var metas = new List<SaveFileMeta>();
+        foreach (string path in files)
+        {
+            var m = GetSaveMetadata(path);
+            if (m.displayName != null)
+                metas.Add(new SaveFileMeta(path, m.displayName, m.sortDate));
+        }
+
+        metas.Sort((a, b) => b.SortDate.CompareTo(a.SortDate));
+        return metas.ToArray();
+    }
+
+    /// <summary>
+    /// Delete save file at <paramref name="filePath"/> plus its <c>.meta</c> sidecar (if present).
+    /// No-op when file does not exist. No side effects on <c>PlayerPrefs</c>.
+    /// </summary>
+    public static void DeleteSave(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return;
+        if (File.Exists(filePath))
+            File.Delete(filePath);
+        string metaPath = filePath + ".meta";
+        if (File.Exists(metaPath))
+            File.Delete(metaPath);
+    }
+
     // ── Wave A1 (TECH-27066) — save-discovery read-only API ──────────────────
 
     /// <summary>

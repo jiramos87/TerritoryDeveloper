@@ -36,6 +36,8 @@ namespace Territory.Editor.Bridge
             // Wave A2 (TECH-27069) form + settings archetypes.
             "card-picker", "chip-picker", "text-input",
             "toggle-row", "slider-row", "dropdown-row", "section-header",
+            // Wave A3 (TECH-27074) save-load-view archetypes.
+            "save-controls-strip", "save-list",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -130,6 +132,12 @@ namespace Territory.Editor.Bridge
                 return BakeDropdownRow(irRow, assetPath, theme);
             if (irRow.kind == "section-header")
                 return BakeSectionHeader(irRow, assetPath, theme);
+
+            // Wave A3 (TECH-27074) save-load-view archetypes.
+            if (irRow.kind == "save-controls-strip")
+                return BakeSaveControlsStrip(irRow, assetPath, theme);
+            if (irRow.kind == "save-list")
+                return BakeSaveList(irRow, assetPath, theme);
 
             GameObject go = null;
             try
@@ -1819,6 +1827,124 @@ namespace Territory.Editor.Bridge
         {
             public string label;
             public string size_token;
+        }
+
+        // ── Wave A3 IR DTOs (TECH-27074) ─────────────────────────────────────────
+
+        /// <summary>IR DTO for save-controls-strip archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class SaveControlsStripDetail
+        {
+            public string bindId;
+            public string saveLabel;
+            public string loadLabel;
+        }
+
+        /// <summary>IR DTO for save-list archetype. JsonUtility round-trip validated in EditMode tests.</summary>
+        [System.Serializable]
+        public class SaveListDetail
+        {
+            public string listBindId;
+            public string selectedSlotBindId;
+            public string trashAction;
+            public string selectAction;
+            public bool sortNewestFirst;
+        }
+
+        // ── Wave A3 bake methods (TECH-27074) ────────────────────────────────────
+
+        /// <summary>
+        /// Bake save-controls-strip: HLG root with mode label + mode-switch stub.
+        /// Bind driven by <see cref="SaveControlsStripDetail.bindId"/> (e.g. saveload.mode).
+        /// </summary>
+        static BakeError BakeSaveControlsStrip(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "save-controls-strip");
+                go.AddComponent<RectTransform>();
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8f;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+                hlg.padding = new RectOffset(4, 4, 4, 4);
+
+                // Mode label stub
+                var labelGo = new GameObject("ModeLabel", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, false);
+                var tmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                tmp.text = "Load";
+                tmp.fontSize = 14f;
+
+                // Save as prefab
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>
+        /// Bake save-list: VLG root (scrollable list container) with per-row action map stubs for
+        /// trash + select. Row rendering driven at runtime by <see cref="SaveLoadScreenDataAdapter"/>.
+        /// </summary>
+        static BakeError BakeSaveList(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "save-list");
+                go.AddComponent<RectTransform>();
+                var vlg = go.AddComponent<VerticalLayoutGroup>();
+                vlg.spacing = 4f;
+                vlg.childForceExpandWidth = true;
+                vlg.childForceExpandHeight = false;
+                vlg.childControlWidth = true;
+                vlg.childControlHeight = true;
+                vlg.padding = new RectOffset(4, 4, 4, 4);
+
+                // Row template stub
+                var rowGo = new GameObject("RowTemplate", typeof(RectTransform));
+                rowGo.transform.SetParent(go.transform, false);
+                var rowHlg = rowGo.AddComponent<HorizontalLayoutGroup>();
+                rowHlg.spacing = 6f;
+                rowHlg.childForceExpandWidth = false;
+                rowHlg.childForceExpandHeight = false;
+                rowHlg.childControlWidth = true;
+                rowHlg.childControlHeight = true;
+
+                var rowLabel = new GameObject("RowLabel", typeof(RectTransform));
+                rowLabel.transform.SetParent(rowGo.transform, false);
+                var rowTmp = rowLabel.AddComponent<TMPro.TextMeshProUGUI>();
+                rowTmp.text = "Save Slot";
+                rowTmp.fontSize = 13f;
+
+                var trashBtn = new GameObject("TrashButton", typeof(RectTransform));
+                trashBtn.transform.SetParent(rowGo.transform, false);
+                trashBtn.AddComponent<UnityEngine.UI.Image>().color = new Color(0.7f, 0.2f, 0.2f, 1f);
+                trashBtn.AddComponent<UnityEngine.UI.Button>();
+
+                // Save as prefab
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
         }
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────

@@ -1,96 +1,294 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Territory.Persistence;
+using Territory.UI.Registry;
 using Territory.UI.Themed;
 
 namespace Territory.UI.Modals
 {
     /// <summary>
-    /// Bridges <see cref="GameSaveManager"/> save-slot enumeration to ThemedList row population
-    /// and ThemedButton actions to save/load/delete/cancel. Inspector producer slot with
-    /// FindObjectOfType fallback (invariant #4); UiTheme cached in Awake (invariant #3).
-    /// Slot list refreshes on modal-open (polling via OnEnable).
+    /// Wave A3 (TECH-27075) — refactored save/load screen adapter.
+    /// Subscribes saveload.mode bind (save|load); renders list from GetSaveFiles() newest-first.
+    /// Row click → highlight + set saveload.selectedSlot. Load button fires saveload.load.
+    /// Trash icon → 3s confirm countdown → GameSaveManager.DeleteSave.
+    /// Save mode: name-input pre-filled cityName-YYYY-MM-DD-HHmm; Save fires overwrite-confirm if existing.
     /// </summary>
     public class SaveLoadScreenDataAdapter : MonoBehaviour
     {
         [Header("Producer")]
         [SerializeField] private GameSaveManager _saveManager;
 
-        [Header("Consumers")]
-        [SerializeField] private ThemedList _slotList;
+        [Header("Registry (resolved via FindObjectOfType when null)")]
+        [SerializeField] private UiActionRegistry _actionRegistry;
+        [SerializeField] private UiBindRegistry   _bindRegistry;
+
+        [Header("Consumers (legacy ThemedList/Button; nullable in baked-UI path)")]
+        [SerializeField] private ThemedList   _slotList;
         [SerializeField] private ThemedButton _saveButton;
         [SerializeField] private ThemedButton _loadButton;
         [SerializeField] private ThemedButton _deleteButton;
         [SerializeField] private ThemedButton _cancelButton;
 
-        private int _selectedSlotIndex = -1;
-        private readonly List<string> _slotPaths = new List<string>();
+        // ── internal state ────────────────────────────────────────────────────
+        private string _mode = "load";           // "save" | "load"
+        private int    _selectedSlotIndex = -1;
+        private readonly List<SaveFileMeta> _slotMetas = new List<SaveFileMeta>();
+
+        // IDisposable subscription handles
+        private IDisposable _modeSub;
+        private IDisposable _listSub;
+        private IDisposable _selectedSlotSub;
+
+        // Trash confirm coroutine tracking (per row index)
+        private Coroutine _trashConfirmCoroutine;
+        private int       _trashPendingIndex = -1;
+
+        // ── lifecycle ─────────────────────────────────────────────────────────
 
         private void Awake()
         {
             if (_saveManager == null)
                 _saveManager = FindObjectOfType<GameSaveManager>();
+            if (_actionRegistry == null)
+                _actionRegistry = FindObjectOfType<UiActionRegistry>();
+            if (_bindRegistry == null)
+                _bindRegistry = FindObjectOfType<UiBindRegistry>();
         }
 
         private void OnEnable()
         {
+            // Register actions
+            _actionRegistry?.Register("saveload.load",        _ => OnLoadConfirmed());
+            _actionRegistry?.Register("saveload.save",        _ => OnSaveConfirmed());
+            _actionRegistry?.Register("saveload.delete",      payload => OnDeleteRequested(payload));
+            _actionRegistry?.Register("saveload.selectSlot",  payload => OnSelectSlot(payload));
+
+            // Subscribe binds
+            if (_bindRegistry != null)
+            {
+                _modeSub         = _bindRegistry.Subscribe<string>("saveload.mode",         OnModeChanged);
+                _listSub         = _bindRegistry.Subscribe<object>("saveload.list",         _ => RefreshSlotList());
+                _selectedSlotSub = _bindRegistry.Subscribe<int>   ("saveload.selectedSlot", OnSelectedSlotChanged);
+            }
+
+            // Seed initial mode from bind if already set
+            try { _mode = _bindRegistry?.Get<string>("saveload.mode") ?? "load"; }
+            catch { _mode = "load"; }
+
+            // Wire legacy ThemedButton events (null-safe)
+            if (_saveButton   != null) _saveButton.OnClicked   += OnSaveClicked;
+            if (_loadButton   != null) _loadButton.OnClicked   += OnLoadClicked;
+            if (_deleteButton != null) _deleteButton.OnClicked += OnDeleteClicked;
+            if (_cancelButton != null) _cancelButton.OnClicked += OnCancelClicked;
+
             RefreshSlotList();
-            if (_saveButton != null) _saveButton.OnClicked += OnSave;
-            if (_loadButton != null) _loadButton.OnClicked += OnLoad;
-            if (_deleteButton != null) _deleteButton.OnClicked += OnDelete;
-            if (_cancelButton != null) _cancelButton.OnClicked += OnCancel;
+            PublishListBind();
         }
 
         private void OnDisable()
         {
-            if (_saveButton != null) _saveButton.OnClicked -= OnSave;
-            if (_loadButton != null) _loadButton.OnClicked -= OnLoad;
-            if (_deleteButton != null) _deleteButton.OnClicked -= OnDelete;
-            if (_cancelButton != null) _cancelButton.OnClicked -= OnCancel;
+            // Dispose bind subscriptions
+            _modeSub?.Dispose();         _modeSub = null;
+            _listSub?.Dispose();         _listSub = null;
+            _selectedSlotSub?.Dispose(); _selectedSlotSub = null;
+
+            // Unwire legacy buttons
+            if (_saveButton   != null) _saveButton.OnClicked   -= OnSaveClicked;
+            if (_loadButton   != null) _loadButton.OnClicked   -= OnLoadClicked;
+            if (_deleteButton != null) _deleteButton.OnClicked -= OnDeleteClicked;
+            if (_cancelButton != null) _cancelButton.OnClicked -= OnCancelClicked;
+
             _selectedSlotIndex = -1;
+            _trashPendingIndex = -1;
+            if (_trashConfirmCoroutine != null)
+            {
+                StopCoroutine(_trashConfirmCoroutine);
+                _trashConfirmCoroutine = null;
+            }
             UpdateActionButtonStates();
         }
+
+        // ── slot list ─────────────────────────────────────────────────────────
 
         private void RefreshSlotList()
         {
-            _slotPaths.Clear();
-            var labels = new List<string>();
-            string folder = Application.persistentDataPath;
-            if (Directory.Exists(folder))
+            _slotMetas.Clear();
+            string saveDir = Application.persistentDataPath;
+
+            var metas = GameSaveManager.GetSaveFiles(saveDir);
+            if (metas != null)
             {
-                string[] files = Directory.GetFiles(folder, "*.json");
-                var sorted = new List<(string path, string label, System.DateTime date)>();
-                foreach (string path in files)
-                {
-                    var meta = GameSaveManager.GetSaveMetadata(path);
-                    sorted.Add((path, meta.displayName, meta.sortDate));
-                }
-                sorted.Sort((a, b) => b.date.CompareTo(a.date));
-                foreach (var entry in sorted)
-                {
-                    _slotPaths.Add(entry.path);
-                    labels.Add($"{entry.label}  {entry.date:yyyy-MM-dd HH:mm}");
-                }
+                foreach (var m in metas)
+                    _slotMetas.Add(m);
             }
 
             _selectedSlotIndex = -1;
+            var labels = new List<string>();
+            foreach (var m in _slotMetas)
+                labels.Add($"{m.DisplayName}  {m.SortDate:yyyy-MM-dd HH:mm}");
+
             if (_slotList != null)
                 _slotList.Populate(labels, OnSlotSelected);
+
             UpdateActionButtonStates();
         }
+
+        /// <summary>Publish current list to bind registry so reactive rows can render.</summary>
+        private void PublishListBind()
+        {
+            _bindRegistry?.Set("saveload.list", _slotMetas as object);
+            PushLoadDisabledBind();
+            PushSaveNameBind();
+        }
+
+        private void PushLoadDisabledBind()
+        {
+            bool disabled = _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotMetas.Count;
+            _bindRegistry?.Set("saveload.loadDisabled", disabled);
+        }
+
+        private void PushSaveNameBind()
+        {
+            if (_mode != "save") return;
+            string cityName = _saveManager != null
+                ? (_saveManager.cityName ?? "City")
+                : "City";
+            string autoName = $"{cityName}-{DateTime.Now:yyyy-MM-dd-HHmm}";
+            _bindRegistry?.Set("saveload.saveName", autoName);
+        }
+
+        // ── bind callbacks ────────────────────────────────────────────────────
+
+        private void OnModeChanged(string mode)
+        {
+            _mode = mode ?? "load";
+            PushSaveNameBind();
+        }
+
+        private void OnSelectedSlotChanged(int index)
+        {
+            _selectedSlotIndex = index;
+            PushLoadDisabledBind();
+            UpdateActionButtonStates();
+        }
+
+        // ── action callbacks ──────────────────────────────────────────────────
+
+        private void OnSelectSlot(object payload)
+        {
+            if (payload is int idx)
+            {
+                _selectedSlotIndex = idx;
+                _bindRegistry?.Set("saveload.selectedSlot", idx);
+                PushLoadDisabledBind();
+                UpdateActionButtonStates();
+            }
+        }
+
+        private void OnDeleteRequested(object payload)
+        {
+            int index = payload is int i ? i : _selectedSlotIndex;
+            if (index < 0 || index >= _slotMetas.Count) return;
+
+            if (_trashPendingIndex == index)
+            {
+                // Second fire within confirm window — execute delete immediately
+                ExecuteDelete(index);
+                return;
+            }
+
+            // Start 3s confirm window
+            _trashPendingIndex = index;
+            if (_trashConfirmCoroutine != null)
+                StopCoroutine(_trashConfirmCoroutine);
+            _trashConfirmCoroutine = StartCoroutine(TrashConfirmCountdown(index, 3f));
+        }
+
+        private IEnumerator TrashConfirmCountdown(int index, float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            // Countdown expired without second confirm → cancel
+            if (_trashPendingIndex == index)
+                _trashPendingIndex = -1;
+            _trashConfirmCoroutine = null;
+        }
+
+        private void ExecuteDelete(int index)
+        {
+            if (index < 0 || index >= _slotMetas.Count) return;
+            var meta = _slotMetas[index];
+            GameSaveManager.DeleteSave(meta.FilePath);
+            _trashPendingIndex = -1;
+            if (_trashConfirmCoroutine != null)
+            {
+                StopCoroutine(_trashConfirmCoroutine);
+                _trashConfirmCoroutine = null;
+            }
+            RefreshSlotList();
+            PublishListBind();
+        }
+
+        private void OnLoadConfirmed()
+        {
+            if (_saveManager == null || _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotMetas.Count) return;
+            var meta = _slotMetas[_selectedSlotIndex];
+            GameStartInfo.SetPendingLoadPath(meta.FilePath);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+        }
+
+        private void OnSaveConfirmed()
+        {
+            if (_saveManager == null) return;
+            string customName = null;
+            try { customName = _bindRegistry?.Get<string>("saveload.saveName"); } catch { }
+            _saveManager.SaveGame(customName);
+            RefreshSlotList();
+            PublishListBind();
+        }
+
+        // ── legacy ThemedButton callbacks (baked-UI fallback) ─────────────────
 
         private void OnSlotSelected(int index)
         {
             _selectedSlotIndex = index;
+            _bindRegistry?.Set("saveload.selectedSlot", index);
+            PushLoadDisabledBind();
             UpdateActionButtonStates();
         }
 
+        private void OnSaveClicked()
+        {
+            if (_saveManager == null || _selectedSlotIndex < 0) return;
+            OnSaveConfirmed();
+        }
+
+        private void OnLoadClicked()
+        {
+            if (_saveManager == null || _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotMetas.Count) return;
+            OnLoadConfirmed();
+        }
+
+        private void OnDeleteClicked()
+        {
+            OnDeleteRequested(_selectedSlotIndex);
+        }
+
+        private void OnCancelClicked()
+        {
+            gameObject.SetActive(false);
+        }
+
+        // ── button states ─────────────────────────────────────────────────────
+
         private void UpdateActionButtonStates()
         {
-            bool slotPicked = _selectedSlotIndex >= 0 && _selectedSlotIndex < _slotPaths.Count;
-            SetButtonInteractable(_saveButton, slotPicked);
-            SetButtonInteractable(_loadButton, slotPicked);
+            bool slotPicked = _selectedSlotIndex >= 0 && _selectedSlotIndex < _slotMetas.Count;
+            bool isSaveMode = _mode == "save";
+            SetButtonInteractable(_loadButton,   slotPicked && !isSaveMode);
+            SetButtonInteractable(_saveButton,   isSaveMode);
             SetButtonInteractable(_deleteButton, slotPicked);
         }
 
@@ -99,32 +297,6 @@ namespace Territory.UI.Modals
             if (btn == null) return;
             var ugui = btn.GetComponent<UnityEngine.UI.Button>();
             if (ugui != null) ugui.interactable = interactable;
-        }
-
-        private void OnSave()
-        {
-            if (_saveManager == null || _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotPaths.Count) return;
-            _saveManager.SaveGame();
-            RefreshSlotList();
-        }
-
-        private void OnLoad()
-        {
-            if (_saveManager == null || _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotPaths.Count) return;
-            _saveManager.LoadGame(_slotPaths[_selectedSlotIndex]);
-        }
-
-        private void OnDelete()
-        {
-            if (_selectedSlotIndex < 0 || _selectedSlotIndex >= _slotPaths.Count) return;
-            string path = _slotPaths[_selectedSlotIndex];
-            if (File.Exists(path)) File.Delete(path);
-            RefreshSlotList();
-        }
-
-        private void OnCancel()
-        {
-            gameObject.SetActive(false);
         }
     }
 }

@@ -91,9 +91,10 @@ namespace Territory.UI.Registry
             r.Set<string>("newgame.cityName",            string.Empty);
 
             // ── saveload binds (3) ─────────────────────────────────────────
-            r.Set<object>("saveload.mode",               null);   // enum
+            // Wave A3 (TECH-27077): mode forced to "load" when MainMenu host.
+            r.Set<string>("saveload.mode",               "load"); // forced load in MainMenu host
             r.Set<object>("saveload.list",               null);   // array
-            r.Set<string>("saveload.selectedSlot",       null);   // string|null
+            r.Set<int>   ("saveload.selectedSlot",       -1);     // -1 = nothing selected
         }
     }
 }
