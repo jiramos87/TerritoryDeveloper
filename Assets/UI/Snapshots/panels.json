@@ -1,5 +1,5 @@
 {
-  "snapshot_id": "2026-05-08T15:04:36.344Z",
+  "snapshot_id": "2026-05-09T13:07:08.401Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
@@ -133,6 +133,439 @@
           "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
           "layout_json": "{\"col\":4,\"row\":0,\"zone\":\"right\",\"rowSpan\":2}",
           "instance_slug": "hud-bar-map-button"
+        }
+      ]
+    },
+    {
+      "slug": "main-menu",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"color-bg-menu\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "main-menu",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"color-bg-menu\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.continue\",\"disabled_bind\":\"mainmenu.continue.disabled\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"main\"}",
+          "instance_slug": "continue"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.new-game\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"main\"}",
+          "instance_slug": "new-game"
+        },
+        {
+          "ord": 3,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.load\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"main\"}",
+          "instance_slug": "load"
+        },
+        {
+          "ord": 4,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.settings\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"main\"}",
+          "instance_slug": "settings"
+        },
+        {
+          "ord": 5,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.quit\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"main\"}",
+          "instance_slug": "quit"
+        },
+        {
+          "ord": 6,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.quit-confirm\",\"confirm_action\":\"mainmenu.quit-confirmed\",\"confirm_seconds\":3}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"confirm\"}",
+          "instance_slug": "quit-confirm"
+        },
+        {
+          "ord": 7,
+          "kind": "button",
+          "params_json": "{\"kind\":\"button\",\"action\":\"mainmenu.back\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"nav\"}",
+          "instance_slug": "back"
+        },
+        {
+          "ord": 8,
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\",\"text_token\":\"size-text-title-display\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"branding\"}",
+          "instance_slug": "title"
+        },
+        {
+          "ord": 9,
+          "kind": "label",
+          "params_json": "{\"bind\":\"mainmenu.version\",\"kind\":\"label\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"branding\"}",
+          "instance_slug": "version"
+        },
+        {
+          "ord": 10,
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\",\"text_static\":\"Bacayo Studio\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"branding\"}",
+          "instance_slug": "studio"
+        },
+        {
+          "ord": 11,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"mainmenu.contentScreen\",\"kind\":\"panel\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"content\"}",
+          "instance_slug": "content-slot"
+        }
+      ]
+    },
+    {
+      "slug": "new-game-form",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"title\":\"New Game\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"new-game\",\"host_slots\":[\"main-menu-content-slot\"],\"panel_kind\":\"screen\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "new-game-form",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"title\":\"New Game\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"new-game\",\"host_slots\":[\"main-menu-content-slot\"],\"panel_kind\":\"screen\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Map Size\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-size-header"
+        },
+        {
+          "ord": 2,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Small\",\"value\":\"small\",\"description\":\"64x64\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-small-card"
+        },
+        {
+          "ord": 3,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Medium\",\"value\":\"medium\",\"description\":\"128x128\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-medium-card"
+        },
+        {
+          "ord": 4,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Large\",\"value\":\"large\",\"description\":\"256x256\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-large-card"
+        },
+        {
+          "ord": 5,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Starting Budget\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "budget-header"
+        },
+        {
+          "ord": 6,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$10,000\",\"value\":\"low\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "budget-low-chip"
+        },
+        {
+          "ord": 7,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$50,000\",\"value\":\"medium\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "budget-mid-chip"
+        },
+        {
+          "ord": 8,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$200,000\",\"value\":\"high\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "budget-high-chip"
+        },
+        {
+          "ord": 9,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"City Name\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "cityname-header"
+        },
+        {
+          "ord": 10,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.cityName\",\"kind\":\"text-input\",\"placeholder\":\"Enter city name...\",\"reroll_action\":\"newgame.cityName.reroll\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "cityname-input"
+        }
+      ]
+    },
+    {
+      "slug": "save-load-view",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"modeBindId\":\"saveload.mode\",\"panel_kind\":\"screen\",\"defaultMode\":\"load\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "save-load-view",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"modeBindId\":\"saveload.mode\",\"panel_kind\":\"screen\",\"defaultMode\":\"load\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "panel",
+          "params_json": "{\"kind\":\"save-controls-strip\",\"bindId\":\"saveload.mode\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "save-controls-strip"
+        },
+        {
+          "ord": 2,
+          "kind": "panel",
+          "params_json": "{\"kind\":\"save-list\",\"listBindId\":\"saveload.list\",\"trashAction\":\"saveload.delete\",\"selectAction\":\"saveload.selectSlot\",\"selectedSlotBindId\":\"saveload.selectedSlot\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "save-list"
+        },
+        {
+          "ord": 3,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"saveload.saveName\",\"kind\":\"text-input\",\"placeholder\":\"City-YYYY-MM-DD-HHmm\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "save-name-input"
+        },
+        {
+          "ord": 4,
+          "kind": "button",
+          "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "footer-load-button"
+        }
+      ]
+    },
+    {
+      "slug": "settings-view",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"title\":\"Settings\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"settings\",\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "settings-view",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"title\":\"Settings\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"settings\",\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Audio\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "audio-header"
+        },
+        {
+          "ord": 2,
+          "kind": "panel",
+          "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.masterVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"Master\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "master-volume-slider"
+        },
+        {
+          "ord": 3,
+          "kind": "panel",
+          "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.musicVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"Music\",\"linearToDecibel\":true}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "music-volume-slider"
+        },
+        {
+          "ord": 4,
+          "kind": "panel",
+          "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.sfxVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"SFX\",\"linearToDecibel\":true}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "sfx-volume-slider"
+        },
+        {
+          "ord": 5,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Display\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "display-header"
+        },
+        {
+          "ord": 6,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.fullscreen\",\"kind\":\"toggle-row\",\"label\":\"Fullscreen\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "fullscreen-toggle"
+        },
+        {
+          "ord": 7,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.vsync\",\"kind\":\"toggle-row\",\"label\":\"VSync\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "vsync-toggle"
+        },
+        {
+          "ord": 8,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.resolution\",\"kind\":\"dropdown-row\",\"label\":\"Resolution\",\"options_action\":\"settings.resolution.options\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "resolution-dropdown"
+        },
+        {
+          "ord": 9,
+          "kind": "label",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Gameplay\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "gameplay-header"
+        },
+        {
+          "ord": 10,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.scrollEdgePan\",\"kind\":\"toggle-row\",\"label\":\"Edge Scroll\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "scroll-edge-toggle"
+        },
+        {
+          "ord": 11,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.monthlyBudgetNotifications\",\"kind\":\"toggle-row\",\"label\":\"Budget Alerts\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "monthly-notif-toggle"
+        },
+        {
+          "ord": 12,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"settings.autoSave\",\"kind\":\"toggle-row\",\"label\":\"Auto-Save\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "auto-save-toggle"
+        },
+        {
+          "ord": 13,
+          "kind": "button",
+          "params_json": "{\"kind\":\"confirm-button\",\"label\":\"Reset to Defaults\",\"action\":\"settings.reset\",\"confirm_action\":\"settings.reset.confirmed\",\"confirm_seconds\":3}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "reset-button"
+        }
+      ]
+    },
+    {
+      "slug": "tool-subtype-picker",
+      "fields": {
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"anchor\":\"bottom-left\",\"card_h_px\":80,\"card_w_px\":80,\"panel_kind\":\"hud\",\"strip_h_px\":96,\"open_trigger\":\"toolbar.tool-select\",\"close_triggers\":[\"key.escape\",\"toolbar.tool-deselect\"],\"hidden_default\":true,\"max_strip_w_px\":1200}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "tool-subtype-picker",
+        "layout_template": "hstack",
+        "layout": "hstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"anchor\":\"bottom-left\",\"card_h_px\":80,\"card_w_px\":80,\"panel_kind\":\"hud\",\"strip_h_px\":96,\"open_trigger\":\"toolbar.tool-select\",\"close_triggers\":[\"key.escape\",\"toolbar.tool-deselect\"],\"hidden_default\":true,\"max_strip_w_px\":1200}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "button",
+          "params_json": "{\"icon\":\"scroll-left\",\"kind\":\"illuminated-button\",\"role\":\"strip-arrow-left\",\"hidden_unless_overflow\":true}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"left-edge\"}",
+          "instance_slug": "tool-subtype-picker-arrow-left"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"icon\":\"scroll-right\",\"kind\":\"illuminated-button\",\"role\":\"strip-arrow-right\",\"hidden_unless_overflow\":true}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"right-edge\"}",
+          "instance_slug": "tool-subtype-picker-arrow-right"
+        },
+        {
+          "ord": 10,
+          "kind": "panel",
+          "params_json": "{\"icon\":\"*\",\"kind\":\"subtype-card\",\"name\":\"*\",\"family\":\"*\",\"subtype\":\"*\",\"cost_text\":\"*\",\"affordable_bind\":\"toolSelection.affordable.*\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"cards\"}",
+          "instance_slug": "tool-subtype-picker-card-template"
         }
       ]
     },

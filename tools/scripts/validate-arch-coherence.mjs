@@ -405,6 +405,13 @@ const EXPLICIT_NONE_STAGES = new Set([
   "game-ui-catalog-bake::9.11",
   "game-ui-catalog-bake::9.12",
   "game-ui-catalog-bake::9.13",
+  "game-ui-catalog-bake::9.15",
+  // cityscene-mainmenu-panel-rollout: UI-only scene rewire + bake stages — no arch_surfaces row needed.
+  "cityscene-mainmenu-panel-rollout::4.5",
+  "cityscene-mainmenu-panel-rollout::6.0",
+  "cityscene-mainmenu-panel-rollout::7.0",
+  "cityscene-mainmenu-panel-rollout::8.0",
+  "cityscene-mainmenu-panel-rollout::9.0",
 ]);
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +15,7 @@ namespace Territory.UI
 /// Main menu UI: Continue, New Game, Load City, Options. Scene transition → CityScene
 /// with appropriate <see cref="GameStartInfo"/>.
 /// Wave A1 (TECH-27065): also acts as bind-dispatcher consumer when useBakedUi=true.
+/// Wave A3.5 (TECH-27142): real sub-view swap via content-slot anchor + SerializeField prefab map.
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
@@ -31,6 +34,13 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private UiActionRegistry actionRegistry;
     [SerializeField] private UiBindRegistry bindRegistry;
 
+    [Header("Sub-view prefab map (Wave A3.5 TECH-27142)")]
+    [Tooltip("Sub-panel prefabs keyed by contentScreen id. Assign 3 entries: new-game-form, settings-view, save-load-view.")]
+    [SerializeField] private List<SubPanelEntry> subPanelPrefabs = new List<SubPanelEntry>();
+    [SerializeField] private Transform viewSlotAnchor;
+
+    private readonly Dictionary<string, GameObject> _subPanelMap = new Dictionary<string, GameObject>(StringComparer.Ordinal);
+    private GameObject _currentSubPanel;
     private string saveFolderPath;
 
     void Awake()
@@ -42,6 +52,22 @@ public class MainMenuController : MonoBehaviour
         if (bindRegistry == null)
             bindRegistry = GetComponentInParent<UiBindRegistry>()
                 ?? FindObjectOfType<UiBindRegistry>();
+
+        // Wave A3.5: resolve view-slot anchor from scene path if not serialized.
+        if (viewSlotAnchor == null)
+        {
+            var slotGo = GameObject.Find("MainMenuCanvas/MainMenuPanelRoot/main-menu/content-slot");
+            if (slotGo != null)
+                viewSlotAnchor = slotGo.transform;
+            else
+                Debug.LogWarning("[MainMenuController] content-slot not found — sub-view swap disabled.");
+        }
+
+        // Build screenId → prefab lookup.
+        _subPanelMap.Clear();
+        foreach (var entry in subPanelPrefabs)
+            if (!string.IsNullOrEmpty(entry.screenId) && entry.prefab != null)
+                _subPanelMap[entry.screenId] = entry.prefab;
 
         RegisterBakedUiHandlers();
         UpdateContinueButtonStateBaked();
@@ -90,9 +116,53 @@ public class MainMenuController : MonoBehaviour
 
     private void OnContentScreenChanged(string screenId)
     {
-        // Sub-view visibility driven by bind — host renders declared sub-view.
-        // Placeholder: log; Wave A2+ will drive real sub-view swap.
-        Debug.Log($"[MainMenuController] contentScreen → {screenId}");
+        // Wave A3.5 (TECH-27142): real sub-view swap.
+        if (viewSlotAnchor == null)
+        {
+            Debug.LogWarning($"[MainMenuController] contentScreen → {screenId} (viewSlotAnchor null — sub-view swap skipped)");
+            return;
+        }
+
+        // No-op if already showing requested screen.
+        if (_currentSubPanel != null && _currentSubPanel.name == screenId)
+            return;
+
+        // Destroy previous sub-panel.
+        if (_currentSubPanel != null)
+        {
+            Destroy(_currentSubPanel);
+            _currentSubPanel = null;
+        }
+
+        // screenId == "main" → empty slot; no instantiation.
+        if (string.IsNullOrEmpty(screenId) || screenId == "main")
+            return;
+
+        // Instantiate sub-panel prefab under content-slot anchor.
+        if (_subPanelMap.TryGetValue(screenId, out var prefab) && prefab != null)
+        {
+            _currentSubPanel = Instantiate(prefab, viewSlotAnchor);
+            _currentSubPanel.name = screenId;
+        }
+        else
+        {
+            // Editor fallback: load Generated prefab by path convention when map not populated via Inspector.
+#if UNITY_EDITOR
+            string assetPath = $"Assets/UI/Prefabs/Generated/{screenId}.prefab";
+            var editorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (editorPrefab != null)
+            {
+                _currentSubPanel = Instantiate(editorPrefab, viewSlotAnchor);
+                _currentSubPanel.name = screenId;
+            }
+            else
+            {
+                Debug.LogWarning($"[MainMenuController] No sub-panel prefab for screenId='{screenId}' at {assetPath} — check subPanelPrefabs Inspector list.");
+            }
+#else
+            Debug.LogWarning($"[MainMenuController] No sub-panel prefab for screenId='{screenId}' — check subPanelPrefabs Inspector list.");
+#endif
+        }
     }
 
     private void OnQuitClicked()
@@ -247,6 +317,17 @@ public class MainMenuController : MonoBehaviour
         AddHoverBlip(newGameButton);
         AddHoverBlip(loadCityButton);
         AddHoverBlip(optionsButton);
+    }
+
+    // ── Sub-panel entry (Wave A3.5 TECH-27142) ────────────────────────────────
+
+    [Serializable]
+    public class SubPanelEntry
+    {
+        [Tooltip("contentScreen bind value (e.g. new-game-form, settings-view, save-load-view)")]
+        public string screenId;
+        [Tooltip("Prefab from Assets/UI/Prefabs/Generated/ for this screen")]
+        public GameObject prefab;
     }
 }
 }
