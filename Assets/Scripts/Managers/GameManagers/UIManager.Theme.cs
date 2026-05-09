@@ -1,11 +1,12 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI
 {
     /// <summary>
-    /// Apply <see cref="UiTheme"/> tokens to city HUD texts + common panel chrome (partial of <see cref="UIManager"/>).
+    /// Apply UiTheme tokens to city HUD texts + common panel chrome (partial of UIManager).
+    /// Pass-through over ThemeService POCO port.  Class name + namespace + path + every [SerializeField] UNCHANGED.
+    /// Cutover Stage 2 (TECH-26631). Implements Domains.UI.ITheme facade via _themeService field.
     /// </summary>
     public partial class UIManager
     {
@@ -13,21 +14,18 @@ namespace Territory.UI
         [Tooltip("Assign DefaultUiTheme or a variant; when null, HUD keeps scene-authored colors.")]
         [SerializeField] private UiTheme hudUiTheme;
 
-        // Stage 11 (game-ui-design-system): legacy controlPanelBackgroundImage decommissioned —
-        // toolbar chrome now driven by themed-toolbar-strip studio-control + ToolbarChromeAdapter.
+        // Stage 11 (game-ui-design-system): legacy controlPanelBackgroundImage decommissioned.
+
+        private Domains.UI.Services.ThemeService _themeService;
 
         private void Awake()
         {
             if (Instance != null && Instance != this)
-            {
                 Debug.LogWarning("[UIManager] duplicate instance detected; replacing prior reference.");
-            }
             Instance = this;
+            _themeService = new Domains.UI.Services.ThemeService();
 
-            // Stage 12 trigger contract: modal roots must start deactivated so OpenPopup
-            // can flip them on. Source prefabs ship with m_IsActive=1 for design preview;
-            // enforce hidden runtime state here so they don't block grid raycasts or short-
-            // circuit OpenPopup's `!activeSelf` gate (silent no-op + dead Esc / Shift+hover).
+            // Stage 12 trigger contract: modal roots must start deactivated.
             if (infoPanelRoot != null && infoPanelRoot.activeSelf) infoPanelRoot.SetActive(false);
             if (pauseMenuRoot != null && pauseMenuRoot.activeSelf) pauseMenuRoot.SetActive(false);
             if (settingsScreenRoot != null && settingsScreenRoot.activeSelf) settingsScreenRoot.SetActive(false);
@@ -35,20 +33,12 @@ namespace Territory.UI
             if (newGameScreenRoot != null && newGameScreenRoot.activeSelf) newGameScreenRoot.SetActive(false);
         }
 
-        /// <summary>
-        /// Apply typography + surface colors once at startup when <see cref="hudUiTheme"/> assigned.
-        /// </summary>
+        /// <summary>Apply typography + surface colors once at startup when hudUiTheme assigned.</summary>
         private void ApplyHudUiThemeIfConfigured()
         {
             EnsureCellDataPanelChrome();
             EnsureDemandGaugeBars();
-
-            if (hudUiTheme == null)
-                return;
-
-            // Stage 6 (game-ui-design-system): hero/toolbar money rows removed — population /
-            // money / happiness / cityName / buttonMoney now baked StudioControl variants on
-            // hud-bar prefab; theme is applied by StudioControlBase.ApplyTheme via UiBakeHandler.
+            if (hudUiTheme == null) return;
 
             ApplyBodyStatRow(dateText);
             ApplyBodyStatRow(cityPowerOutputText);
@@ -67,9 +57,7 @@ namespace Territory.UI
             ApplyBodyStatRow(demandCommercialText);
             ApplyBodyStatRow(demandIndustrialText);
             ApplyBodyStatRow(demandFeedbackText);
-
             ApplyCaptionText(detailsDebugText);
-
             ApplyBodyStatRow(detailsNameText);
             ApplyBodyStatRow(detailsOccupancyText);
             ApplyBodyStatRow(detailsHappinessText);
@@ -88,917 +76,68 @@ namespace Territory.UI
                 constructionCostText.color = hudUiTheme.TextPrimary;
             }
 
-            // Stage 11 (`game-ui-design-system`): legacy StatsPanel surface fully decommissioned
-            // with `DataPopupController.statsPanel` retirement (see glossary "Retired terms").
-            TintPanelRootBehindReference("DatePanel", dateText, hudUiTheme.SurfaceCardHud);
-            TintPanelRootBehindReference("TaxPanel", residentialTaxText, hudUiTheme.SurfaceCardHud);
+            _themeService.TintPanelRootBehindReference("DatePanel", dateText, hudUiTheme.SurfaceCardHud);
+            _themeService.TintPanelRootBehindReference("TaxPanel", residentialTaxText, hudUiTheme.SurfaceCardHud);
             ApplyTaxPanelBudgetRowTexts();
             EnsureTaxPanelDividerStripes();
-            TintPanelRootBehindReference("DetailsPanel", detailsNameText, hudUiTheme.SurfaceCardHud);
+            _themeService.TintPanelRootBehindReference("DetailsPanel", detailsNameText, hudUiTheme.SurfaceCardHud);
 
             if (demandWarningPanel != null)
             {
                 var dw = demandWarningPanel.GetComponent<Image>();
-                if (dw != null)
-                    dw.color = hudUiTheme.SurfaceCardHud;
+                if (dw != null) dw.color = hudUiTheme.SurfaceCardHud;
             }
-
-            // Stage 11: controlPanelBackgroundImage tint dropped — themed-toolbar-strip
-            // owns SurfaceToolbar via baked StudioControl SO refs.
 
             ApplyLoadGameAndFundsPanels();
         }
 
-        private const string CellDataPanelName = "CellDataPanel";
-        private const string CellDataPanelNameAlt = "CellDataPanelAlt";
-        private const string CellDataPanelTextInsetName = "CellDataPanelTextInset";
-        private const string CellDataPanelTextHolderAlt = "CellDataPanelText";
+        private void EnsureCellDataPanelChrome() =>
+            _themeService.EnsureCellDataPanelChrome(ref gridCoordinatesText, hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.SurfaceToolbar : null);
 
-        private const string CellDataPanelScrollRootName = "CellDataPanelScrollRoot";
-        private const string CellDataPanelViewportName = "CellDataPanelViewport";
-        private const string CellDataPanelContentName = "CellDataPanelContent";
-
-        private const string ControlPanelObjectName = "ControlPanel";
-
-        /// <summary>Top HUD strip; must stay unobstructed above grid debug chrome (sibling under same HUD root as <see cref="ControlPanelObjectName"/>).</summary>
-        private const string DataPanelButtonsObjectName = "DataPanelButtons";
-
-        /// <summary>Gap: grid debug chrome bottom → top of <see cref="ControlPanelObjectName"/>.</summary>
-        private const float CellDataPanelGapAboveControlPanel = 10f;
-
-        /// <summary>Gap: bottom of <see cref="DataPanelButtonsObjectName"/> → top of grid debug chrome.</summary>
-        private const float CellDataPanelGapBelowDataPanelButtons = 8f;
-
-        /// <summary>Gap: grid debug chrome bottom → top of <c>MiniMapPanel</c> (fallback layout).</summary>
-        private const float CellDataPanelGapAboveMinimap = 30f;
-
-        /// <summary>Max outer size (w=h) of square grid debug chrome.</summary>
-        private const float CellDataPanelMaxSquareSide = 220f;
-
-        private static bool IsCellDataPanelRootName(string n)
-        {
-            return n == CellDataPanelName || n == CellDataPanelNameAlt;
-        }
-
-        private static bool IsCellDataPanelTextHolderName(string n)
-        {
-            return n == CellDataPanelTextInsetName || n == CellDataPanelTextHolderAlt;
-        }
-
-        /// <summary>
-        /// Walk parents → find grid debug chrome root (inset or scroll lives under it).
-        /// </summary>
-        private static Transform FindCellDataPanelRoot(Transform from)
-        {
-            for (Transform p = from; p != null; p = p.parent)
-            {
-                if (IsCellDataPanelRootName(p.name))
-                    return p;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Return text inset <see cref="RectTransform"/> under chrome if present.
-        /// </summary>
-        private static RectTransform FindCellDataPanelInset(RectTransform chromeRt)
-        {
-            if (chromeRt == null)
-                return null;
-            Transform t = chromeRt.Find(CellDataPanelTextInsetName);
-            if (t == null)
-                t = chromeRt.Find(CellDataPanelTextHolderAlt);
-            return t != null ? t.GetComponent<RectTransform>() : null;
-        }
-
-        /// <summary>
-        /// HUD layout root parenting <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in CityScene).
-        /// </summary>
-        private static Transform FindHudLayoutRoot(Transform from)
-        {
-            for (Transform p = from; p != null; p = p.parent)
-            {
-                if (p.Find(ControlPanelObjectName) != null || p.Find("MiniMapPanel") != null)
-                    return p;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Parent grid debug chrome under HUD layout root; draw just after <c>ControlPanel</c> if present, else after <c>MiniMapPanel</c>.
-        /// </summary>
-        private static void EnsureCellDataPanelHudMount(RectTransform chromeRt)
-        {
-            if (chromeRt == null)
-                return;
-            Transform mount = FindHudLayoutRoot(chromeRt);
-            if (mount == null)
-                return;
-            chromeRt.SetParent(mount, false);
-            Transform cp = mount.Find(ControlPanelObjectName);
-            if (cp != null)
-                chromeRt.SetSiblingIndex(cp.GetSiblingIndex() + 1);
-            else
-            {
-                Transform mm = mount.Find("MiniMapPanel");
-                if (mm != null)
-                    chromeRt.SetSiblingIndex(mm.GetSiblingIndex() + 1);
-            }
-        }
-
-        /// <summary>
-        /// Wrap <see cref="gridCoordinatesText"/> in semi-transparent HUD panel, white copy → contrast over map.
-        /// </summary>
-        private void EnsureCellDataPanelChrome()
-        {
-            // Post-Stage-9.1 wrapper-flatten dropped GridCoordinatesText; rebuild in-code when SerializeField null.
-            EnsureCellDataPanelTextField();
-
-            if (gridCoordinatesText == null)
-                return;
-
-            Transform t = gridCoordinatesText.transform;
-            RectTransform textRt = gridCoordinatesText.GetComponent<RectTransform>();
-
-            Transform chromeRoot = FindCellDataPanelRoot(t);
-            if (chromeRoot != null)
-            {
-                RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
-                EnsureCellDataPanelTextUnderInset(chromeRt.transform, textRt);
-                ApplyCellDataPanelTextStyle();
-                EnsureCellDataPanelHudMount(chromeRt);
-                AlignCellDataPanel(chromeRt);
-                UpdateCellDataPanelScrollLayout(chromeRt, gridCoordinatesText);
-                return;
-            }
-
-            Transform originalParent = t.parent;
-            int siblingIndex = t.GetSiblingIndex();
-            Transform chromeMount = FindHudLayoutRoot(t) ?? originalParent;
-
-            GameObject chrome = new GameObject(CellDataPanelName, typeof(RectTransform));
-            chrome.transform.SetParent(chromeMount, false);
-            Transform cpForOrder = chromeMount.Find(ControlPanelObjectName);
-            Transform mmForOrder = chromeMount.Find("MiniMapPanel");
-            if (cpForOrder != null)
-                chrome.transform.SetSiblingIndex(cpForOrder.GetSiblingIndex() + 1);
-            else if (mmForOrder != null)
-                chrome.transform.SetSiblingIndex(mmForOrder.GetSiblingIndex() + 1);
-            else
-                chrome.transform.SetSiblingIndex(siblingIndex);
-            RectTransform chromeRtNew = chrome.GetComponent<RectTransform>();
-            chromeRtNew.anchorMin = textRt.anchorMin;
-            chromeRtNew.anchorMax = textRt.anchorMax;
-            chromeRtNew.pivot = textRt.pivot;
-            chromeRtNew.anchoredPosition = textRt.anchoredPosition;
-            chromeRtNew.sizeDelta = textRt.sizeDelta + new Vector2(54f, 28f);
-            chromeRtNew.localScale = textRt.localScale;
-
-            GameObject bgGo = new GameObject("CellDataPanelBg", typeof(RectTransform), typeof(Image));
-            bgGo.transform.SetParent(chrome.transform, false);
-            bgGo.transform.SetAsFirstSibling();
-            RectTransform bgRt = bgGo.GetComponent<RectTransform>();
-            bgRt.anchorMin = Vector2.zero;
-            bgRt.anchorMax = Vector2.one;
-            bgRt.offsetMin = Vector2.zero;
-            bgRt.offsetMax = Vector2.zero;
-            Image bgImg = bgGo.GetComponent<Image>();
-            bgImg.raycastTarget = false;
-            Color panel = hudUiTheme != null ? hudUiTheme.SurfaceToolbar : new Color(0.07f, 0.08f, 0.11f, 1f);
-            panel.a = hudUiTheme != null ? Mathf.Clamp(hudUiTheme.SurfaceToolbar.a * 0.92f, 0.78f, 0.9f) : 0.86f;
-            bgImg.color = panel;
-
-            EnsureCellDataPanelTextUnderInset(chrome.transform, textRt);
-
-            ApplyCellDataPanelTextStyle();
-            EnsureCellDataPanelHudMount(chromeRtNew);
-            AlignCellDataPanel(chromeRtNew);
-            UpdateCellDataPanelScrollLayout(chromeRtNew, gridCoordinatesText);
-        }
-
-        /// <summary>
-        /// Rebuild lost legacy <c>GridCoordinatesText</c> when SerializeField null (Stage 9.1 wrapper-flatten collateral).
-        /// Mounts under same HUD layout root that hosts ControlPanel/MiniMapPanel.
-        /// </summary>
-        private void EnsureCellDataPanelTextField()
-        {
-            if (gridCoordinatesText != null) return;
-            Transform hudLayoutRoot = FindHudLayoutRootForRebuild();
-            if (hudLayoutRoot == null) return;
-
-            GameObject textGo = new GameObject("GridCoordinatesText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            textGo.transform.SetParent(hudLayoutRoot, false);
-            Text txt = textGo.GetComponent<Text>();
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (txt.font == null) txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            txt.fontSize = 18;
-            txt.color = Color.white;
-            txt.alignment = TextAnchor.UpperLeft;
-            txt.horizontalOverflow = HorizontalWrapMode.Wrap;
-            txt.verticalOverflow = VerticalWrapMode.Overflow;
-            txt.text = string.Empty;
-
-            RectTransform rt = textGo.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1f, 0.5f);
-            rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(1f, 0.5f);
-            rt.sizeDelta = new Vector2(270f, 270f);
-            rt.anchoredPosition = new Vector2(-16f, 0f);
-
-            gridCoordinatesText = txt;
-        }
-
-        /// <summary>
-        /// Parameterless HUD layout root resolver for in-code rebuild paths
-        /// (no anchor Transform available — walks the active scene by name).
-        /// </summary>
-        private static Transform FindHudLayoutRootForRebuild()
-        {
-            GameObject mm = GameObject.Find("MiniMapPanel");
-            if (mm != null && mm.transform.parent != null) return mm.transform.parent;
-            GameObject cp = GameObject.Find(ControlPanelObjectName);
-            if (cp != null && cp.transform.parent != null) return cp.transform.parent;
-            Canvas c = UnityEngine.Object.FindObjectOfType<Canvas>();
-            return c != null ? c.transform : null;
-        }
-
-        /// <summary>
-        /// Inset debug copy from chrome edges (plain <see cref="RectTransform"/>, no layout groups).
-        /// </summary>
-        private static void ApplyCellDataPanelTextInset(RectTransform insetRt)
-        {
-            if (insetRt == null)
-                return;
-            VerticalLayoutGroup vlg = insetRt.GetComponent<VerticalLayoutGroup>();
-            if (vlg != null)
-                UnityEngine.Object.Destroy(vlg);
-
-            insetRt.anchorMin = Vector2.zero;
-            insetRt.anchorMax = Vector2.one;
-            insetRt.anchoredPosition = Vector2.zero;
-            insetRt.sizeDelta = Vector2.zero;
-            insetRt.offsetMin = new Vector2(18f, 10f);
-            insetRt.offsetMax = new Vector2(-18f, -10f);
-        }
-
-        /// <summary>
-        /// Strip nested canvas/scaler + layout drivers → legacy <see cref="Text"/> draws on root HUD canvas.
-        /// </summary>
-        private static void EnsureCellDataPanelTextLayoutDriver(RectTransform textRt)
-        {
-            if (textRt == null)
-                return;
-            ContentSizeFitter fitter = textRt.GetComponent<ContentSizeFitter>();
-            if (fitter != null)
-                UnityEngine.Object.Destroy(fitter);
-            LayoutElement le = textRt.GetComponent<LayoutElement>();
-            if (le != null)
-                UnityEngine.Object.Destroy(le);
-
-            // CanvasScaler requires Canvas — remove scaler first. Disable before Destroy so a same-frame second pass cannot trip the dependency.
-            CanvasScaler scaler = textRt.GetComponent<CanvasScaler>();
-            if (scaler != null)
-            {
-                scaler.enabled = false;
-                UnityEngine.Object.Destroy(scaler);
-            }
-            Canvas nested = textRt.GetComponent<Canvas>();
-            if (nested != null)
-            {
-                nested.enabled = false;
-                UnityEngine.Object.Destroy(nested);
-            }
-
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.pivot = new Vector2(0.5f, 0.5f);
-            textRt.anchoredPosition = Vector2.zero;
-            textRt.sizeDelta = Vector2.zero;
-            textRt.offsetMin = Vector2.zero;
-            textRt.offsetMax = Vector2.zero;
-        }
-
-        /// <summary>
-        /// Ensure inset holder exists under chrome; <see cref="gridCoordinatesText"/> is layout-driven child with real padding.
-        /// </summary>
-        private static void EnsureCellDataPanelTextUnderInset(Transform chromeTransform, RectTransform textRt)
-        {
-            if (chromeTransform == null || textRt == null)
-                return;
-
-            Transform insetTransform = chromeTransform.Find(CellDataPanelTextInsetName);
-            if (insetTransform == null)
-                insetTransform = chromeTransform.Find(CellDataPanelTextHolderAlt);
-            if (insetTransform == null)
-            {
-                GameObject insetGo = new GameObject(CellDataPanelTextInsetName, typeof(RectTransform));
-                insetTransform = insetGo.transform;
-                insetTransform.SetParent(chromeTransform, false);
-                Transform bg = chromeTransform.Find("CellDataPanelBg");
-                if (bg != null)
-                    insetTransform.SetSiblingIndex(bg.GetSiblingIndex() + 1);
-            }
-
-            RectTransform insetRt = insetTransform.GetComponent<RectTransform>();
-            ApplyCellDataPanelTextInset(insetRt);
-
-            EnsureCellDataPanelScrollUnderInset(insetRt, textRt);
-            EnsureCellDataPanelTextLayoutDriver(textRt);
-        }
-
-        /// <summary>
-        /// Add <see cref="ScrollRect"/> under inset → long grid debug copy scrolls inside panel vs overflowing.
-        /// </summary>
-        private static void EnsureCellDataPanelScrollUnderInset(RectTransform insetRt, RectTransform textRt)
-        {
-            if (insetRt == null || textRt == null)
-                return;
-
-            Transform scrollRootT = insetRt.Find(CellDataPanelScrollRootName);
-            if (scrollRootT == null)
-            {
-                GameObject scrollGo = new GameObject(CellDataPanelScrollRootName, typeof(RectTransform), typeof(ScrollRect));
-                scrollRootT = scrollGo.transform;
-                scrollRootT.SetParent(insetRt, false);
-                RectTransform scrollRt = scrollGo.GetComponent<RectTransform>();
-                scrollRt.anchorMin = Vector2.zero;
-                scrollRt.anchorMax = Vector2.one;
-                scrollRt.offsetMin = Vector2.zero;
-                scrollRt.offsetMax = Vector2.zero;
-
-                GameObject vpGo = new GameObject(CellDataPanelViewportName, typeof(RectTransform), typeof(RectMask2D), typeof(Image));
-                vpGo.transform.SetParent(scrollRootT, false);
-                RectTransform vpRt = vpGo.GetComponent<RectTransform>();
-                vpRt.anchorMin = Vector2.zero;
-                vpRt.anchorMax = Vector2.one;
-                vpRt.offsetMin = Vector2.zero;
-                vpRt.offsetMax = Vector2.zero;
-                Image vpImg = vpGo.GetComponent<Image>();
-                vpImg.color = new Color(0f, 0f, 0f, 0.01f);
-                vpImg.raycastTarget = true;
-
-                GameObject contentGo = new GameObject(CellDataPanelContentName, typeof(RectTransform));
-                contentGo.transform.SetParent(vpGo.transform, false);
-                RectTransform contentRt = contentGo.GetComponent<RectTransform>();
-                contentRt.anchorMin = new Vector2(0f, 1f);
-                contentRt.anchorMax = new Vector2(1f, 1f);
-                contentRt.pivot = new Vector2(0.5f, 1f);
-                contentRt.anchoredPosition = Vector2.zero;
-                contentRt.sizeDelta = Vector2.zero;
-
-                ScrollRect sr = scrollGo.GetComponent<ScrollRect>();
-                sr.viewport = vpRt;
-                sr.content = contentRt;
-                sr.horizontal = false;
-                sr.vertical = true;
-                sr.movementType = ScrollRect.MovementType.Clamped;
-                sr.scrollSensitivity = 24f;
-                sr.inertia = true;
-                sr.decelerationRate = 0.135f;
-            }
-
-            Transform viewportT = scrollRootT.Find(CellDataPanelViewportName);
-            Transform contentTransform = viewportT != null ? viewportT.Find(CellDataPanelContentName) : null;
-            RectTransform contentParent = contentTransform != null ? contentTransform.GetComponent<RectTransform>() : null;
-            if (contentParent == null)
-                return;
-
-            textRt.SetParent(contentParent, false);
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.pivot = new Vector2(0.5f, 0.5f);
-            textRt.anchoredPosition = Vector2.zero;
-            textRt.offsetMin = Vector2.zero;
-            textRt.offsetMax = Vector2.zero;
-            textRt.localScale = Vector3.one;
-        }
-
-        /// <summary>
-        /// Size scroll content from text preferred height; enable vertical scroll only when exceeds viewport.
-        /// </summary>
-        private static void UpdateCellDataPanelScrollLayout(RectTransform chromeRt, Text dbgText)
-        {
-            if (chromeRt == null)
-                return;
-
-            RectTransform insetRt = FindCellDataPanelInset(chromeRt);
-            if (insetRt == null)
-                return;
-
-            Transform scrollRootT = insetRt.Find(CellDataPanelScrollRootName);
-            if (scrollRootT == null)
-                return;
-
-            ScrollRect sr = scrollRootT.GetComponent<ScrollRect>();
-            if (sr == null)
-                return;
-
-            RectTransform viewport = sr.viewport;
-            RectTransform content = sr.content as RectTransform;
-            if (viewport == null || content == null)
-                return;
-
-            Canvas.ForceUpdateCanvases();
-
-            float viewW = Mathf.Max(viewport.rect.width, 40f);
-            float viewH = Mathf.Max(viewport.rect.height, 1f);
-
-            float prefH = EstimateCellDataPanelTextPreferredHeight(dbgText, viewW);
-            float contentH = Mathf.Max(prefH, viewH);
-            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentH);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-
-            bool needScroll = prefH > viewH + 0.5f;
-            sr.vertical = needScroll;
-            sr.enabled = true;
-            if (!needScroll)
-                sr.verticalNormalizedPosition = 1f;
-
-            Canvas.ForceUpdateCanvases();
-        }
-
-        /// <summary>
-        /// Pin grid debug chrome to right edge of HUD layout root (vertically centered) so it
-        /// never covers the bottom toolbar or left ControlPanel. Replaces the legacy stack-above-
-        /// ControlPanel/minimap layout that obscured toolbar buttons.
-        /// </summary>
-        private static void AlignCellDataPanel(RectTransform chromeRt)
-        {
-            if (chromeRt == null)
-                return;
-            Canvas.ForceUpdateCanvases();
-            EnsureCellDataPanelHudMount(chromeRt);
-
-            RectTransform parentRt = chromeRt.parent as RectTransform;
-            if (parentRt == null)
-                return;
-
-            const float rightMargin = 16f;
-            float side = Mathf.Min(CellDataPanelMaxSquareSide, parentRt.rect.height * 0.5f);
-            side = Mathf.Max(side, 1f);
-
-            chromeRt.anchorMin = new Vector2(1f, 0.5f);
-            chromeRt.anchorMax = new Vector2(1f, 0.5f);
-            chromeRt.pivot = new Vector2(1f, 0.5f);
-            chromeRt.anchoredPosition = new Vector2(-rightMargin, 0f);
-            chromeRt.sizeDelta = new Vector2(side, side);
-        }
-
-        /// <summary>
-        /// Square grid debug chrome above reference panel top; cap top below <see cref="DataPanelButtonsObjectName"/> when present.
-        /// </summary>
-        private static void CellDataPanelApplySquareLayout(
-            RectTransform chromeRt,
-            RectTransform parentRt,
-            float minX,
-            float referenceTopY,
-            float gapAboveReference,
-            float widthBand)
-        {
-            float minChromeBottom = referenceTopY + gapAboveReference;
-
-            float limitTop = float.PositiveInfinity;
-            Transform dpTransform = parentRt.Find(DataPanelButtonsObjectName);
-            RectTransform dpRt = dpTransform != null ? dpTransform.GetComponent<RectTransform>() : null;
-            if (dpRt != null && CellDataPanelTryGetRectBoundsInParent(parentRt, dpRt, out _, out _, out float dpMinY, out _))
-                limitTop = dpMinY - CellDataPanelGapBelowDataPanelButtons;
-
-            float verticalRoom = limitTop - minChromeBottom;
-            if (!float.IsFinite(verticalRoom) || verticalRoom > 5000f)
-                verticalRoom = CellDataPanelMaxSquareSide;
-            verticalRoom = Mathf.Max(verticalRoom, 1f);
-
-            float panelW = Mathf.Max(widthBand, 44f);
-            float side = Mathf.Min(Mathf.Min(panelW, CellDataPanelMaxSquareSide), verticalRoom);
-            side = Mathf.Max(side, 1f);
-
-            float chromeBottomY = minChromeBottom;
-            float chromeTopY = chromeBottomY + side;
-            if (float.IsFinite(limitTop) && chromeTopY > limitTop)
-            {
-                chromeBottomY = limitTop - side;
-                chromeBottomY = Mathf.Max(chromeBottomY, minChromeBottom);
-            }
-
-            Rect parentRect = parentRt.rect;
-            Vector2 anchorRefBottomLeft = new Vector2(
-                Mathf.Lerp(parentRect.xMin, parentRect.xMax, 0f),
-                Mathf.Lerp(parentRect.yMin, parentRect.yMax, 0f));
-            chromeRt.anchorMin = Vector2.zero;
-            chromeRt.anchorMax = Vector2.zero;
-            chromeRt.pivot = Vector2.zero;
-            chromeRt.anchoredPosition = new Vector2(minX, chromeBottomY) - anchorRefBottomLeft;
-            chromeRt.sizeDelta = new Vector2(side, side);
-        }
-
-        /// <summary>
-        /// Place grid debug chrome just above left <c>ControlPanel</c> (square, same width band as toolbar).
-        /// </summary>
-        private static bool TryAlignCellDataPanelToControlPanel(RectTransform chromeRt)
-        {
-            RectTransform parentRt = chromeRt.parent as RectTransform;
-            if (parentRt == null)
-                return false;
-            Transform cpTransform = parentRt.Find(ControlPanelObjectName);
-            RectTransform cpRt = cpTransform != null ? cpTransform.GetComponent<RectTransform>() : null;
-            if (cpRt == null)
-                return false;
-            if (!CellDataPanelTryGetRectBoundsInParent(parentRt, cpRt, out float minX, out float maxX, out _, out float cpMaxY))
-                return false;
-            float panelW = maxX - minX;
-            if (panelW < 32f)
-                panelW = Mathf.Max(cpRt.rect.width, 80f);
-
-            CellDataPanelApplySquareLayout(
-                chromeRt,
-                parentRt,
-                minX,
-                cpMaxY,
-                CellDataPanelGapAboveControlPanel,
-                panelW);
-            return true;
-        }
-
-        /// <summary>
-        /// Place grid debug chrome above minimap, same width band, square (capped below <see cref="DataPanelButtonsObjectName"/> when present).
-        /// Do NOT copy <c>MiniMapPanel</c> stretch anchors: anchors (0,0)-(1,1) → height = parent.height + sizeDelta.y, so small positive sizeDelta.y fills almost entire screen.
-        /// </summary>
-        private static void AlignCellDataPanelToMiniMap(RectTransform chromeRt)
-        {
-            if (chromeRt == null)
-                return;
-            Canvas.ForceUpdateCanvases();
-            EnsureCellDataPanelHudMount(chromeRt);
-            RectTransform parentRt = chromeRt.parent as RectTransform;
-            if (parentRt == null)
-                return;
-            Transform mmTransform = parentRt.Find("MiniMapPanel");
-            RectTransform mmRt = mmTransform != null ? mmTransform.GetComponent<RectTransform>() : null;
-            if (mmRt == null)
-                return;
-
-            if (!CellDataPanelTryGetRectBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out _, out float mmMaxY))
-                return;
-            float mmWidth = maxX - minX;
-            if (mmWidth < 32f)
-                mmWidth = Mathf.Max(mmRt.rect.width, 80f);
-
-            CellDataPanelApplySquareLayout(
-                chromeRt,
-                parentRt,
-                minX,
-                mmMaxY,
-                CellDataPanelGapAboveMinimap,
-                mmWidth);
-        }
-
-        /// <summary>
-        /// Axis-aligned bounds of <paramref name="childRt"/> in <paramref name="parentRt"/> local space.
-        /// </summary>
-        private static bool CellDataPanelTryGetRectBoundsInParent(RectTransform parentRt, RectTransform childRt, out float minX, out float maxX, out float minY, out float maxY)
-        {
-            minX = maxX = minY = maxY = 0f;
-            if (parentRt == null || childRt == null)
-                return false;
-            Rect r = childRt.rect;
-            Vector3[] corners =
-            {
-                new Vector3(r.xMin, r.yMin, 0f),
-                new Vector3(r.xMin, r.yMax, 0f),
-                new Vector3(r.xMax, r.yMax, 0f),
-                new Vector3(r.xMax, r.yMin, 0f),
-            };
-            minX = minY = float.PositiveInfinity;
-            maxX = maxY = float.NegativeInfinity;
-            for (int i = 0; i < 4; i++)
-            {
-                Vector3 pl = parentRt.InverseTransformPoint(childRt.TransformPoint(corners[i]));
-                minX = Mathf.Min(minX, pl.x);
-                maxX = Mathf.Max(maxX, pl.x);
-                minY = Mathf.Min(minY, pl.y);
-                maxY = Mathf.Max(maxY, pl.y);
-            }
-            return maxX > minX && maxY > minY;
-        }
-
-        /// <summary>
-        /// Re-size/place chrome after <see cref="gridCoordinatesText"/> changes (Awake uses empty string; full debug grows height).
-        /// </summary>
-        private void RefreshCellDataPanelLayout()
-        {
-            if (gridCoordinatesText == null)
-                return;
-            Transform chromeRoot = FindCellDataPanelRoot(gridCoordinatesText.transform);
-            if (chromeRoot == null)
-                return;
-            RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
-            if (chromeRt == null)
-                return;
-            AlignCellDataPanel(chromeRt);
-            UpdateCellDataPanelScrollLayout(chromeRt, gridCoordinatesText);
-        }
-
-        private static float EstimateCellDataPanelTextPreferredHeight(Text text, float innerWidth)
-        {
-            if (text == null)
-                return 64f;
-            string sample = string.IsNullOrEmpty(text.text) ? " " : text.text;
-            float w = Mathf.Max(innerWidth, 40f);
-            TextGenerationSettings settings = text.GetGenerationSettings(new Vector2(w, 0.01f));
-            float px = text.cachedTextGeneratorForLayout.GetPreferredHeight(sample, settings);
-            return Mathf.Clamp(px, 28f, 10000f);
-        }
-
-        private void ApplyCellDataPanelTextStyle()
-        {
-            if (gridCoordinatesText == null)
-                return;
-            gridCoordinatesText.color = Color.white;
-            gridCoordinatesText.fontSize = hudUiTheme != null ? Mathf.Max(hudUiTheme.FontSizeCaption + 6, 17) : 18;
-            gridCoordinatesText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            gridCoordinatesText.verticalOverflow = VerticalWrapMode.Overflow;
-            // Scene default was MiddleLeft — large vertical chrome looked like "padding" while copy stayed flush left.
-            gridCoordinatesText.alignment = TextAnchor.UpperLeft;
-        }
-
-        /// <summary>
-        /// Add horizontal demand gauges under R/C/I stat rows if missing (taller fills, heavy-zoning tint in <see cref="UIManager.Hud"/>).
-        /// </summary>
         private void EnsureDemandGaugeBars()
         {
-            EnsureDemandGaugeForPanel(demandResidentialText, "DemandResidentialPanel", ref demandResidentialBarFill);
-            EnsureDemandGaugeForPanel(demandCommercialText, "DemandCommercialPanel", ref demandCommercialBarFill);
-            EnsureDemandGaugeForPanel(demandIndustrialText, "DemandIndustrialPanel", ref demandIndustrialBarFill);
+            _themeService.EnsureDemandGaugeForPanel(demandResidentialText, "DemandResidentialPanel", ref demandResidentialBarFill,
+                hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.BorderSubtle : null, hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.SurfaceToolbar : null);
+            _themeService.EnsureDemandGaugeForPanel(demandCommercialText, "DemandCommercialPanel", ref demandCommercialBarFill,
+                hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.BorderSubtle : null, hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.SurfaceToolbar : null);
+            _themeService.EnsureDemandGaugeForPanel(demandIndustrialText, "DemandIndustrialPanel", ref demandIndustrialBarFill,
+                hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.BorderSubtle : null, hudUiTheme != null ? (UnityEngine.Color?)hudUiTheme.SurfaceToolbar : null);
         }
 
-        private void EnsureDemandGaugeForPanel(Text anchorText, string panelExactName, ref Image fillImageRef)
-        {
-            if (anchorText == null)
-                return;
-            Transform panel = FindNamedAncestor(anchorText.transform, panelExactName);
-            if (panel == null)
-                return;
-            Transform existing = panel.Find("Fe50DemandGauge");
-            if (existing != null)
-            {
-                RectTransform gaugeRtExisting = existing.GetComponent<RectTransform>();
-                if (gaugeRtExisting != null)
-                {
-                    gaugeRtExisting.offsetMin = new Vector2(8f, 5f);
-                    gaugeRtExisting.offsetMax = new Vector2(-8f, 18f);
-                }
+        private void ApplyBodyStatRow(Text textField, bool styleSiblingLabels = true) =>
+            _themeService.ApplyBodyStatRow(textField, hudUiTheme.FontSizeBody, hudUiTheme.TextPrimary, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary, styleSiblingLabels);
 
-                if (fillImageRef == null)
-                {
-                    Transform fillT = existing.Find("Fe50DemandGaugeFill");
-                    if (fillT != null)
-                        fillImageRef = fillT.GetComponent<Image>();
-                }
+        private void ApplyCaptionText(Text textField) =>
+            _themeService.ApplyCaptionText(textField, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
 
-                return;
-            }
+        private void ApplyTaxPanelBudgetRowTexts() =>
+            _themeService.ApplyTaxPanelBudgetRowTexts(residentialTaxText, hudUiTheme.FontSizeBody, hudUiTheme.TextPrimary, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
 
-            var panelBg = panel.GetComponent<Image>();
-            Sprite sprite = panelBg != null ? panelBg.sprite : null;
+        private void EnsureTaxPanelDividerStripes() =>
+            _themeService.EnsureTaxPanelDividerStripes(residentialTaxText, hudUiTheme.BorderSubtle);
 
-            GameObject gauge = new GameObject("Fe50DemandGauge", typeof(RectTransform));
-            gauge.transform.SetParent(panel, false);
-            RectTransform gaugeRt = gauge.GetComponent<RectTransform>();
-            gaugeRt.anchorMin = new Vector2(0f, 0f);
-            gaugeRt.anchorMax = new Vector2(1f, 0f);
-            gaugeRt.pivot = new Vector2(0.5f, 0f);
-            gaugeRt.offsetMin = new Vector2(8f, 5f);
-            gaugeRt.offsetMax = new Vector2(-8f, 18f);
+        private void ApplyLoadGameAndFundsPanels() =>
+            _themeService.ApplyLoadGameAndFundsPanels(loadGameMenu, insufficientFundsPanel, hudUiTheme.ModalDimmerColor, hudUiTheme.SurfaceCardHud);
 
-            GameObject trackGo = new GameObject("Fe50DemandGaugeTrack", typeof(RectTransform), typeof(Image));
-            trackGo.transform.SetParent(gauge.transform, false);
-            RectTransform trackRt = trackGo.GetComponent<RectTransform>();
-            trackRt.anchorMin = Vector2.zero;
-            trackRt.anchorMax = Vector2.one;
-            trackRt.offsetMin = Vector2.zero;
-            trackRt.offsetMax = Vector2.zero;
-            Image trackImg = trackGo.GetComponent<Image>();
-            trackImg.sprite = sprite;
-            trackImg.type = Image.Type.Simple;
-            trackImg.raycastTarget = false;
-            Color trackCol = hudUiTheme != null ? hudUiTheme.BorderSubtle : new Color(0.12f, 0.13f, 0.16f, 1f);
-            trackCol.a = Mathf.Max(0.55f, trackCol.a * 0.85f);
-            trackImg.color = trackCol;
+        private void ApplyCellDataPanelTextStyle() =>
+            _themeService.ApplyCellDataPanelTextStyle(gridCoordinatesText, hudUiTheme != null ? hudUiTheme.FontSizeCaption : 11);
 
-            GameObject fillGo = new GameObject("Fe50DemandGaugeFill", typeof(RectTransform), typeof(Image));
-            fillGo.transform.SetParent(gauge.transform, false);
-            RectTransform fillRt = fillGo.GetComponent<RectTransform>();
-            fillRt.anchorMin = Vector2.zero;
-            fillRt.anchorMax = Vector2.one;
-            fillRt.offsetMin = Vector2.zero;
-            fillRt.offsetMax = Vector2.zero;
-            Image fillImg = fillGo.GetComponent<Image>();
-            fillImg.sprite = sprite;
-            fillImg.type = Image.Type.Filled;
-            fillImg.fillMethod = Image.FillMethod.Horizontal;
-            fillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
-            fillImg.fillAmount = 0.5f;
-            fillImg.raycastTarget = false;
-            fillImageRef = fillImg;
-        }
+        private void RefreshCellDataPanelLayout() =>
+            _themeService.RefreshCellDataPanelLayout(gridCoordinatesText);
 
-        private static Transform FindNamedAncestor(Transform t, string exactName)
-        {
-            while (t != null)
-            {
-                if (t.name == exactName)
-                    return t;
-                t = t.parent;
-            }
-
-            return null;
-        }
-
+        // §Open Questions (Q5=5b dead-public sweep):
+        // ApplyHeroStatRow — zero external callers; retained for sibling-partial potential use.
+        // ApplyToolbarMoneyRow — zero external callers; retained for sibling-partial potential use.
         private void ApplyHeroStatRow(Text valueText)
         {
-            if (valueText == null)
-                return;
-            StyleSiblingLabelTexts(valueText.transform, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
-            valueText.fontSize = hudUiTheme.FontSizeDisplay;
-            valueText.color = hudUiTheme.TextPrimary;
-            valueText.supportRichText = true;
+            if (hudUiTheme == null) return;
+            _themeService.ApplyHeroStatRow(valueText, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary, hudUiTheme.FontSizeDisplay, hudUiTheme.TextPrimary);
         }
 
-        /// <summary>
-        /// Toolbar chip next to ShowTaxesButton: compact menu size, rich money/delta, no sibling restyling (avoid touching unrelated HUD texts).
-        /// </summary>
         private void ApplyToolbarMoneyRow(Text valueText)
         {
-            if (valueText == null || hudUiTheme == null)
-                return;
-            valueText.fontSize = hudUiTheme.MenuButtonFontSize;
-            valueText.color = hudUiTheme.TextPrimary;
-            valueText.supportRichText = true;
-            valueText.horizontalOverflow = HorizontalWrapMode.Overflow;
-            valueText.verticalOverflow = VerticalWrapMode.Truncate;
-        }
-
-        private void ApplyBodyStatRow(Text textField, bool styleSiblingLabels = true)
-        {
-            if (textField == null)
-                return;
-            if (styleSiblingLabels)
-                StyleSiblingLabelTexts(textField.transform, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
-            textField.fontSize = hudUiTheme.FontSizeBody;
-            textField.color = hudUiTheme.TextPrimary;
-            textField.supportRichText = true;
-        }
-
-        /// <summary>
-        /// TaxPanel holds many <see cref="Text"/> rows as direct children → <see cref="ApplyBodyStatRow"/> sibling styling would cross-bleed.
-        /// Pass: caption tokens for static "%" titles; body tokens for growth budget value labels only.
-        /// </summary>
-        private void ApplyTaxPanelBudgetRowTexts()
-        {
-            if (hudUiTheme == null || residentialTaxText == null)
-                return;
-            Transform taxPanel = residentialTaxText.transform.parent;
-            if (taxPanel == null)
-                return;
-
-            foreach (Transform child in taxPanel)
-            {
-                Text t = child.GetComponent<Text>();
-                if (t == null)
-                    continue;
-                string n = child.name;
-                if (n == "ResidentialTaxText" || n.StartsWith("CommercialTaxText", StringComparison.Ordinal) || n == "IndustrialTaxText")
-                    continue;
-
-                if (n == "TaxGrowthBudgetPercentLabel" ||
-                    (n.Contains("GrowthLabel", StringComparison.Ordinal) && n.Contains("(1)", StringComparison.Ordinal)))
-                {
-                    ApplyCaptionText(t);
-                    continue;
-                }
-
-                if (n == "TotalGrowthLabel" || n == "RoadGrowthLabel" || n == "EnergyGrowthLabel" || n == "WaterGrowthLabel" || n == "ZoningGrowthLabel")
-                    ApplyBodyStatRow(t, styleSiblingLabels: false);
-            }
-        }
-
-        /// <summary>
-        /// Add thin horizontal rules between growth-budget sliders, category sliders, tax rows if missing (runtime Tax panel dividers).
-        /// </summary>
-        private void EnsureTaxPanelDividerStripes()
-        {
-            if (hudUiTheme == null || residentialTaxText == null)
-                return;
-            Transform taxPanel = residentialTaxText.transform.parent;
-            if (taxPanel == null || taxPanel.Find("Fe50TaxDividerUpper") != null)
-                return;
-
-            var panelBg = taxPanel.GetComponent<Image>();
-            Sprite stripeSprite = panelBg != null ? panelBg.sprite : null;
-
-            Color line = hudUiTheme.BorderSubtle;
-            CreateTaxPanelDivider(taxPanel, "Fe50TaxDividerUpper", stripeSprite, line, new Vector2(0f, 48f), new Vector2(200f, 1f));
-            CreateTaxPanelDivider(taxPanel, "Fe50TaxDividerLower", stripeSprite, line, new Vector2(0f, -40f), new Vector2(200f, 1f));
-        }
-
-        private static void CreateTaxPanelDivider(Transform parent, string objectName, Sprite sprite, Color lineColor, Vector2 anchoredPosition, Vector2 sizeDelta)
-        {
-            GameObject go = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = sizeDelta;
-            rt.anchoredPosition = anchoredPosition;
-            var img = go.GetComponent<Image>();
-            img.sprite = sprite;
-            img.type = Image.Type.Simple;
-            img.raycastTarget = false;
-            img.color = lineColor;
-        }
-
-        private void ApplyCaptionText(Text textField)
-        {
-            if (textField == null)
-                return;
-            textField.fontSize = hudUiTheme.FontSizeCaption;
-            textField.color = hudUiTheme.TextSecondary;
-        }
-
-        private static void StyleSiblingLabelTexts(Transform valueTransform, int captionSize, Color captionColor)
-        {
-            Transform parent = valueTransform.parent;
-            if (parent == null)
-                return;
-            foreach (Transform child in parent)
-            {
-                if (child == valueTransform)
-                    continue;
-                var t = child.GetComponent<Text>();
-                if (t == null)
-                    continue;
-                t.fontSize = captionSize;
-                t.color = captionColor;
-            }
-        }
-
-        /// <summary>
-        /// Walk parents from serialized HUD <see cref="Text"/> until <paramref name="panelName"/>; tint its <see cref="Image"/>.
-        /// Supports inactive stat panels (avoids <c>GameObject.Find</c> missing disabled objects).
-        /// </summary>
-        private void TintPanelRootBehindReference(string panelName, Text anchorText, Color color)
-        {
-            if (anchorText == null)
-                return;
-            Transform t = anchorText.transform;
-            for (int depth = 0; depth < 24 && t != null; depth++)
-            {
-                if (t.name == panelName)
-                {
-                    var image = t.GetComponent<Image>();
-                    if (image != null)
-                        image.color = color;
-                    return;
-                }
-                t = t.parent;
-            }
-        }
-
-        private void ApplyLoadGameAndFundsPanels()
-        {
-            if (loadGameMenu != null)
-            {
-                var rootImage = loadGameMenu.GetComponent<Image>();
-                if (rootImage != null)
-                    rootImage.color = hudUiTheme.ModalDimmerColor;
-                foreach (Transform child in loadGameMenu.transform)
-                {
-                    var img = child.GetComponent<Image>();
-                    if (img != null)
-                    {
-                        img.color = hudUiTheme.SurfaceCardHud;
-                        break;
-                    }
-                }
-            }
-
-            if (insufficientFundsPanel != null)
-            {
-                var rootImage = insufficientFundsPanel.GetComponent<Image>();
-                if (rootImage != null)
-                    rootImage.color = hudUiTheme.ModalDimmerColor;
-                foreach (Transform child in insufficientFundsPanel.transform)
-                {
-                    var img = child.GetComponent<Image>();
-                    if (img != null)
-                    {
-                        img.color = hudUiTheme.SurfaceCardHud;
-                        break;
-                    }
-                }
-            }
+            if (hudUiTheme == null) return;
+            _themeService.ApplyToolbarMoneyRow(valueText, hudUiTheme.MenuButtonFontSize, hudUiTheme.TextPrimary);
         }
     }
 }
