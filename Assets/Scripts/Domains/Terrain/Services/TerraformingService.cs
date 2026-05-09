@@ -20,6 +20,8 @@ namespace Domains.Terrain.Services
         private readonly System.Func<int, int, Territory.Terrain.HeightMap, bool> _shouldSkipRoadTerraformSurfaceAt;
         private readonly System.Func<int, int, Territory.Terrain.TerrainSlopeType> _getTerrainSlopeTypeAt;
         private readonly System.Func<int, int, CityCell> _getCell;
+        private readonly System.Action<int, int> _restoreTerrainForCell;
+        private readonly System.Func<int, int, bool> _isWaterAt;
         private readonly bool _expandCutThroughAdjacentByOneStep;
         private readonly int _cutThroughMinCellsFromMapEdge;
 
@@ -31,6 +33,8 @@ namespace Domains.Terrain.Services
             System.Func<int, int, Territory.Terrain.HeightMap, bool> shouldSkipRoadTerraformSurfaceAt,
             System.Func<int, int, Territory.Terrain.TerrainSlopeType> getTerrainSlopeTypeAt,
             System.Func<int, int, CityCell> getCell,
+            System.Action<int, int> restoreTerrainForCell = null,
+            System.Func<int, int, bool> isWaterAt = null,
             bool expandCutThroughAdjacentByOneStep = false,
             int cutThroughMinCellsFromMapEdge = 2)
         {
@@ -41,6 +45,8 @@ namespace Domains.Terrain.Services
             _shouldSkipRoadTerraformSurfaceAt = shouldSkipRoadTerraformSurfaceAt;
             _getTerrainSlopeTypeAt = getTerrainSlopeTypeAt;
             _getCell = getCell;
+            _restoreTerrainForCell = restoreTerrainForCell;
+            _isWaterAt = isWaterAt;
             _expandCutThroughAdjacentByOneStep = expandCutThroughAdjacentByOneStep;
             _cutThroughMinCellsFromMapEdge = cutThroughMinCellsFromMapEdge;
         }
@@ -708,6 +714,7 @@ namespace Domains.Terrain.Services
                 if (pathCell == null) continue;
                 int h = pathCell.GetCellInstanceHeight();
                 if (h <= 0) continue;
+                if (!CellQualifiesForDeckDisplayLipRelaxed(x, y, h, heightMap)) continue;
                 if (h > best) best = h;
             }
 
@@ -725,6 +732,195 @@ namespace Domains.Terrain.Services
         {
             if (!heightMap.IsValidPosition(nx, ny)) return -1;
             return heightMap.GetHeight(nx, ny);
+        }
+
+        static int MaxExcluding(int a, int b, int c, int d, int e, int f, int g)
+        {
+            int max = -1;
+            if (a >= 0) max = Mathf.Max(max, a);
+            if (b >= 0) max = Mathf.Max(max, b);
+            if (c >= 0) max = Mathf.Max(max, c);
+            if (d >= 0) max = Mathf.Max(max, d);
+            if (e >= 0) max = Mathf.Max(max, e);
+            if (f >= 0) max = Mathf.Max(max, f);
+            if (g >= 0) max = Mathf.Max(max, g);
+            return max;
+        }
+
+        /// <summary>Applies terraforming to a cell: modifies heightMap and restores terrain visual.</summary>
+        public void ApplyTerraform(int x, int y, TerraformAction action, OrthogonalDirection orthogonalDir, bool allowLowering = true, int? baseHeight = null)
+        {
+            var heightMap = _getHeightMap?.Invoke();
+            if (heightMap == null || !heightMap.IsValidPosition(x, y)) return;
+
+            int currentHeight = heightMap.GetHeight(x, y);
+            int newHeight = ComputeNewHeight(heightMap, x, y, action, orthogonalDir, baseHeight);
+            if (newHeight < 0) return;
+
+            if (!allowLowering && newHeight < currentHeight) return;
+
+            heightMap.SetHeight(x, y, newHeight);
+            _restoreTerrainForCell?.Invoke(x, y);
+        }
+
+        /// <summary>Reverts terraforming for preview cancel: restores original height.</summary>
+        public void RevertTerraform(int x, int y, int originalHeight)
+        {
+            var heightMap = _getHeightMap?.Invoke();
+            if (heightMap == null || !heightMap.IsValidPosition(x, y)) return;
+
+            heightMap.SetHeight(x, y, originalHeight);
+            _restoreTerrainForCell?.Invoke(x, y);
+        }
+
+        int ComputeNewHeight(Territory.Terrain.HeightMap heightMap, int x, int y, TerraformAction action, OrthogonalDirection orthogonalDir, int? baseHeight = null)
+        {
+            int n = GetNeighborHeight(heightMap, x + 1, y);
+            int s = GetNeighborHeight(heightMap, x - 1, y);
+            int e = GetNeighborHeight(heightMap, x, y - 1);
+            int w = GetNeighborHeight(heightMap, x, y + 1);
+            int ne = GetNeighborHeight(heightMap, x + 1, y - 1);
+            int nw = GetNeighborHeight(heightMap, x + 1, y + 1);
+            int se = GetNeighborHeight(heightMap, x - 1, y - 1);
+            int sw = GetNeighborHeight(heightMap, x - 1, y + 1);
+
+            if (action == TerraformAction.Flatten)
+            {
+                if (baseHeight.HasValue) return baseHeight.Value;
+                int maxN = Mathf.Max(n, s, e, w, ne, nw, se, sw);
+                return maxN >= 0 ? maxN : heightMap.GetHeight(x, y);
+            }
+
+            if (action == TerraformAction.DiagonalToOrthogonal)
+            {
+                int maxOthers;
+                int higherNeighbor;
+                switch (orthogonalDir)
+                {
+                    case OrthogonalDirection.East:
+                        maxOthers = MaxExcluding(n, s, e, ne, nw, se, sw);
+                        higherNeighbor = w;
+                        break;
+                    case OrthogonalDirection.West:
+                        maxOthers = MaxExcluding(n, s, w, ne, nw, se, sw);
+                        higherNeighbor = e;
+                        break;
+                    case OrthogonalDirection.North:
+                        maxOthers = MaxExcluding(s, e, w, ne, nw, se, sw);
+                        higherNeighbor = n;
+                        break;
+                    case OrthogonalDirection.South:
+                        maxOthers = MaxExcluding(n, e, w, ne, nw, se, sw);
+                        higherNeighbor = s;
+                        break;
+                    default:
+                        return -1;
+                }
+                if (higherNeighbor >= 0 && higherNeighbor > maxOthers)
+                    return maxOthers >= 0 ? maxOthers : heightMap.GetHeight(x, y);
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Builds a PathTerraformPlan with no terraform height mutations (all TerraformAction.None), water-bridge relaxation on,
+        /// and waterBridgeDeckDisplayHeight from TryAssignWaterBridgeDeckDisplayHeight.
+        /// expandedCardinalPath must already be cardinal.
+        /// </summary>
+        public bool TryBuildDeckSpanOnlyWaterBridgePlan(IList<Vector2> expandedCardinalPath, out Territory.Terrain.PathTerraformPlan plan)
+        {
+            plan = null;
+            var heightMap = _getHeightMap?.Invoke();
+            if (heightMap == null || expandedCardinalPath == null || expandedCardinalPath.Count == 0 || _getCell == null)
+                return false;
+
+            plan = new Territory.Terrain.PathTerraformPlan
+            {
+                isValid = true,
+                isCutThrough = false,
+                waterBridgeTerraformRelaxation = true
+            };
+
+            int x0 = (int)expandedCardinalPath[0].x;
+            int y0 = (int)expandedCardinalPath[0].y;
+            plan.baseHeight = heightMap.IsValidPosition(x0, y0) ? heightMap.GetHeight(x0, y0) : 1;
+
+            plan.pathCells.Clear();
+            plan.adjacentCells.Clear();
+
+            for (int i = 0; i < expandedCardinalPath.Count; i++)
+            {
+                int x = (int)expandedCardinalPath[i].x;
+                int y = (int)expandedCardinalPath[i].y;
+                if (!heightMap.IsValidPosition(x, y) || _getCell(x, y) == null)
+                {
+                    plan.isValid = false;
+                    plan = null;
+                    return false;
+                }
+
+                int h = heightMap.GetHeight(x, y);
+                Territory.Terrain.TerrainSlopeType slope = Territory.Terrain.TerrainSlopeType.Flat;
+                if (!_isRegisteredOpenWaterAt(x, y) && !_isWaterSlopeCell(x, y))
+                    slope = _getTerrainSlopeTypeAt(x, y);
+
+                plan.pathCells.Add(new Territory.Terrain.PathTerraformPlan.CellPlan
+                {
+                    position = new Vector2Int(x, y),
+                    action = TerraformAction.None,
+                    direction = OrthogonalDirection.North,
+                    originalHeight = h,
+                    targetHeight = h,
+                    postTerraformSlopeType = slope
+                });
+            }
+
+            plan.waterBridgeDeckDisplayHeight = 0;
+            TryAssignWaterBridgeDeckDisplayHeight(plan, expandedCardinalPath, heightMap);
+            if (plan.waterBridgeDeckDisplayHeight <= 0)
+            {
+                plan = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        bool CellQualifiesForDeckDisplayLipRelaxed(int x, int y, int h, Territory.Terrain.HeightMap heightMap)
+        {
+            if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
+
+            int[] cdx = { 1, -1, 0, 0 };
+            int[] cdy = { 0, 0, 1, -1 };
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + cdx[d];
+                int ny = y + cdy[d];
+                if (!heightMap.IsValidPosition(nx, ny)) continue;
+                int hn = heightMap.GetHeight(nx, ny);
+                if (hn >= h) continue;
+                if (_isRegisteredOpenWaterAt(nx, ny) || _isWaterSlopeCell(nx, ny))
+                    return true;
+                if (DryCellTouchesRegisteredWaterForDeckHeight(nx, ny))
+                    return true;
+            }
+
+            return false;
+        }
+
+        bool DryCellTouchesRegisteredWaterForDeckHeight(int x, int y)
+        {
+            if (_isRegisteredOpenWaterAt(x, y) || _isWaterSlopeCell(x, y)) return true;
+            if (_isWaterAt == null) return false;
+
+            int[] mdx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+            int[] mdy = { 0, 0, 1, -1, 1, -1, 1, -1 };
+            for (int d = 0; d < 8; d++)
+            {
+                if (_isWaterAt(x + mdx[d], y + mdy[d])) return true;
+            }
+            return false;
         }
     }
 }
