@@ -125,7 +125,14 @@ if (existsSync(uiBakeHandlerPath)) {
 // dispatched through KindRendererMatrix or BakeChildByKind directly.
 // "panel" = sub-widget container (inner kind is authoritative via params_json.kind).
 // "subtype-card" = internal template within subtype-picker-strip composite.
-const OUTER_KIND_EXCLUSIONS = new Set(['panel', 'subtype-card']);
+const OUTER_KIND_EXCLUSIONS = new Set([
+  'panel',
+  'subtype-card',
+  'modal-card',     // stage 5.5 pre-pop (cityscene B4) — backdrop + center + content-replace container
+  'info-dock',      // stage 5.5 pre-pop (cityscene B5) — right-edge dock container
+  'field-list',     // stage 5.5 pre-pop (cityscene B5) — row-list container
+  'toast-stack',    // stage 5.5 pre-pop (cityscene B5) — vertical toast container
+]);
 
 // ── NormalizeChildKind aliases (from UiBakeHandler.cs NormalizeChildKind) ─
 // Kinds that are aliased to covered kinds are considered covered.
@@ -137,6 +144,19 @@ const aliases = new Map([
   ['view-slot', 'view-slot'],
   ['icon-button', 'illuminated-button'],
   ['destructive-confirm-button', 'confirm-button'],
+  // stage 5.5 pre-pop (cityscene B2..B5) — new kinds aliased to existing covered kinds
+  // pre-population so validate:bake-handler-kind-coverage stays GREEN before each
+  // panel migration ships its own renderer / switch arm.
+  ['tab-strip', 'illuminated-button'],          // stage 5.5 pre-pop (cityscene B2) — tabs = button-click
+  ['chart', 'themed-label'],                    // stage 5.5 pre-pop (cityscene B2) — read-only data display
+  ['range-tabs', 'illuminated-button'],         // stage 5.5 pre-pop (cityscene B2) — button group w/ selection
+  ['stacked-bar-row', 'segmented-readout'],     // stage 5.5 pre-pop (cityscene B2) — segmented horizontal data
+  ['service-row', 'themed-label'],              // stage 5.5 pre-pop (cityscene B2) — icon + 2 labels read-only
+  ['slider-row-numeric', 'slider-row'],         // stage 5.5 pre-pop (cityscene B3) — numeric variant of slider-row
+  ['expense-row', 'segmented-readout'],         // stage 5.5 pre-pop (cityscene B3) — label + numeric readout
+  ['readout-block', 'segmented-readout'],       // stage 5.5 pre-pop (cityscene B3) — multi-segment readout
+  ['minimap-canvas', 'themed-label'],           // stage 5.5 pre-pop (cityscene B5) — RawImage display surface
+  ['toast-card', 'themed-label'],               // stage 5.5 pre-pop (cityscene B5) — transient text display
 ]);
 
 // Combined covered kinds.
