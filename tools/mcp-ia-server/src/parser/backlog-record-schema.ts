@@ -20,6 +20,7 @@ export const E_EMPTY_DEPENDS_ON_RAW = "empty_depends_on_raw";
 export const E_BAD_TASK_KEY_FORMAT = "bad_task_key_format";
 export const E_BAD_LOCATOR_ARRAY_TYPE = "bad_locator_array_type";
 export const E_EMPTY_PARENT_PLAN = "empty_parent_plan";
+export const E_BAD_TASK_KIND = "bad_task_kind";
 
 // ---------------------------------------------------------------------------
 // Minimal YAML scalar parser (schema-aware; matches emitter in
@@ -61,6 +62,8 @@ export interface ParsedYamlScalars {
   surfaces?: string[];
   mcp_slices?: string[];
   skill_hints?: string[];
+  // Schema-v3 blueprint fields
+  task_kind?: string;
   [key: string]: unknown;
 }
 
@@ -145,6 +148,8 @@ export function parseYamlScalars(content: string): ParsedYamlScalars {
 // ---------------------------------------------------------------------------
 
 const VALID_STATUS = new Set(["open", "closed"]);
+const VALID_TASK_KIND = new Set(["ui_from_db", "implementation", "refactor", "docs", "tooling"]);
+const DEFAULT_TASK_KIND = "implementation";
 const ID_RE = /^(TECH|FEAT|BUG|ART|AUDIO)-\d+[a-z]?$/;
 const TASK_KEY_RE = /^T\d+\.\d+(\.\d+)?$/;
 const LOCATOR_ARRAY_FIELDS = ["surfaces", "mcp_slices", "skill_hints"] as const;
@@ -245,6 +250,16 @@ export function validateBacklogRecord(yamlBody: string): ValidateResult {
       `${E_EMPTY_PARENT_PLAN}: parent_plan key is present but value is empty`,
     );
   }
+
+  // 5d. task_kind enum validation (optional field; defaults implementation when absent)
+  if (s.task_kind !== undefined && s.task_kind !== null && s.task_kind !== "") {
+    if (!VALID_TASK_KIND.has(s.task_kind as string)) {
+      errors.push(
+        `${E_BAD_TASK_KIND}: task_kind '${s.task_kind}' is not a valid enum value (expected: ${[...VALID_TASK_KIND].join(" | ")}); default is '${DEFAULT_TASK_KIND}'`,
+      );
+    }
+  }
+  // Absent or empty task_kind → defaults to 'implementation' (no error, no warning)
 
   return { ok: errors.length === 0, errors, warnings };
 }

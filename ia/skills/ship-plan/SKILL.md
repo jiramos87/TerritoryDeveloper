@@ -183,11 +183,29 @@ Cache as `SHARED_CONTEXT` Tier 2 ephemeral block. **Do NOT re-fetch per Task.**
 
 ---
 
-## Phase 4 — Pre-load task_bundle_batch context
+## Phase 4 — Pre-load task_bundle_batch context + blueprint detection
 
 Call `mcp__territory-ia__task_bundle_batch({ slug: "{SLUG}", task_keys: yaml.stages.flatMap(s => s.tasks.map(t => `${t.prefix}-${t.id}`)) })` — single MCP roundtrip pre-loads all task contexts (depends_on resolution + cited-id status maps + commit history shells). Cache as `TASK_BATCH` block.
 
 `task_bundle_batch` is the new MCP tool registered by TECH-12635. Pre-creation of plan rows happens via `master_plan_bundle_apply` at Phase 7 — `task_bundle_batch` here primes the cache for downstream `/ship-cycle` consumption.
+
+### Phase 4.1 — Blueprint loader (task_kind branch)
+
+After `task_bundle_batch` returns, scan each task in `yaml.stages[].tasks[]` for `task_kind` field. Two branches:
+
+**Branch A — `task_kind: ui_from_db`:**
+
+1. Read `ia/templates/blueprints/ui-from-db.md` (file-based canonical blueprint).
+2. Assert file carries the 5 deterministic H2 section ids in order: `Schema-Probe` / `Bake-Apply` / `Render-Check` / `Console-Sweep` / `Tracer`. Missing or reordered → halt with `STOPPED — blueprint_section_ids_invalid: ia/templates/blueprints/ui-from-db.md`.
+3. Check `bake_handler_version:` stamp in blueprint front-comment. If handler version differs from current `UiBakeHandler` schema_version → emit warning `blueprint_version_drift: blueprint={N} handler={M}` in hand-off summary (not a halt — drift surfaces, does not block).
+4. At Phase 5 digest composition: replace the standard 3-section §Plan Digest template with the 5-section blueprint expansion. Per blueprint section (`Schema-Probe` / `Bake-Apply` / `Render-Check` / `Console-Sweep` / `Tracer`), fill `{{slots}}` from task `digest_outline` + stage `exit` fields. Emit the 5 sections as ordered sub-headings under `## §Plan Digest` in the task spec body.
+5. Cache the loaded + slot-filled blueprint as `BLUEPRINT_UI_FROM_DB` for reuse across multiple `ui_from_db` tasks in the same plan run.
+
+**Branch B — all other `task_kind` values (default: `implementation`, `refactor`, `docs`, `tooling`, absent):**
+
+No change — Phase 5 proceeds with standard 3-section digest template. Default branch is strictly unchanged.
+
+Blueprint cache note: `BLUEPRINT_UI_FROM_DB` loaded once per plan invocation (not per task). Second `ui_from_db` task reuses cached blueprint + re-fills slots.
 
 ---
 

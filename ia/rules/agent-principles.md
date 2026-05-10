@@ -11,6 +11,7 @@ alwaysApply: true
 
 - Prefer closed-loop testing (`verify-loop` / `testmode-batch`) over human-in-the-loop. Ask only when bridge/batch can't reach the surface.
 - Unity mutations/reads → `unity_bridge_command` / `unity_bridge_get` end-to-end. Agent owns Editor work; never hand the human a wiring checklist. Missing kind → propose new bridge tool stub in `tools/mcp-ia-server/src/index.ts` BEFORE escalating; only escalate when proposal itself blocked.
+- **Stage = one test file, grown task-by-task (incremental TDD red→green protocol).** Each Stage owns ONE test file under `tests/{plan-slug}/stage{N}-{slug}.test.{mjs|cs}` (Node `--test` for tooling/IA, Unity Test Runner EditMode/PlayMode for runtime C#). First task of the Stage creates the file in failing/red state. Each subsequent task extends the same file with new assertions tied to its phase — file stays red until last task of the Stage. Stage close requires file fully green. Master-plan close runs union of all stage files via single `npm run test:{plan-slug}` step (Node-side) + `unity:testmode-batch --filter {PlanSlugPascal}.*` (Unity-side). Same suite re-runs on every fix forever — no per-fix test invention, no test rot. Test file path written to Stage row + each Task spec §Red-Stage Proof anchor.
 
 ## Token economy + speed
 
