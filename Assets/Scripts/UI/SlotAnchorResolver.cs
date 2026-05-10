@@ -1,12 +1,13 @@
 using UnityEngine;
 
-namespace Territory.Editor.UiBake.SlotResolver
+namespace Territory.UI
 {
     /// <summary>
-    /// Stage 2 static helper: resolves a slot anchor Transform by panel slug using suffix-match fallback.
+    /// Runtime static helper: resolves a slot anchor Transform by panel slug using suffix-match fallback.
     /// Finding F2 — bake emits panel-prefixed slot names (e.g. "main-menu-content-slot"),
     /// controllers hard-code generic names (e.g. "content-slot"). Suffix-match bridges the gap.
     /// Inv #3: runs at mount/apply only, never per-frame.
+    /// Moved from Territory.Editor.UiBake.SlotResolver (Editor-only) to Territory.UI (runtime) — TECH-27541.
     /// </summary>
     public static class SlotAnchorResolver
     {

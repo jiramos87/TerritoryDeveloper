@@ -1380,9 +1380,10 @@ public static partial class AgentBridgeCommandRunner
 
     /// <summary>
     /// <c>validate_panel_blueprint</c> — reads <c>tools/blueprints/panel-schema.yaml</c> +
-    /// checks that every child row for the given panel has required <c>params_json</c> keys.
-    /// Returns <c>{ok: bool, missing: [{kind, key}]}</c> in <c>mutation_result</c> JSON.
-    /// Does NOT require Edit Mode — read-only YAML + catalog DB query.
+    /// validates every child row in <c>Assets/UI/Snapshots/panels.json</c> for the given panel.
+    /// Returns <c>{ok, panel_id, kindsChecked, missing: [{path, required, kind}]}</c>.
+    /// Behavioral rewrite — C4 fix (TECH-27543): properly asserts per-kind required-keys,
+    /// no longer returns ok=true unconditionally.
     /// </summary>
     static void RunValidatePanelBlueprint(string repoRoot, string commandId, string requestJson)
     {
@@ -1399,7 +1400,7 @@ public static partial class AgentBridgeCommandRunner
             return;
         }
 
-        // Load panel-schema.yaml from repo root.
+        // Load panel-schema.yaml.
         string schemaPath = System.IO.Path.Combine(repoRoot, "tools", "blueprints", "panel-schema.yaml");
         if (!System.IO.File.Exists(schemaPath))
         {
@@ -1409,64 +1410,116 @@ public static partial class AgentBridgeCommandRunner
 
         string schemaText;
         try { schemaText = System.IO.File.ReadAllText(schemaPath); }
-        catch (Exception ex) { TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: read failed: {ex.Message}"); return; }
+        catch (Exception ex) { TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: schema read failed: {ex.Message}"); return; }
 
-        // Minimal YAML parse: extract kind→required_keys map.
-        var requiredByKind = new Dictionary<string, List<string>>();
+        // Structured YAML parse: extract kinds[].kind → required_keys[] map.
+        // Format: top-level `kinds:` list; each item has `kind:` + `required_keys:` sub-list.
+        var requiredByKind = ParsePanelSchemaYaml(schemaText);
+
+        // Load panels.json — canonical path; delegates to Node harness CLI args via bridge when testing.
+        string panelsPath = System.IO.Path.Combine(repoRoot, "Assets", "UI", "Snapshots", "panels.json");
+        if (!System.IO.File.Exists(panelsPath))
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: panels.json not found at {panelsPath}.");
+            return;
+        }
+
+        string panelsText;
+        try { panelsText = System.IO.File.ReadAllText(panelsPath); }
+        catch (Exception ex) { TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: panels.json read failed: {ex.Message}"); return; }
+
+        // Invoke Node harness to perform actual validation (reuses harness logic, avoids JSON+YAML
+        // parsing duplication in C# without a full YAML library). harness returns JSON result to stdout.
+        string harnessPath = System.IO.Path.Combine(repoRoot, "tools", "scripts", "validate-panel-blueprint-harness.mjs");
+        if (!System.IO.File.Exists(harnessPath))
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: harness not found at {harnessPath}.");
+            return;
+        }
+
+        string harnessOutput;
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo("node",
+                $"\"{harnessPath}\" --panel-id \"{EscapeJsonString(panelId)}\" --panels-file \"{panelsPath}\"")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                WorkingDirectory = repoRoot,
+            };
+            var proc = System.Diagnostics.Process.Start(psi);
+            harnessOutput = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit(10000);
+        }
+        catch (Exception ex)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"validate_panel_blueprint: harness exec failed: {ex.Message}");
+            return;
+        }
+
+        harnessOutput = harnessOutput?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(harnessOutput))
+        {
+            TryFinalizeFailed(repoRoot, commandId, "validate_panel_blueprint: harness returned empty output.");
+            return;
+        }
+
+        // Forward harness JSON result directly as mutation_result.
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "validate_panel_blueprint");
+        resp.mutation_result = harnessOutput;
+        CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+    }
+
+    /// <summary>
+    /// Structured YAML parser for <c>tools/blueprints/panel-schema.yaml</c>.
+    /// Extracts <c>kinds[].kind → required_keys[]</c> map.
+    /// Handles the indented list-item format used in the schema file.
+    /// </summary>
+    static Dictionary<string, List<string>> ParsePanelSchemaYaml(string text)
+    {
+        var result = new Dictionary<string, List<string>>(System.StringComparer.Ordinal);
         string currentKind = null;
-        foreach (var rawLine in schemaText.Split('\n'))
+        bool inRequiredKeys = false;
+
+        foreach (var rawLine in text.Split('\n'))
         {
             var line = rawLine.TrimEnd();
-            if (line.TrimStart().StartsWith("#") || string.IsNullOrWhiteSpace(line)) continue;
-            if (line.Contains("  - kind:"))
+            var trimmed = line.TrimStart();
+            if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")) continue;
+
+            // `  - kind: <slug>` — new kind entry.
+            if (trimmed.StartsWith("- kind:"))
             {
-                currentKind = line.Replace("  - kind:", "").Trim().Trim('"', '\'');
-                if (!requiredByKind.ContainsKey(currentKind))
-                    requiredByKind[currentKind] = new List<string>();
+                currentKind = trimmed.Substring("- kind:".Length).Trim().Trim('"', '\'');
+                if (!result.ContainsKey(currentKind))
+                    result[currentKind] = new List<string>();
+                inRequiredKeys = false;
+                continue;
             }
-            else if (currentKind != null && line.Contains("    - ") && line.TrimStart().StartsWith("- "))
+
+            // `    required_keys:` heading.
+            if (currentKind != null && trimmed.StartsWith("required_keys:"))
             {
-                var key = line.TrimStart().Substring(2).Trim().Trim('"', '\'');
+                inRequiredKeys = true;
+                continue;
+            }
+
+            // `      - <key>` under required_keys.
+            if (inRequiredKeys && currentKind != null && trimmed.StartsWith("- "))
+            {
+                var key = trimmed.Substring(2).Trim().Trim('"', '\'');
                 if (!string.IsNullOrEmpty(key))
-                    requiredByKind[currentKind].Add(key);
+                    result[currentKind].Add(key);
+                continue;
             }
+
+            // Reset required_keys context on non-list lines that are not deeply indented.
+            if (inRequiredKeys && !trimmed.StartsWith("- ") && !trimmed.StartsWith("#"))
+                inRequiredKeys = false;
         }
 
-        // Query catalog DB for panel children.
-        string listScript = System.IO.Path.Combine(repoRoot, "tools", "scripts", "agent-bridge-validate-blueprint.mjs");
-        // Fallback: run a direct node script to query catalog + validate. Output JSON to stdout.
-        string nodeArgs = $"--input-data \"{EscapeJsonString(panelId)}\" --schema-path \"{schemaPath}\"";
-
-        // Simple implementation: call agent-bridge-dequeue side-channel script if available,
-        // else build a basic validation result from the schema alone (no DB — returns schema-only check).
-        // Full DB-backed validation requires the catalog query script; for Stage 1 we validate the
-        // schema YAML loads correctly and return ok=true when no panel_id mismatch is found.
-        var missingList = new List<string>();
-
-        // Stage 1: schema structural validation — verify YAML loaded + panel_id acknowledged.
-        // Full child-row validation (DB query) is a Stage 2 hardening concern.
-        bool ok = requiredByKind.Count > 0;
-
-        var resultJson = new System.Text.StringBuilder();
-        resultJson.Append("{\"ok\":");
-        resultJson.Append(ok ? "true" : "false");
-        resultJson.Append(",\"panel_id\":\"");
-        resultJson.Append(EscapeJsonString(panelId));
-        resultJson.Append("\",\"schema_kinds_loaded\":");
-        resultJson.Append(requiredByKind.Count);
-        resultJson.Append(",\"missing\":[");
-        for (int i = 0; i < missingList.Count; i++)
-        {
-            if (i > 0) resultJson.Append(',');
-            resultJson.Append('"');
-            resultJson.Append(EscapeJsonString(missingList[i]));
-            resultJson.Append('"');
-        }
-        resultJson.Append("]}");
-
-        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "validate_panel_blueprint");
-        resp.mutation_result = resultJson.ToString();
-        CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+        return result;
     }
 
     static void CompleteOrFail(string repoRoot, string commandId, string responseJson)

@@ -8,7 +8,12 @@
     "validate:plan-digest-coverage",
     "validate:seeded-task-stale",
     "validate:asset-pipeline",
-    "validate:drift-lint"
+    "validate:drift-lint",
+    "validate:ui-drift",
+    "validate:no-domain-game-cycle",
+    "validate:action-bind-drift",
+    "validate:ui-id-consistency",
+    "validate:bake-handler-kind-coverage"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [
@@ -202,6 +207,18 @@
     ],
     "tools/scripts/validate-cron-call-site-coverage.mjs": [
       "validate:cron-call-site-coverage"
+    ],
+    "Assets/UI/Snapshots/panels.json": [
+      "validate:ui-id-consistency"
+    ],
+    "Assets/UI/Prefabs/Generated/**/*.prefab": [
+      "validate:ui-id-consistency"
+    ],
+    "Assets/Scripts/Editor/UiBake/KindRendererMatrix.cs": [
+      "validate:bake-handler-kind-coverage"
+    ],
+    "Assets/Scripts/Editor/Bridge/UiBakeHandler*.cs": [
+      "validate:bake-handler-kind-coverage"
     ]
   }
 }

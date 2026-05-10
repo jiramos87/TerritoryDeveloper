@@ -1,4 +1,5 @@
 using TMPro;
+using Territory.UI;
 using Territory.UI.Registry;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,15 +36,15 @@ namespace Territory.UI.Modals
 
         /// <summary>
         /// Mount settings sub-view into the resolved slot. Resolves slot via
-        /// <see cref="ResolveByPanel"/> on every call (mount/apply only).
+        /// <see cref="SlotAnchorResolver.ResolveByPanel"/> on every call (mount/apply only).
         /// Runs apply-time render-check: 12 widgets present + bind-counts non-zero.
         /// </summary>
         public void Apply()
         {
             // Inv #3 — slot resolution at apply only, never per-frame.
-            _resolvedSlot = ResolveByPanel("settings", transform);
+            _resolvedSlot = SlotAnchorResolver.ResolveByPanel("settings", transform);
             if (_resolvedSlot == null)
-                _resolvedSlot = ResolveByPanel("settings", transform.root);
+                _resolvedSlot = SlotAnchorResolver.ResolveByPanel("settings", transform.root);
 
             if (_resolvedSlot == null)
             {
@@ -125,41 +126,5 @@ namespace Territory.UI.Modals
             public int Total => Sliders + Toggles + Dropdowns + Headers;
         }
 
-        // ── Slot resolver (mirrors SlotAnchorResolver.ResolveByPanel — runtime copy) ──────────
-
-        /// <summary>
-        /// Resolve a slot Transform whose name ends with "-content-slot" under <paramref name="searchRoot"/>.
-        /// Match priority: exact name "{panelSlug}-content-slot" → suffix "-content-slot" → null.
-        /// Same algorithm as SlotAnchorResolver.ResolveByPanel (Editor-only class).
-        /// </summary>
-        public static Transform ResolveByPanel(string panelSlug, Transform searchRoot)
-        {
-            if (searchRoot == null || string.IsNullOrEmpty(panelSlug)) return null;
-            string exactName = $"{panelSlug}-content-slot";
-            return WalkForSlot(searchRoot, exactName);
-        }
-
-        private static Transform WalkForSlot(Transform root, string exactName)
-        {
-            // Exact match pass.
-            for (int i = 0; i < root.childCount; i++)
-            {
-                var child = root.GetChild(i);
-                if (child.name == exactName) return child;
-            }
-            // Suffix fallback pass.
-            for (int i = 0; i < root.childCount; i++)
-            {
-                var child = root.GetChild(i);
-                if (child.name.EndsWith("-content-slot", System.StringComparison.Ordinal)) return child;
-            }
-            // Recurse.
-            for (int i = 0; i < root.childCount; i++)
-            {
-                var found = WalkForSlot(root.GetChild(i), exactName);
-                if (found != null) return found;
-            }
-            return null;
-        }
     }
 }

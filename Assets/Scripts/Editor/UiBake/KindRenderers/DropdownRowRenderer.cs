@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Territory.Editor.UiBake.KindRenderers
 {
-    /// <summary>Renders a dropdown-row widget (label + value display).</summary>
+    /// <summary>Renders a dropdown-row widget (label + value + arrow) with real TMP_Dropdown component. TECH-27542.</summary>
     public sealed class DropdownRowRenderer : IKindRenderer
     {
         public GameObject Render(string paramsJson, Transform parent)
@@ -28,7 +28,13 @@ namespace Territory.Editor.UiBake.KindRenderers
 
             var arrow = new GameObject("Arrow", typeof(RectTransform));
             arrow.transform.SetParent(go.transform, worldPositionStays: false);
-            arrow.AddComponent<Image>().raycastTarget = false;
+            var arrowImage = arrow.AddComponent<Image>();
+            arrowImage.raycastTarget = false;
+
+            // Wire real TMP_Dropdown component (C3 fix — was Image stub).
+            var dropdown = go.AddComponent<TMP_Dropdown>();
+            dropdown.captionText = valueTmp;
+            dropdown.targetGraphic = arrowImage;
 
             return go;
         }

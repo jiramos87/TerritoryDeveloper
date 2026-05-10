@@ -117,7 +117,7 @@
     "unity:build-scenario-from-descriptor": "bash tools/scripts/unity-build-scenario-from-descriptor.sh",
     "unity:bake-ui": "tsx tools/scripts/unity-bake-ui.ts",
     "scenario:build-from-descriptor": "node tools/fixtures/scenarios/build-scenario-from-descriptor.mjs",
-    "verify:local": "bash tools/scripts/verify-local.sh",
+    "verify:local": "bash tools/scripts/verify-local.sh && npm run console:scan",
     "verify:post-implementation": "npm run verify:local",
     "backfill:arch-surfaces": "node tools/scripts/backfill-arch-surfaces.mjs",
     "progress": "node tools/progress-tracker/index.mjs",

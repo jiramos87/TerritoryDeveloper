@@ -15,7 +15,7 @@
 
 using NUnit.Framework;
 using Territory.Editor.UiBake;
-using Territory.Editor.UiBake.SlotResolver;
+using Territory.UI;
 using UnityEngine;
 using System.Diagnostics;
 using System.IO;

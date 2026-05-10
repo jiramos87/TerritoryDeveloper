@@ -79,4 +79,7 @@ territory_wait_lock_present 60
 
 run_step npm run db:bridge-playmode-smoke -- "$@"
 
+# H1 fix (TECH-27544): allowlist-filtered console-error gate runs on every local + CI pass.
+run_step npm run console:scan
+
 echo "post-implementation-verify: all steps completed OK." >&2

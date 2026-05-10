@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Territory.Editor.UiBake.KindRenderers
 {
-    /// <summary>Renders a slider-row widget (track + fill + thumb + label).</summary>
+    /// <summary>Renders a slider-row widget (track + fill + thumb + label) with real Slider component. TECH-27542.</summary>
     public sealed class SliderRowRenderer : IKindRenderer
     {
         public GameObject Render(string paramsJson, Transform parent)
@@ -22,7 +22,7 @@ namespace Territory.Editor.UiBake.KindRenderers
 
             var thumb = new GameObject("Thumb", typeof(RectTransform));
             thumb.transform.SetParent(go.transform, worldPositionStays: false);
-            thumb.AddComponent<Image>();
+            var thumbImage = thumb.AddComponent<Image>();
 
             var label = new GameObject("Label", typeof(RectTransform));
             label.transform.SetParent(go.transform, worldPositionStays: false);
@@ -30,6 +30,12 @@ namespace Territory.Editor.UiBake.KindRenderers
             tmp.text = string.Empty;
             tmp.fontSize = 14f;
             tmp.raycastTarget = false;
+
+            // Wire real Slider component (C3 fix — was Image stub).
+            var slider = go.AddComponent<Slider>();
+            slider.targetGraphic = thumbImage;
+            slider.fillRect = fill.GetComponent<RectTransform>();
+            slider.handleRect = thumb.GetComponent<RectTransform>();
 
             return go;
         }

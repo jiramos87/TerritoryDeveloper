@@ -591,6 +591,7 @@ namespace Territory.Editor.Bridge
                 case "slider-row":
                 {
                     // Stage 4 settings widget — track + fill + thumb + label.
+                    // C3 fix (TECH-27542): wire real Slider component instead of bare Image stub.
                     var track = new GameObject("Track", typeof(RectTransform));
                     track.transform.SetParent(childGo.transform, worldPositionStays: false);
                     track.AddComponent<Image>().raycastTarget = false;
@@ -599,32 +600,42 @@ namespace Territory.Editor.Bridge
                     fill.AddComponent<Image>().raycastTarget = false;
                     var thumb = new GameObject("Thumb", typeof(RectTransform));
                     thumb.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    thumb.AddComponent<Image>();
+                    var thumbImg = thumb.AddComponent<Image>();
                     var sliderLabel = new GameObject("Label", typeof(RectTransform));
                     sliderLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var sliderTmp = sliderLabel.AddComponent<TMP_Text>();
                     sliderTmp.text = pj?.label ?? string.Empty;
                     sliderTmp.raycastTarget = false;
+                    var slider = childGo.AddComponent<UnityEngine.UI.Slider>();
+                    slider.targetGraphic = thumbImg;
+                    slider.fillRect = fill.GetComponent<RectTransform>();
+                    slider.handleRect = thumb.GetComponent<RectTransform>();
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
                 case "toggle-row":
                 {
                     // Stage 4 settings widget — checkmark + label.
+                    // C3 fix (TECH-27542): wire real Toggle component instead of bare Image stub.
                     var check = new GameObject("Checkmark", typeof(RectTransform));
                     check.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    check.AddComponent<Image>().raycastTarget = false;
+                    var checkImg = check.AddComponent<Image>();
+                    checkImg.raycastTarget = false;
                     var toggleLabel = new GameObject("Label", typeof(RectTransform));
                     toggleLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var toggleTmp = toggleLabel.AddComponent<TMP_Text>();
                     toggleTmp.text = pj?.label ?? string.Empty;
                     toggleTmp.raycastTarget = false;
+                    var toggle = childGo.AddComponent<UnityEngine.UI.Toggle>();
+                    toggle.graphic = checkImg;
+                    toggle.targetGraphic = checkImg;
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
                 case "dropdown-row":
                 {
                     // Stage 4 settings widget — label + value display + arrow.
+                    // C3 fix (TECH-27542): wire real TMP_Dropdown component instead of bare Image stub.
                     var dropLabel = new GameObject("Label", typeof(RectTransform));
                     dropLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var dropLabelTmp = dropLabel.AddComponent<TMP_Text>();
@@ -632,12 +643,16 @@ namespace Territory.Editor.Bridge
                     dropLabelTmp.raycastTarget = false;
                     var dropValue = new GameObject("Value", typeof(RectTransform));
                     dropValue.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var dropValueTmp = dropValue.AddComponent<TMP_Text>();
+                    var dropValueTmp = dropValue.AddComponent<TMPro.TextMeshProUGUI>();
                     dropValueTmp.text = string.Empty;
                     dropValueTmp.raycastTarget = false;
                     var arrow = new GameObject("Arrow", typeof(RectTransform));
                     arrow.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    arrow.AddComponent<Image>().raycastTarget = false;
+                    var arrowImg = arrow.AddComponent<Image>();
+                    arrowImg.raycastTarget = false;
+                    var dropdown = childGo.AddComponent<TMPro.TMP_Dropdown>();
+                    dropdown.captionText = dropValueTmp;
+                    dropdown.targetGraphic = arrowImg;
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
