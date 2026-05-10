@@ -25,6 +25,8 @@
     "validate:recipe-drift": "node tools/scripts/validate-recipe-drift.mjs",
     "validate:skill-recipe-drift": "npx tsx tools/scripts/skill-tools/validate-skill-recipe-drift.ts",
     "test:recipe-engine": "node tools/recipe-engine/selftest.mjs",
+    "test:bake-pipeline-hardening": "node --test tests/bake-pipeline/*.test.mjs && npm run unity:testmode-batch -- --filter BakePipeline.*",
+    "console:scan": "node tools/scripts/console-scan.mjs",
     "validate:skill-changelog-presence": "node tools/scripts/validate-skill-changelog-presence.mjs",
     "recipe:run": "npx tsx tools/recipe-engine/src/cli.ts",
     "validate:claude-imports": "npx tsx tools/scripts/validate-claude-imports.ts",

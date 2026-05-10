@@ -1,0 +1,48 @@
+# panel-schema.yaml — per-widget-kind required params_json keys.
+#
+# Single canonical source for bridge validate_panel_blueprint MCP kind
+# AND Unity UiBakeHandler pre-flight. Both read this file at runtime.
+#
+# Edit co-location rule: when catalog DB types (panel_child.kind enum) change,
+# update this file AND tools/unity-warning-allowlist.yaml together.
+#
+# Schema:
+#   kind:          widget kind slug (matches panel_child.kind + params_json.kind after NormalizeChildKind)
+#   required_keys: list of params_json field names that must be present + non-empty for this kind
+
+kinds:
+  - kind: button
+    required_keys:
+      - action
+
+  - kind: illuminated-button
+    required_keys:
+      - action
+
+  - kind: confirm-button
+    required_keys:
+      - action
+      - confirm_label
+
+  - kind: slider-row
+    required_keys:
+      - label
+      - bind
+
+  - kind: toggle-row
+    required_keys:
+      - label
+      - bind
+
+  - kind: dropdown-row
+    required_keys:
+      - label
+      - bind
+
+  - kind: section-header
+    required_keys:
+      - label
+
+  - kind: list-row
+    required_keys:
+      - label

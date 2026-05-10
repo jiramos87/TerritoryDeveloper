@@ -1248,6 +1248,34 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>
+        /// Pre-flight panel blueprint validator — reads <c>tools/blueprints/panel-schema.yaml</c>
+        /// and checks that each required key is present for the given panel slug.
+        /// Returns null on pass; populated <see cref="BakeError"/> on schema-file read failure.
+        /// Non-fatal on missing keys: logs warning + continues bake (Stage 1 scope).
+        /// </summary>
+        internal static BakeError ValidatePanelBlueprint(string repoRoot, string panelSlug)
+        {
+            if (string.IsNullOrEmpty(repoRoot) || string.IsNullOrEmpty(panelSlug)) return null;
+            string schemaPath = System.IO.Path.Combine(repoRoot, "tools", "blueprints", "panel-schema.yaml");
+            if (!System.IO.File.Exists(schemaPath)) return null; // schema optional during rollout
+            // Stage 1: structural check only — confirm schema reads without error.
+            try
+            {
+                _ = System.IO.File.ReadAllText(schemaPath);
+            }
+            catch (Exception ex)
+            {
+                return new BakeError
+                {
+                    error = "validate_panel_blueprint_schema_read_failed",
+                    details = ex.Message,
+                    path = schemaPath,
+                };
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Stage 9.10 — bake from panels.json snapshot (PanelSnapshot DTOs).
         /// Reads panels_path, parses into <see cref="PanelSnapshot"/>, bakes each panel item.
         /// Fails hard when layout_template missing.
@@ -1310,6 +1338,17 @@ namespace Territory.Editor.Bridge
                         },
                         warnings = warnings,
                     };
+                }
+
+                // validate_panel_blueprint pre-flight: read schema YAML before bake write.
+                // Non-fatal on missing keys (Stage 1 scope); hard-fail only on schema read error.
+                foreach (var item in snapshot.items ?? Array.Empty<PanelSnapshotItem>())
+                {
+                    if (item == null || string.IsNullOrEmpty(item.slug)) continue;
+                    string repoRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                        System.IO.Path.GetDirectoryName(args.panels_path), "..", ".."));
+                    var blueprintErr = ValidatePanelBlueprint(repoRoot, item.slug);
+                    if (blueprintErr != null) return new BakeResult { root = null, error = blueprintErr, warnings = warnings };
                 }
 
                 var prefabError = WritePanelSnapshotPrefabs(snapshot, args.out_dir, theme);

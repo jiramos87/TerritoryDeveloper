@@ -18,6 +18,11 @@ public static class AgentBridgeConsoleBuffer
     static readonly object s_lock = new object();
     static bool s_subscribed;
 
+    /// <summary>UTC timestamp of the most recent domain reload (assembly reload complete).
+    /// Set on <see cref="InitializeOnLoad"/> constructor via <see cref="EditorApplication.delayCall"/>
+    /// so it fires after the reload finishes. Zero until first reload completes.</summary>
+    public static DateTime DomainReloadTimestampUtc { get; private set; }
+
     [Serializable]
     public struct LogEntry
     {
@@ -31,6 +36,11 @@ public static class AgentBridgeConsoleBuffer
     {
         EnsureSubscribed();
         AssemblyReloadEvents.beforeAssemblyReload += Clear;
+        // Track domain-reload completion timestamp via delayCall (fires after reload settles).
+        EditorApplication.delayCall += () =>
+        {
+            DomainReloadTimestampUtc = DateTime.UtcNow;
+        };
     }
 
     static void EnsureSubscribed()

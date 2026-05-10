@@ -1,0 +1,28 @@
+# Unity Console warning allowlist — bake-pipeline-hardening Stage 1.
+#
+# Each entry suppresses a known-noise warning during `verify:local` console scan.
+# Expired entries (expires < today) flip back to blocking — update or remove them.
+#
+# Schema:
+#   pattern:  string — substring match against console message (case-insensitive)
+#   reason:   string — why this warning is acceptable / being tracked
+#   expires:  ISO date string (YYYY-MM-DD) — after this date the entry is no longer valid
+#   owner:    string — team or issue id responsible for tracking resolution
+#
+# Edit co-location rule: when catalog DB types add a new widget kind, audit this
+# file and panel-schema.yaml together (tools/blueprints/panel-schema.yaml).
+
+entries:
+  - pattern: "content-slot not found"
+    reason: >
+      CitysceneMainmenu panel-rollout Stage 4.5 — Zone_Center slot lookup falls back
+      gracefully; known noise until main-menu sub-view swap wiring completes.
+    expires: "2026-08-01"
+    owner: "cityscene-mainmenu-panel-rollout"
+
+  - pattern: "ThemedPanel: layout group already present"
+    reason: >
+      Bake double-AddComponent guard fires on re-bake when prefab already has a LayoutGroup
+      from a prior run. Non-fatal; OnEnable strips stale group.
+    expires: "2026-07-01"
+    owner: "bake-pipeline-hardening"
