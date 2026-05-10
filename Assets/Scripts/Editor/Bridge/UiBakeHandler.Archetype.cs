@@ -41,6 +41,8 @@ namespace Territory.Editor.Bridge
             "save-controls-strip", "save-list",
             // Wave B1 (TECH-27079) subtype-picker-strip archetype.
             "subtype-picker-strip",
+            // Wave B2 (TECH-27083) stats-panel archetypes.
+            "tab-strip", "chart", "range-tabs", "stacked-bar-row", "service-row",
         };
 
         static bool IsKnownStudioControlKind(string kind)
@@ -145,6 +147,18 @@ namespace Territory.Editor.Bridge
             // Wave B1 (TECH-27079) — subtype-picker-strip archetype.
             if (irRow.kind == "subtype-picker-strip")
                 return BakeSubtypePickerStrip(irRow, assetPath, theme);
+
+            // Wave B2 (TECH-27083) — stats-panel archetypes (tab-strip / chart / range-tabs / stacked-bar-row / service-row).
+            if (irRow.kind == "tab-strip")
+                return BakeTabStrip(irRow, assetPath, theme);
+            if (irRow.kind == "chart")
+                return BakeChart(irRow, assetPath, theme);
+            if (irRow.kind == "range-tabs")
+                return BakeRangeTabs(irRow, assetPath, theme);
+            if (irRow.kind == "stacked-bar-row")
+                return BakeStackedBarRow(irRow, assetPath, theme);
+            if (irRow.kind == "service-row")
+                return BakeServiceRow(irRow, assetPath, theme);
 
             GameObject go = null;
             try
@@ -2145,6 +2159,287 @@ namespace Territory.Editor.Bridge
                     Debug.LogWarning($"[UiBakeHandler] panel.archetype '{panel.archetype}' unknown — skipped");
                     break;
             }
+        }
+
+        // ── Wave B2 (TECH-27083) — stats-panel archetype bake methods ────────────
+
+        /// <summary>Wave B2 — tab-strip: N tabs + active-tab bind. Toggle group children.</summary>
+        static BakeError BakeTabStrip(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "tab-strip");
+                var rt = go.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero; rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.sizeDelta = new Vector2(0f, 48f);
+
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 4f;
+                hlg.childForceExpandWidth = true;
+                hlg.childForceExpandHeight = true;
+                hlg.childControlWidth = true;
+                hlg.childControlHeight = true;
+
+                var tg = go.AddComponent<ToggleGroup>();
+                tg.allowSwitchOff = false;
+
+                // Placeholder tab children (runtime expands to N tabs from params_json.tabs).
+                string[] defaultTabs = { "Tab1", "Tab2", "Tab3" };
+                foreach (var tabLabel in defaultTabs)
+                {
+                    var tabGo = new GameObject(tabLabel, typeof(RectTransform));
+                    tabGo.transform.SetParent(go.transform, false);
+                    var toggle = tabGo.AddComponent<UnityEngine.UI.Toggle>();
+                    toggle.group = tg;
+                    var label = new GameObject("Label", typeof(RectTransform));
+                    label.transform.SetParent(tabGo.transform, false);
+                    label.AddComponent<TMPro.TextMeshProUGUI>().text = tabLabel;
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>Wave B2 — chart: read-only line-series placeholder (RawImage stub; runtime plots via StatsHistoryRecorder).</summary>
+        static BakeError BakeChart(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "chart");
+                var rt = go.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
+
+                // RawImage as chart canvas stub — runtime replaces with line-render texture.
+                var img = go.AddComponent<UnityEngine.UI.RawImage>();
+                img.color = new Color(0.08f, 0.12f, 0.18f, 1f);
+
+                // Axis label stubs.
+                var xLabel = new GameObject("x-axis-label", typeof(RectTransform));
+                xLabel.transform.SetParent(go.transform, false);
+                xLabel.AddComponent<TMPro.TextMeshProUGUI>().text = "Time";
+
+                var yLabel = new GameObject("y-axis-label", typeof(RectTransform));
+                yLabel.transform.SetParent(go.transform, false);
+                yLabel.AddComponent<TMPro.TextMeshProUGUI>().text = "Value";
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>Wave B2 — range-tabs: 3-chip toggle group (3mo / 12mo / all-time).</summary>
+        static BakeError BakeRangeTabs(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "range-tabs");
+                var rt = go.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero; rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.sizeDelta = new Vector2(0f, 36f);
+
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 4f;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = true;
+                hlg.childControlWidth = false;
+                hlg.childControlHeight = true;
+
+                var tg = go.AddComponent<ToggleGroup>();
+                tg.allowSwitchOff = false;
+
+                string[] chips = { "3mo", "12mo", "all-time" };
+                foreach (var chip in chips)
+                {
+                    var chipGo = new GameObject(chip, typeof(RectTransform));
+                    chipGo.transform.SetParent(go.transform, false);
+                    var chipRt = chipGo.GetComponent<RectTransform>();
+                    chipRt.sizeDelta = new Vector2(72f, 32f);
+                    var toggle = chipGo.AddComponent<UnityEngine.UI.Toggle>();
+                    toggle.group = tg;
+                    var lbl = new GameObject("Label", typeof(RectTransform));
+                    lbl.transform.SetParent(chipGo.transform, false);
+                    lbl.AddComponent<TMPro.TextMeshProUGUI>().text = chip;
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>Wave B2 — stacked-bar-row: label + segmented horizontal Image stack.</summary>
+        static BakeError BakeStackedBarRow(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "stacked-bar-row");
+                var rt = go.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero; rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.sizeDelta = new Vector2(0f, 40f);
+
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8f;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = true;
+                hlg.childControlWidth = false;
+                hlg.childControlHeight = true;
+                hlg.padding = new RectOffset(8, 8, 4, 4);
+
+                // Row label
+                var labelGo = new GameObject("RowLabel", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, false);
+                var lblRt = labelGo.GetComponent<RectTransform>();
+                lblRt.sizeDelta = new Vector2(140f, 32f);
+                var lblTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                lblTmp.text = irRow.slug ?? "Row";
+
+                // Bar container
+                var barGo = new GameObject("BarContainer", typeof(RectTransform));
+                barGo.transform.SetParent(go.transform, false);
+                var barLe = barGo.AddComponent<LayoutElement>();
+                barLe.flexibleWidth = 1f;
+                var barHlg = barGo.AddComponent<HorizontalLayoutGroup>();
+                barHlg.spacing = 1f;
+                barHlg.childForceExpandWidth = true;
+                barHlg.childForceExpandHeight = true;
+                barHlg.childControlWidth = true;
+                barHlg.childControlHeight = true;
+
+                // 2 segment stubs (runtime expands per data).
+                for (int i = 0; i < 2; i++)
+                {
+                    var seg = new GameObject($"Seg{i}", typeof(RectTransform));
+                    seg.transform.SetParent(barGo.transform, false);
+                    var segImg = seg.AddComponent<UnityEngine.UI.Image>();
+                    segImg.color = i == 0 ? new Color(0.3f, 0.7f, 0.4f) : new Color(0.2f, 0.4f, 0.6f);
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>Wave B2 — service-row: icon Image + label TMP + value-bind TMP.</summary>
+        static BakeError BakeServiceRow(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug ?? "service-row");
+                var rt = go.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero; rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.sizeDelta = new Vector2(0f, 36f);
+
+                var hlg = go.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 8f;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = true;
+                hlg.childControlWidth = false;
+                hlg.childControlHeight = true;
+                hlg.padding = new RectOffset(8, 8, 4, 4);
+
+                // Icon stub
+                var iconGo = new GameObject("Icon", typeof(RectTransform));
+                iconGo.transform.SetParent(go.transform, false);
+                var iconRt = iconGo.GetComponent<RectTransform>();
+                iconRt.sizeDelta = new Vector2(28f, 28f);
+                iconGo.AddComponent<UnityEngine.UI.Image>().color = new Color(0.8f, 0.8f, 0.8f);
+
+                // Label
+                var labelGo = new GameObject("ServiceLabel", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, false);
+                var labelLe = labelGo.AddComponent<LayoutElement>();
+                labelLe.flexibleWidth = 1f;
+                var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                labelTmp.text = irRow.slug ?? "Service";
+
+                // Value bind
+                var valueGo = new GameObject("ValueLabel", typeof(RectTransform));
+                valueGo.transform.SetParent(go.transform, false);
+                var valueRt = valueGo.GetComponent<RectTransform>();
+                valueRt.sizeDelta = new Vector2(64f, 28f);
+                var valueTmp = valueGo.AddComponent<TMPro.TextMeshProUGUI>();
+                valueTmp.text = "—";
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "bake_exception", details = ex.Message, path = assetPath };
+            }
+            finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>Wave B2 (TECH-27083) — IR DTO for tab-strip. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class TabStripDetail
+        {
+            public string[] tabs;
+            public string activeTabBindId;
+        }
+
+        /// <summary>Wave B2 (TECH-27083) — IR DTO for chart. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class ChartDetail
+        {
+            public string seriesId;
+            public string bindId;
+            public string tabGroup;
+        }
+
+        /// <summary>Wave B2 (TECH-27083) — IR DTO for range-tabs. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class RangeTabsDetail
+        {
+            public string[] options;
+            public string bindId;
+        }
+
+        /// <summary>Wave B2 (TECH-27083) — IR DTO for stacked-bar-row. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class StackedBarRowDetail
+        {
+            public string bindId;
+            public string tabGroup;
+        }
+
+        /// <summary>Wave B2 (TECH-27083) — IR DTO for service-row. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class ServiceRowDetail
+        {
+            public string icon;
+            public string bindId;
+            public string tabGroup;
         }
 
     }

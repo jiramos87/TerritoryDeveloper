@@ -30,6 +30,8 @@ public class TimeManager : MonoBehaviour
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
     public SimulationManager simulationManager;
+    // Wave B2 (TECH-27085) — stats history recorder.
+    [SerializeField] private Territory.Simulation.StatsHistoryRecorder statsHistoryRecorder;
     public float[] timeSpeeds = new float[] { 0f, 0.50f, 1.0f, 2.0f, 4.0f };
     private int currentTimeSpeedIndex = 0;
 
@@ -79,6 +81,9 @@ public class TimeManager : MonoBehaviour
                     simulationManager.ProcessMonthlyReset();
                 if (interstateManager != null)
                     interstateManager.CheckInterstateConnectivity();
+                // Wave B2 (TECH-27085) — snapshot monthly aggregates.
+                if (statsHistoryRecorder != null)
+                    statsHistoryRecorder.OnMonthlyTick();
             }
             uiManager.UpdateUI();
         }
@@ -161,6 +166,30 @@ public class TimeManager : MonoBehaviour
 
     /// <summary>Read-only accessor for the current speed index (0..timeSpeeds.Length-1) — exposed for HUD adapters that mirror speed-button state. No setter; mutate via <see cref="SetTimeSpeedIndex"/>.</summary>
     public int CurrentTimeSpeedIndex => currentTimeSpeedIndex;
+
+    // ── Modal pause-owner API (Wave B2 TECH-27084) ───────────────────────
+
+    private string _modalPauseOwner;
+
+    /// <summary>Returns true when sim is paused by a modal owner.</summary>
+    public bool IsPaused => _modalPauseOwner != null;
+
+    /// <summary>Set modal pause-owner and freeze sim (timeMultiplier → 0). Single-owner initially.</summary>
+    public void SetModalPauseOwner(string owner)
+    {
+        if (string.IsNullOrEmpty(owner)) return;
+        _modalPauseOwner = owner;
+        timeMultiplier = 0f;
+    }
+
+    /// <summary>Clear modal pause-owner and resume sim only when <paramref name="owner"/> matches current owner.</summary>
+    public void ClearModalPauseOwner(string owner)
+    {
+        if (_modalPauseOwner != owner) return;
+        _modalPauseOwner = null;
+        // Resume at last user-selected speed.
+        timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
+    }
 
     public InGameTime GetCurrentInGameTime()
     {
