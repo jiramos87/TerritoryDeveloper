@@ -1,24 +1,24 @@
 ---
 name: project-new-apply
 purpose: >-
-  Sonnet pair-tail: reads /project-new command args directly; reserves id + writes yaml + spec stub;
-  enqueues cron_materialize_backlog_enqueue + validate:dead-project-specs; hands off to stage-authoring at N=1.
+  Sonnet pair-tail: reads /project-new command args directly; calls task_insert MCP (DB-backed, no yaml);
+  task_spec_section_write spec stub; enqueues cron_materialize_backlog_enqueue + validate:dead-project-specs; hands off to stage-authoring at N=1.
 audience: agent
 loaded_by: "skill:project-new-apply"
 slices_via: none
 description: >-
   Sonnet pair-tail skill. Reads args directly from /project-new command (no §Project-New Plan
-  pair-head read). Runs reserve-id.sh, writes ia/backlog/{id}.yaml, writes ia/projects/{id}.md stub
-  from project-spec-template, enqueues cron_materialize_backlog_enqueue + validate:dead-project-specs. Single-issue
-  path — no tuple iteration, no task-table flip. Hands off to stage-authoring at N=1 for spec-body
-  authoring. Triggers: "project-new-apply", "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}",
-  "apply project new", "pair-tail project new", "materialize single issue". Argument order (explicit):
+  pair-head read). DB-backed: calls task_insert MCP (no reserve-id.sh, no yaml write), then
+  task_spec_section_write to author spec stub body. No filesystem writes to ia/backlog/ or
+  ia/projects/. Single-issue path — no tuple iteration, no task-table flip. Hands off to
+  stage-authoring at N=1 for spec-body authoring. Triggers: "project-new-apply",
+  "/project-new-apply {TITLE} {ISSUE_TYPE} {PRIORITY}", "apply project new",
+  "pair-tail project new", "materialize single issue". Argument order (explicit):
   TITLE first, ISSUE_TYPE second, PRIORITY third, NOTES optional.
 phases:
   - Parse args + validate prefix
-  - Reserve id
-  - Write ia/backlog/{ISSUE_ID}.yaml
-  - Write ia/projects/{ISSUE_ID}.md stub
+  - task_insert MCP (reserve id + DB row)
+  - task_spec_section_write spec stub body
   - "Post-write: materialize + validate + handoff"
 triggers:
   - project-new-apply
@@ -43,7 +43,7 @@ hard_boundaries: []
 
 Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
 
-**Role:** Sonnet pair-tail. Reads `/project-new` command args verbatim (no Opus pair-head, no tuple list); reserves id, writes yaml, writes spec stub, materializes + validates. Never authors §1/§2/§4/§5/§7 beyond skeleton — stage-authoring writes spec body at N=1.
+**Role:** Sonnet pair-tail. Reads `/project-new` command args verbatim (no Opus pair-head, no tuple list); calls `task_insert` MCP (no yaml, no filesystem spec stub), writes initial spec stub body via `task_spec_section_write`, validates. Never authors §1/§2/§4/§5/§7 beyond skeleton — stage-authoring writes spec body at N=1. DB-backed: no `reserve-id.sh`, no `ia/backlog/*.yaml`, no `ia/projects/*.md` writes.
 
 Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Validation gate, §Escalation rule, §Idempotency requirement.
 
@@ -70,63 +70,45 @@ Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-c
 
 ---
 
-## Phase 2 — Reserve id
+## Phase 2 — task_insert MCP (reserve id + DB row)
 
-```bash
-bash tools/scripts/reserve-id.sh {PREFIX}
+Call `mcp__territory-ia__task_insert`:
+
+```json
+{
+  "slug": null,
+  "stage_id": null,
+  "title": "{TITLE}",
+  "type": "{PREFIX}",
+  "priority": "{PRIORITY}",
+  "notes": "{NOTES if provided, else empty string}",
+  "depends_on": [],
+  "related": []
+}
 ```
 
-- Capture stdout as `ISSUE_ID` (e.g. `TECH-470`).
-- Non-zero exit or `flock` timeout → escalate: `{escalation: true, reason: "reserve-id.sh failed: {stderr}", id_counter_path: "ia/state/id-counter.json"}`.
-- Invariant #13: `ia/state/id-counter.json` written exclusively via `reserve-id.sh` under `flock`; never hand-edit the counter or the `id:` field of an existing yaml record.
-- Idempotency: if `ia/backlog/{ISSUE_ID}.yaml` already exists with matching `title:` → reuse existing id; skip reserve call.
+- Response carries reserved `task_id` (e.g. `TECH-27601`) from DB sequence.
+- MCP error → escalate: `{escalation: true, reason: "task_insert failed: {error}"}`.
+- Idempotency: if task with matching title already exists in DB → use existing `task_id`; skip insert.
+- **No `reserve-id.sh`, no yaml write, no filesystem ops.**
 
 ---
 
-## Phase 3 — Write `ia/backlog/{ISSUE_ID}.yaml`
+## Phase 3 — Write spec stub body via task_spec_section_write
 
-Author yaml body. Required fields:
+Call `mcp__territory-ia__task_spec_section_write`:
 
-```yaml
-id: "{ISSUE_ID}"
-type: "{PREFIX}"                   # e.g. TECH (no dash)
-title: "{TITLE}"
-priority: "{PRIORITY}"
-status: open
-section: "Single-issue"
-spec: "ia/projects/{ISSUE_ID}.md"
-files: []
-notes: |
-  {NOTES if provided, else empty string}
-acceptance: |
-  - [ ] Spec authored and implementation complete.
-  - [ ] npm run validate:all exit 0.
-depends_on: []
-depends_on_raw: ""
-related: []
-created: "{TODAY}"
-raw_markdown: |
-  {TITLE}
+```json
+{
+  "task_id": "{ISSUE_ID}",
+  "section": "Goal",
+  "content": "## §Goal\n\n{TITLE} — implementation TBD. Spec body authored by stage-authoring at N=1.\n\n**Status:** Draft\n**Created:** {TODAY}"
+}
 ```
 
-Before writing, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})`. Fix any schema errors before disk write. MCP unavailable → skip validate; Phase 5 `validate:dead-project-specs` catches drift.
-
-Write to `ia/backlog/{ISSUE_ID}.yaml`. **Do NOT** edit `BACKLOG.md` directly.
-
-Idempotency: if file exists and `id:` field matches → overwrite with desired final state.
-
----
-
-## Phase 4 — Write `ia/projects/{ISSUE_ID}.md` stub
-
-Bootstrap from `ia/templates/project-spec-template.md`. Populate:
-
-- Frontmatter: `purpose` (1-line summary), `audience: both`, `loaded_by: ondemand`, `slices_via: none`.
-- `> **Issue:** [{ISSUE_ID}](../../BACKLOG.md)` link.
-- `> **Status:** Draft`.
-- `> **Created:** {TODAY}`.
-- `> **Last updated:** {TODAY}`.
-- `## 1. Summary` — single skeleton paragraph: `{TITLE} — implementation TBD. Spec body authored by stage-authoring at N=1.`
+- Writes `§Goal` section to `ia_tasks.body` in DB (no filesystem file).
+- MCP error → escalate: `{escalation: true, reason: "task_spec_section_write failed: {error}"}`.
+- **No `ia/projects/{ISSUE_ID}.md` write.**
 - `## 7. Implementation Plan` — placeholder line: `_pending — stage-authoring writes phases at N=1._`
 - Leave `§Plan Digest` at template default — `stage-authoring` fills executable digest at N=1.
 - Leave all other template sections at their default placeholder text.
@@ -136,7 +118,7 @@ Idempotency: overwrite if file exists.
 
 ---
 
-## Phase 5 — Post-write: materialize + validate + handoff
+## Phase 4 — Post-write: materialize + validate + handoff
 
 1. **Materialize BACKLOG (async enqueue):**
    Call `mcp__territory-ia__cron_materialize_backlog_enqueue({triggered_by: "project-new-apply"})`.

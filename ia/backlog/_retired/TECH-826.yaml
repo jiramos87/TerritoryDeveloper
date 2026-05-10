@@ -1,0 +1,21 @@
+id: TECH-826
+type: TECH
+title: ui_token_* MCP slices (Stage 5 — deferred filing)
+priority: P2
+status: pending
+section: UI MCP slices
+files:
+  - tools/mcp-ia-server/src/tools/ui-token.ts
+  - tools/mcp-ia-server/src/server-registrations.ts
+notes: |
+  Deferred to Stage 5 (Track D part 2) per plan lock.
+  Token DB seed (Track D part 1 Stage 4.0) must ship first.
+  Filed now as stub to establish monotonic id; spec + implementation in Stage 5.
+acceptance:
+  - ui_token_list + ui_token_get tools registered
+  - Reads from ds_tokens table (Stage 4 seed)
+  - Tests pass
+depends_on: []
+depends_on_raw: ''
+related: [TECH-827]
+created: '2026-05-08'

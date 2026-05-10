@@ -1,25 +1,23 @@
 ---
 name: project-new
 purpose: >-
-  Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id,
-  row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and
-  Depends on /…
+  Use when creating a new BACKLOG issue from a user prompt: calls task_insert MCP (DB-backed, no yaml
+  write), task_spec_section_write spec stub, materializes backlog async via cron enqueue. Depends on /…
 audience: agent
 loaded_by: "skill:project-new"
 slices_via: none
 description: >-
-  Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id,
-  row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and
-  Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
-  "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec", "add
-  issue to backlog from description".
+  DB-backed: calls task_insert MCP (no reserve-id.sh, no yaml write) to create new BACKLOG issue;
+  writes spec stub via task_spec_section_write. No ia/backlog/*.yaml or ia/projects/*.md writes.
+  Triggers: "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project
+  spec", "add issue to backlog from description".
 phases:
   - Context load
   - Backlog dep check
   - Spec outline
-  - Reserve id
-  - Write yaml + spec
-  - Materialize backlog
+  - task_insert MCP (reserve id + DB row)
+  - task_spec_section_write spec stub body
+  - Post-insert validate + handoff
 triggers:
   - /project-new
   - new backlog issue
@@ -64,7 +62,7 @@ Create a new backlog issue and initial project spec from this description:
 
 {USER_PROMPT}
 
-Follow `ia/skills/project-new/SKILL.md`: run the Tool recipe (territory-ia), then write `ia/backlog/{ISSUE_ID}.yaml`, create `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`, run `bash tools/scripts/materialize-backlog.sh`, and link Depends on / Related with verified ids only. Run `npm run validate:dead-project-specs` before finishing the PR.
+Follow `ia/skills/project-new/SKILL.md`: run the Tool recipe (territory-ia), then call `task_insert` MCP to reserve id + create DB row, write spec stub via `task_spec_section_write`, and link Depends on / Related with verified ids only. Run `npm run validate:dead-project-specs` before finishing the PR.
 ```
 
 ## Stage context injection (called from `stage-file`)
@@ -105,13 +103,10 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 ## File and backlog checklist
 
 1. **Prefix** — `BUG-`/`FEAT-`/`TECH-`/`ART-`/`AUDIO-` per [`AGENTS.md`](../../../AGENTS.md).
-2. **Next id** — Three paths (never hand-edit the counter):
-   - **Normal path (MCP available):** Call `mcp__territory-ia__reserve_backlog_ids(prefix: "{PREFIX}", count: 1)` to get the next id. Use the returned id.
-   - **Normal path (MCP unavailable):** Run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Use the returned id.
-   - **`--reserved-id {ID}` path (called from `stage-file`):** When the seed prompt carries `--reserved-id {ID}`, use that id verbatim. Skip both `reserve_backlog_ids` and `reserve-id.sh` entirely — `stage-file` already reserved the id via a batch call. Invariant #13 preserved (one writer per call chain).
-3. **Priority section** — Match severity + existing BACKLOG structure. Follow Priority order in AGENTS.md.
-4. **Backlog record** — Author the yaml body (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Before writing to disk, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})` and fix any reported schema errors. **MCP unavailable fallback:** skip the validate call; `validate:all` at end catches schema drift. Write the validated yaml to `ia/backlog/{ISSUE_ID}.yaml`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
-5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../../docs/PROJECT-SPEC-STRUCTURE.md).
+2. **Reserve id + create DB row** — Call `mcp__territory-ia__task_insert` with `{slug: null, stage_id: null, title, type: PREFIX, priority, notes, depends_on: [], related: []}`. Response carries reserved `task_id` from DB sequence. **No `reserve-id.sh`, no `ia/backlog/*.yaml` write.** MCP unavailable → escalate.
+3. **Priority** — Match severity + existing BACKLOG structure per AGENTS.md.
+4. **Spec stub** — Call `mcp__territory-ia__task_spec_section_write({task_id, section: "Goal", content: "## §Goal\n\n{TITLE} — implementation TBD. Spec body authored by stage-authoring at N=1.\n\n**Status:** Draft\n**Created:** {TODAY}"})`. **No `ia/projects/{ISSUE_ID}.md` write.**
+5. **Materialize** — `mcp__territory-ia__cron_materialize_backlog_enqueue({triggered_by: "project-new"})`. Fallback: `bash tools/scripts/materialize-backlog.sh`.
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — At N=1: `/stage-authoring --task` to fill §Plan Digest before `/implement`.
 

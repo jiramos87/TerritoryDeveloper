@@ -1,0 +1,26 @@
+id: TECH-847
+type: TECH
+title: "Scratchpad ledger MCP + audit-mode skill + audit-summary output-style (Tier A1+A3+C4 compaction-loop mitigation)"
+priority: P1
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-847.md
+files:
+  - tools/mcp-ia-server/src/index.ts
+  - tools/db/migrations/0111-ia-scratchpad-ledger.sql
+  - ia/skills/audit-mode/SKILL.md
+  - .claude/output-styles/audit-summary.md
+notes: |
+  Bundle of three pieces deferred to atomization mid-sweep (~Stage 10 of large-file-atomization-refactor). DB table + 3 MCP tools mirror project-spec-journal.ts shape. Skill template copies arch-drift-scan/SKILL.md (MCP ledger consumption + polling). Output-style template copies verification-report.md. Plan-of-record: /Users/javier/.claude-personal/plans/create-a-plan-for-splendid-fountain.md. Tier A1+A3+C4 from docs/audit/compaction-loop-mitigation.md. Not blocking TECH-846 (Tier A4 hook already shipped). Related: TECH-846.
+acceptance:
+  - Persistent DB table ia_scratchpad_ledger (migration 0111) with id, slug, finding_type, file, line, severity, finding_text, timestamp columns mirroring project-spec-journal.ts shape
+  - Three MCP tools in tools/mcp-ia-server/src/index.ts (scratchpad_ledger_append, scratchpad_ledger_get, scratchpad_ledger_list) with full schema documentation
+  - New skill ia/skills/audit-mode/SKILL.md forcing per-finding ledger append BEFORE chat emission, final render via scratchpad_ledger_get(slug) fetching docs/audit/{slug}.md
+  - New output-style .claude/output-styles/audit-summary.md forcing structured table (File|Line|Severity|Finding) wired into audit-mode Stage 3 only
+  - Outcome compaction summary cost degenerates from O(finding_size × turn_count) to O(turn_count)
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-846
+created: "2026-05-08"
+raw_markdown: ""

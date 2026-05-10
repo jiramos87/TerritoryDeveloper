@@ -58,7 +58,7 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_S
    - `.claude/commands/stage-file.md` (canonical chain: stage-file → stage-authoring → plan-review → STOP)
 
 2. **Execute the full chain inline** for `{MASTER_PLAN_SLUG}` Stage `{STAGE_ID}`:
-   - Step 1 — `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + manifest append (`ia/state/backlog-sections.json`) + `ia/projects/{ISSUE_ID}.md` spec stub from template → Post-loop `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
+   - Step 1 — `stage-file` work (8 phases): Mode detection → `lifecycle_stage_context` once → Stage block + cardinality + sizing gates → Batch Depends-on verify via single `backlog_list` → Resolve target BACKLOG manifest section → Per-task `task_insert` MCP (DB-backed per-prefix id; NO reserve-id.sh; NO yaml) + `task_spec_section_write` spec stub (DB-backed; NO `ia/projects/` write) + manifest append (`ia/state/backlog-sections.json`) → Post-loop `cron_materialize_backlog_enqueue` + `npm run validate:dead-project-specs` (NO `validate:backlog-yaml` on DB path) + atomic task-table flip + R2 Stage Status flip + R1 plan-top Status flip.
    - Step 2 — `stage-authoring` bulk Stage 1×N (one Opus pass writes §Plan Digest direct per task via `task_spec_section_write` MCP; self-lints via `plan_digest_lint` cap=1).
    - Step 3 — `plan-review`: PASS → Step 4; critical → `plan-applier` Mode plan-fix → re-review (cap=1); second critical → abort.
    - Step 4 — STOP at plan-review PASS. Do NOT auto-chain to `/ship-stage`.
@@ -66,7 +66,7 @@ Missing either → print usage + abort: `/stage-file-main-session {MASTER_PLAN_S
 3. **Tooling:**
    - territory-ia MCP: `lifecycle_stage_context`, `backlog_list`, `task_insert`, `backlog_record_validate`, `plan_digest_compile_stage_doc`, `plan_digest_lint`, etc.
    - `task_insert` MCP owns id assignment (per-prefix DB sequence). Do NOT call `reserve-id.sh` or `reserve_backlog_ids` on DB path.
-   - Direct file edits (manifest `ia/state/backlog-sections.json`, spec stubs under `ia/projects/`). Master-plan task table updates flow through `task_insert` + `master_plan_render` (DB rows), NOT a filesystem `.md`. NO yaml under `ia/backlog/`.
+   - Direct file edits: manifest `ia/state/backlog-sections.json` only. Spec stubs via `task_spec_section_write` MCP (DB; NO `ia/projects/` writes). Master-plan task table updates flow through `task_insert` + `master_plan_render` (DB rows), NOT a filesystem `.md`. NO yaml under `ia/backlog/`.
 
 4. **Hard boundaries (from `.claude/commands/stage-file.md` — apply inline):**
    - No Agent/Task dispatch for any chain step.

@@ -24,8 +24,8 @@ Forward via Agent tool with `subagent_type: "project-new-planner"`:
 >
 > ## Hard boundaries
 >
-> - Do NOT reserve id — applier reserves via `reserve-id.sh`.
-> - Do NOT write yaml / spec stubs — applier writes.
+> - Do NOT reserve id — applier calls `task_insert` MCP.
+> - Do NOT write yaml / spec stubs — applier writes via `task_spec_section_write` MCP.
 > - Do NOT run `materialize-backlog.sh` / validators — applier runs gate.
 > - Do NOT bulk-file multiple issues — that is `stage-file`.
 > - Do NOT enrich spec body beyond stub seeds — `stage-authoring` writes spec body at N=1 post-apply.
@@ -42,13 +42,13 @@ Forward via Agent tool with `subagent_type: "project-new-applier"`:
 >
 > ## Mission
 >
-> Run `ia/skills/project-new-apply/SKILL.md` end-to-end. Reads planner-resolved args verbatim (`TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES`, `depends_on`, `related`). Phase 1 normalize prefix + validate enum. Phase 2 reserve id via `bash tools/scripts/reserve-id.sh {PREFIX}`. Phase 3 compose yaml body, `backlog_record_validate`, write `ia/backlog/{ISSUE_ID}.yaml`. Phase 4 bootstrap `ia/projects/{ISSUE_ID}.md` stub from `ia/templates/project-spec-template.md`. Phase 5 `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` once. Idempotent.
+> Run `ia/skills/project-new-apply/SKILL.md` end-to-end. Reads planner-resolved args verbatim (`TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES`, `depends_on`, `related`). Phase 1 normalize prefix + validate enum. Phase 2 call `task_insert` MCP (reserve id + DB row — no yaml write). Phase 3 call `task_spec_section_write` MCP (spec stub — no ia/projects file write). Phase 4 `cron_materialize_backlog_enqueue` + `npm run validate:dead-project-specs` once. Idempotent.
 >
 > ## Hard boundaries
 >
 > - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `stage-authoring` writes spec body at N=1.
-> - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
-> - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates it.
+> - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 4.
+> - Do NOT edit `BACKLOG.md` directly — `cron_materialize_backlog_enqueue` regenerates it async.
 > - Do NOT chain to `stage-authoring` — command dispatcher (Step 3 below) does that.
 > - Do NOT reuse archived ids.
 > - Do NOT commit — user decides.

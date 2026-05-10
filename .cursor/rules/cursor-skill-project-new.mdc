@@ -1,5 +1,5 @@
 ---
-description: "Use when creating a new BACKLOG.md issue from a user prompt: next BUG-/FEAT-/TECH-/ART-/AUDIO- id, row in the correct priority section, bootstrap ia/projects/{ISSUE_ID}.md from the template, and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers: \"/project-new\", \"new backlog issue\", \"create TECH-xx from prompt\", \"bootstrap project spec\", \"add issue to backlog from description\"."
+description: "DB-backed: calls task_insert MCP (no reserve-id.sh, no yaml write) to create new BACKLOG issue; writes spec stub via task_spec_section_write. No ia/backlog/*.yaml or ia/projects/*.md writes. Triggers: \"/project-new\", \"new backlog issue\", \"create TECH-xx from prompt\", \"bootstrap project spec\", \"add issue to backlog from description\"."
 alwaysApply: false
 ---
 Read and follow: @ia/skills/project-new/SKILL.md
