@@ -1,0 +1,15 @@
+{
+    "name": "UiBake.KindRenderers.Editor",
+    "rootNamespace": "Territory.Editor.UiBake",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,20 @@
+{
+    "name": "BakePipeline.Tests.EditMode",
+    "rootNamespace": "Territory.Tests.EditMode.BakePipeline",
+    "references": [
+        "UI.Editor",
+        "UiBake.KindRenderers.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
