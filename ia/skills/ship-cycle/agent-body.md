@@ -1,19 +1,14 @@
 # Mission
 
-Run `ia/skills/ship-cycle/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{SLUG}`. Stage-atomic full ship — Pass A (bulk emit + per-task compile + `task_status_flip(implemented)`) AND Pass B (verify-loop + verified→done flips + inline closeout + single stage commit + `cron_stage_verification_flip_enqueue`). Sole stage-driver in chain `design-explore → ship-plan → ship-cycle → ship-final`. Token budget hard cap 80k input on Pass A inference — over cap = fallback `/ship-stage-main-session` legacy two-pass adapter.
+Run `ia/skills/ship-cycle/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{SLUG}`. Stage-atomic full ship — Pass A (Sonnet inference: bulk emit + ONE compile-check + `task_status_flip_batch(implemented)`) + Pass B (verify-loop + recipe `ship-cycle-pass-b` mechanical tail). Sole stage-driver in chain `design-explore → ship-plan → ship-cycle → ship-final`. Token budget hard cap 80k input on Pass A inference — over cap = fallback `/ship-stage-main-session` legacy two-pass adapter.
 
 # Phase sequence (matches SKILL frontmatter `phases:`)
 
-1. Phase 0 — Parse `{SLUG} {STAGE_ID}`; `stage_bundle(slug, stage_id)`; idle exit if stage done.
-2. Phase 1 — Token-budget preflight: sum bundle + per-task §Plan Digest bytes; over 80k → STOPPED + fallback handoff to `/ship-stage-main-session`.
-3. Phase 2 — Resume gate (DB `task_state` per task): pending → Pass A required; all implemented → PASS_B_ONLY; all terminal → idle exit.
-4. Phase 3 — Pass A — single inference body emits all tasks with boundary markers `<!-- TASK:{ISSUE_ID} START/END -->`.
-5. Phase 4 — Pass A — per task: `unity:compile-check` (when Assets/**/*.cs touched) → `task_status_flip(implemented)` → `cron_journal_append_enqueue(payload_kind=phase_checkpoint)`. NO per-task commits.
-6. Phase 5 — Pass B — verify-loop on cumulative `git diff HEAD`. Verdict pass required; fail → `STAGE_VERIFY_FAIL` (no rollback).
-7. Phase 6 — Pass B — per task: `task_status_flip(verified)` then `task_status_flip(done)`.
-8. Phase 7 — Pass B — inline closeout: `stage_closeout_apply(slug, stage_id)` + `cron_audit_log_enqueue({audit_kind:'stage_closed'})`.
-9. Phase 8 — Pass B — when stage diff touches `Assets/**`: `unity_bridge_command(kind="refresh_asset_database")` BEFORE `git add -A` so live Editor writes `.meta` siblings synchronously into the stage commit (skip when no `Assets/**` paths). Then single stage commit `feat({slug}-stage-{stage_id_db}): ...` + per-task `cron_task_commit_record_enqueue(commit_sha)` + `cron_stage_verification_flip_enqueue(verdict='pass', commit_sha)`.
-10. Phase 9 — Chain digest + next-stage resolver via `master_plan_state(slug)`: capture `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` from `stages[]` (length = total, 1-based index of `{STAGE_ID}` = position); filed Stage → `/ship-cycle Stage N.M`; all done → `/ship-final {SLUG}`.
+1. Phase 0 — `tools/scripts/recipe-engine/ship-cycle/preflight.sh --slug {SLUG} --stage-id {STAGE_ID}` — parse + canonical `STAGE_ID_DB` resolve + token-budget preflight (over 80k → fallback `/ship-stage-main-session`) + resume bucket via DB `task_state`. Emits JSON consumed by Pass A.
+2. Phase 1 (Pass A) — single Sonnet inference emits all tasks with boundary markers `<!-- TASK:{ISSUE_ID} START/END -->`. After return: aggregate ALL `Assets/**/*.cs` paths across markers → ONE `unity:compile-check` (single batchmode invocation; replaces per-task loop) → `task_status_flip_batch(slug, stage_id, from='pending', to='implemented')` (single MCP call). NO per-task commits. `cron_journal_append_enqueue(payload_kind=phase_checkpoint)`.
+3. Phase 2 (Pass B step 1) — verify-loop on cumulative `git diff HEAD`. Write verdict file `/tmp/ship-cycle-verify-{slug}-{stage_id}.json`. Fail → `STAGE_VERIFY_FAIL` (no rollback).
+4. Phase 3 (Pass B steps 2–12) — `npm run recipe:run -- ship-cycle-pass-b --input slug={SLUG} stage_id={STAGE_ID_DB}`. Recipe owns: verify-loop check + 2× `task_status_flip_batch` (verified, done) + `stage_closeout_apply` (DB-only) + `materialize-backlog` + conditional `unity_refresh_asset_database` (fire-and-forget; verdict drains async via `cron_unity_compile_verify_jobs`) + per-file `git add` + stage commit `feat({slug}-stage-{stage_id_db}): ship-cycle Pass B verify + closeout` + 4 cron enqueues (`audit_log[stage_closed]`, `task_commit_record` foreach, `stage_verification_flip[verdict=pass]`, NEW `validate_post_close`, NEW `unity_compile_verify`).
+5. Phase 4 — Chain digest + next-stage resolver via `master_plan_state(slug)`: capture `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` from `stages[]` (length = total, 1-based index of `{STAGE_ID}` = position); filed Stage → `/ship-cycle Stage N.M`; all done → `/ship-final {SLUG}`.
 
 # Boundary marker contract
 
@@ -28,13 +23,13 @@ HTML comments — invisible in rendered markdown, greppable by code-review / val
 # Hard boundaries
 
 - Do NOT bypass token-budget preflight — over cap → fallback `/ship-stage-main-session`.
-- Pass A NEVER commits per Task — single stage commit at Phase 8 covers all Pass A + Pass B diffs.
-- Do NOT skip `unity:compile-check` per task on Assets/**/*.cs touched.
+- Pass A NEVER commits per Task — single stage commit at Pass B recipe step 7 covers all Pass A + Pass B diffs.
+- Do NOT skip aggregated `unity:compile-check` when Pass A touched `Assets/**/*.cs`.
 - Do NOT cross stage boundary — strictly one Stage per invocation.
-- Pass A flips strictly `pending → implemented`; Pass B flips strictly `implemented → verified → done`.
-- Inline closeout (Phase 7) MANDATORY on green Pass B — never defer.
-- Phase 8 step 0: refresh_asset_database bridge call BEFORE git add -A whenever stage diff touches Assets/** — never skip when Assets/** present (orphan .meta drift recurrence).
+- Pass A flips strictly `pending → implemented` (single batch); Pass B flips strictly `implemented → verified → done` (two batches).
+- Inline closeout (Pass B recipe step 4) MANDATORY on green verify-loop — never defer.
 - On Pass B verify-loop fail → `STAGE_VERIFY_FAIL` + worktree stays dirty + no rollback of Pass A flips.
+- Pass B recipe step 6 (`unity_refresh_asset_database`) fires-and-forgets — verdict drains async; sync `get_compilation_status` poll REMOVED.
 - Do NOT chain `/code-review` — operator runs out-of-band per Task (lifecycle row 9).
 - Do NOT write task spec bodies to filesystem — DB sole source of truth.
 

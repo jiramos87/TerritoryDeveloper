@@ -27,6 +27,7 @@ phases:
   - Assert sections closed (open ia_section_claims = 0)
   - Assert all stages done (no partial / pending / in_progress)
   - Plan-scoped validate:fast (paths from ia_task_commits for slug; HEAD-diff fallback)
+  - Assert cron_validate_post_close_jobs drained for slug (queued+running = 0)
   - Git tag {slug}-v{N} (annotated, local)
   - Flip closed_at via master_plan_close MCP
   - Journal append (payload_kind=version_close)
@@ -56,6 +57,7 @@ hard_boundaries:
   - IF any `ia_section_claims` row open for slug → STOP. Run /section-closeout first.
   - IF any `ia_stages.status` ≠ `done` (incl. `partial`, `pending`, `in_progress`) → STOP. Ship remaining stages first.
   - IF plan-scoped `validate:fast` exits non-zero → STOP. Fix + re-run. Scope is the union of paths in `ia_task_commits` for slug — drift in unrelated plans CANNOT block this close.
+  - IF `cron_validate_post_close_jobs` has any `queued` / `running` row for slug → STOP. Cron drainer behind; re-run after drained.
   - IF `closed_at` already set on parent → STOP. Version already closed.
   - Do NOT push tag — local only. User decides remote push.
   - Do NOT create v(N+1) row — that is `master_plan_version_create` (separate MCP).
@@ -103,9 +105,10 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 2. **`assert_sections_closed`** — bash: count `ia_section_claims` open rows for slug. STOP on `> 0`.
 3. **`assert_stages_done`** — bash: assert every `stages[].status === 'done'`. STOP on any `partial` / `pending` / `in_progress`.
 4. **`cumulative_validate`** — bash: query `ia_task_commits` for plan's task shas → union `git show --name-only` paths → `npm run validate:fast -- --diff-paths <csv>` (path-map scoped, TECH-12640). Drift in unrelated plans does NOT block this close. Fallback: HEAD-diff `validate:fast` when DB unreachable. STOP on non-zero exit.
-5. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
-6. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede cron_journal_append_enqueue.
-7. **`journal_close`** — MCP: `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
+5. **`assert_post_close_validate_drained`** — bash: assert `cron_validate_post_close_jobs` has zero `queued` / `running` rows for slug. STOP on drainer-behind so close blocks until verdict lands; operator re-runs `/ship-final` once drained.
+6. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
+7. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede cron_journal_append_enqueue.
+8. **`journal_close`** — MCP: `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
 
 ---
 
@@ -124,6 +127,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 - IF open section claim → STOP. `/section-closeout` first.
 - IF any stage `status ≠ done` → STOP. `/ship-stage` remaining stages first.
 - IF plan-scoped `validate:fast` red → STOP. Fix + re-run. Scope is plan's task-commit paths only; unrelated-plan drift cannot trigger this stop.
+- IF `cron_validate_post_close_jobs` has open rows for slug → STOP. Drainer behind; re-run after drained.
 - IF `closed_at` already set → STOP with `version_already_closed`.
 - Do NOT push tag — local only. Pushing is a human-gated step.
 - Do NOT mutate code / specs / schemas — closure is metadata-only (tag + closed_at + journal row).
@@ -142,9 +146,11 @@ Invoke recipe:
     --input slug={SLUG}
 
 Recipe: load_plan → assert_sections_closed → assert_stages_done →
-        cumulative_validate → git_tag → close_plan → journal_close.
+        cumulative_validate → assert_post_close_validate_drained →
+        git_tag → close_plan → journal_close.
 
-STOP on open section / non-done stage / validate red / closed_at already set.
+STOP on open section / non-done stage / validate red /
+post-close drainer behind / closed_at already set.
 Do NOT push tag. Do NOT create v(N+1) row. Do NOT commit source.
 ```
 
@@ -157,3 +163,4 @@ Do NOT push tag. Do NOT create v(N+1) row. Do NOT commit source.
 | 2026-05-05 | NEW skill — ship-protocol Stage 4 (TECH-12643). 7 steps: load_plan + assert_sections_closed + assert_stages_done + cumulative_validate + git_tag + close_plan + journal_close. | `docs/explorations/ship-protocol-exploration.md` Stage 4 |
 | 2026-05-06 | Phase 4 cumulative_validate switched from whole-repo `validate:all` to plan-scoped `validate:fast --diff-paths <csv>` (paths derived by unioning `git show --name-only` across `ia_task_commits` shas for slug). Whole-repo gate red-blocked closes when unrelated-plan handoff drift was present. New behavior fails ONLY on drift in this plan's edits. Fallback to HEAD-diff `validate:fast` when DB unreachable. | Force-close override on `ship-cycle-db-read-efficiency` v1 close — handoff-schema drift in `chain-token-cut.md` + `async-cron-jobs.md` blocked unrelated plan close. |
 | 2026-05-06 | Path-map sub-fix — `validate:fast` runner extended to accept entries shaped `{id, scope:"matched"}` which forward matched touched paths as positional args (`npm run script -- path1 path2`). `docs/explorations/**` entry rewritten to scoped form so plan-scoped runs only validate touched handoff docs. `ia/skills/ship-plan/**` → handoff-schema mapping removed (whole-tree on SKILL.md edit re-collapsed scope; validate:all chain still covers schema-source changes). `validate-fast-coverage.mjs` updated to handle object entries. | Smoke test of patched cumulative-validate.sh on this plan re-failed on whole-tree handoff scan — touched skill files triggered bare-string entry. |
+| 2026-05-10 | Phase 4.5 step `assert_post_close_validate_drained` — gates close on `cron_validate_post_close_jobs` queued+running rows = 0 for slug. Pairs with new `cron_validate_post_close_jobs` queue introduced by ship-cycle Pass B refactor — async post-close validate verdict must land before version close. Re-runnable after drainer catches up. | Lifecycle skills refactor (Phase 4 / mig 0133 / cron handler `validate-post-close-cron-handler.ts`). |

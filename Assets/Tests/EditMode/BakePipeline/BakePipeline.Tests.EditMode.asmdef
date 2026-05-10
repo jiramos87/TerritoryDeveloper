@@ -3,7 +3,9 @@
     "rootNamespace": "Territory.Tests.EditMode.BakePipeline",
     "references": [
         "UI.Editor",
-        "UiBake.KindRenderers.Editor"
+        "UiBake.KindRenderers.Editor",
+        "TerritoryDeveloper.Game",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

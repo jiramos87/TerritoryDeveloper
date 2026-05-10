@@ -75,6 +75,9 @@ public partial class UIManager : MonoBehaviour
     [SerializeField] private GameObject settingsScreenRoot;
     [SerializeField] private GameObject saveLoadScreenRoot;
     [SerializeField] private GameObject newGameScreenRoot;
+
+    [Header("Modal Coordination (Wave B4 — TECH-27095)")]
+    [SerializeField] private Territory.UI.Modals.ModalCoordinator _modalCoordinator;
     #endregion
 
     #region State

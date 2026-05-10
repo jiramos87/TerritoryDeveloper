@@ -1,26 +1,12 @@
 -- Migration: 0140_seed_budget_archetypes.sql
 -- Stage 7.0 Wave B3 — TECH-27088
--- 3 new archetype rows: slider-row-numeric, expense-row, readout-block.
--- chart + range-tabs reused from Wave B2 (0138_seed_stats_archetypes.sql).
+-- Archetype acknowledgement for slider-row-numeric, expense-row, readout-block.
+-- NOTE: catalog_archetype table does not exist in this schema version.
+-- Archetypes are registered as bake-handler case arms (UiBakeHandler.Archetype.cs).
+-- This migration is a no-op acknowledgement for migration-chain continuity.
 
-INSERT INTO catalog_archetype (kind, label, description, params_json)
-VALUES
-  (
-    'slider-row-numeric',
-    'Slider Row (Numeric)',
-    'Slider row with live numeric value readout left-aligned. Alias of slider-row + numeric=true flag. min/max/step from params; value-bind + actionId dispatch on change.',
-    '{"numeric":true,"min":0,"max":100,"step":1,"bindId":"","actionId":"","variant":"default"}'
-  ),
-  (
-    'expense-row',
-    'Expense Row',
-    'Icon + label + amount row for service funding / expense display. Aliases to segmented-readout for display-only stub.',
-    '{"icon":"","label":"","bindId":"","amount":0}'
-  ),
-  (
-    'readout-block',
-    'Readout Block',
-    'Label + value bind block with delta-color rule (positive-green / negative-red). Aliases to segmented-readout.',
-    '{"bindId":"","deltaColorRule":"positive-green","label":""}'
-  )
-ON CONFLICT (kind) DO NOTHING;
+DO $$
+BEGIN
+  RAISE NOTICE '0140 OK: budget-panel archetypes (slider-row-numeric/expense-row/readout-block) registered in bake-handler — no catalog_archetype table in this schema version';
+END;
+$$;

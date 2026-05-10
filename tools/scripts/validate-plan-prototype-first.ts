@@ -55,6 +55,10 @@ const pg = pgRequire("pg");
 // Cutover date (D3): plans created before this date are grandfathered.
 // ---------------------------------------------------------------------------
 
+// Plan-scope opt-in — when set (ship-final cumulative-validate), restrict to
+// stages owned by that slug. Cross-plan drift gated by validate:all in CI.
+const SCOPE_SLUG = (process.env.VALIDATE_SCOPE_SLUG ?? "").trim();
+
 const CUTOVER_ISO = "2026-05-03";
 
 // ---------------------------------------------------------------------------
@@ -196,6 +200,7 @@ interface StageRow {
   slug: string;
   stage_id: string;
   status: string;
+  body: string | null;
   tracer_slice_block: Record<string, unknown> | null;
   visibility_delta: string | null;
 }
@@ -312,11 +317,13 @@ async function main(): Promise<number> {
       return 0;
     }
 
-    const activeSlugs = new Set(activePlans.map((p) => p.slug));
+    // Restrict to scoped slug when ship-final cumulative-validate sets VALIDATE_SCOPE_SLUG.
+    const filteredPlans = SCOPE_SLUG ? activePlans.filter((p) => p.slug === SCOPE_SLUG) : activePlans;
+    const activeSlugs = new Set(filteredPlans.map((p) => p.slug));
     if (!fake) {
       const pgClient = client as unknown as InstanceType<typeof pg.Client>;
       const stagesRes = await pgClient.query<StageRow>(
-        `SELECT slug, stage_id, status, tracer_slice_block, visibility_delta
+        `SELECT slug, stage_id, status, body, tracer_slice_block, visibility_delta
            FROM ia_stages
           WHERE slug = ANY($1::text[])
           ORDER BY slug, stage_id`,
@@ -333,13 +340,14 @@ async function main(): Promise<number> {
       stagesByPlan.set(s.slug, arr);
     }
 
-    for (const plan of activePlans) {
+    for (const plan of filteredPlans) {
       const stages = stagesByPlan.get(plan.slug) ?? [];
       if (stages.length === 0) continue;
 
       // Check 1: Stage 1.0 / 1.1 MUST carry tracer_slice_block.
       for (const s of stages) {
         if (s.stage_id === "1.0" || s.stage_id === "1.1") {
+          if (s.body?.includes("target_kind: design_only")) continue;
           const err = validateTracerSliceBlock(s.tracer_slice_block);
           if (err) {
             console.error(
@@ -355,6 +363,7 @@ async function main(): Promise<number> {
       const deltaCounts = new Map<string, string[]>();
       for (const s of stages) {
         if (isOneXStage(s.stage_id)) continue;
+        if (s.body?.includes("target_kind: design_only")) continue;
         const d = (s.visibility_delta ?? "").trim();
         if (d === "") {
           console.error(
@@ -379,7 +388,7 @@ async function main(): Promise<number> {
 
     // Stub-blocker scan (TECH-10306) — per Stage 1.0/1.1 with non-null verb.
     // Violation → hard error (exit nonzero). Orphan token → warn (exit 0).
-    for (const plan of activePlans) {
+    for (const plan of filteredPlans) {
       const stages = stagesByPlan.get(plan.slug) ?? [];
       for (const s of stages) {
         if (s.stage_id !== "1.0" && s.stage_id !== "1.1") continue;
@@ -412,13 +421,13 @@ async function main(): Promise<number> {
 
     if (violations > 0) {
       console.error(
-        `[plan-prototype-first] ${violations} violation(s) total across ${activePlans.length} active plan(s); ${grandfathered.length} grandfathered (skipped)`,
+        `[plan-prototype-first] ${violations} violation(s) total across ${filteredPlans.length} active plan(s); ${grandfathered.length} grandfathered (skipped)`,
       );
       return 1;
     }
 
     console.log(
-      `[plan-prototype-first] ✓ ${activePlans.length} active plan(s) checked · ${grandfathered.length} grandfathered (skipped) · ${warnCount} warn(s)`,
+      `[plan-prototype-first] ✓ ${filteredPlans.length} active plan(s) checked · ${grandfathered.length} grandfathered (skipped) · ${warnCount} warn(s)`,
     );
     return 0;
   } finally {

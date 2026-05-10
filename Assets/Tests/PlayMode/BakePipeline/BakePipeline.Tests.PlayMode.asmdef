@@ -1,7 +1,10 @@
 {
     "name": "BakePipeline.Tests.PlayMode",
     "rootNamespace": "Territory.Tests.PlayMode.BakePipeline",
-    "references": ["TerritoryDeveloper.Game"],
+    "references": [
+        "TerritoryDeveloper.Game",
+        "Unity.TextMeshPro"
+    ],
     "includePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

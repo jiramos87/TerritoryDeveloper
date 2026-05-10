@@ -418,6 +418,202 @@ export async function mutateStageUpdate(
 }
 
 // ---------------------------------------------------------------------------
+// stage_delete
+// (Hard-delete one ia_stages row + cascade-cleanup. Used by reshape paths
+// where superseded carcass shells need physical removal — `stage_update`
+// only relabels titles, leaving phantom pending rows in `master_plan_state`
+// + `master_plan_health`. No status='archived' for stages (only for tasks),
+// so DELETE is the only correct tool.)
+//
+// Cascade matrix (from FK declarations across migrations):
+//   ia_tasks                   → ON DELETE RESTRICT (blocks unless stage empty)
+//   ia_stage_verifications     → ON DELETE CASCADE
+//   stage_arch_surfaces        → ON DELETE CASCADE
+//   ia_red_stage_proofs        → ON DELETE CASCADE
+//   stage_carcass_signals      → ON DELETE CASCADE
+//   ia_stage_claims            → ON DELETE CASCADE
+//   ia_master_plan_change_log  → text col only, no FK (audit trail preserved)
+//
+// Default = strict — refuse if ANY task rows exist on the stage. Caller
+// must flip tasks to terminal status (`archived`) + opt in to
+// `cascade_archived_tasks=true` to also delete those rows. Non-archived
+// task rows ALWAYS block deletion regardless of flag — protects against
+// accidental work loss.
+// ---------------------------------------------------------------------------
+
+export interface StageDeleteInput {
+  slug: string;
+  stage_id: string;
+  /**
+   * When true, also DELETE child `ia_tasks` rows whose status='archived'
+   * before deleting the stage. Non-archived task rows always block
+   * deletion regardless of this flag — caller must first flip them via
+   * `task_status_flip` / `stage_closeout_apply`.
+   */
+  cascade_archived_tasks?: boolean;
+  /** Audit body for `ia_master_plan_change_log` (kind='stage-delete'). */
+  audit_note?: string | null;
+  /** Audit actor for `ia_master_plan_change_log.actor`. */
+  actor?: string | null;
+}
+
+export interface StageDeleteResult {
+  slug: string;
+  stage_id: string;
+  deleted_archived_tasks: number;
+  cascade_counts: {
+    stage_verifications: number;
+    arch_surfaces: number;
+    red_stage_proofs: number;
+    carcass_signals: number;
+    stage_claims: number;
+  };
+  change_log_entry_id: number | null;
+}
+
+export async function mutateStageDelete(
+  input: StageDeleteInput,
+): Promise<StageDeleteResult> {
+  const cleanSlug = (input.slug ?? "").trim();
+  const cleanStageId = (input.stage_id ?? "").trim();
+  if (!cleanSlug) throw new IaDbValidationError("slug is required");
+  if (!cleanStageId) throw new IaDbValidationError("stage_id is required");
+  const cascadeArchived = input.cascade_archived_tasks === true;
+
+  return withTx(async (c) => {
+    // Stage row guard + lock — block concurrent writes during delete.
+    const sg = await c.query(
+      `SELECT 1 FROM ia_stages WHERE slug = $1 AND stage_id = $2 FOR UPDATE`,
+      [cleanSlug, cleanStageId],
+    );
+    if (sg.rowCount === 0) {
+      throw new IaDbValidationError(
+        `stage not found: ${cleanSlug}/${cleanStageId}`,
+      );
+    }
+
+    // Non-terminal task guard — `pending` / `in_progress` / `verified` /
+    // `implemented` / `done` rows always block. Only `archived` is OK to
+    // sweep via cascade flag.
+    const nonArchived = await c.query<{ task_id: string; status: string }>(
+      `SELECT task_id, status::text AS status
+         FROM ia_tasks
+        WHERE slug = $1 AND stage_id = $2
+          AND status <> 'archived'
+        ORDER BY task_id`,
+      [cleanSlug, cleanStageId],
+    );
+    if ((nonArchived.rowCount ?? 0) > 0) {
+      const ids = nonArchived.rows
+        .map((r) => `${r.task_id}(${r.status})`)
+        .join(", ");
+      throw new IaDbValidationError(
+        `stage has non-archived tasks: ${ids} — flip to archived (task_status_flip / stage_closeout_apply) before delete`,
+      );
+    }
+
+    // Archived tasks — count + optionally cascade-delete. Without the flag,
+    // archived task rows themselves block delete (FK is RESTRICT — DB would
+    // reject anyway; we surface a clearer error here).
+    const archivedCount = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM ia_tasks
+        WHERE slug = $1 AND stage_id = $2 AND status = 'archived'`,
+      [cleanSlug, cleanStageId],
+    );
+    const archivedN = parseInt(archivedCount.rows[0]!.n, 10);
+    let deletedArchivedTasks = 0;
+    if (archivedN > 0) {
+      if (!cascadeArchived) {
+        throw new IaDbValidationError(
+          `stage has ${archivedN} archived task(s) — pass cascade_archived_tasks=true to delete them along with the stage`,
+        );
+      }
+      const del = await c.query(
+        `DELETE FROM ia_tasks WHERE slug = $1 AND stage_id = $2 AND status = 'archived'`,
+        [cleanSlug, cleanStageId],
+      );
+      deletedArchivedTasks = del.rowCount ?? 0;
+    }
+
+    // Pre-count cascade tables for return shape (post-delete counts come
+    // from RETURNING but Postgres doesn't return cascade row counts on the
+    // parent DELETE — query before).
+    const verRes = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM ia_stage_verifications
+        WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+    const surfRes = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM stage_arch_surfaces
+        WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+    const proofRes = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM ia_red_stage_proofs
+        WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+    const sigRes = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM stage_carcass_signals
+        WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+    const claimRes = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM ia_stage_claims
+        WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+
+    // Audit row — written BEFORE delete so a successful txn includes the
+    // trail row, and a rollback discards both together. Plan-scoped FK
+    // (slug → ia_master_plans) on change_log keeps the row intact even
+    // though the stage row vanishes; `stage_id` is plain text.
+    const auditBody =
+      input.audit_note ??
+      `stage_delete: ${cleanSlug}/${cleanStageId} (${deletedArchivedTasks} archived task(s) cascade-deleted)`;
+    let changeLogEntryId: number | null = null;
+    try {
+      const audit = await c.query<{ entry_id: string }>(
+        `INSERT INTO ia_master_plan_change_log (slug, stage_id, kind, body, actor)
+         VALUES ($1, $2, 'stage-delete', $3, $4)
+         RETURNING entry_id::text AS entry_id`,
+        [cleanSlug, cleanStageId, auditBody, input.actor ?? "stage_delete"],
+      );
+      changeLogEntryId = parseInt(audit.rows[0]!.entry_id, 10);
+    } catch (e) {
+      // ia_master_plan_change_log may have UNIQUE(slug, stage_id, kind, commit_sha)
+      // — duplicate stage-delete entries (e.g. retry) collapse to no-op so
+      // the actual stage row deletion still proceeds.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/duplicate key|unique/i.test(msg)) throw e;
+    }
+
+    // The actual delete — cascades clean up child rows in CASCADE tables.
+    await c.query(
+      `DELETE FROM ia_stages WHERE slug = $1 AND stage_id = $2`,
+      [cleanSlug, cleanStageId],
+    );
+
+    // Cache-bust: stage delete invalidates plan state / render reads.
+    enqueueCacheBust("db_read_batch", "db_read_batch:%");
+
+    return {
+      slug: cleanSlug,
+      stage_id: cleanStageId,
+      deleted_archived_tasks: deletedArchivedTasks,
+      cascade_counts: {
+        stage_verifications: parseInt(verRes.rows[0]!.n, 10),
+        arch_surfaces: parseInt(surfRes.rows[0]!.n, 10),
+        red_stage_proofs: parseInt(proofRes.rows[0]!.n, 10),
+        carcass_signals: parseInt(sigRes.rows[0]!.n, 10),
+        stage_claims: parseInt(claimRes.rows[0]!.n, 10),
+      },
+      change_log_entry_id: changeLogEntryId,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // stage_body_write
 // (Mirror of mutateMasterPlanPreambleWrite for ia_stages.body.)
 // ---------------------------------------------------------------------------

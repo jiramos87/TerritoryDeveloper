@@ -75,6 +75,27 @@ const planShape = z
   })
   .passthrough();
 
+const redStageProofBlockShape = z
+  .object({
+    red_test_anchor: z
+      .string()
+      .optional()
+      .describe("Red test anchor `{path}::{symbol}`. Defaults to 'design_only' when omitted."),
+    target_kind: z
+      .string()
+      .optional()
+      .describe("Surface kind tag (e.g. mcp_tool, sql_fn, c_sharp_method, design_only)."),
+    proof_artifact_id: z
+      .string()
+      .optional()
+      .describe("Linked red-stage proof id (when surfaced via red_stage_proof_capture)."),
+    proof_status: z
+      .string()
+      .optional()
+      .describe("'pending' | 'captured' | 'finalized' | 'not_applicable'."),
+  })
+  .passthrough();
+
 const stageShape = z
   .object({
     stage_id: z.string().min(1).describe("Stage id e.g. 'stage-1-tracer'."),
@@ -85,6 +106,17 @@ const stageShape = z
     section_id: z.string().optional(),
     carcass_role: z.string().optional(),
     visibility_delta: z.string().optional(),
+    body: z
+      .string()
+      .optional()
+      .describe(
+        "Stage body markdown. When omitted + red_stage_proof_block present, server-side renders via format_stage_body() (mig 0136).",
+      ),
+    red_stage_proof_block: redStageProofBlockShape
+      .optional()
+      .describe(
+        "Structured §Red-Stage Proof block (mig 0136). Server-side rendered when stage.body is absent.",
+      ),
   })
   .passthrough();
 
@@ -140,9 +172,11 @@ export function registerMasterPlanBundleApply(server: McpServer): void {
         "One Postgres tx inserts ia_master_plans + N ia_stages + M ia_tasks. " +
         "Apply paths: insert_new | backfill_replace | version_bump (decided by SQL fn). " +
         "Task body resolution: body | digest_body | '' (mig 0078 dual-key COALESCE). " +
+        "Stage body resolution: body | format_stage_body(red_stage_proof_block) | '' (mig 0136). " +
+        "Inside tx: promote_drift_lint_staged(slug, version) flips pre-staged drift findings → queued (mig 0136). " +
         "task_id minted via per-prefix nextval(tech_id_seq | feat_id_seq | bug_id_seq | art_id_seq | audio_id_seq). " +
         "task_key embedded in body via <!-- task_key: T{N.M.K} --> header. " +
-        "Returns {plan_slug, apply_path, plan_version, stages_inserted, tasks_inserted}. " +
+        "Returns {plan_slug, apply_path, plan_version, stages_inserted, tasks_inserted, drift_lint_promoted}. " +
         "Any constraint failure rolls back the entire bundle. " +
         "Used by /ship-plan Phase 7. Schema-cache restart required after adding this tool (N4).",
       inputSchema: inputShape,

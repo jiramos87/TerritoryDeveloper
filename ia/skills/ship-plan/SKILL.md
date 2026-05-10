@@ -20,14 +20,12 @@ description: >-
   Replaces the `stage-file` + `stage-authoring` two-step roundtrip.
   Triggers: "/ship-plan {SLUG}", "ship plan", "bulk-author plan from handoff yaml".
 phases:
-  - Parse handoff YAML frontmatter
-  - Validate handoff schema
-  - Pre-fetch shared MCP context (glossary + router + invariants once per plan)
-  - Pre-load task_bundle_batch context
-  - Compose 3-section digest per task with inline anchor expansion
-  - Drift lint (anchor + glossary + retired-surface) per task
-  - Dispatch master_plan_bundle_apply (atomic Postgres tx)
-  - Hand-off
+  - Phase A — recipe ship-plan-phase-a (parse + schema + invariants + task_bundle + spec_sections + drift-lint stash)
+  - Phase B — compose 3-section digest per task with inline anchor expansion (Opus only)
+  - Phase B.5 — split-on-token-overflow guardrail (single bundle dispatch after last sub-pass)
+  - Phase C — dispatch master_plan_bundle_apply (server-side body render via mig 0136; drift-lint stash promoted atomically)
+  - Phase D — recipe ship-plan-phase-c (glossary backlinks + anchor reindex + plan_filed audit)
+  - Phase E — hand-off
 triggers:
   - /ship-plan {SLUG}
   - ship plan
@@ -130,220 +128,80 @@ Schema validated by `tools/scripts/validate-handoff-schema.mjs` (TECH-12634).
 
 ---
 
-## Phase 1 — Parse handoff YAML frontmatter
+## Phase A — recipe `ship-plan-phase-a` (mechanical preflight)
 
-Read `docs/explorations/{SLUG}.md`. Extract leading YAML block delimited by `---` lines. Parse with `yaml` module. Required top-level keys: `slug`, `target_version`, `stages[]`. Each stage requires `id`, `title`, `exit`, `red_stage_proof`, `tasks[]`. Each task requires `id`, `title`, `prefix`, `digest_outline`, `kind`. Optional per stage: `red_stage_proof_block` (4-field object — see Phase 7.0). Optional per task: `depends_on`, `touched_paths`.
+Single recipe call replaces legacy Phases 1-4 + 6 (parse + schema + MCP prefetch + task_bundle + spec_sections batch + drift-lint stash):
 
-Missing frontmatter → halt with `STOPPED — handoff_yaml_missing: docs/explorations/{SLUG}.md`. `slug` mismatch → halt with `STOPPED — slug_mismatch: arg={SLUG} yaml={yaml.slug}`.
-
-### Phase 1 resume hook — phase_checkpoint read
-
-After parsing YAML, derive `resolved_phases` set:
-
-```
-IF yaml.target_version > 1 AND yaml.parent_plan_slug IS NOT NULL:
-    rows = journal_get(slug=SLUG, payload_kind="phase_checkpoint")
-    resolved_phases = { row.payload.phase_id for row in rows }
-ELSE:
-    resolved_phases = {}   # New plan — skip read entirely
+```bash
+npm run recipe:run -- ship-plan-phase-a --input slug={SLUG}
 ```
 
-Later phases (6, 7) check `if "ship-plan.{N}.{label}" in resolved_phases: skip`. Resume reader is read-only; no write at this point.
+Recipe steps (`tools/recipes/ship-plan-phase-a.yaml`):
 
-Prior drift summary read (when `parent_plan_slug` non-null):
+1. `parse_handoff_yaml` — bash; reads `docs/explorations/{SLUG}.md` frontmatter; emits parsed JSON.
+2. `validate_handoff` — bash; wraps `tools/scripts/validate-handoff-schema.mjs` (TECH-12634). Non-zero exit → STOP.
+3. `invariants_summary` + `list_rules` — parallel MCP fetches; merged universal + Unity invariants + rule-id index.
+4. `task_bundle_batch` — MCP; primes depends_on + cited-id status maps for all `{prefix}-{id}` keys.
+5. `spec_sections` — MCP; batch anchor expansion for ALL anchors across all tasks (replaces sequential per-anchor `spec_section`).
+6. `drift_lint_pre_bundle` — MCP `plan_digest_drift_lint`; SQL+regex anchor + glossary + retired-surface scan.
+7. `enqueue_drift_findings_staged` — MCP `cron_drift_lint_findings_enqueue(status='staged')`. Stash awaits Phase C bundle_apply success → `promote_drift_lint_staged()` flips staged→queued atomically inside the same tx.
 
-```sql
-SELECT id, payload FROM ia_master_plan_change_log
-WHERE slug = $1 AND kind = 'drift_lint_summary'
-ORDER BY recorded_at DESC LIMIT 1
-```
+Recipe outputs: `{handoff_json, invariants, rule_index, task_batch, anchor_bundle, drift_findings_job_id}`. Consumed by Phase B digest composition.
 
-If row exists → Phase 6 may skip already-resolved drift items (use `payload.n_unresolved` as gate: 0 → drift clean from prior run).
+Resume hook — when `target_version > 1 AND parent_plan_slug IS NOT NULL`: recipe step `parse_handoff_yaml` reads `ia_ship_stage_journal` for `payload_kind=phase_checkpoint` rows; later phases skip already-resolved.
 
----
+Stop conditions (recipe exits non-zero):
+- `handoff_yaml_missing` / `handoff_yaml_invalid_yaml` / `slug_mismatch` → Phase 1 step.
+- `handoff_schema_invalid` → Phase 2 step.
+- `mcp_unavailable` → Phase 3-5 steps (do NOT fall back to filesystem).
 
-## Phase 2 — Validate handoff schema
+### Phase A.1 — Blueprint loader (task_kind branch)
 
-Invoke `node tools/scripts/validate-handoff-schema.mjs docs/explorations/{SLUG}.md`. Non-zero exit → halt with `STOPPED — handoff_schema_invalid: {stderr}`. Schema validator owns: required-key check + cardinality (≤6 stages, ≤5 tasks/stage for new plans), prefix enum (`TECH` / `FEAT` / `BUG` / `ART` / `AUDIO`), kind enum (`code` / `doc-only` / `mcp-only`), id-format (`{stage_id}.{task_idx}` or `{major}.{minor}.{task_idx}` for sub-stages).
-
-Existing-plan grandfather clause — `parent_plan_id` non-null skips cardinality cap.
-
----
-
-## Phase 3 — Pre-fetch shared MCP context (once per plan)
-
-Single batched read — reused across all N tasks:
-
-1. `mcp__territory-ia__router_for_task({ task_keywords: yaml.stages.flatMap(s => s.tasks.map(t => t.title)).join(" ") })` → router hits.
-2. `mcp__territory-ia__glossary_discover({ query: ... })` → glossary anchors.
-3. `mcp__territory-ia__invariants_summary({})` → universal + Unity invariants merged.
-4. `mcp__territory-ia__list_rules({})` → rule-id index for retired-surface scan.
-
-Cache as `SHARED_CONTEXT` Tier 2 ephemeral block. **Do NOT re-fetch per Task.**
-
----
-
-## Phase 4 — Pre-load task_bundle_batch context + blueprint detection
-
-Call `mcp__territory-ia__task_bundle_batch({ slug: "{SLUG}", task_keys: yaml.stages.flatMap(s => s.tasks.map(t => `${t.prefix}-${t.id}`)) })` — single MCP roundtrip pre-loads all task contexts (depends_on resolution + cited-id status maps + commit history shells). Cache as `TASK_BATCH` block.
-
-`task_bundle_batch` is the new MCP tool registered by TECH-12635. Pre-creation of plan rows happens via `master_plan_bundle_apply` at Phase 7 — `task_bundle_batch` here primes the cache for downstream `/ship-cycle` consumption.
-
-### Phase 4.1 — Blueprint loader (task_kind branch)
-
-After `task_bundle_batch` returns, scan each task in `yaml.stages[].tasks[]` for `task_kind` field. Two branches:
+After recipe returns `task_batch`, scan each task in `handoff_json.stages[].tasks[]` for `task_kind` field:
 
 **Branch A — `task_kind: ui_from_db`:**
 
-1. Read `ia/templates/blueprints/ui-from-db.md` (file-based canonical blueprint).
-2. Assert file carries the 5 deterministic H2 section ids in order: `Schema-Probe` / `Bake-Apply` / `Render-Check` / `Console-Sweep` / `Tracer`. Missing or reordered → halt with `STOPPED — blueprint_section_ids_invalid: ia/templates/blueprints/ui-from-db.md`.
-3. Check `bake_handler_version:` stamp in blueprint front-comment. If handler version differs from current `UiBakeHandler` schema_version → emit warning `blueprint_version_drift: blueprint={N} handler={M}` in hand-off summary (not a halt — drift surfaces, does not block).
-4. At Phase 5 digest composition: replace the standard 3-section §Plan Digest template with the 5-section blueprint expansion. Per blueprint section (`Schema-Probe` / `Bake-Apply` / `Render-Check` / `Console-Sweep` / `Tracer`), fill `{{slots}}` from task `digest_outline` + stage `exit` fields. Emit the 5 sections as ordered sub-headings under `## §Plan Digest` in the task spec body.
-5. Cache the loaded + slot-filled blueprint as `BLUEPRINT_UI_FROM_DB` for reuse across multiple `ui_from_db` tasks in the same plan run.
+1. Read `ia/templates/blueprints/ui-from-db.md` (canonical blueprint).
+2. Assert 5 deterministic H2 section ids in order: `Schema-Probe` / `Bake-Apply` / `Render-Check` / `Console-Sweep` / `Tracer`. Missing or reordered → halt with `STOPPED — blueprint_section_ids_invalid: ia/templates/blueprints/ui-from-db.md`.
+3. Check `bake_handler_version:` stamp. If differs from current `UiBakeHandler` schema_version → emit warning `blueprint_version_drift: blueprint={N} handler={M}` (not a halt).
+4. At Phase B digest composition: replace standard 3-section §Plan Digest template with 5-section blueprint expansion. Per blueprint section, fill `{{slots}}` from task `digest_outline` + stage `exit`.
+5. Cache loaded + slot-filled blueprint as `BLUEPRINT_UI_FROM_DB` for reuse across multiple `ui_from_db` tasks.
 
 **Branch B — all other `task_kind` values (default: `implementation`, `refactor`, `docs`, `tooling`, absent):**
 
-No change — Phase 5 proceeds with standard 3-section digest template. Default branch is strictly unchanged.
-
-Blueprint cache note: `BLUEPRINT_UI_FROM_DB` loaded once per plan invocation (not per task). Second `ui_from_db` task reuses cached blueprint + re-fills slots.
+No change — Phase B proceeds with standard 3-section digest template.
 
 ---
 
-## Phase 5 — Compose 3-section digest per task with inline anchor expansion
+## Phase B — Compose 3-section digest per task (Opus-owned)
 
-Per task, build `§Plan Digest` body with exactly 3 sub-sections by reading the file-based Markdown templates (TECH-15901) under `ia/templates/digest-sections/` and filling `{{slot}}` values:
+Per task, build `§Plan Digest` body with exactly 3 sub-sections by reading file-based Markdown templates (TECH-15901) under `ia/templates/digest-sections/` and filling `{{slot}}` values:
 
-- `ia/templates/digest-sections/goal.md` — slots: `{{intent_one_liner}}`, `{{primary_surface}}`, `{{glossary_terms}}`
-- `ia/templates/digest-sections/red-stage-proof.md` — slots: `{{anchor_kind}}`, `{{path}}`, `{{method}}`, `{{description}}`, `{{failing_baseline}}`, `{{green_criteria}}`
-- `ia/templates/digest-sections/work-items.md` — slot: `{{work_item_lines}}` (bullet list)
+- `goal.md` — slots: `{{intent_one_liner}}`, `{{primary_surface}}`, `{{glossary_terms}}`
+- `red-stage-proof.md` — slots: `{{anchor_kind}}`, `{{path}}`, `{{method}}`, `{{description}}`, `{{failing_baseline}}`, `{{green_criteria}}`
+- `work-items.md` — slot: `{{work_item_lines}}` (bullet list)
 
-Concatenate the three filled templates under a `## §Plan Digest` heading. Structure is identical across FEAT/BUG/TECH tasks — only slot values differ.
+Concatenate three filled templates under `## §Plan Digest` heading. Structure identical across FEAT/BUG/TECH tasks — only slot values differ.
 
-**Drop sections** (vs legacy 7-section relaxed shape): §Acceptance, §Pending Decisions, §Implementer Latitude, §Test Blueprint, §Invariants & Gate. §Acceptance subsumed by §Red-Stage Proof. §Invariants & Gate moved to stage exit criteria. §Pending Decisions resolved upstream at design-explore Phase 1 (zero unresolved decisions reach ship-plan — hard rule).
+**Anchor inline expansion at digest write.** For every `{anchor-kind}:{path}::{method}` ref in §Red-Stage Proof or every glossary slug in §Goal, embed the resolved body from `anchor_bundle` (returned by Phase A recipe step 5) directly in the digest. No deferred `@anchor` placeholders.
 
-### 5.1 Inline anchor expansion at digest write
+**Drop sections** (vs legacy 7-section shape): §Acceptance / §Pending Decisions / §Implementer Latitude / §Test Blueprint / §Invariants & Gate. §Acceptance subsumed by §Red-Stage Proof. §Invariants & Gate moved to stage exit criteria. §Pending Decisions resolved upstream at design-explore Phase 1.
 
-For every `{anchor-kind}:{path}::{method}` ref in §Red-Stage Proof or every glossary slug in §Goal, call `mcp__territory-ia__spec_section` (router hits cached at Phase 3) inline and embed the resolved body directly in the digest. No deferred `@anchor` placeholders — implementer reads the digest and the cited surface in one read.
+### Phase B.5 — Token-split guardrail
 
-### 5.2 Token-split guardrail
+Total input tokens (handoff YAML + Phase A outputs) > 180k → split into ⌈N/2⌉ bulk sub-passes per stage. Each sub-pass replays Phase A outputs + per-stage handoff slice. Sub-passes append to a single `bundle.tasks[]` array — **bundle dispatch (Phase C) still runs once** after the last sub-pass.
 
-Total input tokens (handoff YAML + SHARED_CONTEXT + TASK_BATCH) > 180k → split into ⌈N/2⌉ bulk sub-passes per stage. Each sub-pass replays SHARED_CONTEXT + per-stage handoff slice. Sub-passes append to a single `bundle.tasks[]` array — **bundle dispatch (Phase 7) still runs once** after the last sub-pass.
-
----
-
-## Phase 6 — Drift lint (synchronous; per task before bundle dispatch)
-
-**Ctx-discipline: in-memory buffer, not inline preamble.** Collect ALL drift findings into an in-memory
-`drift_findings` buffer object (do NOT append verbose findings to the author-prompt context). Buffer shape
-mirrors `drift_lint_summary` payload schema (`ia/rules/ship-stage-journal-schema.md §drift_lint_summary`).
-Phase 7 dispatches `master_plan_bundle_apply` FIRST, then enqueues `cron_audit_log_enqueue` (audit_kind=drift_lint_summary) row from
-the buffer. Author prompt at Phase 7 receives only: `drift_lint_summary_id={row_id} ({n_resolved} resolved,
-{n_unresolved} unresolved)` — the 1-line ref, not the full findings.
-
-**Resume read (parent_plan_slug non-null):** Phase 1 resume hook already queried prior `drift_lint_summary`
-row. If prior row has `n_unresolved=0` → drift clean from prior run; Phase 6 may skip re-lint of previously
-passing tasks. Flag each task: `"skip_drift_lint": true` when prior `decisions_resolved` includes the task
-anchor.
-
-Per composed §Plan Digest body, run three sub-lints:
-
-After completing all three sub-lints, write a phase checkpoint:
-
-```json
-{
-  "session_id": "{SESSION_ID}",
-  "slug": "{SLUG}",
-  "stage_id": "{first stage id}",
-  "phase": "ship-plan.6.drift_lint",
-  "payload_kind": "phase_checkpoint",
-  "payload": {
-    "phase_id": "ship-plan.6.drift_lint",
-    "decisions_resolved": ["drift_lint:anchor_pass", "drift_lint:glossary_pass", "drift_lint:retired_surface_pass"],
-    "pending_decisions": [],
-    "next_phase": "ship-plan.7.bundle_apply",
-    "ctx_drop_hint": ["drift_lint_inline_log"]
-  }
-}
-```
-
-Note: drift findings buffer is held **in-memory** at this point. Do NOT write `drift_lint_summary` row here — write AFTER `master_plan_bundle_apply` succeeds at Phase 7 (Review Note 5 — version row must exist first).
-
-### 6.1 Anchor lint
-
-Every `{anchor-kind}:{path}::{method}` ref in §Red-Stage Proof MUST resolve. Resolution = `path` exists on HEAD AND `method` is a valid identifier on that path's symbol table. Failure → re-author that task's §Red-Stage Proof with a corrected anchor; halt the plan only after 2 retries fail (`STOPPED — anchor_unresolved: {ref}`).
-
-Anchor grammar: `{anchor-kind}:{path}::{method}` where `{anchor-kind}` ∈ {`tracer-test`, `visibility-delta-test`, `bug-repro-test`, `unit-test`}.
-
-### 6.2 Glossary alignment
-
-Every domain-style noun phrase in §Goal MUST match `ia/specs/glossary.md` spelling. Mismatch → replace inline with canonical spelling. Term not in glossary → leave as-is + emit `glossary_warning: {term}` in hand-off (do NOT edit glossary; do NOT add §Open Questions row from this skill).
-
-### 6.3 Retired-surface scan
-
-Hard-coded list of retired surface names that MUST NOT appear in any §Plan Digest body:
-
-| Retired | Live successor |
-|---------|---------------|
-| `/enrich` / `spec-enrich` | folded into ship-plan |
-| `/kickoff` / `spec-kickoff` | folded into ship-plan |
-| `/author {id}` / `plan-author` | folded into ship-plan |
-| `/plan-digest` / `plan-digest` | folded into ship-plan |
-| `/stage-file` / `stage-file` | folded into ship-plan |
-| `/stage-authoring` / `stage-authoring` | folded into ship-plan |
-| `project-spec-close` / `project-stage-close` | folded into ship-cycle Pass B |
-| `docs/implementation/{slug}-stage-X.Y-plan.md` ref | drop entirely |
-| `§Mechanical Steps` (heading) | `§Work Items` |
-
-Match → replace inline with the live successor. Counter: `n_retired_refs_replaced`.
-
-Retired-surface rule list also consulted via `mcp__territory-ia__rule_content({ rule_id: "retired-surfaces" })` for cross-skill consistency.
+Drift-lint runs synchronously inside Phase A recipe step 6 (`plan_digest_drift_lint` MCP); findings staged at status=`staged` via step 7. Phase C `master_plan_bundle_apply` flips staged→queued atomically; cron drainer writes the change-log row. No agent-owned drift-lint loop.
 
 ---
 
-## Phase 7 — Dispatch master_plan_bundle_apply (atomic Postgres tx)
+## Phase C — Dispatch master_plan_bundle_apply (atomic Postgres tx)
 
-### 7.0 Compose stage body with §Red-Stage Proof block (mig 0113)
+### C.1 Build bundle jsonb (server-side body render)
 
-Per stage, compose `body` text with a 4-field §Red-Stage Proof block. `validate:plan-red-stage` (mig 0060 / TECH-10896) scans `ia_stages.body` for these 4 fields at `/ship-final` Phase 4. Empty body = halt.
+Mig 0136 extended `master_plan_bundle_apply` to render stage body server-side from `red_stage_proof_block`. Agent passes the 4-field jsonb verbatim from handoff YAML; SQL fn formats the markdown body. When `red_stage_proof_block` is absent, SQL fn seeds the skip-clause default (`target_kind=design_only` + `proof_status=not_applicable`).
 
-Resolution rule per stage:
-
-```
-IF yaml.stages[i].red_stage_proof_block IS NOT NULL:
-    proof = yaml.stages[i].red_stage_proof_block   # literal 4-field shape
-ELSE:
-    # Skip-clause default — legitimate for mechanical refactor / pass-through
-    # stages with no behavioural delta. design_only + not_applicable satisfies
-    # the validator's skip-clause (parseRedStageProofBlock + validateProofFields).
-    proof = {
-      red_test_anchor:   "n/a",
-      target_kind:       "design_only",
-      proof_artifact_id: "n/a",
-      proof_status:      "not_applicable"
-    }
-```
-
-Stage body template (markdown):
-
-```
-## §Stage {id} — {title}
-
-Exit: {exit_criteria}
-
-§Red-Stage Proof
-red_test_anchor: {proof.red_test_anchor}
-target_kind: {proof.target_kind}
-proof_artifact_id: {proof.proof_artifact_id}
-proof_status: {proof.proof_status}
-
-{yaml.stages[i].red_stage_proof prose, if present}
-```
-
-The §Red-Stage Proof header MUST be exactly `§Red-Stage Proof` on its own line (no `#`, no `**`); each field on its own `field: value` line. Validator regex `parseRedStageProofBlock` requires this shape.
-
-### 7.1 Build bundle jsonb
-
-Build the bundle jsonb shape:
+Bundle jsonb shape:
 
 ```json
 {
@@ -358,7 +216,7 @@ Build the bundle jsonb shape:
       "stage_id": "{id}",
       "title": "{title}",
       "exit_criteria": "{exit}",
-      "body": "{composed stage body from 7.0}"
+      "red_stage_proof_block": { "red_test_anchor": "...", "target_kind": "...", "proof_artifact_id": "...", "proof_status": "..." }
     }
   ],
   "tasks": [
@@ -367,57 +225,37 @@ Build the bundle jsonb shape:
 }
 ```
 
-Single call: `mcp__territory-ia__master_plan_bundle_apply({ bundle })`. Returns `{plan_slug, stages_inserted, tasks_inserted}`. Any constraint failure rolls back the whole tx — re-author offending field then re-dispatch.
+Single call: `mcp__territory-ia__master_plan_bundle_apply({ bundle })`. Tx body:
 
-After `master_plan_bundle_apply` succeeds, write a phase checkpoint AND the drift lint summary in order:
+1. Insert plan + stages + tasks rows.
+2. Render stage body from `red_stage_proof_block` (mig 0136 server-side fn).
+3. Call `promote_drift_lint_staged(plan_slug, version)` — flips `cron_drift_lint_findings_jobs` row from `staged` → `queued`. Drainer then writes to `ia_master_plan_change_log`.
 
-1. `cron_journal_append_enqueue` with `payload_kind=phase_checkpoint` (cron drains async to `ia_ship_stage_journal`):
+Whole tx commits atomically. Constraint failure → rollback; re-author offending field then re-dispatch once. Returns `{plan_slug, stages_inserted, tasks_inserted, drift_lint_promoted: true}`.
 
-```json
-{
-  "session_id": "{SESSION_ID}",
-  "slug": "{SLUG}",
-  "phase": "ship-plan.7.bundle_apply",
-  "payload_kind": "phase_checkpoint",
-  "payload": {
-    "phase_id": "ship-plan.7.bundle_apply",
-    "decisions_resolved": ["bundle_apply:ok", "plan:{SLUG}:v{VERSION}:inserted"],
-    "pending_decisions": [],
-    "next_phase": "ship-plan.8.handoff",
-    "ctx_drop_hint": ["bundle_jsonb", "task_digest_bodies"]
-  }
-}
-```
-
-2. `cron_audit_log_enqueue` with `audit_kind=drift_lint_summary` (body = in-memory drift findings buffer from Phase 6, JSON-stringified). Cron drains to `ia_master_plan_change_log`. Returns `job_id`. Ref `drift_lint_summary_job_id={job_id}` stored for Phase 8 summary line.
-
-Payload schema: `ia/rules/ship-stage-journal-schema.md §drift_lint_summary`.
-
-`task_key` is allocated by the Postgres function (per-prefix monotonic id from `ia_id_sequences`). The composed §Plan Digest is sent in the `body` field per task and persisted to `ia_tasks.body` — DB sole source of truth (read back via `task_spec_body` MCP).
+`task_key` allocated by Postgres fn (per-prefix monotonic id from `ia_id_sequences`).
 
 ---
 
-## Phase 7.5 — Post-bundle glossary back-link enrich (TECH-15903)
+## Phase D — recipe `ship-plan-phase-c` (post-bundle async fan-out)
 
-After `master_plan_bundle_apply` succeeds, enqueue the back-link enricher (async — fire-and-forget):
+Single recipe call replaces legacy Phase 7.5 inline enqueues:
 
-```
-mcp__territory-ia__cron_glossary_backlinks_enqueue({ slug: {slug}, plan_id: {plan_uuid} })
-```
-
-Cron supervisor drains the job by shelling to `node tools/scripts/glossary-backlink-enrich.mjs --plan-id {slug}` (cadence `*/5 * * * *`; drains within 5 min). Upserts `ia_glossary_backlinks` rows keyed `(plan_id, term, section_id)`. Cache-backed via `ia_mcp_context_cache` (TECH-15902). Enqueue returns < 100 ms. Non-blocking: enqueue failure emits a warning log but does not halt the plan.
-
-Also enqueue an anchor reindex to sync `ia_spec_anchors` after the new task spec bodies land:
-
-```
-mcp__territory-ia__cron_anchor_reindex_enqueue({ paths: ["ia/specs/glossary.md"] })
+```bash
+npm run recipe:run -- ship-plan-phase-c --input slug={SLUG} version={VERSION}
 ```
 
-Cron supervisor drains by running `npm run generate:ia-indexes -- --write-anchors` (cadence `*/5 * * * *`; drains within 5 min). Non-blocking: enqueue failure emits a warning log but does not halt the plan.
+Recipe steps (`tools/recipes/ship-plan-phase-c.yaml`):
+
+1. `cron_glossary_backlinks_enqueue` — MCP; drainer shells `glossary-backlink-enrich.mjs`.
+2. `cron_anchor_reindex_enqueue` — MCP; drainer shells `generate:ia-indexes --write-anchors`.
+3. `cron_audit_log_enqueue(audit_kind=plan_filed)` — MCP; provenance row.
+
+All three enqueues non-blocking; drainer cadence `*/5 * * * *`. Recipe returns `{glossary_job_id, anchor_job_id, audit_job_id}`.
 
 ---
 
-## Phase 8 — Hand-off
+## Phase E — Hand-off
 
 Caveman summary block:
 
@@ -429,8 +267,8 @@ Per-stage:
 Per-task:
   {task_key}: §Plan Digest written ({n_work_items} work items); fold: {n_term_replacements}/{n_retired_refs_replaced}; glossary_warnings: {n_glossary_warnings}
   ...
-drift_lint_summary_job_id: {job_id} ({n_resolved} resolved, {n_unresolved} unresolved)
-DB writes: 1 master_plan_bundle_apply OK; 1 cron_audit_log_enqueue (drift_lint_summary, drained async); 0 task_spec_section_write (replaced by bundle).
+drift_lint_findings_job_id: {job_id} (status=queued, n_resolved={n_resolved}, n_unresolved={n_unresolved})
+DB writes: 1 master_plan_bundle_apply OK (incl. promote_drift_lint_staged); 3 Phase D async enqueues (glossary backlinks + anchor reindex + plan_filed audit).
 next=ship-cycle Stage 1.0
 ```
 
@@ -446,19 +284,17 @@ Then dispatcher emits next-step handoff:
 Structured halt shape:
 
 ```json
-{ "escalation": true, "phase": N, "reason": "...", "task_key?": "...", "failing_field?": "...", "stderr?": "..." }
+{ "escalation": true, "phase": "A|B|C|D", "reason": "...", "task_key?": "...", "failing_field?": "...", "stderr?": "..." }
 ```
 
 Triggers:
 
-- Phase 1: `handoff_yaml_missing` / `handoff_yaml_invalid_yaml` / `slug_mismatch`.
-- Phase 2: `handoff_schema_invalid`.
-- Phase 3-4: `mcp_unavailable` (do NOT fall back to filesystem).
-- Phase 5: `digest_compose_failed` after 2 retries.
-- Phase 6: `anchor_unresolved` after 2 retries OR `retired_surface_persistent` after 2 retries.
-- Phase 7: `bundle_apply_constraint_violation` after 1 retry (re-author offending field then re-dispatch once; second failure escalates).
+- Phase A: `handoff_yaml_missing` / `handoff_yaml_invalid_yaml` / `slug_mismatch` / `handoff_schema_invalid` / `mcp_unavailable` (recipe step exits non-zero).
+- Phase B: `digest_compose_failed` after 2 retries / `anchor_resolution_failed` (Phase A `anchor_bundle` missing required ref).
+- Phase C: `bundle_apply_constraint_violation` after 1 retry (re-author offending field then re-dispatch once; second failure escalates). DB unavailable → escalate.
+- Phase D: enqueue failure → warning log, NOT a halt (non-blocking fan-out).
 
-DB unavailable at Phase 7 → escalate. Do NOT write task spec bodies to filesystem.
+Do NOT write task spec bodies to filesystem on any escalation.
 
 ---
 
@@ -474,3 +310,4 @@ Before issuing the first DB read, list every question needed for this phase. Bat
 
 - 2026-05-08 — fix: stage body emit drift (`/ship-final` Phase 4 plan-red-stage halt). Phase 7.0 added — composes stage `body` with 4-field §Red-Stage Proof block; defaults skip-clause (`target_kind=design_only`, `proof_status=not_applicable`) when handoff yaml omits `stages[].red_stage_proof_block`. Companion mig 0113 extends `master_plan_bundle_apply` SQL fn to accept `stages[].body`. Source: bug-log (large-file-atomization-cutover-refactor v1; 6 violations halted /ship-final).
 - 2026-05-09 — lesson: `cityscene-mainmenu-panel-rollout 2.0` Wave A0 → bake → runtime gap. Stage 1.0 task specs registered `UiActionRegistry` shell + `MainMenuRegistrySeed` canonical action ids but never gated **action-wire conformance** in §Red-Stage Proof — bake handler had no `UiActionTrigger` attach helper, controller-side action ids drifted from `panels.json` canonical (silent dispatch miss, compile-clean). For UI-bake stages, §Red-Stage Proof must include a runtime click-fires-handler assertion (Path A bridge or Play-Mode test), NOT just DB row + bake screenshot. Add handoff-yaml convention `stages[].action_wire_proof: required|skip` for any stage that emits `params_json.action`. Drift gates to mention in §Work Items: (a) `panels.json` action id ≡ controller register id (one source of truth = panels.json); (b) every button-kind switch case in `UiBakeHandler` includes `AttachUiActionTrigger` (validator stub `validate:bake-handler-action-coverage`). Pending stages of any UI-bake plan that ship visible buttons → flag the same gates upstream so handoff yaml carries them.
+- 2026-05-10 — refactor: lifecycle skills mechanical-work move-out (Phase 5 of cheeky-growing-panda plan). Phases 1-4 + 6 collapsed to recipe `ship-plan-phase-a` (parse + schema + invariants + task_bundle + spec_sections batch + drift-lint stash). Phase 7.0 stage body composition dropped — mig 0136 server-side render owns it (agent passes `red_stage_proof_block` jsonb verbatim). Phase 7.5 collapsed to recipe `ship-plan-phase-c` (glossary backlinks + anchor reindex + plan_filed audit). Drift-lint findings buffer replaced with crash-safe `cron_drift_lint_findings_jobs` two-phase commit (staged → queued via `promote_drift_lint_staged()` SQL fn called atomically inside `master_plan_bundle_apply` tx). Agent prompt body shrinks ~60 % (parsing + lint + body composition removed). Companion migs 0132 (stage_id canonical) + 0135 (drift-lint queue) + 0136 (server-side body render).

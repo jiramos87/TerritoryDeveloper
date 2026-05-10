@@ -23,6 +23,9 @@ import { run as runAnchorReindex } from "./handlers/anchor-reindex-cron-handler.
 import { run as runDriftLint } from "./handlers/drift-lint-cron-handler.js";
 import { run as runCacheWarm } from "./handlers/cache-warm-cron-handler.js";
 import { run as runCacheBust } from "./handlers/cache-bust-cron-handler.js";
+import { run as runValidatePostClose } from "./handlers/validate-post-close-cron-handler.js";
+import { run as runUnityCompileVerify } from "./handlers/unity-compile-verify-cron-handler.js";
+import { run as runDriftLintFindings } from "./handlers/drift-lint-findings-cron-handler.js";
 import { runStaleSweep } from "./handlers/stale-sweep-cron-handler.js";
 import type { AuditLogJobRow } from "./handlers/audit-log-cron-handler.js";
 import type { JournalAppendJobRow } from "./handlers/journal-append-cron-handler.js";
@@ -36,6 +39,9 @@ import type { AnchorReindexJobRow } from "./handlers/anchor-reindex-cron-handler
 import type { DriftLintJobRow } from "./handlers/drift-lint-cron-handler.js";
 import type { CacheWarmJobRow } from "./handlers/cache-warm-cron-handler.js";
 import type { CacheBustJobRow } from "./handlers/cache-bust-cron-handler.js";
+import type { ValidatePostCloseJobRow } from "./handlers/validate-post-close-cron-handler.js";
+import type { UnityCompileVerifyJobRow } from "./handlers/unity-compile-verify-cron-handler.js";
+import type { DriftLintFindingsJobRow } from "./handlers/drift-lint-findings-cron-handler.js";
 
 // Load DATABASE_URL from .env if not already set.
 const { config } = await import("dotenv");
@@ -123,6 +129,24 @@ const KINDS: KindConfig[] = [
     table: "cron_cache_bust_jobs",
     cadence: "* * * * *", // every minute — post-write invalidation must be hot
     handler: (row) => runCacheBust(row as unknown as CacheBustJobRow),
+    claimLimit: 50,
+  },
+  {
+    table: "cron_validate_post_close_jobs",
+    cadence: "* * * * *", // every minute — post-stage validate, agent waits on verdict
+    handler: (row) => runValidatePostClose(row as unknown as ValidatePostCloseJobRow),
+    claimLimit: 5,
+  },
+  {
+    table: "cron_unity_compile_verify_jobs",
+    cadence: "* * * * *", // every minute — replaces sync 60s compile poll in ship-cycle Phase 8
+    handler: (row) => runUnityCompileVerify(row as unknown as UnityCompileVerifyJobRow),
+    claimLimit: 5,
+  },
+  {
+    table: "cron_drift_lint_findings_jobs",
+    cadence: "* * * * *", // every minute — flips change-log row post bundle_apply
+    handler: (row) => runDriftLintFindings(row as unknown as DriftLintFindingsJobRow),
     claimLimit: 50,
   },
 ];

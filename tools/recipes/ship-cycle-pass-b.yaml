@@ -1,0 +1,174 @@
+recipe: ship-cycle-pass-b
+description: >-
+  Ship-cycle Pass B — full mechanical sequence after Pass A inference +
+  verify-loop (see ship-cycle SKILL.md Phase 5). Distinct from
+  `ship-stage-pass-b.yaml` — this recipe is the stage-atomic batch path
+  used by `/ship-cycle`. Replaces ship-cycle SKILL.md Phases 6–9. Uses
+  task_status_flip_batch (one call per status flip, not N) and dispatches
+  validate + live-Editor compile to async cron queues (no 60s sync block).
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - stage_id
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug.
+    stage_id:
+      type: string
+      description: Stage id (e.g. "1.0").
+    verify_verdict_file:
+      type: string
+      description: >-
+        Path to verify-loop verdict file written by Pass A's verify-loop.
+        Defaults to /tmp/ship-cycle-verify-{slug}-{stage_id}.json.
+steps:
+  - id: load_stage
+    description: >-
+      Phase B.1 — rehydrate stage bundle (task list, slug FK, status checks).
+    mcp: stage_bundle
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: verify_loop_check
+    description: >-
+      Phase B.2 — read verify-loop verdict from tmp file. Stops on `fail`.
+    bash: tools/scripts/recipe-engine/ship-cycle/verify-loop-check.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      verdict_file: ${inputs.verify_verdict_file}
+
+  - id: flip_verified_batch
+    description: >-
+      Phase B.3 — flip ALL stage tasks to verified in one MCP call.
+      Replaces N×task_status_flip from prior monolithic Pass B.
+    mcp: task_status_flip_batch
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      new_status: verified
+
+  - id: flip_done_batch
+    description: >-
+      Phase B.4 — flip ALL stage tasks to done in one MCP call.
+    mcp: task_status_flip_batch
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      new_status: done
+
+  - id: stage_closeout
+    description: >-
+      Phase B.5 — DB-only closeout: assert tasks done, flip stage status,
+      update master-plan rollup. NOT validate:all + NOT materialize-backlog
+      (explicit subsequent steps — fixes prose↔SQL drift).
+    mcp: stage_closeout_apply
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: materialize_backlog
+    description: >-
+      Phase B.6 — refresh BACKLOG.md / BACKLOG-ARCHIVE.md after task status
+      flips. Lifted out of skill prose into explicit recipe step.
+    bash: tools/scripts/recipe-engine/ship-cycle/materialize-backlog.sh
+
+  - id: maybe_refresh_asset_db
+    description: >-
+      Phase B.7 — refresh Unity AssetDatabase only when Assets/** touched.
+      Bash precondition gate skips when no Unity files in stage diff.
+    bash: tools/scripts/recipe-engine/ship-cycle/maybe-refresh-asset-db.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+
+  - id: stage_commit
+    description: >-
+      Phase B.8 — single stage commit (chain-scope delta). Captures sha for
+      downstream task_commit_record + stage_verification_flip rows.
+    bash: tools/scripts/recipe-engine/ship-cycle/git-commit-stage.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      archived_task_count: ${stage_closeout.archived_task_count}
+
+  - id: audit_stage_closed
+    description: >-
+      Phase B.9 — enqueue stage_closed audit row.
+    mcp: cron_audit_log_enqueue
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      audit_kind: stage_closed
+      commit_sha: ${stage_commit.commit_sha}
+      body: >-
+        Stage ${inputs.stage_id} closed — ${stage_closeout.archived_task_count}
+        tasks archived
+
+  - id: task_commit_records
+    description: >-
+      Phase B.10 — per-task task_commit_record (UNIQUE(task_id,commit_sha)
+      → idempotent). Cron-enqueued — non-blocking.
+    flow: foreach
+    items: ${load_stage.tasks}
+    as: task
+    steps:
+      - id: enqueue_record
+        mcp: cron_task_commit_record_enqueue
+        args:
+          task_id: ${task.task_id}
+          commit_sha: ${stage_commit.commit_sha}
+          commit_kind: feat
+          message: Stage ${inputs.stage_id} — ${inputs.slug}
+
+  - id: enqueue_stage_verification
+    description: >-
+      Phase B.11 — enqueue stage_verification_flip(verdict=pass). History-
+      preserving append (each enqueue → distinct ia_stage_verifications row).
+    mcp: cron_stage_verification_flip_enqueue
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      verdict: pass
+      commit_sha: ${stage_commit.commit_sha}
+      actor: ship-cycle
+      notes: ship-cycle Pass B green (recipe)
+
+  - id: enqueue_validate_post_close
+    description: >-
+      Phase B.12 — non-blocking validate:fast scoped to stage commit.
+      Cron handler shells `validate:fast --diff-paths`. Resume gate of
+      next /ship-cycle reads cron_validate_post_close_jobs row.
+    mcp: cron_validate_post_close_enqueue
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      commit_sha: ${stage_commit.commit_sha}
+      validate_kind: fast
+      idempotency_key: ${inputs.slug}:${inputs.stage_id}:${stage_commit.commit_sha}:validate-post-close
+
+  - id: enqueue_unity_compile_verify
+    description: >-
+      Phase B.13 — non-blocking live-Editor compile poll. Cron handler
+      enqueues bridge get_compilation_status; verdict to row +
+      ia_stage_verifications. Replaces 60s sync block.
+    mcp: cron_unity_compile_verify_enqueue
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      commit_sha: ${stage_commit.commit_sha}
+      idempotency_key: ${inputs.slug}:${inputs.stage_id}:${stage_commit.commit_sha}:unity-compile-verify
+
+outputs:
+  slug: ${inputs.slug}
+  stage_id: ${inputs.stage_id}
+  stage_commit_sha: ${stage_commit.commit_sha}
+  archived_task_count: ${stage_closeout.archived_task_count}
+  verification_job_id: ${enqueue_stage_verification.job_id}
+  validate_job_id: ${enqueue_validate_post_close.job_id}
+  compile_verify_job_id: ${enqueue_unity_compile_verify.job_id}
+  drift_findings_promoted: ${stage_closeout.drift_findings_promoted}

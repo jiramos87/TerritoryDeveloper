@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using TMPro;
+using Territory.UI;
 using Territory.UI.Modals;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -94,7 +95,7 @@ namespace Territory.Tests.PlayMode.BakePipeline
         // ── 4.2 SettingsViewController resolves slot via ResolveByPanel ───────────
 
         /// <summary>
-        /// Verifies SettingsViewController.ResolveByPanel("settings") finds "settings-content-slot"
+        /// Verifies SlotAnchorResolver.ResolveByPanel("settings") finds "settings-content-slot"
         /// via suffix-match. CountWidgets sees >= 12 widgets. Apply() runs without exception.
         /// Task 4.2 anchor.
         /// </summary>
@@ -115,7 +116,7 @@ namespace Territory.Tests.PlayMode.BakePipeline
                 for (int i = 0; i < 3; i++) AddTmpText(slotGo.transform);
 
                 // SlotAnchorResolver contract: ResolveByPanel("settings") suffix-matches "settings-content-slot".
-                var resolved = SettingsViewController.ResolveByPanel("settings", root.transform);
+                var resolved = SlotAnchorResolver.ResolveByPanel("settings", root.transform);
                 Assert.IsNotNull(resolved,
                     "ResolveByPanel('settings') should find 'settings-content-slot' via suffix-match");
                 Assert.AreEqual(slotGo.transform, resolved,
@@ -144,7 +145,7 @@ namespace Territory.Tests.PlayMode.BakePipeline
 
         /// <summary>
         /// Runs id-lint + kind-coverage-lint via Node scripts (exit 0 required).
-        /// Also verifies SettingsViewController.ResolveByPanel exists and BakeChildByKind
+        /// Also verifies SlotAnchorResolver.ResolveByPanel exists and BakeChildByKind
         /// handles all 4 settings kinds without exception via a smoke hierarchy build.
         /// Task 4.3 anchor — file fully green.
         /// </summary>
@@ -174,13 +175,13 @@ namespace Territory.Tests.PlayMode.BakePipeline
 
             yield return null;
 
-            // Gate 3: SettingsViewController.ResolveByPanel correctly finds the slot.
+            // Gate 3: SlotAnchorResolver.ResolveByPanel correctly finds the slot.
             var root = new GameObject("gate3-root");
             var slotGo = new GameObject("settings-content-slot");
             slotGo.transform.SetParent(root.transform, false);
             try
             {
-                var resolved = SettingsViewController.ResolveByPanel("settings", root.transform);
+                var resolved = SlotAnchorResolver.ResolveByPanel("settings", root.transform);
                 Assert.IsNotNull(resolved, "ResolveByPanel must find 'settings-content-slot' (gate 3)");
             }
             finally

@@ -81,6 +81,8 @@ public partial class UIManager
             case PopupType.PauseMenu:
                 if (pauseMenuRoot != null && !pauseMenuRoot.activeSelf)
                 {
+                    // Wave B4 (TECH-27095): enforce exclusive group via ModalCoordinator.
+                    if (_modalCoordinator != null) _modalCoordinator.TryOpen("pause-menu");
                     pauseMenuRoot.SetActive(true);
                     RegisterPopupOpened(type);
                 }
@@ -142,7 +144,12 @@ public partial class UIManager
                 if (infoPanelRoot != null) infoPanelRoot.SetActive(false);
                 break;
             case PopupType.PauseMenu:
-                if (pauseMenuRoot != null) pauseMenuRoot.SetActive(false);
+                if (pauseMenuRoot != null)
+                {
+                    pauseMenuRoot.SetActive(false);
+                    // Wave B4 (TECH-27095): deregister from ModalCoordinator.
+                    if (_modalCoordinator != null) _modalCoordinator.Close("pause-menu");
+                }
                 break;
             case PopupType.SettingsScreen:
                 if (settingsScreenRoot != null) settingsScreenRoot.SetActive(false);

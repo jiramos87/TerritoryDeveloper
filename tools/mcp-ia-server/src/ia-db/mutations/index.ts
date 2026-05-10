@@ -40,6 +40,8 @@ export type {
   StageInsertResult,
   StageUpdateInput,
   StageUpdateResult,
+  StageDeleteInput,
+  StageDeleteResult,
   StageBodyWriteResult,
   StageDecomposeApplyInput,
   StageDecomposeApplyResult,
@@ -49,6 +51,7 @@ export {
   mutateStageCloseoutApply,
   mutateStageInsert,
   mutateStageUpdate,
+  mutateStageDelete,
   mutateStageBodyWrite,
   mutateStageDecomposeApply,
 } from "./stage.js";

@@ -162,6 +162,10 @@ namespace Territory.Editor.Bridge
             if (irRow.kind == "service-row")
                 return BakeServiceRow(irRow, assetPath, theme);
 
+            // Wave B4 (TECH-27093) — modal-card layout container archetype.
+            if (irRow.kind == "modal-card")
+                return BakeModalCard(irRow, assetPath, theme);
+
             GameObject go = null;
             try
             {
@@ -2442,6 +2446,84 @@ namespace Territory.Editor.Bridge
             public string icon;
             public string bindId;
             public string tabGroup;
+        }
+
+        // ── Wave B4 (TECH-27093) — modal-card layout container ───────────────────
+
+        /// <summary>
+        /// Bake modal-card root container: full-screen backdrop (Image + raycast-target) +
+        /// center-anchored card RectTransform + content-replace slot named "{slug}-content-slot".
+        /// Used as root layout template for pause-menu, stats-panel, budget-panel (Wave B4+).
+        /// Round-trip IR DTO: <see cref="ModalCardDetail"/>.
+        /// </summary>
+        static BakeError BakeModalCard(IrInteractive irRow, string assetPath, UiTheme theme)
+        {
+            GameObject go = null;
+            try
+            {
+                go = new GameObject(irRow.slug);
+                var rootRt = go.AddComponent<RectTransform>();
+                // Fullscreen stretch.
+                rootRt.anchorMin = Vector2.zero;
+                rootRt.anchorMax = Vector2.one;
+                rootRt.offsetMin = rootRt.offsetMax = Vector2.zero;
+
+                // Backdrop child: full-screen Image blocking raycasts.
+                var backdropGo = new GameObject("backdrop", typeof(RectTransform));
+                backdropGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var backdropRt = (RectTransform)backdropGo.transform;
+                backdropRt.anchorMin = Vector2.zero;
+                backdropRt.anchorMax = Vector2.one;
+                backdropRt.offsetMin = backdropRt.offsetMax = Vector2.zero;
+                var backdropImg = backdropGo.AddComponent<UnityEngine.UI.Image>();
+                backdropImg.color = new Color(0f, 0f, 0f, 0.55f);
+                backdropImg.raycastTarget = true;
+
+                // Card child: center-anchored content area.
+                var cardGo = new GameObject("card", typeof(RectTransform));
+                cardGo.transform.SetParent(go.transform, worldPositionStays: false);
+                var cardRt = (RectTransform)cardGo.transform;
+                cardRt.anchorMin = new Vector2(0.5f, 0.5f);
+                cardRt.anchorMax = new Vector2(0.5f, 0.5f);
+                cardRt.pivot = new Vector2(0.5f, 0.5f);
+                cardRt.sizeDelta = new Vector2(480f, 480f);
+                cardRt.anchoredPosition = Vector2.zero;
+                var cardImg = cardGo.AddComponent<UnityEngine.UI.Image>();
+                cardImg.color = new Color(0.08f, 0.08f, 0.12f, 1f);
+                cardImg.raycastTarget = true;
+
+                // Content-replace slot child: named "{slug}-content-slot" per SlotAnchorResolver convention.
+                var slotName = $"{irRow.slug}-content-slot";
+                var slotGo = new GameObject(slotName, typeof(RectTransform));
+                slotGo.transform.SetParent(cardGo.transform, worldPositionStays: false);
+                var slotRt = (RectTransform)slotGo.transform;
+                slotRt.anchorMin = Vector2.zero;
+                slotRt.anchorMax = Vector2.one;
+                slotRt.offsetMin = slotRt.offsetMax = Vector2.zero;
+                var slotImg = slotGo.AddComponent<UnityEngine.UI.Image>();
+                slotImg.color = new Color(0f, 0f, 0f, 0f); // transparent placeholder
+                slotImg.raycastTarget = false;
+
+                PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new BakeError { error = "prefab_write_failed", details = ex.Message, path = assetPath };
+            }
+            finally
+            {
+                if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Wave B4 (TECH-27093) — IR DTO for modal-card archetype. JsonUtility round-trip.</summary>
+        [Serializable]
+        public class ModalCardDetail
+        {
+            public float width = 480f;
+            public float height = 480f;
+            public string modal_kind;
         }
 
     }

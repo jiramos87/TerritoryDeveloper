@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (78)
+## Tools (159)
 
 | Tool | Description |
 |------|-------------|
@@ -92,6 +92,15 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`cron_task_commit_record_enqueue`** | Async cron enqueue — task-commit-record (TECH-18094). Fire-and-forget INSERT into `cron_task_commit_record_jobs`. Cron supervisor drains to `ia_task_commits`. Same payload shape as `task_commit_record`. Returns `{job_id, status:'queued'}` in < 100 ms. |
 | **`cron_stage_verification_flip_enqueue`** | Async cron enqueue — stage-verification-flip (TECH-18094). Fire-and-forget INSERT into `cron_stage_verification_flip_jobs`. Cron supervisor drains to `ia_stage_verifications`. Same payload shape as `stage_verification_flip`. Returns `{job_id, status:'queued'}` in < 100 ms. |
 | **`cron_arch_changelog_append_enqueue`** | Async cron enqueue — arch-changelog-append (TECH-18094). Fire-and-forget INSERT into `cron_arch_changelog_append_jobs`. Cron supervisor drains to `arch_changelog`. Same payload shape as `arch_changelog_append`. Returns `{job_id, status:'queued'}` in < 100 ms. |
+| **`cron_drift_lint_findings_enqueue`** | Async cron enqueue — drift-lint-findings. Fire-and-forget INSERT into `cron_drift_lint_findings_jobs`. Cron supervisor drains lint summaries to `ia_drift_lint_findings`. Returns `{job_id, status:'queued'}`. |
+| **`cron_drift_lint_findings_promote`** | Async cron enqueue — drift-lint-findings promote. Promotes staged lint findings to active `ia_drift_lint_findings` rows. Returns `{job_id, status:'queued'}`. |
+| **`cron_unity_compile_verify_enqueue`** | Async cron enqueue — unity-compile-verify. Enqueues a Unity compile verification job. Cron supervisor drains to compile-check audit log. Returns `{job_id, status:'queued'}`. |
+| **`cron_validate_post_close_enqueue`** | Async cron enqueue — validate-post-close. Enqueues a post-plan-close `validate:fast` run scoped to the plan's diff paths. Returns `{job_id, status:'queued'}`. |
+| **`action_registry_list`** | Read-only: returns all registered action entries from `ia_action_registry`. Used by `UiActionRegistry` dispatch and bake pipeline to enumerate valid action slugs. |
+| **`bind_registry_list`** | Read-only: returns all registered bind entries from `ia_bind_registry`. Used by `UiBindRegistry` to enumerate valid bind slugs. |
+| **`master_plan_bundle_apply`** | Atomic plan-authoring tx: single Postgres transaction upserts `ia_master_plans` + inserts `ia_stages` + `ia_tasks` + `ia_task_specs` from a lean handoff bundle. Used by `/ship-plan`. Supports `apply_path` `new` and `version_bump`. |
+| **`plan_digest_drift_lint`** | Drift lint (read-only): scans §Plan Digest sections in `ia_task_specs` for a stage or plan and reports anchor drift, glossary mismatches, and retired-surface refs. Returns `{ok, violations[]}`. |
+| **`stage_delete`** | Hard delete: removes an `ia_stages` row (optionally cascades archived tasks via `cascade_archived_tasks=true`). Writes audit row to `ia_master_plan_change_log`. Only allowed on `superseded`/`done` stages with all tasks archived. Returns `{ok, deleted_stage_id, cascaded_task_count}`. |
 | **`invariant_preflight`** | Composite context tool: given `issue_id`, bundles invariants + router matches + relevant spec sections in one call. Infers domains from issue **Files**; fetches up to 6 spec sections (800 chars each). |
 | **`findobjectoftype_scan`** | Static regex scan of C# files for `FindObjectOfType` / `FindObjectsOfType` in `Update` / `LateUpdate` / `FixedUpdate` methods. Optional `path` (default `Assets/Scripts/`). Returns `violation_count` + `violations[]` (`file`, `line`, `method`, `snippet`). |
 | **`city_metrics_query`** | Read recent rows from **`city_metrics_history`** (Unity **`MetricsRecorder`** per-tick snapshots). Optional **`scenario_id`**, **`last_n_rows`** (1–500). Returns **`db_unconfigured`**, **`table_missing`**, or **`rows`**. |

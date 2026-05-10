@@ -33,6 +33,7 @@ import {
   mutateMasterPlanInsert,
   mutateMasterPlanPreambleWrite,
   mutateStageBodyWrite,
+  mutateStageDelete,
   mutateStageInsert,
   mutateStageUpdate,
 } from "../ia-db/mutations.js";
@@ -665,6 +666,91 @@ export function registerStageUpdate(server: McpServer): void {
 }
 
 // ---------------------------------------------------------------------------
+// stage_delete
+// ---------------------------------------------------------------------------
+
+export function registerStageDelete(server: McpServer): void {
+  server.registerTool(
+    "stage_delete",
+    {
+      description:
+        "DB-backed: hard-delete one ia_stages row + cascade-cleanup of child rows in stage_verifications / arch_surfaces / red_stage_proofs / carcass_signals / stage_claims (all FK ON DELETE CASCADE). Refuses delete when stage has any non-archived ia_tasks rows — caller MUST flip tasks to archived first via task_status_flip / stage_closeout_apply. Archived task rows themselves block delete unless `cascade_archived_tasks=true` (FK is ON DELETE RESTRICT). Writes one audit row to ia_master_plan_change_log (kind='stage-delete') BEFORE the DELETE so failed txns lose nothing. Use case: reshape paths where superseded carcass shells need physical removal — `stage_update` only relabels titles, leaving phantom pending rows in `master_plan_state` + `master_plan_health`.",
+      inputSchema: {
+        slug: z.string().describe("Master-plan slug."),
+        stage_id: z.string().describe("Stage id e.g. `5.4`."),
+        cascade_archived_tasks: z
+          .boolean()
+          .optional()
+          .describe(
+            "When true, also DELETE child ia_tasks rows whose status='archived' before deleting the stage. Non-archived rows always block deletion regardless of flag. Default false.",
+          ),
+        audit_note: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            "Body for the ia_master_plan_change_log audit row (kind='stage-delete'). Default: auto-synthesized summary.",
+          ),
+        actor: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            "Actor for the audit row. Default: 'stage_delete'.",
+          ),
+      },
+    },
+    async (args) =>
+      runWithToolTiming("stage_delete", async () => {
+        const envelope = await wrapTool(
+          async (
+            input:
+              | {
+                  slug?: string;
+                  stage_id?: string;
+                  cascade_archived_tasks?: boolean;
+                  audit_note?: string | null;
+                  actor?: string | null;
+                }
+              | undefined,
+          ) => {
+            const slug = (input?.slug ?? "").trim();
+            const stage_id = (input?.stage_id ?? "").trim();
+            if (!slug || !stage_id) {
+              throw {
+                code: "invalid_input",
+                message: "slug and stage_id are required.",
+              };
+            }
+            try {
+              return await mutateStageDelete({
+                slug,
+                stage_id,
+                cascade_archived_tasks: input?.cascade_archived_tasks,
+                audit_note: input?.audit_note,
+                actor: input?.actor,
+              });
+            } catch (e) {
+              mapDbErrors(e);
+            }
+          },
+        )(
+          args as
+            | {
+                slug?: string;
+                stage_id?: string;
+                cascade_archived_tasks?: boolean;
+                audit_note?: string | null;
+                actor?: string | null;
+              }
+            | undefined,
+        );
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // stage_body_write
 // ---------------------------------------------------------------------------
 
@@ -730,5 +816,6 @@ export function registerMasterPlanRenderTools(server: McpServer): void {
   registerMasterPlanDescriptionWrite(server);
   registerStageInsert(server);
   registerStageUpdate(server);
+  registerStageDelete(server);
   registerStageBodyWrite(server);
 }

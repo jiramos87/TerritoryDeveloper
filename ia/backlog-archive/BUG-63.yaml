@@ -1,8 +1,8 @@
 id: BUG-63
 type: BUG
 title: "ship-cycle Pass B should AssetDatabase.Refresh before git add -A so generated .meta files land in stage commit"
-priority: P1
-status: done
+priority: p1
+status: closed
 closed: "2026-05-08T00:00:00Z"
 section: null
 spec: null

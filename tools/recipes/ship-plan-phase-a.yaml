@@ -1,0 +1,104 @@
+recipe: ship-plan-phase-a
+description: >-
+  Ship-plan Phase A — preflight that pulls all mechanical work out of the
+  Opus prompt: parse handoff YAML, schema-validate, prefetch shared context
+  (invariants + rule list), batch task_bundle, batch spec_sections for ALL
+  anchors, run pre-bundle drift lint (pure SQL+regex, no LLM), enqueue
+  findings stash at status=staged. Output blob feeds the ship-plan agent
+  prompt — agent now owns digest composition + bundle dispatch only.
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug (matches handoff doc filename + ia_master_plans.slug).
+    handoff_path:
+      type: string
+      description: >-
+        Optional override. Defaults to docs/explorations/{slug}.md.
+steps:
+  - id: parse_handoff
+    description: >-
+      Phase A.1 — parse `docs/explorations/{slug}.md` YAML frontmatter into JSON.
+      Emits {plan, stages[], tasks[], anchors[], glossary_terms[]}.
+    bash: tools/scripts/recipe-engine/ship-plan/parse-handoff-yaml.sh
+    args:
+      slug: ${inputs.slug}
+      handoff_path: ${inputs.handoff_path}
+
+  - id: validate_handoff
+    description: >-
+      Phase A.2 — schema-validate parsed handoff. Wraps existing TECH-12634
+      validator. Stops on non-zero exit.
+    bash: tools/scripts/recipe-engine/ship-plan/validate-handoff-schema.sh
+    args:
+      slug: ${inputs.slug}
+      handoff_path: ${inputs.handoff_path}
+
+  - id: invariants_summary
+    description: >-
+      Phase A.3.a — universal + Unity invariants merged JSON blob. No args.
+      Replaces ship-plan agent inline `invariants_summary` MCP call.
+    mcp: invariants_summary
+    args: {}
+
+  - id: list_rules
+    description: >-
+      Phase A.3.b — rule index for shared context. Replaces ship-plan agent
+      inline `list_rules` MCP call.
+    mcp: list_rules
+    args: {}
+
+  - id: task_bundle_batch
+    description: >-
+      Phase A.4 — prime task bundle cache (one MCP call for all tasks).
+    mcp: task_bundle_batch
+    args:
+      task_keys: ${parse_handoff.task_keys}
+
+  - id: spec_sections_batch
+    description: >-
+      Phase A.5 — batch anchor expansion. Replaces ship-plan Phase 5.1
+      sequential N×spec_section with one spec_sections call.
+    mcp: spec_sections
+    args:
+      anchors: ${parse_handoff.anchors}
+
+  - id: drift_lint_pre_bundle
+    description: >-
+      Phase A.6 — pure SQL+regex drift lint. No LLM. Returns findings array
+      + n_resolved + n_unresolved.
+    mcp: plan_digest_drift_lint
+    args:
+      slug: ${inputs.slug}
+      version: ${parse_handoff.plan_version}
+      tasks: ${parse_handoff.lint_tasks}
+
+  - id: enqueue_drift_findings_staged
+    description: >-
+      Phase A.7 — stash findings at status=staged (drainer skips). Flipped
+      to queued atomically inside master_plan_bundle_apply via
+      promote_drift_lint_staged() (mig 0136). Crash-safe.
+    mcp: cron_drift_lint_findings_enqueue
+    args:
+      slug: ${inputs.slug}
+      version: ${parse_handoff.plan_version}
+      findings: ${drift_lint_pre_bundle.findings}
+      n_resolved: ${drift_lint_pre_bundle.n_resolved}
+      n_unresolved: ${drift_lint_pre_bundle.n_unresolved}
+      status: staged
+      idempotency_key: ${inputs.slug}:${parse_handoff.plan_version}:drift-lint
+
+outputs:
+  slug: ${inputs.slug}
+  plan_version: ${parse_handoff.plan_version}
+  invariants: ${invariants_summary.merged}
+  rule_index: ${list_rules.rules}
+  task_batch: ${task_bundle_batch.tasks}
+  anchor_bundle: ${spec_sections_batch.sections}
+  drift_findings_job_id: ${enqueue_drift_findings_staged.job_id}
+  drift_n_unresolved: ${drift_lint_pre_bundle.n_unresolved}
+  parsed_handoff: ${parse_handoff.stdout}

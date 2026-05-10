@@ -51,6 +51,10 @@ const pg = pgRequire("pg");
 // 2026-05-04+) is NOT grandfathered via date — the DB flag=false enforces it.
 const CUTOVER_ISO = "2026-05-04";
 
+// Plan-scope opt-in — when set (ship-final cumulative-validate), restrict to
+// stages owned by that slug. Cross-plan drift gated by validate:all in CI.
+const SCOPE_SLUG = (process.env.VALIDATE_SCOPE_SLUG ?? "").trim();
+
 /** 4 required proof fields. */
 const PROOF_FIELDS = [
   "red_test_anchor",
@@ -252,7 +256,8 @@ async function main() {
       return 0;
     }
 
-    const activeSlugs = new Set(activePlans.map((p) => p.slug));
+    const filteredPlans = SCOPE_SLUG ? activePlans.filter((p) => p.slug === SCOPE_SLUG) : activePlans;
+    const activeSlugs = new Set(filteredPlans.map((p) => p.slug));
 
     // Index stages by slug.
     /** @type {Map<string, StageRow[]>} */
@@ -271,7 +276,7 @@ async function main() {
       proofsMap.set(`${p.slug}::${p.stage_id}`, p);
     }
 
-    for (const plan of activePlans) {
+    for (const plan of filteredPlans) {
       const stages = stagesByPlan.get(plan.slug) ?? [];
 
       for (const s of stages) {
@@ -302,13 +307,13 @@ async function main() {
 
     if (violations > 0) {
       console.error(
-        `[plan-red-stage] ${violations} violation(s) total across ${activePlans.length} active plan(s); ${grandfathered.length} grandfathered (skipped)`,
+        `[plan-red-stage] ${violations} violation(s) total across ${filteredPlans.length} active plan(s); ${grandfathered.length} grandfathered (skipped)`,
       );
       return 1;
     }
 
     console.log(
-      `[plan-red-stage] ✓ ${activePlans.length} active plan(s) checked · ${grandfathered.length} grandfathered (skipped) · ${warnCount} warn(s)`,
+      `[plan-red-stage] ✓ ${filteredPlans.length} active plan(s) checked · ${grandfathered.length} grandfathered (skipped) · ${warnCount} warn(s)`,
     );
     return 0;
   } finally {

@@ -101,6 +101,10 @@ import { registerCronAnchorReindexEnqueue } from "./tools/cron-anchor-reindex.js
 import { registerCronDriftLintEnqueue } from "./tools/cron-drift-lint.js";
 import { registerCronCacheWarmEnqueue } from "./tools/cron-cache-warm.js";
 import { registerCronCacheBustEnqueue } from "./tools/cron-cache-bust.js";
+import { registerCronValidatePostCloseEnqueue } from "./tools/cron-validate-post-close.js";
+import { registerCronUnityCompileVerifyEnqueue } from "./tools/cron-unity-compile-verify.js";
+import { registerCronDriftLintFindingsTools } from "./tools/cron-drift-lint-findings.js";
+import { registerPlanDigestDriftLint } from "./tools/plan-digest-drift-lint.js";
 import { registerUiDefDriftScan } from "./tools/ui-def-drift-scan.js";
 import { registerUiCalibrationCorpusQuery, registerUiCalibrationVerdictRecord } from "./tools/ui-calibration-corpus.js";
 import { registerUiPanelGet, registerUiPanelList, registerUiPanelPublish } from "./tools/ui-panel.js";
@@ -238,6 +242,10 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerCronDriftLintEnqueue(server);
   registerCronCacheWarmEnqueue(server);
   registerCronCacheBustEnqueue(server);
+  registerCronValidatePostCloseEnqueue(server);
+  registerCronUnityCompileVerifyEnqueue(server);
+  registerCronDriftLintFindingsTools(server);
+  registerPlanDigestDriftLint(server);
   registerUiDefDriftScan(server);
   registerUiCalibrationCorpusQuery(server);
   registerUiCalibrationVerdictRecord(server);

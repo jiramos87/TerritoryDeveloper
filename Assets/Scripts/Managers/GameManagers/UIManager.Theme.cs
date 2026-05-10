@@ -25,6 +25,10 @@ namespace Territory.UI
             Instance = this;
             _themeService = new Domains.UI.Services.ThemeService();
 
+            // Wave B4 (TECH-27095): ModalCoordinator FindObjectOfType fallback.
+            if (_modalCoordinator == null)
+                _modalCoordinator = FindObjectOfType<Territory.UI.Modals.ModalCoordinator>();
+
             // Stage 12 trigger contract: modal roots must start deactivated.
             if (infoPanelRoot != null && infoPanelRoot.activeSelf) infoPanelRoot.SetActive(false);
             if (pauseMenuRoot != null && pauseMenuRoot.activeSelf) pauseMenuRoot.SetActive(false);

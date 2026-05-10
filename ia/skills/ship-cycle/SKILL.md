@@ -30,16 +30,12 @@ description: >-
   "stage-atomic batch ship". Argument order (explicit): SLUG first,
   STAGE_ID second.
 phases:
-  - Parse args + load stage bundle
-  - Token-budget preflight (hard cap 80k input → fallback ship-stage-main-session)
-  - Resume gate (DB task_state — pending→Pass A, implemented→skip Pass A)
-  - Pass A — bulk emit task-batch body with boundary markers
-  - Pass A — per-task unity:compile-check gate + task_status_flip(implemented) + phase_checkpoint journal
-  - Pass B — verify-loop on cumulative git diff HEAD (verdict==pass required)
-  - Pass B — per-task verified→done flips
-  - Pass B — inline closeout (stage_closeout_apply + cron_audit_log_enqueue)
-  - Pass B — single stage commit + per-task cron_task_commit_record_enqueue + cron_stage_verification_flip_enqueue
-  - Chain digest + next-stage resolver
+  - Phase 0 — recipe ship-cycle-preflight (parse + token-budget + resume gate via DB)
+  - Pass A — bulk emit task-batch body with boundary markers (Sonnet inference)
+  - Pass A — aggregate Assets/**/*.cs across tasks → ONE unity:compile-check + task_status_flip_batch(implemented)
+  - Pass B step 1 — verify-loop on cumulative git diff HEAD (verdict==pass required, verdict file written)
+  - Pass B steps 2–12 — recipe ship-cycle-pass-b (verified→done batch flips + closeout + materialize-backlog + asset-db refresh + stage commit + 4 cron enqueues)
+  - Phase 9 — chain digest + next-stage resolver
 triggers:
   - /ship-cycle {SLUG} {STAGE_ID}
   - ship cycle stage
@@ -81,7 +77,7 @@ hard_boundaries:
   - Do NOT write task spec bodies to filesystem — DB sole source of truth.
   - Do NOT chain `/code-review` — operator runs out-of-band per Task (lifecycle row 9).
   - On Pass B verify-loop fail → `STAGE_VERIFY_FAIL` + worktree stays dirty + no rollback of Pass A flips.
-  - Phase 8 step 0a (live-Editor compile poll) MANDATORY when step 0 ran — never fire-and-forget `refresh_asset_database` without polling `get_compilation_status` to terminal state before commit.
+  - Pass B recipe step 6 (`unity_refresh_asset_database`) fires-and-forgets — verdict drains async via `cron_unity_compile_verify_jobs`. Sync `get_compilation_status` poll REMOVED; resume gate of next `/ship-cycle` reads verdict from `master_plan_state(slug).stages[].compile_verify_verdict`.
 caller_agent: ship-cycle
 ---
 
@@ -110,122 +106,79 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ## Phase sequence
 
-### Phase 0 — Parse args + load stage bundle
+### Phase 0 — Preflight (recipe / bash)
 
-`stage_bundle(slug, stage_id)` once. Capture `tasks[]` (filed, non-terminal). Idle exit when stage `done` + tasks all terminal.
+Single bash helper resolves args + token budget + resume bucket:
 
-### Phase 1 — Token-budget preflight
-
-Sum input bytes: stage bundle + per-task §Plan Digest body (DB read via `task_spec_body`). Hard cap 80k input → over cap = `STOPPED — token_budget_exceeded`; emit `Next: /ship-stage-main-session {SLUG} {STAGE_ID}` (legacy two-pass adapter).
-
-### Phase 2 — Resume gate (DB-only)
-
-`task_state(task_id)` per task in stage. Bucket:
-
-- All `pending` → run Pass A + Pass B (full chain).
-- Mixed `pending` + `implemented` → run Pass A on remaining `pending`, then Pass B on full set.
-- All `implemented` → skip Pass A entirely; run `PASS_B_ONLY` (worktree dirty required; clean → `STOPPED — pass_b_only_clean_worktree`).
-- All terminal (`done`/`archived`) → idle exit, `Next:` next-stage resolver.
-
-Disabled by `--no-resume`.
-
-### Phase 3 — Pass A — bulk emit task-batch body
-
-Single inference. Boundary markers per task: `<!-- TASK:{ISSUE_ID} START -->` ... `<!-- TASK:{ISSUE_ID} END -->`. Inside markers: full implementation diff body for that task. Greppable by validators / code-review subagents. Skip tasks already `implemented` (resume).
-
-### Phase 4 — Pass A — per-task gate + flip + checkpoint
-
-For each task in batch (skip if already `implemented`):
-
-1. `unity:compile-check` if `Assets/**/*.cs` touched in this task's marker block.
-2. `task_status_flip(task_id, implemented)`.
-3. `cron_journal_append_enqueue` with `payload_kind=phase_checkpoint` (fire-and-forget; enqueue < 100 ms; cron supervisor drains to `ia_ship_stage_journal`):
-
-```json
-{
-  "session_id": "{SESSION_ID}",
-  "task_id": "{TASK_ID}",
-  "slug": "{SLUG}",
-  "stage_id": "{STAGE_ID}",
-  "phase": "ship-cycle.4.per_task",
-  "payload_kind": "phase_checkpoint",
-  "payload": {
-    "phase_id": "ship-cycle.4.{TASK_ID}",
-    "decisions_resolved": ["{TASK_ID}:implemented", "{TASK_ID}:compile_check_pass"],
-    "pending_decisions": [],
-    "next_phase": "ship-cycle.4.{NEXT_TASK_ID or ship-cycle.5.verify_loop}",
-    "ctx_drop_hint": ["task_spec_body:{TASK_ID}", "compile_log:{TASK_ID}"]
-  }
-}
+```bash
+tools/scripts/recipe-engine/ship-cycle/preflight.sh --slug {SLUG} --stage-id {STAGE_ID}
 ```
 
-Payload schema: `ia/rules/ship-stage-journal-schema.md §phase_checkpoint`.
+Steps inside the helper (DB-only, no agent inference):
 
-Stop on first failure. Surviving tasks remain `implemented`; failed task → `STOPPED at {ISSUE_ID}` + `Next: /ship-cycle {SLUG} {STAGE_ID}` resume.
+1. Parse args; resolve canonical `STAGE_ID_DB` from `master_plan_state(slug).stages[]` (mig 0132 enforces `N.M` form at insert; no per-plan format hunting).
+2. `stage_bundle(slug, stage_id)` — capture filed non-terminal `tasks[]`. Idle exit when stage `done` + tasks all terminal.
+3. Token-budget — sum stage bundle + per-task §Plan Digest body bytes (DB read). Hard cap 80k → exit code 78 = `STOPPED — token_budget_exceeded`; emit `Next: /ship-stage-main-session {SLUG} {STAGE_ID}`.
+4. Resume gate — `task_state(task_id)` per task. Bucket as JSON: `pending_only` / `mixed` / `implemented_only` / `all_terminal`. `--no-resume` flag forces `pending_only` regardless.
 
-**NO per-task commits** — single stage commit at Phase 8 covers all Pass A + Pass B diffs.
+Output JSON consumed by Pass A inference body: `{stage_id_db, tasks[], resume_bucket, digest_bodies}`.
 
-### Phase 5 — Pass B — verify-loop on cumulative diff (runs ONCE per stage)
+### Phase 1 — Pass A — bulk emit task-batch body (Sonnet inference)
+
+Single Sonnet inference. Boundary markers per task: `<!-- TASK:{ISSUE_ID} START -->` ... `<!-- TASK:{ISSUE_ID} END -->`. Inside markers: full implementation diff body for that task. Greppable by validators / code-review subagents. Skip tasks already `implemented` (resume).
+
+After inference returns, BEFORE flipping any task status:
+
+1. **Aggregate touched paths** — collect ALL `Assets/**/*.cs` paths across every task marker block.
+2. **One unity:compile-check** — single batchmode invocation on the union diff. Replaces legacy per-task compile-check loop. On failure → `STOPPED at compile — {first_error}` + `Next: /ship-cycle {SLUG} {STAGE_ID}` resume.
+3. **Batch flip** — `task_status_flip_batch(slug, stage_id, from='pending', to='implemented')` — single MCP call covers all tasks in this stage (DB CHECK enforces enum walk). Replaces legacy N×`task_status_flip` calls.
+4. **Phase checkpoint** — `cron_journal_append_enqueue` ONCE per Pass A pass with `payload_kind=phase_checkpoint`, `phase=ship-cycle.1.pass_a_complete`, `decisions_resolved=[task_ids implemented + compile pass]`.
+
+**NO per-task commits** — single stage commit at Pass B recipe step 7 covers all Pass A + Pass B diffs.
+
+### Phase 2 — Pass B step 1 — verify-loop on cumulative diff (agent-owned)
 
 Full `verify-loop` Path A + Path B on cumulative `git diff HEAD` (worktree dirty from Pass A edits). Verdict shape per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
-- `verdict == pass` required → continue Phase 6.
-- `verdict == fail` → `STAGE_VERIFY_FAIL` + chain digest + worktree stays dirty + no rollback of Pass A flips. Operator fixes manually then re-invokes `/ship-cycle {SLUG} {STAGE_ID}` (resume gate sees `implemented` → re-runs Phase 5).
+Write verdict file `/tmp/ship-cycle-verify-{slug}-{stage_id}.json`:
+
+```json
+{ "verdict": "pass" | "fail", "reason": "...", "duration_ms": <int> }
+```
+
+- `verdict == pass` → continue Phase 3 (Pass B recipe consumes verdict file).
+- `verdict == fail` → `STAGE_VERIFY_FAIL` + chain digest + worktree stays dirty + no rollback of Pass A flips. Operator fixes manually then re-invokes `/ship-cycle {SLUG} {STAGE_ID}` (resume gate sees `implemented` → re-runs Phase 2).
 
 No code-review in chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9).
 
-### Phase 6 — Pass B — verified→done flips
+### Phase 3 — Pass B steps 2–12 (recipe ship-cycle-pass-b)
 
-Per task in `STAGE_TASK_IDS` (skip if already terminal):
+Single recipe call drives the full mechanical Pass B tail:
 
-1. `task_status_flip(task_id, "verified")`
-2. `task_status_flip(task_id, "done")`
+```bash
+npm run recipe:run -- ship-cycle-pass-b --input slug={SLUG} stage_id={STAGE_ID_DB}
+```
 
-Enum walk requires both — DB CHECK refuses `implemented → done` direct.
+Recipe steps (`tools/recipes/ship-cycle-pass-b.yaml`):
 
-### Phase 7 — Pass B — inline closeout (DB-only)
+1. `verify_loop_check` — bash; reads `/tmp/ship-cycle-verify-{slug}-{stage_id}.json`. Non-`pass` → STOP.
+2. `task_status_flip_batch` (verified) — MCP; single call for all tasks (`from='implemented'`, `to='verified'`). Enum walk requires intermediate state.
+3. `task_status_flip_batch` (done) — MCP; single call (`from='verified'`, `to='done'`).
+4. `stage_closeout_apply` — MCP; **DB-only** (per `mutations/stage.ts:105–195`). Atomic: shared migration ops deduped + per-Task `archived_at` set + Stage / Plan Status rolled up per R3 / R5. **NO inline `validate:all` / `materialize-backlog` — those are now separate recipe steps below.**
+5. `materialize_backlog` — bash; `tools/scripts/materialize-backlog.sh` (lifted out of skill prose; flock'd inside).
+6. `unity_refresh_asset_database` — MCP; conditional on `git diff HEAD` showing `Assets/**` paths (precondition gate via `maybe-refresh-asset-db.sh`). Enqueues `agent_bridge_job(kind=refresh_asset_database)`. **NO sync compile poll** — verdict drains async via `cron_unity_compile_verify_jobs` (mig 0134) and surfaces at next `/ship-cycle` resume gate read of `master_plan_state(slug).stages[].compile_verify_verdict`.
+7. `git_commit_stage` — bash; per-file `git add` + single commit `feat({slug}-stage-{stage_id_db}): ship-cycle Pass B verify + closeout`. Captures `STAGE_COMMIT_SHA`.
+8. `cron_audit_log_enqueue` — MCP; `audit_kind=stage_closed`.
+9. `cron_task_commit_record_enqueue` — MCP foreach over tasks; records per-task commit sha.
+10. `cron_stage_verification_flip_enqueue` — MCP; `verdict=pass`, `commit_sha=STAGE_COMMIT_SHA`.
+11. `cron_validate_post_close_enqueue` — MCP (NEW, mig 0133); non-blocking `validate:fast --diff-paths` scoped to stage commit. Drainer writes verdict; `/ship-final` Phase 4.5 gates close on this queue draining for slug.
+12. `cron_unity_compile_verify_enqueue` — MCP (NEW, mig 0134); non-blocking live-Editor compile poll (replaces legacy 60 s sync block).
 
-1. `stage_closeout_apply(slug, stage_id)` — atomic: shared migration ops deduped + N per-Task `archived_at` set + Stage / Plan Status rolled up per R3 / R5 + `materialize-backlog.sh` + `validate:all` run once at end.
-2. `cron_audit_log_enqueue({slug, audit_kind:'stage_closed', body, stage_id, commit_sha})` — fire-and-forget audit row (enqueue < 100 ms; cron supervisor drains to `ia_master_plan_change_log` within 90 s).
+Recipe outputs: `{stage_commit_sha, verification_job_id, validate_job_id, compile_verify_job_id}`.
 
-No filesystem mv. Closeout MANDATORY on green Pass B — never defer.
+Pre-commit hook fail at step 7 → `STOPPED at commit — pre-commit hook failed: {reason}` (investigate; do NOT amend or `--no-verify`).
 
-### Phase 8 — Pass B — stage commit + per-task commit record + verification flip
-
-0. **AssetDatabase refresh pre-commit gate** — when stage diff touched `Assets/**` (any file under Unity asset roots): call `unity_bridge_command(kind="refresh_asset_database")` BEFORE `git add -A`. Live Editor writes `.meta` GUID siblings synchronously for any new `.cs` / asset files Pass A created — without this gate, `unity:compile-check` (batchmode + second-instance when project lock held) skips AssetDatabase writes, leaving orphan untracked `.meta` files outside the stage commit. Skip this step when `git diff HEAD --name-only` shows zero `Assets/**` paths. On bridge failure (Editor not running / lease unavailable) → fall back to `unity:compile-check` (which now hits batchmode AssetDatabase since user can quit Editor) OR `STOPPED at refresh — bridge_unavailable` so operator can resume after starting Editor.
-
-0a. **Live-Editor compile poll (post-refresh gate)** — immediately after step 0 `refresh_asset_database` succeeds, poll `unity_bridge_command(kind="get_compilation_status")` until `compilation_status ∈ {idle, compilation_succeeded}` OR ceiling reached. Refresh triggers live Editor recompile asynchronously; without this poll, ship-cycle proceeds to commit while live Editor compile may still fail — Pass A `unity:compile-check` (batchmode 2nd-instance under project lock) can pass with stale assembly cache while live Editor surfaces real errors only after refresh.
-
-   Poll loop:
-   - Initial wait 2 s (refresh → recompile latency); then poll every 2 s.
-   - Ceiling: 60 s (30 polls). Configurable via `UNITY_COMPILE_POLL_CEILING_S`.
-   - Terminal states:
-     - `compilation_status == "idle"` OR `"compilation_succeeded"` → continue Phase 8 step 1 (`git add -A`).
-     - `compilation_status == "compilation_failed"` → `STOPPED at refresh — live_editor_compile_failed` + emit `last_error_excerpt` + `recent_error_messages` from response. Worktree stays dirty. No commit. Operator fixes errors in Editor → re-runs `/ship-cycle {SLUG} {STAGE_ID}` (resume gate sees `implemented` → re-enters Phase 5 verify-loop).
-     - Ceiling exhausted with `compilation_status == "compiling"` → `STOPPED at refresh — compile_poll_ceiling_exceeded` (rare; manual investigation).
-   - Bridge unavailable for poll → same fallback as step 0 (`unity:compile-check` batchmode OR `STOPPED at refresh — bridge_unavailable`).
-
-   This gate is MANDATORY when step 0 ran. Skipping it = same blind spot BUG-63 closed for `.meta` drift, but for compile state — fire-and-forget refresh leaks compile errors past the stage boundary into the user's next Editor session.
-
-1. `git add -A` + single commit:
-
-   ```
-   feat({SLUG}-stage-{STAGE_ID_DB}): <one-line summary derived from task titles>
-
-   Tasks: {TASK_ID_LIST}.
-
-   Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
-   ```
-
-   Resume note: if `git diff HEAD` empty (PASS_B_ONLY re-run after prior commit), skip commit + reuse `git rev-parse HEAD` as `STAGE_COMMIT_SHA`.
-
-2. Capture `STAGE_COMMIT_SHA = git rev-parse HEAD`.
-3. Per task: `cron_task_commit_record_enqueue(task_id, commit_sha=STAGE_COMMIT_SHA, commit_kind="feat", ...)` — fire-and-forget; returns `{job_id, status:'queued'}` < 100 ms; cron drains to `ia_task_commits` within 90 s.
-4. `cron_stage_verification_flip_enqueue(slug, stage_id, verdict="pass", commit_sha=STAGE_COMMIT_SHA, actor="ship-cycle")` — fire-and-forget; history-preserving INSERT via cron drain.
-
-Pre-commit hook fail → `STOPPED at commit — pre-commit hook failed: {reason}` (investigate; do NOT amend or `--no-verify`).
-
-### Phase 9 — Chain digest + next-stage resolver
+### Phase 4 — Chain digest + next-stage resolver
 
 `master_plan_state(slug)` — capture `stages[]` for both progress counter + next-stage resolution:
 
@@ -268,7 +221,7 @@ Emit chain digest JSON header `chain_stage_digest: true` + caveman summary + `ne
 {
   "escalation": true,
   "phase": <int>,
-  "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed | stage_verify_fail | closeout_apply_failed | commit_failed | verification_flip_failed | live_editor_compile_failed | compile_poll_ceiling_exceeded | bridge_unavailable",
+  "reason": "token_budget_exceeded | boundary_marker_unbalanced | compile_check_failed | task_status_flip_failed | stage_verify_fail | closeout_apply_failed | commit_failed | verification_flip_failed",
   "task_id": "<optional>",
   "stderr": "<optional>"
 }
@@ -280,15 +233,12 @@ Emit chain digest JSON header `chain_stage_digest: true` + caveman summary + `ne
 
 Emit exactly one of:
 
-- `SHIP_CYCLE {STAGE_ID}: PASSED` — only after Phase 7 closeout + Phase 8 commit + verification flip succeed. Include `Next:` from Phase 9.
+- `SHIP_CYCLE {STAGE_ID}: PASSED` — only after Phase 3 recipe completes (closeout + commit + 4 cron enqueues). Include `Next:` from Phase 4.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED — token_budget_exceeded` — `Next: /ship-stage-main-session {SLUG} {STAGE_ID}`.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at {ISSUE_ID} — {reason}` — Pass A failure; `Next: /ship-cycle {SLUG} {STAGE_ID}` resume.
 - `SHIP_CYCLE {STAGE_ID}: STAGE_VERIFY_FAIL` — Pass B verify-loop failed; worktree stays dirty; manual fix then re-run.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at closeout — non-terminal tasks present: {ids}` — DB-drift repair directive.
 - `SHIP_CYCLE {STAGE_ID}: STOPPED at commit — pre-commit hook failed: {reason}` — investigate hook.
-- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — live_editor_compile_failed` — Phase 8 step 0a poll surfaced live Editor compile errors after `refresh_asset_database`. Worktree dirty; no commit. Operator fixes errors → resume `/ship-cycle {SLUG} {STAGE_ID}`.
-- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — compile_poll_ceiling_exceeded` — Phase 8 step 0a poll exhausted ceiling (60 s default) with `compilation_status == "compiling"`. Manual investigation.
-- `SHIP_CYCLE {STAGE_ID}: STOPPED at refresh — bridge_unavailable` — bridge / Editor unavailable for refresh or poll. Operator starts Editor + re-runs.
 
 Followed by caveman summary block: `ship-cycle done. STAGE_ID={S} STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES} BATCH_SIZE={N} IMPLEMENTED={K} VERIFIED={V} DONE={D} STAGE_COMMIT={short_sha} VERIFY={pass|fail|skipped}` + per-task rows + `Next:` handoff.
 
@@ -313,15 +263,11 @@ When Pass A inference body needs DB context for multiple tables or queries, use 
 
 For ad-hoc multi-query DB state (anything not covered by the above): one `db_read_batch` call covers all questions. Do NOT issue sequential `psql` shell calls or N sequential MCP reads when a single batch covers it.
 
-### Stage_id literal match guardrail
+### Stage_id canonical form (post mig 0132)
 
-`stage_id` propagated to `stage_closeout_apply`, `cron_stage_verification_flip_enqueue`, `cron_task_commit_record_enqueue`, `cron_audit_log_enqueue`, and the stage commit subject MUST be the literal value stored in `ia_stages.stage_id` for the slug — NOT a free-typed approximation.
+Mig 0132 adds `CHECK (stage_id ~ '^\d+(\.\d+)?$')` constraint at insert + generated column `stage_id_canonical` (auto-suffixes `.0` to bare-int rows). Per-plan format inconsistency now historical — all new stages are `N.M` form at DB level.
 
-Resolve once at Phase 0 / Phase 1 entry via `master_plan_state(slug).stages[]`: pick the row matching the user-supplied `{STAGE_ID}` arg (lookup must be tolerant — accept `3`, `3.0`, `stage-3-foo` and resolve to canonical) then propagate the canonical literal verbatim through all downstream phases. Per-plan formats vary (`N.M` for `ui-implementation-mvp-rest`, bare-int + slug-style mix for `large-file-atomization-refactor`, slug-style for `large-file-atomization-cutover-refactor`). No global format invariant.
-
-Why. Cron drainer enforces strict FK `ia_stage_verifications_stage_fk(slug, stage_id) → ia_stages(slug, stage_id)`. MCP enqueue tool inserts verbatim — no pre-check, no normalization. Mismatch surfaces only after async drain: row stuck `status=done` with `error` populated, no retry. Recurrence evidence: 2026-05-08 `cron_stage_verification_flip_jobs.job_id=6436292f`, slug `ui-implementation-mvp-rest`, agent passed `"3"` when canonical was `"3.0"`; manually replayed.
-
-How to apply. (a) Phase 0 — capture `STAGE_ID_DB = master_plan_state(slug).stages[i].stage_id` (canonical literal) before any other DB write. (b) Phases 7–9 — pass `STAGE_ID_DB` verbatim to closeout / cron-flip / commit subject. (c) NEVER concatenate stage_id from chat or BACKLOG row text — resolve from DB.
+Phase 0 preflight resolves `STAGE_ID_DB` via `master_plan_state(slug).stages[]` regardless; the canonical literal propagates verbatim through Pass B recipe. Drainer FK fallback in `stage-verification-flip-cron-handler.ts:30` becomes belt-and-braces (post-mig 0132 it can never fire on new rows; retained for legacy slug data).
 
 ---
 
@@ -332,3 +278,4 @@ How to apply. (a) Phase 0 — capture `STAGE_ID_DB = master_plan_state(slug).sta
 - 2026-05-08 (BUG-63) — Phase 8 step 0 added: `unity_bridge_command(kind="refresh_asset_database")` runs before `git add -A` when stage diff touches `Assets/**`. Live Editor writes `.meta` siblings synchronously into stage commit; eliminates orphan `.meta` drift accumulated when batchmode `unity:compile-check` runs in second-instance mode (project lock held by user's Editor → AssetDatabase writes skipped). Recurrence evidence: large-file-atomization-refactor stages 2–15, 65 orphan `.meta` swept in chore commit `bd153cc3`.
 - 2026-05-08 — Stage_id literal match guardrail added (Guardrails §). `stage_id` propagated to closeout / cron flip / cron commit-record / audit / stage commit MUST be canonical literal from `ia_stages.stage_id` (resolved via `master_plan_state(slug).stages[]`). Recurrence evidence: `cron_stage_verification_flip_jobs.job_id=6436292f` 2026-05-08, slug `ui-implementation-mvp-rest`, agent emitted `"3"` vs canonical `"3.0"`; FK `ia_stage_verifications_stage_fk` violation surfaced only at async cron drain (row stuck `done` with `error`); manually replayed. Per-plan format inconsistency observed (`N.M` vs bare-int vs `stage-N-...`) — no global invariant; agent must resolve per slug. Server-side FK pre-check tracked separately (TECH issue).
 - 2026-05-08 — Phase 8 step 0a added: post-refresh live-Editor compile poll. `refresh_asset_database` (step 0) was fire-and-forget — refresh kicks off async live-Editor recompile, but ship-cycle proceeded to commit + closeout while compile may still fail. Pass A `unity:compile-check` (batchmode 2nd-instance under project lock) passed with stale assembly cache while live Editor surfaced real errors only after refresh. Step 0a polls `get_compilation_status` every 2 s (initial wait 2 s, ceiling 60 s, configurable via `UNITY_COMPILE_POLL_CEILING_S`) until terminal state. New failure modes: `live_editor_compile_failed`, `compile_poll_ceiling_exceeded`, `bridge_unavailable`. Recurrence evidence: large-file-atomization-cutover-refactor stage-6-bridge-mutations shipped clean per ship-cycle but live Editor blocked on compile errors at next session start.
+- 2026-05-10 — Lifecycle skills mechanical-work move-out (Phase 5 of cheeky-growing-panda plan). Phases 0–2 collapsed to `tools/scripts/recipe-engine/ship-cycle/preflight.sh` (parse + token-budget + resume gate via DB). Phases 6–8 collapsed to recipe `ship-cycle-pass-b.yaml` (12 mechanical steps: verify-loop check + 2× `task_status_flip_batch` + `stage_closeout_apply` + `materialize-backlog` + conditional asset-db refresh + stage commit + 4 cron enqueues incl. NEW `cron_validate_post_close_enqueue` (mig 0133) + `cron_unity_compile_verify_enqueue` (mig 0134)). Phase 9 renamed Phase 4 (chain digest). Phase 7 prose-fix: `stage_closeout_apply` documented as DB-only (per `mutations/stage.ts:105–195`); legacy claim of inline `validate:all` + `materialize-backlog` was prose drift — those are now separate recipe steps. Phase 8 step 0a sync `get_compilation_status` poll REMOVED — verdict drains async; resume gate of next `/ship-cycle` reads `master_plan_state(slug).stages[].compile_verify_verdict`. Stage_id literal match guardrail simplified (mig 0132 enforces canonical N.M form at insert). Pass A change: aggregate `Assets/**/*.cs` paths across tasks → ONE `unity:compile-check` (replaces per-task loop). Per-task `task_status_flip` calls replaced with single `task_status_flip_batch` (already exists, `task.ts:461–560`). Net: agent prompt body shrinks ~40 %; only Pass A inference + verify-loop coordination remain LLM-owned.

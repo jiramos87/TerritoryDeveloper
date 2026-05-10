@@ -339,7 +339,7 @@ const unityBridgeCommandInputShape = {
   panel_id: z
     .string()
     .optional()
-    .describe("validate_panel_blueprint: catalog panel slug/id to validate against tools/blueprints/panel-schema.yaml. Returns {ok, missing} per child kind."),
+    .describe("validate_panel_blueprint: panel slug/id to validate against panel-schema.yaml. Returns {ok, missing} per child kind."),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */

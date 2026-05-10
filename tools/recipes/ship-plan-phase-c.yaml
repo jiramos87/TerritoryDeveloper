@@ -1,0 +1,54 @@
+recipe: ship-plan-phase-c
+description: >-
+  Ship-plan Phase C — post-bundle async fan-out. Replaces inline calls in
+  ship-plan Phase 7.5. All three steps are fire-and-forget cron enqueues
+  (returns within ms; cron drains).
+inputs:
+  type: object
+  additionalProperties: false
+  required:
+    - slug
+    - version
+  properties:
+    slug:
+      type: string
+      description: Master-plan slug.
+    version:
+      type: integer
+      description: Plan version (returned by master_plan_bundle_apply).
+    actor:
+      type: string
+      description: Optional actor for audit row.
+    body:
+      type: string
+      description: Optional audit body summary (defaults to slug+version line).
+steps:
+  - id: glossary_backlinks
+    description: >-
+      Phase C.1 — enqueue glossary backlink rebuild for the new plan rows.
+    mcp: cron_glossary_backlinks_enqueue
+    args:
+      slug: ${inputs.slug}
+
+  - id: anchor_reindex
+    description: >-
+      Phase C.2 — enqueue anchor reindex for new task spec bodies.
+    mcp: cron_anchor_reindex_enqueue
+    args:
+      slug: ${inputs.slug}
+
+  - id: audit_log
+    description: >-
+      Phase C.3 — record plan_filed audit row in ia_master_plan_change_log.
+    mcp: cron_audit_log_enqueue
+    args:
+      slug: ${inputs.slug}
+      version: ${inputs.version}
+      audit_kind: plan_filed
+      actor: ${inputs.actor}
+      body: ${inputs.body}
+
+outputs:
+  glossary_job_id: ${glossary_backlinks.job_id}
+  anchor_reindex_job_id: ${anchor_reindex.job_id}
+  audit_job_id: ${audit_log.job_id}
