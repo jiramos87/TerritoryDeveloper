@@ -1,7 +1,9 @@
 {
     "name": "UiBake.KindRenderers.Editor",
     "rootNamespace": "Territory.Editor.UiBake",
-    "references": [],
+    "references": [
+        "Unity.TextMeshPro"
+    ],
     "includePlatforms": [
         "Editor"
     ],

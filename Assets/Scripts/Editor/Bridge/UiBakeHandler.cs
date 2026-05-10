@@ -588,6 +588,90 @@ namespace Territory.Editor.Bridge
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
                     break;
                 }
+                case "slider-row":
+                {
+                    // Stage 4 settings widget — track + fill + thumb + label.
+                    var track = new GameObject("Track", typeof(RectTransform));
+                    track.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    track.AddComponent<Image>().raycastTarget = false;
+                    var fill = new GameObject("Fill", typeof(RectTransform));
+                    fill.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    fill.AddComponent<Image>().raycastTarget = false;
+                    var thumb = new GameObject("Thumb", typeof(RectTransform));
+                    thumb.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    thumb.AddComponent<Image>();
+                    var sliderLabel = new GameObject("Label", typeof(RectTransform));
+                    sliderLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var sliderTmp = sliderLabel.AddComponent<TMP_Text>();
+                    sliderTmp.text = pj?.label ?? string.Empty;
+                    sliderTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    break;
+                }
+                case "toggle-row":
+                {
+                    // Stage 4 settings widget — checkmark + label.
+                    var check = new GameObject("Checkmark", typeof(RectTransform));
+                    check.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    check.AddComponent<Image>().raycastTarget = false;
+                    var toggleLabel = new GameObject("Label", typeof(RectTransform));
+                    toggleLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var toggleTmp = toggleLabel.AddComponent<TMP_Text>();
+                    toggleTmp.text = pj?.label ?? string.Empty;
+                    toggleTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    break;
+                }
+                case "dropdown-row":
+                {
+                    // Stage 4 settings widget — label + value display + arrow.
+                    var dropLabel = new GameObject("Label", typeof(RectTransform));
+                    dropLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var dropLabelTmp = dropLabel.AddComponent<TMP_Text>();
+                    dropLabelTmp.text = pj?.label ?? string.Empty;
+                    dropLabelTmp.raycastTarget = false;
+                    var dropValue = new GameObject("Value", typeof(RectTransform));
+                    dropValue.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var dropValueTmp = dropValue.AddComponent<TMP_Text>();
+                    dropValueTmp.text = string.Empty;
+                    dropValueTmp.raycastTarget = false;
+                    var arrow = new GameObject("Arrow", typeof(RectTransform));
+                    arrow.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    arrow.AddComponent<Image>().raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    break;
+                }
+                case "section-header":
+                {
+                    // Stage 4 settings widget — bold section text label.
+                    var hdrLabel = new GameObject("Label", typeof(RectTransform));
+                    hdrLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var hdrTmp = hdrLabel.AddComponent<TMP_Text>();
+                    hdrTmp.text = pj?.label ?? string.Empty;
+                    hdrTmp.fontStyle = TMPro.FontStyles.Bold;
+                    hdrTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    break;
+                }
+                case "list-row":
+                {
+                    // list-row: icon + primary label + secondary value.
+                    var listIcon = new GameObject("Icon", typeof(RectTransform));
+                    listIcon.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    listIcon.AddComponent<Image>().raycastTarget = false;
+                    var listPrimary = new GameObject("PrimaryLabel", typeof(RectTransform));
+                    listPrimary.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var listPrimaryTmp = listPrimary.AddComponent<TMP_Text>();
+                    listPrimaryTmp.text = pj?.label ?? string.Empty;
+                    listPrimaryTmp.raycastTarget = false;
+                    var listSecondary = new GameObject("SecondaryValue", typeof(RectTransform));
+                    listSecondary.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var listSecondaryTmp = listSecondary.AddComponent<TMP_Text>();
+                    listSecondaryTmp.text = string.Empty;
+                    listSecondaryTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    break;
+                }
                 default:
                 {
                     AddBakeWarning("unhandled_inner_kind", innerKind ?? "(null)", $"$.child[{childGo.name}].kind");

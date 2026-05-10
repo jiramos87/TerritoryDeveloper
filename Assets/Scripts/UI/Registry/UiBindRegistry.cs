@@ -52,6 +52,14 @@ namespace Territory.UI.Registry
             return new Subscription(() => list.Remove(wrapped));
         }
 
+        /// <summary>Returns true when at least one subscriber is registered for <paramref name="bindId"/>.</summary>
+        public bool HasSubscribers(string bindId)
+        {
+            return !string.IsNullOrEmpty(bindId)
+                && _subscribers.TryGetValue(bindId, out var list)
+                && list.Count > 0;
+        }
+
         /// <summary>Returns snapshot of all bind ids with current values.</summary>
         public IReadOnlyList<string> ListRegistered()
         {
