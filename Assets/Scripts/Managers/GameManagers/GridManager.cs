@@ -57,6 +57,9 @@ public class GridManager : MonoBehaviour, IGridManager
 
     /// <summary>Fired when grid restored from save. Listeners must invalidate caches.</summary>
     public System.Action onGridRestored;
+
+    /// <summary>Alt+Click world-select action — InfoPanelAdapter subscribes to drive field-list bind (T9.0.3).</summary>
+    public System.Action<Vector2Int> _worldSelectAction;
     #endregion
 
     #region Grid Configuration
@@ -415,6 +418,15 @@ public class GridManager : MonoBehaviour, IGridManager
                 HandleShowTileDetails(mouseGridPosition);
             }
 
+            // Alt+Click inspect modifier — dispatches world.select for InfoPanelAdapter (T9.0.3).
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    _worldSelectAction?.Invoke(new Vector2Int((int)mouseGridPosition.x, (int)mouseGridPosition.y));
+                }
+            }
+
             HandleRaycast(mouseGridPosition);
 
         }
@@ -755,6 +767,16 @@ public class GridManager : MonoBehaviour, IGridManager
         }
         HandleBulldozeTile(zoneType, cell, showAnimation);
         return true;
+    }
+
+    /// <summary>
+    /// Direct API: demolish cell at grid coord. Tool-mode-independent — reuses <see cref="onUrbanCellsBulldozed"/>.
+    /// Preserves Inv 1 (HeightMap-Cell sync) + Inv 8 (grid coord rules) via DemolishCellAt delegate path.
+    /// Returns true if demolished; false if coord out-of-range, empty, or non-bulldozable.
+    /// </summary>
+    public bool DemolishAt(Vector2Int grid)
+    {
+        return DemolishCellAt(new Vector2(grid.x, grid.y), showAnimation: true);
     }
 
     bool CanBulldoze(CityCell cell)

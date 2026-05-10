@@ -45,6 +45,8 @@ namespace Territory.Editor.Bridge
             "tab-strip", "chart", "range-tabs", "stacked-bar-row", "service-row",
             // Wave B3 (TECH-27088) budget-panel archetypes.
             "slider-row-numeric", "expense-row", "readout-block",
+            // Wave B5 (TECH-27098) HUD widget archetypes.
+            "info-dock", "field-list", "minimap-canvas", "toast-stack", "toast-card",
         };
 
         static bool IsKnownStudioControlKind(string kind)

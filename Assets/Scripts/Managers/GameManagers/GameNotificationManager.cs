@@ -29,6 +29,9 @@ public class GameNotificationManager : MonoBehaviour
     [Header("SFX — TECH-15225")]
     [SerializeField] private AudioClip sfxNotificationShow;
     [SerializeField] private AudioClip sfxErrorFeedback;
+    [SerializeField] private AudioClip sfxSuccess;
+    [SerializeField] private AudioClip sfxWarning;
+    [SerializeField] private AudioClip sfxMilestone;
 
     // DS-* token audit — TECH-15227: notification surface.
     // errorColor → ds-accent-negative; warningColor → ds-accent-warning;
@@ -59,7 +62,9 @@ public class GameNotificationManager : MonoBehaviour
         Info,
         Success,
         Warning,
-        Error
+        Error,
+        /// <summary>Milestone tier — sticky gold-pulse toast (T9.0.5).</summary>
+        Milestone
     }
 
     /// <summary>
@@ -70,14 +75,24 @@ public class GameNotificationManager : MonoBehaviour
         public string message;
         public NotificationType type;
         public float duration;
+        public bool sticky;
+        public string subtitle;
+        public Vector2Int? cellRef;
 
-        public NotificationMessage(string message, NotificationType type, float duration)
+        public NotificationMessage(string message, NotificationType type, float duration,
+            bool sticky = false, string subtitle = null, Vector2Int? cellRef = null)
         {
             this.message = message;
             this.type = type;
             this.duration = duration;
+            this.sticky = sticky;
+            this.subtitle = subtitle;
+            this.cellRef = cellRef;
         }
     }
+
+    // Sticky queue (always rendered above non-sticky). Non-sticky uses messageQueue.
+    private Queue<NotificationMessage> stickyQueue = new Queue<NotificationMessage>();
 
     void Awake()
     {
@@ -234,10 +249,10 @@ public class GameNotificationManager : MonoBehaviour
         // Create notification message
         NotificationMessage notification = new NotificationMessage(message, type, customDuration);
 
-        // Add to queue (remove oldest if queue is full)
+        // Add to queue (remove oldest non-sticky if queue is full)
         if (messageQueue.Count >= maxQueueSize)
         {
-            messageQueue.Dequeue();
+            AgeOutOldestNonSticky();
             DebugHelper.LogWarning("GameNotificationManager: Message queue full, removing oldest message");
         }
 
@@ -261,18 +276,21 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Start displaying next queued notification.
+    /// Start displaying next queued notification. Sticky queue drains before non-sticky.
     /// </summary>
     private void StartNextNotification()
     {
-        if (messageQueue.Count == 0)
+        if (stickyQueue.Count == 0 && messageQueue.Count == 0)
         {
             isDisplayingMessage = false;
             return;
         }
 
         isDisplayingMessage = true;
-        NotificationMessage nextMessage = messageQueue.Dequeue();
+        // Sticky always wins over non-sticky.
+        NotificationMessage nextMessage = stickyQueue.Count > 0
+            ? stickyQueue.Dequeue()
+            : messageQueue.Dequeue();
 
         if (currentDisplayCoroutine != null)
         {
@@ -331,6 +349,10 @@ public class GameNotificationManager : MonoBehaviour
             case NotificationType.Error:
                 notificationText.color = errorColor;
                 break;
+            case NotificationType.Milestone:
+                // Gold-pulse milestone — #FFD700.
+                notificationText.color = new Color(1f, 0.843f, 0f, 1f);
+                break;
         }
     }
 
@@ -357,11 +379,12 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Clear all pending queued notifications.
+    /// Clear all pending queued notifications (sticky + non-sticky).
     /// </summary>
     public void ClearNotificationQueue()
     {
         messageQueue.Clear();
+        stickyQueue.Clear();
 
         if (currentDisplayCoroutine != null)
         {
@@ -381,6 +404,60 @@ public class GameNotificationManager : MonoBehaviour
     {
         return messageQueue.Count;
     }
+
+    #region Milestone Tier (T9.0.5)
+
+    /// <summary>
+    /// Post sticky milestone toast (gold-pulse variant). Sticks until player clicks dismiss.
+    /// </summary>
+    /// <param name="title">Milestone title (e.g. "Population: 1,000").</param>
+    /// <param name="subtitle">Optional subtitle.</param>
+    /// <param name="cellRef">Optional grid coord — camera jumps to cell on card click + dismiss.</param>
+    public void PostMilestone(string title, string subtitle = null, Vector2Int? cellRef = null)
+    {
+        if (notificationPanel == null || notificationText == null) return;
+        if (string.IsNullOrEmpty(title)) return;
+
+        var msg = new NotificationMessage(title, NotificationType.Milestone, 0f,
+            sticky: true, subtitle: subtitle, cellRef: cellRef);
+
+        // Sticky always enqueues to front of sticky queue.
+        stickyQueue.Enqueue(msg);
+
+        if (!isDisplayingMessage)
+            StartNextNotification();
+    }
+
+    /// <summary>
+    /// Card click handler — if cellRef present, pan camera then dismiss.
+    /// </summary>
+    public void OnCardClicked(NotificationMessage notification)
+    {
+        if (notification.cellRef.HasValue)
+        {
+            var cc = FindObjectOfType<Territory.UI.CameraController>();
+            if (cc != null) cc.PanCameraTo(notification.cellRef.Value);
+        }
+        // Dismiss + continue queue.
+        if (currentDisplayCoroutine != null)
+        {
+            StopCoroutine(currentDisplayCoroutine);
+            currentDisplayCoroutine = null;
+        }
+        if (notificationPanel != null) notificationPanel.SetActive(false);
+        isDisplayingMessage = false;
+        StartNextNotification();
+    }
+
+    /// <summary>
+    /// Age out oldest non-sticky message when queue overflow. Sticky messages never aged out.
+    /// </summary>
+    private void AgeOutOldestNonSticky()
+    {
+        if (messageQueue.Count > 0) messageQueue.Dequeue();
+    }
+
+    #endregion
 
     #region Convenience Methods for Common Game Events
 

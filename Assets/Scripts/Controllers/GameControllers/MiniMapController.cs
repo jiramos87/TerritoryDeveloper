@@ -32,7 +32,7 @@ public enum MiniMapLayer
 /// Texture rebuilds on geography complete, grid restore, panel open, layer change (not fixed timer).
 /// Hides during full-screen popups (LoadGame, BuildingSelector).
 /// </summary>
-public class MiniMapController : MonoBehaviour, IPointerClickHandler
+public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandler
 {
     #region Dependencies
     public GridManager gridManager;
@@ -506,6 +506,52 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
 
         Vector2 worldPos = gridManager.GetWorldPosition(gridX, gridY);
         cameraController.MoveCameraToMapCenter(new Vector3(worldPos.x, worldPos.y, 0));
+    }
+    #endregion
+
+    #region Drag-Pan (T9.0.4)
+    /// <summary>
+    /// IDragHandler — drag on minimap → pan camera. Translates drag delta in normalized map
+    /// coords to grid delta → <see cref="CameraController.PanCameraTo"/>.
+    /// </summary>
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (gridManager == null || cameraController == null || mapImage == null)
+            return;
+
+        RectTransform rect = mapImage.rectTransform;
+        // Convert drag delta (screen pixels) to normalized minimap delta.
+        Vector2 sizeDelta = rect.rect.size;
+        if (sizeDelta.x <= 0f || sizeDelta.y <= 0f) return;
+
+        float normDx = eventData.delta.x / sizeDelta.x;
+        float normDy = eventData.delta.y / sizeDelta.y;
+
+        int w = gridManager.width;
+        int h = gridManager.height;
+
+        // Compute target grid coord from current camera position + drag delta.
+        Camera cam = Camera.main;
+        if (cam == null) return;
+        Vector2 camGrid = gridManager.GetGridPosition(new Vector2(cam.transform.position.x, cam.transform.position.y));
+        int targetX = Mathf.Clamp(Mathf.RoundToInt(camGrid.x + normDx * w), 0, w - 1);
+        int targetY = Mathf.Clamp(Mathf.RoundToInt(camGrid.y + normDy * h), 0, h - 1);
+        cameraController.PanCameraTo(new Vector2Int(targetX, targetY));
+    }
+
+    /// <summary>Forward layer-toggle from header-strip button. Called by MapPanelAdapter.</summary>
+    public void ForwardLayerToggle(MiniMapLayer layer)
+    {
+        ToggleLayer(layer);
+    }
+
+    /// <summary>Enforce 360x324 render size (36px header occupies remaining 36px of 360px panel height).</summary>
+    public void EnforceRenderSize()
+    {
+        if (mapImage == null) return;
+        RectTransform rt = mapImage.rectTransform;
+        if (rt != null)
+            rt.sizeDelta = new Vector2(360f, 324f);
     }
     #endregion
 }

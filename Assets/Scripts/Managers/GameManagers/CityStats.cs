@@ -123,6 +123,21 @@ public class CityStats : MonoBehaviour, ICityStats, ICityStatsAuto
 
     private BudgetAllocationService budgetAllocationService;
 
+    #region Milestone Tracking (T9.0.5)
+    /// <summary>Fired once per threshold crossing from the canonical milestone set.</summary>
+    public System.Action<int> OnPopulationMilestone;
+
+    private static readonly int[] PopulationMilestones = { 1000, 5000, 10000, 25000, 50000, 100000 };
+
+    // Track which milestones have fired (index-matched to PopulationMilestones).
+    private readonly bool[] _milestoneFired = new bool[6];
+
+    // Per-milestone last-fire date for 30-day debounce.
+    private readonly System.DateTime[] _milestoneLastFire = new System.DateTime[6];
+
+    private const int MilestoneDebounceInGameDays = 30;
+    #endregion
+
     #region Population and Demographics
     void Start()
     {
@@ -193,7 +208,32 @@ public class CityStats : MonoBehaviour, ICityStats, ICityStatsAuto
     /// <param name="value">Population delta.</param>
     public void AddPopulation(int value)
     {
+        int prev = population;
         population += value;
+        CheckPopulationMilestones(prev, population);
+    }
+
+    /// <summary>Check if population crossed any milestone threshold; fire OnPopulationMilestone once per threshold (30-day debounce).</summary>
+    private void CheckPopulationMilestones(int prev, int next)
+    {
+        if (OnPopulationMilestone == null) return;
+        for (int i = 0; i < PopulationMilestones.Length; i++)
+        {
+            int threshold = PopulationMilestones[i];
+            // Crossed upward only.
+            if (prev < threshold && next >= threshold)
+            {
+                // 30-day debounce.
+                if (_milestoneFired[i])
+                {
+                    System.TimeSpan gap = currentDate - _milestoneLastFire[i];
+                    if (gap.TotalDays < MilestoneDebounceInGameDays) continue;
+                }
+                _milestoneFired[i] = true;
+                _milestoneLastFire[i] = currentDate;
+                OnPopulationMilestone.Invoke(threshold);
+            }
+        }
     }
 
     /// <summary>Add amount to city treasury.</summary>

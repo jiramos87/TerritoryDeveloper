@@ -289,6 +289,17 @@ public class CameraController : MonoBehaviour
 
 
     /// <summary>
+    /// Animated camera pan to grid coord. Reuses <see cref="MoveCameraToMapCenter"/> for immediate snap.
+    /// Animated lerp path deferred to Stage 13 polish; immediate snap satisfies T9.0.4 requirement.
+    /// </summary>
+    public void PanCameraTo(Vector2Int grid)
+    {
+        if (gridManager == null) return;
+        Vector2 worldPos = gridManager.GetWorldPosition(grid.x, grid.y);
+        MoveCameraToMapCenter(new Vector3(worldPos.x, worldPos.y, 0f));
+    }
+
+    /// <summary>
     /// Handle WASD/arrow camera movement. Uses Time.unscaledDeltaTime → works during pause.
     /// Speed scales with zoom (zoomed out = faster).
     /// </summary>

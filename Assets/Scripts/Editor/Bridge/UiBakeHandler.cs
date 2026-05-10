@@ -687,6 +687,135 @@ namespace Territory.Editor.Bridge
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
+                // Wave B5 (TECH-27098) HUD widget archetypes.
+                case "info-dock":
+                {
+                    // Outer right-edge dock container — header + field-list slot + footer-action area.
+                    // Stage 5.5 OUTER_KIND_EXCLUSIONS pre-pop; actual children baked as field-list + confirm-button.
+                    var infoBg = childGo.AddComponent<Image>();
+                    infoBg.color = new Color(0.05f, 0.05f, 0.05f, 0.85f);
+                    infoBg.raycastTarget = true;
+                    var infoRt = childGo.GetComponent<RectTransform>();
+                    if (infoRt != null)
+                    {
+                        infoRt.anchorMin = new Vector2(1f, 0f);
+                        infoRt.anchorMax = new Vector2(1f, 1f);
+                        infoRt.pivot = new Vector2(1f, 0.5f);
+                        infoRt.sizeDelta = new Vector2(280f, 0f);
+                        infoRt.anchoredPosition = new Vector2(-8f, 0f);
+                    }
+                    childGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    EnsureChildLayoutElement(childGo, preferredWidth: 280f, preferredHeight: -1f, flexibleWidth: 0f);
+                    break;
+                }
+                case "field-list":
+                {
+                    // Label-value pair list from bind array. Outer container — OUTER_KIND_EXCLUSIONS pre-pop.
+                    // Spawns a VerticalLayoutGroup container; runtime populates rows from bind.
+                    var fieldBg = childGo.AddComponent<Image>();
+                    fieldBg.color = new Color(0f, 0f, 0f, 0f);
+                    fieldBg.raycastTarget = false;
+                    childGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    // Placeholder pair to show structure at bake time.
+                    var keyGo = new GameObject("FieldKey", typeof(RectTransform));
+                    keyGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var keyTmp = keyGo.AddComponent<TMP_Text>();
+                    keyTmp.text = "Key";
+                    keyTmp.fontSize = 12f;
+                    keyTmp.raycastTarget = false;
+                    var valGo = new GameObject("FieldValue", typeof(RectTransform));
+                    valGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var valTmp = valGo.AddComponent<TMP_Text>();
+                    valTmp.text = "--";
+                    valTmp.fontSize = 12f;
+                    valTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
+                    break;
+                }
+                case "minimap-canvas":
+                {
+                    // RawImage render surface + IDragHandler-marked component + layer-toggle children.
+                    // Stage 5.5 alias to themed-label (aliased renderer path) — now first-class.
+                    var mapRawImg = childGo.AddComponent<RawImage>();
+                    mapRawImg.raycastTarget = true;
+                    var mapRt = childGo.GetComponent<RectTransform>();
+                    if (mapRt != null)
+                    {
+                        mapRt.sizeDelta = new Vector2(360f, 324f);
+                    }
+                    // IDragHandler scaffold — runtime MiniMapController.OnDrag implements drag-pan.
+                    // Bake-time: add EventTrigger as proxy for IDragHandler detection by render-check.
+                    childGo.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+                    AttachUiActionTrigger(childGo, pj?.action);
+                    EnsureChildLayoutElement(childGo, preferredWidth: 360f, preferredHeight: 324f, flexibleWidth: 0f);
+                    break;
+                }
+                case "toast-stack":
+                {
+                    // Top-right anchored vertical stack container. Stage 5.5 OUTER_KIND_EXCLUSIONS pre-pop.
+                    var stackBg = childGo.AddComponent<Image>();
+                    stackBg.color = new Color(0f, 0f, 0f, 0f);
+                    stackBg.raycastTarget = false;
+                    var vlg = childGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    vlg.spacing = 4f;
+                    vlg.childAlignment = TextAnchor.UpperRight;
+                    var stackRt = childGo.GetComponent<RectTransform>();
+                    if (stackRt != null)
+                    {
+                        stackRt.anchorMin = new Vector2(1f, 1f);
+                        stackRt.anchorMax = new Vector2(1f, 1f);
+                        stackRt.pivot = new Vector2(1f, 1f);
+                        stackRt.anchoredPosition = new Vector2(-8f, -8f);
+                        stackRt.sizeDelta = new Vector2(320f, 0f);
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: 320f, preferredHeight: -1f, flexibleWidth: 0f);
+                    break;
+                }
+                case "toast-card":
+                {
+                    // Toast card: icon + title + body + dismiss button + sticky-variant flag.
+                    // Stage 5.5 alias to themed-label (aliased renderer path) — now first-class.
+                    var cardBg = childGo.AddComponent<Image>();
+                    cardBg.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+                    cardBg.raycastTarget = true;
+                    var cardHlg = childGo.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                    cardHlg.spacing = 8f;
+                    cardHlg.padding = new RectOffset(8, 8, 8, 8);
+                    // Icon placeholder.
+                    var cardIcon = new GameObject("Icon", typeof(RectTransform));
+                    cardIcon.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var cardIconImg = cardIcon.AddComponent<Image>();
+                    cardIconImg.raycastTarget = false;
+                    EnsureChildLayoutElement(cardIcon, preferredWidth: 24f, preferredHeight: 24f, flexibleWidth: 0f);
+                    // Title + body column.
+                    var cardTextCol = new GameObject("TextColumn", typeof(RectTransform));
+                    cardTextCol.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    cardTextCol.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    EnsureChildLayoutElement(cardTextCol, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
+                    var cardTitle = new GameObject("Title", typeof(RectTransform));
+                    cardTitle.transform.SetParent(cardTextCol.transform, worldPositionStays: false);
+                    var cardTitleTmp = cardTitle.AddComponent<TMP_Text>();
+                    cardTitleTmp.text = pj?.label ?? "Notification";
+                    cardTitleTmp.fontSize = 14f;
+                    cardTitleTmp.fontStyle = TMPro.FontStyles.Bold;
+                    cardTitleTmp.raycastTarget = false;
+                    var cardBody = new GameObject("Body", typeof(RectTransform));
+                    cardBody.transform.SetParent(cardTextCol.transform, worldPositionStays: false);
+                    var cardBodyTmp = cardBody.AddComponent<TMP_Text>();
+                    cardBodyTmp.text = string.Empty;
+                    cardBodyTmp.fontSize = 12f;
+                    cardBodyTmp.raycastTarget = false;
+                    // Dismiss button.
+                    var dismissGo = new GameObject("Dismiss", typeof(RectTransform));
+                    dismissGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var dismissBtn = dismissGo.AddComponent<UnityEngine.UI.Button>();
+                    var dismissImg = dismissGo.AddComponent<Image>();
+                    dismissImg.color = new Color(1f, 1f, 1f, 0.2f);
+                    dismissBtn.targetGraphic = dismissImg;
+                    EnsureChildLayoutElement(dismissGo, preferredWidth: 24f, preferredHeight: 24f, flexibleWidth: 0f);
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 56f, flexibleWidth: 1f);
+                    break;
+                }
                 default:
                 {
                     AddBakeWarning("unhandled_inner_kind", innerKind ?? "(null)", $"$.child[{childGo.name}].kind");
