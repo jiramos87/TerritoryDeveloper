@@ -158,7 +158,36 @@ slices_via: none
 
 ### 4.3 MCP tool surface under DB regime
 
-**Read:**
+> **v2 remap refresh (2026-05-10):** Table below maps planned tool names (v1 design) to live registered tool names. Planned tools not yet shipped or superseded noted inline.
+
+| Planned (v1 design) | Live registered name | Status |
+|---|---|---|
+| `stage_state(slug, stage_id)` | `stage_state` | live |
+| `task_state(task_id)` | `task_state` | live |
+| `stage_bundle(slug, stage_id)` | `stage_bundle` | live |
+| `task_bundle(task_id)` | `task_bundle` | live |
+| `master_plan_state(slug)` | `master_plan_state` | live |
+| `task_spec_body(task_id)` | `task_spec_body` | live |
+| `task_spec_section(task_id, section)` | `task_spec_section` | live |
+| `task_spec_search(query, filters)` | `task_spec_search` | live |
+| `backlog_issue` / `backlog_list` / `backlog_search` | `backlog_issue` / `backlog_list` / `backlog_search` | live (re-implemented as DB queries) |
+| `master_plan_health(slug)` | `master_plan_health` | live |
+| `master_plan_next_pending` | `master_plan_next_pending` | live |
+| `master_plan_locate` | `master_plan_locate` | live |
+| `task_insert(...)` | `task_insert` | live |
+| `task_status_flip(task_id, new_status)` | `task_status_flip` | live |
+| `task_status_flip` (batch) | `task_status_flip_batch` | live (additional batch variant) |
+| `task_spec_section_write(task_id, section, content)` | `task_spec_section_write` | live |
+| `stage_verification_flip(slug, stage_id, verdict, commit_sha)` | `cron_stage_verification_flip_enqueue` | live (fire-and-forget cron enqueue, not direct flip) |
+| `stage_closeout_apply(slug, stage_id)` | `stage_closeout_apply` | live |
+| `task_commit_record(task_id, commit_sha)` | `cron_task_commit_record_enqueue` | live (fire-and-forget cron enqueue) |
+| `journal_append(session_id, task_id, phase, payload)` | `cron_journal_append_enqueue` | live (fire-and-forget cron enqueue) |
+| `journal_get` / `journal_search` | (superseded) | not shipped; `stage_bundle` covers read path |
+| `fix_plan_write(task_id, tuples)` | `fix_plan_write` | live |
+| `fix_plan_consume(task_id, round)` | `fix_plan_consume` | live |
+| `cron_audit_log_enqueue` | `cron_audit_log_enqueue` | live (additional — not in v1 design) |
+
+**Read (current live):**
 
 - `stage_state(slug, stage_id)` — DB query; no file read.
 - `task_state(task_id)` — DB query; returns metadata + status + commits + deps.
@@ -168,17 +197,18 @@ slices_via: none
 - `task_spec_body(task_id)` — full body markdown from DB.
 - `task_spec_section(task_id, section)` — single section slice (§Goal, §Intent, §Plan Digest, etc.).
 - `task_spec_search(query, filters)` — full-text + trigram search across all task bodies (replaces grep-over-markdown).
-- `backlog_list` / `backlog_search` / `backlog_issue` — re-implement as DB queries (schemas survive, storage flips).
+- `backlog_list` / `backlog_search` / `backlog_issue` — live as DB queries.
 
-**Mutate (atomic, transactional):**
+**Mutate (current live — atomic, transactional or fire-and-forget cron enqueue):**
 
 - `task_insert({slug, stage_id, title, body, ...})` → returns reserved task_id via DB sequence + writes initial body.
-- `task_status_flip(task_id, new_status)` — single transaction.
+- `task_status_flip(task_id, new_status)` — single transaction; `task_status_flip_batch` for stage-level batch.
 - `task_spec_section_write(task_id, section, content)` — sectioned atomic body update; optional audit row in `ia_task_spec_history`.
-- `stage_verification_flip(slug, stage_id, verdict, commit_sha)`.
+- `cron_stage_verification_flip_enqueue(slug, stage_id, verdict, commit_sha)` — fire-and-forget; cron drains to `ia_stage_verifications`.
 - `stage_closeout_apply(slug, stage_id)` — DB flip + filesystem `mv` stage file to `_closed/` in one op.
-- `task_commit_record(task_id, commit_sha)`.
-- `journal_append(session_id, task_id, phase, payload)` / `journal_get` / `journal_search`.
+- `cron_task_commit_record_enqueue(task_id, commit_sha)` — fire-and-forget; cron drains to `ia_task_commits`.
+- `cron_journal_append_enqueue(session_id, phase, payload_kind, payload)` — fire-and-forget; cron drains to `ia_ship_stage_journal`.
+- `cron_audit_log_enqueue(slug, audit_kind, body)` — fire-and-forget; cron drains to `ia_master_plan_change_log`.
 - `fix_plan_write(task_id, tuples)` / `fix_plan_consume(task_id, round)`.
 
 ### 4.4 Round 4 — locked decisions
