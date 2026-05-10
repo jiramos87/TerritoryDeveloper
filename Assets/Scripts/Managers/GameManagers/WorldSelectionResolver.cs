@@ -59,7 +59,7 @@ public class WorldSelectionResolver : MonoBehaviour
         var fields = new List<SelectionField>();
         fields.Add(new SelectionField { key = "Type", value = typeName });
         fields.Add(new SelectionField { key = "Grid", value = $"({coord.x},{coord.y})" });
-        fields.Add(new SelectionField { key = "Elevation", value = cell.heightLevel.ToString() });
+        fields.Add(new SelectionField { key = "Elevation", value = cell.height.ToString() });
 
         switch (typeName)
         {

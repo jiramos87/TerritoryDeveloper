@@ -70,7 +70,7 @@ public class GameNotificationManager : MonoBehaviour
     /// <summary>
     /// Queued notification message struct.
     /// </summary>
-    private struct NotificationMessage
+    public struct NotificationMessage
     {
         public string message;
         public NotificationType type;
