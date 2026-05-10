@@ -86,6 +86,22 @@ steps:
       slug: ${inputs.slug}
       stage_id: ${inputs.stage_id}
 
+  - id: wait_asset_recompile
+    description: >-
+      Phase B.7b — SYNC gate. When B.7 reported touched_assets=true, block
+      on bridge round-trip until Editor finishes recompiling AND reports
+      compilation_failed=false. Closes the false-green window where the
+      stage commit (B.8) used to land before the Editor had re-parsed the
+      new source. No-op when no Assets/** touched. Hard fail aborts the
+      recipe before any commit / closeout enqueues.
+    bash: tools/scripts/recipe-engine/ship-cycle/wait-asset-recompile.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      touched_assets: ${maybe_refresh_asset_db.touched_assets}
+      refresh_job_id: ${maybe_refresh_asset_db.bridge_job_id}
+      timeout_seconds: 180
+
   - id: stage_commit
     description: >-
       Phase B.8 — single stage commit (chain-scope delta). Captures sha for

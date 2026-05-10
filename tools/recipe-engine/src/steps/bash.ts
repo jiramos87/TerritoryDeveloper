@@ -33,7 +33,8 @@ export async function runBashStep(step: BashStep, ctx: RunContext): Promise<Step
     );
     child.on("close", (code) => {
       if (code === 0) {
-        resolve({ ok: true, value: { stdout, stderr, code } });
+        const kv = parseStdoutKv(stdout);
+        resolve({ ok: true, value: { stdout, stderr, code, ...kv } });
       } else {
         resolve({
           ok: false,
@@ -42,6 +43,34 @@ export async function runBashStep(step: BashStep, ctx: RunContext): Promise<Step
       }
     });
   });
+}
+
+/**
+ * Parse trailing `key=value` tokens from bash stdout so recipe steps can
+ * reference them via `${step.key}`. Convention: scripts emit a final line
+ * (or any line) of whitespace-separated `key=value` pairs. Value may be
+ * bare (no quotes) — first `=` splits. Reserved keys (stdout/stderr/code)
+ * are skipped to avoid clobbering the raw envelope.
+ */
+function parseStdoutKv(stdout: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const lines = stdout.split(/\r?\n/);
+  const reserved = new Set(["stdout", "stderr", "code"]);
+  for (const line of lines) {
+    // Only parse lines that look like one-or-more `key=value` tokens.
+    if (!/^\s*[a-zA-Z_][a-zA-Z0-9_]*=/.test(line)) continue;
+    const tokens = line.trim().split(/\s+/);
+    for (const tok of tokens) {
+      const eq = tok.indexOf("=");
+      if (eq <= 0) continue;
+      const k = tok.slice(0, eq);
+      const v = tok.slice(eq + 1);
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)) continue;
+      if (reserved.has(k)) continue;
+      out[k] = v;
+    }
+  }
+  return out;
 }
 
 function flattenArgs(obj: Record<string, unknown>): string[] {
