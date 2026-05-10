@@ -4,12 +4,18 @@ using UnityEngine.UI;
 
 namespace Territory.Editor.UiBake.KindRenderers
 {
-    /// <summary>Renders a slider-row widget (track + fill + thumb + label) with real Slider component. TECH-27542.</summary>
+    /// <summary>
+    /// Renders a slider-row widget (track + fill + thumb + label) with real Slider component. TECH-27542.
+    /// When paramsJson contains "numeric":true (slider-row-numeric alias), appends a live value
+    /// readout TMP_Text left-aligned next to the label. TECH-27088.
+    /// </summary>
     public sealed class SliderRowRenderer : IKindRenderer
     {
         public GameObject Render(string paramsJson, Transform parent)
         {
-            var go = new GameObject("slider-row", typeof(RectTransform));
+            bool isNumeric = !string.IsNullOrEmpty(paramsJson) && paramsJson.Contains("\"numeric\":true");
+
+            var go = new GameObject(isNumeric ? "slider-row-numeric" : "slider-row", typeof(RectTransform));
             go.transform.SetParent(parent, worldPositionStays: false);
 
             var track = new GameObject("Track", typeof(RectTransform));
@@ -36,6 +42,18 @@ namespace Territory.Editor.UiBake.KindRenderers
             slider.targetGraphic = thumbImage;
             slider.fillRect = fill.GetComponent<RectTransform>();
             slider.handleRect = thumb.GetComponent<RectTransform>();
+
+            // Numeric variant — live value readout left-aligned (TECH-27088).
+            if (isNumeric)
+            {
+                var readout = new GameObject("ValueReadout", typeof(RectTransform));
+                readout.transform.SetParent(go.transform, worldPositionStays: false);
+                var readoutTmp = readout.AddComponent<TextMeshProUGUI>();
+                readoutTmp.text = "0";
+                readoutTmp.fontSize = 14f;
+                readoutTmp.alignment = TMPro.TextAlignmentOptions.Left;
+                readoutTmp.raycastTarget = false;
+            }
 
             return go;
         }

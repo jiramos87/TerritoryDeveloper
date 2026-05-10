@@ -43,6 +43,8 @@ namespace Territory.Editor.Bridge
             "subtype-picker-strip",
             // Wave B2 (TECH-27083) stats-panel archetypes.
             "tab-strip", "chart", "range-tabs", "stacked-bar-row", "service-row",
+            // Wave B3 (TECH-27088) budget-panel archetypes.
+            "slider-row-numeric", "expense-row", "readout-block",
         };
 
         static bool IsKnownStudioControlKind(string kind)

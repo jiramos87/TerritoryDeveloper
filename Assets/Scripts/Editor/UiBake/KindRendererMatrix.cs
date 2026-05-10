@@ -16,11 +16,15 @@ namespace Territory.Editor.UiBake
             new Dictionary<string, IKindRenderer>(StringComparer.Ordinal)
             {
                 // owner: stage-2 kind-renderer matrix (T2.0.1)
-                { "slider-row",      new SliderRowRenderer() },
-                { "toggle-row",      new ToggleRowRenderer() },
-                { "dropdown-row",    new DropdownRowRenderer() },
-                { "section-header",  new SectionHeaderRenderer() },
-                { "list-row",        new ListRowRenderer() },
+                { "slider-row",         new SliderRowRenderer() },
+                { "toggle-row",         new ToggleRowRenderer() },
+                { "dropdown-row",       new DropdownRowRenderer() },
+                { "section-header",     new SectionHeaderRenderer() },
+                { "list-row",           new ListRowRenderer() },
+                // owner: Wave B3 budget-panel archetypes (TECH-27088)
+                { "slider-row-numeric", new SliderRowRenderer() },
+                { "expense-row",        new ExpenseRowRenderer() },
+                { "readout-block",      new ReadoutBlockRenderer() },
             };
 
         /// <summary>All registered kind slugs. Used by validate:bake-handler-kind-coverage lint.</summary>
