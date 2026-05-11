@@ -1,7 +1,6 @@
 using UnityEngine;
 using Territory.Core;
 using Territory.Zones;
-using Territory.Buildings;
 using Domains.Grid;
 
 namespace Domains.Cursor.Services
@@ -28,12 +27,12 @@ namespace Domains.Cursor.Services
         private static readonly Color PreviewTintRed = new Color(1f, 0.4f, 0.4f, 0.5f);
 
         // ── Cursor texture state ─────────────────────────────────────────────────
-        private UnityEngine.Texture2D _activeCursorTexture;
+        private Texture2D _activeCursorTexture;
         private Vector2 _activeCursorHotSpot;
         private bool _isOverUI;
 
         // ── Texture scaling cache ────────────────────────────────────────────────
-        private UnityEngine.Texture2D _scaledBulldozerTexture;
+        private Texture2D _scaledBulldozerTexture;
 
         public CursorService(ICursorHub hub)
         {
@@ -120,7 +119,7 @@ namespace Domains.Cursor.Services
 
         // ── Update tick ───────────────────────────────────────────────────────────
 
-        public void UpdatePreview(Camera cam, GridManager gridManager, UIManager uiManager, PlacementValidator validator)
+        public void UpdatePreview(Camera cam)
         {
             if (_previewInstance == null)
             {
@@ -128,8 +127,8 @@ namespace Domains.Cursor.Services
                 return;
             }
 
-            Vector2 mousePos = GridManager.ScreenPointToWorldOnGridPlane(cam, Input.mousePosition);
-            CityCell mouseCell = gridManager.GetMouseGridCell(mousePos);
+            Vector2 mousePos = _hub.ScreenToWorldOnGrid(cam, Input.mousePosition);
+            CityCell mouseCell = _hub.GetMouseCell(mousePos);
             if (mouseCell == null)
             {
                 _previewInstance.SetActive(false);
@@ -142,9 +141,9 @@ namespace Domains.Cursor.Services
             Vector2 gridPosition = new Vector2(mouseCell.x, mouseCell.y);
             _previewInstance.SetActive(true);
 
-            if (uiManager != null && uiManager.GetSelectedZoneType() == Zone.ZoneType.Road && gridManager.roadManager != null)
+            if (_hub.GetSelectedZoneType() == Zone.ZoneType.Road && _hub.HasRoadManager)
             {
-                gridManager.roadManager.GetRoadGhostPreviewForCell(gridPosition, out GameObject roadPrefab, out Vector2 worldPos, out int sortingOrder);
+                _hub.GetRoadGhostPreview(gridPosition, out GameObject roadPrefab, out Vector2 worldPos, out int sortingOrder);
                 if (roadPrefab != _currentRoadGhostPrefab)
                 {
                     _currentRoadGhostPrefab = roadPrefab;
@@ -168,10 +167,8 @@ namespace Domains.Cursor.Services
             else
             {
                 _currentRoadGhostPrefab = null;
-                int buildingSize = 1;
-                if (uiManager != null && uiManager.GetSelectedBuilding() != null)
-                    buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
-                CityCell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+                int buildingSize = _hub.GetSelectedBuildingSize();
+                CityCell cell = _hub.GetCell((int)gridPosition.x, (int)gridPosition.y);
                 if (cell == null)
                 {
                     _previewInstance.SetActive(false);
@@ -180,17 +177,16 @@ namespace Domains.Cursor.Services
                 }
                 else
                 {
-                    Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
-                    IBuilding selectedBuilding = uiManager?.GetSelectedBuilding();
-                    if (selectedBuilding is WaterPlant)
-                        newWorldPos.y += gridManager.tileHeight / 4f;
+                    Vector2 newWorldPos = _hub.GetBuildingPlacementPos(gridPosition, buildingSize);
+                    if (_hub.IsSelectedBuildingWaterPlant())
+                        newWorldPos.y += _hub.TileHeight / 4f;
                     _previewInstance.transform.position = newWorldPos;
 
-                    if (validator != null && (cell.x != _lastCellX || cell.y != _lastCellY))
+                    if (cell.x != _lastCellX || cell.y != _lastCellY)
                     {
                         _lastCellX = cell.x;
                         _lastCellY = cell.y;
-                        PlacementResult result = validator.CanPlace(_currentAssetId, cell.x, cell.y, _currentRotation, _currentZoneType);
+                        PlacementResult result = _hub.CanPlace(_currentAssetId, cell.x, cell.y, _currentRotation, _currentZoneType);
                         _hub.FirePlacementResultChanged(result);
                     }
                 }
@@ -248,7 +244,7 @@ namespace Domains.Cursor.Services
 
         // ── Texture scaling ───────────────────────────────────────────────────────
 
-        private UnityEngine.Texture2D GetScaledBulldozerTexture()
+        private Texture2D GetScaledBulldozerTexture()
         {
             var src = _hub.BulldozerTexture;
             if (src == null) return null;
@@ -262,13 +258,13 @@ namespace Domains.Cursor.Services
             return _scaledBulldozerTexture;
         }
 
-        private static UnityEngine.Texture2D ScaleTexture(UnityEngine.Texture2D source, int newWidth, int newHeight)
+        private static Texture2D ScaleTexture(Texture2D source, int newWidth, int newHeight)
         {
             RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight);
             Graphics.Blit(source, rt);
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = rt;
-            var result = new UnityEngine.Texture2D(newWidth, newHeight);
+            var result = new Texture2D(newWidth, newHeight);
             result.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0, 0);
             result.Apply();
             RenderTexture.active = previous;
