@@ -844,20 +844,78 @@ namespace Territory.Editor.Bridge
                 }
                 case "list-row":
                 {
-                    // list-row: icon + primary label + secondary value.
-                    var listIcon = new GameObject("Icon", typeof(RectTransform));
+                    // Stage 10 stats/budget — 3-col HLG row: Icon (24×24) · PrimaryLabel (flex) · SecondaryValue (64px right).
+                    // Mirrors toggle-row HLG settings; runtime ServiceRowController subscribes pj.bindId → SecondaryValue text.
+                    var listHlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    listHlg.spacing = 8f;
+                    listHlg.padding = new RectOffset(8, 8, 4, 4);
+                    listHlg.childAlignment = TextAnchor.MiddleLeft;
+                    listHlg.childForceExpandHeight = false;
+                    listHlg.childForceExpandWidth = false;
+                    listHlg.childControlHeight = true;
+                    listHlg.childControlWidth = true;
+
+                    var listIcon = new GameObject("Icon", typeof(RectTransform), typeof(LayoutElement));
                     listIcon.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    listIcon.AddComponent<Image>().raycastTarget = false;
-                    var listPrimary = new GameObject("PrimaryLabel", typeof(RectTransform));
+                    var listIconImg = listIcon.AddComponent<Image>();
+                    listIconImg.raycastTarget = false;
+                    var listIconLe = listIcon.GetComponent<LayoutElement>();
+                    listIconLe.preferredWidth = 24f;
+                    listIconLe.minWidth = 24f;
+                    listIconLe.preferredHeight = 24f;
+                    listIconLe.minHeight = 24f;
+                    var iconSprite = ResolveButtonIconSprite(pj?.icon);
+                    if (iconSprite != null)
+                    {
+                        listIconImg.sprite = iconSprite;
+                    }
+                    else
+                    {
+                        listIcon.SetActive(false);
+                        UnityEngine.Debug.LogWarning(
+                            $"[UiBakeHandler] list-row missing icon for slug={pj?.icon ?? "<null>"} — caption-only fallback");
+                    }
+
+                    var listPrimary = new GameObject("PrimaryLabel", typeof(RectTransform), typeof(LayoutElement));
                     listPrimary.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var listPrimaryTmp = listPrimary.AddComponent<TextMeshProUGUI>();
                     listPrimaryTmp.text = pj?.label ?? string.Empty;
+                    listPrimaryTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    listPrimaryTmp.fontSize = 14f;
+                    listPrimaryTmp.color = theme != null ? theme.TextPrimary : Color.white;
                     listPrimaryTmp.raycastTarget = false;
-                    var listSecondary = new GameObject("SecondaryValue", typeof(RectTransform));
+                    var listPrimaryLe = listPrimary.GetComponent<LayoutElement>();
+                    listPrimaryLe.flexibleWidth = 1f;
+                    listPrimaryLe.preferredHeight = 32f;
+                    // Caption-only fallback bumps preferred width so secondary value still right-aligns.
+                    if (iconSprite == null) listPrimaryLe.preferredWidth = 160f;
+
+                    var listSecondary = new GameObject("SecondaryValue", typeof(RectTransform), typeof(LayoutElement));
                     listSecondary.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var listSecondaryTmp = listSecondary.AddComponent<TextMeshProUGUI>();
                     listSecondaryTmp.text = string.Empty;
+                    listSecondaryTmp.alignment = TextAlignmentOptions.MidlineRight;
+                    listSecondaryTmp.fontSize = 14f;
+                    listSecondaryTmp.color = theme != null ? theme.TextSecondary : new Color(0.8f, 0.8f, 0.8f, 1f);
                     listSecondaryTmp.raycastTarget = false;
+                    var listSecondaryLe = listSecondary.GetComponent<LayoutElement>();
+                    listSecondaryLe.preferredWidth = 64f;
+                    listSecondaryLe.minWidth = 64f;
+                    listSecondaryLe.preferredHeight = 32f;
+
+                    // Wire ServiceRowController.
+                    var rowCtrl = childGo.AddComponent<Territory.UI.Renderers.ServiceRowController>();
+                    var rowSo = new SerializedObject(rowCtrl);
+                    var bindIdProp = rowSo.FindProperty("_bindId");
+                    if (bindIdProp != null) bindIdProp.stringValue = pj?.bindId ?? string.Empty;
+                    var formatProp = rowSo.FindProperty("_format");
+                    if (formatProp != null && !string.IsNullOrEmpty(pj?.format)) formatProp.stringValue = pj.format;
+                    var secondaryProp = rowSo.FindProperty("_secondaryValueText");
+                    if (secondaryProp != null) secondaryProp.objectReferenceValue = listSecondaryTmp;
+                    var iconProp = rowSo.FindProperty("_iconImage");
+                    if (iconProp != null) iconProp.objectReferenceValue = listIconImg;
+                    rowSo.ApplyModifiedPropertiesWithoutUndo();
+
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
                     break;
                 }
