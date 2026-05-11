@@ -1,0 +1,687 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Territory.Terrain
+{
+    /// <summary>
+    /// Lake generation (depression fill + artificial fallback) extracted from WaterMap (Strategy γ Stage 3.2).
+    /// Partial class — same assembly as WaterMap.cs. Accesses internal/private members via partial.
+    /// </summary>
+    public sealed partial class WaterMap
+    {
+        // ─────────────────────────────────────────────────────────────────────────
+        // InitializeLakesFromDepressionFill
+        // ─────────────────────────────────────────────────────────────────────────
+
+        internal void InitializeLakesFromDepressionFillImpl(HeightMap heightMap, LakeFillSettings settings, int seaLevelForArtificialFallback)
+        {
+            ClearAllWater();
+            ArtificialDirtyMinX = -1;
+            ArtificialDirtyMinY = -1;
+            ArtificialDirtyMaxX = -1;
+            ArtificialDirtyMaxY = -1;
+            LastLakeGenerationArtificialBodiesPlaced = 0;
+            LastLakeGenerationRecoveryPasses = 0;
+            LastLakeGenerationMetTarget = false;
+            if (heightMap == null || settings == null) return;
+
+            int areaScaledBudget = settings.GetAreaScaledLakeBudgetDiagnostic(width, height);
+            int effectiveMaxLakeBodies = settings.GetEffectiveMaxLakeBodies(width, height);
+
+            LastLakeGenerationTargetBodies = effectiveMaxLakeBodies;
+            LastLakeGenerationScaledBudget = areaScaledBudget;
+
+            int randomExtraAttempts = settings.GetScaledRandomExtraSeedAttempts(width, height);
+
+            var rnd = new System.Random(settings.RandomSeed);
+            var seedSet = new HashSet<Vector2Int>();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (IsStrictLocalMinimum(x, y, heightMap))
+                        seedSet.Add(new Vector2Int(x, y));
+                    if (IsLocalMinimumInWindow(x, y, heightMap, settings.LocalMinWindowRadius))
+                        seedSet.Add(new Vector2Int(x, y));
+                }
+            }
+
+            for (int i = 0; i < randomExtraAttempts; i++)
+                seedSet.Add(new Vector2Int(rnd.Next(width), rnd.Next(height)));
+
+            var minima = new List<Vector2Int>(seedSet);
+            SortSeedCandidatesBySpillHeadroom(minima, heightMap, rnd);
+
+            var claimed = new bool[width, height];
+            int bodiesCreated = 0;
+            foreach (var seed in minima)
+            {
+                if (claimed[seed.x, seed.y]) continue;
+                if (bodiesCreated >= effectiveMaxLakeBodies) break;
+
+                int spill = GetPlateauSpillHeight(seed.x, seed.y, heightMap);
+                int seedH = heightMap.GetHeight(seed.x, seed.y);
+                if (spill <= seedH) continue;
+                if (rnd.NextDouble() > settings.LakeAcceptProbability) continue;
+
+                var basinCells = new List<Vector2Int>();
+                CollectBasin(seed.x, seed.y, spill, heightMap, basinCells);
+                if (basinCells.Count < settings.MinLakeCells) continue;
+                if (!LakeBoundingBoxFits(settings, basinCells)) continue;
+
+                bool overlaps = false;
+                foreach (var c in basinCells)
+                {
+                    if (claimed[c.x, c.y]) { overlaps = true; break; }
+                }
+                if (overlaps) continue;
+
+                int bodyId = nextBodyId++;
+                var body = new WaterBody(bodyId, spill, WaterBodyType.Lake);
+                bodies[bodyId] = body;
+
+                foreach (var c in basinCells)
+                {
+                    SetWaterBodyId(c.x, c.y, bodyId);
+                    body.AddCellIndex(ToFlat(c.x, c.y));
+                    claimed[c.x, c.y] = true;
+                }
+                bodiesCreated++;
+            }
+
+            if (settings.RunBoundedLocalDepressionPass)
+                TryFillBoundedLocalDepressions(heightMap, settings, rnd, claimed, ref bodiesCreated, effectiveMaxLakeBodies);
+
+            LastLakeGenerationProceduralBodiesAfterBounded = bodies.Count;
+            RunMergeAdjacentBodiesWithSameSurface();
+
+            if (bodies.Count < effectiveMaxLakeBodies)
+            {
+                const int maxRecoveryPasses = 48;
+                int totalArtificial = 0;
+                int pass = 0;
+                while (bodies.Count < effectiveMaxLakeBodies && pass < maxRecoveryPasses)
+                {
+                    int added = TryArtificialLakeFallback(heightMap, settings, seaLevelForArtificialFallback, effectiveMaxLakeBodies, claimed, rnd);
+                    totalArtificial += added;
+                    RunMergeAdjacentBodiesWithSameSurface();
+                    pass++;
+                    LastLakeGenerationRecoveryPasses = pass;
+                    if (bodies.Count >= effectiveMaxLakeBodies) break;
+                    if (added == 0) break;
+                }
+
+                if (bodies.Count < effectiveMaxLakeBodies)
+                {
+                    int cornerAdded = TryLastResortCornerArtificialLakes(heightMap, settings, seaLevelForArtificialFallback, effectiveMaxLakeBodies, claimed);
+                    totalArtificial += cornerAdded;
+                    RunMergeAdjacentBodiesWithSameSurface();
+                }
+
+                LastLakeGenerationArtificialBodiesPlaced = totalArtificial;
+            }
+
+            LastLakeGenerationFinalBodyCount = bodies.Count;
+            LastLakeGenerationMetTarget = bodies.Count >= effectiveMaxLakeBodies;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Seed + basin helpers
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private static int BorderNeighborHeight(int x, int y, HeightMap hm)
+        {
+            if (hm.IsValidPosition(x, y)) return hm.GetHeight(x, y);
+            return OutsideMapSpillHeight;
+        }
+
+        private bool IsStrictLocalMinimum(int x, int y, HeightMap hm)
+        {
+            int h0 = hm.GetHeight(x, y);
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+            for (int i = 0; i < 4; i++)
+            {
+                int nh = BorderNeighborHeight(x + dx[i], y + dy[i], hm);
+                if (nh <= h0) return false;
+            }
+            return true;
+        }
+
+        private bool IsLocalMinimumInWindow(int x, int y, HeightMap hm, int radius)
+        {
+            if (radius < 0) return false;
+            int h0 = hm.GetHeight(x, y);
+            int maxH = int.MinValue;
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    if (!IsValidPosition(nx, ny)) continue;
+                    int h = hm.GetHeight(nx, ny);
+                    if (h < h0) return false;
+                    if (h > maxH) maxH = h;
+                }
+            }
+            return maxH > h0;
+        }
+
+        private int GetPlateauSpillHeight(int x, int y, HeightMap hm)
+        {
+            int seedH = hm.GetHeight(x, y);
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+            int spill = int.MaxValue;
+            var q = new Queue<Vector2Int>();
+            var inPlateau = new bool[width, height];
+            q.Enqueue(new Vector2Int(x, y));
+            inPlateau[x, y] = true;
+            int plateauCount = 0;
+
+            while (q.Count > 0)
+            {
+                var c = q.Dequeue();
+                plateauCount++;
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = c.x + dx[i];
+                    int ny = c.y + dy[i];
+                    if (!IsValidPosition(nx, ny))
+                    {
+                        spill = Mathf.Min(spill, BorderNeighborHeight(nx, ny, hm));
+                        continue;
+                    }
+                    if (inPlateau[nx, ny]) continue;
+                    int nh = hm.GetHeight(nx, ny);
+                    if (nh == seedH) { inPlateau[nx, ny] = true; q.Enqueue(new Vector2Int(nx, ny)); }
+                    else spill = Mathf.Min(spill, nh);
+                }
+            }
+
+            if (plateauCount == width * height) return seedH;
+            return spill == int.MaxValue ? seedH : spill;
+        }
+
+        private void CollectBasin(int sx, int sy, int spillHeight, HeightMap hm, List<Vector2Int> outCells)
+        {
+            outCells.Clear();
+            if (hm.GetHeight(sx, sy) >= spillHeight) return;
+
+            var q = new Queue<Vector2Int>();
+            var visited = new bool[width, height];
+            q.Enqueue(new Vector2Int(sx, sy));
+            visited[sx, sy] = true;
+
+            while (q.Count > 0)
+            {
+                var c = q.Dequeue();
+                outCells.Add(c);
+                int[] dx = { 1, -1, 0, 0 };
+                int[] dy = { 0, 0, 1, -1 };
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = c.x + dx[i];
+                    int ny = c.y + dy[i];
+                    if (!IsValidPosition(nx, ny) || visited[nx, ny]) continue;
+                    if (hm.GetHeight(nx, ny) >= spillHeight) continue;
+                    visited[nx, ny] = true;
+                    q.Enqueue(new Vector2Int(nx, ny));
+                }
+            }
+        }
+
+        private void SortSeedCandidatesBySpillHeadroom(List<Vector2Int> cells, HeightMap heightMap, System.Random rnd)
+        {
+            int n = cells.Count;
+            if (n <= 1) return;
+
+            var tmp = new List<(Vector2Int p, int tie)>(n);
+            for (int i = 0; i < n; i++)
+                tmp.Add((cells[i], rnd.Next()));
+
+            tmp.Sort((A, B) =>
+            {
+                Vector2Int a = A.p;
+                Vector2Int b = B.p;
+                int spillA = GetPlateauSpillHeight(a.x, a.y, heightMap);
+                int spillB = GetPlateauSpillHeight(b.x, b.y, heightMap);
+                int hA = heightMap.GetHeight(a.x, a.y);
+                int hB = heightMap.GetHeight(b.x, b.y);
+                int scoreA = spillA - hA;
+                int scoreB = spillB - hB;
+                int c = scoreB.CompareTo(scoreA);
+                if (c != 0) return c;
+                c = hA.CompareTo(hB);
+                if (c != 0) return c;
+                return A.tie.CompareTo(B.tie);
+            });
+
+            cells.Clear();
+            for (int i = 0; i < n; i++)
+                cells.Add(tmp[i].p);
+        }
+
+        private void TryFillBoundedLocalDepressions(HeightMap heightMap, LakeFillSettings settings,
+            System.Random rnd, bool[,] claimed, ref int bodiesCreated, int effectiveMaxLakeBodies)
+        {
+            var extraSeeds = new List<Vector2Int>();
+            int r = settings.BoundedLocalDepressionWindowRadius;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (claimed[x, y]) continue;
+                    if (!IsLocalMinimumInWindow(x, y, heightMap, r)) continue;
+                    extraSeeds.Add(new Vector2Int(x, y));
+                }
+            }
+
+            SortSeedCandidatesBySpillHeadroom(extraSeeds, heightMap, rnd);
+
+            foreach (var seed in extraSeeds)
+            {
+                if (claimed[seed.x, seed.y]) continue;
+                if (bodiesCreated >= effectiveMaxLakeBodies) break;
+
+                int spill = GetPlateauSpillHeight(seed.x, seed.y, heightMap);
+                int seedH = heightMap.GetHeight(seed.x, seed.y);
+                if (spill <= seedH) continue;
+                if (rnd.NextDouble() > settings.LakeAcceptProbability * settings.BoundedLocalDepressionAcceptScale) continue;
+
+                var basinCells = new List<Vector2Int>();
+                CollectBasin(seed.x, seed.y, spill, heightMap, basinCells);
+                if (basinCells.Count < settings.MinLakeCells) continue;
+                if (basinCells.Count > settings.BoundedLocalDepressionMaxBasinCells) continue;
+                if (!LakeBoundingBoxFits(settings, basinCells)) continue;
+
+                bool overlaps = false;
+                foreach (var c in basinCells)
+                {
+                    if (claimed[c.x, c.y]) { overlaps = true; break; }
+                }
+                if (overlaps) continue;
+
+                int bodyId = nextBodyId++;
+                var body = new WaterBody(bodyId, spill, WaterBodyType.Lake);
+                bodies[bodyId] = body;
+
+                foreach (var c in basinCells)
+                {
+                    SetWaterBodyId(c.x, c.y, bodyId);
+                    body.AddCellIndex(ToFlat(c.x, c.y));
+                    claimed[c.x, c.y] = true;
+                }
+                bodiesCreated++;
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Bounding-box helpers
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private static bool LakeBoundingBoxFits(LakeFillSettings settings, List<Vector2Int> basinCells)
+        {
+            if (basinCells == null || basinCells.Count == 0) return false;
+            int minX = int.MaxValue, maxX = int.MinValue, minY = int.MaxValue, maxY = int.MinValue;
+            foreach (var c in basinCells)
+            {
+                if (c.x < minX) minX = c.x;
+                if (c.x > maxX) maxX = c.x;
+                if (c.y < minY) minY = c.y;
+                if (c.y > maxY) maxY = c.y;
+            }
+            int bw = maxX - minX + 1;
+            int bh = maxY - minY + 1;
+            return bw >= settings.MinLakeBoundingExtent && bw <= settings.MaxLakeBoundingExtent
+                && bh >= settings.MinLakeBoundingExtent && bh <= settings.MaxLakeBoundingExtent;
+        }
+
+        private static bool ArtificialRectangleBboxFits(LakeFillSettings settings, int rw, int rh)
+        {
+            return rw >= settings.MinLakeBoundingExtent && rw <= settings.MaxLakeBoundingExtent
+                && rh >= settings.MinLakeBoundingExtent && rh <= settings.MaxLakeBoundingExtent;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Artificial lake fallback
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private int ComputeArtificialEdgeMargin()
+        {
+            int m = Mathf.Min(width, height);
+            if (m <= 4) return 0;
+            if (m <= 9) return 1;
+            return 2;
+        }
+
+        private int TryArtificialLakeFallback(HeightMap heightMap, LakeFillSettings settings, int seaLevel,
+            int targetBodies, bool[,] claimed, System.Random rnd)
+        {
+            int edgeMargin = ComputeArtificialEdgeMargin();
+            const int maxRandomAttempts = 2500;
+            int attempts = 0;
+            int added = 0;
+
+            while (bodies.Count < targetBodies && attempts < maxRandomAttempts)
+            {
+                attempts++;
+                int rw = rnd.Next(settings.MinLakeBoundingExtent, settings.MaxLakeBoundingExtent + 1);
+                int rh = rnd.Next(settings.MinLakeBoundingExtent, settings.MaxLakeBoundingExtent + 1);
+                rw = Mathf.Clamp(rw, 1, Mathf.Max(1, width - 2 * edgeMargin));
+                rh = Mathf.Clamp(rh, 1, Mathf.Max(1, height - 2 * edgeMargin));
+                if (width - rw - 2 * edgeMargin < 1 || height - rh - 2 * edgeMargin < 1) continue;
+
+                int x0 = rnd.Next(edgeMargin, width - rw - edgeMargin + 1);
+                int y0 = rnd.Next(edgeMargin, height - rh - edgeMargin + 1);
+
+                if (TryPlaceArtificialRectangle(heightMap, settings, seaLevel, x0, y0, rw, rh, claimed, edgeMargin))
+                {
+                    added++;
+                    if (bodies.Count >= targetBodies) break;
+                }
+            }
+
+            if (bodies.Count < targetBodies)
+                added += TryDeterministicArtificialLakeFallback(heightMap, settings, seaLevel, targetBodies, claimed);
+
+            return added;
+        }
+
+        private int TryDeterministicArtificialLakeFallback(HeightMap heightMap, LakeFillSettings settings,
+            int seaLevel, int targetBodies, bool[,] claimed)
+        {
+            int edgeMargin = ComputeArtificialEdgeMargin();
+            int added = 0;
+            int maxExtent = Mathf.Min(settings.MaxLakeBoundingExtent, 12, width - 2 * edgeMargin, height - 2 * edgeMargin);
+            maxExtent = Mathf.Max(1, maxExtent);
+            int minExtent = Mathf.Min(settings.MinLakeBoundingExtent, maxExtent);
+
+            for (int extent = minExtent; extent <= maxExtent; extent++)
+            {
+                if (bodies.Count >= targetBodies) break;
+                for (int x0 = edgeMargin; x0 + extent <= width - edgeMargin; x0++)
+                {
+                    for (int y0 = edgeMargin; y0 + extent <= height - edgeMargin; y0++)
+                    {
+                        if (TryPlaceArtificialRectangle(heightMap, settings, seaLevel, x0, y0, extent, extent, claimed, edgeMargin))
+                        {
+                            added++;
+                            if (bodies.Count >= targetBodies) return added;
+                        }
+                    }
+                }
+            }
+            return added;
+        }
+
+        private int TryLastResortCornerArtificialLakes(HeightMap heightMap, LakeFillSettings settings,
+            int seaLevel, int targetBodies, bool[,] claimed)
+        {
+            int em = ComputeArtificialEdgeMargin();
+            int maxSpan = Mathf.Min(width - 2 * em, height - 2 * em);
+            if (maxSpan < 1) return 0;
+
+            int extent = Mathf.Max(settings.MinLakeBoundingExtent, Mathf.CeilToInt(Mathf.Sqrt(settings.MinLakeCells)));
+            extent = Mathf.Min(extent, maxSpan, settings.MaxLakeBoundingExtent);
+            if (extent < 1 || extent * extent < settings.MinLakeCells) return 0;
+
+            int added = 0;
+            int maxX0 = width - em - extent;
+            int maxY0 = height - em - extent;
+            if (maxX0 < em || maxY0 < em) return 0;
+
+            var corners = new Vector2Int[]
+            {
+                new Vector2Int(em, em),
+                new Vector2Int(maxX0, em),
+                new Vector2Int(em, maxY0),
+                new Vector2Int(maxX0, maxY0),
+            };
+
+            foreach (Vector2Int c in corners)
+            {
+                if (bodies.Count >= targetBodies) break;
+                if (TryPlaceArtificialRectangle(heightMap, settings, seaLevel, c.x, c.y, extent, extent, claimed, em))
+                    added++;
+            }
+            return added;
+        }
+
+        private bool TryPlaceArtificialRectangle(HeightMap heightMap, LakeFillSettings settings,
+            int seaLevel, int x0, int y0, int rw, int rh, bool[,] claimed, int edgeMargin)
+        {
+            if (x0 < edgeMargin || y0 < edgeMargin || x0 + rw > width - edgeMargin || y0 + rh > height - edgeMargin)
+                return false;
+            if (rw * rh < settings.MinLakeCells) return false;
+            if (!ArtificialRectangleBboxFits(settings, rw, rh)) return false;
+
+            for (int ox = 0; ox < rw; ox++)
+                for (int oy = 0; oy < rh; oy++)
+                    if (claimed[x0 + ox, y0 + oy] || IsWater(x0 + ox, y0 + oy))
+                        return false;
+
+            int maxHBefore = HeightMap.MIN_HEIGHT;
+            for (int ox = 0; ox < rw; ox++)
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int h = heightMap.GetHeight(x0 + ox, y0 + oy);
+                    if (h > maxHBefore) maxHBefore = h;
+                }
+
+            int minCardinalOutside = GetMinCardinalHeightOutsideRectangle(heightMap, x0, y0, rw, rh);
+            int bowlFloorCap;
+            if (minCardinalOutside == int.MaxValue)
+                bowlFloorCap = Mathf.Max(HeightMap.MIN_HEIGHT, maxHBefore - 1);
+            else
+                bowlFloorCap = Mathf.Max(HeightMap.MIN_HEIGHT, minCardinalOutside - 1);
+
+            for (int ox = 0; ox < rw; ox++)
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int x = x0 + ox; int y = y0 + oy;
+                    int cur = heightMap.GetHeight(x, y);
+                    heightMap.SetHeight(x, y, Mathf.Min(cur, bowlFloorCap));
+                }
+
+            int maxHPost = HeightMap.MIN_HEIGHT;
+            for (int ox = 0; ox < rw; ox++)
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int h = heightMap.GetHeight(x0 + ox, y0 + oy);
+                    if (h > maxHPost) maxHPost = h;
+                }
+
+            if (!ResolveSurfaceForNewLake(x0, y0, rw, rh, maxHPost, seaLevel, out int surface))
+                surface = Mathf.Min(HeightMap.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxHPost + 1));
+
+            CoerceDiagonalCornerRimForArtificialLake(heightMap, x0, y0, rw, rh, surface);
+
+            int bodyId = nextBodyId++;
+            var wb = new WaterBody(bodyId, surface, WaterBodyType.Lake);
+            bodies[bodyId] = wb;
+            for (int ox = 0; ox < rw; ox++)
+            {
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int x = x0 + ox; int y = y0 + oy;
+                    SetWaterBodyId(x, y, bodyId);
+                    wb.AddCellIndex(ToFlat(x, y));
+                    claimed[x, y] = true;
+                }
+            }
+
+            ExpandArtificialDirtyRect(x0, y0, rw, rh);
+            return true;
+        }
+
+        private bool HasCardinalNeighborOutsideRectWithSameSurface(int x0, int y0, int rw, int rh, int surface)
+        {
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+            for (int ox = 0; ox < rw; ox++)
+            {
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int x = x0 + ox; int y = y0 + oy;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int nx = x + dx[i]; int ny = y + dy[i];
+                        if (nx >= x0 && nx < x0 + rw && ny >= y0 && ny < y0 + rh) continue;
+                        if (!IsValidPosition(nx, ny)) continue;
+                        int id = GetWaterBodyId(nx, ny);
+                        if (id == 0) continue;
+                        if (bodies.TryGetValue(id, out WaterBody b) && b.SurfaceHeight == surface) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool ResolveSurfaceForNewLake(int x0, int y0, int rw, int rh, int maxTerrainH, int seaLevel, out int surfaceOut)
+        {
+            surfaceOut = Mathf.Min(HeightMap.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxTerrainH + 1));
+            for (int bump = 0; bump < 16; bump++)
+            {
+                if (surfaceOut <= seaLevel) return false;
+                if (surfaceOut > HeightMap.MAX_HEIGHT) return false;
+                if (!HasCardinalNeighborOutsideRectWithSameSurface(x0, y0, rw, rh, surfaceOut)) return true;
+                surfaceOut++;
+            }
+            return false;
+        }
+
+        private static int GetMinCardinalHeightOutsideRectangle(HeightMap heightMap, int x0, int y0, int rw, int rh)
+        {
+            int minH = int.MaxValue;
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+            for (int ox = 0; ox < rw; ox++)
+            {
+                for (int oy = 0; oy < rh; oy++)
+                {
+                    int x = x0 + ox; int y = y0 + oy;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int nx = x + dx[i]; int ny = y + dy[i];
+                        if (nx >= x0 && nx < x0 + rw && ny >= y0 && ny < y0 + rh) continue;
+                        if (!heightMap.IsValidPosition(nx, ny)) continue;
+                        int nh = heightMap.GetHeight(nx, ny);
+                        if (nh < minH) minH = nh;
+                    }
+                }
+            }
+            return minH;
+        }
+
+        private static void CoerceDiagonalCornerRimForArtificialLake(HeightMap heightMap, int x0, int y0, int rw, int rh, int surface)
+        {
+            if (heightMap == null || rw <= 0 || rh <= 0) return;
+
+            int[] cx = { x0 - 1, x0 + rw, x0 - 1, x0 + rw };
+            int[] cy = { y0 - 1, y0 - 1, y0 + rh, y0 + rh };
+            int[] ddx = { 1, -1, 1, -1 };
+            int[] ddy = { 1, 1, -1, -1 };
+
+            for (int i = 0; i < 4; i++)
+            {
+                int x = cx[i]; int y = cy[i];
+                if (!heightMap.IsValidPosition(x, y)) continue;
+
+                bool touchesLakeDiagonally = false;
+                for (int k = 0; k < 4; k++)
+                {
+                    int lx = x + ddx[k]; int ly = y + ddy[k];
+                    if (lx >= x0 && lx < x0 + rw && ly >= y0 && ly < y0 + rh) { touchesLakeDiagonally = true; break; }
+                }
+                if (!touchesLakeDiagonally) continue;
+
+                int[] cdx = { 1, -1, 0, 0 };
+                int[] cdy = { 0, 0, 1, -1 };
+                bool touchesLakeCardinally = false;
+                for (int k = 0; k < 4; k++)
+                {
+                    int lx = x + cdx[k]; int ly = y + cdy[k];
+                    if (lx >= x0 && lx < x0 + rw && ly >= y0 && ly < y0 + rh) { touchesLakeCardinally = true; break; }
+                }
+                if (touchesLakeCardinally) continue;
+
+                int cur = heightMap.GetHeight(x, y);
+                if (cur > surface)
+                    heightMap.SetHeight(x, y, Mathf.Clamp(surface, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT));
+            }
+        }
+
+        private void ExpandArtificialDirtyRect(int x0, int y0, int rw, int rh)
+        {
+            const int dirtyPad = 2;
+            int dminX = Mathf.Max(0, x0 - dirtyPad);
+            int dminY = Mathf.Max(0, y0 - dirtyPad);
+            int dmaxX = Mathf.Min(width - 1, x0 + rw - 1 + dirtyPad);
+            int dmaxY = Mathf.Min(height - 1, y0 + rh - 1 + dirtyPad);
+
+            if (ArtificialDirtyMinX < 0)
+            {
+                ArtificialDirtyMinX = dminX; ArtificialDirtyMinY = dminY;
+                ArtificialDirtyMaxX = dmaxX; ArtificialDirtyMaxY = dmaxY;
+            }
+            else
+            {
+                ArtificialDirtyMinX = Mathf.Min(ArtificialDirtyMinX, dminX);
+                ArtificialDirtyMinY = Mathf.Min(ArtificialDirtyMinY, dminY);
+                ArtificialDirtyMaxX = Mathf.Max(ArtificialDirtyMaxX, dmaxX);
+                ArtificialDirtyMaxY = Mathf.Max(ArtificialDirtyMaxY, dmaxY);
+            }
+        }
+    }
+
+    /// <summary>Params for procedural lake placement (depression fill).</summary>
+    [Serializable]
+    public sealed class LakeFillSettings
+    {
+        public float LakeAcceptProbability = 1f;
+        public int MinLakeCells = 6;
+        public int MaxLakeBodies = 48;
+        public int ProceduralLakeBudgetHardCap = 4;
+        public int LakeFeasibilityExtraBowls = 2;
+        public int RandomSeed = 54321;
+        public bool UseScaledProceduralLakeBudget = false;
+        public int ReferenceMapSide = 128;
+        public int ProceduralLakeBudgetAtReference = 10;
+        public int RandomExtraSeedAttempts = 640;
+        public int LocalMinWindowRadius = 2;
+        public int MinLakeBoundingExtent = 2;
+        public int MaxLakeBoundingExtent = 10;
+        public bool RunBoundedLocalDepressionPass = true;
+        public int BoundedLocalDepressionWindowRadius = 3;
+        public int BoundedLocalDepressionMaxBasinCells = 100;
+        public float BoundedLocalDepressionAcceptScale = 0.85f;
+
+        public int GetAreaScaledLakeBudgetDiagnostic(int mapWidth, int mapHeight)
+        {
+            int refArea = UnityEngine.Mathf.Max(1, ReferenceMapSide * ReferenceMapSide);
+            int area = UnityEngine.Mathf.Max(1, mapWidth * mapHeight);
+            int scaled = UnityEngine.Mathf.RoundToInt(ProceduralLakeBudgetAtReference * (area / (float)refArea));
+            scaled = UnityEngine.Mathf.Max(1, scaled);
+            return UnityEngine.Mathf.Min(MaxLakeBodies, scaled);
+        }
+
+        public int GetEffectiveMaxLakeBodies(int mapWidth, int mapHeight)
+        {
+            if (!UseScaledProceduralLakeBudget)
+                return UnityEngine.Mathf.Clamp(ProceduralLakeBudgetHardCap, 1, MaxLakeBodies);
+            int scaled = GetAreaScaledLakeBudgetDiagnostic(mapWidth, mapHeight);
+            return UnityEngine.Mathf.Min(ProceduralLakeBudgetHardCap, scaled);
+        }
+
+        public int GetScaledRandomExtraSeedAttempts(int mapWidth, int mapHeight)
+        {
+            int refArea = UnityEngine.Mathf.Max(1, ReferenceMapSide * ReferenceMapSide);
+            int area = mapWidth * mapHeight;
+            int scaled = UnityEngine.Mathf.RoundToInt(RandomExtraSeedAttempts * (area / (float)refArea));
+            return UnityEngine.Mathf.Max(RandomExtraSeedAttempts, scaled);
+        }
+    }
+}
