@@ -99,6 +99,40 @@ steps:
       refresh_job_id: ${maybe_refresh_asset_db.bridge_job_id}
       timeout_seconds: 180
 
+  - id: visual_diff_gate
+    description: >-
+      Phase B.7c — visual diff gate. Runs VisualDiff_* PlayMode tests via
+      testmode-batch. Hard-fails (non-zero) when SSIM < 0.95 on any panel
+      whose baseline exists. Skipped when no Assets/Resources/UI/Generated/**
+      touched in stage diff.
+    bash: tools/scripts/recipe-engine/ship-cycle/run-visual-diff.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      touched_assets: ${maybe_refresh_asset_db.touched_assets}
+
+  - id: functional_smoke_gate
+    description: >-
+      Phase B.7d — functional smoke gate. Runs FunctionalSmoke_* PlayMode tests.
+      Hard-fails when any HUD button has no handler (dead-button) or dispatches
+      to wrong target panel. Skipped when no UI assets touched.
+    bash: tools/scripts/recipe-engine/ship-cycle/run-functional-smoke.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      touched_assets: ${maybe_refresh_asset_db.touched_assets}
+
+  - id: legacy_drift_sweep_gate
+    description: >-
+      Phase B.7e — legacy-drift sweep gate. Runs LegacyDrift_* PlayMode tests.
+      Hard-fails when any catalog_legacy_gos-equivalent GO is still active in
+      scene after its retire_after_stage has closed. Skipped when no UI touched.
+    bash: tools/scripts/recipe-engine/ship-cycle/run-legacy-drift-sweep.sh
+    args:
+      slug: ${inputs.slug}
+      stage_id: ${inputs.stage_id}
+      touched_assets: ${maybe_refresh_asset_db.touched_assets}
+
   - id: stage_commit
     description: >-
       Phase B.8 — single stage commit (chain-scope delta). Captures sha for
