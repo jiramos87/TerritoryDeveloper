@@ -4,349 +4,85 @@ using UnityEngine.EventSystems;
 using Territory.Core;
 using Territory.Zones;
 using Territory.Buildings;
+using Domains.Registry;
+using Domains.Cursor;
+using Domains.Cursor.Services;
 
 namespace Territory.UI
 {
-/// <summary>
-/// Visual cursor + placement preview. Shows ghost prefabs for buildings, roads, zones as mouse
-/// moves over grid. Cursor texture swaps per tool mode (bulldozer, details, placement).
-/// Coords with <see cref="GridManager"/> for grid pos + placement validation.
-/// </summary>
-public class CursorManager : MonoBehaviour
+/// <summary>THIN hub — delegates every public concern to CursorService POCO. Path/class/namespace/[SerializeField] unchanged.</summary>
+public class CursorManager : MonoBehaviour, ICursor, ICursorHub
 {
+    // ── [SerializeField] set UNCHANGED (locked) ──────────────────────────────────
     public Texture2D cursorTexture;
     public Texture2D bulldozerTexture;
     public Texture2D detailsTexture;
     public Vector2 hotSpot;
-    private GameObject previewInstance;
     public GridManager gridManager;
     [SerializeField] private PlacementValidator placementValidator;
-    public event Action<PlacementResult> PlacementResultChanged;
-    private int _lastCellX = int.MinValue;
-    private int _lastCellY = int.MinValue;
-    private int _currentAssetId;
-    private int _currentRotation;
-    private Zone.ZoneType _currentZoneType = Zone.ZoneType.None;
-    private GameObject currentRoadGhostPrefab;
-    private Texture2D activeCursorTexture;
-    private Vector2 activeCursorHotSpot;
-    private bool isOverUI;
-    private Texture2D scaledBulldozerTexture;
-    private Camera cachedMainCamera;
-    private UIManager cachedUIManager;
 
-    private enum PreviewTintState { None, Valid, Invalid }
-    private PreviewTintState _lastTintState = PreviewTintState.None;
-    private Color _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
-    private static readonly Color PreviewTintGreen = new Color(0.4f, 1f, 0.4f, 0.5f);
-    private static readonly Color PreviewTintRed = new Color(1f, 0.4f, 0.4f, 0.5f);
+    // ── Events (ICursor) ──────────────────────────────────────────────────────────
+    public event Action<PlacementResult> PlacementResultChanged;
     public event Action<PlacementFailReason> PlacementReasonChanged;
+
+    // ── Registry + service ────────────────────────────────────────────────────────
+    private ServiceRegistry _registry;
+    private CursorService _service;
+    private Camera _cachedMainCamera;
+    private UIManager _cachedUIManager;
+
+    // ── ICursorHub impl ───────────────────────────────────────────────────────────
+    Texture2D ICursorHub.CursorTexture => cursorTexture;
+    Texture2D ICursorHub.BulldozerTexture => bulldozerTexture;
+    Texture2D ICursorHub.DetailsTexture => detailsTexture;
+    bool ICursorHub.IsPointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    void ICursorHub.FirePlacementResultChanged(PlacementResult r) { PlacementResultChanged?.Invoke(r); }
+    void ICursorHub.FirePlacementReasonChanged(PlacementFailReason r) { PlacementReasonChanged?.Invoke(r); }
+
+    void Awake()
+    {
+        _registry = FindObjectOfType<ServiceRegistry>();
+        _service = new CursorService(this);
+        _registry?.Register<ICursor>(this);
+    }
 
     void Start()
     {
         hotSpot = Vector2.zero;
-        activeCursorTexture = null;
-        activeCursorHotSpot = Vector2.zero;
-        isOverUI = false;
-        cachedMainCamera = Camera.main;
-        cachedUIManager = FindObjectOfType<UIManager>();
+        _cachedMainCamera = Camera.main;
+        _cachedUIManager = FindObjectOfType<UIManager>();
         if (placementValidator == null)
             placementValidator = FindObjectOfType<PlacementValidator>();
-        PlacementResultChanged += ApplyPreviewTint;
+        PlacementResultChanged += _service.ApplyPreviewTint;
         PlacementReasonChanged += OnPlacementReasonForwardToTooltip;
-        Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
+        UnityEngine.Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
+        // Wire grid dependency post-Awake (never resolve in Awake)
+        _service.WireDependencies(_registry?.Resolve<Domains.Grid.IGrid>());
     }
 
-    public void SetBullDozerCursor()
-    {
-        Texture2D targetTexture = GetScaledBulldozerTexture();
-        if (targetTexture == null)
-        {
-            return;
-        }
-
-        activeCursorTexture = targetTexture;
-        activeCursorHotSpot = new Vector2(0, targetTexture.height);
-
-        if (!IsPointerOverUI())
-        {
-            Cursor.SetCursor(activeCursorTexture, activeCursorHotSpot, CursorMode.Auto);
-        }
-    }
-
-    public void SetDefaultCursor()
-    {
-        hotSpot = Vector2.zero;
-        activeCursorTexture = null;
-        activeCursorHotSpot = Vector2.zero;
-        Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
-    }
-
-    public void SetDetailsCursor()
-    {
-        activeCursorTexture = detailsTexture;
-        activeCursorHotSpot = Vector2.zero;
-
-        if (!IsPointerOverUI())
-        {
-            Cursor.SetCursor(activeCursorTexture, activeCursorHotSpot, CursorMode.Auto);
-        }
-    }
-
-    public void ShowBuildingPreview(GameObject buildingPrefab, int buildingSize = 1)
-    {
-        try
-        {
-            currentRoadGhostPrefab = null;
-            if (previewInstance != null)
-            {
-                Destroy(previewInstance);
-            }
-
-            // Instantiate a preview of the buildingPrefab
-            previewInstance = Instantiate(buildingPrefab);
-
-            // Get the SpriteRenderer component
-            SpriteRenderer spriteRenderer = previewInstance.GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
-            {
-                spriteRenderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
-            }
-
-            if (spriteRenderer != null)
-            {
-                _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
-                spriteRenderer.color = _originalPreviewColor; // Set transparency
-                // Set a high sorting order to ensure preview appears on top
-                spriteRenderer.sortingOrder = 10000;
-                _lastTintState = PreviewTintState.None;
-            }
-            else
-            {
-                Debug.LogError("No SpriteRenderer found on building prefab or its children!");
-            }
-
-            Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
-            foreach (var col in colliders)
-            {
-                Destroy(col);
-            }
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"Error in ShowBuildingPreview: {ex.Message}\n{ex.StackTrace}");
-        }
-    }
+    // ── Public delegates (ICursor) ────────────────────────────────────────────────
+    public void SetBullDozerCursor() => _service.SetBullDozerCursor();
+    public void SetDefaultCursor() => _service.SetDefaultCursor();
+    public void SetDetailsCursor() => _service.SetDetailsCursor();
+    public void ShowBuildingPreview(GameObject buildingPrefab, int buildingSize = 1) => _service.ShowBuildingPreview(buildingPrefab, buildingSize);
+    public void RemovePreview() => _service.RemovePreview();
 
     void Update()
     {
-        if (previewInstance != null)
-        {
-            if (cachedMainCamera == null) cachedMainCamera = Camera.main;
-            Vector2 mousePosition2 = GridManager.ScreenPointToWorldOnGridPlane(cachedMainCamera, Input.mousePosition);
-
-            CityCell mouseCell = gridManager.GetMouseGridCell(mousePosition2);
-            if (mouseCell == null)
-            {
-                previewInstance.SetActive(false);
-                _lastCellX = int.MinValue;
-                _lastCellY = int.MinValue;
-                UpdateCursorForUIHover();
-                return;
-            }
-            Vector2 gridPosition = new Vector2(mouseCell.x, mouseCell.y);
-
-            previewInstance.SetActive(true);
-
-            if (cachedUIManager != null && cachedUIManager.GetSelectedZoneType() == Zone.ZoneType.Road && gridManager.roadManager != null)
-            {
-                gridManager.roadManager.GetRoadGhostPreviewForCell(gridPosition, out GameObject roadPrefab, out Vector2 worldPos, out int sortingOrder);
-                if (roadPrefab != currentRoadGhostPrefab)
-                {
-                    currentRoadGhostPrefab = roadPrefab;
-                    Destroy(previewInstance);
-                    previewInstance = Instantiate(roadPrefab);
-                    SpriteRenderer sr = previewInstance.GetComponent<SpriteRenderer>();
-                    if (sr == null) sr = previewInstance.GetComponentInChildren<SpriteRenderer>();
-                    if (sr != null)
-                    {
-                        _originalPreviewColor = new Color(1f, 1f, 1f, 0.5f);
-                        sr.color = _originalPreviewColor;
-                    }
-                    _lastTintState = PreviewTintState.None;
-                    foreach (var col in previewInstance.GetComponentsInChildren<Collider2D>())
-                        Destroy(col);
-                }
-                previewInstance.transform.position = new Vector3(worldPos.x, worldPos.y, 0f);
-                SpriteRenderer[] renderers = previewInstance.GetComponentsInChildren<SpriteRenderer>();
-                foreach (SpriteRenderer sr in renderers)
-                    if (sr != null) sr.sortingOrder = sortingOrder;
-            }
-            else
-            {
-                currentRoadGhostPrefab = null;
-                int buildingSize = 1;
-                if (cachedUIManager != null && cachedUIManager.GetSelectedBuilding() != null)
-                    buildingSize = cachedUIManager.GetSelectedBuilding().BuildingSize;
-                CityCell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
-                if (cell == null)
-                {
-                    previewInstance.SetActive(false);
-                    _lastCellX = int.MinValue;
-                    _lastCellY = int.MinValue;
-                }
-                else
-                {
-                    Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
-                    IBuilding selectedBuilding = cachedUIManager?.GetSelectedBuilding();
-                    if (selectedBuilding is WaterPlant)
-                        newWorldPos.y += gridManager.tileHeight / 4f;
-                    previewInstance.transform.position = newWorldPos;
-
-                    if (placementValidator != null && (cell.x != _lastCellX || cell.y != _lastCellY))
-                    {
-                        _lastCellX = cell.x;
-                        _lastCellY = cell.y;
-                        PlacementResult result = placementValidator.CanPlace(
-                            _currentAssetId,
-                            cell.x,
-                            cell.y,
-                            _currentRotation,
-                            _currentZoneType);
-                        PlacementResultChanged?.Invoke(result);
-                    }
-                }
-            }
-        }
-
-        UpdateCursorForUIHover();
+        if (_cachedMainCamera == null) _cachedMainCamera = Camera.main;
+        _service.UpdatePreview(_cachedMainCamera, gridManager, _cachedUIManager, placementValidator);
     }
 
-    private void UpdateCursorForUIHover()
+    private void OnPlacementReasonForwardToTooltip(PlacementFailReason reason)
     {
-        bool overUI = IsPointerOverUI();
-        if (overUI == isOverUI)
-        {
-            return;
-        }
-
-        isOverUI = overUI;
-        if (isOverUI)
-        {
-            Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
-            return;
-        }
-
-        if (activeCursorTexture != null)
-        {
-            Cursor.SetCursor(activeCursorTexture, activeCursorHotSpot, CursorMode.Auto);
-        }
-        else
-        {
-            Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
-        }
-    }
-
-    private bool IsPointerOverUI()
-    {
-        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-    }
-
-    private void ApplyPreviewTint(PlacementResult result)
-    {
-        if (previewInstance == null) return;
-        SpriteRenderer renderer = previewInstance.GetComponent<SpriteRenderer>();
-        if (renderer == null) renderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
-        if (renderer == null) return;
-
-        if (result.IsAllowed)
-        {
-            if (_lastTintState != PreviewTintState.Valid)
-            {
-                renderer.color = PreviewTintGreen;
-                _lastTintState = PreviewTintState.Valid;
-            }
-        }
-        else
-        {
-            if (_lastTintState != PreviewTintState.Invalid)
-            {
-                renderer.color = PreviewTintRed;
-                _lastTintState = PreviewTintState.Invalid;
-            }
-        }
-
-        PlacementReasonChanged?.Invoke(result.Reason);
-    }
-
-    private Texture2D GetScaledBulldozerTexture()
-    {
-        if (bulldozerTexture == null)
-        {
-            return null;
-        }
-
-        int targetWidth = bulldozerTexture.width / 2;
-        int targetHeight = bulldozerTexture.height / 2;
-        if (targetWidth <= 0 || targetHeight <= 0)
-        {
-            return bulldozerTexture;
-        }
-
-        if (scaledBulldozerTexture != null
-            && scaledBulldozerTexture.width == targetWidth
-            && scaledBulldozerTexture.height == targetHeight)
-        {
-            return scaledBulldozerTexture;
-        }
-
-        if (scaledBulldozerTexture != null)
-        {
-            Destroy(scaledBulldozerTexture);
-        }
-
-        scaledBulldozerTexture = ScaleTexture(bulldozerTexture, targetWidth, targetHeight);
-        return scaledBulldozerTexture;
-    }
-
-    private Texture2D ScaleTexture(Texture2D source, int newWidth, int newHeight)
-    {
-        RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight);
-        Graphics.Blit(source, rt);
-
-        RenderTexture previous = RenderTexture.active;
-        RenderTexture.active = rt;
-
-        Texture2D result = new Texture2D(newWidth, newHeight);
-        result.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0, 0);
-        result.Apply();
-
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(rt);
-        return result;
-    }
-    public void RemovePreview()
-    {
-        currentRoadGhostPrefab = null;
-        if (previewInstance != null)
-        {
-            Destroy(previewInstance);
-            previewInstance = null;
-        }
-        _lastCellX = int.MinValue;
-        _lastCellY = int.MinValue;
+        if (_cachedUIManager == null) return;
+        _cachedUIManager.ShowPlacementReasonTooltip(reason);
     }
 
     private void OnDestroy()
     {
         PlacementResultChanged = null;
         PlacementReasonChanged = null;
-    }
-
-    private void OnPlacementReasonForwardToTooltip(PlacementFailReason reason)
-    {
-        if (cachedUIManager == null) return;
-        cachedUIManager.ShowPlacementReasonTooltip(reason);
     }
 }
 }
