@@ -104,29 +104,9 @@ namespace Territory.UI.Modals
             var rangeSub = _bindRegistry.Subscribe<string>("stats.range", range => OnRangeChanged(range));
             _subscriptions.Add(rangeSub);
 
-            // Chart series binds
-            foreach (var bindId in ChartBindIds)
-            {
-                var id = bindId;
-                var sub = _bindRegistry.Subscribe<float[]>(id, _ => { });
-                _subscriptions.Add(sub);
-            }
-
-            // Service-row binds
-            foreach (var bindId in ServiceBindIds)
-            {
-                var id = bindId;
-                var sub = _bindRegistry.Subscribe<float>(id, _ => { });
-                _subscriptions.Add(sub);
-            }
-
-            // Stacked-bar binds
-            foreach (var bindId in BarBindIds)
-            {
-                var id = bindId;
-                var sub = _bindRegistry.Subscribe<float[]>(id, _ => { });
-                _subscriptions.Add(sub);
-            }
+            // Chart / service / bar binds are owned by bake-time renderers
+            // (ChartRenderer, ServiceRowController, FieldListRenderer) — adapter
+            // only publishes; renderers subscribe.
         }
 
         private void OnTabChanged(string tab)
@@ -211,7 +191,7 @@ namespace Territory.UI.Modals
                     if (_bindRegistry.HasSubscribers(id)) boundCount++;
 
                 if (boundCount == 0)
-                    Debug.LogWarning("[StatsPanelAdapter] render-check: no bind subscribers found — adapter may not be wired.");
+                    Debug.LogError("[StatsPanelAdapter] render-check: no bind subscribers found — adapter may not be wired.");
             }
         }
     }

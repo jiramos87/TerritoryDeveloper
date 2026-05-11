@@ -121,12 +121,8 @@ namespace Territory.UI.Modals
                 _subscriptions.Add(sub);
             }
 
-            // Funding / expense-row binds (read-only display).
-            foreach (var bindId in FundingBindIds)
-            {
-                var sub = _bindRegistry.Subscribe<float>(bindId, _ => { });
-                _subscriptions.Add(sub);
-            }
+            // Funding / expense-row binds are owned by bake-time renderers
+            // (ServiceRowController) — adapter only publishes; renderers subscribe.
 
             // Forecast + readout binds.
             foreach (var bindId in ForecastBindIds)
@@ -305,7 +301,7 @@ namespace Territory.UI.Modals
                     if (_bindRegistry.HasSubscribers(id)) boundCount++;
 
                 if (boundCount == 0)
-                    Debug.LogWarning("[BudgetPanelAdapter] render-check: no bind subscribers found — adapter may not be wired.");
+                    Debug.LogError("[BudgetPanelAdapter] render-check: no bind subscribers found — adapter may not be wired.");
             }
         }
     }
