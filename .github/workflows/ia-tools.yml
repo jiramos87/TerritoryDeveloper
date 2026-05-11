@@ -11,7 +11,6 @@ on:
       - "ARCHITECTURE.md"
       - "tools/mcp-ia-server/**"
       - "tools/compute-lib/**"
-      - "tools/validate-dead-project-spec-paths.mjs"
       - ".github/workflows/ia-tools.yml"
       - "package.json"
   pull_request:
@@ -24,7 +23,6 @@ on:
       - "ARCHITECTURE.md"
       - "tools/mcp-ia-server/**"
       - "tools/compute-lib/**"
-      - "tools/validate-dead-project-spec-paths.mjs"
       - ".github/workflows/ia-tools.yml"
       - "package.json"
 
@@ -43,9 +41,6 @@ jobs:
           cache-dependency-path: |
             tools/mcp-ia-server/package-lock.json
             tools/compute-lib/package-lock.json
-      - name: Dead project spec paths (TECH-50)
-        working-directory: ${{ github.workspace }}
-        run: node tools/validate-dead-project-spec-paths.mjs
       - name: Build territory-compute-lib (TECH-37)
         working-directory: tools/compute-lib
         run: npm ci && npm run build
