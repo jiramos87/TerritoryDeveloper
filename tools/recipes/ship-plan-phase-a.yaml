@@ -54,10 +54,8 @@ steps:
 
   - id: task_bundle_batch
     description: >-
-      Phase A.4 — prime task bundle cache (one MCP call for all tasks).
-      New-plan path: parse_handoff.task_ids is empty (no DB rows yet);
-      MCP returns empty per schema ("Empty array → empty result"). Skip
-      becomes implicit, no recipe crash.
+      Phase A.4 — prime task bundle cache. New-plan path: task_ids empty
+      → MCP returns empty per schema. Skip implicit, no recipe crash.
     mcp: task_bundle_batch
     args:
       slug: ${inputs.slug}
@@ -67,9 +65,10 @@ steps:
     description: >-
       Phase A.5 — batch anchor expansion. Replaces ship-plan Phase 5.1
       sequential N×spec_section with one spec_sections call.
+    when: ${parse_handoff.spec_section_requests}
     mcp: spec_sections
     args:
-      anchors: ${parse_handoff.anchors}
+      sections: ${parse_handoff.spec_section_requests}
 
   - id: drift_lint_pre_bundle
     description: >-

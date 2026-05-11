@@ -45,7 +45,18 @@ const src = await readFile(abs, "utf8");
 const fm = extractFrontmatter(src);
 const data = yaml.load(fm) ?? {};
 
-const plan = data.plan ?? {};
+// Plan block — handoff may declare `plan:` explicitly OR put fields top-level
+// (slug, target_version, parent_plan_id, parent_rationale). Synthesize when
+// absent so master_plan_bundle_apply receives a minimum-valid plan row.
+const plan = data.plan && typeof data.plan === "object"
+  ? data.plan
+  : {
+      slug: data.slug ?? args.slug,
+      version: data.target_version ?? 1,
+      parent_plan_slug: data.parent_plan_slug ?? data.parent_plan_id ?? null,
+      description: data.parent_rationale ?? data.description ?? "",
+      title: data.title ?? "",
+    };
 const stages = Array.isArray(data.stages) ? data.stages : [];
 const topLevelTasks = Array.isArray(data.tasks) ? data.tasks : [];
 
@@ -98,6 +109,24 @@ for (const t of tasks) {
   });
 }
 
+// Split anchors: spec-doc refs ({spec}::{section}) go to spec_sections batch;
+// test-file refs (tests/... or *.cs::Method) stay in anchors for §Red-Stage
+// Proof carry-through only (no MCP slice).
+const specSectionRequests = [];
+for (const anchor of anchorsSet) {
+  const m = anchor.match(/^([^:]+)::(.+)$/);
+  if (!m) continue;
+  const lhs = m[1];
+  const rhs = m[2];
+  // Heuristic: spec ref when lhs has no path separator AND no file extension,
+  // OR lhs starts with ia/specs/. Test/code refs always rejected (path/dot).
+  const looksLikeSpecKey = !lhs.includes("/") && !lhs.includes(".");
+  const looksLikeSpecPath = lhs.startsWith("ia/specs/");
+  if (looksLikeSpecKey || looksLikeSpecPath) {
+    specSectionRequests.push({ spec: lhs, section: rhs });
+  }
+}
+
 const out = {
   plan_version: plan.version ?? data.target_version ?? 1,
   plan,
@@ -105,6 +134,7 @@ const out = {
   tasks,
   task_ids: taskIds,
   anchors: [...anchorsSet],
+  spec_section_requests: specSectionRequests,
   glossary_terms: [...glossarySet],
   lint_tasks: lintTasks,
 };

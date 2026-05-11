@@ -34,7 +34,8 @@ export async function runBashStep(step: BashStep, ctx: RunContext): Promise<Step
     child.on("close", (code) => {
       if (code === 0) {
         const kv = parseStdoutKv(stdout);
-        resolve({ ok: true, value: { stdout, stderr, code, ...kv } });
+        const json = parseStdoutJson(stdout);
+        resolve({ ok: true, value: { stdout, stderr, code, ...kv, ...json } });
       } else {
         resolve({
           ok: false,
@@ -71,6 +72,29 @@ function parseStdoutKv(stdout: string): Record<string, string> {
     }
   }
   return out;
+}
+
+/**
+ * If stdout is a single JSON object, spread its keys into the step output so
+ * `${step.key}` references resolve. Reserved keys (stdout/stderr/code) are
+ * skipped. Non-object or invalid JSON → return empty (KV fallback still used).
+ */
+function parseStdoutJson(stdout: string): Record<string, unknown> {
+  const trimmed = stdout.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return {};
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const out: Record<string, unknown> = {};
+    const reserved = new Set(["stdout", "stderr", "code"]);
+    for (const [k, v] of Object.entries(parsed)) {
+      if (reserved.has(k)) continue;
+      out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
 }
 
 function flattenArgs(obj: Record<string, unknown>): string[] {
