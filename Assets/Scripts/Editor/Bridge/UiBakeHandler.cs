@@ -1729,6 +1729,25 @@ namespace Territory.Editor.Bridge
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+
+                // Layer 2 .meta-file write proof (TECH-28364): assert .meta exists with
+                // stable GUID after SaveAsPrefabAsset so phantom-GUID defect (F4) is caught
+                // before the bake result is returned to the caller.
+                try
+                {
+                    string expectedGuid = Territory.Editor.UiBake.BakeMetaProof.ComputeStableGuid(item.slug);
+                    Territory.Editor.UiBake.BakeMetaProof.AssertMetaExists(assetPath, expectedGuid);
+                }
+                catch (Territory.Editor.UiBake.BakeException metaEx)
+                {
+                    return new BakeError
+                    {
+                        error   = "meta_missing_or_unstable",
+                        details = metaEx.Message,
+                        path    = assetPath,
+                    };
+                }
+
                 return null;
             }
             catch (Exception ex)
@@ -1824,6 +1843,9 @@ namespace Territory.Editor.Bridge
 
                 string innerKind = NormalizeChildKind(child.kind, pj.kind);
                 BakeChildByKind(childGo, innerKind, pj, theme, prefW, prefH);
+                // Layer 2 non-empty assert (TECH-28361): throw BakeException when renderer
+                // produced an empty stub (no child GameObjects + no meaningful component).
+                Territory.Editor.UiBake.BakeEmptyChildGuard.AssertNotEmpty(childGo, innerKind, item.slug);
                 PropagateThemeRefRecursive(childGo, theme);
 
                 // visible_bind → toggles GameObject.SetActive on bool bind id changes. Defaults

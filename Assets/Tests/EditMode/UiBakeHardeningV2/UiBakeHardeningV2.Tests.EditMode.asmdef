@@ -1,0 +1,21 @@
+{
+    "name": "UiBakeHardeningV2.Tests.EditMode",
+    "rootNamespace": "Territory.Tests.EditMode.UiBakeHardeningV2",
+    "references": [
+        "TerritoryDeveloper.Game",
+        "TerritoryDeveloper.Editor.Bake",
+        "UiBake.KindRenderers.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
