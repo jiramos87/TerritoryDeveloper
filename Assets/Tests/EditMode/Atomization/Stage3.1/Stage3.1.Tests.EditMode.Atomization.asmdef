@@ -1,0 +1,19 @@
+{
+    "name": "Stage3.1.Tests.EditMode.Atomization",
+    "rootNamespace": "Territory.Tests.EditMode.Atomization.Stage3_1",
+    "references": [
+        "Terrain"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
