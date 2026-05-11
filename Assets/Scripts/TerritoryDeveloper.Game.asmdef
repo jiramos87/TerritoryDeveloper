@@ -9,6 +9,7 @@
         "Roads",
         "Terrain",
         "UI.Runtime",
+        "UiBake.KindRenderers.Editor",
         "Water",
         "Zones"
     ],

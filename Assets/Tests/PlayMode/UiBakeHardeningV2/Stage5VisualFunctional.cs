@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Territory.Editor.UiBake;
+using Territory.UI.Bake;
 using Territory.UI.Registry;
 
 namespace Territory.Tests.PlayMode.UiBakeHardeningV2

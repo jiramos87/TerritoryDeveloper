@@ -348,11 +348,11 @@ const unityBridgeCommandInputShape = {
   panel_slug: z
     .string()
     .optional()
-    .describe("read_panel_state: panel slug (root GO name); returns mounted/anchor_path/child_count/bind_count/action_count/controller_alive from active scene."),
+    .describe("read_panel_state: panel slug (root GO name); returns mount/bind/action counts + controller_alive."),
   action_id: z
     .string()
     .optional()
-    .describe("dispatch_action / get_action_log: action_id to dispatch synthetically (dispatch_action) or filter log entries (get_action_log context only)."),
+    .describe("dispatch_action / get_action_log: action_id to fire synthetically or filter log entries by."),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */

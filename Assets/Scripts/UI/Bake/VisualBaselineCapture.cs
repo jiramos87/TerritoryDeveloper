@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace Territory.Editor.UiBake
+namespace Territory.UI.Bake
 {
     /// <summary>
     /// Layer 5 visual diff harness (TECH-28374).

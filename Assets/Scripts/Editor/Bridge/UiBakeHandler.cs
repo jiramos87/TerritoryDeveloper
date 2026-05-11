@@ -853,7 +853,7 @@ namespace Territory.Editor.Bridge
 
         internal static void AddBakeWarning(string error, string details, string path)
         {
-            Debug.LogWarning($"[UiBakeHandler] {error}: {details} @ {path}");
+            UnityEngine.Debug.LogWarning($"[UiBakeHandler] {error}: {details} @ {path}");
             if (_currentBakeWarnings != null)
             {
                 _currentBakeWarnings.Add(new BakeError { error = error, details = details, path = path });

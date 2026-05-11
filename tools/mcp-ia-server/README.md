@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (159)
+## Tools (161)
 
 | Tool | Description |
 |------|-------------|
@@ -239,6 +239,8 @@ All 16 write tools transactional (`BEGIN` / `COMMIT` / `ROLLBACK` via `withTx`).
 | **`ui_def_drift_scan`** | Scan `panel_detail` DB rows vs `Assets/UI/Snapshots/panels.json` for rect_json drift. Returns `{drifts:[{slug,field,db_value,snapshot_value}], total_panels, total_drifts}`. Optional `slug_filter` to restrict scan. Requires DATABASE_URL and panels.json snapshot. |
 | **`ui_calibration_corpus_query`** | Read-side filter on `ia/state/ui-calibration-corpus.jsonl`. Returns matching corpus rows filtered by `panel_slug`, `agent_or_human`, or `decision_id`. All filters optional. Append-only source — no mutation. |
 | **`ui_calibration_verdict_record`** | Append a verdict row to `ia/state/ui-calibration-verdicts.jsonl`. Idempotent on `(panel_slug, rebake_n)` — second call with same pair is a no-op and returns `{skipped:true}`. JSONL append-only; no in-place edit. |
+| **`catalog_panel_publish`** | Publish a catalog panel (`ui-bake-pipeline-hardening-v2` Stage 1 gate). Validates anchor row in `catalog_panel_anchors` + scene-target row in `catalog_panel_scene_targets`; refuses with `missing_anchor` / `missing_scene_target` when either gate fails. Returns `{slug, prev_version_id, new_version_id}` on pass. |
+| **`ui_bake_history_query`** | Read-side query on `ia_ui_bake_history`. Filters by `panel_slug`, `commit_sha`, or `bake_handler_version`; default order DESC by `baked_at`. Returns `{rows:[…], count}` for the audit dashboard at `/admin/ui-bake-history`. |
 
 All tools obey the token-economy rule: output ≤20 lines typical; must REDUCE tokens vs. the Read/Grep alternative.
 

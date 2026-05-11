@@ -85,7 +85,7 @@ namespace Territory.Editor.UiBake
             return rows;
         }
 
-        internal static string GetOutputPath() => OutputPath;
+        public static string GetOutputPath() => OutputPath;
 
         private static string SerializeToYaml(IReadOnlyList<SceneTargetRow> rows)
         {
