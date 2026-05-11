@@ -172,4 +172,24 @@ export type UnityBridgeResponsePayload = {
   };
   /** Populated for claude_design_conformance (Stage 12 Step 14.3) — IR + UiTheme conformance rows. */
   claude_design_conformance_result?: ConformanceResult;
+  /** Populated for read_panel_state (Stage 4 T4.0.1) — live panel runtime state. */
+  panel_state_result?: {
+    panel_slug: string;
+    mounted: boolean;
+    anchor_path: string;
+    child_count: number;
+    bind_count: number;
+    action_count: number;
+    controller_alive: boolean;
+  };
+  /** Populated for get_action_log (Stage 4 T4.0.3) — action-fire telemetry log tail. */
+  action_log_result?: {
+    log_path: string;
+    entries: Array<{
+      action_id: string;
+      handler_class: string;
+      ts: string;
+      marker: string;
+    }>;
+  };
 };

@@ -188,6 +188,15 @@ public static partial class AgentBridgeCommandRunner
             case "validate_panel_blueprint": // bake-pipeline-hardening Stage 1 — pre-flight panel schema validator
                 RunValidatePanelBlueprint(repoRoot, commandId, dq.request_json);
                 break;
+            case "read_panel_state": // Stage 4 T4.0.1 — live panel runtime state query
+                RunReadPanelState(repoRoot, commandId, dq.request_json);
+                break;
+            case "get_action_log": // Stage 4 T4.0.3 — action-fire telemetry log tail
+                RunGetActionLog(repoRoot, commandId, dq.request_json);
+                break;
+            case "dispatch_action": // Stage 4 T4.0.4 — synthetic click without OS event
+                RunDispatchAction(repoRoot, commandId, dq.request_json);
+                break;
             default:
                 // Try mutation kinds (Phases 1-3)
                 if (!TryDispatchMutationKind(dq.kind, repoRoot, commandId, dq.request_json))
@@ -195,7 +204,7 @@ public static partial class AgentBridgeCommandRunner
                     TryFinalizeFailed(
                         repoRoot,
                         commandId,
-                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug, catalog_preview, prefab_inspect, ui_tree_walk, claude_design_conformance, claude_design_check, validate_panel_blueprint. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
+                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug, export_cell_chunk, export_sorting_debug, catalog_preview, prefab_inspect, ui_tree_walk, claude_design_conformance, claude_design_check, validate_panel_blueprint, read_panel_state, get_action_log, dispatch_action. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
                 }
                 break;
         }
@@ -1756,6 +1765,12 @@ class AgentBridgeResponseFileDto
 
     /// <summary>Populated for <c>prefab_inspect</c> (Stage 12 Step 14.1): hierarchy + components + serialized fields.</summary>
     public AgentBridgePrefabInspectDto prefab_inspect_result;
+
+    /// <summary>Populated for <c>read_panel_state</c> (Stage 4 T4.0.1): live mounted/child/bind/action/controller counts.</summary>
+    public AgentBridgePanelStateDto panel_state_result;
+
+    /// <summary>Populated for <c>get_action_log</c> (Stage 4 T4.0.3): action-fire telemetry log tail.</summary>
+    public AgentBridgeActionLogResultDto action_log_result;
 
     /// <summary>Populated for <c>ui_tree_walk</c> (Stage 12 Step 14.2): scene Canvas walk + screen-space rects.</summary>
     public AgentBridgeUiTreeWalkDto ui_tree_walk_result;
