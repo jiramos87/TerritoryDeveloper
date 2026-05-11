@@ -11,6 +11,7 @@
     "validate:drift-lint",
     "validate:ui-drift",
     "validate:no-domain-game-cycle",
+    "validate:asmdef-graph",
     "validate:action-bind-drift",
     "validate:ui-id-consistency",
     "validate:bake-handler-kind-coverage",
@@ -119,6 +120,9 @@
     "Assets/Scripts/**/*.cs": [
       "validate:single-esc-handler",
       "validate:csharp-fast"
+    ],
+    "Assets/**/*.asmdef": [
+      "validate:asmdef-graph"
     ],
     "Assets/Tests/**/*.cs": [
       "validate:csharp-fast"
