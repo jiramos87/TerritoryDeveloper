@@ -4,6 +4,7 @@ using Territory.Economy;
 using Territory.Timing;
 using Territory.UI;
 using Territory.UI.Juice;
+using Territory.UI.Registry;
 using Territory.UI.StudioControls;
 using Territory.UI.Themed;
 
@@ -66,9 +67,8 @@ namespace Territory.UI.HUD
         [SerializeField] private IlluminatedButton _statsButton;
         [SerializeField] private IlluminatedButton _miniMapButton;
 
-        [Header("Growth budget panel (FEAT-59)")]
-        [SerializeField] private GrowthBudgetPanelController _budgetPanelController;
-        [SerializeField] private GameObject _growthBudgetPanelRoot; // optional Inspector slot; controller self-spawns when null.
+        [Header("Action dispatch (Stage 10 hotfix)")]
+        [SerializeField] private UiActionRegistry _actionRegistry;
 
         [Header("Stats + MiniMap roots — toggle on click")]
         [SerializeField] private GameObject _cityStatsRoot;
@@ -92,14 +92,8 @@ namespace Territory.UI.HUD
             if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
 
-            // FEAT-59 — growth-budget panel controller (Inspector first, FindObjectOfType fallback,
-            // lazy-spawn host so panel/archetype defaults are reachable without scene wiring).
-            if (_budgetPanelController == null) _budgetPanelController = FindObjectOfType<GrowthBudgetPanelController>(true);
-            if (_budgetPanelController == null)
-            {
-                var go = new GameObject("GrowthBudgetPanelController");
-                _budgetPanelController = go.AddComponent<GrowthBudgetPanelController>();
-            }
+            // Stage 10 hotfix — UiActionRegistry routes hud-bar AUTO/BUDGET/SAVE/STATS clicks.
+            if (_actionRegistry == null) _actionRegistry = FindObjectOfType<UiActionRegistry>();
 
             // Post-Stage-9.1 wrapper-flatten: _miniMapRoot SerializeField slot left null in baked hud-bar.
             // Resolve via MiniMapController.miniMapPanel (controller may live ON the panel itself).
@@ -325,7 +319,9 @@ namespace Territory.UI.HUD
 
         private void HandleSaveClick()
         {
-            if (_uiManager != null) _uiManager.OnSaveGameButtonClicked();
+            // Stage 10 hotfix — dispatch save-menu-open; SaveLoadScreenDataAdapter opens panel via ModalCoordinator.
+            if (_actionRegistry != null && _actionRegistry.Dispatch("action.save-menu-open", null)) return;
+            if (_uiManager != null) _uiManager.OpenPopup(PopupType.SaveLoadScreen);
         }
 
         private void HandleLoadClick()
@@ -335,25 +331,17 @@ namespace Territory.UI.HUD
 
         private void HandleAutoClick()
         {
-            // Stage 9.14 / TECH-22667 — AUTO toggle opens the GrowthBudget panel.
-            // GrowthBudgetPanelController.Toggle() self-spawns its panelRoot on first Show
-            // (EnsureRuntimePanelRootIfNeeded); when _panelRoot is scene-wired it uses
-            // the existing BudgetPanel GameObject instead.
-            if (_budgetPanelController != null)
-            {
-                _budgetPanelController.Toggle();
-                return;
-            }
-            // Fallback: flip cityStats.simulateGrowth when no panel controller reachable.
+            // Stage 10 hotfix — dispatch auto-mode-toggle; UIManager flips isAutoMode flag. No panel opens.
+            if (_actionRegistry != null && _actionRegistry.Dispatch("action.auto-mode-toggle", null)) return;
+            // Fallback: flip cityStats.simulateGrowth when registry absent.
             if (_cityStats == null) return;
             _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
         }
 
         private void HandleBudgetClick()
         {
-            // FEAT-59 — toggle growth-budget panel; controller self-spawns its panelRoot on first Show.
-            if (_budgetPanelController == null) return;
-            _budgetPanelController.Toggle();
+            // Stage 10 hotfix — dispatch budget-panel-toggle; BudgetPanelAdapter opens panel via ModalCoordinator.
+            if (_actionRegistry != null) _actionRegistry.Dispatch("action.budget-panel-toggle", null);
         }
 
         private void HandleZoomInClick()
@@ -368,6 +356,8 @@ namespace Territory.UI.HUD
 
         private void HandleStatsClick()
         {
+            // Stage 10 hotfix — dispatch stats-panel-toggle; StatsPanelAdapter opens panel via ModalCoordinator.
+            if (_actionRegistry != null && _actionRegistry.Dispatch("action.stats-panel-toggle", null)) return;
             if (_cityStatsRoot != null) _cityStatsRoot.SetActive(!_cityStatsRoot.activeSelf);
         }
 
@@ -420,11 +410,8 @@ namespace Territory.UI.HUD
                 _autoButton.IlluminationAlpha = _cityStats.simulateGrowth ? 1f : 0f;
             }
 
-            // BUDGET illumination mirrors panel visibility (FEAT-59).
-            if (_budgetButton != null && _budgetPanelController != null)
-            {
-                _budgetButton.IlluminationAlpha = _budgetPanelController.IsVisible ? 1f : 0f;
-            }
+            // BUDGET illumination — visibility tracked via ModalCoordinator (Stage 10 hotfix).
+            // Adapter no longer owns panel state; visual stays passive until panel adapter publishes a bind.
 
             // speed channel — exactly-one-illuminated mirroring TimeManager.CurrentTimeSpeedIndex
             if (_timeManager != null && _speedButtons != null && _speedButtons.Length > 0)

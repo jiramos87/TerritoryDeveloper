@@ -387,6 +387,19 @@ namespace Territory.Editor.Bridge
             public int    confirm_window_ms;
             public string slot_bind;
             public string @default;
+            // Stage 10 budget/stats panel — DB catalog emits actionId/bindId/variant/quadrant
+            // instead of action/bind/etc. Aliases below let JsonUtility populate without
+            // dropping new fields; downstream readers prefer the populated alias.
+            public string actionId;
+            public string bindId;
+            public string variant;
+            public string quadrant;
+            public int min;
+            public int max;
+            public int step;
+            public bool numeric;
+            // text-input widget (save-load-view save-name-input).
+            public string placeholder;
         }
 
         /// <summary>Typed view of panel-level params_json on PanelSnapshotFields. Open shape — fields optional.</summary>
@@ -436,6 +449,7 @@ namespace Territory.Editor.Bridge
             if (!string.IsNullOrEmpty(innerKind))
             {
                 if (innerKind == "readout") return "segmented-readout";
+                if (innerKind == "readout-block") return "segmented-readout";
                 if (innerKind == "label") return "themed-label";
                 // main-menu fullscreen-stack aliases (docs/ui-element-definitions.md lines 1239-1248):
                 //   destructive-confirm-button → confirm-button (visual = illuminated-button +
@@ -444,7 +458,16 @@ namespace Territory.Editor.Bridge
                 //     already supported by IlluminatedButton renderer).
                 if (innerKind == "destructive-confirm-button") return "confirm-button";
                 if (innerKind == "icon-button") return "illuminated-button";
+                if (innerKind == "themed-button") return "illuminated-button";
                 if (innerKind == "view-slot") return "view-slot";
+                // Stage 10 budget/stats modal aliases — map new catalog slugs to existing handlers.
+                if (innerKind == "slider-row-numeric") return "slider-row";
+                if (innerKind == "expense-row") return "list-row";
+                if (innerKind == "service-row") return "list-row";
+                if (innerKind == "chart") return "chart-stub";
+                if (innerKind == "stacked-bar-row") return "chart-stub";
+                if (innerKind == "range-tabs") return "tab-strip-stub";
+                if (innerKind == "tab-strip") return "tab-strip-stub";
                 return innerKind;
             }
             if (outerKind == "button") return "illuminated-button";
@@ -479,7 +502,7 @@ namespace Territory.Editor.Bridge
                     bool iconResolved = SpawnIlluminatedButtonRenderTargets(childGo, iconSlug, out var bodyImg, out var haloImg);
                     WireIlluminatedButtonHoverAndPress(childGo, btnRend, bodyImg, haloImg, theme);
                     btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSlug });
-                    AttachUiActionTrigger(childGo, pj?.action);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
                     // Caption fallback when icon sprite missing OR slug is the placeholder "empty" — both
                     // need the label to communicate function while real art is pending.
                     bool isPlaceholder = string.IsNullOrEmpty(iconSlug) || iconSlug == "empty";
@@ -566,7 +589,7 @@ namespace Territory.Editor.Bridge
                     bool iconResolved = SpawnIlluminatedButtonRenderTargets(childGo, iconSlug, out var bodyImg, out var haloImg);
                     WireIlluminatedButtonHoverAndPress(childGo, btnRend, bodyImg, haloImg, theme);
                     btn.ApplyDetail(new IlluminatedButtonDetail { iconSpriteSlug = iconSlug });
-                    AttachUiActionTrigger(childGo, pj?.action);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
                     bool isPlaceholder = string.IsNullOrEmpty(iconSlug) || iconSlug == "empty";
                     if ((!iconResolved || isPlaceholder) && !string.IsNullOrEmpty(label))
                     {
@@ -592,70 +615,207 @@ namespace Territory.Editor.Bridge
                 }
                 case "slider-row":
                 {
-                    // Stage 4 settings widget — track + fill + thumb + label.
-                    // C3 fix (TECH-27542): wire real Slider component instead of bare Image stub.
-                    var track = new GameObject("Track", typeof(RectTransform));
-                    track.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    track.AddComponent<Image>().raycastTarget = false;
-                    var fill = new GameObject("Fill", typeof(RectTransform));
-                    fill.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    fill.AddComponent<Image>().raycastTarget = false;
-                    var thumb = new GameObject("Thumb", typeof(RectTransform));
-                    thumb.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var thumbImg = thumb.AddComponent<Image>();
-                    var sliderLabel = new GameObject("Label", typeof(RectTransform));
+                    // 2-col HLG row: label (left, flex) + slider host (right, fixed 160).
+                    var rowHlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    rowHlg.spacing = 8f;
+                    rowHlg.padding = new RectOffset(0, 0, 0, 0);
+                    rowHlg.childAlignment = TextAnchor.MiddleLeft;
+                    rowHlg.childForceExpandHeight = false;
+                    rowHlg.childForceExpandWidth = false;
+                    rowHlg.childControlHeight = true;
+                    rowHlg.childControlWidth = true;
+                    var sliderLabel = new GameObject("Label", typeof(RectTransform), typeof(LayoutElement));
                     sliderLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var sliderTmp = sliderLabel.AddComponent<TMP_Text>();
+                    var sliderTmp = sliderLabel.AddComponent<TextMeshProUGUI>();
                     sliderTmp.text = pj?.label ?? string.Empty;
+                    sliderTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    sliderTmp.fontSize = 14f;
+                    sliderTmp.color = Color.white;
                     sliderTmp.raycastTarget = false;
-                    var slider = childGo.AddComponent<UnityEngine.UI.Slider>();
-                    slider.targetGraphic = thumbImg;
-                    slider.fillRect = fill.GetComponent<RectTransform>();
-                    slider.handleRect = thumb.GetComponent<RectTransform>();
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    var sliderLabelLe = sliderLabel.GetComponent<LayoutElement>();
+                    sliderLabelLe.flexibleWidth = 1f;
+                    sliderLabelLe.preferredHeight = 28f;
+
+                    // Slider host — real Unity Slider with Background + Fill Area/Fill + Handle Slide Area/Handle.
+                    var sliderHost = new GameObject("SliderHost", typeof(RectTransform), typeof(LayoutElement));
+                    sliderHost.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var sliderHostLe = sliderHost.GetComponent<LayoutElement>();
+                    sliderHostLe.preferredWidth = 160f;
+                    sliderHostLe.minWidth = 160f;
+                    sliderHostLe.preferredHeight = 20f;
+                    sliderHostLe.minHeight = 20f;
+
+                    var sliderBg = new GameObject("Background", typeof(RectTransform));
+                    sliderBg.transform.SetParent(sliderHost.transform, worldPositionStays: false);
+                    var sliderBgRt = sliderBg.GetComponent<RectTransform>();
+                    sliderBgRt.anchorMin = new Vector2(0f, 0.4f);
+                    sliderBgRt.anchorMax = new Vector2(1f, 0.6f);
+                    sliderBgRt.offsetMin = sliderBgRt.offsetMax = Vector2.zero;
+                    var sliderBgImg = sliderBg.AddComponent<Image>();
+                    sliderBgImg.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+                    sliderBgImg.raycastTarget = false;
+
+                    var fillArea = new GameObject("Fill Area", typeof(RectTransform));
+                    fillArea.transform.SetParent(sliderHost.transform, worldPositionStays: false);
+                    var fillAreaRt = fillArea.GetComponent<RectTransform>();
+                    fillAreaRt.anchorMin = new Vector2(0f, 0.4f);
+                    fillAreaRt.anchorMax = new Vector2(1f, 0.6f);
+                    fillAreaRt.offsetMin = new Vector2(5f, 0f);
+                    fillAreaRt.offsetMax = new Vector2(-5f, 0f);
+                    var fill = new GameObject("Fill", typeof(RectTransform));
+                    fill.transform.SetParent(fillArea.transform, worldPositionStays: false);
+                    var fillRt = fill.GetComponent<RectTransform>();
+                    fillRt.anchorMin = new Vector2(0f, 0f);
+                    fillRt.anchorMax = new Vector2(1f, 1f);
+                    fillRt.offsetMin = fillRt.offsetMax = Vector2.zero;
+                    var fillImg = fill.AddComponent<Image>();
+                    fillImg.color = new Color(0.4f, 0.6f, 0.9f, 1f);
+                    fillImg.raycastTarget = false;
+
+                    var handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
+                    handleArea.transform.SetParent(sliderHost.transform, worldPositionStays: false);
+                    var handleAreaRt = handleArea.GetComponent<RectTransform>();
+                    handleAreaRt.anchorMin = new Vector2(0f, 0f);
+                    handleAreaRt.anchorMax = new Vector2(1f, 1f);
+                    handleAreaRt.offsetMin = new Vector2(5f, 0f);
+                    handleAreaRt.offsetMax = new Vector2(-5f, 0f);
+                    var handle = new GameObject("Handle", typeof(RectTransform));
+                    handle.transform.SetParent(handleArea.transform, worldPositionStays: false);
+                    var handleRt = handle.GetComponent<RectTransform>();
+                    handleRt.anchorMin = new Vector2(0f, 0f);
+                    handleRt.anchorMax = new Vector2(0f, 1f);
+                    handleRt.sizeDelta = new Vector2(14f, 0f);
+                    var handleImg = handle.AddComponent<Image>();
+                    handleImg.color = Color.white;
+
+                    var slider = sliderHost.AddComponent<UnityEngine.UI.Slider>();
+                    slider.targetGraphic = handleImg;
+                    slider.fillRect = fillRt;
+                    slider.handleRect = handleRt;
+                    slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 case "toggle-row":
                 {
-                    // Stage 4 settings widget — checkmark + label.
-                    // C3 fix (TECH-27542): wire real Toggle component instead of bare Image stub.
-                    var check = new GameObject("Checkmark", typeof(RectTransform));
-                    check.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var checkImg = check.AddComponent<Image>();
-                    checkImg.raycastTarget = false;
-                    var toggleLabel = new GameObject("Label", typeof(RectTransform));
+                    // 2-col HLG row: label (left, flex) + toggle host (right, fixed 24x24).
+                    var rowHlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    rowHlg.spacing = 8f;
+                    rowHlg.padding = new RectOffset(0, 0, 0, 0);
+                    rowHlg.childAlignment = TextAnchor.MiddleLeft;
+                    rowHlg.childForceExpandHeight = false;
+                    rowHlg.childForceExpandWidth = false;
+                    rowHlg.childControlHeight = true;
+                    rowHlg.childControlWidth = true;
+                    var toggleLabel = new GameObject("Label", typeof(RectTransform), typeof(LayoutElement));
                     toggleLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var toggleTmp = toggleLabel.AddComponent<TMP_Text>();
+                    var toggleTmp = toggleLabel.AddComponent<TextMeshProUGUI>();
                     toggleTmp.text = pj?.label ?? string.Empty;
+                    toggleTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    toggleTmp.fontSize = 14f;
+                    toggleTmp.color = Color.white;
                     toggleTmp.raycastTarget = false;
-                    var toggle = childGo.AddComponent<UnityEngine.UI.Toggle>();
+                    var toggleLabelLe = toggleLabel.GetComponent<LayoutElement>();
+                    toggleLabelLe.flexibleWidth = 1f;
+                    toggleLabelLe.preferredHeight = 24f;
+
+                    var toggleHost = new GameObject("ToggleHost", typeof(RectTransform), typeof(LayoutElement));
+                    toggleHost.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var toggleHostLe = toggleHost.GetComponent<LayoutElement>();
+                    toggleHostLe.preferredWidth = 24f;
+                    toggleHostLe.minWidth = 24f;
+                    toggleHostLe.preferredHeight = 24f;
+                    toggleHostLe.minHeight = 24f;
+                    var toggleBgImg = toggleHost.AddComponent<Image>();
+                    toggleBgImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+                    var checkmark = new GameObject("Checkmark", typeof(RectTransform));
+                    checkmark.transform.SetParent(toggleHost.transform, worldPositionStays: false);
+                    var checkmarkRt = checkmark.GetComponent<RectTransform>();
+                    checkmarkRt.anchorMin = new Vector2(0f, 0f);
+                    checkmarkRt.anchorMax = new Vector2(1f, 1f);
+                    checkmarkRt.offsetMin = new Vector2(4f, 4f);
+                    checkmarkRt.offsetMax = new Vector2(-4f, -4f);
+                    var checkImg = checkmark.AddComponent<Image>();
+                    checkImg.color = new Color(0.4f, 0.8f, 0.4f, 1f);
+                    checkImg.raycastTarget = false;
+
+                    var toggle = toggleHost.AddComponent<UnityEngine.UI.Toggle>();
                     toggle.graphic = checkImg;
-                    toggle.targetGraphic = checkImg;
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    toggle.targetGraphic = toggleBgImg;
+
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 case "dropdown-row":
                 {
-                    // Stage 4 settings widget — label + value display + arrow.
-                    // C3 fix (TECH-27542): wire real TMP_Dropdown component instead of bare Image stub.
-                    var dropLabel = new GameObject("Label", typeof(RectTransform));
+                    // 2-col HLG row: label (left, flex) + dropdown host (right, fixed 160).
+                    var rowHlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    rowHlg.spacing = 8f;
+                    rowHlg.padding = new RectOffset(0, 0, 0, 0);
+                    rowHlg.childAlignment = TextAnchor.MiddleLeft;
+                    rowHlg.childForceExpandHeight = false;
+                    rowHlg.childForceExpandWidth = false;
+                    rowHlg.childControlHeight = true;
+                    rowHlg.childControlWidth = true;
+                    var dropLabel = new GameObject("Label", typeof(RectTransform), typeof(LayoutElement));
                     dropLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var dropLabelTmp = dropLabel.AddComponent<TMP_Text>();
+                    var dropLabelTmp = dropLabel.AddComponent<TextMeshProUGUI>();
                     dropLabelTmp.text = pj?.label ?? string.Empty;
+                    dropLabelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    dropLabelTmp.fontSize = 14f;
+                    dropLabelTmp.color = Color.white;
                     dropLabelTmp.raycastTarget = false;
-                    var dropValue = new GameObject("Value", typeof(RectTransform));
-                    dropValue.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var dropValueTmp = dropValue.AddComponent<TMPro.TextMeshProUGUI>();
-                    dropValueTmp.text = string.Empty;
-                    dropValueTmp.raycastTarget = false;
+                    var dropLabelLe = dropLabel.GetComponent<LayoutElement>();
+                    dropLabelLe.flexibleWidth = 1f;
+                    dropLabelLe.preferredHeight = 28f;
+
+                    var dropHost = new GameObject("DropdownHost", typeof(RectTransform), typeof(LayoutElement));
+                    dropHost.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var dropHostLe = dropHost.GetComponent<LayoutElement>();
+                    dropHostLe.preferredWidth = 160f;
+                    dropHostLe.minWidth = 160f;
+                    dropHostLe.preferredHeight = 28f;
+                    dropHostLe.minHeight = 28f;
+                    var dropBgImg = dropHost.AddComponent<Image>();
+                    dropBgImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+                    var dropCaption = new GameObject("Label", typeof(RectTransform));
+                    dropCaption.transform.SetParent(dropHost.transform, worldPositionStays: false);
+                    var dropCaptionRt = dropCaption.GetComponent<RectTransform>();
+                    dropCaptionRt.anchorMin = new Vector2(0f, 0f);
+                    dropCaptionRt.anchorMax = new Vector2(1f, 1f);
+                    dropCaptionRt.offsetMin = new Vector2(8f, 2f);
+                    dropCaptionRt.offsetMax = new Vector2(-24f, -2f);
+                    var dropCaptionTmp = dropCaption.AddComponent<TMPro.TextMeshProUGUI>();
+                    dropCaptionTmp.text = string.Empty;
+                    dropCaptionTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    dropCaptionTmp.fontSize = 12f;
+                    dropCaptionTmp.color = Color.white;
+                    dropCaptionTmp.raycastTarget = false;
+
                     var arrow = new GameObject("Arrow", typeof(RectTransform));
-                    arrow.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var arrowImg = arrow.AddComponent<Image>();
-                    arrowImg.raycastTarget = false;
-                    var dropdown = childGo.AddComponent<TMPro.TMP_Dropdown>();
-                    dropdown.captionText = dropValueTmp;
-                    dropdown.targetGraphic = arrowImg;
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    arrow.transform.SetParent(dropHost.transform, worldPositionStays: false);
+                    var arrowRt = arrow.GetComponent<RectTransform>();
+                    arrowRt.anchorMin = new Vector2(1f, 0.5f);
+                    arrowRt.anchorMax = new Vector2(1f, 0.5f);
+                    arrowRt.pivot = new Vector2(1f, 0.5f);
+                    arrowRt.sizeDelta = new Vector2(16f, 16f);
+                    arrowRt.anchoredPosition = new Vector2(-6f, 0f);
+                    var arrowTmp = arrow.AddComponent<TMPro.TextMeshProUGUI>();
+                    arrowTmp.text = "v";
+                    arrowTmp.alignment = TextAlignmentOptions.Center;
+                    arrowTmp.fontSize = 12f;
+                    arrowTmp.fontStyle = FontStyles.Bold;
+                    arrowTmp.color = Color.white;
+                    arrowTmp.raycastTarget = false;
+
+                    var dropdown = dropHost.AddComponent<TMPro.TMP_Dropdown>();
+                    dropdown.captionText = dropCaptionTmp;
+                    dropdown.targetGraphic = dropBgImg;
+
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 case "section-header":
@@ -663,11 +823,18 @@ namespace Territory.Editor.Bridge
                     // Stage 4 settings widget — bold section text label.
                     var hdrLabel = new GameObject("Label", typeof(RectTransform));
                     hdrLabel.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var hdrTmp = hdrLabel.AddComponent<TMP_Text>();
+                    var hdrLabelRt = hdrLabel.GetComponent<RectTransform>();
+                    hdrLabelRt.anchorMin = Vector2.zero;
+                    hdrLabelRt.anchorMax = Vector2.one;
+                    hdrLabelRt.offsetMin = hdrLabelRt.offsetMax = Vector2.zero;
+                    var hdrTmp = hdrLabel.AddComponent<TextMeshProUGUI>();
                     hdrTmp.text = pj?.label ?? string.Empty;
+                    hdrTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    hdrTmp.fontSize = 16f;
+                    hdrTmp.color = Color.white;
                     hdrTmp.fontStyle = TMPro.FontStyles.Bold;
                     hdrTmp.raycastTarget = false;
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 24f, flexibleWidth: 1f);
                     break;
                 }
                 case "list-row":
@@ -678,12 +845,12 @@ namespace Territory.Editor.Bridge
                     listIcon.AddComponent<Image>().raycastTarget = false;
                     var listPrimary = new GameObject("PrimaryLabel", typeof(RectTransform));
                     listPrimary.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var listPrimaryTmp = listPrimary.AddComponent<TMP_Text>();
+                    var listPrimaryTmp = listPrimary.AddComponent<TextMeshProUGUI>();
                     listPrimaryTmp.text = pj?.label ?? string.Empty;
                     listPrimaryTmp.raycastTarget = false;
                     var listSecondary = new GameObject("SecondaryValue", typeof(RectTransform));
                     listSecondary.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var listSecondaryTmp = listSecondary.AddComponent<TMP_Text>();
+                    var listSecondaryTmp = listSecondary.AddComponent<TextMeshProUGUI>();
                     listSecondaryTmp.text = string.Empty;
                     listSecondaryTmp.raycastTarget = false;
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
@@ -721,13 +888,13 @@ namespace Territory.Editor.Bridge
                     // Placeholder pair to show structure at bake time.
                     var keyGo = new GameObject("FieldKey", typeof(RectTransform));
                     keyGo.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var keyTmp = keyGo.AddComponent<TMP_Text>();
+                    var keyTmp = keyGo.AddComponent<TextMeshProUGUI>();
                     keyTmp.text = "Key";
                     keyTmp.fontSize = 12f;
                     keyTmp.raycastTarget = false;
                     var valGo = new GameObject("FieldValue", typeof(RectTransform));
                     valGo.transform.SetParent(childGo.transform, worldPositionStays: false);
-                    var valTmp = valGo.AddComponent<TMP_Text>();
+                    var valTmp = valGo.AddComponent<TextMeshProUGUI>();
                     valTmp.text = "--";
                     valTmp.fontSize = 12f;
                     valTmp.raycastTarget = false;
@@ -748,7 +915,7 @@ namespace Territory.Editor.Bridge
                     // IDragHandler scaffold — runtime MiniMapController.OnDrag implements drag-pan.
                     // Bake-time: add EventTrigger as proxy for IDragHandler detection by render-check.
                     childGo.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-                    AttachUiActionTrigger(childGo, pj?.action);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
                     EnsureChildLayoutElement(childGo, preferredWidth: 360f, preferredHeight: 324f, flexibleWidth: 0f);
                     break;
                 }
@@ -796,14 +963,14 @@ namespace Territory.Editor.Bridge
                     EnsureChildLayoutElement(cardTextCol, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
                     var cardTitle = new GameObject("Title", typeof(RectTransform));
                     cardTitle.transform.SetParent(cardTextCol.transform, worldPositionStays: false);
-                    var cardTitleTmp = cardTitle.AddComponent<TMP_Text>();
+                    var cardTitleTmp = cardTitle.AddComponent<TextMeshProUGUI>();
                     cardTitleTmp.text = pj?.label ?? "Notification";
                     cardTitleTmp.fontSize = 14f;
                     cardTitleTmp.fontStyle = TMPro.FontStyles.Bold;
                     cardTitleTmp.raycastTarget = false;
                     var cardBody = new GameObject("Body", typeof(RectTransform));
                     cardBody.transform.SetParent(cardTextCol.transform, worldPositionStays: false);
-                    var cardBodyTmp = cardBody.AddComponent<TMP_Text>();
+                    var cardBodyTmp = cardBody.AddComponent<TextMeshProUGUI>();
                     cardBodyTmp.text = string.Empty;
                     cardBodyTmp.fontSize = 12f;
                     cardBodyTmp.raycastTarget = false;
@@ -816,6 +983,168 @@ namespace Territory.Editor.Bridge
                     dismissBtn.targetGraphic = dismissImg;
                     EnsureChildLayoutElement(dismissGo, preferredWidth: 24f, preferredHeight: 24f, flexibleWidth: 0f);
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 56f, flexibleWidth: 1f);
+                    break;
+                }
+                case "chart-stub":
+                {
+                    // Stage 10 budget/stats — chart + stacked-bar placeholder. RawImage scaffold;
+                    // runtime ChartRenderer replaces texture from bindId series.
+                    var chartImg = childGo.AddComponent<RawImage>();
+                    chartImg.color = new Color(0.12f, 0.12f, 0.12f, 1f);
+                    chartImg.raycastTarget = false;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 120f, flexibleWidth: 1f);
+                    break;
+                }
+                case "tab-strip-stub":
+                {
+                    // Stage 10 budget/stats — range-tabs + tab-strip placeholder. HLG of stub toggles;
+                    // runtime swaps active state on bindId change.
+                    var stripBg = childGo.AddComponent<Image>();
+                    stripBg.color = new Color(0f, 0f, 0f, 0f);
+                    stripBg.raycastTarget = false;
+                    var stripHlg = childGo.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                    stripHlg.spacing = 4f;
+                    stripHlg.childAlignment = TextAnchor.MiddleCenter;
+                    // Placeholder tab pills (3) so renderer + AssertNotEmpty pass.
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var pill = new GameObject($"Tab_{i}", typeof(RectTransform));
+                        pill.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var pillImg = pill.AddComponent<Image>();
+                        pillImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+                        pillImg.raycastTarget = true;
+                        EnsureChildLayoutElement(pill, preferredWidth: 64f, preferredHeight: 28f, flexibleWidth: 0f);
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    break;
+                }
+                case "save-controls-strip":
+                {
+                    // Save/Load mode toggle strip — two pills (Save | Load) wired to bindId.
+                    // Bake-time placeholder: HLG container + 2 themed-button-like pills with
+                    // captions. Runtime SaveLoadController populates active state from bindId.
+                    var stripBg = childGo.AddComponent<Image>();
+                    stripBg.color = new Color(0f, 0f, 0f, 0f);
+                    stripBg.raycastTarget = false;
+                    var stripHlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    stripHlg.spacing = 8f;
+                    stripHlg.childAlignment = TextAnchor.MiddleCenter;
+                    stripHlg.childForceExpandWidth = true;
+                    stripHlg.childForceExpandHeight = true;
+                    stripHlg.childControlWidth = true;
+                    stripHlg.childControlHeight = true;
+                    string[] pillLabels = { "Save", "Load" };
+                    for (int i = 0; i < pillLabels.Length; i++)
+                    {
+                        var pill = new GameObject($"Pill_{pillLabels[i]}",
+                            typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+                        pill.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var pillImg = pill.GetComponent<Image>();
+                        pillImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+                        var pillBtn = pill.GetComponent<Button>();
+                        pillBtn.targetGraphic = pillImg;
+                        var pillLe = pill.GetComponent<LayoutElement>();
+                        pillLe.preferredHeight = 36f;
+                        pillLe.flexibleWidth = 1f;
+                        var pillLabelGo = new GameObject("Label", typeof(RectTransform));
+                        pillLabelGo.transform.SetParent(pill.transform, worldPositionStays: false);
+                        var pillTmp = pillLabelGo.AddComponent<TextMeshProUGUI>();
+                        pillTmp.text = pillLabels[i];
+                        pillTmp.alignment = TextAlignmentOptions.Center;
+                        pillTmp.fontSize = 14f;
+                        pillTmp.color = Color.white;
+                        pillTmp.raycastTarget = false;
+                        var pillLabelRt = pillLabelGo.GetComponent<RectTransform>();
+                        pillLabelRt.anchorMin = Vector2.zero;
+                        pillLabelRt.anchorMax = Vector2.one;
+                        pillLabelRt.offsetMin = pillLabelRt.offsetMax = Vector2.zero;
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    break;
+                }
+                case "save-list":
+                {
+                    // Vertical save-slot list — bake-time scroll-view stub. Runtime
+                    // SaveLoadController populates rows from listBindId.
+                    var listBg = childGo.AddComponent<Image>();
+                    listBg.color = new Color(0.08f, 0.08f, 0.08f, 1f);
+                    listBg.raycastTarget = false;
+                    var listVlg = childGo.AddComponent<VerticalLayoutGroup>();
+                    listVlg.spacing = 4f;
+                    listVlg.padding = new RectOffset(4, 4, 4, 4);
+                    listVlg.childForceExpandWidth = true;
+                    listVlg.childForceExpandHeight = false;
+                    listVlg.childControlWidth = true;
+                    listVlg.childControlHeight = true;
+                    // Placeholder row so the container has visible content at bake time.
+                    var placeholderRow = new GameObject("PlaceholderRow", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                    placeholderRow.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var rowImg = placeholderRow.GetComponent<Image>();
+                    rowImg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+                    rowImg.raycastTarget = false;
+                    var rowLe = placeholderRow.GetComponent<LayoutElement>();
+                    rowLe.preferredHeight = 32f;
+                    var rowLabelGo = new GameObject("Label", typeof(RectTransform));
+                    rowLabelGo.transform.SetParent(placeholderRow.transform, worldPositionStays: false);
+                    var rowTmp = rowLabelGo.AddComponent<TextMeshProUGUI>();
+                    rowTmp.text = "(no saves)";
+                    rowTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    rowTmp.fontSize = 12f;
+                    rowTmp.color = new Color(0.62f, 0.62f, 0.62f, 1f);
+                    rowTmp.raycastTarget = false;
+                    var rowLabelRt = rowLabelGo.GetComponent<RectTransform>();
+                    rowLabelRt.anchorMin = new Vector2(0f, 0f);
+                    rowLabelRt.anchorMax = new Vector2(1f, 1f);
+                    rowLabelRt.offsetMin = new Vector2(8f, 0f);
+                    rowLabelRt.offsetMax = new Vector2(-8f, 0f);
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 160f, flexibleWidth: 1f);
+                    var saveListLe = childGo.GetComponent<LayoutElement>();
+                    if (saveListLe != null) saveListLe.flexibleHeight = 1f;
+                    break;
+                }
+                case "text-input":
+                {
+                    // TMP_InputField scaffold — runtime SaveLoadController binds via bind id.
+                    var inputBg = childGo.AddComponent<Image>();
+                    inputBg.color = new Color(0.12f, 0.12f, 0.12f, 1f);
+                    inputBg.raycastTarget = true;
+                    var textArea = new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D));
+                    textArea.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var textAreaRt = textArea.GetComponent<RectTransform>();
+                    textAreaRt.anchorMin = Vector2.zero;
+                    textAreaRt.anchorMax = Vector2.one;
+                    textAreaRt.offsetMin = new Vector2(8f, 4f);
+                    textAreaRt.offsetMax = new Vector2(-8f, -4f);
+                    var placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
+                    placeholderGo.transform.SetParent(textArea.transform, worldPositionStays: false);
+                    var placeholderTmp = placeholderGo.AddComponent<TextMeshProUGUI>();
+                    placeholderTmp.text = pj?.placeholder ?? string.Empty;
+                    placeholderTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    placeholderTmp.fontSize = 12f;
+                    placeholderTmp.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+                    placeholderTmp.raycastTarget = false;
+                    var placeholderRt = placeholderGo.GetComponent<RectTransform>();
+                    placeholderRt.anchorMin = Vector2.zero;
+                    placeholderRt.anchorMax = Vector2.one;
+                    placeholderRt.offsetMin = placeholderRt.offsetMax = Vector2.zero;
+                    var inputTextGo = new GameObject("Text", typeof(RectTransform));
+                    inputTextGo.transform.SetParent(textArea.transform, worldPositionStays: false);
+                    var inputTmp = inputTextGo.AddComponent<TextMeshProUGUI>();
+                    inputTmp.text = string.Empty;
+                    inputTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                    inputTmp.fontSize = 12f;
+                    inputTmp.color = Color.white;
+                    inputTmp.raycastTarget = false;
+                    var inputTextRt = inputTextGo.GetComponent<RectTransform>();
+                    inputTextRt.anchorMin = Vector2.zero;
+                    inputTextRt.anchorMax = Vector2.one;
+                    inputTextRt.offsetMin = inputTextRt.offsetMax = Vector2.zero;
+                    var inputField = childGo.AddComponent<TMP_InputField>();
+                    inputField.targetGraphic = inputBg;
+                    inputField.textViewport = textAreaRt;
+                    inputField.textComponent = inputTmp;
+                    inputField.placeholder = placeholderTmp;
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
                 default:
@@ -1747,7 +2076,30 @@ namespace Territory.Editor.Bridge
                 // before the bake result is returned to the caller.
                 try
                 {
-                    string expectedGuid = Territory.Editor.UiBake.BakeMetaProof.ComputeStableGuid(item.slug);
+                    // Preserve any pre-existing GUID Unity already assigned (scene refs depend on it).
+                    // Only write deterministic GUID when .meta is missing — first-time bake of new slug.
+                    var metaPath = assetPath + ".meta";
+                    string expectedGuid;
+                    if (System.IO.File.Exists(metaPath))
+                    {
+                        // Parse `guid: <hex>` from existing .meta and assert against itself.
+                        var existing = System.IO.File.ReadAllText(metaPath);
+                        var match = System.Text.RegularExpressions.Regex.Match(existing, @"guid:\s*([0-9a-fA-F]{32})");
+                        expectedGuid = match.Success
+                            ? match.Groups[1].Value
+                            : Territory.Editor.UiBake.BakeMetaProof.ComputeStableGuid(item.slug);
+                        if (!match.Success)
+                        {
+                            Territory.Editor.UiBake.BakeMetaProof.WriteMetaFile(assetPath, expectedGuid);
+                            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                        }
+                    }
+                    else
+                    {
+                        expectedGuid = Territory.Editor.UiBake.BakeMetaProof.ComputeStableGuid(item.slug);
+                        Territory.Editor.UiBake.BakeMetaProof.WriteMetaFile(assetPath, expectedGuid);
+                        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                    }
                     Territory.Editor.UiBake.BakeMetaProof.AssertMetaExists(assetPath, expectedGuid);
                 }
                 catch (Territory.Editor.UiBake.BakeException metaEx)

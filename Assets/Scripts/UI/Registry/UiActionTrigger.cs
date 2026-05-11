@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Territory.UI.StudioControls;
 
 namespace Territory.UI.Registry
@@ -23,7 +24,12 @@ namespace Territory.UI.Registry
         private IlluminatedButton _button;
         private UiActionRegistry _registry;
 
-        private void Start()
+        // Stage 13 hotfix — wire in Awake instead of Start. Baked buttons inside modal
+        // panels (pause-menu / budget-panel / stats-panel) get instantiated, then their
+        // root is SetActive(false) by ModalCoordinator.RegisterPanel before end of frame,
+        // so Start never fires → click listener never attached. Awake fires on Instantiate
+        // regardless of subsequent active state.
+        private void Awake()
         {
             if (string.IsNullOrEmpty(_actionId)) return;
             _button = GetComponent<IlluminatedButton>();
@@ -49,6 +55,13 @@ namespace Territory.UI.Registry
             {
                 Debug.LogWarning($"[UiActionTrigger] action not registered (actionId={_actionId})");
             }
+
+            // Stage 13 hotfix — drop EventSystem selection after dispatch so the
+            // button's "selected" highlight (yellow) doesn't linger after click.
+            // Without this, the next time the panel reopens the last-clicked
+            // button is still highlighted as selected.
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
         }
     }
 }

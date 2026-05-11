@@ -79,12 +79,12 @@ public partial class UIManager
                 }
                 break;
             case PopupType.PauseMenu:
-                if (pauseMenuRoot != null && !pauseMenuRoot.activeSelf)
+                // Stage 13 hotfix — legacy pauseMenuRoot retired; baked pause-menu prefab under
+                // Canvas/Modals owns visibility via ModalCoordinator (RegisterPanel auto-toggles SetActive).
+                if (_modalCoordinator != null && !_modalCoordinator.IsOpen("pause-menu"))
                 {
-                    // Wave B4 (TECH-27095): enforce exclusive group via ModalCoordinator.
-                    if (_modalCoordinator != null) _modalCoordinator.TryOpen("pause-menu");
-                    pauseMenuRoot.SetActive(true);
-                    RegisterPopupOpened(type);
+                    if (_modalCoordinator.TryOpen("pause-menu"))
+                        RegisterPopupOpened(type);
                 }
                 break;
             case PopupType.SettingsScreen:
@@ -144,12 +144,8 @@ public partial class UIManager
                 if (infoPanelRoot != null) infoPanelRoot.SetActive(false);
                 break;
             case PopupType.PauseMenu:
-                if (pauseMenuRoot != null)
-                {
-                    pauseMenuRoot.SetActive(false);
-                    // Wave B4 (TECH-27095): deregister from ModalCoordinator.
-                    if (_modalCoordinator != null) _modalCoordinator.Close("pause-menu");
-                }
+                // Stage 13 hotfix — legacy pauseMenuRoot retired; coordinator owns SetActive.
+                if (_modalCoordinator != null) _modalCoordinator.Close("pause-menu");
                 break;
             case PopupType.SettingsScreen:
                 if (settingsScreenRoot != null) settingsScreenRoot.SetActive(false);

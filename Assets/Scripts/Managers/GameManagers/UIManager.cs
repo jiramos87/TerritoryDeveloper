@@ -13,6 +13,7 @@ using Territory.Persistence;
 using Territory.Forests;
 using Territory.Buildings;
 using Territory.Utilities;
+using Territory.UI.Registry;
 
 namespace Territory.UI
 {
@@ -225,9 +226,145 @@ public partial class UIManager : MonoBehaviour
 
         EnsureEconomyHudRuntimeWiring();
         EnsureConstructionCostTextExists();
+        EnsureBakedPanelsRuntimeWiring();
+        EnsureEconomyHudBindPublisher();
         ApplyHudUiThemeIfConfigured();
         // Stage 11: RequestToolbarChromeRefresh() removed — toolbar tinting now baked into ThemedToolbarStrip.
         TryShowWelcomeBriefingAfterStart();
+        RegisterAutoModeAction();
+    }
+
+    /// <summary>
+    /// Stage 10 hotfix — instantiate baked panel prefabs (budget-panel, stats-panel, pause-menu, save-load-view)
+    /// under "UI Canvas/Modals" + "UI Canvas/SubViews" anchors. Register each with ModalCoordinator
+    /// so the coordinator owns SetActive on open/close. Mirrors MainMenuController sub-view swap pattern.
+    /// Idempotent — re-finding instances by name avoids dup-instantiation across scene reloads.
+    /// </summary>
+    private void EnsureBakedPanelsRuntimeWiring()
+    {
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+
+        // Ensure ModalCoordinator exists in scene (host for SetActive toggling).
+        if (_modalCoordinator == null)
+            _modalCoordinator = FindObjectOfType<Territory.UI.Modals.ModalCoordinator>();
+        if (_modalCoordinator == null)
+        {
+            var coordGo = new GameObject("ModalCoordinator");
+            coordGo.transform.SetParent(canvas.transform, false);
+            _modalCoordinator = coordGo.AddComponent<Territory.UI.Modals.ModalCoordinator>();
+        }
+
+        // Find/create canvas-layer parent transforms.
+        Transform modalsParent   = FindOrCreateCanvasLayer(canvas.transform, "Modals");
+        Transform subViewsParent = FindOrCreateCanvasLayer(canvas.transform, "SubViews");
+
+        // panel slug → (parent, adapter component type)
+        InstantiateBakedPanel("budget-panel",   modalsParent,   typeof(Territory.UI.Modals.BudgetPanelAdapter));
+        InstantiateBakedPanel("stats-panel",    modalsParent,   typeof(Territory.UI.Modals.StatsPanelAdapter));
+        InstantiateBakedPanel("pause-menu",     modalsParent,   typeof(Territory.UI.Modals.PauseMenuDataAdapter));
+        InstantiateBakedPanel("save-load-view", subViewsParent, typeof(Territory.UI.Modals.SaveLoadScreenDataAdapter));
+
+        // Retire legacy saveLoadScreenRoot — new save-load-view replaces it.
+        if (saveLoadScreenRoot != null)
+        {
+            saveLoadScreenRoot.SetActive(false);
+            Destroy(saveLoadScreenRoot);
+            saveLoadScreenRoot = null;
+        }
+
+        // Stage 13 hotfix — retire legacy pauseMenuRoot (full-screen scene GameObject).
+        // Baked pause-menu under Canvas/Modals replaces it; Esc routing in UIManager.PopupStack
+        // now drives ModalCoordinator.TryOpen("pause-menu") instead of pauseMenuRoot.SetActive.
+        if (pauseMenuRoot != null)
+        {
+            pauseMenuRoot.SetActive(false);
+            Destroy(pauseMenuRoot);
+            pauseMenuRoot = null;
+        }
+    }
+
+    private static Transform FindOrCreateCanvasLayer(Transform canvasRoot, string layerName)
+    {
+        var existing = canvasRoot.Find(layerName);
+        if (existing != null) return existing;
+
+        var go = new GameObject(layerName, typeof(RectTransform));
+        go.transform.SetParent(canvasRoot, false);
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        return go.transform;
+    }
+
+    /// <summary>
+    /// Stage 10 hotfix — attach EconomyHudBindPublisher so baked HUD-bar BUDGET button text
+    /// receives economyManager.totalBudget + economyManager.budgetDelta values.
+    /// </summary>
+    private void EnsureEconomyHudBindPublisher()
+    {
+        var existing = FindObjectOfType<Territory.UI.HUD.EconomyHudBindPublisher>();
+        if (existing != null) return;
+        gameObject.AddComponent<Territory.UI.HUD.EconomyHudBindPublisher>();
+    }
+
+    private void InstantiateBakedPanel(string slug, Transform parent, System.Type adapterType)
+    {
+        if (parent == null || string.IsNullOrEmpty(slug)) return;
+
+        // Idempotency: if already instantiated under parent, just ensure adapter + registration.
+        Transform existing = parent.Find(slug);
+        GameObject panelGo = existing != null ? existing.gameObject : null;
+
+        if (panelGo == null)
+        {
+#if UNITY_EDITOR
+            string assetPath = $"Assets/UI/Prefabs/Generated/{slug}.prefab";
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[UIManager] EnsureBakedPanelsRuntimeWiring — prefab missing at {assetPath} for slug={slug}; skipping.");
+                return;
+            }
+            panelGo = Instantiate(prefab, parent);
+            panelGo.name = slug;
+#else
+            Debug.LogWarning($"[UIManager] EnsureBakedPanelsRuntimeWiring — runtime prefab load not implemented for slug={slug}; bake outputs are Editor-only assets.");
+            return;
+#endif
+        }
+
+        // Ensure adapter component attached.
+        if (adapterType != null && panelGo.GetComponent(adapterType) == null)
+            panelGo.AddComponent(adapterType);
+
+        // Register with ModalCoordinator so it owns SetActive on open/close.
+        if (_modalCoordinator != null)
+            _modalCoordinator.RegisterPanel(slug, panelGo);
+        else
+            panelGo.SetActive(false);
+    }
+
+    /// <summary>
+    /// Stage 10 hotfix — register action.auto-mode-toggle on UiActionRegistry.
+    /// Flips cityStats.simulateGrowth and publishes uiManager.isAutoMode bind for visual reflection.
+    /// No panel opens.
+    /// </summary>
+    private void RegisterAutoModeAction()
+    {
+        var actionRegistry = FindObjectOfType<UiActionRegistry>();
+        if (actionRegistry == null) return;
+        var bindRegistry = FindObjectOfType<UiBindRegistry>();
+        actionRegistry.Register("action.auto-mode-toggle", _ =>
+        {
+            if (cityStats == null) return;
+            cityStats.simulateGrowth = !cityStats.simulateGrowth;
+            bindRegistry?.Set("uiManager.isAutoMode", cityStats.simulateGrowth);
+        });
+        // Seed initial bind value so subscribers reflect current state.
+        if (cityStats != null) bindRegistry?.Set("uiManager.isAutoMode", cityStats.simulateGrowth);
     }
 
     /// <summary>Current Zone S sub-type id; -1 = not picked yet.</summary>
@@ -401,6 +538,26 @@ public partial class UIManager : MonoBehaviour
         {
             DismissWelcomeBriefing();
             return;
+        }
+
+        // Stage 13 hotfix — consult ModalCoordinator before popupStack/PauseMenu fallback.
+        // popupStack + ModalCoordinator._openModals are independent state stores; baked
+        // panels (stats/budget/pause) register via ModalCoordinator only, so Esc would
+        // otherwise stack pause-menu on top of an already-open modal.
+        var modalCoord = FindObjectOfType<Territory.UI.Modals.ModalCoordinator>();
+        if (modalCoord != null && modalCoord.IsAnyExclusiveOpen())
+        {
+            // Pause-menu navigated-view: in sub-view (settings/save/load), Esc = back to root.
+            // Only when root visible does Esc close the modal.
+            if (modalCoord.IsOpen("pause-menu"))
+            {
+                var pauseAdapter = FindObjectOfType<Territory.UI.Modals.PauseMenuDataAdapter>();
+                if (pauseAdapter != null && pauseAdapter.TryHandleBackButton()) return;
+            }
+            foreach (var slug in new[] { "stats-panel", "budget-panel", "pause-menu" })
+            {
+                if (modalCoord.IsOpen(slug)) { modalCoord.Close(slug); return; }
+            }
         }
 
         if (popupStack.Count > 0)

@@ -265,6 +265,14 @@ When Pass A inference body needs DB context for multiple tables or queries, use 
 
 For ad-hoc multi-query DB state (anything not covered by the above): one `db_read_batch` call covers all questions. Do NOT issue sequential `psql` shell calls or N sequential MCP reads when a single batch covers it.
 
+### UI bake — force recompile before `bake_ui_from_ir` (stale-DLL gate)
+
+When a Stage edits `Assets/Scripts/Editor/Bridge/UiBakeHandler.*.cs` OR `Assets/Scripts/Editor/UiBake/**`, an `unity_compile` MUST run BEFORE any `unity_bridge_command(kind="bake_ui_from_ir")` issued within the same Pass A iteration. Otherwise the bake executes against the prior Editor DLL — source edits silently invisible, false-green prefab. Pass A's per-stage aggregated `unity:compile-check` already covers stage close; this guardrail covers iterative bake-edit-rebake loops INSIDE Pass A.
+
+Full contract — `ia/rules/ui-bake-pipeline.md` §2 (stale-DLL gate) + §1 (production dispatch path via `NormalizeChildKind → BakeChildByKind` switch) + §3 (dead-code map: KindRendererMatrix + KindRenderers/* + RowBakeHandler are non-production).
+
+Recurrence evidence — `cityscene-mainmenu-panel-rollout` Stage 13: settings widgets baked with stale slider/toggle/dropdown shape despite repeated source edits; hours lost chasing dispatch mystery before identifying stale DLL as root cause.
+
 ### Stage_id canonical form (post mig 0132)
 
 Mig 0132 adds `CHECK (stage_id ~ '^\d+(\.\d+)?$')` constraint at insert + generated column `stage_id_canonical` (auto-suffixes `.0` to bare-int rows). Per-plan format inconsistency now historical — all new stages are `N.M` form at DB level.

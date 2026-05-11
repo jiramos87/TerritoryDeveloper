@@ -21,12 +21,31 @@ namespace Territory.UI.Modals
 
         private readonly HashSet<string> _openModals = new HashSet<string>();
 
+        /// <summary>
+        /// Stage 10 hotfix — slug → GameObject registry for SetActive toggling on TryOpen/Close.
+        /// Adapters call <see cref="RegisterPanel"/> in OnEnable so coordinator owns visibility.
+        /// </summary>
+        private readonly Dictionary<string, GameObject> _panelRoots = new Dictionary<string, GameObject>();
+
         [SerializeField] private TimeManager _timeManager;
 
         private void Awake()
         {
             if (_timeManager == null)
                 _timeManager = FindObjectOfType<TimeManager>();
+        }
+
+        /// <summary>
+        /// Register a panel GameObject so this coordinator can toggle SetActive on TryOpen/Close.
+        /// Idempotent — re-registering the same slug overwrites the previous root.
+        /// Panel starts inactive after registration.
+        /// </summary>
+        public void RegisterPanel(string modalSlug, GameObject root)
+        {
+            if (string.IsNullOrEmpty(modalSlug) || root == null) return;
+            _panelRoots[modalSlug] = root;
+            if (!_openModals.Contains(modalSlug))
+                root.SetActive(false);
         }
 
         /// <summary>
@@ -52,6 +71,10 @@ namespace Territory.UI.Modals
             }
 
             _openModals.Add(modalSlug);
+
+            // Toggle GameObject visibility when registered.
+            if (_panelRoots.TryGetValue(modalSlug, out var root) && root != null)
+                root.SetActive(true);
 
             if (_timeManager != null)
                 _timeManager.SetModalPauseOwner(modalSlug);
@@ -79,9 +102,14 @@ namespace Territory.UI.Modals
         private void CloseInternal(string modalSlug)
         {
             _openModals.Remove(modalSlug);
+            if (_panelRoots.TryGetValue(modalSlug, out var root) && root != null)
+                root.SetActive(false);
             if (_timeManager != null)
                 _timeManager.ClearModalPauseOwner(modalSlug);
         }
+
+        /// <summary>True when modal slug currently open.</summary>
+        public bool IsOpen(string modalSlug) => !string.IsNullOrEmpty(modalSlug) && _openModals.Contains(modalSlug);
 
         private static bool IsExclusiveGroup(string slug)
         {

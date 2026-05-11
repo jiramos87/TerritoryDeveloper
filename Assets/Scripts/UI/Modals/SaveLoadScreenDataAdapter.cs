@@ -24,6 +24,7 @@ namespace Territory.UI.Modals
         [Header("Registry (resolved via FindObjectOfType when null)")]
         [SerializeField] private UiActionRegistry _actionRegistry;
         [SerializeField] private UiBindRegistry   _bindRegistry;
+        [SerializeField] private ModalCoordinator _modalCoordinator;
 
         [Header("Consumers (legacy ThemedList/Button; nullable in baked-UI path)")]
         [SerializeField] private ThemedList   _slotList;
@@ -56,6 +57,8 @@ namespace Territory.UI.Modals
                 _actionRegistry = FindObjectOfType<UiActionRegistry>();
             if (_bindRegistry == null)
                 _bindRegistry = FindObjectOfType<UiBindRegistry>();
+            if (_modalCoordinator == null)
+                _modalCoordinator = FindObjectOfType<ModalCoordinator>();
         }
 
         private void OnEnable()
@@ -65,6 +68,8 @@ namespace Territory.UI.Modals
             _actionRegistry?.Register("saveload.save",        _ => OnSaveConfirmed());
             _actionRegistry?.Register("saveload.delete",      payload => OnDeleteRequested(payload));
             _actionRegistry?.Register("saveload.selectSlot",  payload => OnSelectSlot(payload));
+            // Stage 10 hotfix — open Save/Load panel via ModalCoordinator (replaces UIManager.OnSaveGameButtonClicked toast).
+            _actionRegistry?.Register("action.save-menu-open", _ => OnSaveMenuOpen());
 
             // Subscribe binds
             if (_bindRegistry != null)
@@ -86,6 +91,20 @@ namespace Territory.UI.Modals
 
             RefreshSlotList();
             PublishListBind();
+        }
+
+        private void Update()
+        {
+            // Stage 10 hotfix — Esc closes the screen (no UI cancel button).
+            // Guard: only fire when active; UIManager.HandleEscapePress runs in parallel
+            // but this adapter takes priority by handling the press before stack pop.
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (_modalCoordinator != null)
+                    _modalCoordinator.Close("save-load-view");
+                else
+                    gameObject.SetActive(false);
+            }
         }
 
         private void OnDisable()
@@ -245,6 +264,19 @@ namespace Territory.UI.Modals
             string customName = null;
             try { customName = _bindRegistry?.Get<string>("saveload.saveName"); } catch { }
             _saveManager.SaveGame(customName);
+            RefreshSlotList();
+            PublishListBind();
+        }
+
+        private void OnSaveMenuOpen()
+        {
+            // Stage 10 hotfix — open save-load-view modal in save mode + seed list.
+            _bindRegistry?.Set("saveload.mode", "save");
+            _mode = "save";
+            if (_modalCoordinator != null)
+                _modalCoordinator.TryOpen("save-load-view");
+            else if (gameObject != null)
+                gameObject.SetActive(true);
             RefreshSlotList();
             PublishListBind();
         }

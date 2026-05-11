@@ -189,6 +189,19 @@ namespace Territory.Editor.Bridge
                     BindBtn("_settingsButton", 3);
                     BindBtn("_mainMenuButton", 4);
                     BindBtn("_quitButton", 5);
+
+                    // Stage 13 hotfix — assign sub-view prefab refs from generated bake assets.
+                    // Without these, OnSettings/OnSave/OnLoad MountSubView silently no-ops.
+                    void BindPrefab(string fieldName, string assetPath)
+                    {
+                        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                        if (prefab == null) return;
+                        var prop = aSo.FindProperty(fieldName);
+                        if (prop != null) prop.objectReferenceValue = prefab;
+                    }
+                    BindPrefab("_settingsViewPrefab", "Assets/UI/Prefabs/Generated/settings-view.prefab");
+                    BindPrefab("_saveLoadViewPrefab", "Assets/UI/Prefabs/Generated/save-load-view.prefab");
+
                     aSo.ApplyModifiedPropertiesWithoutUndo();
                 }
 

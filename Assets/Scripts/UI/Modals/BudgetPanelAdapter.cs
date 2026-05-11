@@ -25,6 +25,7 @@ namespace Territory.UI.Modals
         [SerializeField] private ModalCoordinator  _modalCoordinator;
         [SerializeField] private EconomyManager    _economyManager;
         [SerializeField] private BudgetForecaster  _forecaster;
+        [SerializeField] private GrowthBudgetManager _growthBudgetManager;
 
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
 
@@ -54,6 +55,14 @@ namespace Territory.UI.Modals
             "budget.treasury",
         };
 
+        // Growth-budget bind ids (Stage 10 hotfix — Total/Zoning/Roads %).
+        private static readonly string[] GrowthBindIds =
+        {
+            "growth.total",
+            "growth.zoning",
+            "growth.roads",
+        };
+
         private void Awake()
         {
             if (_actionRegistry   == null) _actionRegistry   = FindObjectOfType<UiActionRegistry>();
@@ -61,10 +70,10 @@ namespace Territory.UI.Modals
             if (_modalCoordinator == null) _modalCoordinator = FindObjectOfType<ModalCoordinator>();
             if (_economyManager   == null) _economyManager   = FindObjectOfType<EconomyManager>();
             if (_forecaster       == null) _forecaster       = FindObjectOfType<BudgetForecaster>();
-        }
-
-        private void Start()
-        {
+            if (_growthBudgetManager == null) _growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
+            // Stage 13 hotfix — register in Awake instead of Start. Panel root is registered
+            // with ModalCoordinator (SetActive false) immediately after AddComponent, so Start
+            // never fires on this adapter. Awake runs once on AddComponent regardless of active.
             RegisterActions();
             Subscribe();
         }
@@ -131,6 +140,26 @@ namespace Territory.UI.Modals
             var rangeSub  = _bindRegistry.Subscribe<string>("budget.range",  _ => { });
             _subscriptions.Add(headerSub);
             _subscriptions.Add(rangeSub);
+
+            // Growth-budget slider binds — dispatch SetCategoryPercent/SetGrowthBudgetPercent on change.
+            foreach (var bindId in GrowthBindIds)
+            {
+                var id = bindId;
+                var sub = _bindRegistry.Subscribe<float>(id, val => OnGrowthSliderChanged(id, val));
+                _subscriptions.Add(sub);
+            }
+        }
+
+        private void OnGrowthSliderChanged(string bindId, float value)
+        {
+            if (_growthBudgetManager == null) return;
+            int pct = Mathf.Clamp(Mathf.RoundToInt(value), 0, 100);
+            switch (bindId)
+            {
+                case "growth.total":   _growthBudgetManager.SetGrowthBudgetPercent(pct); break;
+                case "growth.zoning":  _growthBudgetManager.SetCategoryPercent(GrowthCategory.Zoning, pct); break;
+                case "growth.roads":   _growthBudgetManager.SetCategoryPercent(GrowthCategory.Roads,  pct); break;
+            }
         }
 
         private void OnTaxSliderChanged(string bindId, float value)
@@ -202,6 +231,14 @@ namespace Territory.UI.Modals
 
             // Header.
             _bindRegistry.Set("budget.title", "City Budget");
+
+            // Growth-budget initial values.
+            if (_growthBudgetManager != null)
+            {
+                _bindRegistry.Set("growth.total",  (float)_growthBudgetManager.GetGrowthBudgetPercent());
+                _bindRegistry.Set("growth.zoning", (float)_growthBudgetManager.GetCategoryPercent(GrowthCategory.Zoning));
+                _bindRegistry.Set("growth.roads",  (float)_growthBudgetManager.GetCategoryPercent(GrowthCategory.Roads));
+            }
 
             // Initial forecast.
             if (_forecaster != null)

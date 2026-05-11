@@ -51,6 +51,23 @@ namespace Territory.UI.StudioControls.Renderers
             }
         }
 
+        // Stage 13 hotfix — pause-menu Resume "yellow stays" bug.
+        // OnClicked → HaloPulse coroutine fades halo 1→0 over 0.25s, then on click
+        // the panel SetActive(false) suspends the coroutine mid-lerp leaving halo
+        // alpha=1 (yellow). On reopen the coroutine resumes but the panel paints
+        // yellow until it completes. Force-reset on disable.
+        private void OnDisable()
+        {
+            if (_haloCoroutine != null)
+            {
+                StopCoroutine(_haloCoroutine);
+                _haloCoroutine = null;
+            }
+            _isHover = false;
+            _isPressed = false;
+            ApplyHaloState();
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             _isHover = true;
@@ -162,7 +179,9 @@ namespace Territory.UI.StudioControls.Renderers
                 var color = _haloImage.color;
                 color.a = Mathf.Lerp(1f, 0f, t);
                 _haloImage.color = color;
-                elapsed += Time.deltaTime;
+                // Stage 13 hotfix — use unscaled delta so modal pause (timeScale=0)
+                // doesn't deadlock the pulse coroutine, leaving halo stuck at full alpha.
+                elapsed += Time.unscaledDeltaTime;
                 yield return null;
             }
             _haloCoroutine = null;

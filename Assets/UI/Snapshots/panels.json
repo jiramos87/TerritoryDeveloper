@@ -1,8 +1,261 @@
 {
-  "snapshot_id": "2026-05-09T17:04:00.085Z",
+  "snapshot_id": "2026-05-11T17:42:21.121Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
+    {
+      "slug": "budget-panel",
+      "fields": {
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":760,\"height\":600,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"]}",
+        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[760,600],\"anchored_position\":[0,0]}"
+      },
+      "panel": {
+        "slug": "budget-panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":760,\"height\":600,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"]}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"bindId\":\"budget.title\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-header"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"kind\":\"themed-button\",\"variant\":\"icon-close\",\"actionId\":\"budget.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-close"
+        },
+        {
+          "ord": 3,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"tax-rates\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-tax"
+        },
+        {
+          "ord": 4,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"service-funding\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-funding"
+        },
+        {
+          "ord": 5,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"expenses\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-expenses"
+        },
+        {
+          "ord": 6,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"forecast\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-forecast"
+        },
+        {
+          "ord": 7,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.residential\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"residential\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-tax-residential"
+        },
+        {
+          "ord": 8,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.commercial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"commercial\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-tax-commercial"
+        },
+        {
+          "ord": 9,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.industrial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"industrial\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-tax-industrial"
+        },
+        {
+          "ord": 10,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.general\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"general\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-tax-general"
+        },
+        {
+          "ord": 11,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"power\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.power\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-power"
+        },
+        {
+          "ord": 12,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"water\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.water\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-water"
+        },
+        {
+          "ord": 13,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"waste\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.waste\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-waste"
+        },
+        {
+          "ord": 14,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"police\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.police\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-police"
+        },
+        {
+          "ord": 15,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"fire\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.fire\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-fire"
+        },
+        {
+          "ord": 16,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"health\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.health\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-health"
+        },
+        {
+          "ord": 17,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"education\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.education\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-education"
+        },
+        {
+          "ord": 18,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"parks\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.parks\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-parks"
+        },
+        {
+          "ord": 19,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"transit\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.transit\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-transit"
+        },
+        {
+          "ord": 20,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"roads\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.roads\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-roads"
+        },
+        {
+          "ord": 21,
+          "kind": "expense-row",
+          "params_json": "{\"icon\":\"maintenance\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.maintenance\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-fund-maintenance"
+        },
+        {
+          "ord": 22,
+          "kind": "readout-block",
+          "params_json": "{\"kind\":\"readout-block\",\"bindId\":\"budget.treasury\",\"deltaColorRule\":\"positive-green\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-readout-treasury"
+        },
+        {
+          "ord": 23,
+          "kind": "readout-block",
+          "params_json": "{\"kind\":\"readout-block\",\"bindId\":\"budget.forecast.balance\",\"deltaColorRule\":\"positive-green\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-readout-projected"
+        },
+        {
+          "ord": 24,
+          "kind": "chart",
+          "params_json": "{\"kind\":\"chart\",\"bindId\":\"budget.forecast.chart\",\"seriesId\":\"forecast\",\"axisLabels\":[\"Month 1\",\"Month 2\",\"Month 3\"]}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-forecast-chart"
+        },
+        {
+          "ord": 25,
+          "kind": "range-tabs",
+          "params_json": "{\"kind\":\"range-tabs\",\"bindId\":\"budget.range\",\"options\":[\"1mo\",\"3mo\",\"6mo\"]}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-range-tabs"
+        },
+        {
+          "ord": 26,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"growth-budget\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-growth"
+        },
+        {
+          "ord": 27,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.total\",\"numeric\":true,\"actionId\":\"growth.setTotal\",\"actionPayload\":{}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-growth-total"
+        },
+        {
+          "ord": 28,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.zoning\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"zoning\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-growth-zoning"
+        },
+        {
+          "ord": 29,
+          "kind": "slider-row-numeric",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.roads\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"roads\"}}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-growth-roads"
+        }
+      ]
+    },
     {
       "slug": "hud-bar",
       "fields": {
@@ -25,26 +278,18 @@
         {
           "ord": 1,
           "kind": "button",
-          "params_json": "{\"icon\":\"new-game\",\"kind\":\"illuminated-button\",\"label\":\"NEW\",\"action\":\"action.game-new\"}",
-          "sprite_ref": "Assets/Sprites/Buttons/new-game-button-target.png",
+          "params_json": "{\"icon\":\"pause\",\"kind\":\"illuminated-button\",\"action\":\"action.time-play-pause-toggle\",\"alt_icon\":\"pause\",\"bind_state\":\"timeManager.isPaused\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/pause-button-1-64-target.png",
           "layout_json": "{\"ord\":0,\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-new-button"
+          "instance_slug": "hud-bar-play-pause-button"
         },
         {
           "ord": 2,
           "kind": "button",
-          "params_json": "{\"icon\":\"save-game\",\"kind\":\"illuminated-button\",\"label\":\"SAVE\",\"action\":\"action.game-save\"}",
-          "sprite_ref": "Assets/Sprites/Buttons/save-game-button-target.png",
+          "params_json": "{\"icon\":\"empty\",\"kind\":\"illuminated-button\",\"action\":\"action.time-speed-cycle\",\"label_bind\":\"timeManager.currentTimeSpeedLabel\"}",
+          "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
           "layout_json": "{\"ord\":1,\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-save-button"
-        },
-        {
-          "ord": 3,
-          "kind": "button",
-          "params_json": "{\"icon\":\"load-game\",\"kind\":\"illuminated-button\",\"label\":\"LOAD\",\"action\":\"action.game-load\"}",
-          "sprite_ref": "Assets/Sprites/Buttons/load-game-button-target.png",
-          "layout_json": "{\"ord\":2,\"zone\":\"left\"}",
-          "instance_slug": "hud-bar-load-button"
+          "instance_slug": "hud-bar-speed-cycle-button"
         },
         {
           "ord": 4,
@@ -95,22 +340,6 @@
           "instance_slug": "hud-bar-budget-button"
         },
         {
-          "ord": 10,
-          "kind": "button",
-          "params_json": "{\"icon\":\"pause\",\"kind\":\"illuminated-button\",\"action\":\"action.time-play-pause-toggle\",\"alt_icon\":\"pause\",\"bind_state\":\"timeManager.isPaused\"}",
-          "sprite_ref": "Assets/Sprites/Buttons/pause-button-1-64-target.png",
-          "layout_json": "{\"col\":1,\"row\":1,\"zone\":\"right\",\"sub_col\":0}",
-          "instance_slug": "hud-bar-play-pause-button"
-        },
-        {
-          "ord": 11,
-          "kind": "button",
-          "params_json": "{\"icon\":\"empty\",\"kind\":\"illuminated-button\",\"action\":\"action.time-speed-cycle\",\"label_bind\":\"timeManager.currentTimeSpeedLabel\"}",
-          "sprite_ref": "Assets/Sprites/Buttons/empty-button-64-target.png",
-          "layout_json": "{\"col\":1,\"row\":1,\"zone\":\"right\",\"sub_col\":1}",
-          "instance_slug": "hud-bar-speed-cycle-button"
-        },
-        {
           "ord": 12,
           "kind": "button",
           "params_json": "{\"icon\":\"stats\",\"kind\":\"illuminated-button\",\"action\":\"action.stats-panel-toggle\"}",
@@ -143,7 +372,7 @@
         "layout": "vstack",
         "gap_px": 0,
         "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
-        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"color-bg-menu\"}",
+        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"token-color-bg-menu\"}",
         "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[1,1],\"anchor_min\":[0,0],\"size_delta\":[0,0],\"anchored_position\":[0,0]}"
       },
       "panel": {
@@ -152,7 +381,7 @@
         "layout": "vstack",
         "gap_px": 0,
         "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
-        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"color-bg-menu\"}"
+        "params_json": "{\"fullscreen\":true,\"bg_color_token\":\"token-color-bg-menu\"}"
       },
       "children": [
         {
@@ -339,6 +568,91 @@
       ]
     },
     {
+      "slug": "pause-menu",
+      "fields": {
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":480,\"height\":480,\"modal_kind\":\"pause\",\"bg_color_token\":\"token-color-bg-menu\"}",
+        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[480,480],\"anchored_position\":[0,0]}"
+      },
+      "panel": {
+        "slug": "pause-menu",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":480,\"height\":480,\"modal_kind\":\"pause\",\"bg_color_token\":\"token-color-bg-menu\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "label",
+          "params_json": "{\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"token-size-text-modal-title\",\"text_static\":\"Paused\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-title-label"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Resume\",\"action\":\"pause.resume\",\"tooltip\":\"Return to game.\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-resume-button"
+        },
+        {
+          "ord": 3,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Settings\",\"action\":\"pause.openSettings\",\"tooltip\":\"Open settings.\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-settings-button"
+        },
+        {
+          "ord": 4,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Save\",\"action\":\"pause.openSave\",\"tooltip\":\"Save the city.\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-save-button"
+        },
+        {
+          "ord": 5,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Load\",\"action\":\"pause.openLoad\",\"tooltip\":\"Load a save.\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-load-button"
+        },
+        {
+          "ord": 6,
+          "kind": "confirm-button",
+          "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Main Menu\",\"action\":\"pause.mainMenu\",\"tooltip\":\"Return to main menu.\",\"confirm_label\":\"Click again to confirm\",\"action_confirm\":\"pause.mainMenu.confirm\",\"confirm_window_ms\":3000}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-main-menu-button"
+        },
+        {
+          "ord": 7,
+          "kind": "confirm-button",
+          "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Quit\",\"action\":\"pause.quit\",\"tooltip\":\"Exit to desktop.\",\"confirm_label\":\"Click again to confirm\",\"action_confirm\":\"pause.quit.confirm\",\"confirm_window_ms\":3000}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-quit-button"
+        },
+        {
+          "ord": 100,
+          "kind": "view-slot",
+          "params_json": "{\"kind\":\"view-slot\",\"views\":[\"root\",\"settings\",\"save\",\"load\"],\"default\":\"root\",\"slot_bind\":\"pause.contentScreen\"}",
+          "sprite_ref": "",
+          "layout_json": "{\"zone\":\"center\"}",
+          "instance_slug": "pause-menu-content-slot"
+        }
+      ]
+    },
+    {
       "slug": "save-load-view",
       "fields": {
         "layout_template": "vstack",
@@ -383,6 +697,80 @@
         },
         {
           "ord": 4,
+          "kind": "button",
+          "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "footer-load-button"
+        }
+      ]
+    },
+    {
+      "slug": "save-view",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "save-view",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"saveload.saveName\",\"kind\":\"text-input\",\"placeholder\":\"City-YYYY-MM-DD-HHmm\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "save-name-input"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"kind\":\"themed-button\",\"label\":\"Save\",\"action\":\"saveload.save\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "footer-save-button"
+        }
+      ]
+    },
+    {
+      "slug": "load-view",
+      "fields": {
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "load-view",
+        "layout_template": "vstack",
+        "layout": "vstack",
+        "gap_px": 8,
+        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "panel",
+          "params_json": "{\"kind\":\"save-list\",\"listBindId\":\"saveload.list\",\"trashAction\":\"saveload.delete\",\"selectAction\":\"saveload.selectSlot\",\"selectedSlotBindId\":\"saveload.selectedSlot\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "save-list"
+        },
+        {
+          "ord": 2,
           "kind": "button",
           "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
           "sprite_ref": "",
@@ -513,6 +901,195 @@
           "sprite_ref": "",
           "layout_json": "{}",
           "instance_slug": "reset-button"
+        }
+      ]
+    },
+    {
+      "slug": "stats-panel",
+      "fields": {
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":720,\"height\":560,\"defaultTab\":\"population\"}",
+        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[720,560],\"anchored_position\":[0,0]}"
+      },
+      "panel": {
+        "slug": "stats-panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 0,
+        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "params_json": "{\"width\":720,\"height\":560,\"defaultTab\":\"population\"}"
+      },
+      "children": [
+        {
+          "ord": 1,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"bindId\":\"stats.title\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-header"
+        },
+        {
+          "ord": 2,
+          "kind": "button",
+          "params_json": "{\"kind\":\"themed-button\",\"variant\":\"icon-close\",\"actionId\":\"stats.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-close"
+        },
+        {
+          "ord": 3,
+          "kind": "tab-strip",
+          "params_json": "{\"kind\":\"tab-strip\",\"tabs\":[\"population\",\"services\",\"economy\"],\"bindId\":\"stats.activeTab\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-tab-strip"
+        },
+        {
+          "ord": 4,
+          "kind": "range-tabs",
+          "params_json": "{\"kind\":\"range-tabs\",\"bindId\":\"stats.range\",\"options\":[\"3mo\",\"12mo\",\"all-time\"]}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-range-tabs"
+        },
+        {
+          "ord": 5,
+          "kind": "chart",
+          "params_json": "{\"kind\":\"chart\",\"bindId\":\"stats.chart.population\",\"seriesId\":\"population\",\"tabGroup\":\"population\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-chart-population"
+        },
+        {
+          "ord": 6,
+          "kind": "chart",
+          "params_json": "{\"kind\":\"chart\",\"bindId\":\"stats.chart.services\",\"seriesId\":\"services\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-chart-services"
+        },
+        {
+          "ord": 7,
+          "kind": "chart",
+          "params_json": "{\"kind\":\"chart\",\"bindId\":\"stats.chart.economy\",\"seriesId\":\"economy\",\"tabGroup\":\"economy\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-chart-economy"
+        },
+        {
+          "ord": 8,
+          "kind": "stacked-bar-row",
+          "params_json": "{\"kind\":\"stacked-bar-row\",\"bindId\":\"stats.bar.population\",\"tabGroup\":\"population\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-bar-population"
+        },
+        {
+          "ord": 9,
+          "kind": "stacked-bar-row",
+          "params_json": "{\"kind\":\"stacked-bar-row\",\"bindId\":\"stats.bar.services\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-bar-services"
+        },
+        {
+          "ord": 10,
+          "kind": "stacked-bar-row",
+          "params_json": "{\"kind\":\"stacked-bar-row\",\"bindId\":\"stats.bar.economy\",\"tabGroup\":\"economy\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-bar-economy"
+        },
+        {
+          "ord": 11,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"power\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.power\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-power"
+        },
+        {
+          "ord": 12,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"water\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.water\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-water"
+        },
+        {
+          "ord": 13,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"waste\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.waste\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-waste"
+        },
+        {
+          "ord": 14,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"police\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.police\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-police"
+        },
+        {
+          "ord": 15,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"fire\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.fire\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-fire"
+        },
+        {
+          "ord": 16,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"health\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.health\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-health"
+        },
+        {
+          "ord": 17,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"education\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.education\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-education"
+        },
+        {
+          "ord": 18,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"parks\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.parks\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-parks"
+        },
+        {
+          "ord": 19,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"transit\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.transit\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-transit"
+        },
+        {
+          "ord": 20,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"roads\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.roads\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-roads"
+        },
+        {
+          "ord": 21,
+          "kind": "service-row",
+          "params_json": "{\"icon\":\"happiness\",\"kind\":\"service-row\",\"bindId\":\"stats.svc.happiness\",\"tabGroup\":\"services\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-svc-happiness"
         }
       ]
     },

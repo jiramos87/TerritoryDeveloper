@@ -55,10 +55,9 @@ namespace Territory.UI.Modals
             if (_bindRegistry      == null) _bindRegistry      = FindObjectOfType<UiBindRegistry>();
             if (_modalCoordinator  == null) _modalCoordinator  = FindObjectOfType<ModalCoordinator>();
             if (_recorder          == null) _recorder          = FindObjectOfType<StatsHistoryRecorder>();
-        }
-
-        private void Start()
-        {
+            // Stage 13 hotfix — register in Awake instead of Start. Panel root is registered
+            // with ModalCoordinator (SetActive false) immediately after AddComponent, so Start
+            // never fires on this adapter. Awake runs once on AddComponent regardless of active.
             RegisterActions();
             Subscribe();
         }

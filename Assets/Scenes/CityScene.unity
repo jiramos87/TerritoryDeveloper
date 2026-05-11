@@ -168,9 +168,9 @@ RectTransform:
   - {fileID: 1655832389}
   - {fileID: 1604661282}
   - {fileID: 173975893}
-  - {fileID: 255580841}
   - {fileID: 1912908571}
   - {fileID: 87270093}
+  - {fileID: 255580841}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5943,7 +5943,8 @@ MonoBehaviour:
   _modalCoordinator: {fileID: 0}
   _actionRegistry: {fileID: 0}
   _settingsViewPrefab: {fileID: 0}
-  _saveLoadViewPrefab: {fileID: 0}
+  _saveViewPrefab: {fileID: 0}
+  _loadViewPrefab: {fileID: 0}
 --- !u!1 &905573289
 GameObject:
   m_ObjectHideFlags: 0
