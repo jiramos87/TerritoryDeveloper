@@ -1,19 +1,24 @@
+using Territory.UI.Registry;
 using UnityEngine;
 using Territory.UI;
 
 namespace Territory.UI.HUD
 {
     /// <summary>
-    /// Map-panel adapter — subscribes minimap.toggle / minimap.layer.set / minimap.drag actions
+    /// Map-panel adapter — registers action.map-panel-toggle (DB-canonical per button_detail — TECH-29752)
+    /// and subscribes minimap.toggle / minimap.layer.set / minimap.drag actions
     /// → forwards to <see cref="MiniMapController"/>. Apply-time render-check mirrors SettingsViewController.
     /// </summary>
     public class MapPanelAdapter : MonoBehaviour
     {
+        [SerializeField] private UiActionRegistry _actionRegistry;
         private MiniMapController _miniMapController;
         private Territory.UI.CameraController _cameraController;
+        private bool _mapVisible;
 
         private void Awake()
         {
+            if (_actionRegistry == null) _actionRegistry = FindObjectOfType<UiActionRegistry>();
             _miniMapController = FindObjectOfType<MiniMapController>();
             _cameraController = FindObjectOfType<Territory.UI.CameraController>();
 
@@ -21,9 +26,27 @@ namespace Territory.UI.HUD
                 _miniMapController.EnforceRenderSize();
         }
 
+        private void Start()
+        {
+            RegisterActions();
+        }
+
         private void OnEnable()
         {
             ApplyTimeRenderCheck();
+        }
+
+        private void RegisterActions()
+        {
+            if (_actionRegistry == null) return;
+            // DB-canonical action id (button_detail.action_id — TECH-29752).
+            _actionRegistry.Register("action.map-panel-toggle", _ => OnMapPanelToggle());
+        }
+
+        private void OnMapPanelToggle()
+        {
+            _mapVisible = !_mapVisible;
+            OnMinimapToggle(_mapVisible);
         }
 
         /// <summary>Subscribe minimap.toggle action. Called by HUD map button.</summary>

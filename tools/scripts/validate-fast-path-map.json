@@ -13,7 +13,8 @@
     "validate:no-domain-game-cycle",
     "validate:action-bind-drift",
     "validate:ui-id-consistency",
-    "validate:bake-handler-kind-coverage"
+    "validate:bake-handler-kind-coverage",
+    "validate:scene-wire-drift"
   ],
   "path_globs": {
     "docs/**/*master-plan*.md": [

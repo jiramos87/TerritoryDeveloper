@@ -8,7 +8,8 @@ namespace Territory.UI.Modals
 {
     /// <summary>
     /// Wave B2 (TECH-27085) — stats-panel adapter.
-    /// Registers stats.open / stats.close action handlers.
+    /// Registers action.stats-panel-toggle / action.stats-panel-close action handlers
+    /// (DB-canonical action ids per button_detail — TECH-29752).
     /// Subscribes ~25 binds (3 chart series + 11 service rows + tab + range + 3 stacked-bars).
     /// Wires range-tabs to StatsHistoryRecorder.GetRange.
     /// Apply-time render-check asserts ≥25 widgets + non-zero subscriber counts.
@@ -71,6 +72,10 @@ namespace Territory.UI.Modals
         private void RegisterActions()
         {
             if (_actionRegistry == null) return;
+            // DB-canonical action ids (button_detail.action_id — TECH-29752).
+            _actionRegistry.Register("action.stats-panel-toggle", _ => OnStatsOpen());
+            _actionRegistry.Register("action.stats-panel-close",  _ => OnStatsClose());
+            // Legacy aliases — kept for editor scripts / test harnesses referencing old ids.
             _actionRegistry.Register("stats.open",  _ => OnStatsOpen());
             _actionRegistry.Register("stats.close", _ => OnStatsClose());
         }

@@ -9,7 +9,8 @@ namespace Territory.UI.Modals
 {
     /// <summary>
     /// Wave B3 (TECH-27089) — budget-panel adapter.
-    /// Registers budget.open / budget.close action handlers.
+    /// Registers action.budget-panel-toggle / action.budget-panel-close action handlers
+    /// (DB-canonical action ids per button_detail — TECH-29752).
     /// Subscribes ~40 binds (taxes 4 + funding 11 + forecast 3 + treasury + header + range).
     /// Dispatches taxRate.set actions back to EconomyManager on slider change.
     /// ModalCoordinator reused from Wave B2 (T6.0.5).
@@ -77,6 +78,10 @@ namespace Territory.UI.Modals
         private void RegisterActions()
         {
             if (_actionRegistry == null) return;
+            // DB-canonical action ids (button_detail.action_id — TECH-29752).
+            _actionRegistry.Register("action.budget-panel-toggle", _ => OnBudgetOpen());
+            _actionRegistry.Register("action.budget-panel-close",  _ => OnBudgetClose());
+            // Legacy aliases — kept for editor scripts / test harnesses referencing old ids.
             _actionRegistry.Register("budget.open",  _ => OnBudgetOpen());
             _actionRegistry.Register("budget.close", _ => OnBudgetClose());
         }
