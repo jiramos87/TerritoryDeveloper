@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Territory.UI;
 using Territory.UI.Editor;
@@ -1583,6 +1585,16 @@ namespace Territory.Editor.Bridge
                 if (prefabError != null) return new BakeResult { root = null, error = prefabError, warnings = warnings };
 
                 AssetDatabase.Refresh();
+
+                // Layer 6 — audit row (TECH-28378). Best-effort; failure does not abort bake.
+                string repoRootForAudit = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                    System.IO.Path.GetDirectoryName(args.panels_path), "..", ".."));
+                foreach (var item in snapshot.items ?? Array.Empty<PanelSnapshotItem>())
+                {
+                    if (item == null || string.IsNullOrEmpty(item.slug)) continue;
+                    WriteBakeAuditRow(repoRootForAudit, item.slug);
+                }
+
                 return new BakeResult { root = null, error = null, warnings = warnings };
             }
             finally
@@ -2133,6 +2145,133 @@ namespace Territory.Editor.Bridge
             {
                 if (go != null) UnityEngine.Object.DestroyImmediate(go);
             }
+        }
+
+        // ── Layer 6 — bake audit (TECH-28378) ───────────────────────────────────
+
+        /// <summary>Version tag written to ia_ui_bake_history.bake_handler_version.</summary>
+        internal const string BakeHandlerVersion = "1.0";
+
+        /// <summary>
+        /// Best-effort: insert one row into ia_ui_bake_history via bake-audit-write.mjs.
+        /// Failure logs a warning but does NOT abort the bake.
+        /// </summary>
+        internal static void WriteBakeAuditRow(string repoRoot, string panelSlug)
+        {
+            if (string.IsNullOrEmpty(repoRoot) || string.IsNullOrEmpty(panelSlug)) return;
+
+            string script = System.IO.Path.Combine(repoRoot, "tools", "postgres-ia", "bake-audit-write.mjs");
+            if (!System.IO.File.Exists(script))
+            {
+                UnityEngine.Debug.LogWarning($"[UiBakeHandler] bake-audit-write.mjs not found at {script} — skipping audit row.");
+                return;
+            }
+
+            // Build payload JSON.
+            string commitSha = ResolveGitCommitSha(repoRoot);
+            var payloadObj = new BakeAuditPayload
+            {
+                panel_slug           = panelSlug,
+                bake_handler_version = BakeHandlerVersion,
+                diff_summary         = new BakeDiffSummaryForAudit(),
+                commit_sha           = commitSha ?? string.Empty,
+            };
+            string payloadJson = JsonUtility.ToJson(payloadObj);
+
+            // Write payload to temp file.
+            string tmpFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"bake-audit-{Guid.NewGuid():N}.json");
+            try
+            {
+                System.IO.File.WriteAllText(tmpFile, payloadJson, new UTF8Encoding(false));
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[UiBakeHandler] Failed to write audit payload temp file: {ex.Message}");
+                return;
+            }
+
+            try
+            {
+                string nodeExe = EditorPostgresExportRegistrar.ResolveNodeExecutablePath();
+                string dbUrl   = EditorPostgresExportRegistrar.ResolveEffectiveDatabaseUrl(repoRoot);
+                if (string.IsNullOrWhiteSpace(dbUrl) || string.IsNullOrWhiteSpace(nodeExe)) return;
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName               = nodeExe,
+                    Arguments              = $"\"{script}\" --payload-file \"{tmpFile}\"",
+                    WorkingDirectory       = repoRoot,
+                    UseShellExecute        = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    CreateNoWindow         = true,
+                };
+                psi.EnvironmentVariables["DATABASE_URL"] = dbUrl;
+                psi.EnvironmentVariables["NODE_NO_WARNINGS"] = "1";
+
+                using var proc = new Process { StartInfo = psi };
+                proc.Start();
+                bool finished = proc.WaitForExit(15_000);
+                if (!finished)
+                {
+                    proc.Kill();
+                    UnityEngine.Debug.LogWarning("[UiBakeHandler] bake-audit-write.mjs timed out — audit row skipped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[UiBakeHandler] bake audit write failed: {ex.Message}");
+            }
+            finally
+            {
+                try { System.IO.File.Delete(tmpFile); } catch { /* ignored */ }
+            }
+        }
+
+        /// <summary>Returns the current HEAD commit SHA (short). Returns empty string on failure.</summary>
+        static string ResolveGitCommitSha(string repoRoot)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName               = "git",
+                    Arguments              = "rev-parse --short HEAD",
+                    WorkingDirectory       = repoRoot,
+                    UseShellExecute        = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    CreateNoWindow         = true,
+                };
+                using var proc = new Process { StartInfo = psi };
+                proc.Start();
+                string sha = proc.StandardOutput.ReadToEnd().Trim();
+                proc.WaitForExit(5_000);
+                return sha;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        // ── DTOs for bake audit payload (JsonUtility-compatible) ─────────────────
+
+        [Serializable]
+        class BakeAuditPayload
+        {
+            public string panel_slug;
+            public string bake_handler_version;
+            public BakeDiffSummaryForAudit diff_summary;
+            public string commit_sha;
+        }
+
+        [Serializable]
+        class BakeDiffSummaryForAudit
+        {
+            // Empty summary — detailed diffs require a live prefab reference not available
+            // at post-bake hook time without a second prefab load. Extended by TECH-28379+.
+            public string status = "written";
         }
 
     }

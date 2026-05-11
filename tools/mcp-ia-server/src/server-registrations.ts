@@ -111,6 +111,7 @@ import { registerUiPanelGet, registerUiPanelList, registerUiPanelPublish } from 
 import { registerUiTokenGet, registerUiTokenList, registerUiTokenPublish } from "./tools/ui-token.js";
 import { registerUiComponentGet, registerUiComponentList, registerUiComponentPublish } from "./tools/ui-component.js";
 import { registerActionRegistryList, registerBindRegistryList } from "./tools/ui-registry.js";
+import { registerUiBakeHistoryQuery } from "./tools/ui-bake-history-query.js";
 
 // Bridge + compute tools
 import {
@@ -263,6 +264,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerBindRegistryList(server);
   // Note: catalog_panel_publish (Layer 1 gates TECH-28356–28360) registered
   // inside registerCatalogMutateTools above — no separate call needed.
+  // Layer 6 auditability (TECH-28379) — bake history query
+  registerUiBakeHistoryQuery(server);
 }
 
 /**
