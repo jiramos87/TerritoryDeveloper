@@ -400,6 +400,11 @@ namespace Territory.Editor.Bridge
             public bool numeric;
             // text-input widget (save-load-view save-name-input).
             public string placeholder;
+            // Stage 10 stats/budget panel — tab strips + chart series binding.
+            public string[] tabs;       // tab-strip captions
+            public string[] options;    // range-tabs captions
+            public string seriesId;     // chart series identifier (forwarded to ChartRenderer)
+            public string tabGroup;     // optional ToggleGroup id for multi-strip pages
         }
 
         /// <summary>Typed view of panel-level params_json on PanelSnapshotFields. Open shape — fields optional.</summary>

@@ -754,7 +754,8 @@ namespace Territory.Editor.Bridge
                 {
                     Debug.LogWarning(
                         $"[UiBakeHandler] illuminated-button icon sprite not found (slug={iconSpriteSlug}); "
-                        + "expected Assets/Sprites/Buttons/{slug}-target.png or Assets/Sprites/{slug}-target.png");
+                        + "expected Assets/Sprites/Buttons/{slug}-target.png, Assets/Sprites/{slug}-target.png, "
+                        + "or Assets/Sprites/Icons/icon-{slug}.png");
                 }
             }
 
@@ -821,6 +822,10 @@ namespace Territory.Editor.Bridge
             if (sprite != null) return sprite;
             var fallback = $"Assets/Sprites/{slug}-target.png";
             sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fallback);
+            if (sprite != null) return sprite;
+            // Stage 10 stats/budget service-icon path — Assets/Sprites/Icons/icon-{slug}.png.
+            var serviceIconPath = $"Assets/Sprites/Icons/icon-{slug}.png";
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(serviceIconPath);
             if (sprite != null) return sprite;
             // Step 16.D extension — sibling-folder scan (sprites organized under family folders
             // like Assets/Sprites/Commercial/Commercial-button-64-target.png).
