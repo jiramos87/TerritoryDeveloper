@@ -467,7 +467,7 @@ namespace Domains.Water.Services
         }
 
         private bool HasCardinalNeighborOutsideRectWithSameSurface(int x0, int y0, int rw, int rh, int surface,
-            Func<int, int, int> getWaterBodyId, Func<int, int> getSurface)
+            Func<int, int, int> getWaterBodyId, Func<int, int, int> getSurface)
         {
             int[] dx = { 1, -1, 0, 0 };
             int[] dy = { 0, 0, 1, -1 };
@@ -482,7 +482,6 @@ namespace Domains.Water.Services
                         if (!IsValidPosition(nx, ny)) continue;
                         int id = getWaterBodyId(nx, ny);
                         if (id == 0) continue;
-                        // getSurface returns surface of body at that id, or -1 if unknown
                         if (getSurface(nx, ny) == surface) return true;
                     }
                 }

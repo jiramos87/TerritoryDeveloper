@@ -11,6 +11,37 @@ namespace Territory.Terrain
 
 public partial class TerrainManager
 {
+    /// <summary>Cardinal offsets (S, N, E, W) for neighbor scans — order matches four-direction loops.</summary>
+    static readonly int[] CardinalDx = { -1, 1, 0, 0 };
+    static readonly int[] CardinalDy = { 0, 0, -1, 1 };
+
+    /// <summary>Cliff sprites must sort strictly below cell's primary terrain/shore sprite.</summary>
+    private const int CliffSortingBelowCellTerrain = 1;
+
+    /// <summary>
+    /// S/E face toward off-grid void: water-shore primary prefabs already include transition art on that edge → skip duplicate brown cliff stacks.
+    /// </summary>
+    private bool ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(CityCell cell)
+    {
+        return cell != null && CellUsesWaterShorePrimaryPrefab(cell);
+    }
+
+    private bool IsRegisteredOpenWaterAtImpl(int x, int y)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        return waterManager != null && waterManager.IsWaterAt(x, y);
+    }
+
+    private bool ShouldSkipRoadTerraformSurfaceAtImpl(int x, int y, HeightMap heightMap)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return true;
+        if (IsWaterSlopeCellImpl(x, y))
+            return true;
+        return IsRegisteredOpenWaterAtImpl(x, y);
+    }
+
     /// <summary>
     /// Find terrain prefab (slope, water slope, sea level water, bay) by name. Used when restoring saved games.
     /// </summary>
