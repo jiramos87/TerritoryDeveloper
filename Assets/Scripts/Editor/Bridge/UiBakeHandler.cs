@@ -1051,10 +1051,28 @@ namespace Territory.Editor.Bridge
                 case "chart-stub":
                 {
                     // Stage 10 budget/stats — chart + stacked-bar placeholder. RawImage scaffold;
-                    // runtime ChartRenderer replaces texture from bindId series.
+                    // ChartRenderer owns the Texture2D + paints on Subscribe<float[]>(bindId, ...).
                     var chartImg = childGo.AddComponent<RawImage>();
-                    chartImg.color = new Color(0.12f, 0.12f, 0.12f, 1f);
+                    chartImg.color = Color.white;
                     chartImg.raycastTarget = false;
+                    var chartRenderer = childGo.AddComponent<Territory.UI.Renderers.ChartRenderer>();
+                    var chartSo = new SerializedObject(chartRenderer);
+                    var chartBindIdProp = chartSo.FindProperty("_bindId");
+                    if (chartBindIdProp != null) chartBindIdProp.stringValue = pj?.bindId ?? string.Empty;
+                    var chartModeProp = chartSo.FindProperty("_mode");
+                    if (chartModeProp != null)
+                    {
+                        // pj.kind selects mode: "stacked-bar-row" → StackedBar, otherwise Line.
+                        chartModeProp.enumValueIndex = (pj?.kind == "stacked-bar-row") ? 1 : 0;
+                    }
+                    if (theme != null)
+                    {
+                        var lineColorProp = chartSo.FindProperty("_lineColor");
+                        if (lineColorProp != null) lineColorProp.colorValue = theme.AccentPrimary;
+                        var axisColorProp = chartSo.FindProperty("_axisColor");
+                        if (axisColorProp != null) axisColorProp.colorValue = theme.BorderSubtle;
+                    }
+                    chartSo.ApplyModifiedPropertiesWithoutUndo();
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 120f, flexibleWidth: 1f);
                     break;
                 }
