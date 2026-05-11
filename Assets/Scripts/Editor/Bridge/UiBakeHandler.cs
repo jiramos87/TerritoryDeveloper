@@ -942,25 +942,69 @@ namespace Territory.Editor.Bridge
                 }
                 case "field-list":
                 {
-                    // Label-value pair list from bind array. Outer container — OUTER_KIND_EXCLUSIONS pre-pop.
-                    // Spawns a VerticalLayoutGroup container; runtime populates rows from bind.
+                    // Stage 10 stats/budget — label-value pair list from string[] bind. Transparent BG,
+                    // VLG container, hidden Row_Prototype (HLG of FieldKey + FieldValue). Runtime
+                    // FieldListRenderer clones the prototype per pair on Subscribe<string[]>(bindId).
                     var fieldBg = childGo.AddComponent<Image>();
                     fieldBg.color = new Color(0f, 0f, 0f, 0f);
                     fieldBg.raycastTarget = false;
-                    childGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
-                    // Placeholder pair to show structure at bake time.
-                    var keyGo = new GameObject("FieldKey", typeof(RectTransform));
-                    keyGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var fieldVlg = childGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    fieldVlg.spacing = 2f;
+                    fieldVlg.padding = new RectOffset(4, 4, 4, 4);
+                    fieldVlg.childForceExpandHeight = false;
+                    fieldVlg.childForceExpandWidth = true;
+                    fieldVlg.childControlHeight = true;
+                    fieldVlg.childControlWidth = true;
+
+                    var prototypeGo = new GameObject("Row_Prototype", typeof(RectTransform), typeof(LayoutElement));
+                    prototypeGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var prototypeHlg = prototypeGo.AddComponent<HorizontalLayoutGroup>();
+                    prototypeHlg.spacing = 8f;
+                    prototypeHlg.childAlignment = TextAnchor.MiddleLeft;
+                    prototypeHlg.childForceExpandHeight = false;
+                    prototypeHlg.childForceExpandWidth = false;
+                    prototypeHlg.childControlHeight = true;
+                    prototypeHlg.childControlWidth = true;
+                    var prototypeLe = prototypeGo.GetComponent<LayoutElement>();
+                    prototypeLe.preferredHeight = 18f;
+                    prototypeLe.flexibleWidth = 1f;
+
+                    var keyGo = new GameObject("FieldKey", typeof(RectTransform), typeof(LayoutElement));
+                    keyGo.transform.SetParent(prototypeGo.transform, worldPositionStays: false);
                     var keyTmp = keyGo.AddComponent<TextMeshProUGUI>();
                     keyTmp.text = "Key";
+                    keyTmp.alignment = TextAlignmentOptions.MidlineLeft;
                     keyTmp.fontSize = 12f;
+                    keyTmp.color = theme != null ? theme.TextSecondary : new Color(0.75f, 0.75f, 0.75f, 1f);
                     keyTmp.raycastTarget = false;
-                    var valGo = new GameObject("FieldValue", typeof(RectTransform));
-                    valGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var keyLe = keyGo.GetComponent<LayoutElement>();
+                    keyLe.flexibleWidth = 1f;
+                    keyLe.preferredHeight = 18f;
+
+                    var valGo = new GameObject("FieldValue", typeof(RectTransform), typeof(LayoutElement));
+                    valGo.transform.SetParent(prototypeGo.transform, worldPositionStays: false);
                     var valTmp = valGo.AddComponent<TextMeshProUGUI>();
                     valTmp.text = "--";
+                    valTmp.alignment = TextAlignmentOptions.MidlineRight;
                     valTmp.fontSize = 12f;
+                    valTmp.color = theme != null ? theme.TextPrimary : Color.white;
                     valTmp.raycastTarget = false;
+                    var valLe = valGo.GetComponent<LayoutElement>();
+                    valLe.preferredWidth = 80f;
+                    valLe.preferredHeight = 18f;
+
+                    prototypeGo.SetActive(false);
+
+                    var fieldCtrl = childGo.AddComponent<Territory.UI.Renderers.FieldListRenderer>();
+                    var fieldSo = new SerializedObject(fieldCtrl);
+                    var fieldBindIdProp = fieldSo.FindProperty("_bindId");
+                    if (fieldBindIdProp != null) fieldBindIdProp.stringValue = pj?.bindId ?? string.Empty;
+                    var containerProp = fieldSo.FindProperty("_container");
+                    if (containerProp != null) containerProp.objectReferenceValue = childGo.GetComponent<RectTransform>();
+                    var prototypeProp = fieldSo.FindProperty("_prototype");
+                    if (prototypeProp != null) prototypeProp.objectReferenceValue = prototypeGo;
+                    fieldSo.ApplyModifiedPropertiesWithoutUndo();
+
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
                     break;
                 }
