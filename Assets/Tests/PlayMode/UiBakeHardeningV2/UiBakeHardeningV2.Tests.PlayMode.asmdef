@@ -1,0 +1,17 @@
+{
+    "name": "UiBakeHardeningV2.Tests.PlayMode",
+    "rootNamespace": "Territory.Tests.PlayMode.UiBakeHardeningV2",
+    "references": [
+        "TerritoryDeveloper.Game"
+    ],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
