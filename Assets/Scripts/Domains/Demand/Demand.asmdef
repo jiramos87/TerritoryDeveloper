@@ -1,0 +1,15 @@
+{
+    "name": "Demand",
+    "rootNamespace": "Domains.Demand",
+    "references": [
+        "GUID:1816056a6d934540a09c11d99d6672be"
+    ],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}
