@@ -1,0 +1,97 @@
+# scene-wire-plan.yaml — canvas layer assignments for CityScene panels
+# Source: Stage 13.0 canvas layering fix (TECH-29763/29764)
+# Canonical order: HUD < SubViews < Modals < Notifications < Cursor
+# DO NOT edit by hand — regenerate via SceneWirePlanEmitter when DB surface is ready.
+
+panels:
+- panel_slug: hud-bar
+  scene_name: CityScene
+  canvas_path: UI Canvas/HUD
+  slot_anchor: hud
+  controller_type: HudBarController
+  canvas_sorting_layer: HUD
+  canvas_sorting_order: 10
+- panel_slug: toolbar
+  scene_name: CityScene
+  canvas_path: UI Canvas/HUD
+  slot_anchor: hud
+  controller_type: ToolbarController
+  canvas_sorting_layer: HUD
+  canvas_sorting_order: 15
+- panel_slug: tool-subtype-picker
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: bottom-left
+  controller_type: ToolSubtypePickerController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 20
+- panel_slug: info-panel
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: bottom-right
+  controller_type: InfoPanelController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 25
+- panel_slug: main-menu
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: fullscreen
+  controller_type: MainMenuController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 30
+- panel_slug: new-game-form
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: fullscreen
+  controller_type: NewGameFormController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 32
+- panel_slug: save-load-view
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: fullscreen
+  controller_type: SaveLoadViewController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 34
+- panel_slug: settings-view
+  scene_name: CityScene
+  canvas_path: UI Canvas/SubViews
+  slot_anchor: fullscreen
+  controller_type: SettingsViewController
+  canvas_sorting_layer: SubViews
+  canvas_sorting_order: 36
+- panel_slug: map-panel
+  scene_name: CityScene
+  canvas_path: UI Canvas/HUD
+  slot_anchor: minimap
+  controller_type: MapPanelController
+  canvas_sorting_layer: HUD
+  canvas_sorting_order: 12
+- panel_slug: budget-panel
+  scene_name: CityScene
+  canvas_path: UI Canvas/Modals
+  slot_anchor: center
+  controller_type: BudgetPanelController
+  canvas_sorting_layer: Modals
+  canvas_sorting_order: 50
+- panel_slug: stats-panel
+  scene_name: CityScene
+  canvas_path: UI Canvas/Modals
+  slot_anchor: center
+  controller_type: StatsPanelController
+  canvas_sorting_layer: Modals
+  canvas_sorting_order: 55
+- panel_slug: pause-menu
+  scene_name: CityScene
+  canvas_path: UI Canvas/Modals
+  slot_anchor: center
+  controller_type: PauseMenuController
+  canvas_sorting_layer: Modals
+  canvas_sorting_order: 60
+- panel_slug: notifications-toast
+  scene_name: CityScene
+  canvas_path: UI Canvas/Notifications
+  slot_anchor: top-center
+  controller_type: NotificationsToastController
+  canvas_sorting_layer: Notifications
+  canvas_sorting_order: 80
