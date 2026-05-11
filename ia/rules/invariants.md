@@ -29,4 +29,4 @@ alwaysApply: true
 
 # Numbering
 
-Rules numbered 12–13 to preserve cardinal continuity with Unity rules 1–11. Merged total across both files = 13 invariants + 10 guardrails. MCP `invariants_summary` returns the merged shape.
+Rules numbered 12–13 to preserve cardinal continuity with Unity rules 1–11. Unity rules 1–12 + universal rules 12–13 = merged total 14 invariants. MCP `invariants_summary` returns the merged shape.

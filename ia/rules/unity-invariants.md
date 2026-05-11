@@ -20,6 +20,7 @@ alwaysApply: false
 9. Cliff visible faces: south + east only — N/W not instantiated
 10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
 11. `UrbanizationProposal`: NEVER re-enable — obsolete (see **glossary** **Urbanization proposal**)
+12. `ServiceRegistry` wiring — `Register<T>` in `Awake` (producer side); `Resolve<T>` in `Start` or method body ONLY — **NEVER in `Awake`** (init-order race). Every scene that hosts domain facades must have a `ServiceRegistry` GO. Spec: `docs/post-atomization-architecture.md §Service Registry`.
 
 # Guardrails (IF → THEN)
 

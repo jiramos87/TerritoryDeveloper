@@ -84,13 +84,13 @@ test(
 );
 
 test(
-  "buildInvariantsPayload with no domain returns all 13 invariants + all guardrails",
+  "buildInvariantsPayload with no domain returns all 14 invariants + all guardrails",
   { skip: !registryAvailable },
   () => {
     const registry = buildRegistry();
     const result = buildInvariantsPayload(registry);
     assert.ok(result);
-    assert.equal(result!.invariants.length, 13);
+    assert.equal(result!.invariants.length, 14);
     const counts = parsedSourceCounts();
     assert.equal(
       result!.guardrails.length,

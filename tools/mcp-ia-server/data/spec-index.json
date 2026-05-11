@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-11T10:50:01.950Z",
+  "last_generated": "2026-05-11T16:28:21.836Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -761,19 +761,19 @@
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 356
+          "line_start": 357
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 367
+          "line_start": 368
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 381
+          "line_start": 382
         }
       ]
     },

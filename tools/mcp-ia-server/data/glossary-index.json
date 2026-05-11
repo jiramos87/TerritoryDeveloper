@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-05-11T10:50:01.955Z",
+  "last_generated": "2026-05-11T16:28:21.841Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -786,6 +786,10 @@
     "service facade": {
       "spec_key": "docs",
       "anchor": "post-atomization-architecture-md-domain-catalog-table"
+    },
+    "service registry": {
+      "spec_key": "docs",
+      "anchor": "post-atomization-architecture-md-service-registry"
     },
     "concern boundary": {
       "spec_key": "docs",

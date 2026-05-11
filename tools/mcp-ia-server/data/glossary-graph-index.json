@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-11T10:50:02.102Z",
+  "last_generated": "2026-05-11T16:28:22.006Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -5418,6 +5418,16 @@
       ]
     },
     "service facade": {
+      "related": [
+        "asmdef boundary",
+        "atomization",
+        "componentization",
+        "concern boundary",
+        "domain folder"
+      ],
+      "cited_in": []
+    },
+    "service registry": {
       "related": [
         "asmdef boundary",
         "atomization",

@@ -136,6 +136,29 @@ Each domain may carry an `Editor/` child folder with a sub-asmdef:
 - `includePlatforms: ["Editor"]`
 - Only Editor-only tooling and bridge helpers go here — never runtime code.
 
+## §Service Registry
+
+`Assets/Scripts/Domains/_Registry/ServiceRegistry.cs` — scene-hosted MonoBehaviour implementing `IServiceRegistry`. Present in every scene.
+
+### Wiring rule
+
+- Producers (domain facades) call `Register<IFacade>(this)` in their own `Awake()`.
+- Consumers call `Resolve<IFacade>()` in `Start()` or in method bodies — **NEVER in Awake** (init-order race).
+
+### Scene-host rule
+
+Every scene that hosts domain facades MUST have a `ServiceRegistry` GameObject at the root of its hierarchy. CityScene, MainMenu: ServiceRegistry GO added Stage 0 (TECH-29997).
+
+### Init-order rule
+
+Registry itself has no Awake ordering dependency. Because it is a plain `Dictionary<Type,object>`, resolve order depends only on which Awake runs first. Producers register in Awake; consumers resolve in Start — Unity's two-phase init guarantees all Awake calls finish before any Start call.
+
+### asmdef boundary
+
+`Domains.Registry` asmdef has no references to concrete Domain asmdefs. Domain asmdefs reference `Domains.Registry` only if they call `Register`/`Resolve` directly. Consumers in `TerritoryDeveloper.Game.asmdef` resolve via `FindObjectOfType<ServiceRegistry>()` cached in their own Awake.
+
+---
+
 ## §Non-Unity tracks (separate conventions)
 
 - `tools/mcp-ia-server/src/ia-db/mutations/` — TS module split, one file per mutation kind cluster.
