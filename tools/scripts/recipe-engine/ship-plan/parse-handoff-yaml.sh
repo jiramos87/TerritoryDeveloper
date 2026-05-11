@@ -15,7 +15,7 @@
 #     "plan": {...},
 #     "stages": [...],
 #     "tasks": [...],
-#     "task_keys": [...],
+#     "task_ids": [...],
 #     "anchors": [...],
 #     "glossary_terms": [...],
 #     "lint_tasks": [{task_key, body, anchors, glossary_terms}, ...]

@@ -261,6 +261,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   // Wave A0 (TECH-27061) — action+bind registry read-only slices
   registerActionRegistryList(server);
   registerBindRegistryList(server);
+  // Note: catalog_panel_publish (Layer 1 gates TECH-28356–28360) registered
+  // inside registerCatalogMutateTools above — no separate call needed.
 }
 
 /**

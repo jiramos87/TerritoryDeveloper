@@ -55,9 +55,13 @@ steps:
   - id: task_bundle_batch
     description: >-
       Phase A.4 — prime task bundle cache (one MCP call for all tasks).
+      New-plan path: parse_handoff.task_ids is empty (no DB rows yet);
+      MCP returns empty per schema ("Empty array → empty result"). Skip
+      becomes implicit, no recipe crash.
     mcp: task_bundle_batch
     args:
-      task_keys: ${parse_handoff.task_keys}
+      slug: ${inputs.slug}
+      task_ids: ${parse_handoff.task_ids}
 
   - id: spec_sections_batch
     description: >-

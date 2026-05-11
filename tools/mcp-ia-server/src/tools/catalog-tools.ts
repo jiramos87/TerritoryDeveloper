@@ -11,6 +11,7 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerCatalogPanelPublish } from "./catalog-panel-publish.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 
@@ -955,9 +956,14 @@ export function registerCatalogMutateTools(server: McpServer): void {
     registerCreateTool(server, kind);
     registerUpdateTool(server, kind);
     registerRetireTool(server, kind);
-    registerPublishTool(server, kind);
+    // catalog_panel_publish is handled by the gated version (Layer 1 author-time
+    // gates TECH-28356–28360) — skip generic publish for 'panel' to avoid
+    // duplicate tool name collision.
+    if (kind !== "panel") registerPublishTool(server, kind);
     registerRestoreTool(server, kind);
   }
+  // Register gated panel publish (replaces generic catalog_panel_publish).
+  registerCatalogPanelPublish(server);
   registerCatalogBulkAction(server);
 }
 

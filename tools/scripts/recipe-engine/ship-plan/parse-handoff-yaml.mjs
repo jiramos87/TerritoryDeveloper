@@ -47,17 +47,43 @@ const data = yaml.load(fm) ?? {};
 
 const plan = data.plan ?? {};
 const stages = Array.isArray(data.stages) ? data.stages : [];
-const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+const topLevelTasks = Array.isArray(data.tasks) ? data.tasks : [];
 
-const taskKeys = tasks.map((t) => t.task_key).filter((x) => typeof x === "string" && x);
+// New-plan handoff keeps tasks nested under stages[].tasks[]. Flatten when
+// top-level tasks[] empty so downstream consumers see a unified task list.
+const flattenedFromStages = [];
+for (const stage of stages) {
+  const stageTasks = Array.isArray(stage?.tasks) ? stage.tasks : [];
+  for (const t of stageTasks) {
+    flattenedFromStages.push({ ...t, stage_id: stage?.id ?? null });
+  }
+}
+
+const tasks = topLevelTasks.length > 0 ? topLevelTasks : flattenedFromStages;
+
+// task_ids = DB-issued ids (TECH-NNNN). For new-plan path tasks have no
+// DB id yet — emit empty array; task_bundle_batch returns empty result
+// per its schema ("Empty array → empty result"). Avoids recipe crash.
+const taskIds = tasks
+  .map((t) => t.task_id)
+  .filter((x) => typeof x === "string" && x);
 
 const anchorsSet = new Set();
 const glossarySet = new Set();
 const lintTasks = [];
 
+// Harvest stage-level red_stage_proof_block.red_test_anchor (separate from
+// per-task anchors so it doesn't inflate task count).
+for (const stage of stages) {
+  const stageAnchor = stage?.red_stage_proof_block?.red_test_anchor;
+  if (typeof stageAnchor === "string" && stageAnchor) {
+    anchorsSet.add(stageAnchor);
+  }
+}
+
 for (const t of tasks) {
-  const taskKey = t.task_key ?? "";
-  const body = typeof t.body === "string" ? t.body : (t.digest_body ?? "");
+  const taskKey = t.task_key ?? t.task_id ?? t.id ?? "";
+  const body = typeof t.body === "string" ? t.body : (t.digest_body ?? t.digest_outline ?? "");
   const taskAnchors = Array.isArray(t.anchors) ? t.anchors.filter((x) => typeof x === "string") : [];
   const taskTerms = Array.isArray(t.glossary_terms)
     ? t.glossary_terms.filter((x) => typeof x === "string")
@@ -73,11 +99,11 @@ for (const t of tasks) {
 }
 
 const out = {
-  plan_version: plan.version ?? 1,
+  plan_version: plan.version ?? data.target_version ?? 1,
   plan,
   stages,
   tasks,
-  task_keys: taskKeys,
+  task_ids: taskIds,
   anchors: [...anchorsSet],
   glossary_terms: [...glossarySet],
   lint_tasks: lintTasks,
