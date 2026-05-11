@@ -1078,24 +1078,84 @@ namespace Territory.Editor.Bridge
                 }
                 case "tab-strip-stub":
                 {
-                    // Stage 10 budget/stats — range-tabs + tab-strip placeholder. HLG of stub toggles;
-                    // runtime swaps active state on bindId change.
+                    // Stage 10 budget/stats — tab-strip + range-tabs. Pills built from pj.tabs (else
+                    // pj.options, else single fallback caption). ToggleGroup ensures single-active;
+                    // runtime TabStripController publishes captionId to bindId on click + recolors.
                     var stripBg = childGo.AddComponent<Image>();
                     stripBg.color = new Color(0f, 0f, 0f, 0f);
                     stripBg.raycastTarget = false;
                     var stripHlg = childGo.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
                     stripHlg.spacing = 4f;
                     stripHlg.childAlignment = TextAnchor.MiddleCenter;
-                    // Placeholder tab pills (3) so renderer + AssertNotEmpty pass.
-                    for (int i = 0; i < 3; i++)
+
+                    string[] captions = (pj?.tabs != null && pj.tabs.Length > 0) ? pj.tabs
+                                       : (pj?.options != null && pj.options.Length > 0) ? pj.options
+                                       : new[] { "(no tabs)" };
+                    var toggleGroup = childGo.AddComponent<ToggleGroup>();
+                    toggleGroup.allowSwitchOff = false;
+
+                    Color idleColor = theme != null ? theme.SurfaceCardHud : new Color(0.18f, 0.18f, 0.22f, 1f);
+                    Color activeColor = theme != null ? theme.AccentPrimary : new Color(0.29f, 0.62f, 1f, 1f);
+
+                    var pillsArr = new System.Collections.Generic.List<(Toggle toggle, Image bg, string caption)>(captions.Length);
+                    for (int i = 0; i < captions.Length; i++)
                     {
-                        var pill = new GameObject($"Tab_{i}", typeof(RectTransform));
+                        var caption = captions[i];
+                        var pill = new GameObject($"Pill_{caption}", typeof(RectTransform), typeof(LayoutElement));
                         pill.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var pillLe = pill.GetComponent<LayoutElement>();
+                        pillLe.preferredWidth = 96f;
+                        pillLe.minWidth = 96f;
+                        pillLe.preferredHeight = 28f;
+                        pillLe.minHeight = 28f;
                         var pillImg = pill.AddComponent<Image>();
-                        pillImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+                        pillImg.color = idleColor;
                         pillImg.raycastTarget = true;
-                        EnsureChildLayoutElement(pill, preferredWidth: 64f, preferredHeight: 28f, flexibleWidth: 0f);
+
+                        var labelGo = new GameObject("Label", typeof(RectTransform));
+                        labelGo.transform.SetParent(pill.transform, worldPositionStays: false);
+                        var labelRt = labelGo.GetComponent<RectTransform>();
+                        labelRt.anchorMin = Vector2.zero;
+                        labelRt.anchorMax = Vector2.one;
+                        labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+                        var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
+                        labelTmp.text = caption;
+                        labelTmp.alignment = TextAlignmentOptions.Center;
+                        labelTmp.fontSize = 12f;
+                        labelTmp.color = theme != null ? theme.TextPrimary : Color.white;
+                        labelTmp.raycastTarget = false;
+
+                        var pillToggle = pill.AddComponent<Toggle>();
+                        pillToggle.targetGraphic = pillImg;
+                        pillToggle.group = toggleGroup;
+                        pillToggle.isOn = (i == 0);
+                        if (i == 0) pillImg.color = activeColor;
+
+                        pillsArr.Add((pillToggle, pillImg, caption));
                     }
+
+                    var tabCtrl = childGo.AddComponent<Territory.UI.Renderers.TabStripController>();
+                    var tabSo = new SerializedObject(tabCtrl);
+                    var tabBindIdProp = tabSo.FindProperty("_bindId");
+                    if (tabBindIdProp != null) tabBindIdProp.stringValue = pj?.bindId ?? string.Empty;
+                    var tabActiveColorProp = tabSo.FindProperty("_activeColor");
+                    if (tabActiveColorProp != null) tabActiveColorProp.colorValue = activeColor;
+                    var tabIdleColorProp = tabSo.FindProperty("_idleColor");
+                    if (tabIdleColorProp != null) tabIdleColorProp.colorValue = idleColor;
+                    var pillsProp = tabSo.FindProperty("_pills");
+                    if (pillsProp != null)
+                    {
+                        pillsProp.arraySize = pillsArr.Count;
+                        for (int i = 0; i < pillsArr.Count; i++)
+                        {
+                            var elem = pillsProp.GetArrayElementAtIndex(i);
+                            elem.FindPropertyRelative("toggle").objectReferenceValue = pillsArr[i].toggle;
+                            elem.FindPropertyRelative("background").objectReferenceValue = pillsArr[i].bg;
+                            elem.FindPropertyRelative("captionId").stringValue = pillsArr[i].caption;
+                        }
+                    }
+                    tabSo.ApplyModifiedPropertiesWithoutUndo();
+
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
