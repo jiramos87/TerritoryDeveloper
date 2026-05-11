@@ -2,7 +2,10 @@
     "name": "Zones",
     "rootNamespace": "Domains.Zones",
     "references": [
-        "GUID:c52fc744255e341e2b7c46b44439a244"
+        "GUID:c52fc744255e341e2b7c46b44439a244",
+        "GUID:8643513d36d6a4e6ea43ef708efd8ee0",
+        "GUID:3122f3163e46e4c5b9c743b44c471edb",
+        "GUID:ec856710742f14b6289b53aa575ea62a"
     ],
     "includePlatforms": [],
     "allowUnsafeCode": false,
