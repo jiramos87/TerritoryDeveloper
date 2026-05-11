@@ -1,5 +1,5 @@
 {
-  "snapshot_id": "2026-05-11T17:42:21.121Z",
+  "snapshot_id": "2026-05-11T21:41:32.971Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
@@ -697,80 +697,6 @@
         },
         {
           "ord": 4,
-          "kind": "button",
-          "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "footer-load-button"
-        }
-      ]
-    },
-    {
-      "slug": "save-view",
-      "fields": {
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
-        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
-        "rect_json": "{}"
-      },
-      "panel": {
-        "slug": "save-view",
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
-        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
-      },
-      "children": [
-        {
-          "ord": 1,
-          "kind": "panel",
-          "params_json": "{\"bind\":\"saveload.saveName\",\"kind\":\"text-input\",\"placeholder\":\"City-YYYY-MM-DD-HHmm\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "save-name-input"
-        },
-        {
-          "ord": 2,
-          "kind": "button",
-          "params_json": "{\"kind\":\"themed-button\",\"label\":\"Save\",\"action\":\"saveload.save\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "footer-save-button"
-        }
-      ]
-    },
-    {
-      "slug": "load-view",
-      "fields": {
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
-        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
-        "rect_json": "{}"
-      },
-      "panel": {
-        "slug": "load-view",
-        "layout_template": "vstack",
-        "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
-        "params_json": "{\"host_slots\":[\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
-      },
-      "children": [
-        {
-          "ord": 1,
-          "kind": "panel",
-          "params_json": "{\"kind\":\"save-list\",\"listBindId\":\"saveload.list\",\"trashAction\":\"saveload.delete\",\"selectAction\":\"saveload.selectSlot\",\"selectedSlotBindId\":\"saveload.selectedSlot\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "save-list"
-        },
-        {
-          "ord": 2,
           "kind": "button",
           "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
           "sprite_ref": "",
