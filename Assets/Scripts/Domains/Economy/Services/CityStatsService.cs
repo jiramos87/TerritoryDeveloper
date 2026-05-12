@@ -258,6 +258,120 @@ public class CityStatsService : IEconomy
     /// <summary>Decrement grass count.</summary>
     public void RemoveGrassCount() { _grassCount--; }
 
+    // Sub-type zone mutators (light/medium/heavy per R/C/I)
+    /// <summary>Increment residential light building count + aggregate.</summary>
+    public void AddResidentialLightBuildingCount() { _residentialLightBuildingCount++; AddResidentialBuildingCount(); }
+    /// <summary>Decrement residential light building count + aggregate.</summary>
+    public void RemoveResidentialLightBuildingCount() { _residentialLightBuildingCount--; RemoveResidentialBuildingCount(); }
+    /// <summary>Increment residential light zoning count + aggregate.</summary>
+    public void AddResidentialLightZoningCount() { _residentialLightZoningCount++; AddResidentialZoneCount(); }
+    /// <summary>Decrement residential light zoning count + aggregate.</summary>
+    public void RemoveResidentialLightZoningCount() { _residentialLightZoningCount--; RemoveResidentialZoneCount(); }
+    /// <summary>Increment residential medium building count + aggregate.</summary>
+    public void AddResidentialMediumBuildingCount() { _residentialMediumBuildingCount++; AddResidentialBuildingCount(); }
+    /// <summary>Decrement residential medium building count + aggregate.</summary>
+    public void RemoveResidentialMediumBuildingCount() { _residentialMediumBuildingCount--; RemoveResidentialBuildingCount(); }
+    /// <summary>Increment residential medium zoning count + aggregate.</summary>
+    public void AddResidentialMediumZoningCount() { _residentialMediumZoningCount++; AddResidentialZoneCount(); }
+    /// <summary>Decrement residential medium zoning count + aggregate.</summary>
+    public void RemoveResidentialMediumZoningCount() { _residentialMediumZoningCount--; RemoveResidentialZoneCount(); }
+    /// <summary>Increment residential heavy building count + aggregate.</summary>
+    public void AddResidentialHeavyBuildingCount() { _residentialHeavyBuildingCount++; AddResidentialBuildingCount(); }
+    /// <summary>Decrement residential heavy building count + aggregate.</summary>
+    public void RemoveResidentialHeavyBuildingCount() { _residentialHeavyBuildingCount--; RemoveResidentialBuildingCount(); }
+    /// <summary>Increment residential heavy zoning count + aggregate.</summary>
+    public void AddResidentialHeavyZoningCount() { _residentialHeavyZoningCount++; AddResidentialZoneCount(); }
+    /// <summary>Decrement residential heavy zoning count + aggregate.</summary>
+    public void RemoveResidentialHeavyZoningCount() { _residentialHeavyZoningCount--; RemoveResidentialZoneCount(); }
+
+    /// <summary>Increment commercial light building count + aggregate.</summary>
+    public void AddCommercialLightBuildingCount() { _commercialLightBuildingCount++; AddCommercialBuildingCount(); }
+    /// <summary>Decrement commercial light building count + aggregate.</summary>
+    public void RemoveCommercialLightBuildingCount() { _commercialLightBuildingCount--; RemoveCommercialBuildingCount(); }
+    /// <summary>Increment commercial light zoning count + aggregate.</summary>
+    public void AddCommercialLightZoningCount() { _commercialLightZoningCount++; AddCommercialZoneCount(); }
+    /// <summary>Decrement commercial light zoning count + aggregate.</summary>
+    public void RemoveCommercialLightZoningCount() { _commercialLightZoningCount--; RemoveCommercialZoneCount(); }
+    /// <summary>Increment commercial medium building count + aggregate.</summary>
+    public void AddCommercialMediumBuildingCount() { _commercialMediumBuildingCount++; AddCommercialBuildingCount(); }
+    /// <summary>Decrement commercial medium building count + aggregate.</summary>
+    public void RemoveCommercialMediumBuildingCount() { _commercialMediumBuildingCount--; RemoveCommercialBuildingCount(); }
+    /// <summary>Increment commercial medium zoning count + aggregate.</summary>
+    public void AddCommercialMediumZoningCount() { _commercialMediumZoningCount++; AddCommercialZoneCount(); }
+    /// <summary>Decrement commercial medium zoning count + aggregate.</summary>
+    public void RemoveCommercialMediumZoningCount() { _commercialMediumZoningCount--; RemoveCommercialZoneCount(); }
+    /// <summary>Increment commercial heavy building count + aggregate.</summary>
+    public void AddCommercialHeavyBuildingCount() { _commercialHeavyBuildingCount++; AddCommercialBuildingCount(); }
+    /// <summary>Decrement commercial heavy building count + aggregate.</summary>
+    public void RemoveCommercialHeavyBuildingCount() { _commercialHeavyBuildingCount--; RemoveCommercialBuildingCount(); }
+    /// <summary>Increment commercial heavy zoning count + aggregate.</summary>
+    public void AddCommercialHeavyZoningCount() { _commercialHeavyZoningCount++; AddCommercialZoneCount(); }
+    /// <summary>Decrement commercial heavy zoning count + aggregate.</summary>
+    public void RemoveCommercialHeavyZoningCount() { _commercialHeavyZoningCount--; RemoveCommercialZoneCount(); }
+
+    /// <summary>Increment industrial light building count + aggregate.</summary>
+    public void AddIndustrialLightBuildingCount() { _industrialLightBuildingCount++; AddIndustrialBuildingCount(); }
+    /// <summary>Decrement industrial light building count + aggregate.</summary>
+    public void RemoveIndustrialLightBuildingCount() { _industrialLightBuildingCount--; RemoveIndustrialBuildingCount(); }
+    /// <summary>Increment industrial light zoning count + aggregate.</summary>
+    public void AddIndustrialLightZoningCount() { _industrialLightZoningCount++; AddIndustrialZoneCount(); }
+    /// <summary>Decrement industrial light zoning count + aggregate.</summary>
+    public void RemoveIndustrialLightZoningCount() { _industrialLightZoningCount--; RemoveIndustrialZoneCount(); }
+    /// <summary>Increment industrial medium building count + aggregate.</summary>
+    public void AddIndustrialMediumBuildingCount() { _industrialMediumBuildingCount++; AddIndustrialBuildingCount(); }
+    /// <summary>Decrement industrial medium building count + aggregate.</summary>
+    public void RemoveIndustrialMediumBuildingCount() { _industrialMediumBuildingCount--; RemoveIndustrialBuildingCount(); }
+    /// <summary>Increment industrial medium zoning count + aggregate.</summary>
+    public void AddIndustrialMediumZoningCount() { _industrialMediumZoningCount++; AddIndustrialZoneCount(); }
+    /// <summary>Decrement industrial medium zoning count + aggregate.</summary>
+    public void RemoveIndustrialMediumZoningCount() { _industrialMediumZoningCount--; RemoveIndustrialZoneCount(); }
+    /// <summary>Increment industrial heavy building count + aggregate.</summary>
+    public void AddIndustrialHeavyBuildingCount() { _industrialHeavyBuildingCount++; AddIndustrialBuildingCount(); }
+    /// <summary>Decrement industrial heavy building count + aggregate.</summary>
+    public void RemoveIndustrialHeavyBuildingCount() { _industrialHeavyBuildingCount--; RemoveIndustrialBuildingCount(); }
+    /// <summary>Increment industrial heavy zoning count + aggregate.</summary>
+    public void AddIndustrialHeavyZoningCount() { _industrialHeavyZoningCount++; AddIndustrialZoneCount(); }
+    /// <summary>Decrement industrial heavy zoning count + aggregate.</summary>
+    public void RemoveIndustrialHeavyZoningCount() { _industrialHeavyZoningCount--; RemoveIndustrialZoneCount(); }
+
+    // Sub-type zone accessors (light/medium/heavy)
+    /// <summary>Get residential light building count.</summary>
+    public int GetResidentialLightBuildingCount() => _residentialLightBuildingCount;
+    /// <summary>Get residential light zoning count.</summary>
+    public int GetResidentialLightZoningCount() => _residentialLightZoningCount;
+    /// <summary>Get residential medium building count.</summary>
+    public int GetResidentialMediumBuildingCount() => _residentialMediumBuildingCount;
+    /// <summary>Get residential medium zoning count.</summary>
+    public int GetResidentialMediumZoningCount() => _residentialMediumZoningCount;
+    /// <summary>Get residential heavy building count.</summary>
+    public int GetResidentialHeavyBuildingCount() => _residentialHeavyBuildingCount;
+    /// <summary>Get residential heavy zoning count.</summary>
+    public int GetResidentialHeavyZoningCount() => _residentialHeavyZoningCount;
+    /// <summary>Get commercial light building count.</summary>
+    public int GetCommercialLightBuildingCount() => _commercialLightBuildingCount;
+    /// <summary>Get commercial light zoning count.</summary>
+    public int GetCommercialLightZoningCount() => _commercialLightZoningCount;
+    /// <summary>Get commercial medium building count.</summary>
+    public int GetCommercialMediumBuildingCount() => _commercialMediumBuildingCount;
+    /// <summary>Get commercial medium zoning count.</summary>
+    public int GetCommercialMediumZoningCount() => _commercialMediumZoningCount;
+    /// <summary>Get commercial heavy building count.</summary>
+    public int GetCommercialHeavyBuildingCount() => _commercialHeavyBuildingCount;
+    /// <summary>Get commercial heavy zoning count.</summary>
+    public int GetCommercialHeavyZoningCount() => _commercialHeavyZoningCount;
+    /// <summary>Get industrial light building count.</summary>
+    public int GetIndustrialLightBuildingCount() => _industrialLightBuildingCount;
+    /// <summary>Get industrial light zoning count.</summary>
+    public int GetIndustrialLightZoningCount() => _industrialLightZoningCount;
+    /// <summary>Get industrial medium building count.</summary>
+    public int GetIndustrialMediumBuildingCount() => _industrialMediumBuildingCount;
+    /// <summary>Get industrial medium zoning count.</summary>
+    public int GetIndustrialMediumZoningCount() => _industrialMediumZoningCount;
+    /// <summary>Get industrial heavy building count.</summary>
+    public int GetIndustrialHeavyBuildingCount() => _industrialHeavyBuildingCount;
+    /// <summary>Get industrial heavy zoning count.</summary>
+    public int GetIndustrialHeavyZoningCount() => _industrialHeavyZoningCount;
+
     // ---- Economy envelope ----
 
     /// <summary>Set total envelope cap from BudgetAllocationService.</summary>

@@ -1,1328 +1,196 @@
-using UnityEngine;
-using UnityEngine.Serialization;
-using System.Collections.Generic;
-using Territory.Timing;
-using Territory.Terrain;
-using Territory.Forests;
-using Territory.Buildings;
-using Territory.Core;
-using Territory.Zones;
-using Territory.Simulation;
-using Territory.Simulation.Signals;
+using UnityEngine; using UnityEngine.Serialization; using System.Collections.Generic;
+using Territory.Timing; using Territory.Terrain; using Territory.Forests;
+using Territory.Buildings; using Territory.Core; using Territory.Zones;
+using Territory.Simulation; using Territory.Simulation.Signals;
+using Domains.Economy.Services;
 
 namespace Territory.Economy
 {
-/// <summary>
-/// Global stats aggregator for city. Tracks population, money, happiness, employment,
-/// water/power capacity + consumption, zone counts, resource budgets. Many managers read
-/// from <see cref="CityStats"/> to decide. Updated by <see cref="TimeManager"/>, <see cref="WaterManager"/>, <see cref="ForestManager"/>.
-/// </summary>
+/// <summary>THIN hub — delegates to <see cref="CityStatsService"/>. Serialized fields UNCHANGED (locked #3).</summary>
 public class CityStats : MonoBehaviour, ICityStats, ICityStatsAuto
 {
-    #region Dependencies
-    public TimeManager timeManager;
-    public WaterManager waterManager;
-    public ForestManager forestManager;
+    #region Fields (locked #3)
+    public TimeManager timeManager; public WaterManager waterManager; public ForestManager forestManager;
     [SerializeField] private HappinessComposer happinessComposer;
     [SerializeField] private SignalFieldRegistry signalFieldRegistry;
     [SerializeField] private SignalTickScheduler signalTickScheduler;
-    private EmploymentManager _employmentManager;
-    private EconomyManager _economyManager;
-    private StatisticsManager _statisticsManager;
-    #endregion
-
-    #region City Data Fields
-    public System.DateTime currentDate;
-
-    public int population;
-    public int money;
-
-    // Stage 4 facade migration — happiness + pollution scalars now delegate to the
-    // signal layer (HappinessComposer / SignalFieldRegistry). Backing fields keep
-    // [SerializeField] + [FormerlySerializedAs] so legacy save-load round-trips
-    // continue to populate the same Inspector slot. Setter still writes the backing
-    // field for save-restore + reset paths (RestoreCityStatsData / ResetCityStats).
-    [SerializeField] [FormerlySerializedAs("happiness")] private float _happiness = 50f;
-    [SerializeField] [FormerlySerializedAs("pollution")] private float _pollution;
-
-    public float happiness
-    {
-        get { return happinessComposer != null ? happinessComposer.Current : _happiness; }
-        set { _happiness = value; }
-    }
-
-    public float pollution
-    {
-        get { return signalFieldRegistry != null ? ComputePollutionMean() : _pollution; }
-        set { _pollution = value; }
-    }
-
-    public int residentialZoneCount;
-
-    public int residentialBuildingCount;
-    public int commercialZoneCount;
-    public int commercialBuildingCount;
-    public int industrialZoneCount;
-    public int industrialBuildingCount;
-
-    /// <summary>Stage 7 (TECH-1892) — daily-refreshed mean of <see cref="SimulationSignal.LandValue"/> across all districts. Populated by <see cref="RefreshEconomyReadModel"/> via <see cref="SignalTickScheduler"/>.<see cref="SignalTickScheduler.Cache"/>.MeanForSignal. <c>0f</c> when scheduler/cache absent or no district has emitted yet (no NaN propagation downstream).</summary>
-    public float cityLandValueMean;
-
-    public int residentialLightBuildingCount;
-    public int residentialLightZoningCount;
-    public int residentialMediumBuildingCount;
-    public int residentialMediumZoningCount;
-    public int residentialHeavyBuildingCount;
-    public int residentialHeavyZoningCount;
-
-    public int commercialLightBuildingCount;
-    public int commercialLightZoningCount;
-    public int commercialMediumBuildingCount;
-    public int commercialMediumZoningCount;
-    public int commercialHeavyBuildingCount;
-    public int commercialHeavyZoningCount;
-
-    public int industrialLightBuildingCount;
-    public int industrialLightZoningCount;
-    public int industrialMediumBuildingCount;
-    public int industrialMediumZoningCount;
-    public int industrialHeavyBuildingCount;
-    public int industrialHeavyZoningCount;
-
-    public int roadCount;
-    public int grassCount;
-
-    public int cityPowerConsumption;
-    public int cityPowerOutput;
-    /// <summary>Explicit ICityStatsAuto bridge — field-to-property for cross-asmdef consumers.</summary>
+    private EmploymentManager _employmentManager; private EconomyManager _economyManager;
+    private StatisticsManager _statisticsManager; private BudgetAllocationService budgetAllocationService;
+    private CityStatsService _svc;
+    public System.DateTime currentDate; public int population; public int money;
+    [SerializeField][FormerlySerializedAs("happiness")] private float _happiness = 50f;
+    [SerializeField][FormerlySerializedAs("pollution")] private float _pollution;
+    public float happiness { get { return happinessComposer != null ? happinessComposer.Current : _happiness; } set { _happiness = value; } }
+    public float pollution { get { return signalFieldRegistry != null ? (_svc?.GetPollution() ?? _pollution) : _pollution; } set { _pollution = value; } }
+    public int residentialZoneCount, residentialBuildingCount, commercialZoneCount, commercialBuildingCount;
+    public int industrialZoneCount, industrialBuildingCount; public float cityLandValueMean;
+    public int residentialLightBuildingCount, residentialLightZoningCount;
+    public int residentialMediumBuildingCount, residentialMediumZoningCount;
+    public int residentialHeavyBuildingCount, residentialHeavyZoningCount;
+    public int commercialLightBuildingCount, commercialLightZoningCount;
+    public int commercialMediumBuildingCount, commercialMediumZoningCount;
+    public int commercialHeavyBuildingCount, commercialHeavyZoningCount;
+    public int industrialLightBuildingCount, industrialLightZoningCount;
+    public int industrialMediumBuildingCount, industrialMediumZoningCount;
+    public int industrialHeavyBuildingCount, industrialHeavyZoningCount;
+    public int roadCount, grassCount, cityPowerConsumption, cityPowerOutput;
     int ICityStatsAuto.cityPowerOutput => cityPowerOutput;
-
-    private List<PowerPlant> powerPlants = new List<PowerPlant>();
-
-    public string cityName;
-
-    public int cityWaterConsumption;
-    public int cityWaterOutput;
-
-    [Header("Forest Statistics")]
-    public int forestCellCount;
-    public float forestCoveragePercentage;
-
-    [Header("Simulation")]
-    public bool simulateGrowth = false;
-    /// <summary>Explicit ICityStatsAuto bridge — field-to-property for cross-asmdef consumers.</summary>
+    public string cityName; public int cityWaterConsumption, cityWaterOutput;
+    [Header("Forest Statistics")] public int forestCellCount; public float forestCoveragePercentage;
+    [Header("Simulation")] public bool simulateGrowth = false;
     bool ICityStatsAuto.simulateGrowth => simulateGrowth;
     public List<CommuneData> communes = new List<CommuneData>();
-
-    [Header("Economy read-model (envelope)")]
-    /// <summary>Global monthly envelope cap from <see cref="BudgetAllocationService.GlobalMonthlyCap"/>.</summary>
-    public int totalEnvelopeCap;
-    /// <summary>Remaining draw per Zone S sub-type (length 7).</summary>
+    [Header("Economy read-model (envelope)")] public int totalEnvelopeCap;
     public int[] envelopeRemainingPerSubType = new int[7];
     #endregion
 
-    private BudgetAllocationService budgetAllocationService;
-
-    #region Milestone Tracking (T9.0.5)
-    /// <summary>Fired once per threshold crossing from the canonical milestone set.</summary>
+    #region Milestone Tracking
     public System.Action<int> OnPopulationMilestone;
-
-    private static readonly int[] PopulationMilestones = { 1000, 5000, 10000, 25000, 50000, 100000 };
-
-    // Track which milestones have fired (index-matched to PopulationMilestones).
-    private readonly bool[] _milestoneFired = new bool[6];
-
-    // Per-milestone last-fire date for 30-day debounce.
-    private readonly System.DateTime[] _milestoneLastFire = new System.DateTime[6];
-
-    private const int MilestoneDebounceInGameDays = 30;
+    static readonly int[] PopMilestones = { 1000, 5000, 10000, 25000, 50000, 100000 };
+    readonly bool[] _mFired = new bool[6]; readonly System.DateTime[] _mDate = new System.DateTime[6];
+    const int MilestoneDays = 30;
     #endregion
 
-    #region Population and Demographics
+    #region Happiness constants
+    const float HB = 50f, WE = 30f, WS = 20f, WF = 10f, WP = 10f;
+    [Header("Happiness (tuning)")][SerializeField] float happinessWeightTax = 27f;
+    [SerializeField] float happinessWeightDevelopment = 12f;
+    [Range(0f,1f)][SerializeField] float happinessServiceCoverageStub = 0.4f;
+    const float DemMul0 = 0.8f, DemMul1 = 1.2f, ComfTax = 10f, MaxTax = 50f, MaxForest = 60f;
+    #endregion
+
     void Start()
     {
-        population = 0;
-        money = 20000;
-        residentialZoneCount = 0;
-        commercialZoneCount = 0;
-        industrialZoneCount = 0;
-        roadCount = 0;
-        grassCount = 0;
-        cityPowerConsumption = 0;
-        cityPowerOutput = 0;
-        cityWaterConsumption = 0;
-        cityWaterOutput = 0;
-        // cityName is set by RegionalMapManager.InitializeRegionalMap() from the player territory
-
-        // Initialize forest statistics
-        forestCellCount = 0;
-        forestCoveragePercentage = 0f;
-
-        if (forestManager == null)
-            forestManager = FindObjectOfType<ForestManager>();
-        if (_employmentManager == null)
-            _employmentManager = FindObjectOfType<EmploymentManager>();
-        if (_economyManager == null)
-            _economyManager = FindObjectOfType<EconomyManager>();
-        if (_statisticsManager == null)
-            _statisticsManager = FindObjectOfType<StatisticsManager>();
-        if (budgetAllocationService == null)
-            budgetAllocationService = FindObjectOfType<BudgetAllocationService>();
-        // Stage 4 facade refs — Inspector primary, FindObjectOfType fallback per invariant #4.
-        if (happinessComposer == null)
-            happinessComposer = FindObjectOfType<HappinessComposer>();
-        if (signalFieldRegistry == null)
-            signalFieldRegistry = FindObjectOfType<SignalFieldRegistry>();
-        if (signalTickScheduler == null)
-            signalTickScheduler = FindObjectOfType<SignalTickScheduler>();
+        _svc = new CityStatsService();
+        if (forestManager == null) forestManager = FindObjectOfType<ForestManager>();
+        if (_employmentManager == null) _employmentManager = FindObjectOfType<EmploymentManager>();
+        if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
+        if (_statisticsManager == null) _statisticsManager = FindObjectOfType<StatisticsManager>();
+        if (budgetAllocationService == null) budgetAllocationService = FindObjectOfType<BudgetAllocationService>();
+        if (happinessComposer == null) happinessComposer = FindObjectOfType<HappinessComposer>();
+        if (signalFieldRegistry == null) signalFieldRegistry = FindObjectOfType<SignalFieldRegistry>();
+        if (signalTickScheduler == null) signalTickScheduler = FindObjectOfType<SignalTickScheduler>();
     }
 
-    /// <summary>
-    /// Refresh derived envelope fields for HUD + stats panel. Call from daily tick.
-    /// </summary>
+    void SyncToSvc() { _svc.AddMoney(money - _svc.GetMoney()); _svc.AddPopulation(population - _svc.GetPopulation()); _svc.SetCurrentDate(currentDate); _svc.SetSimulateGrowth(simulateGrowth); if (!string.IsNullOrEmpty(cityName)) _svc.SetCityName(cityName); }
+
     public void RefreshEconomyReadModel()
     {
-        if (envelopeRemainingPerSubType == null || envelopeRemainingPerSubType.Length != 7)
-            envelopeRemainingPerSubType = new int[7];
-
-        if (budgetAllocationService != null)
-        {
-            totalEnvelopeCap = budgetAllocationService.GlobalMonthlyCap;
-            for (int i = 0; i < 7; i++)
-                envelopeRemainingPerSubType[i] = budgetAllocationService.GetRemaining(i);
-        }
-
-        // Stage 7 (TECH-1892) — refresh per-tick mean LandValue from district cache.
-        // Empty cache or absent scheduler → 0f (no NaN propagation into EconomyManager bonus).
-        if (signalTickScheduler != null && signalTickScheduler.Cache != null)
-        {
-            cityLandValueMean = signalTickScheduler.Cache.MeanForSignal(SimulationSignal.LandValue);
-        }
-        else
-        {
-            cityLandValueMean = 0f;
-        }
-    }
-
-    /// <summary>Add (or subtract if negative) amount to city population.</summary>
-    /// <param name="value">Population delta.</param>
-    public void AddPopulation(int value)
-    {
-        int prev = population;
-        population += value;
-        CheckPopulationMilestones(prev, population);
-    }
-
-    /// <summary>Check if population crossed any milestone threshold; fire OnPopulationMilestone once per threshold (30-day debounce).</summary>
-    private void CheckPopulationMilestones(int prev, int next)
-    {
-        if (OnPopulationMilestone == null) return;
-        for (int i = 0; i < PopulationMilestones.Length; i++)
-        {
-            int threshold = PopulationMilestones[i];
-            // Crossed upward only.
-            if (prev < threshold && next >= threshold)
-            {
-                // 30-day debounce.
-                if (_milestoneFired[i])
-                {
-                    System.TimeSpan gap = currentDate - _milestoneLastFire[i];
-                    if (gap.TotalDays < MilestoneDebounceInGameDays) continue;
-                }
-                _milestoneFired[i] = true;
-                _milestoneLastFire[i] = currentDate;
-                OnPopulationMilestone.Invoke(threshold);
-            }
-        }
-    }
-
-    /// <summary>Add amount to city treasury.</summary>
-    /// <param name="value">Money to add.</param>
-    public void AddMoney(int value)
-    {
-        money += value;
-    }
-
-    /// <summary>Subtract amount from city treasury.</summary>
-    /// <param name="value">Money to remove.</param>
-    public void RemoveMoney(int value)
-    {
-        money -= value;
-    }
-
-    #endregion
-
-    #region Zone Statistics
-    /// <summary>Inc residential zone count by 1.</summary>
-    public void AddResidentialZoneCount()
-    {
-        residentialZoneCount++;
-    }
-
-    /// <summary>Dec residential zone count by 1.</summary>
-    public void RemoveResidentialZoneCount()
-    {
-        residentialZoneCount--;
-    }
-
-    /// <summary>Inc residential building count by 1.</summary>
-    public void AddResidentialBuildingCount()
-    {
-        residentialBuildingCount++;
-    }
-
-    /// <summary>Dec residential building count by 1.</summary>
-    public void RemoveResidentialBuildingCount()
-    {
-        residentialBuildingCount--;
-    }
-
-    /// <summary>Inc commercial zone count by 1.</summary>
-    public void AddCommercialZoneCount()
-    {
-        commercialZoneCount++;
-    }
-
-    /// <summary>Dec commercial zone count by 1.</summary>
-    public void RemoveCommercialZoneCount()
-    {
-        commercialZoneCount--;
-    }
-
-    /// <summary>Inc commercial building count by 1.</summary>
-    public void AddCommercialBuildingCount()
-    {
-        commercialBuildingCount++;
-    }
-
-    /// <summary>Dec commercial building count by 1.</summary>
-    public void RemoveCommercialBuildingCount()
-    {
-        commercialBuildingCount--;
-    }
-
-    /// <summary>Inc industrial zone count by 1.</summary>
-    public void AddIndustrialZoneCount()
-    {
-        industrialZoneCount++;
-    }
-
-    /// <summary>Dec industrial zone count by 1.</summary>
-    public void RemoveIndustrialZoneCount()
-    {
-        industrialZoneCount--;
-    }
-
-    /// <summary>Inc industrial building count by 1.</summary>
-    public void AddIndustrialBuildingCount()
-    {
-        industrialBuildingCount++;
-    }
-
-    /// <summary>Dec industrial building count by 1.</summary>
-    public void RemoveIndustrialBuildingCount()
-    {
-        industrialBuildingCount--;
-    }
-
-    /// <summary>Inc residential light building count + aggregate residential building count.</summary>
-    public void AddResidentialLightBuildingCount()
-    {
-        residentialLightBuildingCount++;
-        AddResidentialBuildingCount();
-    }
-
-    /// <summary>Dec residential light building count + aggregate residential building count.</summary>
-    public void RemoveResidentialLightBuildingCount()
-    {
-        residentialLightBuildingCount--;
-        RemoveResidentialBuildingCount();
-    }
-
-    /// <summary>Inc residential light zoning count + aggregate residential zone count.</summary>
-    public void AddResidentialLightZoningCount()
-    {
-        residentialLightZoningCount++;
-        AddResidentialZoneCount();
-    }
-
-    /// <summary>Dec residential light zoning count + aggregate residential zone count.</summary>
-    public void RemoveResidentialLightZoningCount()
-    {
-        residentialLightZoningCount--;
-        RemoveResidentialZoneCount();
-    }
-
-    /// <summary>Inc residential medium building count + aggregate residential building count.</summary>
-    public void AddResidentialMediumBuildingCount()
-    {
-        residentialMediumBuildingCount++;
-        AddResidentialBuildingCount();
-    }
-
-    /// <summary>Dec residential medium building count + aggregate residential building count.</summary>
-    public void RemoveResidentialMediumBuildingCount()
-    {
-        residentialMediumBuildingCount--;
-        RemoveResidentialBuildingCount();
-    }
-
-    /// <summary>Inc residential medium zoning count + aggregate residential zone count.</summary>
-    public void AddResidentialMediumZoningCount()
-    {
-        residentialMediumZoningCount++;
-        AddResidentialZoneCount();
-    }
-
-    /// <summary>Dec residential medium zoning count + aggregate residential zone count.</summary>
-    public void RemoveResidentialMediumZoningCount()
-    {
-        residentialMediumZoningCount--;
-        RemoveResidentialZoneCount();
-    }
-
-    /// <summary>Inc residential heavy building count + aggregate residential building count.</summary>
-    public void AddResidentialHeavyBuildingCount()
-    {
-        residentialHeavyBuildingCount++;
-        AddResidentialBuildingCount();
-    }
-
-    /// <summary>Dec residential heavy building count + aggregate residential building count.</summary>
-    public void RemoveResidentialHeavyBuildingCount()
-    {
-        residentialHeavyBuildingCount--;
-        RemoveResidentialBuildingCount();
-    }
-
-    /// <summary>Inc residential heavy zoning count + aggregate residential zone count.</summary>
-    public void AddResidentialHeavyZoningCount()
-    {
-        residentialHeavyZoningCount++;
-        AddResidentialZoneCount();
-    }
-
-    /// <summary>Dec residential heavy zoning count + aggregate residential zone count.</summary>
-    public void RemoveResidentialHeavyZoningCount()
-    {
-        residentialHeavyZoningCount--;
-        RemoveResidentialZoneCount();
-    }
-
-    /// <summary>Inc commercial light building count + aggregate commercial building count.</summary>
-    public void AddCommercialLightBuildingCount()
-    {
-        commercialLightBuildingCount++;
-        AddCommercialBuildingCount();
-    }
-
-    /// <summary>Dec commercial light building count + aggregate commercial building count.</summary>
-    public void RemoveCommercialLightBuildingCount()
-    {
-        commercialLightBuildingCount--;
-        RemoveCommercialBuildingCount();
-    }
-
-    /// <summary>Inc commercial light zoning count + aggregate commercial zone count.</summary>
-    public void AddCommercialLightZoningCount()
-    {
-        commercialLightZoningCount++;
-        AddCommercialZoneCount();
-    }
-
-    /// <summary>Dec commercial light zoning count + aggregate commercial zone count.</summary>
-    public void RemoveCommercialLightZoningCount()
-    {
-        commercialLightZoningCount--;
-        RemoveCommercialZoneCount();
-    }
-
-    /// <summary>Inc commercial medium building count + aggregate commercial building count.</summary>
-    public void AddCommercialMediumBuildingCount()
-    {
-        commercialMediumBuildingCount++;
-        AddCommercialBuildingCount();
-    }
-
-    /// <summary>Dec commercial medium building count + aggregate commercial building count.</summary>
-    public void RemoveCommercialMediumBuildingCount()
-    {
-        commercialMediumBuildingCount--;
-        RemoveCommercialBuildingCount();
-    }
-
-    /// <summary>Inc commercial medium zoning count + aggregate commercial zone count.</summary>
-    public void AddCommercialMediumZoningCount()
-    {
-        commercialMediumZoningCount++;
-        AddCommercialZoneCount();
-    }
-
-    /// <summary>Dec commercial medium zoning count + aggregate commercial zone count.</summary>
-    public void RemoveCommercialMediumZoningCount()
-    {
-        commercialMediumZoningCount--;
-        RemoveCommercialZoneCount();
-    }
-
-    /// <summary>Inc commercial heavy building count + aggregate commercial building count.</summary>
-    public void AddCommercialHeavyBuildingCount()
-    {
-        commercialHeavyBuildingCount++;
-        AddCommercialBuildingCount();
-    }
-
-    /// <summary>Dec commercial heavy building count + aggregate commercial building count.</summary>
-    public void RemoveCommercialHeavyBuildingCount()
-    {
-        commercialHeavyBuildingCount--;
-        RemoveCommercialBuildingCount();
-    }
-
-    /// <summary>Inc commercial heavy zoning count + aggregate commercial zone count.</summary>
-    public void AddCommercialHeavyZoningCount()
-    {
-        commercialHeavyZoningCount++;
-        AddCommercialZoneCount();
-    }
-
-    /// <summary>Dec commercial heavy zoning count + aggregate commercial zone count.</summary>
-    public void RemoveCommercialHeavyZoningCount()
-    {
-        commercialHeavyZoningCount--;
-        RemoveCommercialZoneCount();
-    }
-
-    /// <summary>Inc industrial light building count + aggregate industrial building count.</summary>
-    public void AddIndustrialLightBuildingCount()
-    {
-        industrialLightBuildingCount++;
-        AddIndustrialBuildingCount();
-    }
-
-    /// <summary>Dec industrial light building count + aggregate industrial building count.</summary>
-    public void RemoveIndustrialLightBuildingCount()
-    {
-        industrialLightBuildingCount--;
-        RemoveIndustrialBuildingCount();
-    }
-
-    /// <summary>Inc industrial light zoning count + aggregate industrial zone count.</summary>
-    public void AddIndustrialLightZoningCount()
-    {
-        industrialLightZoningCount++;
-        AddIndustrialZoneCount();
-    }
-
-    /// <summary>Dec industrial light zoning count + aggregate industrial zone count.</summary>
-    public void RemoveIndustrialLightZoningCount()
-    {
-        industrialLightZoningCount--;
-        RemoveIndustrialZoneCount();
-    }
-
-    /// <summary>Inc industrial medium building count + aggregate industrial building count.</summary>
-    public void AddIndustrialMediumBuildingCount()
-    {
-        industrialMediumBuildingCount++;
-        AddIndustrialBuildingCount();
-    }
-
-    /// <summary>Dec industrial medium building count + aggregate industrial building count.</summary>
-    public void RemoveIndustrialMediumBuildingCount()
-    {
-        industrialMediumBuildingCount--;
-        RemoveIndustrialBuildingCount();
-    }
-
-    /// <summary>Inc industrial medium zoning count + aggregate industrial zone count.</summary>
-    public void AddIndustrialMediumZoningCount()
-    {
-        industrialMediumZoningCount++;
-        AddIndustrialZoneCount();
-    }
-
-    /// <summary>Dec industrial medium zoning count + aggregate industrial zone count.</summary>
-    public void RemoveIndustrialMediumZoningCount()
-    {
-        industrialMediumZoningCount--;
-        RemoveIndustrialZoneCount();
-    }
-
-    /// <summary>Inc industrial heavy building count + aggregate industrial building count.</summary>
-    public void AddIndustrialHeavyBuildingCount()
-    {
-        industrialHeavyBuildingCount++;
-        AddIndustrialBuildingCount();
-    }
-
-    /// <summary>Dec industrial heavy building count + aggregate industrial building count.</summary>
-    public void RemoveIndustrialHeavyBuildingCount()
-    {
-        industrialHeavyBuildingCount--;
-        RemoveIndustrialBuildingCount();
-    }
-
-    /// <summary>Inc industrial heavy zoning count + aggregate industrial zone count.</summary>
-    public void AddIndustrialHeavyZoningCount()
-    {
-        industrialHeavyZoningCount++;
-        AddIndustrialZoneCount();
-    }
-
-    /// <summary>Dec industrial heavy zoning count + aggregate industrial zone count.</summary>
-    public void RemoveIndustrialHeavyZoningCount()
-    {
-        industrialHeavyZoningCount--;
-        RemoveIndustrialZoneCount();
-    }
-
-    /// <summary>Inc road count by 1.</summary>
-    public void AddRoadCount()
-    {
-        roadCount++;
-    }
-
-    /// <summary>Inc grass tile count by 1.</summary>
-    public void AddGrassCount()
-    {
-        grassCount++;
-    }
-
-    /// <summary>Inc appropriate zone or building counter for given zone type.</summary>
-    /// <param name="zoneType">Zone type whose counter to increment.</param>
-    public void AddZoneBuildingCount(Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightBuilding:
-                AddResidentialLightBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialLightZoning:
-                AddResidentialLightZoningCount();
-                break;
-            case Zone.ZoneType.ResidentialMediumBuilding:
-                AddResidentialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                AddResidentialMediumZoningCount();
-                break;
-            case Zone.ZoneType.ResidentialHeavyBuilding:
-                AddResidentialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                AddResidentialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.CommercialLightBuilding:
-                AddCommercialLightBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialLightZoning:
-                AddCommercialLightZoningCount();
-                break;
-            case Zone.ZoneType.CommercialMediumBuilding:
-                AddCommercialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialMediumZoning:
-                AddCommercialMediumZoningCount();
-                break;
-            case Zone.ZoneType.CommercialHeavyBuilding:
-                AddCommercialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                AddCommercialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialLightBuilding:
-                AddIndustrialLightBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialLightZoning:
-                AddIndustrialLightZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialMediumBuilding:
-                AddIndustrialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                AddIndustrialMediumZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialHeavyBuilding:
-                AddIndustrialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                AddIndustrialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.Road:
-                AddRoadCount();
-                break;
-            case Zone.ZoneType.Grass:
-                AddGrassCount();
-                break;
-        }
-    }
-
-    /// <summary>Dec appropriate zone or building counter for given zone type.</summary>
-    /// <param name="zoneType">Zone type whose counter to decrement.</param>
-    public void RemoveZoneBuildingCount(Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightBuilding:
-                RemoveResidentialLightBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialLightZoning:
-                RemoveResidentialLightZoningCount();
-                break;
-            case Zone.ZoneType.ResidentialMediumBuilding:
-                RemoveResidentialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                RemoveResidentialMediumZoningCount();
-                break;
-            case Zone.ZoneType.ResidentialHeavyBuilding:
-                RemoveResidentialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                RemoveResidentialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.CommercialLightBuilding:
-                RemoveCommercialLightBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialLightZoning:
-                RemoveCommercialLightZoningCount();
-                break;
-            case Zone.ZoneType.CommercialMediumBuilding:
-                RemoveCommercialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialMediumZoning:
-                RemoveCommercialMediumZoningCount();
-                break;
-            case Zone.ZoneType.CommercialHeavyBuilding:
-                RemoveCommercialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                RemoveCommercialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialLightBuilding:
-                RemoveIndustrialLightBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialLightZoning:
-                RemoveIndustrialLightZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialMediumBuilding:
-                RemoveIndustrialMediumBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                RemoveIndustrialMediumZoningCount();
-                break;
-            case Zone.ZoneType.IndustrialHeavyBuilding:
-                RemoveIndustrialHeavyBuildingCount();
-                break;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                RemoveIndustrialHeavyZoningCount();
-                break;
-            case Zone.ZoneType.Road:
-                roadCount--;
-                break;
-            case Zone.ZoneType.Grass:
-                grassCount--;
-                break;
-        }
-    }
-    #endregion
-
-    #region Resource Capacity
-    /// <summary>Return true if treasury ≥ cost.</summary>
-    /// <param name="cost">Cost to check.</param>
-    /// <returns>True if affordable.</returns>
-    public bool CanAfford(int cost)
-    {
-        return money >= cost;
-    }
-
-    /// <summary>Register power plant + recalc total city power output.</summary>
-    /// <param name="powerPlant">Plant to register.</param>
-    public void RegisterPowerPlant(PowerPlant powerPlant)
-    {
-        powerPlants.Add(powerPlant);
-
-        int totalPowerOutput = 0;
-        foreach (var plant in powerPlants)
-        {
-            totalPowerOutput += plant.PowerOutput;
-        }
-
-        cityPowerOutput = totalPowerOutput;
-    }
-
-    /// <summary>Unregister power plant + recalc total city power output.</summary>
-    /// <param name="powerPlant">Plant to unregister.</param>
-    public void UnregisterPowerPlant(PowerPlant powerPlant)
-    {
-        powerPlants.Remove(powerPlant);
-
-        int totalPowerOutput = 0;
-        foreach (var plant in powerPlants)
-        {
-            totalPowerOutput += plant.PowerOutput;
-        }
-
-        cityPowerOutput = totalPowerOutput;
-    }
-
-    /// <summary>Clear registered plants + reset city power output to 0.</summary>
-    public void ResetPowerPlants()
-    {
-        powerPlants.Clear();
-        cityPowerOutput = 0;
-    }
-
-    /// <summary>Count of registered plants for output aggregation (upkeep + pollution).</summary>
-    public int GetRegisteredPowerPlantCount()
-    {
-        return powerPlants.Count;
-    }
-
-    /// <summary>Total power output from all registered plants.</summary>
-    /// <returns>Total city power output.</returns>
-    public int GetTotalPowerOutput()
-    {
-        return cityPowerOutput;
-    }
-
-    /// <summary>Add amount to city total power consumption.</summary>
-    /// <param name="value">Power consumption to add.</param>
-    public void AddPowerConsumption(int value)
-    {
-        cityPowerConsumption += value;
-    }
-
-    /// <summary>Subtract amount from city total power consumption.</summary>
-    /// <param name="value">Power consumption to remove.</param>
-    public void RemovePowerConsumption(int value)
-    {
-        cityPowerConsumption -= value;
-    }
-
-    /// <summary>Total city-wide power consumption.</summary>
-    /// <returns>Total city power consumption.</returns>
-    public int GetTotalPowerConsumption()
-    {
-        return cityPowerConsumption;
-    }
-    #endregion
-
-    #region Update Methods
-    /// <summary>Monthly update logic (placeholder for future monthly calcs).</summary>
-    public void PerformMonthlyUpdates()
-    {
-
-    }
-
-    /// <summary>Daily update: sync date, update employment + stats + forest data.</summary>
-    public void PerformDailyUpdates()
-    {
-        currentDate = timeManager.GetCurrentDate();
-
-        if (_employmentManager != null) _employmentManager.UpdateEmployment();
-        if (_statisticsManager != null) _statisticsManager.UpdateStatistics();
-
-        // Update forest statistics
-        UpdateForestStatistics();
-
-        // Stage 4 — pollution + happiness now driven by SignalTickScheduler (producers + HappinessComposer);
-        // RecalculatePollution() / RecalculateHappiness() bodies migrated to no-ops + facade getters above.
-
-        // Demand uses same-tick happiness targets and tax rates (see EmploymentManager.RefreshRCIDemandAfterDailyStats)
-        if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
-
-        RefreshEconomyReadModel();
-    }
-
-    /// <summary>
-    /// Re-run pollution + happiness + R/C/I demand when tax or policy inputs change mid-day from UI
-    /// (daily ticks already call <see cref="PerformDailyUpdates"/>).
-    /// </summary>
-    public void RefreshHappinessAfterPolicyChange()
-    {
-        // Stage 4 — pollution + happiness now driven by SignalTickScheduler; facade getters
-        // surface the post-tick value. RecalculatePollution / RecalculateHappiness retained
-        // as no-op shims for any external caller that still invokes them.
-        if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
-    }
-
-    /// <summary>True if city power output &gt; consumption.</summary>
-    /// <returns>True if power supply sufficient.</returns>
-    public bool GetCityPowerAvailability()
-    {
-        return cityPowerOutput > cityPowerConsumption;
-    }
-    #endregion
-
-    #region Economy
-    /// <summary>Apply cost + population + happiness + power + water effects of new zone/building placement.</summary>
-    /// <param name="zoneType">Zone/building type placed.</param>
-    /// <param name="zoneAttributes">Attributes → costs + stat contributions.</param>
-    public void HandleZoneBuildingPlacement(Zone.ZoneType zoneType, ZoneAttributes zoneAttributes)
-    {
-        RemoveMoney(zoneAttributes.ConstructionCost);
-        AddPopulation(zoneAttributes.Population);
-        AddZoneBuildingCount(zoneType);
-        AddPowerConsumption(zoneAttributes.PowerConsumption);
-        AddWaterConsumption(zoneAttributes.WaterConsumption);
-    }
-
-    /// <summary>Reverse stat effects of demolished building + refund fraction of build cost.</summary>
-    /// <param name="zoneType">Zone/building type demolished.</param>
-    /// <param name="zoneAttributes">Attributes → reverse stat contributions.</param>
-    public void HandleBuildingDemolition(Zone.ZoneType zoneType, ZoneAttributes zoneAttributes)
-    {
-        AddMoney(zoneAttributes.ConstructionCost / 5);
-        AddPopulation(-zoneAttributes.Population);
-        RemoveZoneBuildingCount(zoneType);
-        RemovePowerConsumption(zoneAttributes.PowerConsumption);
-        RemoveWaterConsumption(zoneAttributes.WaterConsumption);
-    }
-
-    /// <summary>Update forest stats (called by ForestManager).</summary>
-    public void UpdateForestStats(ForestStatistics forestStats)
-    {
-        forestCellCount = forestStats.totalForestCells;
-        forestCoveragePercentage = forestStats.forestCoveragePercentage;
-    }
-
-    /// <summary>Update forest stats from ForestManager.</summary>
-    private void UpdateForestStatistics()
-    {
-        if (forestManager != null)
-        {
-            var forestStats = forestManager.GetForestStatistics();
-            UpdateForestStats(forestStats);
-        }
-    }
-
-    /// <summary>
-    /// Forest happiness bonus normalized 0–1. Diminishing returns above 20 forest cells; capped at maxForestBonus.
-    /// </summary>
-    public float GetForestHappinessBonus()
-    {
-        float bonus = forestCellCount * 1.0f;
-        if (forestCellCount > 20)
-            bonus = 20f + (forestCellCount - 20) * 0.5f;
-        return Mathf.Min(bonus, MAX_FOREST_BONUS);
-    }
-    #endregion
-
-    #region Happiness & Pollution
-    // --- Happiness weights: positives must not push raw sum far above 100 before tax, or Mathf.Clamp hides tax pressure ---
-    private const float HAPPINESS_BASELINE = 50f;
-    private const float WEIGHT_EMPLOYMENT = 30f;
-    private const float WEIGHT_SERVICES = 20f;
-    private const float WEIGHT_FOREST = 10f;
-    private const float WEIGHT_POLLUTION = 10f;
-
-    [Header("Happiness formula (tuning)")]
-    [Tooltip("Applied as taxFactor × this (taxFactor is 0 to -1). Higher = stronger mood hit from rates above the comfort band.")]
-    [SerializeField] private float happinessWeightTax = 27f;
-    [Tooltip("Weighted by (buildings / zoned cells), 0–1.")]
-    [SerializeField] private float happinessWeightDevelopment = 12f;
-    [Tooltip("0–1 stub until service coverage ships (FEAT-52). Multiplied by WEIGHT_SERVICES.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float happinessServiceCoverageStub = 0.4f;
-
-    // Convergence
-    private const float BASE_CONVERGENCE_RATE = 0.15f;
-    private const float POPULATION_SCALE_FACTOR = 500f;
-
-    /// <summary>Maps target happiness 0–100 to demand multiplier (low happiness suppresses R/C/I appetite).</summary>
-    private const float DEMAND_HAPPINESS_MULT_MIN = 0.8f;
-    private const float DEMAND_HAPPINESS_MULT_MAX = 1.2f;
-
-    // Tax comfort threshold (average tax rate at or below this has no penalty)
-    private const float COMFORTABLE_TAX_RATE = 10f;
-    private const float MAX_TAX_RATE_FOR_SCALE = 50f;
-
-    // Forest normalization
-    private const float MAX_FOREST_BONUS = 60f;
-
-    // --- Pollution constants ---
-    private const float POLLUTION_INDUSTRIAL_HEAVY = 3.0f;
-    private const float POLLUTION_INDUSTRIAL_MEDIUM = 2.0f;
-    private const float POLLUTION_INDUSTRIAL_LIGHT = 1.0f;
-    private const float POLLUTION_NUCLEAR = 2.0f;
-    private const float FOREST_ABSORPTION_RATE = 0.3f;
-    private const float POLLUTION_CAP = 200f;
-
-    /// <summary>
-    /// Recalc city-wide pollution from industrial buildings + power plants, minus forest absorption.
-    /// Called once per sim tick before RecalculateHappiness.
-    /// </summary>
-    public void RecalculatePollution()
-    {
-        // Migrated to ForestPollutionSink + IndustrialPollutionProducer + PowerPlantPollutionProducer (Stage 4).
-        // SignalTickScheduler drives the per-tick recompute via the producer/diffusion pipeline; the
-        // pollution getter now reads the per-cell mean of SimulationSignal.PollutionAir.
-    }
-
-    /// <summary>Mean of non-zero cells in the PollutionAir signal field; Stage 4 facade for the legacy `pollution` scalar.</summary>
-    private float ComputePollutionMean()
-    {
-        if (signalFieldRegistry == null)
-            return _pollution;
-        SignalField field = signalFieldRegistry.GetField(SimulationSignal.PollutionAir);
-        if (field == null)
-            return _pollution;
-        int width = field.Width;
-        int height = field.Height;
-        if (width <= 0 || height <= 0)
-            return 0f;
-        float sum = 0f;
-        int nonZero = 0;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                float cell = field.Get(x, y);
-                if (Mathf.Abs(cell) > Mathf.Epsilon)
-                {
-                    sum += cell;
-                    nonZero++;
-                }
-            }
-        }
-        return nonZero > 0 ? sum / nonZero : 0f;
-    }
-
-    /// <summary>
-    /// Compute immediate happiness target from employment + tax + services + forest + development + pollution.
-    /// Used for display convergence + same-tick demand feedback.
-    /// </summary>
-    private float ComputeTargetHappiness()
-    {
-        // Employment factor (0–1): higher employment = happier
-        float employmentFactor = 0.5f;
-        if (_employmentManager != null)
-            employmentFactor = _employmentManager.GetEmploymentRate() / 100f;
-
-        // Tax factor (0 to -1): use the highest R/C/I rate so raising one slider visibly affects happiness (average diluted the effect).
-        float taxFactor = 0f;
-        if (_economyManager != null)
-        {
-            float maxTax = Mathf.Max(
-                _economyManager.residentialIncomeTax,
-                Mathf.Max(_economyManager.commercialIncomeTax, _economyManager.industrialIncomeTax));
-            if (maxTax > COMFORTABLE_TAX_RATE)
-            {
-                taxFactor = -Mathf.Clamp01((maxTax - COMFORTABLE_TAX_RATE) /
-                            (MAX_TAX_RATE_FOR_SCALE - COMFORTABLE_TAX_RATE));
-            }
-        }
-
-        float serviceFactor = Mathf.Clamp01(happinessServiceCoverageStub);
-
-        // Forest factor (0–1)
-        float forestFactor = Mathf.Clamp01(GetForestHappinessBonus() / MAX_FOREST_BONUS);
-
-        // Development factor (0–1): ratio of buildings to zoned cells
-        int totalBuildings = residentialBuildingCount + commercialBuildingCount + industrialBuildingCount;
-        int totalZoned = residentialZoneCount + commercialZoneCount + industrialZoneCount;
-        float developmentFactor = totalZoned > 0 ? Mathf.Clamp01((float)totalBuildings / totalZoned) : 0f;
-
-        // Pollution factor (0–1)
-        float pollutionFactor = Mathf.Clamp01(pollution / POLLUTION_CAP);
-
-        float targetHappiness = HAPPINESS_BASELINE
-            + employmentFactor * WEIGHT_EMPLOYMENT
-            + taxFactor * happinessWeightTax
-            + serviceFactor * WEIGHT_SERVICES
-            + forestFactor * WEIGHT_FOREST
-            + developmentFactor * happinessWeightDevelopment
-            - pollutionFactor * WEIGHT_POLLUTION;
-
-        return Mathf.Clamp(targetHappiness, 0f, 100f);
-    }
-
-    /// <summary>
-    /// Recalc happiness as 0–100 score from weighted factors, converging smoothly.
-    /// Called once per sim tick after employment + economy + pollution updates.
-    /// </summary>
-    public void RecalculateHappiness()
-    {
-        // Migrated to HappinessComposer (Stage 4).
-        // SignalTickScheduler drives per-tick happiness convergence; the happiness getter now
-        // reads HappinessComposer.Current. ComputeTargetHappiness retained because
-        // GetHappinessDemandMultiplier (below) still uses the immediate target.
-    }
-
-    /// <summary>Happiness normalized 0–1 for UI/diagnostics (current converged value).</summary>
-    public float GetNormalizedHappiness()
-    {
-        return Mathf.Clamp01(happiness / 100f);
-    }
-
-    /// <summary>
-    /// Demand multiplier from <b>today's</b> happiness target (not lerped score) → tax + employment changes
-    /// affect R/C/I demand on same daily tick.
-    /// </summary>
-    public float GetHappinessDemandMultiplier()
-    {
-        float normalized = Mathf.Clamp01(ComputeTargetHappiness() / 100f);
-        return DEMAND_HAPPINESS_MULT_MIN + normalized * (DEMAND_HAPPINESS_MULT_MAX - DEMAND_HAPPINESS_MULT_MIN);
-    }
-    #endregion
-
-    #region Utility Methods
-    /// <summary>Snapshot all city stats into serializable data struct for saving.</summary>
-    /// <returns>CityStatsData struct with current stats.</returns>
-    public CityStatsData GetCityStatsData()
-    {
-        CityStatsData cityStatsData = new CityStatsData
-        {
-            currentDate = currentDate,
-            population = population,
-            money = money,
-            happiness = happiness,
-            pollution = pollution,
-            residentialZoneCount = residentialZoneCount,
-            residentialBuildingCount = residentialBuildingCount,
-            commercialZoneCount = commercialZoneCount,
-            commercialBuildingCount = commercialBuildingCount,
-            industrialZoneCount = industrialZoneCount,
-            industrialBuildingCount = industrialBuildingCount,
-            residentialLightBuildingCount = residentialLightBuildingCount,
-            residentialLightZoningCount = residentialLightZoningCount,
-            residentialMediumBuildingCount = residentialMediumBuildingCount,
-            residentialMediumZoningCount = residentialMediumZoningCount,
-            residentialHeavyBuildingCount = residentialHeavyBuildingCount,
-            residentialHeavyZoningCount = residentialHeavyZoningCount,
-            commercialLightBuildingCount = commercialLightBuildingCount,
-            commercialLightZoningCount = commercialLightZoningCount,
-            commercialMediumBuildingCount = commercialMediumBuildingCount,
-            commercialMediumZoningCount = commercialMediumZoningCount,
-            commercialHeavyBuildingCount = commercialHeavyBuildingCount,
-            commercialHeavyZoningCount = commercialHeavyZoningCount,
-            industrialLightBuildingCount = industrialLightBuildingCount,
-            industrialLightZoningCount = industrialLightZoningCount,
-            industrialMediumBuildingCount = industrialMediumBuildingCount,
-            industrialMediumZoningCount = industrialMediumZoningCount,
-            industrialHeavyBuildingCount = industrialHeavyBuildingCount,
-            industrialHeavyZoningCount = industrialHeavyZoningCount,
-            roadCount = roadCount,
-            grassCount = grassCount,
-            cityPowerConsumption = cityPowerConsumption,
-            cityPowerOutput = cityPowerOutput,
-            cityWaterConsumption = cityWaterConsumption,
-            cityWaterOutput = cityWaterOutput,
-            cityName = cityName,
-            // Forest statistics
-            forestCellCount = forestCellCount,
-            forestCoveragePercentage = forestCoveragePercentage,
-            simulateGrowth = simulateGrowth,
-            communes = communes
-        };
-
-        return cityStatsData;
-    }
-
-    /// <summary>Restore all city stats from previously saved data struct.</summary>
-    /// <param name="cityStatsData">Saved data to restore from.</param>
-    public void RestoreCityStatsData(CityStatsData cityStatsData)
-    {
-        currentDate = cityStatsData.currentDate;
-        population = cityStatsData.population;
-        money = cityStatsData.money;
-        happiness = Mathf.Clamp(cityStatsData.happiness, 0f, 100f);
-        pollution = Mathf.Max(cityStatsData.pollution, 0f);
-        residentialZoneCount = cityStatsData.residentialZoneCount;
-        residentialBuildingCount = cityStatsData.residentialBuildingCount;
-        commercialZoneCount = cityStatsData.commercialZoneCount;
-        commercialBuildingCount = cityStatsData.commercialBuildingCount;
-        industrialZoneCount = cityStatsData.industrialZoneCount;
-        industrialBuildingCount = cityStatsData.industrialBuildingCount;
-        residentialLightBuildingCount = cityStatsData.residentialLightBuildingCount;
-        residentialLightZoningCount = cityStatsData.residentialLightZoningCount;
-        residentialMediumBuildingCount = cityStatsData.residentialMediumBuildingCount;
-        residentialMediumZoningCount = cityStatsData.residentialMediumZoningCount;
-        residentialHeavyBuildingCount = cityStatsData.residentialHeavyBuildingCount;
-        residentialHeavyZoningCount = cityStatsData.residentialHeavyZoningCount;
-        commercialLightBuildingCount = cityStatsData.commercialLightBuildingCount;
-        commercialLightZoningCount = cityStatsData.commercialLightZoningCount;
-        commercialMediumBuildingCount = cityStatsData.commercialMediumBuildingCount;
-        commercialMediumZoningCount = cityStatsData.commercialMediumZoningCount;
-        commercialHeavyBuildingCount = cityStatsData.commercialHeavyBuildingCount;
-        commercialHeavyZoningCount = cityStatsData.commercialHeavyZoningCount;
-        industrialLightBuildingCount = cityStatsData.industrialLightBuildingCount;
-        industrialLightZoningCount = cityStatsData.industrialLightZoningCount;
-        industrialMediumBuildingCount = cityStatsData.industrialMediumBuildingCount;
-        industrialMediumZoningCount = cityStatsData.industrialMediumZoningCount;
-        industrialHeavyBuildingCount = cityStatsData.industrialHeavyBuildingCount;
-        industrialHeavyZoningCount = cityStatsData.industrialHeavyZoningCount;
-        roadCount = cityStatsData.roadCount;
-        grassCount = cityStatsData.grassCount;
-        cityPowerConsumption = cityStatsData.cityPowerConsumption;
-        cityPowerOutput = cityStatsData.cityPowerOutput;
-        cityWaterConsumption = cityStatsData.cityWaterConsumption;
-        cityWaterOutput = cityStatsData.cityWaterOutput;
-        cityName = cityStatsData.cityName;
-
-        // Restore forest statistics
-        forestCellCount = cityStatsData.forestCellCount;
-        forestCoveragePercentage = cityStatsData.forestCoveragePercentage;
-        simulateGrowth = cityStatsData.simulateGrowth;
-        communes = cityStatsData.communes != null ? new List<CommuneData>(cityStatsData.communes) : new List<CommuneData>();
-    }
-
-    /// <summary>Reset all city stats to defaults (new game state).</summary>
-    public void ResetCityStats()
-    {
-        ResetPowerPlants();
-
-        population = 0;
-        money = 20000;
-        happiness = 50f;
-        pollution = 0f;
-        currentDate = new System.DateTime(2024, 8, 27);
-        residentialZoneCount = 0;
-        commercialZoneCount = 0;
-        industrialZoneCount = 0;
-        roadCount = 0;
-        grassCount = 0;
-        cityPowerConsumption = 0;
-        cityPowerOutput = 0;
-        // cityName is preserved; sync from RegionalMap in GameSaveManager.NewGame() if needed
-
-        // Reset forest statistics
-        forestCellCount = 0;
-        forestCoveragePercentage = 0f;
-
-        simulateGrowth = false;
-        communes?.Clear();
-        if (communes == null) communes = new List<CommuneData>();
-    }
-
-    /// <summary>
-    /// Set city name (e.g. player rename). Becomes canonical name until changed again or loaded from save.
-    /// </summary>
-    public void SetCityName(string newName)
-    {
-        if (!string.IsNullOrWhiteSpace(newName))
-            cityName = newName.Trim();
-    }
-
-    /// <summary>Find + return EmploymentManager in scene.</summary>
-    /// <returns>EmploymentManager instance or null.</returns>
+        if (envelopeRemainingPerSubType == null || envelopeRemainingPerSubType.Length != 7) envelopeRemainingPerSubType = new int[7];
+        if (budgetAllocationService != null) { totalEnvelopeCap = budgetAllocationService.GlobalMonthlyCap; for (int i = 0; i < 7; i++) envelopeRemainingPerSubType[i] = budgetAllocationService.GetRemaining(i); }
+        cityLandValueMean = (signalTickScheduler?.Cache != null) ? signalTickScheduler.Cache.MeanForSignal(SimulationSignal.LandValue) : 0f;
+    }
+
+    public void AddPopulation(int v) { int p = population; population += v; _svc.AddPopulation(v); CheckMilestones(p, population); }
+    public void AddMoney(int v) { money += v; _svc.AddMoney(v); }
+    public void RemoveMoney(int v) { money -= v; _svc.RemoveMoney(v); }
+    void CheckMilestones(int prev, int next) { if (OnPopulationMilestone == null) return; for (int i = 0; i < PopMilestones.Length; i++) { int t = PopMilestones[i]; if (prev < t && next >= t) { if (_mFired[i] && (currentDate - _mDate[i]).TotalDays < MilestoneDays) continue; _mFired[i] = true; _mDate[i] = currentDate; OnPopulationMilestone.Invoke(t); } } }
+
+    public void AddResidentialZoneCount() { residentialZoneCount++; _svc.AddResidentialZoneCount(); }
+    public void RemoveResidentialZoneCount() { residentialZoneCount--; _svc.RemoveResidentialZoneCount(); }
+    public void AddResidentialBuildingCount() { residentialBuildingCount++; _svc.AddResidentialBuildingCount(); }
+    public void RemoveResidentialBuildingCount() { residentialBuildingCount--; _svc.RemoveResidentialBuildingCount(); }
+    public void AddCommercialZoneCount() { commercialZoneCount++; _svc.AddCommercialZoneCount(); }
+    public void RemoveCommercialZoneCount() { commercialZoneCount--; _svc.RemoveCommercialZoneCount(); }
+    public void AddCommercialBuildingCount() { commercialBuildingCount++; _svc.AddCommercialBuildingCount(); }
+    public void RemoveCommercialBuildingCount() { commercialBuildingCount--; _svc.RemoveCommercialBuildingCount(); }
+    public void AddIndustrialZoneCount() { industrialZoneCount++; _svc.AddIndustrialZoneCount(); }
+    public void RemoveIndustrialZoneCount() { industrialZoneCount--; _svc.RemoveIndustrialZoneCount(); }
+    public void AddIndustrialBuildingCount() { industrialBuildingCount++; _svc.AddIndustrialBuildingCount(); }
+    public void RemoveIndustrialBuildingCount() { industrialBuildingCount--; _svc.RemoveIndustrialBuildingCount(); }
+    public void AddResidentialLightBuildingCount() { residentialLightBuildingCount++; AddResidentialBuildingCount(); }
+    public void RemoveResidentialLightBuildingCount() { residentialLightBuildingCount--; RemoveResidentialBuildingCount(); }
+    public void AddResidentialLightZoningCount() { residentialLightZoningCount++; AddResidentialZoneCount(); }
+    public void RemoveResidentialLightZoningCount() { residentialLightZoningCount--; RemoveResidentialZoneCount(); }
+    public void AddResidentialMediumBuildingCount() { residentialMediumBuildingCount++; AddResidentialBuildingCount(); }
+    public void RemoveResidentialMediumBuildingCount() { residentialMediumBuildingCount--; RemoveResidentialBuildingCount(); }
+    public void AddResidentialMediumZoningCount() { residentialMediumZoningCount++; AddResidentialZoneCount(); }
+    public void RemoveResidentialMediumZoningCount() { residentialMediumZoningCount--; RemoveResidentialZoneCount(); }
+    public void AddResidentialHeavyBuildingCount() { residentialHeavyBuildingCount++; AddResidentialBuildingCount(); }
+    public void RemoveResidentialHeavyBuildingCount() { residentialHeavyBuildingCount--; RemoveResidentialBuildingCount(); }
+    public void AddResidentialHeavyZoningCount() { residentialHeavyZoningCount++; AddResidentialZoneCount(); }
+    public void RemoveResidentialHeavyZoningCount() { residentialHeavyZoningCount--; RemoveResidentialZoneCount(); }
+    public void AddCommercialLightBuildingCount() { commercialLightBuildingCount++; AddCommercialBuildingCount(); }
+    public void RemoveCommercialLightBuildingCount() { commercialLightBuildingCount--; RemoveCommercialBuildingCount(); }
+    public void AddCommercialLightZoningCount() { commercialLightZoningCount++; AddCommercialZoneCount(); }
+    public void RemoveCommercialLightZoningCount() { commercialLightZoningCount--; RemoveCommercialZoneCount(); }
+    public void AddCommercialMediumBuildingCount() { commercialMediumBuildingCount++; AddCommercialBuildingCount(); }
+    public void RemoveCommercialMediumBuildingCount() { commercialMediumBuildingCount--; RemoveCommercialBuildingCount(); }
+    public void AddCommercialMediumZoningCount() { commercialMediumZoningCount++; AddCommercialZoneCount(); }
+    public void RemoveCommercialMediumZoningCount() { commercialMediumZoningCount--; RemoveCommercialZoneCount(); }
+    public void AddCommercialHeavyBuildingCount() { commercialHeavyBuildingCount++; AddCommercialBuildingCount(); }
+    public void RemoveCommercialHeavyBuildingCount() { commercialHeavyBuildingCount--; RemoveCommercialBuildingCount(); }
+    public void AddCommercialHeavyZoningCount() { commercialHeavyZoningCount++; AddCommercialZoneCount(); }
+    public void RemoveCommercialHeavyZoningCount() { commercialHeavyZoningCount--; RemoveCommercialZoneCount(); }
+    public void AddIndustrialLightBuildingCount() { industrialLightBuildingCount++; AddIndustrialBuildingCount(); }
+    public void RemoveIndustrialLightBuildingCount() { industrialLightBuildingCount--; RemoveIndustrialBuildingCount(); }
+    public void AddIndustrialLightZoningCount() { industrialLightZoningCount++; AddIndustrialZoneCount(); }
+    public void RemoveIndustrialLightZoningCount() { industrialLightZoningCount--; RemoveIndustrialZoneCount(); }
+    public void AddIndustrialMediumBuildingCount() { industrialMediumBuildingCount++; AddIndustrialBuildingCount(); }
+    public void RemoveIndustrialMediumBuildingCount() { industrialMediumBuildingCount--; RemoveIndustrialBuildingCount(); }
+    public void AddIndustrialMediumZoningCount() { industrialMediumZoningCount++; AddIndustrialZoneCount(); }
+    public void RemoveIndustrialMediumZoningCount() { industrialMediumZoningCount--; RemoveIndustrialZoneCount(); }
+    public void AddIndustrialHeavyBuildingCount() { industrialHeavyBuildingCount++; AddIndustrialBuildingCount(); }
+    public void RemoveIndustrialHeavyBuildingCount() { industrialHeavyBuildingCount--; RemoveIndustrialBuildingCount(); }
+    public void AddIndustrialHeavyZoningCount() { industrialHeavyZoningCount++; AddIndustrialZoneCount(); }
+    public void RemoveIndustrialHeavyZoningCount() { industrialHeavyZoningCount--; RemoveIndustrialZoneCount(); }
+    public void AddRoadCount() { roadCount++; _svc.AddRoadCount(); }
+    public void AddGrassCount() { grassCount++; _svc.AddGrassCount(); }
+
+    public void AddZoneBuildingCount(Zone.ZoneType t) { switch(t) { case Zone.ZoneType.ResidentialLightBuilding: AddResidentialLightBuildingCount(); break; case Zone.ZoneType.ResidentialLightZoning: AddResidentialLightZoningCount(); break; case Zone.ZoneType.ResidentialMediumBuilding: AddResidentialMediumBuildingCount(); break; case Zone.ZoneType.ResidentialMediumZoning: AddResidentialMediumZoningCount(); break; case Zone.ZoneType.ResidentialHeavyBuilding: AddResidentialHeavyBuildingCount(); break; case Zone.ZoneType.ResidentialHeavyZoning: AddResidentialHeavyZoningCount(); break; case Zone.ZoneType.CommercialLightBuilding: AddCommercialLightBuildingCount(); break; case Zone.ZoneType.CommercialLightZoning: AddCommercialLightZoningCount(); break; case Zone.ZoneType.CommercialMediumBuilding: AddCommercialMediumBuildingCount(); break; case Zone.ZoneType.CommercialMediumZoning: AddCommercialMediumZoningCount(); break; case Zone.ZoneType.CommercialHeavyBuilding: AddCommercialHeavyBuildingCount(); break; case Zone.ZoneType.CommercialHeavyZoning: AddCommercialHeavyZoningCount(); break; case Zone.ZoneType.IndustrialLightBuilding: AddIndustrialLightBuildingCount(); break; case Zone.ZoneType.IndustrialLightZoning: AddIndustrialLightZoningCount(); break; case Zone.ZoneType.IndustrialMediumBuilding: AddIndustrialMediumBuildingCount(); break; case Zone.ZoneType.IndustrialMediumZoning: AddIndustrialMediumZoningCount(); break; case Zone.ZoneType.IndustrialHeavyBuilding: AddIndustrialHeavyBuildingCount(); break; case Zone.ZoneType.IndustrialHeavyZoning: AddIndustrialHeavyZoningCount(); break; case Zone.ZoneType.Road: AddRoadCount(); break; case Zone.ZoneType.Grass: AddGrassCount(); break; } }
+    public void RemoveZoneBuildingCount(Zone.ZoneType t) { switch(t) { case Zone.ZoneType.ResidentialLightBuilding: RemoveResidentialLightBuildingCount(); break; case Zone.ZoneType.ResidentialLightZoning: RemoveResidentialLightZoningCount(); break; case Zone.ZoneType.ResidentialMediumBuilding: RemoveResidentialMediumBuildingCount(); break; case Zone.ZoneType.ResidentialMediumZoning: RemoveResidentialMediumZoningCount(); break; case Zone.ZoneType.ResidentialHeavyBuilding: RemoveResidentialHeavyBuildingCount(); break; case Zone.ZoneType.ResidentialHeavyZoning: RemoveResidentialHeavyZoningCount(); break; case Zone.ZoneType.CommercialLightBuilding: RemoveCommercialLightBuildingCount(); break; case Zone.ZoneType.CommercialLightZoning: RemoveCommercialLightZoningCount(); break; case Zone.ZoneType.CommercialMediumBuilding: RemoveCommercialMediumBuildingCount(); break; case Zone.ZoneType.CommercialMediumZoning: RemoveCommercialMediumZoningCount(); break; case Zone.ZoneType.CommercialHeavyBuilding: RemoveCommercialHeavyBuildingCount(); break; case Zone.ZoneType.CommercialHeavyZoning: RemoveCommercialHeavyZoningCount(); break; case Zone.ZoneType.IndustrialLightBuilding: RemoveIndustrialLightBuildingCount(); break; case Zone.ZoneType.IndustrialLightZoning: RemoveIndustrialLightZoningCount(); break; case Zone.ZoneType.IndustrialMediumBuilding: RemoveIndustrialMediumBuildingCount(); break; case Zone.ZoneType.IndustrialMediumZoning: RemoveIndustrialMediumZoningCount(); break; case Zone.ZoneType.IndustrialHeavyBuilding: RemoveIndustrialHeavyBuildingCount(); break; case Zone.ZoneType.IndustrialHeavyZoning: RemoveIndustrialHeavyZoningCount(); break; case Zone.ZoneType.Road: roadCount--; _svc.RemoveRoadCount(); break; case Zone.ZoneType.Grass: grassCount--; _svc.RemoveGrassCount(); break; } }
+
+    public bool CanAfford(int cost) => money >= cost;
+    public void RegisterPowerPlant(PowerPlant p) { _svc.RegisterPowerPlant(p.GetInstanceID().ToString(), p.PowerOutput); cityPowerOutput = _svc.GetTotalPowerOutput(); }
+    public void UnregisterPowerPlant(PowerPlant p) { _svc.UnregisterPowerPlant(p.GetInstanceID().ToString()); cityPowerOutput = _svc.GetTotalPowerOutput(); }
+    public void ResetPowerPlants() { _svc?.ResetPowerPlants(); cityPowerOutput = 0; }
+    public int GetRegisteredPowerPlantCount() => _svc?.GetRegisteredPowerPlantCount() ?? 0;
+    public int GetTotalPowerOutput() => cityPowerOutput;
+    public void AddPowerConsumption(int v) { cityPowerConsumption += v; _svc.AddPowerConsumption(v); }
+    public void RemovePowerConsumption(int v) { cityPowerConsumption -= v; _svc.RemovePowerConsumption(v); }
+    public int GetTotalPowerConsumption() => cityPowerConsumption;
+    public bool GetCityPowerAvailability() => cityPowerOutput > cityPowerConsumption;
+
+    public void PerformMonthlyUpdates() { }
+    public void PerformDailyUpdates() { currentDate = timeManager.GetCurrentDate(); if (_employmentManager != null) { _employmentManager.UpdateEmployment(); } if (_statisticsManager != null) _statisticsManager.UpdateStatistics(); UpdateForestStatistics(); if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats(); RefreshEconomyReadModel(); }
+    public void RefreshHappinessAfterPolicyChange() { if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats(); }
+
+    public void HandleZoneBuildingPlacement(Zone.ZoneType t, ZoneAttributes a) { RemoveMoney(a.ConstructionCost); AddPopulation(a.Population); AddZoneBuildingCount(t); AddPowerConsumption(a.PowerConsumption); AddWaterConsumption(a.WaterConsumption); }
+    public void HandleBuildingDemolition(Zone.ZoneType t, ZoneAttributes a) { AddMoney(a.ConstructionCost / 5); AddPopulation(-a.Population); RemoveZoneBuildingCount(t); RemovePowerConsumption(a.PowerConsumption); RemoveWaterConsumption(a.WaterConsumption); }
+    public void UpdateForestStats(ForestStatistics s) { forestCellCount = s.totalForestCells; forestCoveragePercentage = s.forestCoveragePercentage; _svc.UpdateForestStats(forestCellCount, forestCoveragePercentage); }
+    void UpdateForestStatistics() { if (forestManager != null) UpdateForestStats(forestManager.GetForestStatistics()); }
+    public float GetForestHappinessBonus() { float b = forestCellCount * 1.0f; if (forestCellCount > 20) b = 20f + (forestCellCount - 20) * 0.5f; return Mathf.Min(b, MaxForest); }
+    public void RecalculatePollution() { } public void RecalculateHappiness() { }
+    public float GetNormalizedHappiness() => Mathf.Clamp01(happiness / 100f);
+    public float GetHappinessDemandMultiplier() { float n = Mathf.Clamp01(ComputeTargetHappiness() / 100f); return DemMul0 + n * (DemMul1 - DemMul0); }
+    float ComputeTargetHappiness() { float empl = _employmentManager != null ? _employmentManager.GetEmploymentRate() / 100f : 0.5f; float tax = 0f; if (_economyManager != null) { float mx = Mathf.Max(_economyManager.residentialIncomeTax, Mathf.Max(_economyManager.commercialIncomeTax, _economyManager.industrialIncomeTax)); if (mx > ComfTax) tax = -Mathf.Clamp01((mx - ComfTax) / (MaxTax - ComfTax)); } float dev = (residentialZoneCount + commercialZoneCount + industrialZoneCount) > 0 ? Mathf.Clamp01((float)(residentialBuildingCount + commercialBuildingCount + industrialBuildingCount) / (residentialZoneCount + commercialZoneCount + industrialZoneCount)) : 0f; return Mathf.Clamp(HB + empl * WE + tax * happinessWeightTax + Mathf.Clamp01(happinessServiceCoverageStub) * WS + Mathf.Clamp01(GetForestHappinessBonus() / MaxForest) * WF + dev * happinessWeightDevelopment - Mathf.Clamp01(pollution / 200f) * WP, 0f, 100f); }
+
+    public CityStatsData GetCityStatsData() => new CityStatsData { currentDate=currentDate, population=population, money=money, happiness=happiness, pollution=pollution, residentialZoneCount=residentialZoneCount, residentialBuildingCount=residentialBuildingCount, commercialZoneCount=commercialZoneCount, commercialBuildingCount=commercialBuildingCount, industrialZoneCount=industrialZoneCount, industrialBuildingCount=industrialBuildingCount, residentialLightBuildingCount=residentialLightBuildingCount, residentialLightZoningCount=residentialLightZoningCount, residentialMediumBuildingCount=residentialMediumBuildingCount, residentialMediumZoningCount=residentialMediumZoningCount, residentialHeavyBuildingCount=residentialHeavyBuildingCount, residentialHeavyZoningCount=residentialHeavyZoningCount, commercialLightBuildingCount=commercialLightBuildingCount, commercialLightZoningCount=commercialLightZoningCount, commercialMediumBuildingCount=commercialMediumBuildingCount, commercialMediumZoningCount=commercialMediumZoningCount, commercialHeavyBuildingCount=commercialHeavyBuildingCount, commercialHeavyZoningCount=commercialHeavyZoningCount, industrialLightBuildingCount=industrialLightBuildingCount, industrialLightZoningCount=industrialLightZoningCount, industrialMediumBuildingCount=industrialMediumBuildingCount, industrialMediumZoningCount=industrialMediumZoningCount, industrialHeavyBuildingCount=industrialHeavyBuildingCount, industrialHeavyZoningCount=industrialHeavyZoningCount, roadCount=roadCount, grassCount=grassCount, cityPowerConsumption=cityPowerConsumption, cityPowerOutput=cityPowerOutput, cityWaterConsumption=cityWaterConsumption, cityWaterOutput=cityWaterOutput, cityName=cityName, forestCellCount=forestCellCount, forestCoveragePercentage=forestCoveragePercentage, simulateGrowth=simulateGrowth, communes=communes };
+    public void RestoreCityStatsData(CityStatsData d) { currentDate=d.currentDate; population=d.population; money=d.money; happiness=Mathf.Clamp(d.happiness,0f,100f); pollution=Mathf.Max(d.pollution,0f); residentialZoneCount=d.residentialZoneCount; residentialBuildingCount=d.residentialBuildingCount; commercialZoneCount=d.commercialZoneCount; commercialBuildingCount=d.commercialBuildingCount; industrialZoneCount=d.industrialZoneCount; industrialBuildingCount=d.industrialBuildingCount; residentialLightBuildingCount=d.residentialLightBuildingCount; residentialLightZoningCount=d.residentialLightZoningCount; residentialMediumBuildingCount=d.residentialMediumBuildingCount; residentialMediumZoningCount=d.residentialMediumZoningCount; residentialHeavyBuildingCount=d.residentialHeavyBuildingCount; residentialHeavyZoningCount=d.residentialHeavyZoningCount; commercialLightBuildingCount=d.commercialLightBuildingCount; commercialLightZoningCount=d.commercialLightZoningCount; commercialMediumBuildingCount=d.commercialMediumBuildingCount; commercialMediumZoningCount=d.commercialMediumZoningCount; commercialHeavyBuildingCount=d.commercialHeavyBuildingCount; commercialHeavyZoningCount=d.commercialHeavyZoningCount; industrialLightBuildingCount=d.industrialLightBuildingCount; industrialLightZoningCount=d.industrialLightZoningCount; industrialMediumBuildingCount=d.industrialMediumBuildingCount; industrialMediumZoningCount=d.industrialMediumZoningCount; industrialHeavyBuildingCount=d.industrialHeavyBuildingCount; industrialHeavyZoningCount=d.industrialHeavyZoningCount; roadCount=d.roadCount; grassCount=d.grassCount; cityPowerConsumption=d.cityPowerConsumption; cityPowerOutput=d.cityPowerOutput; cityWaterConsumption=d.cityWaterConsumption; cityWaterOutput=d.cityWaterOutput; cityName=d.cityName; forestCellCount=d.forestCellCount; forestCoveragePercentage=d.forestCoveragePercentage; simulateGrowth=d.simulateGrowth; communes=d.communes!=null?new List<CommuneData>(d.communes):new List<CommuneData>(); if(_svc!=null)SyncToSvc(); }
+    public void ResetCityStats() { ResetPowerPlants(); population=0; money=20000; happiness=50f; pollution=0f; currentDate=new System.DateTime(2024,8,27); residentialZoneCount=0; commercialZoneCount=0; industrialZoneCount=0; roadCount=0; grassCount=0; cityPowerConsumption=0; cityPowerOutput=0; forestCellCount=0; forestCoveragePercentage=0f; simulateGrowth=false; communes?.Clear(); if(communes==null)communes=new List<CommuneData>(); _svc?.Reset(); }
+    public void SetCityName(string n) { if(!string.IsNullOrWhiteSpace(n)){cityName=n.Trim();_svc?.SetCityName(cityName);} }
     public EmploymentManager GetEmploymentManager() => _employmentManager;
-
-    /// <summary>Add amount to both local + WaterManager water consumption trackers.</summary>
-    /// <param name="value">Water consumption to add.</param>
-    public void AddWaterConsumption(int value)
-    {
-        cityWaterConsumption += value;
-        if (waterManager != null)
-        {
-            waterManager.AddWaterConsumption(value);
-        }
-    }
-
-    /// <summary>Subtract amount from both local + WaterManager water consumption trackers.</summary>
-    /// <param name="value">Water consumption to remove.</param>
-    public void RemoveWaterConsumption(int value)
-    {
-        cityWaterConsumption -= value;
-        if (waterManager != null)
-        {
-            waterManager.RemoveWaterConsumption(value);
-        }
-    }
-
-    /// <summary>Total city-wide water consumption.</summary>
-    /// <returns>Total city water consumption.</returns>
-    public int GetTotalWaterConsumption()
-    {
-        return cityWaterConsumption;
-    }
-
-    /// <summary>Total city-wide water output.</summary>
-    /// <returns>Total city water output.</returns>
-    public int GetTotalWaterOutput()
-    {
-        return cityWaterOutput;
-    }
-
-    /// <summary>True if city water output &gt; consumption. Syncs with WaterManager first.</summary>
-    /// <returns>True if water supply sufficient.</returns>
-    public bool GetCityWaterAvailability()
-    {
-        // Sync with water manager
-        if (waterManager != null)
-        {
-            cityWaterOutput = waterManager.GetTotalWaterOutput();
-            cityWaterConsumption = waterManager.GetTotalWaterConsumption();
-        }
-
-        return cityWaterOutput > cityWaterConsumption;
-    }
-
-    /// <summary>Sync local water output value from WaterManager.</summary>
-    public void UpdateWaterOutput()
-    {
-        if (waterManager != null)
-        {
-            cityWaterOutput = waterManager.GetTotalWaterOutput();
-        }
-    }
-
-    /// <summary>Total forest cell count.</summary>
-    /// <returns>Forest cell count.</returns>
-    public int GetForestCellCount() => forestCellCount;
-    /// <summary>Percentage of grid covered by forest.</summary>
-    /// <returns>Forest coverage %.</returns>
-    public float GetForestCoveragePercentage() => forestCoveragePercentage;
-    #endregion
+    public void AddWaterConsumption(int v) { cityWaterConsumption+=v; waterManager?.AddWaterConsumption(v); } public void RemoveWaterConsumption(int v) { cityWaterConsumption-=v; waterManager?.RemoveWaterConsumption(v); }
+    public int GetTotalWaterConsumption() => cityWaterConsumption; public int GetTotalWaterOutput() => cityWaterOutput;
+    public bool GetCityWaterAvailability() { if(waterManager!=null){cityWaterOutput=waterManager.GetTotalWaterOutput();cityWaterConsumption=waterManager.GetTotalWaterConsumption();} return cityWaterOutput>cityWaterConsumption; }
+    public void UpdateWaterOutput() { if(waterManager!=null)cityWaterOutput=waterManager.GetTotalWaterOutput(); }
+    public int GetForestCellCount() => forestCellCount; public float GetForestCoveragePercentage() => forestCoveragePercentage;
 }
 
 [System.Serializable]
 public struct CityStatsData
 {
-    public System.DateTime currentDate;
-    public int population;
-    public int money;
-    public float happiness;
-    public float pollution;
-    public int residentialZoneCount;
-    public int residentialBuildingCount;
-    public int commercialZoneCount;
-    public int commercialBuildingCount;
-    public int industrialZoneCount;
-    public int industrialBuildingCount;
-    public int residentialLightBuildingCount;
-    public int residentialLightZoningCount;
-    public int residentialMediumBuildingCount;
-    public int residentialMediumZoningCount;
-    public int residentialHeavyBuildingCount;
-    public int residentialHeavyZoningCount;
-    public int commercialLightBuildingCount;
-    public int commercialLightZoningCount;
-    public int commercialMediumBuildingCount;
-    public int commercialMediumZoningCount;
-    public int commercialHeavyBuildingCount;
-    public int commercialHeavyZoningCount;
-    public int industrialLightBuildingCount;
-    public int industrialLightZoningCount;
-    public int industrialMediumBuildingCount;
-    public int industrialMediumZoningCount;
-    public int industrialHeavyBuildingCount;
-    public int industrialHeavyZoningCount;
-    public int roadCount;
-    public int grassCount;
-    public int cityPowerConsumption;
-    public int cityPowerOutput;
-    public int cityWaterConsumption;
-    public int cityWaterOutput;
-    public string cityName;
-
-    // Forest statistics
-    public int forestCellCount;
-    public float forestCoveragePercentage;
-
-    public bool simulateGrowth;
-    public List<CommuneData> communes;
+    public System.DateTime currentDate; public int population, money; public float happiness, pollution;
+    public int residentialZoneCount, residentialBuildingCount, commercialZoneCount, commercialBuildingCount;
+    public int industrialZoneCount, industrialBuildingCount;
+    public int residentialLightBuildingCount, residentialLightZoningCount, residentialMediumBuildingCount, residentialMediumZoningCount;
+    public int residentialHeavyBuildingCount, residentialHeavyZoningCount;
+    public int commercialLightBuildingCount, commercialLightZoningCount, commercialMediumBuildingCount, commercialMediumZoningCount;
+    public int commercialHeavyBuildingCount, commercialHeavyZoningCount;
+    public int industrialLightBuildingCount, industrialLightZoningCount, industrialMediumBuildingCount, industrialMediumZoningCount;
+    public int industrialHeavyBuildingCount, industrialHeavyZoningCount;
+    public int roadCount, grassCount, cityPowerConsumption, cityPowerOutput, cityWaterConsumption, cityWaterOutput;
+    public string cityName; public int forestCellCount; public float forestCoveragePercentage;
+    public bool simulateGrowth; public List<CommuneData> communes;
 }
 }
