@@ -3,7 +3,8 @@
     "rootNamespace": "Territory.Tests.EditMode.Atomization.Stage4_6",
     "references": [
         "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a",
-        "GUID:3122f3163e46e4c5b9c743b44c471edb"
+        "GUID:3122f3163e46e4c5b9c743b44c471edb",
+        "GUID:913d2b31f2b8b461bb8d4254b6178cfd"
     ],
     "includePlatforms": [
         "Editor"
