@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-11T16:28:22.006Z",
+  "last_generated": "2026-05-12T21:04:59.478Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -4046,8 +4046,8 @@
         "catalog_entity",
         "Junction",
         "pool_member",
-        "archetype_version",
-        "snapshot"
+        "snapshot",
+        "archetype_version"
       ],
       "cited_in": [
         {
@@ -4074,6 +4074,16 @@
           "spec": "catalog-architecture",
           "section_id": "6.1",
           "section_title": "6.1 `panel_child`"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "6",
+          "section_title": "6. Revision history"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "8.5",
+          "section_title": "8.5 New panel definitions — whole-game rollout (2026-05-12)"
         }
       ]
     },
@@ -4538,8 +4548,8 @@
         "Cell",
         "Gate",
         "Orchestrator document",
-        "Reference spec",
-        "Save data"
+        "panel_child",
+        "Reference spec"
       ],
       "cited_in": [
         {

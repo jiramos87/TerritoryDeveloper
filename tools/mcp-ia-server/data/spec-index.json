@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-11T16:28:21.836Z",
+  "last_generated": "2026-05-12T21:04:59.304Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -1980,6 +1980,12 @@
           "title": "Machine-readable traceability (UI inventory baseline)",
           "depth": 3,
           "line_start": 491
+        },
+        {
+          "section_id": "8.5",
+          "title": "8.5 New panel definitions — whole-game rollout (2026-05-12)",
+          "depth": 3,
+          "line_start": 496
         }
       ]
     },
