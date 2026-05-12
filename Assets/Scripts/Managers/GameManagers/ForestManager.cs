@@ -1,847 +1,197 @@
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using Territory.Core;
-using Territory.Terrain;
-using Territory.Economy;
-using Territory.UI;
-using Territory.Zones;
-using Territory.Utilities;
+using UnityEngine; using System.Collections; using System.Collections.Generic;
+using Territory.Core; using Territory.Terrain; using Territory.Economy;
+using Territory.UI; using Territory.Zones; using Territory.Utilities;
+using Domains.Forests.Services; using Domains.Registry;
 
 namespace Territory.Forests
 {
-/// <summary>
-/// Manage forest placement, removal, env effects in city sim.
-/// Works with <c>IForest</c> → supports forest types (Sparse, Dense, Dense).
-/// </summary>
+/// <summary>THIN hub — delegates logic to <see cref="ForestService"/>. Serialized fields UNCHANGED (locked #3).</summary>
 public class ForestManager : MonoBehaviour, IForestManager
 {
-    #region Dependencies
     [Header("References")]
-    public GridManager gridManager;
-    public WaterManager waterManager;
-    public CityStats cityStats;
-    public EconomyManager economyManager;
-    public UIManager uiManager;
-    public GameNotificationManager gameNotificationManager;
-    public TerrainManager terrainManager;
-    #endregion
-
-    #region Forest Prefabs and Configuration
+    public GridManager gridManager; public WaterManager waterManager; public CityStats cityStats;
+    public EconomyManager economyManager; public UIManager uiManager;
+    public GameNotificationManager gameNotificationManager; public TerrainManager terrainManager;
     [Header("Forest Prefabs")]
-    public GameObject sparseForestPrefab;
-    public GameObject mediumForestPrefab;
-    public GameObject denseForestPrefab;
-
+    public GameObject sparseForestPrefab; public GameObject mediumForestPrefab; public GameObject denseForestPrefab;
     [Header("Forest Slope Prefabs (Medium)")]
-    public GameObject forestNorthSlopePrefab;
-    public GameObject forestSouthSlopePrefab;
-    public GameObject forestEastSlopePrefab;
-    public GameObject forestWestSlopePrefab;
-    public GameObject forestNorthEastSlopePrefab;
-    public GameObject forestNorthWestSlopePrefab;
-    public GameObject forestSouthEastSlopePrefab;
-    public GameObject forestSouthWestSlopePrefab;
-    public GameObject forestNorthEastUpSlopePrefab;
-    public GameObject forestNorthWestUpSlopePrefab;
-    public GameObject forestSouthEastUpSlopePrefab;
-    public GameObject forestSouthWestUpSlopePrefab;
-
+    public GameObject forestNorthSlopePrefab; public GameObject forestSouthSlopePrefab;
+    public GameObject forestEastSlopePrefab;  public GameObject forestWestSlopePrefab;
+    public GameObject forestNorthEastSlopePrefab; public GameObject forestNorthWestSlopePrefab;
+    public GameObject forestSouthEastSlopePrefab; public GameObject forestSouthWestSlopePrefab;
+    public GameObject forestNorthEastUpSlopePrefab; public GameObject forestNorthWestUpSlopePrefab;
+    public GameObject forestSouthEastUpSlopePrefab; public GameObject forestSouthWestUpSlopePrefab;
     [Header("Forest Configuration")]
-    public float desirabilityPerAdjacentForest = 2.0f; // Desirability bonus per adjacent forest
-    public float demandBoostPercentage = 0.5f; // Percentage increase in demand per forest cell
-
+    public float desirabilityPerAdjacentForest = 2.0f; public float demandBoostPercentage = 0.5f;
     private ForestMap forestMap;
-    private Dictionary<Forest.ForestType, int> forestTypeCounts;
-    #endregion
+    private ForestService _svc;
 
-    #region Initialization
     void Start()
     {
-        if (gridManager == null)
-            gridManager = FindObjectOfType<GridManager>();
-        if (waterManager == null)
-            waterManager = FindObjectOfType<WaterManager>();
-        if (cityStats == null)
-            cityStats = FindObjectOfType<CityStats>();
-        if (economyManager == null)
-            economyManager = FindObjectOfType<EconomyManager>();
-
-        if (uiManager == null)
-            uiManager = FindObjectOfType<UIManager>();
-        // Use same TerrainManager as GridManager so we get the heightMap from InitializeHeightMap (correct slope prefabs).
-        if (terrainManager == null && gridManager != null && gridManager.terrainManager != null)
-            terrainManager = gridManager.terrainManager;
-        if (terrainManager == null)
-            terrainManager = FindObjectOfType<TerrainManager>();
-
-        InitializeForestTypeCounts();
-    }
-
-    private void InitializeForestTypeCounts()
-    {
-        forestTypeCounts = new Dictionary<Forest.ForestType, int>
-        {
-            { Forest.ForestType.None, 0 },
-            { Forest.ForestType.Sparse, 0 },
-            { Forest.ForestType.Medium, 0 },
-            { Forest.ForestType.Dense, 0 }
-        };
+        if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
+        if (waterManager == null) waterManager = FindObjectOfType<WaterManager>();
+        if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
+        if (economyManager == null) economyManager = FindObjectOfType<EconomyManager>();
+        if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
+        if (terrainManager == null && gridManager?.terrainManager != null) terrainManager = gridManager.terrainManager;
+        if (terrainManager == null) terrainManager = FindObjectOfType<TerrainManager>();
+        _svc = new ForestService();
+        var reg = FindObjectOfType<ServiceRegistry>();
+        _svc.WireDependencies(reg?.Resolve<Domains.Grid.IGrid>(), reg?.Resolve<Domains.Water.IWater>(),
+            reg?.Resolve<Domains.Economy.IEconomy>(), reg?.Resolve<Domains.Terrain.ITerrain>(),
+            gridManager != null ? gridManager.width : 0, gridManager != null ? gridManager.height : 0);
     }
 
     public void InitializeForestMap()
     {
-        if (gridManager != null)
-        {
-            // Use same TerrainManager as GridManager so heightMap is available (slope prefabs). Start() order is not guaranteed.
-            if (terrainManager == null && gridManager.terrainManager != null)
-                terrainManager = gridManager.terrainManager;
-            if (terrainManager == null)
-                terrainManager = FindObjectOfType<TerrainManager>();
-
-            if (waterManager == null && gridManager.waterManager != null)
-                waterManager = gridManager.waterManager;
-            if (waterManager == null)
-                waterManager = FindObjectOfType<WaterManager>();
-
-            // Required before BuildInitialForestCellsChunkBased: chunk placement uses GetTerrainHeightMap(); without this, heightMap can still be null (Start order).
-            if (terrainManager != null)
-                terrainManager.EnsureHeightMapLoaded();
-
-            forestMap = new ForestMap(gridManager.width, gridManager.height);
-
-            // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense) using chunk-based placement for economy and natural clusters
-            int[,] initialForestCells = BuildInitialForestCellsChunkBased(gridManager.width, gridManager.height);
-
-            forestMap.InitializeFromIntMatrix(initialForestCells);
-
-            // Apply forest visuals only when TerrainManager has heightMap (needed for slope prefab selection).
-            if (terrainManager != null)
-            {
-                terrainManager.EnsureHeightMapLoaded();
-                if (terrainManager.GetHeightMap() != null)
-                {
-                    UpdateForestVisuals();
-                }
-                else
-                {
-                    StartCoroutine(DeferredUpdateForestVisuals());
-                }
-            }
-            else
-            {
-                UpdateForestVisuals();
-            }
-
-            // Update statistics
-            UpdateForestStatistics();
-
-            // Calculate initial desirability for all cells
-            UpdateAllCellDesirability();
-
-        }
+        if (gridManager == null) return;
+        if (terrainManager == null && gridManager.terrainManager != null) terrainManager = gridManager.terrainManager;
+        if (terrainManager == null) terrainManager = FindObjectOfType<TerrainManager>();
+        if (waterManager == null && gridManager.waterManager != null) waterManager = gridManager.waterManager;
+        if (waterManager == null) waterManager = FindObjectOfType<WaterManager>();
+        if (terrainManager != null) terrainManager.EnsureHeightMapLoaded();
+        forestMap = new ForestMap(gridManager.width, gridManager.height);
+        forestMap.InitializeFromIntMatrix(_svc.BuildInitialForestCells(gridManager.width, gridManager.height));
+        if (terrainManager != null) { terrainManager.EnsureHeightMapLoaded(); if (terrainManager.GetHeightMap() != null) UpdateForestVisuals(); else StartCoroutine(DeferredUpdateForestVisuals()); } else UpdateForestVisuals();
+        UpdateForestStatistics(); UpdateAllCellDesirability();
     }
-
-    private const int ForestChunkSize = 8;
-    private const float ForestChunkProbability = 0.4f;
-    private const float ForestCellInChunkProbability = 0.5f;
-
-    /// <summary>Build initial forest matrix by chunks → fewer Random calls + natural clusters. 0=None, 1=Sparse, 2=Medium, 3=Dense.</summary>
-    private int[,] BuildInitialForestCellsChunkBased(int gridWidth, int gridHeight)
-    {
-        int[,] initialForestCells = new int[gridHeight, gridWidth];
-        HeightMap heightMap = GetTerrainHeightMap();
-
-        for (int by = 0; by < gridHeight; by += ForestChunkSize)
-        {
-            for (int bx = 0; bx < gridWidth; bx += ForestChunkSize)
-            {
-                bool chunkHasLand = false;
-                for (int oy = 0; oy < ForestChunkSize && by + oy < gridHeight; oy++)
-                {
-                    for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
-                    {
-                        int x = bx + ox, y = by + oy;
-                        if (IsDryLandForForestSeed(x, y, heightMap))
-                        {
-                            chunkHasLand = true;
-                            break;
-                        }
-                    }
-                    if (chunkHasLand) break;
-                }
-
-                if (!chunkHasLand || Random.value >= ForestChunkProbability)
-                    continue;
-
-                for (int oy = 0; oy < ForestChunkSize && by + oy < gridHeight; oy++)
-                {
-                    for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
-                    {
-                        int x = bx + ox, y = by + oy;
-                        if (!IsDryLandForForestSeed(x, y, heightMap))
-                            continue;
-                        if (!CanPlaceForestAt(x, y))
-                            continue;
-                        if (Random.value >= ForestCellInChunkProbability)
-                            continue;
-                        float t = Random.value;
-                        initialForestCells[y, x] = t < 0.33f ? 1 : (t < 0.66f ? 2 : 3);
-                    }
-                }
-            }
-        }
-
-        return initialForestCells;
-    }
-
-    /// <summary>Dry land suitable for forest seeding: above sea level in height map, not logical water, not lake/coast border (water-slope cells).</summary>
-    private bool IsDryLandForForestSeed(int x, int y, HeightMap heightMap)
-    {
-        if (waterManager != null && waterManager.IsWaterAt(x, y))
-            return false;
-        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
-            return false;
-        if (heightMap != null && heightMap.IsValidPosition(x, y))
-            return heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL;
-        CityCell c = gridManager != null ? gridManager.GetCell(x, y) : null;
-        return c != null && c.height > TerrainManager.SEA_LEVEL;
-    }
-    #endregion
-
-    #region Forest Placement
-    public bool IsForestAt(int x, int y)
-    {
-        if (forestMap == null) return false;
-        return forestMap.GetForestType(x, y) != Forest.ForestType.None;
-    }
-
-    public Forest.ForestType GetForestTypeAt(int x, int y)
-    {
-        if (forestMap == null) return Forest.ForestType.None;
-        return forestMap.GetForestType(x, y);
-    }
-
+    public bool IsForestAt(int x, int y) => forestMap != null && forestMap.GetForestType(x, y) != Forest.ForestType.None;
+    public Forest.ForestType GetForestTypeAt(int x, int y) => forestMap != null ? forestMap.GetForestType(x, y) : Forest.ForestType.None;
     public bool PlaceForest(Vector2 gridPosition, IForest selectedForest)
     {
-        int x = (int)gridPosition.x;
-        int y = (int)gridPosition.y;
-
-        if (!gridManager.IsValidGridPosition(gridPosition))
-        {
-            DebugHelper.LogWarning($"Cannot place forest at invalid position: ({x}, {y})");
-            return false;
-        }
-
-        CityCell cellComponent = gridManager.GetCell(x, y);
-
-        if (cellComponent == null)
-            return false;
-
-        EnsureForestMapForManualPlacement();
-
-        if (forestMap == null || !forestMap.IsValidPosition(x, y))
-            return false;
-
-        if (!CanPlaceForestAt(x, y))
-            return false;
-
-        if (!CanAffordForest(selectedForest))
-        {
-            gameNotificationManager.PostInfo($"Insufficient funds to place {selectedForest.ForestType} forest! Cost: {selectedForest.ConstructionCost}");
-            return false;
-        }
-
-        if (!HasSufficientWaterForForest(selectedForest))
-        {
-            gameNotificationManager.PostInfo($"Insufficient water to place {selectedForest.ForestType} forest! Required: {selectedForest.WaterConsumption}");
-            return false;
-        }
-
-        GameObject forestPrefab = GetForestPrefabForCell(x, y, selectedForest.ForestType);
-
-        if (forestPrefab == null)
-            return false;
-
-        Vector2 worldPos = cellComponent.transformPosition;
-
-        int height = cellComponent.GetCellInstanceHeight();
-
-        Quaternion rotation = forestPrefab.transform.rotation;
-        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
-
-        forestObject.transform.SetParent(cellComponent.gameObject.transform);
-
-        SetForestSortingOrder(forestObject, x, y, height);
-
-        cellComponent.SetTree(true, selectedForest.ForestType.ToString(), forestObject);
-
-        forestMap.SetForestType(x, y, selectedForest.ForestType);
-
-        if (selectedForest.ConstructionCost > 0)
-        {
-            economyManager.SpendMoney(selectedForest.ConstructionCost);
-        }
-
-        if (selectedForest.WaterConsumption > 0)
-        {
-            waterManager.AddWaterConsumption(selectedForest.WaterConsumption);
-        }
-
-        UpdateAdjacentDesirability(x, y, true);
-        UpdateForestStatistics();
-
-        // Only destroy the template instance if it's still valid (not already destroyed)
-        var forestMono = selectedForest as MonoBehaviour;
-        if (forestMono != null && forestMono.gameObject != forestObject)
-        {
-            Destroy(forestMono.gameObject);
-        }
-
-        return true;
+        int x = (int)gridPosition.x, y = (int)gridPosition.y;
+        if (!gridManager.IsValidGridPosition(gridPosition)) { DebugHelper.LogWarning($"Cannot place forest at invalid position: ({x}, {y})"); return false; }
+        CityCell cell = gridManager.GetCell(x, y);
+        if (cell == null || forestMap == null || !forestMap.IsValidPosition(x, y)) return false;
+        if (forestMap.GetForestType(x, y) != Forest.ForestType.None) return false;
+        if (waterManager != null && waterManager.IsWaterAt(x, y)) return false;
+        if (_svc.IsRiverOrCoastEdge(x, y) || (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))) return false;
+        if (!_svc.CanPlaceOnCell(cell)) return false;
+        if (!_svc.CanAffordForest(selectedForest.ConstructionCost)) { gameNotificationManager.PostInfo($"Insufficient funds to place {selectedForest.ForestType} forest! Cost: {selectedForest.ConstructionCost}"); return false; }
+        if (!_svc.HasSufficientWaterForForest(selectedForest.WaterConsumption)) { gameNotificationManager.PostInfo($"Insufficient water to place {selectedForest.ForestType} forest! Required: {selectedForest.WaterConsumption}"); return false; }
+        GameObject fp = GetForestPrefabForCell(x, y, selectedForest.ForestType); if (fp == null) return false;
+        GameObject fo = Instantiate(fp, cell.transformPosition, fp.transform.rotation); fo.transform.SetParent(cell.gameObject.transform);
+        SetForestSortingOrder(fo, x, y, cell.GetCellInstanceHeight()); cell.SetTree(true, selectedForest.ForestType.ToString(), fo); forestMap.SetForestType(x, y, selectedForest.ForestType);
+        if (selectedForest.ConstructionCost > 0) economyManager.SpendMoney(selectedForest.ConstructionCost);
+        if (selectedForest.WaterConsumption > 0) waterManager.AddWaterConsumption(selectedForest.WaterConsumption);
+        UpdateAdjacentDesirability(x, y, true); UpdateForestStatistics();
+        var fm = selectedForest as MonoBehaviour; if (fm != null && fm.gameObject != fo) Destroy(fm.gameObject); return true;
     }
-    #endregion
 
-    #region Forest Removal
     public bool RemoveForestFromCell(int x, int y, bool refundCost = false)
     {
-        if (forestMap == null || !forestMap.IsValidPosition(x, y))
-            return false;
-
-        Forest.ForestType currentType = forestMap.GetForestType(x, y);
-        if (currentType == Forest.ForestType.None)
-            return false;
-
-        // Get the cell and remove forest
-        CityCell cellComponent = gridManager.GetCell(x, y);
-
-        // Store water consumption for refund calculation
-        int waterToRefund = GetWaterConsumptionForForestType(currentType);
-        int costToRefund = GetConstructionCostForForestType(currentType);
-
-        // Remove the forest GameObject
-        cellComponent.SetTree(false);
-
-        // Update forest map
-        forestMap.SetForestType(x, y, Forest.ForestType.None);
-
-        // Refund costs if requested (not for automatic building removal)
-        if (refundCost)
-        {
-            if (waterToRefund > 0)
-            {
-                waterManager.RemoveWaterConsumption(waterToRefund);
-            }
-            if (costToRefund > 0)
-            {
-                economyManager.AddMoney(costToRefund / 2); // 50% refund
-            }
-        }
-
-        // Update adjacent cell desirability
-        UpdateAdjacentDesirability(x, y, false);
-
-        // Update statistics
-        UpdateForestStatistics();
-
-        return true;
+        if (forestMap == null || !forestMap.IsValidPosition(x, y)) return false;
+        Forest.ForestType ct = forestMap.GetForestType(x, y);
+        if (ct == Forest.ForestType.None) return false;
+        CityCell cell = gridManager.GetCell(x, y);
+        int wr = _svc.GetWaterConsumptionForForestType(ct), cr = _svc.GetConstructionCostForForestType(ct);
+        cell.SetTree(false); forestMap.SetForestType(x, y, Forest.ForestType.None);
+        if (refundCost) { if (wr > 0) waterManager.RemoveWaterConsumption(wr); if (cr > 0) economyManager.AddMoney(cr / 2); }
+        UpdateAdjacentDesirability(x, y, false); UpdateForestStatistics(); return true;
     }
 
-    /// <summary>
-    /// Restore forest at cell during Load. Destroy existing forest visual, update <see cref="ForestMap"/>,
-    /// when forestType != None place correct prefab. Call per cell to sync map with saved data (incl. None → clear initial gen).
-    /// </summary>
-    /// <param name="updateStats">False → skip UpdateForestStatistics (call RefreshForestStatistics after batch restore).</param>
-    /// <param name="savedSpriteSortingOrder">Set (load restore) → apply persisted forest sprite order (e.g. terrain base + 5).</param>
     public void RestoreForestAt(int x, int y, Forest.ForestType forestType, string forestPrefabName, bool updateStats = true, int? savedSpriteSortingOrder = null)
     {
-        if (forestMap == null || gridManager == null) return;
-        if (!forestMap.IsValidPosition(x, y)) return;
-
-        CityCell cellComponent = gridManager.GetCell(x, y);
-        if (cellComponent == null) return;
-
-        // Destroy existing forest visual (from initial generation)
-        if (cellComponent.forestObject != null)
-        {
-            Destroy(cellComponent.forestObject);
-            cellComponent.forestObject = null;
-        }
-
-        forestMap.SetForestType(x, y, forestType);
-
-        if (forestType == Forest.ForestType.None)
-            return;
-
-        GameObject forestPrefab = GetForestPrefabForCell(x, y, forestType);
-        if (forestPrefab == null) return;
-
-        Vector2 worldPos = cellComponent.transformPosition;
-        Quaternion rotation = forestPrefab.transform.rotation;
-        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
-
-        forestObject.transform.SetParent(cellComponent.gameObject.transform);
-        if (savedSpriteSortingOrder.HasValue)
-        {
-            SpriteRenderer sr = forestObject.GetComponent<SpriteRenderer>();
-            if (sr != null)
-                sr.sortingOrder = savedSpriteSortingOrder.Value;
-        }
-        else
-            SetForestSortingOrder(forestObject, x, y, cellComponent.height);
-
-        cellComponent.SetForest(forestType, forestPrefab.name, forestObject);
-
-        UpdateAdjacentDesirability(x, y, true);
-        if (updateStats)
-            UpdateForestStatistics();
+        if (forestMap == null || gridManager == null || !forestMap.IsValidPosition(x, y)) return;
+        CityCell cell = gridManager.GetCell(x, y); if (cell == null) return;
+        if (cell.forestObject != null) { Destroy(cell.forestObject); cell.forestObject = null; }
+        forestMap.SetForestType(x, y, forestType); if (forestType == Forest.ForestType.None) return;
+        GameObject fp = GetForestPrefabForCell(x, y, forestType); if (fp == null) return;
+        GameObject fo = Instantiate(fp, cell.transformPosition, fp.transform.rotation);
+        fo.transform.SetParent(cell.gameObject.transform);
+        if (savedSpriteSortingOrder.HasValue) { SpriteRenderer sr = fo.GetComponent<SpriteRenderer>(); if (sr != null) sr.sortingOrder = savedSpriteSortingOrder.Value; }
+        else SetForestSortingOrder(fo, x, y, cell.height);
+        cell.SetForest(forestType, fp.name, fo);
+        UpdateAdjacentDesirability(x, y, true); if (updateStats) UpdateForestStatistics();
     }
 
-    /// <summary>
-    /// Refresh forest statistics (e.g. after batch restore). Call once after <see cref="RestoreForestAt"/> for all cells.
-    /// </summary>
-    public void RefreshForestStatistics()
+    public void RefreshForestStatistics() => UpdateForestStatistics();
+    public ForestMap GetForestMap() => forestMap;
+    public float GetForestDemandBoost() { if (forestMap == null) return 0f; var c = forestMap.GetForestTypeCounts(); int t = 0; foreach (var v in c.Values) t += v; return t * demandBoostPercentage; }
+    public ForestStatistics GetForestStatistics()
     {
-        UpdateForestStatistics();
-    }
-    #endregion
-
-    #region Forest Queries
-    private bool CanPlaceForestAt(int x, int y)
-    {
-        if (forestMap == null)
-            return false;
-
-        // Cannot place if already has forest
-        if (forestMap.GetForestType(x, y) != Forest.ForestType.None)
-            return false;
-
-        // Cannot place on water
-        if (waterManager != null && waterManager.IsWaterAt(x, y))
-            return false;
-
-        CityCell cellComponent = gridManager.GetCell(x, y);
-
-        // Cannot place on river/coast edge (cardinal water); Moore-neighbor lake edges use TerrainManager.IsWaterSlopeCell.
-        if (IsRiverOrCoastEdge(x, y))
-            return false;
-
-        TerrainManager tm = terrainManager;
-        if (tm == null && gridManager != null)
-            tm = gridManager.terrainManager;
-        if (tm != null && tm.IsWaterSlopeCell(x, y))
-            return false;
-
-        // Cannot place on roads or interstate
-        if (cellComponent.zoneType == Zone.ZoneType.Road)
-            return false;
-        if (cellComponent.isInterstate)
-            return false;
-
-        // Cannot place on buildings (occupied building or zone type is a building)
-        if (cellComponent.occupiedBuilding != null)
-            return false;
-        if (IsZoneTypeBlockingForest(cellComponent.zoneType))
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// True → land cell orthogonally adjacent to logical water (any surface height). Uses <see cref="WaterManager.IsWaterAt"/>, not terrain height alone.
-    /// </summary>
-    private bool IsRiverOrCoastEdge(int x, int y)
-    {
-        if (waterManager == null)
-            return false;
-
-        if (waterManager.IsWaterAt(x, y))
-            return true;
-
-        int[] dx = { -1, 1, 0, 0 };
-        int[] dy = { 0, 0, -1, 1 };
-        for (int i = 0; i < 4; i++)
-        {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
-            if (gridManager.IsValidGridPosition(new Vector2(nx, ny)) && waterManager.IsWaterAt(nx, ny))
-                return true;
-        }
-        return false;
-    }
-
-    /// <summary>Allocate empty <see cref="ForestMap"/> when procedural init skipped → manual placement still works.</summary>
-    private void EnsureForestMapForManualPlacement()
-    {
-        if (forestMap != null || gridManager == null)
-            return;
-        if (terrainManager == null && gridManager.terrainManager != null)
-            terrainManager = gridManager.terrainManager;
-        if (terrainManager == null)
-            terrainManager = FindObjectOfType<TerrainManager>();
-        if (waterManager == null && gridManager.waterManager != null)
-            waterManager = gridManager.waterManager;
-        if (waterManager == null)
-            waterManager = FindObjectOfType<WaterManager>();
-        if (terrainManager != null)
-            terrainManager.EnsureHeightMapLoaded();
-        forestMap = new ForestMap(gridManager.width, gridManager.height);
-    }
-
-    /// <summary>
-    /// Height map for terrain logic (river edge, etc.). Prefer terrainManager; fallback gridManager.terrainManager
-    /// → use initial/terrain heights, not CityCell.height (water slope cells have CityCell.height=0 but terrain height=1).
-    /// </summary>
-    private HeightMap GetTerrainHeightMap()
-    {
-        if (terrainManager != null && terrainManager.GetHeightMap() != null)
-            return terrainManager.GetHeightMap();
-        if (gridManager != null && gridManager.terrainManager != null && gridManager.terrainManager.GetHeightMap() != null)
-            return gridManager.terrainManager.GetHeightMap();
-        return null;
-    }
-
-    private int GetCellHeight(int x, int y)
-    {
-        HeightMap heightMap = GetTerrainHeightMap();
-        if (heightMap != null && heightMap.IsValidPosition(x, y))
-            return heightMap.GetHeight(x, y);
-        CityCell c = gridManager.GetCell(x, y);
-        if (c != null)
-            return c.height;
-        return TerrainManager.SEA_LEVEL;
-    }
-
-    private bool IsZoneTypeBlockingForest(Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.Road:
-            case Zone.ZoneType.Water:
-            case Zone.ZoneType.Building:
-            case Zone.ZoneType.ResidentialLightBuilding:
-            case Zone.ZoneType.ResidentialMediumBuilding:
-            case Zone.ZoneType.ResidentialHeavyBuilding:
-            case Zone.ZoneType.CommercialLightBuilding:
-            case Zone.ZoneType.CommercialMediumBuilding:
-            case Zone.ZoneType.CommercialHeavyBuilding:
-            case Zone.ZoneType.IndustrialLightBuilding:
-            case Zone.ZoneType.IndustrialMediumBuilding:
-            case Zone.ZoneType.IndustrialHeavyBuilding:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private bool CanAffordForest(IForest forest)
-    {
-        if (economyManager == null || forest.ConstructionCost <= 0)
-            return true; // Free forests or no economy manager
-
-        return economyManager.GetCurrentMoney() >= forest.ConstructionCost;
-    }
-
-    private bool HasSufficientWaterForForest(IForest forest)
-    {
-        if (cityStats == null || forest.WaterConsumption <= 0)
-            return true; // Allow if we can't check or no water required
-
-        // Check if city has enough water capacity
-        int currentWaterConsumption = cityStats.GetTotalWaterConsumption();
-        int currentWaterOutput = cityStats.GetTotalWaterOutput();
-
-        return (currentWaterConsumption + forest.WaterConsumption) <= currentWaterOutput;
-    }
-    #endregion
-
-    #region Utility Methods
-    private IEnumerator DeferredUpdateForestVisuals()
-    {
-        yield return null;
-        if (terrainManager != null)
-            terrainManager.EnsureHeightMapLoaded();
-        // Always place forest visuals; if heightMap is still null we use flat prefabs so the map is never empty.
-        if (forestMap != null && gridManager != null)
-            UpdateForestVisuals();
+        if (forestMap == null) return new ForestStatistics();
+        var counts = forestMap.GetForestTypeCounts(); int total = 0; foreach (var v in counts.Values) total += v;
+        return new ForestStatistics { totalForestCells = total, forestCoveragePercentage = forestMap.GetForestCoveragePercentage(),
+            sparseForestCount = counts.ContainsKey(Forest.ForestType.Sparse) ? counts[Forest.ForestType.Sparse] : 0,
+            mediumForestCount = counts.ContainsKey(Forest.ForestType.Medium) ? counts[Forest.ForestType.Medium] : 0,
+            denseForestCount  = counts.ContainsKey(Forest.ForestType.Dense)  ? counts[Forest.ForestType.Dense]  : 0 };
     }
 
     public void UpdateForestVisuals()
     {
         if (forestMap == null || gridManager == null) return;
-
         for (int x = 0; x < gridManager.width; x++)
-        {
             for (int y = 0; y < gridManager.height; y++)
-            {
-                Forest.ForestType forestType = forestMap.GetForestType(x, y);
-                if (forestType != Forest.ForestType.None)
-                {
-                    PlaceForestVisual(x, y, forestType);
-                }
-            }
-        }
+            { Forest.ForestType ft = forestMap.GetForestType(x, y); if (ft != Forest.ForestType.None) PlaceForestVisual(x, y, ft); }
     }
 
-    private void PlaceForestVisual(int x, int y, Forest.ForestType forestType)
+    private void PlaceForestVisual(int x, int y, Forest.ForestType ft)
     {
-        CityCell cellComponent = gridManager.GetCell(x, y);
-
-        // Don't place if cell already has a tree
-        if (cellComponent.hasTree)
-            return;
-
-        GameObject forestPrefab = GetForestPrefabForCell(x, y, forestType);
-        if (forestPrefab == null) return;
-
-        Vector2 worldPos = cellComponent.transformPosition;
-        // Use prefab's default rotation so slope prefabs keep their authored orientation (avoids "upside down" on slopes).
-        Quaternion rotation = forestPrefab.transform.rotation;
-        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
-
-        forestObject.transform.SetParent(cellComponent.gameObject.transform);
-        SetForestSortingOrder(forestObject, x, y, cellComponent.height);
-
-        cellComponent.SetTree(true, forestType.ToString(), forestObject);
+        CityCell cell = gridManager.GetCell(x, y); if (cell.hasTree) return;
+        GameObject fp = GetForestPrefabForCell(x, y, ft); if (fp == null) return;
+        GameObject fo = Instantiate(fp, cell.transformPosition, fp.transform.rotation);
+        fo.transform.SetParent(cell.gameObject.transform); SetForestSortingOrder(fo, x, y, cell.height);
+        cell.SetTree(true, ft.ToString(), fo);
     }
 
-    private void UpdateAdjacentDesirability(int centerX, int centerY, bool forestAdded)
-    {
-        var adjacentPositions = forestMap.GetPositionsAdjacentToForest(centerX, centerY);
+    private IEnumerator DeferredUpdateForestVisuals() { yield return null; if (terrainManager != null) terrainManager.EnsureHeightMapLoaded(); if (forestMap != null && gridManager != null) UpdateForestVisuals(); }
 
-        foreach (var pos in adjacentPositions)
+    private void UpdateAdjacentDesirability(int cx, int cy, bool added)
+    {
+        if (forestMap == null || gridManager == null) return;
+        foreach (var pos in forestMap.GetPositionsAdjacentToForest(cx, cy))
         {
-            CityCell cellComponent = gridManager.GetCell(pos.x, pos.y);
-
-            // Update close forest count
-            if (forestAdded)
-                cellComponent.closeForestCount++;
-            else
-                cellComponent.closeForestCount = Mathf.Max(0, cellComponent.closeForestCount - 1);
-
-            // Recalculate desirability
-            cellComponent.UpdateDesirability();
+            CityCell cell = gridManager.GetCell(pos.x, pos.y); if (cell == null) continue;
+            if (added) cell.closeForestCount++; else cell.closeForestCount = Mathf.Max(0, cell.closeForestCount - 1);
+            cell.UpdateDesirability();
         }
     }
 
     private void UpdateAllCellDesirability()
     {
-        if (gridManager == null || forestMap == null) return;
+        if (forestMap == null || gridManager == null) return;
+        for (int x = 0; x < gridManager.width; x++) for (int y = 0; y < gridManager.height; y++)
+        { CityCell cell = gridManager.GetCell(x, y); if (cell == null) continue; cell.closeForestCount = forestMap.GetAdjacentForestCount(x, y); cell.UpdateDesirability(); }
+    }
 
-        for (int x = 0; x < gridManager.width; x++)
-        {
-            for (int y = 0; y < gridManager.height; y++)
-            {
-                CityCell cellComponent = gridManager.GetCell(x, y);
-
-                // Calculate adjacent forest count
-                cellComponent.closeForestCount = forestMap.GetAdjacentForestCount(x, y);
-
-                // Update desirability
-                cellComponent.UpdateDesirability();
-            }
-        }
+    private void EnsureForestMapForManualPlacement()
+    {
+        if (forestMap != null || gridManager == null) return;
+        if (terrainManager == null && gridManager.terrainManager != null) terrainManager = gridManager.terrainManager;
+        if (terrainManager == null) terrainManager = FindObjectOfType<TerrainManager>();
+        if (waterManager == null && gridManager.waterManager != null) waterManager = gridManager.waterManager;
+        if (waterManager == null) waterManager = FindObjectOfType<WaterManager>();
+        if (terrainManager != null) terrainManager.EnsureHeightMapLoaded();
+        forestMap = new ForestMap(gridManager.width, gridManager.height);
     }
 
     private void UpdateForestStatistics()
     {
         if (forestMap == null || cityStats == null) return;
-
-        // Count each forest type
-        forestTypeCounts = forestMap.GetForestTypeCounts();
-
-        int totalForestCells = 0;
-        foreach (var count in forestTypeCounts.Values)
-        {
-            totalForestCells += count;
-        }
-
-        // Update CityStats with forest information
-        if (cityStats.GetComponent<CityStats>())
-        {
-            cityStats.SendMessage("UpdateForestStats",
-                new ForestStatistics
-                {
-                    totalForestCells = totalForestCells,
-                    forestCoveragePercentage = forestMap.GetForestCoveragePercentage(),
-                    sparseForestCount = forestTypeCounts[Forest.ForestType.Dense],
-                    mediumForestCount = forestTypeCounts[Forest.ForestType.Dense],
-                    denseForestCount = forestTypeCounts[Forest.ForestType.Dense]
-                },
-                SendMessageOptions.DontRequireReceiver);
-        }
+        if (cityStats.GetComponent<CityStats>()) cityStats.SendMessage("UpdateForestStats", GetForestStatistics(), SendMessageOptions.DontRequireReceiver);
     }
 
-    public float GetForestDemandBoost()
+    private void SetForestSortingOrder(GameObject fo, int x, int y, int h)
     {
-        int totalForestCells = 0;
-        foreach (var count in forestTypeCounts.Values)
-        {
-            totalForestCells += count;
-        }
-        return totalForestCells * demandBoostPercentage;
+        int order = _svc != null ? _svc.GetForestSortingOrder(x, y, h) : -(y * 10 + x) - (h * 100) - 50;
+        foreach (SpriteRenderer sr in fo.GetComponentsInChildren<SpriteRenderer>()) { if (sr != null) sr.sortingOrder = order; }
     }
 
-    private GameObject GetPrefabForForestType(Forest.ForestType forestType)
-    {
-        switch (forestType)
-        {
-            case Forest.ForestType.Sparse:
-                return sparseForestPrefab;
-            case Forest.ForestType.Medium:
-                return mediumForestPrefab;
-            case Forest.ForestType.Dense:
-                return denseForestPrefab;
-            default:
-                DebugHelper.LogWarning($"No prefab assigned for forest type: {forestType}");
-                return null;
-        }
-    }
+    private GameObject GetPrefabForForestType(Forest.ForestType ft) { switch (ft) { case Forest.ForestType.Sparse: return sparseForestPrefab; case Forest.ForestType.Medium: return mediumForestPrefab; case Forest.ForestType.Dense: return denseForestPrefab; default: return null; } }
 
-    /// <summary>
-    /// Return forest prefab for cell based on terrain (flat vs slope). On slopes → 12 slope prefabs (medium).
-    /// </summary>
-    private GameObject GetForestPrefabForCell(int x, int y, Forest.ForestType forestType)
-    {
-        if (terrainManager == null)
-            return GetPrefabForForestType(forestType);
+    private GameObject GetForestPrefabForCell(int x, int y, Forest.ForestType ft)
+    { if (terrainManager == null) return GetPrefabForForestType(ft); TerrainSlopeType st = terrainManager.GetTerrainSlopeTypeAt(x, y); if (st == TerrainSlopeType.Flat) return GetPrefabForForestType(ft); GameObject sp = GetSlopeForestPrefab(st); return sp ?? GetPrefabForForestType(ft); }
 
-        TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
-        if (slopeType == TerrainSlopeType.Flat)
-            return GetPrefabForForestType(forestType);
-
-        GameObject slopePrefab = GetSlopeForestPrefab(slopeType);
-        if (slopePrefab != null)
-            return slopePrefab;
-        return GetPrefabForForestType(forestType);
-    }
-
-    private GameObject GetSlopeForestPrefab(TerrainSlopeType slopeType)
-    {
-        switch (slopeType)
-        {
-            case TerrainSlopeType.North: return forestNorthSlopePrefab;
-            case TerrainSlopeType.South: return forestSouthSlopePrefab;
-            case TerrainSlopeType.East: return forestEastSlopePrefab;
-            case TerrainSlopeType.West: return forestWestSlopePrefab;
-            case TerrainSlopeType.NorthEast: return forestNorthEastSlopePrefab;
-            case TerrainSlopeType.NorthWest: return forestNorthWestSlopePrefab;
-            case TerrainSlopeType.SouthEast: return forestSouthEastSlopePrefab;
-            case TerrainSlopeType.SouthWest: return forestSouthWestSlopePrefab;
-            case TerrainSlopeType.NorthEastUp: return forestNorthEastUpSlopePrefab;
-            case TerrainSlopeType.NorthWestUp: return forestNorthWestUpSlopePrefab;
-            case TerrainSlopeType.SouthEastUp: return forestSouthEastUpSlopePrefab;
-            case TerrainSlopeType.SouthWestUp: return forestSouthWestUpSlopePrefab;
-            default: return null;
-        }
-    }
-
-    private int GetWaterConsumptionForForestType(Forest.ForestType forestType)
-    {
-        // You might want to make this configurable or get it from a data source
-        switch (forestType)
-        {
-            case Forest.ForestType.Sparse:
-                return 2;
-            case Forest.ForestType.Medium:
-                return 3;
-            case Forest.ForestType.Dense:
-                return 5;
-            default:
-                return 0;
-        }
-    }
-
-    private int GetConstructionCostForForestType(Forest.ForestType forestType)
-    {
-        // You might want to make this configurable or get it from a data source
-        switch (forestType)
-        {
-            case Forest.ForestType.Sparse:
-                return 0;
-            case Forest.ForestType.Medium:
-                return 0;
-            case Forest.ForestType.Dense:
-                return 0;
-            default:
-                return 0;
-        }
-    }
-
-    // Forest draws above terrain but below buildings (TerrainManager.BUILDING_OFFSET = 10)
-    private const int FOREST_SORTING_OFFSET = 5;
-
-    private void SetForestSortingOrder(GameObject forestObject, int x, int y, int cellHeight)
-    {
-        int sortingOrder;
-        if (terrainManager != null)
-        {
-            int height = cellHeight;
-            if (terrainManager.GetHeightMap() != null)
-            {
-                height = terrainManager.GetHeightMap().GetHeight(x, y);
-            }
-            sortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, height) + FOREST_SORTING_OFFSET;
-        }
-        else
-        {
-            int baseSortingOrder = -(y * 10 + x) - (cellHeight * 100);
-            sortingOrder = baseSortingOrder - 50;
-        }
-
-        SpriteRenderer[] renderers = forestObject.GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            if (sr != null)
-                sr.sortingOrder = sortingOrder;
-        }
-    }
-
-    public ForestStatistics GetForestStatistics()
-    {
-        if (forestMap == null)
-        {
-            return new ForestStatistics
-            {
-                totalForestCells = 0,
-                forestCoveragePercentage = 0f,
-                sparseForestCount = 0,
-                mediumForestCount = 0,
-                denseForestCount = 0
-            };
-        }
-
-        var counts = forestMap.GetForestTypeCounts();
-        int totalForestCells = 0;
-        foreach (var count in counts.Values)
-        {
-            totalForestCells += count;
-        }
-
-        return new ForestStatistics
-        {
-            totalForestCells = totalForestCells,
-            forestCoveragePercentage = forestMap.GetForestCoveragePercentage(),
-            sparseForestCount = counts[Forest.ForestType.Sparse],
-            mediumForestCount = counts[Forest.ForestType.Medium],
-            denseForestCount = counts[Forest.ForestType.Dense]
-        };
-    }
-
-    public ForestMap GetForestMap() => forestMap;
-    #endregion
+    private GameObject GetSlopeForestPrefab(TerrainSlopeType st)
+    { switch (st) { case TerrainSlopeType.North: return forestNorthSlopePrefab; case TerrainSlopeType.South: return forestSouthSlopePrefab; case TerrainSlopeType.East: return forestEastSlopePrefab; case TerrainSlopeType.West: return forestWestSlopePrefab; case TerrainSlopeType.NorthEast: return forestNorthEastSlopePrefab; case TerrainSlopeType.NorthWest: return forestNorthWestSlopePrefab; case TerrainSlopeType.SouthEast: return forestSouthEastSlopePrefab; case TerrainSlopeType.SouthWest: return forestSouthWestSlopePrefab; case TerrainSlopeType.NorthEastUp: return forestNorthEastUpSlopePrefab; case TerrainSlopeType.NorthWestUp: return forestNorthWestUpSlopePrefab; case TerrainSlopeType.SouthEastUp: return forestSouthEastUpSlopePrefab; case TerrainSlopeType.SouthWestUp: return forestSouthWestUpSlopePrefab; default: return null; } }
 }
 
-/// <summary>
-/// Forest statistics with type-specific counts.
-/// </summary>
+/// <summary>Forest statistics with type-specific counts.</summary>
 [System.Serializable]
 public struct ForestStatistics
 {
-    public int totalForestCells;
-    public float forestCoveragePercentage;
-    public int sparseForestCount;
-    public int mediumForestCount;
-    public int denseForestCount;
+    public int totalForestCells; public float forestCoveragePercentage;
+    public int sparseForestCount; public int mediumForestCount; public int denseForestCount;
 }
 }
