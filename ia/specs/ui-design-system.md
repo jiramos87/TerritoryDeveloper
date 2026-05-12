@@ -492,3 +492,34 @@ These patterns apply to both the **in-game HUD** (Unity uGUI) and the **web plat
 
 - **Committed snapshot:** [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) — refresh from **Postgres** `editor_export_ui_inventory` or **Territory Developer → Reports → Export UI Inventory (JSON)** when **UI** hierarchies change (see [`docs/reports/README.md`](../../docs/reports/README.md)).
 - **Field mapping:** JSON node **`path`** is relative to the sampled **Canvas** root (`Canvas/…`); full scene path is **`UI/City/Canvas`** + **`path`** for **CityScene**.
+
+### 8.5 New panel definitions — whole-game rollout (2026-05-12)
+
+DB-backed publish pass driving every panel through pilot baseline (header-strip HLG + tokenized padding + Bucket C renderers). Source: `docs/ui-continuation-handoff.md` /goal run.
+
+| entity_id | slug | layout_template | dims (w×h) | token refs | published v |
+|---|---|---|---|---|---|
+| 41  | hud-bar | hstack | top dock | size-text-value (readouts) + size-text-body-row (city-name) | 613 |
+| 100 | toolbar | (vstack/hstack) | left dock | (no panel_child rows; placeholder publish) | 612 |
+| 175 | main-menu | fullscreen-stack | full screen | size-text-title-display + size-text-body-row | 614 |
+| 199 | new-game-form | modal-card | inherits modal-card | padding-card + corner-radius-card + border-width-card + color-border-accent + gap-section (gap_px=16) | 604 |
+| 200 | settings-view | modal-card | inherits modal-card | same as 199 | 605 |
+| 213 | save-load-view | modal-card | inherits modal-card | same as 199 | 606 |
+| 216 | tool-subtype-picker | hstack | bottom-left dock | gap-tight padding (dock variant) | 607 |
+| 222 | pause-menu | modal-card | 480×480 | same as 199 + back-button visible_bind=pause.contentBack.visible | 608 |
+| 224 | info-panel | modal-card | 480×320 | same as 199; bindIds info.title/info.name/info.body/info.cellCoord | 609 |
+| 225 | map-panel | modal-card | 420×480 | same as 199; minimap-canvas + 3 layer toggle illuminated-buttons | 610 |
+| 226 | notifications-toast | top-right-toast | 320×0 | gap-tight padding; toast-stack + toast-card template, bindId notifications.toastList | 611 |
+
+**Header-strip protocol.** Each new modal panel (199/200/213/222/224/225) carries:
+
+- `slot_name='close'`, `order_idx=1`, `child_kind='button'`, `params_json.kind='back-button'` + action.
+- `slot_name='header'`, `order_idx=2`, `child_kind='label'`, `params_json.kind='themed-label'`, `params_json.variant='modal-title'`, label/bindId.
+
+`UiBakeHandler.WritePanelSnapshotPrefabs` detects this shape (`item.children[0]` back-button + `item.children[1]` themed-label modal-title) and wraps both into a `HeaderStrip` HLG; original VLG flow resumes from `order_idx>=3`.
+
+**Bucket F resolver.** `Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` loads `Assets/UI/Snapshots/tokens.json` at bake start; `SubstituteSpacingTokensInJson` rewrites `padding_json` keys (top/left/right/bottom/border_width/corner_radius/gap/padding) when values are spacing-token slugs. `ResolveBorderColor` consults published `color-*` tokens by slug before legacy fallback. Public helpers exposed for renderers: `ResolveTypeScaleFontSize`, `ResolveTypeScaleWeight`, `ResolveColorTokenHex`.
+
+**Bucket C renderers landed.** `card-picker` (3-col GridLayoutGroup + ToggleGroup), `chip-picker` (HLG + toggle chips, color-bg-selected token), `subtype-card` (icon + label Button), `chart` (full ChartRenderer with optional axisLabels children). Legacy `chart-stub` retained as backstop alias for stacked-bar-row.
+
+**Runtime nav-header retired.** `PauseMenuDataAdapter.InjectNavHeader` no longer invoked on sub-view mount; DB-driven header-strip on each sub-view replaces it.

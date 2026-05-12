@@ -216,3 +216,56 @@ The handoff §6 maps each bundle file to suggested Next.js destinations (`compon
 | Code mirror | `web/lib/design-tokens.ts` (Stage 22 T22.3) + `cdBundle` (Stage 24 CD transcription) |
 | CSS vars | `web/app/globals.css` `@theme` `ds` prefix (T22.4) + `/* CD-BUNDLE-START */` block (Stage 24) |
 | CD pilot | `web/design-refs/step-8-console/HANDOFF.md` + extensions `### CD Pilot Bundle — 2026-04-18` |
+
+## Pilot promotions — 2026-05-12 (stats + budget UI redesign pilot)
+
+The stats-panel + budget-panel pilots surfaced 8 cross-panel concerns. All resolved via factory or design-system token.
+
+### Type-scale tokens (5 published in `token_detail`, `Assets/UI/Snapshots/tokens.json`)
+
+| Token slug | pt | weight | Usage |
+| --- | --- | --- | --- |
+| `size-text-title-display` | 48 | bold | Branding / splash titles |
+| `size-text-modal-title` | 24 | bold | Modal panel headers (`themed-label modal-title` variant) |
+| `size-text-section-header` | 20 | bold | In-panel section dividers (`section-header` kind) |
+| `size-text-body-row` | 18 | regular | List-row / expense-row primary label |
+| `size-text-value` | 18 | bold | List-row secondary value column |
+
+Bake reference: `UiBakeHandler.cs:hdrTmp.fontSize=20f` (section), `listPrimaryTmp/listSecondaryTmp=18f` (rows), `sliderTmp=16f` (slider label).
+
+### Color tokens
+
+| Token slug | hex | reference | Notes |
+| --- | --- | --- | --- |
+| `color-border-accent` | `#ffb020` | `led-amber` light-stop | Modal-card border (6 px). Future panels use this slug instead of raw `led-amber` ref. |
+
+### Typography family
+
+| Token slug | family | weight default |
+| --- | --- | --- |
+| `font-family-ui` | LiberationSans | regular |
+
+(TMP default formalized as token — future swap point.)
+
+### Shared factories (Assets/Scripts/UI/Decoration/)
+
+| Factory | Surface | Used by |
+| --- | --- | --- |
+| `NavBackButton.Spawn(parent, size=40)` | 40 × 40 dark chip + `<` TMP glyph, 24 pt bold | stats-close, budget-close, settings nav-header |
+| `RoundedBorder` (`MaskableGraphic` mesh) | Panel-card border with corner_radius | All `layout_template = modal-card` panels |
+
+### Bake-time helpers (`UiBakeHandler.cs`)
+
+| Helper | Purpose |
+| --- | --- |
+| `ApplyCornerOverlay(go, corner, size, offset, padding)` | Escapes panel VLG flow via `LayoutElement.ignoreLayout = 1`; pins to named corner; padding-aware offset parsed from `"x,y"` string |
+| `BakeChildByKind: case "back-button"` | Routes to `NavBackButton.Spawn` + attaches `UiActionTrigger(pj.action)` |
+| `MapLayoutTemplate: case "modal-card" → VerticalLayoutGroup` | Formal recognition (was `vstack` fallback with warning) |
+| `MapLayoutTemplateToPanelKind: case "modal-card" → PanelKind.Modal` | Matches `_kind` to LayoutGroup type |
+
+### Open decisions resolved
+
+| Decision | Resolution |
+| --- | --- |
+| `row_columns` scope | Per-panel param (no layout-template default). Stats = 2-col service rows; budget = 1-col rows. Different content densities, no forcing function. |
+| `frame-modal-card` padding/border/radius | Resolved via `panel_detail.padding_json` packed shape: `{top, left, right, bottom, border_width, corner_radius, border_color_token}`. All modal-card panels copy stats v=7 baseline shape. |
