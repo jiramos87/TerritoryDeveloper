@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Territory.UI;
+using Territory.UI.Decoration;
 using Territory.UI.Editor;
 using Territory.UI.HUD;
 using Territory.UI.Juice;
@@ -293,6 +294,8 @@ namespace Territory.Editor.Bridge
         [Serializable]
         public class PanelSnapshotFields
         {
+            /// <summary>Catalog display_name (catalog_entity.display_name) — drives header label fallback for themed-label modal-title.</summary>
+            public string display_name;
             public string layout_template;
             public string layout;
             public float gap_px;
@@ -405,6 +408,15 @@ namespace Territory.Editor.Bridge
             public string[] options;    // range-tabs captions
             public string seriesId;     // chart series identifier (forwarded to ChartRenderer)
             public string tabGroup;     // optional ToggleGroup id for multi-strip pages
+            // Stats-panel pilot — corner-anchor overlay. When set ("top-left" / "top-right" /
+            // "bottom-left" / "bottom-right"), the child escapes the panel VLG flow and is pinned
+            // to the named panel corner with a small fixed size + padding-aware offset.
+            public string corner;
+            public int corner_size;     // optional pixel size (default 40 when corner set)
+            // Optional manual offset override (px) — "x,y" string. Overrides default
+            // padding+border math when set. Useful when overlay needs to align with a sibling
+            // element (e.g. centering close-button vertically with a tall themed-label header).
+            public string corner_offset;
         }
 
         /// <summary>Typed view of panel-level params_json on PanelSnapshotFields. Open shape — fields optional.</summary>
@@ -412,9 +424,16 @@ namespace Territory.Editor.Bridge
         public class PanelFieldsParamsJson
         {
             public string position; // "top" | "bottom" — Hud arm anchor override (Bug A)
+            // Stats-panel pilot — when >=2, contiguous list-row family runs (expense-row /
+            // service-row / key-value) are wrapped in a GridLayoutGroup with this many cols.
+            public int row_columns;
+            // Stats-panel pilot — modal-card panel-card width (px). Used by RowGrid sizing.
+            public int width;
+            public int height;
+            public string defaultTab;
         }
 
-        /// <summary>Typed view of padding_json on PanelSnapshotFields — `{"top":N,"right":N,"bottom":N,"left":N}`.</summary>
+        /// <summary>Typed view of padding_json on PanelSnapshotFields — `{"top":N,"right":N,"bottom":N,"left":N,"border_width":F,"border_color_token":"slug","corner_radius":F}`.</summary>
         [Serializable]
         public class PanelPaddingJson
         {
@@ -422,6 +441,10 @@ namespace Territory.Editor.Bridge
             public int right;
             public int bottom;
             public int left;
+            // Frame fields (stats-panel pilot — packed into padding_json to avoid schema migration).
+            public float border_width;
+            public string border_color_token;
+            public float corner_radius;
         }
 
         /// <summary>JsonUtility wrapper that returns a default-init T when input is null/whitespace/malformed (silent — log on caller side when needed).</summary>
@@ -437,6 +460,19 @@ namespace Territory.Editor.Bridge
             {
                 return new T();
             }
+        }
+
+        /// <summary>Slug → Title Case ("power" → "Power", "public-housing" → "Public Housing").</summary>
+        private static string TitleCaseSlug(string slug)
+        {
+            if (string.IsNullOrEmpty(slug)) return string.Empty;
+            var parts = slug.Replace('_', '-').Split('-');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i].Length == 0) continue;
+                parts[i] = char.ToUpperInvariant(parts[i][0]) + parts[i].Substring(1);
+            }
+            return string.Join(" ", parts);
         }
 
         // Imp-1 (bake-fix-2026-05-08) — unified kind dispatch. Snapshot path + IR/Frame path share
@@ -489,7 +525,7 @@ namespace Territory.Editor.Bridge
         /// <see cref="SpawnIlluminatedButtonCaption"/>, <see cref="SpawnSegmentedReadoutRenderTargets"/>,
         /// <see cref="SpawnThemedLabelChild"/>) so snapshot and IR contracts stay byte-identical.</summary>
         static void BakeChildByKind(GameObject childGo, string innerKind, PanelChildParamsJson pj, UiTheme theme,
-            float preferredWidth = 64f, float preferredHeight = 64f)
+            float preferredWidth = 64f, float preferredHeight = 64f, string panelDisplayName = null)
         {
             if (childGo == null) return;
             string iconSlug = pj != null ? pj.icon : null;
@@ -536,12 +572,17 @@ namespace Territory.Editor.Bridge
                     var lbl = childGo.AddComponent<ThemedLabel>();
                     WireThemeRef(lbl, theme);
                     SpawnThemedLabelChild(childGo, out var labelTmp);
-                    // text_static (branding strips) wins over generic label; "--" placeholder is
-                    // last-resort default when neither static text nor a label was authored.
+                    // text_static (branding strips) wins over generic label; modal-title variant
+                    // falls back to the parent panel's display_name so stats-panel / budget-panel
+                    // headers render the catalog display label without an explicit text_static.
+                    // "--" placeholder is the last-resort default.
                     string staticText = pj?.text_static;
-                    string resolvedText = !string.IsNullOrEmpty(staticText)
-                        ? staticText
-                        : (string.IsNullOrEmpty(label) ? "--" : label);
+                    bool isModalTitle = string.Equals(pj?.variant, "modal-title", StringComparison.Ordinal);
+                    string resolvedText;
+                    if (!string.IsNullOrEmpty(staticText)) resolvedText = staticText;
+                    else if (!string.IsNullOrEmpty(label)) resolvedText = label;
+                    else if (isModalTitle && !string.IsNullOrEmpty(panelDisplayName)) resolvedText = panelDisplayName;
+                    else resolvedText = "--";
                     if (labelTmp != null)
                     {
                         labelTmp.text = resolvedText;
@@ -616,6 +657,31 @@ namespace Territory.Editor.Bridge
                         rect.offsetMin = rect.offsetMax = Vector2.zero;
                     }
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: -1f, flexibleWidth: 1f);
+                    break;
+                }
+                case "back-button":
+                {
+                    // Official UI back-arrow — single source of truth in NavBackButton factory.
+                    // 40x40 dark chip + "<" TMP glyph. Action wired via UiActionTrigger (pj.action).
+                    // childGo is the wrapper produced by the bake loop; reparent the factory output
+                    // INTO childGo so corner/layout post-processing still hits childGo's RectTransform.
+                    var spawned = NavBackButton.Spawn(childGo);
+                    // NavBackButton.Spawn adds Image+Button+LayoutElement to spawned; collapse them
+                    // onto childGo instead so corner-overlay + LayoutElement.ignoreLayout still target
+                    // the single wrapper. Move the "<" label child up.
+                    var labelTr = spawned.transform.Find("Label");
+                    if (labelTr != null) labelTr.SetParent(childGo.transform, worldPositionStays: false);
+                    // Replicate chip visuals on childGo (Image color + Button targetGraphic).
+                    var chipImg = childGo.GetComponent<Image>();
+                    if (chipImg == null) chipImg = childGo.AddComponent<Image>();
+                    chipImg.color = new Color(0.18f, 0.18f, 0.18f, 0.9f);
+                    var chipBtn = childGo.GetComponent<Button>();
+                    if (chipBtn == null) chipBtn = childGo.AddComponent<Button>();
+                    chipBtn.targetGraphic = chipImg;
+                    UnityEngine.Object.DestroyImmediate(spawned);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
+                    float size = pj != null && pj.corner_size > 0 ? pj.corner_size : NavBackButton.DefaultSize;
+                    EnsureChildLayoutElement(childGo, preferredWidth: size, preferredHeight: size, flexibleWidth: 0f);
                     break;
                 }
                 case "slider-row":
@@ -879,7 +945,15 @@ namespace Territory.Editor.Bridge
                     var listPrimary = new GameObject("PrimaryLabel", typeof(RectTransform), typeof(LayoutElement));
                     listPrimary.transform.SetParent(childGo.transform, worldPositionStays: false);
                     var listPrimaryTmp = listPrimary.AddComponent<TextMeshProUGUI>();
-                    listPrimaryTmp.text = pj?.label ?? string.Empty;
+                    // Step 12.1 — list-row label fallback: when params_json.label is absent,
+                    // derive from pj.icon (e.g. "power" → "Power"). Mirrors authoring intent for
+                    // panels.json expense-row/service-row entries that ship icon + bindId only.
+                    string resolvedListLabel = pj?.label;
+                    if (string.IsNullOrEmpty(resolvedListLabel) && !string.IsNullOrEmpty(pj?.icon))
+                    {
+                        resolvedListLabel = TitleCaseSlug(pj.icon);
+                    }
+                    listPrimaryTmp.text = resolvedListLabel ?? string.Empty;
                     listPrimaryTmp.alignment = TextAlignmentOptions.MidlineLeft;
                     listPrimaryTmp.fontSize = 16f;
                     listPrimaryTmp.color = theme != null ? theme.TextPrimary : Color.white;
@@ -1695,10 +1769,11 @@ namespace Territory.Editor.Bridge
             if (layoutGroup == null) return;
             int padTop = 4, padBottom = 4, padLeft = 8, padRight = 8;
             float gap = fields?.gap_px ?? 8f;
+            PanelPaddingJson pad = null;
             var padJson = fields?.padding_json;
             if (!string.IsNullOrEmpty(padJson))
             {
-                var pad = TryParseTypedJson<PanelPaddingJson>(padJson);
+                pad = TryParseTypedJson<PanelPaddingJson>(padJson);
                 // Apply only fields the JSON actually carried — JsonUtility cannot distinguish "absent" from
                 // "0", so we keep defaults when caller passed empty/whitespace; non-empty input fully overrides.
                 padTop = pad.top;
@@ -1707,6 +1782,12 @@ namespace Territory.Editor.Bridge
                 padLeft = pad.left;
             }
             layoutGroup.padding = new RectOffset(padLeft, padRight, padTop, padBottom);
+
+            // Frame: rounded border. Skipped silently when fields absent / zero.
+            if (pad != null && (pad.border_width > 0f || pad.corner_radius > 0f))
+            {
+                ApplyRoundedBorder(layoutGroup.gameObject, pad);
+            }
 
             switch (layoutGroup)
             {
@@ -1734,6 +1815,118 @@ namespace Territory.Editor.Bridge
                     grid.childAlignment = TextAnchor.UpperLeft;
                     break;
             }
+        }
+
+        // Stats-panel pilot — bake-time color resolution for frame border tokens.
+        // TokenCatalog runtime resolver not bake-accessible; hardcoded slug→hex map promotes to
+        // tokens snapshot reader in Phase 2 (after pilot approved).
+        private static readonly Dictionary<string, Color> s_BorderTokenHexFallback = new Dictionary<string, Color>(StringComparer.Ordinal)
+        {
+            { "led-amber", new Color(1f, 0.835f, 0.541f, 1f) }, // #ffd58a
+            { "white",    Color.white },
+        };
+
+        private static Color ResolveBorderColor(string token)
+        {
+            if (string.IsNullOrEmpty(token)) return Color.white;
+            if (s_BorderTokenHexFallback.TryGetValue(token, out var c)) return c;
+            return Color.white;
+        }
+
+        /// <summary>
+        /// Stats-panel pilot — true when a panel-child kind belongs to the row-list family
+        /// (expense-row / service-row / key-value). These are the kinds that flow into a
+        /// RowGrid wrapper when panel.params_json.row_columns >= 2.
+        /// </summary>
+        private static bool IsListRowFamily(string outerKind, string innerKind)
+        {
+            if (outerKind == "expense-row" || outerKind == "service-row" || outerKind == "key-value") return true;
+            if (innerKind == "expense-row" || innerKind == "service-row" || innerKind == "key-value") return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Stats-panel pilot — create a "RowGrid" wrapper GameObject under <paramref name="panelRoot"/>
+        /// with a GridLayoutGroup configured for the requested column count. Cell width derives from
+        /// panel width / cols when known; falls back to 280 px otherwise. ord seed makes name unique
+        /// when the panel contains multiple row blocks separated by non-row children.
+        /// </summary>
+        private static GameObject CreateRowGrid(GameObject panelRoot, int cols, int panelWidth, int ordSeed)
+        {
+            var go = new GameObject($"RowGrid_{ordSeed}", typeof(RectTransform));
+            go.transform.SetParent(panelRoot.transform, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+
+            var grid = go.AddComponent<GridLayoutGroup>();
+            float gridGap = 4f;
+            float availableWidth = panelWidth > 0 ? panelWidth - 16f : 700f;
+            float cellW = Mathf.Floor((availableWidth - gridGap * (cols - 1)) / cols);
+            grid.cellSize = new Vector2(cellW, 28f);
+            grid.spacing = new Vector2(gridGap, gridGap);
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.UpperLeft;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = cols;
+
+            var le = go.AddComponent<LayoutElement>();
+            le.preferredWidth = panelWidth > 0 ? panelWidth - 16f : 700f;
+            le.flexibleWidth = 1f;
+            return go;
+        }
+
+        /// <summary>
+        /// Stats-panel pilot — attach a <see cref="RoundedBorder"/> child to the panel root.
+        /// Border GO stretches to the panel rect via anchors (0,0)-(1,1); LayoutElement.ignoreLayout
+        /// prevents the root VerticalLayoutGroup from squishing it into the layout flow. Sibling
+        /// index 0 (first) so it renders behind labels/buttons. RoundedBorder mesh draws BOTH the
+        /// rounded fill (panel-face color) AND the outline — the panel root's square bg Image is
+        /// hidden (alpha→0) so corners actually round. Idempotent: replaces an existing "Border".
+        /// </summary>
+        private static void ApplyRoundedBorder(GameObject panelRoot, PanelPaddingJson pad)
+        {
+            if (panelRoot == null || pad == null) return;
+            var existing = panelRoot.transform.Find("Border");
+            if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+
+            // Hide the panel root's square Image bg so the rounded fill below isn't masked by hard
+            // corners showing underneath. Keep the component (other systems may inspect it) but make
+            // it invisible + non-raycasting.
+            var rootImage = panelRoot.GetComponent<Image>();
+            if (rootImage != null)
+            {
+                var c = rootImage.color;
+                c.a = 0f;
+                rootImage.color = c;
+                rootImage.raycastTarget = false;
+            }
+
+            var go = new GameObject("Border", typeof(RectTransform), typeof(CanvasRenderer));
+            go.transform.SetParent(panelRoot.transform, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = Vector2.zero;
+            rt.SetAsFirstSibling(); // render behind text/buttons, but provide rounded fill
+
+            // Escape VLG / HLG / Grid layout — Border must follow the parent rect exactly.
+            var le = go.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
+
+            var border = go.AddComponent<RoundedBorder>();
+            border.BorderWidth = pad.border_width;
+            border.CornerRadius = pad.corner_radius;
+            border.BorderColor = ResolveBorderColor(pad.border_color_token);
+            // Fill mode — rounded panel face, same color the bg Image was using
+            // (ui-design-system.md §1.1 `ui-surface-dark` panel-face token).
+            border.FillEnabled = true;
+            border.FillColor = new Color(0.196f, 0.196f, 0.196f, 1f);
+            border.raycastTarget = false;
         }
 
         /// <summary>
@@ -2349,6 +2542,21 @@ namespace Territory.Editor.Bridge
                 ? BuildFullscreenStackZoneWrappers(panelRoot)
                 : null;
 
+            // Stats-panel pilot — panel-level row_columns drives 2-col wrapping of contiguous
+            // list-row family runs (expense-row / service-row / key-value). Single-col panels
+            // bypass entirely (rowColumns < 2 → null active RowGrid).
+            var fieldsParamsTop = TryParseTypedJson<PanelFieldsParamsJson>(item.fields?.params_json);
+            int rowColumns = fieldsParamsTop?.row_columns ?? 0;
+            int panelWidth = fieldsParamsTop?.width ?? 0;
+            // Stats-panel pilot — panel padding parsed once for corner-overlay offset math
+            // (child rect anchoredPosition uses padding to clear the border + radius zone).
+            var paddingTop = TryParseTypedJson<PanelPaddingJson>(item.fields?.padding_json);
+            GameObject activeRowGrid = null;
+            // Track every RowGrid we create so we can finalize LayoutElement.preferredHeight
+            // after all children are attached — VLG on the panel root needs an explicit height
+            // for the grid to actually expand vertically; otherwise it collapses to 100px default.
+            var createdRowGrids = new List<GameObject>();
+
             foreach (var child in item.children)
             {
                 if (child == null) continue;
@@ -2356,14 +2564,38 @@ namespace Territory.Editor.Bridge
                 var pj = TryParseTypedJson<PanelChildParamsJson>(child.params_json);
 
                 Transform parent = panelRoot.transform;
+                bool slotOverridden = false;
                 if (parentByOrd != null && parentByOrd.TryGetValue(child.ord, out var resolved) && resolved != null)
                 {
                     parent = resolved;
+                    slotOverridden = true;
                 }
                 if (parentByZone != null && !string.IsNullOrEmpty(layout?.zone)
                     && parentByZone.TryGetValue(layout.zone, out var zoneParent) && zoneParent != null)
                 {
                     parent = zoneParent;
+                    slotOverridden = true;
+                }
+
+                // Stats-panel pilot — RowGrid wrapping. Active only when:
+                //   (a) panel-level row_columns >= 2
+                //   (b) child parents directly to panelRoot (no slot/zone override)
+                //   (c) child kind is in list-row family
+                // Non-row child (or slot override) flushes the active group.
+                bool isListRowFamily = IsListRowFamily(child.kind, pj?.kind);
+                if (rowColumns >= 2 && !slotOverridden && isListRowFamily)
+                {
+                    if (activeRowGrid == null)
+                    {
+                        activeRowGrid = CreateRowGrid(panelRoot, rowColumns, panelWidth, child.ord);
+                        createdRowGrids.Add(activeRowGrid);
+                    }
+                    parent = activeRowGrid.transform;
+                }
+                else
+                {
+                    // Boundary: flush.
+                    activeRowGrid = null;
                 }
 
                 string childName = !string.IsNullOrEmpty(child.instance_slug)
@@ -2404,11 +2636,19 @@ namespace Territory.Editor.Bridge
                 }
 
                 string innerKind = NormalizeChildKind(child.kind, pj.kind);
-                BakeChildByKind(childGo, innerKind, pj, theme, prefW, prefH);
+                BakeChildByKind(childGo, innerKind, pj, theme, prefW, prefH, item.fields?.display_name);
                 // Layer 2 non-empty assert (TECH-28361): throw BakeException when renderer
                 // produced an empty stub (no child GameObjects + no meaningful component).
                 Territory.Editor.UiBake.BakeEmptyChildGuard.AssertNotEmpty(childGo, innerKind, item.slug);
                 PropagateThemeRefRecursive(childGo, theme);
+
+                // Stats-panel pilot — corner-anchor overlay. Escapes panel VLG flow + pins to
+                // named corner with padding-aware offset. Applied after BakeChildByKind so the
+                // renderer-spawned body/halo/icon are already attached when we collapse the rect.
+                if (!slotOverridden && !string.IsNullOrEmpty(pj?.corner))
+                {
+                    ApplyCornerOverlay(childGo, pj.corner, pj.corner_size, pj.corner_offset, paddingTop);
+                }
 
                 // visible_bind → toggles GameObject.SetActive on bool bind id changes. Defaults
                 // to hidden when the bind id has not yet been seeded; the runtime registry seed
@@ -2420,6 +2660,105 @@ namespace Territory.Editor.Bridge
                     binder.Initialize(pj.visible_bind);
                 }
             }
+
+            // Stats-panel pilot — finalize every RowGrid we created. Each wraps a contiguous
+            // run of list-row children; child count is only known after the loop above. VLG on
+            // panel root needs LayoutElement.preferredHeight to give the grid actual vertical
+            // space — otherwise GridLayoutGroup collapses to ~100px and rows render off-panel.
+            foreach (var grid in createdRowGrids)
+            {
+                if (grid == null) continue;
+                int childCount = grid.transform.childCount;
+                if (childCount == 0) continue;
+                var glg = grid.GetComponent<GridLayoutGroup>();
+                var rgLe = grid.GetComponent<LayoutElement>();
+                if (glg == null || rgLe == null) continue;
+                int cols = Mathf.Max(1, glg.constraintCount);
+                int rows = Mathf.CeilToInt((float)childCount / cols);
+                float cellH = glg.cellSize.y;
+                float spacingY = glg.spacing.y;
+                rgLe.preferredHeight = rows * cellH + Mathf.Max(0, rows - 1) * spacingY;
+            }
+        }
+
+        /// <summary>
+        /// Stats-panel pilot — pin a child to a named panel corner with padding-aware offset.
+        /// Escapes panel VLG flow via LayoutElement.ignoreLayout=true, overrides anchors/pivot
+        /// to the corner, and shrinks sizeDelta to a small fixed square (default 40px).
+        /// Corner values: "top-left" | "top-right" | "bottom-left" | "bottom-right".
+        /// Offset = padding side + border_width so the button clears the rounded border zone.
+        /// </summary>
+        static void ApplyCornerOverlay(GameObject childGo, string corner, int requestedSize, string offsetOverride, PanelPaddingJson padding)
+        {
+            if (childGo == null || string.IsNullOrEmpty(corner)) return;
+
+            float size = requestedSize > 0 ? requestedSize : 40f;
+            float padLeft  = padding != null ? padding.left   : 0f;
+            float padRight = padding != null ? padding.right  : 0f;
+            float padTop   = padding != null ? padding.top    : 0f;
+            float padBot   = padding != null ? padding.bottom : 0f;
+            float border   = padding != null ? padding.border_width : 0f;
+            float offsetX = padLeft + border;
+            float offsetY = padTop  + border;
+            // Right/bottom use their own pad sides (symmetric default but kept distinct).
+            float offsetRX = padRight + border;
+            float offsetRY = padBot   + border;
+
+            // Manual override — "x,y" string parsed as left/top offsets. Applied to whichever
+            // side the corner uses (left→x, right→rx; top→y, bottom→ry).
+            if (!string.IsNullOrEmpty(offsetOverride))
+            {
+                var parts = offsetOverride.Split(',');
+                if (parts.Length == 2
+                    && float.TryParse(parts[0].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float ox)
+                    && float.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float oy))
+                {
+                    offsetX = ox; offsetRX = ox;
+                    offsetY = oy; offsetRY = oy;
+                }
+            }
+
+            // Escape panel VLG flow.
+            var le = childGo.GetComponent<LayoutElement>();
+            if (le == null) le = childGo.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
+            le.preferredWidth = size;
+            le.preferredHeight = size;
+            le.flexibleWidth = 0f;
+            le.flexibleHeight = 0f;
+
+            var rect = (RectTransform)childGo.transform;
+            Vector2 anchor; Vector2 pivot; Vector2 anchored;
+            switch (corner)
+            {
+                case "top-left":
+                    anchor = new Vector2(0f, 1f); pivot = new Vector2(0f, 1f);
+                    anchored = new Vector2(offsetX, -offsetY);
+                    break;
+                case "top-right":
+                    anchor = new Vector2(1f, 1f); pivot = new Vector2(1f, 1f);
+                    anchored = new Vector2(-offsetRX, -offsetY);
+                    break;
+                case "bottom-left":
+                    anchor = new Vector2(0f, 0f); pivot = new Vector2(0f, 0f);
+                    anchored = new Vector2(offsetX, offsetRY);
+                    break;
+                case "bottom-right":
+                    anchor = new Vector2(1f, 0f); pivot = new Vector2(1f, 0f);
+                    anchored = new Vector2(-offsetRX, offsetRY);
+                    break;
+                default:
+                    return; // unknown corner — leave child in VLG flow
+            }
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = pivot;
+            rect.anchoredPosition = anchored;
+            rect.sizeDelta = new Vector2(size, size);
+
+            // Renderer-spawned descendants (body/halo/icon for illuminated-button) inherit the
+            // rect collapse via their own anchors/sizeDelta math at bake time — no recursive
+            // fix-up needed; the shrunken root rect propagates through their fitter components.
         }
 
         /// <summary>

@@ -89,6 +89,7 @@ const PANELS_QUERY = `
   SELECT
     pe.id                  AS panel_entity_id,
     pe.slug                AS panel_slug,
+    pe.display_name        AS panel_display_name,
     pd.layout_template     AS panel_layout_template,
     pd.layout              AS panel_layout,
     pd.gap_px              AS panel_gap_px,
@@ -152,6 +153,7 @@ async function main() {
       items.push({
         slug: p.panel_slug,
         fields: {
+          display_name: p.panel_display_name ?? '',
           layout_template: p.panel_layout_template ?? p.panel_layout ?? 'vstack',
           layout: p.panel_layout ?? '',
           gap_px: p.panel_gap_px,

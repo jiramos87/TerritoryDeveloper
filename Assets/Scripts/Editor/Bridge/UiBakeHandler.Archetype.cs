@@ -823,6 +823,14 @@ namespace Territory.Editor.Bridge
             var fallback = $"Assets/Sprites/{slug}-target.png";
             sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fallback);
             if (sprite != null) return sprite;
+            // Stats-panel pilot 2026-05-12 — icon-only sprites (no pressed-state pair) live
+            // under Assets/Sprites/Buttons/{slug}.png without the -target suffix.
+            var plain = $"Assets/Sprites/Buttons/{slug}.png";
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(plain);
+            if (sprite != null) return sprite;
+            var plainRoot = $"Assets/Sprites/{slug}.png";
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(plainRoot);
+            if (sprite != null) return sprite;
             // Stage 10 stats/budget service-icon path — Assets/Sprites/Icons/icon-{slug}.png.
             var serviceIconPath = $"Assets/Sprites/Icons/icon-{slug}.png";
             sprite = AssetDatabase.LoadAssetAtPath<Sprite>(serviceIconPath);

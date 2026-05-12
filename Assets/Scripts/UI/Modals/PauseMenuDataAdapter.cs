@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Territory.UI;
+using Territory.UI.Decoration;
 using Territory.UI.Registry;
 
 namespace Territory.UI.Modals
@@ -259,34 +260,9 @@ namespace Territory.UI.Modals
             headerLe.preferredHeight = 48f;
             headerLe.flexibleWidth = 1f;
 
-            // Back button — 40x40 dark chip with "<" glyph.
-            var backGo = new GameObject("back-button", typeof(RectTransform),
-                typeof(Image), typeof(Button), typeof(LayoutElement));
-            backGo.transform.SetParent(headerGo.transform, worldPositionStays: false);
-            var backImg = backGo.GetComponent<Image>();
-            backImg.color = new Color(0.18f, 0.18f, 0.18f, 0.9f);
-            var backLe = backGo.GetComponent<LayoutElement>();
-            backLe.preferredWidth = 40f;
-            backLe.preferredHeight = 40f;
-            backLe.minWidth = 40f;
-            backLe.minHeight = 40f;
-            var backBtn = backGo.GetComponent<Button>();
-            backBtn.targetGraphic = backImg;
-            backBtn.onClick.AddListener(OnBack);
-
-            var backLabelGo = new GameObject("Label", typeof(RectTransform));
-            backLabelGo.transform.SetParent(backGo.transform, worldPositionStays: false);
-            var backTmp = backLabelGo.AddComponent<TextMeshProUGUI>();
-            backTmp.text = "<";
-            backTmp.alignment = TextAlignmentOptions.Center;
-            backTmp.fontSize = 24f;
-            backTmp.fontStyle = FontStyles.Bold;
-            backTmp.color = Color.white;
-            backTmp.raycastTarget = false;
-            var backLabelRt = backLabelGo.GetComponent<RectTransform>();
-            backLabelRt.anchorMin = Vector2.zero;
-            backLabelRt.anchorMax = Vector2.one;
-            backLabelRt.offsetMin = backLabelRt.offsetMax = Vector2.zero;
+            // Back button — official UI back-arrow via shared factory.
+            var backGo = NavBackButton.Spawn(headerGo);
+            backGo.GetComponent<Button>().onClick.AddListener(OnBack);
 
             // Title label.
             var titleGo = new GameObject("title", typeof(RectTransform), typeof(LayoutElement));

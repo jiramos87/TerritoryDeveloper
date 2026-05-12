@@ -1,10 +1,13 @@
 /**
- * MCP tools: ui_panel_get + ui_panel_list + ui_panel_publish.
+ * MCP tools: ui_panel_get + ui_panel_list + ui_panel_publish + panel_detail_update.
  *
- * Three-sub-tool MCP slice for panel CRUD.
+ * All write paths delegate to the shared `ia-db/ui-catalog.ts` DAL — the web
+ * `asset-pipeline` backend will import the same module, so SQL stays single-sourced.
+ *
  * get(slug):    panel_detail row + linked corpus rows.
  * list():       slug + status + rect_json summary.
- * publish(slug): increments current_published_version_id + flags snapshot regen.
+ * publish(slug): version bump (no gates — use catalog_panel_publish for gated flow).
+ * panel_detail_update(slug, patch): scalar overwrite + JSONB shallow-merge.
  */
 
 import { z } from "zod";
@@ -15,6 +18,11 @@ import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 import { resolveRepoRoot } from "../config.js";
+import {
+  getPanelBundle,
+  publishPanel,
+  updatePanelDetail,
+} from "../ia-db/ui-catalog.js";
 
 const CORPUS_REL = "ia/state/ui-calibration-corpus.jsonl";
 
@@ -62,32 +70,38 @@ export function registerUiPanelGet(server: McpServer): void {
 
           const client = await pool.connect();
           try {
-            const result = await client.query(
-              `SELECT ce.id, ce.slug, ce.kind, ce.display_name,
-                      ce.current_published_version_id, ce.tags,
-                      ce.created_at, ce.updated_at,
-                      pd.rect_json, pd.layout, pd.padding_json, pd.gap_px, pd.params_json,
-                      pd.layout_template, pd.modal
-               FROM panel_detail pd
-               JOIN catalog_entity ce ON ce.id = pd.entity_id
-               WHERE ce.kind = 'panel' AND ce.slug = $1`,
-              [input.slug],
-            );
+            const bundle = await getPanelBundle(client, input.slug);
+            if (bundle == null) return null;
 
-            if (result.rows.length === 0) {
-              return null;
-            }
-
-            const row = result.rows[0];
             const repoRoot = resolveRepoRoot();
             const corpusRows = readCorpusForSlug(repoRoot, input.slug);
 
+            // Flatten for response compatibility with prior shape.
+            const panel = {
+              id: bundle.entity.id,
+              slug: bundle.entity.slug,
+              kind: bundle.entity.kind,
+              display_name: bundle.entity.display_name,
+              current_published_version_id: bundle.entity.current_published_version_id,
+              tags: bundle.entity.tags,
+              created_at: bundle.entity.created_at,
+              updated_at: bundle.entity.updated_at,
+              rect_json: bundle.detail.rect_json,
+              layout: bundle.detail.layout,
+              padding_json: bundle.detail.padding_json,
+              gap_px: bundle.detail.gap_px,
+              params_json: bundle.detail.params_json,
+              layout_template: bundle.detail.layout_template,
+              modal: bundle.detail.modal,
+            };
+
             return {
-              panel: row,
+              panel,
               corpus_rows: corpusRows,
               corpus_count: corpusRows.length,
             };
           } catch (e) {
+            if (e && typeof e === "object" && "code" in e) throw e;
             const msg = e instanceof Error ? e.message : String(e);
             throw { code: "db_error" as const, message: msg };
           } finally {
@@ -183,7 +197,7 @@ export function registerUiPanelPublish(server: McpServer): void {
     "ui_panel_publish",
     {
       description:
-        "Publish a panel: increments current_published_version_id on catalog_entity and returns new version id. Flags snapshot regen required when regen_snapshot=true (default). Returns {slug, prev_version_id, new_version_id, snapshot_regen_required}.",
+        "Publish a panel: increments current_published_version_id on catalog_entity and returns new version id. Flags snapshot regen required when regen_snapshot=true (default). Returns {slug, prev_version_id, new_version_id, snapshot_regen_required}. No author-time gates — use catalog_panel_publish for the gated flow.",
       inputSchema: panelPublishSchema,
     },
     async (args) =>
@@ -194,62 +208,20 @@ export function registerUiPanelPublish(server: McpServer): void {
 
           const client = await pool.connect();
           try {
-            // Fetch entity + current published version row
-            const fetchResult = await client.query(
-              `SELECT ce.id AS entity_id, ce.current_published_version_id,
-                      ev.version_number AS current_version_number
-               FROM catalog_entity ce
-               LEFT JOIN entity_version ev ON ev.id = ce.current_published_version_id
-               WHERE ce.kind = 'panel' AND ce.slug = $1`,
-              [input.slug],
-            );
-
-            if (fetchResult.rows.length === 0) {
-              throw {
-                code: "invalid_input" as const,
-                message: `Panel not found: ${input.slug}`,
-              };
-            }
-
-            const {
-              entity_id: entityId,
-              current_published_version_id: prevVersionId,
-              current_version_number: currentVersionNum,
-            } = fetchResult.rows[0] as {
-              entity_id: string;
-              current_published_version_id: string | null;
-              current_version_number: number | null;
-            };
-
-            const nextVersionNumber = (currentVersionNum ?? 0) + 1;
-
-            // Insert new entity_version row
-            const insertResult = await client.query(
-              `INSERT INTO entity_version (entity_id, version_number, status, parent_version_id, created_at, updated_at)
-               VALUES ($1, $2, 'published', $3, NOW(), NOW())
-               RETURNING id`,
-              [entityId, nextVersionNumber, prevVersionId],
-            );
-
-            const newVersionId = (insertResult.rows[0] as { id: string }).id;
-
-            // Update current_published_version_id
-            await client.query(
-              `UPDATE catalog_entity
-               SET current_published_version_id = $1, updated_at = NOW()
-               WHERE id = $2`,
-              [newVersionId, entityId],
-            );
+            await client.query("BEGIN");
+            const result = await publishPanel(client, input.slug);
+            await client.query("COMMIT");
 
             return {
               slug: input.slug,
-              entity_id: entityId,
-              prev_version_id: prevVersionId,
-              new_version_id: newVersionId,
-              new_version_number: nextVersionNumber,
+              entity_id: result.entity_id,
+              prev_version_id: result.prev_version_id,
+              new_version_id: result.new_version_id,
+              new_version_number: result.new_version_number,
               snapshot_regen_required: input.regen_snapshot,
             };
           } catch (e) {
+            await client.query("ROLLBACK").catch(() => {});
             if (e && typeof e === "object" && "code" in e) throw e;
             const msg = e instanceof Error ? e.message : String(e);
             throw { code: "db_error" as const, message: msg };
@@ -257,6 +229,76 @@ export function registerUiPanelPublish(server: McpServer): void {
             client.release();
           }
         })(panelPublishSchema.parse(args ?? {}));
+        return jsonResult(envelope);
+      }),
+  );
+}
+
+// ── panel_detail_update ──────────────────────────────────────────────────
+
+const panelDetailUpdateSchema = z.object({
+  slug: z.string().describe("Panel slug (e.g. 'stats-panel')."),
+  layout_template: z.string().optional(),
+  layout: z.string().optional(),
+  modal: z.boolean().optional(),
+  gap_px: z.number().int().optional(),
+  padding_json: z.record(z.string(), z.unknown()).optional()
+    .describe("Shallow-merged into existing padding_json. Use json_strategy:'replace' to overwrite."),
+  params_json: z.record(z.string(), z.unknown()).optional()
+    .describe("Shallow-merged into existing params_json."),
+  rect_json: z.record(z.string(), z.unknown()).optional()
+    .describe("Shallow-merged into existing rect_json."),
+  json_strategy: z.enum(["merge", "replace"]).optional().default("merge"),
+});
+
+export function registerPanelDetailUpdate(server: McpServer): void {
+  server.registerTool(
+    "panel_detail_update",
+    {
+      description:
+        "Patch panel_detail fields for one panel (NO version bump — call ui_panel_publish or catalog_panel_publish after). " +
+        "Scalar fields (layout_template, layout, modal, gap_px) overwrite. JSONB fields (padding_json, params_json, rect_json) shallow-merge by default; pass json_strategy:'replace' to overwrite. " +
+        "Returns {slug, entity_id, updated_fields:[]}. Throws not_found when slug missing.",
+      inputSchema: panelDetailUpdateSchema,
+    },
+    async (args) =>
+      runWithToolTiming("panel_detail_update", async () => {
+        const envelope = await wrapTool(async (input: z.infer<typeof panelDetailUpdateSchema>) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+
+          const client = await pool.connect();
+          try {
+            await client.query("BEGIN");
+            const result = await updatePanelDetail(
+              client,
+              input.slug,
+              {
+                layout_template: input.layout_template,
+                layout: input.layout,
+                modal: input.modal,
+                gap_px: input.gap_px,
+                padding_json: input.padding_json,
+                params_json: input.params_json,
+                rect_json: input.rect_json,
+              },
+              { jsonStrategy: input.json_strategy },
+            );
+            await client.query("COMMIT");
+            return {
+              slug: input.slug,
+              entity_id: result.entity_id,
+              updated_fields: result.updated_fields,
+            };
+          } catch (e) {
+            await client.query("ROLLBACK").catch(() => {});
+            if (e && typeof e === "object" && "code" in e) throw e;
+            const msg = e instanceof Error ? e.message : String(e);
+            throw { code: "db_error" as const, message: msg };
+          } finally {
+            client.release();
+          }
+        })(panelDetailUpdateSchema.parse(args ?? {}));
         return jsonResult(envelope);
       }),
   );
