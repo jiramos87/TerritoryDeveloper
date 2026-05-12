@@ -417,6 +417,12 @@ namespace Territory.Editor.Bridge
             // padding+border math when set. Useful when overlay needs to align with a sibling
             // element (e.g. centering close-button vertically with a tall themed-label header).
             public string corner_offset;
+            // Bucket C — card-picker / chip-picker / subtype-card / chart axis labels.
+            public string[] cards;
+            public string[] chips;
+            public string[] axisLabels;
+            public string subtype;
+            public string size_tone;
         }
 
         /// <summary>Typed view of panel-level params_json on PanelSnapshotFields. Open shape — fields optional.</summary>
@@ -445,6 +451,156 @@ namespace Territory.Editor.Bridge
             public float border_width;
             public string border_color_token;
             public float corner_radius;
+        }
+
+        // ── Bucket F (2026-05-12) — token resolver. Pre-process padding_json /
+        // params_json so token slugs ("padding-card", "color-border-accent",
+        // "size-text-modal-title", …) substitute to typed values before JsonUtility
+        // parses the strict DTO shape. Snapshot source: tokens.json sibling of panels.json.
+
+        [Serializable]
+        private class TokenSnapshot
+        {
+            public string snapshot_id;
+            public string kind;
+            public int schema_version;
+            public TokenSnapshotItem[] items;
+        }
+
+        [Serializable]
+        private class TokenSnapshotItem
+        {
+            public string slug;
+            public string display_name;
+            public string token_kind;
+            public string value_json;
+        }
+
+        [Serializable]
+        private class TokenSpacingValueDto { public int value; }
+        [Serializable]
+        private class TokenColorValueDto { public string hex; public string value; }
+        [Serializable]
+        public class TokenTypeScaleValueDto { public int pt; public string weight; public string family; }
+
+        private static Dictionary<string, int> s_TokenSpacingInt;
+        private static Dictionary<string, int[]> s_TokenSpacingArr;
+        private static Dictionary<string, string> s_TokenColorHex;
+        private static Dictionary<string, TokenTypeScaleValueDto> s_TokenTypeScale;
+
+        private static readonly Regex s_SpacingKeyRegex = new Regex(
+            "\"(top|left|right|bottom|border_width|corner_radius|gap|padding)\"\\s*:\\s*\"([a-z][a-z0-9-]+)\"",
+            RegexOptions.Compiled);
+
+        /// <summary>Load tokens.json sibling of panels.json into static caches. Refreshes on every bake invocation.</summary>
+        private static void LoadTokenSnapshot(string panelsPath)
+        {
+            s_TokenSpacingInt = new Dictionary<string, int>(StringComparer.Ordinal);
+            s_TokenSpacingArr = new Dictionary<string, int[]>(StringComparer.Ordinal);
+            s_TokenColorHex = new Dictionary<string, string>(StringComparer.Ordinal);
+            s_TokenTypeScale = new Dictionary<string, TokenTypeScaleValueDto>(StringComparer.Ordinal);
+            if (string.IsNullOrEmpty(panelsPath)) return;
+            string dir = System.IO.Path.GetDirectoryName(panelsPath);
+            if (string.IsNullOrEmpty(dir)) return;
+            string tokensPath = System.IO.Path.Combine(dir, "tokens.json");
+            if (!System.IO.File.Exists(tokensPath)) return;
+            string raw;
+            try { raw = System.IO.File.ReadAllText(tokensPath); } catch { return; }
+            TokenSnapshot snap;
+            try { snap = JsonUtility.FromJson<TokenSnapshot>(raw); } catch { return; }
+            if (snap?.items == null) return;
+            foreach (var it in snap.items)
+            {
+                if (it == null || string.IsNullOrEmpty(it.slug) || string.IsNullOrEmpty(it.value_json)) continue;
+                switch (it.token_kind)
+                {
+                    case "spacing":
+                        var arrMatch = Regex.Match(it.value_json, "\"value\"\\s*:\\s*\\[([^\\]]*)\\]");
+                        if (arrMatch.Success)
+                        {
+                            var parts = arrMatch.Groups[1].Value.Split(',');
+                            var arr = new int[parts.Length];
+                            bool ok = true;
+                            for (int i = 0; i < parts.Length; i++)
+                            {
+                                if (!int.TryParse(parts[i].Trim(), out arr[i])) { ok = false; break; }
+                            }
+                            if (ok) s_TokenSpacingArr[it.slug] = arr;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                var sp = JsonUtility.FromJson<TokenSpacingValueDto>(it.value_json);
+                                if (sp != null) s_TokenSpacingInt[it.slug] = sp.value;
+                            }
+                            catch { }
+                        }
+                        break;
+                    case "color":
+                        try
+                        {
+                            var col = JsonUtility.FromJson<TokenColorValueDto>(it.value_json);
+                            string hex = !string.IsNullOrEmpty(col?.hex) ? col.hex : col?.value;
+                            if (!string.IsNullOrEmpty(hex)) s_TokenColorHex[it.slug] = hex;
+                        }
+                        catch { }
+                        break;
+                    case "type-scale":
+                        try
+                        {
+                            var ts = JsonUtility.FromJson<TokenTypeScaleValueDto>(it.value_json);
+                            if (ts != null) s_TokenTypeScale[it.slug] = ts;
+                        }
+                        catch { }
+                        break;
+                }
+            }
+        }
+
+        /// <summary>Substitute spacing-token slug refs inside a padding_json blob. Idempotent — leaves
+        /// numeric values + non-spacing slug strings alone. Matches numeric-bearing keys only.</summary>
+        private static string SubstituteSpacingTokensInJson(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return raw;
+            if (s_TokenSpacingInt == null || s_TokenSpacingInt.Count == 0) return raw;
+            return s_SpacingKeyRegex.Replace(raw, m =>
+            {
+                string key = m.Groups[1].Value;
+                string slug = m.Groups[2].Value;
+                if (s_TokenSpacingInt.TryGetValue(slug, out var v)) return "\"" + key + "\": " + v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return m.Value;
+            });
+        }
+
+        public static float ResolveTypeScaleFontSize(string slug, float fallback)
+        {
+            if (!string.IsNullOrEmpty(slug) && s_TokenTypeScale != null
+                && s_TokenTypeScale.TryGetValue(slug, out var ts) && ts != null && ts.pt > 0)
+            {
+                return ts.pt;
+            }
+            return fallback;
+        }
+
+        public static string ResolveTypeScaleWeight(string slug, string fallback)
+        {
+            if (!string.IsNullOrEmpty(slug) && s_TokenTypeScale != null
+                && s_TokenTypeScale.TryGetValue(slug, out var ts) && !string.IsNullOrEmpty(ts?.weight))
+            {
+                return ts.weight;
+            }
+            return fallback;
+        }
+
+        public static string ResolveColorTokenHex(string slug)
+        {
+            if (!string.IsNullOrEmpty(slug) && s_TokenColorHex != null
+                && s_TokenColorHex.TryGetValue(slug, out var hex))
+            {
+                return hex;
+            }
+            return null;
         }
 
         /// <summary>JsonUtility wrapper that returns a default-init T when input is null/whitespace/malformed (silent — log on caller side when needed).</summary>
@@ -505,7 +661,8 @@ namespace Territory.Editor.Bridge
                 if (innerKind == "slider-row-numeric") return "slider-row";
                 if (innerKind == "expense-row") return "list-row";
                 if (innerKind == "service-row") return "list-row";
-                if (innerKind == "chart") return "chart-stub";
+                // Bucket C5 — `chart` resolves to full renderer with axis-label support.
+                // stacked-bar-row keeps the stub path.
                 if (innerKind == "stacked-bar-row") return "chart-stub";
                 if (innerKind == "range-tabs") return "tab-strip-stub";
                 if (innerKind == "tab-strip") return "tab-strip-stub";
@@ -551,6 +708,41 @@ namespace Territory.Editor.Bridge
                     {
                         SpawnIlluminatedButtonCaption(childGo, label);
                     }
+                    // Dynamic value label — pj.bind drives BindTextRenderer that subscribes to the
+                    // bindId and formats per pj.format. Used by hud-bar-budget-button to show $N.
+                    string bindForLabel = !string.IsNullOrEmpty(pj?.bind) ? pj.bind : pj?.bindId;
+                    if (!string.IsNullOrEmpty(bindForLabel))
+                    {
+                        var bindLabelGo = new GameObject("BindLabel", typeof(RectTransform));
+                        bindLabelGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var bindLabelRt = (RectTransform)bindLabelGo.transform;
+                        // Center across the full button rect — stretch on both axes so the text
+                        // sits in the middle visually instead of being bottom-anchored.
+                        bindLabelRt.anchorMin = Vector2.zero;
+                        bindLabelRt.anchorMax = Vector2.one;
+                        bindLabelRt.pivot = new Vector2(0.5f, 0.5f);
+                        bindLabelRt.offsetMin = Vector2.zero;
+                        bindLabelRt.offsetMax = Vector2.zero;
+                        var bindTmp = bindLabelGo.AddComponent<TextMeshProUGUI>();
+                        // Bumped to size-text-modal-title (24pt bold) so the dollar amount reads at a glance.
+                        bindTmp.fontSize = ResolveTypeScaleFontSize("size-text-modal-title", 24f);
+                        bindTmp.fontStyle = FontStyles.Bold;
+                        bindTmp.alignment = TextAlignmentOptions.Center;
+                        bindTmp.color = Color.white;
+                        bindTmp.raycastTarget = false;
+                        bindTmp.text = string.Empty;
+                        var bindLabelLe = bindLabelGo.AddComponent<LayoutElement>();
+                        bindLabelLe.ignoreLayout = true;
+                        var bindRenderer = bindLabelGo.AddComponent<Territory.UI.Renderers.BindTextRenderer>();
+                        var bindSo = new SerializedObject(bindRenderer);
+                        var bindIdProp = bindSo.FindProperty("_bindId");
+                        if (bindIdProp != null) bindIdProp.stringValue = bindForLabel;
+                        var formatProp = bindSo.FindProperty("_format");
+                        if (formatProp != null) formatProp.stringValue = pj?.format ?? string.Empty;
+                        var targetProp = bindSo.FindProperty("_target");
+                        if (targetProp != null) targetProp.objectReferenceValue = bindTmp;
+                        bindSo.ApplyModifiedPropertiesWithoutUndo();
+                    }
                     EnsureChildLayoutElement(childGo, preferredWidth: preferredWidth, preferredHeight: preferredHeight, flexibleWidth: 0f);
                     break;
                 }
@@ -586,21 +778,55 @@ namespace Territory.Editor.Bridge
                     if (labelTmp != null)
                     {
                         labelTmp.text = resolvedText;
-                        // size_token mapping (size.text.title-display / .caption / .body) — keeps
-                        // branding strips visually distinct from inline labels. Autosize disabled
-                        // when an explicit size_token is provided; theme palette + color_token
-                        // override default white when "color.text.muted".
+                        // Variant → type-scale token resolution (pilot iter 8 + Bucket F).
+                        // modal-title → size-text-modal-title (24pt bold).
+                        // section-header → size-text-section-header (20pt bold).
+                        // Default body row → size-text-body-row (18pt regular).
+                        // Autosize disabled when variant or size_token resolves a fontSize.
+                        bool variantSized = false;
+                        if (!string.IsNullOrEmpty(pj?.variant))
+                        {
+                            float vSize = pj.variant switch
+                            {
+                                "modal-title"   => ResolveTypeScaleFontSize("size-text-modal-title", 24f),
+                                "section-header" => ResolveTypeScaleFontSize("size-text-section-header", 20f),
+                                "body-row"      => ResolveTypeScaleFontSize("size-text-body-row", 18f),
+                                "value"         => ResolveTypeScaleFontSize("size-text-value", 18f),
+                                _               => -1f,
+                            };
+                            if (vSize > 0f)
+                            {
+                                labelTmp.enableAutoSizing = false;
+                                labelTmp.fontSize = vSize;
+                                if (pj.variant == "modal-title" || pj.variant == "section-header" || pj.variant == "value")
+                                    labelTmp.fontStyle |= TMPro.FontStyles.Bold;
+                                variantSized = true;
+                            }
+                        }
+                        // size_token mapping (size.text.* legacy slugs + size-text-* published slugs).
+                        // Autosize disabled when an explicit size_token is provided.
                         if (!string.IsNullOrEmpty(pj?.size_token))
                         {
                             labelTmp.enableAutoSizing = false;
-                            labelTmp.fontSize = pj.size_token switch
+                            float resolvedSize = pj.size_token switch
                             {
                                 "size.text.title-display" => 64f,
                                 "size.text.title"         => 32f,
                                 "size.text.body"          => 16f,
                                 "size.text.caption"       => 12f,
-                                _                         => labelTmp.fontSize,
+                                _ => ResolveTypeScaleFontSize(pj.size_token, labelTmp.fontSize),
                             };
+                            labelTmp.fontSize = resolvedSize;
+                            string weight = ResolveTypeScaleWeight(pj.size_token, null);
+                            if (string.Equals(weight, "bold", StringComparison.Ordinal))
+                                labelTmp.fontStyle |= TMPro.FontStyles.Bold;
+                            variantSized = true;
+                        }
+                        // Floor guard for unsized labels — autosize min lift to 12 prevents the
+                        // 8pt collapse seen in narrow HLG cells (settings-view sub-view header).
+                        if (!variantSized && labelTmp.enableAutoSizing)
+                        {
+                            labelTmp.fontSizeMin = Mathf.Max(labelTmp.fontSizeMin, 12f);
                         }
                         if (string.Equals(pj?.color_token, "color.text.muted", StringComparison.Ordinal))
                         {
@@ -1419,6 +1645,168 @@ namespace Territory.Editor.Bridge
                     EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
                     break;
                 }
+                case "card-picker":
+                {
+                    var pickerBg = childGo.AddComponent<Image>();
+                    pickerBg.color = new Color(0f, 0f, 0f, 0f);
+                    pickerBg.raycastTarget = false;
+                    var grid = childGo.AddComponent<GridLayoutGroup>();
+                    grid.cellSize = new Vector2(160f, 96f);
+                    grid.spacing = new Vector2(8f, 8f);
+                    grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                    grid.constraintCount = 3;
+                    var labels = pj?.cards ?? new[] { "Small", "Medium", "Large" };
+                    var toggleGroup = childGo.AddComponent<ToggleGroup>();
+                    foreach (var caption in labels)
+                    {
+                        var cardGo = new GameObject("card_" + (caption?.ToLowerInvariant() ?? "x"), typeof(RectTransform));
+                        cardGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var cardBg = cardGo.AddComponent<Image>();
+                        cardBg.color = new Color(0.18f, 0.18f, 0.22f, 1f);
+                        var toggle = cardGo.AddComponent<Toggle>();
+                        toggle.targetGraphic = cardBg;
+                        toggle.group = toggleGroup;
+                        var cardLabelGo = new GameObject("Label", typeof(RectTransform));
+                        cardLabelGo.transform.SetParent(cardGo.transform, worldPositionStays: false);
+                        var labelRt = (RectTransform)cardLabelGo.transform;
+                        labelRt.anchorMin = Vector2.zero;
+                        labelRt.anchorMax = Vector2.one;
+                        labelRt.offsetMin = Vector2.zero;
+                        labelRt.offsetMax = Vector2.zero;
+                        var tmp = cardLabelGo.AddComponent<TextMeshProUGUI>();
+                        tmp.text = caption ?? string.Empty;
+                        tmp.fontSize = ResolveTypeScaleFontSize("size-text-body-row", 18f);
+                        tmp.alignment = TextAlignmentOptions.Center;
+                        tmp.raycastTarget = false;
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 200f, flexibleWidth: 1f);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
+                    break;
+                }
+                case "chip-picker":
+                {
+                    var chipBg = childGo.AddComponent<Image>();
+                    chipBg.color = new Color(0f, 0f, 0f, 0f);
+                    chipBg.raycastTarget = false;
+                    var hlg = childGo.AddComponent<HorizontalLayoutGroup>();
+                    hlg.spacing = 8f;
+                    hlg.padding = new RectOffset(0, 0, 0, 0);
+                    hlg.childAlignment = TextAnchor.MiddleLeft;
+                    hlg.childForceExpandHeight = false;
+                    hlg.childForceExpandWidth = false;
+                    var captions = pj?.chips ?? new[] { "Low", "Mid", "High" };
+                    var selectedHex = ResolveColorTokenHex("color-bg-selected");
+                    Color selectedColor;
+                    if (string.IsNullOrEmpty(selectedHex) || !ColorUtility.TryParseHtmlString(selectedHex, out selectedColor))
+                    {
+                        selectedColor = new Color(0.165f, 0.369f, 0.749f, 1f);
+                    }
+                    var tg = childGo.AddComponent<ToggleGroup>();
+                    foreach (var caption in captions)
+                    {
+                        var chipGo = new GameObject("chip_" + (caption?.ToLowerInvariant() ?? "x"), typeof(RectTransform));
+                        chipGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var bg = chipGo.AddComponent<Image>();
+                        bg.color = new Color(0.16f, 0.16f, 0.20f, 1f);
+                        var toggle = chipGo.AddComponent<Toggle>();
+                        toggle.targetGraphic = bg;
+                        toggle.group = tg;
+                        var colors = toggle.colors;
+                        colors.normalColor = new Color(0.16f, 0.16f, 0.20f, 1f);
+                        colors.selectedColor = selectedColor;
+                        colors.highlightedColor = selectedColor;
+                        toggle.colors = colors;
+                        var chipLabelGo = new GameObject("Label", typeof(RectTransform));
+                        chipLabelGo.transform.SetParent(chipGo.transform, worldPositionStays: false);
+                        var labelRt = (RectTransform)chipLabelGo.transform;
+                        labelRt.anchorMin = Vector2.zero;
+                        labelRt.anchorMax = Vector2.one;
+                        labelRt.offsetMin = new Vector2(12f, 4f);
+                        labelRt.offsetMax = new Vector2(-12f, -4f);
+                        var tmp = chipLabelGo.AddComponent<TextMeshProUGUI>();
+                        tmp.text = caption ?? string.Empty;
+                        tmp.fontSize = ResolveTypeScaleFontSize("size-text-body-row", 18f);
+                        tmp.alignment = TextAlignmentOptions.Center;
+                        tmp.raycastTarget = false;
+                        EnsureChildLayoutElement(chipGo, preferredWidth: 96f, preferredHeight: 36f, flexibleWidth: 0f);
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 48f, flexibleWidth: 1f);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
+                    break;
+                }
+                case "subtype-card":
+                {
+                    var subBg = childGo.AddComponent<Image>();
+                    subBg.color = new Color(0.16f, 0.16f, 0.20f, 1f);
+                    var btn = childGo.AddComponent<Button>();
+                    btn.targetGraphic = subBg;
+                    var subVlg = childGo.AddComponent<VerticalLayoutGroup>();
+                    subVlg.padding = new RectOffset(6, 6, 6, 6);
+                    subVlg.spacing = 4f;
+                    subVlg.childAlignment = TextAnchor.MiddleCenter;
+                    var iconGo = new GameObject("Icon", typeof(RectTransform));
+                    iconGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var iconImg = iconGo.AddComponent<Image>();
+                    iconImg.color = new Color(1f, 1f, 1f, 0.6f);
+                    iconImg.raycastTarget = false;
+                    EnsureChildLayoutElement(iconGo, preferredWidth: 48f, preferredHeight: 48f, flexibleWidth: 0f);
+                    var labelGo = new GameObject("Label", typeof(RectTransform));
+                    labelGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                    var labelTmp = labelGo.AddComponent<TextMeshProUGUI>();
+                    labelTmp.text = !string.IsNullOrEmpty(pj?.label) ? pj.label
+                        : (!string.IsNullOrEmpty(pj?.subtype) ? TitleCaseSlug(pj.subtype) : "Subtype");
+                    labelTmp.fontSize = ResolveTypeScaleFontSize("size-text-body-row", 14f);
+                    labelTmp.alignment = TextAlignmentOptions.Center;
+                    labelTmp.raycastTarget = false;
+                    EnsureChildLayoutElement(labelGo, preferredWidth: -1f, preferredHeight: 20f, flexibleWidth: 1f);
+                    AttachUiActionTrigger(childGo, !string.IsNullOrEmpty(pj?.action) ? pj.action : pj?.actionId);
+                    EnsureChildLayoutElement(childGo, preferredWidth: 96f, preferredHeight: 96f, flexibleWidth: 0f);
+                    break;
+                }
+                case "chart":
+                {
+                    var chartImg = childGo.AddComponent<RawImage>();
+                    chartImg.color = Color.white;
+                    chartImg.raycastTarget = false;
+                    var chartRenderer = childGo.AddComponent<Territory.UI.Renderers.ChartRenderer>();
+                    var chartSo = new SerializedObject(chartRenderer);
+                    var chartBindIdProp = chartSo.FindProperty("_bindId");
+                    if (chartBindIdProp != null) chartBindIdProp.stringValue = pj?.bindId ?? pj?.bind ?? string.Empty;
+                    var chartModeProp = chartSo.FindProperty("_mode");
+                    if (chartModeProp != null) chartModeProp.enumValueIndex = (pj?.kind == "stacked-bar-row") ? 1 : 0;
+                    if (theme != null)
+                    {
+                        var lineColorProp = chartSo.FindProperty("_lineColor");
+                        if (lineColorProp != null) lineColorProp.colorValue = theme.AccentPrimary;
+                        var axisColorProp = chartSo.FindProperty("_axisColor");
+                        if (axisColorProp != null) axisColorProp.colorValue = theme.BorderSubtle;
+                    }
+                    chartSo.ApplyModifiedPropertiesWithoutUndo();
+                    if (pj?.axisLabels != null && pj.axisLabels.Length > 0)
+                    {
+                        for (int i = 0; i < pj.axisLabels.Length; i++)
+                        {
+                            var axisGo = new GameObject("axis_label_" + i, typeof(RectTransform));
+                            axisGo.transform.SetParent(childGo.transform, worldPositionStays: false);
+                            var axisRt = (RectTransform)axisGo.transform;
+                            float t = pj.axisLabels.Length > 1 ? (float)i / (pj.axisLabels.Length - 1) : 0.5f;
+                            axisRt.anchorMin = new Vector2(t, 0f);
+                            axisRt.anchorMax = new Vector2(t, 0f);
+                            axisRt.pivot = new Vector2(0.5f, 1f);
+                            axisRt.anchoredPosition = new Vector2(0f, -2f);
+                            axisRt.sizeDelta = new Vector2(64f, 16f);
+                            var axisTmp = axisGo.AddComponent<TextMeshProUGUI>();
+                            axisTmp.text = pj.axisLabels[i] ?? string.Empty;
+                            axisTmp.fontSize = ResolveTypeScaleFontSize("size-text-body-row", 12f);
+                            axisTmp.alignment = TextAlignmentOptions.Center;
+                            axisTmp.raycastTarget = false;
+                            var axisLe = axisGo.AddComponent<LayoutElement>();
+                            axisLe.ignoreLayout = true;
+                        }
+                    }
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 160f, flexibleWidth: 1f);
+                    break;
+                }
                 default:
                 {
                     AddBakeWarning("unhandled_inner_kind", innerKind ?? "(null)", $"$.child[{childGo.name}].kind");
@@ -1829,6 +2217,9 @@ namespace Territory.Editor.Bridge
         private static Color ResolveBorderColor(string token)
         {
             if (string.IsNullOrEmpty(token)) return Color.white;
+            // Bucket F resolver — published color tokens consulted first.
+            var hex = ResolveColorTokenHex(token);
+            if (!string.IsNullOrEmpty(hex) && ColorUtility.TryParseHtmlString(hex, out var parsed)) return parsed;
             if (s_BorderTokenHexFallback.TryGetValue(token, out var c)) return c;
             return Color.white;
         }
@@ -2270,6 +2661,30 @@ namespace Territory.Editor.Bridge
                 var (snapshot, parseError) = ParsePanelSnapshot(jsonText);
                 if (parseError != null) return new BakeResult { root = null, error = parseError, warnings = warnings };
 
+                // Bucket F resolver — load tokens.json + substitute spacing slugs in
+                // padding_json + params_json strings before downstream JsonUtility parses run.
+                LoadTokenSnapshot(args.panels_path);
+                if (snapshot?.items != null)
+                {
+                    foreach (var item in snapshot.items)
+                    {
+                        if (item?.fields != null)
+                        {
+                            item.fields.padding_json = SubstituteSpacingTokensInJson(item.fields.padding_json);
+                            item.fields.params_json = SubstituteSpacingTokensInJson(item.fields.params_json);
+                        }
+                        if (item?.children != null)
+                        {
+                            foreach (var c in item.children)
+                            {
+                                if (c == null) continue;
+                                c.params_json = SubstituteSpacingTokensInJson(c.params_json);
+                                c.layout_json = SubstituteSpacingTokensInJson(c.layout_json);
+                            }
+                        }
+                    }
+                }
+
                 var soPath = string.IsNullOrEmpty(args.theme_so)
                     ? "Assets/UI/Theme/DefaultUiTheme.asset"
                     : args.theme_so;
@@ -2557,6 +2972,37 @@ namespace Territory.Editor.Bridge
             // for the grid to actually expand vertically; otherwise it collapses to 100px default.
             var createdRowGrids = new List<GameObject>();
 
+            // Header-strip detection (pilot iter 12): when first 2 children are
+            // [back-button, themed-label modal-title], wrap both into a horizontal
+            // HLG so the back arrow renders inline left of the title (no corner-overlay).
+            GameObject headerStripHLG = null;
+            if (item.children != null && item.children.Length >= 2)
+            {
+                var hc0 = item.children[0];
+                var hc1 = item.children[1];
+                var hpj0 = TryParseTypedJson<PanelChildParamsJson>(hc0?.params_json);
+                var hpj1 = TryParseTypedJson<PanelChildParamsJson>(hc1?.params_json);
+                string hk0 = NormalizeChildKind(hc0?.kind, hpj0?.kind);
+                string hk1 = NormalizeChildKind(hc1?.kind, hpj1?.kind);
+                bool isHeader = hk1 == "themed-label" && string.Equals(hpj1?.variant, "modal-title", StringComparison.Ordinal);
+                if (hk0 == "back-button" && isHeader)
+                {
+                    headerStripHLG = new GameObject("HeaderStrip", typeof(RectTransform));
+                    headerStripHLG.transform.SetParent(panelRoot.transform, worldPositionStays: false);
+                    var hsHlg = headerStripHLG.AddComponent<HorizontalLayoutGroup>();
+                    hsHlg.spacing = 8f;
+                    hsHlg.padding = new RectOffset(0, 0, 0, 0);
+                    hsHlg.childAlignment = TextAnchor.MiddleLeft;
+                    hsHlg.childForceExpandHeight = false;
+                    hsHlg.childForceExpandWidth = false;
+                    hsHlg.childControlHeight = true;
+                    hsHlg.childControlWidth = true;
+                    var hsLe = headerStripHLG.AddComponent<LayoutElement>();
+                    hsLe.preferredHeight = 40f;
+                    hsLe.flexibleWidth = 1f;
+                }
+            }
+
             foreach (var child in item.children)
             {
                 if (child == null) continue;
@@ -2574,6 +3020,13 @@ namespace Territory.Editor.Bridge
                     && parentByZone.TryGetValue(layout.zone, out var zoneParent) && zoneParent != null)
                 {
                     parent = zoneParent;
+                    slotOverridden = true;
+                }
+
+                // Header-strip routing: first 2 children parent into the HLG container.
+                if (headerStripHLG != null && !slotOverridden && (child.ord == 1 || child.ord == 2))
+                {
+                    parent = headerStripHLG.transform;
                     slotOverridden = true;
                 }
 
