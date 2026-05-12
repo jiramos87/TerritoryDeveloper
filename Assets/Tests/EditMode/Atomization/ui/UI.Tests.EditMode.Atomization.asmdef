@@ -2,7 +2,8 @@
     "name": "UI.Tests.EditMode.Atomization",
     "rootNamespace": "Territory.Tests.EditMode.Atomization.UI",
     "references": [
-        "UI.Runtime"
+        "UI.Runtime",
+        "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a"
     ],
     "includePlatforms": [
         "Editor"
