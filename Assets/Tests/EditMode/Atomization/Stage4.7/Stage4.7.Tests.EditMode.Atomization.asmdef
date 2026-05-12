@@ -1,0 +1,17 @@
+{
+    "name": "Stage4.7.Tests.EditMode.Atomization",
+    "rootNamespace": "Territory.Tests.EditMode.Atomization.Stage4_7",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
