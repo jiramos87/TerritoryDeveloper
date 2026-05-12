@@ -2,7 +2,8 @@
     "name": "Demand",
     "rootNamespace": "Domains.Demand",
     "references": [
-        "GUID:1816056a6d934540a09c11d99d6672be"
+        "GUID:1816056a6d934540a09c11d99d6672be",
+        "GUID:c52fc744255e341e2b7c46b44439a244"
     ],
     "includePlatforms": [],
     "allowUnsafeCode": false,
