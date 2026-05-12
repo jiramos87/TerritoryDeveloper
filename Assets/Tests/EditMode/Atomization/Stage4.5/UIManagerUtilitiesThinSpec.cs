@@ -72,8 +72,8 @@ namespace Territory.Tests.EditMode.Atomization.Stage4_5
         [Test]
         public void utilities_service_exists_in_correct_namespace()
         {
-            Type t = Type.GetType("Domains.UI.Services.UIManagerUtilitiesService, Assembly-CSharp");
-            Assert.IsNotNull(t, "UIManagerUtilitiesService must be loadable from Assembly-CSharp");
+            Type t = typeof(Domains.UI.Services.UIManagerUtilitiesService);
+            Assert.IsNotNull(t, "UIManagerUtilitiesService must be loadable");
             Assert.AreEqual("Domains.UI.Services", t.Namespace,
                 $"UIManagerUtilitiesService namespace mismatch: {t.Namespace}");
         }
@@ -81,7 +81,7 @@ namespace Territory.Tests.EditMode.Atomization.Stage4_5
         [Test]
         public void utilities_service_exposes_placement_message_lookup()
         {
-            Type t = Type.GetType("Domains.UI.Services.UIManagerUtilitiesService, Assembly-CSharp");
+            Type t = typeof(Domains.UI.Services.UIManagerUtilitiesService);
             Assert.IsNotNull(t, "UIManagerUtilitiesService must exist");
             Assert.IsNotNull(t.GetMethod("TryGetPlacementMessage"),
                 "UIManagerUtilitiesService must expose TryGetPlacementMessage");

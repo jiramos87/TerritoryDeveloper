@@ -1,7 +1,9 @@
 {
     "name": "UI.Runtime",
     "rootNamespace": "Domains.UI",
-    "references": [],
+    "references": [
+        "GUID:c52fc744255e341e2b7c46b44439a244"
+    ],
     "includePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
