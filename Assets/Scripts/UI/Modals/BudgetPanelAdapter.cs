@@ -71,6 +71,13 @@ namespace Territory.UI.Modals
             if (_economyManager   == null) _economyManager   = FindObjectOfType<EconomyManager>();
             if (_forecaster       == null) _forecaster       = FindObjectOfType<BudgetForecaster>();
             if (_growthBudgetManager == null) _growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
+            if (_forecaster == null)
+            {
+                // Scene didn't wire one — instantiate at runtime so panel always has forecast flow.
+                // Forecaster.Awake() lazy-resolves EconomyManager + UiBindRegistry via FindObjectOfType.
+                var forecasterGo = new GameObject("BudgetForecaster (auto)");
+                _forecaster = forecasterGo.AddComponent<BudgetForecaster>();
+            }
             // Stage 13 hotfix — register in Awake instead of Start. Panel root is registered
             // with ModalCoordinator (SetActive false) immediately after AddComponent, so Start
             // never fires on this adapter. Awake runs once on AddComponent regardless of active.
@@ -95,11 +102,16 @@ namespace Territory.UI.Modals
             _actionRegistry.Register("budget.close", _ => OnBudgetClose());
         }
 
+        private const string DefaultRange = "3mo";
+
         private void OnBudgetOpen()
         {
             if (_modalCoordinator != null)
                 _modalCoordinator.TryOpen("budget-panel");
-            RefreshAllBinds();
+            RefreshAllBinds(DefaultRange);
+            // Default to 3mo range on every open — keeps range tab in sync with chart length.
+            if (_bindRegistry != null)
+                _bindRegistry.Set("budget.range", DefaultRange);
         }
 
         private void OnBudgetClose()
@@ -133,7 +145,7 @@ namespace Territory.UI.Modals
 
             // Header + range binds.
             var headerSub = _bindRegistry.Subscribe<string>("budget.title",  _ => { });
-            var rangeSub  = _bindRegistry.Subscribe<string>("budget.range",  _ => { });
+            var rangeSub  = _bindRegistry.Subscribe<string>("budget.range",  OnRangeChanged);
             _subscriptions.Add(headerSub);
             _subscriptions.Add(rangeSub);
 
@@ -164,8 +176,8 @@ namespace Territory.UI.Modals
             string zone = bindId.Replace("budget.tax.", "");
             _actionRegistry.Dispatch("taxRate.set", new { zone = zone, rate = (int)value });
 
-            // Recompute forecast immediately.
-            if (_forecaster != null && _economyManager != null)
+            // Recompute forecast immediately at current range.
+            if (_forecaster != null && _economyManager != null && _bindRegistry != null)
             {
                 var taxRates = new TaxRates
                 {
@@ -176,18 +188,14 @@ namespace Territory.UI.Modals
                 };
                 int treasury = _economyManager.GetCurrentMoney();
                 int expenses = _economyManager.GetProjectedMonthlyMaintenance();
-                var result   = _forecaster.Recompute(taxRates, treasury, expenses);
-
-                if (_bindRegistry != null)
-                {
-                    _bindRegistry.Set("budget.forecast.balance", (float)result.Month3Balance);
-                    _bindRegistry.Set("budget.forecast.chart",   new float[]
-                    {
-                        result.Month1Balance,
-                        result.Month2Balance,
-                        result.Month3Balance,
-                    });
-                }
+                string range = DefaultRange;
+                try { range = _bindRegistry.Get<string>("budget.range"); }
+                catch (System.Collections.Generic.KeyNotFoundException) { /* range bind not set yet — fall back to default. */ }
+                int months = MonthsForRange(string.IsNullOrEmpty(range) ? DefaultRange : range);
+                var series = _forecaster.RecomputeRange(taxRates, treasury, expenses, months);
+                float endBalance = series.Length > 0 ? series[series.Length - 1] : treasury;
+                _bindRegistry.Set("budget.forecast.balance", endBalance);
+                _bindRegistry.Set("budget.forecast.chart",   series);
             }
         }
 
@@ -211,7 +219,88 @@ namespace Territory.UI.Modals
                 _economyManager.minTaxRate, _economyManager.maxTaxRate);
         }
 
-        private void RefreshAllBinds()
+        private void OnRangeChanged(string range)
+        {
+            if (string.IsNullOrEmpty(range)) return;
+            RefreshAllBinds(range);
+        }
+
+        private static int MonthsForRange(string range)
+        {
+            switch (range)
+            {
+                case "1mo": return 1;
+                case "3mo": return 3;
+                case "6mo": return 6;
+                default:    return 3;
+            }
+        }
+
+        // Maps sub-type id (ZoneSubTypeRegistry order: police, fire, education, health, parks, ...)
+        // to the budget.funding.{cat} bind key. Index = subTypeId.
+        private static readonly string[] SubTypeFundingKey =
+        {
+            "budget.funding.police",
+            "budget.funding.fire",
+            "budget.funding.education",
+            "budget.funding.health",
+            "budget.funding.parks",
+        };
+
+        private void PushFundingFromContributors(int totalMaintenance)
+        {
+            if (_bindRegistry == null) return;
+
+            // Zero-init all keys so previous values clear on refresh.
+            foreach (var key in FundingBindIds)
+                _bindRegistry.Set(key, 0f);
+
+            int subTypeAccum = 0;
+            int powerAccum   = 0;
+            int roadsAccum   = 0;
+
+            if (_economyManager != null)
+            {
+                var snapshot = _economyManager.GetMaintenanceContributorsSnapshot();
+                foreach (var c in snapshot)
+                {
+                    int cost = c.GetMonthlyMaintenance();
+                    if (cost <= 0) continue;
+                    string id = c.GetContributorId();
+                    int subType = c.GetSubTypeId();
+                    if (id == "power-aggregate")
+                    {
+                        powerAccum += cost;
+                    }
+                    else if (id == "road-aggregate")
+                    {
+                        roadsAccum += cost;
+                    }
+                    else if (subType >= 0 && subType < SubTypeFundingKey.Length)
+                    {
+                        var key = SubTypeFundingKey[subType];
+                        var prev = _bindRegistry.Get<float>(key);
+                        _bindRegistry.Set(key, prev + cost);
+                        subTypeAccum += cost;
+                    }
+                }
+            }
+
+            _bindRegistry.Set("budget.funding.power", (float)powerAccum);
+            _bindRegistry.Set("budget.funding.roads", (float)roadsAccum);
+            _bindRegistry.Set("budget.funding.maintenance", (float)totalMaintenance);
+
+            // Categories not yet wired to a maintenance contributor — surface the residual
+            // (total − accounted) split evenly so rows render non-zero once city has expenses.
+            int accountedFor = powerAccum + roadsAccum + subTypeAccum;
+            int residual = Mathf.Max(0, totalMaintenance - accountedFor);
+            string[] proxyKeys = { "budget.funding.water", "budget.funding.waste", "budget.funding.transit" };
+            int per = residual / proxyKeys.Length;
+            foreach (var key in proxyKeys)
+                _bindRegistry.Set(key, (float)per);
+        }
+
+        private void RefreshAllBinds(string rangeKind)
         {
             if (_bindRegistry == null || _economyManager == null) return;
 
@@ -228,6 +317,10 @@ namespace Territory.UI.Modals
             // Header.
             _bindRegistry.Set("budget.title", "City Budget");
 
+            // Live funding values per category — sourced from maintenance contributors.
+            int expenses = _economyManager.GetProjectedMonthlyMaintenance();
+            PushFundingFromContributors(expenses);
+
             // Growth-budget initial values.
             if (_growthBudgetManager != null)
             {
@@ -236,7 +329,7 @@ namespace Territory.UI.Modals
                 _bindRegistry.Set("growth.roads",  (float)_growthBudgetManager.GetCategoryPercent(GrowthCategory.Roads));
             }
 
-            // Initial forecast.
+            // Forecast across N months (driven by range tab).
             if (_forecaster != null)
             {
                 var taxRates = new TaxRates
@@ -246,15 +339,11 @@ namespace Territory.UI.Modals
                     Industrial  = _economyManager.industrialIncomeTax,
                     General     = 0,
                 };
-                int expenses = _economyManager.GetProjectedMonthlyMaintenance();
-                var result   = _forecaster.Recompute(taxRates, treasury, expenses);
-                _bindRegistry.Set("budget.forecast.balance", (float)result.Month3Balance);
-                _bindRegistry.Set("budget.forecast.chart", new float[]
-                {
-                    result.Month1Balance,
-                    result.Month2Balance,
-                    result.Month3Balance,
-                });
+                int months = MonthsForRange(rangeKind);
+                var series = _forecaster.RecomputeRange(taxRates, treasury, expenses, months);
+                float endBalance = series.Length > 0 ? series[series.Length - 1] : treasury;
+                _bindRegistry.Set("budget.forecast.balance", endBalance);
+                _bindRegistry.Set("budget.forecast.chart",   series);
             }
         }
 

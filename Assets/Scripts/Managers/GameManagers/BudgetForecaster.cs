@@ -56,6 +56,22 @@ namespace Territory.Simulation
             };
         }
 
+        /// <summary>
+        /// Projects treasury balance across <paramref name="monthCount"/> months given
+        /// tax rates + monthly expenses. Returns float[] of length monthCount where
+        /// arr[i] = currentTreasury + netPerMonth * (i + 1).
+        /// </summary>
+        public float[] RecomputeRange(TaxRates taxRates, int currentTreasury, int monthlyExpenses, int monthCount)
+        {
+            int safeCount = Mathf.Max(1, monthCount);
+            int monthlyIncome = ComputeMonthlyIncome(taxRates);
+            int netPerMonth   = monthlyIncome - monthlyExpenses;
+            var result = new float[safeCount];
+            for (int i = 0; i < safeCount; i++)
+                result[i] = currentTreasury + netPerMonth * (i + 1);
+            return result;
+        }
+
         private void RecomputeFromManager()
         {
             if (_economyManager == null || _bindRegistry == null) return;
