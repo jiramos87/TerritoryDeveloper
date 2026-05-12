@@ -1,30 +1,38 @@
 {
-  "snapshot_id": "2026-05-12T14:59:28.993Z",
+  "snapshot_id": "2026-05-12T21:45:30.992Z",
   "kind": "panels",
   "schema_version": 4,
   "items": [
     {
       "slug": "budget-panel",
       "fields": {
-        "display_name": "Budget Panel",
+        "display_name": "Budget",
         "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 0,
-        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
-        "params_json": "{\"width\":760,\"height\":600,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"]}",
-        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[760,600],\"anchored_position\":[0,0]}"
+        "gap_px": 16,
+        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16,\"border_width\":6,\"corner_radius\":24,\"border_color_token\":\"led-amber\"}",
+        "params_json": "{\"width\":760,\"height\":1100,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"],\"row_columns\":2}",
+        "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[760,1100],\"anchored_position\":[0,0]}"
       },
       "panel": {
         "slug": "budget-panel",
         "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 0,
-        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
-        "params_json": "{\"width\":760,\"height\":600,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"]}"
+        "gap_px": 16,
+        "padding_json": "{\"top\":16,\"left\":16,\"right\":16,\"bottom\":16,\"border_width\":6,\"corner_radius\":24,\"border_color_token\":\"led-amber\"}",
+        "params_json": "{\"width\":760,\"height\":1100,\"quadrants\":[\"tax-rates\",\"service-funding\",\"expenses\",\"forecast\",\"growth-budget\"],\"row_columns\":2}"
       },
       "children": [
         {
           "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"budget.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-close"
+        },
+        {
+          "ord": 2,
           "kind": "label",
           "params_json": "{\"kind\":\"themed-label\",\"bindId\":\"budget.title\",\"variant\":\"modal-title\"}",
           "sprite_ref": "",
@@ -32,79 +40,55 @@
           "instance_slug": "budget-header"
         },
         {
-          "ord": 2,
-          "kind": "button",
-          "params_json": "{\"kind\":\"themed-button\",\"variant\":\"icon-close\",\"actionId\":\"budget.close\"}",
-          "sprite_ref": "",
-          "layout_json": null,
-          "instance_slug": "budget-close"
-        },
-        {
           "ord": 3,
           "kind": "section-header",
-          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"tax-rates\"}",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Tax Rates\",\"quadrant\":\"tax-rates\"}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-section-tax"
         },
         {
           "ord": 4,
-          "kind": "section-header",
-          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"service-funding\"}",
-          "sprite_ref": "",
-          "layout_json": null,
-          "instance_slug": "budget-section-funding"
-        },
-        {
-          "ord": 5,
-          "kind": "section-header",
-          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"expenses\"}",
-          "sprite_ref": "",
-          "layout_json": null,
-          "instance_slug": "budget-section-expenses"
-        },
-        {
-          "ord": 6,
-          "kind": "section-header",
-          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"forecast\"}",
-          "sprite_ref": "",
-          "layout_json": null,
-          "instance_slug": "budget-section-forecast"
-        },
-        {
-          "ord": 7,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.residential\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"residential\"}}",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"label\":\"Residential\",\"bindId\":\"budget.tax.residential\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"residential\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-tax-residential"
         },
         {
-          "ord": 8,
+          "ord": 5,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.commercial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"commercial\"}}",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"label\":\"Commercial\",\"bindId\":\"budget.tax.commercial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"commercial\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-tax-commercial"
         },
         {
-          "ord": 9,
+          "ord": 6,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.industrial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"industrial\"}}",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"label\":\"Industrial\",\"bindId\":\"budget.tax.industrial\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"industrial\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-tax-industrial"
         },
         {
-          "ord": 10,
+          "ord": 7,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"bindId\":\"budget.tax.general\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"general\"}}",
+          "params_json": "{\"max\":50,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":1,\"label\":\"General\",\"bindId\":\"budget.tax.general\",\"numeric\":true,\"actionId\":\"taxRate.set\",\"actionPayload\":{\"zone\":\"general\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-tax-general"
         },
         {
-          "ord": 11,
+          "ord": 8,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Service Funding\",\"quadrant\":\"service-funding\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-funding"
+        },
+        {
+          "ord": 9,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"power\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.power\"}",
           "sprite_ref": "",
@@ -112,7 +96,7 @@
           "instance_slug": "budget-fund-power"
         },
         {
-          "ord": 12,
+          "ord": 10,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"water\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.water\"}",
           "sprite_ref": "",
@@ -120,7 +104,7 @@
           "instance_slug": "budget-fund-water"
         },
         {
-          "ord": 13,
+          "ord": 11,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"waste\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.waste\"}",
           "sprite_ref": "",
@@ -128,7 +112,7 @@
           "instance_slug": "budget-fund-waste"
         },
         {
-          "ord": 14,
+          "ord": 12,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"police\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.police\"}",
           "sprite_ref": "",
@@ -136,7 +120,7 @@
           "instance_slug": "budget-fund-police"
         },
         {
-          "ord": 15,
+          "ord": 13,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"fire\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.fire\"}",
           "sprite_ref": "",
@@ -144,7 +128,7 @@
           "instance_slug": "budget-fund-fire"
         },
         {
-          "ord": 16,
+          "ord": 14,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"health\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.health\"}",
           "sprite_ref": "",
@@ -152,7 +136,7 @@
           "instance_slug": "budget-fund-health"
         },
         {
-          "ord": 17,
+          "ord": 15,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"education\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.education\"}",
           "sprite_ref": "",
@@ -160,7 +144,7 @@
           "instance_slug": "budget-fund-education"
         },
         {
-          "ord": 18,
+          "ord": 16,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"parks\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.parks\"}",
           "sprite_ref": "",
@@ -168,7 +152,7 @@
           "instance_slug": "budget-fund-parks"
         },
         {
-          "ord": 19,
+          "ord": 17,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"transit\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.transit\"}",
           "sprite_ref": "",
@@ -176,7 +160,7 @@
           "instance_slug": "budget-fund-transit"
         },
         {
-          "ord": 20,
+          "ord": 18,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"roads\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.roads\"}",
           "sprite_ref": "",
@@ -184,12 +168,28 @@
           "instance_slug": "budget-fund-roads"
         },
         {
-          "ord": 21,
+          "ord": 19,
           "kind": "expense-row",
           "params_json": "{\"icon\":\"maintenance\",\"kind\":\"expense-row\",\"bindId\":\"budget.funding.maintenance\"}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-fund-maintenance"
+        },
+        {
+          "ord": 20,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Expenses\",\"quadrant\":\"expenses\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-expenses"
+        },
+        {
+          "ord": 21,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Treasury\",\"variant\":\"section-header\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-label-treasury"
         },
         {
           "ord": 22,
@@ -201,6 +201,14 @@
         },
         {
           "ord": 23,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Projected\",\"variant\":\"section-header\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-label-projected"
+        },
+        {
+          "ord": 24,
           "kind": "readout-block",
           "params_json": "{\"kind\":\"readout-block\",\"bindId\":\"budget.forecast.balance\",\"deltaColorRule\":\"positive-green\"}",
           "sprite_ref": "",
@@ -208,7 +216,15 @@
           "instance_slug": "budget-readout-projected"
         },
         {
-          "ord": 24,
+          "ord": 25,
+          "kind": "section-header",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Forecast\",\"quadrant\":\"forecast\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "budget-section-forecast"
+        },
+        {
+          "ord": 26,
           "kind": "chart",
           "params_json": "{\"kind\":\"chart\",\"bindId\":\"budget.forecast.chart\",\"seriesId\":\"forecast\",\"axisLabels\":[\"Month 1\",\"Month 2\",\"Month 3\"]}",
           "sprite_ref": "",
@@ -216,7 +232,7 @@
           "instance_slug": "budget-forecast-chart"
         },
         {
-          "ord": 25,
+          "ord": 27,
           "kind": "range-tabs",
           "params_json": "{\"kind\":\"range-tabs\",\"bindId\":\"budget.range\",\"options\":[\"1mo\",\"3mo\",\"6mo\"]}",
           "sprite_ref": "",
@@ -224,33 +240,33 @@
           "instance_slug": "budget-range-tabs"
         },
         {
-          "ord": 26,
+          "ord": 28,
           "kind": "section-header",
-          "params_json": "{\"kind\":\"section-header\",\"quadrant\":\"growth-budget\"}",
+          "params_json": "{\"kind\":\"section-header\",\"label\":\"Growth Budget\",\"quadrant\":\"growth-budget\"}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-section-growth"
         },
         {
-          "ord": 27,
+          "ord": 29,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.total\",\"numeric\":true,\"actionId\":\"growth.setTotal\",\"actionPayload\":{}}",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"label\":\"Total\",\"bindId\":\"growth.total\",\"numeric\":true,\"actionId\":\"growth.setTotal\",\"actionPayload\":{}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-growth-total"
         },
         {
-          "ord": 28,
+          "ord": 30,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.zoning\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"zoning\"}}",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"label\":\"Zoning\",\"bindId\":\"growth.zoning\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"zoning\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-growth-zoning"
         },
         {
-          "ord": 29,
+          "ord": 31,
           "kind": "slider-row-numeric",
-          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"bindId\":\"growth.roads\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"roads\"}}",
+          "params_json": "{\"max\":100,\"min\":0,\"kind\":\"slider-row-numeric\",\"step\":5,\"label\":\"Roads\",\"bindId\":\"growth.roads\",\"numeric\":true,\"actionId\":\"growth.setCategory\",\"actionPayload\":{\"category\":\"roads\"}}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "budget-growth-roads"
@@ -264,7 +280,7 @@
         "layout_template": "hstack",
         "layout": "hstack",
         "gap_px": 8,
-        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4}",
+        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4,\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{}",
         "rect_json": "{\"pivot\":[0.5,1],\"anchor_max\":[1,1],\"anchor_min\":[0,1],\"size_delta\":[-16,144],\"anchored_position\":[0,-8]}"
       },
@@ -273,7 +289,7 @@
         "layout_template": "hstack",
         "layout": "hstack",
         "gap_px": 8,
-        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4}",
+        "padding_json": "{\"top\":4,\"left\":8,\"right\":8,\"bottom\":4,\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{}"
       },
       "children": [
@@ -296,7 +312,7 @@
         {
           "ord": 4,
           "kind": "label",
-          "params_json": "{\"bind\":\"cityStats.cityName\",\"font\":\"display\",\"kind\":\"label\",\"align\":\"center\"}",
+          "params_json": "{\"bind\":\"cityStats.cityName\",\"font\":\"display\",\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"size-text-body-row\"}",
           "sprite_ref": "",
           "layout_json": "{\"row\":0,\"zone\":\"center\"}",
           "instance_slug": "hud-bar-city-name-label"
@@ -304,7 +320,7 @@
         {
           "ord": 5,
           "kind": "label",
-          "params_json": "{\"bind\":\"timeManager.currentDate\",\"kind\":\"readout\",\"format\":\"text\",\"cadence\":\"tick\"}",
+          "params_json": "{\"bind\":\"timeManager.currentDate\",\"kind\":\"readout\",\"format\":\"text\",\"cadence\":\"tick\",\"size_token\":\"size-text-value\"}",
           "sprite_ref": "",
           "layout_json": "{\"row\":1,\"zone\":\"center\"}",
           "instance_slug": "hud-bar-sim-date-readout"
@@ -312,7 +328,7 @@
         {
           "ord": 6,
           "kind": "label",
-          "params_json": "{\"bind\":\"cityStats.population\",\"kind\":\"readout\",\"format\":\"integer\",\"cadence\":\"tick\"}",
+          "params_json": "{\"bind\":\"cityStats.population\",\"kind\":\"readout\",\"format\":\"integer\",\"cadence\":\"tick\",\"size_token\":\"size-text-value\"}",
           "sprite_ref": "",
           "layout_json": "{\"row\":2,\"zone\":\"center\"}",
           "instance_slug": "hud-bar-population-readout"
@@ -368,6 +384,140 @@
       ]
     },
     {
+      "slug": "info-panel",
+      "fields": {
+        "display_name": "Info Panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
+        "params_json": "{\"width\":480,\"height\":320}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "info-panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
+        "params_json": "{\"width\":480,\"height\":320}"
+      },
+      "children": [
+        {
+          "ord": 0,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.header\",\"kind\":\"label\",\"text\":\"Cell Info\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-header"
+        },
+        {
+          "ord": 1,
+          "kind": "field-list",
+          "params_json": "{\"bind\":\"info.fields\",\"kind\":\"field-list\",\"rows\":6}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-field-list"
+        },
+        {
+          "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"info.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-close"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.type\",\"kind\":\"label\",\"label\":\"Type\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-type-label"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Info\",\"bindId\":\"info.title\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-header"
+        },
+        {
+          "ord": 3,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"-\",\"bindId\":\"info.name\",\"variant\":\"section-header\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-name"
+        },
+        {
+          "ord": 3,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.zone\",\"kind\":\"label\",\"label\":\"Zone\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-zone-label"
+        },
+        {
+          "ord": 4,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.population\",\"kind\":\"label\",\"label\":\"Population\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-pop-label"
+        },
+        {
+          "ord": 4,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"-\",\"bindId\":\"info.body\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-body"
+        },
+        {
+          "ord": 5,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"(0,0)\",\"bindId\":\"info.cellCoord\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-coord"
+        },
+        {
+          "ord": 5,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.value\",\"kind\":\"label\",\"label\":\"Land Value\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-value-label"
+        },
+        {
+          "ord": 6,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.owner\",\"kind\":\"label\",\"label\":\"Owner\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-owner-label"
+        },
+        {
+          "ord": 7,
+          "kind": "label",
+          "params_json": "{\"bind\":\"info.coord\",\"kind\":\"label\",\"label\":\"Grid\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-coord-label"
+        },
+        {
+          "ord": 8,
+          "kind": "confirm-button",
+          "params_json": "{\"kind\":\"confirm-button\",\"label\":\"Demolish\",\"action\":\"info.demolish\",\"confirm_text\":\"Demolish this cell?\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "info-panel-demolish-button"
+        }
+      ]
+    },
+    {
       "slug": "main-menu",
       "fields": {
         "display_name": "Main Menu",
@@ -390,7 +540,7 @@
         {
           "ord": 1,
           "kind": "label",
-          "params_json": "{\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"size.text.title-display\",\"text_static\":\"Territory\"}",
+          "params_json": "{\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"size-text-title-display\",\"text_static\":\"Territory\"}",
           "sprite_ref": "",
           "layout_json": "{\"zone\":\"top\"}",
           "instance_slug": "main-menu-title-label"
@@ -398,7 +548,7 @@
         {
           "ord": 2,
           "kind": "label",
-          "params_json": "{\"kind\":\"label\",\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\",\"text_static\":\"Bacayo Studio\"}",
+          "params_json": "{\"kind\":\"label\",\"size_token\":\"size-text-body-row\",\"color_token\":\"color.text.muted\",\"text_static\":\"Bacayo Studio\"}",
           "sprite_ref": "",
           "layout_json": "{\"zone\":\"bottom-left\"}",
           "instance_slug": "main-menu-studio-label"
@@ -406,7 +556,7 @@
         {
           "ord": 3,
           "kind": "label",
-          "params_json": "{\"bind\":\"mainmenu.version.text\",\"kind\":\"label\",\"align\":\"right\",\"size_token\":\"size.text.caption\",\"color_token\":\"color.text.muted\"}",
+          "params_json": "{\"bind\":\"mainmenu.version.text\",\"kind\":\"label\",\"align\":\"right\",\"size_token\":\"size-text-body-row\",\"color_token\":\"color.text.muted\"}",
           "sprite_ref": "",
           "layout_json": "{\"zone\":\"bottom-right\"}",
           "instance_slug": "main-menu-version-label"
@@ -470,27 +620,153 @@
       ]
     },
     {
+      "slug": "map-panel",
+      "fields": {
+        "display_name": "Map Panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
+        "params_json": "{\"width\":420,\"height\":480}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "map-panel",
+        "layout_template": "modal-card",
+        "layout": "vstack",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
+        "params_json": "{\"width\":420,\"height\":480}"
+      },
+      "children": [
+        {
+          "ord": 0,
+          "kind": "label",
+          "params_json": "{\"bind\":\"map.header\",\"kind\":\"label\",\"text\":\"Map\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-header"
+        },
+        {
+          "ord": 1,
+          "kind": "minimap-canvas",
+          "params_json": "{\"bind\":\"map.canvas\",\"kind\":\"minimap-canvas\",\"width\":360,\"height\":324}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-minimap"
+        },
+        {
+          "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"map-panel.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-close"
+        },
+        {
+          "ord": 2,
+          "kind": "toggle-row",
+          "params_json": "{\"kind\":\"toggle-row\",\"label\":\"Streets\",\"layer\":\"Streets\",\"action\":\"minimap.layer.set\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-toggle-streets"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Map\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-header"
+        },
+        {
+          "ord": 3,
+          "kind": "toggle-row",
+          "params_json": "{\"kind\":\"toggle-row\",\"label\":\"Zones\",\"layer\":\"Zones\",\"action\":\"minimap.layer.set\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-toggle-zones"
+        },
+        {
+          "ord": 3,
+          "kind": "minimap-canvas",
+          "params_json": "{\"kind\":\"minimap-canvas\",\"action\":\"map-panel.recenter\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-canvas"
+        },
+        {
+          "ord": 4,
+          "kind": "toggle-row",
+          "params_json": "{\"kind\":\"toggle-row\",\"label\":\"Forests\",\"layer\":\"Forests\",\"action\":\"minimap.layer.set\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-toggle-forests"
+        },
+        {
+          "ord": 4,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Terrain\",\"value\":\"terrain\",\"action\":\"map-panel.toggleLayer\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-layer-terrain"
+        },
+        {
+          "ord": 5,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Roads\",\"value\":\"roads\",\"action\":\"map-panel.toggleLayer\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-layer-roads"
+        },
+        {
+          "ord": 6,
+          "kind": "button",
+          "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Zones\",\"value\":\"zones\",\"action\":\"map-panel.toggleLayer\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "map-panel-layer-zones"
+        }
+      ]
+    },
+    {
       "slug": "new-game-form",
       "fields": {
         "display_name": "New Game Form",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"title\":\"New Game\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"new-game\",\"host_slots\":[\"main-menu-content-slot\"],\"panel_kind\":\"screen\"}",
         "rect_json": "{}"
       },
       "panel": {
         "slug": "new-game-form",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"title\":\"New Game\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"new-game\",\"host_slots\":[\"main-menu-content-slot\"],\"panel_kind\":\"screen\"}"
       },
       "children": [
         {
           "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"mainmenu.back\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "new-game-form-back"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"New Game\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "new-game-form-header"
+        },
+        {
+          "ord": 3,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"Map Size\"}",
           "sprite_ref": "",
@@ -498,31 +774,7 @@
           "instance_slug": "map-size-header"
         },
         {
-          "ord": 2,
-          "kind": "panel",
-          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Small\",\"value\":\"small\",\"description\":\"64x64\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "map-small-card"
-        },
-        {
-          "ord": 3,
-          "kind": "panel",
-          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Medium\",\"value\":\"medium\",\"description\":\"128x128\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "map-medium-card"
-        },
-        {
           "ord": 4,
-          "kind": "panel",
-          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Large\",\"value\":\"large\",\"description\":\"256x256\"}",
-          "sprite_ref": "",
-          "layout_json": "{}",
-          "instance_slug": "map-large-card"
-        },
-        {
-          "ord": 5,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"Starting Budget\"}",
           "sprite_ref": "",
@@ -530,7 +782,31 @@
           "instance_slug": "budget-header"
         },
         {
+          "ord": 4,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Small\",\"value\":\"small\",\"description\":\"64x64\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-small-card"
+        },
+        {
+          "ord": 5,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Medium\",\"value\":\"medium\",\"description\":\"128x128\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-medium-card"
+        },
+        {
           "ord": 6,
+          "kind": "panel",
+          "params_json": "{\"bind\":\"newgame.mapSize\",\"kind\":\"card-picker\",\"label\":\"Large\",\"value\":\"large\",\"description\":\"256x256\"}",
+          "sprite_ref": "",
+          "layout_json": "{}",
+          "instance_slug": "map-large-card"
+        },
+        {
+          "ord": 8,
           "kind": "panel",
           "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$10,000\",\"value\":\"low\"}",
           "sprite_ref": "",
@@ -538,7 +814,7 @@
           "instance_slug": "budget-low-chip"
         },
         {
-          "ord": 7,
+          "ord": 9,
           "kind": "panel",
           "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$50,000\",\"value\":\"medium\"}",
           "sprite_ref": "",
@@ -546,7 +822,7 @@
           "instance_slug": "budget-mid-chip"
         },
         {
-          "ord": 8,
+          "ord": 10,
           "kind": "panel",
           "params_json": "{\"bind\":\"newgame.budget\",\"kind\":\"chip-picker\",\"label\":\"$200,000\",\"value\":\"high\"}",
           "sprite_ref": "",
@@ -554,7 +830,7 @@
           "instance_slug": "budget-high-chip"
         },
         {
-          "ord": 9,
+          "ord": 11,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"City Name\"}",
           "sprite_ref": "",
@@ -562,7 +838,7 @@
           "instance_slug": "cityname-header"
         },
         {
-          "ord": 10,
+          "ord": 12,
           "kind": "panel",
           "params_json": "{\"bind\":\"newgame.cityName\",\"kind\":\"text-input\",\"placeholder\":\"Enter city name...\",\"reroll_action\":\"newgame.cityName.reroll\"}",
           "sprite_ref": "",
@@ -572,13 +848,123 @@
       ]
     },
     {
+      "slug": "notifications-toast",
+      "fields": {
+        "display_name": "Notifications Toast",
+        "layout_template": "top-right-toast",
+        "layout": "free",
+        "gap_px": 4,
+        "padding_json": "{\"top\":\"gap-tight\",\"left\":\"gap-tight\",\"right\":\"gap-tight\",\"bottom\":\"gap-tight\"}",
+        "params_json": "{\"width\":320,\"height\":0,\"max_stack\":4}",
+        "rect_json": "{}"
+      },
+      "panel": {
+        "slug": "notifications-toast",
+        "layout_template": "top-right-toast",
+        "layout": "free",
+        "gap_px": 4,
+        "padding_json": "{\"top\":\"gap-tight\",\"left\":\"gap-tight\",\"right\":\"gap-tight\",\"bottom\":\"gap-tight\"}",
+        "params_json": "{\"width\":320,\"height\":0,\"max_stack\":4}"
+      },
+      "children": [
+        {
+          "ord": 0,
+          "kind": "toast-stack",
+          "params_json": "{\"bind\":\"toast.stack\",\"kind\":\"toast-stack\",\"max_visible\":5}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-stack"
+        },
+        {
+          "ord": 1,
+          "kind": "toast-stack",
+          "params_json": "{\"kind\":\"toast-stack\",\"bindId\":\"notifications.toastList\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-stack"
+        },
+        {
+          "ord": 1,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.card.0\",\"kind\":\"toast-card\",\"sticky\":false}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-card-0"
+        },
+        {
+          "ord": 2,
+          "kind": "toast-card",
+          "params_json": "{\"kind\":\"toast-card\",\"label\":\"-\",\"size_tone\":\"info\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-template"
+        },
+        {
+          "ord": 2,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.card.1\",\"kind\":\"toast-card\",\"sticky\":false}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-card-1"
+        },
+        {
+          "ord": 3,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.card.2\",\"kind\":\"toast-card\",\"sticky\":false}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-card-2"
+        },
+        {
+          "ord": 4,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.card.3\",\"kind\":\"toast-card\",\"sticky\":false}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-card-3"
+        },
+        {
+          "ord": 5,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.card.4\",\"kind\":\"toast-card\",\"sticky\":false}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-card-4"
+        },
+        {
+          "ord": 6,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.milestone.0\",\"kind\":\"toast-card\",\"sticky\":true,\"variant\":\"milestone\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-milestone-0"
+        },
+        {
+          "ord": 7,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.milestone.1\",\"kind\":\"toast-card\",\"sticky\":true,\"variant\":\"milestone\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-milestone-1"
+        },
+        {
+          "ord": 8,
+          "kind": "toast-card",
+          "params_json": "{\"bind\":\"toast.milestone.2\",\"kind\":\"toast-card\",\"sticky\":true,\"variant\":\"milestone\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "notifications-toast-milestone-2"
+        }
+      ]
+    },
+    {
       "slug": "pause-menu",
       "fields": {
         "display_name": "Pause Menu",
         "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 0,
-        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"width\":480,\"height\":480,\"modal_kind\":\"pause\",\"bg_color_token\":\"token-color-bg-menu\"}",
         "rect_json": "{\"pivot\":[0.5,0.5],\"anchor_max\":[0.5,0.5],\"anchor_min\":[0.5,0.5],\"size_delta\":[480,480],\"anchored_position\":[0,0]}"
       },
@@ -586,21 +972,29 @@
         "slug": "pause-menu",
         "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 0,
-        "padding_json": "{\"top\":0,\"left\":0,\"right\":0,\"bottom\":0}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"width\":480,\"height\":480,\"modal_kind\":\"pause\",\"bg_color_token\":\"token-color-bg-menu\"}"
       },
       "children": [
         {
           "ord": 1,
-          "kind": "label",
-          "params_json": "{\"kind\":\"label\",\"align\":\"center\",\"size_token\":\"token-size-text-modal-title\",\"text_static\":\"Paused\"}",
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"pause.resume\",\"visible_bind\":\"pause.contentBack.visible\"}",
           "sprite_ref": "",
           "layout_json": null,
-          "instance_slug": "pause-menu-title-label"
+          "instance_slug": "pause-menu-back"
         },
         {
           "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Paused\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "pause-menu-header"
+        },
+        {
+          "ord": 4,
           "kind": "button",
           "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Resume\",\"action\":\"pause.resume\",\"tooltip\":\"Return to game.\"}",
           "sprite_ref": "",
@@ -608,7 +1002,7 @@
           "instance_slug": "pause-menu-resume-button"
         },
         {
-          "ord": 3,
+          "ord": 5,
           "kind": "button",
           "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Settings\",\"action\":\"pause.openSettings\",\"tooltip\":\"Open settings.\"}",
           "sprite_ref": "",
@@ -616,7 +1010,7 @@
           "instance_slug": "pause-menu-settings-button"
         },
         {
-          "ord": 4,
+          "ord": 6,
           "kind": "button",
           "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Save\",\"action\":\"pause.openSave\",\"tooltip\":\"Save the city.\"}",
           "sprite_ref": "",
@@ -624,7 +1018,7 @@
           "instance_slug": "pause-menu-save-button"
         },
         {
-          "ord": 5,
+          "ord": 7,
           "kind": "button",
           "params_json": "{\"kind\":\"illuminated-button\",\"label\":\"Load\",\"action\":\"pause.openLoad\",\"tooltip\":\"Load a save.\"}",
           "sprite_ref": "",
@@ -632,7 +1026,7 @@
           "instance_slug": "pause-menu-load-button"
         },
         {
-          "ord": 6,
+          "ord": 8,
           "kind": "confirm-button",
           "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Main Menu\",\"action\":\"pause.mainMenu\",\"tooltip\":\"Return to main menu.\",\"confirm_label\":\"Click again to confirm\",\"action_confirm\":\"pause.mainMenu.confirm\",\"confirm_window_ms\":3000}",
           "sprite_ref": "",
@@ -640,7 +1034,7 @@
           "instance_slug": "pause-menu-main-menu-button"
         },
         {
-          "ord": 7,
+          "ord": 9,
           "kind": "confirm-button",
           "params_json": "{\"kind\":\"destructive-confirm-button\",\"label\":\"Quit\",\"action\":\"pause.quit\",\"tooltip\":\"Exit to desktop.\",\"confirm_label\":\"Click again to confirm\",\"action_confirm\":\"pause.quit.confirm\",\"confirm_window_ms\":3000}",
           "sprite_ref": "",
@@ -648,7 +1042,7 @@
           "instance_slug": "pause-menu-quit-button"
         },
         {
-          "ord": 100,
+          "ord": 102,
           "kind": "view-slot",
           "params_json": "{\"kind\":\"view-slot\",\"views\":[\"root\",\"settings\",\"save\",\"load\"],\"default\":\"root\",\"slot_bind\":\"pause.contentScreen\"}",
           "sprite_ref": "",
@@ -661,24 +1055,40 @@
       "slug": "save-load-view",
       "fields": {
         "display_name": "Save / Load View",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"modeBindId\":\"saveload.mode\",\"panel_kind\":\"screen\",\"defaultMode\":\"load\"}",
         "rect_json": "{}"
       },
       "panel": {
         "slug": "save-load-view",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"modeBindId\":\"saveload.mode\",\"panel_kind\":\"screen\",\"defaultMode\":\"load\"}"
       },
       "children": [
         {
           "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"mainmenu.back\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "save-load-back"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Save / Load\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "save-load-header"
+        },
+        {
+          "ord": 3,
           "kind": "panel",
           "params_json": "{\"kind\":\"save-controls-strip\",\"bindId\":\"saveload.mode\"}",
           "sprite_ref": "",
@@ -686,7 +1096,7 @@
           "instance_slug": "save-controls-strip"
         },
         {
-          "ord": 2,
+          "ord": 4,
           "kind": "panel",
           "params_json": "{\"kind\":\"save-list\",\"listBindId\":\"saveload.list\",\"trashAction\":\"saveload.delete\",\"selectAction\":\"saveload.selectSlot\",\"selectedSlotBindId\":\"saveload.selectedSlot\"}",
           "sprite_ref": "",
@@ -694,7 +1104,7 @@
           "instance_slug": "save-list"
         },
         {
-          "ord": 3,
+          "ord": 5,
           "kind": "panel",
           "params_json": "{\"bind\":\"saveload.saveName\",\"kind\":\"text-input\",\"placeholder\":\"City-YYYY-MM-DD-HHmm\"}",
           "sprite_ref": "",
@@ -702,7 +1112,7 @@
           "instance_slug": "save-name-input"
         },
         {
-          "ord": 4,
+          "ord": 6,
           "kind": "button",
           "params_json": "{\"kind\":\"themed-button\",\"label\":\"Load\",\"action\":\"saveload.load\",\"disabledBindId\":\"saveload.loadDisabled\"}",
           "sprite_ref": "",
@@ -715,24 +1125,40 @@
       "slug": "settings-view",
       "fields": {
         "display_name": "Settings View",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"title\":\"Settings\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"settings\",\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}",
         "rect_json": "{}"
       },
       "panel": {
         "slug": "settings-view",
-        "layout_template": "vstack",
+        "layout_template": "modal-card",
         "layout": "vstack",
-        "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "gap_px": 16,
+        "padding_json": "{\"top\":\"padding-card\",\"left\":\"padding-card\",\"right\":\"padding-card\",\"bottom\":\"padding-card\",\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{\"title\":\"Settings\",\"bind_enum\":\"mainmenu.contentScreen\",\"bind_value\":\"settings\",\"host_slots\":[\"main-menu-content-slot\",\"pause-menu-content-slot\"],\"panel_kind\":\"screen\"}"
       },
       "children": [
         {
           "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"mainmenu.back\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "settings-back"
+        },
+        {
+          "ord": 2,
+          "kind": "label",
+          "params_json": "{\"kind\":\"themed-label\",\"label\":\"Settings\",\"variant\":\"modal-title\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "settings-header"
+        },
+        {
+          "ord": 3,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"Audio\"}",
           "sprite_ref": "",
@@ -740,7 +1166,7 @@
           "instance_slug": "audio-header"
         },
         {
-          "ord": 2,
+          "ord": 4,
           "kind": "panel",
           "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.masterVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"Master\"}",
           "sprite_ref": "",
@@ -748,7 +1174,7 @@
           "instance_slug": "master-volume-slider"
         },
         {
-          "ord": 3,
+          "ord": 5,
           "kind": "panel",
           "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.musicVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"Music\",\"linearToDecibel\":true}",
           "sprite_ref": "",
@@ -756,7 +1182,7 @@
           "instance_slug": "music-volume-slider"
         },
         {
-          "ord": 4,
+          "ord": 6,
           "kind": "panel",
           "params_json": "{\"max\":1,\"min\":0,\"bind\":\"settings.sfxVolume\",\"kind\":\"slider-row\",\"step\":0.01,\"label\":\"SFX\",\"linearToDecibel\":true}",
           "sprite_ref": "",
@@ -764,7 +1190,7 @@
           "instance_slug": "sfx-volume-slider"
         },
         {
-          "ord": 5,
+          "ord": 7,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"Display\"}",
           "sprite_ref": "",
@@ -772,7 +1198,7 @@
           "instance_slug": "display-header"
         },
         {
-          "ord": 6,
+          "ord": 8,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.fullscreen\",\"kind\":\"toggle-row\",\"label\":\"Fullscreen\"}",
           "sprite_ref": "",
@@ -780,7 +1206,7 @@
           "instance_slug": "fullscreen-toggle"
         },
         {
-          "ord": 7,
+          "ord": 9,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.vsync\",\"kind\":\"toggle-row\",\"label\":\"VSync\"}",
           "sprite_ref": "",
@@ -788,7 +1214,7 @@
           "instance_slug": "vsync-toggle"
         },
         {
-          "ord": 8,
+          "ord": 10,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.resolution\",\"kind\":\"dropdown-row\",\"label\":\"Resolution\",\"options_action\":\"settings.resolution.options\"}",
           "sprite_ref": "",
@@ -796,7 +1222,7 @@
           "instance_slug": "resolution-dropdown"
         },
         {
-          "ord": 9,
+          "ord": 11,
           "kind": "label",
           "params_json": "{\"kind\":\"section-header\",\"label\":\"Gameplay\"}",
           "sprite_ref": "",
@@ -804,7 +1230,7 @@
           "instance_slug": "gameplay-header"
         },
         {
-          "ord": 10,
+          "ord": 12,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.scrollEdgePan\",\"kind\":\"toggle-row\",\"label\":\"Edge Scroll\"}",
           "sprite_ref": "",
@@ -812,7 +1238,7 @@
           "instance_slug": "scroll-edge-toggle"
         },
         {
-          "ord": 11,
+          "ord": 13,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.monthlyBudgetNotifications\",\"kind\":\"toggle-row\",\"label\":\"Budget Alerts\"}",
           "sprite_ref": "",
@@ -820,7 +1246,7 @@
           "instance_slug": "monthly-notif-toggle"
         },
         {
-          "ord": 12,
+          "ord": 14,
           "kind": "panel",
           "params_json": "{\"bind\":\"settings.autoSave\",\"kind\":\"toggle-row\",\"label\":\"Auto-Save\"}",
           "sprite_ref": "",
@@ -828,7 +1254,7 @@
           "instance_slug": "auto-save-toggle"
         },
         {
-          "ord": 13,
+          "ord": 15,
           "kind": "button",
           "params_json": "{\"kind\":\"confirm-button\",\"label\":\"Reset to Defaults\",\"action\":\"settings.reset\",\"confirm_action\":\"settings.reset.confirmed\",\"confirm_seconds\":3}",
           "sprite_ref": "",
@@ -859,19 +1285,19 @@
       "children": [
         {
           "ord": 1,
+          "kind": "button",
+          "params_json": "{\"kind\":\"back-button\",\"action\":\"stats.close\"}",
+          "sprite_ref": "",
+          "layout_json": null,
+          "instance_slug": "stats-close"
+        },
+        {
+          "ord": 2,
           "kind": "label",
           "params_json": "{\"kind\":\"themed-label\",\"bindId\":\"stats.title\",\"variant\":\"modal-title\"}",
           "sprite_ref": "",
           "layout_json": null,
           "instance_slug": "stats-header"
-        },
-        {
-          "ord": 2,
-          "kind": "button",
-          "params_json": "{\"kind\":\"back-button\",\"action\":\"stats.close\",\"corner\":\"top-left\",\"corner_offset\":\"22,22\"}",
-          "sprite_ref": "",
-          "layout_json": null,
-          "instance_slug": "stats-close"
         },
         {
           "ord": 3,
@@ -1034,7 +1460,7 @@
         "layout_template": "hstack",
         "layout": "hstack",
         "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "padding_json": "{\"top\":\"gap-tight\",\"left\":\"gap-tight\",\"right\":\"gap-tight\",\"bottom\":\"gap-tight\"}",
         "params_json": "{\"anchor\":\"bottom-left\",\"card_h_px\":80,\"card_w_px\":80,\"panel_kind\":\"hud\",\"strip_h_px\":96,\"open_trigger\":\"toolbar.tool-select\",\"close_triggers\":[\"key.escape\",\"toolbar.tool-deselect\"],\"hidden_default\":true,\"max_strip_w_px\":1200}",
         "rect_json": "{}"
       },
@@ -1043,7 +1469,7 @@
         "layout_template": "hstack",
         "layout": "hstack",
         "gap_px": 8,
-        "padding_json": "{\"top\":8,\"left\":8,\"right\":8,\"bottom\":8}",
+        "padding_json": "{\"top\":\"gap-tight\",\"left\":\"gap-tight\",\"right\":\"gap-tight\",\"bottom\":\"gap-tight\"}",
         "params_json": "{\"anchor\":\"bottom-left\",\"card_h_px\":80,\"card_w_px\":80,\"panel_kind\":\"hud\",\"strip_h_px\":96,\"open_trigger\":\"toolbar.tool-select\",\"close_triggers\":[\"key.escape\",\"toolbar.tool-deselect\"],\"hidden_default\":true,\"max_strip_w_px\":1200}"
       },
       "children": [
@@ -1080,7 +1506,7 @@
         "layout_template": "vstack",
         "layout": "vstack",
         "gap_px": 4,
-        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4,\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{}",
         "rect_json": "{\"pivot\":[0,0.5],\"anchor_max\":[0,1],\"anchor_min\":[0,0],\"size_delta\":[220,-352],\"anchored_position\":[12,24]}"
       },
@@ -1089,7 +1515,7 @@
         "layout_template": "vstack",
         "layout": "vstack",
         "gap_px": 4,
-        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4}",
+        "padding_json": "{\"top\":4,\"left\":4,\"right\":4,\"bottom\":4,\"border_width\":\"border-width-card\",\"corner_radius\":\"corner-radius-card\",\"border_color_token\":\"color-border-accent\"}",
         "params_json": "{}"
       },
       "children": []
