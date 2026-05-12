@@ -98,3 +98,18 @@ var/
 var/blobs/
 
 !var/blobs/.gitkeep
+
+# Per-user Unity editor layout — not shared across machines
+UserSettings/Layouts/
+
+# Local runtime stderr logs (cron-server, etc.)
+tools/cron-server/launchd/*.err
+
+# Nested mcp-ia-server cache (parse-cache.json under tools/mcp-ia-server/tools/mcp-ia-server/.cache/)
+tools/mcp-ia-server/tools/mcp-ia-server/.cache/
+
+# Local sqlite DB — session state, reproducible from migrations
+ia/state/ia.db
+
+# Claude Code scheduled-task lock
+.claude/scheduled_tasks.lock
