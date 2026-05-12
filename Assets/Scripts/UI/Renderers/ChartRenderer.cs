@@ -42,9 +42,14 @@ namespace Territory.UI.Renderers
             }
 
             if (_bindRegistry == null) _bindRegistry = FindObjectOfType<UiBindRegistry>();
-            if (_bindRegistry == null || string.IsNullOrEmpty(_bindId)) return;
+            if (_bindRegistry == null || string.IsNullOrEmpty(_bindId))
+            {
+                Debug.LogWarning($"[ChartRenderer][LOG] OnEnable on {gameObject.name} — SKIPPED bindRegistry={(_bindRegistry != null ? "OK" : "NULL")} bindId='{_bindId}'");
+                return;
+            }
 
             _sub = _bindRegistry.Subscribe<float[]>(_bindId, OnSeriesChanged);
+            Debug.Log($"[ChartRenderer][LOG] OnEnable on {gameObject.name} — subscribed bindId='{_bindId}' mode={_mode}");
         }
 
         private void OnDisable()
@@ -64,6 +69,7 @@ namespace Territory.UI.Renderers
 
         private void OnSeriesChanged(float[] series)
         {
+            Debug.Log($"[ChartRenderer][LOG] OnSeriesChanged on {gameObject.name} bindId='{_bindId}' — series.Length={(series != null ? series.Length : -1)} first={(series != null && series.Length > 0 ? series[0].ToString("F2") : "-")}");
             if (_texture == null) return;
 
             for (int i = 0; i < _clearBuffer.Length; i++) _clearBuffer[i] = Color.clear;

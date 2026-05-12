@@ -55,6 +55,15 @@ namespace Territory.UI.Modals
             if (_bindRegistry      == null) _bindRegistry      = FindObjectOfType<UiBindRegistry>();
             if (_modalCoordinator  == null) _modalCoordinator  = FindObjectOfType<ModalCoordinator>();
             if (_recorder          == null) _recorder          = FindObjectOfType<StatsHistoryRecorder>();
+            if (_recorder == null)
+            {
+                // Scene didn't wire one — instantiate at runtime so panel always has data flow.
+                // Recorder.Awake() lazy-resolves CityStats + EconomyManager via FindObjectOfType.
+                var recorderGo = new GameObject("StatsHistoryRecorder (auto)");
+                _recorder = recorderGo.AddComponent<StatsHistoryRecorder>();
+                Debug.Log("[StatsPanelAdapter][LOG] Auto-created StatsHistoryRecorder (scene missing one).");
+            }
+            Debug.Log($"[StatsPanelAdapter][LOG] Awake — actionRegistry={(_actionRegistry != null ? "OK" : "NULL")} bindRegistry={(_bindRegistry != null ? "OK" : "NULL")} modalCoordinator={(_modalCoordinator != null ? "OK" : "NULL")} recorder={(_recorder != null ? "OK" : "NULL")}");
             // Stage 13 hotfix — register in Awake instead of Start. Panel root is registered
             // with ModalCoordinator (SetActive false) immediately after AddComponent, so Start
             // never fires on this adapter. Awake runs once on AddComponent regardless of active.
@@ -81,9 +90,20 @@ namespace Territory.UI.Modals
 
         private void OnStatsOpen()
         {
+            Debug.Log($"[StatsPanelAdapter][LOG] OnStatsOpen — recorder={(_recorder != null ? "OK" : "NULL")} bindRegistry={(_bindRegistry != null ? "OK" : "NULL")}");
             if (_modalCoordinator != null)
                 _modalCoordinator.TryOpen("stats-panel");
+            // Force a fresh snapshot so panel shows real values immediately — don't wait for
+            // the next monthly tick (day==1 in TimeManager). Without this, opening within the
+            // first month of a fresh game shows all-zero charts + rows.
+            if (_recorder != null)
+                _recorder.OnMonthlyTick();
             RefreshAllBinds("12mo");
+            // Default to population tab on every open — also activates the right chart+bar pair.
+            if (_bindRegistry != null)
+                _bindRegistry.Set("stats.activeTab", "population");
+            else
+                OnTabChanged("population");
         }
 
         private void OnStatsClose()
@@ -109,9 +129,52 @@ namespace Territory.UI.Modals
             // only publishes; renderers subscribe.
         }
 
+        private static readonly string[] TabSeriesIds = { "population", "services", "economy" };
+
         private void OnTabChanged(string tab)
         {
-            // Tab visibility filtering deferred to scene-wire (T6.0.5).
+            if (string.IsNullOrEmpty(tab)) return;
+
+            // Always search from scene root — panel mount hierarchy varies + slot resolver
+            // may return a sub-section that excludes chart hosts.
+            var searchRoot = transform.root;
+            Debug.Log($"[StatsPanelAdapter][LOG] OnTabChanged → active='{tab}' searchRoot='{searchRoot.name}'");
+
+            foreach (var series in TabSeriesIds)
+            {
+                bool active = (series == tab);
+                ToggleByName(searchRoot, $"stats-chart-{series}", active);
+                ToggleByName(searchRoot, $"stats-bar-{series}",   active);
+            }
+
+            // Re-push series so newly activated chart receives fresh data
+            // (subscription replays only future emissions).
+            RefreshAllBinds("12mo");
+        }
+
+        private static void ToggleByName(Transform root, string goName, bool active)
+        {
+            var t = FindDeep(root, goName);
+            if (t != null)
+            {
+                t.gameObject.SetActive(active);
+                Debug.Log($"[StatsPanelAdapter][LOG] ToggleByName '{goName}' → active={active} found=YES");
+            }
+            else
+            {
+                Debug.LogWarning($"[StatsPanelAdapter][LOG] ToggleByName '{goName}' → NOT FOUND");
+            }
+        }
+
+        private static Transform FindDeep(Transform root, string goName)
+        {
+            if (root.name == goName) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var r = FindDeep(root.GetChild(i), goName);
+                if (r != null) return r;
+            }
+            return null;
         }
 
         private void OnRangeChanged(string range)
@@ -121,6 +184,7 @@ namespace Territory.UI.Modals
 
         private void RefreshAllBinds(string rangeKind)
         {
+            Debug.Log($"[StatsPanelAdapter][LOG] RefreshAllBinds({rangeKind}) — entering. bindRegistry={(_bindRegistry != null ? "OK" : "NULL")} recorder={(_recorder != null ? "OK" : "NULL")}");
             if (_bindRegistry == null) return;
 
             // Push chart series.
@@ -128,6 +192,7 @@ namespace Territory.UI.Modals
             {
                 string seriesId = bindId.Replace("stats.chart.", "");
                 var data = _recorder != null ? _recorder.GetRange(rangeKind, seriesId) : Array.Empty<float>();
+                Debug.Log($"[StatsPanelAdapter][LOG] Set chart bind '{bindId}' ← float[{data.Length}] (subscribers={_bindRegistry.HasSubscribers(bindId)})");
                 _bindRegistry.Set(bindId, data);
             }
 
@@ -136,6 +201,7 @@ namespace Territory.UI.Modals
             {
                 string seriesId = bindId.Replace("stats.bar.", "");
                 var data = _recorder != null ? _recorder.GetRange(rangeKind, seriesId) : Array.Empty<float>();
+                Debug.Log($"[StatsPanelAdapter][LOG] Set bar bind '{bindId}' ← float[{data.Length}] (subscribers={_bindRegistry.HasSubscribers(bindId)})");
                 _bindRegistry.Set(bindId, data);
             }
 
@@ -144,6 +210,7 @@ namespace Territory.UI.Modals
             {
                 string seriesId = bindId.Replace("stats.", "");
                 float val = _recorder != null ? _recorder.GetCurrentSnapshot(seriesId) : 0f;
+                Debug.Log($"[StatsPanelAdapter][LOG] Set service bind '{bindId}' ← {val:F2} (subscribers={_bindRegistry.HasSubscribers(bindId)})");
                 _bindRegistry.Set(bindId, val);
             }
         }

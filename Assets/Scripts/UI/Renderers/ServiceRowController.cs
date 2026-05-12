@@ -25,9 +25,14 @@ namespace Territory.UI.Renderers
         private void OnEnable()
         {
             if (_bindRegistry == null) _bindRegistry = FindObjectOfType<UiBindRegistry>();
-            if (_bindRegistry == null || string.IsNullOrEmpty(_bindId)) return;
+            if (_bindRegistry == null || string.IsNullOrEmpty(_bindId))
+            {
+                Debug.LogWarning($"[ServiceRowController][LOG] OnEnable on {gameObject.name} — SKIPPED bindRegistry={(_bindRegistry != null ? "OK" : "NULL")} bindId='{_bindId}'");
+                return;
+            }
 
             _sub = _bindRegistry.Subscribe<float>(_bindId, OnValueChanged);
+            Debug.Log($"[ServiceRowController][LOG] OnEnable on {gameObject.name} — subscribed bindId='{_bindId}' secondaryText={(_secondaryValueText != null ? "OK" : "NULL")}");
         }
 
         private void OnDisable()
@@ -38,6 +43,7 @@ namespace Territory.UI.Renderers
 
         private void OnValueChanged(float v)
         {
+            Debug.Log($"[ServiceRowController][LOG] OnValueChanged on {gameObject.name} bindId='{_bindId}' ← {v:F2} (secondaryText={(_secondaryValueText != null ? "OK" : "NULL")})");
             if (_secondaryValueText == null) return;
             _secondaryValueText.text = v.ToString(_format);
         }

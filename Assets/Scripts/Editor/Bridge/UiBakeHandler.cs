@@ -881,12 +881,12 @@ namespace Territory.Editor.Bridge
                     var listPrimaryTmp = listPrimary.AddComponent<TextMeshProUGUI>();
                     listPrimaryTmp.text = pj?.label ?? string.Empty;
                     listPrimaryTmp.alignment = TextAlignmentOptions.MidlineLeft;
-                    listPrimaryTmp.fontSize = 14f;
+                    listPrimaryTmp.fontSize = 16f;
                     listPrimaryTmp.color = theme != null ? theme.TextPrimary : Color.white;
                     listPrimaryTmp.raycastTarget = false;
                     var listPrimaryLe = listPrimary.GetComponent<LayoutElement>();
                     listPrimaryLe.flexibleWidth = 1f;
-                    listPrimaryLe.preferredHeight = 32f;
+                    listPrimaryLe.preferredHeight = 36f;
                     // Caption-only fallback bumps preferred width so secondary value still right-aligns.
                     if (iconSprite == null) listPrimaryLe.preferredWidth = 160f;
 
@@ -895,13 +895,13 @@ namespace Territory.Editor.Bridge
                     var listSecondaryTmp = listSecondary.AddComponent<TextMeshProUGUI>();
                     listSecondaryTmp.text = string.Empty;
                     listSecondaryTmp.alignment = TextAlignmentOptions.MidlineRight;
-                    listSecondaryTmp.fontSize = 14f;
+                    listSecondaryTmp.fontSize = 16f;
                     listSecondaryTmp.color = theme != null ? theme.TextSecondary : new Color(0.8f, 0.8f, 0.8f, 1f);
                     listSecondaryTmp.raycastTarget = false;
                     var listSecondaryLe = listSecondary.GetComponent<LayoutElement>();
-                    listSecondaryLe.preferredWidth = 64f;
-                    listSecondaryLe.minWidth = 64f;
-                    listSecondaryLe.preferredHeight = 32f;
+                    listSecondaryLe.preferredWidth = 80f;
+                    listSecondaryLe.minWidth = 80f;
+                    listSecondaryLe.preferredHeight = 36f;
 
                     // Wire ServiceRowController.
                     var rowCtrl = childGo.AddComponent<Territory.UI.Renderers.ServiceRowController>();
@@ -916,7 +916,7 @@ namespace Territory.Editor.Bridge
                     if (iconProp != null) iconProp.objectReferenceValue = listIconImg;
                     rowSo.ApplyModifiedPropertiesWithoutUndo();
 
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 40f, flexibleWidth: 1f);
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 44f, flexibleWidth: 1f);
                     break;
                 }
                 // Wave B5 (TECH-27098) HUD widget archetypes.
@@ -1125,12 +1125,21 @@ namespace Territory.Editor.Bridge
                     // Stage 10 budget/stats — tab-strip + range-tabs. Pills built from pj.tabs (else
                     // pj.options, else single fallback caption). ToggleGroup ensures single-active;
                     // runtime TabStripController publishes captionId to bindId on click + recolors.
+                    bool isRangeTabs = pj?.kind == "range-tabs";
+                    float pillWidth  = isRangeTabs ? 72f  : 120f;
+                    float pillHeight = isRangeTabs ? 28f  : 36f;
+                    float pillFont   = isRangeTabs ? 14f  : 18f;
+
                     var stripBg = childGo.AddComponent<Image>();
                     stripBg.color = new Color(0f, 0f, 0f, 0f);
                     stripBg.raycastTarget = false;
                     var stripHlg = childGo.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
                     stripHlg.spacing = 4f;
-                    stripHlg.childAlignment = TextAnchor.MiddleCenter;
+                    stripHlg.childAlignment = isRangeTabs ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
+                    stripHlg.childForceExpandWidth  = false;
+                    stripHlg.childForceExpandHeight = false;
+                    stripHlg.childControlWidth  = false;
+                    stripHlg.childControlHeight = false;
 
                     string[] captions = (pj?.tabs != null && pj.tabs.Length > 0) ? pj.tabs
                                        : (pj?.options != null && pj.options.Length > 0) ? pj.options
@@ -1147,11 +1156,15 @@ namespace Territory.Editor.Bridge
                         var caption = captions[i];
                         var pill = new GameObject($"Pill_{caption}", typeof(RectTransform), typeof(LayoutElement));
                         pill.transform.SetParent(childGo.transform, worldPositionStays: false);
+                        var pillRt = pill.GetComponent<RectTransform>();
+                        pillRt.sizeDelta = new Vector2(pillWidth, pillHeight);
                         var pillLe = pill.GetComponent<LayoutElement>();
-                        pillLe.preferredWidth = 96f;
-                        pillLe.minWidth = 96f;
-                        pillLe.preferredHeight = 28f;
-                        pillLe.minHeight = 28f;
+                        pillLe.preferredWidth  = pillWidth;
+                        pillLe.minWidth        = pillWidth;
+                        pillLe.flexibleWidth   = 0f;
+                        pillLe.preferredHeight = pillHeight;
+                        pillLe.minHeight       = pillHeight;
+                        pillLe.flexibleHeight  = 0f;
                         var pillImg = pill.AddComponent<Image>();
                         pillImg.color = idleColor;
                         pillImg.raycastTarget = true;
@@ -1165,7 +1178,7 @@ namespace Territory.Editor.Bridge
                         var labelTmp = labelGo.AddComponent<TMPro.TextMeshProUGUI>();
                         labelTmp.text = caption;
                         labelTmp.alignment = TextAlignmentOptions.Center;
-                        labelTmp.fontSize = 12f;
+                        labelTmp.fontSize = pillFont;
                         labelTmp.color = theme != null ? theme.TextPrimary : Color.white;
                         labelTmp.raycastTarget = false;
 
@@ -1200,7 +1213,7 @@ namespace Territory.Editor.Bridge
                     }
                     tabSo.ApplyModifiedPropertiesWithoutUndo();
 
-                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 32f, flexibleWidth: 1f);
+                    EnsureChildLayoutElement(childGo, preferredWidth: -1f, preferredHeight: 44f, flexibleWidth: 1f);
                     break;
                 }
                 case "save-controls-strip":

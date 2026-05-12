@@ -45,6 +45,10 @@ public class TimeManager : MonoBehaviour
         // Inspector wire is preferred; FindObjectOfType is safety-net only.
         if (geographyManager == null)
             geographyManager = FindObjectOfType<GeographyManager>();
+        // Wave B2 (TECH-27085) — lazy-resolve recorder so monthly ticks accumulate history
+        // even when scene wiring is missing.
+        if (statsHistoryRecorder == null)
+            statsHistoryRecorder = FindObjectOfType<Territory.Simulation.StatsHistoryRecorder>();
     }
 
     void Start()
@@ -52,6 +56,9 @@ public class TimeManager : MonoBehaviour
         currentDate = new System.DateTime(2024, 8, 27);
         currentDate = currentDate.Date;
         uiManager.UpdateUI();
+        // Re-resolve recorder in Start in case adapter auto-created it after our Awake ran.
+        if (statsHistoryRecorder == null)
+            statsHistoryRecorder = FindObjectOfType<Territory.Simulation.StatsHistoryRecorder>();
     }
 
     void Update()

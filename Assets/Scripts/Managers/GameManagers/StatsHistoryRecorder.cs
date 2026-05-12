@@ -51,6 +51,8 @@ namespace Territory.Simulation
 
             foreach (var id in AllSeriesIds)
                 InitBuffers(id);
+
+            Debug.Log($"[StatsHistoryRecorder][LOG] Awake — _cityStats={(_cityStats != null ? "OK" : "NULL")} _economyManager={(_economyManager != null ? "OK" : "NULL")} buffers={AllSeriesIds.Length}");
         }
 
         private void InitBuffers(string id)
@@ -67,6 +69,7 @@ namespace Territory.Simulation
         public void OnMonthlyTick()
         {
             var snapshot = BuildSnapshot();
+            Debug.Log($"[StatsHistoryRecorder][LOG] OnMonthlyTick — snapshot population={snapshot["population"]:F1} economy={snapshot["economy"]:F1} services={snapshot["services"]:F2} svc.power={snapshot["svc.power"]:F2} svc.water={snapshot["svc.water"]:F2} svc.happiness={snapshot["svc.happiness"]:F2}");
             foreach (var kv in snapshot)
                 Push(kv.Key, kv.Value);
         }
@@ -82,17 +85,40 @@ namespace Territory.Simulation
             float econ = _economyManager != null ? (float)_economyManager.GetProjectedMonthlyIncome() : 0f;
             map["economy"] = econ;
 
-            // Services saturation stubs (0–1 normalized).
-            float svc = 0.5f; // placeholder until service managers expose saturation.
-            map["services"] = svc;
+            // Service saturations — real values from CityStats where available; happiness proxy
+            // for managers that don't yet expose saturation.
+            float power     = Saturation(_cityStats != null ? _cityStats.cityPowerOutput      : 0,
+                                          _cityStats != null ? _cityStats.cityPowerConsumption : 0);
+            float water     = Saturation(_cityStats != null ? _cityStats.cityWaterOutput      : 0,
+                                          _cityStats != null ? _cityStats.cityWaterConsumption : 0);
+            float happiness = _cityStats != null ? Mathf.Clamp01(_cityStats.happiness / 100f) : 0f;
 
-            string[] svcIds = { "svc.power", "svc.water", "svc.waste", "svc.police",
-                                 "svc.fire", "svc.health", "svc.education", "svc.parks",
-                                 "svc.transit", "svc.roads", "svc.happiness" };
-            foreach (var id in svcIds)
-                map[id] = svc;
+            map["svc.power"]     = power;
+            map["svc.water"]     = water;
+            map["svc.happiness"] = happiness;
+            // Managers not yet wired — proxy with happiness so chart/rows render non-zero
+            // until WasteManager / PoliceManager / FireManager / etc. expose saturation.
+            map["svc.waste"]     = happiness;
+            map["svc.police"]    = happiness;
+            map["svc.fire"]      = happiness;
+            map["svc.health"]    = happiness;
+            map["svc.education"] = happiness;
+            map["svc.parks"]     = happiness;
+            map["svc.transit"]   = happiness;
+            map["svc.roads"]     = happiness;
+
+            // Aggregate services bar = mean of individual saturations.
+            map["services"] = (power + water + happiness * 9f) / 11f;
 
             return map;
+        }
+
+        /// <summary>Supply/demand saturation clamped to [0,1]. Returns 1 when demand=0 and supply>0 (over-supplied),
+        /// 0 when both are 0 (no infrastructure yet).</summary>
+        private static float Saturation(int supply, int demand)
+        {
+            if (demand <= 0) return supply > 0 ? 1f : 0f;
+            return Mathf.Clamp01((float)supply / demand);
         }
 
         private void Push(string id, float value)
@@ -125,21 +151,26 @@ namespace Territory.Simulation
         /// <summary>Returns ordered float[] for the given range and series. Empty when no data yet.</summary>
         public float[] GetRange(string rangeKind, string seriesId)
         {
+            float[] result;
             switch (rangeKind)
             {
-                case "3mo":      return ExtractOrdered(_buf3mo, _head3, _count3, seriesId, Buf3Mo);
-                case "12mo":     return ExtractOrdered(_buf12mo, _head12, _count12, seriesId, Buf12Mo);
-                case "all-time": return ExtractOrdered(_bufAll, _headAll, _countAll, seriesId, BufAll);
+                case "3mo":      result = ExtractOrdered(_buf3mo, _head3, _count3, seriesId, Buf3Mo); break;
+                case "12mo":     result = ExtractOrdered(_buf12mo, _head12, _count12, seriesId, Buf12Mo); break;
+                case "all-time": result = ExtractOrdered(_bufAll, _headAll, _countAll, seriesId, BufAll); break;
                 default:
                     Debug.LogWarning($"[StatsHistoryRecorder] Unknown rangeKind '{rangeKind}'");
                     return Array.Empty<float>();
             }
+            Debug.Log($"[StatsHistoryRecorder][LOG] GetRange({rangeKind}, {seriesId}) → len={result.Length} first={(result.Length > 0 ? result[0].ToString("F2") : "-")} last={(result.Length > 0 ? result[result.Length-1].ToString("F2") : "-")}");
+            return result;
         }
 
         /// <summary>Returns latest snapshot value for service-rows (non-series read).</summary>
         public float GetCurrentSnapshot(string seriesId)
         {
-            return _latest.TryGetValue(seriesId, out var v) ? v : 0f;
+            float v = _latest.TryGetValue(seriesId, out var x) ? x : 0f;
+            Debug.Log($"[StatsHistoryRecorder][LOG] GetCurrentSnapshot({seriesId}) → {v:F2}");
+            return v;
         }
 
         private static float[] ExtractOrdered(
