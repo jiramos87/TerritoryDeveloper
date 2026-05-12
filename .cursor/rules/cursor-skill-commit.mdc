@@ -1,0 +1,8 @@
+---
+description: "Topic-clustered commit pipeline. Sweeps `git status --porcelain` + `git diff --stat HEAD` (caller session + orphan changes from closed parallel sessions), filters ephemeral noise (lockfiles, UserSettings/Layouts, cron-server.err), clusters dirty paths by topic (path-root buckets + slug attribution from recent commits), polls caller per cluster (include / skip / merge), stages cluster paths, runs `validate:fast --diff-paths` on the staged diff, commits with conventional message `{type}({scope}): {subject}` per cluster. Hard boundaries: never --no-verify, never --amend, never push, never mix clusters in one commit unless caller merges, never auto-include filtered noise. Includes orphan diffs in caller commit when orphan touches caller-edited files (no stash, no conflict polling). Triggers: \"/commit\", \"commit topic clusters\", \"commit orphan changes\", \"sweep tree commit\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/commit/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "commit"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc
