@@ -1,0 +1,8 @@
+---
+description: "Use when the user wants a state-of-art survey on an external topic (TOPIC) combined with a frozen-in-time audit of the repo's existing implementation of the same subject area, followed by critique and N improvement methodologies sourced from the research. Output = one Markdown doc with 4 ordered sections (Findings · Audit · Critique · Exploration). Does NOT create master plan, BACKLOG row, exploration seed, or commit. Triggers: \"/topic-research-survey {TOPIC}\", \"research + audit + critique + improve {TOPIC}\", \"state-of-art survey for {SUBSYSTEM}\"."
+alwaysApply: false
+---
+Read and follow: @ia/skills/topic-research-survey/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "topic-research-survey"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

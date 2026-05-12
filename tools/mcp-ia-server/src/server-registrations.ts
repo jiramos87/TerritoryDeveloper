@@ -112,6 +112,12 @@ import { registerUiTokenGet, registerUiTokenList, registerUiTokenPublish } from 
 import { registerUiComponentGet, registerUiComponentList, registerUiComponentPublish } from "./tools/ui-component.js";
 import { registerActionRegistryList, registerBindRegistryList } from "./tools/ui-registry.js";
 import { registerUiBakeHistoryQuery } from "./tools/ui-bake-history-query.js";
+import { registerResearchDocScaffold } from "./tools/research-doc-scaffold.js";
+import { registerWebFindingsDedupe } from "./tools/web-findings-dedupe.js";
+import { registerAuditScopeResolve } from "./tools/audit-scope-resolve.js";
+import { registerArchDecisionConflictScan } from "./tools/arch-decision-conflict-scan.js";
+import { registerImprovementProposalLint } from "./tools/improvement-proposal-lint.js";
+import { registerResearchDocToExplorationSeed } from "./tools/research-doc-to-exploration-seed.js";
 
 // Bridge + compute tools
 import {
@@ -267,6 +273,13 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   // inside registerCatalogMutateTools above — no separate call needed.
   // Layer 6 auditability (TECH-28379) — bake history query
   registerUiBakeHistoryQuery(server);
+  // topic-research-survey skill — 4-section research doc helpers
+  registerResearchDocScaffold(server);
+  registerWebFindingsDedupe(server);
+  registerAuditScopeResolve(server, registry);
+  registerArchDecisionConflictScan(server);
+  registerImprovementProposalLint(server);
+  registerResearchDocToExplorationSeed(server);
 }
 
 /**
