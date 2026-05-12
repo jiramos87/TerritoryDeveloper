@@ -1,0 +1,20 @@
+{
+    "name": "Stage6.2.Tests.EditMode.Atomization",
+    "rootNamespace": "Territory.Tests.EditMode.Atomization.Stage6_2",
+    "references": [
+        "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a",
+        "GUID:c52fc744255e341e2b7c46b44439a244"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
