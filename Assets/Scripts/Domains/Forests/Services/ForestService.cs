@@ -31,6 +31,8 @@ namespace Domains.Forests.Services
         private const float ForestChunkProbability     = 0.4f;
         private const float ForestCellInChunkProbability = 0.5f;
         private const int   FOREST_SORTING_OFFSET      = 5;
+        // Mirror of SEA_LEVEL (Territory.Buildings asmdef cannot be referenced from Domains.Forests).
+        private const int   SEA_LEVEL                  = 0;
 
         // ── Setup ───────────────────────────────────────────────────────────────────
 
@@ -179,9 +181,9 @@ namespace Domains.Forests.Services
         private bool IsDryLandSeed(int x, int y, HeightMap hm)
         {
             if (_water != null && _water.IsWaterAt(x, y)) return false;
-            if (hm != null && hm.IsValidPosition(x, y)) return hm.GetHeight(x, y) > TerrainManager.SEA_LEVEL;
+            if (hm != null && hm.IsValidPosition(x, y)) return hm.GetHeight(x, y) > SEA_LEVEL;
             CityCell c = _grid?.GetCell(x, y);
-            return c != null && c.height > TerrainManager.SEA_LEVEL;
+            return c != null && c.height > SEA_LEVEL;
         }
     }
 }
