@@ -36,8 +36,8 @@
     ]
   },
   "env": {
-    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "65"
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "0",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70"
   },
   "hooks": {
     "SessionStart": [
