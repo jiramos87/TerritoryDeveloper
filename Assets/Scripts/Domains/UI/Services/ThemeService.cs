@@ -215,6 +215,14 @@ namespace Domains.UI.Services
             Color panel = surfaceToolbar.HasValue ? surfaceToolbar.Value : new Color(0.07f, 0.08f, 0.11f, 1f);
             panel.a = surfaceToolbar.HasValue ? Mathf.Clamp(surfaceToolbar.Value.a * 0.92f, 0.78f, 0.9f) : 0.86f;
             bgImg.color = panel;
+            // Pilot rim (2026-05-12) — Unity Outline approximates stats-panel canonical border
+            // (border_width=6, color-border-accent #ffb020). Outline is rectangular (no rounded
+            // corners) because UI.Runtime asmdef does not see Territory.UI.Decoration.RoundedBorder
+            // from TerritoryDeveloper.Game; Outline lives in UnityEngine.UI (always available).
+            var bgOutline = bgGo.AddComponent<Outline>();
+            bgOutline.effectColor = new Color(1f, 0.690f, 0.125f, 1f); // color-border-accent #ffb020
+            bgOutline.effectDistance = new Vector2(6f, -6f);
+            bgOutline.useGraphicAlpha = false;
             EnsureCellDataPanelTextUnderInset(chrome.transform, textRt);
             ApplyCellDataPanelTextStyleInternal(gridCoordinatesText, 11);
             EnsureCellDataPanelHudMount(chromeRtNew);

@@ -159,9 +159,32 @@ namespace Territory.UI
             rt.anchorMax = panelDef.anchorMax;
             rt.pivot = panelDef.pivot;
             rt.sizeDelta = panelDef.sizeDelta;
-            rt.anchoredPosition = new Vector2(-50f, 24f);
+            // Bottom-left dock — 16px inset from screen edges. Anchor + pivot drive position;
+            // anchoredPosition is the offset from the anchor in pivot-local coords.
+            rt.anchoredPosition = new Vector2(16f, 16f);
+            // Root Image is transparent — RoundedBorder handles both fill and border so corners stay clean.
             var bg = root.AddComponent<Image>();
-            bg.color = uiTheme != null ? uiTheme.SurfaceCardHud : new Color(0.08f, 0.08f, 0.1f, 0.96f);
+            bg.color = Color.clear;
+            bg.raycastTarget = false;
+
+            Color fillColor = uiTheme != null ? uiTheme.SurfaceCardHud : new Color(0.08f, 0.08f, 0.1f, 0.96f);
+
+            // RoundedBorder: fill + amber rim (corner_radius=24, border_width=6).
+            var borderGo = new GameObject("PickerBorder", typeof(RectTransform), typeof(CanvasRenderer));
+            borderGo.transform.SetParent(root.transform, false);
+            borderGo.transform.SetAsLastSibling();
+            var borderRt = (RectTransform)borderGo.transform;
+            borderRt.anchorMin = Vector2.zero; borderRt.anchorMax = Vector2.one;
+            borderRt.offsetMin = Vector2.zero; borderRt.offsetMax = Vector2.zero;
+            var borderLe = borderGo.AddComponent<LayoutElement>();
+            borderLe.ignoreLayout = true;
+            var border = borderGo.AddComponent<Territory.UI.Decoration.RoundedBorder>();
+            border.BorderWidth = 6f;
+            border.CornerRadius = 24f;
+            border.BorderColor = new Color(1f, 0.690f, 0.125f, 1f); // color-border-accent #ffb020
+            border.FillEnabled = true;
+            border.FillColor = fillColor;
+            border.raycastTarget = false;
 
             var hlg = root.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = panelDef.spacing;
@@ -326,9 +349,19 @@ namespace Territory.UI
 
             GameObject tile = new GameObject($"PickerTile_{spawnedRows.Count}", typeof(RectTransform), typeof(Button), typeof(Image));
             tile.transform.SetParent(rowContainer, false);
+            // Pin the tile's RectTransform to its tile size explicitly. HLG with childControl*=false
+            // positions children but does NOT resize them; without this each tile's actual rect stays
+            // at the default 100×100 and the hit-test rect collides with the next tile's slot —
+            // resulting in only the first tile being clickable/hoverable (user feedback 2026-05-12).
+            var tileRt = tile.GetComponent<RectTransform>();
+            tileRt.anchorMin = new Vector2(0.5f, 0.5f);
+            tileRt.anchorMax = new Vector2(0.5f, 0.5f);
+            tileRt.pivot = new Vector2(0.5f, 0.5f);
+            tileRt.sizeDelta = new Vector2(tileW, tileH);
             var img = tile.GetComponent<Image>();
             Color baseColor = uiTheme != null ? uiTheme.SurfaceElevated : new Color(0.16f, 0.16f, 0.2f, 1f);
             img.color = baseColor;
+            img.raycastTarget = true;
 
             var le = tile.AddComponent<LayoutElement>();
             le.preferredWidth  = tileW;
@@ -338,10 +371,14 @@ namespace Territory.UI
             le.flexibleWidth  = 0;
             le.flexibleHeight = 0;
 
-            // Selection outline — toggled by RefreshSelectionVisuals.
+            // Selection outline — toggled by RefreshSelectionVisuals. Thick white/accent border
+            // so the selected tile reads as selected after the cursor moves away (independent of
+            // EventSystem focus). 4px effectDistance + bright accent for unmistakable visual.
             var outline = tile.AddComponent<Outline>();
-            outline.effectColor = uiTheme != null ? uiTheme.AccentPrimary : new Color(0.29f, 0.62f, 1f, 1f);
-            outline.effectDistance = new Vector2(2f, -2f);
+            Color outlineColor = uiTheme != null ? uiTheme.AccentPrimary : new Color(0.29f, 0.62f, 1f, 1f);
+            outline.effectColor = outlineColor;
+            outline.effectDistance = new Vector2(4f, -4f);
+            outline.useGraphicAlpha = false;
             outline.enabled = (key == selectedKey);
 
             // Hover branch — motion.hover enum from archetype.
@@ -350,21 +387,27 @@ namespace Territory.UI
             ColorBlock cb = btn.colors;
             cb.normalColor   = baseColor;
             cb.pressedColor  = LerpToward(baseColor, Color.black, 0.12f);
+            // selectedColor (Unity EventSystem focus state) matches normal so the persistent
+            // selection signal lives on the Outline component (via RefreshSelectionVisuals),
+            // not the focus-dependent ColorBlock that hover/click can clobber.
             cb.selectedColor = baseColor;
             cb.disabledColor = baseColor;
             cb.colorMultiplier = 1f;
             cb.fadeDuration  = 0.1f;
+            // Hover branch — bumped from 0.18 → 0.40 tint so visual feedback is unmistakable
+            // when mousing over the picker tile (user feedback 2026-05-12).
+            Color accentTarget = uiTheme != null ? uiTheme.AccentPrimary : new Color(0.29f, 0.62f, 1f, 1f);
             switch (hover)
             {
                 case "tint":
-                    cb.highlightedColor = LerpToward(baseColor, Color.white, 0.18f);
+                    cb.highlightedColor = LerpToward(baseColor, accentTarget, 0.40f);
                     break;
                 case "glow":
                     throw new NotImplementedException("[SubtypePickerController] motion.hover='glow' not yet implemented.");
                 case "scale":
                     throw new NotImplementedException("[SubtypePickerController] motion.hover='scale' not yet implemented.");
                 default:
-                    cb.highlightedColor = LerpToward(baseColor, Color.white, 0.18f);
+                    cb.highlightedColor = LerpToward(baseColor, accentTarget, 0.40f);
                     break;
             }
             btn.colors = cb;
@@ -394,7 +437,8 @@ namespace Territory.UI
             lrt.offsetMax = new Vector2(-2f, 2f + captH);
             var t = labelObj.GetComponent<Text>();
             t.text = label;
-            t.fontSize = 10;
+            t.fontSize = 14;
+            t.fontStyle = FontStyle.Bold;
             t.alignment = TextAnchor.MiddleCenter;
             t.color = uiTheme != null ? uiTheme.TextPrimary : Color.white;
             t.raycastTarget = false;
@@ -409,10 +453,9 @@ namespace Territory.UI
                 UiSfxPlayer.Play(sfxPickerConfirm);
                 onClick?.Invoke();
                 selectedKey = capturedKey;
-                if (currentFamily == ToolFamily.StateService)
-                    RefreshSelectionVisuals();
-                else
-                    Hide(cancelled: false);
+                // Keep picker open across all families so user can switch subtype freely.
+                // ESC / family-change closes via PopupStack → Hide().
+                RefreshSelectionVisuals();
             });
 
             spawnedRows.Add(tile);
@@ -431,12 +474,29 @@ namespace Territory.UI
 
         private void RefreshSelectionVisuals()
         {
+            Color baseColor = uiTheme != null ? uiTheme.SurfaceElevated : new Color(0.16f, 0.16f, 0.2f, 1f);
+            Color accentColor = uiTheme != null ? uiTheme.AccentPrimary : new Color(0.29f, 0.62f, 1f, 1f);
+            Color selectedBg = LerpToward(baseColor, accentColor, 0.25f);
             for (int i = 0; i < spawnedRows.Count; i++)
             {
                 if (spawnedRows[i] == null) continue;
+                bool isSelected = (spawnedRowKeys[i] == selectedKey);
                 var outline = spawnedRows[i].GetComponent<Outline>();
-                if (outline != null)
-                    outline.enabled = (spawnedRowKeys[i] == selectedKey);
+                if (outline != null) outline.enabled = isSelected;
+                // Tile bg tint also flips so the selected tile reads at-a-glance even when the
+                // cursor leaves the picker. ColorBlock.normalColor + selectedColor both updated
+                // so the Selectable state machine doesn't snap back to base on focus change.
+                var img = spawnedRows[i].GetComponent<Image>();
+                var btn = spawnedRows[i].GetComponent<Button>();
+                if (img != null && btn != null)
+                {
+                    Color tileBase = isSelected ? selectedBg : baseColor;
+                    img.color = tileBase;
+                    var cb = btn.colors;
+                    cb.normalColor = tileBase;
+                    cb.selectedColor = tileBase;
+                    btn.colors = cb;
+                }
             }
         }
 

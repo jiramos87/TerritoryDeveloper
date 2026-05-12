@@ -144,17 +144,31 @@ namespace Territory.UI.Themed
                 {
                     _backgroundImage.color = bg;
                 }
-                // Step 16.8 — procedural border tint: pick a clearly-distinct shade from the
-                // panel-fill ramp[1]. ramp[2] (Step 16.2) was only ~9 brightness units lighter and
-                // rendered invisible. ramp[4] (or ramp.Length-1 fallback) gives a visible hairline.
-                int borderIdx = ramp.ramp.Length >= 5 ? 4 : ramp.ramp.Length - 1;
-                if (borderIdx < 0) borderIdx = idx;
-                if (ColorUtility.TryParseHtmlString(ramp.ramp[borderIdx], out var borderColor))
+                // Pilot rim (2026-05-12) — force amber color-border-accent (#ffb020) on the 4
+                // border strips AND bump thickness 3 → 6 px so always-on UI surfaces (toolbar,
+                // themed panels) read coherent with stats-panel rim. Was ramp[4] = #34393f on
+                // chassis-graphite (dark grey, invisible) + 3 px thin hairline.
+                Color borderColor = new Color(1f, 0.690f, 0.125f, 1f);
+                const float pilotBorderThickness = 6f;
+                if (_borderTop != null)
                 {
-                    if (_borderTop != null) _borderTop.color = borderColor;
-                    if (_borderBottom != null) _borderBottom.color = borderColor;
-                    if (_borderLeft != null) _borderLeft.color = borderColor;
-                    if (_borderRight != null) _borderRight.color = borderColor;
+                    _borderTop.color = borderColor;
+                    var rt = _borderTop.rectTransform; if (rt != null) rt.sizeDelta = new Vector2(0f, pilotBorderThickness);
+                }
+                if (_borderBottom != null)
+                {
+                    _borderBottom.color = borderColor;
+                    var rt = _borderBottom.rectTransform; if (rt != null) rt.sizeDelta = new Vector2(0f, pilotBorderThickness);
+                }
+                if (_borderLeft != null)
+                {
+                    _borderLeft.color = borderColor;
+                    var rt = _borderLeft.rectTransform; if (rt != null) rt.sizeDelta = new Vector2(pilotBorderThickness, 0f);
+                }
+                if (_borderRight != null)
+                {
+                    _borderRight.color = borderColor;
+                    var rt = _borderRight.rectTransform; if (rt != null) rt.sizeDelta = new Vector2(pilotBorderThickness, 0f);
                 }
             }
 

@@ -203,7 +203,9 @@ namespace Territory.UI.Modals
                 }
             }
 
-            InjectNavHeader(_currentSubView, screen);
+            // Bucket A1 (2026-05-12) — header-strip now DB-driven via panel_child close-button +
+            // themed-label modal-title on each sub-view (settings 200, save-load 213, new-game 199).
+            // Runtime InjectNavHeader retained as dead-code reference; no longer invoked on mount.
             _currentContentScreen = screen;
         }
 

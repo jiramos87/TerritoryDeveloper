@@ -193,12 +193,14 @@ namespace Territory.UI
             new UiPanelDef
             {
                 slug      = "subtype_picker",
-                sizeDelta = new Vector2(0f, 88f),
-                anchorMin = new Vector2(0.5f, 0f),
-                anchorMax = new Vector2(0.5f, 0f),
-                pivot     = new Vector2(0.5f, 0f),
-                padding   = new Vector4(10f, 10f, 8f, 8f), // left, right, top, bottom
-                spacing   = 8f,
+                // Bottom-left dock — sits between bottom of toolbar and bottom of screen.
+                // Width grows via ContentSizeFitter; height fixed to fit larger icon tiles.
+                sizeDelta = new Vector2(0f, 160f),
+                anchorMin = new Vector2(0f, 0f),
+                anchorMax = new Vector2(0f, 0f),
+                pivot     = new Vector2(0f, 0f),
+                padding   = new Vector4(12f, 12f, 12f, 12f), // left, right, top, bottom
+                spacing   = 10f,
             },
             // Stage 9.9 (TECH-16992) — growth-budget panel. Top-right anchor near hud-bar BUDGET button.
             new UiPanelDef
@@ -218,11 +220,13 @@ namespace Territory.UI
             new UiArchetypeDef
             {
                 slug          = "picker_tile_72",
-                tileWidth     = 72f,
-                tileHeight    = 72f,
-                iconOffsetMin = new Vector2(6f, 18f),
-                iconOffsetMax = new Vector2(-6f, -6f),
-                captionHeight = 12f,
+                // Tile bumped from 72 → 120 px square so icon sprites carry placement info
+                // at glance distance. Caption stays at 14 px (small but legible).
+                tileWidth     = 120f,
+                tileHeight    = 120f,
+                iconOffsetMin = new Vector2(8f, 24f),
+                iconOffsetMax = new Vector2(-8f, -8f),
+                captionHeight = 16f,
                 motionHover   = "tint",
             },
             // Stage 9.9 (TECH-16992) — slider-row archetype for growth-budget panel.
