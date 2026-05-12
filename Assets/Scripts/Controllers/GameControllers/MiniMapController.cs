@@ -1,19 +1,15 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Territory.Core;
-using Territory.Zones;
 using Territory.Terrain;
 using Territory.Roads;
-using Territory.Forests;
 using Territory.Simulation;
+using Domains.UI.Services;
 
 namespace Territory.UI
 {
-/// <summary>
-/// Mini-map layer flags. Multiple layers active simultaneously.
-/// </summary>
+/// <summary>Mini-map layer flags. Multiple layers active simultaneously.</summary>
 [System.Flags]
 public enum MiniMapLayer
 {
@@ -26,534 +22,154 @@ public enum MiniMapLayer
 }
 
 /// <summary>
-/// Render procedural mini-map from grid cells + click-to-navigate.
-/// Shows zones, roads, water, interstate (thicker), viewport rect.
-/// Toggleable layers: streets, zones, forests, desirability, centroid.
-/// Texture rebuilds on geography complete, grid restore, panel open, layer change (not fixed timer).
-/// Hides during full-screen popups (LoadGame, BuildingSelector).
+/// Hub: render procedural mini-map + click/drag-to-navigate. Stage 5.6 THIN.
+/// Color/classifier logic delegated to MiniMapService (_svc).
 /// </summary>
 public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandler
 {
-    #region Dependencies
     public GridManager gridManager;
     public WaterManager waterManager;
     public InterstateManager interstateManager;
     public CameraController cameraController;
     public AutoZoningManager autoZoningManager;
     public UrbanCentroidService urbanCentroidService;
-    #endregion
 
-    #region UI References
     [Header("UI References")]
     public RawImage mapImage;
     public RectTransform viewportRect;
     public GameObject miniMapPanel;
-    #endregion
 
-    #region Colors
-    private static readonly Color ColorGrass = new Color(0.176f, 0.353f, 0.118f);      // #2D5A1E dark green
-    private static readonly Color ColorResidential = new Color(0.298f, 0.686f, 0.314f); // #4CAF50
-    private static readonly Color ColorCommercial = new Color(0.129f, 0.588f, 0.953f);  // #2196F3
-    private static readonly Color ColorIndustrial = new Color(1f, 0.757f, 0.027f);      // #FFC107
-    private static readonly Color ColorBuilding = new Color(0.102f, 0.102f, 0.102f);     // #1A1A1A black
-    private static readonly Color ColorRoad = Color.white;
-    private static readonly Color ColorInterstate = new Color(0.5f, 0.5f, 0.5f); // Gray, same thickness as roads
-    private static readonly Color ColorWater = new Color(0.082f, 0.396f, 0.753f);       // #1565C0
-    private static readonly Color ColorDesirabilityLow = new Color(0.9f, 0.2f, 0.2f);
-    private static readonly Color ColorDesirabilityHigh = new Color(0.2f, 0.8f, 0.2f);
-    private static readonly Color ColorForestSparse = new Color(0.4f, 0.7f, 0.35f);
-    private static readonly Color ColorForestMedium = new Color(0.25f, 0.55f, 0.25f);
-    private static readonly Color ColorForestDense = new Color(0.15f, 0.4f, 0.15f);
-    private static readonly Color ColorCentroid = new Color(1f, 0f, 1f); // Magenta marker
-    private static readonly Color ColorRingBoundary = new Color(0.6f, 0.9f, 1f); // Light cyan
-    /// <summary>Zone S (StateService) — single tint for all sub-types (N5 MVP).</summary>
-    private static readonly Color ColorStateService = new Color(0.55f, 0.25f, 0.75f);
-    #endregion
-
-    #region State
-    private Texture2D mapTexture;
-    private HashSet<Vector2Int> interstateSet;
-    private HashSet<Vector2Int> roadSet;
-    private bool wasVisibleBeforePopup = true;
-    private float desirabilityMin;
-    private float desirabilityMax;
-
+    private Texture2D _mapTexture;
     [SerializeField] private MiniMapLayer activeLayers = MiniMapLayer.Streets | MiniMapLayer.Zones;
-    #endregion
+    private readonly MiniMapService _svc = new MiniMapService();
 
-    #region Public API
-    /// <summary>True if mini-map panel visible.</summary>
+    // ── Public API ────────────────────────────────────────────────────────────────
     public bool IsVisible => (miniMapPanel != null ? miniMapPanel : gameObject).activeSelf;
 
-    /// <summary>Show/hide mini-map panel. Rebuilds texture on open → stays current.</summary>
     public void SetVisible(bool visible)
     {
-        GameObject target = miniMapPanel != null ? miniMapPanel : gameObject;
-        target.SetActive(visible);
-        if (visible)
-            RebuildTexture();
+        (miniMapPanel != null ? miniMapPanel : gameObject).SetActive(visible);
+        if (visible) RebuildTexture();
     }
 
-    /// <summary>Toggle given layer on/off.</summary>
-    public void ToggleLayer(MiniMapLayer layer)
-    {
-        activeLayers ^= layer;
-        RebuildTexture();
-    }
+    public void ToggleLayer(MiniMapLayer layer)        { activeLayers ^= layer; RebuildTexture(); }
+    public bool IsLayerActive(MiniMapLayer layer)      => (activeLayers & layer) != 0;
+    public MiniMapLayer GetActiveLayers()              => activeLayers;
+    public void SetActiveLayers(MiniMapLayer layers)   { activeLayers = layers; RebuildTexture(); }
 
-    /// <summary>True if layer currently active.</summary>
-    public bool IsLayerActive(MiniMapLayer layer)
-    {
-        return (activeLayers & layer) != 0;
-    }
-
-    /// <summary>Active layers bitmask.</summary>
-    public MiniMapLayer GetActiveLayers()
-    {
-        return activeLayers;
-    }
-
-    /// <summary>Set active layers (used on save restore).</summary>
-    public void SetActiveLayers(MiniMapLayer layers)
-    {
-        activeLayers = layers;
-        RebuildTexture();
-    }
-    #endregion
-
-    #region Unity Lifecycle
+    // ── Unity Lifecycle ───────────────────────────────────────────────────────────
     void Awake()
     {
-        if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
-        if (waterManager == null) waterManager = FindObjectOfType<WaterManager>();
-        if (interstateManager == null) interstateManager = FindObjectOfType<InterstateManager>();
-        if (cameraController == null) cameraController = FindObjectOfType<CameraController>();
-        if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
+        if (gridManager == null)         gridManager         = FindObjectOfType<GridManager>();
+        if (waterManager == null)        waterManager        = FindObjectOfType<WaterManager>();
+        if (interstateManager == null)   interstateManager   = FindObjectOfType<InterstateManager>();
+        if (cameraController == null)    cameraController    = FindObjectOfType<CameraController>();
+        if (autoZoningManager == null)   autoZoningManager   = FindObjectOfType<AutoZoningManager>();
         if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
 
-        // Polish: enforce square panel ≥360×360 anchored bottom-right (Stage 9.1 collateral fix).
         GameObject panelGo = miniMapPanel != null ? miniMapPanel : gameObject;
         RectTransform panelRt = panelGo.GetComponent<RectTransform>();
         if (panelRt != null)
         {
-            panelRt.anchorMin = new Vector2(1f, 0f);
-            panelRt.anchorMax = new Vector2(1f, 0f);
-            panelRt.pivot = new Vector2(1f, 0f);
-            panelRt.sizeDelta = new Vector2(360f, 360f);
-            panelRt.anchoredPosition = new Vector2(-24f, 24f);
-            panelRt.localScale = Vector3.one;
+            panelRt.anchorMin = new Vector2(1f, 0f); panelRt.anchorMax = new Vector2(1f, 0f);
+            panelRt.pivot = new Vector2(1f, 0f); panelRt.sizeDelta = new Vector2(360f, 360f);
+            panelRt.anchoredPosition = new Vector2(-24f, 24f); panelRt.localScale = Vector3.one;
         }
     }
 
-    void Start()
-    {
-        if (gridManager != null && gridManager.onGridRestored != null)
-            gridManager.onGridRestored += OnGridRestored;
-    }
+    void Start()   { if (gridManager != null && gridManager.onGridRestored != null) gridManager.onGridRestored += OnGridRestored; }
 
     void OnDestroy()
     {
-        if (gridManager != null && gridManager.onGridRestored != null)
-            gridManager.onGridRestored -= OnGridRestored;
-
-        if (mapTexture != null)
-        {
-            Destroy(mapTexture);
-            mapTexture = null;
-        }
+        if (gridManager != null && gridManager.onGridRestored != null) gridManager.onGridRestored -= OnGridRestored;
+        if (_mapTexture != null) { Destroy(_mapTexture); _mapTexture = null; }
     }
 
     void Update()
     {
-        if (gridManager == null || !gridManager.isInitialized)
-            return;
-
-        GameObject panel = miniMapPanel != null ? miniMapPanel : gameObject;
-        if (!panel.activeSelf)
-            return;
-
+        if (gridManager == null || !gridManager.isInitialized) return;
+        if (!(miniMapPanel != null ? miniMapPanel : gameObject).activeSelf) return;
         UpdateViewportRect();
     }
-    #endregion
 
-    #region Texture Rebuild
-    private void OnGridRestored()
-    {
-        RebuildTexture();
-    }
+    // ── Texture Rebuild ───────────────────────────────────────────────────────────
+    private void OnGridRestored() => RebuildTexture();
 
-    /// <summary>Rebuild procedural map texture from cell data.</summary>
     public void RebuildTexture()
     {
-        if (gridManager == null || !gridManager.isInitialized || mapImage == null)
-            return;
+        if (gridManager == null || !gridManager.isInitialized || mapImage == null) return;
+        int w = gridManager.width, h = gridManager.height;
 
-        int w = gridManager.width;
-        int h = gridManager.height;
-
-        if (mapTexture == null || mapTexture.width != w || mapTexture.height != h)
+        if (_mapTexture == null || _mapTexture.width != w || _mapTexture.height != h)
         {
-            if (mapTexture != null)
-                Destroy(mapTexture);
-            mapTexture = new Texture2D(w, h);
-            mapTexture.filterMode = FilterMode.Point;
+            if (_mapTexture != null) Destroy(_mapTexture);
+            _mapTexture = new Texture2D(w, h) { filterMode = FilterMode.Point };
         }
 
-        BuildInterstateSet();
-        BuildRoadSet();
-
+        _svc.BuildInterstateSet(interstateManager);
+        _svc.BuildRoadSet(gridManager);
         if ((activeLayers & MiniMapLayer.Desirability) != 0)
-            ComputeDesirabilityRange(w, h);
+            _svc.ComputeDesirabilityRange(w, h, gridManager, waterManager);
 
         for (int x = 0; x < w; x++)
-        {
             for (int y = 0; y < h; y++)
+                _mapTexture.SetPixel(x, y, _svc.GetCellColor(x, y, activeLayers, gridManager, waterManager));
+
+        if ((activeLayers & MiniMapLayer.Centroid) != 0 &&
+            (urbanCentroidService != null || (autoZoningManager != null && autoZoningManager.GetUrbanMetrics() != null)))
+        {
+            if (urbanCentroidService != null) urbanCentroidService.RecalculateFromGrid();
+            UrbanMetrics um = urbanCentroidService != null ? urbanCentroidService.GetUrbanMetrics() : autoZoningManager.GetUrbanMetrics();
+            if (um != null)
             {
-                Color c = GetCellColor(x, y);
-                mapTexture.SetPixel(x, y, c);
+                Vector2 centroid = urbanCentroidService != null ? urbanCentroidService.GetCentroid() : um.GetCentroid();
+                float[] boundaries = urbanCentroidService != null ? urbanCentroidService.GetRingBoundaryDistances() : um.GetRingBoundaryDistances();
+                _svc.PaintCentroidOverlay(_mapTexture, w, h, centroid, boundaries);
             }
         }
 
-        if ((activeLayers & MiniMapLayer.Centroid) != 0 && (urbanCentroidService != null || (autoZoningManager != null && autoZoningManager.GetUrbanMetrics() != null)))
-        {
-            if (urbanCentroidService != null)
-            {
-                urbanCentroidService.RecalculateFromGrid();
-            }
-            UrbanMetrics urbanMetrics = urbanCentroidService != null ? urbanCentroidService.GetUrbanMetrics() : autoZoningManager.GetUrbanMetrics();
-            if (urbanMetrics != null && gridManager != null)
-            {
-                Vector2 centroid = urbanCentroidService != null ? urbanCentroidService.GetCentroid() : urbanMetrics.GetCentroid();
-                float[] boundaries = urbanCentroidService != null
-                    ? urbanCentroidService.GetRingBoundaryDistances()
-                    : urbanMetrics.GetRingBoundaryDistances();
-
-                for (int x = 0; x < w; x++)
-                {
-                    for (int y = 0; y < h; y++)
-                    {
-                        Vector2 cellCenter = new Vector2(x + 0.5f, y + 0.5f);
-                        float dist = Vector2.Distance(cellCenter, centroid);
-                        foreach (float b in boundaries)
-                        {
-                            if (Mathf.Abs(dist - b) < 0.45f)
-                            {
-                                mapTexture.SetPixel(x, y, ColorRingBoundary);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                int cx = Mathf.Clamp(Mathf.RoundToInt(centroid.x), 0, w - 1);
-                int cy = Mathf.Clamp(Mathf.RoundToInt(centroid.y), 0, h - 1);
-                const int markerRadius = 2;
-                for (int dx = -markerRadius; dx <= markerRadius; dx++)
-                {
-                    int px = cx + dx;
-                    if (px >= 0 && px < w)
-                        mapTexture.SetPixel(px, cy, ColorCentroid);
-                }
-                for (int dy = -markerRadius; dy <= markerRadius; dy++)
-                {
-                    int py = cy + dy;
-                    if (py >= 0 && py < h)
-                        mapTexture.SetPixel(cx, py, ColorCentroid);
-                }
-            }
-        }
-
-        mapTexture.Apply();
-        mapImage.texture = mapTexture;
+        _mapTexture.Apply();
+        mapImage.texture = _mapTexture;
     }
 
-    private void BuildInterstateSet()
-    {
-        interstateSet = new HashSet<Vector2Int>();
-        if (interstateManager != null && interstateManager.InterstatePositions != null)
-        {
-            foreach (var pos in interstateManager.InterstatePositions)
-                interstateSet.Add(pos);
-        }
-    }
-
-    /// <summary>Build road set by scanning grid directly (cell.zoneType == Road).
-    /// Bypass cache → auto-generated, manual, restored roads all show correctly.</summary>
-    private void BuildRoadSet()
-    {
-        roadSet = new HashSet<Vector2Int>();
-        if (gridManager == null || !gridManager.isInitialized)
-            return;
-        int w = gridManager.width;
-        int h = gridManager.height;
-        for (int x = 0; x < w; x++)
-        {
-            for (int y = 0; y < h; y++)
-            {
-                CityCell c = gridManager.GetCell(x, y);
-                if (c != null && c.zoneType == Zone.ZoneType.Road)
-                {
-                    Vector2Int pos = new Vector2Int(x, y);
-                    if (interstateSet == null || !interstateSet.Contains(pos))
-                        roadSet.Add(pos);
-                }
-            }
-        }
-    }
-
-    private Color GetCellColor(int x, int y)
-    {
-        Vector2Int pos = new Vector2Int(x, y);
-        bool isInterstate = interstateSet != null && interstateSet.Contains(pos);
-        bool isRoad = roadSet != null && roadSet.Contains(pos);
-
-        // 1. Water (always visible) — WaterMap first; ZoneType.Water covers sea-level terrain not yet in map.
-        if (waterManager != null && waterManager.IsWaterAt(x, y))
-            return ColorWater;
-
-        // 2. Streets (if active) — roads and interstate
-        if ((activeLayers & MiniMapLayer.Streets) != 0)
-        {
-            if (isInterstate) return ColorInterstate;
-            if (isRoad) return ColorRoad;
-        }
-
-        CityCell cell = gridManager.GetCell(x, y);
-        if (cell == null)
-            return ColorGrass;
-
-        if (cell.GetZoneType() == Zone.ZoneType.Water)
-            return ColorWater;
-
-        Zone.ZoneType zt = cell.GetZoneType();
-
-        // 3. Zones (if active) — buildings and zoning
-        if ((activeLayers & MiniMapLayer.Zones) != 0)
-        {
-            if (IsStateServiceBuilding(zt) || IsStateServiceZoning(zt)) return ColorStateService;
-            if (IsBuilding(zt)) return ColorBuilding;
-            if (IsResidentialZoning(zt)) return ColorResidential;
-            if (IsCommercialZoning(zt)) return ColorCommercial;
-            if (IsIndustrialZoning(zt)) return ColorIndustrial;
-        }
-
-        // 4. Forests (if active)
-        if ((activeLayers & MiniMapLayer.Forests) != 0 && cell.HasForest())
-            return GetForestColor(cell.GetForestType());
-
-        // 5. Desirability (if active) — roads keep normal colors per user requirement
-        if ((activeLayers & MiniMapLayer.Desirability) != 0)
-        {
-            if (isInterstate) return ColorInterstate;
-            if (isRoad) return ColorRoad;
-            return GetDesirabilityColor(cell.desirability);
-        }
-
-        // 6. Fallback
-        return ColorGrass;
-    }
-
-    /// <summary>Compute min/max desirability for land cells (excludes water, roads) → dynamic color scaling.</summary>
-    private void ComputeDesirabilityRange(int w, int h)
-    {
-        desirabilityMin = float.MaxValue;
-        desirabilityMax = float.MinValue;
-        for (int x = 0; x < w; x++)
-        {
-            for (int y = 0; y < h; y++)
-            {
-                if (waterManager != null && waterManager.IsWaterAt(x, y))
-                    continue;
-                Vector2Int pos = new Vector2Int(x, y);
-                if (interstateSet != null && interstateSet.Contains(pos))
-                    continue;
-                if (roadSet != null && roadSet.Contains(pos))
-                    continue;
-                CityCell cell = gridManager.GetCell(x, y);
-                if (cell == null) continue;
-                if (cell.GetZoneType() == Zone.ZoneType.Water)
-                    continue;
-                float d = cell.desirability;
-                if (d < desirabilityMin) desirabilityMin = d;
-                if (d > desirabilityMax) desirabilityMax = d;
-            }
-        }
-        if (desirabilityMin > desirabilityMax)
-        {
-            desirabilityMin = 0f;
-            desirabilityMax = 20f;
-        }
-    }
-
-    private Color GetDesirabilityColor(float desirability)
-    {
-        float range = desirabilityMax - desirabilityMin;
-        float t = range > 0.001f
-            ? Mathf.Clamp01((desirability - desirabilityMin) / range)
-            : 0f;
-        return Color.Lerp(ColorDesirabilityLow, ColorDesirabilityHigh, t);
-    }
-
-    private static Color GetForestColor(Forest.ForestType forestType)
-    {
-        switch (forestType)
-        {
-            case Forest.ForestType.Sparse: return ColorForestSparse;
-            case Forest.ForestType.Medium: return ColorForestMedium;
-            case Forest.ForestType.Dense: return ColorForestDense;
-            default: return ColorForestMedium;
-        }
-    }
-
-    private static bool IsBuilding(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.Building ||
-               zt == Zone.ZoneType.ResidentialLightBuilding || zt == Zone.ZoneType.ResidentialMediumBuilding || zt == Zone.ZoneType.ResidentialHeavyBuilding ||
-               zt == Zone.ZoneType.CommercialLightBuilding || zt == Zone.ZoneType.CommercialMediumBuilding || zt == Zone.ZoneType.CommercialHeavyBuilding ||
-               zt == Zone.ZoneType.IndustrialLightBuilding || zt == Zone.ZoneType.IndustrialMediumBuilding || zt == Zone.ZoneType.IndustrialHeavyBuilding;
-    }
-
-    private static bool IsStateServiceBuilding(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.StateServiceLightBuilding || zt == Zone.ZoneType.StateServiceMediumBuilding ||
-               zt == Zone.ZoneType.StateServiceHeavyBuilding;
-    }
-
-    private static bool IsStateServiceZoning(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.StateServiceLightZoning || zt == Zone.ZoneType.StateServiceMediumZoning ||
-               zt == Zone.ZoneType.StateServiceHeavyZoning;
-    }
-
-    private static bool IsResidentialZoning(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.ResidentialLightZoning || zt == Zone.ZoneType.ResidentialMediumZoning || zt == Zone.ZoneType.ResidentialHeavyZoning;
-    }
-
-    private static bool IsCommercialZoning(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.CommercialLightZoning || zt == Zone.ZoneType.CommercialMediumZoning || zt == Zone.ZoneType.CommercialHeavyZoning;
-    }
-
-    private static bool IsIndustrialZoning(Zone.ZoneType zt)
-    {
-        return zt == Zone.ZoneType.IndustrialLightZoning || zt == Zone.ZoneType.IndustrialMediumZoning || zt == Zone.ZoneType.IndustrialHeavyZoning;
-    }
-    #endregion
-
-    #region Viewport Rect
+    // ── Viewport + Navigation ─────────────────────────────────────────────────────
     private void UpdateViewportRect()
     {
-        if (viewportRect == null || gridManager == null || !gridManager.isInitialized)
-            return;
-
+        if (viewportRect == null || gridManager == null || !gridManager.isInitialized) return;
         Camera cam = Camera.main;
         if (cam == null) return;
-
-        Vector3 camPos = cam.transform.position;
-        float orthoSize = cam.orthographicSize;
-        float halfW = orthoSize * cam.aspect;
-        float halfH = orthoSize;
-
-        Vector2 bl = new Vector2(camPos.x - halfW, camPos.y - halfH);
-        Vector2 br = new Vector2(camPos.x + halfW, camPos.y - halfH);
-        Vector2 tl = new Vector2(camPos.x - halfW, camPos.y + halfH);
-        Vector2 tr = new Vector2(camPos.x + halfW, camPos.y + halfH);
-
-        int minGridX = Mathf.Min((int)gridManager.GetGridPosition(bl).x, (int)gridManager.GetGridPosition(br).x,
-            (int)gridManager.GetGridPosition(tl).x, (int)gridManager.GetGridPosition(tr).x);
-        int maxGridX = Mathf.Max((int)gridManager.GetGridPosition(bl).x, (int)gridManager.GetGridPosition(br).x,
-            (int)gridManager.GetGridPosition(tl).x, (int)gridManager.GetGridPosition(tr).x);
-        int minGridY = Mathf.Min((int)gridManager.GetGridPosition(bl).y, (int)gridManager.GetGridPosition(br).y,
-            (int)gridManager.GetGridPosition(tl).y, (int)gridManager.GetGridPosition(tr).y);
-        int maxGridY = Mathf.Max((int)gridManager.GetGridPosition(bl).y, (int)gridManager.GetGridPosition(br).y,
-            (int)gridManager.GetGridPosition(tl).y, (int)gridManager.GetGridPosition(tr).y);
-
-        int w = gridManager.width;
-        int h = gridManager.height;
-
-        float minNormX = Mathf.Clamp01(minGridX / (float)w);
-        float maxNormX = Mathf.Clamp01((maxGridX + 1) / (float)w);
-        float minNormY = Mathf.Clamp01(minGridY / (float)h);
-        float maxNormY = Mathf.Clamp01((maxGridY + 1) / (float)h);
-
-        viewportRect.anchorMin = new Vector2(minNormX, minNormY);
-        viewportRect.anchorMax = new Vector2(maxNormX, maxNormY);
-        viewportRect.offsetMin = Vector2.zero;
-        viewportRect.offsetMax = Vector2.zero;
+        MiniMapService.ComputeViewportAnchors(cam, gridManager, out Vector2 aMin, out Vector2 aMax);
+        viewportRect.anchorMin = aMin; viewportRect.anchorMax = aMax;
+        viewportRect.offsetMin = Vector2.zero; viewportRect.offsetMax = Vector2.zero;
     }
-    #endregion
 
-    #region Click-to-Navigate
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (gridManager == null || cameraController == null || mapImage == null)
-            return;
-
+        if (gridManager == null || cameraController == null || mapImage == null) return;
         RectTransform rect = mapImage.rectTransform;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, eventData.pressEventCamera, out Vector2 localPoint))
-            return;
-
-        Rect rectLocal = rect.rect;
-        float normX = (localPoint.x - rectLocal.xMin) / rectLocal.width;
-        float normY = (localPoint.y - rectLocal.yMin) / rectLocal.height;
-
-        int w = gridManager.width;
-        int h = gridManager.height;
-
-        int gridX = Mathf.Clamp(Mathf.FloorToInt(normX * w), 0, w - 1);
-        int gridY = Mathf.Clamp(Mathf.FloorToInt(normY * h), 0, h - 1);
-
-        Vector2 worldPos = gridManager.GetWorldPosition(gridX, gridY);
-        cameraController.MoveCameraToMapCenter(new Vector3(worldPos.x, worldPos.y, 0));
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, eventData.pressEventCamera, out Vector2 lp)) return;
+        Vector2Int g = MiniMapService.LocalPointToGrid(lp, rect.rect, gridManager);
+        Vector2 wp = gridManager.GetWorldPosition(g.x, g.y);
+        cameraController.MoveCameraToMapCenter(new Vector3(wp.x, wp.y, 0));
     }
-    #endregion
 
-    #region Drag-Pan (T9.0.4)
-    /// <summary>
-    /// IDragHandler — drag on minimap → pan camera. Translates drag delta in normalized map
-    /// coords to grid delta → <see cref="CameraController.PanCameraTo"/>.
-    /// </summary>
     public void OnDrag(PointerEventData eventData)
     {
-        if (gridManager == null || cameraController == null || mapImage == null)
-            return;
-
-        RectTransform rect = mapImage.rectTransform;
-        // Convert drag delta (screen pixels) to normalized minimap delta.
-        Vector2 sizeDelta = rect.rect.size;
-        if (sizeDelta.x <= 0f || sizeDelta.y <= 0f) return;
-
-        float normDx = eventData.delta.x / sizeDelta.x;
-        float normDy = eventData.delta.y / sizeDelta.y;
-
-        int w = gridManager.width;
-        int h = gridManager.height;
-
-        // Compute target grid coord from current camera position + drag delta.
+        if (gridManager == null || cameraController == null || mapImage == null) return;
+        Vector2 sz = mapImage.rectTransform.rect.size;
+        if (sz.x <= 0f || sz.y <= 0f) return;
         Camera cam = Camera.main;
         if (cam == null) return;
-        Vector2 camGrid = gridManager.GetGridPosition(new Vector2(cam.transform.position.x, cam.transform.position.y));
-        int targetX = Mathf.Clamp(Mathf.RoundToInt(camGrid.x + normDx * w), 0, w - 1);
-        int targetY = Mathf.Clamp(Mathf.RoundToInt(camGrid.y + normDy * h), 0, h - 1);
-        cameraController.PanCameraTo(new Vector2Int(targetX, targetY));
+        cameraController.PanCameraTo(MiniMapService.DragDeltaToTargetGrid(eventData.delta.x / sz.x, eventData.delta.y / sz.y, cam, gridManager));
     }
 
-    /// <summary>Forward layer-toggle from header-strip button. Called by MapPanelAdapter.</summary>
-    public void ForwardLayerToggle(MiniMapLayer layer)
-    {
-        ToggleLayer(layer);
-    }
+    public void ForwardLayerToggle(MiniMapLayer layer) => ToggleLayer(layer);
 
-    /// <summary>Enforce 360x324 render size (36px header occupies remaining 36px of 360px panel height).</summary>
     public void EnforceRenderSize()
     {
-        if (mapImage == null) return;
-        RectTransform rt = mapImage.rectTransform;
-        if (rt != null)
-            rt.sizeDelta = new Vector2(360f, 324f);
+        RectTransform rt = mapImage?.rectTransform;
+        if (rt != null) rt.sizeDelta = new Vector2(360f, 324f);
     }
-    #endregion
 }
 
 }
