@@ -83,11 +83,30 @@ public class GeographyManager : MonoBehaviour, IGeography
     private GeographyClearService _clearService;
 
     /// <summary>
+    /// Fired on the false→true transition of <see cref="IsInitialized"/>.
+    /// Subscribers (e.g. <see cref="Domains.Geography.Services.LoadingVeilController"/>) deactivate
+    /// loading overlays or trigger deferred work.
+    /// </summary>
+    public event System.Action OnGeographyInitialized;
+
+    private bool _isInitialized;
+
+    /// <summary>
     /// True after <see cref="InitializeGeography"/> completes its full pipeline (terrain → water → rivers →
     /// interstate → forests → desirability → sorting). Time-driven systems must wait for this flag before
-    /// reading grid data (init-race guard).
+    /// reading grid data (init-race guard). Fires <see cref="OnGeographyInitialized"/> on first set to true.
     /// </summary>
-    public bool IsInitialized { get; internal set; }
+    public bool IsInitialized
+    {
+        get => _isInitialized;
+        internal set
+        {
+            bool prev = _isInitialized;
+            _isInitialized = value;
+            if (!prev && value)
+                OnGeographyInitialized?.Invoke();
+        }
+    }
     #endregion
 
     #region Initialization

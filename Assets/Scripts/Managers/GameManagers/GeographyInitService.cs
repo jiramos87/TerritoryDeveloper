@@ -1,5 +1,6 @@
 // long-file-allowed: legacy hub — scope outside current atomization plan; deferred to future sweep
 using System;
+using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -102,18 +103,22 @@ public class GeographyInitService
         RunWaterPipeline();
         RunInterstatePipeline(false);
 
-        if (_hub.forestManager != null && _hub.initializeForestsOnStart)
+        if (_hub.forestManager != null)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Profiler.BeginSample("GeographyInitService.InitializeForestMap");
-#endif
-            try { _hub.forestManager.InitializeForestMap(); }
-            finally
+            if (_hub.initializeForestsOnStart)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Profiler.EndSample();
+                Profiler.BeginSample("GeographyInitService.InitializeForestMap");
 #endif
+                try { _hub.forestManager.InitializeForestMap(); }
+                finally
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Profiler.EndSample();
+#endif
+                }
             }
+            // deferred path: forest init runs post-playable via coroutine after IsInitialized fires
         }
 
         _hub.InitializeWaterDesirability();
@@ -137,6 +142,19 @@ public class GeographyInitService
         _hub.NotifyMiniMap();
 
         _hub.IsInitialized = true;
+
+        // Deferred forest init: start coroutine after playable state is signalled.
+        if (_hub.forestManager != null && !_hub.initializeForestsOnStart)
+            _hub.StartCoroutine(DeferredForestInit());
+    }
+
+    // ---- DeferredForestInit ----
+
+    private IEnumerator DeferredForestInit()
+    {
+        yield return null;
+        yield return null;
+        _hub.forestManager.InitializeForestMap();
     }
 
     // ---- ReinitializeGeographyForNewGame ----
