@@ -470,3 +470,191 @@ export async function getPanelConsumersDirect(
   );
   return res.rows.map((r: { slug: string }) => r.slug);
 }
+
+// ── Visual Regression — Strategy γ repos ──────────────────────────────────
+
+export interface VisualBaselineRow {
+  id: string;
+  panel_entity_id: string | null;
+  panel_version_id: string | null;
+  panel_slug: string;
+  image_ref: string;
+  image_sha256: string;
+  resolution: string;
+  theme: string;
+  tolerance_pct: number;
+  captured_at: Date;
+  captured_by: string | null;
+  supersedes_id: string | null;
+  status: "active" | "retired" | "candidate";
+}
+
+export interface VisualDiffRow {
+  id: string;
+  baseline_id: string;
+  candidate_hash: string;
+  diff_pct: number;
+  verdict: "match" | "regression" | "new_baseline_needed";
+  diff_image_ref: string | null;
+  region_map: unknown;
+  ran_at: Date;
+}
+
+export interface VisualBaselineRecordInput {
+  panel_slug: string;
+  image_ref: string;
+  image_sha256: string;
+  resolution?: string;
+  theme?: string;
+  captured_by?: string;
+  tolerance_pct?: number;
+  panel_entity_id?: string | null;
+  panel_version_id?: string | null;
+}
+
+export interface VisualDiffRunInput {
+  baseline_id: string;
+  candidate_hash: string;
+  diff_pct: number;
+  verdict: "match" | "regression" | "new_baseline_needed";
+  diff_image_ref?: string | null;
+  region_map?: unknown;
+}
+
+/**
+ * Strategy γ repo: visualBaselineRepo — get / record / retire / list.
+ */
+export function visualBaselineRepo(client: PoolClient) {
+  return {
+    async get(
+      slug: string,
+      opts?: { resolution?: string; theme?: string },
+    ): Promise<VisualBaselineRow | null> {
+      const resolution = opts?.resolution ?? "1920x1080";
+      const theme = opts?.theme ?? "dark";
+      const res = await client.query(
+        `SELECT * FROM ia_visual_baseline
+         WHERE panel_slug = $1 AND resolution = $2 AND theme = $3 AND status = 'active'
+         ORDER BY captured_at DESC LIMIT 1`,
+        [slug, resolution, theme],
+      );
+      return res.rows.length === 0 ? null : (res.rows[0] as VisualBaselineRow);
+    },
+
+    async record(input: VisualBaselineRecordInput): Promise<VisualBaselineRow> {
+      const resolution = input.resolution ?? "1920x1080";
+      const theme = input.theme ?? "dark";
+      const tolerance_pct = input.tolerance_pct ?? 0.005;
+
+      // Retire existing active rows for same (slug, resolution, theme).
+      const priorRes = await client.query(
+        `UPDATE ia_visual_baseline
+         SET status = 'retired'
+         WHERE panel_slug = $1 AND resolution = $2 AND theme = $3 AND status = 'active'
+         RETURNING id`,
+        [input.panel_slug, resolution, theme],
+      );
+      const supersedes_id = priorRes.rows.length > 0
+        ? (priorRes.rows[0] as { id: string }).id
+        : null;
+
+      const ins = await client.query(
+        `INSERT INTO ia_visual_baseline
+           (panel_slug, image_ref, image_sha256, resolution, theme,
+            tolerance_pct, captured_by, supersedes_id, status,
+            panel_entity_id, panel_version_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10)
+         RETURNING *`,
+        [
+          input.panel_slug,
+          input.image_ref,
+          input.image_sha256,
+          resolution,
+          theme,
+          tolerance_pct,
+          input.captured_by ?? null,
+          supersedes_id,
+          input.panel_entity_id ?? null,
+          input.panel_version_id ?? null,
+        ],
+      );
+      return ins.rows[0] as VisualBaselineRow;
+    },
+
+    async retire(id: string): Promise<void> {
+      await client.query(
+        `UPDATE ia_visual_baseline SET status = 'retired' WHERE id = $1`,
+        [id],
+      );
+    },
+
+    async list(filter?: {
+      panel_slug?: string;
+      status?: string;
+      resolution?: string;
+      theme?: string;
+    }): Promise<VisualBaselineRow[]> {
+      const conditions: string[] = [];
+      const params: unknown[] = [];
+      let p = 1;
+      if (filter?.panel_slug) {
+        conditions.push(`panel_slug = $${p++}`);
+        params.push(filter.panel_slug);
+      }
+      if (filter?.status) {
+        conditions.push(`status = $${p++}`);
+        params.push(filter.status);
+      }
+      if (filter?.resolution) {
+        conditions.push(`resolution = $${p++}`);
+        params.push(filter.resolution);
+      }
+      if (filter?.theme) {
+        conditions.push(`theme = $${p++}`);
+        params.push(filter.theme);
+      }
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      const res = await client.query(
+        `SELECT * FROM ia_visual_baseline ${where} ORDER BY captured_at DESC`,
+        params,
+      );
+      return res.rows as VisualBaselineRow[];
+    },
+  };
+}
+
+/**
+ * Strategy γ repo: visualDiffRepo — run / getLatest.
+ */
+export function visualDiffRepo(client: PoolClient) {
+  return {
+    async run(input: VisualDiffRunInput): Promise<VisualDiffRow> {
+      const res = await client.query(
+        `INSERT INTO ia_visual_diff
+           (baseline_id, candidate_hash, diff_pct, verdict, diff_image_ref, region_map)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+         RETURNING *`,
+        [
+          input.baseline_id,
+          input.candidate_hash,
+          input.diff_pct,
+          input.verdict,
+          input.diff_image_ref ?? null,
+          input.region_map != null ? JSON.stringify(input.region_map) : null,
+        ],
+      );
+      return res.rows[0] as VisualDiffRow;
+    },
+
+    async getLatest(
+      baselineId: string,
+    ): Promise<VisualDiffRow | null> {
+      const res = await client.query(
+        `SELECT * FROM ia_visual_diff
+         WHERE baseline_id = $1 ORDER BY ran_at DESC LIMIT 1`,
+        [baselineId],
+      );
+      return res.rows.length === 0 ? null : (res.rows[0] as VisualDiffRow);
+    },
+  };
+}

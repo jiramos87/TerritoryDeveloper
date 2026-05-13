@@ -119,6 +119,9 @@ import { registerAuditScopeResolve } from "./tools/audit-scope-resolve.js";
 import { registerArchDecisionConflictScan } from "./tools/arch-decision-conflict-scan.js";
 import { registerImprovementProposalLint } from "./tools/improvement-proposal-lint.js";
 import { registerResearchDocToExplorationSeed } from "./tools/research-doc-to-exploration-seed.js";
+import { registerUiVisualBaselineGet } from "./tools/ui-visual-baseline-get.js";
+import { registerUiVisualBaselineRecord } from "./tools/ui-visual-baseline-record.js";
+import { registerUiVisualDiffRun } from "./tools/ui-visual-diff-run.js";
 
 // Bridge + compute tools
 import {
@@ -282,6 +285,10 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerArchDecisionConflictScan(server);
   registerImprovementProposalLint(server);
   registerResearchDocToExplorationSeed(server);
+  // ui-visual-regression Stage 1.0 (TECH-31890) — pixel-diff baseline slices
+  registerUiVisualBaselineGet(server);
+  registerUiVisualBaselineRecord(server);
+  registerUiVisualDiffRun(server);
 }
 
 /**

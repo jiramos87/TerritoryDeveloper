@@ -267,6 +267,10 @@ namespace Territory.Editor.Bridge
             public string panels_path;
             public string out_dir;
             public string theme_so;
+            /// <summary>Visual regression — when true, capture baseline candidate PNG per baked panel (TECH-31891).</summary>
+            public bool captureBaselines;
+            /// <summary>Visual regression — CSV of panel slugs to capture (empty = all baked panels). Only used when captureBaselines=true.</summary>
+            public string capturePanelsCsv;
         }
 
         // ── Stage 9.10 — PanelSnapshot DTOs (JsonUtility-friendly, no Newtonsoft) ─
@@ -2728,6 +2732,34 @@ namespace Territory.Editor.Bridge
                 {
                     if (item == null || string.IsNullOrEmpty(item.slug)) continue;
                     WriteBakeAuditRow(repoRootForAudit, item.slug);
+                }
+
+                // Visual regression — capture baseline candidates when flag set (TECH-31891).
+                if (args.captureBaselines)
+                {
+                    var panelFilter = new System.Collections.Generic.HashSet<string>(
+                        string.IsNullOrEmpty(args.capturePanelsCsv)
+                            ? Array.Empty<string>()
+                            : args.capturePanelsCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+
+                    foreach (var item in snapshot.items ?? Array.Empty<PanelSnapshotItem>())
+                    {
+                        if (item == null || string.IsNullOrEmpty(item.slug)) continue;
+                        if (panelFilter.Count > 0 && !panelFilter.Contains(item.slug)) continue;
+                        var captureResult = CaptureBaselineCandidate(item.slug);
+                        if (!string.IsNullOrEmpty(captureResult.error))
+                        {
+                            AddBakeWarning(
+                                "capture_baseline_failed",
+                                captureResult.error,
+                                item.slug);
+                        }
+                        else
+                        {
+                            UnityEngine.Debug.Log(
+                                $"[UiBakeHandler] Captured baseline candidate: {captureResult.candidate_path} sha256={captureResult.sha256}");
+                        }
+                    }
                 }
 
                 return new BakeResult { root = null, error = null, warnings = warnings };

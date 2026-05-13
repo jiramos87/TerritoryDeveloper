@@ -16,6 +16,7 @@
  *
  * Usage from repository root:
  *   npm run unity:bake-ui
+ *   npm run unity:bake-ui -- --capture-baselines --panels pause-menu
  *   PANELS_PATH=custom/panels.json npm run unity:bake-ui
  *
  * Env:
@@ -30,6 +31,11 @@
  *   DATABASE_URL   Optional override for Postgres connection.
  *   SKIP_SNAPSHOT_EXPORT  When "1", skip pre-bake exporter step (CI fixture mode).
  *
+ * Flags (TECH-31891 — visual regression):
+ *   --capture-baselines   After bake, emit candidate PNGs to Library/UiBaselines/_candidate/.
+ *   --panels {csv}        Comma-separated panel slugs to capture (requires --capture-baselines).
+ *                         Omitting captures all baked panels.
+ *
  * Exit codes:
  *   0  on bake success
  *   1  on any bridge / snapshot / connection error
@@ -37,6 +43,7 @@
 
 import { spawnSync } from 'node:child_process';
 import * as path from 'node:path';
+import * as process from 'node:process';
 
 import { resolveRepoRoot } from '../mcp-ia-server/src/config.js';
 import { loadRepoDotenvIfNotCi } from '../mcp-ia-server/src/ia-db/repo-dotenv.js';
@@ -44,6 +51,20 @@ import {
   runUnityBridgeCommand,
   UNITY_BRIDGE_TIMEOUT_MS_MAX,
 } from '../mcp-ia-server/src/tools/unity-bridge-command.js';
+
+// ── Argv helpers (TECH-31891) ──────────────────────────────────────────────
+
+/** Parse --capture-baselines + --panels {csv} from process.argv. */
+function parseVisualRegressionFlags(): { captureBaselines: boolean; panelsCsv: string } {
+  const argv = process.argv.slice(2);
+  const captureBaselines = argv.includes('--capture-baselines');
+  let panelsCsv = '';
+  const panelsIdx = argv.findIndex((a) => a === '--panels');
+  if (panelsIdx !== -1 && argv[panelsIdx + 1]) {
+    panelsCsv = argv[panelsIdx + 1]!.trim();
+  }
+  return { captureBaselines, panelsCsv };
+}
 
 const PANELS_PATH_DEFAULT = 'Assets/UI/Snapshots/panels.json';
 const THEME_SO_DEFAULT = 'Assets/UI/Theme/DefaultUiTheme.asset';
@@ -95,8 +116,10 @@ async function main(): Promise<number> {
     Math.max(1000, Number(process.env.BRIDGE_TIMEOUT_MS ?? 30_000) || 30_000),
   );
 
+  const { captureBaselines, panelsCsv } = parseVisualRegressionFlags();
+
   console.error(
-    `unity-bake-ui: REPO_ROOT=${repo} panels_path=${panels_path} theme_so=${theme_so} out_dir=${out_dir} timeout_ms=${timeout_ms}`,
+    `unity-bake-ui: REPO_ROOT=${repo} panels_path=${panels_path} theme_so=${theme_so} out_dir=${out_dir} timeout_ms=${timeout_ms} captureBaselines=${captureBaselines} panelsCsv=${panelsCsv || '(all)'}`,
   );
 
   // Pre-bake hook: refresh panels.json from DB unless fixture mode.
@@ -119,6 +142,10 @@ async function main(): Promise<number> {
     out_dir,
     theme_so,
     agent_id: 'unity-bake-ui',
+    // Visual regression flags (TECH-31891). Passed through BakeArgs JSON.
+    ...(captureBaselines
+      ? { capture_baselines: true, capture_panels_csv: panelsCsv }
+      : {}),
   });
 
   console.log(JSON.stringify(r, null, 2));
