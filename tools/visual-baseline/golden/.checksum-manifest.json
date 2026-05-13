@@ -7,6 +7,30 @@
       "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel hud-bar --capture` at full city load to populate. Null sha256 means capture pending.",
       "stage": "stage-2-0",
       "captured_at": null
+    },
+    "main-menu.png": {
+      "sha256": null,
+      "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel main-menu --capture` at MainMenu scene load to populate. Null sha256 means capture pending.",
+      "stage": "stage-3-0",
+      "captured_at": null
+    },
+    "new-game-form.png": {
+      "sha256": null,
+      "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel new-game-form --capture` at MainMenu scene load to populate. Null sha256 means capture pending.",
+      "stage": "stage-3-0",
+      "captured_at": null
+    },
+    "save-load-view.png": {
+      "sha256": null,
+      "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel save-load-view --capture` at MainMenu scene load to populate. Null sha256 means capture pending.",
+      "stage": "stage-3-0",
+      "captured_at": null
+    },
+    "settings-view.png": {
+      "sha256": null,
+      "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel settings-view --capture` at MainMenu scene load to populate. Null sha256 means capture pending.",
+      "stage": "stage-3-0",
+      "captured_at": null
     }
   }
 }
