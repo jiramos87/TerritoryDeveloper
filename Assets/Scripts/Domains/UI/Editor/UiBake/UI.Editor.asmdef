@@ -1,15 +1,17 @@
 {
     "name": "UI.Editor",
     "rootNamespace": "Domains.UI.Editor",
-    "references": [],
+    "references": [
+        "GUID:bac35c2a89ea14f79acaebb2a9f856e8"
+    ],
     "includePlatforms": [
         "Editor"
     ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [],
     "optionalUnityReferences": [],
-    "noEngineReferences": true
+    "noEngineReferences": false
 }
