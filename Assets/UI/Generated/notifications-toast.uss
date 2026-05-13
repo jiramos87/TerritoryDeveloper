@@ -1,0 +1,74 @@
+/* Panel: notifications-toast | kind: transient | theme: dark */
+/* Stage 5.0 (TECH-32922) — toast stack + fade */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.notifications-toast {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 320px;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.notifications-toast__list {
+    flex-grow: 1;
+    width: 100%;
+}
+
+/* Toast card — set via makeItem in Host */
+.notifications-toast__card {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    border-width: 1px;
+    border-color: var(--ds-color-border, #45475a);
+    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
+    margin-bottom: var(--ds-space-sm, 8px);
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.notifications-toast__card--info {
+    border-left-color: var(--ds-color-primary, #89b4fa);
+    border-left-width: 3px;
+}
+
+.notifications-toast__card--warn {
+    border-left-color: var(--ds-color-warn, #fab387);
+    border-left-width: 3px;
+}
+
+.notifications-toast__card--error {
+    border-left-color: var(--ds-color-error, #f38ba8);
+    border-left-width: 3px;
+}
+
+.notifications-toast__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: var(--ds-space-sm, 8px);
+    flex-shrink: 0;
+}
+
+.notifications-toast__text {
+    flex-grow: 1;
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-sm, 12px);
+    white-space: normal;
+}
+
+.notifications-toast__dismiss-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    padding: 2px 4px;
+    border-radius: var(--ds-radius-sm, 4px);
+    flex-shrink: 0;
+    margin-left: var(--ds-space-sm, 8px);
+}
+
+.notifications-toast__dismiss-btn:hover {
+    color: var(--ds-color-warn, #fab387);
+}

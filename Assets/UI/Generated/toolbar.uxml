@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: toolbar | kind: hud | theme: dark -->
+  <!-- Stage 5.0 (TECH-32923) — tool selection strip -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="toolbar.uss"/>
+  <ui:VisualElement name="toolbar" class="toolbar">
+    <!-- Tool buttons rendered by ToolbarHost via ListView -->
+    <ui:ListView name="tool-list" class="toolbar__tool-list"
+                 binding-path="Tools"
+                 selection-type="Single"
+                 show-border="false"
+                 show-alternating-row-backgrounds="None"/>
+    <ui:Label name="active-tool-label" class="toolbar__active-label"
+              binding-path="ActiveTool"/>
+  </ui:VisualElement>
+</ui:UXML>

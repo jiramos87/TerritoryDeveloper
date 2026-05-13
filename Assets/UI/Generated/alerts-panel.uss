@@ -1,0 +1,80 @@
+/* Panel: alerts-panel | kind: modal | theme: dark */
+/* Stage 5.0 (TECH-32924) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.alerts-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-lg, 20px);
+    min-width: 300px;
+    max-width: 480px;
+    max-height: 400px;
+    flex-direction: column;
+}
+
+.alerts-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.alerts-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-lg, 18px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.alerts-panel__count-badge {
+    background-color: var(--ds-color-error, #f38ba8);
+    color: #11111b;
+    font-size: var(--ds-font-size-xs, 10px);
+    -unity-font-style: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-right: var(--ds-space-sm, 8px);
+}
+
+.alerts-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.alerts-panel__list {
+    flex-grow: 1;
+}
+
+/* Alert row — set via makeItem in Host */
+.alerts-panel__alert-row {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--ds-space-xs, 4px) 0;
+    border-bottom-width: 1px;
+    border-color: var(--ds-color-border, #45475a);
+}
+
+.alerts-panel__alert-row--warn { border-left-color: var(--ds-color-warn, #fab387); border-left-width: 2px; }
+.alerts-panel__alert-row--error { border-left-color: var(--ds-color-error, #f38ba8); border-left-width: 2px; }
+
+.alerts-panel__alert-text {
+    flex-grow: 1;
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+    white-space: normal;
+}
+
+.alerts-panel__clear-btn {
+    background-color: transparent;
+    border-color: var(--ds-color-border, #45475a);
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 6px 12px;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin-top: var(--ds-space-sm, 8px);
+    align-self: flex-end;
+}

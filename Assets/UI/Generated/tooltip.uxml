@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: tooltip | kind: popover | theme: dark -->
+  <!-- Stage 5.0 (TECH-32924) — contextual tooltip -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="tooltip.uss"/>
+  <ui:VisualElement name="tooltip" class="tooltip">
+    <ui:Label name="tooltip-label" class="tooltip__label" binding-path="Label"/>
+    <ui:Label name="tooltip-text" class="tooltip__text" binding-path="Text"/>
+  </ui:VisualElement>
+</ui:UXML>

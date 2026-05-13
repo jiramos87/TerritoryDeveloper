@@ -1,0 +1,48 @@
+/* Panel: zone-overlay | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32923) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.zone-overlay {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-xs, 4px) var(--ds-space-sm, 8px);
+    height: 36px;
+}
+
+.zone-overlay__title {
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+    margin-right: var(--ds-space-sm, 8px);
+}
+
+.zone-overlay__legend {
+    flex-direction: row;
+    align-items: center;
+    margin-right: var(--ds-space-sm, 8px);
+}
+
+.zone-overlay__swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin-right: 4px;
+    justify-content: center;
+    align-items: center;
+}
+
+.zone-overlay__swatch--residential { background-color: #a6e3a1; }
+.zone-overlay__swatch--commercial  { background-color: #89b4fa; }
+.zone-overlay__swatch--industrial  { background-color: #fab387; }
+
+.zone-overlay__swatch-label {
+    color: #11111b;
+    font-size: var(--ds-font-size-xs, 10px);
+    -unity-font-style: bold;
+}
+
+.zone-overlay__active-toggle {
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+}

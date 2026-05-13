@@ -1,0 +1,59 @@
+/* Panel: onboarding | kind: fullscreen | theme: dark */
+/* Stage 5.0 (TECH-32925) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.onboarding {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(17, 17, 27, 0.92);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--ds-space-xl, 32px);
+}
+
+.onboarding__welcome {
+    color: var(--ds-color-primary, #89b4fa);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.onboarding__step-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    letter-spacing: 2px;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.onboarding__instruction {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-md, 14px);
+    white-space: normal;
+    -unity-text-align: upper-center;
+    max-width: 480px;
+    margin-bottom: var(--ds-space-xl, 32px);
+}
+
+.onboarding__actions {
+    flex-direction: row;
+}
+
+.onboarding__btn--primary {
+    background-color: var(--ds-color-primary, #89b4fa);
+    color: #11111b;
+    border-color: transparent;
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 8px 24px;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin-left: var(--ds-space-sm, 8px);
+}
+
+.onboarding__btn--secondary {
+    background-color: transparent;
+    border-color: var(--ds-color-border, #45475a);
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 8px 24px;
+    border-radius: var(--ds-radius-sm, 4px);
+}

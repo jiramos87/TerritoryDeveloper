@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: building-info | kind: modal | theme: dark -->
+  <!-- Stage 5.0 (TECH-32924) — building detail popup -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="building-info.uss"/>
+  <ui:VisualElement name="building-info" class="building-info">
+    <ui:VisualElement name="header" class="building-info__header">
+      <ui:Label name="title" class="building-info__title" binding-path="BuildingName"/>
+      <ui:Button name="btn-close" class="building-info__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:Label name="building-type" class="building-info__type" binding-path="BuildingType"/>
+    <ui:VisualElement name="stats-row" class="building-info__stats-row">
+      <ui:Label name="level-label" class="building-info__stat-label" text="Level"/>
+      <ui:Label name="level-value" class="building-info__stat-value" binding-path="Level"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="stats-row-2" class="building-info__stats-row">
+      <ui:Label name="residents-label" class="building-info__stat-label" text="Residents"/>
+      <ui:Label name="residents-value" class="building-info__stat-value" binding-path="Residents"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="stats-row-3" class="building-info__stats-row">
+      <ui:Label name="condition-label" class="building-info__stat-label" text="Condition"/>
+      <ui:Label name="condition-value" class="building-info__stat-value" binding-path="Condition"/>
+    </ui:VisualElement>
+    <ui:Button name="btn-demolish" class="building-info__demolish-btn"
+               text="Demolish" binding-path="DemolishCommand"/>
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: onboarding-overlay | kind: modal | theme: dark -->
+  <!-- Stage 5.0 (TECH-32924) — tutorial step overlay -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="onboarding-overlay.uss"/>
+  <ui:VisualElement name="onboarding-overlay" class="onboarding-overlay">
+    <ui:VisualElement name="spotlight" class="onboarding-overlay__spotlight"/>
+    <ui:VisualElement name="callout" class="onboarding-overlay__callout">
+      <ui:Label name="step-label" class="onboarding-overlay__step-label" binding-path="StepLabel"/>
+      <ui:Label name="instruction" class="onboarding-overlay__instruction" binding-path="Instruction"/>
+      <ui:VisualElement name="actions" class="onboarding-overlay__actions">
+        <ui:Button name="btn-skip" class="onboarding-overlay__btn onboarding-overlay__btn--secondary"
+                   text="Skip" binding-path="SkipCommand"/>
+        <ui:Button name="btn-next" class="onboarding-overlay__btn onboarding-overlay__btn--primary"
+                   text="Next" binding-path="NextCommand"/>
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

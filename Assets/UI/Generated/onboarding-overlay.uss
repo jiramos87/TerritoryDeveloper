@@ -1,0 +1,68 @@
+/* Panel: onboarding-overlay | kind: modal | theme: dark */
+/* Stage 5.0 (TECH-32924) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.onboarding-overlay {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 48px;
+}
+
+.onboarding-overlay__spotlight {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.onboarding-overlay__callout {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-lg, 20px);
+    min-width: 320px;
+    max-width: 480px;
+    flex-direction: column;
+    border-width: 1px;
+    border-color: var(--ds-color-primary, #89b4fa);
+}
+
+.onboarding-overlay__step-label {
+    color: var(--ds-color-primary, #89b4fa);
+    font-size: var(--ds-font-size-xs, 10px);
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-xs, 4px);
+    letter-spacing: 1px;
+}
+
+.onboarding-overlay__instruction {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-md, 14px);
+    white-space: normal;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.onboarding-overlay__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.onboarding-overlay__btn {
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 6px 16px;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin-left: var(--ds-space-sm, 8px);
+}
+
+.onboarding-overlay__btn--primary {
+    background-color: var(--ds-color-primary, #89b4fa);
+    color: #11111b;
+    border-color: transparent;
+}
+
+.onboarding-overlay__btn--secondary {
+    background-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    border-color: var(--ds-color-border, #45475a);
+}

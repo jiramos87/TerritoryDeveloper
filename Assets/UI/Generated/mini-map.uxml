@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: mini-map | kind: hud | theme: dark -->
+  <!-- Stage 5.0 (TECH-32923) — minimap thumbnail display -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="mini-map.uss"/>
+  <ui:VisualElement name="mini-map" class="mini-map">
+    <ui:Label name="map-label" class="mini-map__label" binding-path="MapLabel"/>
+    <ui:VisualElement name="map-surface" class="mini-map__surface"/>
+    <ui:Label name="coords-label" class="mini-map__coords" binding-path="CoordsLabel"/>
+  </ui:VisualElement>
+</ui:UXML>

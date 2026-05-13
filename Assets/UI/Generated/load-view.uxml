@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: load-view | kind: fullscreen | theme: dark -->
+  <!-- Stage 5.0 (TECH-32925) — loading screen -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="load-view.uss"/>
+  <ui:VisualElement name="load-view" class="load-view">
+    <ui:Label name="loading-label" class="load-view__label" binding-path="LoadingLabel"/>
+    <ui:ProgressBar name="progress-bar" class="load-view__progress" binding-path="Progress"/>
+    <ui:Label name="status-label" class="load-view__status" binding-path="StatusText"/>
+  </ui:VisualElement>
+</ui:UXML>

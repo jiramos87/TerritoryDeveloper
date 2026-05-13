@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: city-stats | kind: hud | theme: dark -->
+  <!-- Stage 5.0 (TECH-32925) — city KPIs summary strip -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="city-stats.uss"/>
+  <ui:VisualElement name="city-stats" class="city-stats">
+    <ui:VisualElement name="stat-population" class="city-stats__stat">
+      <ui:Label name="pop-label" class="city-stats__label" text="POP"/>
+      <ui:Label name="pop-value" class="city-stats__value" binding-path="Population"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="stat-happiness" class="city-stats__stat">
+      <ui:Label name="hap-label" class="city-stats__label" text="HAP"/>
+      <ui:Label name="hap-value" class="city-stats__value" binding-path="Happiness"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="stat-funds" class="city-stats__stat">
+      <ui:Label name="funds-label" class="city-stats__label" text="FUNDS"/>
+      <ui:Label name="funds-value" class="city-stats__value" binding-path="Funds"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="stat-day" class="city-stats__stat">
+      <ui:Label name="day-label" class="city-stats__label" text="DAY"/>
+      <ui:Label name="day-value" class="city-stats__value" binding-path="Day"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

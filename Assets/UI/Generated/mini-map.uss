@@ -1,0 +1,35 @@
+/* Panel: mini-map | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32923) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.mini-map {
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    border-width: 1px;
+    border-color: var(--ds-color-border, #45475a);
+    padding: var(--ds-space-xs, 4px);
+    width: 160px;
+}
+
+.mini-map__label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    margin-bottom: 2px;
+    -unity-text-align: upper-center;
+}
+
+.mini-map__surface {
+    width: 148px;
+    height: 148px;
+    background-color: var(--ds-color-bg-elev, #181825);
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.mini-map__coords {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    margin-top: 2px;
+    -unity-text-align: upper-center;
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: splash | kind: fullscreen | theme: dark -->
+  <!-- Stage 5.0 (TECH-32925) — splash + studio logo -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="splash.uss"/>
+  <ui:VisualElement name="splash" class="splash">
+    <ui:Label name="studio-label" class="splash__studio-label" binding-path="StudioLabel"/>
+    <ui:Label name="game-title" class="splash__game-title" binding-path="GameTitle"/>
+    <ui:Label name="version-label" class="splash__version-label" binding-path="VersionLabel"/>
+  </ui:VisualElement>
+</ui:UXML>

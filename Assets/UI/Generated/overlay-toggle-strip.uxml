@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: overlay-toggle-strip | kind: hud | theme: dark -->
+  <!-- Stage 5.0 (TECH-32923) — map overlay toggles -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="overlay-toggle-strip.uss"/>
+  <ui:VisualElement name="overlay-toggle-strip" class="overlay-toggle-strip">
+    <ui:Toggle name="toggle-terrain" class="overlay-toggle-strip__toggle"
+               label="Terrain" binding-path="ShowTerrain"/>
+    <ui:Toggle name="toggle-zones" class="overlay-toggle-strip__toggle"
+               label="Zones" binding-path="ShowZones"/>
+    <ui:Toggle name="toggle-roads" class="overlay-toggle-strip__toggle"
+               label="Roads" binding-path="ShowRoads"/>
+    <ui:Toggle name="toggle-water" class="overlay-toggle-strip__toggle"
+               label="Water" binding-path="ShowWater"/>
+    <ui:Toggle name="toggle-grid" class="overlay-toggle-strip__toggle"
+               label="Grid" binding-path="ShowGrid"/>
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: alerts-panel | kind: modal | theme: dark -->
+  <!-- Stage 5.0 (TECH-32924) — persistent city alerts list -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="alerts-panel.uss"/>
+  <ui:VisualElement name="alerts-panel" class="alerts-panel">
+    <ui:VisualElement name="header" class="alerts-panel__header">
+      <ui:Label name="title" class="alerts-panel__title" binding-path="Title"/>
+      <ui:Label name="count-badge" class="alerts-panel__count-badge" binding-path="CountLabel"/>
+      <ui:Button name="btn-close" class="alerts-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:ListView name="alert-list" class="alerts-panel__list"
+                 binding-path="Alerts"
+                 selection-type="Single"
+                 show-border="false"
+                 show-alternating-row-backgrounds="None"/>
+    <ui:Button name="btn-clear-all" class="alerts-panel__clear-btn"
+               text="Clear All" binding-path="ClearAllCommand"/>
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: zone-overlay | kind: hud | theme: dark -->
+  <!-- Stage 5.0 (TECH-32923) — zone legend strip -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="zone-overlay.uss"/>
+  <ui:VisualElement name="zone-overlay" class="zone-overlay">
+    <ui:Label name="zone-title" class="zone-overlay__title" text="Zones" binding-path="Title"/>
+    <ui:VisualElement name="zone-legend" class="zone-overlay__legend">
+      <ui:VisualElement name="zone-residential" class="zone-overlay__swatch zone-overlay__swatch--residential">
+        <ui:Label class="zone-overlay__swatch-label" text="R"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="zone-commercial" class="zone-overlay__swatch zone-overlay__swatch--commercial">
+        <ui:Label class="zone-overlay__swatch-label" text="C"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="zone-industrial" class="zone-overlay__swatch zone-overlay__swatch--industrial">
+        <ui:Label class="zone-overlay__swatch-label" text="I"/>
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Toggle name="toggle-active" class="zone-overlay__active-toggle"
+               label="Active" binding-path="IsActive"/>
+  </ui:VisualElement>
+</ui:UXML>

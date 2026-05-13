@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: notifications-toast | kind: transient | theme: dark -->
+  <!-- Stage 5.0 (TECH-32922) — toast stack + dismiss -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="notifications-toast.uss"/>
+  <ui:VisualElement name="notifications-toast" class="notifications-toast">
+    <!-- Toast entries rendered by Host via ListView -->
+    <ui:ListView name="toast-list" class="notifications-toast__list"
+                 binding-path="Toasts"
+                 selection-type="None"
+                 show-border="false"
+                 show-alternating-row-backgrounds="None"/>
+  </ui:VisualElement>
+</ui:UXML>

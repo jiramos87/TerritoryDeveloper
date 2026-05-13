@@ -1,0 +1,91 @@
+/* Panel: growth-budget-panel | kind: modal | theme: dark */
+/* Stage 5.0 (TECH-32925) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.growth-budget-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-lg, 20px);
+    min-width: 300px;
+    max-width: 480px;
+    flex-direction: column;
+}
+
+.growth-budget-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.growth-budget-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-lg, 18px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.growth-budget-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.growth-budget-panel__summary {
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.growth-budget-panel__row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.growth-budget-panel__row-label {
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+    width: 100px;
+}
+
+.growth-budget-panel__slider {
+    flex-grow: 1;
+    margin: 0 var(--ds-space-sm, 8px);
+}
+
+.growth-budget-panel__row-value {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-sm, 12px);
+    width: 36px;
+    -unity-text-align: lower-right;
+}
+
+.growth-budget-panel__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: var(--ds-space-md, 12px);
+}
+
+.growth-budget-panel__btn--primary {
+    background-color: var(--ds-color-primary, #89b4fa);
+    color: #11111b;
+    border-color: transparent;
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 6px 16px;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin-left: var(--ds-space-sm, 8px);
+}
+
+.growth-budget-panel__btn--secondary {
+    background-color: transparent;
+    border-color: var(--ds-color-border, #45475a);
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 6px 16px;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin-left: var(--ds-space-sm, 8px);
+}

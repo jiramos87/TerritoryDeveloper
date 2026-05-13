@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: onboarding | kind: fullscreen | theme: dark -->
+  <!-- Stage 5.0 (TECH-32925) — full-screen onboarding flow -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="onboarding.uss"/>
+  <ui:VisualElement name="onboarding" class="onboarding">
+    <ui:Label name="welcome-label" class="onboarding__welcome" binding-path="WelcomeLabel"/>
+    <ui:Label name="step-label" class="onboarding__step-label" binding-path="StepLabel"/>
+    <ui:Label name="instruction" class="onboarding__instruction" binding-path="Instruction"/>
+    <ui:VisualElement name="actions" class="onboarding__actions">
+      <ui:Button name="btn-skip" class="onboarding__btn--secondary"
+                 text="Skip Tutorial" binding-path="SkipCommand"/>
+      <ui:Button name="btn-next" class="onboarding__btn--primary"
+                 text="Next" binding-path="NextCommand"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

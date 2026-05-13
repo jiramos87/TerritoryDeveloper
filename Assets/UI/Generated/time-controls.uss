@@ -1,0 +1,49 @@
+/* Panel: time-controls | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32923) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.time-controls {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-xs, 4px) var(--ds-space-sm, 8px);
+    height: 36px;
+}
+
+.time-controls__btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+    padding: 2px 6px;
+    border-radius: var(--ds-radius-sm, 4px);
+    min-width: 28px;
+    height: 28px;
+}
+
+.time-controls__btn:hover {
+    background-color: var(--ds-color-bg-elev, #181825);
+    color: var(--ds-color-text-primary, #cdd6f4);
+}
+
+.time-controls__btn--pause {
+    font-size: var(--ds-font-size-md, 14px);
+    min-width: 32px;
+}
+
+.time-controls__speed-btn {
+    margin-left: 2px;
+}
+
+.time-controls__speed-btn--active {
+    color: var(--ds-color-primary, #89b4fa);
+    border-color: var(--ds-color-primary, #89b4fa);
+    border-width: 1px;
+}
+
+.time-controls__speed-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    margin-left: var(--ds-space-sm, 8px);
+}

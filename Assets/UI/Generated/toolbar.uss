@@ -1,0 +1,46 @@
+/* Panel: toolbar | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32923) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.toolbar {
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-sm, 8px) var(--ds-space-xs, 4px);
+    min-width: 56px;
+}
+
+.toolbar__tool-list {
+    flex-grow: 1;
+    width: 100%;
+}
+
+/* Tool button tile — set via makeItem in Host */
+.toolbar__tool-btn {
+    width: 44px;
+    height: 44px;
+    background-color: transparent;
+    border-color: transparent;
+    border-radius: var(--ds-radius-sm, 4px);
+    margin: 2px 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.toolbar__tool-btn:hover {
+    background-color: var(--ds-color-bg-elev, #181825);
+}
+
+.toolbar__tool-btn--active {
+    background-color: var(--ds-color-bg-elev, #181825);
+    border-color: var(--ds-color-primary, #89b4fa);
+    border-width: 1px;
+}
+
+.toolbar__active-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    margin-top: var(--ds-space-xs, 4px);
+    -unity-text-align: lower-center;
+}

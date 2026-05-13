@@ -1,0 +1,22 @@
+/* Panel: overlay-toggle-strip | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32923) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.overlay-toggle-strip {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-xs, 4px) var(--ds-space-sm, 8px);
+    height: 36px;
+}
+
+.overlay-toggle-strip__toggle {
+    margin-right: var(--ds-space-sm, 8px);
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-sm, 12px);
+}
+
+.overlay-toggle-strip__toggle:checked {
+    color: var(--ds-color-primary, #89b4fa);
+}

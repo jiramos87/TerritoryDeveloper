@@ -1,0 +1,31 @@
+/* Panel: city-stats | kind: hud | theme: dark */
+/* Stage 5.0 (TECH-32925) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.city-stats {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-xs, 4px) var(--ds-space-sm, 8px);
+    height: 40px;
+}
+
+.city-stats__stat {
+    flex-direction: column;
+    align-items: center;
+    margin-right: var(--ds-space-md, 12px);
+    min-width: 48px;
+}
+
+.city-stats__label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    letter-spacing: 1px;
+}
+
+.city-stats__value {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-sm, 12px);
+    -unity-font-style: bold;
+}

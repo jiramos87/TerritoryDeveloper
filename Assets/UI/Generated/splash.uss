@@ -1,0 +1,32 @@
+/* Panel: splash | kind: fullscreen | theme: dark */
+/* Stage 5.0 (TECH-32925) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.splash {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: #11111b;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.splash__studio-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 12px);
+    letter-spacing: 3px;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.splash__game-title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: 48px;
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.splash__version-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-xs, 10px);
+    margin-top: var(--ds-space-md, 12px);
+}

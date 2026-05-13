@@ -1,0 +1,30 @@
+/* Panel: load-view | kind: fullscreen | theme: dark */
+/* Stage 5.0 (TECH-32925) */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.load-view {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: var(--ds-color-bg-elev, #181825);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.load-view__label {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-lg, 20px);
+}
+
+.load-view__progress {
+    width: 320px;
+    height: 8px;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.load-view__status {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 12px);
+}

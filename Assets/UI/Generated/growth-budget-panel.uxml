@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: growth-budget-panel | kind: modal | theme: dark -->
+  <!-- Stage 5.0 (TECH-32925) — growth investments budget allocation -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="growth-budget-panel.uss"/>
+  <ui:VisualElement name="growth-budget-panel" class="growth-budget-panel">
+    <ui:VisualElement name="header" class="growth-budget-panel__header">
+      <ui:Label name="title" class="growth-budget-panel__title" binding-path="Title"/>
+      <ui:Button name="btn-close" class="growth-budget-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:Label name="budget-summary" class="growth-budget-panel__summary" binding-path="BudgetSummary"/>
+    <ui:VisualElement name="allocation-row" class="growth-budget-panel__row">
+      <ui:Label class="growth-budget-panel__row-label" text="Infrastructure"/>
+      <ui:Slider name="infrastructure-slider" class="growth-budget-panel__slider"
+                 low-value="0" high-value="100" binding-path="InfrastructureBudget"/>
+      <ui:Label name="infra-value" class="growth-budget-panel__row-value" binding-path="InfrastructureDisplay"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="allocation-row-2" class="growth-budget-panel__row">
+      <ui:Label class="growth-budget-panel__row-label" text="Services"/>
+      <ui:Slider name="services-slider" class="growth-budget-panel__slider"
+                 low-value="0" high-value="100" binding-path="ServicesBudget"/>
+      <ui:Label name="services-value" class="growth-budget-panel__row-value" binding-path="ServicesDisplay"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="actions" class="growth-budget-panel__actions">
+      <ui:Button name="btn-apply" class="growth-budget-panel__btn--primary"
+                 text="Apply" binding-path="ApplyCommand"/>
+      <ui:Button name="btn-cancel" class="growth-budget-panel__btn--secondary"
+                 text="Cancel" binding-path="CancelCommand"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

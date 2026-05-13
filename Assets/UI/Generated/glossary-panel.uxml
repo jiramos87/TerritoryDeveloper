@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: glossary-panel | kind: modal | theme: dark -->
+  <!-- Stage 5.0 (TECH-32924) — in-game glossary browser -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="glossary-panel.uss"/>
+  <ui:VisualElement name="glossary-panel" class="glossary-panel">
+    <ui:VisualElement name="header" class="glossary-panel__header">
+      <ui:Label name="title" class="glossary-panel__title" text="Glossary" binding-path="Title"/>
+      <ui:Button name="btn-close" class="glossary-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:TextField name="search-field" class="glossary-panel__search"
+                  placeholder-text="Search..." binding-path="SearchQuery"/>
+    <ui:ListView name="term-list" class="glossary-panel__list"
+                 binding-path="FilteredTerms"
+                 selection-type="Single"
+                 show-border="false"
+                 show-alternating-row-backgrounds="None"/>
+    <ui:VisualElement name="detail-section" class="glossary-panel__detail">
+      <ui:Label name="term-name" class="glossary-panel__term-name" binding-path="SelectedTerm"/>
+      <ui:Label name="term-def" class="glossary-panel__term-def" binding-path="SelectedDefinition"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
