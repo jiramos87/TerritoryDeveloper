@@ -1,0 +1,15 @@
+┌────────────────────────────────────┐
+│ new-game-form (modal-card)         │
+│ ├─ budget-header: label (label)    │
+│ ├─ budget-high-chip: panel (panel) │
+│ ├─ budget-low-chip: panel (panel)  │
+│ ├─ budget-mid-chip: panel (panel)  │
+│ ├─ cityname-header: label (label)  │
+│ ├─ cityname-input: panel (panel)   │
+│ ├─ close: button (button)          │
+│ ├─ header: label (label)           │
+│ ├─ map-large-card: panel (panel)   │
+│ ├─ map-medium-card: panel (panel)  │
+│ ├─ map-size-header: label (label)  │
+│ └─ map-small-card: panel (panel)   │
+└────────────────────────────────────┘

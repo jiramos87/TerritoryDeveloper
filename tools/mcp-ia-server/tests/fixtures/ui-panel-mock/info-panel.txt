@@ -1,0 +1,17 @@
+┌──────────────────────────────────────────────────┐
+│ info-panel (modal-card)                          │
+│ ├─ body: label (label)                           │
+│ ├─ cell-coord: label (label)                     │
+│ ├─ close: button (button)                        │
+│ ├─ coord-label: label (label)                    │
+│ ├─ demolish-btn: confirm-button (confirm-button) │
+│ ├─ field-list: field-list (field-list)           │
+│ ├─ header: label (label)                         │
+│ ├─ header: label (label)                         │
+│ ├─ name: label (label)                           │
+│ ├─ owner-label: label (label)                    │
+│ ├─ pop-label: label (label)                      │
+│ ├─ type-label: label (label)                     │
+│ ├─ value-label: label (label)                    │
+│ └─ zone-label: label (label)                     │
+└──────────────────────────────────────────────────┘

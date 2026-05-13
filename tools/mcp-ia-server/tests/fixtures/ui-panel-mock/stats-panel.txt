@@ -1,0 +1,24 @@
+┌──────────────────────────────────────────────────────┐
+│ stats-panel (modal-card)                             │
+│ ├─ bar-economy: stacked-bar-row (stacked-bar-row)    │
+│ ├─ bar-population: stacked-bar-row (stacked-bar-row) │
+│ ├─ bar-services: stacked-bar-row (stacked-bar-row)   │
+│ ├─ chart-economy: chart (chart)                      │
+│ ├─ chart-population: chart (chart)                   │
+│ ├─ chart-services: chart (chart)                     │
+│ ├─ close: button (button)                            │
+│ ├─ header: label (label)                             │
+│ ├─ range-tabs: range-tabs (range-tabs)               │
+│ ├─ svc-education: service-row (service-row)          │
+│ ├─ svc-fire: service-row (service-row)               │
+│ ├─ svc-happiness: service-row (service-row)          │
+│ ├─ svc-health: service-row (service-row)             │
+│ ├─ svc-parks: service-row (service-row)              │
+│ ├─ svc-police: service-row (service-row)             │
+│ ├─ svc-power: service-row (service-row)              │
+│ ├─ svc-roads: service-row (service-row)              │
+│ ├─ svc-transit: service-row (service-row)            │
+│ ├─ svc-waste: service-row (service-row)              │
+│ ├─ svc-water: service-row (service-row)              │
+│ └─ tab-strip: tab-strip (tab-strip)                  │
+└──────────────────────────────────────────────────────┘

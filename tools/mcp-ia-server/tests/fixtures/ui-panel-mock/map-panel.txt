@@ -1,0 +1,14 @@
+┌─────────────────────────────────────────────┐
+│ map-panel (modal-card)                      │
+│ ├─ close: button (button)                   │
+│ ├─ header: label (label)                    │
+│ ├─ header: label (label)                    │
+│ ├─ minimap: minimap-canvas (minimap-canvas) │
+│ ├─ minimap: minimap-canvas (minimap-canvas) │
+│ ├─ toggle-forests: toggle-row (toggle-row)  │
+│ ├─ toggle-layer-roads: button (button)      │
+│ ├─ toggle-layer-terrain: button (button)    │
+│ ├─ toggle-layer-zones: button (button)      │
+│ ├─ toggle-streets: toggle-row (toggle-row)  │
+│ └─ toggle-zones: toggle-row (toggle-row)    │
+└─────────────────────────────────────────────┘

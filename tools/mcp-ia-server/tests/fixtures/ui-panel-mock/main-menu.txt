@@ -1,0 +1,13 @@
+┌──────────────────────────────────────────┐
+│ main-menu (fullscreen-stack)             │
+│ ├─ back: button (button)                 │
+│ ├─ content-slot: view-slot (view-slot)   │
+│ ├─ continue: button (button)             │
+│ ├─ load: button (button)                 │
+│ ├─ new-game: button (button)             │
+│ ├─ quit: confirm-button (confirm-button) │
+│ ├─ settings: button (button)             │
+│ ├─ studio: label (label)                 │
+│ ├─ title: label (label)                  │
+│ └─ version: label (label)                │
+└──────────────────────────────────────────┘

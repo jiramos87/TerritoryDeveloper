@@ -1,0 +1,12 @@
+┌───────────────────────────────────────────────┐
+│ pause-menu (modal-card)                       │
+│ ├─ close: button (button)                     │
+│ ├─ content-slot: view-slot (view-slot)        │
+│ ├─ header: label (label)                      │
+│ ├─ load: button (button)                      │
+│ ├─ main-menu: confirm-button (confirm-button) │
+│ ├─ quit: confirm-button (confirm-button)      │
+│ ├─ resume: button (button)                    │
+│ ├─ save: button (button)                      │
+│ └─ settings: button (button)                  │
+└───────────────────────────────────────────────┘

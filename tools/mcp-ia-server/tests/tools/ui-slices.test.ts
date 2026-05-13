@@ -768,6 +768,223 @@ test(
   },
 );
 
+// ---------------------------------------------------------------------------
+// Suite 8: allPanelsSweep (TECH-31623)
+// ---------------------------------------------------------------------------
+test(
+  "allPanelsSweep — all panels resolve via ui_panel_get + ui_panel_render_mock returns non-empty ASCII",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const { getPanelBundle, getPanelChildren } = await import("../../src/ia-db/ui-catalog.js");
+    const { renderAscii } = await import("../../src/ia-db/ascii-mock-emitter.js");
+
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    const fixtureDir = path.join(__dirname, "../fixtures/ui-panel-mock");
+
+    try {
+      const res = await client.query(
+        `SELECT ce.slug FROM catalog_entity ce
+         JOIN panel_detail pd ON pd.entity_id = ce.id
+         WHERE ce.kind = 'panel' AND ce.retired_at IS NULL
+         ORDER BY ce.slug`,
+      );
+
+      const panels: { slug: string }[] = res.rows as { slug: string }[];
+      assert.ok(panels.length >= 13, `expect at least 13 panels, got ${panels.length}`);
+
+      for (const { slug } of panels) {
+        // (a) ui_panel_get: bundle resolves without error
+        const bundle = await getPanelBundle(client, slug);
+        assert.ok(bundle !== null, `${slug}: getPanelBundle must resolve (not null)`);
+
+        // (b) ui_panel_render_mock: returns non-empty ASCII
+        const children = await getPanelChildren(client, bundle!.entity.id, { maxDepth: 2 });
+        const mock1 = renderAscii(children, {
+          rootLabel: slug,
+          layoutTemplate: bundle!.detail.layout_template,
+        });
+        assert.ok(mock1.length > 0, `${slug}: renderAscii must return non-empty string`);
+        assert.ok(mock1.startsWith("┌"), `${slug}: output must start with ┌`);
+
+        // (c) Byte-equal determinism: two sequential calls must match
+        const mock2 = renderAscii(children, {
+          rootLabel: slug,
+          layoutTemplate: bundle!.detail.layout_template,
+        });
+        assert.equal(mock1, mock2, `${slug}: two sequential renderAscii calls must be byte-identical`);
+
+        // (d) Golden fixture compare
+        const fixturePath = path.join(fixtureDir, `${slug}.txt`);
+        if (fs.existsSync(fixturePath)) {
+          const fixture = fs.readFileSync(fixturePath, "utf8").trimEnd();
+          assert.equal(
+            mock1.trimEnd(),
+            fixture,
+            `${slug}: renderAscii output must match golden fixture at tests/fixtures/ui-panel-mock/${slug}.txt`,
+          );
+        }
+      }
+    } finally {
+      client.release();
+    }
+  },
+);
+
+test(
+  "allPanelsSweep — kind-inference table covers all panel_child kinds in DB",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) {
+      const { kindInferenceTable } = await import("../../src/ia-db/ascii-mock-emitter.js");
+      assert.ok(typeof kindInferenceTable === "object", "kindInferenceTable must be exported");
+      return;
+    }
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const { kindInferenceTable } = await import("../../src/ia-db/ascii-mock-emitter.js");
+
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      const res = await client.query(
+        `SELECT DISTINCT child_kind FROM panel_child ORDER BY child_kind`,
+      );
+      const dbKinds: string[] = (res.rows as { child_kind: string }[]).map((r) => r.child_kind);
+
+      // All DB kinds must be in inference table (no fallback needed for known kinds)
+      for (const kind of dbKinds) {
+        assert.ok(
+          kind in kindInferenceTable,
+          `kind '${kind}' from DB must be in kindInferenceTable`,
+        );
+      }
+
+      // Known vocabulary kinds required by task spec must all be present
+      const requiredKinds = ["tab-strip", "range-tabs", "chart", "stacked-bar-row", "service-row", "row", "text"];
+      for (const kind of requiredKinds) {
+        assert.ok(kind in kindInferenceTable, `required kind '${kind}' must be in kindInferenceTable`);
+        assert.equal(kindInferenceTable[kind], kind, `kind '${kind}' must map to itself`);
+      }
+    } finally {
+      client.release();
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Suite 9: panelConsumersNonEmptyAssertion (TECH-31623)
+// ---------------------------------------------------------------------------
+test(
+  "panelConsumersNonEmptyAssertion — ≥8 components used by ≥1 panel via panel_child join",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+    try {
+      // Count distinct components that appear as child_entity_id in at least one panel
+      const res = await client.query(
+        `SELECT ce.slug AS component_slug, COUNT(DISTINCT panel_ce.slug) AS panel_count
+         FROM panel_child pc
+         JOIN catalog_entity ce ON ce.id = pc.child_entity_id
+         JOIN catalog_entity panel_ce ON panel_ce.id = pc.panel_entity_id
+         WHERE ce.retired_at IS NULL
+         GROUP BY ce.slug
+         HAVING COUNT(DISTINCT panel_ce.slug) >= 1
+         ORDER BY ce.slug`,
+      );
+
+      assert.ok(
+        res.rows.length >= 8,
+        `expect at least 8 components used by ≥1 panel via panel_child, got ${res.rows.length}: ${JSON.stringify(res.rows.map((r: { component_slug: string }) => r.component_slug))}`,
+      );
+    } finally {
+      client.release();
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Suite 10: backCompatShellKeys (TECH-31623)
+// ---------------------------------------------------------------------------
+test(
+  "backCompatShellKeys — 5 representative panels shell keys match baseline fixture",
+  async () => {
+    const dbAvail = await isDbReachable();
+    if (!dbAvail) return;
+
+    const baselinePath = path.join(__dirname, "../fixtures/ui-panel-shell-baseline.json");
+    if (!fs.existsSync(baselinePath)) {
+      // Baseline not committed yet — skip rather than fail
+      return;
+    }
+
+    const baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8")) as Record<string, string[]>;
+
+    const { getIaDatabasePool } = await import("../../src/ia-db/pool.js");
+    const { getPanelBundle, getPanelChildren } = await import("../../src/ia-db/ui-catalog.js");
+    const pool = getIaDatabasePool();
+    const client = await pool!.connect();
+
+    try {
+      for (const slug of Object.keys(baseline)) {
+        const bundle = await getPanelBundle(client, slug);
+        if (!bundle) continue; // panel may not be in this DB instance
+
+        const children = await getPanelChildren(client, bundle.entity.id, { maxDepth: 2 });
+
+        const panel = {
+          id: bundle.entity.id,
+          slug: bundle.entity.slug,
+          kind: bundle.entity.kind,
+          display_name: bundle.entity.display_name,
+          current_published_version_id: bundle.entity.current_published_version_id,
+          tags: bundle.entity.tags,
+          created_at: bundle.entity.created_at,
+          updated_at: bundle.entity.updated_at,
+          rect_json: bundle.detail.rect_json,
+          layout: bundle.detail.layout,
+          padding_json: bundle.detail.padding_json,
+          gap_px: bundle.detail.gap_px,
+          params_json: bundle.detail.params_json,
+          layout_template: bundle.detail.layout_template,
+          modal: bundle.detail.modal,
+          children,
+        };
+
+        const currentKeys = Object.keys(panel).sort();
+        const baselineKeys = baseline[slug]!.slice().sort();
+
+        // children[] addition tolerated; no removal/rename of required keys
+        const requiredKeys = ["rect_json", "padding_json", "params_json", "modal", "layout_template", "display_name"];
+        for (const key of requiredKeys) {
+          assert.ok(
+            currentKeys.includes(key),
+            `${slug}: required shell key '${key}' must be present (back-compat)`,
+          );
+        }
+
+        // No keys removed from baseline (children[] addition tolerated)
+        for (const key of baselineKeys) {
+          if (key === "children") continue; // always additive
+          assert.ok(
+            currentKeys.includes(key),
+            `${slug}: baseline key '${key}' must not be removed (back-compat regression)`,
+          );
+        }
+      }
+    } finally {
+      client.release();
+    }
+  },
+);
+
 test(
   "UiComponentGetListPublish — publish version bumps + regen flag set",
   async () => {

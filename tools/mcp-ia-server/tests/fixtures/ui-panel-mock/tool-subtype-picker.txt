@@ -1,0 +1,6 @@
+┌─────────────────────────────────┐
+│ tool-subtype-picker (hstack)    │
+│ ├─ arrow-left: button (button)  │
+│ ├─ arrow-right: button (button) │
+│ └─ card-template: panel (panel) │
+└─────────────────────────────────┘

@@ -1,0 +1,14 @@
+┌───────────────────────────────────────────────┐
+│ notifications-toast (top-right-toast)         │
+│ ├─ toast-card-0: toast-card (toast-card)      │
+│ ├─ toast-card-1: toast-card (toast-card)      │
+│ ├─ toast-card-2: toast-card (toast-card)      │
+│ ├─ toast-card-3: toast-card (toast-card)      │
+│ ├─ toast-card-4: toast-card (toast-card)      │
+│ ├─ toast-milestone-0: toast-card (toast-card) │
+│ ├─ toast-milestone-1: toast-card (toast-card) │
+│ ├─ toast-milestone-2: toast-card (toast-card) │
+│ ├─ toast-stack: toast-stack (toast-stack)     │
+│ ├─ toast-stack: toast-stack (toast-stack)     │
+│ └─ toast-template: toast-card (toast-card)    │
+└───────────────────────────────────────────────┘

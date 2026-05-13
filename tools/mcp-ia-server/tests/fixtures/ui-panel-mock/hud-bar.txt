@@ -1,0 +1,14 @@
+┌──────────────────────────────────────────────┐
+│ hud-bar (hstack)                             │
+│ ├─ main: hud-bar-play-pause-button (button)  │
+│ ├─ main: hud-bar-speed-cycle-button (button) │
+│ ├─ main: hud-bar-city-name-label (label)     │
+│ ├─ main: hud-bar-sim-date-readout (label)    │
+│ ├─ main: hud-bar-population-readout (label)  │
+│ ├─ main: hud-bar-zoom-in-button (button)     │
+│ ├─ main: hud-bar-zoom-out-button (button)    │
+│ ├─ main: hud-bar-budget-button (button)      │
+│ ├─ main: hud-bar-stats-button (button)       │
+│ ├─ main: hud-bar-auto-button (button)        │
+│ └─ main: hud-bar-map-button (button)         │
+└──────────────────────────────────────────────┘

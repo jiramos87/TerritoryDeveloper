@@ -1,0 +1,18 @@
+┌────────────────────────────────────────┐
+│ settings-view (modal-card)             │
+│ ├─ audio-header: label (label)         │
+│ ├─ auto-save-toggle: panel (panel)     │
+│ ├─ close: button (button)              │
+│ ├─ display-header: label (label)       │
+│ ├─ fullscreen-toggle: panel (panel)    │
+│ ├─ gameplay-header: label (label)      │
+│ ├─ header: label (label)               │
+│ ├─ master-volume-slider: panel (panel) │
+│ ├─ monthly-notif-toggle: panel (panel) │
+│ ├─ music-volume-slider: panel (panel)  │
+│ ├─ reset-button: button (button)       │
+│ ├─ resolution-dropdown: panel (panel)  │
+│ ├─ scroll-edge-toggle: panel (panel)   │
+│ ├─ sfx-volume-slider: panel (panel)    │
+│ └─ vsync-toggle: panel (panel)         │
+└────────────────────────────────────────┘

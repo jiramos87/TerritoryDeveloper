@@ -1,0 +1,9 @@
+┌────────────────────────────────────────┐
+│ save-load-view (modal-card)            │
+│ ├─ close: button (button)              │
+│ ├─ footer-load-button: button (button) │
+│ ├─ header: label (label)               │
+│ ├─ save-controls-strip: panel (panel)  │
+│ ├─ save-list: panel (panel)            │
+│ └─ save-name-input: panel (panel)      │
+└────────────────────────────────────────┘

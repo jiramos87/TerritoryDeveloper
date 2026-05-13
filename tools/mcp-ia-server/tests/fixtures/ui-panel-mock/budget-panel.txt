@@ -1,0 +1,34 @@
+┌─────────────────────────────────────────────────────────────┐
+│ budget-panel (modal-card)                                   │
+│ ├─ close: button (button)                                   │
+│ ├─ forecast-chart: chart (chart)                            │
+│ ├─ fund-education: expense-row (expense-row)                │
+│ ├─ fund-fire: expense-row (expense-row)                     │
+│ ├─ fund-health: expense-row (expense-row)                   │
+│ ├─ fund-maintenance: expense-row (expense-row)              │
+│ ├─ fund-parks: expense-row (expense-row)                    │
+│ ├─ fund-police: expense-row (expense-row)                   │
+│ ├─ fund-power: expense-row (expense-row)                    │
+│ ├─ fund-roads: expense-row (expense-row)                    │
+│ ├─ fund-transit: expense-row (expense-row)                  │
+│ ├─ fund-waste: expense-row (expense-row)                    │
+│ ├─ fund-water: expense-row (expense-row)                    │
+│ ├─ growth-roads: slider-row-numeric (slider-row-numeric)    │
+│ ├─ growth-total: slider-row-numeric (slider-row-numeric)    │
+│ ├─ growth-zoning: slider-row-numeric (slider-row-numeric)   │
+│ ├─ header: label (label)                                    │
+│ ├─ label-projected: label (label)                           │
+│ ├─ label-treasury: label (label)                            │
+│ ├─ range-tabs: range-tabs (range-tabs)                      │
+│ ├─ readout-projected: readout-block (readout-block)         │
+│ ├─ readout-treasury: readout-block (readout-block)          │
+│ ├─ section-expenses: section-header (section-header)        │
+│ ├─ section-forecast: section-header (section-header)        │
+│ ├─ section-funding: section-header (section-header)         │
+│ ├─ section-growth: section-header (section-header)          │
+│ ├─ section-tax: section-header (section-header)             │
+│ ├─ tax-commercial: slider-row-numeric (slider-row-numeric)  │
+│ ├─ tax-general: slider-row-numeric (slider-row-numeric)     │
+│ ├─ tax-industrial: slider-row-numeric (slider-row-numeric)  │
+│ └─ tax-residential: slider-row-numeric (slider-row-numeric) │
+└─────────────────────────────────────────────────────────────┘
