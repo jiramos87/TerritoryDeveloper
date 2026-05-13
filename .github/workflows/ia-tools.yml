@@ -32,6 +32,8 @@ jobs:
     defaults:
       run:
         working-directory: tools/mcp-ia-server
+    env:
+      VISUAL_REGRESSION_STRICT: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

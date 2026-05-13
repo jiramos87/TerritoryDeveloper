@@ -126,24 +126,135 @@ Rationale: fast band runs pre-commit to catch drift early; heavy band runs at pl
 
 Visual regression baseline sweep for published panels (ui-visual-regression plan).
 
+### 1 — Capture loop
+
+Steps in order:
+
+1. **Bake candidates** — `npm run unity:bake-ui` emits candidate PNGs under
+   `Library/UiBaselines/_candidate/{slug}.png`.
+2. **Diff against active baseline** — `ui_visual_baseline_get(panel_slug)` returns the
+   active `ia_visual_baseline` row; `visualDiffRepo.run(baseline, candidate)` computes
+   `diff_pct` respecting region masks and per-panel tolerance.
+3. **Human gate** — when diff_pct exceeds tolerance or no baseline exists, agent emits
+   an `AskUserQuestion` poll:
+
+   > Baseline for **{panel_slug}** differs by {diff_pct}%.
+   > Options: `approve` / `reject` / `refresh` / `skip`
+
+4. **Promote or reject** — `approve` → `ui_visual_baseline_record(panel_slug, candidate_sha)`
+   writes new `ia_visual_baseline` row (status=active, supersedes_id=prev); `reject` →
+   no write; `skip` → deferred; `refresh` → see §4 below.
+5. **Audit trail** — sweep writes to `Library/UiBaselines/_sweep-{ts}.jsonl`.
+
 Sweep orchestrator: `tools/scripts/sweep-visual-baselines.mjs`. Enumerates every
 published panel from `Assets/UI/Snapshots/panels.json`, groups by archetype, fires
 one approval prompt per group (approve_all / approve_subset / skip / refresh),
 then promotes candidate PNGs to `ia_visual_baseline` rows.
 
-Full workflow: run `unity:bake-ui --capture-baselines --panels=all` first to emit
-candidate PNGs under `Library/UiBaselines/_candidate/`, then run the orchestrator
-to promote approved candidates. Audit trail written to `Library/UiBaselines/_sweep-{ts}.jsonl`.
+### 2 — Region mask sidecar authoring
 
-Region mask sidecars for live-state panels (hud-bar, budget-panel, time-strip)
-stored at `Assets/UI/VisualBaselines/{slug}.masks.json`; `visualDiffRepo.run`
-loads sidecars automatically and zeroes masked pixels on both images before diff.
+Live-state panels (hud-bar, budget-panel, time-strip) carry sidecar mask files at
+`Assets/UI/VisualBaselines/{slug}.masks.json`.
 
-Per-panel tolerance_pct overrides recorded on `ia_visual_baseline` rows where
-defaults diverge (e.g. budget-panel = 0.01 vs default 0.005).
+Schema (each entry in the `masks` array):
 
-Full §UI Visual Regression workflow documentation (CI strict-mode gate, JSONL→DB
-migration, complete operator runbook) expands at Task 3.0.3.
+```json
+{
+  "label": "budget-counter",
+  "x": 120, "y": 8,
+  "width": 80, "height": 24
+}
+```
+
+`visualDiffRepo.run` loads sidecars automatically and zeroes masked pixels on both
+baseline and candidate before diff. Masks survive baseline refresh — they are authored
+once per panel, not per baseline version. Add masks for any region that changes on each
+frame (counters, timers, animated icons).
+
+### 3 — Per-panel tolerance_pct override semantics
+
+Default tolerance: `0.005` (0.5% of total pixels). Panels with dynamic content or
+anti-aliasing variation may need a higher floor.
+
+Override recorded on the `ia_visual_baseline` row (`tolerance_pct` column):
+
+- `budget-panel` → `0.01` (budget counter changes each sim tick)
+- Static panels (pause-menu, toolbar) → `0.005` (default)
+
+Agent sets override at baseline-record time. To inspect: `SELECT panel_slug, tolerance_pct
+FROM ia_visual_baseline WHERE status='active' ORDER BY panel_slug;`
+
+### 4 — Baseline refresh trigger semantics
+
+Three categories:
+
+| Trigger | Action |
+|---|---|
+| Intentional design change (deliberate restyle) | Agent files TECH/ART task → on completion, runs capture loop → `AskUserQuestion(approve/reject)` |
+| Regression (unexpected pixel shift) | CI reports `VISUAL_REGRESSION_STRICT=1` red → agent investigates root cause before refresh |
+| Token-bump cascade (minor anti-aliasing shift across N panels) | Sweep orchestrator shows approve_all prompt per archetype group; human approves in single poll |
+
+`AskUserQuestion` poll shape for baseline refresh:
+
+> Baseline refresh requested for **{panel_slug}**.
+> Reason: {reason}. New diff: {diff_pct}%.
+> Options: `approve` (record new baseline) / `reject` (keep current) / `refresh` (re-capture + re-poll) / `skip` (defer)
+
+Manual-every-time decision: auto-refresh on token bump is intentionally excluded
+(Q7=a decision; see ui-visual-regression exploration doc).
+
+### 5 — VISUAL_REGRESSION_STRICT env + CI integration
+
+`VISUAL_REGRESSION_STRICT=1` flips `validate:visual-regression` from warn-only to
+exit-1-on-regression.
+
+Behavior:
+
+- **Strict** (`=1`): resolves touched panel slugs from `Assets/UI/Snapshots/panels.json`
+  ∩ `git diff --name-only origin/main...HEAD` path scan; queries `ia_visual_diff` for
+  `verdict='regression'` rows intersecting the touched set; exits 1 with JSON error
+  report when any regression found.
+- **Warn-only** (env unset or `=0`): always exits 0; no behavior change for local
+  `verify:local`.
+
+CI wiring: `.github/workflows/ia-tools.yml` sets `VISUAL_REGRESSION_STRICT: "1"` on the
+`node` job env block. Deliberate single-pixel shift on a PR branch turns CI red.
+
+Local operators: unset env keeps `verify:local` warn-only. Set explicitly when
+testing strict mode locally: `VISUAL_REGRESSION_STRICT=1 npm run validate:visual-regression`.
+
+Script: `tools/scripts/validate-visual-regression.mjs`.
+Test: `tools/scripts/test/validate-visual-regression-strict.test.mjs`.
+Fixture pair: `tools/scripts/test/fixtures/visual-regression-strict/` (baseline + candidate differing by 1px).
+
+### 6 — LFS storage budget
+
+Baseline PNGs stored in `Library/UiBaselines/` (gitignored). Promoted baselines
+referenced by `image_ref` in `ia_visual_baseline` (path relative to repo root).
+
+Initial estimate: ~20 published panels × ~200 KB each = ~4 MB active set.
+Retired baselines superseded by `supersedes_id` chain; GC deferred to future plan.
+
+Monitoring command: `du -sh Library/UiBaselines/` (local only — Library is gitignored).
+
+LFS is NOT used for this plan: baseline PNGs are stored on disk + DB row reference only.
+If baseline corpus exceeds 50 MB active set, file a TECH task to evaluate Git LFS or
+S3 blob storage. Current signoff threshold: **non-blocking** — monitor quarterly.
+
+### 7 — ui_calibration_verdict_record parallel retention
+
+`ui_calibration_verdict_record` continues writing to `ia_ui_calibration_verdict` table
+(migration 0157) in parallel with new `ia_visual_baseline` / `ia_visual_diff` pipeline.
+
+Legacy JSONL files (`ia/state/ui-calibration-verdicts.jsonl`,
+`ia/state/ui-calibration-corpus.jsonl`) migrated to DB via
+`tools/scripts/migrate-calibration-jsonl-to-db.mjs --apply`; frozen snapshot in
+`.archive/ui-calibration-jsonl-frozen/`.
+
+Full retirement of JSONL read path deferred to UI Toolkit migration plan. Until then,
+both `ui_calibration_verdict_record` (DB) and legacy JSONL readers coexist.
+Handoff: when UI Toolkit migration plan is filed, cross-link to this section and retire
+the JSONL path in that plan's Stage 1.
 
 ---
 
