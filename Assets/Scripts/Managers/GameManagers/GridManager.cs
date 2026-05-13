@@ -43,6 +43,12 @@ public partial class GridManager : MonoBehaviour, IGridManager
     public InterstateManager interstateManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
 
+    [SerializeField] private TilePool tilePool;
+    /// <summary>Pool pre-warmed by GeographyInitService before InitializeGrid.</summary>
+    public TilePool TilePool => tilePool;
+    /// <summary>Base grass tile prefab; cached on first CreateGrid call for pre-warm use.</summary>
+    public GameObject TilePrefab { get; private set; }
+
     // Helper services (initialized in InitializeGrid)
     private GridPathfinder pathfinder;
     private GridSortingOrderService sortingService;

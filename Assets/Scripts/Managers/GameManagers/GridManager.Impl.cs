@@ -118,13 +118,24 @@ public partial class GridManager
 
                 if (createBaseTiles)
                 {
-                    GameObject zoneTile = Instantiate(tilePrefab, gridCell.transform.position, Quaternion.identity);
+                    GameObject zoneTile;
+                    if (tilePool != null)
+                        zoneTile = tilePool.Get(tilePrefab, gridCell.transform.position);
+                    else
+                    {
+                        Debug.LogWarning("[GridManager] TilePool not wired; falling back to Instantiate.");
+                        zoneTile = Instantiate(tilePrefab, gridCell.transform.position, Quaternion.identity);
+                    }
                     SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
                     Zone zoneComponent = zoneTile.GetComponent<Zone>();
                     if (zoneComponent == null) { zoneComponent = zoneTile.AddComponent<Zone>(); zoneComponent.zoneType = Zone.ZoneType.Grass; }
                 }
             }
         }
+        // Cache base tile prefab for pre-warm access
+        if (TilePrefab == null && zoneManager != null)
+            TilePrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1) ??
+                         (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null);
     }
     #endregion
 
@@ -987,9 +998,20 @@ public partial class GridManager
             if (grassPrefab == null && zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0) grassPrefab = zoneManager.grassPrefabs[0];
             if (grassPrefab != null)
             {
-                for (int i = cell.transform.childCount - 1; i >= 0; i--) Destroy(cell.transform.GetChild(i).gameObject);
                 CityCell cellComponent = cellArray[cellData.x, cellData.y];
-                GameObject zoneTile = Instantiate(grassPrefab, cellComponent.transformPosition, Quaternion.identity);
+                for (int i = cell.transform.childCount - 1; i >= 0; i--)
+                {
+                    var child = cell.transform.GetChild(i).gameObject;
+                    if (tilePool != null) tilePool.Return(child); else Destroy(child);
+                }
+                GameObject zoneTile;
+                if (tilePool != null)
+                    zoneTile = tilePool.Get(grassPrefab, cellComponent.transformPosition);
+                else
+                {
+                    Debug.LogWarning("[GridManager] TilePool not wired; falling back to Instantiate.");
+                    zoneTile = Instantiate(grassPrefab, cellComponent.transformPosition, Quaternion.identity);
+                }
                 zoneTile.transform.SetParent(cell.transform); ApplySavedSpriteSorting(zoneTile, cellData.sortingOrder); cellComponent.SetCellInstanceSortingOrder(cellData.sortingOrder);
                 Zone zoneComponent = zoneTile.GetComponent<Zone>(); if (zoneComponent == null) { zoneComponent = zoneTile.AddComponent<Zone>(); zoneComponent.zoneType = Zone.ZoneType.Grass; }
             }

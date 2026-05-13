@@ -63,6 +63,28 @@ public class GeographyInitService
 
         if (_hub.gridManager != null)
         {
+            // Pre-warm tile pool before grid creation to eliminate per-tile Instantiate allocations.
+            var pool = _hub.gridManager.TilePool;
+            if (pool != null)
+            {
+                int w = _hub.gridManager.width > 0 ? _hub.gridManager.width : 64;
+                int h = _hub.gridManager.height > 0 ? _hub.gridManager.height : 64;
+                // Resolve base grass prefab via ZoneManager for pre-warm
+                var zoneManager = _hub.gridManager.zoneManager;
+                GameObject tilePrefab = zoneManager != null
+                    ? (zoneManager.GetRandomZonePrefab(Territory.Zones.Zone.ZoneType.Grass, 1) ??
+                       (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null))
+                    : null;
+                if (tilePrefab != null)
+                    pool.PreWarm(w * h, tilePrefab);
+                else
+                    Debug.LogWarning("[GeographyInitService] TilePool pre-warm skipped: could not resolve grass tile prefab.");
+            }
+            else
+            {
+                Debug.LogWarning("[GeographyInitService] TilePool not wired on GridManager — pre-warm skipped.");
+            }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Profiler.BeginSample("GeographyInitService.CreateGrid");
 #endif
