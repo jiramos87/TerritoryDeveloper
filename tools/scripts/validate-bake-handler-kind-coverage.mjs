@@ -27,8 +27,24 @@ const REPO_ROOT = resolve(__dirname, '..', '..');
 
 const PANELS_PATH = join(REPO_ROOT, 'Assets', 'UI', 'Snapshots', 'panels.json');
 const MATRIX_PATH = join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'UiBake', 'KindRendererMatrix.cs');
-// Also check the existing _knownKinds in UiBakeHandler.Archetype.cs for full coverage.
-const ARCHETYPE_PATH = join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.Archetype.cs');
+// Post-atomization: _knownKinds + switch cases distributed across extracted bakers + impl partials.
+// Validator must scan all of them, not just the thin UiBakeHandler.cs (196 LOC delegate facade).
+const KIND_SOURCE_PATHS = [
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.ArchetypeImpl.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.BakePipeline.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.ButtonImpl.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.FrameImpl.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'PanelBaker.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'StudioControlBaker.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'FrameBaker.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'JuiceAttacher.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeService.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Domains', 'UI', 'Editor', 'UiBake', 'Services', 'ButtonBaker.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Domains', 'UI', 'Editor', 'UiBake', 'Services', 'UiBakeService.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Domains', 'UI', 'Editor', 'UiBake', 'Services', 'UiBakeArchetypeService.cs'),
+  join(REPO_ROOT, 'Assets', 'Scripts', 'Domains', 'UI', 'Editor', 'UiBake', 'Services', 'UiBakeFrameService.cs'),
+];
 
 const fixtureArg = process.argv.includes('--fixture') &&
   process.argv[process.argv.indexOf('--fixture') + 1];
@@ -94,30 +110,22 @@ if (existsSync(MATRIX_PATH)) {
 //  themed-label / confirm-button / view-slot — treat _knownKinds as coverage.)
 
 const archetypeKinds = new Set();
-if (existsSync(ARCHETYPE_PATH)) {
-  const src = readFileSync(ARCHETYPE_PATH, 'utf8');
-  // Extract string literals in _knownKinds HashSet initializer block.
-  const blockMatch = src.match(/_knownKinds\s*=\s*new\s+HashSet<string>\s*\{([^}]+)\}/s);
-  if (blockMatch) {
-    const block = blockMatch[1];
-    const re2 = /"([^"]+)"/g;
-    let m2;
-    while ((m2 = re2.exec(block)) !== null) {
-      archetypeKinds.add(m2[1]);
-    }
-  }
-}
-
-// Also check BakeChildByKind switch cases in UiBakeHandler.cs.
-const uiBakeHandlerPath = join(REPO_ROOT, 'Assets', 'Scripts', 'Editor', 'Bridge', 'UiBakeHandler.cs');
 const switchKinds = new Set();
-if (existsSync(uiBakeHandlerPath)) {
-  const src = readFileSync(uiBakeHandlerPath, 'utf8');
-  const re3 = /case\s+"([^"]+)"\s*:/g;
-  let m3;
-  while ((m3 = re3.exec(src)) !== null) {
-    switchKinds.add(m3[1]);
+for (const p of KIND_SOURCE_PATHS) {
+  if (!existsSync(p)) continue;
+  const src = readFileSync(p, 'utf8');
+  // _knownKinds HashSet initializer block(s)
+  const blockRe = /_knownKinds\s*=\s*new\s+HashSet<string>\s*\{([^}]+)\}/gs;
+  let bm;
+  while ((bm = blockRe.exec(src)) !== null) {
+    const lit = /"([^"]+)"/g;
+    let lm;
+    while ((lm = lit.exec(bm[1])) !== null) archetypeKinds.add(lm[1]);
   }
+  // switch case kinds
+  const caseRe = /case\s+"([a-z][a-z0-9-]*)"\s*:/g;
+  let cm;
+  while ((cm = caseRe.exec(src)) !== null) switchKinds.add(cm[1]);
 }
 
 // ── Outer kind exclusions ─────────────────────────────────────────────────
