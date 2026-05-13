@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Domains.UI.Data;
 using TMPro;
 using Territory.UI;
 using Territory.UI.Juice;
@@ -452,7 +453,7 @@ namespace Territory.Editor.Bridge
         /// Attach JuiceLayer components to a baked prefab root per per-kind defaults + IR <c>juice[]</c>
         /// overrides. Idempotent — existing components of the same juice type are skipped (re-bake safe).
         /// </summary>
-        static void AttachJuiceComponents(GameObject prefabRoot, IrInteractive irRow)
+        public static void AttachJuiceComponents(GameObject prefabRoot, IrInteractive irRow)
         {
             if (prefabRoot == null || irRow == null) return;
 
@@ -505,7 +506,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Attach a single juice component by slug. No-op when the juice slug is unknown or already attached.</summary>
-        static void AttachOneJuice(GameObject prefabRoot, string juiceKind, string curveSlug)
+        public static void AttachOneJuice(GameObject prefabRoot, string juiceKind, string curveSlug)
         {
             switch (juiceKind)
             {
@@ -558,7 +559,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Write the <c>curveSlug</c> SerializedProperty on an attached JuiceLayer component when non-empty.</summary>
-        static void WriteJuiceCurveSlug(JuiceBase juice, string curveSlug)
+        public static void WriteJuiceCurveSlug(JuiceBase juice, string curveSlug)
         {
             if (juice == null || string.IsNullOrEmpty(curveSlug)) return;
             var so = new SerializedObject(juice);
@@ -1023,7 +1024,7 @@ namespace Territory.Editor.Bridge
         // ── Stage 1.4 T1.4.1 — panel spacing application ────────────────────────
 
         /// <summary>Apply <paramref name="panel"/>.detail spacing values to <paramref name="root"/>'s <see cref="VerticalLayoutGroup"/> and optional divider Image. Stage 1.4 (T1.4.1).</summary>
-        static void ApplySpacing(IrPanel panel, GameObject root)
+        public static void ApplySpacing(IrPanel panel, GameObject root)
         {
             if (panel?.detail == null) return;
 
@@ -1900,7 +1901,7 @@ namespace Territory.Editor.Bridge
 
         // ── Stage 1.4 T1.4.2 — panel archetype dispatch ─────────────────────────
 
-        static void BakePanelArchetype(IrPanel panel, GameObject root, UiTheme theme)
+        public static void BakePanelArchetype(IrPanel panel, GameObject root, UiTheme theme)
         {
             if (panel == null || root == null || string.IsNullOrEmpty(panel.archetype)) return;
 

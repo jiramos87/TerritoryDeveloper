@@ -2,11 +2,9 @@ namespace Domains.UI.Editor.UiBake.Services
 {
     /// <summary>
     /// Domain facade for UiBakeHandler archetype baking concern.
-    /// Stage 6.0 Tier-D extraction — concern boundary stub.
+    /// Stage 2 (TECH-31980/31981): StudioControlBaker + JuiceAttacher POCOs extracted here.
     /// Real bake body lives in Territory.Editor.Bridge.UiBakeHandler.Archetype.cs
-    /// + Bridge/UiBakeHandler.ArchetypeImpl.cs. This service marks the concern boundary
-    /// for the StudioControl interactive bake surface.
-    /// UI.Editor assembly (noEngineReferences=true) — no UnityEngine/UnityEditor usage.
+    /// + Bridge/UiBakeHandler.ArchetypeImpl.cs delegated via StudioControlBaker + JuiceAttacher.
     /// </summary>
     public class UiBakeArchetypeService
     {

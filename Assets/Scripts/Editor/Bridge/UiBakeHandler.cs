@@ -2871,7 +2871,7 @@ namespace Territory.Editor.Bridge
         /// which never resolves a <see cref="UiTheme"/> ScriptableObject asset (white-square chrome bug).
         /// No-op when the component does not declare <c>_themeRef</c> or when <paramref name="theme"/> is null.
         /// </summary>
-        static void WireThemeRef(Component component, UiTheme theme)
+        public static void WireThemeRef(Component component, UiTheme theme)
         {
             if (component == null || theme == null) return;
             var so = new SerializedObject(component);

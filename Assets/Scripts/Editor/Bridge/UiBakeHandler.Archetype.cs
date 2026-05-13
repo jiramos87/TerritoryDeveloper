@@ -38,13 +38,13 @@ namespace Territory.Editor.Bridge
             "info-dock", "field-list", "minimap-canvas", "toast-stack", "toast-card",
         };
 
-        static bool IsKnownStudioControlKind(string kind)
+        public static bool IsKnownStudioControlKind(string kind)
         {
             return !string.IsNullOrEmpty(kind) && _knownKinds.Contains(kind);
         }
 
         /// <summary>Map IR <c>panel.kind</c> string to <see cref="PanelKind"/> enum index. Default = Modal (0).</summary>
-        static int ResolvePanelKindIndex(string kind)
+        public static int ResolvePanelKindIndex(string kind)
         {
             if (string.IsNullOrEmpty(kind)) return (int)PanelKind.Modal;
             switch (kind)

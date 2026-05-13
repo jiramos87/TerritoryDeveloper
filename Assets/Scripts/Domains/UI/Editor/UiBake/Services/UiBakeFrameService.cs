@@ -2,11 +2,8 @@ namespace Domains.UI.Editor.UiBake.Services
 {
     /// <summary>
     /// Domain facade for UiBakeHandler frame/panel baking concern.
-    /// Stage 6.0 Tier-D extraction — concern boundary stub.
-    /// Real bake body lives in Territory.Editor.Bridge.UiBakeHandler.Frame.cs
-    /// + Bridge/UiBakeHandler.FrameImpl.cs. This service marks the concern boundary
-    /// for the panel prefab frame, row emission, and slot dispatch surface.
-    /// UI.Editor assembly (noEngineReferences=true) — no UnityEngine/UnityEditor usage.
+    /// Stage 2 (TECH-31979): FrameBaker POCO extracted here.
+    /// Bridge FrameImpl.cs delegates SavePanelPrefab to FrameBaker.
     /// </summary>
     public class UiBakeFrameService
     {
