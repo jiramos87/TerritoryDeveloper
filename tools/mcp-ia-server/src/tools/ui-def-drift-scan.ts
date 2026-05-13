@@ -1,8 +1,13 @@
 /**
- * MCP tool: ui_def_drift_scan — DB ↔ panels.json rect_json drift gate.
+ * MCP tool: ui_def_drift_scan — DB ↔ panels.json rect_json drift gate + UXML artifact drift.
  * Wraps validate-ui-def-drift.mjs logic as a structured MCP response.
- * Returns {drifts, total_panels, total_drifts} on any DB+snapshot pair.
- * No input required (optional slug filter for subset scan).
+ * Returns {drifts, total_panels, total_drifts, uxml_findings} on any DB+snapshot pair.
+ * No input required (optional slug_filter to restrict scan).
+ *
+ * UXML extension (ui-toolkit-migration Stage 1.0 / TECH-32905):
+ *   Scans Assets/UI/Generated/*.uxml + *.uss alongside existing prefab snapshot scan.
+ *   Returns uxml_findings: [{panel_slug, kind:'uxml'|'prefab', drift:'missing'|'stale'|'ok'}].
+ *   Backward-compatible — prefab drift surface preserved; new uxml field additive.
  */
 
 import { z } from "zod";
@@ -15,6 +20,7 @@ import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 import { resolveRepoRoot } from "../config.js";
 
 const SNAPSHOT_REL = "Assets/UI/Snapshots/panels.json";
+const UXML_GENERATED_REL = "Assets/UI/Generated";
 
 interface DriftEntry {
   slug: string;
@@ -23,10 +29,20 @@ interface DriftEntry {
   snapshot_value: unknown;
 }
 
+/** UXML artifact finding — kind discriminates prefab vs UXML surface */
+interface UxmlFinding {
+  panel_slug: string;
+  kind: "uxml" | "uss" | "prefab";
+  drift: "missing" | "stale" | "ok";
+  artifact_path?: string;
+}
+
 interface DriftScanResult {
   drifts: DriftEntry[];
   total_panels: number;
   total_drifts: number;
+  /** UXML/USS artifact findings keyed by panel slug (additive; empty when UXML dir absent) */
+  uxml_findings: UxmlFinding[];
 }
 
 function jsonResult(payload: unknown) {
@@ -40,14 +56,82 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe("Optional panel slug to restrict scan (omit for all panels)."),
+  include_uxml: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("When true (default), scan Assets/UI/Generated/*.uxml + *.uss for drift alongside prefab snapshot."),
 });
+
+/** Scan Assets/UI/Generated/ for .uxml + .uss files and report drift against DB panel slugs */
+function scanUxmlArtifacts(
+  repoRoot: string,
+  dbSlugs: Set<string>,
+  slugFilter: string | undefined,
+): UxmlFinding[] {
+  const generatedDir = path.join(repoRoot, UXML_GENERATED_REL);
+  if (!fs.existsSync(generatedDir)) return [];
+
+  const findings: UxmlFinding[] = [];
+  const files = fs.readdirSync(generatedDir);
+
+  const uxmlFiles = new Set(files.filter((f) => f.endsWith(".uxml")).map((f) => f.replace(/\.uxml$/, "")));
+  const ussFiles = new Set(files.filter((f) => f.endsWith(".uss")).map((f) => f.replace(/\.uss$/, "")));
+
+  // For each DB panel slug: check whether a matching .uxml and .uss artifact exists
+  for (const slug of dbSlugs) {
+    if (slugFilter && slug !== slugFilter) continue;
+
+    const uxmlPresent = uxmlFiles.has(slug);
+    const ussPresent = ussFiles.has(slug);
+
+    findings.push({
+      panel_slug: slug,
+      kind: "uxml",
+      drift: uxmlPresent ? "ok" : "missing",
+      artifact_path: uxmlPresent ? path.join(UXML_GENERATED_REL, `${slug}.uxml`) : undefined,
+    });
+    findings.push({
+      panel_slug: slug,
+      kind: "uss",
+      drift: ussPresent ? "ok" : "missing",
+      artifact_path: ussPresent ? path.join(UXML_GENERATED_REL, `${slug}.uss`) : undefined,
+    });
+  }
+
+  // Also surface orphaned .uxml/.uss files not in DB (stale)
+  for (const slug of uxmlFiles) {
+    if (!dbSlugs.has(slug)) {
+      if (slugFilter && slug !== slugFilter) continue;
+      findings.push({
+        panel_slug: slug,
+        kind: "uxml",
+        drift: "stale",
+        artifact_path: path.join(UXML_GENERATED_REL, `${slug}.uxml`),
+      });
+    }
+  }
+  for (const slug of ussFiles) {
+    if (!dbSlugs.has(slug)) {
+      if (slugFilter && slug !== slugFilter) continue;
+      findings.push({
+        panel_slug: slug,
+        kind: "uss",
+        drift: "stale",
+        artifact_path: path.join(UXML_GENERATED_REL, `${slug}.uss`),
+      });
+    }
+  }
+
+  return findings;
+}
 
 export function registerUiDefDriftScan(server: McpServer): void {
   server.registerTool(
     "ui_def_drift_scan",
     {
       description:
-        "Scan panel_detail DB rows vs Assets/UI/Snapshots/panels.json for rect_json drift. Returns {drifts:[{slug,field,db_value,snapshot_value}], total_panels, total_drifts}. No input required; optional slug_filter to restrict scan. Requires DATABASE_URL / config/postgres-dev.json and panels.json snapshot.",
+        "Scan panel_detail DB rows vs Assets/UI/Snapshots/panels.json for rect_json drift AND Assets/UI/Generated/*.uxml/*.uss for UXML artifact drift. Returns {drifts:[{slug,field,db_value,snapshot_value}], total_panels, total_drifts, uxml_findings:[{panel_slug,kind:'uxml'|'uss'|'prefab',drift:'missing'|'stale'|'ok'}]}. No input required; optional slug_filter + include_uxml (default true). Requires DATABASE_URL / config/postgres-dev.json and panels.json snapshot.",
       inputSchema,
     },
     async (args) =>
@@ -144,10 +228,18 @@ export function registerUiDefDriftScan(server: McpServer): void {
               }
             }
 
+            // ── 4. UXML artifact scan ────────────────────────────────────
+            const dbSlugs = new Set(rows.map((r) => r.slug));
+            const uxmlFindings: UxmlFinding[] =
+              input.include_uxml !== false
+                ? scanUxmlArtifacts(repoRoot, dbSlugs, input.slug_filter)
+                : [];
+
             const result: DriftScanResult = {
               drifts,
               total_panels: rows.length,
               total_drifts: drifts.length,
+              uxml_findings: uxmlFindings,
             };
             return result;
           },

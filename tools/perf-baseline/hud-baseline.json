@@ -1,0 +1,20 @@
+{
+  "_comment": "HUD framerate + modal open/close timing baseline. Consumed by Stage 2 acceptance gate.",
+  "captured_at": "2026-05-13",
+  "unity_version": "6000.0",
+  "hud_fps_at_full_city_load": {
+    "value": null,
+    "unit": "fps",
+    "note": "Capture via unity:testmode-batch at full city load. Null until Stage 1 baseline run."
+  },
+  "modal_open_ms": {
+    "value": null,
+    "unit": "ms",
+    "note": "Time from show-modal call to first rendered frame. Null until Stage 1 baseline run."
+  },
+  "modal_close_ms": {
+    "value": null,
+    "unit": "ms",
+    "note": "Time from hide-modal call to frame cleared. Null until Stage 1 baseline run."
+  }
+}

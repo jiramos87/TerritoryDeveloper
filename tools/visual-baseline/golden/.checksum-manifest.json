@@ -1,0 +1,5 @@
+{
+  "_comment": "SHA-256 checksums per golden PNG. Committed — lets reviewers detect uncommitted local golden churn. Goldens themselves are gitignored.",
+  "version": 1,
+  "entries": {}
+}
