@@ -19,6 +19,297 @@ related_mcp_slices:
   - ui_calibration_verdict_record
   - ui_bake_history_query
   - ui_def_drift_scan
+notes: |
+  Design-expansion 2026-05-12 (this doc §Design Expansion) selected: Approach C
+  (tracer-slice + horizontal sweep, pilot pause-menu). Diff engine = Unity Test
+  Framework ImageAssert.AreEqual with ImageComparisonSettings.PerPixelCorrectness
+  Threshold=0.005; PlayMode harness used if EditMode rejects ImageAssert (open
+  NON-BLOCKING — confirm at Stage 1.0.3 impl). Storage = hybrid: PNG via git LFS
+  under Assets/UI/VisualBaselines/{slug}@v{N}.png (invariant #2 LFS gate),
+  metadata in DB tables ia_visual_baseline + ia_visual_diff. 3 new MCP slices:
+  ui_visual_baseline_get, ui_visual_baseline_record, ui_visual_diff_run.
+  Strategy γ for new MCP server code (one file per slice). Stage 1.0 = tracer
+  pause-menu end-to-end (red on first run, green after baseline recorded);
+  Stage 2.0 = horizontal sweep over remaining published panels + region masks
+  for live-state panels (hud-bar money-readout, budget-panel running-total,
+  time-strip clock) + per-panel tolerance_pct overrides; Stage 3.0 = CI
+  hardening (VISUAL_REGRESSION_STRICT env-gated fail-on-regression) + legacy
+  JSONL → DB migration + docs refresh. UI Toolkit migration handshake (Stage 4
+  in body) deferred to a separate plan that consumes baselines from this one.
+  Open NON-BLOCKING items carried into Stage 1 impl: (a) PlayMode-vs-EditMode
+  harness for ImageAssert; (b) LFS cost-budget signoff (operator gate before
+  Stage 2.0 mass-capture lands). Glossary candidates (do not edit specs/
+  glossary.md): `visual_baseline`, `pixel_diff`, `region_mask_sidecar`,
+  `baseline_refresh_poll`, `tolerance_pct`, `candidate_screenshot`.
+stages:
+  - id: "1.0"
+    title: "Tracer slice — pause-menu pixel-diff end-to-end"
+    exit: "Pause-menu baseline captured at 1920x1080 (dark theme) and stored under Assets/UI/VisualBaselines/pause-menu@v{N}.png via git LFS + ia_visual_baseline row (status=active, image_sha256 populated); ui_visual_baseline_get('pause-menu') returns the row; second bake with --capture-baselines re-captures candidate into Library/UiBaselines/_candidate/ and ImageAssert.AreEqual passes against active baseline (diff_pct == 0.0, PerPixelCorrectnessThreshold=0.005); CI validator validate:visual-regression runs warn-only and emits per-panel verdict JSON; .gitattributes LFS filter active on Assets/UI/VisualBaselines/*.png; new MCP slices ui_visual_baseline_get / ui_visual_baseline_record / ui_visual_diff_run registered and tested; validate:all green; unity:compile-check green."
+    red_stage_proof: |
+      tracer-verb-test:Assets/Tests/EditMode/Atomization/VisualRegression/VisualBaselineCaptureTests.cs::CapturesPauseMenuBaseline
+        BEFORE: ui_visual_baseline_get(panel_slug="pause-menu") returns {status:"missing"}; Library/UiBaselines/_candidate/pause-menu.png does not exist; ia_visual_baseline + ia_visual_diff tables do not exist (no migration applied); .gitattributes has no Assets/UI/VisualBaselines/*.png LFS filter line; npm run unity:bake-ui -- --capture-baselines --panels pause-menu exits non-zero (flag unknown to bake CLI).
+        AFTER (RED on first run, GREEN after baseline record): unity:bake-ui --capture-baselines --panels pause-menu writes Library/UiBaselines/_candidate/pause-menu.png + emits sha256; ui_visual_baseline_get returns {status:"missing"} → CI verdict new_baseline_needed (warn-only); operator approval poll fires; ui_visual_baseline_record inserts ia_visual_baseline row (status=active), copies PNG into Assets/UI/VisualBaselines/pause-menu@v1.png via LFS; image_sha256 hex matches sha256(file); subsequent bake → ImageAssert.AreEqual passes; diff_pct == 0.0; ia_visual_diff row written with verdict='match'.
+        SMOKE: unity:compile-check green; validate:all green; Assets/UI/VisualBaselines/pause-menu@v1.png staged via git lfs status (not raw blob); ia_visual_baseline row carries panel_version_id matching catalog_panel publish version.
+        CALLERS: UiBakeHandler.BakeAll unchanged when --capture-baselines flag absent; ui_calibration_verdict_record still works in parallel (no retirement yet).
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:Assets/Tests/EditMode/Atomization/VisualRegression/VisualBaselineCaptureTests.cs::CapturesPauseMenuBaseline
+      target_kind: tracer_verb
+      proof_artifact_id: Assets/Tests/EditMode/Atomization/VisualRegression/VisualBaselineCaptureTests.cs
+      proof_status: failed_as_expected
+    tasks:
+      - id: "1.0.1"
+        title: "Migration + DAL repos + 3 MCP slices (visual_baseline_get / record / diff_run)"
+        prefix: TECH
+        depends_on: []
+        kind: mcp-only
+        digest_outline: |
+          Postgres migration (next id via next_migration_id MCP) seeds two tables:
+          ia_visual_baseline (id, panel_entity_id FK catalog_entity, panel_version_id FK
+          catalog_panel_version, panel_slug, image_ref text, image_sha256 char(64),
+          resolution text, theme text, tolerance_pct numeric(5,4) DEFAULT 0.005,
+          captured_at timestamptz DEFAULT now(), captured_by text, supersedes_id FK
+          ia_visual_baseline NULL, status text CHECK status IN ('active','retired',
+          'candidate')); ia_visual_diff (id, baseline_id FK ia_visual_baseline,
+          candidate_hash char(64), diff_pct numeric(6,5), verdict text CHECK IN
+          ('match','regression','new_baseline_needed'), diff_image_ref text, region_map
+          jsonb, ran_at timestamptz DEFAULT now()). DAL: tools/mcp-ia-server/src/ia-db/
+          ui-catalog.ts add visualBaselineRepo {get(slug,version?), record(input),
+          retire(id), list(filter)} and visualDiffRepo {run(baselineId,candidatePath,
+          opts?), getLatest(slug)}. New MCP slice files (Strategy γ — one per slice):
+          src/tools/ui-visual-baseline-get.ts (input {panel_slug, version?}; output
+          row or {status:'missing'}), src/tools/ui-visual-baseline-record.ts (input
+          {panel_slug, image_path, theme?, resolution?, captured_by?, tolerance_pct?};
+          computes sha256, copies PNG into Assets/UI/VisualBaselines/{slug}@v{N}.png,
+          retires any prior active row for same slug+resolution+theme), src/tools/
+          ui-visual-diff-run.ts (input {panel_slug, candidate_path, region_map?};
+          server-side pixel-byte compare as stand-in until Editor ImageAssert lands,
+          inserts ia_visual_diff row, emits verdict). Register all three in src/index.ts.
+          Tests: tests/tools/ui-visual-baseline.test.ts (CRUD + sha256 stability +
+          supersedes chain) + tests/tools/ui-visual-diff.test.ts (verdict enum + region
+          mask zeroing).
+        touched_paths:
+          - tools/mcp-ia-server/migrations/0NNN_visual_baseline.sql
+          - tools/mcp-ia-server/src/ia-db/ui-catalog.ts
+          - tools/mcp-ia-server/src/tools/ui-visual-baseline-get.ts
+          - tools/mcp-ia-server/src/tools/ui-visual-baseline-record.ts
+          - tools/mcp-ia-server/src/tools/ui-visual-diff-run.ts
+          - tools/mcp-ia-server/src/index.ts
+          - tools/mcp-ia-server/tests/tools/ui-visual-baseline.test.ts
+          - tools/mcp-ia-server/tests/tools/ui-visual-diff.test.ts
+      - id: "1.0.2"
+        title: "Editor capture partial + unity:bake-ui --capture-baselines flag"
+        prefix: TECH
+        depends_on: ["1.0.1"]
+        kind: code
+        digest_outline: |
+          Author Assets/Scripts/Editor/Bridge/UiBakeHandler.VisualBaseline.cs as a
+          partial of UiBakeHandler; new method CaptureBaselineCandidate(string
+          panelSlug, int width=1920, int height=1080, string theme="dark") renders
+          the published panel prefab via RenderTexture at requested resolution,
+          encodes PNG with Texture2D.EncodeToPNG, writes Library/UiBaselines/
+          _candidate/{slug}.png (gitignored), returns {panel_slug, candidate_path,
+          sha256, resolution, theme}. Wire into UiBakeHandler.BakeAll: when
+          BakeOptions.captureBaselines is set, invoke CaptureBaselineCandidate per
+          baked panel after prefab write. Add Library/UiBaselines/.gitignore at
+          root with `_candidate/` + `_diff/` + `_sweep-*.jsonl` entries
+          (Assets/UI/VisualBaselines/ stays tracked under LFS). Bake CLI: extend
+          tools/scripts/unity-bake-ui.mjs to accept --capture-baselines (bool) and
+          --panels {csv|all} args; serialize through BakeOptions JSON on Editor
+          batchmode invocation; preserve current arg surface untouched when flag
+          absent. Validator scene-wiring preflight unchanged. unity:compile-check
+          green.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.VisualBaseline.cs
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Library/UiBaselines/.gitignore
+          - tools/scripts/unity-bake-ui.mjs
+      - id: "1.0.3"
+        title: "ImageAssert test + LFS gate + first pause-menu baseline + warn-only CI validator"
+        prefix: TECH
+        depends_on: ["1.0.1", "1.0.2"]
+        kind: code
+        digest_outline: |
+          Add Assets/Tests/EditMode/Atomization/VisualRegression/VisualBaselineCaptureTests.cs
+          (PlayMode harness if ImageAssert requires it — open NON-BLOCKING; if
+          PlayMode mandatory, file path stays under VisualRegression subfolder but
+          asmdef references com.unity.test-framework.performance + uses
+          UnityTest attribute). Test CapturesPauseMenuBaseline: invoke bake in
+          batchmode with --capture-baselines, assert candidate path exists;
+          ui_visual_baseline_get → assert RED first run (status=='missing');
+          after operator records baseline, second bake → ImageAssert.AreEqual
+          with ImageComparisonSettings{PerPixelCorrectnessThreshold=0.005}
+          passes; diff_pct == 0.0 in ia_visual_diff row. Edit .gitattributes
+          appending `Assets/UI/VisualBaselines/*.png filter=lfs diff=lfs
+          merge=lfs -text` (invariant #2 LFS gate). Author
+          tools/scripts/validate-visual-regression.mjs: enumerates panels.json
+          published rows, calls ui_visual_baseline_get + ui_visual_diff_run per
+          panel against most recent candidate, emits stdout JSON per-panel verdict;
+          exit 0 always at Stage 1.0 (warn-only). Register in package.json scripts
+          (validate:visual-regression) + add to validate:all chain in warn-only
+          mode. Capture pause-menu first baseline via unity:bake-ui
+          --capture-baselines --panels pause-menu; AskUserQuestion approval poll
+          presents candidate path; on approve, ui_visual_baseline_record runs +
+          PNG copied through LFS + ia_visual_baseline row inserted. Commit PNG +
+          row via standard ship-cycle commit.
+        touched_paths:
+          - Assets/Tests/EditMode/Atomization/VisualRegression/VisualBaselineCaptureTests.cs
+          - .gitattributes
+          - tools/scripts/validate-visual-regression.mjs
+          - package.json
+          - Assets/UI/VisualBaselines/pause-menu@v1.png
+
+  - id: "2.0"
+    title: "Horizontal sweep — remaining published panels baselined + region masks + per-panel tolerance"
+    exit: "Every published panel in panels.json carries an active ia_visual_baseline row at canonical 1920x1080 dark theme; live-state panels (hud-bar, budget-panel, time-strip, score-panel ticker, and any other agent-detected dynamic regions) carry region mask sidecars at Assets/UI/VisualBaselines/{slug}.masks.json zeroing dynamic regions before diff; per-panel tolerance_pct overrides recorded where defaults diverge (e.g. budget-panel = 0.01); validate:visual-regression report shows zero `missing` verdicts; per-archetype batch-approve sweep flow via AskUserQuestion documented + replayable; HorizontalSweepTests.AllPanelsHaveBaseline asserts missing == []; validate:all green; LFS storage delta logged for operator review (NON-BLOCKING signoff gate from notes:)."
+    red_stage_proof: |
+      tracer-verb-test:Assets/Tests/EditMode/Atomization/VisualRegression/HorizontalSweepTests.cs::AllPanelsHaveBaseline
+        BEFORE: read_json(Assets/UI/Snapshots/panels.json).panels → ~50 published entries; loop ui_visual_baseline_get per slug returns {status:"missing"} for all but pause-menu; missing.length ≈ 49 post-Stage 1.0; region mask sidecars do not exist (hud-bar money counter forces false-regression on every bake when bake-time freezes a different money value); per-panel tolerance_pct uniformly default 0.005 (no overrides recorded); sweep orchestrator script (tools/scripts/sweep-visual-baselines.mjs) absent.
+        AFTER: same loop returns active baseline for every published panel; missing.length === 0; ≥3 live-state panels (hud-bar, budget-panel, time-strip) carry .masks.json sidecars with rect arrays + reason strings; budget-panel ia_visual_baseline row carries tolerance_pct == 0.01 (per-panel override applied); intentional live counter shift on hud-bar diff returns verdict='match' (masked region zeroed); deliberate one-pixel shift outside mask returns verdict='regression'.
+        SMOKE: validate:visual-regression green (warn-only still); unity:bake-ui --capture-baselines --panels=all completes without Editor errors; tools/scripts/sweep-visual-baselines.mjs runs end-to-end with archetype-grouped polls; LFS storage delta < operator budget (signoff carried from notes:).
+        CALLERS: UiBakeHandler bake path unchanged for non-flag callers; ui_calibration_verdict_record callable in parallel.
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:Assets/Tests/EditMode/Atomization/VisualRegression/HorizontalSweepTests.cs::AllPanelsHaveBaseline
+      target_kind: visibility_delta
+      proof_artifact_id: Assets/Tests/EditMode/Atomization/VisualRegression/HorizontalSweepTests.cs
+      proof_status: failed_as_expected
+    tasks:
+      - id: "2.0.1"
+        title: "Sweep orchestrator + per-archetype AskUserQuestion approve flow + HorizontalSweepTests"
+        prefix: TECH
+        depends_on: ["1.0.3"]
+        kind: code
+        digest_outline: |
+          Author tools/scripts/sweep-visual-baselines.mjs orchestrator: queries
+          published panels via ui_panel_list, dispatches Editor bake batchmode
+          (unity:bake-ui --capture-baselines --panels=all), groups candidate
+          screenshots by catalog_panel.archetype (slug-prefix fallback when
+          archetype absent), fires one AskUserQuestion per archetype group with
+          options approve_all / approve_subset {slugs} / skip / refresh; on
+          approve, calls ui_visual_baseline_record for each panel; writes audit
+          trail to Library/UiBaselines/_sweep-{ts}.jsonl carrying {slug,
+          archetype, verdict, captured_by, sha256, lfs_size_bytes}. Extend
+          unity-bake-ui.mjs --panels=all path to iterate panels.json. Author
+          Assets/Tests/EditMode/Atomization/VisualRegression/HorizontalSweepTests.cs
+          with AllPanelsHaveBaseline test asserting missing array empty after
+          sweep. Document sweep workflow stub in docs/agent-led-verification-policy.md
+          (full doc expansion lands at Stage 3.0.3).
+        touched_paths:
+          - tools/scripts/sweep-visual-baselines.mjs
+          - tools/scripts/unity-bake-ui.mjs
+          - Assets/Tests/EditMode/Atomization/VisualRegression/HorizontalSweepTests.cs
+          - docs/agent-led-verification-policy.md
+      - id: "2.0.2"
+        title: "Region mask sidecars for live-state panels + per-panel tolerance_pct overrides"
+        prefix: TECH
+        depends_on: ["2.0.1"]
+        kind: code
+        digest_outline: |
+          Mask sidecar schema: Assets/UI/VisualBaselines/{slug}.masks.json carrying
+          {regions:[{name, x, y, w, h, reason}]}. Author masks for ≥3 known live
+          panels: hud-bar (money-readout rect), budget-panel (running-total rect),
+          time-strip (clock rect). Operator authors remaining masks on-demand via
+          same schema. Extend visualDiffRepo.run to load sidecar via
+          Assets/UI/VisualBaselines/{slug}.masks.json when present; zero pixel data
+          inside each rect on BOTH candidate + baseline images before diff (via
+          server-side image lib in MCP path + via ImageComparisonSettings.IgnoreRect
+          in Editor ImageAssert path). Extend ui-visual-diff-run.ts to accept
+          optional region_map override at call time (carries through, default loads
+          from sidecar). Migration adds tolerance_pct column override path through
+          ui_visual_baseline_record input field tolerance_pct? (NOT NULL DEFAULT
+          0.005 already from Stage 1.0); apply budget-panel tolerance_pct=0.01 as
+          exemplar override. Extend visual-diff tests with mask zeroing case +
+          per-panel tolerance case.
+        touched_paths:
+          - Assets/UI/VisualBaselines/hud-bar.masks.json
+          - Assets/UI/VisualBaselines/budget-panel.masks.json
+          - Assets/UI/VisualBaselines/time-strip.masks.json
+          - tools/mcp-ia-server/src/ia-db/ui-catalog.ts
+          - tools/mcp-ia-server/src/tools/ui-visual-diff-run.ts
+          - tools/mcp-ia-server/src/tools/ui-visual-baseline-record.ts
+          - tools/mcp-ia-server/tests/tools/ui-visual-diff.test.ts
+
+  - id: "3.0"
+    title: "CI hardening (strict mode) + legacy JSONL → DB migration + docs refresh"
+    exit: "validate:visual-regression flipped from warn-only to fail-on-regression when env VISUAL_REGRESSION_STRICT=1 (default-on in CI workflow); legacy ui_calibration JSONL rows migrated into DB via idempotent migration script; .archive/ui-calibration-jsonl-frozen/ holds frozen JSONL snapshot with README pointing to DB table; docs/agent-led-verification-policy.md carries §UI Visual Regression workflow (capture loop, region masks, per-panel tolerance, refresh trigger semantics, VISUAL_REGRESSION_STRICT env, LFS budget note); CI green on baseline-stable PR + RED on deliberate single-pixel regression fixture; ui_calibration_verdict_record callable in parallel (full retirement deferred); validate:all green."
+    red_stage_proof: |
+      tracer-verb-test:tools/scripts/test/validate-visual-regression-strict.test.mjs::StrictModeBlocksOnRegression
+        BEFORE: validate:visual-regression exit code unconditional 0 (warn-only); legacy verdict rows under Library/UiCalibration/*.jsonl exist with no DB mirror in ia_ui_calibration_verdict (or sibling); docs/agent-led-verification-policy.md has no §UI Visual Regression section; CI workflow does not gate on ia_visual_diff regression rows; intentional one-pixel fixture diff is not caught by CI.
+        AFTER: VISUAL_REGRESSION_STRICT=1 npm run validate:visual-regression exits non-zero when any ia_visual_diff row has verdict='regression' for panels touched in the current diff; legacy JSONL → DB migration script (tools/scripts/migrate-calibration-jsonl-to-db.mjs) idempotent with --dry-run + --apply modes, parity checksum matches; .archive/ui-calibration-jsonl-frozen/ holds original JSONL + README mirror pointer; docs section authored; CI workflow file sets VISUAL_REGRESSION_STRICT=1 on the validate:all job; deliberate single-pixel fixture commit makes CI red.
+        SMOKE: validate:all green; strict mode env unset preserves warn-only behavior; migration roundtrip count + checksum parity asserted by test harness.
+        CALLERS: ui_calibration_verdict_record dispatch path unchanged; additive verdict rows continue to accumulate.
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:tools/scripts/test/validate-visual-regression-strict.test.mjs::StrictModeBlocksOnRegression
+      target_kind: tracer_verb
+      proof_artifact_id: tools/scripts/test/validate-visual-regression-strict.test.mjs
+      proof_status: failed_as_expected
+    tasks:
+      - id: "3.0.1"
+        title: "Strict mode flip on validate:visual-regression + CI env gate + regression fixture"
+        prefix: TECH
+        depends_on: ["2.0.2"]
+        kind: code
+        digest_outline: |
+          Extend tools/scripts/validate-visual-regression.mjs: when env
+          VISUAL_REGRESSION_STRICT=1, exit non-zero on any ia_visual_diff row with
+          verdict='regression' for panels touched in current branch diff (resolve
+          touched panel slugs via panels.json + git diff path scan); else preserve
+          warn-only behavior. Add tools/scripts/test/validate-visual-regression-strict.test.mjs
+          harness asserting both modes (strict + warn-only) plus the deliberate
+          single-pixel-shift fixture path. Add fixture pair under
+          tools/scripts/test/fixtures/visual-regression-strict/{baseline.png,
+          candidate.png} — candidate differs by exactly one pixel above tolerance
+          floor. Wire VISUAL_REGRESSION_STRICT=1 into the GitHub Actions workflow
+          job that runs validate:all (.github/workflows/ci.yml — confirm exact job
+          name at impl). Update docs/agent-led-verification-policy.md stub with
+          env description (full §UI Visual Regression workflow lands in 3.0.3).
+        touched_paths:
+          - tools/scripts/validate-visual-regression.mjs
+          - tools/scripts/test/validate-visual-regression-strict.test.mjs
+          - tools/scripts/test/fixtures/visual-regression-strict/baseline.png
+          - tools/scripts/test/fixtures/visual-regression-strict/candidate.png
+          - .github/workflows/ci.yml
+      - id: "3.0.2"
+        title: "Legacy JSONL → DB migration + frozen archive + parity test"
+        prefix: TECH
+        depends_on: ["3.0.1"]
+        kind: code
+        digest_outline: |
+          Author tools/scripts/migrate-calibration-jsonl-to-db.mjs: enumerates
+          Library/UiCalibration/*.jsonl, normalizes verdict row shape, inserts
+          into ia_ui_calibration_verdict (existing table OR new sibling if schema
+          divergent — resolve at impl via mcp_cache_get + table introspection),
+          idempotent UNIQUE (source_file, line_idx); flags --dry-run (prints JSON
+          diff to stdout, no writes) + --apply (commits inserts in single tx).
+          After successful --apply run, move Library/UiCalibration/*.jsonl
+          contents into .archive/ui-calibration-jsonl-frozen/ with README.md
+          carrying freeze date + DB mirror table name + row count parity. Update
+          .ignore for archived path so Grep skips frozen corpus. Migration test
+          tools/scripts/test/migrate-calibration-jsonl-to-db.test.mjs asserts
+          roundtrip parity (count + checksum) between JSONL and DB rows.
+        touched_paths:
+          - tools/scripts/migrate-calibration-jsonl-to-db.mjs
+          - tools/scripts/test/migrate-calibration-jsonl-to-db.test.mjs
+          - .archive/ui-calibration-jsonl-frozen/README.md
+          - .ignore
+      - id: "3.0.3"
+        title: "Docs refresh — §UI Visual Regression workflow + LFS budget note"
+        prefix: TECH
+        depends_on: ["3.0.1"]
+        kind: doc-only
+        digest_outline: |
+          Add §UI Visual Regression section to docs/agent-led-verification-policy.md
+          covering: (1) capture loop (bake → candidate → ui_visual_baseline_get →
+          diff → AskUserQuestion → ui_visual_baseline_record), (2) region mask
+          sidecar authoring guide, (3) per-panel tolerance_pct override semantics,
+          (4) baseline refresh trigger (intentional design change vs regression vs
+          token bump cascade) with the AskUserQuestion poll shape, (5) VISUAL_
+          REGRESSION_STRICT env description + CI integration, (6) LFS storage
+          budget note (initial estimate + monitoring command + signoff cadence),
+          (7) ui_calibration_verdict_record parallel retention + future-retirement
+          handoff note pointing at UI Toolkit migration plan. Cross-link from
+          docs/ui-design-system.md and any panel authoring guide. No code touched.
+        touched_paths:
+          - docs/agent-led-verification-policy.md
 ---
 
 # UI visual regression — pixel-diff baselines (exploration seed)

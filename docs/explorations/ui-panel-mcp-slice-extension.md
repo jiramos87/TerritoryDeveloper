@@ -19,6 +19,110 @@ related_mcp_slices:
   - ui_panel_list
   - ui_component_get
   - ui_def_drift_scan
+notes: |
+  Design-expansion 2026-05-12 selected bundle approach: Q1c (depth-limited nested, default
+  max_depth=2) + Q2a (ASCII only) + Q3c (caller-controlled pin, default live) + Q4a (keep
+  narrow CHECK; infer kinds from params_json.kind) + Q5b (defer drift-scan tree extension) +
+  Q6a (direct nesting only; UNION existing ILIKE) + Q8a (no cache) + Q9b (extend ui_panel_get
+  + new ui_panel_render_mock) + Q10b (vertical tracer + expansion) + Q11a (independent of
+  visual regression) + Q12a (retire predecessor ui-panel-tree-db-storage.md).
+  Locked: no DB schema migrations; back-compat keys preserved on ui_panel_get; Strategy γ for
+  new MCP server code; deterministic byte-identical ASCII output.
+  Glossary candidates (do not edit specs/glossary.md): `ui_panel_render_mock`, `panel tree
+  resolver`, `ASCII panel mock`, `panel_consumers UNION`.
+stages:
+  - id: "1.0"
+    title: "Tracer slice — stats-panel end-to-end"
+    exit: "ui_panel_get('stats-panel') returns 21 children resolved at max_depth=2; ui_panel_render_mock('stats-panel') returns deterministic ASCII tree byte-identical across runs; ui_component_get('close-button').panel_consumers non-empty includes 'stats-panel'; back-compat shell keys on ui_panel_get untouched; validate:all green; new MCP slice registered via registerUiPanelRenderMock."
+    red_stage_proof: |
+      tracer-test:tools/mcp-ia-server/tests/tools/ui-slices.test.ts::tracerStatsPanelEndToEnd
+        BEFORE: ui_panel_get("stats-panel") returns shell only (rect, padding, params, modal, corpus_rows) — no `children[]` key; ui_panel_render_mock slice does not exist (server registry has no entry); ui_component_get("close-button").panel_consumers === [] (empty array).
+        AFTER: ui_panel_get("stats-panel", {max_depth:2}).children.length === 21; each child carries {slot, ord, kind, slug, child_entity_id, params_json, resolved:{display_name, role}, children?:[...]}; ui_panel_render_mock("stats-panel") returns non-empty ASCII string starting with "┌─ stats-panel (modal-tabbed)"; ui_component_get("close-button").panel_consumers includes "stats-panel" via direct panel_child UNION; consumer_count >= 1.
+        SMOKE: csharp_compile_passes() N/A (no C# touched); validate:all green; two sequential ui_panel_render_mock("stats-panel") invocations return byte-identical strings (cycle guard + stable ord verified).
+        CALLERS: existing ui_panel_get consumers (web asset-pipeline at web/app/asset-pipeline/panel/[slug]/page.tsx) compile + render identically — children[] additive, shell keys preserved.
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:tools/mcp-ia-server/tests/tools/ui-slices.test.ts::tracerStatsPanelEndToEnd
+      target_kind: tracer_verb
+      proof_artifact_id: tools/mcp-ia-server/tests/tools/ui-slices.test.ts
+      proof_status: failed_as_expected
+    tasks:
+      - id: "1.0.1"
+        title: "Tracer end-to-end: DAL helpers + slice extensions + render_mock on stats-panel"
+        prefix: TECH
+        depends_on: []
+        kind: mcp-only
+        digest_outline: |
+          Add ui-catalog.ts DAL helpers: getPanelChildren(client, entityId, {maxDepth=2, pin='live'})
+          — recursive panel_child join with catalog_entity resolve, cycle guard via visited-set
+          per branch, stops at cycle/maxDepth; getPanelConsumersDirect(client, entitySlug) —
+          SELECT DISTINCT panel slug via panel_child reverse join. Extend ui_panel_get input
+          schema with optional max_depth (default 2) + pin ('live'|'frozen', default 'live');
+          payload gains `children[]` from getPanelChildren — shell keys (rect, padding, params,
+          modal, corpus_rows) PRESERVED for back-compat. Extend ui_component_get.panel_consumers
+          via UNION of existing ILIKE result + getPanelConsumersDirect; dedup by slug; bump
+          consumer_count. New file ascii-mock-emitter.ts (Strategy γ POCO; namespace under
+          ia-db/) exporting renderAscii(tree, opts) — deterministic stringify, stable
+          (slot_name, order_idx) sort, box-drawing chars ┌─┐│└┘├┤, LF newlines only, no
+          Date.now()/randomness, width auto-fit bounded to ASCII. New file
+          ui-panel-render-mock.ts (new MCP slice registration); input {slug,
+          format:'ascii' (only allowed), max_depth?, pin?}; calls getPanelBundle +
+          getPanelChildren + renderAscii; returns {slug, format, mock, generated_from:{pin,
+          max_depth}}. Wire registerUiPanelRenderMock in src/index.ts (one-line add). Extend
+          tests/tools/ui-slices.test.ts with tracerStatsPanelEndToEnd case asserting: (a)
+          children.length===21, (b) close-button.panel_consumers includes stats-panel, (c)
+          two ui_panel_render_mock calls byte-identical.
+        touched_paths:
+          - tools/mcp-ia-server/src/ia-db/ui-catalog.ts
+          - tools/mcp-ia-server/src/ia-db/ascii-mock-emitter.ts
+          - tools/mcp-ia-server/src/tools/ui-panel.ts
+          - tools/mcp-ia-server/src/tools/ui-component.ts
+          - tools/mcp-ia-server/src/tools/ui-panel-render-mock.ts
+          - tools/mcp-ia-server/src/index.ts
+          - tools/mcp-ia-server/tests/tools/ui-slices.test.ts
+  - id: "2.0"
+    title: "Sweep + hardening — all 51 panels + kind inference + golden fixtures"
+    exit: "ui_panel_get + ui_panel_render_mock pass for all 51 panels (no errors, children[] non-empty where present, ASCII mock non-empty); ascii-mock-emitter resolves params_json.kind labels for tab-strip|range-tabs|chart|stacked-bar-row|service-row|row|text; golden fixtures land under tests/fixtures/ui-panel-mock/{slug}.txt with byte-equal snapshot compare; ui_component_get.panel_consumers non-empty for ≥8 components used by ≥1 panel; web asset-pipeline backward-compat verified (shell keys identical pre/post); validate:all green."
+    red_stage_proof: |
+      tracer-test:tools/mcp-ia-server/tests/tools/ui-slices.test.ts::allPanelsSweep
+        BEFORE: only stats-panel covered by tracer (Stage 1.0); 50 other panels untested at slice surface; ascii-mock-emitter renders generic 'panel' tokens for richer kinds (tab-strip/range-tabs/chart/etc); no golden fixtures under tests/fixtures/ui-panel-mock/; ui_component_get sweep across 51 panels not asserted.
+        AFTER: forEach(panel of allPanels) → ui_panel_get(panel.slug) resolves without error AND ui_panel_render_mock(panel.slug) returns non-empty ASCII; per-panel snapshot fixture compare matches tests/fixtures/ui-panel-mock/{slug}.txt; emitter kind-inference table covers tab-strip|range-tabs|chart|stacked-bar-row|service-row|row|text matching bake snapshot vocabulary; sweep assertion: panel_consumers non-empty for ≥8 components.
+        SMOKE: validate:all green; existing web/app/asset-pipeline/panel/[slug]/page.tsx renders against extended shell + new children[] without modification (back-compat assertion); two-pass byte-equal still holds across full 51-panel sweep.
+        CALLERS: web asset-pipeline consumer compiles + shows identical shell metadata; new children[] surfaced inline if consumer opts in (additive).
+    red_stage_proof_block:
+      red_test_anchor: tracer-verb-test:tools/mcp-ia-server/tests/tools/ui-slices.test.ts::allPanelsSweep
+      target_kind: tracer_verb
+      proof_artifact_id: tools/mcp-ia-server/tests/fixtures/ui-panel-mock/
+      proof_status: failed_as_expected
+    tasks:
+      - id: "2.0.1"
+        title: "51-panel sweep + kind inference table + golden ASCII fixtures + back-compat assertion"
+        prefix: TECH
+        depends_on: []
+        kind: mcp-only
+        digest_outline: |
+          Extend ascii-mock-emitter.ts with kind-inference table mapping params_json.kind
+          values → label tokens for tab-strip, range-tabs, chart, stacked-bar-row, service-row,
+          row, text (matches bake snapshot vocabulary at Assets/UI/Snapshots/panels.json). Add
+          test cases in ui-slices.test.ts: allPanelsSweep iterating over all 51 panels asserting
+          (a) ui_panel_get(slug) resolves without error, (b) ui_panel_render_mock(slug) returns
+          non-empty ASCII, (c) per-panel byte-equal compare against golden fixture under
+          tests/fixtures/ui-panel-mock/{slug}.txt. Generate golden fixtures one-shot via test
+          helper (script under tests/helpers/ if needed; otherwise inline writeFileSync gated
+          by UPDATE_FIXTURES=1 env). Add panelConsumersNonEmptyAssertion sweep asserting at
+          least 8 components used by ≥1 panel return non-empty panel_consumers via extended
+          UNION. Add backCompatShellKeys assertion: dump ui_panel_get shell keys for 5
+          representative panels, compare to baseline JSON committed under
+          tests/fixtures/ui-panel-shell-baseline.json — identical keys (children[] addition
+          tolerated, no removal/rename). No DAL/slice signature changes — pure emitter
+          extension + test surface broadening.
+        touched_paths:
+          - tools/mcp-ia-server/src/ia-db/ui-catalog.ts
+          - tools/mcp-ia-server/src/ia-db/ascii-mock-emitter.ts
+          - tools/mcp-ia-server/src/tools/ui-panel.ts
+          - tools/mcp-ia-server/src/tools/ui-component.ts
+          - tools/mcp-ia-server/tests/tools/ui-slices.test.ts
+          - tools/mcp-ia-server/tests/fixtures/ui-panel-mock/
+          - tools/mcp-ia-server/tests/fixtures/ui-panel-shell-baseline.json
 ---
 
 # UI panel MCP slice extension — full tree + render_mock (exploration seed)

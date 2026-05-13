@@ -1,8 +1,8 @@
 ---
 slug: ui-bake-handler-atomization
 target_version: 1
-extends_existing_plan: false
 parent_plan_id: null
+extends_existing_plan: false
 audience: agent
 loaded_by: on-demand
 created_at: 2026-05-12
@@ -18,6 +18,321 @@ related_mcp_slices:
   - ui_panel_get
   - ui_panel_list
   - ui_def_drift_scan
+notes: |
+  Pre-condition (Q9a): `large-file-atomization-hub-thinning-sweep` must close before
+  Stage 1.0 opens — folder conflict on `Domains/UI/Services/` (`ThemeService.cs` Tier E
+  candidate). Composed test alone (Q8a) — no per-archetype unit harness. Per-stage byte-
+  identical prefab gate (Q7a). All stages skip the §Red-Stage Proof block (refactor-only
+  plan; target_kind=design_only — composed bake-and-compare is the proof). `BakeContext`
+  shape pinned in 1.0.4 digest_outline before first POCO extract.
+stages:
+  - id: "1.0"
+    title: "Tracer — DTOs + TokenResolver + ButtonBaker"
+    exit: |
+      All `Assets/UI/Prefabs/Generated/*.prefab` byte-identical to HEAD baseline.
+      `Domains/UI/Data/Ir*.cs` + `Domains/UI/Services/TokenResolver.cs` live and
+      runtime-asmdef-clean (no `UnityEditor` refs). `ButtonBaker` POCO live under
+      `Domains/UI/Editor/UiBake/Services/`. `UiBakeHandler.Button.cs` ≤50 LOC
+      delegate stub. `validate:all` + `unity:compile-check` + `npm run unity:bake-ui`
+      + `ui_def_drift_scan` + `CityScene` / `MainMenu` scene-load smoke all green.
+    red_stage_proof: |
+      Refactor-only stage with composed-test safety net (no red unit test).
+      Proof = byte-diff gate: `git stash` baseline of `Assets/UI/Prefabs/Generated/`
+      captured before stage; after stage, `npm run unity:bake-ui` + `git diff
+      Assets/UI/Prefabs/Generated/` returns clean. Drift on any prefab byte =
+      stage red. Composed gate ALSO requires `ui_def_drift_scan` MCP slice = 0
+      drift across 49 prefabs.
+    tasks:
+      - id: 1.0.1
+        title: "Extract IR DTO POCOs to Domains/UI/Data/"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `[Serializable]` IR DTO classes (`IrRoot`, `IrPanel`, `IrInteractive`,
+          `IrToken`, `IrButtonPalette`, ~30 types) from `UiBakeHandler.cs` lines 50–280
+          into `Domains/UI/Data/Ir{Type}.cs` — one file per top-level type, nested
+          types stay nested. Add `namespace Domains.UI.Data`. Preserve field
+          declaration order verbatim (JsonUtility deserialization depends on it).
+          Add `using Domains.UI.Data;` to `UiBakeHandler.cs`. Verify no
+          `UnityEditor` refs in any new file (runtime asmdef purity, inv 5).
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Data/IrRoot.cs
+          - Assets/Scripts/Domains/UI/Data/IrPanel.cs
+          - Assets/Scripts/Domains/UI/Data/IrInteractive.cs
+          - Assets/Scripts/Domains/UI/Data/IrToken.cs
+          - Assets/Scripts/Domains/UI/Data/IrButtonPalette.cs
+      - id: 1.0.2
+        title: "Extract TokenResolver to Domains/UI/Services/"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `ResolveTypeScaleFontSize`, `ResolveColorTokenHex`,
+          `SubstituteSpacingTokensInJson` from `UiBakeHandler.cs` lines 496–622
+          into `Domains/UI/Services/TokenResolver.cs` (static class,
+          `namespace Domains.UI.Services`). Visibility = `public static` (Q5a:
+          unblocks calibration verdict-loop + agent-driven preview surfaces
+          cross-asmdef without `[InternalsVisibleTo]`). Pre-extract grep
+          `UnityEditor|AssetDatabase` lines 496–622 — if any hit, isolate to
+          Editor-side helper instead. Runtime asmdef purity gate (inv 5).
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Services/TokenResolver.cs
+      - id: 1.0.3
+        title: "Hub thin delegates for token + DTO surface"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          `UiBakeHandler.cs` keeps every `public static` signature from constraint #3
+          but delegates body to `TokenResolver` / `Domains.UI.Data.*`. Pattern:
+          `public static float ResolveTypeScaleFontSize(string slug, float fb)
+          => TokenResolver.FontSize(slug, fb);`. Net: ~400 LOC removed from
+          `UiBakeHandler.cs` (DTO bodies + token-resolve bodies → delegate one-
+          liners). Verify all external callers (grep `UiBakeHandler.Resolve` +
+          `UiBakeHandler.Ir`) still link.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+      - id: 1.0.4
+        title: "Pin BakeContext shape + extract ButtonBaker POCO"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Define `BakeContext` POCO in `Domains/UI/Editor/UiBake/Services/BakeContext.cs`
+          carrying: `ThemeRefSink` (`IList<GameObject>`), `RepoRoot` (string),
+          `WarningSink` (`Action<string>`), `AuditSink` (`Action<string>`).
+          Extract `UiBakeHandler.Button.cs` body (`BakeButton` + ~30 palette/atlas/
+          motion helpers) into `Domains/UI/Editor/UiBake/Services/ButtonBaker.cs`
+          (POCO, constructor takes `BakeContext`, `Bake(IrButton row)` entry).
+          Update `UiBakeHandler.Button.cs` to delegate:
+          `static GameObject BakeButton(IrButton row, BakeContext ctx)
+          => new ButtonBaker(ctx).Bake(row);`. New files live under existing
+          `Domains/UI/Editor/UiBake/UI.Editor.asmdef` (Editor-only).
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/BakeContext.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/ButtonBaker.cs
+      - id: 1.0.5
+        title: "Shrink UiBakeHandler.Button.cs to ≤50 LOC delegate stub"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          After 1.0.4 extraction, `UiBakeHandler.Button.cs` contains only the
+          `static GameObject BakeButton(IrButton row, BakeContext ctx)` delegate.
+          Confirm `wc -l Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs`
+          ≤50. If fully migrated and only one delegate method remains, leave the
+          partial file (defer deletion to Stage 3 cleanup). Verify external
+          callers of `BakeButton` (grep `UiBakeHandler.BakeButton`) still link.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs
+
+  - id: "2.0"
+    title: "Sweep — FrameBaker + StudioControlBaker + JuiceAttacher"
+    exit: |
+      `UiBakeHandler.Frame.cs` ≤50 LOC delegate stub. StudioControl branches
+      (`knob`/`fader`/`vu`/`oscilloscope`) extracted out of `.Archetype.cs` into
+      dedicated POCO. Juice attachment rules extracted out of `.Archetype.cs`.
+      Byte-identical prefab gate green. `validate:all` + `unity:compile-check`
+      + `npm run unity:bake-ui` + `ui_def_drift_scan` + scene-load smoke all green.
+    red_stage_proof: |
+      Refactor-only stage. Proof = composed byte-diff gate against Stage 1.0
+      acceptance SHA (NOT HEAD baseline — chain forward). `git stash` of
+      `Assets/UI/Prefabs/Generated/` at Stage 2.0 start; `npm run unity:bake-ui`
+      + clean `git diff` at Stage 2.0 close. `ui_def_drift_scan` = 0 drift.
+      Scene-load smoke green for `CityScene` + `MainMenu`.
+    tasks:
+      - id: 2.0.1
+        title: "Extract FrameBaker POCO"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `UiBakeHandler.Frame.cs` body (frame / decoration generation, ~1000
+          LOC) into `Domains/UI/Editor/UiBake/Services/FrameBaker.cs` (POCO,
+          constructor takes `BakeContext`, `Bake(IrFrame row)` entry). Update
+          `UiBakeHandler.Frame.cs` to delegate stub (≤50 LOC). Preserve every
+          `public static` external signature.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/FrameBaker.cs
+      - id: 2.0.2
+        title: "Extract StudioControlBaker POCO"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Extract StudioControl branches from `UiBakeHandler.Archetype.cs`
+          (`if (kind == "knob"/"fader"/"vu"/"oscilloscope") ...`, ~300 LOC) into
+          `Domains/UI/Editor/UiBake/Services/StudioControlBaker.cs` (POCO with
+          sub-dispatch on `kind` string). Update `.Archetype.cs` to delegate the
+          studio-control branch. Each sub-archetype (knob / fader / vu /
+          oscilloscope) becomes a private method on `StudioControlBaker`.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/StudioControlBaker.cs
+      - id: 2.0.3
+        title: "Extract JuiceAttacher POCO"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Extract juice rules (motion attach / tween config / hover-spring rules,
+          ~150 LOC) from `UiBakeHandler.Archetype.cs` into
+          `Domains/UI/Editor/UiBake/Services/JuiceAttacher.cs` (POCO,
+          `Attach(GameObject built, IrJuice rules, BakeContext ctx)` entry).
+          Update `.Archetype.cs` to delegate the juice-attach branch.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/JuiceAttacher.cs
+
+  - id: "3.0"
+    title: "Panel + Orchestrator thin + tracer wire-up"
+    exit: |
+      `wc -l Assets/Scripts/Editor/Bridge/UiBakeHandler*.cs | awk '$1>500 && $2!="total"'`
+      returns ZERO matching lines. Empty partial files (`.Archetype.cs`,
+      `.Frame.cs`, `.Button.cs`) deleted. `UiBakeService` tracer wired to
+      `BakeOrchestrator` (stub `return null` replaced). Byte-identical prefab
+      gate green vs HEAD baseline (chain-anchor). Full acceptance gate green:
+      `validate:all` + `unity:compile-check` + `npm run unity:bake-ui` +
+      `ui_def_drift_scan` + `CityScene` / `MainMenu` smoke.
+    red_stage_proof: |
+      Refactor-only stage. Proof = full-chain byte-diff gate: `npm run
+      unity:bake-ui` produces `Assets/UI/Prefabs/Generated/*.prefab` byte-
+      identical to the HEAD baseline captured BEFORE Stage 1.0 (not the
+      per-stage chain anchor — final cumulative check). `ui_def_drift_scan` = 0
+      drift across 49 prefabs. `wc -l UiBakeHandler*.cs > 500` returns zero
+      matches.
+    tasks:
+      - id: 3.0.1
+        title: "Extract PanelBaker POCO"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Extract `BakeInteractive` + 30+ panel helpers (~2500 LOC) from
+          `UiBakeHandler.Archetype.cs` into
+          `Domains/UI/Editor/UiBake/Services/PanelBaker.cs` (POCO, constructor
+          takes `BakeContext`, `Bake(IrPanel row)` entry). All private helpers
+          move as private methods on `PanelBaker`. Update `.Archetype.cs` to
+          delegate `BakeInteractive` to `new PanelBaker(ctx).Bake(row)`.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/PanelBaker.cs
+      - id: 3.0.2
+        title: "Extract RectLayoutService static"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `ApplyPanelKindRectDefaults`, `ApplyPanelRectJsonOverlay`,
+          `ApplyRootLayoutGroupConfig`, `CreateRowGrid`, `ApplyRoundedBorder`
+          (~400 LOC) from `UiBakeHandler.cs` lines 1942–2245 into
+          `Domains/UI/Editor/UiBake/Services/RectLayoutService.cs` (static
+          class). Update `PanelBaker` to call `RectLayoutService.*` directly;
+          `UiBakeHandler.cs` keeps thin `public static` delegate where any
+          external caller exists.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/RectLayoutService.cs
+      - id: 3.0.3
+        title: "Extract IrParser + BlueprintValidator static"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `Parse` (line 2386) + `BakeFromPanelSnapshot` (line 2589) into
+          `Domains/UI/Editor/UiBake/Services/IrParser.cs` (static). Move
+          `ValidateSlotAcceptRules` (line 2463) + `ValidatePanelBlueprint` (line
+          2562) into `Domains/UI/Editor/UiBake/Services/BlueprintValidator.cs`
+          (static). `UiBakeHandler.cs` keeps `public static` delegates for
+          `Parse` / `BakeFromPanelSnapshot` / `ValidatePanelBlueprint`.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/IrParser.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/BlueprintValidator.cs
+      - id: 3.0.4
+        title: "Extract BakeOrchestrator POCO + ThemeRefPropagator static"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Extract `Bake` (line 2514) + bake glue helpers (~200 LOC) into
+          `Domains/UI/Editor/UiBake/Services/BakeOrchestrator.cs` (POCO,
+          constructor takes `BakeArgs`, exposes `Run()` + `RunFromSnapshot()`).
+          Orchestrator owns the `BakeContext` instance and dispatches to
+          `IrParser` → `BlueprintValidator` → `BakeDispatcher` (per-archetype
+          baker) → `BakeAuditLog`. Move `PropagateThemeRefRecursive` (line 3209,
+          ~80 LOC) into
+          `Domains/UI/Editor/UiBake/Services/ThemeRefPropagator.cs` (static).
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/BakeOrchestrator.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/ThemeRefPropagator.cs
+      - id: 3.0.5
+        title: "Extract BakeAuditLog + BakeWarningSink static"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Move `WriteBakeAuditRow` (line 3466, ~40 LOC) into
+          `Domains/UI/Editor/UiBake/Services/BakeAuditLog.cs` (static, append-
+          only). Move `AddBakeWarning` (line 1808, ~30 LOC) into
+          `Domains/UI/Editor/UiBake/Services/BakeWarningSink.cs` (static
+          collector). `BakeContext` wires `WarningSink` / `AuditSink` to these.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/BakeAuditLog.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/BakeWarningSink.cs
+      - id: 3.0.6
+        title: "Shrink UiBakeHandler.cs to ≤500 LOC delegate facade"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          After 3.0.1–3.0.5 extractions, `UiBakeHandler.cs` retains only `public
+          static` delegate one-liners for every signature locked by constraint
+          #3 (`Bake`, `BakeFromPanelSnapshot`, `Parse`, `ResolveTypeScaleFontSize`,
+          `ResolveColorTokenHex`, `ValidatePanelBlueprint`). Confirm `wc -l
+          Assets/Scripts/Editor/Bridge/UiBakeHandler.cs` ≤500. No body code
+          remains — only delegates + `using Domains.UI.*` directives.
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.cs
+      - id: 3.0.7
+        title: "Delete empty partial files"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Delete `UiBakeHandler.Archetype.cs`, `UiBakeHandler.Frame.cs`,
+          `UiBakeHandler.Button.cs` once their bodies are fully migrated and
+          contain no methods. Constraint #1 locks only the hub `UiBakeHandler.cs`
+          path — partial extension files are NOT locked. Confirm `grep -r
+          "UiBakeHandler\." Assets/Scripts/` shows zero refs to deleted partial
+          methods (all routed through hub delegates).
+        touched_paths:
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Archetype.cs
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Frame.cs
+          - Assets/Scripts/Editor/Bridge/UiBakeHandler.Button.cs
+      - id: 3.0.8
+        title: "Wire UiBakeService tracer to BakeOrchestrator"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: |
+          Existing tracer at
+          `Assets/Scripts/Domains/UI/Editor/UiBake/Services/UiBakeService.cs`
+          (Stage 9 prior work) currently stubs `return null`. Wire `IUiBake.Bake`
+          impl to delegate to `new BakeOrchestrator(args).Run()`. The tracer
+          becomes the canonical Domain facade for non-Editor-bridge callers
+          (replaces `UiBakeHandler.Bake` for new code; legacy callers continue
+          via hub delegate). Verify `UI.Editor.asmdef` reference chain compiles.
+        touched_paths:
+          - Assets/Scripts/Domains/UI/Editor/UiBake/Services/UiBakeService.cs
+          - Assets/Scripts/Domains/UI/Editor/UiBake/IUiBake.cs
 ---
 
 # UI bake handler atomization (exploration seed)
