@@ -70,6 +70,8 @@ hard_boundaries:
   - "Do NOT edit `ia/specs/glossary.md` — propose candidates in handoff `notes:` field only."
   - "Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard."
   - "Do NOT write task spec bodies to filesystem — bundle apply persists to DB only."
+  - "Phase B enriched-subsection injection MUST be verbatim — no paraphrase, no compression. When source MD subsection absent → emit skip-clause body line, NEVER drop the `### §...` heading."
+  - "Phase A.0 — when `docs/explorations/{slug}.html` exists, refresh `.md` sidecar via extract-md before recipe runs. HTML is canonical artifact post-uplift."
 caller_agent: ship-plan
 ---
 
@@ -128,6 +130,27 @@ Schema validated by `tools/scripts/validate-handoff-schema.mjs` (TECH-12634).
 
 ---
 
+## Phase A.0 — Source resolution (HTML-first)
+
+Resolve the canonical MD input for the recipe. Two cases:
+
+**Case 1 — `docs/explorations/{slug}.html` exists** (post-uplift exploration). Extract canonical MD from the HTML's embedded `<script id="rawMarkdown">` block and refresh the on-disk `.md` sidecar in place:
+
+```bash
+npm run design-explore:extract-md {SLUG} > docs/explorations/{slug}.md
+```
+
+This guarantees the recipe reads the byte-equivalent of the canonical embed inside HTML — sidesteps drift if user hand-edited the `.md` post-render. Recipe step 1 (`parse_handoff_yaml`) then reads the refreshed `.md` as normal.
+
+**Case 2 — only `docs/explorations/{slug}.md` exists** (legacy exploration, pre-uplift). Skip extraction; recipe reads `.md` directly.
+
+**Stop conditions:**
+
+- Neither `.html` nor `.md` present → `STOPPED — exploration_source_missing: docs/explorations/{slug}.(html|md)`.
+- Round-trip extract returns malformed YAML frontmatter → `STOPPED — html_raw_md_block_corrupt`; fall back to direct `.md` read + warn.
+
+Emit working-memory token: `source ∈ {html-extracted, md-legacy, drift-detected}`. Downstream Phase B uses this to decide whether to expect enriched MD subsections (`html-extracted` / `drift-detected` → yes; `md-legacy` → emit skip-clause inside each enriched digest subsection).
+
 ## Phase A — recipe `ship-plan-phase-a` (mechanical preflight)
 
 Single recipe call replaces legacy Phases 1-4 + 6 (parse + schema + MCP prefetch + task_bundle + spec_sections batch + drift-lint stash):
@@ -173,9 +196,11 @@ No change — Phase B proceeds with standard 3-section digest template.
 
 ---
 
-## Phase B — Compose 3-section digest per task (Opus-owned)
+## Phase B — Compose 3-section digest + 8 enriched subsections per task (Opus-owned)
 
-Per task, build `§Plan Digest` body with exactly 3 sub-sections by reading file-based Markdown templates (TECH-15901) under `ia/templates/digest-sections/` and filling `{{slot}}` values:
+Per task, build `§Plan Digest` body with the legacy 3 sub-sections + 8 enriched sub-sections (when source MD carries them per [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md)). Total = 11 sub-sections per task on post-uplift explorations; 3 + N skipped sub-sections on legacy `md-legacy` source.
+
+**Legacy 3 sub-sections** — file-based Markdown templates (TECH-15901) under `ia/templates/digest-sections/`:
 
 - `goal.md` — slots: `{{intent_one_liner}}`, `{{primary_surface}}`, `{{glossary_terms}}`
 - `red-stage-proof.md` — slots: `{{anchor_kind}}`, `{{path}}`, `{{method}}`, `{{description}}`, `{{failing_baseline}}`, `{{green_criteria}}`
@@ -183,9 +208,34 @@ Per task, build `§Plan Digest` body with exactly 3 sub-sections by reading file
 
 Concatenate three filled templates under `## §Plan Digest` heading. Structure identical across FEAT/BUG/TECH tasks — only slot values differ.
 
+**Enriched 8 sub-sections** — read verbatim from the per-task `#### Task {ID} — Enriched` block in the exploration MD body (or the per-stage `#### Stage {ID} — Enriched` block for stage-level fields). Inject in fixed order as `### §...` headings after the legacy 3:
+
+| Section heading | Source subsection (under task / stage MD block) | Source field name (in YAML `enriched:`) | Per-X |
+|---|---|---|---|
+| `### §Visual Mockup` | `##### Visual Mockup` | `visual_mockup_svg` | task |
+| `### §Before / After` | `##### Before / After Code` | `before_after_code` | task |
+| `### §Edge Cases` | `##### Edge Cases` (stage block) | `edge_cases[]` (stage) | stage → repeats across all tasks |
+| `### §Glossary Anchors` | `##### Glossary Anchors` | `glossary_anchors[]` | task |
+| `### §Failure Modes` | `##### Failure Modes` | `failure_modes[]` | task |
+| `### §Decision Dependencies` | `##### Decision Dependencies` | `decision_dependencies` | task |
+| `### §Shared Seams` | `##### Shared Seams` (stage block) | `shared_seams[]` (stage) | stage → repeats across all tasks |
+| `### §Touched Paths Preview` | `##### Touched Paths Preview` | `touched_paths_with_preview` | task |
+
+**Injection rule — VERBATIM, no paraphrase.** Read the source MD subsection body byte-for-byte and inject under the `### §...` heading. No re-formatting, no token compression, no "summarize as N bullets". This is the load-bearing contract — spec-implementer + verify-loop downstream rely on the canonical content shape.
+
+**Skip-clause.** When source MD subsection is absent (legacy `md-legacy` source, or `optional` mandatory-band field not authored on a Stage 2+ task) → emit the section heading + body line:
+
+```markdown
+### §Edge Cases
+
+_skipped — source absent (legacy doc shape; pre-uplift exploration)._
+```
+
+Do NOT fail the task. Legacy plans ship with reduced enrichment. Output token `n_enriched_subsections_skipped` per task in Phase E handoff summary.
+
 **Anchor inline expansion at digest write.** For every `{anchor-kind}:{path}::{method}` ref in §Red-Stage Proof or every glossary slug in §Goal, embed the resolved body from `anchor_bundle` (returned by Phase A recipe step 5) directly in the digest. No deferred `@anchor` placeholders.
 
-**Drop sections** (vs legacy 7-section shape): §Acceptance / §Pending Decisions / §Implementer Latitude / §Test Blueprint / §Invariants & Gate. §Acceptance subsumed by §Red-Stage Proof. §Invariants & Gate moved to stage exit criteria. §Pending Decisions resolved upstream at design-explore Phase 1.
+**Drop sections** (vs legacy 7-section shape): §Acceptance / §Pending Decisions / §Implementer Latitude / §Test Blueprint / §Invariants & Gate. §Acceptance subsumed by §Red-Stage Proof + §Edge Cases + §Failure Modes (when enriched present). §Invariants & Gate moved to stage exit criteria. §Pending Decisions resolved upstream at design-explore Phase 1.
 
 ### Phase B.5 — Token-split guardrail
 
@@ -310,4 +360,5 @@ Before issuing the first DB read, list every question needed for this phase. Bat
 
 - 2026-05-08 — fix: stage body emit drift (`/ship-final` Phase 4 plan-red-stage halt). Phase 7.0 added — composes stage `body` with 4-field §Red-Stage Proof block; defaults skip-clause (`target_kind=design_only`, `proof_status=not_applicable`) when handoff yaml omits `stages[].red_stage_proof_block`. Companion mig 0113 extends `master_plan_bundle_apply` SQL fn to accept `stages[].body`. Source: bug-log (large-file-atomization-cutover-refactor v1; 6 violations halted /ship-final).
 - 2026-05-09 — lesson: `cityscene-mainmenu-panel-rollout 2.0` Wave A0 → bake → runtime gap. Stage 1.0 task specs registered `UiActionRegistry` shell + `MainMenuRegistrySeed` canonical action ids but never gated **action-wire conformance** in §Red-Stage Proof — bake handler had no `UiActionTrigger` attach helper, controller-side action ids drifted from `panels.json` canonical (silent dispatch miss, compile-clean). For UI-bake stages, §Red-Stage Proof must include a runtime click-fires-handler assertion (Path A bridge or Play-Mode test), NOT just DB row + bake screenshot. Add handoff-yaml convention `stages[].action_wire_proof: required|skip` for any stage that emits `params_json.action`. Drift gates to mention in §Work Items: (a) `panels.json` action id ≡ controller register id (one source of truth = panels.json); (b) every button-kind switch case in `UiBakeHandler` includes `AttachUiActionTrigger` (validator stub `validate:bake-handler-action-coverage`). Pending stages of any UI-bake plan that ship visible buttons → flag the same gates upstream so handoff yaml carries them.
+- 2026-05-13 — feat: HTML-first uplift (design-explore-html-effectiveness-uplift plan). Phase A.0 added — source resolution: extracts canonical MD from `docs/explorations/{slug}.html` (when present) via `npm run design-explore:extract-md {SLUG}`, refreshing the on-disk `.md` sidecar before recipe Phase A reads it. Legacy `.md`-only explorations bypass extraction. Phase B prompt extended — composes 11 sub-sections per task (legacy 3 + 8 enriched per [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md)). Skip-clause: enriched subsection absent → `_skipped — source absent_` body; section heading always emitted. Hard boundary: Phase B injection MUST be verbatim (no paraphrase / compression / re-formatting); spec-implementer + verify-loop downstream rely on canonical content shape.
 - 2026-05-10 — refactor: lifecycle skills mechanical-work move-out (Phase 5 of cheeky-growing-panda plan). Phases 1-4 + 6 collapsed to recipe `ship-plan-phase-a` (parse + schema + invariants + task_bundle + spec_sections batch + drift-lint stash). Phase 7.0 stage body composition dropped — mig 0136 server-side render owns it (agent passes `red_stage_proof_block` jsonb verbatim). Phase 7.5 collapsed to recipe `ship-plan-phase-c` (glossary backlinks + anchor reindex + plan_filed audit). Drift-lint findings buffer replaced with crash-safe `cron_drift_lint_findings_jobs` two-phase commit (staged → queued via `promote_drift_lint_staged()` SQL fn called atomically inside `master_plan_bundle_apply` tx). Agent prompt body shrinks ~60 % (parsing + lint + body composition removed). Companion migs 0132 (stage_id canonical) + 0135 (drift-lint queue) + 0136 (server-side body render).

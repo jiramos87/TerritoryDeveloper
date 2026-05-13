@@ -51,6 +51,8 @@ hard_boundaries:
   - Do NOT create master plan, BACKLOG row, or invoke `project-new` — user triggers next step after review.
   - Do NOT commit — user decides when.
   - Do NOT load whole reference specs when `spec_section` / `spec_sections` slices cover it.
+  - Phase 3.5 enriched grill — Stage 1 strict band: every task carries all 8 fields. Stages 2+ — fields with `always` mandatory band MUST be present. Partial enrichment on Stage 1 → STOP + re-poll.
+  - Phase 9 — emit BOTH `.html` (canonical artifact) and `.md` (derived sidecar). `.html` MUST embed the canonical MD inside `<script id="rawMarkdown" type="text/plain">`. Round-trip `extract-md → diff .md` MUST be byte-clean before handing back. NEVER persist `.html` without the sidecar `.md` (legacy validator chain breaks).
 caller_agent: design-explore
 ---
 
@@ -258,6 +260,36 @@ Detail the selected approach:
 - **Interfaces / contracts** — key function signatures, file formats, event boundaries, CLI flags
 - **Non-scope** — explicit list of what this approach does NOT do
 
+### Phase 3.5 — Enriched field grill (8 fields per task / stage)
+
+Schema contract: [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md). Fetch via `rule_content design-explore-output-schema` before starting the grill. Carries the 8 field shapes, mandatory bands, MD persistence shape, downstream ingestion points.
+
+**Causal chain.** The 8 fields cross from this skill into `ship-plan` Phase B (digest authoring) into `ship-cycle` Pass A (spec-implementer) into `verify-loop` Pass B. Without enrichment authoring here, downstream digests stay thin → spec-implementer + verifier work from prose only. With it, body_md carries machine-typed mockups + edge cases + failure modes + path previews.
+
+**Phase 3.5 fires** for every stage + task produced in Phase 3, regardless of plan_shape. Order: stage-level fields first (`edge_cases[]`, `shared_seams[]`), then per-task fields (6 × N tasks).
+
+**Polling shape — one question per turn.** Plain-language preface + Recommended line mandatory per [`agent-human-polling`](../../rules/agent-human-polling.md). Defer the heaviest fields (`visual_mockup_svg`, `before_after_code`) to last.
+
+**Grill poll order (8 polls, expand per task / stage):**
+
+1. **Per stage — `edge_cases[]`.** "What edge cases must the red-stage proof cover before this stage closes?" Agent enumerates ≥3 `{input, state, expected}` triples per stage. Always mandatory.
+2. **Per stage — `shared_seams[]`.** "What interface contracts cross from this stage forward or backward into other stages?" Skip when stage is self-contained (validator emits INFO). Bullet list of `{name, producer_stage, consumer_stages, contract}`.
+3. **Per task — `glossary_anchors[]`.** Driven by Tool recipe (no human poll required); ≥1 anchor per task. Always mandatory.
+4. **Per task — `touched_paths_with_preview`.** Driven by Tool recipe `csharp_class_summary` calls. One entry per item in `touched_paths`. Always mandatory.
+5. **Per task — `failure_modes[]`.** "Name the concrete ways this task can ship broken." Bullet list of "Fails if X" statements; ≥1 entry. Always mandatory.
+6. **Per task — `decision_dependencies`.** Driven by `arch_decision_list` (Tool recipe); per-task-type band — fires when touched_paths overlap `ia/specs/architecture/**` OR `digest_outline` references DEC-A*. Optional otherwise.
+7. **Per task — `visual_mockup_svg`.** "What does this task SHOW the user when shipped?" Inline SVG ≤200 LOC, ds-* palette. Always mandatory on Stage 1 tracer-slice tasks; per-task-type elsewhere (kind=code AND touched_paths include UI surface); optional otherwise.
+8. **Per task — `before_after_code`.** Driven by Tool recipe `csharp_class_summary`. Pair `{path, before, after}` ≤30 LOC per side. Per-task-type band — kind=code AND largest touched-path LOC ≥50; optional otherwise.
+
+**Hard rule — Stage 1 strict band.** Every task of the first stage carries all 8 fields. Stage 1 is the load-bearing prototype demonstration (prototype-first methodology); partial enrichment defeats the purpose. Validator (`validate-design-explore-yaml.mjs`) enforces.
+
+**Persist shape (in working memory until Phase 9):**
+
+- YAML frontmatter `enriched:` sub-block per task (machine-typed values).
+- Parallel MD body subsections (`#### Task {ID} — Enriched` + sub-headings).
+
+Both surfaces emitted at Phase 9 persist time. Schema contract specifies dual surface; renderer (Phase 9) reads frontmatter for widget binding, ship-plan reads body subsections for digest injection.
+
 ### Phase 4 — Architecture + Red-Stage Proofs + YAML Emitter
 
 Emit both:
@@ -402,11 +434,32 @@ For each item: location (which phase), problem, recommended fix.
 - Resolve all **BLOCKING** items before persisting.
 - Include **NON-BLOCKING** + **SUGGESTIONS** verbatim in `## Review Notes`.
 
-### Phase 9 — Persist
+### Phase 9 — Persist (HTML-first + MD derived artifact)
 
-Detect whether `## Design Expansion` section already exists in `{DOC_PATH}`:
-- **Exists** → update content in place between that header and the next `---` separator.
-- **Not present** → append after a `---` separator following the last existing section.
+**Output shape — `.html` canonical + `.md` derived sidecar.**
+
+Phase 9 emits TWO files atomically:
+
+- `docs/explorations/{slug}.html` — canonical artifact (embeds raw MD inside `<script id="rawMarkdown">` block + renders 11 Thariq widgets + embeds enriched fields from frontmatter)
+- `docs/explorations/{slug}.md` — derived sidecar (byte-equal to the MD embedded inside the HTML; ship-plan Phase A.0 prefers HTML extract path but falls back to .md when only the sidecar is present)
+
+The `.md` exists so legacy validators (`validate-design-explore-yaml.mjs`, `validate:frontmatter`, `generate:ia-indexes`) keep operating on a single text source without traversing HTML. Hand-edits to `.md` are absorbed at next design-explore re-run via the renderer reading `.md` as input.
+
+**Steps (in order):**
+
+1. Author canonical MD in working memory: frontmatter (lean YAML + `enriched:` blocks per task / stage) + body (Design Expansion + parallel `#### Task {ID} — Enriched` subsections per task).
+2. Detect `## Design Expansion` existence inside current `{DOC_PATH}` (when caller passed an existing `.md`):
+   - **Exists** → update content in place between that header and the next `---` separator.
+   - **Not present** → append after a `---` separator following the last existing section.
+3. Write `.md` sidecar to disk: `docs/explorations/{slug}.md` (or versioned `{slug}-v{N+1}.md` on `--resume`).
+4. Run renderer: `npm run design-explore:render-html {slug}`. Renderer reads `.md`, parses frontmatter via `js-yaml`, fills the `ia/templates/design-explore.html.template` slots (`{{TITLE}}`, `{{META_CHIPS_JSON}}`, `{{FRONTMATTER_RAW}}`, `{{RAW_MD}}`, `{{STAGES_JSON}}`, `{{DECISIONS_JSON}}`, `{{REFERENCES_JSON}}`, `{{CUSTOM_BLOCKS}}`), writes `docs/explorations/{slug}.html`.
+5. Validate round-trip: `npm run design-explore:extract-md {slug} > /tmp/extracted.md` then `diff /tmp/extracted.md docs/explorations/{slug}.md`. Zero diff (modulo trailing newline) confirms canonical embed is byte-clean.
+6. Hand back ABSOLUTE paths + `open` cmd so user's IDE can reach both files:
+
+   ```
+   .md  → file:///Users/.../docs/explorations/{slug}.md
+   .html → file:///Users/.../docs/explorations/{slug}.html
+   ```
 
 **Mandatory subsections (per `docs/prototype-first-methodology-design.md §6 D10` — prototype-first methodology):**
 
@@ -551,7 +604,18 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 
 ---
 
-## Tool recipe (territory-ia) — Phase 5 only
+## Tool recipe (territory-ia) — Phase 3.5 + Phase 5
+
+### Phase 3.5 recipe (enriched field grill driver)
+
+Per design-explore run, batch the following MCP calls once at the start of Phase 3.5 + use returned data per-task during the grill polls:
+
+1. **`glossary_lookup` (batched per task).** Per task in working memory, batch one `glossary_lookup({ keywords: [...digest_outline tokens, ...interface names, ...touched_paths basenames] })` call. Returned anchors fill `enriched.glossary_anchors[]` verbatim. No grill poll required — anchors are derived.
+2. **`arch_decision_list` (once per run).** Single call: `arch_decision_list({ plan_slug: "{slug}" })` — returns DEC-A* rows scoped to this plan + global. Surface matching rows per task during the `decision_dependencies` grill poll.
+3. **`csharp_class_summary` (batched per `.cs` path).** Per task, for each `.cs` path in `touched_paths`, call `csharp_class_summary({ path })`. Returns `{ loc, summary }`. Fills `enriched.touched_paths_with_preview[].loc` + `.summary` + `.kind` (`new` when LOC unresolvable; `extend` when LOC > 0 + path exists in `touched_paths`).
+4. **Reuse for `before_after_code`.** Same `csharp_class_summary` output drives `enriched.before_after_code.before` — agent extracts ≤30 LOC excerpt of the target method/class from summary's body slice; drafts `.after` shape during the grill turn.
+
+### Phase 5 recipe (subsystem impact)
 
 **Composite-first call (MCP available):**
 
@@ -597,3 +661,4 @@ See `ia/rules/plan-digest-contract.md` rubric point 1 (zero open picks) and `ia/
 
 ## Changelog
 
+- 2026-05-13 — feat: HTML-first uplift (design-explore-html-effectiveness-uplift plan). Phase 3.5 added — 8-field enriched grill (visual_mockup_svg, before_after_code, edge_cases, glossary_anchors, failure_modes, decision_dependencies, shared_seams, touched_paths_with_preview) per [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md). Tool recipe extended with Phase 3.5 sub-block (batch glossary_lookup + arch_decision_list + csharp_class_summary). Phase 9 rewritten — emits BOTH `{slug}.html` (canonical, embeds raw MD inside `<script id="rawMarkdown">`) + `{slug}.md` (derived sidecar). Renderer = `npm run design-explore:render-html {slug}` (script: `tools/scripts/render-design-explore-html.mjs`); template = `ia/templates/design-explore.html.template`. Round-trip extractor = `npm run design-explore:extract-md {slug}` (script: `tools/scripts/extract-exploration-md.mjs`). Hard boundaries extended — Stage 1 strict band; HTML + MD both written. Source: HTML-first uplift causal chain — enriched body_md flows into ship-plan Phase B prompt → ship-cycle Pass A spec-implementer transparently (ship-cycle preflight reads full body_md via `task_spec_body` MCP).

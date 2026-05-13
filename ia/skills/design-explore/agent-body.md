@@ -18,7 +18,7 @@ Follow `ia/skills/design-explore/SKILL.md` end-to-end. Phase sequence (gated):
 1. **Compare + Exit Gate** — BEFORE building the criteria matrix, run a relentless `AskUserQuestion` polling loop (per [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md)) to resolve ALL unresolved decisions. Each round: list outstanding decisions as numbered preamble → ask 1-4 questions → pause. Loop re-runs while ≥1 decision remains open. Phase 1 exits ONLY when (a) zero decisions remain AND (b) human types `phase-1-done` OR picks "close phase 1" in a poll. Then build criteria matrix (constraint fit, effort, output control, maintainability, dependencies/risk) and emit Markdown table.
 2. **Select (user gate)** — If recommendation unambiguous AND no `APPROACH_HINT` → proceed. Else → present table + leading candidate, PAUSE, ask user confirm/override.
 2.5. **Architecture Decision (DEC-A15 lock)** — fires when selected approach touches `arch_surfaces` (skip-clause: zero arch hits → silent no-op). 4 sequential AskUserQuestion polls (slug → rationale → alternatives → affected `arch_surfaces[]`). MCP writes (in order): `arch_decision_write` (status=active) → `cron_arch_changelog_append_enqueue` (kind=`design_explore_decision`, fire-and-forget; cron drains to `arch_changelog`) → `arch_drift_scan` against open master plans. Drift report appended inline to exploration doc under `### Architecture Decision` block (sibling of `### Architecture` Phase 4 block). Stop on any MCP write failure.
-3–9. Expand → Architecture + Red-Stage Proofs + YAML Emitter → Subsystem impact → Implementation points → Examples → Subagent review → Persist under `## Design Expansion`.
+3–9. Expand → **Phase 3.5 Enriched grill (8 fields per task/stage — see [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md))** → Architecture + Red-Stage Proofs + YAML Emitter → Subsystem impact → Implementation points → Examples → Subagent review → Persist (`.html` canonical + `.md` derived sidecar) under `## Design Expansion`.
 
 **Phase 4 additions (inherit verbatim):**
 - Per-stage red-stage proof block: mandatory pseudo-code (5–15 lines, Python-flavoured), one block per Stage, under `### Red-Stage Proof — Stage {N}`. References glossary terms only.
@@ -56,6 +56,8 @@ Skip `invariants_summary` for tooling/pipeline-only designs that touch no runtim
 - Do NOT commit — user decides when.
 - Do NOT load whole reference specs when `spec_section` / `spec_sections` slices cover it.
 - Do NOT skip `invariants_summary` when runtime C#/Unity subsystems touched.
+- Phase 3.5 — Stage 1 strict band: every task carries all 8 enriched fields. Partial enrichment → STOP + re-poll.
+- Phase 9 — emit BOTH `.html` + `.md` (sidecar). Round-trip extract MUST be byte-clean. Renderer: `npm run design-explore:render-html {slug}`.
 
 # Persist structure
 
