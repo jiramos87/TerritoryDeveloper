@@ -101,6 +101,8 @@
     <li><a href="#risks">Risks + escape hatches</a></li>
     <li><a href="#orig-gap">Gap closure vs original migration plan (DEC-A28)</a></li>
     <li><a href="#md-handoff">Markdown handoff section (for the implementing agent)</a></li>
+    <li><a href="#iter1-critique">Visual critique — iter 1 implementation vs visual goals</a></li>
+    <li><a href="#iter2-strategy">Iteration 2 — goals + strategy</a></li>
   </ol>
 </div>
 
@@ -850,6 +852,274 @@ Before `git add` for the single end-of-Phase-H commit:
 </pre>
 
 <p class="small" style="margin-top:32px">End of plan. ~9 phases, ~40 mechanical steps, ~10 new tools/methods, 0 cross-coupling between phases. Self-contained; the HTML carries all required visual context.</p>
+
+<!-- =========================================================== -->
+<h2 id="iter1-critique">12 · Visual critique — iter 1 implementation vs visual goals</h2>
+<p class="lead">Iteration 1 (commit <code>0c7045ae</code>) shipped on <code>feature/asset-pipeline</code>. Compile-check, ui-def-drift-scan, residual-uGUI grep all green. <b>Visually, only MainMenu is close to its goal — the CityScene HUD looks broadly the same as before the recovery</b> (small improvement, far from parity). Captured by Javier 2026-05-13 ~17:32–17:41:</p>
+<ul class="small">
+  <li><code>~/Desktop/Screenshot 2026-05-13 at 5.32.30 PM.png</code> — CityScene HUD, no map (top-of-frame fragmented overlap)</li>
+  <li><code>~/Desktop/Screenshot 2026-05-13 at 5.32.44 PM.png</code> — top-left zoom; mini-map preview <i>does</i> render content (orange zone tile + green grass + blue water)</li>
+  <li><code>~/Desktop/Screenshot 2026-05-13 at 5.34.50 PM.png</code> — CityScene with iso map loaded; full-screen view</li>
+  <li><code>~/Desktop/Screenshot 2026-05-13 at 5.41.43 PM.png</code> — MainMenu with cursor on "New Game" — only the hovered button shows cream chrome; the other 4 are invisible</li>
+</ul>
+
+<h3>12.1 · Per-goal scorecard</h3>
+<table>
+<thead><tr><th style="width:120px">Goal</th><th>Iter-1 result</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>Goal A · CityScene HUD</b></td>
+  <td>Top strip is a chaos of overlapping fragments: a stray "<code>Zones [R][C][I] Active</code>" badge top-left (zone-overlay-uidoc), a horizontal "Terrain · Zones · Roads · Water · Grid" row (overlay-toggle-strip-uidoc), and a tiny center cluster of "Pop 0 / $0 / Est. monthly… / HAP… FUNDS DAY" — all rendered without a cream-card backplate. Right side has invisible AUTO/MAP plus the time-controls "1x 2x 3x" floating in space without chrome. Mini-map preview <i>does</i> show the city in tiny pixels (top-left). Toolbar tile icons render but their cream backplate is missing — icons appear floating on the dark navy bg.</td>
+  <td><span class="pill bad">FAIL</span></td>
+</tr>
+<tr>
+  <td><b>Goal B · MainMenu</b></td>
+  <td>Layout, footer, Continue+New+Load+Settings+Quit stack, Territory title, build code — all correctly positioned. <b>But:</b> only the <i>:hover</i> button shows the cream backplate + tan border; the other 4 buttons are invisible (no fill, no border). Title "Territory" renders in faint dark grey on dark grey — barely readable. Footer "Bacayo Studio" + build code render but very dim.</td>
+  <td><span class="pill warn">CLOSE</span></td>
+</tr>
+<tr>
+  <td><b>Goal C · CityStats modal</b></td>
+  <td>Not opened in this round of screenshots — no toggler wired (Phase F-stats). Cannot evaluate.</td>
+  <td><span class="pill todo">UNTESTED</span></td>
+</tr>
+<tr>
+  <td><b>Goal D · Subtype picker</b></td>
+  <td>Not visible in screenshots; no toolbar tile click captured. UIDoc was added in scene + Host wired direct, but the trigger path (toolbar-tile click → picker.Open) is unverified at runtime.</td>
+  <td><span class="pill todo">UNTESTED</span></td>
+</tr>
+</tbody>
+</table>
+
+<h3>12.2 · Annotated panel-by-panel breakdown</h3>
+<div class="grid grid-2">
+
+<div class="card bad">
+  <h4>HudBar — invisible chrome, broken layout</h4>
+  <p><b>Expected</b> (Goal A): solid cream-tan bar across top, 3 distinct clusters with visible separators, icons visible on cream tiles, "Blackwood" city name large, surplus caption in orange.</p>
+  <p><b>Actual</b>: HUD bar background <i>not visible at all</i>. Labels render as tiny text scattered along the top. Pause icon, mini-map slot, zoom +/− buttons not visible. AUTO + MAP render as plain text, no border. Icon-button .icon-btn class likely has the right spec but its cream backplate isn't rendering.</p>
+</div>
+
+<div class="card bad">
+  <h4>Toolbar — wrong position + missing backplate</h4>
+  <p><b>Expected</b>: vertical strip on left edge, 2-col grid of cream-tan tiles, dark icons on cream backgrounds, ~64–88px wide.</p>
+  <p><b>Actual</b>: 2-col grid of icons appears <i>at the top-left of the screen</i> — not anchored as a vertical strip on the left edge. Icons themselves load and render correctly (residential, commercial, industrial, road, services, power, water, landmark, bulldoze — all 9 sprite paths resolved). But the cream tile backplate is missing — the icons float on the navy bg.</p>
+</div>
+
+<div class="card warn">
+  <h4>MainMenu — title low contrast, buttons invisible until hover</h4>
+  <p><b>Expected</b>: large tan "Territory" title on dark bg; 5 cream buttons with dark text + tan border.</p>
+  <p><b>Actual</b>: Layout matches goal exactly — title position, 5 buttons stacked, footer split L/R. <i>Only</i> the hovered button (currently "New Game") shows cream backplate + border. The other 4 (Continue, Load, Settings, Quit) are invisible — no fill, no border. Title renders in dark grey on dark grey instead of tan-on-dark.</p>
+</div>
+
+<div class="card warn">
+  <h4>Time controls — text-only no chrome</h4>
+  <p><b>Expected</b>: 3 cream buttons "1x 2x 3x" with tan border, anchored top-right above MAP.</p>
+  <p><b>Actual</b>: "1x 2x 3x" labels render as bare text, no button chrome, no active-state highlight.</p>
+</div>
+
+<div class="card bad">
+  <h4>Out-of-scope HUDs leaking — overlay-toggle-strip + zone-overlay</h4>
+  <p>The recovery plan didn't address two pre-existing UIDocs that render at top-of-screen and now <i>compete with</i> the new HudBar:</p>
+  <ul>
+    <li><code>overlay-toggle-strip-uidoc</code>: horizontal strip "Terrain · Zones · Roads · Water · Grid" with tiny checkboxes — visible across top of screen in shots 1 + 3.</li>
+    <li><code>zone-overlay-uidoc</code>: "Zones [R][C][I] Active" badge floating top-left in shot 1.</li>
+  </ul>
+  <p>Both are at <code>sortOrder=20</code> after the recovery sortOrder pass, putting them above the HUD bar (sortOrder=10) — explains the layered fragments.</p>
+</div>
+
+<div class="card ok">
+  <h4>Wins observed (do not regress)</h4>
+  <ul>
+    <li>Mini-map preview tile <i>actually renders city contents</i> in pixel form (visible top-left in shot 2 — orange zone tile, green grass, blue water). Phase G was marked MINIMAL but appears to work.</li>
+    <li>9 toolbar icon sprites resolve correctly via <code>project://database/Assets/Sprites/Icons/icon-*.png</code> URLs.</li>
+    <li>MainMenu structural layout (title, 5-stack, footer) = pixel-perfect to Goal B.</li>
+    <li>MainMenu :hover state on a button <i>does</i> render full cream chrome + tan border — confirms the USS is wired and the cream tokens resolve at hover specificity.</li>
+    <li><code>ui_def_drift_scan</code> = 0 drifts; theme-patch script idempotent; sortOrder script idempotent.</li>
+  </ul>
+</div>
+
+</div>
+
+<h3>12.3 · Root-cause hypotheses (ranked by likely impact)</h3>
+<table>
+<thead><tr><th style="width:36px">#</th><th>Hypothesis</th><th>Evidence</th><th>Prob.</th></tr></thead>
+<tbody>
+<tr>
+  <td>H1</td>
+  <td><b><code>cream.tss</code> tokens are not cascading to base selectors — only resolve on <code>:hover</code> specificity.</b> Either <code>cream.tss</code> failed to import (AssetDatabase didn't refresh after .meta GUID was hand-written), or the stock <code>UnityDefaultRuntimeTheme.tss</code> on <code>MainPanelSettings</code> wins the cascade order, or <code>:root</code> custom properties don't propagate to non-root selectors in Unity 2022's UI Toolkit when both stylesheets import via different paths.</td>
+  <td>MainMenu :hover button is fully cream + bordered → tokens resolve at <i>some</i> selector. Base selector renders transparent → <code>var(--ds-color-bg-card-inner, #ede4ce)</code> evaluates to neither the var <i>nor</i> the fallback; computed style is likely <code>rgba(0,0,0,0)</code> default. The <code>#ede4ce</code> fallback should always render even if the var fails — it doesn't, which suggests something is overriding (e.g. ThemedButton runtime style writer).</td>
+  <td><span class="pill bad">HIGH</span></td>
+</tr>
+<tr>
+  <td>H2</td>
+  <td><b>UIDocument RootVisualElement isn't sized to viewport.</b> Root <code>VisualElement</code> defaults to <code>flex: 0</code> until the host sets <code>style.flexGrow=1</code> or USS gives it <code>position:absolute; top:0; left:0; right:0; bottom:0</code>. Without that, child layouts compute against zero width → labels "fall out" of their cluster shapes.</td>
+  <td>Top-of-screen labels render at tiny font sizes scattered horizontally — consistent with absolute-positioned children of a zero-sized root.</td>
+  <td><span class="pill warn">HIGH</span></td>
+</tr>
+<tr>
+  <td>H3</td>
+  <td><b>Toolbar UIDocument GameObject anchor is wrong.</b> The Generated USS has <code>position:absolute; top:100px; left:8px; width:88px;</code> but the UIDocument's panel itself anchors to top-left and the rect-transform / panel-settings reference resolution does not produce the visible vertical strip. The 9-tile grid lands at top-left because the panel snapshots to (0,0) and the children flex right.</td>
+  <td>Shot 1 + 3: 9-tile grid sits at top-left in 2 columns × ~5 rows, not on the left edge.</td>
+  <td><span class="pill warn">HIGH</span></td>
+</tr>
+<tr>
+  <td>H4</td>
+  <td><b>Out-of-scope legacy HUDs interfere with parity</b>. <code>overlay-toggle-strip-uidoc</code> + <code>zone-overlay-uidoc</code> were left alive (Phase F sortOrder bumped them to 20, putting them on top of the new HUD bar at 10). They compete for top-of-screen real estate and visually break the goal layout.</td>
+  <td>Shot 1: "Terrain · Zones · Roads · Water · Grid" + "Zones [R][C][I] Active" both render at top, dwarfing the HUD bar.</td>
+  <td><span class="pill warn">MED-HIGH</span></td>
+</tr>
+<tr>
+  <td>H5</td>
+  <td><b>MainPanelSettings reference resolution mismatch</b>. <code>m_ReferenceResolution: {x: 1920, y: 1080}</code> with <code>m_ScaleMode: 2</code> (Constant Pixel Size) means px-values render literally. If the captured screenshots are at 2880×1800 (Mac retina), things look 1.5× tinier than designed. Designed for ScaleMode=1 (Match Width Or Height) likely.</td>
+  <td>All HUD text reads at ~11px on what looks like a 1500×800-pt window; consistent with literal px instead of scaled px.</td>
+  <td><span class="pill warn">MED</span></td>
+</tr>
+<tr>
+  <td>H6</td>
+  <td><b>Theme-patch script touched files but cream.tss never imported at runtime</b>. The <code>&lt;Style src="project://database/Assets/UI/Themes/cream.tss"/&gt;</code> line is in every patched UXML head, but if Unity AssetDatabase still has the old import for <code>cream.tss.meta</code>, the file may be flagged as <i>not a USS asset</i> and silently skipped on UIDocument load.</td>
+  <td>The <code>cream.tss.meta</code> was hand-authored in iter 1 with a synthetic GUID — Unity may need an explicit <code>AssetDatabase.Refresh()</code> + reopen Editor for the new ScriptedImporter binding to take.</td>
+  <td><span class="pill warn">MED</span></td>
+</tr>
+<tr>
+  <td>H7</td>
+  <td><b>Time-controls / icon-buttons render text path, not background-image path</b>. Buttons authored with <code>text="1x"</code> and CSS class <code>.time-controls__btn</code>: if .uss doesn't actually load, the button falls back to default UI Toolkit Button which is borderless transparent.</td>
+  <td>Same chrome-missing pattern across all bare buttons — supports H1.</td>
+  <td><span class="pill warn">MED</span></td>
+</tr>
+<tr>
+  <td>H8</td>
+  <td><b>The 9-tile toolbar icon backgrounds use <code>background-image</code> but no <code>width</code>/<code>height</code> sized container</b>. Without explicit dims on the <code>.toolbar__tile</code> wrapper, sprite scale-to-fit collapses.</td>
+  <td>Shot 1 icons render at native sprite size (~22×22) with no surrounding cream square. The toolbar.uss <i>does</i> set <code>.toolbar__tile { width:34px; height:34px; }</code> — so the dim is set; but no cream backplate is visible.</td>
+  <td><span class="pill warn">MED-LOW</span></td>
+</tr>
+</tbody>
+</table>
+
+<h3>12.4 · One-shot summary</h3>
+<blockquote>
+  <p>Iteration 1 delivered the <i>structural</i> recovery (UXML reshaping, Host wiring, theme files authored, scene UIDoc added, sortOrders set, validators green) — but the <i>theme cascade</i> never lit up. Cream tokens resolve at <code>:hover</code> specificity in MainMenu (proving the file <i>is</i> loaded somewhere) but not at base selectors anywhere. Combined with un-reskinned legacy HUDs leaking through and at-least-one anchor/reference-resolution miss, the visual gap to the goal screenshots is still ~70%. The right fix is <i>not</i> "redo the recovery" — it's a focused theme + anchor + competing-HUD pass.</p>
+</blockquote>
+
+<!-- =========================================================== -->
+<h2 id="iter2-strategy">13 · Iteration 2 — goals + strategy</h2>
+<p class="lead">Iter-2 closes the visual gap. <b>Smaller scope than iter-1</b> — no new Hosts, no new panels.json rows, no new C# managers. Six tightly-scoped fixes, each with a hard verification gate (bridge snapshot diff). Estimated &lt; ½ the surface area of iter 1.</p>
+
+<h3>13.1 · Iter-2 acceptance criteria (hard gates)</h3>
+<ul class="checklist">
+  <li>Every base-state button on plan-scope panels renders cream backplate + tan border <i>without</i> :hover.</li>
+  <li>HudBar renders as a single contiguous cream-tan strip across top of CityScene; the 3 clusters (left/center/right) are visually separable; surplus caption visible in orange.</li>
+  <li>Toolbar renders as a vertical 2-col strip docked to the LEFT EDGE of the viewport, not at the top-left corner.</li>
+  <li>Time-controls renders as 3 cream-tan buttons "1x 2x 3x" anchored top-right above MAP toggle.</li>
+  <li>MainMenu title "Territory" is clearly readable (high contrast tan-on-dark).</li>
+  <li>Out-of-scope legacy HUDs (overlay-toggle-strip, zone-overlay) are <i>either</i> hidden, <i>or</i> reskinned to coexist with the new HudBar without overlap.</li>
+  <li>Per-panel <code>npm run unity:visual-diff &lt;slug&gt;</code> against goldens captured in Phase H8 is &lt; tolerance for: <code>main-menu</code>, <code>hud-bar</code>, <code>toolbar</code>, <code>time-controls</code>, <code>tool-subtype-picker</code>.</li>
+  <li>Stats-panel (Goal C) opens via at least one wired trigger (toolbar tile? hotkey? new HUD button?) — picked during Phase Z3 below.</li>
+</ul>
+
+<h3>13.2 · Phases (Z0 → Z6)</h3>
+
+<div class="grid grid-2">
+<div class="card warn">
+  <h4>Phase Z0 — Theme cascade audit (gating)</h4>
+  <p>Before any fix, prove which hypothesis (H1 or H6) is true. <b>Three diagnostic probes</b>:</p>
+  <ol>
+    <li>Inspect <code>Assets/UI/Themes/cream.tss</code> at runtime via bridge: confirm asset loads + custom-prop block is non-empty in Editor playmode.</li>
+    <li>In <code>main-menu.uss</code>, replace <i>one</i> rule's <code>var(--ds-color-bg-card-inner, #ede4ce)</code> with the literal <code>#ede4ce</code>. Bake + bridge snapshot. If buttons now render → <b>vars don't cascade</b> (H1). If still invisible → <b>the .uss isn't loaded</b> (H6 or worse).</li>
+    <li>Add a <code>#main-menu &gt; *</code> debug rule with <code>border: 1px solid red;</code> — re-snapshot. Red borders visible? .uss loads. Red borders absent? .uss path broken.</li>
+  </ol>
+  <p>Output of Z0 is a <i>verdict</i> — drives whether Z1 = "promote PanelSettings.themeUss to cream theme" (H6 fix) or Z1 = "drop var() in favor of literal hex" (H1 fix). Branches collapse to ≤ 1 paragraph delta in the rest of Z phases.</p>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z1 — Theme load fix (whichever Z0 elects)</h4>
+  <p><b>Branch H6</b>: change <code>MainPanelSettings.asset</code> <code>themeUss</code> field from <code>UnityDefaultRuntimeTheme.tss</code> → <code>Assets/UI/Themes/cream.tss</code> (PanelSettings GUID rewrite, single line). Re-import asset via Unity bridge, AssetDatabase.Refresh, re-snapshot.</p>
+  <p><b>Branch H1</b>: drop all <code>var(--ds-*)</code> calls in plan-scope .uss files; replace with the literal hex from the cream.tss token table. Pure search-and-replace — &lt; 30 lines per file.</p>
+  <p><b>Both branches</b>: explicit AssetDatabase.Refresh via bridge after edit; reopen Editor if Refresh isn't enough. Also wire a small <code>tools/scripts/recovery-tss-import-refresh.mjs</code> helper so subsequent re-bakes don't break.</p>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z2 — UIDocument anchor / reference-resolution fix</h4>
+  <p>Two surgical changes:</p>
+  <ol>
+    <li><b>MainPanelSettings.asset</b>: <code>m_ScaleMode: 2</code> → <code>m_ScaleMode: 1</code> (Match Width Or Height); set <code>m_Match: 0.5</code>. Side-effect: HUD elements scale with viewport instead of rendering at literal px.</li>
+    <li>For each plan-scope <i>HUD</i> UIDocument GameObject (hud-bar, toolbar, time-controls, tool-subtype-picker, mini-map): in the Host C# OnEnable, set <code>root.style.position = Position.Absolute; root.style.top/left/right/bottom = 0;</code> to make the panel's rootVisualElement fill the viewport. The Generated USS already has <code>position:absolute</code> on the inner element; this gives that element a sized parent.</li>
+  </ol>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z3 — Out-of-scope HUD reconciliation</h4>
+  <p>Three sub-surfaces to address — pick per surface during Z3 review:</p>
+  <ul>
+    <li><b>overlay-toggle-strip-uidoc</b> (Terrain · Zones · Roads · Water · Grid): not in pre-migration goal screenshots. <b>Default action: hide</b> (set sortOrder=-1 + disable on enable, or remove from CityScene). <b>Alternate</b>: cream-skin it as a sub-strip below the HudBar (re-anchor + apply cream theme).</li>
+    <li><b>zone-overlay-uidoc</b> ("Zones R C I Active"): same triage — likely hide (legacy debug HUD).</li>
+    <li><b>growth-budget-panel-uidoc</b>: was at sortOrder=10 before recovery, bumped to 100 in F sortOrder pass — confirm doesn't appear unexpectedly on Play start.</li>
+  </ul>
+  <p>For both hide-actions: poll Javier first via AskUserQuestion (HUDs may be load-bearing for current dev workflow even if not in pre-migration parity goal). Caveat: this Phase is the only one that <i>can</i> regress current dev tooling — handle with care.</p>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z4 — Stats-panel opener (Goal C wiring)</h4>
+  <p>Pick ONE trigger path for stats-panel and wire it end-to-end:</p>
+  <ul>
+    <li><b>Option A</b> — HudBar gets a 4th right-cluster button "STATS" → <code>ModalCoordinator.Show("stats-panel")</code>. Smallest UX change.</li>
+    <li><b>Option B</b> — Hotkey (S) opens stats-panel. No UI add. Requires global hotkey hook.</li>
+    <li><b>Option C</b> — Toolbar tile click for "services" opens stats-panel directly (instead of subtype picker). Re-uses existing tile.</li>
+  </ul>
+  <p>Recommended: A. Fastest verifiable path. UXML add 1 button + Host wire 1 click handler + USS class.</p>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z5 — Subtype picker live test (Goal D verification)</h4>
+  <p>Run a Play-Mode test: bridge clicks toolbar tile "zone-r" → confirm picker UXML displays at bottom-left with 3 tier cards. If display:none stays after .Open() → debug VisualElement.style.display vs USS class fight.</p>
+</div>
+
+<div class="card warn">
+  <h4>Phase Z6 — Visual baseline capture + diff</h4>
+  <p>Run <code>npm run unity:visual-diff main-menu --capture</code> + same for hud-bar/toolbar/time-controls/tool-subtype-picker/stats-panel. Goldens land in <code>tools/visual-baseline/golden/</code>. Manual review by Javier; on green, baselines committed. Re-run in CI catches future regressions.</p>
+</div>
+</div>
+
+<h3>13.3 · Order + dependency graph</h3>
+<pre>
+Z0 (audit, gating)
+   ├─ branches H1 path → Z1·H1 (drop var() in .uss)
+   └─ branches H6 path → Z1·H6 (PanelSettings.themeUss flip)
+Z1 → Z2 (anchor + scale-mode)        ← independent of Z3
+Z2 → Z3 (legacy HUD reconciliation)  ← polls Javier first
+Z2 → Z4 (stats opener)                ← independent of Z3
+Z4 → Z5 (subtype picker live test)   ← uses toolbar tile = same Host
+Z5 → Z6 (visual baseline + diff)     ← gating for commit
+</pre>
+
+<h3>13.4 · What iter 2 does <i>NOT</i> touch</h3>
+<ul>
+  <li>panels.json schema (no version bump — schema_version stays 5).</li>
+  <li>Hosts other than the surgical anchor + Stats-opener changes.</li>
+  <li>cream.tss tokens (the .tss table itself is fine).</li>
+  <li>Tool sprite atlases / icon-zoom-in/out placeholder PNGs.</li>
+  <li>Mini-map RT capture (still deferred per iter-1 §G).</li>
+  <li>Hover info card / GridHoverProbe (still deferred per iter-1 §F2).</li>
+  <li>Studio controls / onboarding overlay / notifications-toast triggers.</li>
+  <li>UiBindRegistry quarantine beyond what iter-1 F0 already cut.</li>
+  <li>DEC-A28 amend — no architectural deviation expected.</li>
+</ul>
+
+<h3>13.5 · Risk + escape hatches</h3>
+<table>
+<thead><tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Z0 verdict ambiguous (both probes red).</td><td><span class="pill warn">L</span></td><td>Add a 3rd probe: bridge dumps <code>UIDocument.rootVisualElement.resolvedStyle.backgroundColor</code> for a known element at runtime. Definitive answer.</td></tr>
+<tr><td>Z2 ScaleMode=1 breaks existing HUDs Javier didn't want changed.</td><td><span class="pill warn">M</span></td><td>Rollback = single-line revert of <code>m_ScaleMode</code>. Keep prior PanelSettings asset bytes in commit log for fast restore.</td></tr>
+<tr><td>Z3 hide of overlay-toggle-strip-uidoc removes a current dev tool Javier uses for terrain/zones/roads/water/grid debug overlays.</td><td><span class="pill warn">M</span></td><td>Poll Javier first. Default to "reskin in-place" (lower blast radius) over "hide".</td></tr>
+<tr><td>cream.tss requires Editor restart to register .meta GUID.</td><td><span class="pill warn">M</span></td><td>Add <code>recovery-tss-import-refresh.mjs</code> step that triggers AssetDatabase.Refresh via bridge before any visual-diff.</td></tr>
+<tr><td>Visual-diff goldens drift on Mac vs CI Linux due to font rendering.</td><td><span class="pill warn">L</span></td><td>Set diff tolerance generous (3–5%); inspect manually on first capture.</td></tr>
+</tbody>
+</table>
+
+<h3>13.6 · One-shot iter-2 commit shape</h3>
+<p>Same one-commit policy as iter-1: end-of-Z6 commit titled <code>fix(ui-toolkit-parity-recovery): theme cascade + anchor + legacy-HUD reconciliation</code>. Body enumerates Z0 verdict, Z1 branch taken, Z2 anchor changes, Z3 reconciled HUDs, Z4 stats trigger, Z5 picker verdict, Z6 baselines captured.</p>
+
+<p class="small" style="margin-top:24px">End of iter-2 strategy. ~6 phases, ~12 mechanical steps, 0 new Hosts, 0 new panels.json rows. Reviewed by Javier <b>before</b> implementation per /goal directive.</p>
 
 </body>
 </html>
