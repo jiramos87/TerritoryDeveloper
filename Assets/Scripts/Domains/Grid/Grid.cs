@@ -1,3 +1,4 @@
+// registry-resolve-exempt: internal factory — constructs own domain sub-services (GridSortingOrderService, CellAccessService) in composition root
 using System.Collections.Generic;
 using UnityEngine;
 using Territory.Core;

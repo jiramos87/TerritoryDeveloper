@@ -1,3 +1,4 @@
+// long-file-allowed: legacy hub — scope outside current atomization plan; deferred to future sweep
 using UnityEngine;
 using UnityEngine.UI;
 

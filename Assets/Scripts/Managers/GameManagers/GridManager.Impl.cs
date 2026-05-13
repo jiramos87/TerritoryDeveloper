@@ -1,3 +1,4 @@
+// long-file-allowed: legacy hub — scope outside current atomization plan; deferred to future sweep
 // GridManager.Impl.cs — body methods for partial GridManager hub (Stage 3.0 atomization).
 // Invariant #5 carve-out: cellArray accessed directly here for save/restore performance paths.
 // Invariant #1: HeightMap≡Cell.height preserved verbatim in all write paths.

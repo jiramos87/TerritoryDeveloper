@@ -2,21 +2,14 @@
 // validate-no-hub-fat.mjs
 // Scans Assets/Scripts/Managers/**/*.cs + Controllers/**/*.cs for files >200 LOC.
 // Honors: // long-file-allowed: {reason}
-// Gated behind ATOMIZATION_GATES=1 env flag; exits 0 when flag absent.
-// Wire: package.json validate:no-hub-fat; validate:all reference deferred to Stage 8.0.
+// Stage 8.0 Tier-F: gate promoted — always ON; no env flag required.
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../..');
-const GATE_ACTIVE = process.env.ATOMIZATION_GATES === '1';
 const LOC_LIMIT = 200;
-
-if (!GATE_ACTIVE) {
-    console.log('[validate-no-hub-fat] ATOMIZATION_GATES not set — skipping (stub OFF).');
-    process.exit(0);
-}
 
 const SCAN_DIRS = [
     join(REPO_ROOT, 'Assets/Scripts/Managers'),

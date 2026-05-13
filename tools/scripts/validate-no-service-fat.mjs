@@ -2,21 +2,14 @@
 // validate-no-service-fat.mjs
 // Scans Assets/Scripts/Domains/*/Services/*.cs for files >500 LOC.
 // Honors: // long-file-allowed: {reason}
-// Gated behind ATOMIZATION_GATES=1 env flag; exits 0 when flag absent.
-// Wire: package.json validate:no-service-fat; validate:all reference deferred to Stage 8.0.
+// Stage 8.0 Tier-F: gate promoted — always ON; no env flag required.
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../..');
-const GATE_ACTIVE = process.env.ATOMIZATION_GATES === '1';
 const LOC_LIMIT = 500;
-
-if (!GATE_ACTIVE) {
-    console.log('[validate-no-service-fat] ATOMIZATION_GATES not set — skipping (stub OFF).');
-    process.exit(0);
-}
 
 const DOMAINS_DIR = join(REPO_ROOT, 'Assets/Scripts/Domains');
 

@@ -1,6 +1,8 @@
+// registry-resolve-exempt: internal factory — constructs own sub-services (InterstateConformanceService, InterstateGenService, InterstateFlowTrackerService) within Roads domain
 using UnityEngine;
 using System.Collections.Generic;
 using Territory.Core;
+using Territory.Geography;
 using Territory.Terrain;
 using Territory.Roads;
 // RoadStrokeTerrainRules (Territory.Utilities) lives in TerritoryDeveloper.Game — IsLandSlopeAllowedForRoadStroke inlined in InterstateConformanceService.

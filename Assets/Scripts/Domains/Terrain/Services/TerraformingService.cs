@@ -1,3 +1,4 @@
+// registry-resolve-exempt: internal factory — constructs own sub-services (TerraformSmoothService, TerraformPlanService, TerraformApplyService) within Terrain domain
 using System.Collections.Generic;
 using UnityEngine;
 using Territory.Terrain;

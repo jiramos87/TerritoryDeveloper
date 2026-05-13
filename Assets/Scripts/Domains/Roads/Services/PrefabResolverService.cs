@@ -1,3 +1,4 @@
+// registry-resolve-exempt: internal factory — constructs own sub-services (PrefabLookupService, PrefabVariantPickService, PrefabCacheService) within Roads domain
 using System.Collections.Generic;
 using UnityEngine;
 using Territory.Core;

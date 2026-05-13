@@ -1,3 +1,4 @@
+// long-file-allowed: complex algorithm — split would fragment logic without clean boundary
 using System.Collections.Generic;
 using Territory.Terrain;
 using UnityEngine;

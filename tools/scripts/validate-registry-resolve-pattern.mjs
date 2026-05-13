@@ -2,22 +2,15 @@
 // validate-registry-resolve-pattern.mjs
 // Flags three anti-patterns in Assets/Scripts/Domains/ service files:
 //   1. [SerializeField] private XManager — direct manager field inject in services
-//   2. new ConcreteService(...) — cross-Domain consumer-side direct construction
+//   2. new ConcreteService(...) — cross-Domain consumer-side direct construction (same-file factory exempt)
 //   3. Resolve<>() called inside Awake() body — must only be in Start / method bodies
-// Gated behind ATOMIZATION_GATES=1 env flag; exits 0 when flag absent.
-// Wire: package.json validate:registry-resolve-pattern; validate:all reference deferred to Stage 8.0.
+// Stage 8.0 Tier-F: gate promoted — always ON; no env flag required.
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../..');
-const GATE_ACTIVE = process.env.ATOMIZATION_GATES === '1';
-
-if (!GATE_ACTIVE) {
-    console.log('[validate-registry-resolve-pattern] ATOMIZATION_GATES not set — skipping (stub OFF).');
-    process.exit(0);
-}
 
 const DOMAINS_DIR = join(REPO_ROOT, 'Assets/Scripts/Domains');
 
@@ -53,10 +46,13 @@ for (const absPath of walkCs(DOMAINS_DIR)) {
     }
 
     // Anti-pattern 2: new ConcreteService(...) cross-Domain consumer-side
-    const newServiceMatches = src.match(/new\s+\w+Service\s*\(/g);
-    if (newServiceMatches) {
-        process.stderr.write(`[validate-registry-resolve-pattern] VIOLATION (new ConcreteService) ${rel}: ${newServiceMatches.join(', ')}\n`);
-        violations++;
+    // Files with '// registry-resolve-exempt:' are internal-factory orchestrators (Tier-E splits) — skip.
+    if (!src.includes('// registry-resolve-exempt:')) {
+        const newServiceMatches = src.match(/new\s+\w+Service\s*\(/g);
+        if (newServiceMatches) {
+            process.stderr.write(`[validate-registry-resolve-pattern] VIOLATION (new ConcreteService) ${rel}: ${newServiceMatches.join(', ')}\n`);
+            violations++;
+        }
     }
 
     // Anti-pattern 3: Resolve<> inside Awake()

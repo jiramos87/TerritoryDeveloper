@@ -1,3 +1,4 @@
+// registry-resolve-exempt: internal factory — constructs own sub-services (ThemeStyleApplyService, ThemeCacheService) within UI domain
 using UnityEngine;
 using UnityEngine.UI;
 

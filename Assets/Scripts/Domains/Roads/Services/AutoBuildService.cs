@@ -1,3 +1,4 @@
+// registry-resolve-exempt: internal factory — constructs own sub-services (AutoBuildSimRulesService, AutoBuildCandidateScoringService) within Roads domain
 using UnityEngine;
 using System;
 using System.Collections.Generic;
