@@ -295,7 +295,7 @@ namespace Territory.Editor.Bridge
             if (tmp != null) tmp.text = captionText ?? string.Empty;
         }
 
-        static void EnsureChildLayoutElement(GameObject child, float preferredWidth, float preferredHeight, float flexibleWidth = 0f)
+        public static void EnsureChildLayoutElement(GameObject child, float preferredWidth, float preferredHeight, float flexibleWidth = 0f)
         {
             if (child == null) return;
             var le = child.GetComponent<LayoutElement>();
@@ -305,7 +305,7 @@ namespace Territory.Editor.Bridge
             le.flexibleWidth = flexibleWidth;
         }
 
-        static void SpawnThemedLabelChild(GameObject prefabRoot, out TMP_Text tmp)
+        public static void SpawnThemedLabelChild(GameObject prefabRoot, out TMP_Text tmp)
         {
             tmp = null;
             if (prefabRoot == null) return;

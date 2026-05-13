@@ -607,7 +607,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Spawn the illuminated-button main body Image child + optional icon child + halo child under the prefab root.</summary>
-        static bool SpawnIlluminatedButtonRenderTargets(
+        public static bool SpawnIlluminatedButtonRenderTargets(
             GameObject prefabRoot,
             string iconSpriteSlug,
             out Image bodyImage,
@@ -734,7 +734,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Resolve a human-art button sprite by slug. Search order: primary → fallback → plain → serviceIconPath → sibling-folder scan → variant-suffix shape.</summary>
-        static Sprite ResolveButtonIconSprite(string slug)
+        public static Sprite ResolveButtonIconSprite(string slug)
         {
             if (string.IsNullOrEmpty(slug)) return null;
             var primary = $"Assets/Sprites/Buttons/{slug}-target.png";
@@ -776,7 +776,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Step 16 D3.1+D3.2 — wire IlluminatedButton hover/press at bake time.</summary>
-        static void WireIlluminatedButtonHoverAndPress(
+        public static void WireIlluminatedButtonHoverAndPress(
             GameObject hostGo,
             IlluminatedButtonRenderer renderer,
             Image bodyImage,
@@ -813,7 +813,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Wave A0 follow-up — bake-time wiring for params_json.action. Attaches a <see cref="UiActionTrigger"/> to the host.</summary>
-        static void AttachUiActionTrigger(GameObject hostGo, string actionId)
+        public static void AttachUiActionTrigger(GameObject hostGo, string actionId)
         {
             if (hostGo == null) return;
             if (string.IsNullOrEmpty(actionId)) return;
@@ -829,7 +829,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Step 16.G — caption fallback for illuminated-button slots that carry a label in IR but no human-art icon sprite. Idempotent.</summary>
-        static void SpawnIlluminatedButtonCaption(GameObject prefabRoot, string label)
+        public static void SpawnIlluminatedButtonCaption(GameObject prefabRoot, string label)
         {
             if (prefabRoot == null) return;
             if (string.IsNullOrEmpty(label)) return;
@@ -871,7 +871,7 @@ namespace Territory.Editor.Bridge
         }
 
         /// <summary>Spawn the segmented-readout TMP child under the prefab root. Idempotent.</summary>
-        static void SpawnSegmentedReadoutRenderTargets(GameObject prefabRoot, SegmentedReadoutDetail detail)
+        public static void SpawnSegmentedReadoutRenderTargets(GameObject prefabRoot, SegmentedReadoutDetail detail)
         {
             if (prefabRoot == null) return;
             var rootRect = prefabRoot.GetComponent<RectTransform>();
