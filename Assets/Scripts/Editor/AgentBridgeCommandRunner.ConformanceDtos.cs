@@ -4,7 +4,7 @@ using System;
 // Moved to keep Conformance.cs ≤200 LOC. File-level (no namespace) to match legacy shape.
 
 [Serializable]
-class ConformanceParamsDto
+public class ConformanceParamsDto
 {
     public string ir_path;
     public string theme_so;
@@ -14,7 +14,7 @@ class ConformanceParamsDto
 
 /// <summary>Stage 1.4 (T1.4.5) — params bag for <c>claude_design_check</c> targeted check command.</summary>
 [Serializable]
-class DesignCheckParamsDto
+public class DesignCheckParamsDto
 {
     public string check_kind;
     public string prefab_path;
@@ -27,14 +27,14 @@ class DesignCheckParamsDto
 // the full IR (interactives[].detail is open-ended) — these DTOs intentionally
 // drop fields the bridge never reads (motion_curve, illumination, detail).
 [Serializable]
-class ConformanceIrRootDto
+public class ConformanceIrRootDto
 {
     public ConformanceIrTokensDto tokens;
     public ConformanceIrPanelDto[] panels;
 }
 
 [Serializable]
-class ConformanceIrTokensDto
+public class ConformanceIrTokensDto
 {
     public ConformanceIrPaletteDto[] palette;
     public ConformanceIrFrameStyleDto[] frame_style;
@@ -42,14 +42,14 @@ class ConformanceIrTokensDto
 }
 
 [Serializable]
-class ConformanceIrPaletteDto
+public class ConformanceIrPaletteDto
 {
     public string slug;
     public string[] ramp;
 }
 
 [Serializable]
-class ConformanceIrFrameStyleDto
+public class ConformanceIrFrameStyleDto
 {
     public string slug;
     public string edge;
@@ -57,7 +57,7 @@ class ConformanceIrFrameStyleDto
 }
 
 [Serializable]
-class ConformanceIrFontFaceDto
+public class ConformanceIrFontFaceDto
 {
     public string slug;
     public string family;
@@ -65,7 +65,7 @@ class ConformanceIrFontFaceDto
 }
 
 [Serializable]
-class ConformanceIrPanelDto
+public class ConformanceIrPanelDto
 {
     public string slug;
     public string archetype;
@@ -74,7 +74,7 @@ class ConformanceIrPanelDto
 }
 
 [Serializable]
-class ConformanceIrPanelSlotDto
+public class ConformanceIrPanelSlotDto
 {
     public string name;
     public string[] accepts;

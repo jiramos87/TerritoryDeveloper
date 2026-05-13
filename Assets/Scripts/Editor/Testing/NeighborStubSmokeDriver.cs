@@ -61,7 +61,7 @@ namespace Territory.Testing
 
         /// <summary>
         /// Assert stub seeding + binding + resolver contract post-build.
-        /// Returns a <see cref="AgentTestModeBatchRunner.NeighborStubSmokeResultDto"/> with counts +
+        /// Returns a <see cref="Domains.Testing.Dto.NeighborStubSmokeResultDto"/> with counts +
         /// <c>assertions_passed</c>.
         ///
         /// Assertions:
@@ -71,11 +71,11 @@ namespace Territory.Testing
         ///    stub whose <c>id == binding.stubId</c>.
         /// 4. <c>resolver_matches == binding_count</c>.
         /// </summary>
-        public static AgentTestModeBatchRunner.NeighborStubSmokeResultDto RunSmokeAssertions(
+        public static Domains.Testing.Dto.NeighborStubSmokeResultDto RunSmokeAssertions(
             GameSaveManager saveManager,
             GridManager grid)
         {
-            var result = new AgentTestModeBatchRunner.NeighborStubSmokeResultDto();
+            var result = new Domains.Testing.Dto.NeighborStubSmokeResultDto();
 
             if (saveManager == null)
             {

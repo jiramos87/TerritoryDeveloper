@@ -4,6 +4,8 @@ using Territory.Core;
 using Territory.Terrain;
 using UnityEditor;
 using UnityEngine;
+using Territory.Core;
+using Domains.Bridge.Services;
 
 /// <summary>
 /// Poll Postgres via <c>agent-bridge-dequeue.mjs</c> → dispatch bridge <c>kind</c> to existing

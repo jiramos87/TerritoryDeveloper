@@ -4,7 +4,7 @@ using System;
 // Moved to keep stem ≤200 LOC. These are file-level (no namespace) to match legacy shape.
 
 [Serializable]
-class AgentBridgeRequestEnvelopeDto
+public class AgentBridgeRequestEnvelopeDto
 {
     public int schema_version;
     public string artifact;
@@ -15,7 +15,7 @@ class AgentBridgeRequestEnvelopeDto
 }
 
 [Serializable]
-class AgentBridgeParamsPayloadDto
+public class AgentBridgeParamsPayloadDto
 {
     public string since_utc;
     public string severity_filter;
@@ -38,7 +38,7 @@ class AgentBridgeParamsPayloadDto
 }
 
 [Serializable]
-class AgentBridgeLogLineDto
+public class AgentBridgeLogLineDto
 {
     public string timestamp_utc;
     public string severity;
@@ -47,7 +47,7 @@ class AgentBridgeLogLineDto
 }
 
 [Serializable]
-class AgentBridgeCompilationStatusDto
+public class AgentBridgeCompilationStatusDto
 {
     public bool compiling;
     public bool compilation_failed;
@@ -56,7 +56,7 @@ class AgentBridgeCompilationStatusDto
 }
 
 [Serializable]
-class AgentBridgeResponseFileDto
+public class AgentBridgeResponseFileDto
 {
     public int schema_version;
     public string artifact;
@@ -115,7 +115,7 @@ class AgentBridgeResponseFileDto
 }
 
 [Serializable]
-class AgentBridgeBundleDto
+public class AgentBridgeBundleDto
 {
     public AgentBridgeBundleCellExportDto cell_export;
     public AgentBridgeBundleScreenshotDto screenshot;
@@ -126,7 +126,7 @@ class AgentBridgeBundleDto
 }
 
 [Serializable]
-class AgentBridgeEconomySnapshotDto
+public class AgentBridgeEconomySnapshotDto
 {
     public int population;
     public float happiness;
@@ -144,7 +144,7 @@ class AgentBridgeEconomySnapshotDto
 }
 
 [Serializable]
-class AgentBridgePrefabManifestDto
+public class AgentBridgePrefabManifestDto
 {
     public int total_monobehaviours;
     public int missing_script_count;
@@ -152,7 +152,7 @@ class AgentBridgePrefabManifestDto
 }
 
 [Serializable]
-class AgentBridgePrefabManifestEntryDto
+public class AgentBridgePrefabManifestEntryDto
 {
     public string game_object_path;
     public string component_type;
@@ -160,7 +160,7 @@ class AgentBridgePrefabManifestEntryDto
 }
 
 [Serializable]
-class AgentBridgeSortingOrderDebugDto
+public class AgentBridgeSortingOrderDebugDto
 {
     public int cell_x;
     public int cell_y;
@@ -170,7 +170,7 @@ class AgentBridgeSortingOrderDebugDto
 }
 
 [Serializable]
-class AgentBridgeSortingRendererDto
+public class AgentBridgeSortingRendererDto
 {
     public string name;
     public string sorting_layer;
@@ -180,14 +180,14 @@ class AgentBridgeSortingRendererDto
 }
 
 [Serializable]
-class AgentBridgeBundleCellExportDto
+public class AgentBridgeBundleCellExportDto
 {
     public string artifact_path;
     public bool ok;
 }
 
 [Serializable]
-class AgentBridgeBundleScreenshotDto
+public class AgentBridgeBundleScreenshotDto
 {
     public string artifact_path;
     public bool ok;
@@ -195,7 +195,7 @@ class AgentBridgeBundleScreenshotDto
 }
 
 [Serializable]
-class AgentBridgeBundleConsoleDto
+public class AgentBridgeBundleConsoleDto
 {
     public AgentBridgeLogLineDto[] log_lines;
     public int line_count;

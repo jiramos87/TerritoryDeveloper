@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Territory.Core;
+using Territory.Geography;
 using Territory.Terrain;
 using Territory.Roads;
 

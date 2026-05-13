@@ -6,6 +6,8 @@ using Territory.Core;
 using Territory.Terrain;
 using UnityEditor;
 using UnityEngine;
+using Territory.Core;
+using Domains.Bridge.Services;
 
 // Stage 6.1 extract — observability kind handlers + deferred screenshot pump.
 // Moved from AgentBridgeCommandRunner.cs stem to keep stem ≤200 LOC.

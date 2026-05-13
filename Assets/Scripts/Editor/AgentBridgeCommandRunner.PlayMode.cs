@@ -2,6 +2,8 @@ using System;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
+using Territory.Core;
+using Domains.Bridge.Services;
 
 // Stage 6.1 extract — play-mode pump + enter/exit/status handlers.
 // Moved from AgentBridgeCommandRunner.cs stem to keep stem ≤200 LOC.

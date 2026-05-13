@@ -278,30 +278,6 @@ public static partial class AgentBridgeCommandRunner
         return true;
     }
 
-    // Local copy of ExtractParamsJsonBlock — avoids cross-partial coupling.
-    static string ExtractParamsJsonBlockInspect(string requestJson)
-    {
-        if (string.IsNullOrEmpty(requestJson)) return null;
-        int keyIdx = requestJson.IndexOf("\"params\":", StringComparison.Ordinal);
-        if (keyIdx < 0)
-            keyIdx = requestJson.IndexOf("\"bridge_params\":", StringComparison.Ordinal);
-        if (keyIdx < 0) return null;
-        int braceStart = requestJson.IndexOf('{', keyIdx);
-        if (braceStart < 0) return null;
-        int depth = 0;
-        for (int i = braceStart; i < requestJson.Length; i++)
-        {
-            char c = requestJson[i];
-            if (c == '{') depth++;
-            else if (c == '}')
-            {
-                depth--;
-                if (depth == 0)
-                    return requestJson.Substring(braceStart, i - braceStart + 1);
-            }
-        }
-        return null;
-    }
 }
 
 [Serializable]
