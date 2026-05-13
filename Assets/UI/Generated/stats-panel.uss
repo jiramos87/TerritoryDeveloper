@@ -1,6 +1,7 @@
 /* Panel: stats-panel | kind: modal | theme: dark */
 /* Stage 4.0 (TECH-32919) — tab + chart tokens; ThemedTabBar styling */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
+@import url("project://database/Assets/UI/Themes/cream.tss");
 
 .stats-panel {
     background-color: var(--ds-color-bg-card, #313244);

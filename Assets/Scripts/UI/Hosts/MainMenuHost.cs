@@ -20,10 +20,12 @@ namespace Territory.UI.Hosts
         [SerializeField] UIDocument _doc;
 
         MainMenuVM _vm;
+        Button _btnContinue;
         Button _btnNewGame;
         Button _btnLoad;
         Button _btnSettings;
         Button _btnQuit;
+        Label _footerRight;
 
         void OnEnable()
         {
@@ -42,25 +44,43 @@ namespace Territory.UI.Hosts
             var root = _doc.rootVisualElement;
             root.SetCompatDataSource(_vm);
 
+            _btnContinue = root.Q<Button>("btn-continue");
             _btnNewGame = root.Q<Button>("btn-new-game");
             _btnLoad = root.Q<Button>("btn-load");
             _btnSettings = root.Q<Button>("btn-settings");
             _btnQuit = root.Q<Button>("btn-quit");
+            _footerRight = root.Q<Label>("main-menu-footer-right");
 
+            if (_btnContinue != null) _btnContinue.clicked += OnContinue;
             if (_btnNewGame != null) _btnNewGame.clicked += OnNewGame;
             if (_btnLoad != null) _btnLoad.clicked += OnLoad;
             if (_btnSettings != null) _btnSettings.clicked += OnSettings;
             if (_btnQuit != null) _btnQuit.clicked += OnQuit;
+
+            // Continue is only meaningful when a recent save exists.
+            if (_btnContinue != null && string.IsNullOrEmpty(ResolveMostRecentSavePath()))
+                _btnContinue.AddToClassList("hidden");
+
+            if (_footerRight != null) _footerRight.text = Application.version;
         }
 
         void OnDisable()
         {
+            if (_btnContinue != null) _btnContinue.clicked -= OnContinue;
             if (_btnNewGame != null) _btnNewGame.clicked -= OnNewGame;
             if (_btnLoad != null) _btnLoad.clicked -= OnLoad;
             if (_btnSettings != null) _btnSettings.clicked -= OnSettings;
             if (_btnQuit != null) _btnQuit.clicked -= OnQuit;
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
+        }
+
+        void OnContinue()
+        {
+            string path = ResolveMostRecentSavePath();
+            if (string.IsNullOrEmpty(path)) return;
+            GameStartInfo.SetPendingLoadPath(path);
+            SceneManager.LoadScene(CitySceneBuildIndex);
         }
 
         void OnNewGame()

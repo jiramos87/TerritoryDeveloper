@@ -17,6 +17,7 @@ namespace Territory.UI.Modals
     /// a runtime nav header (back arrow + screen title). OnBack restores root.
     /// Esc routing two-level: in sub-view → back; in root → close pause.
     /// </summary>
+    [System.Obsolete("Strangler — kept while UIManager + tests still reference it. See DEC-A28. Not deleted (Phase A0 reasonable-call deviation): 7 in-code refs vs plan-assumed scene-YAML-only refs.")]
     public class PauseMenuDataAdapter : MonoBehaviour
     {
         [Header("Producer")]

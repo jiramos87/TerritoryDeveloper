@@ -8,6 +8,7 @@ namespace Territory.UI.Modals
     /// slots and ThemedTabBar tab activation. Inspector producer slot with FindObjectOfType
     /// fallback (invariant #4); UiTheme cached in Awake (invariant #3).
     /// </summary>
+    [System.Obsolete("Strangler — replaced by VM-direct Host on UIToolkit. See DEC-A28.")]
     public class InfoPanelDataAdapter : MonoBehaviour
     {
         [Header("Producer")]

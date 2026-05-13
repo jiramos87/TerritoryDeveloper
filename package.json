@@ -121,6 +121,7 @@
     "unity:testmode-batch": "bash tools/scripts/unity-testmode-batch.sh",
     "unity:build-scenario-from-descriptor": "bash tools/scripts/unity-build-scenario-from-descriptor.sh",
     "unity:bake-ui": "tsx tools/scripts/unity-bake-ui.ts",
+    "unity:ui-theme-patch": "node tools/scripts/unity-ui-theme-patch.mjs",
     "unity:visual-diff": "node tools/scripts/unity-visual-diff.mjs",
     "scenario:build-from-descriptor": "node tools/fixtures/scenarios/build-scenario-from-descriptor.mjs",
     "verify:local": "bash tools/scripts/verify-local.sh && npm run console:scan",

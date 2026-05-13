@@ -350,22 +350,19 @@ public partial class UIManager : MonoBehaviour
 
     /// <summary>
     /// Stage 10 hotfix — register action.auto-mode-toggle on UiActionRegistry.
-    /// Flips cityStats.simulateGrowth and publishes uiManager.isAutoMode bind for visual reflection.
-    /// No panel opens.
+    /// Flips cityStats.simulateGrowth so legacy action callers stay live; HudBarHost (Phase B
+    /// recovery) reads simulateGrowth directly each Update, so the legacy
+    /// UiBindRegistry.Set("uiManager.isAutoMode", …) double-write is severed (recovery Phase F0).
     /// </summary>
     private void RegisterAutoModeAction()
     {
         var actionRegistry = FindObjectOfType<UiActionRegistry>();
         if (actionRegistry == null) return;
-        var bindRegistry = FindObjectOfType<UiBindRegistry>();
         actionRegistry.Register("action.auto-mode-toggle", _ =>
         {
             if (cityStats == null) return;
             cityStats.simulateGrowth = !cityStats.simulateGrowth;
-            bindRegistry?.Set("uiManager.isAutoMode", cityStats.simulateGrowth);
         });
-        // Seed initial bind value so subscribers reflect current state.
-        if (cityStats != null) bindRegistry?.Set("uiManager.isAutoMode", cityStats.simulateGrowth);
     }
 
     /// <summary>Current Zone S sub-type id; -1 = not picked yet.</summary>

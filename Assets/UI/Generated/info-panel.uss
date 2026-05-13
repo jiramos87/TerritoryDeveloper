@@ -1,6 +1,7 @@
 /* Panel: info-panel | kind: modal | theme: dark */
 /* Stage 4.0 (TECH-32918) — context typography + spacing tokens */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
+@import url("project://database/Assets/UI/Themes/cream.tss");
 
 .info-panel {
     background-color: var(--ds-color-bg-card, #313244);

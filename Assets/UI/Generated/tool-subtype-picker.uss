@@ -1,81 +1,65 @@
-/* Panel: tool-subtype-picker | kind: modal | theme: dark */
-/* Stage 4.0 (TECH-32921) — grid + icon tokens */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Panel: tool-subtype-picker | kind: hud | theme: cream */
+/* HUD-anchored bottom-left strip — recovery plan Phase D2 */
+/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
+@import url("project://database/Assets/UI/Themes/cream.tss");
 
 .tool-subtype-picker {
-    background-color: var(--ds-color-bg-card, #313244);
-    border-radius: var(--ds-radius-lg, 16px);
-    padding: var(--ds-space-lg, 20px);
-    min-width: 280px;
-    max-width: 480px;
+    position: absolute;
+    left: 100px;
+    bottom: 12px;
     flex-direction: column;
+    background-color: #2a2d33;
+    border-color: var(--ds-color-accent, #b89b5e);
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 8px;
+    /* display:none until Host.Open() */
+    display: none;
 }
 
-.tool-subtype-picker__header {
+.tool-subtype-picker.is-open {
+    display: flex;
+}
+
+.tool-subtype-picker__tier-row {
     flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--ds-space-md, 12px);
 }
 
-.tool-subtype-picker__title {
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-lg, 18px);
-    -unity-font-style: bold;
-    flex-grow: 1;
-}
-
-.tool-subtype-picker__close-btn {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-md, 14px);
-    padding: 4px 8px;
-    border-radius: var(--ds-radius-sm, 4px);
-}
-
-.tool-subtype-picker__close-btn:hover {
-    color: var(--ds-color-warn, #fab387);
-    border-color: var(--ds-color-warn, #fab387);
-}
-
-/* Subtype grid */
-.tool-subtype-picker__grid {
-    flex-grow: 1;
-    max-height: 300px;
-}
-
-/* Tile item (set via makeItem in Host) */
-.tool-subtype-picker__tile {
-    width: 72px;
-    height: 72px;
-    background-color: var(--ds-color-bg-elev, #181825);
-    border-radius: var(--ds-radius-md, 8px);
-    margin: var(--ds-space-sm, 8px);
+.tool-subtype-picker__tier-card {
+    width: 96px;
+    height: 80px;
+    background-color: #1a1d24;
+    border-color: #6b5a3d;
+    border-width: 2px;
+    border-radius: 6px;
+    margin: 4px;
+    padding: 6px;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-width: 1px;
-    border-color: var(--ds-color-border, #45475a);
 }
 
-.tool-subtype-picker__tile:hover {
-    border-color: var(--ds-color-primary, #89b4fa);
-    background-color: var(--ds-color-bg-card, #313244);
+.tool-subtype-picker__tier-card:hover {
+    border-color: #d4b87a;
 }
 
-.tool-subtype-picker__tile--selected {
-    border-color: var(--ds-color-accent, #cba6f7);
-    border-width: 2px;
+.tool-subtype-picker__tier-card--active {
+    border-color: #5b7fa8;
+    border-width: 3px;
 }
 
-.tool-subtype-picker__tile-label {
-    color: var(--ds-color-text-secondary, #a6adc8);
-    font-size: var(--ds-font-size-sm, 11px);
-    -unity-text-align: lower-center;
+.tool-subtype-picker__tier-icon {
+    color: #f0b429;
+    font-size: 22px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.tool-subtype-picker__tier-label {
+    color: #f0e4ce;
+    font-size: 11px;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
     margin-top: 4px;
-}
-
-.tool-subtype-picker__tile-icon {
-    width: 40px;
-    height: 40px;
 }

@@ -7,7 +7,8 @@
     editor-extension-mode="False">
   <!-- Panel: glossary-panel | kind: modal | theme: dark -->
   <!-- Stage 5.0 (TECH-32924) — in-game glossary browser -->
-  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
+  <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="glossary-panel.uss"/>
   <ui:VisualElement name="glossary-panel" class="glossary-panel">
     <ui:VisualElement name="header" class="glossary-panel__header">

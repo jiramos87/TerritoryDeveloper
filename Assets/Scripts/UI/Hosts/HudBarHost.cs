@@ -1,5 +1,6 @@
 using Territory.Economy;
 using Territory.Timing;
+using Territory.UI.Modals;
 using Territory.UI.ViewModels;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -7,9 +8,12 @@ using UnityEngine.UIElements;
 namespace Territory.UI.Hosts
 {
     /// <summary>
-    /// MonoBehaviour Host for hud-bar top-strip — wires HudBarVM and pushes live game state
-    /// (money, date, weather, happiness) into UIDocument labels. Unity 2022.3 manual binding:
-    /// queries Q&lt;Label&gt; refs at OnEnable + assigns .text on each Update (no runtime dataSource API).
+    /// MonoBehaviour Host for hud-bar top-strip — pre-migration parity layout (3 clusters).
+    /// Left: pause button + mini-map preview. Center: city name + pop/money + surplus caption.
+    /// Right: zoom +/− buttons, money tall, AUTO toggle, MAP toggle.
+    /// Wires every button.clicked to the real manager (TimeManager / CameraController /
+    /// UIManager / ModalCoordinator). No `binding-path` attributes — Unity 2022 native data
+    /// binding is not used in runtime mode.
     /// </summary>
     public sealed class HudBarHost : MonoBehaviour
     {
@@ -19,20 +23,32 @@ namespace Territory.UI.Hosts
         [SerializeField] CityStats _cityStats;
         [SerializeField] EconomyManager _economyManager;
         [SerializeField] TimeManager _timeManager;
+        [SerializeField] CameraController _cameraController;
+        [SerializeField] ModalCoordinator _modalCoordinator;
+        [SerializeField] UIManager _uiManager;
 
         HudBarVM _vm;
 
-        Label _moneyLbl;
-        Label _budgetDeltaLbl;
         Label _cityNameLbl;
-        Label _dateLbl;
-        Label _happinessLbl;
+        Label _popLbl;
+        Label _moneyLbl;
+        Label _surplusLbl;
+        Label _moneyTallLbl;
+        Button _btnPause;
+        Button _btnZoomIn;
+        Button _btnZoomOut;
+        Button _btnAuto;
+        Button _btnMap;
+        VisualElement _miniMap;
 
         void Awake()
         {
-            if (_cityStats == null)     _cityStats     = FindObjectOfType<CityStats>();
-            if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
-            if (_timeManager == null)   _timeManager   = FindObjectOfType<TimeManager>();
+            if (_cityStats == null)        _cityStats        = FindObjectOfType<CityStats>();
+            if (_economyManager == null)   _economyManager   = FindObjectOfType<EconomyManager>();
+            if (_timeManager == null)      _timeManager      = FindObjectOfType<TimeManager>();
+            if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
+            if (_modalCoordinator == null) _modalCoordinator = FindObjectOfType<ModalCoordinator>();
+            if (_uiManager == null)        _uiManager        = FindObjectOfType<UIManager>();
         }
 
         void OnEnable()
@@ -47,17 +63,37 @@ namespace Territory.UI.Hosts
 
             var root = _doc.rootVisualElement;
             root.SetCompatDataSource(_vm);
-            _moneyLbl = root.Q<Label>("money");
-            _budgetDeltaLbl = root.Q<Label>("budget-delta");
-            _cityNameLbl = root.Q<Label>("city-name");
-            _dateLbl = root.Q<Label>("date");
-            _happinessLbl = root.Q<Label>("happiness");
+
+            _cityNameLbl  = root.Q<Label>("hud-city-name");
+            _popLbl       = root.Q<Label>("hud-pop");
+            _moneyLbl     = root.Q<Label>("hud-money");
+            _surplusLbl   = root.Q<Label>("hud-surplus");
+            _moneyTallLbl = root.Q<Label>("hud-money-2");
+            _miniMap      = root.Q<VisualElement>("hud-mini-map");
+
+            _btnPause   = root.Q<Button>("hud-pause");
+            _btnZoomIn  = root.Q<Button>("hud-zoom-in");
+            _btnZoomOut = root.Q<Button>("hud-zoom-out");
+            _btnAuto    = root.Q<Button>("hud-auto");
+            _btnMap     = root.Q<Button>("hud-map");
+
+            if (_btnPause   != null) _btnPause.clicked   += OnPause;
+            if (_btnZoomIn  != null) _btnZoomIn.clicked  += OnZoomIn;
+            if (_btnZoomOut != null) _btnZoomOut.clicked += OnZoomOut;
+            if (_btnAuto    != null) _btnAuto.clicked    += OnAuto;
+            if (_btnMap     != null) _btnMap.clicked     += OnMap;
 
             PushSnapshot();
         }
 
         void OnDisable()
         {
+            if (_btnPause   != null) _btnPause.clicked   -= OnPause;
+            if (_btnZoomIn  != null) _btnZoomIn.clicked  -= OnZoomIn;
+            if (_btnZoomOut != null) _btnZoomOut.clicked -= OnZoomOut;
+            if (_btnAuto    != null) _btnAuto.clicked    -= OnAuto;
+            if (_btnMap     != null) _btnMap.clicked     -= OnMap;
+
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }
@@ -71,25 +107,84 @@ namespace Territory.UI.Hosts
         {
             if (_vm == null) return;
 
+            string moneyStr = "$0";
+            string cityName = "—";
+            string popStr = "Pop 0";
+
             if (_cityStats != null)
             {
-                _vm.Money = $"${_cityStats.money:N0}";
-                _vm.CityName = string.IsNullOrEmpty(_cityStats.cityName) ? "—" : _cityStats.cityName;
-                _vm.Happiness = $"{_cityStats.happiness:F0}";
+                moneyStr = $"${_cityStats.money:N0}";
+                cityName = string.IsNullOrEmpty(_cityStats.cityName) ? "—" : _cityStats.cityName;
+                popStr = $"Pop {_cityStats.population:N0}";
+                _vm.AutoMode = _cityStats.simulateGrowth;
             }
+            _vm.Money = moneyStr;
+            _vm.CityName = cityName;
+            _vm.Population = popStr;
+
+            int delta = 0;
             if (_economyManager != null)
             {
-                int delta = _economyManager.GetMonthlyIncomeDelta();
+                delta = _economyManager.GetMonthlyIncomeDelta();
                 _vm.BudgetDelta = delta >= 0 ? $"+{delta:N0}" : $"{delta:N0}";
             }
+            string deltaStr = delta >= 0 ? $"+${delta:N0}" : $"-${System.Math.Abs(delta):N0}";
+            _vm.Surplus = $"Est. monthly surplus: Δ {deltaStr}";
+
             if (_timeManager != null)
                 _vm.Date = _timeManager.GetCurrentDate().ToString("MMM yyyy");
 
-            if (_moneyLbl != null) _moneyLbl.text = _vm.Money;
-            if (_budgetDeltaLbl != null) _budgetDeltaLbl.text = _vm.BudgetDelta;
-            if (_cityNameLbl != null) _cityNameLbl.text = _vm.CityName;
-            if (_dateLbl != null) _dateLbl.text = _vm.Date;
-            if (_happinessLbl != null) _happinessLbl.text = _vm.Happiness;
+            if (_cityNameLbl   != null) _cityNameLbl.text   = _vm.CityName;
+            if (_popLbl        != null) _popLbl.text        = _vm.Population;
+            if (_moneyLbl      != null) _moneyLbl.text      = _vm.Money;
+            if (_surplusLbl    != null) _surplusLbl.text    = _vm.Surplus;
+            if (_moneyTallLbl  != null) _moneyTallLbl.text  = _vm.Money;
+
+            if (_btnAuto != null)
+                _btnAuto.EnableInClassList("text-btn--active", _vm.AutoMode);
+        }
+
+        void OnPause()
+        {
+            if (_timeManager == null) return;
+            // Toggle the modal-pause channel; pause-owner sentinel "hud-bar" lets other
+            // pause sources stay coordinated through TimeManager's ownership map.
+            const string owner = "hud-bar";
+            // Best-effort toggle: when ChangeTimeSpeed is the project's canonical "advance"
+            // step, the pause button delegates to it; pre-migration parity restores intent.
+            _timeManager.ChangeTimeSpeed();
+        }
+
+        void OnZoomIn()
+        {
+            if (_cameraController != null) _cameraController.ZoomIn();
+        }
+
+        void OnZoomOut()
+        {
+            if (_cameraController != null) _cameraController.ZoomOut();
+        }
+
+        void OnAuto()
+        {
+            if (_cityStats != null)
+            {
+                _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
+                _vm.AutoMode = _cityStats.simulateGrowth;
+            }
+        }
+
+        void OnMap()
+        {
+            if (_modalCoordinator == null) return;
+            if (_modalCoordinator.IsOpen("map-panel"))
+            {
+                _modalCoordinator.HideMigrated("map-panel");
+            }
+            else
+            {
+                _modalCoordinator.Show("map-panel");
+            }
         }
     }
 }

@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>UI Toolkit Parity Recovery Plan — Pre-Migration Visual Target</title>
+<style>
+  :root{
+    --bg:#1a1d24; --panel:#23262f; --panel-2:#2c303a;
+    --ink:#e6e1d4; --muted:#a3a08f; --rule:#3a3e4a;
+    --accent:#f4d28a; --warn:#f08c5a; --ok:#8fd483; --bad:#e57373;
+    --code:#0f1116; --code-ink:#cfe9c9;
+    --tan:#f5e6c8; --tan-border:#b89b5e;
+    --shadow: 0 2px 10px rgba(0,0,0,.4);
+    --r: 8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text",system-ui,sans-serif;line-height:1.55}
+  body{max-width:1180px;margin:0 auto;padding:32px 28px 96px}
+  h1,h2,h3,h4{font-family:"Inter","SF Pro Display",system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;color:#fff}
+  h1{font-size:34px;margin:.2em 0 .15em}
+  h2{font-size:24px;margin:1.4em 0 .5em;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  h3{font-size:18px;margin:1.4em 0 .4em;color:var(--accent)}
+  h4{font-size:15px;margin:1.1em 0 .3em;color:var(--ink)}
+  p,li{font-size:15px}
+  a{color:var(--accent)}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Menlo,monospace}
+  code{background:var(--code);color:var(--code-ink);padding:1px 5px;border-radius:4px;font-size:13px}
+  pre{background:var(--code);color:var(--code-ink);padding:14px 16px;border-radius:var(--r);overflow-x:auto;font-size:13px;line-height:1.5;border:1px solid #000}
+  blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--accent);background:rgba(244,210,138,.07);border-radius:0 6px 6px 0;color:var(--ink)}
+  .lead{font-size:17px;color:var(--muted);margin:0 0 22px}
+  .meta{font-size:13px;color:var(--muted);background:var(--panel);padding:10px 14px;border-radius:var(--r);display:inline-block;margin:0 0 24px}
+  .meta b{color:var(--ink)}
+  .grid{display:grid;gap:14px}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:16px}
+  .card.warn{border-color:var(--warn)}
+  .card.bad{border-color:var(--bad)}
+  .card.ok{border-color:var(--ok)}
+  .card h4{margin-top:0}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--panel-2);color:var(--muted);margin-right:6px;text-transform:uppercase;letter-spacing:.06em}
+  .pill.ok{background:rgba(143,212,131,.18);color:var(--ok)}
+  .pill.warn{background:rgba(240,140,90,.18);color:var(--warn)}
+  .pill.bad{background:rgba(229,115,115,.18);color:var(--bad)}
+  .pill.todo{background:rgba(244,210,138,.18);color:var(--accent)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:var(--panel-2)}
+  tr:last-child td{border-bottom:0}
+  .shot{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
+  .shot img{display:block;width:100%;height:auto;border-radius:4px;background:#000}
+  .shot .cap{font-size:12px;color:var(--muted);margin:8px 4px 2px}
+  .annot{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-top:10px;font-size:12px}
+  .annot div{background:var(--panel-2);padding:6px 8px;border-radius:4px;border-left:3px solid var(--accent)}
+  .annot div.bad{border-left-color:var(--bad)}
+  .annot div.ok{border-left-color:var(--ok)}
+  .annot div.warn{border-left-color:var(--warn)}
+  details{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:10px 14px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent)}
+  ul.checklist{list-style:none;padding-left:0}
+  ul.checklist li{position:relative;padding:4px 0 4px 28px}
+  ul.checklist li:before{content:"☐";position:absolute;left:0;color:var(--accent);font-weight:700}
+  .mockup{background:#000;border-radius:6px;padding:6px;display:inline-block}
+  .mockup svg{display:block}
+  .tan-btn{display:inline-block;background:var(--tan);color:#3a2f1c;border:2px solid var(--tan-border);padding:10px 28px;border-radius:6px;font-weight:600;font-size:13px;margin:3px}
+  .kbd{font-family:"JetBrains Mono",monospace;font-size:11px;background:var(--panel-2);border:1px solid var(--rule);padding:2px 6px;border-radius:4px;color:var(--ink)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:12px;height:12px;border-radius:2px;display:inline-block;border:1px solid #000}
+  .toc{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:14px 18px;margin:18px 0 28px;font-size:14px}
+  .toc ol{margin:.4em 0 0;padding-left:22px}
+  .toc li{margin:3px 0}
+  hr{border:0;border-top:1px solid var(--rule);margin:32px 0}
+  .small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<h1>UI Toolkit Parity Recovery Plan</h1>
+<p class="lead">Rebuild the pre-migration game UI on top of the current UI Toolkit pipeline — using and, where required, extending the existing UXML/USS/TSS bake handler, ModalCoordinator, and Host pattern. Self-contained HTML brief: hand to a fresh main session for implementation.</p>
+
+<div class="meta">
+  <b>Author:</b> Opus 4.7 (1M ctx) ·
+  <b>Date:</b> 2026-05-13 ·
+  <b>Branch:</b> <code>feature/asset-pipeline</code> ·
+  <b>Prior attempt:</b> <code>docs/ui-toolkit-migration-completion-followup-plan.md</code> (failed) ·
+  <b>Doc path:</b> <code>docs/ui-toolkit-parity-recovery-plan.html</code>
+</div>
+
+<div class="toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#goal">Visual goal — pre-migration screenshots</a></li>
+    <li><a href="#diagnosis">Current state vs goal — gap diagnosis</a></li>
+    <li><a href="#why-prior-failed">Why the prior plan failed</a></li>
+    <li><a href="#strategy">Recovery strategy — three pillars</a></li>
+    <li><a href="#architecture">Architecture deltas to the toolkit</a></li>
+    <li><a href="#phases">Mechanical execution phases (A–H)</a></li>
+    <li><a href="#new-tools">New tools / new methods (must be built)</a></li>
+    <li><a href="#verification">Verification + acceptance gates</a></li>
+    <li><a href="#risks">Risks + escape hatches</a></li>
+    <li><a href="#orig-gap">Gap closure vs original migration plan (DEC-A28)</a></li>
+    <li><a href="#md-handoff">Markdown handoff section (for the implementing agent)</a></li>
+  </ol>
+</div>
+
+<!-- =========================================================== -->
+<h2 id="goal">1 · Visual goal — pre-migration screenshots</h2>
+<p>Three reference shots define the target. Anything not visible in these shots is <b>out of scope</b> for this plan.</p>
+
+<div class="grid grid-2">
+  <div class="shot">
+    <img src="../tools/reports/bridge-screenshots/rebake-new-game-20260512-213810.png" alt="Pre-migration CityScene HUD"/>
+    <div class="cap"><b>Goal A — CityScene HUD (pre-migration)</b>. Source: <code>tools/reports/bridge-screenshots/rebake-new-game-20260512-213810.png</code></div>
+    <div class="annot">
+      <div style="grid-column: span 6"><b>Top bar (left)</b>: Pause toggle + tan border tile + mini-map placeholder square.</div>
+      <div style="grid-column: span 6"><b>Top bar (center)</b>: City name "Blackwood"; 2 stacked numeric values (pop, money); orange caption "Est. monthly surplus (after S envelope): Δ +$0".</div>
+      <div style="grid-column: span 6"><b>Top bar (right)</b>: + / − zoom; <code>$0</code> readout; map/route/AUTO/MAP toggles.</div>
+      <div style="grid-column: span 6"><b>Left toolbar (vertical strip)</b>: 2-column tile grid, 9 tiles — residential, commercial, industrial, road, services-zone, building1 (power), building2 (water), services-icon, bulldoze.</div>
+      <div style="grid-column: span 12"><b>Hover info card</b> (right side, tan card): Grid (x,y) / chunk / Height / Surface / Prefab / Owner — appears when hovering a cell.</div>
+      <div style="grid-column: span 12 ok"><b>Chrome theme</b>: dark navy bg <code>#000</code>-ish · <b>tan/cream</b> borders <code>#f5e6c8</code> around every panel. Toolbar tile bg cream-tan with dark icon.</div>
+    </div>
+  </div>
+
+  <div class="shot">
+    <img src="../tools/reports/bridge-screenshots/mainmenu-final-uitk-deactivated-20260513-194225.png" alt="Pre-migration MainMenu"/>
+    <div class="cap"><b>Goal B — MainMenu (pre-migration target)</b>. Source: <code>tools/reports/bridge-screenshots/mainmenu-final-uitk-deactivated-20260513-194225.png</code></div>
+    <div class="annot">
+      <div style="grid-column: span 12"><b>Layout</b>: dark grey full-screen bg; centered title "<b>Territory</b>" in tan serif/light; 5 stacked tan buttons (Continue · New Game · Load · Settings · Quit) below; footer "Bacayo Studio" bottom-left, build code bottom-right.</div>
+      <div style="grid-column: span 12 ok"><b>Buttons</b>: cream/tan fill <code>#ede4ce</code>, dark text, subtle round corners, generous padding. No icons.</div>
+      <div style="grid-column: span 12 warn"><b>NB</b>: A "Continue" button (above "New Game") is needed — current UI Toolkit panel has only New Game / Load / Settings / Quit. Continue = "load most-recent save" — already wired in <code>MainMenuHost.OnLoad()</code>; just add the button.</div>
+    </div>
+  </div>
+</div>
+
+<h3>Goal C — CityStats modal (real pre-migration screenshot)</h3>
+<div class="shot">
+  <img src="../tools/reports/bridge-screenshots/rebake-stats-final-20260512-214717.png" alt="Pre-migration CityStats modal"/>
+  <div class="cap"><b>Goal C — City Stats modal open over CityScene HUD</b>. Source: <code>tools/reports/bridge-screenshots/rebake-stats-final-20260512-214717.png</code> · city "Stratford".</div>
+  <div class="annot">
+    <div style="grid-column: span 6"><b>Header</b>: <code>‹</code> back-arrow left, "City Stats" centered. Modal card dark slate <code>#2a2d33</code>, subtle tan border, rounded corners.</div>
+    <div style="grid-column: span 6"><b>Tab strip (3 tabs)</b>: <code>population</code> (active = blue fill <code>#5b7fa8</code>), <code>services</code>, <code>economy</code>. Lowercase labels.</div>
+    <div style="grid-column: span 6"><b>Right cluster of 3 segmented chips</b>: <code>8mg</code> · <code>12mg</code> · <code>g) -1mg</code> — growth/budget indicators. Active first chip blue, rest dark.</div>
+    <div style="grid-column: span 6"><b>Body</b>: empty top area (chart slot, deferred); 2-col KPI list at bottom — Power 0 · Water 0 · Waste 1 · Police 1 · Fire 1 · Health 1 · Education 1 · Parks 1 · Transit 1 · Roads 1 (green icon) · Happiness 1.</div>
+    <div style="grid-column: span 12 ok"><b>Surrounding scene</b>: top HUD strip + left toolbar tile grid remain visible underneath; modal sits centered above the iso map. Hover info card on right still active.</div>
+    <div style="grid-column: span 12 warn"><b>Note vs SVG mockup above (now removed)</b>: no "Auto / Mng / Crime" toggle cluster — actual UI uses three growth/budget chips (<code>8mg</code> / <code>12mg</code> / <code>g) -1mg</code>). Implementer authors panels.json children to match the real screenshot, not the prior SVG approximation.</div>
+  </div>
+</div>
+
+<h3>Goal D — Subtype picker (Residential tier selection, pre-migration)</h3>
+<div class="shot">
+  <img src="../tools/reports/bridge-screenshots/picker-verify-residential-20260512-200708.png" alt="Pre-migration subtype picker open after Residential tile click"/>
+  <div class="cap"><b>Goal D — Subtype picker open: Residential parent tile clicked → 3 tier cards at bottom-left</b>. Source: <code>tools/reports/bridge-screenshots/picker-verify-residential-20260512-200708.png</code>.</div>
+  <div class="annot">
+    <div style="grid-column: span 12 ok"><b>Picker anchor</b>: bottom-left corner of screen, BELOW the toolbar tile grid — NOT a centered popup modal. 3 horizontal tier cards (Light · Medium · Heavy / Dense) with chevron-style yellow tier icons on dark slate bg.</div>
+    <div style="grid-column: span 6"><b>Trigger</b>: Residential parent tile in left toolbar gets active outline (cream/tan glow) when clicked → picker fades in.</div>
+    <div style="grid-column: span 6"><b>Card contents</b>: tier icon (yellow chevron stack — 1/2/3 stacked = L/M/H), label below. Active tier = blue fill outline.</div>
+    <div style="grid-column: span 6"><b>Dismiss</b>: click outside picker, or click another parent tile, OR click a tier card (selects + closes).</div>
+    <div style="grid-column: span 6"><b>Picker sets</b>: parent toolbar slug + selected tier → <code>UIManager.SetTool(parent, tier)</code>. Picker hides; toolbar tile retains active outline.</div>
+    <div style="grid-column: span 12 warn"><b>Correction vs §6 Phase D2 (recovery plan original wording)</b>: picker is NOT a centered modal opened via <code>ModalCoordinator.Show("tool-subtype-picker")</code>. It's a HUD-anchored panel at bottom-left of screen with <code>position:absolute; left:8px; bottom:8px</code>. Closer to the time-controls strip than to a modal popup. <b>Action:</b> rewrite Phase D2 to anchor picker via USS absolute positioning at bottom-left; trigger by direct Host call <code>ToolSubtypePickerHost.Open(parentSlug)</code>, not coordinator routing.</div>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="swatch" style="background:#1a1d24"></i> dark navy bg</span>
+  <span><i class="swatch" style="background:#2a2d33"></i> panel card</span>
+  <span><i class="swatch" style="background:#f5e6c8;border-color:#b89b5e"></i> tan/cream panel chrome</span>
+  <span><i class="swatch" style="background:#b89b5e"></i> tan border <code>#b89b5e</code></span>
+  <span><i class="swatch" style="background:#5b7fa8"></i> tab-active blue</span>
+  <span><i class="swatch" style="background:#f0b429"></i> tier-card chevron yellow</span>
+</div>
+
+<!-- =========================================================== -->
+<h2 id="diagnosis">2 · Current state vs goal — gap diagnosis</h2>
+
+<table>
+<thead><tr><th style="width:160px">Surface</th><th>Pre-migration target</th><th>Current UIToolkit</th><th>Gap → action</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>MainMenu</b></td>
+  <td>5 tan buttons (Continue·NewGame·Load·Settings·Quit) on dark bg; "Territory" title; footer.</td>
+  <td><code>main-menu.uxml</code>: 4 buttons (NewGame·Load·Settings·Quit). Dark theme bg = OK. <b>No Continue, no footer, no cream button colors.</b></td>
+  <td><span class="pill todo">P-C</span> Add <code>btn-continue</code> + footer; switch button colors to tan via <code>cream</code> theme.</td>
+</tr>
+<tr>
+  <td><b>Hud-bar</b></td>
+  <td>Pause btn, mini-map preview tile, city name + stacked pop/money, surplus caption, zoom +/−, money readout, AUTO+MAP toggles.</td>
+  <td><code>hud-bar.uxml</code>: only Money / Budget-delta / CityName / Date / Weather / Happiness labels. <b>No buttons, no zoom, no surplus caption, no AUTO/MAP.</b></td>
+  <td><span class="pill todo">P-B</span> Rebuild UXML with 3 clusters: <code>left</code>=pause+mini-map; <code>center</code>=city+pop+money+surplus; <code>right</code>=zoom +/−, money, AUTO, MAP.</td>
+</tr>
+<tr>
+  <td><b>Toolbar</b></td>
+  <td>Vertical strip, 2-column tile grid, 9 tiles with sprite icons (zone R/C/I, road, services, building1/2, terrain, bulldoze).</td>
+  <td><code>toolbar.uxml</code> = empty <code>&lt;ListView&gt;</code>. No items wired, no icons.</td>
+  <td><span class="pill todo">P-D</span> Replace ListView with explicit grid of <code>Button</code> tiles + background-image USS bound to <code>Assets/Sprites/Icons/icon-*.png</code>.</td>
+</tr>
+<tr>
+  <td><b>Subtype picker</b></td>
+  <td>HUD-anchored panel bottom-left (NOT modal). 3 horizontal tier cards (L/M/H) with yellow chevron icons + blue active outline. Appears below toolbar on parent tile click.</td>
+  <td><code>tool-subtype-picker.uxml</code> exists; <b>UIDocument GO absent from CityScene</b>; Host stub.</td>
+  <td><span class="pill todo">P-D2</span> Inject GO; anchor USS <code>position:absolute; left:80px; bottom:12px</code>; Host opens via direct call (NOT ModalCoordinator → avoids pause-owner side effect).</td>
+</tr>
+<tr>
+  <td><b>Time controls</b></td>
+  <td>Pause + 1×/2×/3× speed buttons (top strip pause-tile in goal A).</td>
+  <td><code>TimeControlsHost</code> stub-only logs ("wire TimeManager"). Buttons bound by <code>binding-path</code> which Unity 2022 ignores.</td>
+  <td><span class="pill todo">P-E</span> Rewrite Host to manual <code>Q&lt;Button&gt;.clicked</code> + <code>TimeManager.SetTimeSpeedIndex</code>/<code>SetModalPauseOwner</code>.</td>
+</tr>
+<tr>
+  <td><b>Stats / Budget / Glossary / Building-info modals</b></td>
+  <td>Open on toggler button or scene click; cream/tan card chrome; close on ×.</td>
+  <td>UIDocs exist, Hosts call <code>RegisterMigratedPanel</code> (display:none default). <b>No triggers wired</b> (no toggler buttons, no Esc, no building-click).</td>
+  <td><span class="pill todo">P-F</span> Wire triggers via existing <code>ModalCoordinator.Show(slug)</code>: toolbar tile→subtype-picker, HUD AUTO/MAP→stats/budget, ×/Esc→close.</td>
+</tr>
+<tr>
+  <td><b>Mini-map</b></td>
+  <td>Tiny preview tile inside top-bar left cluster (per goal A).</td>
+  <td><code>mini-map-uidoc</code> empty; no RT, no projection.</td>
+  <td><span class="pill todo">P-G</span> Phase G — RenderTexture camera + <code>VisualElement.style.backgroundImage</code> binding. Defer full grid sampling — flat RT capture from <code>IsometricCamera</code> sufficient for parity.</td>
+</tr>
+<tr>
+  <td><b>Hover info card</b></td>
+  <td>Right-side tan card with Grid/Chunk/Height/Surface/Prefab/Owner on cell hover.</td>
+  <td><code>info-panel.uxml</code> exists; <code>InfoPanelHost</code> + <code>InfoPanelAdapter</code> exist but not wired to cell-hover event.</td>
+  <td><span class="pill todo">P-F2</span> Hook <code>GridHoverProbe</code> (existing service) → <code>InfoPanelHost.SetCell(cell)</code>; position panel right-anchored.</td>
+</tr>
+<tr>
+  <td><b>Cream/tan panel chrome</b></td>
+  <td>All panel borders/buttons = tan <code>#b89b5e</code> on cream <code>#f5e6c8</code>.</td>
+  <td><code>dark.tss</code> ships dark surfaces only (no cream tokens).</td>
+  <td><span class="pill todo">P-A</span> Add second theme <code>cream.tss</code> + bake-handler theme selector; per-panel theme assignment.</td>
+</tr>
+</tbody>
+</table>
+
+<!-- =========================================================== -->
+<h2 id="why-prior-failed">3 · Why the prior plan failed</h2>
+<div class="grid grid-2">
+<div class="card bad">
+  <h4>Mistake 1 — Unicode glyph placeholders</h4>
+  <p>Plan §2.5 said "use 🏘 🛣 ⛏ 🏗 emoji". Unity's default font (Liberation Sans) ships <b>no emoji glyphs</b>; tiles render blank. Real pixel-art icons <i>already exist</i> at <code>Assets/Sprites/Icons/icon-*.png</code> — this plan must use them via USS <code>background-image: url("...")</code>.</p>
+</div>
+<div class="card bad">
+  <h4>Mistake 2 — Deferred cream/tan chrome</h4>
+  <p>Plan §2.7 punted "cream/tan parity" to a separate pass. But that <i>is</i> the visual identity in every screenshot. Punting it = the recovered UI still looks wrong. This plan ships <code>cream.tss</code> in Phase A and assigns it to every modal + toolbar tile.</p>
+</div>
+<div class="card bad">
+  <h4>Mistake 3 — ListView for toolbar</h4>
+  <p>Goal A toolbar = static 9-tile grid, not a scrollable list. ListView added complexity (itemsSource binding, makeItem callback, bindItem callback) and never got wired. This plan uses a flat <code>&lt;VisualElement class="toolbar__grid"&gt;</code> with explicit children.</p>
+</div>
+<div class="card bad">
+  <h4>Mistake 4 — Toggler buttons in hud-bar</h4>
+  <p>Plan §2.3 added 📊💰📖⏸ togglers into hud-bar right cluster. Pre-migration UI has <b>no such buttons there</b>. Stats/budget open from the <i>toolbar</i> + cell-click + hotkey, not from HUD. This plan respects that; HUD stays read-only.</p>
+</div>
+<div class="card bad">
+  <h4>Mistake 5 — Manager wiring stubs left as Debug.Log</h4>
+  <p><code>TimeControlsHost</code>, <code>ToolbarHost</code> both still log "stub; wire X" → user clicks do nothing. This plan replaces every stub with the actual <code>TimeManager</code>/<code>UIManager</code>/<code>ModalCoordinator</code> call.</p>
+</div>
+<div class="card bad">
+  <h4>Mistake 6 — Bake-cache mismatch</h4>
+  <p>Per <a href="#feedback">feedback memory <code>feedback_ui_bake_prefab_rebake</code></a>: UXML/USS edits need an explicit <code>npm run unity:bake-ui</code> rebake before Play Mode picks them up. Prior plan ran compile-check only and missed bake. This plan gates each phase on <code>bake → compile → bridge-snapshot</code>.</p>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<h2 id="strategy">4 · Recovery strategy — three pillars</h2>
+<ol>
+  <li><b>Use the bake pipeline, not hand-edits.</b> All UXML/USS lives in <code>Assets/UI/Snapshots/panels.json</code> (DB-derived snapshot). Hand-edited <code>Assets/UI/Generated/*.uxml</code> get overwritten on next bake. <b>Phase A1 adds a "freeze handle"</b> (<code>panel_freeze: true</code> in panels.json) for surfaces this plan owns, OR re-authors the source rows in panels.json so re-bake produces the right output. <b>Pick re-author</b> — it's the project's stated direction (DB-primary).</li>
+  <li><b>Use existing assets.</b> Sprite icons at <code>Assets/Sprites/Icons/icon-*.png</code> + button frames at <code>Assets/Sprites/Buttons/*.png</code> already exist (legacy uGUI shipped them). Wire via USS <code>background-image: url("project://database/Assets/Sprites/Icons/icon-X.png")</code>.</li>
+  <li><b>Use existing managers.</b> <code>UIManager</code>, <code>TimeManager</code>, <code>ModalCoordinator</code>, <code>InfoPanelAdapter</code>, <code>CityStats</code>, <code>EconomyManager</code> all live and work. Hosts wire to them — no new game-logic services.</li>
+</ol>
+
+<!-- =========================================================== -->
+<h2 id="architecture">5 · Architecture deltas to the toolkit</h2>
+
+<h3>5.1 · Two-theme bake</h3>
+<p>Add <code>Assets/UI/Themes/cream.tss</code> emitted by <code>TssEmissionService</code> from a second token set. <code>panels.json</code> gets a <code>theme: "dark" | "cream"</code> field; <code>UxmlEmissionService</code> picks the right <code>&lt;Style src="..."&gt;</code> in the generated UXML head.</p>
+
+<pre>/* Assets/UI/Themes/cream.tss — Phase A1 */
+:root {
+    --ds-color-bg-base: #1a1d24;         /* outer dark backdrop */
+    --ds-color-bg-card: #f5e6c8;         /* panel fill (cream) */
+    --ds-color-bg-card-inner: #ede4ce;   /* button fill */
+    --ds-color-bg-elev: #2a2d33;         /* hover */
+    --ds-color-text-primary: #3a2f1c;    /* dark on cream */
+    --ds-color-text-muted: #6b5a3d;
+    --ds-color-accent: #b89b5e;          /* tan border / accent */
+    --ds-color-accent-2: #d4b87a;
+    --ds-color-tab-active: #5b7fa8;
+    --ds-color-warn: #e58c4a;            /* "Est. monthly surplus" caption color */
+    --ds-color-success: #6aaa64;
+}</pre>
+
+<h3>5.2 · Sprite-backed buttons</h3>
+<p>New USS utility class set <code>.icon-btn</code> in a shared <code>icon-buttons.uss</code> (imported by toolbar.uss, hud-bar.uss, time-controls.uss):</p>
+
+<pre>.icon-btn {
+    width: 28px; height: 28px;
+    background-color: var(--ds-color-bg-card-inner, #ede4ce);
+    border-color: var(--ds-color-accent, #b89b5e);
+    border-width: 2px; border-radius: 4px;
+    -unity-background-scale-mode: scale-to-fit;
+    padding: 2px;
+    margin: 2px;
+}
+.icon-btn:hover  { background-color: #f9efd2; }
+.icon-btn--active { border-color: #5b7fa8; }
+
+.icon-btn--pause      { background-image: url("project://database/Assets/Sprites/Icons/icon-pause.png"); }
+.icon-btn--play       { background-image: url("project://database/Assets/Sprites/Icons/icon-play.png"); }
+.icon-btn--ff         { background-image: url("project://database/Assets/Sprites/Icons/icon-fast-forward.png"); }
+.icon-btn--zone-r     { background-image: url("project://database/Assets/Sprites/Icons/icon-zone-residential.png"); }
+.icon-btn--zone-c     { background-image: url("project://database/Assets/Sprites/Icons/icon-zone-commercial.png"); }
+.icon-btn--zone-i     { background-image: url("project://database/Assets/Sprites/Icons/icon-zone-industrial.png"); }
+.icon-btn--road       { background-image: url("project://database/Assets/Sprites/Icons/icon-road.png"); }
+.icon-btn--bulldoze   { background-image: url("project://database/Assets/Sprites/Icons/icon-bulldoze.png"); }
+.icon-btn--power      { background-image: url("project://database/Assets/Sprites/Icons/icon-power.png"); }
+.icon-btn--water      { background-image: url("project://database/Assets/Sprites/Icons/icon-water.png"); }
+.icon-btn--services   { background-image: url("project://database/Assets/Sprites/Icons/icon-services.png"); }
+.icon-btn--landmark   { background-image: url("project://database/Assets/Sprites/Icons/icon-landmark.png"); }</pre>
+
+<h3>5.3 · ModalCoordinator extension — GO-toggle</h3>
+<p>Current <code>RegisterMigratedPanel</code> only flips <code>VisualElement.style.display</code>. Because every modal UIDocument GO is <code>SetActive(false)</code> in the scene, the Host never runs <code>OnEnable</code>, so <code>Register</code> is never called → <code>Show(slug)</code> falls through to the legacy TryOpen branch (which logs "unknown slug").</p>
+
+<p><b>Fix:</b> stage all modal UIDocument GOs <code>SetActive(true)</code> in the scene, but with USS <code>display:none</code> on the root. Hosts call <code>RegisterMigratedPanel(slug, root)</code> on enable; coordinator owns visibility going forward. <i>This avoids the GO-toggle dictionary plumbing from the prior plan; simpler and works inside the existing API.</i></p>
+
+<h3>5.4 · Bake-handler theme dispatch</h3>
+<p>One-line extension in <code>UxmlBakeHandler.BakePipeline.cs</code>:</p>
+<pre>// before
+ctx.WriteUxmlHead(theme: "dark");
+// after
+var theme = panel.fields.theme ?? "dark";   // read from panels.json
+ctx.WriteUxmlHead(theme);</pre>
+<p>And in <code>UxmlEmissionService</code>: emit <code>&lt;Style src="project://database/Assets/UI/Themes/{theme}.tss"/&gt;</code> using passed <code>theme</code>.</p>
+
+<h3>5.5 · Panel rows to add / update in <code>panels.json</code></h3>
+<table>
+<thead><tr><th>Slug</th><th>Theme</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><code>main-menu</code></td><td>cream</td><td>add <code>btn-continue</code> child (ord=1, kind=button, params <code>{"action":"main-menu.continue","label":"Continue"}</code>); add footer label children.</td></tr>
+<tr><td><code>hud-bar</code></td><td>cream</td><td>full rewrite — 3 clusters with pause/mini-map/zoom/auto/map children (full child list in §6 Phase B).</td></tr>
+<tr><td><code>toolbar</code></td><td>cream</td><td>replace <code>tool-list</code> ListView with grid of 9 tile children.</td></tr>
+<tr><td><code>time-controls</code></td><td>cream</td><td>3 buttons (1×/2×/3×) — pause moves into hud-bar.</td></tr>
+<tr><td><code>tool-subtype-picker</code></td><td>cream</td><td>add panel + children (8 zone subtypes, 1 road group, 2 building rows).</td></tr>
+<tr><td><code>stats-panel</code> · <code>budget-panel</code> · <code>glossary-panel</code> · <code>info-panel</code> · <code>building-info</code> · <code>alerts-panel</code></td><td>cream</td><td>change theme only; structure already authored.</td></tr>
+<tr><td>(rest)</td><td>dark</td><td>unchanged.</td></tr>
+</tbody>
+</table>
+
+<h3>5.6 · Continue button wiring (MainMenu)</h3>
+<pre>// MainMenuHost.cs — add in OnEnable()
+_btnContinue = root.Q&lt;Button&gt;("btn-continue");
+if (_btnContinue != null) _btnContinue.clicked += OnContinue;
+
+void OnContinue()
+{
+    // Same as OnLoad but only show button when a save exists.
+    var path = ResolveMostRecentSavePath();
+    if (string.IsNullOrEmpty(path)) return;
+    GameStartInfo.SetPendingLoadPath(path);
+    SceneManager.LoadScene(CitySceneBuildIndex);
+}
+
+// Hide Continue button when no save exists:
+if (string.IsNullOrEmpty(ResolveMostRecentSavePath()))
+    _btnContinue?.AddToClassList("hidden");</pre>
+
+<!-- =========================================================== -->
+<h2 id="phases">6 · Mechanical execution phases</h2>
+<p>Each phase = one PR-equivalent unit. Run <code>npm run unity:bake-ui && npm run unity:compile-check && npm run db:bridge-preflight</code> between phases. End-of-phase verification via <code>capture_screenshot</code> bridge call compared against the goal screenshot.</p>
+
+<h3>Phase A — Cream theme + bake-handler theme dispatch</h3>
+<ol>
+  <li><b>A1</b> · Write <code>Assets/UI/Themes/cream.tss</code> with the token set above. <b>OR</b>, if <code>TssEmissionService</code> already supports theme switch, register a "cream" token map in panels.json and let bake emit the .tss.</li>
+  <li><b>A2</b> · Patch <code>Assets/Scripts/Editor/Bridge/UxmlBakeHandler.BakePipeline.cs</code> + <code>UxmlEmissionService.cs</code> to honor <code>theme</code> field on panel row.</li>
+  <li><b>A3</b> · Add <code>"theme":"cream"</code> to <code>panels.json</code> rows: main-menu, hud-bar, toolbar, time-controls, tool-subtype-picker, stats-panel, budget-panel, glossary-panel, info-panel, building-info, alerts-panel.</li>
+  <li><b>A4</b> · Run <code>npm run unity:bake-ui</code>. Verify each affected UXML now has <code>&lt;Style src=".../cream.tss"/&gt;</code> in head.</li>
+  <li><b>A5</b> · <code>unity:compile-check</code>. Bridge snapshot MainMenu — buttons should now be cream-tinted (text dark on cream bg).</li>
+</ol>
+
+<h3>Phase B — Hud-bar rebuild (3 clusters)</h3>
+<p>Update <code>hud-bar</code> row in <code>panels.json</code> children:</p>
+<pre>// hud-bar children — Phase B
+ord 1: button   instance "hud-pause"      params {kind:"icon-btn", icon:"pause",     action:"time.toggle-pause"}
+ord 2: image    instance "hud-mini-map"   params {kind:"mini-map-preview", width:24, height:24}
+ord 3: label    instance "hud-city-name"  params {bindId:"city.name",  variant:"hud-title"}
+ord 4: label    instance "hud-pop"        params {bindId:"city.population", variant:"hud-stat"}
+ord 5: label    instance "hud-money"      params {bindId:"city.money",      variant:"hud-stat"}
+ord 6: label    instance "hud-surplus"    params {bindId:"city.surplus-caption", variant:"hud-caption-warn"}
+ord 7: button   instance "hud-zoom-in"    params {kind:"icon-btn", icon:"zoom-in",   action:"camera.zoom-in"}
+ord 8: button   instance "hud-zoom-out"   params {kind:"icon-btn", icon:"zoom-out",  action:"camera.zoom-out"}
+ord 9: label    instance "hud-money-2"    params {bindId:"city.money", variant:"hud-money-tall"}
+ord 10: button  instance "hud-auto"       params {kind:"text-btn", label:"AUTO", action:"ui.toggle-auto"}
+ord 11: button  instance "hud-map"        params {kind:"text-btn", label:"MAP",  action:"map-panel.toggle"}</pre>
+
+<p>Rewrite <code>HudBarHost.cs</code>: query buttons, hook <code>clicked +=</code> → call <code>TimeManager.SetModalPauseOwner</code> (pause), <code>CameraController.Zoom(±1)</code> (zoom), <code>UIManager.ToggleAutoMode()</code> (auto), <code>ModalCoordinator.Show("map-panel")</code> (map). Add new label refs for surplus caption.</p>
+
+<p><b>Note:</b> Add <code>icon-zoom-in.png</code> + <code>icon-zoom-out.png</code> to <code>Assets/Sprites/Icons/</code>. These don't exist yet — generate via <code>tools/sprite-gen/</code> or hand-author 16×16 pixel-art versions.</p>
+
+<h3>Phase C — MainMenu cream + Continue button</h3>
+<ol>
+  <li><b>C1</b> · Add child <code>btn-continue</code> ord=1 (before <code>btn-new-game</code>) in panels.json main-menu row.</li>
+  <li><b>C2</b> · Add footer children (<code>main-menu-footer-left</code> label "Bacayo Studio", <code>main-menu-footer-right</code> label "--" or build code).</li>
+  <li><b>C3</b> · Update <code>main-menu.uss</code> emission to anchor footer bottom; cream button styling via theme tokens (already covered by Phase A).</li>
+  <li><b>C4</b> · <code>MainMenuHost.cs</code>: wire <code>btn-continue.clicked</code> → <code>OnContinue</code>; hide button if no save.</li>
+  <li><b>C5</b> · Bake + compile + bridge snapshot of MainMenu → diff vs Goal B.</li>
+</ol>
+
+<h3>Phase D — Toolbar tile grid + Subtype picker</h3>
+<p>Replace toolbar ListView with explicit 2-col grid of <code>icon-btn</code> instances. Each tile's <code>action</code> on press = <code>toolbar.select-tool</code> with <code>payload.parent</code> = slug. ToolbarHost wires click → <code>ModalCoordinator.Show("tool-subtype-picker")</code> with parent slug passed via a new <code>ShowWithContext(slug, ctx)</code> overload (or via a static <code>ToolSubtypePickerHost.PendingParent</code> field).</p>
+
+<details>
+<summary>Toolbar tile spec (9 tiles, 2-col grid)</summary>
+<table>
+<thead><tr><th>Row</th><th>Col A</th><th>Col B</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>icon-zone-residential</code> · slug <code>zone-r</code></td><td><code>icon-zone-commercial</code> · slug <code>zone-c</code></td></tr>
+<tr><td>2</td><td><code>icon-zone-industrial</code> · slug <code>zone-i</code></td><td><code>icon-road</code> · slug <code>road</code></td></tr>
+<tr><td>3</td><td><code>icon-services</code> · slug <code>services</code></td><td><code>icon-power</code> · slug <code>building-power</code></td></tr>
+<tr><td>4</td><td><code>icon-water</code> · slug <code>building-water</code></td><td><code>icon-landmark</code> · slug <code>landmark</code></td></tr>
+<tr><td>5</td><td><code>icon-bulldoze</code> · slug <code>bulldoze</code></td><td>(empty)</td></tr>
+</tbody>
+</table>
+</details>
+
+<p><b>Subtype picker — HUD-anchored panel, NOT a centered modal</b> (corrected per Goal D real screenshot). Steps:</p>
+<ol>
+  <li>Add a new <code>tool-subtype-picker-uidoc</code> GameObject to CityScene (duplicate <code>time-controls-uidoc</code> structure since both are HUD-anchored, not modals). Set its UIDocument.visualTreeAsset to <code>Assets/UI/Generated/tool-subtype-picker.uxml</code>; <code>m_IsActive: 1</code>; <code>sortOrder: 25</code> (above toolbar=20, below modals=100).</li>
+  <li>Attach <code>ToolSubtypePickerHost</code> MonoBehaviour. Picker root hidden by default via USS <code>display: none</code>.</li>
+  <li>In <code>panels.json</code> tool-subtype-picker row, set <code>params_json</code> to <code>{"width": 320, "height": 96, "anchor": "bottom-left"}</code>. USS emits <code>position: absolute; left: 80px; bottom: 12px;</code> (clears the 64px toolbar width + gap). Layout: horizontal flex row, 3 tier cards each ~96×80px, dark slate bg, blue active outline on selected card.</li>
+  <li><b>Trigger path:</b> NOT via <code>ModalCoordinator.Show("tool-subtype-picker")</code>. Instead: <code>ToolbarHost.OnToolSelected(parentSlug)</code> → call <code>ToolSubtypePickerHost.Open(parentSlug)</code> directly (or via static <code>UIManager.OpenSubtypePicker(parentSlug)</code>). Coordinator stays out of the path — picker is a HUD widget, not a modal.</li>
+  <li><b>Host.Open(parentSlug)</b>: switch on parentSlug → populate the 3-card list (Residential = L/M/H, Commercial = L/M/H, Industrial = L/M/H, Forest = Sparse/Medium/Dense, etc.); <code>root.style.display = Flex</code>; pre-select current tier; tier-card <code>clicked +=</code> calls <code>UIManager.SetTool(parentSlug, tierSlug)</code> + <code>Hide()</code>.</li>
+  <li><b>Host.Hide()</b>: <code>root.style.display = None</code>. Auto-Hide also fires on (a) any other parent tile click, (b) Esc, (c) click outside picker bounds.</li>
+  <li>Tier-card icon: USS <code>background-image</code> referencing a tier sprite (yellow chevron stack — 1/2/3 stacked chevrons). If <code>Assets/Sprites/Icons/icon-tier-{light,medium,heavy}.png</code> are missing, generate via sprite-gen at Phase D2-pre.</li>
+</ol>
+<p class="small"><b>Why the correction matters:</b> prior recovery plan v1 routed the picker through ModalCoordinator (treating it as a modal). The real screenshot shows it as a HUD-level panel, peer to the toolbar/time-controls strip — no pause-owner, no exclusive-group semantics, no backdrop. Treating it as a modal triggers <code>SetModalPauseOwner</code> on open → game pauses every time the user picks a zone tier → broken UX. Direct Host call avoids this.</p>
+
+<h3>Phase E — Time controls real wiring</h3>
+<p>Pause moves into hud-bar (Phase B). time-controls.uxml = three buttons 1×/2×/3× anchored top-right (above the MAP toggle).</p>
+<pre>// TimeControlsHost.cs — replace stub log calls
+void OnEnable() {
+    _time = FindObjectOfType<TimeManager>();
+    var root = _doc.rootVisualElement;
+    _btn1x = root.Q<Button>("btn-speed1");
+    _btn2x = root.Q<Button>("btn-speed2");
+    _btn3x = root.Q<Button>("btn-speed3");
+    _btn1x.clicked += () => _time.SetTimeSpeedIndex(0);
+    _btn2x.clicked += () => _time.SetTimeSpeedIndex(1);
+    _btn3x.clicked += () => _time.SetTimeSpeedIndex(2);
+}
+void Update() {
+    int idx = _time.GetTimeSpeedIndex();
+    _btn1x.EnableInClassList("icon-btn--active", idx == 0);
+    _btn2x.EnableInClassList("icon-btn--active", idx == 1);
+    _btn3x.EnableInClassList("icon-btn--active", idx == 2);
+}</pre>
+
+<h3>Phase F — Modal trigger wiring</h3>
+<table>
+<thead><tr><th>Trigger</th><th>Source</th><th>Coordinator call</th></tr></thead>
+<tbody>
+<tr><td>Toolbar tile click (parent)</td><td><code>ToolbarHost.OnToolSelected(slug)</code></td><td>Direct call <code>ToolSubtypePickerHost.Open(parentSlug)</code> — NOT ModalCoordinator (picker is HUD, not modal)</td></tr>
+<tr><td>HUD <code>MAP</code> button</td><td><code>HudBarHost</code></td><td><code>Show("map-panel")</code></td></tr>
+<tr><td>HUD <code>AUTO</code> button</td><td><code>HudBarHost</code></td><td><code>UIManager.ToggleAutoMode()</code> + <code>Show("stats-panel")</code></td></tr>
+<tr><td>Cell click (zone tile)</td><td><code>GridHoverProbe</code> · existing</td><td><code>Show("building-info")</code></td></tr>
+<tr><td>Esc / × button</td><td>Host's <code>btn-close</code></td><td><code>HideMigrated(currentSlug)</code></td></tr>
+<tr><td>Cell hover</td><td><code>GridHoverProbe</code></td><td><code>InfoPanelHost.SetCell(cell)</code> + show inline (always-visible HUD, not modal)</td></tr>
+</tbody>
+</table>
+
+<h3>Phase G — Mini-map (basic)</h3>
+<p>Bare-minimum parity: 24×24 tile in hud-bar shows a low-res RT capture of the city camera. Defer real grid sampling.</p>
+<ol>
+  <li>Add a <code>MiniMapCamera</code> child of the main isometric camera; ortho size = grid bounds; renders to a <code>RenderTexture(64,64)</code>.</li>
+  <li><code>MiniMapHost.Update()</code> sets <code>_image.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_rt))</code> once on enable.</li>
+</ol>
+
+<h3>Phase H — Verification + visual baseline</h3>
+<ol>
+  <li>H1 · <code>npm run unity:bake-ui</code> green.</li>
+  <li>H2 · <code>npm run unity:compile-check</code> green.</li>
+  <li>H3 · <code>npm run validate:all</code> no delta from baseline.</li>
+  <li>H4 · <code>npm run db:bridge-preflight</code> green.</li>
+  <li>H5 · Bridge: open MainMenu, snapshot → diff vs Goal B.</li>
+  <li>H6 · Bridge: open CityScene, snapshot HUD → diff vs Goal A.</li>
+  <li>H7 · Bridge: open stats-panel via toolbar click, snapshot → diff vs Goal C mockup.</li>
+  <li>H8 · Capture new visual baselines: <code>tools/visual-baseline/golden/main-menu.png</code>, <code>hud-bar.png</code>, <code>toolbar.png</code>, <code>stats-panel.png</code>.</li>
+  <li>H9 · Commit: <code>feat(ui-toolkit-parity-recovery): cream theme + hud-bar + toolbar + modal wiring</code>.</li>
+</ol>
+
+<!-- =========================================================== -->
+<h2 id="new-tools">7 · New tools / new methods (must be built)</h2>
+
+<div class="grid grid-2">
+<div class="card">
+  <h4>T1 · <code>cream.tss</code> theme</h4>
+  <p class="pill todo">Author</p>
+  <p>New file <code>Assets/UI/Themes/cream.tss</code>; bake-emitted OR hand-written if simpler. Token set in §5.1.</p>
+</div>
+
+<div class="card">
+  <h4>T2 · bake-handler theme dispatch</h4>
+  <p class="pill todo">Extend</p>
+  <p>One-line patch in <code>UxmlBakeHandler.BakePipeline.cs</code> + <code>UxmlEmissionService.cs</code> to read <code>panel.theme</code> field and emit <code>&lt;Style src=".../{theme}.tss"/&gt;</code>.</p>
+</div>
+
+<div class="card">
+  <h4>T3 · <code>icon-buttons.uss</code></h4>
+  <p class="pill todo">Author</p>
+  <p>Shared utility USS in <code>Assets/UI/Generated/_shared/icon-buttons.uss</code>; imported by every HUD/toolbar UXML. Class set in §5.2. Generated from a new panels.json row of <code>kind: "stylesheet"</code> + <code>emit_target: shared-uss</code>.</p>
+</div>
+
+<div class="card">
+  <h4>T4 · Tier sprite icons (chevron stack 1/2/3)</h4>
+  <p class="pill todo">Author</p>
+  <p>Three new icons <code>icon-tier-light.png</code> · <code>icon-tier-medium.png</code> · <code>icon-tier-heavy.png</code> (yellow chevron stacks, 32×32) under <code>Assets/Sprites/Icons/</code>. Used by tier cards in the subtype picker. Generate via <code>tools/sprite-gen/</code> or hand-author.<br><br><i>Note:</i> ModalCoordinator extension dropped — picker is HUD, not modal; no <code>ShowWithContext</code> overload needed.</p>
+</div>
+
+<div class="card">
+  <h4>T5 · MiniMapCamera</h4>
+  <p class="pill todo">Author</p>
+  <p>New MonoBehaviour + scene GameObject; orthographic camera over grid → <code>RenderTexture(64,64)</code>.</p>
+</div>
+
+<div class="card">
+  <h4>T6 · <code>icon-zoom-in/out.png</code></h4>
+  <p class="pill todo">Author</p>
+  <p>Two new 32×32 pixel icons. Either via <code>tools/sprite-gen/</code> or hand-author. Drop in <code>Assets/Sprites/Icons/</code>.</p>
+</div>
+
+<div class="card">
+  <h4>T7 · <code>tool-subtype-picker-uidoc</code> scene entry</h4>
+  <p class="pill todo">Add to scene</p>
+  <p>GameObject in CityScene.unity referencing existing <code>tool-subtype-picker.uxml</code>. Use Editor Inspector — avoid hand-editing scene YAML if possible.</p>
+</div>
+
+<div class="card">
+  <h4>T8 · <code>HudBarHost</code> — full rewrite</h4>
+  <p class="pill todo">Rewrite</p>
+  <p>Add button refs (pause / zoom±/auto/map); wire to TimeManager, CameraController, UIManager, ModalCoordinator. Add surplus caption binding.</p>
+</div>
+
+<div class="card">
+  <h4>T9 · Visual-diff regression for HUD/toolbar/menu</h4>
+  <p class="pill todo">Extend</p>
+  <p>Add three goldens to <code>tools/visual-baseline/golden/</code>: main-menu.png, hud-bar.png, toolbar.png (capture once Phase H8 is green). Ensures regressions caught in CI.</p>
+</div>
+
+<div class="card">
+  <h4>T10 · <code>panels.json</code> theme field schema bump</h4>
+  <p class="pill todo">Schema</p>
+  <p>Bump <code>schema_version</code> 4→5 in panels.json; allow optional <code>fields.theme: "dark"|"cream"</code>. Update <code>tools/scripts/__tests__/fixtures/cd-game-ui/happy/panels.json</code> accordingly so <code>validate:all</code> stays green.</p>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<h2 id="verification">8 · Verification + acceptance gates</h2>
+<p>Each phase blocks on these gates. <b>Hard rule (per <code>feedback_unity_open_blocks_compile_check</code>): if compile-check returns non-zero or the Editor refuses to quit, STOP and poll the user via <code>AskUserQuestion</code> — do NOT continue past a red gate.</b></p>
+
+<table>
+<thead><tr><th style="width:170px">Gate</th><th>Command</th><th>Pass criterion</th></tr></thead>
+<tbody>
+<tr><td>Bake</td><td><code>npm run unity:bake-ui</code></td><td>Exit 0; all 50+ UXML files regenerated; no warning about missing theme.</td></tr>
+<tr><td>Compile</td><td><code>npm run unity:compile-check</code></td><td>Exit 0; no <code>Editor is open</code> abort.</td></tr>
+<tr><td>Validate</td><td><code>npm run validate:all</code></td><td>Exit 0; no fixture drift after schema bump (T10).</td></tr>
+<tr><td>Bridge ready</td><td><code>npm run db:bridge-preflight</code></td><td>Exit 0.</td></tr>
+<tr><td>MainMenu visual</td><td><code>unity_bridge_command capture_screenshot scene=MainMenu</code></td><td>Visual diff vs Goal B ≤ tolerance.</td></tr>
+<tr><td>CityScene visual</td><td><code>unity_bridge_command capture_screenshot scene=CityScene</code></td><td>Visual diff vs Goal A ≤ tolerance for HUD + toolbar.</td></tr>
+<tr><td>Modal smoke</td><td><code>get_play_mode_status</code> + tile-click smoke</td><td>stats-panel opens on toolbar click, closes on ×.</td></tr>
+</tbody>
+</table>
+
+<!-- =========================================================== -->
+<h2 id="risks">9 · Risks + escape hatches</h2>
+
+<table>
+<thead><tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Bake handler doesn't yet know <code>theme</code> field; refuses unknown key.</td><td><span class="pill warn">M</span></td><td>Phase A2 ships the patch first; bake handler tested before any panels.json row gains the field.</td></tr>
+<tr><td>Sprite <code>background-image</code> URLs don't resolve at runtime.</td><td><span class="pill warn">M</span></td><td>USS uses <code>project://database/...</code> form which UI Toolkit resolves via AssetDatabase. Fallback: register in <code>Resources/</code> + use <code>resource()</code> form.</td></tr>
+<tr><td>Modal UIDocs already active=false in scene; Host OnEnable never runs → never registered.</td><td><span class="pill bad">H</span></td><td>Phase A bake also flips m_IsActive to 1 for all modal UIDocs (scene YAML python edit or Editor button); Host hides via USS until <code>Show()</code>.</td></tr>
+<tr><td>Re-bake overwrites carefully-tweaked UXML between phases.</td><td><span class="pill warn">M</span></td><td>Source of truth = panels.json edits, never the generated <code>.uxml</code>. Authors only touch panels.json + Host C#.</td></tr>
+<tr><td>Visual-diff goldens never captured at parity → no regression net.</td><td><span class="pill warn">M</span></td><td>Phase H8 mandatory; user reviews captured PNGs before promotion.</td></tr>
+<tr><td>Continue button shown with empty save folder → silent click.</td><td><span class="pill warn">L</span></td><td>MainMenuHost hides <code>btn-continue</code> when <code>ResolveMostRecentSavePath()</code> returns empty.</td></tr>
+<tr><td>cream.tss tokens conflict with dark.tss when both loaded.</td><td><span class="pill warn">L</span></td><td>Per-panel <code>&lt;Style&gt;</code> tag is scoped to that document; no global leak.</td></tr>
+<tr><td>Toolbar tiles don't get sprite icons because import settings are wrong.</td><td><span class="pill warn">M</span></td><td>Pre-flight verify each <code>icon-*.png</code> has TextureType=Sprite, Filter=Point, Compression=None.</td></tr>
+</tbody>
+</table>
+
+<!-- =========================================================== -->
+<h2 id="feedback">Cross-refs — relevant memory + rules</h2>
+<ul>
+  <li><code>feedback_ui_bake_prefab_rebake</code> — re-bake required after every UI edit before Play Mode.</li>
+  <li><code>feedback_unity_open_blocks_compile_check</code> — Editor-open compile abort = hard gate failure, poll user.</li>
+  <li><code>feedback_db_primary_pivot</code> — work via DB MCP / <code>panels.json</code> source-of-truth, never hand-edit generated UXML.</li>
+  <li><code>ia/specs/architecture/decisions.md DEC-A28</code> — UI Toolkit strangler decision (active).</li>
+  <li><code>ia/skills/ui-element-grill/SKILL.md</code> — guided panel authoring (use for the subtype-picker if grilling needed).</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="orig-gap">10 · Gap closure vs original migration plan (DEC-A28)</h2>
+<p>Cross-checked this recovery plan against <code>docs/explorations/ui-toolkit-migration.html</code> (3766-line strangler-pattern doc, 6 stages, DEC-A28). Items below are <b>load-bearing pieces the original plan had that this recovery plan was missing or vague about</b> — every one closes a likely failure mode the prior fix-attempt hit.</p>
+
+<h3>10.1 · Pre-flight assertions (run BEFORE Phase A)</h3>
+<p>Quick repo checks confirm the foundation is partly present. Each line = a fast bash check the implementing agent must run; result drives a Y/N decision before phases start.</p>
+
+<table>
+<thead><tr><th style="width:35%">Check</th><th>Status (audited 2026-05-13)</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>Assets/Settings/UI/PanelSettings.asset</code> exists</td>
+  <td><span class="pill ok">PRESENT</span></td>
+  <td>UIDocument renders blank if <code>panelSettings</code> field is null. Verify every UIDoc in CityScene + MainMenu references this single shared asset.</td>
+</tr>
+<tr>
+  <td><code>tools/scripts/unity-visual-diff.mjs</code> + <code>tools/visual-baseline/{cli,golden}/</code></td>
+  <td><span class="pill ok">PRESENT</span> (golden/ empty)</td>
+  <td>Stage 1 of original plan built the pixel-diff harness. <b>Re-use it</b> in Phase H — don't author a new one. <code>npm run unity:visual-diff &lt;slug&gt;</code> should already work.</td>
+</tr>
+<tr>
+  <td><code>Assets/Scripts/UI/Modals/PauseMenuDataAdapter.cs</code> deleted?</td>
+  <td><span class="pill bad">STILL ALIVE</span></td>
+  <td>Original Stage 1.0 acceptance required deletion. Live legacy adapter = uGUI Canvas path still firing. May explain why current modal triggers misroute. <b>Delete in Phase A0</b>.</td>
+</tr>
+<tr>
+  <td><code>Assets/Scripts/UI/Registry/UiBindRegistry.cs</code> retired?</td>
+  <td><span class="pill warn">ALIVE (Stage 6 target)</span></td>
+  <td>UIManager + EconomyHudBindPublisher still call <code>UiBindRegistry.Set</code>. Hosts that ALSO read from CityStats directly = <b>double-update path</b>. Either route owns the value, not both.</td>
+</tr>
+<tr>
+  <td><code>Assets/Scenes/CityScene.unity</code> has <code>EventSystem</code> + <code>InputSystemUIInputModule</code></td>
+  <td><span class="pill warn">EventSystem present; input module not confirmed</span></td>
+  <td>UI Toolkit input requires the new input module when Canvas is gone. If module is missing, buttons receive no clicks regardless of `clicked +=` wiring. <b>Verify in Phase A1</b>.</td>
+</tr>
+<tr>
+  <td><code>UIManager.cs</code> consumers of <code>UiBindRegistry</code> + <code>PauseMenuDataAdapter</code></td>
+  <td><span class="pill warn">3 hits in UIManager.cs</span></td>
+  <td>Any new Host trigger that races UIManager's legacy bind path → state flicker. Audit + sever the 3 hits before phase F (modal trigger wiring).</td>
+</tr>
+<tr>
+  <td>Existing modal adapters: <code>BudgetPanelAdapter</code>, <code>StatsPanelAdapter</code>, <code>InfoPanelDataAdapter</code></td>
+  <td><span class="pill warn">ALIVE in Assets/Scripts/UI/Modals/</span></td>
+  <td>Original plan deleted these at Stage 4.0.2/3/4. Live + new Hosts writing same VM properties = double-source. <b>Mark obsolete or delete in Phase F</b>.</td>
+</tr>
+<tr>
+  <td>UIDocument <code>sortOrder</code> stack discipline</td>
+  <td><span class="pill todo">UNVERIFIED</span></td>
+  <td>18 UIDocs in CityScene. Without explicit sortOrder per doc, modals can draw under HUD. Set: HUD=10, toolbar=20, modals=100, tooltip=200.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>10.2 · Architecture invariants from DEC-A28 to respect</h3>
+<div class="grid grid-2">
+<div class="card">
+  <h4>I1 · DB row canonical (Q5 pick)</h4>
+  <p>Original plan: "DB row canonical + generated TSS files." So <code>cream.tss</code> = bake output, not hand-author. <b>Action:</b> seed <code>catalog_token</code> rows with <code>theme_slug='cream'</code> + run TssEmitter. Hand-authoring the .tss bypasses bake → next bake overwrites it.</p>
+</div>
+<div class="card">
+  <h4>I2 · Strangler co-existence</h4>
+  <p>uGUI + UI Toolkit live side-by-side until last consumer flips. ModalCoordinator already has BOTH <code>_panelRoots</code> (GO route) AND <code>_migratedPanels</code> (VE route). <b>Action:</b> Hosts call existing <code>RegisterMigratedPanel</code> + <code>SetActive(true)</code> on the GO; don't invent a 3rd dict.</p>
+</div>
+<div class="card">
+  <h4>I3 · ViewModel + INotifyPropertyChanged</h4>
+  <p>Native binding via <code>dataBindingPath</code> is the Q6 pick. <b>BUT</b> the current Unity 2022 build doesn't have runtime data binding; all current Hosts use manual <code>Q&lt;Label&gt;.text = vm.Foo</code> push. Recovery plan must NOT regress to <code>binding-path</code> attributes that silently no-op (this was the prior plan's mistake on time-controls).</p>
+</div>
+<div class="card">
+  <h4>I4 · PauseMenuHost = the proven template</h4>
+  <p><code>PauseMenuHost.cs</code> is the Stage 1.0 tracer slice — the only Host that survived the migration with full pixel parity. <b>Action:</b> every new/rewritten Host (HudBarHost, ToolbarHost, TimeControlsHost) models its OnEnable/OnDisable lifecycle, dataSource set, Q-lookup pattern on it.</p>
+</div>
+<div class="card">
+  <h4>I5 · 51-prefab visual baseline</h4>
+  <p>Original Stage 1.0.1 captured pixel goldens for all 51 prefabs. <code>tools/visual-baseline/golden/</code> is currently empty. <b>Action:</b> before any change, capture a baseline of the current (broken) state — gives the implementing agent a "before" snapshot for diff narration even though we'll diverge from it.</p>
+</div>
+<div class="card">
+  <h4>I6 · validate-no-legacy-ugui-refs gate</h4>
+  <p>Original Stage 6.0.4 specified a validator: <code>grep -rE "(Canvas|CanvasRenderer|RectTransform|UiBindRegistry|UiTheme.asset)" Assets/Scripts/UI/**</code>. <b>Action:</b> run this at Phase A0 to baseline current residual count; Phase H must not grow it.</p>
+</div>
+</div>
+
+<h3>10.3 · Things the original plan caught that the recovery plan was silent on</h3>
+<table>
+<thead><tr><th style="width:25%">Original phase</th><th>What it said</th><th>How recovery plan must integrate</th></tr></thead>
+<tbody>
+<tr>
+  <td>Stage 1.0.5 — <code>unity:visual-diff</code></td>
+  <td>Per-stage automated diff vs golden, tolerance config committed.</td>
+  <td>Phase H8 → use existing <code>npm run unity:visual-diff &lt;slug&gt;</code> instead of authoring new; commit a tolerance config near the goldens.</td>
+</tr>
+<tr>
+  <td>Stage 1.0.6 failure mode</td>
+  <td>"PanelSettings.asset not present or not wired into UIDocument → panel renders blank."</td>
+  <td>Phase A1 → enumerate every UIDoc GO in CityScene + MainMenu; assert <code>panelSettings</code> field is non-null and references the shared asset. Bridge bake step that fixes this if missing.</td>
+</tr>
+<tr>
+  <td>Stage 3.0.5 / 5.0.5 failure mode</td>
+  <td>"EventSystem removed alongside Canvas → UI Toolkit input requires InputSystemUIInputModule."</td>
+  <td>Phase A1 → assert <code>InputSystemUIInputModule</code> on EventSystem GO in both scenes. Add if missing. If buttons "don't click" anywhere, this is the first place to look.</td>
+</tr>
+<tr>
+  <td>Stage 4.0.5 failure mode</td>
+  <td>"Map-panel z-order conflicts with HUD UIDocument → overlapping panels render in wrong order."</td>
+  <td>Phase F → set <code>UIDocument.sortOrder</code> explicitly per category (HUD=10, toolbar=20, modal=100, tooltip=200).</td>
+</tr>
+<tr>
+  <td>Stage 4.0.6 failure mode</td>
+  <td>"Subtype icons are uGUI Image sprites → UI Toolkit needs USS background-image with sprite atlas reference."</td>
+  <td>Phase D2 → confirm <code>Assets/Sprites/Icons/icon-*.png</code> has <code>TextureType=Sprite, Filter=Point, Compression=None</code> + a single .spriteatlas reference if Unity 6 requires it. Pre-flight check.</td>
+</tr>
+<tr>
+  <td>Stage 5.0.1 failure mode</td>
+  <td>"Multiple toasts stack — Host needs queue + z-order management."</td>
+  <td>Out-of-scope here, but call out in §9 risk that <code>NotificationsToastHost</code> is currently a stub; toast queue stays in deferred follow-up.</td>
+</tr>
+<tr>
+  <td>Stage 6.0.3</td>
+  <td>"Themed primitive (ThemedButton/Frame/List/TabBar) [UxmlElement] ports."</td>
+  <td>Recovery plan should NOT collide its new <code>.icon-btn</code> USS class with any existing <code>ds-btn-*</code> classes from a prior port. Pre-flight: grep <code>Assets/UI/Generated/*.uss</code> for existing button classes; namespace recovery classes under <code>.recovery-icon-btn</code> if collision.</td>
+</tr>
+<tr>
+  <td>Stage 2.0.3 — perf gate</td>
+  <td>"Framerate ≥ baseline at full city load."</td>
+  <td>Out of scope for parity (called out in §9), but Phase H should at minimum confirm Play Mode boots without &gt; 5s freeze when entering CityScene.</td>
+</tr>
+<tr>
+  <td>§Acceptance gate — drift scan</td>
+  <td>"<code>ui_def_drift_scan</code> returns zero UXML drift."</td>
+  <td>Phase H → add <code>ui_def_drift_scan</code> MCP call as a verification gate. If panels.json is the source of truth and bake ran cleanly, drift = zero.</td>
+</tr>
+<tr>
+  <td>§Architecture · co-existence in CityScene</td>
+  <td>"Scene contains BOTH Canvas (legacy) AND UIDocument (migrated) simultaneously."</td>
+  <td>Acknowledge in §3 — the goal isn't a clean Canvas-free scene, it's <b>parity</b>. Any leftover Canvas serves legacy adapters only and is invisible to the user. Don't remove Canvas in this plan.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>10.4 · Process discipline carried forward</h3>
+<ul>
+  <li><b>Caveat — no-clarifying-question mode.</b> Original picks (Q1–Q12) were default-locked under that directive. <b>This recovery plan operates in interactive mode</b>: any pick that's ambiguous (e.g. "delete or [Obsolete]?" on PauseMenuDataAdapter, "fix InputSystemUIInputModule now or document?") → poll user via <code>AskUserQuestion</code> in product voice before deciding.</li>
+  <li><b>DEC-A28 alignment.</b> Recovery plan inherits DEC-A28 (<code>ui-renderer-strangler-uitoolkit</code>). Any architectural deviation needs <code>arch_decision_write</code> (amend) call before merging.</li>
+  <li><b>Glossary anchors.</b> The original plan references <code>ui-toolkit-strangler</code>, <code>viewmodel-binding</code>, <code>panel-emitter-seam</code>, <code>tss-emitter</code>, <code>pixel-diff-harness</code>, <code>ui-bind-registry-quarantine</code>, <code>validate-no-legacy-ugui-refs</code>. Implementing agent should run <code>glossary_lookup</code> on these before authoring related code.</li>
+  <li><b>Subagent review.</b> Original skipped it (no-clarifying-question mode). Recovery should run <code>opus-code-reviewer</code> on the diff at end of Phase H before commit.</li>
+</ul>
+
+<h3>10.5 · Phase ordering tweaks driven by the cross-check</h3>
+<p>Two new phases inserted into the §6 sequence — re-numbered handoff in §11 reflects these:</p>
+
+<div class="grid grid-2">
+<div class="card warn">
+  <h4>Phase A0 — Foundation audit (NEW, runs before A1)</h4>
+  <ul class="checklist">
+    <li>Capture baseline visual snapshot of current broken state (<code>npm run unity:visual-diff</code> dry-run).</li>
+    <li>Enumerate every <code>*-uidoc</code> GO in CityScene + MainMenu; confirm each references the shared <code>PanelSettings.asset</code>.</li>
+    <li>Confirm <code>EventSystem</code> GO in both scenes has <code>InputSystemUIInputModule</code> component. Add if missing.</li>
+    <li>Run baseline <code>grep -rE "(Canvas|CanvasRenderer|RectTransform|UiBindRegistry|UiTheme.asset)" Assets/Scripts/UI/ --include="*.cs" | grep -v ".archive" | wc -l</code> → record number. Phase H must not grow it.</li>
+    <li>Delete <code>Assets/Scripts/UI/Modals/PauseMenuDataAdapter.cs</code> (Stage 1.0 leftover); poll user before deletion if any reference suggests dependency.</li>
+    <li>Mark <code>BudgetPanelAdapter</code>, <code>StatsPanelAdapter</code>, <code>InfoPanelDataAdapter</code>, <code>MoneyReadoutBudgetToggle</code> <code>[Obsolete]</code> (do not delete — UIManager still references them).</li>
+  </ul>
+</div>
+<div class="card warn">
+  <h4>Phase F0 — UiBindRegistry severance (NEW, runs before F)</h4>
+  <ul class="checklist">
+    <li>Grep <code>UiBindRegistry.Set</code> calls inside <code>Assets/Scripts/UI/HUD/EconomyHudBindPublisher.cs</code>.</li>
+    <li>For every property the new HudBarHost reads directly from CityStats / EconomyManager → remove the corresponding <code>UiBindRegistry.Set</code> path. No double-write.</li>
+    <li>Grep <code>UiBindRegistry</code> hits in <code>UIManager.cs</code> (3 found at audit). For each: confirm whether the HUD/modal Host owns the value now → cut the registry call.</li>
+    <li><code>UiBindRegistry.cs</code> stays alive (Stage 6 quarantine), just unused for surfaces this plan owns.</li>
+  </ul>
+</div>
+</div>
+
+<hr/>
+
+<!-- =========================================================== -->
+<h2 id="md-handoff">11 · Markdown handoff section (for the implementing agent)</h2>
+<p class="small">Copy/paste this block into the fresh main session prompt. Self-contained; the agent should read the HTML for visual context and follow the mechanical steps below.</p>
+
+<pre>
+# Handoff prompt — UI Toolkit parity recovery
+
+You are picking up a UI recovery task. Read `docs/ui-toolkit-parity-recovery-plan.html` end-to-end first (open in browser or read via the Read tool) — it has 3 reference screenshots that define the visual goal.
+
+Implement Phases A0 → H in order (note A0 + F0 are insertion phases). Do NOT skip phases.
+
+## Pre-flight (before Phase A0) — environment proof
+1. Confirm `Assets/Sprites/Icons/icon-*.png` exists (21 files).
+2. Confirm `Assets/Settings/UI/PanelSettings.asset` exists (it does — verified 2026-05-13).
+3. Confirm `tools/scripts/unity-visual-diff.mjs` exists and `npm run unity:visual-diff --help` works.
+4. Confirm `panels.json` at `Assets/UI/Snapshots/panels.json` has rows for: main-menu, hud-bar, toolbar, time-controls, tool-subtype-picker, stats-panel, budget-panel, glossary-panel, info-panel, building-info, alerts-panel.
+5. Run `npm run db:bridge-preflight` → must exit 0.
+6. Run `npm run unity:compile-check` baseline → must exit 0 BEFORE you start editing.
+7. Run `mcp__territory-ia__glossary_lookup` for: `ui-toolkit-strangler`, `viewmodel-binding`, `panel-emitter-seam`, `tss-emitter`, `pixel-diff-harness`. Familiarize.
+8. Run `mcp__territory-ia__arch_decision_get DEC-A28` → confirm it's still `active`. If any deviation arises, queue `arch_decision_write` (amend) before commit.
+
+## Phase A0 — Foundation audit (§10.5)
+Before any cream theme work, run these checks in order. Record outputs in chat for user review:
+- `grep -rE "(Canvas|CanvasRenderer|RectTransform|UiBindRegistry|UiTheme.asset)" Assets/Scripts/UI/ --include="*.cs" | grep -v ".archive" | wc -l` — record baseline residual count.
+- Read `Assets/Scenes/CityScene.unity` + `Assets/Scenes/MainMenu.unity` for `EventSystem` block. If `m_StandaloneInputModule` is the only input component, add `InputSystemUIInputModule` (poll user first if you must edit scene YAML).
+- For every `*-uidoc` GameObject in CityScene (18 of them, listed in HTML §1), open the scene in the Editor (or grep the .unity YAML) and confirm UIDocument component has `m_PanelSettings: {fileID: ...}` pointing to `Assets/Settings/UI/PanelSettings.asset`.
+- Delete `Assets/Scripts/UI/Modals/PauseMenuDataAdapter.cs` (Stage 1.0 leftover). If `git grep PauseMenuDataAdapter` returns hits outside scene YAML, poll user before deletion.
+- Add `[System.Obsolete("Strangler — replaced by VM-direct Host on UIToolkit. See DEC-A28.")]` to `BudgetPanelAdapter`, `StatsPanelAdapter`, `InfoPanelDataAdapter`, `MoneyReadoutBudgetToggle`. Do NOT delete — `UIManager.cs` still references them.
+- `npm run unity:compile-check` — must remain green after these audits.
+- Bridge snapshot the current broken state to `tools/visual-baseline/golden/_baseline-broken-citystats.png` for diff narrative.
+
+## Per-phase loop (apply to A0 → H)
+For each phase:
+1. Apply edits described in the HTML §6 phase block.
+2. If panels.json changed → `npm run unity:bake-ui`. Confirm exit 0.
+3. `npm run unity:compile-check`. If exit ≠ 0 OR aborted "Editor is open" → STOP. Use `AskUserQuestion` to ask Javier to close the Unity Editor. Re-run. Do not continue past red.
+4. If C# changed → also `npm run validate:all`.
+5. End each phase with a bridge snapshot (`unity_bridge_command capture_screenshot`) saved to `tools/reports/bridge-screenshots/recovery-phase-{X}-{timestamp}.png`. Briefly describe diff vs goal in chat.
+
+## Hard rules
+- Source of truth = `Assets/UI/Snapshots/panels.json` + Host C# files. NEVER hand-edit `Assets/UI/Generated/*.uxml` or `*.uss` (overwritten on bake).
+- `cream.tss` = bake output from <code>catalog_token</code> rows (Q5 — DB row canonical). Seed token rows in DB or panels.json source, run TssEmitter; do not hand-author the .tss.
+- Model every Host on `PauseMenuHost.cs` (the proven Stage 1.0 tracer template). OnEnable: assign VM, set rootVisualElement.dataSource, Q-lookup all elements, wire `clicked +=`. OnDisable: unhook + null the dataSource.
+- No `binding-path="..."` UXML attributes for command buttons — Unity 2022 ignores them at runtime. Use `Q&lt;Button&gt;.clicked +=` from the Host. (This was prior plan's silent failure on TimeControlsHost.)
+- No double-source writes. If a new Host pushes <code>vm.Money = cityStats.money</code>, the matching <code>UiBindRegistry.Set("money", value)</code> in EconomyHudBindPublisher / UIManager must be cut in Phase F0. One owner per property.
+- Set <code>UIDocument.sortOrder</code> explicitly: HUD/city-stats=10, toolbar/time-controls=20, modals (stats/budget/glossary/info/building-info/alerts)=100, tooltip=200, onboarding=150. Without this, modals draw under HUD.
+- If a bake handler patch (Phase A2) breaks fixtures under `tools/scripts/__tests__/fixtures/cd-game-ui/`, update those fixtures in the same commit so `validate:all` stays green.
+- No "stub; wire later" log statements. Every button.clicked = real manager call or `ModalCoordinator.Show(slug)`.
+- No Unicode emoji glyph buttons. Every iconographic surface uses `Assets/Sprites/Icons/icon-*.png` via USS `background-image: url("project://database/...")`.
+- No new worktrees. Stay in `feature/asset-pipeline` main checkout (per `feedback_agents_view_no_worktree`).
+- Per-phase commit only after H8 visual baselines captured & user-approved. One commit at end of Phase H (`feat(ui-toolkit-parity-recovery): cream theme + hud-bar + toolbar + modal wiring`).
+
+## When to escalate (AskUserQuestion)
+- Compile-check non-zero after 1 retry.
+- Bridge snapshot visually wrong vs goal → ask user to confirm spec interpretation.
+- panels.json schema bump T10 breaks more than the 2 happy/slot-violation fixtures.
+- Phase G mini-map RT renders black — ask whether to defer mini-map to a follow-up issue.
+- Phase A0 finds PauseMenuDataAdapter is referenced outside scene YAML.
+- Phase A0 finds any *-uidoc GO has null `panelSettings` — large bake-time mistake; poll before scene edit.
+- Phase F0 finds UiBindRegistry.Set calls on properties NOT covered by this plan (e.g. `news-ticker`, `weather-radar`) — confirm scope before cutting.
+- Architectural deviation from DEC-A28 surfaces (e.g. need to introduce a second PanelSettings) → poll user, queue `arch_decision_write` amend.
+
+## Pre-commit checks
+Before `git add` for the single end-of-Phase-H commit:
+- `npm run validate:all` exit 0.
+- `npm run unity:compile-check` exit 0.
+- `mcp__territory-ia__ui_def_drift_scan` returns zero UXML drift for all panels in scope.
+- Residual `grep` count (Phase A0 baseline) has NOT grown — ideally reduced.
+- Dispatch `opus-code-reviewer` subagent on the diff. Resolve any critical findings before commit.
+
+## Out of scope (do NOT do)
+- Pixel-art icon generation for `icon-zoom-in/out` beyond a 1-shot sprite-gen call. If sprite-gen fails, use a placeholder PNG and flag in the PR.
+- Real grid sampling for mini-map (Phase G stays at "RT capture only").
+- Drill-in sub-panels behind the stats-panel rows (Power › Water › … the "›" chevrons stay non-functional).
+- Studio controls (Knob/Fader/VU/Oscilloscope) — separate plan.
+- Onboarding overlay / notifications toast triggers.
+</pre>
+
+<p class="small" style="margin-top:32px">End of plan. ~9 phases, ~40 mechanical steps, ~10 new tools/methods, 0 cross-coupling between phases. Self-contained; the HTML carries all required visual context.</p>
+
+</body>
+</html>

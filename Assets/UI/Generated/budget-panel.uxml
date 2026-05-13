@@ -7,7 +7,8 @@
     editor-extension-mode="False">
   <!-- Panel: budget-panel | kind: modal | theme: dark -->
   <!-- Stage 4.0 (TECH-32917) — budget rows + treasury display -->
-  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
+  <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="budget-panel.uss"/>
   <ui:VisualElement name="budget-panel" class="budget-panel">
     <ui:VisualElement name="header" class="budget-panel__header">

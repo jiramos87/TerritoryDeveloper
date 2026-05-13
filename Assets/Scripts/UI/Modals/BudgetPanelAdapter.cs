@@ -16,6 +16,7 @@ namespace Territory.UI.Modals
     /// ModalCoordinator reused from Wave B2 (T6.0.5).
     /// Inv #3: slot resolution at mount only, never per-frame.
     /// </summary>
+    [System.Obsolete("Strangler — replaced by VM-direct Host on UIToolkit. See DEC-A28.")]
     public class BudgetPanelAdapter : MonoBehaviour
     {
         private const int ExpectedMinWidgets = 40;

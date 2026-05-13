@@ -1,6 +1,7 @@
 /* Panel: alerts-panel | kind: modal | theme: dark */
 /* Stage 5.0 (TECH-32924) */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
+@import url("project://database/Assets/UI/Themes/cream.tss");
 
 .alerts-panel {
     background-color: var(--ds-color-bg-card, #313244);

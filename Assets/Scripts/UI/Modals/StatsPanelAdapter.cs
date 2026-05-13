@@ -15,6 +15,7 @@ namespace Territory.UI.Modals
     /// Apply-time render-check asserts ≥25 widgets + non-zero subscriber counts.
     /// Inv #3: slot resolution at mount only, never per-frame.
     /// </summary>
+    [System.Obsolete("Strangler — replaced by VM-direct Host on UIToolkit. See DEC-A28.")]
     public class StatsPanelAdapter : MonoBehaviour
     {
         private const int ExpectedMinWidgets = 25;

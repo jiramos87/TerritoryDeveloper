@@ -1,6 +1,7 @@
 /* Panel: budget-panel | kind: modal | theme: dark */
 /* Stage 4.0 (TECH-32917) — panel layout + numeric typography tokens */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
+@import url("project://database/Assets/UI/Themes/cream.tss");
 
 .budget-panel {
     background-color: var(--ds-color-bg-card, #313244);

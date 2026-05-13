@@ -6,6 +6,7 @@ namespace Territory.UI.HUD
 {
     /// <summary>Invisible Graphic on the hud-bar money readout that catches pointer clicks and opens the BudgetPanel popup via UIManager.</summary>
     /// <remarks>Inherits from Graphic so raycastTarget is satisfied without a visible Image. OnPopulateMesh emits nothing — zero vertex cost.</remarks>
+    [System.Obsolete("Strangler — replaced by VM-direct Host on UIToolkit. See DEC-A28.")]
     public class MoneyReadoutBudgetToggle : Graphic, IPointerClickHandler
     {
         [SerializeField] private UIManager _uiManager;

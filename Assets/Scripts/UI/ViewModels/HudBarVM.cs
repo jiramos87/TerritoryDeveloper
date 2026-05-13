@@ -61,6 +61,30 @@ namespace Territory.UI.ViewModels
             set { if (_happiness == value) return; _happiness = value; OnPropertyChanged(); }
         }
 
+        // ── Population (city-stats) ───────────────────────────────────────────
+        string _population = "Pop 0";
+        public string Population
+        {
+            get => _population;
+            set { if (_population == value) return; _population = value; OnPropertyChanged(); }
+        }
+
+        // ── Surplus caption ("Est. monthly surplus: Δ +$0") ───────────────────
+        string _surplus = "Est. monthly surplus: Δ +$0";
+        public string Surplus
+        {
+            get => _surplus;
+            set { if (_surplus == value) return; _surplus = value; OnPropertyChanged(); }
+        }
+
+        // ── AUTO toggle visual state ──────────────────────────────────────────
+        bool _autoMode;
+        public bool AutoMode
+        {
+            get => _autoMode;
+            set { if (_autoMode == value) return; _autoMode = value; OnPropertyChanged(); }
+        }
+
         void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
