@@ -51,7 +51,13 @@ namespace Territory.UI.Hosts
                 return;
             }
 
-            _root = _doc.rootVisualElement.Q<VisualElement>("tool-subtype-picker");
+            var rootEl = _doc.rootVisualElement;
+            rootEl.style.position = Position.Absolute;
+            rootEl.style.top = 0;
+            rootEl.style.left = 0;
+            rootEl.style.right = 0;
+            rootEl.style.bottom = 0;
+            _root = rootEl.Q<VisualElement>("tool-subtype-picker");
             _doc.rootVisualElement.SetCompatDataSource(_vm);
 
             _card0 = _doc.rootVisualElement.Q<Button>("tier-card-0");

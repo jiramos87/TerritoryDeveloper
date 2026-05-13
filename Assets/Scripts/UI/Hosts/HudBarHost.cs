@@ -39,6 +39,7 @@ namespace Territory.UI.Hosts
         Button _btnZoomOut;
         Button _btnAuto;
         Button _btnMap;
+        Button _btnStats;
         VisualElement _miniMap;
 
         void Awake()
@@ -62,6 +63,11 @@ namespace Territory.UI.Hosts
             }
 
             var root = _doc.rootVisualElement;
+            root.style.position = Position.Absolute;
+            root.style.top = 0;
+            root.style.left = 0;
+            root.style.right = 0;
+            root.style.bottom = 0;
             root.SetCompatDataSource(_vm);
 
             _cityNameLbl  = root.Q<Label>("hud-city-name");
@@ -76,12 +82,14 @@ namespace Territory.UI.Hosts
             _btnZoomOut = root.Q<Button>("hud-zoom-out");
             _btnAuto    = root.Q<Button>("hud-auto");
             _btnMap     = root.Q<Button>("hud-map");
+            _btnStats   = root.Q<Button>("hud-btn-stats");
 
             if (_btnPause   != null) _btnPause.clicked   += OnPause;
             if (_btnZoomIn  != null) _btnZoomIn.clicked  += OnZoomIn;
             if (_btnZoomOut != null) _btnZoomOut.clicked += OnZoomOut;
             if (_btnAuto    != null) _btnAuto.clicked    += OnAuto;
             if (_btnMap     != null) _btnMap.clicked     += OnMap;
+            if (_btnStats   != null) _btnStats.clicked   += OnStats;
 
             PushSnapshot();
         }
@@ -93,6 +101,7 @@ namespace Territory.UI.Hosts
             if (_btnZoomOut != null) _btnZoomOut.clicked -= OnZoomOut;
             if (_btnAuto    != null) _btnAuto.clicked    -= OnAuto;
             if (_btnMap     != null) _btnMap.clicked     -= OnMap;
+            if (_btnStats   != null) _btnStats.clicked   -= OnStats;
 
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
@@ -185,6 +194,15 @@ namespace Territory.UI.Hosts
             {
                 _modalCoordinator.Show("map-panel");
             }
+        }
+
+        void OnStats()
+        {
+            if (_modalCoordinator == null) return;
+            if (_modalCoordinator.IsOpen("stats-panel"))
+                _modalCoordinator.HideMigrated("stats-panel");
+            else
+                _modalCoordinator.Show("stats-panel");
         }
     }
 }

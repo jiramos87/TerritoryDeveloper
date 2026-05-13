@@ -27,6 +27,7 @@
       <ui:Button name="hud-zoom-in" class="icon-btn icon-btn--zoom-in" tooltip="Zoom In"/>
       <ui:Button name="hud-zoom-out" class="icon-btn icon-btn--zoom-out" tooltip="Zoom Out"/>
       <ui:Label name="hud-money-2" class="hud-bar__money-tall" text="$0"/>
+      <ui:Button name="hud-btn-stats" class="text-btn" text="STATS"/>
       <ui:Button name="hud-auto" class="text-btn" text="AUTO"/>
       <ui:Button name="hud-map" class="text-btn" text="MAP"/>
     </ui:VisualElement>

@@ -21,7 +21,15 @@ namespace Territory.UI.Hosts
             _vm = new MiniMapVM();
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.SetCompatDataSource(_vm);
+            {
+                var rootEl = _doc.rootVisualElement;
+                rootEl.style.position = Position.Absolute;
+                rootEl.style.top = 0;
+                rootEl.style.left = 0;
+                rootEl.style.right = 0;
+                rootEl.style.bottom = 0;
+                rootEl.SetCompatDataSource(_vm);
+            }
             else
                 Debug.LogWarning("[MiniMapHost] UIDocument or rootVisualElement null on enable.");
         }
