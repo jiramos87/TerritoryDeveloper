@@ -1,5 +1,12 @@
 {
   "_comment": "SHA-256 checksums per golden PNG. Committed — lets reviewers detect uncommitted local golden churn. Goldens themselves are gitignored.",
   "version": 1,
-  "entries": {}
+  "entries": {
+    "hud-bar.png": {
+      "sha256": null,
+      "note": "Golden not yet captured — run `npm run unity:visual-diff -- --panel hud-bar --capture` at full city load to populate. Null sha256 means capture pending.",
+      "stage": "stage-2-0",
+      "captured_at": null
+    }
+  }
 }

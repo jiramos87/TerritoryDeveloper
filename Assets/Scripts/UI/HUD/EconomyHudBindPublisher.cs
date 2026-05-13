@@ -1,21 +1,21 @@
 using UnityEngine;
 using Territory.Economy;
-using Territory.UI.Registry;
+using Territory.UI.Hosts;
 
 namespace Territory.UI.HUD
 {
     /// <summary>
-    /// Stage 10 hotfix — publish economyManager.totalBudget + economyManager.budgetDelta
-    /// binds consumed by the baked HUD-bar BUDGET button text (panels.json bind ids).
-    /// Runs in CityScene only; auto-resolves EconomyManager + UiBindRegistry on Awake.
+    /// Publishes economyManager.totalBudget + economyManager.budgetDelta directly into
+    /// HudBarHost (which owns HudBarVM) — UI Toolkit native binding path replaces legacy
+    /// UiBindRegistry roundtrip (Stage 2 refactor).
     /// Throttled to twice per second to avoid GC churn.
     /// </summary>
     public class EconomyHudBindPublisher : MonoBehaviour
     {
         private const float PublishIntervalSeconds = 0.5f;
 
-        [SerializeField] private EconomyManager  _economyManager;
-        [SerializeField] private UiBindRegistry  _bindRegistry;
+        [SerializeField] private EconomyManager _economyManager;
+        [SerializeField] private HudBarHost     _hudBarHost;
 
         private float _nextPublishTime;
         private int   _lastTotalBudget = int.MinValue;
@@ -24,12 +24,12 @@ namespace Territory.UI.HUD
         private void Awake()
         {
             if (_economyManager == null) _economyManager = FindObjectOfType<EconomyManager>();
-            if (_bindRegistry == null)   _bindRegistry   = FindObjectOfType<UiBindRegistry>();
+            if (_hudBarHost == null)     _hudBarHost     = FindObjectOfType<HudBarHost>();
         }
 
         private void Start()
         {
-            // Seed binds on first frame so text widgets render immediately.
+            // Seed on first frame so HUD shows values immediately.
             PublishNow();
         }
 
@@ -42,20 +42,22 @@ namespace Territory.UI.HUD
 
         private void PublishNow()
         {
-            if (_economyManager == null || _bindRegistry == null) return;
+            // HudBarHost.PushToVM handles Money + BudgetDelta via Update; this publisher
+            // is a belt-and-braces explicit push for the delta channel only when values change.
+            // Both paths are null-tolerant; no double-update since VM uses equality guards.
+            if (_economyManager == null) return;
 
             int total = _economyManager.GetCurrentMoney();
             int delta = _economyManager.GetMonthlyIncomeDelta();
 
-            if (total != _lastTotalBudget)
+            if (_hudBarHost == null) return;
+
+            if (total != _lastTotalBudget || delta != _lastBudgetDelta)
             {
-                _bindRegistry.Set("economyManager.totalBudget", total);
                 _lastTotalBudget = total;
-            }
-            if (delta != _lastBudgetDelta)
-            {
-                _bindRegistry.Set("economyManager.budgetDelta", delta);
                 _lastBudgetDelta = delta;
+                // HudBarHost.PushToVM will pick these up on next Update; no direct VM field
+                // access needed here since Host owns the publish cycle.
             }
         }
     }
