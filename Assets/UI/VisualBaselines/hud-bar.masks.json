@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "panel_slug": "hud-bar",
+  "regions": [
+    {
+      "name": "sim-date-readout",
+      "x": 780,
+      "y": 0,
+      "w": 360,
+      "h": 32,
+      "reason": "live game state — timeManager.currentDate updates every sim tick, would false-flag every bake"
+    },
+    {
+      "name": "population-readout",
+      "x": 780,
+      "y": 32,
+      "w": 360,
+      "h": 32,
+      "reason": "live game state — cityStats.population updates every sim tick, would false-flag every bake"
+    },
+    {
+      "name": "money-readout",
+      "x": 780,
+      "y": 64,
+      "w": 360,
+      "h": 32,
+      "reason": "live game state — economy.money counter updates every frame, would false-flag every bake"
+    }
+  ]
+}

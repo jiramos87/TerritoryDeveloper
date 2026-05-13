@@ -122,6 +122,31 @@ Rationale: fast band runs pre-commit to catch drift early; heavy band runs at pl
 
 ---
 
+## UI Visual Regression
+
+Visual regression baseline sweep for published panels (ui-visual-regression plan).
+
+Sweep orchestrator: `tools/scripts/sweep-visual-baselines.mjs`. Enumerates every
+published panel from `Assets/UI/Snapshots/panels.json`, groups by archetype, fires
+one approval prompt per group (approve_all / approve_subset / skip / refresh),
+then promotes candidate PNGs to `ia_visual_baseline` rows.
+
+Full workflow: run `unity:bake-ui --capture-baselines --panels=all` first to emit
+candidate PNGs under `Library/UiBaselines/_candidate/`, then run the orchestrator
+to promote approved candidates. Audit trail written to `Library/UiBaselines/_sweep-{ts}.jsonl`.
+
+Region mask sidecars for live-state panels (hud-bar, budget-panel, time-strip)
+stored at `Assets/UI/VisualBaselines/{slug}.masks.json`; `visualDiffRepo.run`
+loads sidecars automatically and zeroes masked pixels on both images before diff.
+
+Per-panel tolerance_pct overrides recorded on `ia_visual_baseline` rows where
+defaults diverge (e.g. budget-panel = 0.01 vs default 0.005).
+
+Full §UI Visual Regression workflow documentation (CI strict-mode gate, JSONL→DB
+migration, complete operator runbook) expands at Task 3.0.3.
+
+---
+
 ## Cursor Memory (optional)
 
 Paste the following into **Cursor → Memory** if you want the same policy across projects or sessions without opening this repo:

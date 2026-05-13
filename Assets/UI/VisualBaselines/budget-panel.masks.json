@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "panel_slug": "budget-panel",
+  "regions": [
+    {
+      "name": "running-total",
+      "x": 16,
+      "y": 80,
+      "w": 728,
+      "h": 48,
+      "reason": "live game state — budget.treasury readout-block updates on tick, would false-flag every bake"
+    },
+    {
+      "name": "projected-balance",
+      "x": 16,
+      "y": 480,
+      "w": 728,
+      "h": 48,
+      "reason": "live game state — budget.forecast.balance readout-block updates on tick, would false-flag every bake"
+    }
+  ]
+}

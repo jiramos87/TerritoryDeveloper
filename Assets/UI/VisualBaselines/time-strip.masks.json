@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "panel_slug": "time-strip",
+  "regions": [
+    {
+      "name": "clock",
+      "x": 0,
+      "y": 0,
+      "w": 240,
+      "h": 48,
+      "reason": "live game state — clock readout updates every sim tick, would false-flag every bake"
+    },
+    {
+      "name": "date-display",
+      "x": 240,
+      "y": 0,
+      "w": 480,
+      "h": 48,
+      "reason": "live game state — current date display updates every tick, would false-flag every bake"
+    }
+  ]
+}

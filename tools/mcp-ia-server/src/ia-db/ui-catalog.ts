@@ -14,6 +14,8 @@
  *    primitives + validators in one transaction).
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { PoolClient } from "pg";
 
 // ── shared types ──────────────────────────────────────────────────────────
@@ -519,6 +521,121 @@ export interface VisualDiffRunInput {
   verdict: "match" | "regression" | "new_baseline_needed";
   diff_image_ref?: string | null;
   region_map?: unknown;
+}
+
+// ── Region mask types (Task 2.0.2) ────────────────────────────────────────
+
+export interface MaskRegion {
+  name?: string;
+  reason?: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface MaskSidecar {
+  schema_version?: number;
+  panel_slug?: string;
+  regions: MaskRegion[];
+}
+
+/**
+ * Load region mask sidecar from Assets/UI/VisualBaselines/{slug}.masks.json.
+ * Returns null when sidecar absent (no-op path — callers skip zeroing).
+ */
+function loadMaskSidecar(slug: string): MaskSidecar | null {
+  try {
+    // Resolve repo root relative to this file's compile-time path.
+    // __dirname not available in ESM — use path.resolve from import.meta context.
+    // Fallback: walk up from cwd.
+    const repoRoot = (() => {
+      // Try process.env.REPO_ROOT first (set by scripts).
+      if (process.env.REPO_ROOT) return process.env.REPO_ROOT;
+      // Walk up from cwd until we find package.json.
+      let dir = process.cwd();
+      for (let i = 0; i < 8; i++) {
+        if (fs.existsSync(path.join(dir, "package.json"))) return dir;
+        const parent = path.dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+      }
+      return process.cwd();
+    })();
+
+    const sidecarPath = path.join(
+      repoRoot,
+      "Assets/UI/VisualBaselines",
+      `${slug}.masks.json`,
+    );
+    if (!fs.existsSync(sidecarPath)) return null;
+    const raw = fs.readFileSync(sidecarPath, "utf8");
+    return JSON.parse(raw) as MaskSidecar;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Zero-fill pixels inside each mask rect on a raw RGBA pixel buffer (in-place).
+ * Width/height describe the full image dimensions.
+ */
+function zeroMaskedPixels(
+  pixels: Uint8Array | Buffer,
+  imageWidth: number,
+  imageHeight: number,
+  regions: MaskRegion[],
+): void {
+  for (const rect of regions) {
+    const x0 = Math.max(0, Math.min(rect.x, imageWidth - 1));
+    const y0 = Math.max(0, Math.min(rect.y, imageHeight - 1));
+    const x1 = Math.min(rect.x + rect.w, imageWidth);
+    const y1 = Math.min(rect.y + rect.h, imageHeight);
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        const idx = (y * imageWidth + x) * 4;
+        pixels[idx] = 0;       // R
+        pixels[idx + 1] = 0;   // G
+        pixels[idx + 2] = 0;   // B
+        pixels[idx + 3] = 0;   // A
+      }
+    }
+  }
+}
+
+/**
+ * Apply mask regions to a PNG file path: decode → zero pixels → return modified buffer.
+ * Falls back to returning the original bytes if sharp/jimp unavailable.
+ * When regions is empty, returns the original file bytes unchanged.
+ */
+async function applyMaskToPng(
+  filePath: string,
+  regions: MaskRegion[],
+): Promise<Buffer> {
+  const original = fs.readFileSync(filePath);
+  if (regions.length === 0) return original;
+
+  // Attempt sharp (preferred dep; already used in MCP server image pipeline).
+  try {
+    const sharp = (await import("sharp")).default;
+    const { data, info } = await sharp(original)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    zeroMaskedPixels(data, info.width, info.height, regions);
+
+    const masked = await sharp(data, {
+      raw: { width: info.width, height: info.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+    return masked;
+  } catch {
+    // sharp unavailable — pure JS PNG path not included to avoid large dep.
+    // Return original bytes; sidecar regions will not be zeroed (safe fallback).
+    return original;
+  }
 }
 
 /**

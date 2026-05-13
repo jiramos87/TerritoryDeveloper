@@ -42,8 +42,11 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import * as path from 'node:path';
 import * as process from 'node:process';
+
+const require = createRequire(import.meta.url);
 
 import { resolveRepoRoot } from '../mcp-ia-server/src/config.js';
 import { loadRepoDotenvIfNotCi } from '../mcp-ia-server/src/ia-db/repo-dotenv.js';
@@ -54,7 +57,12 @@ import {
 
 // ── Argv helpers (TECH-31891) ──────────────────────────────────────────────
 
-/** Parse --capture-baselines + --panels {csv} from process.argv. */
+/** Parse --capture-baselines + --panels {csv|all} from process.argv.
+ *
+ * When --panels=all is passed, expand to all published slugs from panels.json.
+ * The literal `all` token is resolved before passing panelsCsv to the bridge,
+ * so downstream callers always receive a concrete CSV or empty string.
+ */
 function parseVisualRegressionFlags(): { captureBaselines: boolean; panelsCsv: string } {
   const argv = process.argv.slice(2);
   const captureBaselines = argv.includes('--capture-baselines');
@@ -64,6 +72,34 @@ function parseVisualRegressionFlags(): { captureBaselines: boolean; panelsCsv: s
     panelsCsv = argv[panelsIdx + 1]!.trim();
   }
   return { captureBaselines, panelsCsv };
+}
+
+/**
+ * Expand the literal `all` token in panelsCsv to a concrete CSV of published
+ * panel slugs from panels.json.  When panelsCsv is already a concrete CSV or
+ * empty, returns it unchanged (csv path preserved per spec).
+ */
+function expandPanelsAll(panelsCsv: string, repoRoot: string): string {
+  if (panelsCsv.trim().toLowerCase() !== 'all') return panelsCsv;
+  const panelsJsonPath = path.join(repoRoot, PANELS_PATH_DEFAULT);
+  try {
+    const { readFileSync, existsSync } = require('node:fs') as typeof import('node:fs');
+    if (!existsSync(panelsJsonPath)) {
+      console.error('[unity-bake-ui] --panels=all: panels.json not found at', panelsJsonPath);
+      return '';
+    }
+    const raw = JSON.parse(readFileSync(panelsJsonPath, 'utf8')) as { items?: Array<{ slug?: string }> };
+    const slugs = (raw.items ?? []).map((item) => item.slug).filter((s): s is string => !!s);
+    if (slugs.length === 0) {
+      console.error('[unity-bake-ui] --panels=all: no published panels found in panels.json');
+      return '';
+    }
+    console.error(`[unity-bake-ui] --panels=all expanded to ${slugs.length} panels`);
+    return slugs.join(',');
+  } catch (e) {
+    console.error('[unity-bake-ui] --panels=all: failed to parse panels.json:', (e as Error).message);
+    return '';
+  }
 }
 
 const PANELS_PATH_DEFAULT = 'Assets/UI/Snapshots/panels.json';
@@ -116,7 +152,9 @@ async function main(): Promise<number> {
     Math.max(1000, Number(process.env.BRIDGE_TIMEOUT_MS ?? 30_000) || 30_000),
   );
 
-  const { captureBaselines, panelsCsv } = parseVisualRegressionFlags();
+  const { captureBaselines, panelsCsv: rawPanelsCsv } = parseVisualRegressionFlags();
+  // Expand literal `all` token to concrete CSV from panels.json (csv path preserved).
+  const panelsCsv = expandPanelsAll(rawPanelsCsv, repo);
 
   console.error(
     `unity-bake-ui: REPO_ROOT=${repo} panels_path=${panels_path} theme_so=${theme_so} out_dir=${out_dir} timeout_ms=${timeout_ms} captureBaselines=${captureBaselines} panelsCsv=${panelsCsv || '(all)'}`,
