@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Territory.Core;
 using Territory.Terrain;
 using Territory.Forests;
@@ -61,7 +62,18 @@ public class GeographyInitService
             terrainManager.SetNewGameFlatTerrainOptions(_hub.useFlatTerrainOnNewGame, _hub.flatTerrainHeight);
 
         if (_hub.gridManager != null)
-            _hub.gridManager.InitializeGrid();
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.BeginSample("GeographyInitService.CreateGrid");
+#endif
+            try { _hub.gridManager.InitializeGrid(); }
+            finally
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Profiler.EndSample();
+#endif
+            }
+        }
 
         WarnMapMismatch();
 
@@ -69,12 +81,32 @@ public class GeographyInitService
         RunInterstatePipeline(false);
 
         if (_hub.forestManager != null && _hub.initializeForestsOnStart)
-            _hub.forestManager.InitializeForestMap();
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.BeginSample("GeographyInitService.InitializeForestMap");
+#endif
+            try { _hub.forestManager.InitializeForestMap(); }
+            finally
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Profiler.EndSample();
+#endif
+            }
+        }
 
         _hub.InitializeWaterDesirability();
 
         _hub.currentGeographyData = _hub.CreateGeographyData();
-        _hub.ReCalculateSortingOrderBasedOnHeight();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Profiler.BeginSample("GeographyInitService.ReCalculateSortingOrderBasedOnHeight");
+#endif
+        try { _hub.ReCalculateSortingOrderBasedOnHeight(); }
+        finally
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.EndSample();
+#endif
+        }
 
         if (_hub.regionalMapManager != null)
             _hub.regionalMapManager.PlaceBorderSigns();
@@ -120,18 +152,30 @@ public class GeographyInitService
     {
         _hub.currentGeographyData = data;
 
-        if (data.hasTerrainData && _hub.terrainManager != null)
-            _hub.terrainManager.InitializeHeightMap();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Profiler.BeginSample("GeographyInitService.RestoreGrid");
+#endif
+        try
+        {
+            if (data.hasTerrainData && _hub.terrainManager != null)
+                _hub.terrainManager.InitializeHeightMap();
 
-        if (data.hasWaterData && _hub.waterManager != null)
-            _hub.waterManager.InitializeWaterMap();
+            if (data.hasWaterData && _hub.waterManager != null)
+                _hub.waterManager.InitializeWaterMap();
 
-        if (data.hasForestData && _hub.forestManager != null)
-            _hub.forestManager.InitializeForestMap();
+            if (data.hasForestData && _hub.forestManager != null)
+                _hub.forestManager.InitializeForestMap();
 
-        _hub.InitializeWaterDesirability();
-        _hub.ReCalculateSortingOrderBasedOnHeight();
-        _hub.NotifyMiniMap();
+            _hub.InitializeWaterDesirability();
+            _hub.ReCalculateSortingOrderBasedOnHeight();
+            _hub.NotifyMiniMap();
+        }
+        finally
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.EndSample();
+#endif
+        }
     }
 
     // ---- BuildGeographyInitReportJson ----
@@ -225,26 +269,50 @@ public class GeographyInitService
     private void RunWaterPipeline()
     {
         if (_hub.waterManager == null) return;
-        _hub.waterManager.SetGenerateStandardWater(_hub.generateStandardWaterBodies);
-        _hub.waterManager.InitializeWaterMap();
-        if (_hub.generateStandardWaterBodies && GetEffectiveProceduralRiversOnInit())
-            _hub.waterManager.GenerateProceduralRiversForNewGame();
-        if (_hub.generateTestRiverOnInit)
-            _hub.waterManager.GenerateTestRiver(_hub.testRiverSegmentBedWidths);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Profiler.BeginSample("GeographyInitService.RunWaterPipeline");
+#endif
+        try
+        {
+            _hub.waterManager.SetGenerateStandardWater(_hub.generateStandardWaterBodies);
+            _hub.waterManager.InitializeWaterMap();
+            if (_hub.generateStandardWaterBodies && GetEffectiveProceduralRiversOnInit())
+                _hub.waterManager.GenerateProceduralRiversForNewGame();
+            if (_hub.generateTestRiverOnInit)
+                _hub.waterManager.GenerateTestRiver(_hub.testRiverSegmentBedWidths);
+        }
+        finally
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.EndSample();
+#endif
+        }
     }
 
     private void RunInterstatePipeline(bool withTerrainGuard)
     {
         if (_hub.interstateManager == null) return;
-        const int maxAttempts = 3;
-        bool placed = false;
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Profiler.BeginSample("GeographyInitService.RunInterstatePipeline");
+#endif
+        try
         {
-            placed = _hub.interstateManager.GenerateAndPlaceInterstate(attempt);
-            if (placed) break;
+            const int maxAttempts = 3;
+            bool placed = false;
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                placed = _hub.interstateManager.GenerateAndPlaceInterstate(attempt);
+                if (placed) break;
+            }
+            if (!placed)
+                placed = _hub.interstateManager.TryGenerateInterstateDeterministic();
         }
-        if (!placed)
-            placed = _hub.interstateManager.TryGenerateInterstateDeterministic();
+        finally
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Profiler.EndSample();
+#endif
+        }
     }
 
     private void RunInterstateWithGuard()

@@ -10,13 +10,13 @@ namespace Territory.Persistence
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    private GridManager gridManager;
-    private GameSaveManager saveManager;
+    [SerializeField] private GridManager gridManager;
+    [SerializeField] private GameSaveManager saveManager;
 
     void Start()
     {
-        gridManager = FindObjectOfType<GridManager>();
-        saveManager = FindObjectOfType<GameSaveManager>();
+        if (gridManager == null) Debug.LogWarning("[GameManager] gridManager inspector ref not wired — wire in CityScene.");
+        if (saveManager == null) Debug.LogWarning("[GameManager] saveManager inspector ref not wired — wire in CityScene.");
     }
 
     public void SaveGame(string saveName = null)

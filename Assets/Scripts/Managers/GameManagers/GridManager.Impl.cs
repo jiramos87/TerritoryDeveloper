@@ -26,6 +26,14 @@ public partial class GridManager
     /// <summary>Bootstrap grid: resolve deps, create cell/chunk arrays, generate terrain, center camera.</summary>
     public void InitializeGrid()
     {
+        var depResult = Domains.Grid.Services.GridInitDependencyBinder.Validate(this);
+        if (depResult.missing_count > 0)
+        {
+            foreach (var field in depResult.missing)
+                Debug.LogError($"[GridManager] Inspector ref missing: {field}. Wire in CityScene inspector.");
+            return;
+        }
+
         halfWidth = tileWidth / 2f;
         halfHeight = tileHeight / 2f;
 

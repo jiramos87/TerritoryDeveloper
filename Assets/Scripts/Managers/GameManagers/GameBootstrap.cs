@@ -10,12 +10,12 @@ namespace Territory.Persistence
 /// </summary>
 public class GameBootstrap : MonoBehaviour
 {
-    private GameManager gameManager;
+    [SerializeField] private GameManager gameManager;
     private bool hasProcessed;
 
     void Start()
     {
-        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null) Debug.LogWarning("[GameBootstrap] gameManager inspector ref not wired — wire in CityScene.");
         StartCoroutine(ProcessStartIntent());
     }
 
