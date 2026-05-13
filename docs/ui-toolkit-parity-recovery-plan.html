@@ -103,6 +103,7 @@
     <li><a href="#md-handoff">Markdown handoff section (for the implementing agent)</a></li>
     <li><a href="#iter1-critique">Visual critique — iter 1 implementation vs visual goals</a></li>
     <li><a href="#iter2-strategy">Iteration 2 — goals + strategy</a></li>
+    <li><a href="#iter2-handoff">Iteration 2 — handoff prompt for fresh agent</a></li>
   </ol>
 </div>
 
@@ -1120,6 +1121,250 @@ Z5 → Z6 (visual baseline + diff)     ← gating for commit
 <p>Same one-commit policy as iter-1: end-of-Z6 commit titled <code>fix(ui-toolkit-parity-recovery): theme cascade + anchor + legacy-HUD reconciliation</code>. Body enumerates Z0 verdict, Z1 branch taken, Z2 anchor changes, Z3 reconciled HUDs, Z4 stats trigger, Z5 picker verdict, Z6 baselines captured.</p>
 
 <p class="small" style="margin-top:24px">End of iter-2 strategy. ~6 phases, ~12 mechanical steps, 0 new Hosts, 0 new panels.json rows. Reviewed by Javier <b>before</b> implementation per /goal directive.</p>
+
+<!-- =========================================================== -->
+<h2 id="iter2-handoff">14 · Iteration 2 — handoff prompt for fresh agent</h2>
+<p class="small">Copy/paste this block verbatim into a fresh main session prompt. Self-contained; the agent reads §1, §12, §13 of this HTML for visual + strategic context.</p>
+
+<pre>
+# Handoff prompt — UI Toolkit parity recovery, iter 2
+
+You are picking up iteration 2 of the UI Toolkit parity recovery. Read
+`docs/ui-toolkit-parity-recovery-plan.html` end-to-end first — focus on:
+  - §1 Visual goals (Goal A/B/C/D pre-migration screenshots)
+  - §12 Visual critique of iter-1 implementation (what shipped, what's broken,
+    8 ranked root-cause hypotheses)
+  - §13 Iter-2 strategy (acceptance gates, Z0–Z6 phases, dependency graph,
+    explicit not-touched list, risk + escape-hatch table)
+
+Iter-1 ended at commit `0c7045ae` (single commit `feat(ui-toolkit-parity-recovery):
+cream theme + hud-bar + toolbar + modal wiring`). All compile / drift / preflight
+gates green. Visually only MainMenu approached parity — and even there the buttons
+are invisible until :hover. Goal A (CityScene HUD) ~30% there.
+
+## Pre-flight (before Phase Z0) — environment proof
+1. Confirm `Assets/UI/Themes/cream.tss` exists + has the `:root { --ds-* }` block
+   (authored in iter-1 Phase A1).
+2. Confirm `tools/scripts/unity-ui-theme-patch.mjs` exists + idempotent
+   (`node tools/scripts/unity-ui-theme-patch.mjs` returns `patched=0`).
+3. Confirm `tools/scripts/recovery-cityscene-sortorder.mjs` exists + idempotent.
+4. `npm run db:bridge-preflight` → exit 0.
+5. `npm run unity:compile-check` baseline → exit 0 BEFORE editing.
+6. `mcp__territory-ia__ui_def_drift_scan` → 0 drifts across 13 panels.
+7. `mcp__territory-ia__arch_decision_get DEC-A28` → still `active`. Iter-2 must
+   not deviate; if it does, queue `arch_decision_write` (amend) before commit.
+8. Read `Assets/MainPanelSettings.asset` to confirm
+   `themeUss: {guid: 0918c30beff1648be9ba64f272689a79}`
+   (= UnityDefaultRuntimeTheme.tss, the suspected H6 culprit).
+
+## Phase Z0 — Theme cascade audit (gating, do NOT skip)
+Goal: pick which root-cause branch (H1 `var()` doesn't cascade vs H6 `cream.tss`
+not loaded) drives the rest of iter-2. Three ordered probes:
+
+### Z0.P1 — runtime asset load probe
+Use `mcp__territory-ia__unity_bridge_command` with kind `get_console_logs`
+(or equivalent) to dump UIDocument's resolved theme stylesheet list at runtime.
+If `cream.tss` is NOT in the list → H6 confirmed. Skip P2/P3, jump to Z1·H6.
+
+### Z0.P2 — literal-hex bake-and-snapshot probe
+In `Assets/UI/Generated/main-menu.uss`, replace exactly ONE rule's
+`var(--ds-color-bg-card-inner, #ede4ce)` with the literal `#ede4ce` (rule
+`.main-menu__btn`). Save. `npm run unity:compile-check` (must stay green).
+Capture bridge snapshot of MainMenu (`unity_bridge_command capture_screenshot`).
+  - Buttons NOW render cream backplate → H1 confirmed. Continue to Z1·H1.
+  - Buttons STILL invisible → H6 confirmed (or worse). Continue to Z1·H6.
+
+### Z0.P3 — debug-border .uss confirmation probe
+Append `#main-menu &gt; * { border-width: 1px; border-color: red; }` to
+`main-menu.uss`. Bake-snapshot.
+  - Red borders visible → .uss DOES load; revert P3 edit; verdict from P2 stands.
+  - Red borders absent → .uss path broken; the cream.tss reference is also dead.
+
+Record verdict in chat as a one-liner: `Z0_VERDICT=H1` or `Z0_VERDICT=H6`.
+
+## Phase Z1 — Theme load fix (one branch only, per Z0_VERDICT)
+
+### Z1·H6 branch — promote PanelSettings.themeUss → cream.tss
+1. Read `Assets/MainPanelSettings.asset` field
+   `themeUss: {fileID: -4733365628477956816, guid: 0918c30beff1648be9ba64f272689a79, type: 3}`.
+2. Look up cream.tss GUID: `grep guid: Assets/UI/Themes/cream.tss.meta`.
+3. Edit MainPanelSettings.asset — replace the `themeUss` GUID. KEEP fileID
+   `-4733365628477956816` (the ScriptedImporter sub-asset id) UNLESS it differs
+   between the two .tss files; verify with `grep "fileID:" Assets/UI/Themes/cream.tss`
+   (this file IS the asset, so its fileID is what to use).
+4. Trigger AssetDatabase.Refresh via bridge: `unity_bridge_command refresh_assets`
+   (or whatever kind the bridge exposes). If no kind exists, write a small
+   `tools/scripts/recovery-tss-import-refresh.mjs` helper that calls
+   AssetDatabase.Refresh via a one-shot bridge mutation.
+5. Bake + compile + bridge-snapshot of MainMenu. Buttons MUST now render cream
+   in base state. Otherwise escalate.
+
+### Z1·H1 branch — drop var() in plan-scope .uss files
+1. For each of: `main-menu.uss`, `hud-bar.uss`, `toolbar.uss`, `time-controls.uss`,
+   `tool-subtype-picker.uss` — search-and-replace every
+   `var(--ds-color-X, #HEX)` → `#HEX` (preserve the hex literal already present).
+2. The `unity-ui-theme-patch.mjs` will re-patch the Style src lines on next bake;
+   that's fine — only the `var()` calls move to literal hex.
+3. Bake + compile + bridge-snapshot. Buttons MUST now render cream in base state.
+
+## Phase Z2 — UIDocument anchor + reference-resolution fix
+Two surgical changes:
+
+### Z2.A — MainPanelSettings ScaleMode flip
+Edit `Assets/MainPanelSettings.asset`:
+  - `m_ScaleMode: 2` → `m_ScaleMode: 1`  (Constant Pixel → Match Width Or Height)
+  - `m_Match: 0.5` (already 0.5 in iter-1; verify present)
+Side-effect: HUD elements scale with viewport instead of px-literal. Re-snapshot.
+
+### Z2.B — Host root anchor at OnEnable
+For each plan-scope HUD Host (`HudBarHost.cs`, `ToolbarHost.cs`,
+`TimeControlsHost.cs`, `ToolSubtypePickerHost.cs`, `MiniMapHost.cs`), in
+`OnEnable()` AFTER the `if (_doc == null …) return;` guard, append:
+  ```
+  var rootEl = _doc.rootVisualElement;
+  rootEl.style.position = Position.Absolute;
+  rootEl.style.top = 0; rootEl.style.left = 0;
+  rootEl.style.right = 0; rootEl.style.bottom = 0;
+  ```
+This sizes the panel root to viewport so the inner `position:absolute` USS rules
+(toolbar dock-left, time-controls dock-top-right, etc.) anchor correctly.
+
+`npm run unity:compile-check` after each Host edit.
+
+## Phase Z3 — Out-of-scope HUD reconciliation (POLL FIRST)
+THREE legacy UIDocs interfere with parity. Resolution requires user input.
+
+Use `AskUserQuestion` ONCE with 3 questions:
+  Q1: overlay-toggle-strip-uidoc (Terrain · Zones · Roads · Water · Grid)
+      options: [hide entirely, cream-skin in place, leave as-is]
+  Q2: zone-overlay-uidoc (Zones R C I Active badge)
+      options: [hide entirely, cream-skin in place, leave as-is]
+  Q3: growth-budget-panel-uidoc (only relevant if it auto-shows on Play)
+      options: [hide on enable, cream-skin if it shows, leave as-is]
+
+Apply chosen action per surface:
+  - "hide entirely" → set scene GameObject `m_IsActive: 0` for that uidoc.
+  - "cream-skin in place" → add to `unity-ui-theme-patch.mjs` cream-scope set,
+    re-run script, re-snapshot.
+  - "leave as-is" → no action; document in commit message.
+
+Hard rule per iter-1 feedback: NEVER hide a UIDoc without polling — these may
+be load-bearing dev tools.
+
+## Phase Z4 — Stats-panel opener (Goal C wiring)
+Pick Option A (HudBar 4th right-cluster button "STATS"):
+1. `Assets/UI/Generated/hud-bar.uxml` — add inside `hud-bar__right` cluster
+   between `hud-money-2` and `hud-auto`:
+   `&lt;ui:Button name="hud-stats" class="text-btn" text="STATS"/&gt;`
+2. `Assets/Scripts/UI/Hosts/HudBarHost.cs`:
+   - Add field `Button _btnStats;`
+   - In OnEnable after the other Q-lookups: `_btnStats = root.Q&lt;Button&gt;("hud-stats");`
+   - Add `if (_btnStats != null) _btnStats.clicked += OnStats;`
+   - In OnDisable: matching `-= OnStats;`
+   - Add method:
+     ```
+     void OnStats()
+     {
+         if (_modalCoordinator == null) return;
+         if (_modalCoordinator.IsOpen("stats-panel"))
+             _modalCoordinator.HideMigrated("stats-panel");
+         else
+             _modalCoordinator.Show("stats-panel");
+     }
+     ```
+3. Bake + compile + bridge: open Play Mode, click STATS, snapshot stats-panel
+   open over HUD. Diff vs Goal C in §1.
+
+## Phase Z5 — Subtype picker live test (Goal D verification)
+Bridge-script test path:
+1. Enter Play Mode.
+2. Bridge: synthesize a click on toolbar tile `tool-zone-r`.
+3. Bridge: capture screenshot, expect picker visible bottom-left with 3 tier
+   cards (Light/Medium/Heavy/Dense).
+4. If picker stays hidden → debug:
+   a. Verify ToolSubtypePickerHost.Open() sets `_root.style.display = Flex`.
+   b. Check whether USS class `is-open` actually overrides
+      `.tool-subtype-picker { display:none; }` (USS specificity quirk).
+   c. If specificity loses, switch to inline style write only (drop the
+      `.is-open` class machinery).
+
+## Phase Z6 — Visual baseline capture + diff
+For EACH of: `main-menu`, `hud-bar`, `toolbar`, `time-controls`,
+`tool-subtype-picker`, `stats-panel`:
+  `npm run unity:visual-diff &lt;slug&gt; --capture --tolerance 5`
+
+Goldens land in `tools/visual-baseline/golden/&lt;slug&gt;.png`. Manual review
+by Javier (poll once via AskUserQuestion: "approve goldens for commit?"
+multiSelect=true on the 6 slugs). On any rejection, drill back to the failing
+phase + re-fix.
+
+## Per-phase gate (apply Z0 → Z6)
+1. C# changed → `npm run unity:compile-check`. If fail OR "Editor is open"
+   abort → close Editor (full Unity permissions per memory
+   `feedback_unity_full_permissions`), retry once. If still red → STOP, escalate.
+2. .uss / .uxml / panels.json / scene .unity changed → also bake +
+   `npm run unity:bake-ui` before compile.
+3. After mutation, bridge-snapshot the affected scene + describe diff vs goal
+   in chat (one sentence).
+
+## Hard rules (carried from iter-1, do NOT relax)
+- Source of truth = `Assets/UI/Snapshots/panels.json` + Host C# files. The
+  Generated UXML/USS files in `Assets/UI/Generated/` are the live render source
+  ONLY because the bake handler doesn't yet emit them; iter-2 must NOT
+  re-introduce the simple `UxmlEmissionService` template (it would destroy the
+  rich UXML content).
+- No `binding-path="..."` UXML attributes for command buttons.
+- One owner per property (no double-write to UiBindRegistry + Host VM).
+- No "stub; wire later" Debug.Log statements.
+- No Unicode emoji glyph buttons.
+- No new worktrees explicitly via `EnterWorktree` UNLESS background-job harness
+  forces it (then create + enter + exit + ff-merge as iter-1 did).
+- Never `git push`. Never `--no-verify`. Never `--amend`.
+- Single commit at end of Z6: `fix(ui-toolkit-parity-recovery): theme cascade
+  + anchor + legacy-HUD reconciliation`.
+
+## When to escalate via AskUserQuestion (mandatory polls)
+- Z0 verdict ambiguous (P1 + P2 + P3 all inconclusive).
+- Z3 — three questions about legacy HUDs. POLL FIRST, never auto-hide.
+- Z6 baseline approval poll (6 multiSelect slugs).
+- Compile-check non-zero after 1 retry.
+- Z1·H6 branch: PanelSettings.asset bytes don't take after Refresh — ask
+  whether to manually reopen Editor.
+- Discovered DEC-A28 deviation surfaces (e.g. need to introduce a 2nd
+  PanelSettings).
+
+## Pre-commit checks (Phase Z6 close)
+- `npm run validate:all` — same 6 pre-existing failures unchanged from iter-1
+  baseline (verify count = 6, not 7+).
+- `npm run unity:compile-check` exit 0.
+- `mcp__territory-ia__ui_def_drift_scan` returns 0 UXML drift.
+- Residual uGUI grep count = 95 (iter-1 baseline) or lower; never higher.
+- Run any new helper scripts (e.g. `recovery-tss-import-refresh.mjs`) once with
+  `--check` to confirm idempotent.
+- Optional: dispatch `opus-code-reviewer` subagent on the diff (skip if diff
+  &lt; 200 lines, not worth the round-trip).
+
+## Out of scope (do NOT touch in iter-2)
+- panels.json schema (no version bump — schema_version stays 5).
+- New panels.json rows (the 4 added in iter-1 A3 stay as-is).
+- New Hosts beyond the surgical Z2.B anchor + Z4 STATS button.
+- cream.tss tokens (the table is fine).
+- icon-zoom-in/out placeholder PNGs (still fast-forward + step copies).
+- Mini-map RT capture (still deferred per iter-1 §G).
+- GridHoverProbe / hover info card (still deferred per iter-1 §F2).
+- Studio controls / onboarding overlay / notifications-toast triggers.
+- UiBindRegistry quarantine beyond what iter-1 F0 cut.
+- DEC-A28 amend (no architectural deviation expected).
+
+## Completion signal
+When Z6 commit lands + `git log --oneline -2` shows
+  fix(ui-toolkit-parity-recovery): theme cascade + anchor + legacy-HUD reconciliation
+  feat(ui-toolkit-parity-recovery): cream theme + hud-bar + toolbar + modal wiring
+… emit a one-line summary: `result: iter-2 commit &lt;sha&gt; — Z0_VERDICT=&lt;H1|H6&gt;,
+Z3 actions taken, 6 baselines captured.`
+</pre>
+
+<p class="small" style="margin-top:24px">End of iter-2 handoff. The fresh agent should produce a single end-of-Z6 commit; if anything diverges from the strategy in §13, escalate via AskUserQuestion before mutating shared state.</p>
 
 </body>
 </html>
