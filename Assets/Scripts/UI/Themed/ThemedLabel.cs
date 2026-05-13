@@ -1,9 +1,12 @@
+using System;
 using TMPro;
 using UnityEngine;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed label text variant — font_face + palette token consumer.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Simple primitive quarantined; USS class replaces.</remarks>
+    [Obsolete("ThemedLabel quarantined (TECH-32929). Use USS Label class / UI Toolkit Label element. Deletion deferred to uGUI purge plan.")]
     public class ThemedLabel : ThemedPrimitiveBase
     {
         [SerializeField] private string _fontFaceSlug;

@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed divider archetype — Image color from palette ramp mid-stop + LayoutElement preferredHeight.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Simple primitive quarantined; USS divider class replaces.</remarks>
+    [Obsolete("ThemedDivider quarantined (TECH-32929). Use USS divider class / UI Toolkit VisualElement. Deletion deferred to uGUI purge plan.")]
     public class ThemedDivider : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;

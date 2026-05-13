@@ -9,6 +9,8 @@ namespace Territory.UI.Themed.Renderers
     /// <see cref="Image"/> + label <see cref="TMP_Text"/> refs in <c>Awake</c> and writes
     /// palette colors on <see cref="ApplyTheme"/>. Bake-time-attached only (Stage 10 lock).
     /// </summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined alongside ThemedToggle.</remarks>
+    [Obsolete("ThemedToggleRenderer quarantined (TECH-32929). Deletion deferred to uGUI purge plan.")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ThemedToggle))]
     public class ThemedToggleRenderer : ThemedPrimitiveBase

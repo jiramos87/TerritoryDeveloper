@@ -18,6 +18,8 @@ namespace Territory.UI.Themed.Renderers
     /// <see cref="ThemedOverlayToggleRow"/> is a Themed primitive composite (not a
     /// <see cref="Territory.UI.StudioControls.StudioControlBase"/> subclass).
     /// </remarks>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined alongside ThemedOverlayToggleRow.</remarks>
+    [Obsolete("ThemedOverlayToggleRowRenderer quarantined (TECH-32929). Deletion deferred to uGUI purge plan.")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ThemedOverlayToggleRow))]
     public class ThemedOverlayToggleRowRenderer : ThemedPrimitiveBase

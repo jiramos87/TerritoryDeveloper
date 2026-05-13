@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,8 @@ namespace Territory.UI.Themed
     }
 
     /// <summary>Themed panel root + runtime slot graph composer; baked by <c>UiBakeHandler</c> from IR <c>panels[]</c>.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined; UIDocument/UXML panel replaces.</remarks>
+    [Obsolete("ThemedPanel quarantined (TECH-32929). Use UIDocument / UXML panel host. Deletion deferred to uGUI purge plan.")]
     [ExecuteAlways]
     public class ThemedPanel : ThemedPrimitiveBase
     {

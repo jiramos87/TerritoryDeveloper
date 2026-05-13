@@ -1,8 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Abstract base for themed primitive ring; caches <see cref="UiTheme"/> ref in <c>Awake</c> per invariant #3.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined. USS classes consumed by UI Toolkit panels replace this ring.</remarks>
+    [Obsolete("ThemedPrimitiveBase quarantined (TECH-32929). Use USS classes / UI Toolkit VisualElement composition instead. Deletion deferred to uGUI purge plan.")]
     public abstract class ThemedPrimitiveBase : MonoBehaviour, IThemed
     {
         [SerializeField] private UiTheme _themeRef;

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -6,6 +7,8 @@ using Territory.Audio;
 namespace Territory.UI.Themed
 {
     /// <summary>Themed Button chrome variant — palette + frame_style + sprite-state + motion-curve token consumer.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Complex primitive quarantined; [UxmlElement] custom-control port is the successor.</remarks>
+    [Obsolete("ThemedButton quarantined (TECH-32929). Use UxmlElement custom-control port or USS Button class. Deletion deferred to uGUI purge plan.")]
     public class ThemedButton : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;

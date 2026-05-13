@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed illumination overlay — sibling Image color + halo radius from <see cref="UiTheme.IlluminationSpec"/>.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined; USS illumination class / box-shadow replaces.</remarks>
+    [Obsolete("ThemedIlluminationLayer quarantined (TECH-32929). Use USS illumination class / UI Toolkit box-shadow. Deletion deferred to uGUI purge plan.")]
     public class ThemedIlluminationLayer : ThemedPrimitiveBase
     {
         [SerializeField] private string _illuminationSlug;

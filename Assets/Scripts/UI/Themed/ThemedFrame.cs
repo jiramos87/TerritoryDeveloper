@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed frame chrome — Image + Sliced sprite from <see cref="UiTheme.FrameStyleSpec.sprite_ref_fallback"/>.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Complex primitive quarantined; [UxmlElement] frame port or USS class replaces.</remarks>
+    [Obsolete("ThemedFrame quarantined (TECH-32929). Use UxmlElement custom-control port or USS frame class. Deletion deferred to uGUI purge plan.")]
     public class ThemedFrame : ThemedPrimitiveBase
     {
         [SerializeField] private string _frameStyleSlug;

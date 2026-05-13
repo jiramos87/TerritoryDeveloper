@@ -1,8 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed title row archetype — composes title + optional sub-title <see cref="ThemedLabel"/> children.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined; USS section-header class replaces.</remarks>
+    [Obsolete("ThemedSectionHeader quarantined (TECH-32929). Use USS section-header class / UI Toolkit Label. Deletion deferred to uGUI purge plan.")]
     public class ThemedSectionHeader : ThemedPrimitiveBase
     {
         [SerializeField] private ThemedLabel _titleLabel;

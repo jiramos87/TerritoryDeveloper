@@ -9,6 +9,8 @@ namespace Territory.UI.Registry
     /// Typed Set/Get/Subscribe per bind id.
     /// MonoBehaviour; mount under UI host GameObject per scene (MainMenu.unity, CityScene.unity — T2.0.5+).
     /// </summary>
+    /// <remarks>TECH-32927 Stage 6.0 — Quarantined. Use native UI Toolkit binding (INotifyValueChanged / ChangeEvent) instead.</remarks>
+    [Obsolete("UiBindRegistry quarantined (TECH-32927). Migrate to native UI Toolkit INotifyValueChanged / ChangeEvent bindings. Deletion deferred to uGUI purge plan.")]
     public class UiBindRegistry : MonoBehaviour
     {
         private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
@@ -16,6 +18,7 @@ namespace Territory.UI.Registry
             new Dictionary<string, List<Action<object>>>();
 
         /// <summary>Set bind value; notifies subscribers.</summary>
+        [Obsolete("UiBindRegistry.Set quarantined (TECH-32927). Use native UI Toolkit binding.")]
         public void Set<T>(string bindId, T value)
         {
             if (string.IsNullOrEmpty(bindId)) throw new ArgumentNullException(nameof(bindId));
@@ -27,6 +30,7 @@ namespace Territory.UI.Registry
         }
 
         /// <summary>Get current bind value. Throws KeyNotFoundException when bindId not set.</summary>
+        [Obsolete("UiBindRegistry.Get quarantined (TECH-32927). Use native UI Toolkit binding.")]
         public T Get<T>(string bindId)
         {
             if (!_values.TryGetValue(bindId, out var raw))
@@ -35,6 +39,7 @@ namespace Territory.UI.Registry
         }
 
         /// <summary>Subscribe to bind changes. Returns IDisposable to unsubscribe.</summary>
+        [Obsolete("UiBindRegistry.Subscribe quarantined (TECH-32927). Use native UI Toolkit binding.")]
         public IDisposable Subscribe<T>(string bindId, Action<T> onChange)
         {
             if (string.IsNullOrEmpty(bindId)) throw new ArgumentNullException(nameof(bindId));
@@ -53,6 +58,7 @@ namespace Territory.UI.Registry
         }
 
         /// <summary>Returns true when at least one subscriber is registered for <paramref name="bindId"/>.</summary>
+        [Obsolete("UiBindRegistry.HasSubscribers quarantined (TECH-32927). Use native UI Toolkit binding.")]
         public bool HasSubscribers(string bindId)
         {
             return !string.IsNullOrEmpty(bindId)
@@ -61,6 +67,7 @@ namespace Territory.UI.Registry
         }
 
         /// <summary>Returns snapshot of all bind ids with current values.</summary>
+        [Obsolete("UiBindRegistry.ListRegistered quarantined (TECH-32927). Use native UI Toolkit binding.")]
         public IReadOnlyList<string> ListRegistered()
         {
             return new List<string>(_values.Keys);

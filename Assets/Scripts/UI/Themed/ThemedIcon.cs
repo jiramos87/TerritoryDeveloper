@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +18,9 @@ namespace Territory.UI.Themed
     /// (legacy path preserved during transition). Palette tint
     /// (<see cref="_paletteSlug"/>) applies on top of whichever sprite
     /// resolves.
+    /// TECH-32929 Stage 6.0 — Simple primitive quarantined; USS icon class / Background property replaces.
     /// </remarks>
+    [Obsolete("ThemedIcon quarantined (TECH-32929). Use USS background-image / UI Toolkit VisualElement. Deletion deferred to uGUI purge plan.")]
     public class ThemedIcon : ThemedPrimitiveBase
     {
         private const string FallbackSlug = "icon-info";

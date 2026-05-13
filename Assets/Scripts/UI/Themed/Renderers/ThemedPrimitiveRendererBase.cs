@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Territory.UI.Themed.Renderers
@@ -12,7 +13,9 @@ namespace Territory.UI.Themed.Renderers
     /// State-holder communication: a sibling primitive fires a C# event; subclasses subscribe in
     /// <see cref="OnEnable"/> and unsubscribe in <see cref="OnDisable"/>. The default subscription
     /// is no-op; subclasses opt in by overriding <see cref="OnEnable"/> / <see cref="OnDisable"/>.
+    /// TECH-32929 Stage 6.0 — Quarantined alongside ThemedPrimitiveBase ring.
     /// </remarks>
+    [Obsolete("ThemedPrimitiveRendererBase quarantined (TECH-32929). Use USS classes / UI Toolkit. Deletion deferred to uGUI purge plan.")]
     public abstract class ThemedPrimitiveRendererBase : ThemedPrimitiveBase
     {
         protected override void Awake()

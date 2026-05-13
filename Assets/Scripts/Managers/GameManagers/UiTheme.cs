@@ -17,7 +17,9 @@ namespace Territory.UI
     /// Legacy flat-Color fields preserved for transition; consumers that already cache this SO in
     /// <c>Awake</c>/<c>Start</c> stay valid. Do NOT call <c>FindObjectOfType&lt;UiTheme&gt;</c> per frame
     /// (invariant #3) — cache the reference once.
+    /// TECH-32928 Stage 6.0 — Quarantined. Runtime panels must consume USS var(--ds-*) tokens only.
     /// </remarks>
+    [Obsolete("UiTheme quarantined (TECH-32928). Runtime panels must consume USS var(--ds-*) tokens via UI Toolkit TSS. Deletion deferred to uGUI purge plan.")]
     [CreateAssetMenu(fileName = "UiTheme", menuName = "Territory/UI/Ui Theme", order = 0)]
     public class UiTheme : ScriptableObject
     {

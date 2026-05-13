@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed slider input variant — palette + frame_style token consumer (visuals only).</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined; UI Toolkit Slider with USS class replaces.</remarks>
+    [Obsolete("ThemedSlider quarantined (TECH-32929). Use UI Toolkit Slider with USS class. Deletion deferred to uGUI purge plan.")]
     public class ThemedSlider : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;

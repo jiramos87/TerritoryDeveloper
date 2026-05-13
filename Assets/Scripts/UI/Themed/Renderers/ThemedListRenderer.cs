@@ -10,6 +10,8 @@ namespace Territory.UI.Themed.Renderers
     /// is bake-time injected (vertical stack); runtime <c>Populate</c> stays on <see cref="ThemedList"/>.
     /// Bake-time-attached only (Stage 9 lock).
     /// </summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined alongside ThemedList.</remarks>
+    [Obsolete("ThemedListRenderer quarantined (TECH-32929). Deletion deferred to uGUI purge plan.")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ThemedList))]
     public class ThemedListRenderer : ThemedPrimitiveRendererBase

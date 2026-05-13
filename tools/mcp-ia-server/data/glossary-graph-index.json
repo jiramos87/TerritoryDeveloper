@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-13T03:53:33.636Z",
+  "last_generated": "2026-05-13T16:01:40.251Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -27,10 +27,50 @@
     "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)": {
       "related": [
         "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
-        "CityStatsHandoffAdapter",
-        "Gate",
-        "Phase",
-        "Stage"
+        "`IThemed` interface",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
+        "`UiBindRegistry` (reactive bind table)",
+        "`UiTheme` ScriptableObject"
+      ],
+      "cited_in": []
+    },
+    "`IThemed` interface": {
+      "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
+        "`UiBindRegistry` (reactive bind table)",
+        "`UiTheme` ScriptableObject"
+      ],
+      "cited_in": []
+    },
+    "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)": {
+      "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "`IThemed` interface",
+        "`UiBindRegistry` (reactive bind table)",
+        "`UiTheme` ScriptableObject"
+      ],
+      "cited_in": []
+    },
+    "`UiBindRegistry` (reactive bind table)": {
+      "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "`IThemed` interface",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
+        "`UiTheme` ScriptableObject"
+      ],
+      "cited_in": []
+    },
+    "`UiTheme` ScriptableObject": {
+      "related": [
+        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
+        "`IThemed` interface",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
+        "`UiBindRegistry` (reactive bind table)"
       ],
       "cited_in": []
     },
@@ -6252,9 +6292,9 @@
       "related": [
         "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
         "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
-        "CityStatsHandoffAdapter",
-        "Gate",
-        "Phase"
+        "`IThemed` interface",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
+        "`UiBindRegistry` (reactive bind table)"
       ],
       "cited_in": []
     },
@@ -6699,8 +6739,8 @@
         "RCI",
         "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
         "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
-        "CityStatsHandoffAdapter",
-        "Gate"
+        "`IThemed` interface",
+        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)"
       ],
       "cited_in": [
         {

@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed toggle input variant — palette + frame_style token consumer.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined; UI Toolkit Toggle with USS class replaces.</remarks>
+    [Obsolete("ThemedToggle quarantined (TECH-32929). Use UI Toolkit Toggle with USS class. Deletion deferred to uGUI purge plan.")]
     public class ThemedToggle : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;

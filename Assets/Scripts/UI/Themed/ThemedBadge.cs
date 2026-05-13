@@ -1,9 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
     /// <summary>Themed count / status badge — composes background <see cref="Image"/> + foreground <see cref="ThemedLabel"/>.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Simple primitive quarantined; USS badge class replaces.</remarks>
+    [Obsolete("ThemedBadge quarantined (TECH-32929). Use USS badge class / UI Toolkit Label element. Deletion deferred to uGUI purge plan.")]
     public class ThemedBadge : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;

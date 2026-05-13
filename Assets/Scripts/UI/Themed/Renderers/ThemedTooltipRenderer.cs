@@ -9,6 +9,8 @@ namespace Territory.UI.Themed.Renderers
     /// refs in <c>Awake</c> and writes tooltip palette colors on <see cref="ApplyTheme"/>.
     /// Bake-time-attached only (Stage 9 lock).
     /// </summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Quarantined alongside ThemedTooltip.</remarks>
+    [Obsolete("ThemedTooltipRenderer quarantined (TECH-32929). Deletion deferred to uGUI purge plan.")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ThemedTooltip))]
     public class ThemedTooltipRenderer : ThemedPrimitiveRendererBase

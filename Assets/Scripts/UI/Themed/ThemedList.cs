@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -6,6 +7,8 @@ using UnityEngine.UI;
 namespace Territory.UI.Themed
 {
     /// <summary>Themed list variant — viewport palette tint; per-item token application delegated to per-item primitives.</summary>
+    /// <remarks>TECH-32929 Stage 6.0 — Complex primitive quarantined; [UxmlElement] ListView or UXML repeater replaces.</remarks>
+    [Obsolete("ThemedList quarantined (TECH-32929). Use UxmlElement custom-control port or UI Toolkit ListView. Deletion deferred to uGUI purge plan.")]
     public class ThemedList : ThemedPrimitiveBase
     {
         [SerializeField] private string _paletteSlug;
