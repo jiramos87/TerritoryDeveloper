@@ -375,3 +375,98 @@ export const publishPanel = (client: PoolClient, slug: string) =>
 
 export const publishToken = (client: PoolClient, slug: string) =>
   publishEntity(client, "token", slug);
+
+// ── panel_child DAL ───────────────────────────────────────────────────────
+
+export interface PanelChildNode {
+  slot: string;
+  ord: number;
+  kind: string;
+  slug: string | null;
+  child_entity_id: string | null;
+  params_json: Record<string, unknown>;
+  resolved?: { display_name: string | null; role: string | null } | null;
+  children?: PanelChildNode[];
+}
+
+export interface GetPanelChildrenOpts {
+  maxDepth?: number;
+  pin?: "live" | "frozen";
+}
+
+/**
+ * Recursive panel_child resolver with cycle guard + depth limit.
+ * Returns tree of PanelChildNode rooted at entityId.
+ */
+export async function getPanelChildren(
+  client: PoolClient,
+  entityId: string,
+  opts: GetPanelChildrenOpts = {},
+  _visited: Set<string> = new Set(),
+): Promise<PanelChildNode[]> {
+  const maxDepth = opts.maxDepth ?? 2;
+  const depth = _visited.size;
+  if (depth >= maxDepth) return [];
+
+  const res = await client.query(
+    `SELECT pc.slot_name, pc.order_idx, pc.child_kind,
+            pc.params_json, pc.child_entity_id::text AS child_entity_id,
+            ce.slug AS child_slug, ce.display_name AS child_display_name
+     FROM panel_child pc
+     LEFT JOIN catalog_entity ce ON ce.id = pc.child_entity_id
+     WHERE pc.panel_entity_id = $1::bigint
+     ORDER BY pc.order_idx, pc.slot_name`,
+    [entityId],
+  );
+
+  const nodes: PanelChildNode[] = [];
+  for (const r of res.rows) {
+    const childEntityId: string | null = r.child_entity_id ?? null;
+    const childSlug: string | null = r.child_slug ?? null;
+
+    // Cycle guard: skip if child_entity_id already on current branch path
+    if (childEntityId !== null && _visited.has(childEntityId)) continue;
+
+    const node: PanelChildNode = {
+      slot: r.slot_name as string,
+      ord: r.order_idx as number,
+      kind: r.child_kind as string,
+      slug: childSlug,
+      child_entity_id: childEntityId,
+      params_json: (r.params_json ?? {}) as Record<string, unknown>,
+      resolved: childSlug != null
+        ? { display_name: (r.child_display_name as string | null) ?? null, role: null }
+        : null,
+    };
+
+    // Recurse into child panels
+    if (childEntityId !== null && depth + 1 < maxDepth) {
+      const nextVisited = new Set(_visited);
+      nextVisited.add(childEntityId);
+      const children = await getPanelChildren(client, childEntityId, opts, nextVisited);
+      if (children.length > 0) node.children = children;
+    }
+
+    nodes.push(node);
+  }
+  return nodes;
+}
+
+/**
+ * Direct panel_child reverse-join: returns panel slugs that have entitySlug as a child.
+ */
+export async function getPanelConsumersDirect(
+  client: PoolClient,
+  entitySlug: string,
+): Promise<string[]> {
+  const res = await client.query(
+    `SELECT DISTINCT panel_ce.slug
+     FROM panel_child pc
+     JOIN catalog_entity panel_ce ON panel_ce.id = pc.panel_entity_id
+     WHERE pc.child_entity_id = (
+       SELECT id FROM catalog_entity WHERE slug = $1 LIMIT 1
+     )`,
+    [entitySlug],
+  );
+  return res.rows.map((r: { slug: string }) => r.slug);
+}

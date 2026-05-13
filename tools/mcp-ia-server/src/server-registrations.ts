@@ -108,6 +108,7 @@ import { registerPlanDigestDriftLint } from "./tools/plan-digest-drift-lint.js";
 import { registerUiDefDriftScan } from "./tools/ui-def-drift-scan.js";
 import { registerUiCalibrationCorpusQuery, registerUiCalibrationVerdictRecord } from "./tools/ui-calibration-corpus.js";
 import { registerUiPanelGet, registerUiPanelList, registerUiPanelPublish, registerPanelDetailUpdate } from "./tools/ui-panel.js";
+import { registerUiPanelRenderMock } from "./tools/ui-panel-render-mock.js";
 import { registerUiTokenGet, registerUiTokenList, registerUiTokenPublish } from "./tools/ui-token.js";
 import { registerUiComponentGet, registerUiComponentList, registerUiComponentPublish } from "./tools/ui-component.js";
 import { registerActionRegistryList, registerBindRegistryList } from "./tools/ui-registry.js";
@@ -260,6 +261,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerUiPanelList(server);
   registerUiPanelPublish(server);
   registerPanelDetailUpdate(server);
+  registerUiPanelRenderMock(server);
   registerUiTokenGet(server);
   registerUiTokenList(server);
   registerUiTokenPublish(server);

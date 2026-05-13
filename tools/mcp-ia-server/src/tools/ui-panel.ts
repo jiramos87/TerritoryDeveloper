@@ -20,6 +20,7 @@ import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 import { resolveRepoRoot } from "../config.js";
 import {
   getPanelBundle,
+  getPanelChildren,
   publishPanel,
   updatePanelDetail,
 } from "../ia-db/ui-catalog.js";
@@ -52,6 +53,10 @@ function readCorpusForSlug(repoRoot: string, slug: string): CorpusRow[] {
 
 const panelGetSchema = z.object({
   slug: z.string().describe("Panel slug (e.g. 'hud-bar')."),
+  max_depth: z.number().int().min(0).max(5).optional().default(2)
+    .describe("Max recursion depth for children[] resolution (default 2)."),
+  pin: z.enum(["live", "frozen"]).optional().default("live")
+    .describe("Version pin: 'live' = current published, 'frozen' = locked snapshot (default 'live')."),
 });
 
 export function registerUiPanelGet(server: McpServer): void {
@@ -59,7 +64,7 @@ export function registerUiPanelGet(server: McpServer): void {
     "ui_panel_get",
     {
       description:
-        "Get one panel by slug: panel_detail row (rect_json, layout, padding_json, gap_px, params_json) joined to catalog_entity (id, kind, display_name, current_published_version_id) plus linked ui-calibration-corpus rows for the slug. Returns null payload when slug not found.",
+        "Get one panel by slug: panel_detail row (rect_json, layout, padding_json, gap_px, params_json) joined to catalog_entity (id, kind, display_name, current_published_version_id) plus linked ui-calibration-corpus rows for the slug. Optionally resolves children[] via panel_child join up to max_depth levels (default 2). Shell keys preserved — children[] is purely additive. Returns null payload when slug not found.",
       inputSchema: panelGetSchema,
     },
     async (args) =>
@@ -76,7 +81,14 @@ export function registerUiPanelGet(server: McpServer): void {
             const repoRoot = resolveRepoRoot();
             const corpusRows = readCorpusForSlug(repoRoot, input.slug);
 
-            // Flatten for response compatibility with prior shape.
+            // Resolve children[] via panel_child join
+            const children = await getPanelChildren(
+              client,
+              bundle.entity.id,
+              { maxDepth: input.max_depth, pin: input.pin },
+            );
+
+            // Flatten for response compatibility with prior shape — shell keys preserved.
             const panel = {
               id: bundle.entity.id,
               slug: bundle.entity.slug,
@@ -93,6 +105,7 @@ export function registerUiPanelGet(server: McpServer): void {
               params_json: bundle.detail.params_json,
               layout_template: bundle.detail.layout_template,
               modal: bundle.detail.modal,
+              children,
             };
 
             return {

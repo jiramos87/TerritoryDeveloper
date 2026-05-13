@@ -12,6 +12,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { wrapTool, dbUnconfiguredError } from "../envelope.js";
+import { getPanelConsumersDirect } from "../ia-db/ui-catalog.js";
 
 function jsonResult(payload: unknown) {
   return {
@@ -59,7 +60,7 @@ export function registerUiComponentGet(server: McpServer): void {
 
             const row = result.rows[0];
 
-            // Reverse-lookup linked panel consumers: panel_detail JSONB grep
+            // Reverse-lookup panel consumers: ILIKE grep on params_json UNION direct panel_child join
             const consumerResult = await client.query(
               `SELECT ce.slug AS panel_slug
                FROM panel_detail pd
@@ -69,9 +70,16 @@ export function registerUiComponentGet(server: McpServer): void {
               [`%${input.slug}%`],
             );
 
-            const consumers = consumerResult.rows.map(
+            const ilikeSlugs = consumerResult.rows.map(
               (r: { panel_slug: string }) => r.panel_slug,
             );
+
+            // Direct panel_child reverse-join for components linked via child_entity_id
+            const directSlugs = await getPanelConsumersDirect(client, input.slug);
+
+            // Dedup UNION
+            const consumersSet = new Set([...ilikeSlugs, ...directSlugs]);
+            const consumers = Array.from(consumersSet).sort();
 
             return {
               component: row,
