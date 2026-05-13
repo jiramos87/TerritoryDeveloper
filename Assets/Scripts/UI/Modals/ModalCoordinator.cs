@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using Territory.Timing;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Territory.UI.Modals
 {
     /// <summary>
     /// Wave B2 (TECH-27084) — exclusive modal open/close coordinator.
     /// TryOpen/Close/IsAnyExclusiveOpen. Calls TimeManager pause-owner APIs on open/close.
+    /// Stage 4.0 (TECH-32916) — co-existence overload: Show(VisualElement) routes migrated
+    /// panels via UIDocument; legacy panels stay on Canvas path (strangler co-existence).
     /// MonoBehaviour; mount under CityScene Canvas (Inv #4 — scene component).
     /// ServiceLocator-registered via FindObjectOfType fallback.
     /// </summary>
@@ -26,6 +29,19 @@ namespace Territory.UI.Modals
         /// Adapters call <see cref="RegisterPanel"/> in OnEnable so coordinator owns visibility.
         /// </summary>
         private readonly Dictionary<string, GameObject> _panelRoots = new Dictionary<string, GameObject>();
+
+        /// <summary>
+        /// Stage 4.0 (TECH-32916) — in-memory slug → VisualElement map for migrated panels.
+        /// Hosts call <see cref="RegisterMigratedPanel"/> during OnEnable.
+        /// Show(VisualElement) overload routes slugs in this dict via UIDocument.Add instead of Canvas prefab.
+        /// </summary>
+        private readonly Dictionary<string, VisualElement> _migratedPanels = new Dictionary<string, VisualElement>();
+
+        /// <summary>
+        /// Stage 4.0 — root UIDocument visual element hosting migrated modal panels (stacked VisualElements).
+        /// Wired by ModalDocumentHost (scene component). Null = no UIDocument in scene; migrated route degrades to warning.
+        /// </summary>
+        [SerializeField] private UIDocument _modalDocument;
 
         [SerializeField] private TimeManager _timeManager;
 
@@ -47,6 +63,80 @@ namespace Territory.UI.Modals
             if (!_openModals.Contains(modalSlug))
                 root.SetActive(false);
         }
+
+        /// <summary>
+        /// Stage 4.0 (TECH-32916) — register a migrated UI Toolkit panel VisualElement.
+        /// Hosts call this in OnEnable with their rootVisualElement.
+        /// Idempotent; re-registration overwrites previous entry.
+        /// Panel starts hidden after registration (display:none).
+        /// </summary>
+        public void RegisterMigratedPanel(string modalSlug, VisualElement root)
+        {
+            if (string.IsNullOrEmpty(modalSlug) || root == null) return;
+            _migratedPanels[modalSlug] = root;
+            if (!_openModals.Contains(modalSlug))
+                root.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Stage 4.0 (TECH-32916) — Show overload for migrated panels.
+        /// Routes slug to VisualElement path when registered; falls back to legacy TryOpen for unregistered slugs.
+        /// Exclusive-group semantics preserved (closes other exclusive modals first).
+        /// Returns the VisualElement shown, or null when routed to legacy path.
+        /// </summary>
+        public VisualElement Show(string modalSlug)
+        {
+            if (string.IsNullOrEmpty(modalSlug)) return null;
+
+            if (_migratedPanels.TryGetValue(modalSlug, out var ve))
+            {
+                // Close other exclusive-group members first.
+                if (IsExclusiveGroup(modalSlug))
+                {
+                    var toClose = new List<string>();
+                    foreach (var slug in _openModals)
+                        if (IsExclusiveGroup(slug)) toClose.Add(slug);
+                    foreach (var slug in toClose)
+                        CloseInternal(slug);
+                }
+
+                _openModals.Add(modalSlug);
+                ve.style.display = DisplayStyle.Flex;
+
+                if (_timeManager != null)
+                    _timeManager.SetModalPauseOwner(modalSlug);
+
+                return ve;
+            }
+
+            // Legacy fallback — routes to Canvas prefab path.
+            TryOpen(modalSlug);
+            return null;
+        }
+
+        /// <summary>
+        /// Stage 4.0 — close a migrated panel by slug (counterpart to Show).
+        /// Routes to VisualElement hide when registered; legacy Close otherwise.
+        /// </summary>
+        public void HideMigrated(string modalSlug)
+        {
+            if (string.IsNullOrEmpty(modalSlug)) return;
+
+            if (_migratedPanels.TryGetValue(modalSlug, out var ve))
+            {
+                _openModals.Remove(modalSlug);
+                ve.style.display = DisplayStyle.None;
+                if (_timeManager != null)
+                    _timeManager.ClearModalPauseOwner(modalSlug);
+                return;
+            }
+
+            CloseInternal(modalSlug);
+        }
+
+        /// <summary>Stage 4.0 — true when slug is in the migrated-panels dict (UIDocument route).</summary>
+        public bool IsMigrated(string modalSlug) =>
+            !string.IsNullOrEmpty(modalSlug) && _migratedPanels.ContainsKey(modalSlug);
 
         /// <summary>
         /// Attempt to open <paramref name="modalSlug"/>.

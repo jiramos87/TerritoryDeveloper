@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: info-panel | kind: modal | theme: dark -->
+  <!-- Stage 4.0 (TECH-32918) — context block + detail rows -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="info-panel.uss"/>
+  <ui:VisualElement name="info-panel" class="info-panel">
+    <ui:VisualElement name="header" class="info-panel__header">
+      <ui:Label name="title" class="info-panel__title" text="Selection Info" binding-path="Title"/>
+      <ui:Button name="btn-close" class="info-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="context-block" class="info-panel__context">
+      <ui:Label name="cell-coord" class="info-panel__coord" binding-path="CellCoord"/>
+      <ui:Label name="entity-type" class="info-panel__entity-type" binding-path="EntityType"/>
+    </ui:VisualElement>
+    <ui:ScrollView name="detail-rows" class="info-panel__detail-rows">
+      <ui:VisualElement name="fields-container" class="info-panel__fields" binding-path="Fields"/>
+    </ui:ScrollView>
+    <ui:VisualElement name="actions" class="info-panel__actions">
+      <ui:Button name="btn-demolish" class="info-panel__btn info-panel__btn--danger" text="Demolish" binding-path="DemolishCommand"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

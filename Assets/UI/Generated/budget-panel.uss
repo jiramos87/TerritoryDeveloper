@@ -1,0 +1,123 @@
+/* Panel: budget-panel | kind: modal | theme: dark */
+/* Stage 4.0 (TECH-32917) — panel layout + numeric typography tokens */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.budget-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-xl, 32px);
+    min-width: 360px;
+    max-width: 520px;
+    flex-direction: column;
+}
+
+.budget-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-lg, 20px);
+}
+
+.budget-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.budget-panel__treasury {
+    color: var(--ds-color-primary, #89b4fa);
+    font-size: var(--ds-font-size-lg, 18px);
+    -unity-font-style: bold;
+    margin-right: var(--ds-space-md, 12px);
+}
+
+.budget-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.budget-panel__close-btn:hover {
+    color: var(--ds-color-warn, #fab387);
+    border-color: var(--ds-color-warn, #fab387);
+}
+
+.budget-panel__section {
+    flex-direction: column;
+    margin-bottom: var(--ds-space-lg, 20px);
+}
+
+.budget-panel__section-header {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-sm, 8px);
+    letter-spacing: 1px;
+}
+
+.budget-panel__row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+.budget-panel__row-label {
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-md, 14px);
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.budget-panel__slider {
+    flex-grow: 1;
+    margin: 0 var(--ds-space-sm, 8px);
+}
+
+.budget-panel__row-value {
+    color: var(--ds-color-primary, #89b4fa);
+    font-size: var(--ds-font-size-md, 14px);
+    -unity-font-style: bold;
+    width: 40px;
+    -unity-text-align: middle-right;
+    flex-shrink: 0;
+}
+
+.budget-panel__forecast-balance {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    padding: var(--ds-space-md, 12px);
+}
+
+.budget-panel__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: var(--ds-space-md, 12px);
+}
+
+.budget-panel__btn {
+    background-color: var(--ds-color-bg-elev, #181825);
+    color: var(--ds-color-text-primary, #cdd6f4);
+    border-color: var(--ds-color-accent-2, #89dceb);
+    border-width: 1px;
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
+    margin-left: var(--ds-space-sm, 8px);
+    font-size: var(--ds-font-size-md, 14px);
+    -unity-text-align: middle-center;
+}
+
+.budget-panel__btn--primary {
+    background-color: var(--ds-color-primary, #89b4fa);
+    color: var(--ds-color-bg-base, #1e1e2e);
+    border-color: var(--ds-color-primary, #89b4fa);
+}
+
+.budget-panel__btn:hover {
+    border-color: var(--ds-color-accent, #cba6f7);
+}

@@ -1,0 +1,128 @@
+/* Panel: stats-panel | kind: modal | theme: dark */
+/* Stage 4.0 (TECH-32919) — tab + chart tokens; ThemedTabBar styling */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.stats-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-xl, 32px);
+    min-width: 480px;
+    max-width: 640px;
+    max-height: 600px;
+    flex-direction: column;
+}
+
+.stats-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.stats-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.stats-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.stats-panel__close-btn:hover {
+    color: var(--ds-color-warn, #fab387);
+    border-color: var(--ds-color-warn, #fab387);
+}
+
+/* Tab strip */
+.stats-panel__tab-strip {
+    flex-direction: row;
+    margin-bottom: var(--ds-space-md, 12px);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--ds-color-border, #45475a);
+    padding-bottom: var(--ds-space-sm, 8px);
+}
+
+.stats-panel__tab {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
+    border-radius: var(--ds-radius-sm, 4px) var(--ds-radius-sm, 4px) 0 0;
+    margin-right: var(--ds-space-sm, 8px);
+}
+
+.stats-panel__tab--active {
+    background-color: var(--ds-color-bg-elev, #181825);
+    color: var(--ds-color-primary, #89b4fa);
+    border-bottom-width: 2px;
+    border-bottom-color: var(--ds-color-primary, #89b4fa);
+}
+
+.stats-panel__tab:hover {
+    color: var(--ds-color-text-primary, #cdd6f4);
+}
+
+.stats-panel__active-tab {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+    margin-bottom: var(--ds-space-sm, 8px);
+}
+
+/* Chart container */
+.stats-panel__chart-container {
+    height: 160px;
+    background-color: var(--ds-color-bg-elev, #181825);
+    border-radius: var(--ds-radius-md, 8px);
+    margin-bottom: var(--ds-space-md, 12px);
+    justify-content: center;
+    align-items: center;
+}
+
+.stats-panel__chart-placeholder {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+}
+
+/* Stacked bar */
+.stats-panel__stacked-bar {
+    flex-direction: row;
+    height: 12px;
+    border-radius: var(--ds-radius-sm, 4px);
+    overflow: hidden;
+    margin-bottom: var(--ds-space-md, 12px);
+    background-color: var(--ds-color-bg-elev, #181825);
+}
+
+.stats-panel__bar-segment {
+    height: 100%;
+}
+
+.stats-panel__bar-segment--population {
+    background-color: var(--ds-color-primary, #89b4fa);
+}
+
+.stats-panel__bar-segment--services {
+    background-color: var(--ds-color-accent-2, #89dceb);
+}
+
+.stats-panel__bar-segment--economy {
+    background-color: var(--ds-color-accent, #cba6f7);
+}
+
+/* Service rows */
+.stats-panel__service-rows {
+    flex-grow: 1;
+    max-height: 200px;
+}
+
+.stats-panel__services {
+    flex-direction: column;
+}

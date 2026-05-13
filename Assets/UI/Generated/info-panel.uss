@@ -1,0 +1,95 @@
+/* Panel: info-panel | kind: modal | theme: dark */
+/* Stage 4.0 (TECH-32918) — context typography + spacing tokens */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.info-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-xl, 32px);
+    min-width: 280px;
+    max-width: 380px;
+    flex-direction: column;
+    max-height: 480px;
+}
+
+.info-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.info-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-lg, 18px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.info-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.info-panel__close-btn:hover {
+    color: var(--ds-color-warn, #fab387);
+    border-color: var(--ds-color-warn, #fab387);
+}
+
+.info-panel__context {
+    flex-direction: column;
+    margin-bottom: var(--ds-space-md, 12px);
+    padding-bottom: var(--ds-space-sm, 8px);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--ds-color-border, #45475a);
+}
+
+.info-panel__coord {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+}
+
+.info-panel__entity-type {
+    color: var(--ds-color-accent-2, #89dceb);
+    font-size: var(--ds-font-size-md, 14px);
+    -unity-font-style: bold;
+    margin-top: 4px;
+}
+
+.info-panel__detail-rows {
+    flex-grow: 1;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.info-panel__fields {
+    flex-direction: column;
+}
+
+.info-panel__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.info-panel__btn {
+    background-color: var(--ds-color-bg-elev, #181825);
+    color: var(--ds-color-text-primary, #cdd6f4);
+    border-color: var(--ds-color-accent-2, #89dceb);
+    border-width: 1px;
+    border-radius: var(--ds-radius-md, 8px);
+    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
+    font-size: var(--ds-font-size-md, 14px);
+    -unity-text-align: middle-center;
+}
+
+.info-panel__btn--danger {
+    border-color: var(--ds-color-warn, #fab387);
+    color: var(--ds-color-warn, #fab387);
+}
+
+.info-panel__btn:hover {
+    border-color: var(--ds-color-accent, #cba6f7);
+}

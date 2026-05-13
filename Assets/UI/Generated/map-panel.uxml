@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: map-panel | kind: modal | theme: dark -->
+  <!-- Stage 4.0 (TECH-32920) — minimap surface + legend + controls -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="map-panel.uss"/>
+  <ui:VisualElement name="map-panel" class="map-panel">
+    <ui:VisualElement name="header" class="map-panel__header">
+      <ui:Label name="title" class="map-panel__title" text="Map" binding-path="Title"/>
+      <ui:Button name="btn-close" class="map-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <!-- Minimap surface — texture rendered via MeshGenerationContext / VisualElement subclass -->
+    <ui:VisualElement name="minimap-surface" class="map-panel__minimap">
+      <ui:Label name="minimap-label" class="map-panel__minimap-label" text="Map" binding-path="MinimapLabel"/>
+    </ui:VisualElement>
+    <!-- Layer toggles -->
+    <ui:VisualElement name="layer-controls" class="map-panel__layers">
+      <ui:Label class="map-panel__layers-header" text="Layers"/>
+      <ui:VisualElement class="map-panel__layer-strip">
+        <ui:Toggle name="toggle-terrain" class="map-panel__layer-toggle" label="Terrain" binding-path="ShowTerrain"/>
+        <ui:Toggle name="toggle-zones" class="map-panel__layer-toggle" label="Zones" binding-path="ShowZones"/>
+        <ui:Toggle name="toggle-roads" class="map-panel__layer-toggle" label="Roads" binding-path="ShowRoads"/>
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <!-- Pan/zoom controls -->
+    <ui:VisualElement name="zoom-controls" class="map-panel__zoom">
+      <ui:Button name="btn-zoom-in" class="map-panel__zoom-btn" text="+" binding-path="ZoomInCommand"/>
+      <ui:Button name="btn-zoom-out" class="map-panel__zoom-btn" text="−" binding-path="ZoomOutCommand"/>
+      <ui:Label name="zoom-label" class="map-panel__zoom-label" binding-path="ZoomLabel"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: tool-subtype-picker | kind: modal | theme: dark -->
+  <!-- Stage 4.0 (TECH-32921) — subtype grid + icons -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="tool-subtype-picker.uss"/>
+  <ui:VisualElement name="tool-subtype-picker" class="tool-subtype-picker">
+    <ui:VisualElement name="header" class="tool-subtype-picker__header">
+      <ui:Label name="title" class="tool-subtype-picker__title" text="Select Tool" binding-path="Title"/>
+      <ui:Button name="btn-close" class="tool-subtype-picker__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <!-- Subtype grid — populated by ToolSubtypePickerHost via ListView -->
+    <ui:ListView name="subtype-grid" class="tool-subtype-picker__grid"
+                 binding-path="Subtypes"
+                 selection-type="Single"
+                 show-border="false"
+                 show-alternating-row-backgrounds="None"/>
+  </ui:VisualElement>
+</ui:UXML>

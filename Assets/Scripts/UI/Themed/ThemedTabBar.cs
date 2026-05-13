@@ -4,7 +4,13 @@ using UnityEngine.UI;
 
 namespace Territory.UI.Themed
 {
-    /// <summary>Themed tab bar chrome variant — palette + frame_style token consumer.</summary>
+    /// <summary>
+    /// Themed tab bar chrome variant — palette + frame_style token consumer.
+    /// Stage 4.0 (TECH-32919) — Q3 complex-primitive verdict: legacy uGUI wrapper marked Obsolete.
+    /// UxmlElement custom control port deferred to Stage 6 purge; stats-panel migrated host
+    /// uses UXML tab-strip directly (CSS class toggle on Button elements).
+    /// </summary>
+    [Obsolete("ThemedTabBar uGUI wrapper deprecated — Stage 6 will purge. Use UXML tab-strip pattern (stats-panel Stage 4.0).")]
     public class ThemedTabBar : ThemedPrimitiveBase
     {
         /// <summary>Stage 13.2 — bake-time tab descriptor mirrored from IR v2 `IrTab` (id + label + active).

@@ -1,0 +1,113 @@
+/* Panel: map-panel | kind: modal | theme: dark */
+/* Stage 4.0 (TECH-32920) — panel + legend tokens */
+@import url("project://database/Assets/UI/Themes/dark.tss");
+
+.map-panel {
+    background-color: var(--ds-color-bg-card, #313244);
+    border-radius: var(--ds-radius-lg, 16px);
+    padding: var(--ds-space-xl, 32px);
+    min-width: 360px;
+    max-width: 480px;
+    flex-direction: column;
+}
+
+.map-panel__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.map-panel__title {
+    color: var(--ds-color-text-primary, #cdd6f4);
+    font-size: var(--ds-font-size-xl, 24px);
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.map-panel__close-btn {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-md, 14px);
+    padding: 4px 8px;
+    border-radius: var(--ds-radius-sm, 4px);
+}
+
+.map-panel__close-btn:hover {
+    color: var(--ds-color-warn, #fab387);
+    border-color: var(--ds-color-warn, #fab387);
+}
+
+/* Minimap surface */
+.map-panel__minimap {
+    height: 240px;
+    background-color: var(--ds-color-bg-elev, #181825);
+    border-radius: var(--ds-radius-md, 8px);
+    margin-bottom: var(--ds-space-md, 12px);
+    justify-content: center;
+    align-items: center;
+    border-width: 1px;
+    border-color: var(--ds-color-border, #45475a);
+}
+
+.map-panel__minimap-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+}
+
+/* Layer toggles */
+.map-panel__layers {
+    margin-bottom: var(--ds-space-md, 12px);
+}
+
+.map-panel__layers-header {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+    -unity-font-style: bold;
+    margin-bottom: var(--ds-space-sm, 8px);
+    letter-spacing: 1px;
+}
+
+.map-panel__layer-strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.map-panel__layer-toggle {
+    margin-right: var(--ds-space-md, 12px);
+    color: var(--ds-color-text-secondary, #a6adc8);
+    font-size: var(--ds-font-size-md, 14px);
+}
+
+/* Zoom controls */
+.map-panel__zoom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.map-panel__zoom-btn {
+    background-color: var(--ds-color-bg-elev, #181825);
+    color: var(--ds-color-text-primary, #cdd6f4);
+    border-color: var(--ds-color-border, #45475a);
+    border-width: 1px;
+    border-radius: var(--ds-radius-sm, 4px);
+    padding: 4px 12px;
+    margin-left: var(--ds-space-sm, 8px);
+    font-size: var(--ds-font-size-lg, 18px);
+    -unity-text-align: middle-center;
+}
+
+.map-panel__zoom-btn:hover {
+    border-color: var(--ds-color-primary, #89b4fa);
+    color: var(--ds-color-primary, #89b4fa);
+}
+
+.map-panel__zoom-label {
+    color: var(--ds-color-text-muted, #6c7086);
+    font-size: var(--ds-font-size-sm, 11px);
+    margin-left: var(--ds-space-sm, 8px);
+    min-width: 40px;
+    -unity-text-align: middle-center;
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: budget-panel | kind: modal | theme: dark -->
+  <!-- Stage 4.0 (TECH-32917) — budget rows + treasury display -->
+  <Style src="project://database/Assets/UI/Themes/dark.tss"/>
+  <Style src="budget-panel.uss"/>
+  <ui:VisualElement name="budget-panel" class="budget-panel">
+    <ui:VisualElement name="header" class="budget-panel__header">
+      <ui:Label name="title" class="budget-panel__title" text="City Budget" binding-path="Title"/>
+      <ui:Label name="treasury" class="budget-panel__treasury" text="$0" binding-path="Treasury"/>
+      <ui:Button name="btn-close" class="budget-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="tax-section" class="budget-panel__section">
+      <ui:Label class="budget-panel__section-header" text="Tax Rates"/>
+      <ui:VisualElement class="budget-panel__row">
+        <ui:Label class="budget-panel__row-label" text="Residential"/>
+        <ui:Slider name="tax-residential" class="budget-panel__slider" low-value="0" high-value="20" binding-path="TaxResidential"/>
+        <ui:Label class="budget-panel__row-value" binding-path="TaxResidentialDisplay"/>
+      </ui:VisualElement>
+      <ui:VisualElement class="budget-panel__row">
+        <ui:Label class="budget-panel__row-label" text="Commercial"/>
+        <ui:Slider name="tax-commercial" class="budget-panel__slider" low-value="0" high-value="20" binding-path="TaxCommercial"/>
+        <ui:Label class="budget-panel__row-value" binding-path="TaxCommercialDisplay"/>
+      </ui:VisualElement>
+      <ui:VisualElement class="budget-panel__row">
+        <ui:Label class="budget-panel__row-label" text="Industrial"/>
+        <ui:Slider name="tax-industrial" class="budget-panel__slider" low-value="0" high-value="20" binding-path="TaxIndustrial"/>
+        <ui:Label class="budget-panel__row-value" binding-path="TaxIndustrialDisplay"/>
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="forecast-section" class="budget-panel__section">
+      <ui:Label class="budget-panel__section-header" text="Forecast"/>
+      <ui:Label name="forecast-balance" class="budget-panel__forecast-balance" binding-path="ForecastBalance"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="actions" class="budget-panel__actions">
+      <ui:Button name="btn-apply" class="budget-panel__btn budget-panel__btn--primary" text="Apply" binding-path="ApplyCommand"/>
+      <ui:Button name="btn-cancel" class="budget-panel__btn" text="Cancel" binding-path="CancelCommand"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
