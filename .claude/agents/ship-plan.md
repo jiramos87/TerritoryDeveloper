@@ -23,9 +23,10 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
 
 # Phase sequence
 
+0. **Phase A.0 — Source resolution (HTML-first).** When `docs/explorations/{slug}.html` exists, refresh on-disk `.md` sidecar via `npm run design-explore:extract-md {SLUG} > docs/explorations/{slug}.md` so recipe Phase A reads canonical embed. Legacy `.md`-only path skips extraction. Token `source ∈ {html-extracted, md-legacy, drift-detected}`.
 1. Phase A — `npm run recipe:run -- ship-plan-phase-a --input slug={SLUG}`. Recipe steps: parse handoff yaml → `validate-handoff-schema.mjs` → prefetch `router_for_task` + `glossary_discover` + `invariants_summary` + `list_rules` (parallel) → `task_bundle_batch` → `spec_sections` (batch anchor expansion for ALL anchors across ALL tasks; replaces per-anchor sequential calls) → `plan_digest_drift_lint` (NEW MCP) → `cron_drift_lint_findings_enqueue(status='staged')` (two-phase commit; flips to `queued` post bundle_apply success via SQL fn `promote_drift_lint_staged`). Outputs `{shared_context, task_batch, anchor_bundle, drift_findings_job_id}`.
 2. Phase A.1 — Blueprint loader (when handoff yaml `task_kind=ui-from-db`): MCP `catalog_panel_get` + dependency closure resolve. Branch only fires when blueprint task type detected.
-3. Phase B — Compose 3-section §Plan Digest per task (Opus-owned). Sections: §Goal + §Red-Stage Proof + §Work Items, ~30 lines each. Anchor refs already pre-expanded by Phase A step 5 — digest carries fenced embeds with provenance comment, zero `@anchor` literals.
+3. Phase B — Compose 11-section §Plan Digest per task (Opus-owned). Legacy 3: §Goal + §Red-Stage Proof + §Work Items, ~30 lines each, anchor refs pre-expanded by Phase A step 5. **Enriched 8: §Visual Mockup + §Before / After + §Edge Cases + §Glossary Anchors + §Failure Modes + §Decision Dependencies + §Shared Seams + §Touched Paths Preview — read verbatim from per-task / per-stage `#### ... Enriched` MD subsections (per [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md))**. Skip-clause: missing source subsection → `_skipped — source absent_` body, heading always emitted.
 4. Phase B.5 — Token-split guardrail: when input >180k → split into ⌈N/2⌉ sub-passes; bundle dispatch (Phase C) still runs ONCE.
 5. Phase C — Single `mcp__territory-ia__master_plan_bundle_apply({ bundle })` Postgres tx. Bundle jsonb shape per mig 0136: `{plan, stages[] (with optional `red_stage_proof_block` 4-field jsonb — server renders body), tasks[] (with `digest_body`)}`. SQL fn renders `body` server-side from `red_stage_proof_block` when present; uses pre-rendered `body` when provided; defaults to `design_only` / `not_applicable` skip-clause when both absent. Inside tx: SQL fn calls `promote_drift_lint_staged(plan_slug, version)` flipping stash row staged→queued. Returns `{plan_id, version, drift_lint_promoted: true}`.
 6. Phase D — `npm run recipe:run -- ship-plan-phase-c --input slug={SLUG}`. Async fan-out (fire-and-forget; failures = warning): `cron_glossary_backlinks_enqueue` + `cron_anchor_reindex_enqueue` + `cron_audit_log_enqueue(audit_kind=plan_filed)`.
@@ -45,6 +46,7 @@ Run `ia/skills/ship-plan/SKILL.md` end-to-end for plan slug `{SLUG}`. DB-backed 
 - Do NOT edit `ia/specs/glossary.md` — propose candidates in handoff `notes:` field only.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
 - Do NOT skip Scene Wiring row in §Work Items when triggered (new MonoBehaviour / `[SerializeField]` / scene prefab / `UnityEvent`) per `ia/rules/unity-scene-wiring.md`.
+- Phase B enriched-subsection injection MUST be verbatim (no paraphrase, no compression). When source MD subsection absent → emit skip-clause body line; NEVER drop the `### §...` heading.
 
 # Escalation shape
 

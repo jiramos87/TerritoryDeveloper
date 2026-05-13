@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{TITLE}} — Exploration</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-elev: #1a2028;
+    --bg-card: #232b35;
+    --fg: #e6edf3;
+    --fg-dim: #8b949e;
+    --accent: #4a9eff;
+    --accent-2: #7ee787;
+    --danger: #d65151;
+    --warn: #f0b429;
+    --border: #2d3744;
+    --code-bg: #0d1117;
+    --space: 12px;
+    --radius: 8px;
+    --maxw: 1100px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", Monaco, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--font); line-height: 1.55; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  pre { background: var(--code-bg); padding: 14px; border-radius: var(--radius); overflow-x: auto; border: 1px solid var(--border); }
+  pre code { background: none; padding: 0; }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+  aside.toc {
+    background: var(--bg-elev);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  aside.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--fg-dim); margin: 0 0 12px; }
+  aside.toc ul { list-style: none; padding: 0; margin: 0; }
+  aside.toc li { margin: 2px 0; }
+  aside.toc a {
+    display: block;
+    padding: 5px 8px;
+    color: var(--fg);
+    font-size: 13px;
+    border-radius: 4px;
+    border-left: 2px solid transparent;
+  }
+  aside.toc a:hover { background: var(--bg-card); text-decoration: none; }
+  aside.toc a.active { border-left-color: var(--accent); background: var(--bg-card); color: var(--accent); }
+  aside.toc .lvl-3 { padding-left: 18px; font-size: 12px; color: var(--fg-dim); }
+
+  main { padding: 32px 48px; max-width: var(--maxw); }
+  header.doc-head { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 24px; }
+  header.doc-head h1 { margin: 0 0 8px; font-size: 28px; }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font-size: 12px; color: var(--fg-dim); }
+  .chip strong { color: var(--fg); }
+
+  .frontmatter-panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); margin: 16px 0 24px; }
+  .frontmatter-panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; user-select: none; color: var(--accent); }
+  .frontmatter-panel[open] summary { border-bottom: 1px solid var(--border); }
+  .frontmatter-panel .fm-body { padding: 12px 16px; }
+  .fm-body pre { margin: 0; font-size: 12px; }
+
+  h1, h2, h3, h4 { color: var(--fg); margin-top: 32px; margin-bottom: 12px; }
+  h2 { border-bottom: 1px solid var(--border); padding-bottom: 6px; font-size: 22px; }
+  h3 { font-size: 18px; color: var(--accent-2); }
+  h4 { font-size: 15px; color: var(--fg-dim); }
+
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--bg-card); color: var(--fg); }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+  blockquote { border-left: 3px solid var(--accent); margin: 14px 0; padding: 4px 14px; color: var(--fg-dim); background: var(--bg-elev); border-radius: 0 var(--radius) var(--radius) 0; }
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  .stages-section { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); margin: 16px 0; }
+  .stage-card { border-bottom: 1px solid var(--border); }
+  .stage-card:last-child { border-bottom: none; }
+  .stage-card summary { cursor: pointer; padding: 14px 18px; list-style: none; user-select: none; display: flex; align-items: center; gap: 12px; }
+  .stage-card summary::-webkit-details-marker { display: none; }
+  .stage-card summary::before { content: "▶"; color: var(--accent); transition: transform 0.15s; font-size: 10px; }
+  .stage-card[open] summary::before { transform: rotate(90deg); }
+  .stage-id { background: var(--accent); color: var(--bg); padding: 2px 10px; border-radius: 4px; font-family: var(--mono); font-size: 12px; font-weight: 700; }
+  .stage-title { font-weight: 600; flex: 1; }
+  .stage-body { padding: 0 18px 16px; }
+  .stage-exit { color: var(--accent-2); font-size: 13px; margin: 8px 0; }
+  .stage-exit strong { color: var(--fg); }
+  .task-list { list-style: none; padding: 0; margin: 12px 0 0; }
+  .task-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; }
+  .task-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .task-id { font-family: var(--mono); font-size: 11px; color: var(--accent); background: var(--bg-elev); padding: 1px 6px; border-radius: 3px; }
+  .task-prefix { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--warn); color: var(--bg); font-weight: 700; }
+  .task-title { font-weight: 600; font-size: 14px; }
+  .task-digest { font-size: 13px; color: var(--fg-dim); margin: 4px 0; line-height: 1.5; }
+  .task-paths { font-family: var(--mono); font-size: 11px; color: var(--accent-2); margin-top: 6px; }
+  .task-paths span { display: inline-block; background: var(--bg-elev); padding: 1px 6px; border-radius: 3px; margin: 2px 4px 2px 0; }
+  .task-deps { font-size: 11px; color: var(--fg-dim); }
+  .task-deps strong { color: var(--warn); }
+
+  .red-proof { background: rgba(214,81,81,0.08); border-left: 3px solid var(--danger); padding: 8px 12px; margin: 10px 0; font-size: 13px; border-radius: 0 var(--radius) var(--radius) 0; }
+  .red-proof strong { color: var(--danger); }
+
+  .controls-bar { display: flex; gap: 8px; margin: 12px 0 20px; flex-wrap: wrap; }
+  .btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--fg); padding: 6px 12px; border-radius: var(--radius); cursor: pointer; font-size: 12px; font-family: var(--font); }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .search-box { width: 100%; background: var(--bg-card); border: 1px solid var(--border); color: var(--fg); padding: 8px 12px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; }
+  .search-box:focus { outline: none; border-color: var(--accent); }
+  .hidden { display: none !important; }
+  .mermaid { background: var(--bg-elev); padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+
+  /* Gantt timeline */
+  .gantt { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0 24px; }
+  .gantt-row { display: grid; grid-template-columns: 140px 1fr 80px; align-items: center; gap: 12px; margin: 6px 0; }
+  .gantt-label { font-size: 12px; font-weight: 600; }
+  .gantt-bar-wrap { position: relative; height: 24px; background: var(--bg-card); border-radius: 4px; border: 1px solid var(--border); overflow: hidden; }
+  .gantt-bar { position: absolute; top: 0; bottom: 0; border-radius: 3px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; color: #001; font-weight: 600; background: var(--accent); }
+  .gantt-bar.b1 { background: #4a9eff; }
+  .gantt-bar.b2 { background: #7ee787; }
+  .gantt-bar.b3 { background: #f0b429; }
+  .gantt-bar.b4 { background: #d65151; color: #fff; }
+  .gantt-bar.b5 { background: #c178f0; color: #fff; }
+  .gantt-bar.b6 { background: #888; color: #fff; }
+  .gantt-meta { font-size: 11px; color: var(--fg-dim); text-align: right; }
+
+  /* Decision matrix */
+  .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .decision-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; border-left: 3px solid var(--accent); }
+  .decision-card .q-id { font-family: var(--mono); font-size: 11px; color: var(--accent); background: var(--bg-card); padding: 2px 8px; border-radius: 3px; display: inline-block; margin-bottom: 6px; }
+  .decision-card .q-topic { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .decision-card .q-pick { background: var(--bg-card); border: 1px solid var(--accent-2); color: var(--accent-2); padding: 6px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 6px; font-weight: 600; }
+  .decision-card .q-rationale { font-size: 12px; color: var(--fg-dim); line-height: 1.5; }
+
+  /* Reference cards */
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .ref-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: transform 0.15s, border-color 0.15s; display: block; }
+  .ref-card:hover { transform: translateY(-2px); border-color: var(--accent); text-decoration: none; }
+  .ref-card .ref-cat { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px; font-weight: 600; }
+  .ref-card h5 { margin: 0 0 6px; font-size: 14px; }
+  .ref-card p { margin: 0; font-size: 12px; color: var(--fg-dim); line-height: 1.45; }
+
+  /* Widgets A-K (D5) */
+  .approach-tabs { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin: 16px 0 24px; }
+  .approach-tab-strip { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .approach-tab { background: var(--bg-card); border: 1px solid var(--border); color: var(--fg-dim); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .approach-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .approach-pane { display: none; padding: 12px; background: var(--bg-card); border-radius: 6px; }
+  .approach-pane.active { display: block; }
+
+  .dep-graph-wrap { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0 24px; overflow-x: auto; }
+  .dep-graph-wrap svg { display: block; min-width: 600px; }
+  .dep-node { cursor: pointer; }
+  .dep-node circle { fill: var(--bg-card); stroke: var(--accent); stroke-width: 2; }
+  .dep-node:hover circle { fill: var(--accent); }
+  .dep-node text { fill: var(--fg); font-family: var(--mono); font-size: 10px; text-anchor: middle; pointer-events: none; }
+  .dep-edge { stroke: var(--fg-dim); stroke-width: 1.5; fill: none; }
+  .dep-edge.dec { stroke: var(--warn); stroke-dasharray: 4 2; }
+
+  .task-table-wrap { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0 24px; }
+  .task-table-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .task-table-filter { background: var(--bg-card); border: 1px solid var(--border); color: var(--fg-dim); padding: 4px 10px; border-radius: 999px; cursor: pointer; font-size: 11px; }
+  .task-table-filter.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .task-table table { font-size: 12px; }
+  .task-table .task-row.hidden { display: none; }
+
+  .diff-strip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; margin: 10px 0; }
+  .diff-strip summary { cursor: pointer; padding: 8px 12px; font-size: 12px; color: var(--accent); }
+  .diff-strip .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .diff-strip .diff-pane { background: var(--code-bg); padding: 8px; font-family: var(--mono); font-size: 11px; overflow-x: auto; }
+  .diff-strip .diff-pane.before::before { content: "BEFORE"; display: block; font-size: 9px; color: var(--danger); margin-bottom: 4px; }
+  .diff-strip .diff-pane.after::before { content: "AFTER"; display: block; font-size: 9px; color: var(--accent-2); margin-bottom: 4px; }
+
+  .token-sampler { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0 24px; }
+  .token-sampler h3 { margin-top: 0; }
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .swatch { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: var(--mono); font-size: 11px; }
+  .swatch .swatch-color { height: 32px; border-radius: 4px; margin-bottom: 6px; border: 1px solid var(--border); }
+
+  .mockup-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin: 8px 0; }
+  .mockup-card svg { max-width: 100%; height: auto; display: block; }
+
+  .edge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 8px 0; }
+  .edge-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--warn); border-radius: 4px; padding: 8px; font-size: 12px; }
+  .edge-card .edge-state { font-family: var(--mono); font-size: 10px; color: var(--warn); }
+
+  .failure-list { list-style: none; padding: 0; margin: 8px 0; }
+  .failure-list li { background: rgba(214,81,81,0.08); border-left: 3px solid var(--danger); padding: 6px 10px; margin: 4px 0; font-size: 12px; border-radius: 0 4px 4px 0; }
+  .failure-list li::before { content: "FAILS IF "; font-weight: 700; color: var(--danger); font-size: 10px; letter-spacing: 0.5px; }
+
+  /* Slide-deck mode */
+  .deck-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: none; flex-direction: column; padding: 40px; }
+  .deck-overlay.open { display: flex; }
+  .deck-slide { flex: 1; display: none; flex-direction: column; justify-content: center; max-width: 1000px; margin: 0 auto; }
+  .deck-slide.active { display: flex; }
+  .deck-slide h2 { font-size: 36px; border: none; }
+  .deck-slide p, .deck-slide li { font-size: 18px; }
+  .deck-controls { display: flex; justify-content: space-between; padding: 20px 0; border-top: 1px solid var(--border); }
+  .deck-counter { color: var(--fg-dim); font-family: var(--mono); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.toc { position: relative; height: auto; max-height: 280px; }
+    main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc">
+    <h2>Navigation</h2>
+    <input class="search-box" id="tocSearch" placeholder="Filter sections…" />
+    <ul id="tocList"></ul>
+  </aside>
+  <main>
+    <header class="doc-head">
+      <h1 id="docTitle">{{TITLE}}</h1>
+      <div id="metaChips" class="meta-chips"></div>
+    </header>
+
+    <details class="frontmatter-panel">
+      <summary>Document Metadata (frontmatter)</summary>
+      <div class="fm-body">
+        <pre id="frontmatterRaw">{{FRONTMATTER_RAW}}</pre>
+      </div>
+    </details>
+
+    <div class="controls-bar">
+      <button class="btn" id="expandAll">Expand all stages</button>
+      <button class="btn" id="collapseAll">Collapse all stages</button>
+      <button class="btn" id="toggleTheme">Toggle theme</button>
+      <button class="btn" id="exportYaml" title="Copy lean YAML frontmatter to clipboard">Copy YAML</button>
+      <button class="btn" id="exportShipCmd" title="Copy /ship-plan command">Copy /ship-plan</button>
+      <button class="btn" id="exportStageMd" title="Copy MD snippet for first stage">Copy Stage MD</button>
+      <button class="btn" id="toggleDeck" title="Slide-deck mode (use arrow keys)">Slide deck ▸</button>
+    </div>
+
+    <!-- Custom inline blocks from frontmatter (bespoke per-exploration widgets) -->
+    {{CUSTOM_BLOCKS}}
+
+    <!-- Approach-compare tabs (Widget A) — driven by frontmatter `approaches[]` or skipped -->
+    <section id="approach-compare" class="hidden">
+      <h2>Approaches surveyed</h2>
+      <div class="approach-tabs">
+        <div class="approach-tab-strip" id="approachTabStrip"></div>
+        <div id="approachPanes"></div>
+      </div>
+    </section>
+
+    <!-- Stage roadmap (gantt) -->
+    <section id="stageGantt">
+      <h2>Stage roadmap (relative effort)</h2>
+      <p style="color:var(--fg-dim);font-size:14px;">Bar width = task count proxy for effort.</p>
+      <div class="gantt" id="ganttChart"></div>
+    </section>
+
+    <!-- Stages (universal) -->
+    <section id="stagesSection">
+      <h2>Migration stages — task breakdown</h2>
+      <div class="stages-section" id="stagesList"></div>
+    </section>
+
+    <!-- Dep graph (Widget E) -->
+    <section id="dep-graph">
+      <h2>Task dependency graph</h2>
+      <p style="color:var(--fg-dim);font-size:14px;">Nodes = tasks. Edges = depends_on (solid). DEC-A* edges (dashed warn) = decision dependencies. Click node → scroll to task card.</p>
+      <div class="dep-graph-wrap" id="depGraph"></div>
+    </section>
+
+    <!-- Task table (Widget F) -->
+    <section id="task-table">
+      <h2>Task table — all tasks one view</h2>
+      <div class="task-table-wrap">
+        <div class="task-table-filters" id="taskTableFilters"></div>
+        <div class="task-table" id="taskTable"></div>
+      </div>
+    </section>
+
+    <!-- Decision matrix -->
+    <section id="decisionMatrix" class="hidden">
+      <h2>Decision matrix</h2>
+      <div class="decision-grid" id="decisionGrid"></div>
+    </section>
+
+    <!-- Reference library -->
+    <section id="references" class="hidden">
+      <h2>Reference library</h2>
+      <div class="ref-grid" id="refGrid"></div>
+    </section>
+
+    <!-- Token sampler (Widget H) -->
+    <section id="token-sampler">
+      <h2>Design system tokens (dogfood)</h2>
+      <div class="token-sampler">
+        <h3>Colors</h3>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="swatch-color" style="background:var(--accent)"></div>--accent</div>
+          <div class="swatch"><div class="swatch-color" style="background:var(--accent-2)"></div>--accent-2</div>
+          <div class="swatch"><div class="swatch-color" style="background:var(--warn)"></div>--warn</div>
+          <div class="swatch"><div class="swatch-color" style="background:var(--danger)"></div>--danger</div>
+          <div class="swatch"><div class="swatch-color" style="background:var(--bg-elev);border:1px solid var(--border)"></div>--bg-elev</div>
+          <div class="swatch"><div class="swatch-color" style="background:var(--bg-card);border:1px solid var(--border)"></div>--bg-card</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bodyContent"></section>
+  </main>
+</div>
+
+<!-- Slide-deck overlay (Widget B) -->
+<div class="deck-overlay" id="deckOverlay">
+  <div id="deckSlides"></div>
+  <div class="deck-controls">
+    <button class="btn" id="deckPrev">◀ Prev</button>
+    <span class="deck-counter" id="deckCounter">1 / 1</span>
+    <button class="btn" id="deckNext">Next ▶</button>
+    <button class="btn" id="deckClose">Close ✕</button>
+  </div>
+</div>
+
+<script id="rawMarkdown" type="text/plain">{{RAW_MD}}</script>
+
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { background: '#1a2028', primaryColor: '#232b35', primaryTextColor: '#e6edf3', primaryBorderColor: '#2d3744', lineColor: '#4a9eff' } });
+
+const raw = document.getElementById('rawMarkdown').textContent;
+
+// Split frontmatter / body
+let frontmatterText = '';
+let bodyMd = raw;
+const fmMatch = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+if (fmMatch) { frontmatterText = fmMatch[1]; bodyMd = fmMatch[2]; }
+
+let fm = {};
+try { fm = jsyaml.load(frontmatterText) || {}; } catch (e) { console.error('YAML parse failed', e); }
+
+// Stages / decisions / references / panels passed via render-time JSON slots
+const STAGES = {{STAGES_JSON}};
+const DECISIONS = {{DECISIONS_JSON}};
+const REFS = {{REFERENCES_JSON}};
+const PANELS = {{PANELS_JSON}};
+
+// Title + chips
+const metaChips = {{META_CHIPS_JSON}};
+const chipsEl = document.getElementById('metaChips');
+metaChips.forEach(c => {
+  const el = document.createElement('span');
+  el.className = 'chip';
+  el.innerHTML = `<strong>${c.label}:</strong> ${c.value}`;
+  chipsEl.appendChild(el);
+});
+
+// Render stages w/ enriched per-task subsections
+const stagesList = document.getElementById('stagesList');
+STAGES.forEach(stage => {
+  const card = document.createElement('details');
+  card.className = 'stage-card';
+  card.id = 'stage-' + String(stage.id).replace(/\./g, '-');
+  const summary = document.createElement('summary');
+  summary.innerHTML = `<span class="stage-id">${stage.id}</span><span class="stage-title">${stage.title || ''}</span>`;
+  card.appendChild(summary);
+  const body = document.createElement('div');
+  body.className = 'stage-body';
+  if (stage.exit) {
+    const exit = document.createElement('div');
+    exit.className = 'stage-exit';
+    exit.innerHTML = `<strong>Exit criteria:</strong> ${stage.exit}`;
+    body.appendChild(exit);
+  }
+  if (stage.red_stage_proof) {
+    const proof = document.createElement('div');
+    proof.className = 'red-proof';
+    proof.innerHTML = `<strong>Red-stage proof:</strong><br><pre style="margin:6px 0 0;font-size:11px;">${String(stage.red_stage_proof).trim()}</pre>`;
+    body.appendChild(proof);
+  }
+  // Stage-level enriched: edge_cases + shared_seams (Widgets J + shared-seams details)
+  const enrichedStage = stage.enriched || {};
+  if (Array.isArray(enrichedStage.edge_cases) && enrichedStage.edge_cases.length) {
+    const ec = document.createElement('div');
+    ec.innerHTML = `<h4>Edge cases (${enrichedStage.edge_cases.length})</h4><div class="edge-grid">${
+      enrichedStage.edge_cases.map(c => `<div class="edge-card"><div class="edge-state">${c.state || ''}</div><strong>${c.input || ''}</strong><br>→ ${c.expected || ''}</div>`).join('')
+    }</div>`;
+    body.appendChild(ec);
+  }
+  if (Array.isArray(enrichedStage.shared_seams) && enrichedStage.shared_seams.length) {
+    const ss = document.createElement('details');
+    ss.innerHTML = `<summary>Shared seams (${enrichedStage.shared_seams.length})</summary><ul>${
+      enrichedStage.shared_seams.map(s => `<li><code>${s.name}</code> — produced by <em>${s.producer_stage || '—'}</em>; consumed by ${(s.consumer_stages || []).join(', ')} — ${s.contract || ''}</li>`).join('')
+    }</ul>`;
+    body.appendChild(ss);
+  }
+  if (stage.tasks && stage.tasks.length) {
+    const taskHead = document.createElement('h4');
+    taskHead.textContent = `Tasks (${stage.tasks.length})`;
+    body.appendChild(taskHead);
+    const ul = document.createElement('ul');
+    ul.className = 'task-list';
+    stage.tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'task-card';
+      li.id = 'task-' + String(task.id).replace(/\./g, '-');
+      const deps = (task.depends_on && task.depends_on.length) ? `<span class="task-deps"><strong>deps:</strong> ${task.depends_on.join(', ')}</span>` : '';
+      const paths = (task.touched_paths || []).map(p => `<span>${p}</span>`).join(' ');
+      const enr = task.enriched || {};
+      // Widget I — mockup
+      const mockup = enr.visual_mockup_svg ? `<div class="mockup-card">${enr.visual_mockup_svg}</div>` : '';
+      // Widget G — before/after diff
+      const ba = enr.before_after_code;
+      const diff = ba ? `<details class="diff-strip"><summary>Before / After — ${ba.path || ''}</summary><div class="diff-grid"><div class="diff-pane before"><pre><code>${escapeHtml(ba.before || '')}</code></pre></div><div class="diff-pane after"><pre><code>${escapeHtml(ba.after || '')}</code></pre></div></div></details>` : '';
+      // Widget K — failure modes
+      const fail = (enr.failure_modes && enr.failure_modes.length) ? `<h5 style="margin:8px 0 4px;font-size:11px;color:var(--fg-dim);">Failure modes</h5><ul class="failure-list">${enr.failure_modes.map(f => `<li>${f}</li>`).join('')}</ul>` : '';
+      // Glossary anchors
+      const ga = (enr.glossary_anchors && enr.glossary_anchors.length) ? `<div style="margin-top:6px;font-size:11px;color:var(--fg-dim);">Glossary: ${enr.glossary_anchors.map(s => `<a data-glossary="${s}" href="#g-${s}" style="font-family:var(--mono);">${s}</a>`).join(' · ')}</div>` : '';
+      // Decision deps
+      const dd = (enr.decision_dependencies && enr.decision_dependencies.length) ? `<div style="margin-top:4px;font-size:11px;color:var(--warn);">Decisions: ${enr.decision_dependencies.map(d => `<code>${d.slug}</code> (${d.role || 'inherits'})`).join(' · ')}</div>` : '';
+      // Touched paths preview
+      const tpp = (enr.touched_paths_with_preview && enr.touched_paths_with_preview.length) ? `<details style="margin-top:6px;font-size:11px;"><summary>Path previews (${enr.touched_paths_with_preview.length})</summary><ul>${enr.touched_paths_with_preview.map(p => `<li><code>${p.path}</code> — ${p.loc !== null && p.loc !== undefined ? p.loc + ' LOC, ' : ''}${p.kind || ''} — ${p.summary || ''}</li>`).join('')}</ul></details>` : '';
+      li.innerHTML = `
+        <div class="task-head">
+          <span class="task-id">${task.id}</span>
+          <span class="task-prefix">${task.prefix || ''}</span>
+          <span class="task-title">${task.title || ''}</span>
+        </div>
+        <div class="task-digest">${task.digest_outline || ''}</div>
+        ${paths ? `<div class="task-paths">${paths}</div>` : ''}
+        ${deps}
+        ${mockup}
+        ${diff}
+        ${fail}
+        ${ga}
+        ${dd}
+        ${tpp}
+      `;
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  }
+  card.appendChild(body);
+  stagesList.appendChild(card);
+});
+
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Body markdown render
+marked.setOptions({ gfm: true, breaks: false });
+const bodyHtml = marked.parse(bodyMd);
+document.getElementById('bodyContent').innerHTML = bodyHtml;
+
+// Convert mermaid code blocks
+document.querySelectorAll('pre code.language-mermaid').forEach((codeEl, i) => {
+  const div = document.createElement('div');
+  div.className = 'mermaid';
+  div.id = 'mermaid-' + i;
+  div.textContent = codeEl.textContent;
+  codeEl.parentElement.replaceWith(div);
+});
+mermaid.run();
+
+// Gantt — derived from STAGES task counts
+(function renderGantt(){
+  const chart = document.getElementById('ganttChart');
+  if (!STAGES.length) return;
+  const totalTasks = STAGES.reduce((acc, s) => acc + ((s.tasks && s.tasks.length) || 1), 0);
+  let cursor = 0;
+  const palette = ['b1','b2','b3','b4','b5','b6'];
+  STAGES.forEach((s, idx) => {
+    const tc = (s.tasks && s.tasks.length) || 1;
+    const widthPct = (tc / totalTasks) * 100;
+    const row = document.createElement('div');
+    row.className = 'gantt-row';
+    row.innerHTML = `
+      <div class="gantt-label">Stage ${s.id}</div>
+      <div class="gantt-bar-wrap">
+        <div class="gantt-bar ${palette[idx % palette.length]}" style="left:${cursor}%;width:${widthPct}%;">${tc} task${tc===1?'':'s'}</div>
+      </div>
+      <div class="gantt-meta">${(s.title || '').slice(0, 30)}</div>
+    `;
+    chart.appendChild(row);
+    cursor += widthPct;
+  });
+})();
+
+// Decision matrix
+if (DECISIONS.length) {
+  document.getElementById('decisionMatrix').classList.remove('hidden');
+  const grid = document.getElementById('decisionGrid');
+  DECISIONS.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'decision-card';
+    card.innerHTML = `<div class="q-id">${d.id || ''}</div><div class="q-topic">${d.topic || ''}</div><div class="q-pick">→ ${d.pick || ''}</div><div class="q-rationale">${d.rationale || ''}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// References
+if (REFS.length) {
+  document.getElementById('references').classList.remove('hidden');
+  const grid = document.getElementById('refGrid');
+  REFS.forEach(r => {
+    const card = document.createElement('a');
+    card.className = 'ref-card';
+    card.href = r.href || '#';
+    card.target = '_blank';
+    card.innerHTML = `<span class="ref-cat" style="background:rgba(74,158,255,0.15);color:var(--accent);">${r.cat || ''}</span><h5>${r.title || ''}</h5><p>${r.desc || ''}</p>`;
+    grid.appendChild(card);
+  });
+}
+
+// Dep graph (Widget E)
+(function renderDepGraph(){
+  const wrap = document.getElementById('depGraph');
+  const allTasks = [];
+  STAGES.forEach((s, sidx) => {
+    (s.tasks || []).forEach((t, tidx) => allTasks.push({ ...t, stage_id: s.id, sidx, tidx }));
+  });
+  if (!allTasks.length) { wrap.innerHTML = '<em style="color:var(--fg-dim);">No tasks to graph.</em>'; return; }
+  const nodeW = 90, nodeH = 28, gapX = 110, gapY = 50;
+  // Group by stage column
+  const colsMap = {};
+  allTasks.forEach(t => { (colsMap[t.stage_id] = colsMap[t.stage_id] || []).push(t); });
+  const cols = Object.keys(colsMap);
+  const width = Math.max(600, cols.length * gapX + 40);
+  const height = Math.max(120, Math.max(...Object.values(colsMap).map(a => a.length)) * gapY + 40);
+  const idIndex = {};
+  allTasks.forEach((t) => {
+    const c = cols.indexOf(t.stage_id);
+    const row = colsMap[t.stage_id].indexOf(t);
+    idIndex[t.id] = { x: 30 + c * gapX, y: 30 + row * gapY };
+  });
+  let svg = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMinYMin meet">`;
+  // edges
+  allTasks.forEach(t => {
+    (t.depends_on || []).forEach(dep => {
+      const a = idIndex[dep], b = idIndex[t.id];
+      if (!a || !b) return;
+      svg += `<path class="dep-edge" d="M${a.x + nodeW/2} ${a.y} L${b.x - nodeW/2} ${b.y}" marker-end="url(#arrow)"/>`;
+    });
+    const enr = t.enriched || {};
+    (enr.decision_dependencies || []).forEach(d => {
+      const b = idIndex[t.id];
+      svg += `<text x="${b.x + nodeW/2 + 4}" y="${b.y + 4}" class="dep-edge-label" style="fill:var(--warn);font-size:9px;font-family:var(--mono);">${d.slug}</text>`;
+    });
+  });
+  // arrow marker
+  svg = svg.replace('<svg', '<svg><defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fg-dim)"/></marker></defs>'.replace('<svg', '<svg'));
+  // nodes
+  allTasks.forEach(t => {
+    const p = idIndex[t.id];
+    svg += `<g class="dep-node" data-task-id="${t.id}" transform="translate(${p.x - nodeW/2}, ${p.y - nodeH/2})">
+      <rect x="0" y="0" width="${nodeW}" height="${nodeH}" rx="4" ry="4" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="${nodeW/2}" y="${nodeH/2 + 4}" style="font-family:var(--mono);font-size:10px;fill:var(--fg);text-anchor:middle;">${t.id}</text>
+    </g>`;
+  });
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+  wrap.querySelectorAll('.dep-node').forEach(g => {
+    g.addEventListener('click', () => {
+      const tid = g.dataset.taskId;
+      const target = document.getElementById('task-' + tid.replace(/\./g, '-'));
+      if (target) {
+        // Open parent stage card
+        const stageCard = target.closest('.stage-card');
+        if (stageCard) stageCard.open = true;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+})();
+
+// Task table (Widget F)
+(function renderTaskTable(){
+  const wrap = document.getElementById('taskTable');
+  const filtersEl = document.getElementById('taskTableFilters');
+  const all = [];
+  STAGES.forEach(s => (s.tasks || []).forEach(t => all.push({ ...t, stage_id: s.id })));
+  if (!all.length) { wrap.innerHTML = '<em style="color:var(--fg-dim);">No tasks.</em>'; return; }
+  const prefixes = [...new Set(all.map(t => t.prefix).filter(Boolean))];
+  const stages = [...new Set(all.map(t => t.stage_id))];
+  filtersEl.innerHTML = `
+    ${prefixes.map(p => `<button class="task-table-filter active" data-filter-type="prefix" data-filter-value="${p}">${p}</button>`).join('')}
+    ${stages.map(s => `<button class="task-table-filter active" data-filter-type="stage" data-filter-value="${s}">Stage ${s}</button>`).join('')}
+  `;
+  const rows = all.map(t => `<tr class="task-row" data-prefix="${t.prefix || ''}" data-stage="${t.stage_id}"><td><a href="#task-${String(t.id).replace(/\./g,'-')}" style="font-family:var(--mono);">${t.id}</a></td><td>${t.prefix || ''}</td><td>${t.stage_id}</td><td>${t.title || ''}</td><td style="font-family:var(--mono);font-size:10px;">${(t.touched_paths || []).slice(0,3).join(' · ')}</td></tr>`).join('');
+  wrap.innerHTML = `<table><thead><tr><th>ID</th><th>Prefix</th><th>Stage</th><th>Title</th><th>Top paths</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const refresh = () => {
+    const activePrefixes = [...filtersEl.querySelectorAll('[data-filter-type="prefix"].active')].map(b => b.dataset.filterValue);
+    const activeStages = [...filtersEl.querySelectorAll('[data-filter-type="stage"].active')].map(b => b.dataset.filterValue);
+    wrap.querySelectorAll('.task-row').forEach(r => {
+      const okP = activePrefixes.includes(r.dataset.prefix);
+      const okS = activeStages.includes(r.dataset.stage);
+      r.classList.toggle('hidden', !(okP && okS));
+    });
+  };
+  filtersEl.querySelectorAll('.task-table-filter').forEach(b => b.addEventListener('click', () => { b.classList.toggle('active'); refresh(); }));
+})();
+
+// Build TOC
+const tocList = document.getElementById('tocList');
+const tocItems = [];
+function addToc(id, label, lvl) {
+  const li = document.createElement('li');
+  if (lvl === 3) li.className = 'lvl-3';
+  li.innerHTML = `<a href="#${id}">${label}</a>`;
+  tocList.appendChild(li);
+  tocItems.push({ el: li.firstChild, target: id });
+}
+addToc('stageGantt', 'Stage Roadmap');
+addToc('stagesSection', 'Migration Stages');
+addToc('dep-graph', 'Dep Graph');
+addToc('task-table', 'Task Table');
+if (DECISIONS.length) addToc('decisionMatrix', 'Decision Matrix');
+if (REFS.length) addToc('references', 'Reference Library');
+addToc('token-sampler', 'Design Tokens');
+STAGES.forEach(s => addToc('stage-' + String(s.id).replace(/\./g, '-'), `Stage ${s.id} — ${(s.title || '').slice(0,36)}`, 3));
+
+// TOC search
+document.getElementById('tocSearch').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  tocList.querySelectorAll('li').forEach(li => li.classList.toggle('hidden', q && !li.textContent.toLowerCase().includes(q)));
+});
+
+// Expand/collapse
+document.getElementById('expandAll').onclick = () => document.querySelectorAll('.stage-card').forEach(d => d.open = true);
+document.getElementById('collapseAll').onclick = () => document.querySelectorAll('.stage-card').forEach(d => d.open = false);
+
+// Theme toggle
+document.getElementById('toggleTheme').onclick = () => {
+  const root = document.documentElement;
+  const isLight = root.style.getPropertyValue('--bg') === '#ffffff';
+  if (isLight) { root.style.cssText = ''; }
+  else {
+    root.style.setProperty('--bg', '#ffffff');
+    root.style.setProperty('--bg-elev', '#f6f8fa');
+    root.style.setProperty('--bg-card', '#ffffff');
+    root.style.setProperty('--fg', '#1f2328');
+    root.style.setProperty('--fg-dim', '#656d76');
+    root.style.setProperty('--border', '#d0d7de');
+    root.style.setProperty('--code-bg', '#f6f8fa');
+  }
+};
+
+// Export buttons (Widget D)
+function copyToClipboard(text) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  else {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+}
+document.getElementById('exportYaml').onclick = () => copyToClipboard(frontmatterText);
+document.getElementById('exportShipCmd').onclick = () => copyToClipboard(`claude-personal "/ship-plan ${fm.slug || 'SLUG'}"`);
+document.getElementById('exportStageMd').onclick = () => {
+  const s0 = STAGES[0];
+  if (!s0) return;
+  copyToClipboard(`## Stage ${s0.id} — ${s0.title}\n\nExit: ${s0.exit || ''}\n\n${(s0.tasks || []).map(t => `- ${t.id} ${t.prefix} ${t.title}`).join('\n')}\n`);
+};
+
+// Slide-deck mode (Widget B)
+const deckOverlay = document.getElementById('deckOverlay');
+const deckSlides = document.getElementById('deckSlides');
+const deckCounter = document.getElementById('deckCounter');
+let deckIndex = 0;
+function buildDeck() {
+  deckSlides.innerHTML = '';
+  const slides = [];
+  slides.push(`<article class="deck-slide"><h2>${fm.slug || 'Exploration'}</h2><p style="color:var(--fg-dim);">${fm.created_at || ''} · ${STAGES.length} stage(s)</p></article>`);
+  slides.push(`<article class="deck-slide"><h2>Stages overview</h2><ul>${STAGES.map(s => `<li><strong>Stage ${s.id}</strong> — ${s.title}</li>`).join('')}</ul></article>`);
+  STAGES.forEach(s => {
+    const tasks = (s.tasks || []).slice(0, 6).map(t => `<li><code>${t.id}</code> ${t.title}</li>`).join('');
+    slides.push(`<article class="deck-slide"><h2>Stage ${s.id} — ${s.title || ''}</h2><p style="color:var(--accent-2);">Exit: ${s.exit || ''}</p><ul>${tasks}</ul></article>`);
+  });
+  if (DECISIONS.length) slides.push(`<article class="deck-slide"><h2>Decisions</h2><ul>${DECISIONS.map(d => `<li><strong>${d.id}</strong> ${d.topic} → <em>${d.pick}</em></li>`).join('')}</ul></article>`);
+  slides.push(`<article class="deck-slide"><h2>Handoff</h2><p style="font-family:var(--mono);">claude-personal "/ship-plan ${fm.slug || 'SLUG'}"</p></article>`);
+  deckSlides.innerHTML = slides.join('');
+  deckIndex = 0;
+  showSlide();
+}
+function showSlide() {
+  const slides = deckSlides.querySelectorAll('.deck-slide');
+  slides.forEach((s, i) => s.classList.toggle('active', i === deckIndex));
+  deckCounter.textContent = `${deckIndex + 1} / ${slides.length}`;
+}
+document.getElementById('toggleDeck').onclick = () => {
+  buildDeck();
+  deckOverlay.classList.add('open');
+};
+document.getElementById('deckClose').onclick = () => deckOverlay.classList.remove('open');
+document.getElementById('deckPrev').onclick = () => { const slides = deckSlides.querySelectorAll('.deck-slide'); deckIndex = Math.max(0, deckIndex - 1); showSlide(); };
+document.getElementById('deckNext').onclick = () => { const slides = deckSlides.querySelectorAll('.deck-slide'); deckIndex = Math.min(slides.length - 1, deckIndex + 1); showSlide(); };
+document.addEventListener('keydown', (e) => {
+  if (!deckOverlay.classList.contains('open')) return;
+  if (e.key === 'ArrowLeft') { document.getElementById('deckPrev').click(); }
+  else if (e.key === 'ArrowRight') { document.getElementById('deckNext').click(); }
+  else if (e.key === 'Escape') { document.getElementById('deckClose').click(); }
+});
+
+// Scrollspy
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocItems.forEach(it => { if (it.target === entry.target.id) it.el.classList.add('active'); else it.el.classList.remove('active'); });
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+tocItems.forEach(it => { const target = document.getElementById(it.target); if (target) observer.observe(target); });
+</script>
+</body>
+</html>

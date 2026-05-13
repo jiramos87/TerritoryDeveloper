@@ -42,6 +42,7 @@ Read only task-relevant specs. Use table to navigate.
 | Data flows / init order / persistence | `ia/specs/architecture/data-flows.md` | Initialization, simulation, persistence |
 | Agent IA / MCP / JSON interchange / bridge | `ia/specs/architecture/interchange.md` | Agent IA, MCP, B1/B3/P5, local verification |
 | Architecture decisions (DEC-A1..N) | `ia/specs/architecture/decisions.md` | Table-driven decisions + trade-offs |
+| Design exploration output schema (8 enriched fields, HTML-first persist) | `ia/rules/design-explore-output-schema.md` | Field reference, MD persistence shape, HTML widget binding, validator coverage; required reading before `design-explore` Phase 3.5 grill + `ship-plan` Phase B prompt authoring |
 
 ## Canonical geography spec
 
