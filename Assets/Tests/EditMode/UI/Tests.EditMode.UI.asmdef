@@ -1,7 +1,7 @@
 {
     "name": "Tests.EditMode.UI",
     "rootNamespace": "Territory.Tests.EditMode.UI",
-    "references": ["TerritoryDeveloper.Game", "TerritoryDeveloper.Editor.Bake"],
+    "references": ["TerritoryDeveloper.Game", "TerritoryDeveloper.Editor.Bake", "UI.Runtime"],
     "includePlatforms": [
         "Editor"
     ],

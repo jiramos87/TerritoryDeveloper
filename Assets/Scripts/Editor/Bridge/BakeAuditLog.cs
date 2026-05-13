@@ -64,8 +64,8 @@ namespace Domains.UI.Editor.UiBake.Services
 
             try
             {
-                string nodeExe = Territory.Editor.Bridge.EditorPostgresExportRegistrar.ResolveNodeExecutablePath();
-                string dbUrl   = Territory.Editor.Bridge.EditorPostgresExportRegistrar.ResolveEffectiveDatabaseUrl(repoRoot);
+                string nodeExe = EditorPostgresExportRegistrar.ResolveNodeExecutablePath();
+                string dbUrl   = EditorPostgresExportRegistrar.ResolveEffectiveDatabaseUrl(repoRoot);
                 if (string.IsNullOrWhiteSpace(dbUrl) || string.IsNullOrWhiteSpace(nodeExe)) return;
 
                 var psi = new ProcessStartInfo

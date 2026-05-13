@@ -22,19 +22,15 @@ namespace Territory.UI.Hosts
             _vm.DismissCommand = id => _vm.Dismiss(id);
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = _vm;
+                _doc.rootVisualElement.SetCompatDataSource(_vm);
             else
                 Debug.LogWarning("[NotificationsToastHost] UIDocument or rootVisualElement null on enable.");
-
-            _coordinator = FindObjectOfType<ModalCoordinator>();
-            if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
-                _coordinator.RegisterMigratedPanel("notifications-toast", _doc.rootVisualElement);
         }
 
         void OnDisable()
         {
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = null;
+                _doc.rootVisualElement.SetCompatDataSource(null);
         }
 
         void Update()

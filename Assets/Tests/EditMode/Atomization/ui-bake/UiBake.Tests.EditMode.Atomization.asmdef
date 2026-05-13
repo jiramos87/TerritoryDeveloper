@@ -2,7 +2,8 @@
     "name": "UiBake.Tests.EditMode.Atomization",
     "rootNamespace": "Territory.Tests.EditMode.Atomization.UiBake",
     "references": [
-        "UI.Editor"
+        "UI.Editor",
+        "TerritoryDeveloper.Game"
     ],
     "includePlatforms": [
         "Editor"

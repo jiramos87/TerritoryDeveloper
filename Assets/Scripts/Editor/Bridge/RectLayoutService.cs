@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Domains.UI.Data;
 using Territory.UI;
+using Territory.UI.Decoration;
 using Territory.UI.Themed;
 using UnityEditor;
 using UnityEngine;

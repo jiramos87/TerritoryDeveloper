@@ -1070,16 +1070,8 @@ namespace Territory.Editor.Bridge
                 // Slot-wrapper iteration + children (T4 fills archetype dispatch).
                 BakePanelSnapshotChildren(item, go, theme);
 
-                // hud-bar runtime adapter — slug-walks IlluminatedButton children + attaches OnClick
-                // listeners. Without this, baked buttons render but never wire (adapter must live in
-                // the prefab so it ships wherever the prefab is instantiated).
-                if (item.slug == "hud-bar" || item.slug == "hud_bar")
-                {
-                    if (go.GetComponent<HudBarDataAdapter>() == null)
-                    {
-                        go.AddComponent<HudBarDataAdapter>();
-                    }
-                }
+                // hud-bar runtime adapter removed — HudBarDataAdapter quarantined under .archive/
+                // (uGUI HUD purge). UIToolkit migration: HudBarHost now owns hud-bar runtime binding.
 
                 PrefabUtility.SaveAsPrefabAsset(go, assetPath);
 

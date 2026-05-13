@@ -12,11 +12,11 @@ namespace Domains.UI.Editor.UiBake.Services
         /// <summary>Bake UI prefabs from a panels.json snapshot path. Returns null on success; error JSON on failure.</summary>
         public string BakeFromSnapshot(string panelsPath, string outDir, string themeSoPath)
         {
-            var args = new BakeArgs
+            var args = new Territory.Editor.Bridge.UiBakeHandler.BakeArgs
             {
                 panels_path = panelsPath,
                 out_dir = outDir,
-                theme_so_path = themeSoPath,
+                theme_so = themeSoPath,
             };
             return new BakeOrchestrator(args).RunFromSnapshot();
         }

@@ -21,19 +21,15 @@ namespace Territory.UI.Hosts
             _vm = new TooltipVM();
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = _vm;
+                _doc.rootVisualElement.SetCompatDataSource(_vm);
             else
                 Debug.LogWarning("[TooltipHost] UIDocument or rootVisualElement null on enable.");
-
-            _coordinator = FindObjectOfType<ModalCoordinator>();
-            if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
-                _coordinator.RegisterMigratedPanel("tooltip", _doc.rootVisualElement);
         }
 
         void OnDisable()
         {
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = null;
+                _doc.rootVisualElement.SetCompatDataSource(null);
         }
 
         /// <summary>Show tooltip with label + optional body text at screen position.</summary>

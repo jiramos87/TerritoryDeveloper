@@ -6,9 +6,9 @@ namespace Domains.UI.Editor.UiBake.Services
     /// Constructor takes BakeArgs; Run() and RunFromSnapshot() delegate to hub during transition.</summary>
     public class BakeOrchestrator
     {
-        readonly BakeArgs _args;
+        readonly Territory.Editor.Bridge.UiBakeHandler.BakeArgs _args;
 
-        public BakeOrchestrator(BakeArgs args)
+        public BakeOrchestrator(Territory.Editor.Bridge.UiBakeHandler.BakeArgs args)
         {
             _args = args;
         }

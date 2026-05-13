@@ -3,6 +3,9 @@
 @import url("project://database/Assets/UI/Themes/dark.tss");
 
 .mini-map {
+    position: absolute;
+    top: 50px;
+    right: 8px;
     flex-direction: column;
     align-items: center;
     background-color: var(--ds-color-bg-card, #313244);

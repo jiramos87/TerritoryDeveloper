@@ -3,6 +3,11 @@
 @import url("project://database/Assets/UI/Themes/dark.tss");
 
 .toolbar {
+    position: absolute;
+    top: 50px;
+    left: 8px;
+    bottom: 50px;
+    width: 64px;
     flex-direction: column;
     align-items: center;
     background-color: var(--ds-color-bg-card, #313244);

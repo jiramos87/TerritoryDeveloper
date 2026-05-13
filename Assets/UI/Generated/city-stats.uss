@@ -3,12 +3,16 @@
 @import url("project://database/Assets/UI/Themes/dark.tss");
 
 .city-stats {
+    position: absolute;
+    top: 48px;
+    left: 50%;
+    translate: -50% 0;
     flex-direction: row;
     align-items: center;
     background-color: var(--ds-color-bg-card, #313244);
     border-radius: var(--ds-radius-md, 8px);
-    padding: var(--ds-space-xs, 4px) var(--ds-space-sm, 8px);
-    height: 40px;
+    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
+    min-height: 56px;
 }
 
 .city-stats__stat {

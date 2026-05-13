@@ -28,19 +28,15 @@ namespace Territory.UI.Hosts
             };
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = _vm;
+                _doc.rootVisualElement.SetCompatDataSource(_vm);
             else
                 Debug.LogWarning("[SplashHost] UIDocument or rootVisualElement null on enable.");
-
-            _coordinator = FindObjectOfType<ModalCoordinator>();
-            if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
-                _coordinator.RegisterMigratedPanel("splash", _doc.rootVisualElement);
         }
 
         void OnDisable()
         {
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = null;
+                _doc.rootVisualElement.SetCompatDataSource(null);
         }
     }
 }

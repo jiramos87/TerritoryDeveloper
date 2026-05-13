@@ -7,10 +7,9 @@ using UnityEngine.UIElements;
 namespace Territory.UI.Hosts
 {
     /// <summary>
-    /// MonoBehaviour Host — resolves HudBarVM, wires UIDocument.rootVisualElement.dataSource.
-    /// Pumps live game state (money, date, weather, happiness) directly into VM properties.
-    /// Lives on the HudBar UIDocument GameObject in CityScene (sidecar coexistence per Q2;
-    /// legacy Canvas + HudBarDataAdapter remain alive until Stage 6.0 quarantine plan).
+    /// MonoBehaviour Host for hud-bar top-strip — wires HudBarVM and pushes live game state
+    /// (money, date, weather, happiness) into UIDocument labels. Unity 2022.3 manual binding:
+    /// queries Q&lt;Label&gt; refs at OnEnable + assigns .text on each Update (no runtime dataSource API).
     /// </summary>
     public sealed class HudBarHost : MonoBehaviour
     {
@@ -23,12 +22,11 @@ namespace Territory.UI.Hosts
 
         HudBarVM _vm;
 
-        // Change-detect caches — avoid PropertyChanged churn every frame.
-        string _lastMoney;
-        string _lastBudgetDelta;
-        string _lastCityName;
-        string _lastDate;
-        string _lastHappiness;
+        Label _moneyLbl;
+        Label _budgetDeltaLbl;
+        Label _cityNameLbl;
+        Label _dateLbl;
+        Label _happinessLbl;
 
         void Awake()
         {
@@ -41,65 +39,57 @@ namespace Territory.UI.Hosts
         {
             _vm = new HudBarVM();
 
-            if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = _vm;
-            else
+            if (_doc == null || _doc.rootVisualElement == null)
+            {
                 Debug.LogWarning("[HudBarHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
+                return;
+            }
 
-            // Seed VM on first enable so HUD shows values immediately.
-            PushToVM();
+            var root = _doc.rootVisualElement;
+            root.SetCompatDataSource(_vm);
+            _moneyLbl = root.Q<Label>("money");
+            _budgetDeltaLbl = root.Q<Label>("budget-delta");
+            _cityNameLbl = root.Q<Label>("city-name");
+            _dateLbl = root.Q<Label>("date");
+            _happinessLbl = root.Q<Label>("happiness");
+
+            PushSnapshot();
         }
 
         void OnDisable()
         {
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = null;
+                _doc.rootVisualElement.SetCompatDataSource(null);
         }
 
         void Update()
         {
-            PushToVM();
+            PushSnapshot();
         }
 
-        void PushToVM()
+        void PushSnapshot()
         {
             if (_vm == null) return;
 
-            // Money
             if (_cityStats != null)
             {
-                string money = $"${_cityStats.money:N0}";
-                if (money != _lastMoney) { _vm.Money = money; _lastMoney = money; }
+                _vm.Money = $"${_cityStats.money:N0}";
+                _vm.CityName = string.IsNullOrEmpty(_cityStats.cityName) ? "—" : _cityStats.cityName;
+                _vm.Happiness = $"{_cityStats.happiness:F0}";
             }
-
-            // Budget delta from EconomyManager
             if (_economyManager != null)
             {
                 int delta = _economyManager.GetMonthlyIncomeDelta();
-                string deltaStr = delta >= 0 ? $"+{delta:N0}" : $"{delta:N0}";
-                if (deltaStr != _lastBudgetDelta) { _vm.BudgetDelta = deltaStr; _lastBudgetDelta = deltaStr; }
+                _vm.BudgetDelta = delta >= 0 ? $"+{delta:N0}" : $"{delta:N0}";
             }
-
-            // City name
-            if (_cityStats != null)
-            {
-                string name = string.IsNullOrEmpty(_cityStats.cityName) ? "—" : _cityStats.cityName;
-                if (name != _lastCityName) { _vm.CityName = name; _lastCityName = name; }
-            }
-
-            // Date
             if (_timeManager != null)
-            {
-                string date = _timeManager.GetCurrentDate().Date.ToString("MMM yyyy");
-                if (date != _lastDate) { _vm.Date = date; _lastDate = date; }
-            }
+                _vm.Date = _timeManager.GetCurrentDate().ToString("MMM yyyy");
 
-            // Happiness (formatted 0–100)
-            if (_cityStats != null)
-            {
-                string hap = $"{_cityStats.happiness:F0}";
-                if (hap != _lastHappiness) { _vm.Happiness = hap; _lastHappiness = hap; }
-            }
+            if (_moneyLbl != null) _moneyLbl.text = _vm.Money;
+            if (_budgetDeltaLbl != null) _budgetDeltaLbl.text = _vm.BudgetDelta;
+            if (_cityNameLbl != null) _cityNameLbl.text = _vm.CityName;
+            if (_dateLbl != null) _dateLbl.text = _vm.Date;
+            if (_happinessLbl != null) _happinessLbl.text = _vm.Happiness;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Territory.UI.Hosts
             WireCommands();
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = _vm;
+                _doc.rootVisualElement.SetCompatDataSource(_vm);
             else
                 Debug.LogWarning("[StatsPanelHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
 
@@ -36,7 +36,7 @@ namespace Territory.UI.Hosts
         void OnDisable()
         {
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.dataSource = null;
+                _doc.rootVisualElement.SetCompatDataSource(null);
         }
 
         void WireCommands()
