@@ -99,7 +99,9 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
 
     public void RebuildTexture()
     {
-        if (gridManager == null || !gridManager.isInitialized || mapImage == null) return;
+        // iter-41 — don't block when mapImage RawImage isn't wired (Effort 6 reads
+        // the texture via MapTexture accessor for UI Toolkit binding).
+        if (gridManager == null || !gridManager.isInitialized) return;
         int w = gridManager.width, h = gridManager.height;
 
         if (_mapTexture == null || _mapTexture.width != w || _mapTexture.height != h)
@@ -131,7 +133,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
         }
 
         _mapTexture.Apply();
-        mapImage.texture = _mapTexture;
+        if (mapImage != null) mapImage.texture = _mapTexture;
     }
 
     // ── Viewport + Navigation ─────────────────────────────────────────────────────

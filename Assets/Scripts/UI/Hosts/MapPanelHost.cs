@@ -22,6 +22,7 @@ namespace Territory.UI.Hosts
         Toggle _toggleTerrain;
         Toggle _toggleZones;
         Toggle _toggleRoads;
+        Button _btnZn, _btnRd, _btnFr, _btnCt;
         int _refreshFrame;
 
         private const float ZoomStep = 0.25f;
@@ -115,12 +116,14 @@ namespace Territory.UI.Hosts
 
         void OnLayerChanged(ChangeEvent<bool> _)
         {
+            // Legacy callback path retained for scene-UIDoc Toggle wiring (no-op when toggles absent).
             if (_miniMapController == null) return;
             MiniMapLayer layers = MiniMapLayer.None;
             if (_toggleZones != null && _toggleZones.value)    layers |= MiniMapLayer.Zones;
             if (_toggleRoads != null && _toggleRoads.value)    layers |= MiniMapLayer.Streets;
             if (_toggleTerrain != null && _toggleTerrain.value) layers |= MiniMapLayer.Desirability;
-            _miniMapController.SetActiveLayers(layers);
+            if (layers != MiniMapLayer.None) _miniMapController.SetActiveLayers(layers);
+            _miniMapController.RebuildTexture();
             var tex = _miniMapController.MapTexture;
             if (_minimapSurface != null && tex != null) _minimapSurface.style.backgroundImage = new StyleBackground(tex);
         }
@@ -176,32 +179,75 @@ namespace Territory.UI.Hosts
             _minimapSurface.style.justifyContent = Justify.FlexStart;
             _minimapSurface.style.alignItems = Align.Stretch;
 
-            // Top-strip layer toggle bar overlay (inside the map square).
+            // Top-strip layer toggle bar overlay (inside the map square) — square mini buttons.
             var strip = new VisualElement();
             strip.style.flexDirection = FlexDirection.Row;
             strip.style.alignItems = Align.Center;
-            strip.style.justifyContent = Justify.SpaceAround;
+            strip.style.justifyContent = Justify.FlexStart;
             strip.style.backgroundColor = new StyleColor(new Color(0.96f, 0.90f, 0.78f, 0.85f));
             strip.style.borderBottomColor = tan;
             strip.style.borderBottomWidth = 1f;
             strip.style.paddingTop = 4f; strip.style.paddingBottom = 4f;
             strip.style.paddingLeft = 6f; strip.style.paddingRight = 6f;
 
-            _toggleTerrain = new Toggle("Terrain") { name = "toggle-terrain" };
-            _toggleZones = new Toggle("Zones") { name = "toggle-zones" };
-            _toggleRoads = new Toggle("Roads") { name = "toggle-roads" };
-            foreach (var t in new[] { _toggleTerrain, _toggleZones, _toggleRoads })
-            {
-                t.style.color = Hex("#3a2f1c");
-                t.style.fontSize = 11f;
-                t.style.marginRight = 6f;
-                strip.Add(t);
-            }
+            _btnZn = BuildLayerButton("Zn", MiniMapLayer.Zones,  tan); strip.Add(_btnZn);
+            _btnRd = BuildLayerButton("Rd", MiniMapLayer.Streets, tan); strip.Add(_btnRd);
+            _btnFr = BuildLayerButton("Fr", MiniMapLayer.Forests, tan); strip.Add(_btnFr);
+            _btnCt = BuildLayerButton("Ct", MiniMapLayer.Centroid, tan); strip.Add(_btnCt);
             _minimapSurface.Add(strip);
 
             _runtimePanel.Add(_minimapSurface);
             anchorDoc.rootVisualElement.Add(_runtimePanel);
             Debug.Log("[MapPanelHost] BuildRuntimePanel — chrome-less map square attached to anchor UIDoc");
+        }
+
+        Button BuildLayerButton(string label, MiniMapLayer layer, Color tan)
+        {
+            var b = new Button(() => ToggleLayer(layer)) { text = label };
+            b.style.width = 28f;
+            b.style.height = 22f;
+            b.style.marginRight = 4f;
+            b.style.paddingTop = 0; b.style.paddingBottom = 0;
+            b.style.paddingLeft = 0; b.style.paddingRight = 0;
+            b.style.fontSize = 11f;
+            b.style.unityFontStyleAndWeight = FontStyle.Bold;
+            b.style.color = Hex("#3a2f1c");
+            b.style.borderTopColor = tan; b.style.borderBottomColor = tan;
+            b.style.borderLeftColor = tan; b.style.borderRightColor = tan;
+            b.style.borderTopWidth = 1f; b.style.borderBottomWidth = 1f;
+            b.style.borderLeftWidth = 1f; b.style.borderRightWidth = 1f;
+            b.style.borderTopLeftRadius = 3f; b.style.borderTopRightRadius = 3f;
+            b.style.borderBottomLeftRadius = 3f; b.style.borderBottomRightRadius = 3f;
+            RefreshLayerButton(b, layer);
+            return b;
+        }
+
+        void ToggleLayer(MiniMapLayer layer)
+        {
+            if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>();
+            if (_miniMapController == null) return;
+            _miniMapController.ToggleLayer(layer);
+            RefreshAllLayerButtons();
+            _miniMapController.RebuildTexture();
+            var tex = _miniMapController.MapTexture;
+            if (_minimapSurface != null && tex != null) _minimapSurface.style.backgroundImage = new StyleBackground(tex);
+        }
+
+        void RefreshAllLayerButtons()
+        {
+            if (_miniMapController == null) return;
+            RefreshLayerButton(_btnZn, MiniMapLayer.Zones);
+            RefreshLayerButton(_btnRd, MiniMapLayer.Streets);
+            RefreshLayerButton(_btnFr, MiniMapLayer.Forests);
+            RefreshLayerButton(_btnCt, MiniMapLayer.Centroid);
+        }
+
+        void RefreshLayerButton(Button b, MiniMapLayer layer)
+        {
+            if (b == null || _miniMapController == null) return;
+            bool active = _miniMapController.IsLayerActive(layer);
+            b.style.backgroundColor = active ? Hex("#5b7fa8") : Hex("#ede4ce");
+            b.style.color = active ? Hex("#f5e6c8") : Hex("#3a2f1c");
         }
 
         static Color Hex(string h) { ColorUtility.TryParseHtmlString(h, out var c); return c; }
