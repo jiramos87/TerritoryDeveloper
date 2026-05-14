@@ -77,15 +77,6 @@
     margin: 0 6px;
 }
 
-.hud-mini-map {
-    width: 52px;
-    height: 52px;
-    margin: 0 6px;
-    background-color: #2a2d33;
-    border-color: #b89b5e;
-    border-width: 1px;
-    border-radius: 3px;
-}
 
 .icon-btn {
     width: 48px;

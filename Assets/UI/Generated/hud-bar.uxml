@@ -27,7 +27,6 @@
       <ui:Button name="hud-zoom-out" class="icon-btn icon-btn--zoom-out" tooltip="Zoom Out"/>
       <ui:Label name="hud-money-2" class="hud-bar__money-tall" text="$0"/>
       <ui:Button name="hud-btn-stats" class="icon-btn icon-btn--stats" tooltip="Stats"/>
-      <ui:VisualElement name="hud-mini-map" class="hud-mini-map" tooltip="Live mini-map preview — click MAP for full panel"/>
       <ui:Button name="hud-auto" class="text-btn" text="AUTO"/>
       <ui:Button name="hud-map" class="text-btn" text="MAP" tooltip="Open full mini-map panel (bottom-right)"/>
       <ui:Button name="hud-budget" class="text-btn" text="BUDGET"/>

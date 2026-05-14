@@ -27,8 +27,6 @@ namespace Territory.UI.Hosts
         [SerializeField] CameraController _cameraController;
         [SerializeField] ModalCoordinator _modalCoordinator;
         [SerializeField] UIManager _uiManager;
-        [SerializeField] MiniMapController _miniMapController;
-        int _miniMapRefreshFrame;
 
         HudBarVM _vm;
 
@@ -45,7 +43,6 @@ namespace Territory.UI.Hosts
         Button _btnBudget;
         Button _btnStats;
         Button _btnSpeed1, _btnSpeed2, _btnSpeed3;
-        VisualElement _miniMap;
 
         void Awake()
         {
@@ -55,7 +52,6 @@ namespace Territory.UI.Hosts
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
             if (_modalCoordinator == null) _modalCoordinator = FindObjectOfType<ModalCoordinator>();
             if (_uiManager == null)        _uiManager        = FindObjectOfType<UIManager>();
-            if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>();
         }
 
         void OnEnable()
@@ -84,7 +80,6 @@ namespace Territory.UI.Hosts
             _moneyLbl     = root.Q<Label>("hud-money");
             _surplusLbl   = root.Q<Label>("hud-surplus");
             _moneyTallLbl = root.Q<Label>("hud-money-2");
-            _miniMap      = root.Q<VisualElement>("hud-mini-map");
 
             _btnPause   = root.Q<Button>("hud-pause");
             _btnZoomIn  = root.Q<Button>("hud-zoom-in");
@@ -149,21 +144,6 @@ namespace Territory.UI.Hosts
         void Update()
         {
             PushSnapshot();
-            RefreshMiniMapPreview();
-        }
-
-        void RefreshMiniMapPreview()
-        {
-            if (_miniMap == null) return;
-            if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>();
-            if (_miniMapController == null) return;
-            _miniMapRefreshFrame++;
-            if (_miniMapRefreshFrame < 30) return; // ~2Hz at 60fps
-            _miniMapRefreshFrame = 0;
-            _miniMapController.RebuildTexture();
-            var tex = _miniMapController.MapTexture;
-            if (tex != null)
-                _miniMap.style.backgroundImage = new StyleBackground(tex);
         }
 
         void PushSnapshot()
