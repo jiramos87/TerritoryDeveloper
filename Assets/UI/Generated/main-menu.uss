@@ -79,3 +79,121 @@
 .main-menu__footer-text--right {
     -unity-text-align: middle-right;
 }
+
+/* iter-25 — sub-view nav: root buttons + Load + Settings views share the screen. */
+.main-menu__view {
+    flex-direction: column;
+    align-items: center;
+}
+
+.main-menu__view--sub {
+    align-items: center;
+    justify-content: center;
+}
+
+.main-menu__card {
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
+    border-width: 3px;
+    border-radius: 12px;
+    padding: 28px 36px;
+    min-width: 380px;
+    max-width: 520px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.main-menu__sub-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 18px;
+    width: 100%;
+}
+
+.main-menu__back-arrow {
+    background-color: #ede4ce;
+    color: #3a2f1c;
+    border-color: #b89b5e;
+    border-width: 2px;
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-right: 12px;
+    padding: 0;
+}
+.main-menu__back-arrow:hover { background-color: #f9efd2; }
+
+.main-menu__sub-title {
+    color: #3a2f1c;
+    font-size: 22px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    letter-spacing: 4px;
+    flex-grow: 1;
+}
+
+.main-menu__field-label {
+    color: #6b5a3a;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    margin-top: 6px;
+}
+
+.main-menu__status {
+    color: #6b5a3a;
+    font-size: 11px;
+    margin: 4px 0 10px 0;
+    -unity-font-style: italic;
+}
+
+.main-menu__load-list {
+    min-height: 200px;
+    max-height: 320px;
+    margin-bottom: 10px;
+    background-color: #fff8e6;
+    border-color: #b89b5e;
+    border-width: 2px;
+    border-radius: 6px;
+}
+
+.main-menu__load-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: transparent;
+    border-bottom-width: 1px;
+    border-bottom-color: #ddd2b0;
+}
+.main-menu__load-row:hover { background-color: #f9efd2; }
+.main-menu__load-row--selected { background-color: #5b7fa8; }
+.main-menu__load-row--selected > .unity-text-element { color: #f5e6c8; }
+
+.main-menu__load-row-name {
+    color: #3a2f1c;
+    font-size: 13px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+.main-menu__load-row-date {
+    color: #6b5a3a;
+    font-size: 11px;
+}
+
+.main-menu__slider {
+    margin-bottom: 8px;
+    min-height: 24px;
+}
+.main-menu__slider > .unity-base-slider__tracker {
+    background-color: #d6c79f;
+    border-radius: 4px;
+}
+.main-menu__slider > .unity-base-slider__dragger {
+    background-color: #5b7fa8;
+    border-color: #b89b5e;
+    border-radius: 6px;
+}
