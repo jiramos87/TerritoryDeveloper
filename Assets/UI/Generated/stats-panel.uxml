@@ -9,27 +9,36 @@
   <Style src="stats-panel.uss"/>
   <ui:VisualElement name="stats-panel" class="stats-panel" style="display: none;">
     <ui:VisualElement name="stats-panel-card" class="stats-panel__card">
+
       <ui:VisualElement name="header" class="stats-panel__header">
         <ui:Label name="title" class="stats-panel__title" text="City Stats"/>
         <ui:Button name="btn-close" class="stats-panel__close-btn" text="X"/>
       </ui:VisualElement>
+
       <ui:VisualElement name="tab-strip" class="stats-panel__tab-strip">
         <ui:Button name="tab-population" class="stats-panel__tab stats-panel__tab--active" text="Population"/>
         <ui:Button name="tab-services" class="stats-panel__tab" text="Services"/>
         <ui:Button name="tab-economy" class="stats-panel__tab" text="Economy"/>
       </ui:VisualElement>
-      <ui:Label name="active-tab-label" class="stats-panel__active-tab" text="population"/>
-      <ui:VisualElement name="chart-container" class="stats-panel__chart-container">
-        <ui:Label name="chart-placeholder" class="stats-panel__chart-placeholder" text="Chart"/>
+
+      <!-- Population view -->
+      <ui:VisualElement name="population-view" class="stats-panel__view">
+        <ui:VisualElement name="population-chart" class="stats-panel__chart stats-panel__chart--line"/>
+        <ui:VisualElement name="population-rows" class="stats-panel__rows"/>
       </ui:VisualElement>
-      <ui:VisualElement name="stacked-bar" class="stats-panel__stacked-bar">
-        <ui:VisualElement name="bar-fill-population" class="stats-panel__bar-segment stats-panel__bar-segment--population"/>
-        <ui:VisualElement name="bar-fill-services" class="stats-panel__bar-segment stats-panel__bar-segment--services"/>
-        <ui:VisualElement name="bar-fill-economy" class="stats-panel__bar-segment stats-panel__bar-segment--economy"/>
+
+      <!-- Services view -->
+      <ui:VisualElement name="services-view" class="stats-panel__view" style="display: none;">
+        <ui:VisualElement name="services-chart" class="stats-panel__chart stats-panel__chart--bars"/>
+        <ui:VisualElement name="services-rows" class="stats-panel__rows"/>
       </ui:VisualElement>
-      <ui:ScrollView name="service-rows" class="stats-panel__service-rows">
-        <ui:VisualElement name="service-container" class="stats-panel__services"/>
-      </ui:ScrollView>
+
+      <!-- Economy view -->
+      <ui:VisualElement name="economy-view" class="stats-panel__view" style="display: none;">
+        <ui:VisualElement name="economy-chart" class="stats-panel__chart stats-panel__chart--line"/>
+        <ui:VisualElement name="economy-rows" class="stats-panel__rows"/>
+      </ui:VisualElement>
+
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>
