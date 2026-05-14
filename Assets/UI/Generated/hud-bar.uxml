@@ -13,7 +13,7 @@
       <ui:Button name="btn-speed1" class="icon-btn icon-btn--speed1" tooltip="1× Speed"/>
       <ui:Button name="btn-speed2" class="icon-btn icon-btn--speed2" tooltip="2× Speed"/>
       <ui:Button name="btn-speed3" class="icon-btn icon-btn--speed3" tooltip="3× Speed"/>
-      <ui:VisualElement name="hud-mini-map" class="hud-mini-map" style="display: none;"/>
+      <ui:VisualElement name="hud-mini-map" class="hud-mini-map"/>
     </ui:VisualElement>
     <ui:VisualElement name="hud-bar__center" class="hud-bar__cluster hud-bar__cluster--center">
       <ui:Label name="hud-city-name" class="hud-bar__city-name" text="—"/>

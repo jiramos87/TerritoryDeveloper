@@ -40,6 +40,8 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
     public GameObject miniMapPanel;
 
     private Texture2D _mapTexture;
+    /// <summary>Effort 6 — read-only access to the built mini-map texture for UI Toolkit hosts.</summary>
+    public Texture2D MapTexture => _mapTexture;
     [SerializeField] private MiniMapLayer activeLayers = MiniMapLayer.Streets | MiniMapLayer.Zones;
     private readonly MiniMapService _svc = new MiniMapService();
 
