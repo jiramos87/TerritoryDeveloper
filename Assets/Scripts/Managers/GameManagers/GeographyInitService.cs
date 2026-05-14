@@ -184,6 +184,11 @@ public class GeographyInitService
 
         PostInterstateNotification();
         _hub.NotifyMiniMap();
+
+        // iter-20 — InitializeGeography() flips this at line 144; the NewGame branch was
+        // missing it, so TimeManager.Update's `geographyManager.IsInitialized` gate stayed
+        // false forever → day tick + PlaceAllZonedBuildings never ran → no buildings spawn.
+        _hub.IsInitialized = true;
     }
 
     // ---- LoadGeography ----

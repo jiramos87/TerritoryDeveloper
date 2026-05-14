@@ -72,11 +72,13 @@ public class TimeManager : MonoBehaviour
     {
         HandleOnKeyInput();
 
-        if (!_initialSpeedApplied && geographyManager != null && geographyManager.IsInitialized)
+        // iter-20 — fire auto-start on first Update regardless of geography state;
+        // the geography-init gate below still keeps the day-tick safe.
+        if (!_initialSpeedApplied)
         {
             if (currentTimeSpeedIndex == 0)
             {
-                Debug.Log("[TimeManager] Auto-starting at speed 1.0× (index 2) — geography initialized + still paused.");
+                Debug.Log("[TimeManager] Auto-starting at speed 1.0× (index 2) — fresh game start was paused.");
                 SetTimeSpeedIndex(2);
             }
             _initialSpeedApplied = true;
