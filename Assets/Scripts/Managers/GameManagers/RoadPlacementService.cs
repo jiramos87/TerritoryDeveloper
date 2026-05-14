@@ -84,9 +84,13 @@ public class RoadPlacementService
 
         if (Input.GetMouseButtonUp(0) && _isDrawingRoad)
         {
+            // iter-18 trace — road stroke release: log path length + money snapshot.
+            Debug.Log($"[RoadPlacementService] MouseUp at {pos} — finalizing stroke. _isDrawingRoad={_isDrawingRoad} money={(cityStats != null ? cityStats.money.ToString() : "<no cityStats>")} preview-tile-count={GetPreviewRoadTileCount()}");
             _isDrawingRoad = false;
             ClearPreview();
-            if (!TryFinalizeManualRoadPlacement(cityStats, uiManager))
+            bool ok = TryFinalizeManualRoadPlacement(cityStats, uiManager);
+            Debug.Log($"[RoadPlacementService] TryFinalizeManualRoadPlacement returned {ok}.");
+            if (!ok)
             {
                 if (GameNotificationManager.Instance != null)
                     GameNotificationManager.Instance.PostWarning("Cannot place road along this path. Terrain or validation failed.");
@@ -123,9 +127,12 @@ public class RoadPlacementService
 
         if (Input.GetMouseButtonDown(0))
         {
+            // iter-18 trace — road stroke begin.
+            Debug.Log($"[RoadPlacementService] MouseDown at {pos} — begin road stroke (cost/tile=${CostPerTile}).");
             var intMgr = GetInterstateManager();
             if (intMgr != null && !intMgr.CanPlaceStreetFrom(pos))
             {
+                Debug.Log("[RoadPlacementService] Aborted — first cell does not connect to Interstate/existing road.");
                 if (GameNotificationManager.Instance != null)
                     GameNotificationManager.Instance.PostWarning("Streets must connect to the Interstate Highway or existing connected roads.");
                 return;
@@ -766,13 +773,19 @@ public class RoadPlacementService
 
         int tileCount = expandedPath.Count;
         int totalCost = tileCount * CostPerTile;
+        Debug.Log($"[RoadPlacementService] Finalize: tileCount={tileCount} totalCost=${totalCost} money={(cityStats != null ? cityStats.money.ToString() : "<no cityStats>")} canAfford={(cityStats != null ? cityStats.CanAfford(totalCost).ToString() : "n/a")}");
         if (cityStats != null && !cityStats.CanAfford(totalCost))
         {
+            Debug.LogWarning($"[RoadPlacementService] Insufficient funds — road needs ${totalCost}, money={cityStats.money}.");
             if (uiManager != null) uiManager.ShowInsufficientFundsTooltip("Road", totalCost);
             return false;
         }
 
-        if (!plan.Apply(heightMap, _terrain)) return false;
+        if (!plan.Apply(heightMap, _terrain))
+        {
+            Debug.LogWarning("[RoadPlacementService] plan.Apply returned false (terrain conflict).");
+            return false;
+        }
 
         if (cityStats != null) cityStats.RemoveMoney(totalCost);
         var resolved = _resolver.ResolveForPath(expandedPath, plan);
