@@ -25,6 +25,7 @@ namespace Territory.UI.Hosts
         const string ViewRoot     = "root";
         const string ViewLoad     = "load";
         const string ViewSettings = "settings";
+        const string ViewNewGame = "newgame";
 
         [SerializeField] UIDocument _doc;
 
@@ -48,6 +49,17 @@ namespace Territory.UI.Hosts
         // Settings sub-view.
         Slider _sfxVolumeSlider;
         Label _sfxVolumeValue;
+
+        // New Game sub-view (Effort 10).
+        VisualElement _viewNewGame;
+        TextField _ngCityName;
+        DropdownField _ngMapSize;
+        DropdownField _ngBudget;
+        IntegerField _ngSeed;
+        Button _ngReroll;
+        Button _ngSubmit;
+        Button _ngCancel;
+        Button _ngBack;
 
         string _currentView = ViewRoot;
 
@@ -84,6 +96,31 @@ namespace Territory.UI.Hosts
             _viewRoot     = root.Q<VisualElement>("root-view");
             _viewLoad     = root.Q<VisualElement>("load-view");
             _viewSettings = root.Q<VisualElement>("settings-view");
+            _viewNewGame  = root.Q<VisualElement>("newgame-view");
+
+            _ngCityName = root.Q<TextField>("newgame-city-name");
+            _ngMapSize  = root.Q<DropdownField>("newgame-map-size");
+            _ngBudget   = root.Q<DropdownField>("newgame-budget");
+            _ngSeed     = root.Q<IntegerField>("newgame-seed");
+            _ngReroll   = root.Q<Button>("btn-newgame-reroll");
+            _ngSubmit   = root.Q<Button>("btn-newgame-submit");
+            _ngCancel   = root.Q<Button>("btn-newgame-cancel");
+            _ngBack     = root.Q<Button>("btn-newgame-back");
+
+            if (_ngMapSize != null)
+            {
+                _ngMapSize.choices = new System.Collections.Generic.List<string> { "small", "medium", "large" };
+                _ngMapSize.value = "medium";
+            }
+            if (_ngBudget != null)
+            {
+                _ngBudget.choices = new System.Collections.Generic.List<string> { "low", "medium", "high" };
+                _ngBudget.value = "medium";
+            }
+            if (_ngReroll != null) _ngReroll.clicked += OnNewGameReroll;
+            if (_ngSubmit != null) _ngSubmit.clicked += OnNewGameSubmit;
+            if (_ngCancel != null) _ngCancel.clicked += OnBack;
+            if (_ngBack   != null) _ngBack.clicked   += OnBack;
 
             _btnLoadBack     = root.Q<Button>("btn-load-back");
             _btnSettingsBack = root.Q<Button>("btn-settings-back");
@@ -128,6 +165,10 @@ namespace Territory.UI.Hosts
             if (_btnLoadBack     != null) _btnLoadBack.clicked     -= OnBack;
             if (_btnSettingsBack != null) _btnSettingsBack.clicked -= OnBack;
             if (_btnLoadConfirm  != null) _btnLoadConfirm.clicked  -= OnLoadConfirm;
+            if (_ngReroll != null) _ngReroll.clicked -= OnNewGameReroll;
+            if (_ngSubmit != null) _ngSubmit.clicked -= OnNewGameSubmit;
+            if (_ngCancel != null) _ngCancel.clicked -= OnBack;
+            if (_ngBack   != null) _ngBack.clicked   -= OnBack;
             if (_sfxVolumeSlider != null) _sfxVolumeSlider.UnregisterValueChangedCallback(OnSfxVolumeChanged);
             UnbindMainMenuBlips();
             if (_doc != null && _doc.rootVisualElement != null)
@@ -145,9 +186,47 @@ namespace Territory.UI.Hosts
 
         void OnNewGame()
         {
-            GameStartInfo.SetStartModeNewGame();
-            SceneManager.LoadScene(CitySceneBuildIndex);
+            // Effort 10 §27 — open the New Game form sub-view instead of jumping to CityScene.
+            SeedNewGameDefaults();
+            SwitchView(ViewNewGame);
         }
+
+        void SeedNewGameDefaults()
+        {
+            if (_ngCityName != null)
+                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}";
+            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(1, 99999);
+            if (_ngMapSize != null && string.IsNullOrEmpty(_ngMapSize.value)) _ngMapSize.value = "medium";
+            if (_ngBudget != null && string.IsNullOrEmpty(_ngBudget.value))   _ngBudget.value  = "medium";
+        }
+
+        void OnNewGameReroll()
+        {
+            if (_ngCityName != null)
+                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}";
+            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(1, 99999);
+        }
+
+        void OnNewGameSubmit()
+        {
+            int mapSize = MapSizeStringToInt(_ngMapSize != null ? _ngMapSize.value : "medium");
+            int budget = BudgetStringToInt(_ngBudget != null ? _ngBudget.value : "medium");
+            string cityName = _ngCityName != null && !string.IsNullOrWhiteSpace(_ngCityName.value)
+                ? _ngCityName.value
+                : (Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}");
+            int seed = _ngSeed != null ? _ngSeed.value : UnityEngine.Random.Range(1, 99999);
+            var mainMenu = FindObjectOfType<MainMenuController>();
+            if (mainMenu != null)
+                mainMenu.StartNewGame(mapSize, budget, cityName, seed);
+            else
+            {
+                GameStartInfo.SetStartModeNewGame();
+                SceneManager.LoadScene(CitySceneBuildIndex);
+            }
+        }
+
+        static int MapSizeStringToInt(string v) { switch (v) { case "small": return 1; case "large": return 3; default: return 2; } }
+        static int BudgetStringToInt(string v)  { switch (v) { case "low":   return 10000; case "high": return 200000; default: return 50000; } }
 
         void OnLoad()
         {
@@ -270,6 +349,7 @@ namespace Territory.UI.Hosts
             SetViewDisplay(_viewRoot,     _currentView == ViewRoot);
             SetViewDisplay(_viewLoad,     _currentView == ViewLoad);
             SetViewDisplay(_viewSettings, _currentView == ViewSettings);
+            SetViewDisplay(_viewNewGame,  _currentView == ViewNewGame);
         }
 
         static void SetViewDisplay(VisualElement ve, bool show)
@@ -285,6 +365,7 @@ namespace Territory.UI.Hosts
             {
                 _btnContinue, _btnNewGame, _btnLoad, _btnSettings, _btnQuit,
                 _btnLoadBack, _btnSettingsBack, _btnLoadConfirm,
+                _ngReroll, _ngSubmit, _ngCancel, _ngBack,
             };
             foreach (var b in btns)
                 ToolkitBlipBinder.BindClickAndHover(b, BlipId.UiButtonClick, BlipId.UiButtonHover);
@@ -296,6 +377,7 @@ namespace Territory.UI.Hosts
             {
                 _btnContinue, _btnNewGame, _btnLoad, _btnSettings, _btnQuit,
                 _btnLoadBack, _btnSettingsBack, _btnLoadConfirm,
+                _ngReroll, _ngSubmit, _ngCancel, _ngBack,
             };
             foreach (var b in btns) ToolkitBlipBinder.UnbindAll(b);
         }

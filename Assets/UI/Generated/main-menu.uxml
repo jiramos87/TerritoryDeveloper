@@ -35,6 +35,31 @@
       </ui:VisualElement>
     </ui:VisualElement>
 
+    <!-- New Game sub-view (Effort 10 §27): cream card overlay with form fields -->
+    <ui:VisualElement name="newgame-view" class="main-menu__view main-menu__view--sub" style="display: none;">
+      <ui:VisualElement class="main-menu__card">
+        <ui:VisualElement class="main-menu__sub-header">
+          <ui:Button name="btn-newgame-back" class="main-menu__back-arrow" text="&lt;"/>
+          <ui:Label class="main-menu__sub-title" text="NEW GAME"/>
+        </ui:VisualElement>
+        <ui:Label class="main-menu__field-label" text="City name"/>
+        <ui:TextField name="newgame-city-name" class="main-menu__textfield"/>
+        <ui:Label class="main-menu__field-label" text="Map size"/>
+        <ui:DropdownField name="newgame-map-size" class="main-menu__dropdown"/>
+        <ui:Label class="main-menu__field-label" text="Starting budget"/>
+        <ui:DropdownField name="newgame-budget" class="main-menu__dropdown"/>
+        <ui:Label class="main-menu__field-label" text="Seed"/>
+        <ui:VisualElement class="main-menu__row">
+          <ui:IntegerField name="newgame-seed" class="main-menu__intfield"/>
+          <ui:Button name="btn-newgame-reroll" class="main-menu__btn" text="Reroll"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="main-menu__row">
+          <ui:Button name="btn-newgame-submit" class="main-menu__btn main-menu__btn--primary" text="Start"/>
+          <ui:Button name="btn-newgame-cancel" class="main-menu__btn" text="Cancel"/>
+        </ui:VisualElement>
+      </ui:VisualElement>
+    </ui:VisualElement>
+
     <!-- Settings sub-view: cream card overlay with SFX slider -->
     <ui:VisualElement name="settings-view" class="main-menu__view main-menu__view--sub" style="display: none;">
       <ui:VisualElement class="main-menu__card">
