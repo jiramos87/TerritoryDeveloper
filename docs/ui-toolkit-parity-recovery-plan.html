@@ -1835,8 +1835,51 @@ eral hex (H1) in plan-scope .uss.</li>
 </tbody>
 </table>
 
-<h4>15.4.3 · Next steps — paused for discussion</h4>
-<p>Javier signalled the recovery is done at the iter-43 baseline and asked to discuss what comes next before extending the plan. HTML plan intentionally left open.</p>
+<h4>15.4.3 · Next steps — Path A locked, Path B punted to /design-explore</h4>
+<p>Post-acceptance, Javier asked for a reverse-capture pass to bring iter-43 visuals into DB rows so <code>unity:bake-ui</code> round-trips. Pre-flight audit + 3-path decision matrix below; this plan stays open as historical record while a new master plan owns Path B.</p>
+
+<h5>15.4.3.1 · Pre-flight audit (5 reality checks)</h5>
+<ol>
+  <li><code>npm run unity:bake-ui</code> dispatches <code>bake_ui_from_ir</code> → <code>UiBakeHandler.Bake</code> → <b>prefabs</b> at <code>Assets/UI/Prefabs/Generated/</code> (legacy uGUI DEC-A24 path). It does NOT produce UXML/USS at <code>Assets/UI/Generated/</code>.</li>
+  <li><code>UxmlBakeHandler</code> + <code>UxmlEmissionService</code> (DEC-A28 sidecar) exist but are not wired into <code>unity:bake-ui</code>. The emitter is a 22-line shell stub — <code>BuildUxml</code> emits only outer <code>&lt;ui:VisualElement name="{slug}" class="{slug}"/&gt;</code> (no children); <code>BuildUss</code> emits only outer <code>.{slug} { bg + color + padding }</code> (no per-child rules).</li>
+  <li>DB has 13 published panels with <code>panel_child</code> rows describing the legacy uGUI prefab structure. Example: hud-bar DB has 14 children (play-pause-button / speed-cycle-button / new-game-button / city-name-label / sim-date-readout / population-readout / zoom-in/out / budget-button / save-button / load-button / stats-button / auto-button / map-button) — different layout than iter-43 disk UXML (pause / btn-speed1/2/3 / hud-city-name / hud-pop / hud-money / hud-zoom-in/out / hud-stats / hud-auto / hud-map / hud-budget).</li>
+  <li>Hosts (HudBarHost, BudgetPanelHost, MapPanelHost, etc.) <code>Q&lt;Button&gt;("hud-pause")</code> style — bound to iter-43 disk UXML names, NOT DB slugs.</li>
+  <li>Runtime-only iter-43 surfaces (<code>map-panel</code> runtime VE iter-39, <code>hover-info</code> card iter-28) have no UXML/USS files at all — pure C# programmatic VE construction in Hosts.</li>
+</ol>
+
+<h5>15.4.3.2 · 3-path decision matrix</h5>
+<table>
+<thead><tr><th>Path</th><th>Cost</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td><b>A — Lock + document only</b></td><td>days</td><td>DB stays prefab-canonical; UI Toolkit world stays hand-authored; parity deferred behind emitter tickets.</td></tr>
+<tr><td><b>B — Rewrite DB to mirror iter-43</b></td><td>weeks</td><td>DB becomes iter-43-canonical for cutover slugs; prefab path retired per slug.</td></tr>
+<tr><td><b>C — Two-tree DB</b></td><td>medium</td><td><span class="pill warn">rejected</span> at DEC-A28 Q2 (schema churn cost).</td></tr>
+</tbody>
+</table>
+
+<h5>15.4.3.3 · Path A — locked at this checkpoint</h5>
+<ul>
+  <li>Pixel goldens committed under <code>tools/visual-baseline/golden/</code>: <code>cityscene-hud-baseline.png</code>, <code>cityscene-stats-panel-open.png</code>, <code>cityscene-budget-panel-open.png</code>, <code>cityscene-pause-menu-open.png</code>, <code>cityscene-subtype-picker-residential.png</code>, <code>mainmenu-newgame-form.png</code>. Surfaces not yet captured (glossary / info / building-info / alerts / settings-view / save-load-view / notification-toast) deferred to Path B initial-pass; iter-43 visuals preserved in <code>docs/ui-parity-recovery/iter-43-checkpoint/</code> as supplementary proof.</li>
+  <li>TECH backlog tickets filed (one per emitter capability gap):
+    <ul>
+      <li><b>TECH-34678</b> — UxmlEmissionService walk panel_child tree → emit nested VisualElements.</li>
+      <li><b>TECH-34679</b> — UxmlEmissionService emit per-child USS rules from params_json + token resolution.</li>
+      <li><b>TECH-34680</b> — UxmlEmissionService emit hover/active/focused state classes + pseudo-class rules.</li>
+      <li><b>TECH-34681</b> — DB-canonical TSS theme emitter — replace hand-authored cream.tss / dark.tss.</li>
+      <li><b>TECH-34682</b> — unity:bake-ui dispatcher invokes UxmlBakeHandler alongside UiBakeHandler.</li>
+      <li><b>TECH-34683</b> — DB schema for programmatic / runtime-spawned VE surfaces.</li>
+      <li><b>TECH-34684</b> — DB schema rewrite — panel_child rows match iter-43 UI Toolkit structure per slug.</li>
+      <li><b>TECH-34685</b> — Host Q-lookup rewrite per cutover slug — DB-emitted UXML names match Host bindings.</li>
+      <li><b>TECH-34686</b> — ui_def_drift_scan extends to triple-output drift (UXML + USS + TSS) vs DB.</li>
+    </ul>
+  </li>
+</ul>
+
+<h5>15.4.3.4 · Path B — punted to /design-explore</h5>
+<p>Exploration seed authored at <code>docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md</code>. Next session: run <code>/design-explore docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md</code> to author the Path B master plan covering full emitter parity + DB schema migration + Host rewrites + strangler retirement of DEC-A24 prefab path per cutover slug.</p>
+
+<h5>15.4.3.5 · Status</h5>
+<p>Recovery plan stays open as historical authoring record. New Path B master plan (TBD) owns DB-canonical pipeline work going forward. iter-43 visual baseline is the contract — any Path B emitter output that diverges from the locked goldens is a regression.</p>
 
 <!-- =========================================================== -->
 <h4>15.3.3 · Deferred from §17.1 spec</h4>
