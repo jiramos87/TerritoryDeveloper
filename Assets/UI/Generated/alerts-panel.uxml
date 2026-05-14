@@ -10,7 +10,7 @@
   <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="alerts-panel.uss"/>
-  <ui:VisualElement name="alerts-panel" class="alerts-panel">
+  <ui:VisualElement name="alerts-panel" class="alerts-panel" style="display: none;">
     <ui:VisualElement name="header" class="alerts-panel__header">
       <ui:Label name="title" class="alerts-panel__title" binding-path="Title"/>
       <ui:Label name="count-badge" class="alerts-panel__count-badge" binding-path="CountLabel"/>

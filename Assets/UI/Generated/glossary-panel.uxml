@@ -10,7 +10,7 @@
   <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="glossary-panel.uss"/>
-  <ui:VisualElement name="glossary-panel" class="glossary-panel">
+  <ui:VisualElement name="glossary-panel" class="glossary-panel" style="display: none;">
     <ui:VisualElement name="header" class="glossary-panel__header">
       <ui:Label name="title" class="glossary-panel__title" text="Glossary" binding-path="Title"/>
       <ui:Button name="btn-close" class="glossary-panel__close-btn" text="✕" binding-path="CloseCommand"/>

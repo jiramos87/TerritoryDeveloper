@@ -10,7 +10,7 @@
   <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="building-info.uss"/>
-  <ui:VisualElement name="building-info" class="building-info">
+  <ui:VisualElement name="building-info" class="building-info" style="display: none;">
     <ui:VisualElement name="header" class="building-info__header">
       <ui:Label name="title" class="building-info__title" binding-path="BuildingName"/>
       <ui:Button name="btn-close" class="building-info__close-btn" text="✕" binding-path="CloseCommand"/>

@@ -1,5 +1,5 @@
 /* Panel: hud-bar | kind: hud | theme: cream */
-/* Iter-5 — ScaleMode=1 (Match W/H), reference 1920×1080. Goal A scaled. */
+/* Iter-6 — ScaleMode=2 literal px. Sizes target goal A proportions on 1080p. */
 
 .hud-bar {
     position: absolute;
@@ -12,9 +12,9 @@
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 8px;
-    padding: 4px 12px;
-    height: 80px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    height: 72px;
     color: #3a2f1c;
 }
 
@@ -44,7 +44,7 @@
 
 .hud-bar__city-name {
     color: #3a2f1c;
-    font-size: 20px;
+    font-size: 18px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
@@ -56,36 +56,36 @@
 
 .hud-bar__stat {
     color: #3a2f1c;
-    font-size: 14px;
-    margin: 0 8px;
+    font-size: 13px;
+    margin: 0 6px;
 }
 
 .hud-bar__surplus {
     color: #e58c4a;
-    font-size: 13px;
+    font-size: 12px;
     margin-top: 2px;
 }
 
 .hud-bar__money-tall {
     color: #3a2f1c;
-    font-size: 16px;
+    font-size: 14px;
     -unity-font-style: bold;
     margin: 0 6px;
 }
 
 .hud-mini-map {
-    width: 56px;
-    height: 56px;
-    margin: 0 8px;
+    width: 52px;
+    height: 52px;
+    margin: 0 6px;
     background-color: #2a2d33;
     border-color: #b89b5e;
     border-width: 1px;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .icon-btn {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     background-color: transparent;
     border-color: #b89b5e;
     border-width: 0;
@@ -109,13 +109,13 @@
     background-color: #ede4ce;
     border-color: #b89b5e;
     border-width: 1px;
-    border-radius: 4px;
+    border-radius: 3px;
     color: #3a2f1c;
     padding: 4px 10px;
-    margin: 2px 4px;
-    font-size: 13px;
+    margin: 2px 3px;
+    font-size: 12px;
     -unity-font-style: bold;
-    height: 30px;
+    height: 26px;
 }
 .text-btn:hover { background-color: #f9efd2; }
 .text-btn--active { border-color: #5b7fa8; border-width: 2px; }

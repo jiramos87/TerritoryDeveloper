@@ -10,7 +10,7 @@
   <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="stats-panel.uss"/>
-  <ui:VisualElement name="stats-panel" class="stats-panel">
+  <ui:VisualElement name="stats-panel" class="stats-panel" style="display: none;">
     <ui:VisualElement name="header" class="stats-panel__header">
       <ui:Label name="title" class="stats-panel__title" text="City Stats" binding-path="Title"/>
       <ui:Button name="btn-close" class="stats-panel__close-btn" text="✕" binding-path="CloseCommand"/>

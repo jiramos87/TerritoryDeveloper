@@ -10,7 +10,7 @@
   <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="budget-panel.uss"/>
-  <ui:VisualElement name="budget-panel" class="budget-panel">
+  <ui:VisualElement name="budget-panel" class="budget-panel" style="display: none;">
     <ui:VisualElement name="header" class="budget-panel__header">
       <ui:Label name="title" class="budget-panel__title" text="City Budget" binding-path="Title"/>
       <ui:Label name="treasury" class="budget-panel__treasury" text="$0" binding-path="Treasury"/>

@@ -162,9 +162,17 @@ namespace Territory.UI.Modals
 
             _openModals.Add(modalSlug);
 
-            // Toggle GameObject visibility when registered.
+            // Toggle GameObject visibility when registered (legacy uGUI prefab path).
             if (_panelRoots.TryGetValue(modalSlug, out var root) && root != null)
                 root.SetActive(true);
+
+            // Iter-6: also toggle migrated UI Toolkit panel display via inner element.
+            if (_migratedPanels.TryGetValue(modalSlug, out var velement) && velement != null)
+            {
+                velement.style.display = DisplayStyle.Flex;
+                var inner = velement.Q<VisualElement>(modalSlug);
+                if (inner != null) inner.style.display = DisplayStyle.Flex;
+            }
 
             if (_timeManager != null)
                 _timeManager.SetModalPauseOwner(modalSlug);
@@ -194,6 +202,12 @@ namespace Territory.UI.Modals
             _openModals.Remove(modalSlug);
             if (_panelRoots.TryGetValue(modalSlug, out var root) && root != null)
                 root.SetActive(false);
+            // Iter-6: also hide migrated UI Toolkit panel inner element.
+            if (_migratedPanels.TryGetValue(modalSlug, out var velement) && velement != null)
+            {
+                var inner = velement.Q<VisualElement>(modalSlug);
+                if (inner != null) inner.style.display = DisplayStyle.None;
+            }
             if (_timeManager != null)
                 _timeManager.ClearModalPauseOwner(modalSlug);
         }

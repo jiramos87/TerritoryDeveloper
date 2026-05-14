@@ -10,7 +10,7 @@
   <ui:Template name="pause-menu" src="pause-menu.uxml"/>
   <Style src="project://database/Assets/UI/Themes/dark.tss"/>
   <Style src="pause-menu.uss"/>
-  <ui:VisualElement name="pause-menu" class="pause-menu">
+  <ui:VisualElement name="pause-menu" class="pause-menu" style="display: none;">
     <ui:Label name="title" class="pause-menu__title" text="PAUSED" binding-path="TitleText"/>
     <ui:VisualElement name="buttons" class="pause-menu__buttons">
       <ui:Button name="btn-resume" class="pause-menu__btn pause-menu__btn--primary" text="Resume"
