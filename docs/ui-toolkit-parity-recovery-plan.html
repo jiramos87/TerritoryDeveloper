@@ -72,6 +72,27 @@
   .toc li{margin:3px 0}
   hr{border:0;border-top:1px solid var(--rule);margin:32px 0}
   .small{font-size:12px;color:var(--muted)}
+
+/* Copy-button wrapper for handoff <pre> blocks. */
+.copy-wrap { position: relative; margin: 8px 0 16px; }
+.copy-wrap > pre { margin: 0; }
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #2a2d33;
+  color: #cdd6f4;
+  border: 1px solid #4a4f5a;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.1s, background 0.1s;
+}
+.copy-btn:hover { background: #3a3f4a; opacity: 1; }
+.copy-btn.copied { background: #2d5a3a; border-color: #4a7a55; opacity: 1; }
 </style>
 </head>
 <body>
@@ -1826,7 +1847,7 @@ eral hex (H1) in plan-scope .uss.</li>
 <h2 id="handoff-effort-1">19 · Handoff prompt — Effort 1 (fresh agent)</h2>
 <p class="lead">Paste the block below verbatim into a fresh Claude Code main session in <code>/Users/javier/bacayo-studio/territory-developer</code>. The agent has everything it needs to continue without re-reading the iter-2..9 history.</p>
 
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — UI Toolkit parity recovery, Effort 1 (post iter-9)
 
 You are continuing the recovery covered by
@@ -1940,7 +1961,7 @@ commit `3803d421` / `bd75b781` (iter-9 visual checkpoint). Effort 1 begins now.
 When the user accepts Effort 1 visual + functional checkpoint, drop fresh
 PNGs into `docs/ui-parity-recovery/effort1-checkpoint/`, append §15.3 to the
 plan HTML with the new "after" reference, and surface Effort 2 handoff.
-</pre>
+</pre></div>
 
 <p class="small">After Effort 1 closes, build a §20 handoff for Effort 2 (blip SFX) and post-Effort-2 a §21 handoff for mini-map / auto-mode / full-game (per §18 deferred backlog).</p>
 <!-- AGENT-HANDOFF-PROMPT-END -->
@@ -1986,7 +2007,7 @@ plan HTML with the new "after" reference, and surface Effort 2 handoff.
 </ul>
 
 <h3>20.4 · Handoff prompt — Effort 3</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — UI Toolkit parity recovery, Effort 3 (post iter-25)
 
 Continuing the recovery covered by docs/ui-toolkit-parity-recovery-plan.html.
@@ -2017,7 +2038,7 @@ See checklist in plan §20.3 — save / road-placement / insufficient-funds / co
   - Single feat commit + docs commit per iter. Append row to plan §15 table with
     {ITER-N_SHA} token, then sha sub on second commit.
   - Stop signal: user accepts visual + functional.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-4">21 · Effort 4 — Hover-info card</h2>
@@ -2050,13 +2071,13 @@ See checklist in plan §20.3 — save / road-placement / insufficient-funds / co
 </ul>
 
 <h3>21.4 · Handoff prompt — Effort 4</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 4 — Hover-info card
 Read §15.3 + §21. Same hard rules + workflow as Effort 3 handoff.
 Scope: HoverInfoHost reading gridManager.mouseGridPosition every frame; show
 cell type + zone state + height; hide on off-grid + over-UI. Compile gate,
 two commits per iter. Stop when Javier accepts.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-5">22 · Effort 5 — Cell click inspect panel</h2>
@@ -2089,13 +2110,13 @@ two commits per iter. Stop when Javier accepts.
 </ul>
 
 <h3>22.4 · Handoff prompt — Effort 5</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 5 — Cell click inspect panel
 Read §15.3 + §22. Same hard rules + workflow as prior efforts.
 Scope: CellInspectHost listens to GridManager cell-click; modalCoordinator.Show
 when occupied; reads CityCell fields. Demolish reuses bulldoze path. Esc/X/click-outside
 close. Compile gate, two commits per iter. Stop when Javier accepts.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-6">23 · Effort 6 — Mini-map</h2>
@@ -2130,13 +2151,13 @@ close. Compile gate, two commits per iter. Stop when Javier accepts.
 </ul>
 
 <h3>23.4 · Handoff prompt — Effort 6</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 6 — Mini-map (RT + HUD preview + panel)
 Read §15.3 + §23. Same hard rules + workflow.
 Scope: MiniMapCamera prefab in CityScene → RT → HUD mini-map preview re-enable +
 MapPanelHost modal with layer toggles. Re-use MiniMapController existing API.
 Compile gate, two commits per iter. Stop when Javier accepts.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-7">24 · Effort 7 — RCI demand bars on Stats Panel</h2>
@@ -2167,13 +2188,13 @@ Compile gate, two commits per iter. Stop when Javier accepts.
 </ul>
 
 <h3>24.4 · Handoff prompt — Effort 7</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 7 — RCI demand bars on Stats Panel
 Read §15.3 + §24. Same hard rules + workflow.
 Scope: extend stats-panel Population view with 3 vertical bars + numeric labels;
 data from DemandManager.GetDemandLevel. Refresh in StatsPanelHost.RenderPopulation
 on existing 0.5s cadence. Compile gate, two commits per iter. Stop when Javier accepts.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-8">25 · Effort 8 — Budget panel (services + RCI tax + auto-growth sliders)</h2>
@@ -2207,14 +2228,14 @@ on existing 0.5s cadence. Compile gate, two commits per iter. Stop when Javier a
 </ul>
 
 <h3>25.4 · Handoff prompt — Effort 8</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 8 — Budget panel
 Read §15.3 + §25. Same hard rules + workflow.
 Scope: budget-panel UXML + USS + BudgetPanelHost. Three sections (services / RCI taxes
 / auto-growth sliders). HUD BUDGET button entry. Slider callbacks write to EconomyManager
 + BudgetAllocationService + GrowthBudgetManager. Compile gate, two commits per iter.
 Stop when Javier accepts.
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-9">26 · Effort 9 — AUTO mode full wiring</h2>
@@ -2250,7 +2271,7 @@ Stop when Javier accepts.
 </ul>
 
 <h3>26.4 · Handoff prompt — Effort 9</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 9 — AUTO mode full wiring
 Read §15.3 + §26. Same hard rules + workflow.
 Scope: audit SimulationManager.ProcessSimulationTick + AutoRoadBuilder.ProcessTick +
@@ -2258,7 +2279,7 @@ AutoZoningManager.ProcessTick + ConstructionStageController.ProcessTick. Verify 
 placement (no preview) using same path as manual tools. Confirm budget throttle.
 AUTO toggle → toast via Effort 3. Compile gate, two commits per iter.
 Stop when Javier accepts. Depends on Effort 3 (toast) + Effort 8 (budget sliders).
-</pre>
+</pre></div>
 
 <!-- =========================================================== -->
 <h2 id="effort-10">27 · Effort 10 — NewGameForm UI Toolkit wiring</h2>
@@ -2293,15 +2314,45 @@ Stop when Javier accepts. Depends on Effort 3 (toast) + Effort 8 (budget sliders
 </ul>
 
 <h3>27.4 · Handoff prompt — Effort 10</h3>
-<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+<div class="copy-wrap"><button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button><pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
 # Handoff — Effort 10 — NewGameForm UI Toolkit wiring
 Read §15.3 + §27. Same hard rules + workflow.
 Scope: extend main-menu.uxml with newgame-view sub-view (mirror iter-25 Load/Settings).
 TextField cityName + dropdowns + seed + Reroll + Submit + Cancel. MainMenuHost.OnNewGame
 switches view; Submit calls MainMenuController.StartNewGame. Compile gate, two commits
 per iter. Stop when Javier accepts.
-</pre>
+</pre></div>
 
 
+<script>
+function copyPre(btn) {
+  var wrap = btn.parentElement;
+  var pre = wrap.querySelector('pre');
+  if (!pre) return;
+  var txt = pre.innerText;
+  function done() {
+    var orig = btn.textContent;
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt, done); });
+  } else {
+    fallbackCopy(txt, done);
+  }
+}
+function fallbackCopy(txt, cb) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  cb();
+}
+</script>
 </body>
 </html>
