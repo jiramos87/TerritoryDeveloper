@@ -1,8 +1,10 @@
 using Territory.Audio;
+using Territory.Core;
 using Territory.Economy;
 using Territory.Simulation;
 using Territory.UI.Modals;
 using Territory.UI.ViewModels;
+using Territory.Zones;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,6 +25,8 @@ namespace Territory.UI.Hosts
         ModalCoordinator _coordinator;
         CityStats _cityStats;
         StatsHistoryRecorder _historyRecorder;
+        DemandManager _demandManager;
+        VisualElement _demandBars;
 
         Button _btnClose, _tabPop, _tabServices, _tabEcon;
         VisualElement _viewPop, _viewServices, _viewEcon;
@@ -78,6 +82,7 @@ namespace Territory.UI.Hosts
 
             _cityStats = FindObjectOfType<CityStats>();
             _historyRecorder = FindObjectOfType<StatsHistoryRecorder>();
+            _demandManager = FindObjectOfType<DemandManager>();
             OnTabSelected(StatsPanelVM.StatsTab.Population);
         }
 
@@ -166,6 +171,7 @@ namespace Territory.UI.Hosts
         void RenderPopulation()
         {
             RenderLineChart(_chartPop, "population", colorEconomy: false);
+            RenderDemandBars();
             ClearRows(_rowsPop);
             if (_cityStats == null) return;
             AddRow(_rowsPop, "City",       _cityStats.cityName ?? "—");
@@ -179,6 +185,88 @@ namespace Territory.UI.Hosts
                 $"{_cityStats.residentialBuildingCount} / {_cityStats.commercialBuildingCount} / {_cityStats.industrialBuildingCount}");
             AddRow(_rowsPop, "Forest cover", $"{_cityStats.forestCoveragePercentage:F1}%");
         }
+
+        // Effort 7 — RCI demand strip rendered into the population view above the rows.
+        void RenderDemandBars()
+        {
+            if (_chartPop == null) return;
+            if (_demandManager == null) _demandManager = FindObjectOfType<DemandManager>();
+            if (_demandBars == null)
+            {
+                _demandBars = new VisualElement { name = "demand-bars" };
+                _demandBars.style.flexDirection = FlexDirection.Row;
+                _demandBars.style.justifyContent = Justify.SpaceAround;
+                _demandBars.style.marginTop = 8f;
+                _demandBars.style.marginBottom = 8f;
+                _demandBars.style.height = 120f;
+                _chartPop.parent?.Insert(_chartPop.parent.IndexOf(_chartPop) + 1, _demandBars);
+            }
+            _demandBars.Clear();
+            float r = _demandManager != null ? _demandManager.GetDemandLevel(Zone.ZoneType.ResidentialLightZoning) : 0f;
+            float c = _demandManager != null ? _demandManager.GetDemandLevel(Zone.ZoneType.CommercialLightZoning) : 0f;
+            float i = _demandManager != null ? _demandManager.GetDemandLevel(Zone.ZoneType.IndustrialLightZoning) : 0f;
+            _demandBars.Add(BuildDemandBar("R", r, "#6aaa64", "#a35a4a"));
+            _demandBars.Add(BuildDemandBar("C", c, "#5b7fa8", "#a35a4a"));
+            _demandBars.Add(BuildDemandBar("I", i, "#d9a14a", "#a35a4a"));
+        }
+
+        VisualElement BuildDemandBar(string label, float level, string posHex, string negHex)
+        {
+            var col = new VisualElement { name = $"demand-bar-{label}" };
+            col.style.width = 56f;
+            col.style.flexDirection = FlexDirection.Column;
+            col.style.alignItems = Align.Center;
+
+            var center = new VisualElement();
+            center.style.width = 28f;
+            center.style.height = 96f;
+            center.style.backgroundColor = Hex("#ede4ce");
+            center.style.borderTopColor = Hex("#b89b5e"); center.style.borderBottomColor = Hex("#b89b5e");
+            center.style.borderLeftColor = Hex("#b89b5e"); center.style.borderRightColor = Hex("#b89b5e");
+            center.style.borderTopWidth = 1f; center.style.borderBottomWidth = 1f;
+            center.style.borderLeftWidth = 1f; center.style.borderRightWidth = 1f;
+            center.style.flexDirection = FlexDirection.Column;
+            center.style.justifyContent = Justify.Center;
+
+            // 50% center line
+            var fill = new VisualElement();
+            float clamped = Mathf.Clamp(level, -100f, 100f);
+            float halfHeight = 48f; // 96 / 2
+            float fillPx = Mathf.Abs(clamped) / 100f * halfHeight;
+            fill.style.height = fillPx;
+            fill.style.width = 22f;
+            fill.style.backgroundColor = Hex(clamped >= 0f ? posHex : negHex);
+            fill.style.alignSelf = Align.Center;
+            if (clamped >= 0f)
+            {
+                center.style.justifyContent = Justify.FlexEnd;
+                var spacer = new VisualElement(); spacer.style.height = halfHeight; center.Add(spacer);
+                center.Add(fill);
+            }
+            else
+            {
+                center.style.justifyContent = Justify.FlexStart;
+                var spacer = new VisualElement(); spacer.style.height = halfHeight; center.Add(spacer);
+                center.Insert(0, fill);
+            }
+
+            var labelLine = new Label(label);
+            labelLine.style.color = Hex("#3a2f1c");
+            labelLine.style.fontSize = 12f;
+            labelLine.style.marginTop = 4f;
+            labelLine.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+            var valueLine = new Label($"{Mathf.RoundToInt(clamped)}");
+            valueLine.style.color = Hex("#6b5a3d");
+            valueLine.style.fontSize = 11f;
+
+            col.Add(center);
+            col.Add(labelLine);
+            col.Add(valueLine);
+            return col;
+        }
+
+        static Color Hex(string h) { ColorUtility.TryParseHtmlString(h, out var c); return c; }
 
         // ── Services tab ──────────────────────────────────────────────────────
         void RenderServices()
