@@ -1475,6 +1475,12 @@ Z3 actions taken, 6 baselines captured.`
   <td>Effort 1 §16.3 — stats-panel real content per tab. UXML 3 sibling views (<code>population-view</code> / <code>services-view</code> / <code>economy-view</code>) swap on tab click. <b>Population</b> = 12mo line chart of <code>population</code> series + 2-col rows (city / date / pop / happiness / pollution / R-C-I zones+buildings / forest cover). <b>Services</b> = 10 horizontal saturation bars (Power · Water · Waste · Police · Fire · Health · Education · Parks · Transit · Roads) from <code>StatsHistoryRecorder.GetCurrentSnapshot</code> + supply/demand rows. <b>Economy</b> = 12mo line chart of <code>economy</code> series + money / zones / buildings / communes / projected income. Host <code>Update()</code> refreshes active tab every 0.5s while panel visible.</td>
   <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor visual + functional check.</td>
 </tr>
+
+<tr>
+  <td><b>iter-13</b><br>commit <code>94654a59</code></td>
+  <td>Effort 1 §16.4 — HUD time-control wiring. Pause button now toggles speed-index 0 ↔ previously-active speed (default resume = 1.0×); second click resumes where the player left off. Active-state border (<code>icon-btn--active</code>) mirrors <code>TimeManager.CurrentTimeSpeedIndex</code> on pause + speed1/2/3 buttons via <code>HudBarHost.PushSnapshot</code>. Speed1/2/3 → <code>SetTimeSpeedIndex(1/2/3)</code> hooks already in place from iter-2, verified intact.</td>
+  <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor functional check (tick rate change + pause/resume).</td>
+</tr>
 eral hex (H1) in plan-scope .uss.</li>
   <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
   <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
