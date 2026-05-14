@@ -482,6 +482,8 @@ The `.md` exists so legacy validators (`validate-design-explore-yaml.mjs`, `vali
 
 **Persist failure mode:** Missing or empty `### Core Prototype` OR missing/empty `### Iteration Roadmap` → skill aborts persist with structured error `design_explore_persist_contract_violation` naming the missing/empty subsection. No partial write to `{DOC_PATH}`.
 
+**Optional layout fields (HTML render only).** When the exploration carries visual goals, cross-stage patterns, per-stage checkpoint screenshots, per-stage iteration logs, or per-stage handoff scope summaries, emit them as optional frontmatter keys: `visual_goals[]`, `patterns_observed[]`, `stages[].checkpoint_screenshots[]`, `stages[].iteration_log[]`, `stages[].scope_summary`, and `handoff_template` (top-level override). Field shapes documented in [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md) §Optional layout fields. No validator gates — renderer treats missing fields as empty arrays; HTML sections hide when their backing array is empty. Author hand-fills `visual_goals` at Phase 3 when the exploration carries a UI target; `iteration_log` + `checkpoint_screenshots` populate organically post-`ship-cycle` (later automated via DB sidecar).
+
 **Canonical reference fixture:** [`tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json`](../../../tools/recipes/__fixtures__/design-explore-persist-contract-v2.fixture.json) — authoring shape canonical for §Core Prototype 5-field block + §Iteration Roadmap 3-column table.
 
 Sections to write (in order):

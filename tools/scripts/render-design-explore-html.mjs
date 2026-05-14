@@ -16,6 +16,10 @@
  *   {{REFERENCES_JSON}}   — JSON-stringified `references[]` if present, else "[]"
  *   {{PANELS_JSON}}       — JSON-stringified `panels[]` if present, else "[]"
  *   {{CUSTOM_BLOCKS}}     — inline HTML chunks from frontmatter `custom_blocks_html:` key (bespoke per-exploration widgets)
+ *   {{VISUAL_GOALS_JSON}} — JSON-stringified `visual_goals[]` from frontmatter (drives the visual-goals card)
+ *   {{PATTERNS_JSON}}     — JSON-stringified `patterns_observed[]` from frontmatter (drives the patterns-observed callout)
+ *   {{HANDOFF_TEMPLATE_JSON}} — JSON-stringified handoff prompt template body (per-stage paste-ready block);
+ *                              defaults to the canonical template when frontmatter omits `handoff_template:`
  *
  * Usage:
  *   node tools/scripts/render-design-explore-html.mjs ui-toolkit-migration
@@ -75,6 +79,8 @@ function buildMetaChips(fm) {
   if (fm.audience) chips.push({ label: "audience", value: String(fm.audience) });
   if (fm.created_at) chips.push({ label: "created", value: String(fm.created_at) });
   if (Array.isArray(fm.stages)) chips.push({ label: "stages", value: String(fm.stages.length) });
+  if (Array.isArray(fm.visual_goals) && fm.visual_goals.length > 0) chips.push({ label: "visual goals", value: String(fm.visual_goals.length) });
+  if (Array.isArray(fm.patterns_observed) && fm.patterns_observed.length > 0) chips.push({ label: "patterns", value: String(fm.patterns_observed.length) });
   return chips;
 }
 
@@ -130,8 +136,60 @@ function render({ mdPath, outPath }) {
   html = fillSlot(html, "REFERENCES_JSON", JSON.stringify(fm.references || []));
   html = fillSlot(html, "PANELS_JSON", JSON.stringify(fm.panels || []));
   html = fillSlot(html, "CUSTOM_BLOCKS", fm.custom_blocks_html || "");
+  html = fillSlot(html, "VISUAL_GOALS_JSON", JSON.stringify(fm.visual_goals || []));
+  html = fillSlot(html, "PATTERNS_JSON", JSON.stringify(fm.patterns_observed || []));
+  html = fillSlot(html, "HANDOFF_TEMPLATE_JSON", JSON.stringify(resolveHandoffTemplate(fm)));
   writeFileSync(outPath, html);
   return resolve(outPath);
+}
+
+// Canonical handoff template — composed at render time, per-stage scope_summary slot injected by JS.
+// Author can override via frontmatter `handoff_template:` (string with {{STAGE_ID}} / {{STAGE_TITLE}} /
+// {{SCOPE_SUMMARY}} / {{SLUG}} placeholders).
+const DEFAULT_HANDOFF_TEMPLATE = `# Handoff — Stage {{STAGE_ID}} of {{SLUG}}
+
+You are picking up Stage {{STAGE_ID}} — {{STAGE_TITLE}} — of the {{SLUG}}
+master plan. Read the stage card in this HTML doc end-to-end (scope, tasks,
+red-stage proof, edge cases, failure modes, checkpoint screenshots,
+iteration log) before touching any file.
+
+## Read first (in order)
+  1. The §Latest state header at the top of this HTML doc.
+  2. The §Patterns observed callout — cross-stage lessons; do not repeat them.
+  3. This stage's card (Stage {{STAGE_ID}}) — full body, all tasks.
+  4. \`MEMORY.md\` at repo root + the user's personal MEMORY index — Javier's
+     preferences + project-specific rules + accumulated feedback.
+  5. The DB-backed master plan state: run \`master_plan_state {{SLUG}}\` MCP
+     to confirm stage status and unblock-on-deps before starting.
+
+## Stage scope (this run)
+{{SCOPE_SUMMARY}}
+
+## Hard rules
+  - **Main worktree only.** Single-developer single-stream project.
+  - No \`git commit --amend\`, no \`git push\`, no \`--no-verify\`.
+  - Close Unity Editor before \`npm run unity:compile-check\`.
+  - Simple product language in chat replies (caveman-tech in docs + code only).
+  - One commit per task on the active feature branch. Use Conventional Commits.
+
+## Workflow per task
+  Read task card → implement minimal diff → \`npm run unity:compile-check\`
+  → commit → append a row to this stage's iteration log (frontmatter
+  \`stages[].iteration_log[]\`) → re-render the HTML
+  (\`npm run design-explore:render-html {{SLUG}}\`) → await user verdict.
+
+## Completion signal
+When the user accepts this stage's visual + functional checkpoint, attach
+checkpoint screenshots to \`stages[].checkpoint_screenshots[]\`, set the
+stage \`status: done\`, re-render the HTML, and surface the next-stage
+handoff link from §Latest state.
+`;
+
+function resolveHandoffTemplate(fm) {
+  if (typeof fm.handoff_template === "string" && fm.handoff_template.length > 0) {
+    return fm.handoff_template;
+  }
+  return DEFAULT_HANDOFF_TEMPLATE;
 }
 
 function escapeHtml(s) {

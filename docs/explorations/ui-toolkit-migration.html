@@ -215,9 +215,247 @@
     aside.toc { position: relative; height: auto; max-height: 280px; }
     main { padding: 20px; }
   }
+
+  /* ─── Evolved features (top-bar / visual goals / patterns / per-stage checkpoint+iter+handoff / latest state) ─── */
+
+  /* Top-bar sticky nav — sits above the .layout grid */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 20, 25, 0.96);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--fg-dim);
+    backdrop-filter: blur(6px);
+  }
+  .topnav b { color: var(--warn); margin-right: 6px; }
+  .topnav a {
+    color: var(--fg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+  }
+  .topnav a:hover { background: var(--bg-card); border-color: var(--border); text-decoration: none; }
+  .topnav a.primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+  }
+  .topnav a.primary:hover { background: var(--accent); color: var(--bg); opacity: 0.9; }
+
+  /* Latest-state header card */
+  .latest-state {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 0 0 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: center;
+  }
+  .latest-state .ls-title { font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .latest-state .ls-body { font-size: 14px; color: var(--fg); }
+  .latest-state .ls-body a { font-family: var(--mono); font-size: 12px; }
+  .latest-state .ls-verdict { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 999px; }
+  .latest-state .ls-verdict.pass { background: rgba(126,231,135,0.18); color: var(--accent-2); }
+  .latest-state .ls-verdict.partial { background: rgba(240,180,41,0.18); color: var(--warn); }
+  .latest-state .ls-verdict.fail { background: rgba(214,81,81,0.18); color: var(--danger); }
+  .latest-state .ls-verdict.pending { background: var(--bg-card); color: var(--fg-dim); }
+
+  /* Visual goals card */
+  .visual-goals { margin: 0 0 24px; }
+  .visual-goals h2 { margin-top: 0; }
+  .visual-goals .vg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .visual-goals .vg-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+  }
+  .visual-goals .vg-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    background: #000;
+  }
+  .visual-goals .vg-cap {
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin: 8px 4px 6px;
+  }
+  .visual-goals .vg-cap strong { color: var(--fg); }
+  .visual-goals .vg-annot {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  .visual-goals .vg-annot div {
+    background: var(--bg-card);
+    padding: 5px 8px;
+    border-radius: 4px;
+    border-left: 2px solid var(--accent);
+    color: var(--fg-dim);
+  }
+  .visual-goals .vg-annot div.bad { border-left-color: var(--danger); }
+  .visual-goals .vg-annot div.warn { border-left-color: var(--warn); }
+  .visual-goals .vg-annot div.ok { border-left-color: var(--accent-2); }
+  .visual-goals .vg-annot div strong { color: var(--fg); }
+
+  /* Patterns observed callout */
+  .patterns-observed {
+    background: rgba(74,158,255,0.06);
+    border: 1px solid var(--accent);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0 24px;
+  }
+  .patterns-observed h2 { margin-top: 0; border-bottom: none; padding-bottom: 0; color: var(--accent); font-size: 18px; }
+  .patterns-observed .pat-row {
+    padding: 8px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .patterns-observed .pat-row:first-of-type { border-top: none; padding-top: 4px; }
+  .patterns-observed .pat-title { font-weight: 600; color: var(--fg); margin-bottom: 4px; font-size: 14px; }
+  .patterns-observed .pat-body { font-size: 13px; color: var(--fg-dim); line-height: 1.5; }
+
+  /* Per-stage checkpoint screenshots */
+  .checkpoint-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .checkpoint-strip .cp-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .checkpoint-strip .cp-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 3px;
+    background: #000;
+  }
+  .checkpoint-strip .cp-card .cp-cap {
+    font-size: 11px;
+    color: var(--fg-dim);
+    margin-top: 6px;
+    font-family: var(--mono);
+  }
+
+  /* Per-stage iteration log */
+  .iter-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+  .iter-log-table th, .iter-log-table td {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .iter-log-table th {
+    background: var(--bg-card);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-dim);
+  }
+  .iter-log-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+  .iter-pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .iter-pill.pass { background: rgba(126,231,135,0.18); color: var(--accent-2); }
+  .iter-pill.partial { background: rgba(240,180,41,0.18); color: var(--warn); }
+  .iter-pill.fail { background: rgba(214,81,81,0.18); color: var(--danger); }
+  .iter-pill.pending { background: var(--bg-card); color: var(--fg-dim); }
+
+  /* Per-stage handoff block (paste-ready agent prompt) */
+  .handoff-block {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .handoff-block summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 13px;
+    user-select: none;
+  }
+  .handoff-block[open] summary { border-bottom: 1px solid var(--border); }
+  .handoff-block .handoff-wrap {
+    position: relative;
+    padding: 12px;
+  }
+  .handoff-block pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-size: 11px;
+    line-height: 1.5;
+    border: none;
+    padding: 14px 16px;
+  }
+  .handoff-block .copy-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: var(--bg-card);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.1s, background 0.1s;
+  }
+  .handoff-block .copy-btn:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
+  .handoff-block .copy-btn.copied { background: rgba(126,231,135,0.18); color: var(--accent-2); border-color: var(--accent-2); }
+
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
+
+<!-- Top-bar quick-jump nav (fresh-agent entry shortcut row) -->
+<aside class="topnav">
+  <b>NAV →</b>
+  <a href="#latestState" class="primary">Latest state</a>
+  <a href="#visualGoals">Visual goals</a>
+  <a href="#patternsObserved">Patterns</a>
+  <a href="#stagesSection">Stages</a>
+  <a href="#bodyContent">Body</a>
+</aside>
+
 <div class="layout">
   <aside class="toc">
     <h2>Navigation</h2>
@@ -229,6 +467,21 @@
       <h1 id="docTitle">Ui Toolkit Migration</h1>
       <div id="metaChips" class="meta-chips"></div>
     </header>
+
+    <!-- Latest-state header card (derived from first non-done task in STAGES) -->
+    <section id="latestState" class="latest-state hidden">
+      <div>
+        <div class="ls-title">Latest state</div>
+        <div class="ls-body" id="latestStateBody"></div>
+      </div>
+      <span class="ls-verdict pending" id="latestStateVerdict">pending</span>
+    </section>
+
+    <!-- Visual goals — reference screenshots + annotation grid (frontmatter `visual_goals[]`) -->
+    <section id="visualGoals" class="visual-goals hidden">
+      <h2>Visual goals</h2>
+      <div class="vg-grid" id="visualGoalsGrid"></div>
+    </section>
 
     <details class="frontmatter-panel">
       <summary>Document Metadata (frontmatter)</summary>
@@ -1216,6 +1469,12 @@ stages:
         <div class="approach-tab-strip" id="approachTabStrip"></div>
         <div id="approachPanes"></div>
       </div>
+    </section>
+
+    <!-- Patterns observed — cross-stage lessons (frontmatter `patterns_observed[]`) -->
+    <section id="patternsObserved" class="patterns-observed hidden">
+      <h2>Patterns observed</h2>
+      <div id="patternsList"></div>
     </section>
 
     <!-- Stage roadmap (gantt) -->
@@ -3398,6 +3657,9 @@ const STAGES = [{"id":"1.0","title":"Tracer slice — pause-menu pilot + migrati
 const DECISIONS = [];
 const REFS = [];
 const PANELS = [];
+const VISUAL_GOALS = [];
+const PATTERNS = [];
+const HANDOFF_TEMPLATE = "# Handoff — Stage {{STAGE_ID}} of {{SLUG}}\n\nYou are picking up Stage {{STAGE_ID}} — {{STAGE_TITLE}} — of the {{SLUG}}\nmaster plan. Read the stage card in this HTML doc end-to-end (scope, tasks,\nred-stage proof, edge cases, failure modes, checkpoint screenshots,\niteration log) before touching any file.\n\n## Read first (in order)\n  1. The §Latest state header at the top of this HTML doc.\n  2. The §Patterns observed callout — cross-stage lessons; do not repeat them.\n  3. This stage's card (Stage {{STAGE_ID}}) — full body, all tasks.\n  4. `MEMORY.md` at repo root + the user's personal MEMORY index — Javier's\n     preferences + project-specific rules + accumulated feedback.\n  5. The DB-backed master plan state: run `master_plan_state {{SLUG}}` MCP\n     to confirm stage status and unblock-on-deps before starting.\n\n## Stage scope (this run)\n{{SCOPE_SUMMARY}}\n\n## Hard rules\n  - **Main worktree only.** Single-developer single-stream project.\n  - No `git commit --amend`, no `git push`, no `--no-verify`.\n  - Close Unity Editor before `npm run unity:compile-check`.\n  - Simple product language in chat replies (caveman-tech in docs + code only).\n  - One commit per task on the active feature branch. Use Conventional Commits.\n\n## Workflow per task\n  Read task card → implement minimal diff → `npm run unity:compile-check`\n  → commit → append a row to this stage's iteration log (frontmatter\n  `stages[].iteration_log[]`) → re-render the HTML\n  (`npm run design-explore:render-html {{SLUG}}`) → await user verdict.\n\n## Completion signal\nWhen the user accepts this stage's visual + functional checkpoint, attach\ncheckpoint screenshots to `stages[].checkpoint_screenshots[]`, set the\nstage `status: done`, re-render the HTML, and surface the next-stage\nhandoff link from §Latest state.\n";
 
 // Title + chips
 const metaChips = [{"label":"slug","value":"ui-toolkit-migration"},{"label":"target_version","value":"1"},{"label":"audience","value":"agent"},{"label":"created","value":"Mon May 11 2026 20:00:00 GMT-0400 (Chile Standard Time)"},{"label":"stages","value":"6"}];
@@ -3494,9 +3756,150 @@ STAGES.forEach(stage => {
     });
     body.appendChild(ul);
   }
+
+  // Checkpoint screenshots — frontmatter `stages[].checkpoint_screenshots[]`
+  // Shape: [{ path: "../foo.png", caption: "Pre-stage state" }, ...]
+  const checkpoints = Array.isArray(stage.checkpoint_screenshots) ? stage.checkpoint_screenshots : [];
+  if (checkpoints.length) {
+    const head = document.createElement('h4');
+    head.textContent = `Checkpoint screenshots (${checkpoints.length})`;
+    body.appendChild(head);
+    const strip = document.createElement('div');
+    strip.className = 'checkpoint-strip';
+    strip.innerHTML = checkpoints.map(c =>
+      `<div class="cp-card"><img src="${escapeHtml(c.path || '')}" alt="${escapeHtml(c.caption || '')}"/><div class="cp-cap">${escapeHtml(c.caption || '')}</div></div>`
+    ).join('');
+    body.appendChild(strip);
+  }
+
+  // Iteration log — frontmatter `stages[].iteration_log[]`
+  // Shape: [{ iter: "1", verdict: "pass|partial|fail|pending", outcome: "…", sha: "abc1234", screenshot: "path.png" }, ...]
+  const iters = Array.isArray(stage.iteration_log) ? stage.iteration_log : [];
+  if (iters.length) {
+    const head = document.createElement('h4');
+    head.textContent = `Iteration log (${iters.length})`;
+    body.appendChild(head);
+    const rows = iters.map(it => {
+      const verdict = (it.verdict || 'pending').toLowerCase();
+      const sha = it.sha ? `<code>${escapeHtml(it.sha)}</code>` : '—';
+      const shot = it.screenshot ? `<a href="${escapeHtml(it.screenshot)}" target="_blank">view</a>` : '—';
+      return `<tr><td>${escapeHtml(it.iter || '')}</td><td><span class="iter-pill ${verdict}">${verdict}</span></td><td>${escapeHtml(it.outcome || '')}</td><td>${sha}</td><td>${shot}</td></tr>`;
+    }).join('');
+    const tbl = document.createElement('table');
+    tbl.className = 'iter-log-table';
+    tbl.innerHTML = `<thead><tr><th>Iter</th><th>Verdict</th><th>Outcome</th><th>Sha</th><th>Shot</th></tr></thead><tbody>${rows}</tbody></table>`;
+    body.appendChild(tbl);
+  }
+
+  // Handoff prompt — canonical template + frontmatter `stages[].scope_summary` (per-stage scope slot)
+  if (HANDOFF_TEMPLATE) {
+    const scopeSummary = stage.scope_summary || stage.title || '';
+    const handoffBody = HANDOFF_TEMPLATE
+      .replace(/\{\{STAGE_ID\}\}/g, String(stage.id))
+      .replace(/\{\{STAGE_TITLE\}\}/g, stage.title || '')
+      .replace(/\{\{SCOPE_SUMMARY\}\}/g, scopeSummary)
+      .replace(/\{\{SLUG\}\}/g, fm.slug || 'SLUG');
+    const handoff = document.createElement('details');
+    handoff.className = 'handoff-block';
+    handoff.innerHTML = `
+      <summary>Handoff prompt — Stage ${escapeHtml(String(stage.id))} (paste-ready)</summary>
+      <div class="handoff-wrap">
+        <button type="button" class="copy-btn" data-copy-target="handoff-${escapeHtml(String(stage.id).replace(/\./g,'-'))}">Copy</button>
+        <pre id="handoff-${escapeHtml(String(stage.id).replace(/\./g,'-'))}">${escapeHtml(handoffBody)}</pre>
+      </div>
+    `;
+    body.appendChild(handoff);
+  }
+
   card.appendChild(body);
   stagesList.appendChild(card);
 });
+
+// Copy-button wire-up for handoff blocks
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-btn[data-copy-target]');
+  if (!btn) return;
+  const target = document.getElementById(btn.dataset.copyTarget);
+  if (!target) return;
+  const text = target.textContent || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  else {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+  btn.classList.add('copied');
+  const original = btn.textContent;
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => { btn.classList.remove('copied'); btn.textContent = original; }, 1500);
+});
+
+// Visual goals — frontmatter `visual_goals[]`
+// Shape: [{ path: "../shot.png", caption: "**Goal A** — HUD", annotations: [{ text: "Top bar: …", kind: "ok|warn|bad|info" }] }, ...]
+(function renderVisualGoals(){
+  if (!Array.isArray(VISUAL_GOALS) || VISUAL_GOALS.length === 0) return;
+  document.getElementById('visualGoals').classList.remove('hidden');
+  const grid = document.getElementById('visualGoalsGrid');
+  VISUAL_GOALS.forEach(g => {
+    const annot = (g.annotations || []).map(a => {
+      const kind = (a.kind || '').toLowerCase();
+      const cls = ['ok','warn','bad','info'].includes(kind) ? kind : '';
+      return `<div class="${cls}">${marked.parseInline(String(a.text || ''))}</div>`;
+    }).join('');
+    const card = document.createElement('div');
+    card.className = 'vg-card';
+    card.innerHTML = `
+      <img src="${escapeHtml(g.path || '')}" alt="${escapeHtml(g.caption || '')}"/>
+      <div class="vg-cap">${marked.parseInline(String(g.caption || ''))}</div>
+      ${annot ? `<div class="vg-annot">${annot}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+})();
+
+// Patterns observed — frontmatter `patterns_observed[]`
+// Shape: [{ title: "ScaleMode is sticky", body: "…why this lesson stuck…" }, ...]
+(function renderPatternsObserved(){
+  if (!Array.isArray(PATTERNS) || PATTERNS.length === 0) return;
+  document.getElementById('patternsObserved').classList.remove('hidden');
+  const list = document.getElementById('patternsList');
+  PATTERNS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'pat-row';
+    row.innerHTML = `
+      <div class="pat-title">${marked.parseInline(String(p.title || ''))}</div>
+      <div class="pat-body">${marked.parseInline(String(p.body || ''))}</div>
+    `;
+    list.appendChild(row);
+  });
+})();
+
+// Latest-state header — derived from first non-done task in STAGES
+// Stage / task carries optional `status` field ("done" / "in_progress" / "pending") + optional `verdict`
+(function renderLatestState(){
+  if (!Array.isArray(STAGES) || STAGES.length === 0) return;
+  let pickStage = null;
+  let pickTask = null;
+  for (const s of STAGES) {
+    const tasks = s.tasks || [];
+    const nextPending = tasks.find(t => (t.status || 'pending') !== 'done');
+    if (nextPending) { pickStage = s; pickTask = nextPending; break; }
+    if ((s.status || 'pending') !== 'done') { pickStage = s; break; }
+  }
+  if (!pickStage) {
+    // All done — show last stage as the state
+    pickStage = STAGES[STAGES.length - 1];
+    pickTask = (pickStage.tasks || [])[pickStage.tasks?.length - 1] || null;
+  }
+  document.getElementById('latestState').classList.remove('hidden');
+  const bodyEl = document.getElementById('latestStateBody');
+  const verdictEl = document.getElementById('latestStateVerdict');
+  const stageHref = '#stage-' + String(pickStage.id).replace(/\./g, '-');
+  const taskRef = pickTask ? ` → task <a href="#task-${String(pickTask.id).replace(/\./g, '-')}">${escapeHtml(pickTask.id)}</a> — ${escapeHtml(pickTask.title || pickTask.digest_outline || '')}` : '';
+  bodyEl.innerHTML = `<a href="${stageHref}">Stage ${escapeHtml(String(pickStage.id))}</a> — ${escapeHtml(pickStage.title || '')}${taskRef}`;
+  const verdict = (pickTask && pickTask.verdict) || pickStage.verdict || pickStage.status || 'pending';
+  const v = String(verdict).toLowerCase();
+  verdictEl.textContent = v;
+  verdictEl.className = 'ls-verdict ' + (['pass','partial','fail','pending','done','in_progress'].includes(v) ? (v === 'done' ? 'pass' : v === 'in_progress' ? 'partial' : v) : 'pending');
+})();
 
 function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -3663,6 +4066,8 @@ function addToc(id, label, lvl) {
   tocList.appendChild(li);
   tocItems.push({ el: li.firstChild, target: id });
 }
+if (Array.isArray(VISUAL_GOALS) && VISUAL_GOALS.length) addToc('visualGoals', 'Visual Goals');
+if (Array.isArray(PATTERNS) && PATTERNS.length) addToc('patternsObserved', 'Patterns Observed');
 addToc('stageGantt', 'Stage Roadmap');
 addToc('stagesSection', 'Migration Stages');
 addToc('dep-graph', 'Dep Graph');

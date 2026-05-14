@@ -244,6 +244,111 @@ Validator exit codes:
 
 When `enriched.*` blocks absent across all tasks (legacy doc shape) → validator emits `WARNING:` lines but exits 0. Legacy explorations stay shippable.
 
+## Optional layout fields (HTML render only — no validator gates)
+
+Frontmatter slots that drive the evolved HTML template features (top-bar nav, visual goals card, patterns observed callout, per-stage checkpoint screenshots, per-stage iteration log, per-stage paste-ready handoff prompt). All fields are **optional** — absent fields render as hidden sections. No validator coverage; the renderer treats missing fields as empty arrays.
+
+### `visual_goals[]` — top-level
+
+Reference screenshots with annotation grid. Renders as a card grid after the doc header, above the frontmatter accordion.
+
+| Aspect | Value |
+|---|---|
+| Per-X | top-level |
+| Mandatory band | optional |
+| Shape (TS-ish) | `Array<{ path: string, caption: string, annotations?: Array<{ text: string, kind?: "ok"\|"warn"\|"bad"\|"info" }> }>` |
+| Source authoring | hand-authored during Phase 3 expand when the exploration carries a UI / visual target; path is relative to the rendered HTML file location |
+| HTML surface | `.vg-grid` card cluster inside `#visualGoals` section |
+
+```yaml
+visual_goals:
+  - path: "../tools/reports/bridge-screenshots/hud-target.png"
+    caption: "**Goal A** — HUD target state"
+    annotations:
+      - { text: "**Top bar** — pause + city name + funds", kind: ok }
+      - { text: "**Right cluster** — zoom + MAP + AUTO toggles", kind: ok }
+      - { text: "Mini-map placeholder — defer to Effort 6", kind: warn }
+```
+
+### `patterns_observed[]` — top-level
+
+Cross-stage lessons learned. Renders as a callout box between the gantt and stages list.
+
+| Aspect | Value |
+|---|---|
+| Per-X | top-level |
+| Mandatory band | optional |
+| Shape (TS-ish) | `Array<{ title: string, body: string }>` |
+| Source authoring | populated mid-plan as patterns emerge across stages; not authored at Phase 3 expand time |
+| HTML surface | `.pat-row` list inside `#patternsObserved` callout |
+
+```yaml
+patterns_observed:
+  - title: "ScaleMode is sticky"
+    body: "ScaleMode=1 multiplies px by inverse of Game View ratio. Always use ScaleMode=2 (Constant Pixel Size)."
+  - title: "Modal Host registration race"
+    body: "Hosts' `OnEnable` fires before `UIManager.Start` creates `ModalCoordinator`. Every modal Host needs a `Start()` retry."
+```
+
+### `stages[].checkpoint_screenshots[]`
+
+Per-stage before/after image strip. Renders inside the stage card body.
+
+| Aspect | Value |
+|---|---|
+| Per-X | stage |
+| Mandatory band | optional |
+| Shape (TS-ish) | `Array<{ path: string, caption: string }>` |
+| HTML surface | `.checkpoint-strip` grid inside the stage card |
+
+```yaml
+stages:
+  - id: "2.0"
+    title: "HUD bar parity"
+    checkpoint_screenshots:
+      - { path: "../docs/region-scene/stage-2-before.png", caption: "Before — placeholder HUD" }
+      - { path: "../docs/region-scene/stage-2-after.png",  caption: "After — recovered HUD" }
+```
+
+### `stages[].iteration_log[]`
+
+Per-stage append-only log of fix → verify rounds. Renders as a flat table inside the stage card.
+
+| Aspect | Value |
+|---|---|
+| Per-X | stage |
+| Mandatory band | optional |
+| Shape (TS-ish) | `Array<{ iter: string, verdict: "pass"\|"partial"\|"fail"\|"pending", outcome: string, sha?: string, screenshot?: string }>` |
+| Source authoring | appended after each ship-cycle iteration; eventually populated automatically by a DB sidecar in a later integration pass |
+| HTML surface | `.iter-log-table` inside the stage card |
+
+```yaml
+stages:
+  - id: "2.0"
+    iteration_log:
+      - { iter: "1", verdict: pass,    outcome: "HUD bar renders; toolbar wires up; pause menu opens.", sha: "a1b2c3d", screenshot: "../docs/region-scene/iter-1.png" }
+      - { iter: "2", verdict: partial, outcome: "Pause menu sub-views not navigating.", sha: "e4f5g6h" }
+```
+
+### `stages[].scope_summary`
+
+Per-stage scope prose injected into the canonical handoff template `{{SCOPE_SUMMARY}}` slot. When absent, the stage `title` is used as a fallback.
+
+```yaml
+stages:
+  - id: "2.0"
+    scope_summary: |
+      Recover the pre-migration HUD bar (city name, funds, pause/play, AUTO/MAP
+      toggles). No new feature work — visual + functional parity only.
+      Cross-refs: design tokens (§Patterns) + visual goal A (§Visual Goals).
+```
+
+### `handoff_template` — top-level (override only)
+
+Replaces the canonical handoff prompt body for every stage card. Use only when the canonical template is genuinely unsuitable. Placeholders: `{{STAGE_ID}}`, `{{STAGE_TITLE}}`, `{{SCOPE_SUMMARY}}`, `{{SLUG}}`.
+
+When absent, the renderer's `DEFAULT_HANDOFF_TEMPLATE` constant is used (see `render-design-explore-html.mjs`).
+
 ## Cross-references
 
 - [`ia/skills/design-explore/SKILL.md`](../skills/design-explore/SKILL.md) — Phase 3.5 grill body + Tool recipe extension.
