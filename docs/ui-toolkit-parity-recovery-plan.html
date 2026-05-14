@@ -1443,5 +1443,148 @@ eral hex (H1) in plan-scope .uss.</li>
   <li><b>Modal panels visible in Edit Mode.</b> UIDocument renders UXML at design time; Hosts don’t run. Add inline <code>style="display: none;"</code> on the outer panel element so design-time render stays blank; programmatic <code>style.display = Flex</code> overrides at Play.</li>
 </ul>
 
+
+<h3>15.2 · iter-9 — acceptable visual checkpoint</h3>
+<p>Per QA cycle ending at commit <code>3803d421</code>, the UI surface is considered acceptable for visual parity. Captured proofs (drop fresh PNGs into <code>docs/ui-parity-recovery/iter9-checkpoint/</code> with the names below):</p>
+
+<div class="grid grid-2">
+  <div class="shot">
+    <img src="../docs/ui-parity-recovery/iter9-checkpoint/cityscene-hud-toolbar.png" alt="CityScene HUD + toolbar + picker"/>
+    <div class="cap"><b>CityScene HUD + bottom-left toolbar + picker.</b> 108px hud strip, 76px toolbar tiles, 128px picker tier cards. Cream chrome + tan border on every plan-scope panel.</div>
+  </div>
+  <div class="shot">
+    <img src="../docs/ui-parity-recovery/iter9-checkpoint/pause-menu-open.png" alt="Pause menu open via Esc"/>
+    <div class="cap"><b>Pause menu (Esc).</b> Full-viewport overlay backdrop + centered cream card. Resume / Save game / Settings / Exit to main menu buttons all visible.</div>
+  </div>
+  <div class="shot">
+    <img src="../docs/ui-parity-recovery/iter9-checkpoint/stats-panel-open.png" alt="Stats panel open via STATS button"/>
+    <div class="cap"><b>Stats panel (STATS button).</b> Same overlay + cream card pattern. Header / close-X / tab strip (Population · Services · Economy) / chart placeholder.</div>
+  </div>
+  <div class="shot">
+    <img src="../docs/ui-parity-recovery/iter9-checkpoint/picker-residential.png" alt="Subtype picker open"/>
+    <div class="cap"><b>Picker open after Residential click.</b> 3 zoning tier cards (Light · Medium · Heavy) bound to the actual zoning tile sprites; toolbar tile gets active-state outline.</div>
+  </div>
+</div>
+
+<p class="small">After iter-9, the recovery moves out of pure-visual fix mode into two functional efforts: <b>Effort 1 (UI functionality recovery)</b> and <b>Effort 2 (UI blip SFX recovery)</b>. Mini-map / auto-mode / full-game functionality are deferred to a discussion after Effort 2 closes.</p>
+
+<!-- =========================================================== -->
+<h2 id="effort-1">16 · Effort 1 — recover UI functionality</h2>
+<p class="lead">Visual parity is done. Now every interactive element on the recovered UI must actually drive game state. Each sub-effort is QA'd the same way iter-2..9 was: user screenshot → fix → repeat until acceptable.</p>
+
+<h3>16.1 · Toolbar tool selection — default subtype + cursor prefab + zoning enable</h3>
+<p>Every toolbar tile click must produce the same in-game effect the pre-migration legacy uGUI button did:</p>
+<ol>
+  <li>Pick the family default subtype (e.g. residential → ResidentialLightZoning).</li>
+  <li>Set <code>UIManager.selectedZoneType</code> so the cell input handler knows what to place.</li>
+  <li>Call <code>SetGhostPreview(zoneManager.GetRandomZonePrefab(...), 1)</code> so the cursor shows the zoning preview.</li>
+  <li>Enable the zoning placement code path in <code>GridManager</code> / <code>ZoneManager</code> for that subtype.</li>
+</ol>
+
+<table>
+<thead><tr><th style="width:140px">Toolbar tile</th><th>Default subtype on direct-click</th><th>UIManager method</th></tr></thead>
+<tbody>
+<tr><td><b>zone-r</b></td><td>Residential Light Zoning</td><td><code>OnLightResidentialButtonClicked</code></td></tr>
+<tr><td><b>zone-c</b></td><td>Commercial Light Zoning</td><td><code>OnLightCommercialButtonClicked</code></td></tr>
+<tr><td><b>zone-i</b></td><td>Industrial Light Zoning</td><td><code>OnLightIndustrialButtonClicked</code></td></tr>
+<tr><td><b>services</b></td><td>State Service Light Zoning (default subtype)</td><td><code>OnStateServiceZoningButtonClicked</code></td></tr>
+<tr><td><b>road</b></td><td>Two-way road</td><td><code>OnTwoWayRoadButtonClicked</code></td></tr>
+<tr><td><b>building-power</b></td><td>Nuclear power plant (default)</td><td><code>OnNuclearPowerPlantButtonClicked</code></td></tr>
+<tr><td><b>building-water</b></td><td>Water-plant default</td><td><code>OnWaterFamilyButtonClicked</code> + first subtype confirm</td></tr>
+<tr><td><b>landmark</b></td><td>Forest default</td><td><code>OnForestsFamilyButtonClicked</code> + first subtype confirm</td></tr>
+<tr><td><b>bulldoze</b></td><td>Bulldoze mode toggle</td><td><code>OnBulldozeButtonClicked</code></td></tr>
+</tbody>
+</table>
+
+<p><b>Current state (iter-9):</b> ToolbarHost direct-click on subtype-bearing tiles opens the picker without applying a default tool first. <b>Fix:</b> on every subtype-bearing tile click, ALSO call the family Light/default method so the cursor + zoning are pre-armed before the user picks a tier. Picker tier confirm then re-applies the chosen tier method.</p>
+
+<p>Picker tier click already routes through the right UIManager method per the iter-3 ApplyTier dispatch — that mapping stays. Effort 1 just adds the “default on parent click” step so users can start placing without needing to open the picker.</p>
+
+<h3>16.2 · Pause menu — sub-panel navigation with back arrow</h3>
+<p>Resume must close the menu; the other 3 buttons must navigate to sub-panels inside the pause-menu surface (NOT open separate floating modals). Each sub-panel has a back-arrow button at top-left that returns to the pause-menu root view.</p>
+<ul>
+  <li><b>Save game</b> → swap visible content to Save-game sub-panel (list of save slots + new-save button).</li>
+  <li><b>Load game</b> → NEW button to add to the pause menu (between Save and Settings). Swaps to Load-game sub-panel (list of existing saves + load action).</li>
+  <li><b>Settings</b> → swap to Settings sub-panel (audio sliders / display dropdown / accessibility toggles).</li>
+  <li><b>Exit to main menu</b> → leave Play mode + load <code>MainMenu</code> scene.</li>
+</ul>
+
+<p><b>UXML shape:</b> wrap each sub-panel in a sibling <code>&lt;ui:VisualElement&gt;</code> inside <code>.pause-menu__card</code> with <code>display: none</code> default; root view + 4 sub-panels share the cream card surface. PauseMenuHost manages which one is visible via class toggle (e.g. <code>.pause-menu__card--root</code>, <code>--save</code>, <code>--load</code>, <code>--settings</code>).</p>
+
+<p><b>Back arrow:</b> top-left of each sub-panel, returns to root view. Esc on a sub-panel = back; Esc on root view = close pause menu.</p>
+
+<h3>16.3 · Stats panel — full functionality</h3>
+<p>The cream card already renders. Effort 1 adds:</p>
+<ul>
+  <li>Population / Services / Economy tab switching actually updates content (currently only logs to Debug).</li>
+  <li>Chart container renders the actual chart (population history line, services bar, economy delta) — pulls from <code>StatsHistoryRecorder</code> / <code>CityStats</code> per tab.</li>
+  <li>Stats rows render in 2 columns (matches Goal C). Pull from <code>CityStats</code>: Power / Water / Waste / Police / Fire / Health / Education / Parks / Transit / Roads / Happiness rows.</li>
+</ul>
+
+<h3>16.4 · HUD speed + pause/play buttons — operational</h3>
+<p>Already wired in HudBarHost via <code>TimeManager.SetTimeSpeedIndex</code> and <code>ChangeTimeSpeed</code>. Need to verify:</p>
+<ul>
+  <li>Speed 1/2/3 buttons change game tick rate.</li>
+  <li>Pause button stops the simulation; clicking pause again resumes.</li>
+  <li>Active-state border appears on currently-selected speed.</li>
+</ul>
+
+<h3>16.5 · Acceptance criteria (Effort 1)</h3>
+<ul class="checklist">
+  <li>Click each toolbar tile → cursor shows correct ghost preview + game accepts placement of default subtype.</li>
+  <li>Click each picker tier card → cursor + placement match the selected tier.</li>
+  <li>Esc opens pause menu; Resume / Settings / Save / Load / Exit all navigate or act correctly; back-arrow returns each sub-panel to root.</li>
+  <li>STATS button opens centered stats panel; tabs switch; chart renders per tab; 2-column rows reflect <code>CityStats</code>.</li>
+  <li>Speed 1/2/3 buttons change tick rate; pause/resume works.</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="effort-2">17 · Effort 2 — recover UI blip SFX</h2>
+<p class="lead">Every UI action should fire its pre-migration audio cue. Pre-migration parity was driven by the <code>Blip</code> service + ThemedButton renderer. After the UI Toolkit migration, those audio hooks went dark for Toolkit-side buttons. Effort 2 wires them back.</p>
+
+<h3>17.1 · Surfaces in scope</h3>
+<table>
+<thead><tr><th style="width:200px">UI surface</th><th>Blip cue (legacy slug)</th></tr></thead>
+<tbody>
+<tr><td><b>Toolbar tile click</b></td><td><code>sfx-tool-select</code></td></tr>
+<tr><td><b>Picker tier card click</b></td><td><code>sfx-picker-confirm</code></td></tr>
+<tr><td><b>HUD button hover</b></td><td><code>sfx-btn-hover</code> (subtle)</td></tr>
+<tr><td><b>HUD button click</b></td><td><code>sfx-btn-click</code></td></tr>
+<tr><td><b>Pause menu open / close</b></td><td><code>sfx-panel-open</code> / <code>sfx-panel-close</code></td></tr>
+<tr><td><b>Pause menu sub-panel navigate</b></td><td><code>sfx-page-flip</code></td></tr>
+<tr><td><b>Stats panel open / tab switch</b></td><td><code>sfx-panel-open</code> / <code>sfx-tab-switch</code></td></tr>
+<tr><td><b>Zone / building placement (cell-click)</b></td><td><code>sfx-place-zone</code> / <code>sfx-place-building</code></td></tr>
+<tr><td><b>Speed change</b></td><td><code>sfx-speed-click</code></td></tr>
+<tr><td><b>Pause toggle</b></td><td><code>sfx-pause</code></td></tr>
+</tbody>
+</table>
+
+<h3>17.2 · Implementation plan</h3>
+<ol>
+  <li><b>Inventory legacy Blip slugs.</b> Scan <code>Assets/Scripts/Audio/Blip*</code> + uGUI ThemedButton renderer for the slug → AudioClip map. Pull the existing slugs that already work outside the migrated panels.</li>
+  <li><b>UI Toolkit hover/click hook.</b> Add a single helper (e.g. <code>ToolkitBlipBinder</code>) that takes a VisualElement + a slug and registers <code>RegisterCallback&lt;ClickEvent&gt;</code> / <code>RegisterCallback&lt;MouseEnterEvent&gt;</code> to fire <code>Blip.Play(slug)</code>.</li>
+  <li><b>Bind in each Host.</b> HudBarHost / ToolbarHost / ToolSubtypePickerHost / PauseMenuHost / StatsPanelHost call the helper for each button on OnEnable (after Q lookup).</li>
+  <li><b>Cell placement.</b> Place-action confirm in <code>CursorService</code> / <code>ZoneManager</code> fires the slug → already legacy-wired, just confirm not regressed.</li>
+</ol>
+
+<h3>17.3 · Acceptance criteria (Effort 2)</h3>
+<ul class="checklist">
+  <li>Every toolbar tile click triggers an audible blip.</li>
+  <li>Picker tier confirm triggers a distinct blip.</li>
+  <li>Pause menu open / sub-panel navigate / close each have their own cue.</li>
+  <li>Stats panel tab switch is audible.</li>
+  <li>Speed / pause buttons are audible.</li>
+  <li>No console spam (missing clip slugs etc.) when any UI surface fires.</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="post-effort-2">18 · Post-Effort-2 — to discuss</h2>
+<p>After Effort 1 + 2 close + are QA'd, pause for a planning round on:</p>
+<ul>
+  <li>Mini-map RT capture + button + panel (deferred since iter-1 §G — hidden in iter-9).</li>
+  <li>AUTO mode toggle full wiring (currently flips <code>CityStats.simulateGrowth</code> but no visible visualization of automatic-growth state).</li>
+  <li>Full game-loop functionality recovery (any other legacy uGUI surface that hasn't migrated yet, demand feedback, etc.).</li>
+</ul>
+
 </body>
 </html>
