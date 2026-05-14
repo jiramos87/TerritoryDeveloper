@@ -76,6 +76,26 @@
 </head>
 <body>
 
+<!-- ====================================================================
+     AGENT-NAV-ENTRY-POINT
+     A fresh agent picking up this plan should read in this order:
+       1. §15 Iteration progression — what's already shipped + patterns
+       2. §15.2 iter-9 visual checkpoint — the current state visually
+       3. §19 Handoff prompt for Effort 1 — verbatim instructions
+       4. §16 Effort 1 scope — what to implement
+       5. §17 Effort 2 scope — what comes after Effort 1
+     ==================================================================== -->
+
+<aside id="agent-nav" style="position:sticky;top:0;z-index:50;background:rgba(20,22,28,0.96);border-bottom:1px solid #3a3f4a;padding:8px 16px;margin:0 -16px 16px;font-size:12px;color:#cdd6f4">
+  <b style="color:#f0b429">AGENT NAV →</b>
+  <a href="#iter-progression" style="margin-right:10px">§15 iter log</a>
+  <a href="#effort-1" style="margin-right:10px">§16 Effort 1</a>
+  <a href="#effort-2" style="margin-right:10px">§17 Effort 2</a>
+  <a href="#handoff-effort-1" style="margin-right:10px;background:#f0b429;color:#1a1d24;padding:1px 6px;border-radius:3px">§19 HANDOFF (start here)</a>
+  <a href="#post-effort-2" style="margin-right:10px">§18 post-Effort-2</a>
+</aside>
+
+
 <h1>UI Toolkit Parity Recovery Plan</h1>
 <p class="lead">Rebuild the pre-migration game UI on top of the current UI Toolkit pipeline — using and, where required, extending the existing UXML/USS/TSS bake handler, ModalCoordinator, and Host pattern. Self-contained HTML brief: hand to a fresh main session for implementation.</p>
 
@@ -1368,6 +1388,7 @@ Z3 actions taken, 6 baselines captured.`
 
 
 <!-- =========================================================== -->
+<!-- AGENT-WHAT-WORKED-START: iter-2..9 log + patterns observed -->
 <h2 id="iter-progression">15 · Iteration progression — what worked, what didn’t</h2>
 <p class="lead">Live log of QA cycles iter-2 through iter-9. Successes are kept; failures noted with revert/correction in the next iter.</p>
 
@@ -1444,6 +1465,7 @@ eral hex (H1) in plan-scope .uss.</li>
 </ul>
 
 
+<!-- AGENT-CURRENT-VISUAL-STATE -->
 <h3>15.2 · iter-9 — acceptable visual checkpoint</h3>
 <p>Per QA cycle ending at commit <code>3803d421</code>, the UI surface is considered acceptable for visual parity. Captured proofs (drop fresh PNGs into <code>docs/ui-parity-recovery/iter9-checkpoint/</code> with the names below):</p>
 
@@ -1469,6 +1491,7 @@ eral hex (H1) in plan-scope .uss.</li>
 <p class="small">After iter-9, the recovery moves out of pure-visual fix mode into two functional efforts: <b>Effort 1 (UI functionality recovery)</b> and <b>Effort 2 (UI blip SFX recovery)</b>. Mini-map / auto-mode / full-game functionality are deferred to a discussion after Effort 2 closes.</p>
 
 <!-- =========================================================== -->
+<!-- AGENT-EFFORT-1-START: target scope for next iter chain -->
 <h2 id="effort-1">16 · Effort 1 — recover UI functionality</h2>
 <p class="lead">Visual parity is done. Now every interactive element on the recovered UI must actually drive game state. Each sub-effort is QA'd the same way iter-2..9 was: user screenshot → fix → repeat until acceptable.</p>
 
@@ -1539,6 +1562,7 @@ eral hex (H1) in plan-scope .uss.</li>
 </ul>
 
 <!-- =========================================================== -->
+<!-- AGENT-EFFORT-2-START: after Effort 1 closes -->
 <h2 id="effort-2">17 · Effort 2 — recover UI blip SFX</h2>
 <p class="lead">Every UI action should fire its pre-migration audio cue. Pre-migration parity was driven by the <code>Blip</code> service + ThemedButton renderer. After the UI Toolkit migration, those audio hooks went dark for Toolkit-side buttons. Effort 2 wires them back.</p>
 
@@ -1585,6 +1609,133 @@ eral hex (H1) in plan-scope .uss.</li>
   <li>AUTO mode toggle full wiring (currently flips <code>CityStats.simulateGrowth</code> but no visible visualization of automatic-growth state).</li>
   <li>Full game-loop functionality recovery (any other legacy uGUI surface that hasn't migrated yet, demand feedback, etc.).</li>
 </ul>
+
+
+
+<!-- =========================================================== -->
+<!-- AGENT-HANDOFF-PROMPT-START: copy the <pre> block below verbatim
+     into a fresh main-session prompt to continue Effort 1.        -->
+<h2 id="handoff-effort-1">19 · Handoff prompt — Effort 1 (fresh agent)</h2>
+<p class="lead">Paste the block below verbatim into a fresh Claude Code main session in <code>/Users/javier/bacayo-studio/territory-developer</code>. The agent has everything it needs to continue without re-reading the iter-2..9 history.</p>
+
+<pre style="white-space:pre-wrap;background:#0e1116;border:1px solid #2a2d33;padding:14px;border-radius:6px;color:#cdd6f4;font-size:12px;line-height:1.5">
+# Handoff — UI Toolkit parity recovery, Effort 1 (post iter-9)
+
+You are continuing the recovery covered by
+`docs/ui-toolkit-parity-recovery-plan.html`. Visual parity is acceptable as of
+commit `3803d421` / `bd75b781` (iter-9 visual checkpoint). Effort 1 begins now.
+
+## Read first (in order, brief — do not re-read iter-2..9 in detail)
+  1. `docs/ui-toolkit-parity-recovery-plan.html` §15 (iter log) + §15.1
+     (patterns observed) — known traps, do not repeat them
+  2. §15.2 (visual checkpoint) — the current "after" state, 4 screenshots
+  3. §16 Effort 1 — the scope you are implementing
+  4. `MEMORY.md` at repo root + `~/.claude-personal/projects/.../memory/MEMORY.md`
+     — Javier’s preferences + project-specific rules
+  5. `Assets/Scripts/Managers/GameManagers/UIManager.Toolbar.cs` — the existing
+     `On{Light,Medium,Heavy}{R,C,I}ButtonClicked` + family handlers Effort 1
+     §16.1 wires through
+
+## Hard rules (carried from iter-2..9)
+  - **Work in the main worktree only.** `/Users/javier/bacayo-studio/territory-developer`.
+    Do NOT call `EnterWorktree`. Do NOT pass `isolation: "worktree"` to Agent.
+    If the background-job harness blocks an edit + demands a worktree,
+    surface the conflict to Javier instead of silently creating one.
+    Single-developer single-stream project; worktree overhead = 90s × 6500
+    file checkout for zero parallelism benefit. See memory
+    `feedback_agents_view_no_worktree`.
+  - **No `git commit --amend`**, no `git push`, no `--no-verify`.
+  - **Close Unity Editor before `npm run unity:compile-check`** — Editor-open
+    batchmode aborts with Abort trap 6 (memory
+    `feedback_unity_open_blocks_compile_check`). Full agent permits to
+    close/open Editor — Javier won’t touch it in parallel
+    (`feedback_unity_full_permissions`).
+  - **Simple product language in chat replies.** Caveman-tech only in docs +
+    code, not in human-facing chat (`feedback_simple_product_language`).
+  - **Commit each iter on `feature/asset-pipeline` directly.** Conventional
+    Commits format: `fix(ui-toolkit-parity-recovery): iter-N — <subject>`.
+
+## What worked well (lessons from iter-2..9 — apply, don’t relearn)
+  - **Literal hex (H1) wins over `var(--ds-*)` cream-token cascade.** All
+    plan-scope `.uss` use literal hex. Do NOT reintroduce `var(...)` with
+    fallback — the fallback doesn’t reliably resolve under
+    `UnityDefaultRuntimeTheme`.
+  - **`MainPanelSettings.themeUss` = `UnityDefaultRuntimeTheme` + `m_ScaleMode = 2`**
+    (Constant Pixel Size). Do NOT switch to ScaleMode=1 — the Match-W/H
+    multiplier blows literal px up 3× on Javier’s display.
+  - **Modal panel pattern:** outer `<ui:VisualElement>` carries inline
+    `style="display: none;"` so Edit Mode renders blank;
+    `ModalCoordinator.Show` + `HideMigrated` + `TryOpen` + `CloseInternal`
+    all flip BOTH the registered root AND the inner panel element
+    (`ve.Q&lt;VisualElement&gt;(modalSlug)`).
+  - **Modal Host registration race:** `OnEnable` fires before `UIManager.Start`
+    creates `ModalCoordinator`. EVERY new modal Host needs a `Start()` retry
+    that re-attempts `FindObjectOfType&lt;ModalCoordinator&gt;` +
+    `RegisterMigratedPanel`.
+  - **Manual click wiring beats `binding-path`** in Unity 2022 runtime mode.
+    Every Host: `_btnX = root.Q&lt;Button&gt;("name"); _btnX.clicked += OnX;`
+    in `OnEnable`, `_btnX.clicked -= OnX;` in `OnDisable`.
+  - **Root `pickingMode = Ignore`** on every fullscreen-anchored HUD Host
+    (`root.style.position = Absolute; top/left/right/bottom = 0;
+    pickingMode = PickingMode.Ignore`). Without Ignore, the root captures
+    clicks before children see them.
+  - **`Assets/UI/Generated/*.uxml` + `*.uss` are the live render source**
+    (the bake handler doesn’t re-emit them yet). Edit them directly.
+    Don’t re-introduce a self-Template `&lt;ui:Template src="x.uxml"/&gt;` —
+    Unity Bee build silently dies with FD-exhaustion cascade.
+  - **Sprite catalog:** real pixel-art lives in `Assets/Sprites/Buttons/`,
+    `Assets/Sprites/Residential/`, `Assets/Sprites/Commercial/`,
+    `Assets/Sprites/Industrial/`, `Assets/Sprites/PowerPlant/`,
+    `Assets/Sprites/WaterPlant/`, `Assets/Sprites/Enviromental/`,
+    `Assets/Sprites/State/`. The SVG-style outlined icons in
+    `Assets/Sprites/Icons/` are wrong placeholders — do not use.
+  - **Workflow per iter:** user provides screenshot → analyze what’s broken
+    → apply fix in main worktree → `npm run unity:compile-check` (close
+    Editor first) → commit on `feature/asset-pipeline` → append iter row
+    to plan HTML §15 → drop `{ITERn_SHA}` token → second commit substitutes
+    the real sha → wait for user’s next screenshot.
+
+## Effort 1 scope (from §16, summarized — read §16 for full detail)
+  - 16.1 Toolbar tile click pre-arms the family default subtype + cursor
+    ghost + zoning enable (via the existing
+    `UIManager.OnLight{R,C,I}ButtonClicked` etc.). Per-tile default in §16.1
+    table. Subtype-bearing tiles still open the picker; picker confirm
+    re-applies the chosen tier.
+  - 16.2 Pause menu sub-panel navigation. Add Load-game button to UXML.
+    Save / Load / Settings render as sibling `&lt;ui:VisualElement&gt;`s inside
+    `.pause-menu__card` with `display: none` default; class toggle swaps
+    visible view. Top-left back-arrow returns to root view. Esc on
+    sub-panel = back; Esc on root = close.
+  - 16.3 Stats panel content. Tab switching swaps actual content (not just
+    Debug.Log). Chart renders per tab (population history / services bar /
+    economy delta from `StatsHistoryRecorder` / `CityStats`). Stats rows in
+    2-column grid (Goal C parity).
+  - 16.4 Verify HUD speed 1/2/3 + pause/play operational.
+
+## Workflow
+  - Iter pattern same as iter-2..9: user screenshot → fix → commit →
+    iterate. ASK clarifying questions via `AskUserQuestion` when the visual
+    intent is ambiguous; default = follow the visual goal in §1 + §15.2
+    checkpoint.
+  - After each iter compile-check green, append the row to plan HTML §15
+    AND commit twice (fix + sha sub) the same way iter-2..9 did.
+  - Stop signal: Javier types "Effort 1 done" or equivalent.
+
+## Out of scope (do NOT touch)
+  - Effort 2 (UI blip SFX) — separate handoff after Effort 1.
+  - Mini-map RT capture / panel / button — still deferred.
+  - Hover-info card / GridHoverProbe — info-panel-uidoc disabled in iter-9.
+  - Onboarding overlay / notifications-toast / studio controls.
+  - DEC-A28 architectural deviation (no plan-rewrite).
+
+## Completion signal
+When the user accepts Effort 1 visual + functional checkpoint, drop fresh
+PNGs into `docs/ui-parity-recovery/effort1-checkpoint/`, append §15.3 to the
+plan HTML with the new "after" reference, and surface Effort 2 handoff.
+</pre>
+
+<p class="small">After Effort 1 closes, build a §20 handoff for Effort 2 (blip SFX) and post-Effort-2 a §21 handoff for mini-map / auto-mode / full-game (per §18 deferred backlog).</p>
+<!-- AGENT-HANDOFF-PROMPT-END -->
 
 </body>
 </html>
