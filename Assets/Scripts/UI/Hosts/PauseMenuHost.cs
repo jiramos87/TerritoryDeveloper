@@ -17,6 +17,7 @@ namespace Territory.UI.Hosts
 
         PauseMenuVM _vm;
         ModalCoordinator _coordinator;
+        UnityEngine.UIElements.Button _btnResume, _btnSave, _btnSettings, _btnExit;
 
         void OnEnable()
         {
@@ -24,7 +25,18 @@ namespace Territory.UI.Hosts
             WireCommands();
 
             if (_doc != null && _doc.rootVisualElement != null)
+            {
                 _doc.rootVisualElement.SetCompatDataSource(_vm);
+                var root = _doc.rootVisualElement;
+                _btnResume   = root.Q<UnityEngine.UIElements.Button>("btn-resume");
+                _btnSave     = root.Q<UnityEngine.UIElements.Button>("btn-save");
+                _btnSettings = root.Q<UnityEngine.UIElements.Button>("btn-settings");
+                _btnExit     = root.Q<UnityEngine.UIElements.Button>("btn-exit");
+                if (_btnResume   != null) _btnResume.clicked   += OnResume;
+                if (_btnSave     != null) _btnSave.clicked     += OnSave;
+                if (_btnSettings != null) _btnSettings.clicked += OnSettings;
+                if (_btnExit     != null) _btnExit.clicked     += OnExit;
+            }
             else
                 Debug.LogWarning("[PauseMenuHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
 
@@ -47,6 +59,10 @@ namespace Territory.UI.Hosts
 
         void OnDisable()
         {
+            if (_btnResume   != null) _btnResume.clicked   -= OnResume;
+            if (_btnSave     != null) _btnSave.clicked     -= OnSave;
+            if (_btnSettings != null) _btnSettings.clicked -= OnSettings;
+            if (_btnExit     != null) _btnExit.clicked     -= OnExit;
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }

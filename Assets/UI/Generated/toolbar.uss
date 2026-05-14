@@ -1,45 +1,44 @@
 /* Panel: toolbar | kind: hud | theme: cream */
-/* Iter-6 — ScaleMode=2 literal px, 2-col 48px tiles. */
+/* Iter-8 — 2× size from iter-6/7, anchored bottom-left above picker. */
 
 .toolbar {
     position: absolute;
-    bottom: 100px;
-
+    bottom: 180px;
     left: 8px;
-    width: 116px;
+    width: 220px;
     flex-direction: column;
     align-items: center;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 6px;
-    padding: 6px;
+    border-radius: 8px;
+    padding: 8px;
 }
 
 .toolbar__grid {
     flex-direction: row;
     flex-wrap: wrap;
-    width: 104px;
+    width: 204px;
     justify-content: flex-start;
 }
 
 .toolbar__tile {
-    width: 48px;
-    height: 48px;
-    margin: 2px;
+    width: 96px;
+    height: 96px;
+    margin: 3px;
 }
 
 .icon-btn {
     background-color: #ede4ce;
     border-color: #b89b5e;
-    border-width: 1px;
-    border-radius: 4px;
+    border-width: 2px;
+    border-radius: 6px;
     -unity-background-scale-mode: scale-to-fit;
     padding: 0;
     color: #3a2f1c;
 }
 .icon-btn:hover { background-color: #f9efd2; }
-.icon-btn--active { border-color: #5b7fa8; border-width: 2px; }
+.icon-btn--active { border-color: #5b7fa8; border-width: 3px; }
 
 .icon-btn--zone-r       { background-image: url("project://database/Assets/Sprites/Residential/residential-button-64-target.png"); }
 .icon-btn--zone-c       { background-image: url("project://database/Assets/Sprites/Commercial/commercial-button-64-target.png"); }
@@ -53,8 +52,8 @@
 
 .toolbar__active-label {
     color: #6b5a3d;
-    font-size: 11px;
-    margin-top: 4px;
+    font-size: 12px;
+    margin-top: 6px;
     -unity-text-align: lower-center;
     -unity-font-style: bold;
 }

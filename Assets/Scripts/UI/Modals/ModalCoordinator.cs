@@ -102,6 +102,8 @@ namespace Territory.UI.Modals
 
                 _openModals.Add(modalSlug);
                 ve.style.display = DisplayStyle.Flex;
+                var innerShow = ve.Q<UnityEngine.UIElements.VisualElement>(modalSlug);
+                if (innerShow != null) innerShow.style.display = DisplayStyle.Flex;
 
                 if (_timeManager != null)
                     _timeManager.SetModalPauseOwner(modalSlug);
@@ -126,6 +128,8 @@ namespace Territory.UI.Modals
             {
                 _openModals.Remove(modalSlug);
                 ve.style.display = DisplayStyle.None;
+                var innerHide = ve.Q<UnityEngine.UIElements.VisualElement>(modalSlug);
+                if (innerHide != null) innerHide.style.display = DisplayStyle.None;
                 if (_timeManager != null)
                     _timeManager.ClearModalPauseOwner(modalSlug);
                 return;

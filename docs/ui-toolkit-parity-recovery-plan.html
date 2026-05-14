@@ -1366,5 +1366,75 @@ Z3 actions taken, 6 baselines captured.`
 
 <p class="small" style="margin-top:24px">End of iter-2 handoff. The fresh agent should produce a single end-of-Z6 commit; if anything diverges from the strategy in §13, escalate via AskUserQuestion before mutating shared state.</p>
 
+
+<!-- =========================================================== -->
+<h2 id="iter-progression">15 · Iteration progression — what worked, what didn’t</h2>
+<p class="lead">Live log of QA cycles iter-2 through iter-8. Successes are kept; failures noted with revert/correction in the next iter.</p>
+
+<table>
+<thead><tr><th style="width:90px">Iter</th><th>Goal</th><th>Outcome</th></tr></thead>
+<tbody>
+
+<tr>
+  <td><b>iter-2</b><br>commit <code>1c02ed57</code></td>
+  <td>Theme cascade fix (Z0 H6 verdict): flip <code>MainPanelSettings.themeUss</code> from <code>UnityDefaultRuntimeTheme</code> → <code>cream.tss</code>. ScaleMode 2→1. Host root viewport anchor on 5 HUD hosts. Hide 3 orphan dev HUDs (overlay-toggle-strip / zone-overlay / growth-budget-panel). Add STATS button to HUD right cluster.</td>
+  <td><span class="pill warn">PARTIAL</span> Compile / drift / pre-existing fail count all green. Visual capture deferred — bridge <code>enter_play_mode</code> hardcoded to wait 24s for <code>GridManager.isInitialized</code>; MainMenu scene has no GridManager + CityScene init stalled in fresh worktree.</td>
+</tr>
+
+<tr>
+  <td><b>iter-3</b><br>commit <code>d74b1bd9</code></td>
+  <td>H1 fallback (literal hex in 5 plan-scope .uss, drop <code>var(…)</code>). Real pixel-art sprite icons replace SVG placeholders for HUD / toolbar / time-controls. Picker R/C/I bound to building sprites (later swapped to zoning in iter-4). Toolbar click handlers route through <code>UIManager.OnLightResidentialButtonClicked</code> etc. so the active zone-type + ghost-preview channels actually fire.</td>
+  <td><span class="pill warn">PARTIAL</span> Cream chrome lit up at base state (visual confirm via user screenshots). But MainMenu regressed to invisible-button-text + dark blue scene bg — cream.tss as <code>themeUss</code> broke Unity’s default <code>--unity-font</code> cascade. UI rendered 2-3× oversized due to ScaleMode=1 multiplier on small Game View.</td>
+</tr>
+
+<tr>
+  <td><b>iter-4</b><br>commit <code>3f9150e6</code></td>
+  <td>Revert <code>themeUss</code> back to <code>UnityDefaultRuntimeTheme</code> (text/fonts restore). ScaleMode 1→2 (literal px). MainMenuHost gets root viewport anchor. Picker R/C/I switch from building sprites to zoning tiles (user clarified the picker should show the zoning marker, not the fully-grown building). 7 modal-panel UIDoc GameObjects activated (stats / budget / alerts / glossary / building-info / info / pause-menu) so Hosts can <code>RegisterMigratedPanel</code> at scene load.</td>
+  <td><span class="pill warn">PARTIAL</span> Text rendered correctly again. But ScaleMode=2 at 36px tiles produced UI “way too small” on user’s Mac display. Pause menu visible at Play start (timing race — see iter-7).</td>
+</tr>
+
+<tr>
+  <td><b>iter-5</b><br>commit <code>49610d7b</code></td>
+  <td>Pause menu hide on start via <code>RegisterMigratedPanel</code> default. Speed buttons moved into HUD left cluster + separate <code>time-controls-uidoc</code> disabled. Root <code>pickingMode=Ignore</code> on 5 Hosts so the fullscreen anchored root stops swallowing clicks. ScaleMode back to 1, sizes bumped (hud 80, tile 56, picker card 80). Picker variable card count + grid-tile sprites for single-variant families.</td>
+  <td><span class="pill warn">PARTIAL</span> Picker / variable cards / grid sprites worked. But ScaleMode=1 multiplier blew sizes up 3× on user’s display — “too large again”. HUD click handlers operational. Pause menu still didn’t show on Esc (root cause surfaced iter-7).</td>
+</tr>
+
+<tr>
+  <td><b>iter-6</b><br>commit <code>56915c75</code></td>
+  <td>ScaleMode 1→2 + intermediate sizes (hud 72, tile 48, picker card 64) — no multiplier means px render consistent regardless of Game View size. Inline <code>style="display: none;"</code> added to outer <code>&lt;ui:VisualElement&gt;</code> of 7 modal panels so Edit Mode design-time render shows blank. <code>ModalCoordinator.TryOpen</code> / <code>CloseInternal</code> extended to also Q the inner panel element by slug name and flip <code>style.display</code> (so Esc + click can open migrated panels).</td>
+  <td><span class="pill ok">GOOD</span> Sizing consistent at last. Edit Mode mesh-up resolved for the 7 modals. But pause-menu.uxml had a latent self-Template (<code>&lt;ui:Template src="pause-menu.uxml"/&gt;</code>) that broke Unity’s Bee build after Unity’s caches drained — fixed in <code>671059b7</code> hotfix.</td>
+</tr>
+
+<tr>
+  <td><b>iter-6.5</b><br>commit <code>671059b7</code></td>
+  <td>Hotfix: remove pause-menu.uxml self-Template circular reference + dead <code>dark.tss</code> Style import.</td>
+  <td><span class="pill ok">GOOD</span> Bee build recovers; modals compile clean.</td>
+</tr>
+
+<tr>
+  <td><b>iter-7</b><br>commit <code>50e3032d</code></td>
+  <td>Toolbar anchor flipped <code>top:88px</code> → <code>bottom:100px</code>; picker <code>left:132px</code> → <code>left:8px</code>. Toolbar now sits above picker at bottom-left corner. Modal Host registration race fixed: <code>Host.OnEnable</code> fires before <code>UIManager.Start</code> creates <code>ModalCoordinator</code>; added <code>Start()</code> retry on PauseMenuHost / StatsPanelHost / BudgetPanelHost that re-attempts <code>FindObjectOfType&lt;ModalCoordinator&gt;</code> + <code>RegisterMigratedPanel</code> after coordinator exists.</td>
+  <td><span class="pill ok">GOOD</span> Toolbar + picker anchored correctly. Pause menu opens on Esc but rendered as transparent text overlapping HUD (no backplate — USS used dark.tss <code>var(…)</code> refs that don’t resolve under <code>UnityDefaultRuntimeTheme</code>). Stats click still no-op (<code>Show()</code> path doesn’t flip inner element).</td>
+</tr>
+
+<tr>
+  <td><b>iter-8</b><br>commit <code>{ITER8_SHA}</code></td>
+  <td>Toolbar + picker 2× size (tile 48→96, picker card 64→128). Pause menu CSS rewrite — full-viewport overlay + centered cream card + literal hex (drops dark.tss vars). PauseMenuHost manual button click wiring (replaces dead <code>binding-path</code>). <code>ModalCoordinator.Show</code> + <code>HideMigrated</code> also flip inner element display (was only <code>TryOpen</code> / <code>CloseInternal</code>). Hide HUD mini-map placeholder until RT capture lands.</td>
+  <td><span class="pill ok">GOOD</span> Pause menu now modal-styled centered card; STATS click opens stats-panel; toolbar + picker 2× visible.</td>
+</tr>
+
+</tbody>
+</table>
+
+<h3>15.1 · Patterns observed</h3>
+<ul>
+  <li><b>ScaleMode is sticky.</b> ScaleMode=1 (Match W/H) multiplies px by the inverse of the Game View / reference resolution. On a 600×360 Game View with reference 1920×1080, scale = ~3×. Iter-3 and iter-5 both hit this and produced oversized UI; iter-6 fixed by switching to ScaleMode=2 (Constant Pixel Size).</li>
+  <li><b><code>themeUss</code> = full theme, not partial.</b> Pointing PanelSettings at a TSS that defines only project-custom <code>--ds-*</code> tokens (no <code>--unity-*</code>) breaks Unity’s default font + Button cascade. Either extend Unity’s default TSS, or keep <code>UnityDefaultRuntimeTheme</code> and rely on literal hex (H1) in plan-scope .uss.</li>
+  <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
+  <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
+  <li><b>UXML self-Template silently kills builds.</b> A <code>&lt;ui:Template name="x" src="x.uxml"/&gt;</code> circular ref in a single file cascades to Bee FD-exhaustion errors that look unrelated.</li>
+  <li><b>Modal panels visible in Edit Mode.</b> UIDocument renders UXML at design time; Hosts don’t run. Add inline <code>style="display: none;"</code> on the outer panel element so design-time render stays blank; programmatic <code>style.display = Flex</code> overrides at Play.</li>
+</ul>
+
 </body>
 </html>

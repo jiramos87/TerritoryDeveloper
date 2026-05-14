@@ -1,17 +1,16 @@
 /* Panel: tool-subtype-picker | kind: hud | theme: cream */
-/* Iter-5 — bigger cards, variable card count, grid-tile sprites for solo families. */
+/* Iter-8 — 2× size from iter-6/7, anchored bottom-left below toolbar. */
 
 .tool-subtype-picker {
     position: absolute;
     left: 8px;
-
     bottom: 16px;
     flex-direction: column;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 6px;
-    padding: 6px;
+    border-radius: 8px;
+    padding: 8px;
     display: none;
 }
 
@@ -25,13 +24,13 @@
 }
 
 .tool-subtype-picker__tier-card {
-    width: 64px;
-    height: 64px;
+    width: 128px;
+    height: 128px;
     background-color: #ede4ce;
     border-color: #b89b5e;
-    border-width: 1px;
-    border-radius: 4px;
-    margin: 3px;
+    border-width: 2px;
+    border-radius: 6px;
+    margin: 4px;
     padding: 0;
     flex-direction: column;
     justify-content: flex-end;
@@ -51,15 +50,15 @@
 
 .tool-subtype-picker__tier-label {
     color: #3a2f1c;
-    font-size: 10px;
+    font-size: 13px;
     -unity-text-align: middle-center;
     -unity-font-style: bold;
     background-color: rgba(245, 230, 200, 0.85);
-    padding: 1px 3px;
-    margin-bottom: 2px;
+    padding: 1px 4px;
+    margin-bottom: 4px;
 }
 
-/* zone-r — zoning tiles (clicking creates the zone; building grows later) */
+/* zone-r — zoning tiles (clicking creates a zone, building grows later) */
 .tool-subtype-picker__tier-card--zone-r-light  { background-image: url("project://database/Assets/Sprites/Residential/residential-light-zoning-64.png"); }
 .tool-subtype-picker__tier-card--zone-r-medium { background-image: url("project://database/Assets/Sprites/Residential/residential-medium-zoning-64.png"); }
 .tool-subtype-picker__tier-card--zone-r-heavy  { background-image: url("project://database/Assets/Sprites/Residential/residential-heavy-zoning-64.png"); }
