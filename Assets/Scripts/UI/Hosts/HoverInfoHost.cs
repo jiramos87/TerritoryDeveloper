@@ -98,7 +98,8 @@ namespace Territory.UI.Hosts
         void ApplyCardStyle(VisualElement v)
         {
             v.style.position = Position.Absolute;
-            v.style.bottom = 24f;
+            // iter-40 — anchor above the MAP panel (~240px map + 30px strip + 24px gap from bottom).
+            v.style.bottom = 290f;
             v.style.right = 24f;
             v.style.width = 220f;
             v.style.backgroundColor = Hex("#f5e6c8");

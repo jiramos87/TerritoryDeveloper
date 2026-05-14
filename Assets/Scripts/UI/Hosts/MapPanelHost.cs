@@ -148,6 +148,9 @@ namespace Territory.UI.Hosts
                 return;
             }
 
+            // iter-40 — strip the panel chrome per user QA: no title/close-X/Layers header.
+            // The MAP is now just a cream-bordered map square with layer toggles as a top
+            // strip overlay INSIDE the square.
             _runtimePanel = new VisualElement { name = "map-panel" };
             _runtimePanel.AddToClassList("map-panel");
             _runtimePanel.style.position = Position.Absolute;
@@ -156,70 +159,33 @@ namespace Territory.UI.Hosts
             _runtimePanel.style.flexDirection = FlexDirection.Column;
             _runtimePanel.style.display = DisplayStyle.None;
 
-            var card = new VisualElement { name = "map-panel-card" };
-            card.AddToClassList("map-panel__card");
-            card.style.backgroundColor = Hex("#f5e6c8");
             var tan = Hex("#b89b5e");
-            card.style.borderTopColor = tan; card.style.borderBottomColor = tan;
-            card.style.borderLeftColor = tan; card.style.borderRightColor = tan;
-            card.style.borderTopWidth = 3f; card.style.borderBottomWidth = 3f;
-            card.style.borderLeftWidth = 3f; card.style.borderRightWidth = 3f;
-            card.style.borderTopLeftRadius = 12f; card.style.borderTopRightRadius = 12f;
-            card.style.borderBottomLeftRadius = 12f; card.style.borderBottomRightRadius = 12f;
-            card.style.paddingTop = 16f; card.style.paddingBottom = 16f;
-            card.style.paddingLeft = 18f; card.style.paddingRight = 18f;
-            card.style.width = 360f;
-            card.style.flexDirection = FlexDirection.Column;
 
-            // Header.
-            var header = new VisualElement();
-            header.style.flexDirection = FlexDirection.Row;
-            header.style.justifyContent = Justify.SpaceBetween;
-            header.style.alignItems = Align.Center;
-            header.style.marginBottom = 10f;
-            var title = new Label("Map");
-            title.style.color = Hex("#3a2f1c");
-            title.style.fontSize = 18f;
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.flexGrow = 1f;
-            header.Add(title);
-            var btnClose = new Button(() => OnClose()) { text = "X" };
-            btnClose.style.backgroundColor = Hex("#ede4ce");
-            btnClose.style.borderTopColor = tan; btnClose.style.borderBottomColor = tan;
-            btnClose.style.borderLeftColor = tan; btnClose.style.borderRightColor = tan;
-            btnClose.style.borderTopWidth = 1f; btnClose.style.borderBottomWidth = 1f;
-            btnClose.style.borderLeftWidth = 1f; btnClose.style.borderRightWidth = 1f;
-            btnClose.style.color = Hex("#3a2f1c");
-            btnClose.style.fontSize = 14f;
-            btnClose.style.height = 26f;
-            btnClose.style.unityFontStyleAndWeight = FontStyle.Bold;
-            header.Add(btnClose);
-            card.Add(header);
-
-            // Minimap surface.
+            // Minimap surface = the whole panel. Cream border, no card chrome.
             _minimapSurface = new VisualElement { name = "minimap-surface" };
+            _minimapSurface.style.width = 320f;
             _minimapSurface.style.height = 240f;
             _minimapSurface.style.backgroundColor = Hex("#ede4ce");
             _minimapSurface.style.borderTopColor = tan; _minimapSurface.style.borderBottomColor = tan;
             _minimapSurface.style.borderLeftColor = tan; _minimapSurface.style.borderRightColor = tan;
-            _minimapSurface.style.borderTopWidth = 1f; _minimapSurface.style.borderBottomWidth = 1f;
-            _minimapSurface.style.borderLeftWidth = 1f; _minimapSurface.style.borderRightWidth = 1f;
-            _minimapSurface.style.borderTopLeftRadius = 6f; _minimapSurface.style.borderTopRightRadius = 6f;
-            _minimapSurface.style.borderBottomLeftRadius = 6f; _minimapSurface.style.borderBottomRightRadius = 6f;
-            _minimapSurface.style.marginBottom = 10f;
-            card.Add(_minimapSurface);
+            _minimapSurface.style.borderTopWidth = 3f; _minimapSurface.style.borderBottomWidth = 3f;
+            _minimapSurface.style.borderLeftWidth = 3f; _minimapSurface.style.borderRightWidth = 3f;
+            _minimapSurface.style.borderTopLeftRadius = 8f; _minimapSurface.style.borderTopRightRadius = 8f;
+            _minimapSurface.style.borderBottomLeftRadius = 8f; _minimapSurface.style.borderBottomRightRadius = 8f;
+            _minimapSurface.style.flexDirection = FlexDirection.Column;
+            _minimapSurface.style.justifyContent = Justify.FlexStart;
+            _minimapSurface.style.alignItems = Align.Stretch;
 
-            // Layer toggles.
-            var layersHeader = new Label("Layers");
-            layersHeader.style.color = Hex("#6b5a3d");
-            layersHeader.style.fontSize = 11f;
-            layersHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-            layersHeader.style.marginBottom = 4f;
-            card.Add(layersHeader);
-
+            // Top-strip layer toggle bar overlay (inside the map square).
             var strip = new VisualElement();
             strip.style.flexDirection = FlexDirection.Row;
-            strip.style.flexWrap = Wrap.Wrap;
+            strip.style.alignItems = Align.Center;
+            strip.style.justifyContent = Justify.SpaceAround;
+            strip.style.backgroundColor = new StyleColor(new Color(0.96f, 0.90f, 0.78f, 0.85f));
+            strip.style.borderBottomColor = tan;
+            strip.style.borderBottomWidth = 1f;
+            strip.style.paddingTop = 4f; strip.style.paddingBottom = 4f;
+            strip.style.paddingLeft = 6f; strip.style.paddingRight = 6f;
 
             _toggleTerrain = new Toggle("Terrain") { name = "toggle-terrain" };
             _toggleZones = new Toggle("Zones") { name = "toggle-zones" };
@@ -227,15 +193,15 @@ namespace Territory.UI.Hosts
             foreach (var t in new[] { _toggleTerrain, _toggleZones, _toggleRoads })
             {
                 t.style.color = Hex("#3a2f1c");
-                t.style.fontSize = 12f;
-                t.style.marginRight = 12f;
+                t.style.fontSize = 11f;
+                t.style.marginRight = 6f;
                 strip.Add(t);
             }
-            card.Add(strip);
+            _minimapSurface.Add(strip);
 
-            _runtimePanel.Add(card);
+            _runtimePanel.Add(_minimapSurface);
             anchorDoc.rootVisualElement.Add(_runtimePanel);
-            Debug.Log("[MapPanelHost] BuildRuntimePanel — programmatic map-panel attached to anchor UIDoc");
+            Debug.Log("[MapPanelHost] BuildRuntimePanel — chrome-less map square attached to anchor UIDoc");
         }
 
         static Color Hex(string h) { ColorUtility.TryParseHtmlString(h, out var c); return c; }
