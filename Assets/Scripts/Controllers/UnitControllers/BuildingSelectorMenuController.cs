@@ -166,7 +166,11 @@ public class BuildingSelectorMenuController : MonoBehaviour
             }
         }
 
-        // Also reset any buttons in the popup panel
+        // Also reset any buttons in the popup panel.
+        // iter-17 (Effort 1 §16.1 fix-up) — popupPanel is a legacy uGUI surface that the
+        // UI Toolkit toolbar has retired; guard against the unassigned inspector ref so
+        // UIManager.ClearCurrentTool no longer throws UnassignedReferenceException.
+        if (popupPanel == null) return;
         var popupButtons = popupPanel.GetComponentsInChildren<Button>();
         foreach (var button in popupButtons)
         {
