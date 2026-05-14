@@ -1,44 +1,44 @@
 /* Panel: toolbar | kind: hud | theme: cream */
-/* Iter-3 — literal hex + real pixel-art sprite icons. */
+/* Iter-4 — sized to match goal A: vertical strip ~92px wide, 2-column 36px tiles. */
 
 .toolbar {
     position: absolute;
-    top: 100px;
-    left: 8px;
-    width: 168px;
+    top: 72px;
+    left: 6px;
+    width: 92px;
     flex-direction: column;
     align-items: center;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 8px;
-    padding: 8px;
+    border-radius: 6px;
+    padding: 6px;
 }
 
 .toolbar__grid {
     flex-direction: row;
     flex-wrap: wrap;
-    width: 152px;
+    width: 80px;
     justify-content: flex-start;
 }
 
 .toolbar__tile {
-    width: 68px;
-    height: 68px;
-    margin: 4px;
+    width: 36px;
+    height: 36px;
+    margin: 2px;
 }
 
 .icon-btn {
     background-color: #ede4ce;
     border-color: #b89b5e;
-    border-width: 2px;
-    border-radius: 6px;
+    border-width: 1px;
+    border-radius: 4px;
     -unity-background-scale-mode: scale-to-fit;
     padding: 0;
     color: #3a2f1c;
 }
 .icon-btn:hover { background-color: #f9efd2; }
-.icon-btn--active { border-color: #5b7fa8; border-width: 3px; }
+.icon-btn--active { border-color: #5b7fa8; border-width: 2px; }
 
 .icon-btn--zone-r       { background-image: url("project://database/Assets/Sprites/Residential/residential-button-64-target.png"); }
 .icon-btn--zone-c       { background-image: url("project://database/Assets/Sprites/Commercial/commercial-button-64-target.png"); }
@@ -52,8 +52,8 @@
 
 .toolbar__active-label {
     color: #6b5a3d;
-    font-size: 11px;
-    margin-top: 6px;
+    font-size: 10px;
+    margin-top: 4px;
     -unity-text-align: lower-center;
     -unity-font-style: bold;
 }

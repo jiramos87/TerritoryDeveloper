@@ -1,20 +1,20 @@
 /* Panel: hud-bar | kind: hud | theme: cream */
-/* Iter-3 — literal hex + real pixel-art sprite icons. */
+/* Iter-4 — sized to match goal A: ~56px tall HUD strip. */
 
 .hud-bar {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
+    top: 6px;
+    left: 6px;
+    right: 6px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 8px;
-    padding: 4px 12px;
-    height: 80px;
+    border-radius: 6px;
+    padding: 2px 8px;
+    height: 56px;
     color: #3a2f1c;
 }
 
@@ -44,48 +44,48 @@
 
 .hud-bar__city-name {
     color: #3a2f1c;
-    font-size: 16px;
+    font-size: 14px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
 
 .hud-bar__stats {
     flex-direction: row;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 .hud-bar__stat {
     color: #3a2f1c;
-    font-size: 12px;
-    margin: 0 8px;
+    font-size: 11px;
+    margin: 0 6px;
 }
 
 .hud-bar__surplus {
     color: #e58c4a;
-    font-size: 11px;
-    margin-top: 2px;
+    font-size: 10px;
+    margin-top: 1px;
 }
 
 .hud-bar__money-tall {
     color: #3a2f1c;
-    font-size: 14px;
+    font-size: 13px;
     -unity-font-style: bold;
-    margin: 0 6px;
+    margin: 0 4px;
 }
 
 .hud-mini-map {
-    width: 48px;
-    height: 48px;
-    margin: 0 6px;
+    width: 40px;
+    height: 40px;
+    margin: 0 4px;
     background-color: #2a2d33;
     border-color: #b89b5e;
     border-width: 1px;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .icon-btn {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     background-color: transparent;
     border-color: #b89b5e;
     border-width: 0;
@@ -93,8 +93,8 @@
     padding: 0;
     margin: 2px;
 }
-.icon-btn:hover  { border-width: 2px; border-color: #b89b5e; background-color: #f9efd2; }
-.icon-btn--active { border-width: 3px; border-color: #5b7fa8; }
+.icon-btn:hover  { border-width: 1px; border-color: #b89b5e; background-color: rgba(249, 239, 210, 0.45); }
+.icon-btn--active { border-width: 2px; border-color: #5b7fa8; }
 
 .icon-btn--pause     { background-image: url("project://database/Assets/Sprites/Buttons/pause-button-1-64-target.png"); }
 .icon-btn--play      { background-image: url("project://database/Assets/Sprites/Buttons/speed-1-button-1-64-target.png"); }
@@ -105,12 +105,13 @@
 .text-btn {
     background-color: #ede4ce;
     border-color: #b89b5e;
-    border-width: 2px;
-    border-radius: 4px;
+    border-width: 1px;
+    border-radius: 3px;
     color: #3a2f1c;
-    padding: 4px 12px;
-    margin: 2px 4px;
-    font-size: 12px;
+    padding: 2px 8px;
+    margin: 1px 2px;
+    font-size: 11px;
     -unity-font-style: bold;
+    height: 22px;
 }
 .text-btn:hover { background-color: #f9efd2; }

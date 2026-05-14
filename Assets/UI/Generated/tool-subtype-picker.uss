@@ -3,14 +3,14 @@
 
 .tool-subtype-picker {
     position: absolute;
-    left: 184px;
-    bottom: 20px;
+    left: 108px;
+    bottom: 16px;
     flex-direction: column;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 10px;
-    padding: 10px;
+    border-radius: 6px;
+    padding: 6px;
     display: none;
 }
 
@@ -24,13 +24,13 @@
 }
 
 .tool-subtype-picker__tier-card {
-    width: 96px;
-    height: 96px;
+    width: 64px;
+    height: 64px;
     background-color: #ede4ce;
     border-color: #b89b5e;
-    border-width: 2px;
-    border-radius: 6px;
-    margin: 4px;
+    border-width: 1px;
+    border-radius: 4px;
+    margin: 3px;
     padding: 0;
     flex-direction: column;
     justify-content: flex-end;
@@ -50,28 +50,28 @@
 
 .tool-subtype-picker__tier-label {
     color: #3a2f1c;
-    font-size: 11px;
+    font-size: 9px;
     -unity-text-align: middle-center;
     -unity-font-style: bold;
     background-color: rgba(245, 230, 200, 0.85);
-    padding: 1px 4px;
-    margin-bottom: 4px;
+    padding: 0 3px;
+    margin-bottom: 2px;
 }
 
-/* zone-r */
-.tool-subtype-picker__tier-card--zone-r-light  { background-image: url("project://database/Assets/Sprites/Residential/light-residential-building-2-128.png"); }
-.tool-subtype-picker__tier-card--zone-r-medium { background-image: url("project://database/Assets/Sprites/Residential/medium-residential-building-2-128.png"); }
-.tool-subtype-picker__tier-card--zone-r-heavy  { background-image: url("project://database/Assets/Sprites/Residential/heavy-residential-building-1-64.png"); }
+/* zone-r — zoning tiles (not buildings — clicking creates a zone, building grows later) */
+.tool-subtype-picker__tier-card--zone-r-light  { background-image: url("project://database/Assets/Sprites/Residential/residential-light-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-r-medium { background-image: url("project://database/Assets/Sprites/Residential/residential-medium-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-r-heavy  { background-image: url("project://database/Assets/Sprites/Residential/residential-heavy-zoning-64.png"); }
 
-/* zone-c */
-.tool-subtype-picker__tier-card--zone-c-light  { background-image: url("project://database/Assets/Sprites/Commercial/light-commercial-building-2-128.png"); }
-.tool-subtype-picker__tier-card--zone-c-medium { background-image: url("project://database/Assets/Sprites/Commercial/commercial-medium-building-64-1.png"); }
-.tool-subtype-picker__tier-card--zone-c-heavy  { background-image: url("project://database/Assets/Sprites/Commercial/dense-commercial-tall.png"); }
+/* zone-c — zoning tiles */
+.tool-subtype-picker__tier-card--zone-c-light  { background-image: url("project://database/Assets/Sprites/Commercial/commercial-light-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-c-medium { background-image: url("project://database/Assets/Sprites/Commercial/commercial-medium-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-c-heavy  { background-image: url("project://database/Assets/Sprites/Commercial/commercial-heavy-zoning-64.png"); }
 
-/* zone-i */
-.tool-subtype-picker__tier-card--zone-i-light  { background-image: url("project://database/Assets/Sprites/Industrial/industrial-light-building-64.png"); }
-.tool-subtype-picker__tier-card--zone-i-medium { background-image: url("project://database/Assets/Sprites/Industrial/medium-industrial-building-1-128.png"); }
-.tool-subtype-picker__tier-card--zone-i-heavy  { background-image: url("project://database/Assets/Sprites/Industrial/heavy-industrial-building-1-192.png"); }
+/* zone-i — zoning tiles */
+.tool-subtype-picker__tier-card--zone-i-light  { background-image: url("project://database/Assets/Sprites/Industrial/industrial-light-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-i-medium { background-image: url("project://database/Assets/Sprites/Industrial/industrial-medium-zoning-64.png"); }
+.tool-subtype-picker__tier-card--zone-i-heavy  { background-image: url("project://database/Assets/Sprites/Industrial/industrial-heavy-zoning-64.png"); }
 
 /* services */
 .tool-subtype-picker__tier-card--services-police  { background-image: url("project://database/Assets/Sprites/Buttons/state-button-64-target.png"); }

@@ -42,6 +42,11 @@ namespace Territory.UI.Hosts
             }
 
             var root = _doc.rootVisualElement;
+            root.style.position = Position.Absolute;
+            root.style.top = 0;
+            root.style.left = 0;
+            root.style.right = 0;
+            root.style.bottom = 0;
             root.SetCompatDataSource(_vm);
 
             _btnContinue = root.Q<Button>("btn-continue");
