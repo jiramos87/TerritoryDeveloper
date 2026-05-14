@@ -1541,6 +1541,12 @@ Z3 actions taken, 6 baselines captured.`
   <td>Effort 2 §17.2 step 3 (modals + gameplay) — final wiring round. <b>PauseMenuHost</b>: blip on Resume / Save / Load / Settings / Exit + Save/Load/Settings back-arrows + Save/Load confirm via <code>BindPauseMenuBlips</code> / <code>UnbindPauseMenuBlips</code>. <b>StatsPanelHost</b>: blip on close (X) + Population / Services / Economy tabs. <b>ZoneManager.DoBuildingPlace</b>: fires <code>BlipEngine.Play(BlipId.ToolBuildingPlace)</code> after <code>PlaceZoneBuildingTile</code> commits — the §17.1 "Zone / building placement" cue. Out-of-scope for this round: MainMenuHost (legacy surface), and distinct PanelOpen / PanelClose / PageFlip / TabSwitch / SpeedClick / PausePress enum rows (catalog rejects unknown BlipIds — postpone until catalog grows; all surfaces collapse onto <code>UiButtonClick</code> for now).</td>
   <td><span class="pill ok">GREEN-COMPILE</span></td>
 </tr>
+
+<tr>
+  <td><b>iter-24</b><br>commit <code>39f8ad59</code></td>
+  <td>User feedback after iter-23. <b>Drop spawn blip:</b> removed the iter-23 <code>BlipEngine.Play(ToolBuildingPlace)</code> from <code>ZoneManager.DoBuildingPlace</code> — per-building cue would become audio mess on large maps (auto-zone tick can spawn dozens per minute). Building spawn is silent again (pre-migration parity). <b>MainMenu scene wiring:</b> <code>MainMenuHost</code> now binds hover + click blips on Continue / New game / Load / Settings / Quit through <code>ToolkitBlipBinder.BindClickAndHover</code> (UiButtonClick + UiButtonHover). New <code>BindMainMenuBlips</code> / <code>UnbindMainMenuBlips</code> helpers fired from OnEnable / OnDisable.</td>
+  <td><span class="pill ok">GREEN-COMPILE</span></td>
+</tr>
 eral hex (H1) in plan-scope .uss.</li>
   <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
   <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
