@@ -33,7 +33,16 @@ namespace Territory.UI.Hosts
             WireCommands();
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.SetCompatDataSource(_vm);
+            {
+                var rootEl = _doc.rootVisualElement;
+                // iter-38 fix — root must be viewport-sized for .map-panel's bottom/right anchors
+                // to resolve correctly. pickingMode=Ignore so the empty root never blocks the world.
+                rootEl.style.position = Position.Absolute;
+                rootEl.style.top = 0; rootEl.style.left = 0;
+                rootEl.style.right = 0; rootEl.style.bottom = 0;
+                rootEl.pickingMode = PickingMode.Ignore;
+                rootEl.SetCompatDataSource(_vm);
+            }
             else
                 Debug.LogWarning("[MapPanelHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
 

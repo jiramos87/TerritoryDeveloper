@@ -26,8 +26,11 @@ namespace Territory.UI.Hosts
         ModalCoordinator _coordinator;
         EconomyManager _economy;
         GrowthBudgetManager _growth;
+        CityStats _cityStats;
 
         Slider _taxR, _taxC, _taxI;
+        Label _treasuryLabel;
+        Label _taxRValue, _taxCValue, _taxIValue;
         Slider _autoRoadSlider, _autoZoneSlider;
         Label _autoRoadLabel, _autoZoneLabel;
 
@@ -40,7 +43,14 @@ namespace Territory.UI.Hosts
             WireCommands();
 
             if (_doc != null && _doc.rootVisualElement != null)
-                _doc.rootVisualElement.SetCompatDataSource(_vm);
+            {
+                var rootEl = _doc.rootVisualElement;
+                rootEl.style.position = Position.Absolute;
+                rootEl.style.top = 0; rootEl.style.left = 0;
+                rootEl.style.right = 0; rootEl.style.bottom = 0;
+                rootEl.pickingMode = PickingMode.Ignore;
+                rootEl.SetCompatDataSource(_vm);
+            }
             else
                 Debug.LogWarning("[BudgetPanelHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
 
@@ -50,13 +60,24 @@ namespace Territory.UI.Hosts
 
             _economy = FindObjectOfType<EconomyManager>();
             _growth = FindObjectOfType<GrowthBudgetManager>();
+            _cityStats = FindObjectOfType<CityStats>();
 
             if (_doc != null && _doc.rootVisualElement != null)
             {
                 var root = _doc.rootVisualElement;
+                _treasuryLabel = root.Q<Label>("treasury");
                 _taxR = root.Q<Slider>("tax-residential");
                 _taxC = root.Q<Slider>("tax-commercial");
                 _taxI = root.Q<Slider>("tax-industrial");
+                // Tax value labels live next to each slider in the same row — Q by class + position.
+                var sections = root.Q<VisualElement>("tax-section");
+                if (sections != null)
+                {
+                    var valueLabels = sections.Query<Label>(className: "budget-panel__row-value").ToList();
+                    if (valueLabels.Count >= 1) _taxRValue = valueLabels[0];
+                    if (valueLabels.Count >= 2) _taxCValue = valueLabels[1];
+                    if (valueLabels.Count >= 3) _taxIValue = valueLabels[2];
+                }
                 if (_taxR != null) _taxR.RegisterValueChangedCallback(OnTaxRChanged);
                 if (_taxC != null) _taxC.RegisterValueChangedCallback(OnTaxCChanged);
                 if (_taxI != null) _taxI.RegisterValueChangedCallback(OnTaxIChanged);
@@ -217,6 +238,15 @@ namespace Territory.UI.Hosts
             }
             GameNotificationManager.Instance?.PostSuccess("Budget applied");
             OnClose();
+        }
+
+        void Update()
+        {
+            if (_treasuryLabel != null && _cityStats != null)
+                _treasuryLabel.text = $"${_cityStats.money:N0}";
+            if (_taxRValue != null && _taxR != null) _taxRValue.text = $"{Mathf.RoundToInt(_taxR.value)}%";
+            if (_taxCValue != null && _taxC != null) _taxCValue.text = $"{Mathf.RoundToInt(_taxC.value)}%";
+            if (_taxIValue != null && _taxI != null) _taxIValue.text = $"{Mathf.RoundToInt(_taxI.value)}%";
         }
 
         void OnCancel()

@@ -18,11 +18,11 @@
     border-color: #b89b5e;
     border-width: 3px;
     border-radius: 12px;
-    padding: 24px 32px;
-    min-width: 480px;
-    max-width: 640px;
+    padding: 24px 28px;
+    width: 540px;
     min-height: 360px;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .budget-panel__header {
@@ -79,6 +79,7 @@
     flex-direction: row;
     align-items: center;
     margin-bottom: 6px;
+    width: 100%;
 }
 
 .budget-panel__row-label {
@@ -90,7 +91,9 @@
 
 .budget-panel__slider {
     flex-grow: 1;
+    flex-shrink: 1;
     margin: 0 8px;
+    max-width: 260px;
 }
 
 .budget-panel__row-value {
