@@ -13,7 +13,6 @@
       <ui:Button name="btn-speed1" class="icon-btn icon-btn--speed1" tooltip="1× Speed"/>
       <ui:Button name="btn-speed2" class="icon-btn icon-btn--speed2" tooltip="2× Speed"/>
       <ui:Button name="btn-speed3" class="icon-btn icon-btn--speed3" tooltip="3× Speed"/>
-      <ui:VisualElement name="hud-mini-map" class="hud-mini-map"/>
     </ui:VisualElement>
     <ui:VisualElement name="hud-bar__center" class="hud-bar__cluster hud-bar__cluster--center">
       <ui:Label name="hud-city-name" class="hud-bar__city-name" text="—"/>
@@ -28,6 +27,7 @@
       <ui:Button name="hud-zoom-out" class="icon-btn icon-btn--zoom-out" tooltip="Zoom Out"/>
       <ui:Label name="hud-money-2" class="hud-bar__money-tall" text="$0"/>
       <ui:Button name="hud-btn-stats" class="icon-btn icon-btn--stats" tooltip="Stats"/>
+      <ui:VisualElement name="hud-mini-map" class="hud-mini-map" tooltip="Mini-map preview (waiting for terrain)"/>
       <ui:Button name="hud-auto" class="text-btn" text="AUTO"/>
       <ui:Button name="hud-map" class="text-btn" text="MAP"/>
       <ui:Button name="hud-budget" class="text-btn" text="BUDGET"/>

@@ -30,6 +30,18 @@ namespace Territory.UI.Hosts
                 rootEl.style.bottom = 0;
                 rootEl.pickingMode = PickingMode.Ignore;
                 rootEl.SetCompatDataSource(_vm);
+
+                // iter-36 fix: Effort 6 moved the mini-map preview onto the HUD slot
+                // + map-panel modal, so this standalone Stage 5.0 surface is dormant.
+                // The inner .mini-map element kept rendering an empty rect at top:50px
+                // right:8px and capturing pointer events over MAP/BUDGET. Hide it +
+                // make it transparent to picks.
+                var mini = rootEl.Q<VisualElement>("mini-map");
+                if (mini != null)
+                {
+                    mini.style.display = DisplayStyle.None;
+                    mini.pickingMode = PickingMode.Ignore;
+                }
             }
             else
                 Debug.LogWarning("[MiniMapHost] UIDocument or rootVisualElement null on enable.");

@@ -22,7 +22,7 @@
     min-width: 620px;
     max-width: 760px;
     max-height: 1280px;
-    min-height: 620px;
+    min-height: 760px;
     flex-direction: column;
 }
 
@@ -87,8 +87,8 @@
     border-radius: 6px;
     margin-bottom: 12px;
     padding: 10px;
-    min-height: 180px;
-    max-height: 180px;
+    min-height: 120px;
+    max-height: 120px;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;

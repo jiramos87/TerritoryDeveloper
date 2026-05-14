@@ -196,9 +196,9 @@ namespace Territory.UI.Hosts
                 _demandBars = new VisualElement { name = "demand-bars" };
                 _demandBars.style.flexDirection = FlexDirection.Row;
                 _demandBars.style.justifyContent = Justify.SpaceAround;
-                _demandBars.style.marginTop = 8f;
-                _demandBars.style.marginBottom = 8f;
-                _demandBars.style.height = 120f;
+                _demandBars.style.marginTop = 4f;
+                _demandBars.style.marginBottom = 4f;
+                _demandBars.style.height = 96f;
                 _chartPop.parent?.Insert(_chartPop.parent.IndexOf(_chartPop) + 1, _demandBars);
             }
             _demandBars.Clear();
@@ -219,7 +219,7 @@ namespace Territory.UI.Hosts
 
             var center = new VisualElement();
             center.style.width = 28f;
-            center.style.height = 96f;
+            center.style.height = 72f;
             center.style.backgroundColor = Hex("#ede4ce");
             center.style.borderTopColor = Hex("#b89b5e"); center.style.borderBottomColor = Hex("#b89b5e");
             center.style.borderLeftColor = Hex("#b89b5e"); center.style.borderRightColor = Hex("#b89b5e");
@@ -231,7 +231,7 @@ namespace Territory.UI.Hosts
             // 50% center line
             var fill = new VisualElement();
             float clamped = Mathf.Clamp(level, -100f, 100f);
-            float halfHeight = 48f; // 96 / 2
+            float halfHeight = 36f; // 72 / 2
             float fillPx = Mathf.Abs(clamped) / 100f * halfHeight;
             fill.style.height = fillPx;
             fill.style.width = 22f;
