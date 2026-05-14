@@ -42,6 +42,7 @@ namespace Territory.UI.Hosts
         Button _btnZoomOut;
         Button _btnAuto;
         Button _btnMap;
+        Button _btnBudget;
         Button _btnStats;
         Button _btnSpeed1, _btnSpeed2, _btnSpeed3;
         VisualElement _miniMap;
@@ -90,6 +91,7 @@ namespace Territory.UI.Hosts
             _btnZoomOut = root.Q<Button>("hud-zoom-out");
             _btnAuto    = root.Q<Button>("hud-auto");
             _btnMap     = root.Q<Button>("hud-map");
+            _btnBudget  = root.Q<Button>("hud-budget");
             _btnStats   = root.Q<Button>("hud-btn-stats");
             _btnSpeed1  = root.Q<Button>("btn-speed1");
             _btnSpeed2  = root.Q<Button>("btn-speed2");
@@ -100,6 +102,7 @@ namespace Territory.UI.Hosts
             if (_btnZoomOut != null) _btnZoomOut.clicked += OnZoomOut;
             if (_btnAuto    != null) _btnAuto.clicked    += OnAuto;
             if (_btnMap     != null) _btnMap.clicked     += OnMap;
+            if (_btnBudget  != null) _btnBudget.clicked  += OnBudget;
             if (_btnStats   != null) _btnStats.clicked   += OnStats;
             if (_btnSpeed1  != null) _btnSpeed1.clicked  += OnSpeed1;
             if (_btnSpeed2  != null) _btnSpeed2.clicked  += OnSpeed2;
@@ -113,14 +116,14 @@ namespace Territory.UI.Hosts
 
         void BindHudBlips()
         {
-            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
+            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnBudget, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
             foreach (var b in btns)
                 ToolkitBlipBinder.BindClickAndHover(b, BlipId.UiButtonClick, BlipId.UiButtonHover);
         }
 
         void UnbindHudBlips()
         {
-            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
+            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnBudget, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
             foreach (var b in btns) ToolkitBlipBinder.UnbindAll(b);
         }
 
@@ -131,6 +134,7 @@ namespace Territory.UI.Hosts
             if (_btnZoomOut != null) _btnZoomOut.clicked -= OnZoomOut;
             if (_btnAuto    != null) _btnAuto.clicked    -= OnAuto;
             if (_btnMap     != null) _btnMap.clicked     -= OnMap;
+            if (_btnBudget  != null) _btnBudget.clicked  -= OnBudget;
             if (_btnStats   != null) _btnStats.clicked   -= OnStats;
             if (_btnSpeed1  != null) _btnSpeed1.clicked  -= OnSpeed1;
             if (_btnSpeed2  != null) _btnSpeed2.clicked  -= OnSpeed2;
@@ -245,6 +249,15 @@ namespace Territory.UI.Hosts
                 _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
                 _vm.AutoMode = _cityStats.simulateGrowth;
             }
+        }
+
+        void OnBudget()
+        {
+            if (_modalCoordinator == null) return;
+            if (_modalCoordinator.IsOpen("budget-panel"))
+                _modalCoordinator.HideMigrated("budget-panel");
+            else
+                _modalCoordinator.Show("budget-panel");
         }
 
         void OnMap()

@@ -30,6 +30,7 @@
       <ui:Button name="hud-btn-stats" class="icon-btn icon-btn--stats" tooltip="Stats"/>
       <ui:Button name="hud-auto" class="text-btn" text="AUTO"/>
       <ui:Button name="hud-map" class="text-btn" text="MAP"/>
+      <ui:Button name="hud-budget" class="text-btn" text="BUDGET"/>
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>
