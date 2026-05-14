@@ -1,13 +1,21 @@
-/* Panel: map-panel | kind: modal | theme: dark */
-/* Stage 4.0 (TECH-32920) — panel + legend tokens */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Panel: map-panel | kind: hud-overlay | theme: cream */
+/* Iter-37 — bottom-right cream card per user QA. Literal hex. Not a centered modal — */
+/* anchors to bottom-right of the viewport so the world stays visible behind it. */
 
 .map-panel {
-    background-color: var(--ds-color-bg-card, #313244);
-    border-radius: var(--ds-radius-lg, 16px);
-    padding: var(--ds-space-xl, 32px);
-    min-width: 360px;
-    max-width: 480px;
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    flex-direction: column;
+}
+
+.map-panel__card {
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
+    border-width: 3px;
+    border-radius: 12px;
+    padding: 16px 18px;
+    width: 360px;
     flex-direction: column;
 }
 
@@ -15,99 +23,67 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--ds-space-md, 12px);
+    margin-bottom: 10px;
 }
 
 .map-panel__title {
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-xl, 24px);
+    color: #3a2f1c;
+    font-size: 18px;
     -unity-font-style: bold;
     flex-grow: 1;
 }
 
 .map-panel__close-btn {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-md, 14px);
-    padding: 4px 8px;
-    border-radius: var(--ds-radius-sm, 4px);
+    background-color: #ede4ce;
+    border-color: #b89b5e;
+    border-width: 1px;
+    color: #3a2f1c;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    height: 26px;
+    -unity-font-style: bold;
 }
+.map-panel__close-btn:hover { background-color: #f9efd2; }
 
-.map-panel__close-btn:hover {
-    color: var(--ds-color-warn, #fab387);
-    border-color: var(--ds-color-warn, #fab387);
-}
-
-/* Minimap surface */
 .map-panel__minimap {
     height: 240px;
-    background-color: var(--ds-color-bg-elev, #181825);
-    border-radius: var(--ds-radius-md, 8px);
-    margin-bottom: var(--ds-space-md, 12px);
-    justify-content: center;
-    align-items: center;
+    background-color: #ede4ce;
+    border-color: #b89b5e;
     border-width: 1px;
-    border-color: var(--ds-color-border, #45475a);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 .map-panel__minimap-label {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
+    color: #6b5a3d;
+    font-size: 11px;
+    -unity-text-align: middle-center;
 }
 
-/* Layer toggles */
 .map-panel__layers {
-    margin-bottom: var(--ds-space-md, 12px);
+    flex-direction: column;
+    margin-bottom: 8px;
 }
 
 .map-panel__layers-header {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
+    color: #6b5a3d;
+    font-size: 11px;
     -unity-font-style: bold;
-    margin-bottom: var(--ds-space-sm, 8px);
+    margin-bottom: 4px;
     letter-spacing: 1px;
 }
 
 .map-panel__layer-strip {
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .map-panel__layer-toggle {
-    margin-right: var(--ds-space-md, 12px);
-    color: var(--ds-color-text-secondary, #a6adc8);
-    font-size: var(--ds-font-size-md, 14px);
-}
-
-/* Zoom controls */
-.map-panel__zoom {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-.map-panel__zoom-btn {
-    background-color: var(--ds-color-bg-elev, #181825);
-    color: var(--ds-color-text-primary, #cdd6f4);
-    border-color: var(--ds-color-border, #45475a);
-    border-width: 1px;
-    border-radius: var(--ds-radius-sm, 4px);
-    padding: 4px 12px;
-    margin-left: var(--ds-space-sm, 8px);
-    font-size: var(--ds-font-size-lg, 18px);
-    -unity-text-align: middle-center;
-}
-
-.map-panel__zoom-btn:hover {
-    border-color: var(--ds-color-primary, #89b4fa);
-    color: var(--ds-color-primary, #89b4fa);
-}
-
-.map-panel__zoom-label {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
-    margin-left: var(--ds-space-sm, 8px);
-    min-width: 40px;
-    -unity-text-align: middle-center;
+    color: #3a2f1c;
+    font-size: 12px;
+    margin-right: 12px;
+    margin-bottom: 2px;
 }

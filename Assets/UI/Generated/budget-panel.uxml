@@ -11,6 +11,7 @@
   <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="budget-panel.uss"/>
   <ui:VisualElement name="budget-panel" class="budget-panel" style="display: none;">
+    <ui:VisualElement name="budget-panel-card" class="budget-panel__card">
     <ui:VisualElement name="header" class="budget-panel__header">
       <ui:Label name="title" class="budget-panel__title" text="City Budget" binding-path="Title"/>
       <ui:Label name="treasury" class="budget-panel__treasury" text="$0" binding-path="Treasury"/>
@@ -41,6 +42,7 @@
     <ui:VisualElement name="actions" class="budget-panel__actions">
       <ui:Button name="btn-apply" class="budget-panel__btn budget-panel__btn--primary" text="Apply" binding-path="ApplyCommand"/>
       <ui:Button name="btn-cancel" class="budget-panel__btn" text="Cancel" binding-path="CancelCommand"/>
+    </ui:VisualElement>
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

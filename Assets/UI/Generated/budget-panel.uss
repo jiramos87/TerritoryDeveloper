@@ -1,14 +1,27 @@
-/* Panel: budget-panel | kind: modal | theme: dark */
-/* Stage 4.0 (TECH-32917) — panel layout + numeric typography tokens */
-/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
-@import url("project://database/Assets/UI/Themes/cream.tss");
+/* Panel: budget-panel | kind: modal | theme: cream */
+/* Iter-37 — cream-card treatment mirroring stats-panel / pause-menu. Literal hex per plan rule. */
 
 .budget-panel {
-    background-color: var(--ds-color-bg-card, #313244);
-    border-radius: var(--ds-radius-lg, 16px);
-    padding: var(--ds-space-xl, 32px);
-    min-width: 360px;
-    max-width: 520px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.budget-panel__card {
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
+    border-width: 3px;
+    border-radius: 12px;
+    padding: 24px 32px;
+    min-width: 480px;
+    max-width: 640px;
+    min-height: 360px;
     flex-direction: column;
 }
 
@@ -16,109 +29,111 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--ds-space-lg, 20px);
+    margin-bottom: 16px;
 }
 
 .budget-panel__title {
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-xl, 24px);
+    color: #3a2f1c;
+    font-size: 22px;
     -unity-font-style: bold;
     flex-grow: 1;
 }
 
 .budget-panel__treasury {
-    color: var(--ds-color-primary, #89b4fa);
-    font-size: var(--ds-font-size-lg, 18px);
+    color: #5b7fa8;
+    font-size: 18px;
     -unity-font-style: bold;
-    margin-right: var(--ds-space-md, 12px);
+    margin-right: 12px;
 }
 
 .budget-panel__close-btn {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-md, 14px);
-    padding: 4px 8px;
-    border-radius: var(--ds-radius-sm, 4px);
+    background-color: #ede4ce;
+    border-color: #b89b5e;
+    border-width: 1px;
+    color: #3a2f1c;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    height: 26px;
+    -unity-font-style: bold;
 }
-
-.budget-panel__close-btn:hover {
-    color: var(--ds-color-warn, #fab387);
-    border-color: var(--ds-color-warn, #fab387);
-}
+.budget-panel__close-btn:hover { background-color: #f9efd2; }
 
 .budget-panel__section {
     flex-direction: column;
-    margin-bottom: var(--ds-space-lg, 20px);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: #b89b5e;
 }
 
 .budget-panel__section-header {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
+    color: #6b5a3d;
+    font-size: 12px;
     -unity-font-style: bold;
-    margin-bottom: var(--ds-space-sm, 8px);
+    margin-bottom: 8px;
     letter-spacing: 1px;
 }
 
 .budget-panel__row {
     flex-direction: row;
     align-items: center;
-    margin-bottom: var(--ds-space-sm, 8px);
+    margin-bottom: 6px;
 }
 
 .budget-panel__row-label {
-    color: var(--ds-color-text-secondary, #a6adc8);
-    font-size: var(--ds-font-size-md, 14px);
-    width: 100px;
+    color: #3a2f1c;
+    font-size: 13px;
+    width: 110px;
     flex-shrink: 0;
 }
 
 .budget-panel__slider {
     flex-grow: 1;
-    margin: 0 var(--ds-space-sm, 8px);
+    margin: 0 8px;
 }
 
 .budget-panel__row-value {
-    color: var(--ds-color-primary, #89b4fa);
-    font-size: var(--ds-font-size-md, 14px);
+    color: #5b7fa8;
+    font-size: 13px;
     -unity-font-style: bold;
-    width: 40px;
+    width: 48px;
     -unity-text-align: middle-right;
     flex-shrink: 0;
 }
 
 .budget-panel__forecast-balance {
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-xl, 24px);
+    color: #3a2f1c;
+    font-size: 20px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    padding: var(--ds-space-md, 12px);
+    padding: 8px;
 }
 
 .budget-panel__actions {
     flex-direction: row;
     justify-content: flex-end;
-    margin-top: var(--ds-space-md, 12px);
+    margin-top: 8px;
 }
 
 .budget-panel__btn {
-    background-color: var(--ds-color-bg-elev, #181825);
-    color: var(--ds-color-text-primary, #cdd6f4);
-    border-color: var(--ds-color-accent-2, #89dceb);
+    background-color: #ede4ce;
+    color: #3a2f1c;
+    border-color: #b89b5e;
     border-width: 1px;
-    border-radius: var(--ds-radius-md, 8px);
-    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
-    margin-left: var(--ds-space-sm, 8px);
-    font-size: var(--ds-font-size-md, 14px);
+    border-radius: 4px;
+    padding: 6px 14px;
+    margin-left: 8px;
+    font-size: 13px;
+    -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
 
 .budget-panel__btn--primary {
-    background-color: var(--ds-color-primary, #89b4fa);
-    color: var(--ds-color-bg-base, #1e1e2e);
-    border-color: var(--ds-color-primary, #89b4fa);
+    background-color: #5b7fa8;
+    color: #f5e6c8;
+    border-color: #5b7fa8;
 }
 
-.budget-panel__btn:hover {
-    border-color: var(--ds-color-accent, #cba6f7);
-}
+.budget-panel__btn:hover { background-color: #f9efd2; }
+.budget-panel__btn--primary:hover { background-color: #7193b7; }
