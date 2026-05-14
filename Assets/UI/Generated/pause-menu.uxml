@@ -10,7 +10,7 @@
   <ui:VisualElement name="pause-menu" class="pause-menu" style="display: none;">
     <ui:VisualElement name="pause-menu-card" class="pause-menu__card">
 
-      <!-- Root view: title + 5 buttons -->
+      <!-- Root view -->
       <ui:VisualElement name="root-view" class="pause-menu__view pause-menu__view--root">
         <ui:Label name="title" class="pause-menu__title" text="PAUSED"/>
         <ui:VisualElement name="buttons" class="pause-menu__buttons">
@@ -29,8 +29,10 @@
           <ui:Label class="pause-menu__sub-title" text="SAVE GAME"/>
         </ui:VisualElement>
         <ui:VisualElement name="save-content" class="pause-menu__sub-content">
-          <ui:Label class="pause-menu__sub-stub" text="Save slots (coming)"/>
-          <ui:Button name="btn-save-new" class="pause-menu__btn pause-menu__btn--primary" text="New save"/>
+          <ui:Label class="pause-menu__field-label" text="Save name"/>
+          <ui:TextField name="save-name-input" class="pause-menu__text-input" value="city_save"/>
+          <ui:Label name="save-status" class="pause-menu__status" text=""/>
+          <ui:Button name="btn-save-confirm" class="pause-menu__btn pause-menu__btn--primary" text="Save"/>
         </ui:VisualElement>
       </ui:VisualElement>
 
@@ -41,7 +43,9 @@
           <ui:Label class="pause-menu__sub-title" text="LOAD GAME"/>
         </ui:VisualElement>
         <ui:VisualElement name="load-content" class="pause-menu__sub-content">
-          <ui:Label class="pause-menu__sub-stub" text="No saves yet"/>
+          <ui:ScrollView name="load-list" class="pause-menu__load-list"/>
+          <ui:Label name="load-status" class="pause-menu__status" text=""/>
+          <ui:Button name="btn-load-confirm" class="pause-menu__btn pause-menu__btn--primary" text="Load"/>
         </ui:VisualElement>
       </ui:VisualElement>
 
@@ -52,7 +56,9 @@
           <ui:Label class="pause-menu__sub-title" text="SETTINGS"/>
         </ui:VisualElement>
         <ui:VisualElement name="settings-content" class="pause-menu__sub-content">
-          <ui:Label class="pause-menu__sub-stub" text="Audio · Display · Accessibility (coming)"/>
+          <ui:Label class="pause-menu__field-label" text="SFX volume"/>
+          <ui:Slider name="sfx-volume-slider" low-value="0" high-value="1" value="1" class="pause-menu__slider"/>
+          <ui:Label name="sfx-volume-value" class="pause-menu__status" text="100%"/>
         </ui:VisualElement>
       </ui:VisualElement>
 

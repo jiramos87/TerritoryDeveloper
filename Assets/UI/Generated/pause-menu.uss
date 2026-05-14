@@ -128,3 +128,81 @@
     margin-bottom: 16px;
     margin-top: 16px;
 }
+
+/* Iter-16..18 — save/load/settings sub-view fields. */
+.pause-menu__field-label {
+    color: #6b5a3a;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    margin-top: 6px;
+}
+
+.pause-menu__text-input {
+    margin-bottom: 12px;
+    min-height: 32px;
+}
+.pause-menu__text-input > .unity-text-element {
+    color: #3a2f1c;
+    font-size: 14px;
+    background-color: #fff8e6;
+    border-color: #b89b5e;
+    border-width: 2px;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.pause-menu__status {
+    color: #6b5a3a;
+    font-size: 11px;
+    margin: 4px 0 8px 0;
+    -unity-font-style: italic;
+}
+
+.pause-menu__load-list {
+    min-height: 220px;
+    max-height: 320px;
+    margin-bottom: 12px;
+    background-color: #fff8e6;
+    border-color: #b89b5e;
+    border-width: 2px;
+    border-radius: 6px;
+}
+
+.pause-menu__load-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: transparent;
+    border-bottom-width: 1px;
+    border-bottom-color: #ddd2b0;
+}
+.pause-menu__load-row:hover { background-color: #f9efd2; }
+.pause-menu__load-row--selected { background-color: #5b7fa8; }
+.pause-menu__load-row--selected > .unity-text-element { color: #f5e6c8; }
+
+.pause-menu__load-row-name {
+    color: #3a2f1c;
+    font-size: 13px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+.pause-menu__load-row-date {
+    color: #6b5a3a;
+    font-size: 11px;
+}
+
+.pause-menu__slider {
+    margin-bottom: 8px;
+    min-height: 24px;
+}
+.pause-menu__slider > .unity-base-slider__tracker {
+    background-color: #d6c79f;
+    border-radius: 4px;
+}
+.pause-menu__slider > .unity-base-slider__dragger {
+    background-color: #5b7fa8;
+    border-color: #b89b5e;
+    border-radius: 6px;
+}

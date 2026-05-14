@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using Territory.Audio;
+using Territory.Economy;
+using Territory.Persistence;
 using Territory.UI.Modals;
 using Territory.UI.ViewModels;
 using UnityEngine;
@@ -7,37 +11,56 @@ namespace Territory.UI.Hosts
 {
     /// <summary>
     /// MonoBehaviour Host — resolves PauseMenuVM and sets UIDocument.rootVisualElement.dataSource.
-    /// Lives on the UIDocument GameObject added in CityScene (sidecar coexistence per Q2).
-    /// Iter-5 — registers with ModalCoordinator so Esc routing via UIManager.HandleEscapePress
-    /// flips display state. Panel content starts hidden (RegisterMigratedPanel default).
     /// Iter-11 (Effort 1 §16.2) — sub-view nav: Save / Load / Settings swap views inside the
     /// cream card; back-arrow returns to root. Esc on sub-view = back; Esc on root = close.
+    /// Iter-16..18 (Effort 1 §16.2 wiring) — Save sub-view writes via GameSaveManager;
+    /// Load sub-view renders save file list + restores via SceneManager+GameStartInfo;
+    /// Settings sub-view exposes SFX volume slider.
     /// </summary>
     public sealed class PauseMenuHost : MonoBehaviour
     {
-        // View slugs.
         const string ViewRoot     = "root";
         const string ViewSave     = "save";
         const string ViewLoad     = "load";
         const string ViewSettings = "settings";
 
+        const string SfxVolumePrefKey = "SfxVolume";
+
         [SerializeField] UIDocument _doc;
+        [SerializeField] GameSaveManager _saveManager;
+        [SerializeField] CityStats _cityStats;
 
         PauseMenuVM _vm;
         ModalCoordinator _coordinator;
 
-        // Root view buttons.
         Button _btnResume, _btnSave, _btnLoad, _btnSettings, _btnExit;
-
-        // Sub-views + back buttons.
         VisualElement _viewRoot, _viewSave, _viewLoad, _viewSettings;
         Button _btnSaveBack, _btnLoadBack, _btnSettingsBack;
-        Button _btnSaveNew;
 
-        // Current visible view (one of: root|save|load|settings).
+        // Save sub-view.
+        TextField _saveNameInput;
+        Button _btnSaveConfirm;
+        Label _saveStatus;
+
+        // Load sub-view.
+        ScrollView _loadList;
+        Label _loadStatus;
+        Button _btnLoadConfirm;
+        readonly List<SaveFileMeta> _slotMetas = new List<SaveFileMeta>();
+        int _selectedLoadIndex = -1;
+
+        // Settings sub-view.
+        Slider _sfxVolumeSlider;
+        Label _sfxVolumeValue;
+
         string _currentView = ViewRoot;
-
         public string CurrentView => _currentView;
+
+        void Awake()
+        {
+            if (_saveManager == null) _saveManager = FindObjectOfType<GameSaveManager>();
+            if (_cityStats   == null) _cityStats   = FindObjectOfType<CityStats>();
+        }
 
         void OnEnable()
         {
@@ -63,7 +86,17 @@ namespace Territory.UI.Hosts
                 _btnSaveBack     = root.Q<Button>("btn-save-back");
                 _btnLoadBack     = root.Q<Button>("btn-load-back");
                 _btnSettingsBack = root.Q<Button>("btn-settings-back");
-                _btnSaveNew      = root.Q<Button>("btn-save-new");
+
+                _saveNameInput   = root.Q<TextField>("save-name-input");
+                _btnSaveConfirm  = root.Q<Button>("btn-save-confirm");
+                _saveStatus      = root.Q<Label>("save-status");
+
+                _loadList        = root.Q<ScrollView>("load-list");
+                _loadStatus      = root.Q<Label>("load-status");
+                _btnLoadConfirm  = root.Q<Button>("btn-load-confirm");
+
+                _sfxVolumeSlider = root.Q<Slider>("sfx-volume-slider");
+                _sfxVolumeValue  = root.Q<Label>("sfx-volume-value");
 
                 if (_btnResume       != null) _btnResume.clicked       += OnResume;
                 if (_btnSave         != null) _btnSave.clicked         += OnSave;
@@ -73,9 +106,12 @@ namespace Territory.UI.Hosts
                 if (_btnSaveBack     != null) _btnSaveBack.clicked     += OnBack;
                 if (_btnLoadBack     != null) _btnLoadBack.clicked     += OnBack;
                 if (_btnSettingsBack != null) _btnSettingsBack.clicked += OnBack;
-                if (_btnSaveNew      != null) _btnSaveNew.clicked      += OnSaveNew;
+                if (_btnSaveConfirm  != null) _btnSaveConfirm.clicked  += OnSaveConfirm;
+                if (_btnLoadConfirm  != null) _btnLoadConfirm.clicked  += OnLoadConfirm;
 
-                // Start at root view (defensive — UXML defaults to display:none on sub-views).
+                if (_sfxVolumeSlider != null)
+                    _sfxVolumeSlider.RegisterValueChangedCallback(OnSfxVolumeChanged);
+
                 SwitchView(ViewRoot);
             }
             else
@@ -88,14 +124,14 @@ namespace Territory.UI.Hosts
 
         void Start()
         {
-            // Iter-7: retry registration when ModalCoordinator is created
-            // by UIManager.Start (runs after Host.OnEnable).
             if (_coordinator == null)
             {
                 _coordinator = FindObjectOfType<ModalCoordinator>();
                 if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
                     _coordinator.RegisterMigratedPanel("pause-menu", _doc.rootVisualElement);
             }
+            if (_saveManager == null) _saveManager = FindObjectOfType<GameSaveManager>();
+            if (_cityStats   == null) _cityStats   = FindObjectOfType<CityStats>();
         }
 
         void OnDisable()
@@ -108,7 +144,9 @@ namespace Territory.UI.Hosts
             if (_btnSaveBack     != null) _btnSaveBack.clicked     -= OnBack;
             if (_btnLoadBack     != null) _btnLoadBack.clicked     -= OnBack;
             if (_btnSettingsBack != null) _btnSettingsBack.clicked -= OnBack;
-            if (_btnSaveNew      != null) _btnSaveNew.clicked      -= OnSaveNew;
+            if (_btnSaveConfirm  != null) _btnSaveConfirm.clicked  -= OnSaveConfirm;
+            if (_btnLoadConfirm  != null) _btnLoadConfirm.clicked  -= OnLoadConfirm;
+            if (_sfxVolumeSlider != null) _sfxVolumeSlider.UnregisterValueChangedCallback(OnSfxVolumeChanged);
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }
@@ -129,15 +167,25 @@ namespace Territory.UI.Hosts
             Time.timeScale = 1f;
         }
 
-        void OnSave()     => SwitchView(ViewSave);
-        void OnLoad()     => SwitchView(ViewLoad);
-        void OnSettings() => SwitchView(ViewSettings);
-        void OnBack()     => SwitchView(ViewRoot);
-
-        void OnSaveNew()
+        void OnSave()
         {
-            Debug.Log("[PauseMenuHost] New save requested (stub — wire SaveManager.SaveCurrentSlot).");
+            PrepareSaveView();
+            SwitchView(ViewSave);
         }
+
+        void OnLoad()
+        {
+            RefreshLoadList();
+            SwitchView(ViewLoad);
+        }
+
+        void OnSettings()
+        {
+            PrepareSettingsView();
+            SwitchView(ViewSettings);
+        }
+
+        void OnBack() => SwitchView(ViewRoot);
 
         void OnExit()
         {
@@ -145,6 +193,139 @@ namespace Territory.UI.Hosts
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
+        // ── Save sub-view ─────────────────────────────────────────────────────
+        void PrepareSaveView()
+        {
+            if (_saveNameInput != null)
+                _saveNameInput.value = BuildDefaultSaveName();
+            if (_saveStatus != null) _saveStatus.text = "";
+        }
+
+        string BuildDefaultSaveName()
+        {
+            string city = _cityStats != null && !string.IsNullOrEmpty(_cityStats.cityName) ? _cityStats.cityName : "city";
+            // Strip whitespace so the resulting filename is safe across platforms.
+            city = city.Replace(' ', '_');
+            return $"{city}_{System.DateTime.Now:yyyyMMdd_HHmmss}";
+        }
+
+        void OnSaveConfirm()
+        {
+            if (_saveManager == null)
+            {
+                if (_saveStatus != null) _saveStatus.text = "Save manager not found in scene.";
+                return;
+            }
+            string name = _saveNameInput != null ? _saveNameInput.value : null;
+            if (string.IsNullOrWhiteSpace(name)) name = BuildDefaultSaveName();
+            try
+            {
+                _saveManager.SaveGame(name);
+                if (_saveStatus != null) _saveStatus.text = $"Saved as “{name}”.";
+            }
+            catch (System.Exception ex)
+            {
+                if (_saveStatus != null) _saveStatus.text = $"Save failed: {ex.Message}";
+                Debug.LogError("[PauseMenuHost] SaveGame threw: " + ex);
+            }
+        }
+
+        // ── Load sub-view ─────────────────────────────────────────────────────
+        void RefreshLoadList()
+        {
+            _slotMetas.Clear();
+            _selectedLoadIndex = -1;
+            if (_loadList == null) return;
+            _loadList.Clear();
+            string dir = Application.persistentDataPath;
+            var metas = GameSaveManager.GetSaveFiles(dir);
+            if (metas == null || metas.Length == 0)
+            {
+                if (_loadStatus != null) _loadStatus.text = "No saves found.";
+                return;
+            }
+            for (int i = 0; i < metas.Length; i++)
+            {
+                int idx = i;
+                _slotMetas.Add(metas[i]);
+                var row = BuildLoadRow(metas[i]);
+                row.RegisterCallback<ClickEvent>(_ => OnLoadRowClicked(idx));
+                _loadList.Add(row);
+            }
+            if (_loadStatus != null) _loadStatus.text = "Pick a save then press Load.";
+        }
+
+        static VisualElement BuildLoadRow(SaveFileMeta meta)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("pause-menu__load-row");
+            var name = new Label(meta.DisplayName);
+            name.AddToClassList("pause-menu__load-row-name");
+            var date = new Label(meta.SortDate.ToString("yyyy-MM-dd HH:mm"));
+            date.AddToClassList("pause-menu__load-row-date");
+            row.Add(name);
+            row.Add(date);
+            return row;
+        }
+
+        void OnLoadRowClicked(int idx)
+        {
+            _selectedLoadIndex = idx;
+            for (int i = 0; i < _loadList.contentContainer.childCount; i++)
+            {
+                var row = _loadList.contentContainer[i];
+                row.EnableInClassList("pause-menu__load-row--selected", i == idx);
+            }
+            if (_loadStatus != null && idx >= 0 && idx < _slotMetas.Count)
+                _loadStatus.text = $"Selected: {_slotMetas[idx].DisplayName}";
+        }
+
+        void OnLoadConfirm()
+        {
+            if (_selectedLoadIndex < 0 || _selectedLoadIndex >= _slotMetas.Count)
+            {
+                if (_loadStatus != null) _loadStatus.text = "Pick a save first.";
+                return;
+            }
+            var meta = _slotMetas[_selectedLoadIndex];
+            GameStartInfo.SetPendingLoadPath(meta.FilePath);
+            Time.timeScale = 1f;
+            // Reload CityScene (build index 1) — boot path consumes pending load.
+            UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+        }
+
+        // ── Settings sub-view ─────────────────────────────────────────────────
+        void PrepareSettingsView()
+        {
+            float v = PlayerPrefs.GetFloat(SfxVolumePrefKey, 1f);
+            if (_sfxVolumeSlider != null) _sfxVolumeSlider.SetValueWithoutNotify(v);
+            ApplySfxVolume(v);
+            UpdateSfxLabel(v);
+        }
+
+        void OnSfxVolumeChanged(ChangeEvent<float> evt)
+        {
+            float v = Mathf.Clamp01(evt.newValue);
+            PlayerPrefs.SetFloat(SfxVolumePrefKey, v);
+            ApplySfxVolume(v);
+            UpdateSfxLabel(v);
+        }
+
+        void UpdateSfxLabel(float v)
+        {
+            if (_sfxVolumeValue != null) _sfxVolumeValue.text = $"{Mathf.RoundToInt(v * 100f)}%";
+        }
+
+        static void ApplySfxVolume(float v)
+        {
+            // Fallback to AudioListener while AudioMixer / Blip routing isn't auto-resolved here.
+            AudioListener.volume = v;
+            // Also publish to the Blip pref key so the engine picks it up on next play.
+            PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, v);
+            PlayerPrefs.Save();
+        }
+
+        // ── View switching ────────────────────────────────────────────────────
         void SwitchView(string view)
         {
             _currentView = view ?? ViewRoot;
@@ -160,11 +341,6 @@ namespace Territory.UI.Hosts
             ve.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        /// <summary>
-        /// Esc routing hook — UIManager.HandleEscapePress calls this before defaulting
-        /// to ModalCoordinator.Close("pause-menu"). Returns true when consumed
-        /// (sub-view → root); false when root is already visible (= bubble to close).
-        /// </summary>
         public bool TryHandleBackButton()
         {
             if (_currentView != ViewRoot)
