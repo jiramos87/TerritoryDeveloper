@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: hover-info | kind: transient | theme: cream -->
+  <!-- Effort 4 (post iter-27) — per-frame cell readout card -->
+  <Style src="hover-info.uss"/>
+  <ui:VisualElement name="hover-info" class="hover-info" picking-mode="Ignore" style="display: none;">
+    <ui:Label name="row-cell"  class="hover-info__row hover-info__row--coord"/>
+    <ui:Label name="row-type"  class="hover-info__row hover-info__row--type"/>
+    <ui:Label name="row-zone"  class="hover-info__row"/>
+    <ui:Label name="row-height" class="hover-info__row"/>
+    <ui:Label name="row-name"  class="hover-info__row hover-info__row--name"/>
+  </ui:VisualElement>
+</ui:UXML>

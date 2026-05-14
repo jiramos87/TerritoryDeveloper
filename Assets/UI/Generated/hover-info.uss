@@ -1,0 +1,26 @@
+/* Panel: hover-info | kind: transient | theme: cream */
+/* Effort 4 (post iter-27) — bottom-right cell readout card, literal hex per plan §21 + §20 hard rule */
+
+.hover-info {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 220px;
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 8px 10px;
+    flex-direction: column;
+}
+
+.hover-info__row {
+    color: #3a2f1c;
+    font-size: 11px;
+    margin-bottom: 2px;
+    white-space: normal;
+}
+
+.hover-info__row--coord { color: #6b5a3d; font-size: 10px; }
+.hover-info__row--type  { -unity-font-style: bold; font-size: 12px; color: #3a2f1c; }
+.hover-info__row--name  { color: #5b7fa8; }
