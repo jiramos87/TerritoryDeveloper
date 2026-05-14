@@ -3,7 +3,8 @@
 
 .toolbar {
     position: absolute;
-    top: 88px;
+    bottom: 100px;
+
     left: 8px;
     width: 116px;
     flex-direction: column;

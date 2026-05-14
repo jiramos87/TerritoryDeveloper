@@ -3,7 +3,8 @@
 
 .tool-subtype-picker {
     position: absolute;
-    left: 132px;
+    left: 8px;
+
     bottom: 16px;
     flex-direction: column;
     background-color: #f5e6c8;

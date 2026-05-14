@@ -32,6 +32,18 @@ namespace Territory.UI.Hosts
             if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
                 _coordinator.RegisterMigratedPanel("stats-panel", _doc.rootVisualElement);
         }
+        void Start()
+        {
+            // Iter-7: retry registration when ModalCoordinator is created
+            // by UIManager.Start (runs after Host.OnEnable).
+            if (_coordinator == null)
+            {
+                _coordinator = FindObjectOfType<ModalCoordinator>();
+                if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
+                    _coordinator.RegisterMigratedPanel("stats-panel", _doc.rootVisualElement);
+            }
+        }
+
 
         void OnDisable()
         {
