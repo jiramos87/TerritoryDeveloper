@@ -64,7 +64,7 @@ For full JSON schemas, MCP server tool catalog, Postgres bridge contracts (B1/B3
 
 Cross-cutting effort: reference spec [`ia/specs/ui-design-system.md`](../ui-design-system.md) (**as-built** baseline + committed [`docs/reports/ui-inventory-as-built-baseline.json`](../../../docs/reports/ui-inventory-as-built-baseline.json) + **Codebase inventory (uGUI)**). **UI-as-code program** umbrella **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) **Recent archive**. **Glossary:** **UI design system (reference spec)**, **UI-as-code program**.
 
-**UI Toolkit overlay flow (iter-43 baseline / DEC-A28 strangler).** The current shipping in-game UI runs on UI Toolkit alongside the legacy uGUI prefab pipeline. Per-panel `*Host` MonoBehaviours (e.g. `HudBarHost`, `BudgetPanelHost`, `MapPanelHost`, `StatsPanelHost`, `PauseMenuHost`, `MainMenuHost`, `NotificationsToastHost`, `HoverInfoHost`, `InfoPanelHost`) live in `Assets/Scripts/UI/Hosts/` and own a `UIDocument` reference whose `sourceAsset` is a `*.uxml` file under `Assets/UI/Generated/`. On `OnEnable` each Host Q-lookups its `VisualElement` children by name (`root.Q<Button>("hud-pause")`), wires `Button.clicked` / `Slider.RegisterValueChangedCallback` / `Toggle.RegisterValueChangedCallback` to gameplay managers via `FindObjectOfType` fallbacks (EconomyManager / GrowthBudgetManager / MiniMapController / CityStats / DemandManager), and registers the panel root with `ModalCoordinator.RegisterMigratedPanel(slug, root)` so HUD button clicks (`HudBarHost.OnBudget`, `OnMap`, `OnStats`) toggle modal display via `_modalCoordinator.Show(slug)` / `HideMigrated(slug)`. Two surfaces are runtime-VE only — `HoverInfoHost` (iter-28) and `MapPanelHost.BuildRuntimePanel` (iter-39 + iter-42 `MiniMapController-Runtime` spawn) — both construct their VisualElement tree programmatically in C# and attach to the proven full-viewport `notifications-toast` UIDocument root (pickingMode=Ignore so the overlay never blocks world clicks). Visual contract: `tools/visual-baseline/golden/` (iter-43 acceptance baseline). Path B reverse-capture explored at [`docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md`](../../../docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md).
+**UI Toolkit overlay flow (current UI baseline / DEC-A28 strangler).** The current shipping in-game UI runs on UI Toolkit alongside the legacy uGUI prefab pipeline. Per-panel `*Host` MonoBehaviours (e.g. `HudBarHost`, `BudgetPanelHost`, `MapPanelHost`, `StatsPanelHost`, `PauseMenuHost`, `MainMenuHost`, `NotificationsToastHost`, `HoverInfoHost`, `InfoPanelHost`) live in `Assets/Scripts/UI/Hosts/` and own a `UIDocument` reference whose `sourceAsset` is a `*.uxml` file under `Assets/UI/Generated/`. On `OnEnable` each Host Q-lookups its `VisualElement` children by name (`root.Q<Button>("hud-pause")`), wires `Button.clicked` / `Slider.RegisterValueChangedCallback` / `Toggle.RegisterValueChangedCallback` to gameplay managers via `FindObjectOfType` fallbacks (EconomyManager / GrowthBudgetManager / MiniMapController / CityStats / DemandManager), and registers the panel root with `ModalCoordinator.RegisterMigratedPanel(slug, root)` so HUD button clicks (`HudBarHost.OnBudget`, `OnMap`, `OnStats`) toggle modal display via `_modalCoordinator.Show(slug)` / `HideMigrated(slug)`. Two surfaces are runtime-VE only — `HoverInfoHost` and `MapPanelHost.BuildRuntimePanel` (with `MiniMapController-Runtime` spawner) — both construct their VisualElement tree programmatically in C# and attach to the proven full-viewport `notifications-toast` UIDocument root (pickingMode=Ignore so the overlay never blocks world clicks). Visual contract: pixel goldens under `tools/visual-baseline/golden/`. Path B reverse-capture explored at [`docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md`](../../../docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md).
 
 ## Water
 
@@ -78,22 +78,22 @@ Where every new sprite, prefab, or audio asset lives in the Unity project. Gover
 
 ```
 Assets/
-  Art/
-    Sprites/
-      UI/
-        Icons/          ← family: ui-icon
-      Terrain/          ← family: terrain-sprite
-      Roads/            ← family: road-sprite
-      Buildings/        ← family: building-sprite
-      Water/            ← family: water-sprite
-    VFX/                ← family: vfx-particle
-  Audio/
-    SFX/                ← family: audio-sfx
-    Music/              ← family: audio-music
-  UI/
-    Prefabs/
-      Generated/        ← family: ui-panel
-        Buttons/        ← family: ui-button
+ Art/
+ Sprites/
+ UI/
+ Icons/ ← family: ui-icon
+ Terrain/ ← family: terrain-sprite
+ Roads/ ← family: road-sprite
+ Buildings/ ← family: building-sprite
+ Water/ ← family: water-sprite
+ VFX/ ← family: vfx-particle
+ Audio/
+ SFX/ ← family: audio-sfx
+ Music/ ← family: audio-music
+ UI/
+ Prefabs/
+ Generated/ ← family: ui-panel
+ Buttons/ ← family: ui-button
 ```
 
 All file stems: `^[a-z0-9]+(-[a-z0-9]+)*$` (kebab-case). Enforced by `validate:asset-tree-canonical`. Full family table + naming regex: [`asset-pipeline-standard.md §Canonical asset paths`](asset-pipeline-standard.md).

@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-14T21:26:43.108Z",
+  "last_generated": "2026-05-14T21:41:49.200Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -752,8 +752,8 @@
           "line_start": 325
         },
         {
-          "section_id": "ui-toolkit-iter-43-baseline",
-          "title": "UI Toolkit (iter-43 baseline)",
+          "section_id": "ui-toolkit-current-ui-baseline",
+          "title": "UI Toolkit (current UI baseline)",
           "depth": 3,
           "line_start": 340
         },
@@ -1724,8 +1724,8 @@
           "line_start": 40
         },
         {
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "title": "Codebase inventory (UI Toolkit overlay — current UI baseline)",
           "depth": 3,
           "line_start": 68
         },

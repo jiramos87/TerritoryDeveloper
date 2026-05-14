@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-05-14T21:26:43.113Z",
+  "last_generated": "2026-05-14T21:41:49.205Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -780,8 +780,8 @@
       "anchor": "docs-ui-toolkit-parity-recovery-plan-html"
     },
     "USS": {
-      "spec_key": "recovery",
-      "anchor": "plan-20-hard-rule"
+      "spec_key": "assets",
+      "anchor": "ui-generated"
     },
     "TSS": {
       "spec_key": "dec-a28",
@@ -792,56 +792,28 @@
       "anchor": "ui-toolkit"
     },
     "UIDocument": {
-      "spec_key": "recovery",
-      "anchor": "plan-15-4"
+      "spec_key": "unity-development-context",
+      "anchor": "ui-toolkit"
     },
     "Host MonoBehaviour": {
       "spec_key": "dec-a28",
-      "anchor": "recovery-plan-15-4"
+      "anchor": "assets-scripts-ui-hosts"
     },
     "ModalCoordinator": {
-      "spec_key": "recovery",
-      "anchor": "plan-15-4"
+      "spec_key": "assets",
+      "anchor": "scripts-ui-modals-modalcoordinator-cs"
     },
     "Runtime VE": {
-      "spec_key": "recovery",
-      "anchor": "plan-15-4-3-tech-34683"
+      "spec_key": "tech-34683",
+      "anchor": "assets-scripts-ui-hosts"
     },
     "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`": {
       "spec_key": "dec-a28",
-      "anchor": "path-b-exploration-seed"
+      "anchor": "docs-explorations-ui-toolkit-emitter-parity-and-db-reverse-capture-md"
     },
-    "iter-43 baseline": {
-      "spec_key": "recovery",
-      "anchor": "plan-15-4-tools-visual-baseline-golden"
-    },
-    "Round-3 effort": {
-      "spec_key": "recovery",
-      "anchor": "plan-20-27"
-    },
-    "Layer toggle button (Zn / Rd / Fr / Ct)": {
-      "spec_key": "recovery",
-      "anchor": "plan-20-4-iter-41"
-    },
-    "Notification toast surface": {
-      "spec_key": "recovery",
-      "anchor": "plan-20"
-    },
-    "Hover-info card": {
-      "spec_key": "recovery",
-      "anchor": "plan-21"
-    },
-    "Cell click inspect panel": {
-      "spec_key": "recovery",
-      "anchor": "plan-22"
-    },
-    "MAP panel (runtime VE)": {
-      "spec_key": "recovery",
-      "anchor": "plan-23-tech-34683"
-    },
-    "Cream theme / dark theme": {
-      "spec_key": "recovery",
-      "anchor": "plan-20-hard-rule-assets-ui-themes-cream-tss"
+    "Current UI baseline": {
+      "spec_key": "tools",
+      "anchor": "visual-baseline-golden"
     },
     "atomization": {
       "spec_key": "docs",

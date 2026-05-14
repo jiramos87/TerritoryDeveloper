@@ -4,41 +4,41 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  UI Layer (legacy uGUI — DEC-A24 prefab bake path)      │
-│  UIManager, CursorManager, GameNotificationManager,     │
-│  all Controllers (buttons, popups, sliders)             │
+│ UI Layer (legacy uGUI — DEC-A24 prefab bake path) │
+│ UIManager, CursorManager, GameNotificationManager, │
+│ all Controllers (buttons, popups, sliders) │
 ├─────────────────────────────────────────────────────────┤
-│  UI Toolkit overlay layer (iter-43 baseline / DEC-A28)  │
-│  Per-panel Host MonoBehaviours: HudBarHost,             │
-│  BudgetPanelHost, MapPanelHost, StatsPanelHost,         │
-│  PauseMenuHost, MainMenuHost, NotificationsToastHost,   │
-│  HoverInfoHost, InfoPanelHost, ToolbarHost,             │
-│  ToolSubtypePickerHost, MiniMapController-Runtime.      │
-│  ModalCoordinator owns Show/HideMigrated routing.       │
+│ UI Toolkit overlay layer (current UI baseline / DEC-A28)│
+│ Per-panel Host MonoBehaviours: HudBarHost, │
+│ BudgetPanelHost, MapPanelHost, StatsPanelHost, │
+│ PauseMenuHost, MainMenuHost, NotificationsToastHost, │
+│ HoverInfoHost, InfoPanelHost, ToolbarHost, │
+│ ToolSubtypePickerHost, MiniMapController-Runtime. │
+│ ModalCoordinator owns Show/HideMigrated routing. │
 ├─────────────────────────────────────────────────────────┤
-│  Simulation Layer                                       │
-│  SimulationManager, AutoRoadBuilder, AutoZoningManager, │
-│  AutoResourcePlanner, GrowthManager, GrowthBudgetMgr,  │
-│  UrbanCentroidService (AUTO roads/zoning rings)         │
+│ Simulation Layer │
+│ SimulationManager, AutoRoadBuilder, AutoZoningManager, │
+│ AutoResourcePlanner, GrowthManager, GrowthBudgetMgr, │
+│ UrbanCentroidService (AUTO roads/zoning rings) │
 ├─────────────────────────────────────────────────────────┤
-│  Gameplay Layer                                         │
-│  ZoneManager, RoadManager, InterstateManager,           │
-│  DemandManager, EconomyManager                          │
+│ Gameplay Layer │
+│ ZoneManager, RoadManager, InterstateManager, │
+│ DemandManager, EconomyManager │
 ├─────────────────────────────────────────────────────────┤
-│  Stats Layer                                            │
-│  CityStats, EmploymentManager, StatisticsManager        │
+│ Stats Layer │
+│ CityStats, EmploymentManager, StatisticsManager │
 ├─────────────────────────────────────────────────────────┤
-│  Terrain Layer                                          │
-│  TerrainManager, WaterManager, HeightMap, WaterMap      │
+│ Terrain Layer │
+│ TerrainManager, WaterManager, HeightMap, WaterMap │
 ├─────────────────────────────────────────────────────────┤
-│  Forests Layer                                          │
-│  ForestManager, ForestMap, Forest, IForest              │
+│ Forests Layer │
+│ ForestManager, ForestMap, Forest, IForest │
 ├─────────────────────────────────────────────────────────┤
-│  Core Layer                                             │
-│  GridManager (hub), Cell, CellData                      │
+│ Core Layer │
+│ GridManager (hub), Cell, CellData │
 ├─────────────────────────────────────────────────────────┤
-│  Persistence Layer                                      │
-│  GameSaveManager, GameManager                           │
+│ Persistence Layer │
+│ GameSaveManager, GameManager │
 └─────────────────────────────────────────────────────────┘
 ```
 

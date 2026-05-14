@@ -65,13 +65,13 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
-### Codebase inventory (UI Toolkit overlay — iter-43 baseline)
+### Codebase inventory (UI Toolkit overlay — current UI baseline)
 
-*Per DEC-A28 strangler, in-game UI runs on UI Toolkit alongside the legacy uGUI prefab stack above. The iter-43 acceptance baseline (recovery plan §15.4, commit `c4ef2a25`) is the current shipping visual contract. Refresh this subsection when the Host catalogue or panel slug list changes.*
+*Per DEC-A28 strangler, in-game UI runs on UI Toolkit alongside the legacy uGUI prefab stack above. Pixel goldens under [`tools/visual-baseline/golden/`](../../tools/visual-baseline/golden/) are the current shipping visual contract. Refresh this subsection when the Host catalogue or panel slug list changes.*
 
 **Stack:** **Unity UI Toolkit** — `UIDocument` Unity component hosts one `*.uxml` asset from `Assets/UI/Generated/`; the runtime tree is `VisualElement` + built-in controls (`Button`, `Label`, `Slider`, `Toggle`, `DropdownField`, `IntegerField`, `TextField`, `ScrollView`). Each panel has a dedicated `*Host` MonoBehaviour under `Assets/Scripts/UI/Hosts/` that owns the UIDocument ref, Q-lookups VEs by name, wires `Button.clicked` / `RegisterValueChangedCallback` to gameplay managers via `FindObjectOfType` fallback, and registers the panel root with `ModalCoordinator` (`Assets/Scripts/UI/Modals/`) for migrated-panel Show/Hide routing.
 
-**Per-panel Host catalogue (iter-43):**
+**Per-panel Host catalogue:**
 
 | Host | UXML / panel slug | Surface | Wiring |
 |------|-------------------|---------|--------|
@@ -79,12 +79,12 @@ Add prefab paths under `Assets/` as they are standardized.
 | `ToolbarHost` | `toolbar.uxml` | Bottom-left tool tiles (zone-r/c/i / services / road / building-power/water / landmark / bulldoze) | `UIManager` tier methods (`OnLightResidentialButtonClicked` etc.) |
 | `ToolSubtypePickerHost` | `tool-subtype-picker.uxml` | 3-card tier picker opened on toolbar subtype tiles | `UIManager`, `ZoneManager` |
 | `PauseMenuHost` | `pause-menu.uxml` | Esc → Resume / Save / Load / Settings / Exit + 3 sub-views (Save / Load / Settings) | `GameSaveManager`, `BlipBootstrap`, `SceneManager` |
-| `StatsPanelHost` | `stats-panel.uxml` | HUD STATS → Population / Services / Economy tabs + chart + 2-col rows + RCI demand bars (iter-31) | `CityStats`, `StatsHistoryRecorder`, `DemandManager` |
-| `BudgetPanelHost` | `budget-panel.uxml` | HUD BUDGET → RCI tax sliders + auto-growth sliders + live treasury (iter-38) | `EconomyManager.SetTaxRate`, `GrowthBudgetManager.SetCategoryPercent`, `CityStats.money` |
-| `MapPanelHost` | `map-panel.uxml` (runtime VE fallback iter-39 + iter-42) | HUD MAP → bottom-right cream square + Zn/Rd/Fr/Ct top-strip toggle row | `MiniMapController.{MapTexture, ToggleLayer}` (spawned at runtime when scene UIDoc missing) |
+| `StatsPanelHost` | `stats-panel.uxml` | HUD STATS → Population / Services / Economy tabs + chart + 2-col rows + RCI demand bars | `CityStats`, `StatsHistoryRecorder`, `DemandManager` |
+| `BudgetPanelHost` | `budget-panel.uxml` | HUD BUDGET → RCI tax sliders + auto-growth sliders + live treasury | `EconomyManager.SetTaxRate`, `GrowthBudgetManager.SetCategoryPercent`, `CityStats.money` |
+| `MapPanelHost` | `map-panel.uxml` (runtime VE fallback when scene UIDoc missing) | HUD MAP → bottom-right cream square + Zn/Rd/Fr/Ct top-strip toggle row | `MiniMapController.{MapTexture, ToggleLayer}` (spawned at runtime when scene UIDoc missing) |
 | `NotificationsToastHost` | `notifications-toast.uxml` | Top-right toast stack (success / warning / error / info) | `GameNotificationManager.Post*` routes through; 2.5s dedupe; max-5 stack |
-| `HoverInfoHost` | runtime VE only (iter-28) | Bottom-right per-frame cell readout (coords / type / occupied / ground H / water surface H) | `GridManager.mouseGridPosition`, `GridManager.GetCell`, `WaterManager.GetWaterMap` |
-| `InfoPanelHost` | `info-panel.uxml` | Left-click on occupied cell → cell inspect modal + Demolish action (iter-29) | `GridManager.selectedPoint` polling, `WorldSelectionResolver`, `GridManager.DemolishAt` |
+| `HoverInfoHost` | runtime VE only | Bottom-right per-frame cell readout (coords / type / occupied / ground H / water surface H) | `GridManager.mouseGridPosition`, `GridManager.GetCell`, `WaterManager.GetWaterMap` |
+| `InfoPanelHost` | `info-panel.uxml` | Left-click on occupied cell → cell inspect modal + Demolish action | `GridManager.selectedPoint` polling, `WorldSelectionResolver`, `GridManager.DemolishAt` |
 | `MainMenuHost` | `main-menu.uxml` | MainMenu scene: Continue / New Game / Load / Settings / Quit + 3 sub-views (Load / Settings / NewGame form) | `GameSaveManager`, `MainMenuController.StartNewGame`, `CityNamePoolService` |
 | `AlertsPanelHost`, `GlossaryPanelHost`, `BuildingInfoHost`, `TooltipHost`, `MiniMapHost`, `MapPanelHost`, `BudgetPanelHost`, `GrowthBudgetPanelHost`, `OnboardingHost`, `NewGameFormHost`, `SaveLoadViewHost`, `SettingsViewHost`, `CityStatsHost`, `ZoneOverlayHost` | Stage 4.0 / 5.0 migration surfaces — registered with `ModalCoordinator` per slug | various |
 
@@ -93,27 +93,27 @@ Add prefab paths under `Assets/` as they are standardized.
 ```
 Assets/UI/
   Generated/
-    {slug}.uxml           ← markup, hand-authored at iter-43; DB-emitted in Path B
-    {slug}.uss            ← per-panel rules, literal hex per plan-scope rule
+    {slug}.uxml           ← markup, hand-authored under the current baseline; DB-emitted in Path B
+    {slug}.uss            ← per-panel rules, literal hex inline
   Themes/
     cream.tss             ← `:root { --ds-color-*: hex }` for cream theme
     dark.tss              ← `:root { --ds-color-*: hex }` for dark theme
 Assets/Scripts/UI/
-  Hosts/{*}Host.cs        ← per-panel MonoBehaviour (owns UIDocument ref + Q-lookups + click wiring)
-  Hosts/ToolkitBlipBinder.cs ← shared hover/click blip binding helper
-  Modals/ModalCoordinator.cs ← migrated-panel Show/HideMigrated facade
-  ViewModels/{*}VM.cs     ← POCO ViewModels with INotifyPropertyChanged (limited compat in Unity 2022)
+  Hosts/{*}Host.cs            ← per-panel MonoBehaviour (owns UIDocument ref + Q-lookups + click wiring)
+  Hosts/ToolkitBlipBinder.cs  ← shared hover/click blip binding helper
+  Modals/ModalCoordinator.cs  ← migrated-panel Show/HideMigrated facade
+  ViewModels/{*}VM.cs         ← POCO ViewModels with INotifyPropertyChanged (limited compat in Unity 2022)
 ```
 
 **Bake state.** `UxmlBakeHandler` + `UxmlEmissionService` (DEC-A28 emitter sidecar at `Assets/Scripts/Editor/Bridge/`) are present but currently shell stubs — `BuildUxml` emits only the outer `<ui:VisualElement>` shell and `BuildUss` only the outer class. `unity:bake-ui` continues to dispatch the legacy `UiBakeHandler` prefab path (DEC-A24). Full DB→UXML/USS round-trip is the Path B work tracked by TECH-34678..TECH-34686 and the exploration seed at [`docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md`](../../docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md).
 
-**Theme rule.** Plan-scope `.uss` files use literal hex inline (no `var(--ds-*)` cascade) per the recovery plan §20 hard rule, so cream-cards render byte-equal without depending on token lookup. `cream.tss` / `dark.tss` are currently hand-authored — TECH-34681 moves them to DB-canonical token emission.
+**Theme rule.** Per-panel `.uss` files use literal hex inline (no `var(--ds-*)` cascade) so cream-cards render byte-equal without depending on token lookup. `cream.tss` / `dark.tss` are currently hand-authored — TECH-34681 moves them to DB-canonical token emission.
 
 **Architectural placement** (see also [`ia/specs/architecture/layers.md`](architecture/layers.md)): UI Toolkit overlay layer sits above the legacy uGUI UI layer; the two co-exist per DEC-A28 strangler. The data-flow narrative lives in [`ia/specs/architecture/data-flows.md §UI / UX design system`](architecture/data-flows.md).
 
-**Visual contract.** Pixel goldens for accepted iter-43 surfaces committed under [`tools/visual-baseline/golden/`](../../tools/visual-baseline/golden/). Any Path B emitter output that diverges from a locked golden is a regression.
+**Visual contract.** Pixel goldens for accepted UI surfaces committed under [`tools/visual-baseline/golden/`](../../tools/visual-baseline/golden/). Any Path B emitter output that diverges from a locked golden is a regression.
 
-**Known pain points.** Per-panel `UIDocument` is not always wired in `CityScene.unity` (e.g. `map-panel-uidoc`, `MiniMapController` were absent before iter-39 + iter-42 runtime-spawn fix). Path B must add a wire-up step + DB schema for runtime-only surfaces (TECH-34683). Host Q-lookups bind to iter-43 disk UXML names which differ from DB `panel_child.slug` values — Path B requires either DB schema rewrite (TECH-34684) or alias support to keep Hosts compiling.
+**Known pain points.** Per-panel `UIDocument` is not always wired in `CityScene.unity` (e.g. `map-panel-uidoc`, `MiniMapController` are absent — covered by `MapPanelHost.Bootstrap` runtime spawn). Path B must add a wire-up step + DB schema for runtime-only surfaces (TECH-34683). Host Q-lookups bind to the current disk UXML element names which differ from DB `panel_child.slug` values — Path B requires either DB schema rewrite (TECH-34684) or alias support to keep Hosts compiling.
 
 ---
 
@@ -348,11 +348,11 @@ Slug convention: `{Concept}-button-64` (e.g. `Residential-button-64`, `Commercia
 - **`PopupType`** (`UIManager.cs`): **LoadGame**, **Details**, **BuildingSelector**, **StatsPanel**, **TaxPanel**.
 - **Shared modal contract:** Surfaces above that participate in the **Esc** stack call **`UIManager.RegisterPopupOpened(PopupType)`** when shown so **`UIManager`** closes **last-opened first** (see **`UIManager.PopupStack`**). Prefer full-screen or panel **Image** **`raycastTarget`** on dimmers so pointer hit tests reach **UI** before the **grid**. **InsufficientFunds** / **Notification** panels follow economy flows; add them to the **Esc** stack only if a future issue wires **`RegisterPopupOpened`** for them.
 - **Representative Canvas paths (city scene):**
-  - **LoadGame** → `Canvas/LoadGameMenuPanel` (+ **Scroll View**)
-  - **BuildingSelector** → `Canvas/ControlPanel/BuildingSelectorPopupPanel`
-  - **Details** → `Canvas/DataPanelButtons/DetailsPanel`
-  - **StatsPanel** → `Canvas/DataPanelButtons/StatsPanel`
-  - **TaxPanel** → `Canvas/DataPanelButtons/TaxPanel`
+ - **LoadGame** → `Canvas/LoadGameMenuPanel` (+ **Scroll View**)
+ - **BuildingSelector** → `Canvas/ControlPanel/BuildingSelectorPopupPanel`
+ - **Details** → `Canvas/DataPanelButtons/DetailsPanel`
+ - **StatsPanel** → `Canvas/DataPanelButtons/StatsPanel`
+ - **TaxPanel** → `Canvas/DataPanelButtons/TaxPanel`
 - **Feedback:** `Canvas/InsufficientFundsPanel`, `Canvas/NotificationPanel` — tied to economy / **Game notification** flows.
 - **Controllers:** e.g. **`DetailsPopupController`**, **`BuildingSelectorMenuController`**, **`DataPopupController`** register with **`UIManager`**.
 
@@ -372,10 +372,10 @@ Slug convention: `{Concept}-button-64` (e.g. `Residential-button-64`, `Commercia
 
 - **Expectation:** Pointer over **UI** should consume events so **camera** / **grid** tools do not fire through panels; **`GridManager`** / **`CameraController`** use **`IsPointerOverGameObject`** patterns.
 - **Scroll wheel vs zoom (checklist):**
-  1. **`CameraController.HandleScrollZoom`** returns early when **`EventSystem.current.IsPointerOverGameObject()`** is true so list scroll does not change **orthographic** zoom.
-  2. **Load Game** list: wheel over **`ScrollRect`** / **Viewport** / **Content** — list scrolls, **map** zoom does not.
-  3. **Building selector** popup: same expectation over its **Scroll View** subtree.
-  4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI**.
+ 1. **`CameraController.HandleScrollZoom`** returns early when **`EventSystem.current.IsPointerOverGameObject()`** is true so list scroll does not change **orthographic** zoom.
+ 2. **Load Game** list: wheel over **`ScrollRect`** / **Viewport** / **Content** — list scrolls, **map** zoom does not.
+ 3. **Building selector** popup: same expectation over its **Scroll View** subtree.
+ 4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI**.
 - **Regression test:** **Play Mode** — open **Load Game**, scroll wheel over save list; open **Building Selector**, scroll over building list; pointer over **map** — zoom still steps.
 - **Touch and keyboard:** **`EventSystem.current.IsPointerOverGameObject()`** without a **finger id** can miss **touch** over **`ScrollRect`**; **`CameraController`** should use the active touch’s **`fingerId`** when present. **WASD** (and right-drag) **camera** movement should also respect **UI** hit tests when a blocking overlay is up — same policy as scroll zoom.
 
@@ -549,7 +549,7 @@ DB-backed publish pass driving every panel through pilot baseline (header-strip 
 
 | entity_id | slug | layout_template | dims (w×h) | token refs | published v |
 |---|---|---|---|---|---|
-| 41  | hud-bar | hstack | top dock | size-text-value (readouts) + size-text-body-row (city-name) | 613 |
+| 41 | hud-bar | hstack | top dock | size-text-value (readouts) + size-text-body-row (city-name) | 613 |
 | 100 | toolbar | (vstack/hstack) | left dock | (no panel_child rows; placeholder publish) | 612 |
 | 175 | main-menu | fullscreen-stack | full screen | size-text-title-display + size-text-body-row | 614 |
 | 199 | new-game-form | modal-card | inherits modal-card | padding-card + corner-radius-card + border-width-card + color-border-accent + gap-section (gap_px=16) | 604 |

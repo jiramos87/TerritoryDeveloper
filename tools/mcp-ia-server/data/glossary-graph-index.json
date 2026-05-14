@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-14T21:26:43.285Z",
+  "last_generated": "2026-05-14T21:41:49.406Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -78,9 +78,9 @@
       "related": [
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme",
-        "Host MonoBehaviour"
+        "Current UI baseline",
+        "Host MonoBehaviour",
+        "ModalCoordinator"
       ],
       "cited_in": []
     },
@@ -874,8 +874,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -1098,8 +1098,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "water-terrain-system",
@@ -1535,8 +1535,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "unity-development-context",
@@ -1584,16 +1584,6 @@
           "section_title": "4.7 MapOverlay *(TBD)*"
         }
       ]
-    },
-    "Cell click inspect panel": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cream theme / dark theme",
-        "Host MonoBehaviour"
-      ],
-      "cited_in": []
     },
     "CellData": {
       "related": [
@@ -2013,15 +2003,21 @@
         }
       ]
     },
-    "Cream theme / dark theme": {
+    "Current UI baseline": {
       "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "Host MonoBehaviour"
+        "ModalCoordinator",
+        "Runtime VE",
+        "TSS"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        }
+      ]
     },
     "Cut-through": {
       "related": [
@@ -2856,8 +2852,8 @@
       "related": [
         "Building",
         "Cell",
-        "RCI",
         "Zone",
+        "RCI",
         "Pollution"
       ],
       "cited_in": [
@@ -3170,18 +3166,8 @@
         "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
-      ],
-      "cited_in": []
-    },
-    "Hover-info card": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
+        "Current UI baseline",
+        "ModalCoordinator"
       ],
       "cited_in": []
     },
@@ -3591,22 +3577,6 @@
         }
       ]
     },
-    "iter-43 baseline": {
-      "related": [
-        "Cascade",
-        "Cell",
-        "ModalCoordinator",
-        "RCI",
-        "Runtime VE"
-      ],
-      "cited_in": [
-        {
-          "spec": "ui-design-system",
-          "section_id": "related-files-code-and-assets",
-          "section_title": "Related files (code and assets)"
-        }
-      ]
-    },
     "Junction": {
       "related": [
         "Cell",
@@ -3801,16 +3771,6 @@
         }
       ]
     },
-    "Layer toggle button (Zn / Rd / Fr / Ct)": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
-      ],
-      "cited_in": []
-    },
     "Legacy save": {
       "related": [
         "Building",
@@ -3979,23 +3939,13 @@
         }
       ]
     },
-    "MAP panel (runtime VE)": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
-      ],
-      "cited_in": []
-    },
     "ModalCoordinator": {
       "related": [
         "Cascade",
         "Cell",
-        "RCI",
         "Runtime VE",
-        "TSS"
+        "TSS",
+        "UIDocument"
       ],
       "cited_in": [
         {
@@ -4005,8 +3955,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         }
       ]
     },
@@ -4109,16 +4059,6 @@
         "Map border",
         "Active scale",
         "baseHeight (terraform)"
-      ],
-      "cited_in": []
-    },
-    "Notification toast surface": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
       ],
       "cited_in": []
     },
@@ -4264,8 +4204,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -4557,8 +4497,8 @@
         "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "CityStatsHandoffAdapter"
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter"
       ],
       "cited_in": []
     },
@@ -4632,9 +4572,9 @@
       "related": [
         "Happiness",
         "Cell",
-        "RCI",
         "Building",
-        "Monthly maintenance"
+        "Monthly maintenance",
+        "RCI"
       ],
       "cited_in": [
         {
@@ -4853,8 +4793,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -5485,23 +5425,13 @@
         }
       ]
     },
-    "Round-3 effort": {
-      "related": [
-        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
-        "Cascade",
-        "Cell",
-        "Cell click inspect panel",
-        "Cream theme / dark theme"
-      ],
-      "cited_in": []
-    },
     "Runtime VE": {
       "related": [
         "Cascade",
         "Cell",
         "ModalCoordinator",
-        "RCI",
-        "TSS"
+        "TSS",
+        "UIDocument"
       ],
       "cited_in": [
         {
@@ -5511,8 +5441,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         }
       ]
     },
@@ -6436,8 +6366,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -6516,8 +6446,8 @@
         "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "CityStatsHandoffAdapter"
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter"
       ],
       "cited_in": []
     },
@@ -6599,8 +6529,8 @@
         "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "CityStatsHandoffAdapter"
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter"
       ],
       "cited_in": []
     },
@@ -6753,8 +6683,8 @@
         "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
         "Cascade",
         "Cell",
-        "Cell click inspect panel",
-        "CityStatsHandoffAdapter"
+        "CityStatsHandoffAdapter",
+        "CityStatsPresenter"
       ],
       "cited_in": []
     },
@@ -6835,8 +6765,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         }
       ]
     },
@@ -6859,10 +6789,10 @@
     "UIDocument": {
       "related": [
         "UXML",
-        "RCI",
         "Cascade",
         "Cell",
-        "ModalCoordinator"
+        "ModalCoordinator",
+        "RCI"
       ],
       "cited_in": [
         {
@@ -6872,8 +6802,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -7046,8 +6976,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         }
       ]
     },
@@ -7075,10 +7005,10 @@
     "UXML": {
       "related": [
         "UIDocument",
-        "RCI",
         "Cascade",
         "Cell",
-        "ModalCoordinator"
+        "ModalCoordinator",
+        "RCI"
       ],
       "cited_in": [
         {
@@ -7088,8 +7018,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -7155,8 +7085,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         }
       ]
     },
@@ -7501,8 +7431,8 @@
         },
         {
           "spec": "ui-design-system",
-          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
-          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+          "section_id": "codebase-inventory-ui-toolkit-overlay-current-ui-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — current UI baseline)"
         },
         {
           "spec": "ui-design-system",
