@@ -1786,6 +1786,59 @@ eral hex (H1) in plan-scope .uss.</li>
   <li><b>Background-session harness gates Edit/Write tools.</b> The harness initially blocked direct edits without EnterWorktree. Because the project rule says single-worktree-only, this required rerouting all writes through Bash + Python heredoc. <i>Lesson: when a harness enforces isolation, surface it to the user — don't silently create a worktree.</i></li>
 </ul>
 
+<h3>15.4 · iter-43 — Effort 3..10 acceptance checkpoint (Round 3)</h3>
+<p>Per QA cycle ending at commit <code>c4ef2a25</code> (Round-3 Effort 3..10 + 9 QA iterations addressing 18 reported issues, all green-compile + visually accepted), Javier marked the recovery <i>"done"</i>. Round-3 scope is the baseline for the next discussion; the HTML plan stays open for next-step authoring.</p>
+
+<div class="grid grid-2">
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-43-checkpoint/Screenshot 2026-05-14 at 4.07.32 PM.png" alt="iter-43 checkpoint 01"/>
+    <div class="cap">iter-43 capture 01 — HUD strip (mini-map slot removed), MAP / BUDGET clickable.</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-43-checkpoint/Screenshot 2026-05-14 at 4.07.52 PM.png" alt="iter-43 checkpoint 02"/>
+    <div class="cap">iter-43 capture 02 — MAP panel bottom-right cream square with Zn/Rd/Fr/Ct toggle strip painting the procedural mini-map.</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-43-checkpoint/Screenshot 2026-05-14 at 4.08.21 PM.png" alt="iter-43 checkpoint 03"/>
+    <div class="cap">iter-43 capture 03 — BUDGET cream-card centered modal with live treasury + RCI tax sliders + auto-growth sliders fit inside the card.</div>
+  </div>
+</div>
+
+<h4>15.4.1 · Round-3 effort summary</h4>
+<table>
+<thead><tr><th style="width:80px">Effort</th><th style="width:80px">First iter</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>3</td><td>iter-27</td><td>Notification toast surface — top-right cream stack, 4 types, click-dismiss, max-5, 2.5s dedupe.</td></tr>
+<tr><td>4</td><td>iter-28</td><td>Hover-info card — per-frame coords/type/zone/height + water surface H readout, anchored above MAP corner.</td></tr>
+<tr><td>5</td><td>iter-29</td><td>Cell click inspect panel — extended InfoPanelHost with click polling + WorldSelectionResolver field bundle + Demolish wiring.</td></tr>
+<tr><td>6</td><td>iter-30</td><td>Mini-map — procedural Texture2D rendered into a chrome-less bottom-right cream square (iter-40), Zn/Rd/Fr/Ct toggles (iter-41), MiniMapController spawn-at-runtime (iter-42), HUD slot retired (iter-43).</td></tr>
+<tr><td>7</td><td>iter-31</td><td>RCI demand bars on Stats Panel — 3 vertical bars below the population line chart, ±100 clamp, signed fill.</td></tr>
+<tr><td>8</td><td>iter-32</td><td>Budget panel — HUD BUDGET button, RCI tax sliders → EconomyManager.SetTaxRate, AUTO road/zoning sliders → GrowthBudgetManager.SetCategoryPercent, live treasury (iter-38), cream-card 540px fixed width (iter-38), auto-growth sliders clamped (iter-39).</td></tr>
+<tr><td>9</td><td>iter-33</td><td>AUTO mode toast — HudBarHost.OnAuto posts success/info toast on toggle; AUTO chain audit confirmed wiring intact since iter-19/20.</td></tr>
+<tr><td>10</td><td>iter-34</td><td>NewGameForm sub-view in MainMenu — 4th sibling sub-view mirror of iter-25 Load/Settings; dropdowns labelled with grid dimensions + budget amounts (iter-35).</td></tr>
+</tbody>
+</table>
+
+<h4>15.4.2 · QA round summary</h4>
+<table>
+<thead><tr><th style="width:80px">QA round</th><th style="width:80px">Iter</th><th>Issues addressed</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>iter-35</td><td>Toast dedupe (5 spam → 1) · hover-info surface H · stats card height · MAP/BUDGET click block (toast UIDoc root pickingMode) · new-game dropdowns labelled.</td></tr>
+<tr><td>2</td><td>iter-36</td><td>Stats card content fit · MAP/BUDGET still blocked → standalone mini-map UIDoc dormant rect · HUD mini-map slot relocated to right cluster.</td></tr>
+<tr><td>3</td><td>iter-37</td><td>BUDGET cream-card treatment · MAP cream-card bottom-right + missing display:none added.</td></tr>
+<tr><td>4</td><td>iter-38</td><td>Budget content overflow · live treasury binding · MAP off-screen (UIDoc root fullscreen + ignore).</td></tr>
+<tr><td>5</td><td>iter-39</td><td>Auto-growth slider overflow · map-panel UIDoc absent → runtime spawn + Debug.Log trace.</td></tr>
+<tr><td>6</td><td>iter-40</td><td>MAP chrome stripped · hover-info lifted above MAP corner.</td></tr>
+<tr><td>7</td><td>iter-41</td><td>Toggle checkboxes → 4 square buttons (Zn/Rd/Fr/Ct) · MiniMapController mapImage gate removed.</td></tr>
+<tr><td>8</td><td>iter-42</td><td>MiniMapController missing in scene → runtime spawn; map texture finally paints.</td></tr>
+<tr><td>9</td><td>iter-43</td><td>HUD mini-map slot removed; bottom-right MAP panel is the single surface.</td></tr>
+</tbody>
+</table>
+
+<h4>15.4.3 · Next steps — paused for discussion</h4>
+<p>Javier signalled the recovery is done at the iter-43 baseline and asked to discuss what comes next before extending the plan. HTML plan intentionally left open.</p>
+
+<!-- =========================================================== -->
 <h4>15.3.3 · Deferred from §17.1 spec</h4>
 <ul>
   <li><b>Distinct BlipIds per UI surface</b> (sfx-panel-open / sfx-page-flip / sfx-tab-switch / sfx-speed-click / sfx-pause / sfx-place-zone / sfx-place-building). Catalog has no patches; postpone until BlipPatch ScriptableObjects authored. All UI surfaces collapse to <code>UiButtonClick</code> + <code>UiButtonHover</code> for now.</li>
