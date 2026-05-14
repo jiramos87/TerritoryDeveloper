@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using Territory.Core;
+using Territory.Terrain;
 using Territory.Zones;
 using Territory.Forests;
 
@@ -25,6 +26,7 @@ namespace Territory.UI.Hosts
         Label _rowName;
 
         GridManager _grid;
+        WaterManager _water;
         UIDocument _anchorDoc;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -44,6 +46,7 @@ namespace Territory.UI.Hosts
         {
             if (_root != null) return;
             _grid = FindObjectOfType<GridManager>();
+            _water = FindObjectOfType<WaterManager>();
             // Pick the first UIDocument whose root is mounted; toast doc is preferred.
             var toast = FindObjectOfType<NotificationsToastHost>();
             if (toast != null)
@@ -137,7 +140,10 @@ namespace Territory.UI.Hosts
             _rowCell.text   = $"Cell ({x}, {y})";
             _rowType.text   = $"Type: {DescribeType(cell)}";
             _rowZone.text   = $"Occupied: {(cell.occupiedBuilding != null || IsZoneBuilding(cell.zoneType) ? "yes" : "no")}";
-            _rowHeight.text = $"Height: {cell.height}";
+            int surfaceH = ResolveSurfaceHeight(x, y, cell);
+            _rowHeight.text = surfaceH != cell.height
+                ? $"Ground: {cell.height}  ·  Surface: {surfaceH}"
+                : $"Height: {cell.height}";
             var bname = cell.GetBuildingName();
             if (!string.IsNullOrEmpty(bname))
             {
@@ -178,6 +184,18 @@ namespace Territory.UI.Hosts
                 return true;
             }
             return false;
+        }
+
+        int ResolveSurfaceHeight(int x, int y, CityCell c)
+        {
+            if (_water == null) _water = FindObjectOfType<WaterManager>();
+            var wm = _water != null ? _water.GetWaterMap() : null;
+            if (wm != null)
+            {
+                int sh = wm.GetSurfaceHeightAt(x, y);
+                if (sh > -1) return sh;
+            }
+            return c != null ? c.height : 0;
         }
 
         static string DescribeType(CityCell c)

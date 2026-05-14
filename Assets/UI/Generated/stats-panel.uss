@@ -21,7 +21,7 @@
     padding: 24px 32px;
     min-width: 620px;
     max-width: 760px;
-    max-height: 920px;
+    max-height: 1280px;
     min-height: 620px;
     flex-direction: column;
 }

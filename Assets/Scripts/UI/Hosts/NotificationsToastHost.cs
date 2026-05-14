@@ -15,6 +15,7 @@ namespace Territory.UI.Hosts
 
         const int MaxVisible = 5;
         const float DefaultDurationSeconds = 3f;
+        const float DedupeWindowSeconds = 2.5f;
 
         public static NotificationsToastHost Instance { get; private set; }
 
@@ -22,6 +23,8 @@ namespace Territory.UI.Hosts
 
         VisualElement _stack;
         readonly List<VisualElement> _live = new List<VisualElement>();
+        string _lastDedupeKey;
+        float _lastDedupeTime;
 
         void OnEnable()
         {
@@ -34,10 +37,18 @@ namespace Territory.UI.Hosts
                 Debug.LogWarning("[NotificationsToastHost] UIDocument or rootVisualElement null on enable.");
                 return;
             }
+            // Effort 3 iter-35 fix: ensure the UIDoc root never blocks HUD clicks.
+            root.pickingMode = PickingMode.Ignore;
+            root.style.position = Position.Absolute;
+            root.style.top = 0; root.style.left = 0; root.style.right = 0; root.style.bottom = 0;
             _stack = root.Q<VisualElement>("toast-stack");
             if (_stack == null)
             {
                 Debug.LogWarning("[NotificationsToastHost] toast-stack VisualElement not found in UXML.");
+            }
+            else
+            {
+                _stack.pickingMode = PickingMode.Ignore;
             }
         }
 
@@ -53,6 +64,13 @@ namespace Territory.UI.Hosts
         {
             if (string.IsNullOrEmpty(message) || _stack == null) return;
             if (durationSeconds <= 0f) durationSeconds = DefaultDurationSeconds;
+
+            // iter-35 fix 1 — drop identical message+kind repeats inside the dedupe window.
+            string key = ((int)kind).ToString() + "|" + message;
+            float now = Time.unscaledTime;
+            if (key == _lastDedupeKey && (now - _lastDedupeTime) < DedupeWindowSeconds) return;
+            _lastDedupeKey = key;
+            _lastDedupeTime = now;
 
             // Evict oldest when over cap.
             while (_live.Count >= MaxVisible)

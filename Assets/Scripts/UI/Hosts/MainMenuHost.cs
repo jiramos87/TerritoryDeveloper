@@ -109,13 +109,24 @@ namespace Territory.UI.Hosts
 
             if (_ngMapSize != null)
             {
-                _ngMapSize.choices = new System.Collections.Generic.List<string> { "small", "medium", "large" };
-                _ngMapSize.value = "medium";
+                _ngMapSize.choices = new System.Collections.Generic.List<string>
+                {
+                    "small - 32x32",
+                    "medium - 64x64",
+                    "large - 128x128",
+                    "XL - 256x256",
+                };
+                _ngMapSize.value = "medium - 64x64";
             }
             if (_ngBudget != null)
             {
-                _ngBudget.choices = new System.Collections.Generic.List<string> { "low", "medium", "high" };
-                _ngBudget.value = "medium";
+                _ngBudget.choices = new System.Collections.Generic.List<string>
+                {
+                    "low - $20,000",
+                    "medium - $40,000",
+                    "high - $100,000",
+                };
+                _ngBudget.value = "medium - $40,000";
             }
             if (_ngReroll != null) _ngReroll.clicked += OnNewGameReroll;
             if (_ngSubmit != null) _ngSubmit.clicked += OnNewGameSubmit;
@@ -196,8 +207,8 @@ namespace Territory.UI.Hosts
             if (_ngCityName != null)
                 _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}";
             if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(1, 99999);
-            if (_ngMapSize != null && string.IsNullOrEmpty(_ngMapSize.value)) _ngMapSize.value = "medium";
-            if (_ngBudget != null && string.IsNullOrEmpty(_ngBudget.value))   _ngBudget.value  = "medium";
+            if (_ngMapSize != null && string.IsNullOrEmpty(_ngMapSize.value)) _ngMapSize.value = "medium - 64x64";
+            if (_ngBudget != null && string.IsNullOrEmpty(_ngBudget.value))   _ngBudget.value  = "medium - $40,000";
         }
 
         void OnNewGameReroll()
@@ -209,8 +220,8 @@ namespace Territory.UI.Hosts
 
         void OnNewGameSubmit()
         {
-            int mapSize = MapSizeStringToInt(_ngMapSize != null ? _ngMapSize.value : "medium");
-            int budget = BudgetStringToInt(_ngBudget != null ? _ngBudget.value : "medium");
+            int mapSize = MapSizeStringToInt(_ngMapSize != null ? _ngMapSize.value : "medium - 64x64");
+            int budget = BudgetStringToInt(_ngBudget != null ? _ngBudget.value : "medium - $40,000");
             string cityName = _ngCityName != null && !string.IsNullOrWhiteSpace(_ngCityName.value)
                 ? _ngCityName.value
                 : (Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}");
@@ -225,8 +236,25 @@ namespace Territory.UI.Hosts
             }
         }
 
-        static int MapSizeStringToInt(string v) { switch (v) { case "small": return 1; case "large": return 3; default: return 2; } }
-        static int BudgetStringToInt(string v)  { switch (v) { case "low":   return 10000; case "high": return 200000; default: return 50000; } }
+        // iter-35 fix 5 — dropdown choices include the actual dimensions/amounts so
+        // players see what the tier resolves to before submitting.
+        static int MapSizeStringToInt(string v)
+        {
+            if (string.IsNullOrEmpty(v)) return 64;
+            if (v.StartsWith("small"))  return 32;
+            if (v.StartsWith("medium")) return 64;
+            if (v.StartsWith("large"))  return 128;
+            if (v.StartsWith("XL"))     return 256;
+            return 64;
+        }
+        static int BudgetStringToInt(string v)
+        {
+            if (string.IsNullOrEmpty(v)) return 40000;
+            if (v.StartsWith("low"))    return 20000;
+            if (v.StartsWith("medium")) return 40000;
+            if (v.StartsWith("high"))   return 100000;
+            return 40000;
+        }
 
         void OnLoad()
         {
