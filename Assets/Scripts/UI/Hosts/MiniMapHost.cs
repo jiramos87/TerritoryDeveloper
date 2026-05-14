@@ -28,6 +28,7 @@ namespace Territory.UI.Hosts
                 rootEl.style.left = 0;
                 rootEl.style.right = 0;
                 rootEl.style.bottom = 0;
+                rootEl.pickingMode = PickingMode.Ignore;
                 rootEl.SetCompatDataSource(_vm);
             }
             else

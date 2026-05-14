@@ -1,20 +1,20 @@
 /* Panel: hud-bar | kind: hud | theme: cream */
-/* Iter-4 — sized to match goal A: ~56px tall HUD strip. */
+/* Iter-5 — ScaleMode=1 (Match W/H), reference 1920×1080. Goal A scaled. */
 
 .hud-bar {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 6px;
-    padding: 2px 8px;
-    height: 56px;
+    border-radius: 8px;
+    padding: 4px 12px;
+    height: 80px;
     color: #3a2f1c;
 }
 
@@ -44,48 +44,48 @@
 
 .hud-bar__city-name {
     color: #3a2f1c;
-    font-size: 14px;
+    font-size: 20px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
 
 .hud-bar__stats {
     flex-direction: row;
-    margin-top: 1px;
+    margin-top: 2px;
 }
 
 .hud-bar__stat {
     color: #3a2f1c;
-    font-size: 11px;
-    margin: 0 6px;
+    font-size: 14px;
+    margin: 0 8px;
 }
 
 .hud-bar__surplus {
     color: #e58c4a;
-    font-size: 10px;
-    margin-top: 1px;
+    font-size: 13px;
+    margin-top: 2px;
 }
 
 .hud-bar__money-tall {
     color: #3a2f1c;
-    font-size: 13px;
+    font-size: 16px;
     -unity-font-style: bold;
-    margin: 0 4px;
+    margin: 0 6px;
 }
 
 .hud-mini-map {
-    width: 40px;
-    height: 40px;
-    margin: 0 4px;
+    width: 56px;
+    height: 56px;
+    margin: 0 8px;
     background-color: #2a2d33;
     border-color: #b89b5e;
     border-width: 1px;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
 .icon-btn {
-    width: 36px;
-    height: 36px;
+    width: 56px;
+    height: 56px;
     background-color: transparent;
     border-color: #b89b5e;
     border-width: 0;
@@ -101,17 +101,21 @@
 .icon-btn--zoom-in   { background-image: url("project://database/Assets/Sprites/Buttons/zoom-in-button-1-64-target.png"); }
 .icon-btn--zoom-out  { background-image: url("project://database/Assets/Sprites/Buttons/zoom-out-button-1-64-target.png"); }
 .icon-btn--stats     { background-image: url("project://database/Assets/Sprites/Buttons/stats-button-64-target.png"); }
+.icon-btn--speed1    { background-image: url("project://database/Assets/Sprites/Buttons/speed-1-button-1-64-target.png"); }
+.icon-btn--speed2    { background-image: url("project://database/Assets/Sprites/Buttons/speed-2-button-1-64-target.png"); }
+.icon-btn--speed3    { background-image: url("project://database/Assets/Sprites/Buttons/speed-3-button-1-64-target.png"); }
 
 .text-btn {
     background-color: #ede4ce;
     border-color: #b89b5e;
     border-width: 1px;
-    border-radius: 3px;
+    border-radius: 4px;
     color: #3a2f1c;
-    padding: 2px 8px;
-    margin: 1px 2px;
-    font-size: 11px;
+    padding: 4px 10px;
+    margin: 2px 4px;
+    font-size: 13px;
     -unity-font-style: bold;
-    height: 22px;
+    height: 30px;
 }
 .text-btn:hover { background-color: #f9efd2; }
+.text-btn--active { border-color: #5b7fa8; border-width: 2px; }

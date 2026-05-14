@@ -1,30 +1,30 @@
 /* Panel: toolbar | kind: hud | theme: cream */
-/* Iter-4 — sized to match goal A: vertical strip ~92px wide, 2-column 36px tiles. */
+/* Iter-5 — 2-col 56px tiles, ScaleMode=1. */
 
 .toolbar {
     position: absolute;
-    top: 72px;
-    left: 6px;
-    width: 92px;
+    top: 104px;
+    left: 8px;
+    width: 132px;
     flex-direction: column;
     align-items: center;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 6px;
-    padding: 6px;
+    border-radius: 8px;
+    padding: 8px;
 }
 
 .toolbar__grid {
     flex-direction: row;
     flex-wrap: wrap;
-    width: 80px;
+    width: 120px;
     justify-content: flex-start;
 }
 
 .toolbar__tile {
-    width: 36px;
-    height: 36px;
+    width: 56px;
+    height: 56px;
     margin: 2px;
 }
 
@@ -52,8 +52,8 @@
 
 .toolbar__active-label {
     color: #6b5a3d;
-    font-size: 10px;
-    margin-top: 4px;
+    font-size: 12px;
+    margin-top: 6px;
     -unity-text-align: lower-center;
     -unity-font-style: bold;
 }

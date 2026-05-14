@@ -47,6 +47,7 @@ namespace Territory.UI.Hosts
             root.style.left = 0;
             root.style.right = 0;
             root.style.bottom = 0;
+            root.pickingMode = PickingMode.Ignore;
             root.SetCompatDataSource(_vm);
 
             _btnContinue = root.Q<Button>("btn-continue");

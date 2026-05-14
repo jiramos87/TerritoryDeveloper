@@ -28,18 +28,20 @@ namespace Territory.UI.Hosts
         string _parentSlug;
         readonly string[] _activeSpriteClasses = new string[3];
 
-        // Mapping parent-tool slug → 3 tier slug+label triples. Plan §6 Phase D2 step 5.
+        // Mapping parent-tool slug → N tier slug+label tuples. Iter-5: variable card count
+        // per parent — show only as many cards as the parent has distinct subtypes.
         struct Tier { public string Slug; public string Label; }
         static readonly Dictionary<string, Tier[]> TiersByParent = new()
         {
             { "zone-r",          new[] { new Tier{ Slug="light", Label="Light" }, new Tier{ Slug="medium", Label="Medium" }, new Tier{ Slug="heavy", Label="Dense" } } },
             { "zone-c",          new[] { new Tier{ Slug="light", Label="Light" }, new Tier{ Slug="medium", Label="Medium" }, new Tier{ Slug="heavy", Label="Dense" } } },
             { "zone-i",          new[] { new Tier{ Slug="light", Label="Light" }, new Tier{ Slug="medium", Label="Medium" }, new Tier{ Slug="heavy", Label="Heavy" } } },
-            { "services",        new[] { new Tier{ Slug="police", Label="Police" }, new Tier{ Slug="fire", Label="Fire" }, new Tier{ Slug="health", Label="Health" } } },
-            { "road",            new[] { new Tier{ Slug="street", Label="Street" }, new Tier{ Slug="avenue", Label="Avenue" }, new Tier{ Slug="highway", Label="Highway" } } },
-            { "building-power",  new[] { new Tier{ Slug="coal", Label="Coal" }, new Tier{ Slug="gas", Label="Gas" }, new Tier{ Slug="solar", Label="Solar" } } },
-            { "building-water",  new[] { new Tier{ Slug="pump", Label="Pump" }, new Tier{ Slug="tower", Label="Tower" }, new Tier{ Slug="treatment", Label="Treatment" } } },
-            { "landmark",        new[] { new Tier{ Slug="park", Label="Park" }, new Tier{ Slug="plaza", Label="Plaza" }, new Tier{ Slug="monument", Label="Monument" } } },
+            // Single-variant families — picker shows just one card with the grid-tile sprite.
+            { "services",        new[] { new Tier{ Slug="default", Label="Service" } } },
+            { "road",            new[] { new Tier{ Slug="default", Label="Road" } } },
+            { "building-power",  new[] { new Tier{ Slug="default", Label="Power" } } },
+            { "building-water",  new[] { new Tier{ Slug="default", Label="Water" } } },
+            { "landmark",        new[] { new Tier{ Slug="default", Label="Forest" } } },
         };
 
         void OnEnable()
@@ -59,6 +61,7 @@ namespace Territory.UI.Hosts
             rootEl.style.left = 0;
             rootEl.style.right = 0;
             rootEl.style.bottom = 0;
+            rootEl.pickingMode = PickingMode.Ignore;
             _root = rootEl.Q<VisualElement>("tool-subtype-picker");
             _doc.rootVisualElement.SetCompatDataSource(_vm);
 
@@ -87,18 +90,17 @@ namespace Territory.UI.Hosts
         {
             _parentSlug = parentSlug;
             if (!TiersByParent.TryGetValue(parentSlug, out var tiers))
+                tiers = new[] { new Tier { Slug = "default", Label = "Place" } };
+
+            var cards  = new[] { _card0,  _card1,  _card2  };
+            var labels = new[] { _label0, _label1, _label2 };
+            for (int i = 0; i < cards.Length; i++)
             {
-                // Default 1-tier "Place" card row when parent has no defined subtypes.
-                tiers = new[]
-                {
-                    new Tier { Slug = "default", Label = "Place" },
-                    new Tier { Slug = "alt-1",   Label = "Alt 1" },
-                    new Tier { Slug = "alt-2",   Label = "Alt 2" },
-                };
+                if (cards[i] == null) continue;
+                bool show = i < tiers.Length;
+                cards[i].style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+                if (show && labels[i] != null) labels[i].text = tiers[i].Label;
             }
-            if (_label0 != null) _label0.text = tiers[0].Label;
-            if (_label1 != null) _label1.text = tiers[1].Label;
-            if (_label2 != null) _label2.text = tiers[2].Label;
             ApplySpriteClasses(parentSlug, tiers);
             ClearActive();
             if (_root != null)
@@ -176,12 +178,12 @@ namespace Territory.UI.Hosts
                 case ("zone-i", "light"):  uim.OnLightIndustrialButtonClicked();   break;
                 case ("zone-i", "medium"): uim.OnMediumIndustrialButtonClicked();  break;
                 case ("zone-i", "heavy"):  uim.OnHeavyIndustrialButtonClicked();   break;
-                case ("services", _):      uim.OnStateServiceZoningButtonClicked(); break;
-                case ("road", _):          uim.OnTwoWayRoadButtonClicked();        break;
-                case ("building-power", _): uim.OnNuclearPowerPlantButtonClicked(); break;
-                case ("building-water", _): uim.OnWaterFamilyButtonClicked();      break;
-                case ("landmark", _):      uim.OnForestsFamilyButtonClicked();     break;
-                case ("bulldoze", _):      uim.OnBulldozeButtonClicked();          break;
+                case ("services", _):       uim.OnStateServiceZoningButtonClicked(); break;
+                case ("road", _):           uim.OnTwoWayRoadButtonClicked();         break;
+                case ("building-power", _): uim.OnNuclearPowerPlantButtonClicked();  break;
+                case ("building-water", _): uim.OnWaterFamilyButtonClicked();        break;
+                case ("landmark", _):       uim.OnForestsFamilyButtonClicked();      break;
+                case ("bulldoze", _):       uim.OnBulldozeButtonClicked();           break;
             }
         }
     }

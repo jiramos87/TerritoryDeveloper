@@ -40,6 +40,7 @@ namespace Territory.UI.Hosts
         Button _btnAuto;
         Button _btnMap;
         Button _btnStats;
+        Button _btnSpeed1, _btnSpeed2, _btnSpeed3;
         VisualElement _miniMap;
 
         void Awake()
@@ -68,6 +69,9 @@ namespace Territory.UI.Hosts
             root.style.left = 0;
             root.style.right = 0;
             root.style.bottom = 0;
+            // Iter-5: pass clicks through the now-fullscreen root to game-world / inner UI
+            // children; .hud-bar element still picks normally.
+            root.pickingMode = PickingMode.Ignore;
             root.SetCompatDataSource(_vm);
 
             _cityNameLbl  = root.Q<Label>("hud-city-name");
@@ -83,6 +87,9 @@ namespace Territory.UI.Hosts
             _btnAuto    = root.Q<Button>("hud-auto");
             _btnMap     = root.Q<Button>("hud-map");
             _btnStats   = root.Q<Button>("hud-btn-stats");
+            _btnSpeed1  = root.Q<Button>("btn-speed1");
+            _btnSpeed2  = root.Q<Button>("btn-speed2");
+            _btnSpeed3  = root.Q<Button>("btn-speed3");
 
             if (_btnPause   != null) _btnPause.clicked   += OnPause;
             if (_btnZoomIn  != null) _btnZoomIn.clicked  += OnZoomIn;
@@ -90,6 +97,9 @@ namespace Territory.UI.Hosts
             if (_btnAuto    != null) _btnAuto.clicked    += OnAuto;
             if (_btnMap     != null) _btnMap.clicked     += OnMap;
             if (_btnStats   != null) _btnStats.clicked   += OnStats;
+            if (_btnSpeed1  != null) _btnSpeed1.clicked  += OnSpeed1;
+            if (_btnSpeed2  != null) _btnSpeed2.clicked  += OnSpeed2;
+            if (_btnSpeed3  != null) _btnSpeed3.clicked  += OnSpeed3;
 
             PushSnapshot();
         }
@@ -102,6 +112,9 @@ namespace Territory.UI.Hosts
             if (_btnAuto    != null) _btnAuto.clicked    -= OnAuto;
             if (_btnMap     != null) _btnMap.clicked     -= OnMap;
             if (_btnStats   != null) _btnStats.clicked   -= OnStats;
+            if (_btnSpeed1  != null) _btnSpeed1.clicked  -= OnSpeed1;
+            if (_btnSpeed2  != null) _btnSpeed2.clicked  -= OnSpeed2;
+            if (_btnSpeed3  != null) _btnSpeed3.clicked  -= OnSpeed3;
 
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
@@ -204,5 +217,9 @@ namespace Territory.UI.Hosts
             else
                 _modalCoordinator.Show("stats-panel");
         }
+
+        void OnSpeed1() { if (_timeManager != null) _timeManager.SetTimeSpeedIndex(1); }
+        void OnSpeed2() { if (_timeManager != null) _timeManager.SetTimeSpeedIndex(2); }
+        void OnSpeed3() { if (_timeManager != null) _timeManager.SetTimeSpeedIndex(3); }
     }
 }

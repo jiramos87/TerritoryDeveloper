@@ -1,3 +1,4 @@
+using Territory.UI.Modals;
 using Territory.UI.ViewModels;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -7,13 +8,15 @@ namespace Territory.UI.Hosts
     /// <summary>
     /// MonoBehaviour Host — resolves PauseMenuVM and sets UIDocument.rootVisualElement.dataSource.
     /// Lives on the UIDocument GameObject added in CityScene (sidecar coexistence per Q2).
-    /// Legacy Canvas + PauseMenuDataAdapter remain alive until Stage 6.0 quarantine plan.
+    /// Iter-5 — registers with ModalCoordinator so Esc routing via UIManager.HandleEscapePress
+    /// flips display state. Panel content starts hidden (RegisterMigratedPanel default).
     /// </summary>
     public sealed class PauseMenuHost : MonoBehaviour
     {
         [SerializeField] UIDocument _doc;
 
         PauseMenuVM _vm;
+        ModalCoordinator _coordinator;
 
         void OnEnable()
         {
@@ -24,6 +27,10 @@ namespace Territory.UI.Hosts
                 _doc.rootVisualElement.SetCompatDataSource(_vm);
             else
                 Debug.LogWarning("[PauseMenuHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
+
+            _coordinator = FindObjectOfType<ModalCoordinator>();
+            if (_coordinator != null && _doc != null && _doc.rootVisualElement != null)
+                _coordinator.RegisterMigratedPanel("pause-menu", _doc.rootVisualElement);
         }
 
         void OnDisable()
@@ -42,7 +49,8 @@ namespace Territory.UI.Hosts
 
         void OnResume()
         {
-            gameObject.SetActive(false);
+            if (_coordinator != null)
+                _coordinator.HideMigrated("pause-menu");
             Time.timeScale = 1f;
         }
 
