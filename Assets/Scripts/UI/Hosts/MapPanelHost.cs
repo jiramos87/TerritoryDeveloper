@@ -81,6 +81,12 @@ namespace Territory.UI.Hosts
             }
 
             if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>();
+            if (_miniMapController == null)
+            {
+                Debug.Log("[MapPanelHost] MiniMapController missing in scene — spawning runtime instance");
+                var ctrlGo = new GameObject("MiniMapController-Runtime");
+                _miniMapController = ctrlGo.AddComponent<MiniMapController>();
+            }
 
             if (_doc != null && _doc.rootVisualElement != null)
             {
@@ -105,13 +111,22 @@ namespace Territory.UI.Hosts
 
         void Update()
         {
-            if (_minimapSurface == null || _miniMapController == null) return;
+            if (_minimapSurface == null) return;
+            if (_miniMapController == null) _miniMapController = FindObjectOfType<MiniMapController>();
+            if (_miniMapController == null) return;
             _refreshFrame++;
             if (_refreshFrame < 30) return;
             _refreshFrame = 0;
             _miniMapController.RebuildTexture();
             var tex = _miniMapController.MapTexture;
-            if (tex != null) _minimapSurface.style.backgroundImage = new StyleBackground(tex);
+            if (tex != null)
+            {
+                _minimapSurface.style.backgroundImage = new StyleBackground(tex);
+            }
+            else
+            {
+                Debug.Log("[MapPanelHost] Update — MiniMapController.MapTexture still null (grid not initialized?)");
+            }
         }
 
         void OnLayerChanged(ChangeEvent<bool> _)
