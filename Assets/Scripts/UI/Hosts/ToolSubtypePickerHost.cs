@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Territory.Audio;
 using Territory.UI.Modals;
 using Territory.UI.ViewModels;
 using UnityEngine;
@@ -76,11 +77,19 @@ namespace Territory.UI.Hosts
             if (_card1 != null) _card1.clicked += () => OnTierPicked(1);
             if (_card2 != null) _card2.clicked += () => OnTierPicked(2);
 
+            // iter-22 (Effort 2) — hover + click blips on each tier card.
+            ToolkitBlipBinder.BindClickAndHover(_card0, BlipId.UiButtonClick, BlipId.UiButtonHover);
+            ToolkitBlipBinder.BindClickAndHover(_card1, BlipId.UiButtonClick, BlipId.UiButtonHover);
+            ToolkitBlipBinder.BindClickAndHover(_card2, BlipId.UiButtonClick, BlipId.UiButtonHover);
+
             Hide();
         }
 
         void OnDisable()
         {
+            ToolkitBlipBinder.UnbindAll(_card0);
+            ToolkitBlipBinder.UnbindAll(_card1);
+            ToolkitBlipBinder.UnbindAll(_card2);
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }

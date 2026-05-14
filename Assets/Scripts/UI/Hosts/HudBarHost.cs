@@ -1,3 +1,4 @@
+using Territory.Audio;
 using Territory.Economy;
 using Territory.Timing;
 using Territory.UI.Modals;
@@ -101,7 +102,23 @@ namespace Territory.UI.Hosts
             if (_btnSpeed2  != null) _btnSpeed2.clicked  += OnSpeed2;
             if (_btnSpeed3  != null) _btnSpeed3.clicked  += OnSpeed3;
 
+            // iter-22 (Effort 2) — hover + click blips on every HUD button.
+            BindHudBlips();
+
             PushSnapshot();
+        }
+
+        void BindHudBlips()
+        {
+            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
+            foreach (var b in btns)
+                ToolkitBlipBinder.BindClickAndHover(b, BlipId.UiButtonClick, BlipId.UiButtonHover);
+        }
+
+        void UnbindHudBlips()
+        {
+            var btns = new[] { _btnPause, _btnZoomIn, _btnZoomOut, _btnAuto, _btnMap, _btnStats, _btnSpeed1, _btnSpeed2, _btnSpeed3 };
+            foreach (var b in btns) ToolkitBlipBinder.UnbindAll(b);
         }
 
         void OnDisable()
@@ -115,6 +132,8 @@ namespace Territory.UI.Hosts
             if (_btnSpeed1  != null) _btnSpeed1.clicked  -= OnSpeed1;
             if (_btnSpeed2  != null) _btnSpeed2.clicked  -= OnSpeed2;
             if (_btnSpeed3  != null) _btnSpeed3.clicked  -= OnSpeed3;
+
+            UnbindHudBlips();
 
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);

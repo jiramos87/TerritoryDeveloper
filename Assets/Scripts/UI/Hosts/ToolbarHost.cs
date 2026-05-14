@@ -1,3 +1,4 @@
+using Territory.Audio;
 using Territory.UI.Modals;
 using Territory.UI.ViewModels;
 using UnityEngine;
@@ -69,11 +70,14 @@ namespace Territory.UI.Hosts
                 if (btn == null) continue;
                 _btns[slug] = btn;
                 btn.clicked += () => OnToolSelected(slug);
+                // iter-22 (Effort 2) — hover + click blips per tile.
+                ToolkitBlipBinder.BindClickAndHover(btn, BlipId.UiButtonClick, BlipId.UiButtonHover);
             }
         }
 
         void OnDisable()
         {
+            foreach (var kv in _btns) ToolkitBlipBinder.UnbindAll(kv.Value);
             _btns.Clear();
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
