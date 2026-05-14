@@ -62,9 +62,25 @@ public class TimeManager : MonoBehaviour
             statsHistoryRecorder = FindObjectOfType<Territory.Simulation.StatsHistoryRecorder>();
     }
 
+    // iter-19 — default to 1.0× (index 2) the first frame after geography is initialized,
+    // so a fresh new-game start isn't stuck at index 0 (paused) and the day tick actually
+    // runs PlaceAllZonedBuildings (the building-growth pump). Players can still pause / change
+    // speed via the HUD time-control buttons.
+    bool _initialSpeedApplied;
+
     void Update()
     {
         HandleOnKeyInput();
+
+        if (!_initialSpeedApplied && geographyManager != null && geographyManager.IsInitialized)
+        {
+            if (currentTimeSpeedIndex == 0)
+            {
+                Debug.Log("[TimeManager] Auto-starting at speed 1.0× (index 2) — geography initialized + still paused.");
+                SetTimeSpeedIndex(2);
+            }
+            _initialSpeedApplied = true;
+        }
 
         timeElapsed += UnityEngine.Time.deltaTime * timeMultiplier;
 
