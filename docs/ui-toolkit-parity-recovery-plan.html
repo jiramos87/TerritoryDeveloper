@@ -1463,6 +1463,12 @@ Z3 actions taken, 6 baselines captured.`
   <td>Effort 1 §16.1 — toolbar tile pre-arm default subtype. <code>ToolbarHost.OnToolSelected</code> now calls a <code>PreArmDefault(parentSlug)</code> dispatch BEFORE opening the picker (zone-r→<code>OnLightResidentialButtonClicked</code>, zone-c→<code>OnLightCommercialButtonClicked</code>, zone-i→<code>OnLightIndustrialButtonClicked</code>, services→<code>OnStateServiceZoningButtonClicked</code>, road→<code>OnTwoWayRoadButtonClicked</code>, building-power→<code>OnNuclearPowerPlantButtonClicked</code>, building-water→<code>OnMediumWaterPumpPlantButtonClicked</code>, landmark→<code>OnSparseForestButtonClicked</code>, bulldoze→<code>OnBulldozeButtonClicked</code>). Player can place immediately after a single tile click; picker tier confirm still re-applies the chosen tier.</td>
   <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting Javier's in-Editor visual + functional check for iter-10 acceptance.</td>
 </tr>
+
+<tr>
+  <td><b>iter-11</b><br>commit <code>c46bf86f</code></td>
+  <td>Effort 1 §16.2 — pause-menu sub-view nav. UXML restructured: root view + 3 sub-views (<code>save-view</code> / <code>load-view</code> / <code>settings-view</code>) share the cream card surface. New Load button between Save and Settings. Each sub-view has a back-arrow top-left + sub-title + stub content. <code>PauseMenuHost.SwitchView</code> manages class toggle; <code>PauseMenuHost.TryHandleBackButton</code> exposed for Esc routing. <code>UIManager.HandleEscapePress</code> now consults <code>PauseMenuHost</code> first (Esc on sub-view = back; Esc on root = close).</td>
+  <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor visual + functional check.</td>
+</tr>
 eral hex (H1) in plan-scope .uss.</li>
   <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
   <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
