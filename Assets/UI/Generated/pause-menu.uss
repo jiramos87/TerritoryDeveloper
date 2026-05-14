@@ -66,3 +66,65 @@
 .pause-menu__btn:hover {
     background-color: #f9efd2;
 }
+
+/* Iter-11 (Effort 1 §16.2) — sub-view nav: root view + 3 sub-views share the card surface. */
+.pause-menu__view {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.pause-menu__view--sub {
+    min-width: 360px;
+    min-height: 280px;
+}
+
+.pause-menu__sub-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.pause-menu__back-arrow {
+    background-color: #ede4ce;
+    color: #3a2f1c;
+    border-color: #b89b5e;
+    border-width: 2px;
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-right: 12px;
+    padding: 0;
+}
+
+.pause-menu__back-arrow:hover {
+    background-color: #f9efd2;
+}
+
+.pause-menu__sub-title {
+    color: #3a2f1c;
+    font-size: 22px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    letter-spacing: 4px;
+    flex-grow: 1;
+}
+
+.pause-menu__sub-content {
+    flex-direction: column;
+    align-items: stretch;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.pause-menu__sub-stub {
+    color: #6b5a3a;
+    font-size: 14px;
+    -unity-text-align: middle-center;
+    margin-bottom: 16px;
+    margin-top: 16px;
+}

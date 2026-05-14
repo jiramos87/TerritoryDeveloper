@@ -9,13 +9,53 @@
   <Style src="pause-menu.uss"/>
   <ui:VisualElement name="pause-menu" class="pause-menu" style="display: none;">
     <ui:VisualElement name="pause-menu-card" class="pause-menu__card">
-      <ui:Label name="title" class="pause-menu__title" text="PAUSED"/>
-      <ui:VisualElement name="buttons" class="pause-menu__buttons">
-        <ui:Button name="btn-resume" class="pause-menu__btn pause-menu__btn--primary" text="Resume"/>
-        <ui:Button name="btn-save" class="pause-menu__btn" text="Save game"/>
-        <ui:Button name="btn-settings" class="pause-menu__btn" text="Settings"/>
-        <ui:Button name="btn-exit" class="pause-menu__btn pause-menu__btn--danger" text="Exit to main menu"/>
+
+      <!-- Root view: title + 5 buttons -->
+      <ui:VisualElement name="root-view" class="pause-menu__view pause-menu__view--root">
+        <ui:Label name="title" class="pause-menu__title" text="PAUSED"/>
+        <ui:VisualElement name="buttons" class="pause-menu__buttons">
+          <ui:Button name="btn-resume"   class="pause-menu__btn pause-menu__btn--primary" text="Resume"/>
+          <ui:Button name="btn-save"     class="pause-menu__btn" text="Save game"/>
+          <ui:Button name="btn-load"     class="pause-menu__btn" text="Load game"/>
+          <ui:Button name="btn-settings" class="pause-menu__btn" text="Settings"/>
+          <ui:Button name="btn-exit"     class="pause-menu__btn pause-menu__btn--danger" text="Exit to main menu"/>
+        </ui:VisualElement>
       </ui:VisualElement>
+
+      <!-- Save sub-view -->
+      <ui:VisualElement name="save-view" class="pause-menu__view pause-menu__view--sub" style="display: none;">
+        <ui:VisualElement class="pause-menu__sub-header">
+          <ui:Button name="btn-save-back" class="pause-menu__back-arrow" text="&lt;"/>
+          <ui:Label class="pause-menu__sub-title" text="SAVE GAME"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="save-content" class="pause-menu__sub-content">
+          <ui:Label class="pause-menu__sub-stub" text="Save slots (coming)"/>
+          <ui:Button name="btn-save-new" class="pause-menu__btn pause-menu__btn--primary" text="New save"/>
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Load sub-view -->
+      <ui:VisualElement name="load-view" class="pause-menu__view pause-menu__view--sub" style="display: none;">
+        <ui:VisualElement class="pause-menu__sub-header">
+          <ui:Button name="btn-load-back" class="pause-menu__back-arrow" text="&lt;"/>
+          <ui:Label class="pause-menu__sub-title" text="LOAD GAME"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="load-content" class="pause-menu__sub-content">
+          <ui:Label class="pause-menu__sub-stub" text="No saves yet"/>
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- Settings sub-view -->
+      <ui:VisualElement name="settings-view" class="pause-menu__view pause-menu__view--sub" style="display: none;">
+        <ui:VisualElement class="pause-menu__sub-header">
+          <ui:Button name="btn-settings-back" class="pause-menu__back-arrow" text="&lt;"/>
+          <ui:Label class="pause-menu__sub-title" text="SETTINGS"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="settings-content" class="pause-menu__sub-content">
+          <ui:Label class="pause-menu__sub-stub" text="Audio · Display · Accessibility (coming)"/>
+        </ui:VisualElement>
+      </ui:VisualElement>
+
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

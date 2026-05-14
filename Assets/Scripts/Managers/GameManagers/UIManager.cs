@@ -549,6 +549,9 @@ public partial class UIManager : MonoBehaviour
             // Only when root visible does Esc close the modal.
             if (modalCoord.IsOpen("pause-menu"))
             {
+                // Iter-11 (Effort 1 §16.2) — migrated pause-menu sub-view back-arrow first.
+                var pauseHost = FindObjectOfType<Territory.UI.Hosts.PauseMenuHost>();
+                if (pauseHost != null && pauseHost.TryHandleBackButton()) return;
                 var pauseAdapter = FindObjectOfType<Territory.UI.Modals.PauseMenuDataAdapter>();
                 if (pauseAdapter != null && pauseAdapter.TryHandleBackButton()) return;
             }
