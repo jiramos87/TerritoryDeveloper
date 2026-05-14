@@ -1,4 +1,5 @@
 using System.IO;
+using Territory.Audio;
 using Territory.Persistence;
 using Territory.UI.ViewModels;
 using UnityEngine;
@@ -63,6 +64,9 @@ namespace Territory.UI.Hosts
             if (_btnSettings != null) _btnSettings.clicked += OnSettings;
             if (_btnQuit != null) _btnQuit.clicked += OnQuit;
 
+            // iter-24 (Effort 2) — hover + click blips on every MainMenu button.
+            BindMainMenuBlips();
+
             // Continue is only meaningful when a recent save exists.
             if (_btnContinue != null && string.IsNullOrEmpty(ResolveMostRecentSavePath()))
                 _btnContinue.AddToClassList("hidden");
@@ -77,8 +81,22 @@ namespace Territory.UI.Hosts
             if (_btnLoad != null) _btnLoad.clicked -= OnLoad;
             if (_btnSettings != null) _btnSettings.clicked -= OnSettings;
             if (_btnQuit != null) _btnQuit.clicked -= OnQuit;
+            UnbindMainMenuBlips();
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
+        }
+
+        void BindMainMenuBlips()
+        {
+            var btns = new[] { _btnContinue, _btnNewGame, _btnLoad, _btnSettings, _btnQuit };
+            foreach (var b in btns)
+                ToolkitBlipBinder.BindClickAndHover(b, BlipId.UiButtonClick, BlipId.UiButtonHover);
+        }
+
+        void UnbindMainMenuBlips()
+        {
+            var btns = new[] { _btnContinue, _btnNewGame, _btnLoad, _btnSettings, _btnQuit };
+            foreach (var b in btns) ToolkitBlipBinder.UnbindAll(b);
         }
 
         void OnContinue()
