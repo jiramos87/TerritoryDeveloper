@@ -164,17 +164,31 @@ namespace Territory.UI.Hosts
 
             if (_btnAuto != null)
                 _btnAuto.EnableInClassList("text-btn--active", _vm.AutoMode);
+
+            // Iter-13 (Effort 1 §16.4) — mirror active speed on speed1/2/3 + pause buttons.
+            int idx = _timeManager != null ? _timeManager.CurrentTimeSpeedIndex : -1;
+            if (_btnPause  != null) _btnPause.EnableInClassList("icon-btn--active",  idx == 0);
+            if (_btnSpeed1 != null) _btnSpeed1.EnableInClassList("icon-btn--active", idx == 1);
+            if (_btnSpeed2 != null) _btnSpeed2.EnableInClassList("icon-btn--active", idx == 2);
+            if (_btnSpeed3 != null) _btnSpeed3.EnableInClassList("icon-btn--active", idx == 3);
         }
+
+        // Iter-13 (Effort 1 §16.4) — pause button now toggles speed 0 ↔ last-active speed.
+        int _preResumeSpeedIndex = 2; // default resume speed = 1.0×.
 
         void OnPause()
         {
             if (_timeManager == null) return;
-            // Toggle the modal-pause channel; pause-owner sentinel "hud-bar" lets other
-            // pause sources stay coordinated through TimeManager's ownership map.
-            const string owner = "hud-bar";
-            // Best-effort toggle: when ChangeTimeSpeed is the project's canonical "advance"
-            // step, the pause button delegates to it; pre-migration parity restores intent.
-            _timeManager.ChangeTimeSpeed();
+            int cur = _timeManager.CurrentTimeSpeedIndex;
+            if (cur != 0)
+            {
+                _preResumeSpeedIndex = cur;
+                _timeManager.SetTimeSpeedIndex(0);
+            }
+            else
+            {
+                _timeManager.SetTimeSpeedIndex(_preResumeSpeedIndex);
+            }
         }
 
         void OnZoomIn()
