@@ -5,37 +5,31 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
     editor-extension-mode="False">
-  <!-- Panel: stats-panel | kind: modal | theme: dark -->
-  <!-- Stage 4.0 (TECH-32919) — tabs + chart container + stacked bar -->
-  <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
-  <Style src="project://database/Assets/UI/Themes/cream.tss"/>
+  <!-- Panel: stats-panel | kind: modal | theme: cream -->
   <Style src="stats-panel.uss"/>
   <ui:VisualElement name="stats-panel" class="stats-panel" style="display: none;">
-    <ui:VisualElement name="header" class="stats-panel__header">
-      <ui:Label name="title" class="stats-panel__title" text="City Stats" binding-path="Title"/>
-      <ui:Button name="btn-close" class="stats-panel__close-btn" text="✕" binding-path="CloseCommand"/>
+    <ui:VisualElement name="stats-panel-card" class="stats-panel__card">
+      <ui:VisualElement name="header" class="stats-panel__header">
+        <ui:Label name="title" class="stats-panel__title" text="City Stats"/>
+        <ui:Button name="btn-close" class="stats-panel__close-btn" text="X"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="tab-strip" class="stats-panel__tab-strip">
+        <ui:Button name="tab-population" class="stats-panel__tab stats-panel__tab--active" text="Population"/>
+        <ui:Button name="tab-services" class="stats-panel__tab" text="Services"/>
+        <ui:Button name="tab-economy" class="stats-panel__tab" text="Economy"/>
+      </ui:VisualElement>
+      <ui:Label name="active-tab-label" class="stats-panel__active-tab" text="population"/>
+      <ui:VisualElement name="chart-container" class="stats-panel__chart-container">
+        <ui:Label name="chart-placeholder" class="stats-panel__chart-placeholder" text="Chart"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="stacked-bar" class="stats-panel__stacked-bar">
+        <ui:VisualElement name="bar-fill-population" class="stats-panel__bar-segment stats-panel__bar-segment--population"/>
+        <ui:VisualElement name="bar-fill-services" class="stats-panel__bar-segment stats-panel__bar-segment--services"/>
+        <ui:VisualElement name="bar-fill-economy" class="stats-panel__bar-segment stats-panel__bar-segment--economy"/>
+      </ui:VisualElement>
+      <ui:ScrollView name="service-rows" class="stats-panel__service-rows">
+        <ui:VisualElement name="service-container" class="stats-panel__services"/>
+      </ui:ScrollView>
     </ui:VisualElement>
-    <!-- Tab strip -->
-    <ui:VisualElement name="tab-strip" class="stats-panel__tab-strip">
-      <ui:Button name="tab-population" class="stats-panel__tab stats-panel__tab--active" text="Population" binding-path="SelectPopulationTab"/>
-      <ui:Button name="tab-services" class="stats-panel__tab" text="Services" binding-path="SelectServicesTab"/>
-      <ui:Button name="tab-economy" class="stats-panel__tab" text="Economy" binding-path="SelectEconomyTab"/>
-    </ui:VisualElement>
-    <!-- Active tab label -->
-    <ui:Label name="active-tab-label" class="stats-panel__active-tab" binding-path="ActiveTabLabel"/>
-    <!-- Chart container (custom draw via IMGUIContainer or VisualElement subclass) -->
-    <ui:VisualElement name="chart-container" class="stats-panel__chart-container">
-      <ui:Label name="chart-placeholder" class="stats-panel__chart-placeholder" text="Chart" binding-path="ChartSummary"/>
-    </ui:VisualElement>
-    <!-- Stacked bar -->
-    <ui:VisualElement name="stacked-bar" class="stats-panel__stacked-bar">
-      <ui:VisualElement name="bar-fill-population" class="stats-panel__bar-segment stats-panel__bar-segment--population" binding-path="BarPopulationWidth"/>
-      <ui:VisualElement name="bar-fill-services" class="stats-panel__bar-segment stats-panel__bar-segment--services" binding-path="BarServicesWidth"/>
-      <ui:VisualElement name="bar-fill-economy" class="stats-panel__bar-segment stats-panel__bar-segment--economy" binding-path="BarEconomyWidth"/>
-    </ui:VisualElement>
-    <!-- Service rows (scrollable) -->
-    <ui:ScrollView name="service-rows" class="stats-panel__service-rows">
-      <ui:VisualElement name="service-container" class="stats-panel__services" binding-path="ServiceRows"/>
-    </ui:ScrollView>
   </ui:VisualElement>
 </ui:UXML>

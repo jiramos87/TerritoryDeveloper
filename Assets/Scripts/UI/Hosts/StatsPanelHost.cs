@@ -17,6 +17,7 @@ namespace Territory.UI.Hosts
 
         StatsPanelVM _vm;
         ModalCoordinator _coordinator;
+        Button _btnClose, _tabPop, _tabServices, _tabEcon;
 
         void OnEnable()
         {
@@ -24,7 +25,18 @@ namespace Territory.UI.Hosts
             WireCommands();
 
             if (_doc != null && _doc.rootVisualElement != null)
+            {
                 _doc.rootVisualElement.SetCompatDataSource(_vm);
+                var root = _doc.rootVisualElement;
+                _btnClose    = root.Q<Button>("btn-close");
+                _tabPop      = root.Q<Button>("tab-population");
+                _tabServices = root.Q<Button>("tab-services");
+                _tabEcon     = root.Q<Button>("tab-economy");
+                if (_btnClose    != null) _btnClose.clicked    += OnClose;
+                if (_tabPop      != null) _tabPop.clicked      += () => OnTabSelected(StatsPanelVM.StatsTab.Population);
+                if (_tabServices != null) _tabServices.clicked += () => OnTabSelected(StatsPanelVM.StatsTab.Services);
+                if (_tabEcon     != null) _tabEcon.clicked     += () => OnTabSelected(StatsPanelVM.StatsTab.Economy);
+            }
             else
                 Debug.LogWarning("[StatsPanelHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
 
@@ -47,6 +59,7 @@ namespace Territory.UI.Hosts
 
         void OnDisable()
         {
+            if (_btnClose != null) _btnClose.clicked -= OnClose;
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }

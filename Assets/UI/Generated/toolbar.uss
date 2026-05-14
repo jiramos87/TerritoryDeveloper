@@ -1,30 +1,30 @@
 /* Panel: toolbar | kind: hud | theme: cream */
-/* Iter-8 — 2× size from iter-6/7, anchored bottom-left above picker. */
+/* Iter-9 — 0.8× of iter-8 (tile 96→76, width 220→176), bottom-left above picker. */
 
 .toolbar {
     position: absolute;
     bottom: 180px;
     left: 8px;
-    width: 220px;
+    width: 176px;
     flex-direction: column;
     align-items: center;
     background-color: #f5e6c8;
     border-color: #b89b5e;
     border-width: 2px;
     border-radius: 8px;
-    padding: 8px;
+    padding: 6px;
 }
 
 .toolbar__grid {
     flex-direction: row;
     flex-wrap: wrap;
-    width: 204px;
+    width: 164px;
     justify-content: flex-start;
 }
 
 .toolbar__tile {
-    width: 96px;
-    height: 96px;
+    width: 76px;
+    height: 76px;
     margin: 3px;
 }
 
@@ -52,8 +52,8 @@
 
 .toolbar__active-label {
     color: #6b5a3d;
-    font-size: 12px;
-    margin-top: 6px;
+    font-size: 11px;
+    margin-top: 4px;
     -unity-text-align: lower-center;
     -unity-font-style: bold;
 }

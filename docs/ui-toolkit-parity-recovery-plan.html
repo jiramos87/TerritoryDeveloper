@@ -1369,7 +1369,7 @@ Z3 actions taken, 6 baselines captured.`
 
 <!-- =========================================================== -->
 <h2 id="iter-progression">15 · Iteration progression — what worked, what didn’t</h2>
-<p class="lead">Live log of QA cycles iter-2 through iter-8. Successes are kept; failures noted with revert/correction in the next iter.</p>
+<p class="lead">Live log of QA cycles iter-2 through iter-9. Successes are kept; failures noted with revert/correction in the next iter.</p>
 
 <table>
 <thead><tr><th style="width:90px">Iter</th><th>Goal</th><th>Outcome</th></tr></thead>
@@ -1429,7 +1429,14 @@ Z3 actions taken, 6 baselines captured.`
 <h3>15.1 · Patterns observed</h3>
 <ul>
   <li><b>ScaleMode is sticky.</b> ScaleMode=1 (Match W/H) multiplies px by the inverse of the Game View / reference resolution. On a 600×360 Game View with reference 1920×1080, scale = ~3×. Iter-3 and iter-5 both hit this and produced oversized UI; iter-6 fixed by switching to ScaleMode=2 (Constant Pixel Size).</li>
-  <li><b><code>themeUss</code> = full theme, not partial.</b> Pointing PanelSettings at a TSS that defines only project-custom <code>--ds-*</code> tokens (no <code>--unity-*</code>) breaks Unity’s default font + Button cascade. Either extend Unity’s default TSS, or keep <code>UnityDefaultRuntimeTheme</code> and rely on literal hex (H1) in plan-scope .uss.</li>
+  <li><b><code>themeUss</code> = full theme, not partial.</b> Pointing PanelSettings at a TSS that defines only project-custom <code>--ds-*</code> tokens (no <code>--unity-*</code>) breaks Unity’s default font + Button cascade. Either extend Unity’s default TSS, or keep <code>UnityDefaultRuntimeTheme</code> and rely on lit
+
+<tr>
+  <td><b>iter-9</b><br>commit <code>{ITER9_SHA}</code></td>
+  <td>Stats-panel rewritten with full-viewport overlay + centered cream card (mirror of iter-8 pause-menu treatment); StatsPanelHost manual click wiring for close + 3 tab buttons. HUD bar height 72 → 108 (1.5×) + <code>overflow: hidden</code> so city-name / pop-money / surplus stay contained. Toolbar 0.8×: tile 96 → 76, width 220 → 176. Info-panel UIDoc disabled (cyan-outlined empty rect — deferred hover-info card since iter-1 §F2).</td>
+  <td><span class="pill ok">GOOD</span> Stats panel now opens centered with cream chrome; HUD content no longer bleeds into map; toolbar properly scaled to leave more game-view room.</td>
+</tr>
+eral hex (H1) in plan-scope .uss.</li>
   <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
   <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
   <li><b>UXML self-Template silently kills builds.</b> A <code>&lt;ui:Template name="x" src="x.uxml"/&gt;</code> circular ref in a single file cascades to Bee FD-exhaustion errors that look unrelated.</li>

@@ -1,5 +1,5 @@
 /* Panel: hud-bar | kind: hud | theme: cream */
-/* Iter-6 — ScaleMode=2 literal px. Sizes target goal A proportions on 1080p. */
+/* Iter-9 — height 72→108 (1.5×) to contain city name + stat row + surplus without overflow. */
 
 .hud-bar {
     position: absolute;
@@ -13,14 +13,16 @@
     border-color: #b89b5e;
     border-width: 2px;
     border-radius: 6px;
-    padding: 4px 10px;
-    height: 72px;
+    padding: 4px 12px;
+    height: 108px;
     color: #3a2f1c;
+    overflow: hidden;
 }
 
 .hud-bar__cluster {
     flex-direction: row;
     align-items: center;
+    height: 100%;
 }
 
 .hud-bar__cluster--left {
@@ -34,6 +36,7 @@
     flex-grow: 1;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .hud-bar__cluster--right {
@@ -44,9 +47,10 @@
 
 .hud-bar__city-name {
     color: #3a2f1c;
-    font-size: 18px;
+    font-size: 20px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
+    margin: 0;
 }
 
 .hud-bar__stats {
@@ -62,7 +66,7 @@
 
 .hud-bar__surplus {
     color: #e58c4a;
-    font-size: 12px;
+    font-size: 11px;
     margin-top: 2px;
 }
 
@@ -115,7 +119,7 @@
     margin: 2px 3px;
     font-size: 12px;
     -unity-font-style: bold;
-    height: 26px;
+    height: 28px;
 }
 .text-btn:hover { background-color: #f9efd2; }
 .text-btn--active { border-color: #5b7fa8; border-width: 2px; }

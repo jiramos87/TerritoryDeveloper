@@ -1,15 +1,27 @@
-/* Panel: stats-panel | kind: modal | theme: dark */
-/* Stage 4.0 (TECH-32919) — tab + chart tokens; ThemedTabBar styling */
-/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
-@import url("project://database/Assets/UI/Themes/cream.tss");
+/* Panel: stats-panel | kind: modal | theme: cream */
+/* Iter-9 — full-viewport overlay + centered cream card, literal hex (parity with pause-menu). */
 
 .stats-panel {
-    background-color: var(--ds-color-bg-card, #313244);
-    border-radius: var(--ds-radius-lg, 16px);
-    padding: var(--ds-space-xl, 32px);
-    min-width: 480px;
-    max-width: 640px;
-    max-height: 600px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.stats-panel__card {
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
+    border-width: 3px;
+    border-radius: 12px;
+    padding: 24px 32px;
+    min-width: 560px;
+    max-width: 720px;
+    max-height: 640px;
     flex-direction: column;
 }
 
@@ -17,111 +29,94 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--ds-space-md, 12px);
+    margin-bottom: 14px;
 }
 
 .stats-panel__title {
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-xl, 24px);
+    color: #3a2f1c;
+    font-size: 22px;
     -unity-font-style: bold;
     flex-grow: 1;
 }
 
 .stats-panel__close-btn {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-md, 14px);
-    padding: 4px 8px;
-    border-radius: var(--ds-radius-sm, 4px);
+    background-color: #ede4ce;
+    border-color: #b89b5e;
+    border-width: 1px;
+    color: #3a2f1c;
+    font-size: 14px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    height: 26px;
+    -unity-font-style: bold;
 }
+.stats-panel__close-btn:hover { background-color: #f9efd2; }
 
-.stats-panel__close-btn:hover {
-    color: var(--ds-color-warn, #fab387);
-    border-color: var(--ds-color-warn, #fab387);
-}
-
-/* Tab strip */
 .stats-panel__tab-strip {
     flex-direction: row;
-    margin-bottom: var(--ds-space-md, 12px);
+    margin-bottom: 12px;
     border-bottom-width: 1px;
-    border-bottom-color: var(--ds-color-border, #45475a);
-    padding-bottom: var(--ds-space-sm, 8px);
+    border-bottom-color: #b89b5e;
+    padding-bottom: 8px;
 }
 
 .stats-panel__tab {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-md, 14px);
-    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
-    border-radius: var(--ds-radius-sm, 4px) var(--ds-radius-sm, 4px) 0 0;
-    margin-right: var(--ds-space-sm, 8px);
+    background-color: #ede4ce;
+    color: #3a2f1c;
+    border-color: #b89b5e;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 6px 16px;
+    margin: 0 4px 0 0;
+    font-size: 13px;
+    -unity-font-style: bold;
 }
-
-.stats-panel__tab--active {
-    background-color: var(--ds-color-bg-elev, #181825);
-    color: var(--ds-color-primary, #89b4fa);
-    border-bottom-width: 2px;
-    border-bottom-color: var(--ds-color-primary, #89b4fa);
-}
-
-.stats-panel__tab:hover {
-    color: var(--ds-color-text-primary, #cdd6f4);
-}
+.stats-panel__tab:hover { background-color: #f9efd2; }
+.stats-panel__tab--active { background-color: #5b7fa8; color: #f5e6c8; border-color: #5b7fa8; }
 
 .stats-panel__active-tab {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
-    margin-bottom: var(--ds-space-sm, 8px);
+    color: #6b5a3d;
+    font-size: 12px;
+    margin-bottom: 8px;
+    -unity-font-style: bold;
 }
 
-/* Chart container */
 .stats-panel__chart-container {
-    height: 160px;
-    background-color: var(--ds-color-bg-elev, #181825);
-    border-radius: var(--ds-radius-md, 8px);
-    margin-bottom: var(--ds-space-md, 12px);
-    justify-content: center;
+    min-height: 200px;
+    background-color: #ede4ce;
+    border-color: #b89b5e;
+    border-width: 1px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    padding: 12px;
     align-items: center;
+    justify-content: center;
 }
 
 .stats-panel__chart-placeholder {
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-sm, 11px);
+    color: #6b5a3d;
+    font-size: 14px;
 }
 
-/* Stacked bar */
 .stats-panel__stacked-bar {
     flex-direction: row;
-    height: 12px;
-    border-radius: var(--ds-radius-sm, 4px);
+    height: 16px;
+    background-color: #ede4ce;
+    border-radius: 4px;
+    margin-bottom: 12px;
     overflow: hidden;
-    margin-bottom: var(--ds-space-md, 12px);
-    background-color: var(--ds-color-bg-elev, #181825);
 }
 
-.stats-panel__bar-segment {
-    height: 100%;
-}
+.stats-panel__bar-segment { height: 100%; }
+.stats-panel__bar-segment--population { background-color: #5b7fa8; }
+.stats-panel__bar-segment--services   { background-color: #6aaa64; }
+.stats-panel__bar-segment--economy    { background-color: #e58c4a; }
 
-.stats-panel__bar-segment--population {
-    background-color: var(--ds-color-primary, #89b4fa);
-}
-
-.stats-panel__bar-segment--services {
-    background-color: var(--ds-color-accent-2, #89dceb);
-}
-
-.stats-panel__bar-segment--economy {
-    background-color: var(--ds-color-accent, #cba6f7);
-}
-
-/* Service rows */
 .stats-panel__service-rows {
     flex-grow: 1;
-    max-height: 200px;
+    background-color: #ede4ce;
+    border-radius: 4px;
+    padding: 6px;
 }
 
 .stats-panel__services {
