@@ -1481,6 +1481,24 @@ Z3 actions taken, 6 baselines captured.`
   <td>Effort 1 §16.4 — HUD time-control wiring. Pause button now toggles speed-index 0 ↔ previously-active speed (default resume = 1.0×); second click resumes where the player left off. Active-state border (<code>icon-btn--active</code>) mirrors <code>TimeManager.CurrentTimeSpeedIndex</code> on pause + speed1/2/3 buttons via <code>HudBarHost.PushSnapshot</code>. Speed1/2/3 → <code>SetTimeSpeedIndex(1/2/3)</code> hooks already in place from iter-2, verified intact.</td>
   <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor functional check (tick rate change + pause/resume).</td>
 </tr>
+
+<tr>
+  <td><b>iter-14</b><br>commit <code>30d9efff</code></td>
+  <td>User-feedback iter on iter-10..13. <b>Picker persists</b>: <code>ToolSubtypePickerHost.OnTierPicked</code> no longer calls <code>Hide()</code>; picker stays open across tier confirms and closes only via Esc. <code>UIManager.HandleEscapePress</code> consults <code>ToolSubtypePickerHost.IsOpen</code> first and routes Esc → <code>picker.Hide()</code> before any other Esc consumer. <b>Stats card taller</b>: <code>.stats-panel__card</code> max-height 720→920 + min-height 620; <code>.stats-panel__rows</code> <code>flex-grow:1</code> so 2-col rows no longer overflow on population / services / economy tabs.</td>
+  <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor visual check.</td>
+</tr>
+
+<tr>
+  <td><b>iter-15</b><br>commit <code>e2de74b1</code></td>
+  <td>User reported NRE + zoning placement not working. Root cause = Inspector wiring drift in CityScene leaves <code>UIManager.zoneManager</code> / <code>cursorManager</code> / <code>gridManager</code> null, so pre-arm tier methods NPE. <code>UIManager.Start</code> now falls back to <code>FindObjectOfType</code> for zoneManager, cursorManager, gridManager, timeManager, economyManager, terrainManager, gameManager when the inspector ref is null. <code>ToolbarHost.PreArmDefault</code> skips with a clear warning when deps still null and wraps the dispatch in try/catch.</td>
+  <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor placement check.</td>
+</tr>
+
+<tr>
+  <td><b>iter-16</b><br>commit <code>c618639e</code></td>
+  <td>User feedback: pause-menu Save / Load / Settings sub-views were stubs. Real wiring now lands. <b>Save</b>: <code>TextField</code> pre-filled with <code>{cityName}_{yyyyMMdd_HHmmss}</code> on entry; Save button → <code>GameSaveManager.SaveGame(name)</code> with inline status label. <b>Load</b>: <code>ScrollView</code> renders every save under <code>Application.persistentDataPath</code> via <code>GameSaveManager.GetSaveFiles</code>; row click selects (highlight class), Load button sets <code>GameStartInfo.SetPendingLoadPath</code> + reloads CityScene. <b>Settings</b>: SFX volume <code>Slider</code> 0..1 reads/writes <code>PlayerPrefs[SfxVolume]</code> + <code>BlipBootstrap.SfxVolumeDbKey</code>, applies to <code>AudioListener.volume</code>, live percent label.</td>
+  <td><span class="pill ok">GREEN-COMPILE</span> <code>npm run unity:compile-check</code> clean. Awaiting in-Editor save round-trip + audio check.</td>
+</tr>
 eral hex (H1) in plan-scope .uss.</li>
   <li><b>Host registration timing.</b> <code>OnEnable</code> on all scene scripts fires before any <code>Start()</code>. If a Host depends on a singleton created in another script’s <code>Start()</code>, register in <code>Start()</code> or retry there.</li>
   <li><b><code>Show()</code> ≠ <code>TryOpen()</code>.</b> ModalCoordinator had two paths that needed parallel maintenance for migrated panels. Easy to forget one; always patch both <code>Show</code>+<code>HideMigrated</code> and <code>TryOpen</code>+<code>CloseInternal</code>.</li>
