@@ -15,12 +15,10 @@ public class GameBootstrap : MonoBehaviour
 
     void Start()
     {
-        // iter-18 (Effort 1 fix-up) — CityScene Inspector wiring drift leaves gameManager
-        // null; resolve via FindObjectOfType so the boot path actually fires
-        // CreateNewGame and the city starts with the default $20,000 treasury.
+        // CityScene Inspector wiring drift leaves gameManager null; resolve via
+        // FindObjectOfType so the boot path actually fires CreateNewGame and the
+        // city starts with the default $20,000 treasury.
         if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
-        if (gameManager == null)
-            Debug.LogWarning("[GameBootstrap] gameManager inspector ref not wired AND FindObjectOfType returned null — wire in CityScene.");
         StartCoroutine(ProcessStartIntent());
     }
 
@@ -34,22 +32,17 @@ public class GameBootstrap : MonoBehaviour
         if (GameStartInfo.Mode == GameStartInfo.StartMode.Load && !string.IsNullOrEmpty(GameStartInfo.PendingLoadPath))
         {
             if (System.IO.File.Exists(GameStartInfo.PendingLoadPath))
-            {
-                Debug.Log($"[GameBootstrap] Load mode → {GameStartInfo.PendingLoadPath}");
                 gameManager.LoadGame(GameStartInfo.PendingLoadPath);
-            }
         }
         else if (GameStartInfo.Mode == GameStartInfo.StartMode.NewGame)
         {
-            Debug.Log("[GameBootstrap] NewGame mode → gameManager.CreateNewGame()");
             gameManager.CreateNewGame();
         }
         else
         {
-            // iter-18 — Direct CityScene open from Editor (no MainMenu hand-off) leaves
-            // GameStartInfo.Mode == None. Default to NewGame so CityStats.ResetCityStats
-            // runs and money seeds at the default $20,000.
-            Debug.Log("[GameBootstrap] No start mode set → defaulting to NewGame (Editor direct-open path).");
+            // Direct CityScene open from Editor (no MainMenu hand-off) leaves
+            // Mode == None. Default to NewGame so CityStats.ResetCityStats runs
+            // and money seeds at the default $20,000.
             gameManager.CreateNewGame();
         }
 

@@ -15,12 +15,10 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // iter-18 (Effort 1 fix-up) — fallback resolves so CreateNewGame path
-        // doesn't NPE on saveManager.NewGame() (which seeds money to $20,000).
+        // Fallback resolves so CreateNewGame path doesn't NPE on saveManager.NewGame()
+        // (which seeds money to $20,000).
         if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
         if (saveManager == null) saveManager = FindObjectOfType<GameSaveManager>();
-        if (gridManager == null) Debug.LogWarning("[GameManager] gridManager inspector ref not wired AND FindObjectOfType returned null — wire in CityScene.");
-        if (saveManager == null) Debug.LogWarning("[GameManager] saveManager inspector ref not wired AND FindObjectOfType returned null — wire in CityScene.");
     }
 
     public void SaveGame(string saveName = null)

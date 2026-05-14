@@ -123,36 +123,15 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         else if(Input.GetMouseButton(0)&&isZoning){zoningEnd=pos;ClearPreviews();var tl=new Vector2Int(Mathf.Min((int)zoningStart.x,(int)pos.x),Mathf.Max((int)zoningStart.y,(int)pos.y));var br=new Vector2Int(Mathf.Max((int)zoningStart.x,(int)pos.x),Mathf.Min((int)zoningStart.y,(int)pos.y));for(int x=tl.x;x<=br.x;x++)for(int y=br.y;y<=tl.y;y++){if(CanZone(_plac.GetZoneAttributes(uiManager.GetSelectedZoneType()),new Vector2(x,y))){CityCell c=gridManager.GetCell(x,y);GameObject t=Instantiate(SlopeAware(GetRandomZonePrefab(uiManager.GetSelectedZoneType()),x,y),c.transformPosition,Quaternion.identity);t.GetComponent<SpriteRenderer>().color=new Color(1,1,1,0.5f);previewTiles.Add(t);}}}
         else if(Input.GetMouseButtonUp(0)&&isZoning){isZoning=false;ClearPreviews();var tl=new Vector2Int(Mathf.Min((int)zoningStart.x,(int)pos.x),Mathf.Max((int)zoningStart.y,(int)pos.y));var br=new Vector2Int(Mathf.Max((int)zoningStart.x,(int)pos.x),Mathf.Min((int)zoningStart.y,(int)pos.y));for(int x=tl.x;x<=br.x;x++)for(int y=br.y;y<=tl.y;y++){if(CanZone(_plac.GetZoneAttributes(uiManager.GetSelectedZoneType()),new Vector2(x,y)))PlaceZone(new Vector2(x,y));}CalculateAvailableSquareZonedSections();uiManager?.RestoreGhostPreview();}
     }
-    // iter-19 — throttle Debug.Log spawn diagnostics so the building-growth gates surface
-    // why a zoned area isn't producing buildings. One log per zone type per 2 seconds.
-    static readonly System.Collections.Generic.Dictionary<Zone.ZoneType, float> _lastSpawnLogTime = new System.Collections.Generic.Dictionary<Zone.ZoneType, float>();
-    static void LogSpawnGate(Zone.ZoneType zt, string reason)
-    {
-        if (_lastSpawnLogTime.TryGetValue(zt, out var t) && Time.unscaledTime - t < 2f) return;
-        _lastSpawnLogTime[zt] = Time.unscaledTime;
-        Debug.Log($"[ZoneManager] PlaceZonedBuildings({zt}) → {reason}");
-    }
-
     public void PlaceZonedBuildings(Zone.ZoneType zt)
     {
-        if(_plac.IsStateServiceZoneType(zt)) return;
-        if(availSections.Count == 0) { LogSpawnGate(zt, "no available sections (zone the cells first)"); return; }
-        var s=RandSection(zt);
-        if(!s.HasValue||s.Value.size==0) { LogSpawnGate(zt, $"RandSection returned null — zoned cells not within {MaxRoadDist} of a road or no 1x1/2x2/3x3 square (availSections[{zt}]={(availSections.ContainsKey(zt) ? availSections[zt].Count : 0)})"); return; }
+        if(_plac.IsStateServiceZoneType(zt)||availSections.Count==0)return;
+        var s=RandSection(zt);if(!s.HasValue||s.Value.size==0)return;
         var bt=_plac.GetBuildingZoneType(zt);
-        if(_plac.IsResidentialBuilding(bt))
-        {
-            if(!CanPlaceRes()) { LogSpawnGate(zt, "CanPlaceRes false (residential needs jobs — no commercial/industrial buildings yet)"); return; }
-            if(demandManager!=null&&!demandManager.GetResidentialDemand().canGrow) { LogSpawnGate(zt, "ResidentialDemand.canGrow false"); return; }
-        }
-        else
-        {
-            if(!CanPlaceCI(bt)) { LogSpawnGate(zt, $"CanPlaceCI false for {bt} (C/I needs residential population)"); return; }
-            if(demandManager!=null&&UnityEngine.Random.value>demandManager.GetDemandSpawnFactor(zt)) { LogSpawnGate(zt, $"demand-roll missed (spawnFactor={demandManager.GetDemandSpawnFactor(zt):F2})"); return; }
-        }
-        if(!cityStats.GetCityPowerAvailability()) { LogSpawnGate(zt, $"power output {cityStats.cityPowerOutput} ≤ consumption {cityStats.cityPowerConsumption}"); return; }
-        if(waterManager!=null&&!waterManager.GetCityWaterAvailability()) { LogSpawnGate(zt, $"water output {cityStats.cityWaterOutput} ≤ consumption {cityStats.cityWaterConsumption}"); return; }
-        Debug.Log($"[ZoneManager] PlaceZonedBuildings({zt}) → SPAWNING building (size={s.Value.size}, section.length={s.Value.section.Length})");
+        if(_plac.IsResidentialBuilding(bt)){if(!CanPlaceRes()||demandManager!=null&&!demandManager.GetResidentialDemand().canGrow)return;}
+        else{if(!CanPlaceCI(bt))return;if(demandManager!=null&&UnityEngine.Random.value>demandManager.GetDemandSpawnFactor(zt))return;}
+        if(!cityStats.GetCityPowerAvailability())return;
+        if(waterManager!=null&&!waterManager.GetCityWaterAvailability())return;
         DoBuildingPlace(s.Value.section,bt,_plac.GetZoneAttributes(bt),zt,(int)System.Math.Sqrt(s.Value.section.Length));
     }
     public bool PlaceZoneAt(Vector2 pos,Zone.ZoneType zt)

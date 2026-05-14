@@ -107,18 +107,9 @@ namespace Territory.UI.Hosts
         void PreArmDefault(string parentSlug)
         {
             var uim = FindObjectOfType<UIManager>();
-            if (uim == null)
-            {
-                Debug.LogWarning("[ToolbarHost] PreArmDefault: UIManager not found in scene.");
-                return;
-            }
-            // iter-15 — guard against scene-wiring drift (zoneManager / cursorManager null
-            // → UIManager methods NPE on first click). Log and skip when deps missing.
-            if (uim.zoneManager == null || uim.cursorManager == null)
-            {
-                Debug.LogWarning($"[ToolbarHost] PreArmDefault skipped for '{parentSlug}' — UIManager deps not wired (zoneManager={(uim.zoneManager != null)}, cursorManager={(uim.cursorManager != null)}). Highlight only.");
-                return;
-            }
+            if (uim == null) return;
+            // Guard scene-wiring drift: zoneManager / cursorManager null → UIManager methods NPE.
+            if (uim.zoneManager == null || uim.cursorManager == null) return;
             try
             {
                 switch (parentSlug)
@@ -134,10 +125,7 @@ namespace Territory.UI.Hosts
                     case "bulldoze":       uim.OnBulldozeButtonClicked();             break;
                 }
             }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[ToolbarHost] PreArmDefault('{parentSlug}') threw: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
-            }
+            catch (System.Exception) { /* swallow — scene-wiring drift, dep-chain NPE */ }
         }
     }
 }

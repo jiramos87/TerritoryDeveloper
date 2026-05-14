@@ -1586,6 +1586,90 @@ eral hex (H1) in plan-scope .uss.</li>
 
 <p class="small">After iter-9, the recovery moves out of pure-visual fix mode into two functional efforts: <b>Effort 1 (UI functionality recovery)</b> and <b>Effort 2 (UI blip SFX recovery)</b>. Mini-map / auto-mode / full-game functionality are deferred to a discussion after Effort 2 closes.</p>
 
+<!-- AGENT-EFFORT-1-2-CHECKPOINT -->
+<h3>15.3 · iter-25 — Effort 1 + Effort 2 acceptance checkpoint</h3>
+<p>Per QA cycle ending at commit <code>d90a1b4c</code> (Effort 1 functional parity + Effort 2 audio blip parity + iter-25 MainMenu sub-views), the gameplay loop and audio feedback are considered acceptable. Captured proofs live under <code>docs/ui-parity-recovery/iter-25-checkpoint/</code>:</p>
+
+<div class="grid grid-2">
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-01.png" alt="iter-25 acceptance capture 01"/>
+    <div class="cap">iter-25 capture 01</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-02.png" alt="iter-25 acceptance capture 02"/>
+    <div class="cap">iter-25 capture 02</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-03.png" alt="iter-25 acceptance capture 03"/>
+    <div class="cap">iter-25 capture 03</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-04.png" alt="iter-25 acceptance capture 04"/>
+    <div class="cap">iter-25 capture 04</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-05.png" alt="iter-25 acceptance capture 05"/>
+    <div class="cap">iter-25 capture 05</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-06.png" alt="iter-25 acceptance capture 06"/>
+    <div class="cap">iter-25 capture 06</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-07.png" alt="iter-25 acceptance capture 07"/>
+    <div class="cap">iter-25 capture 07</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-08.png" alt="iter-25 acceptance capture 08"/>
+    <div class="cap">iter-25 capture 08</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-09.png" alt="iter-25 acceptance capture 09"/>
+    <div class="cap">iter-25 capture 09</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-10.png" alt="iter-25 acceptance capture 10"/>
+    <div class="cap">iter-25 capture 10</div>
+  </div>
+  <div class="shot">
+    <img src="ui-parity-recovery/iter-25-checkpoint/iter-25-11.png" alt="iter-25 acceptance capture 11"/>
+    <div class="cap">iter-25 capture 11</div>
+  </div>
+</div>
+
+<h4>15.3.1 · What worked</h4>
+<ul>
+  <li><b>FindObjectOfType fallback in *.Start() to absorb CityScene Inspector drift.</b> UIManager, GameManager, GameBootstrap, GeographyManager all had unwired inspector refs in the live CityScene. Adding <code>if (x == null) x = FindObjectOfType&lt;X&gt;()</code> in Start unblocked every cross-system dependency without forcing a scene-asset rewire.</li>
+  <li><b>Diagnostic Debug.Logs during fix-development → strip on acceptance.</b> Spawn-gate logs in <code>ZoneManager.PlaceZonedBuildings</code> + road-pipeline logs in <code>RoadPlacementService</code> + boot-mode logs in <code>GameBootstrap</code> were essential to surface where the silent failure happened, but they were noise once the fix landed. iter-26 stripped them. <i>Pattern: log to find, strip on green.</i></li>
+  <li><b>Tier-method calls instead of family methods for pre-arm.</b> Toolbar tile pre-arm calls <code>OnLightResidentialButtonClicked</code> (tier) NOT <code>OnResidentialFamilyButtonClicked</code> (family). Family methods open the legacy uGUI subtype-picker controller as a side effect — would have stacked a hidden Canvas picker on top of the UI Toolkit picker.</li>
+  <li><b>Sub-view nav pattern via class-toggle + named VisualElement.</b> One Host owns N sibling sub-views inside a single card; <code>SwitchView(slug)</code> + <code>SetViewDisplay(ve, slug==current)</code> toggles. Back-arrow returns to root. Reused identically in PauseMenuHost (4 views) + MainMenuHost (3 views) + StatsPanelHost (3 tab views).</li>
+  <li><b>Esc routing via Host.TryHandleBackButton in UIManager.HandleEscapePress.</b> Centralized Esc consumer order: ToolSubtypePickerHost.IsOpen first → PauseMenuHost.TryHandleBackButton (sub-view → back) → ModalCoordinator.HideMigrated (root → close). Single-source-of-truth for Esc.</li>
+  <li><b>ToolkitBlipBinder + SafePlay catalog tolerance.</b> Catalog rejects unknown BlipIds with ArgumentOutOfRangeException — SafePlay swallows so a missing catalog row never breaks the UI click pipeline. Lets the Host bind speculatively against future BlipIds.</li>
+  <li><b>ConditionalWeakTable for per-VE binding state.</b> Unity 2022 has no <code>VisualElement.GetProperty</code> (lands 2023+); ConditionalWeakTable gives us per-VE token storage that GCs naturally.</li>
+  <li><b>Default time speed = 1.0× on first Update.</b> TimeManager's default <code>currentTimeSpeedIndex = 0</code> stalls the entire day-tick + auto-zoning loop. Auto-bumping to index 2 on first Update unblocks the simulation without taking pause control away from the player.</li>
+  <li><b>Mirror pause-menu UXML across MainMenu Load + Settings.</b> Single sub-view shape + literal hex card + back-arrow header propagated cleanly between PauseMenuHost and MainMenuHost. Lets future panels reuse the same shape without re-authoring USS rules.</li>
+  <li><b>Reusing existing BlipId enum.</b> Mapped every UI surface onto <code>UiButtonClick</code> + <code>UiButtonHover</code> instead of authoring new enum rows. Catalog authoring (BlipPatch ScriptableObjects per id) is out of scope for code-only effort; deferred until catalog grows.</li>
+</ul>
+
+<h4>15.3.2 · What did not work / cost time</h4>
+<ul>
+  <li><b>Family methods (<code>OnResidentialFamilyButtonClicked</code> etc.) call <code>ShowSubtypePicker</code> as a side effect.</b> First pre-arm attempt routed through these and stacked a hidden legacy Canvas picker on top of ToolSubtypePickerHost. iter-15 switched to tier methods. <i>Lesson: read what every public method actually does before reusing it as a building block.</i></li>
+  <li><b><code>GeographyInitService.ReinitializeGeographyForNewGame</code> never set <code>IsInitialized=true</code>.</b> Only <code>InitializeGeography()</code> (the load-from-save path) did. New-game spawn pipeline silently never ran. iter-20 added the missing flag flip; the difference between Init and Reinit was non-obvious from method names alone. <i>Lesson: when two methods do "almost the same thing" + one is the new-game path, audit invariants at both endpoints.</i></li>
+  <li><b>Legacy <code>BuildingSelectorMenuController.popupPanel</code> unassigned.</b> <code>ClearCurrentTool()</code> calls <code>DeselectAndUnpressAllButtons()</code> which <code>GetComponentsInChildren&lt;Button&gt;</code>'d on the null field → UnassignedReferenceException short-circuited the entire tier-method chain before <code>selectedZoneType</code> got set. iter-17 added a null-guard. <i>Lesson: when an exception kills a chain on line 1 of a method, you can't tell from outside that the method "didn't fire" — looks like the click did nothing.</i></li>
+  <li><b>Diagnostic logs gated on the failing condition.</b> iter-19 spawn-gate logs were gated on <code>geographyManager.IsInitialized</code> indirectly (only fired when day tick ran); since the real bug was IsInitialized never flipping, no logs appeared and looked like iter-19 didn't deploy. iter-20 decoupled the auto-speed log from the geography gate. <i>Lesson: diagnostic logs should fire on the most outer scope possible — outside the gate they're trying to diagnose.</i></li>
+  <li><b>Unity 2022 <code>VisualElement.GetProperty/SetProperty</code> don't exist.</b> First ToolkitBlipBinder draft used them for per-VE state (works in 2023+). Compile error caught immediately; rewrote with ConditionalWeakTable. <i>Lesson: target Unity version's API surface, not the docs.</i></li>
+  <li><b>BlipCatalog rejects unknown BlipIds with throw.</b> <code>BlipCatalog.Resolve(id)</code> throws ArgumentOutOfRangeException when the id has no patch entry. Naively adding new BlipId enum rows (UiPanelOpen / UiPageFlip / UiTabSwitch / UiSpeedClick / UiPausePress) would have crashed every binder click. SafePlay in ToolkitBlipBinder swallows the exception so adding new enum values is safe; authoring the BlipPatch ScriptableObjects is the rest of the work. <i>Lesson: enum + catalog are coupled; adding enum rows alone is not enough.</i></li>
+  <li><b>Default <code>currentTimeSpeedIndex = 0</code> = paused.</b> Pre-migration legacy MainMenu probably explicitly set speed on game start; without that, new games sat frozen. iter-19 caught this only because the spawn-gate logs were silent. <i>Lesson: when a global manager has a "default off" state, expect every consumer to assume "default on" and trip.</i></li>
+  <li><b>Background-session harness gates Edit/Write tools.</b> The harness initially blocked direct edits without EnterWorktree. Because the project rule says single-worktree-only, this required rerouting all writes through Bash + Python heredoc. <i>Lesson: when a harness enforces isolation, surface it to the user — don't silently create a worktree.</i></li>
+</ul>
+
+<h4>15.3.3 · Deferred from §17.1 spec</h4>
+<ul>
+  <li><b>Distinct BlipIds per UI surface</b> (sfx-panel-open / sfx-page-flip / sfx-tab-switch / sfx-speed-click / sfx-pause / sfx-place-zone / sfx-place-building). Catalog has no patches; postpone until BlipPatch ScriptableObjects authored. All UI surfaces collapse to <code>UiButtonClick</code> + <code>UiButtonHover</code> for now.</li>
+  <li><b>NewGameFormHost / SaveLoadViewHost / SettingsViewHost blip wiring.</b> These route through legacy baked panels + bind-registry instead of direct <code>Button.clicked</code>. Their click sounds need to flow through the legacy adapter path when those surfaces are revived.</li>
+  <li><b>Building spawn blip.</b> Authored in iter-23, stripped in iter-24 per user — would become audio mess at scale.</li>
+</ul>
+
 <!-- =========================================================== -->
 <!-- AGENT-EFFORT-1-START: target scope for next iter chain -->
 <h2 id="effort-1">16 · Effort 1 — recover UI functionality</h2>
