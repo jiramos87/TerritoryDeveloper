@@ -88,26 +88,33 @@ namespace Territory.UI.Hosts
             foreach (var kv in _btns)
                 kv.Value.EnableInClassList("icon-btn--active", kv.Key == parentSlug);
 
+            // Effort 1 §16.1 — pre-arm family default (cursor + zoning) on direct tile click,
+            // so users can start placing without first opening the picker. Picker tier confirm
+            // re-applies the chosen tier afterwards.
+            PreArmDefault(parentSlug);
+
             if (HasSubtypes.Contains(parentSlug))
             {
                 if (_subtypePicker != null) _subtypePicker.Open(parentSlug);
                 else Debug.LogWarning("[ToolbarHost] Subtype picker host not wired — Open(" + parentSlug + ") dropped.");
             }
-            else
-            {
-                ApplyTool(parentSlug, tier: null);
-            }
         }
 
-        void ApplyTool(string parentSlug, string tier)
+        void PreArmDefault(string parentSlug)
         {
             var uim = FindObjectOfType<UIManager>();
             if (uim == null) return;
-            // Iter-3: only no-subtype tools land here (subtype tools open the picker
-            // and dispatch via ToolSubtypePickerHost.ApplyTier).
             switch (parentSlug)
             {
-                case "bulldoze": uim.OnBulldozeButtonClicked(); break;
+                case "zone-r":         uim.OnLightResidentialButtonClicked();     break;
+                case "zone-c":         uim.OnLightCommercialButtonClicked();      break;
+                case "zone-i":         uim.OnLightIndustrialButtonClicked();      break;
+                case "services":       uim.OnStateServiceZoningButtonClicked();   break;
+                case "road":           uim.OnTwoWayRoadButtonClicked();           break;
+                case "building-power": uim.OnNuclearPowerPlantButtonClicked();    break;
+                case "building-water": uim.OnMediumWaterPumpPlantButtonClicked(); break;
+                case "landmark":       uim.OnSparseForestButtonClicked();         break;
+                case "bulldoze":       uim.OnBulldozeButtonClicked();             break;
             }
         }
     }
