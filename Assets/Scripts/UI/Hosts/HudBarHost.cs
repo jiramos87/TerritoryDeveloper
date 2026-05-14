@@ -244,10 +244,15 @@ namespace Territory.UI.Hosts
 
         void OnAuto()
         {
-            if (_cityStats != null)
+            if (_cityStats == null) return;
+            _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
+            _vm.AutoMode = _cityStats.simulateGrowth;
+            // Effort 9 §26 — surface AUTO toggle to the player via Effort 3 toast.
+            var notif = GameNotificationManager.Instance;
+            if (notif != null)
             {
-                _cityStats.simulateGrowth = !_cityStats.simulateGrowth;
-                _vm.AutoMode = _cityStats.simulateGrowth;
+                if (_cityStats.simulateGrowth) notif.PostSuccess("Auto-growth enabled");
+                else notif.PostInfo("Auto-growth disabled");
             }
         }
 
