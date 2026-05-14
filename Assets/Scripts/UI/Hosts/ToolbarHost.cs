@@ -103,18 +103,36 @@ namespace Territory.UI.Hosts
         void PreArmDefault(string parentSlug)
         {
             var uim = FindObjectOfType<UIManager>();
-            if (uim == null) return;
-            switch (parentSlug)
+            if (uim == null)
             {
-                case "zone-r":         uim.OnLightResidentialButtonClicked();     break;
-                case "zone-c":         uim.OnLightCommercialButtonClicked();      break;
-                case "zone-i":         uim.OnLightIndustrialButtonClicked();      break;
-                case "services":       uim.OnStateServiceZoningButtonClicked();   break;
-                case "road":           uim.OnTwoWayRoadButtonClicked();           break;
-                case "building-power": uim.OnNuclearPowerPlantButtonClicked();    break;
-                case "building-water": uim.OnMediumWaterPumpPlantButtonClicked(); break;
-                case "landmark":       uim.OnSparseForestButtonClicked();         break;
-                case "bulldoze":       uim.OnBulldozeButtonClicked();             break;
+                Debug.LogWarning("[ToolbarHost] PreArmDefault: UIManager not found in scene.");
+                return;
+            }
+            // iter-15 — guard against scene-wiring drift (zoneManager / cursorManager null
+            // → UIManager methods NPE on first click). Log and skip when deps missing.
+            if (uim.zoneManager == null || uim.cursorManager == null)
+            {
+                Debug.LogWarning($"[ToolbarHost] PreArmDefault skipped for '{parentSlug}' — UIManager deps not wired (zoneManager={(uim.zoneManager != null)}, cursorManager={(uim.cursorManager != null)}). Highlight only.");
+                return;
+            }
+            try
+            {
+                switch (parentSlug)
+                {
+                    case "zone-r":         uim.OnLightResidentialButtonClicked();     break;
+                    case "zone-c":         uim.OnLightCommercialButtonClicked();      break;
+                    case "zone-i":         uim.OnLightIndustrialButtonClicked();      break;
+                    case "services":       uim.OnStateServiceZoningButtonClicked();   break;
+                    case "road":           uim.OnTwoWayRoadButtonClicked();           break;
+                    case "building-power": uim.OnNuclearPowerPlantButtonClicked();    break;
+                    case "building-water": uim.OnMediumWaterPumpPlantButtonClicked(); break;
+                    case "landmark":       uim.OnSparseForestButtonClicked();         break;
+                    case "bulldoze":       uim.OnBulldozeButtonClicked();             break;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[ToolbarHost] PreArmDefault('{parentSlug}') threw: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
             }
         }
     }

@@ -202,6 +202,17 @@ public partial class UIManager : MonoBehaviour
 
     void Start()
     {
+        // iter-15 (Effort 1 §16.1 fix-up) — Inspector wiring drift in CityScene leaves
+        // zoneManager / cursorManager / gridManager etc. null. Falling back to
+        // FindObjectOfType so the toolbar pre-arm path can fire without NPE.
+        if (zoneManager == null)     zoneManager     = FindObjectOfType<ZoneManager>();
+        if (cursorManager == null)   cursorManager   = FindObjectOfType<CursorManager>();
+        if (gridManager == null)     gridManager     = FindObjectOfType<GridManager>();
+        if (timeManager == null)     timeManager     = FindObjectOfType<TimeManager>();
+        if (economyManager == null)  economyManager  = FindObjectOfType<EconomyManager>();
+        if (terrainManager == null)  terrainManager  = FindObjectOfType<TerrainManager>();
+        if (gameManager == null)     gameManager     = FindObjectOfType<GameManager>();
+
         if (cityStats == null)
         {
             cityStats = FindObjectOfType<CityStats>();
