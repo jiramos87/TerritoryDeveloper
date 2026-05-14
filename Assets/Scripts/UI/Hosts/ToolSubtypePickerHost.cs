@@ -138,6 +138,10 @@ namespace Territory.UI.Hosts
             _parentSlug = null;
         }
 
+        /// <summary>iter-14 (Effort 1 §16.1 fix-up) — picker remains open across tier confirms;
+        /// HandleEscapePress queries this before popping other Esc frames.</summary>
+        public bool IsOpen => _root != null && _root.style.display.value == DisplayStyle.Flex;
+
         void ClearActive()
         {
             _card0?.RemoveFromClassList(CardActiveClass);
@@ -157,8 +161,9 @@ namespace Territory.UI.Hosts
             string tierSlug = "";
             if (TiersByParent.TryGetValue(_parentSlug ?? "", out var tiers) && idx >= 0 && idx < tiers.Length)
                 tierSlug = tiers[idx].Slug;
+            // iter-14 (Effort 1 §16.1 fix-up) — picker stays open after tier confirm;
+            // close only via Esc (HandleEscapePress consults SubTypePicker frame).
             ApplyTier(_parentSlug, tierSlug);
-            Hide();
         }
 
         void ApplyTier(string parentSlug, string tierSlug)

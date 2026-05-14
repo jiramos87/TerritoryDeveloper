@@ -538,6 +538,14 @@ public partial class UIManager : MonoBehaviour
             return;
         }
 
+        // iter-14 — close tool subtype picker (UI Toolkit) before any other Esc consumer.
+        var subtypePicker = FindObjectOfType<Territory.UI.Hosts.ToolSubtypePickerHost>();
+        if (subtypePicker != null && subtypePicker.IsOpen)
+        {
+            subtypePicker.Hide();
+            return;
+        }
+
         // Stage 13 hotfix — consult ModalCoordinator before popupStack/PauseMenu fallback.
         // popupStack + ModalCoordinator._openModals are independent state stores; baked
         // panels (stats/budget/pause) register via ModalCoordinator only, so Esc would

@@ -21,7 +21,8 @@
     padding: 24px 32px;
     min-width: 620px;
     max-width: 760px;
-    max-height: 720px;
+    max-height: 920px;
+    min-height: 620px;
     flex-direction: column;
 }
 
@@ -142,6 +143,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
+    flex-grow: 1;
 }
 
 .stats-panel__row {
