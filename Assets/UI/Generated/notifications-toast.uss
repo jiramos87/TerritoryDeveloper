@@ -1,74 +1,58 @@
-/* Panel: notifications-toast | kind: transient | theme: dark */
-/* Stage 5.0 (TECH-32922) — toast stack + fade */
-@import url("project://database/Assets/UI/Themes/dark.tss");
+/* Panel: notifications-toast | kind: transient | theme: cream */
+/* Effort 3 (post iter-25) — top-right toast stack, literal hex per plan §20 hard rule */
 
 .notifications-toast {
     position: absolute;
-    bottom: 24px;
-    right: 24px;
-    width: 320px;
+    top: 120px;
+    right: 16px;
+    width: 280px;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.notifications-toast__list {
-    flex-grow: 1;
+.notifications-toast__stack {
+    flex-direction: column;
     width: 100%;
 }
 
-/* Toast card — set via makeItem in Host */
+/* Toast card — cream surface + tan border + type-specific left accent. */
 .notifications-toast__card {
-    background-color: var(--ds-color-bg-card, #313244);
-    border-radius: var(--ds-radius-md, 8px);
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
     border-width: 1px;
-    border-color: var(--ds-color-border, #45475a);
-    padding: var(--ds-space-sm, 8px) var(--ds-space-md, 12px);
-    margin-bottom: var(--ds-space-sm, 8px);
+    border-left-width: 4px;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     flex-direction: row;
     align-items: center;
     width: 100%;
 }
 
-.notifications-toast__card--info {
-    border-left-color: var(--ds-color-primary, #89b4fa);
-    border-left-width: 3px;
-}
-
-.notifications-toast__card--warn {
-    border-left-color: var(--ds-color-warn, #fab387);
-    border-left-width: 3px;
-}
-
-.notifications-toast__card--error {
-    border-left-color: var(--ds-color-error, #f38ba8);
-    border-left-width: 3px;
-}
+.notifications-toast__card--success { border-left-color: #6aaa64; }
+.notifications-toast__card--warning { border-left-color: #d9a14a; }
+.notifications-toast__card--error   { border-left-color: #c14a3c; }
+.notifications-toast__card--info    { border-left-color: #5b7fa8; }
 
 .notifications-toast__icon {
-    width: 20px;
-    height: 20px;
-    margin-right: var(--ds-space-sm, 8px);
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
     flex-shrink: 0;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    font-size: 14px;
 }
+
+.notifications-toast__icon--success { color: #2f7a2a; }
+.notifications-toast__icon--warning { color: #a06a1f; }
+.notifications-toast__icon--error   { color: #8e2418; }
+.notifications-toast__icon--info    { color: #3a5d80; }
 
 .notifications-toast__text {
     flex-grow: 1;
-    color: var(--ds-color-text-primary, #cdd6f4);
-    font-size: var(--ds-font-size-sm, 12px);
+    flex-shrink: 1;
+    color: #3a2f1c;
+    font-size: 12px;
     white-space: normal;
-}
-
-.notifications-toast__dismiss-btn {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--ds-color-text-muted, #6c7086);
-    font-size: var(--ds-font-size-xs, 10px);
-    padding: 2px 4px;
-    border-radius: var(--ds-radius-sm, 4px);
-    flex-shrink: 0;
-    margin-left: var(--ds-space-sm, 8px);
-}
-
-.notifications-toast__dismiss-btn:hover {
-    color: var(--ds-color-warn, #fab387);
 }

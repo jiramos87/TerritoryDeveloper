@@ -4,12 +4,15 @@ using UnityEngine.UI;
 using TMPro;
 using Territory.Utilities;
 using Domains.Notifications.Services;
+using Territory.UI.Hosts;
 
 namespace Territory.UI
 {
 /// <summary>
 /// Hub: in-game notifications. SerializeField UI refs + lazy-init (guardrail #8) + coroutines.
-/// Queue/state delegated to NotificationService (_svc). Stage 5.5 THIN.
+/// Queue/state delegated to NotificationService (_svc).
+/// Effort 3 (post iter-25): Post* routes through NotificationsToastHost (UI Toolkit toast) when present.
+/// Legacy uGUI panel path retained for back-compat; silent Debug.Log fallback when neither surface is wired.
 /// </summary>
 public class GameNotificationManager : MonoBehaviour
 {
@@ -66,38 +69,13 @@ public class GameNotificationManager : MonoBehaviour
     // ── Lazy-init (guardrail #8) ─────────────────────────────────────────────────
     private void InitializeComponents()
     {
-        if (notificationPanel == null || notificationText == null) LazyCreateNotificationUi();
-        if (notificationPanel == null) { Debug.LogError("GameNotificationManager: no panel."); return; }
-        notificationCanvasGroup = notificationPanel.GetComponent<CanvasGroup>() ?? notificationPanel.AddComponent<CanvasGroup>();
-        notificationPanel.SetActive(false); notificationCanvasGroup.alpha = 0f;
-    }
-
-    private void LazyCreateNotificationUi()
-    {
-        Canvas canvas = null;
-        foreach (var c in Object.FindObjectsOfType<Canvas>())
-            if (c.isActiveAndEnabled && c.renderMode != RenderMode.WorldSpace) { canvas = c; break; }
-        if (canvas == null) return;
-        if (notificationPanel == null)
+        // Effort 3 (post iter-25): UI Toolkit NotificationsToastHost is the primary surface.
+        // Legacy uGUI panel path retained only when explicitly wired in Inspector — no more
+        // lazy-create canvas overlay, no more "no panel" LogError spam.
+        if (notificationPanel != null)
         {
-            var go = new GameObject("NotificationPanel", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(canvas.transform, false);
-            var rt = (RectTransform)go.transform;
-            rt.anchorMin = new Vector2(0.5f,1f); rt.anchorMax = new Vector2(0.5f,1f);
-            rt.pivot = new Vector2(0.5f,1f); rt.anchoredPosition = new Vector2(0f,-32f); rt.sizeDelta = new Vector2(480f,56f);
-            var img = go.GetComponent<Image>(); img.color = new Color(0f,0f,0f,0.65f); img.raycastTarget = false;
-            notificationPanel = go;
-        }
-        if (notificationText == null)
-        {
-            var tgo = new GameObject("NotificationText", typeof(RectTransform));
-            tgo.transform.SetParent(notificationPanel.transform, false);
-            var trt = (RectTransform)tgo.transform;
-            trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
-            trt.offsetMin = new Vector2(12f,8f); trt.offsetMax = new Vector2(-12f,-8f);
-            var tmp = tgo.AddComponent<TextMeshProUGUI>();
-            tmp.alignment = TextAlignmentOptions.Center; tmp.fontSize = 18f;
-            tmp.color = infoColor; tmp.raycastTarget = false; notificationText = tmp;
+            notificationCanvasGroup = notificationPanel.GetComponent<CanvasGroup>() ?? notificationPanel.AddComponent<CanvasGroup>();
+            notificationPanel.SetActive(false); notificationCanvasGroup.alpha = 0f;
         }
     }
 
@@ -110,14 +88,20 @@ public class GameNotificationManager : MonoBehaviour
     public void PostNotification(string message, NotificationType type, float duration)
     {
         if (string.IsNullOrEmpty(message)) { DebugHelper.LogWarning("GameNotificationManager: empty message"); return; }
+        if (TryPostToast(message, type, duration)) return;
+
         bool ready = notificationPanel != null && notificationText != null;
         if (_svc.EnqueueTyped(message, type, duration, ready)) StartNextNotification();
+        else SilentLog(message, type);
     }
     public void PostNotification(string message, NotificationType type) => PostNotification(message, type, notificationDuration);
 
     public void PostMilestone(string title, string subtitle = null, Vector2Int? cellRef = null)
     {
-        if (notificationPanel == null || notificationText == null) return;
+        // Milestone routes to toast as success surface; subtitle/cellRef intentionally not surfaced on the toast strip.
+        if (TryPostToast(title, NotificationType.Success, notificationDuration)) return;
+
+        if (notificationPanel == null || notificationText == null) { SilentLog(title, NotificationType.Success); return; }
         if (_svc.Enqueue(_svc.BuildMilestone(title, subtitle, cellRef), refsReady: true)) StartNextNotification();
     }
 
@@ -143,12 +127,42 @@ public class GameNotificationManager : MonoBehaviour
         _svc.IsDisplayingMessage = false; StartNextNotification();
     }
 
-    // ── Coroutine internals ──────────────────────────────────────────────────────
+    // ── Routing ─────────────────────────────────────────────────────────────────
+    private bool TryPostToast(string message, NotificationType type, float duration)
+    {
+        var host = NotificationsToastHost.Instance;
+        if (host == null) return false;
+        host.Post(message, MapKind(type), duration > 0f ? duration : notificationDuration);
+        return true;
+    }
+
+    private static NotificationsToastHost.ToastKind MapKind(NotificationType t)
+    {
+        switch (t)
+        {
+            case NotificationType.Success:   return NotificationsToastHost.ToastKind.Success;
+            case NotificationType.Warning:   return NotificationsToastHost.ToastKind.Warning;
+            case NotificationType.Error:     return NotificationsToastHost.ToastKind.Error;
+            case NotificationType.Milestone: return NotificationsToastHost.ToastKind.Success;
+            default:                         return NotificationsToastHost.ToastKind.Info;
+        }
+    }
+
+    private static void SilentLog(string message, NotificationType type)
+    {
+        // No toast host + no legacy panel = log only, no Console spam beyond the message itself.
+        Debug.Log($"[Notification:{type}] {message}");
+    }
+
+    // ── Coroutine internals (legacy uGUI path) ──────────────────────────────────
     private void PostInternal(string message, NotificationType type)
     {
         if (string.IsNullOrEmpty(message)) { DebugHelper.LogWarning("GameNotificationManager: empty message"); return; }
+        if (TryPostToast(message, type, notificationDuration)) return;
+
         bool ready = notificationPanel != null && notificationText != null;
         if (_svc.EnqueueTyped(message, type, notificationDuration, ready)) StartNextNotification();
+        else SilentLog(message, type);
     }
 
     private void StartNextNotification()
