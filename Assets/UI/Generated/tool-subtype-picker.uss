@@ -1,19 +1,16 @@
 /* Panel: tool-subtype-picker | kind: hud | theme: cream */
-/* HUD-anchored bottom-left strip — recovery plan Phase D2 */
-/* Theme patched by unity-ui-theme-patch — panel.theme=cream */
-@import url("project://database/Assets/UI/Themes/cream.tss");
+/* Iter-3 — literal hex + per-parent tier-card sprite mapping. */
 
 .tool-subtype-picker {
     position: absolute;
-    left: 100px;
-    bottom: 12px;
+    left: 184px;
+    bottom: 20px;
     flex-direction: column;
-    background-color: #2a2d33;
-    border-color: var(--ds-color-accent, #b89b5e);
+    background-color: #f5e6c8;
+    border-color: #b89b5e;
     border-width: 2px;
-    border-radius: 8px;
-    padding: 8px;
-    /* display:none until Host.Open() */
+    border-radius: 10px;
+    padding: 10px;
     display: none;
 }
 
@@ -28,20 +25,22 @@
 
 .tool-subtype-picker__tier-card {
     width: 96px;
-    height: 80px;
-    background-color: #1a1d24;
-    border-color: #6b5a3d;
+    height: 96px;
+    background-color: #ede4ce;
+    border-color: #b89b5e;
     border-width: 2px;
     border-radius: 6px;
     margin: 4px;
-    padding: 6px;
+    padding: 0;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 .tool-subtype-picker__tier-card:hover {
     border-color: #d4b87a;
+    background-color: #f9efd2;
 }
 
 .tool-subtype-picker__tier-card--active {
@@ -49,17 +48,52 @@
     border-width: 3px;
 }
 
-.tool-subtype-picker__tier-icon {
-    color: #f0b429;
-    font-size: 22px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-}
-
 .tool-subtype-picker__tier-label {
-    color: #f0e4ce;
+    color: #3a2f1c;
     font-size: 11px;
     -unity-text-align: middle-center;
     -unity-font-style: bold;
-    margin-top: 4px;
+    background-color: rgba(245, 230, 200, 0.85);
+    padding: 1px 4px;
+    margin-bottom: 4px;
 }
+
+/* zone-r */
+.tool-subtype-picker__tier-card--zone-r-light  { background-image: url("project://database/Assets/Sprites/Residential/light-residential-building-2-128.png"); }
+.tool-subtype-picker__tier-card--zone-r-medium { background-image: url("project://database/Assets/Sprites/Residential/medium-residential-building-2-128.png"); }
+.tool-subtype-picker__tier-card--zone-r-heavy  { background-image: url("project://database/Assets/Sprites/Residential/heavy-residential-building-1-64.png"); }
+
+/* zone-c */
+.tool-subtype-picker__tier-card--zone-c-light  { background-image: url("project://database/Assets/Sprites/Commercial/light-commercial-building-2-128.png"); }
+.tool-subtype-picker__tier-card--zone-c-medium { background-image: url("project://database/Assets/Sprites/Commercial/commercial-medium-building-64-1.png"); }
+.tool-subtype-picker__tier-card--zone-c-heavy  { background-image: url("project://database/Assets/Sprites/Commercial/dense-commercial-tall.png"); }
+
+/* zone-i */
+.tool-subtype-picker__tier-card--zone-i-light  { background-image: url("project://database/Assets/Sprites/Industrial/industrial-light-building-64.png"); }
+.tool-subtype-picker__tier-card--zone-i-medium { background-image: url("project://database/Assets/Sprites/Industrial/medium-industrial-building-1-128.png"); }
+.tool-subtype-picker__tier-card--zone-i-heavy  { background-image: url("project://database/Assets/Sprites/Industrial/heavy-industrial-building-1-192.png"); }
+
+/* services */
+.tool-subtype-picker__tier-card--services-police  { background-image: url("project://database/Assets/Sprites/Buttons/state-button-64-target.png"); }
+.tool-subtype-picker__tier-card--services-fire    { background-image: url("project://database/Assets/Sprites/Buttons/state-button-64-target.png"); }
+.tool-subtype-picker__tier-card--services-health  { background-image: url("project://database/Assets/Sprites/Buttons/state-button-64-target.png"); }
+
+/* road */
+.tool-subtype-picker__tier-card--road-street  { background-image: url("project://database/Assets/Sprites/roads-button-64-target.png"); }
+.tool-subtype-picker__tier-card--road-avenue  { background-image: url("project://database/Assets/Sprites/roads-button-64-target.png"); }
+.tool-subtype-picker__tier-card--road-highway { background-image: url("project://database/Assets/Sprites/roads-button-64-target.png"); }
+
+/* building-power */
+.tool-subtype-picker__tier-card--building-power-coal  { background-image: url("project://database/Assets/Sprites/power-buildings-button-64-target.png"); }
+.tool-subtype-picker__tier-card--building-power-gas   { background-image: url("project://database/Assets/Sprites/power-buildings-button-64-target.png"); }
+.tool-subtype-picker__tier-card--building-power-solar { background-image: url("project://database/Assets/Sprites/power-buildings-button-64-target.png"); }
+
+/* building-water */
+.tool-subtype-picker__tier-card--building-water-pump      { background-image: url("project://database/Assets/Sprites/water-buildings-button-64-target.png"); }
+.tool-subtype-picker__tier-card--building-water-tower     { background-image: url("project://database/Assets/Sprites/water-buildings-button-64-target.png"); }
+.tool-subtype-picker__tier-card--building-water-treatment { background-image: url("project://database/Assets/Sprites/water-buildings-button-64-target.png"); }
+
+/* landmark */
+.tool-subtype-picker__tier-card--landmark-park     { background-image: url("project://database/Assets/Sprites/Buttons/forest-button-64-target.png"); }
+.tool-subtype-picker__tier-card--landmark-plaza    { background-image: url("project://database/Assets/Sprites/Buttons/forest-button-64-target.png"); }
+.tool-subtype-picker__tier-card--landmark-monument { background-image: url("project://database/Assets/Sprites/Buttons/state-button-64-target.png"); }

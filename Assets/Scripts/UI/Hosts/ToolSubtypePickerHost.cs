@@ -17,6 +17,7 @@ namespace Territory.UI.Hosts
     {
         const string OpenClass = "is-open";
         const string CardActiveClass = "tool-subtype-picker__tier-card--active";
+        const string CardSpriteClassPrefix = "tool-subtype-picker__tier-card--";
 
         [SerializeField] UIDocument _doc;
 
@@ -25,6 +26,7 @@ namespace Territory.UI.Hosts
         Button _card0, _card1, _card2;
         Label _label0, _label1, _label2;
         string _parentSlug;
+        readonly string[] _activeSpriteClasses = new string[3];
 
         // Mapping parent-tool slug → 3 tier slug+label triples. Plan §6 Phase D2 step 5.
         struct Tier { public string Slug; public string Label; }
@@ -97,11 +99,29 @@ namespace Territory.UI.Hosts
             if (_label0 != null) _label0.text = tiers[0].Label;
             if (_label1 != null) _label1.text = tiers[1].Label;
             if (_label2 != null) _label2.text = tiers[2].Label;
+            ApplySpriteClasses(parentSlug, tiers);
             ClearActive();
             if (_root != null)
             {
                 _root.AddToClassList(OpenClass);
                 _root.style.display = DisplayStyle.Flex;
+            }
+        }
+
+        void ApplySpriteClasses(string parentSlug, Tier[] tiers)
+        {
+            var cards = new[] { _card0, _card1, _card2 };
+            for (int i = 0; i < cards.Length; i++)
+            {
+                if (cards[i] == null) continue;
+                if (!string.IsNullOrEmpty(_activeSpriteClasses[i]))
+                    cards[i].RemoveFromClassList(_activeSpriteClasses[i]);
+                string cls = i < tiers.Length
+                    ? CardSpriteClassPrefix + parentSlug + "-" + tiers[i].Slug
+                    : string.Empty;
+                if (!string.IsNullOrEmpty(cls))
+                    cards[i].AddToClassList(cls);
+                _activeSpriteClasses[i] = cls;
             }
         }
 
@@ -143,19 +163,25 @@ namespace Territory.UI.Hosts
         {
             var uim = FindObjectOfType<UIManager>();
             if (uim == null) return;
-            // Pre-migration parity: route through UIManager subtype helpers when the family
-            // matches; otherwise drop into the catalog-driven path. Detailed dispatch lands
-            // when ToolService gets a public surface (DEC-A28 follow-up).
-            switch (parentSlug)
+            // Iter-3: route to the existing UIManager tier-click handlers so the
+            // active zone-type / ghost-preview / tool-selected channel actually fires.
+            switch ((parentSlug, tierSlug))
             {
-                case "bulldoze":
-                    uim.bulldozeMode = true;
-                    break;
-                default:
-                    // Stash the picked tier on the existing slot so consumers can read it.
-                    int hash = (parentSlug + ":" + tierSlug).GetHashCode();
-                    uim.SetCurrentSubTypeId(System.Math.Abs(hash) % 100000);
-                    break;
+                case ("zone-r", "light"):  uim.OnLightResidentialButtonClicked();  break;
+                case ("zone-r", "medium"): uim.OnMediumResidentialButtonClicked(); break;
+                case ("zone-r", "heavy"):  uim.OnHeavyResidentialButtonClicked();  break;
+                case ("zone-c", "light"):  uim.OnLightCommercialButtonClicked();   break;
+                case ("zone-c", "medium"): uim.OnMediumCommercialButtonClicked();  break;
+                case ("zone-c", "heavy"):  uim.OnHeavyCommercialButtonClicked();   break;
+                case ("zone-i", "light"):  uim.OnLightIndustrialButtonClicked();   break;
+                case ("zone-i", "medium"): uim.OnMediumIndustrialButtonClicked();  break;
+                case ("zone-i", "heavy"):  uim.OnHeavyIndustrialButtonClicked();   break;
+                case ("services", _):      uim.OnStateServiceZoningButtonClicked(); break;
+                case ("road", _):          uim.OnTwoWayRoadButtonClicked();        break;
+                case ("building-power", _): uim.OnNuclearPowerPlantButtonClicked(); break;
+                case ("building-water", _): uim.OnWaterFamilyButtonClicked();      break;
+                case ("landmark", _):      uim.OnForestsFamilyButtonClicked();     break;
+                case ("bulldoze", _):      uim.OnBulldozeButtonClicked();          break;
             }
         }
     }

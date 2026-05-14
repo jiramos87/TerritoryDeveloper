@@ -6,22 +6,16 @@
     xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
     editor-extension-mode="False">
   <!-- Panel: tool-subtype-picker | kind: hud | theme: cream -->
-  <!-- HUD-anchored bottom-left strip — recovery plan Phase D2 corrected from modal -->
-  <!-- Theme patched by unity-ui-theme-patch — panel.theme=cream -->
-  <Style src="project://database/Assets/UI/Themes/cream.tss"/>
   <Style src="tool-subtype-picker.uss"/>
   <ui:VisualElement name="tool-subtype-picker" class="tool-subtype-picker">
     <ui:VisualElement name="tier-row" class="tool-subtype-picker__tier-row">
       <ui:Button name="tier-card-0" class="tool-subtype-picker__tier-card">
-        <ui:Label name="tier-card-0-icon" class="tool-subtype-picker__tier-icon" text="∧"/>
         <ui:Label name="tier-card-0-label" class="tool-subtype-picker__tier-label" text="Light"/>
       </ui:Button>
       <ui:Button name="tier-card-1" class="tool-subtype-picker__tier-card">
-        <ui:Label name="tier-card-1-icon" class="tool-subtype-picker__tier-icon" text="∧∧"/>
         <ui:Label name="tier-card-1-label" class="tool-subtype-picker__tier-label" text="Medium"/>
       </ui:Button>
       <ui:Button name="tier-card-2" class="tool-subtype-picker__tier-card">
-        <ui:Label name="tier-card-2-icon" class="tool-subtype-picker__tier-icon" text="∧∧∧"/>
         <ui:Label name="tier-card-2-label" class="tool-subtype-picker__tier-label" text="Heavy"/>
       </ui:Button>
     </ui:VisualElement>

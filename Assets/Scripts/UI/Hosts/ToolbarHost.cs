@@ -31,6 +31,7 @@ namespace Territory.UI.Hosts
         static readonly System.Collections.Generic.HashSet<string> HasSubtypes = new()
         {
             "zone-r", "zone-c", "zone-i", "services",
+            "road", "building-power", "building-water", "landmark",
         };
 
         ToolbarVM _vm;
@@ -101,15 +102,11 @@ namespace Territory.UI.Hosts
         {
             var uim = FindObjectOfType<UIManager>();
             if (uim == null) return;
+            // Iter-3: only no-subtype tools land here (subtype tools open the picker
+            // and dispatch via ToolSubtypePickerHost.ApplyTier).
             switch (parentSlug)
             {
-                case "bulldoze":
-                    uim.bulldozeMode = !uim.bulldozeMode;
-                    break;
-                default:
-                    int hash = (parentSlug + ":" + (tier ?? "")).GetHashCode();
-                    uim.SetCurrentSubTypeId(System.Math.Abs(hash) % 100000);
-                    break;
+                case "bulldoze": uim.OnBulldozeButtonClicked(); break;
             }
         }
     }
