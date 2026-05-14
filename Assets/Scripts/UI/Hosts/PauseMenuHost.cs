@@ -112,6 +112,9 @@ namespace Territory.UI.Hosts
                 if (_sfxVolumeSlider != null)
                     _sfxVolumeSlider.RegisterValueChangedCallback(OnSfxVolumeChanged);
 
+                // iter-23 (Effort 2) — hover + click blips on every pause-menu button.
+                BindPauseMenuBlips();
+
                 SwitchView(ViewRoot);
             }
             else
@@ -147,8 +150,32 @@ namespace Territory.UI.Hosts
             if (_btnSaveConfirm  != null) _btnSaveConfirm.clicked  -= OnSaveConfirm;
             if (_btnLoadConfirm  != null) _btnLoadConfirm.clicked  -= OnLoadConfirm;
             if (_sfxVolumeSlider != null) _sfxVolumeSlider.UnregisterValueChangedCallback(OnSfxVolumeChanged);
+            UnbindPauseMenuBlips();
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
+        }
+
+        void BindPauseMenuBlips()
+        {
+            var btns = new Button[]
+            {
+                _btnResume, _btnSave, _btnLoad, _btnSettings, _btnExit,
+                _btnSaveBack, _btnLoadBack, _btnSettingsBack,
+                _btnSaveConfirm, _btnLoadConfirm,
+            };
+            foreach (var b in btns)
+                ToolkitBlipBinder.BindClickAndHover(b, BlipId.UiButtonClick, BlipId.UiButtonHover);
+        }
+
+        void UnbindPauseMenuBlips()
+        {
+            var btns = new Button[]
+            {
+                _btnResume, _btnSave, _btnLoad, _btnSettings, _btnExit,
+                _btnSaveBack, _btnLoadBack, _btnSettingsBack,
+                _btnSaveConfirm, _btnLoadConfirm,
+            };
+            foreach (var b in btns) ToolkitBlipBinder.UnbindAll(b);
         }
 
         void WireCommands()

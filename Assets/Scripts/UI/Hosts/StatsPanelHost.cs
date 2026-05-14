@@ -1,3 +1,4 @@
+using Territory.Audio;
 using Territory.Economy;
 using Territory.Simulation;
 using Territory.UI.Modals;
@@ -61,6 +62,12 @@ namespace Territory.UI.Hosts
                 if (_tabPop      != null) _tabPop.clicked      += () => OnTabSelected(StatsPanelVM.StatsTab.Population);
                 if (_tabServices != null) _tabServices.clicked += () => OnTabSelected(StatsPanelVM.StatsTab.Services);
                 if (_tabEcon     != null) _tabEcon.clicked     += () => OnTabSelected(StatsPanelVM.StatsTab.Economy);
+
+                // iter-23 (Effort 2) — hover + click blips on close + 3 tabs.
+                ToolkitBlipBinder.BindClickAndHover(_btnClose,    BlipId.UiButtonClick, BlipId.UiButtonHover);
+                ToolkitBlipBinder.BindClickAndHover(_tabPop,      BlipId.UiButtonClick, BlipId.UiButtonHover);
+                ToolkitBlipBinder.BindClickAndHover(_tabServices, BlipId.UiButtonClick, BlipId.UiButtonHover);
+                ToolkitBlipBinder.BindClickAndHover(_tabEcon,     BlipId.UiButtonClick, BlipId.UiButtonHover);
             }
             else
                 Debug.LogWarning("[StatsPanelHost] UIDocument or rootVisualElement null on enable — check PanelSettings wiring.");
@@ -104,6 +111,10 @@ namespace Territory.UI.Hosts
         void OnDisable()
         {
             if (_btnClose != null) _btnClose.clicked -= OnClose;
+            ToolkitBlipBinder.UnbindAll(_btnClose);
+            ToolkitBlipBinder.UnbindAll(_tabPop);
+            ToolkitBlipBinder.UnbindAll(_tabServices);
+            ToolkitBlipBinder.UnbindAll(_tabEcon);
             if (_doc != null && _doc.rootVisualElement != null)
                 _doc.rootVisualElement.SetCompatDataSource(null);
         }
