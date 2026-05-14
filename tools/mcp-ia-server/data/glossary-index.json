@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-05-13T16:01:40.091Z",
+  "last_generated": "2026-05-14T21:26:43.113Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -774,6 +774,74 @@
     "Subtype picker (RCIS)": {
       "spec_key": "ui-design-system",
       "anchor": "3.7"
+    },
+    "UXML": {
+      "spec_key": "dec-a28",
+      "anchor": "docs-ui-toolkit-parity-recovery-plan-html"
+    },
+    "USS": {
+      "spec_key": "recovery",
+      "anchor": "plan-20-hard-rule"
+    },
+    "TSS": {
+      "spec_key": "dec-a28",
+      "anchor": "i1"
+    },
+    "VisualElement": {
+      "spec_key": "unity-development-context",
+      "anchor": "ui-toolkit"
+    },
+    "UIDocument": {
+      "spec_key": "recovery",
+      "anchor": "plan-15-4"
+    },
+    "Host MonoBehaviour": {
+      "spec_key": "dec-a28",
+      "anchor": "recovery-plan-15-4"
+    },
+    "ModalCoordinator": {
+      "spec_key": "recovery",
+      "anchor": "plan-15-4"
+    },
+    "Runtime VE": {
+      "spec_key": "recovery",
+      "anchor": "plan-15-4-3-tech-34683"
+    },
+    "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`": {
+      "spec_key": "dec-a28",
+      "anchor": "path-b-exploration-seed"
+    },
+    "iter-43 baseline": {
+      "spec_key": "recovery",
+      "anchor": "plan-15-4-tools-visual-baseline-golden"
+    },
+    "Round-3 effort": {
+      "spec_key": "recovery",
+      "anchor": "plan-20-27"
+    },
+    "Layer toggle button (Zn / Rd / Fr / Ct)": {
+      "spec_key": "recovery",
+      "anchor": "plan-20-4-iter-41"
+    },
+    "Notification toast surface": {
+      "spec_key": "recovery",
+      "anchor": "plan-20"
+    },
+    "Hover-info card": {
+      "spec_key": "recovery",
+      "anchor": "plan-21"
+    },
+    "Cell click inspect panel": {
+      "spec_key": "recovery",
+      "anchor": "plan-22"
+    },
+    "MAP panel (runtime VE)": {
+      "spec_key": "recovery",
+      "anchor": "plan-23-tech-34683"
+    },
+    "Cream theme / dark theme": {
+      "spec_key": "recovery",
+      "anchor": "plan-20-hard-rule-assets-ui-themes-cream-tss"
     },
     "atomization": {
       "spec_key": "docs",

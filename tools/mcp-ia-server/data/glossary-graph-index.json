@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-13T16:01:40.251Z",
+  "last_generated": "2026-05-14T21:26:43.285Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -71,6 +71,16 @@
         "`IThemed` interface",
         "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)",
         "`UiBindRegistry` (reactive bind table)"
+      ],
+      "cited_in": []
+    },
+    "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`": {
+      "related": [
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme",
+        "Host MonoBehaviour"
       ],
       "cited_in": []
     },
@@ -721,8 +731,8 @@
     "Building": {
       "related": [
         "Cell",
-        "Zone",
         "RCI",
+        "Zone",
         "Interstate",
         "Happiness"
       ],
@@ -861,6 +871,11 @@
           "spec": "ui-design-system",
           "section_id": "codebase-inventory-ugui",
           "section_title": "Codebase inventory (uGUI)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -1077,6 +1092,16 @@
           "section_title": "Manager Responsibilities"
         },
         {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
           "spec": "water-terrain-system",
           "section_id": "layered-visual-model-spec-5-6-5-9",
           "section_title": "Layered visual model (spec §5.6–§5.9)"
@@ -1172,9 +1197,9 @@
     "Cell": {
       "related": [
         "Interstate",
+        "Building",
         "HeightMap",
         "Cliff",
-        "Building",
         "Gate"
       ],
       "cited_in": [
@@ -1504,6 +1529,16 @@
           "section_title": "System dependencies"
         },
         {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
           "spec": "unity-development-context",
           "section_id": "1",
           "section_title": "1. Purpose and scope"
@@ -1549,6 +1584,16 @@
           "section_title": "4.7 MapOverlay *(TBD)*"
         }
       ]
+    },
+    "Cell click inspect panel": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cream theme / dark theme",
+        "Host MonoBehaviour"
+      ],
+      "cited_in": []
     },
     "CellData": {
       "related": [
@@ -1967,6 +2012,16 @@
           "section_title": "Procedural rivers (spec §12)"
         }
       ]
+    },
+    "Cream theme / dark theme": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Host MonoBehaviour"
+      ],
+      "cited_in": []
     },
     "Cut-through": {
       "related": [
@@ -2465,9 +2520,9 @@
       "related": [
         "Happiness",
         "Building",
+        "RCI",
         "Zone",
-        "Monthly maintenance",
-        "RCI"
+        "Cell"
       ],
       "cited_in": [
         {
@@ -2800,10 +2855,10 @@
     "Happiness": {
       "related": [
         "Building",
-        "Zone",
         "Cell",
-        "Pollution",
-        "RCI"
+        "RCI",
+        "Zone",
+        "Pollution"
       ],
       "cited_in": [
         {
@@ -3109,6 +3164,26 @@
           "section_title": "Key files"
         }
       ]
+    },
+    "Host MonoBehaviour": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
+      ],
+      "cited_in": []
+    },
+    "Hover-info card": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
+      ],
+      "cited_in": []
     },
     "IBondLedger": {
       "related": [
@@ -3516,6 +3591,22 @@
         }
       ]
     },
+    "iter-43 baseline": {
+      "related": [
+        "Cascade",
+        "Cell",
+        "ModalCoordinator",
+        "RCI",
+        "Runtime VE"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        }
+      ]
+    },
     "Junction": {
       "related": [
         "Cell",
@@ -3710,6 +3801,16 @@
         }
       ]
     },
+    "Layer toggle button (Zn / Rd / Fr / Ct)": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
+      ],
+      "cited_in": []
+    },
     "Legacy save": {
       "related": [
         "Building",
@@ -3878,6 +3979,37 @@
         }
       ]
     },
+    "MAP panel (runtime VE)": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
+      ],
+      "cited_in": []
+    },
+    "ModalCoordinator": {
+      "related": [
+        "Cascade",
+        "Cell",
+        "RCI",
+        "Runtime VE",
+        "TSS"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        }
+      ]
+    },
     "Monthly maintenance": {
       "related": [
         "Building",
@@ -3977,6 +4109,16 @@
         "Map border",
         "Active scale",
         "baseHeight (terraform)"
+      ],
+      "cited_in": []
+    },
+    "Notification toast surface": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
       ],
       "cited_in": []
     },
@@ -4087,7 +4229,7 @@
         "Junction",
         "pool_member",
         "snapshot",
-        "archetype_version"
+        "Stage"
       ],
       "cited_in": [
         {
@@ -4114,6 +4256,16 @@
           "spec": "catalog-architecture",
           "section_id": "6.1",
           "section_title": "6.1 `panel_child`"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -4402,11 +4554,11 @@
     },
     "Picker universal rule": {
       "related": [
-        "CityStatsHandoffAdapter",
-        "CityStatsPresenter",
-        "Gate",
-        "Happiness",
-        "Interstate"
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "CityStatsHandoffAdapter"
       ],
       "cited_in": []
     },
@@ -4480,9 +4632,9 @@
       "related": [
         "Happiness",
         "Cell",
+        "RCI",
         "Building",
-        "Monthly maintenance",
-        "RCI"
+        "Monthly maintenance"
       ],
       "cited_in": [
         {
@@ -4641,7 +4793,7 @@
         "Cell",
         "Happiness",
         "Zone",
-        "Interstate"
+        "Cascade"
       ],
       "cited_in": [
         {
@@ -4696,6 +4848,16 @@
         },
         {
           "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
+          "spec": "ui-design-system",
           "section_id": "1",
           "section_title": "1. Foundations"
         },
@@ -4744,10 +4906,10 @@
     "Reference spec": {
       "related": [
         "Game notification",
+        "Cell",
         "Gate",
         "Happiness",
-        "Interstate",
-        "AUTO systems"
+        "Interstate"
       ],
       "cited_in": [
         {
@@ -5320,6 +5482,37 @@
           "spec": "simulation-signals",
           "section_id": "purpose-and-scope",
           "section_title": "Purpose and scope"
+        }
+      ]
+    },
+    "Round-3 effort": {
+      "related": [
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "Cream theme / dark theme"
+      ],
+      "cited_in": []
+    },
+    "Runtime VE": {
+      "related": [
+        "Cascade",
+        "Cell",
+        "ModalCoordinator",
+        "RCI",
+        "TSS"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
         }
       ]
     },
@@ -6160,10 +6353,10 @@
     "Stage": {
       "related": [
         "Phase",
+        "Cell",
         "snapshot",
-        "Gate",
-        "Pollution",
-        "Zone"
+        "Zone",
+        "Gate"
       ],
       "cited_in": [
         {
@@ -6238,6 +6431,16 @@
         },
         {
           "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
+          "spec": "ui-design-system",
           "section_id": "tokens",
           "section_title": "Tokens"
         },
@@ -6303,18 +6506,18 @@
         "CityStatsHandoffAdapter",
         "Gate",
         "Stage",
-        "Zone",
-        "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`"
+        "TSS",
+        "USS"
       ],
       "cited_in": []
     },
     "Stats panel tab taxonomy": {
       "related": [
-        "CityStatsHandoffAdapter",
-        "CityStatsPresenter",
-        "Gate",
-        "Happiness",
-        "Interstate"
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "CityStatsHandoffAdapter"
       ],
       "cited_in": []
     },
@@ -6393,11 +6596,11 @@
     },
     "Subtype picker (RCIS)": {
       "related": [
-        "CityStatsHandoffAdapter",
-        "CityStatsPresenter",
-        "Gate",
-        "Happiness",
-        "Interstate"
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "CityStatsHandoffAdapter"
       ],
       "cited_in": []
     },
@@ -6547,11 +6750,11 @@
     },
     "Toolbar family subtype enumeration (MVP)": {
       "related": [
-        "CityStatsHandoffAdapter",
-        "CityStatsPresenter",
-        "Gate",
-        "Happiness",
-        "Interstate"
+        "`UxmlBakeHandler` / `UxmlEmissionService` / `TssEmissionService`",
+        "Cascade",
+        "Cell",
+        "Cell click inspect panel",
+        "CityStatsHandoffAdapter"
       ],
       "cited_in": []
     },
@@ -6616,6 +6819,27 @@
       ],
       "cited_in": []
     },
+    "TSS": {
+      "related": [
+        "USS",
+        "VisualElement",
+        "Cascade",
+        "Cell",
+        "ModalCoordinator"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        }
+      ]
+    },
     "Type offsets": {
       "related": [
         "Building",
@@ -6629,6 +6853,42 @@
           "spec": "isometric-geography-system",
           "section_id": "7",
           "section_title": "7. Sorting Order System"
+        }
+      ]
+    },
+    "UIDocument": {
+      "related": [
+        "UXML",
+        "RCI",
+        "Cascade",
+        "Cell",
+        "ModalCoordinator"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1",
+          "section_title": "1. Foundations"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1.3",
+          "section_title": "1.3 Spacing and layout"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1.3.1",
+          "section_title": "1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)"
         }
       ]
     },
@@ -6736,11 +6996,11 @@
     },
     "Urbanization proposal": {
       "related": [
+        "UIDocument",
+        "UXML",
         "RCI",
         "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`",
-        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)",
-        "`IThemed` interface",
-        "`ThemedPrimitiveBase` + subclasses (`ThemedLabel`, `ThemedButton`, `ThemedFrame`, `ThemedList`, `ThemedTabBar`, `ThemedIcon`, `ThemedDivider`, `ThemedBadge`, `ThemedPanel`, `ThemedToggle`, `ThemedSlider`, `ThemedTooltip`, `ThemedSectionHeader`, `ThemedIlluminationLayer`, `ThemedOverlayToggleRow`)"
+        "`DataPopupController.statsPanel` (legacy city-stats deep-dive panel)"
       ],
       "cited_in": [
         {
@@ -6770,6 +7030,27 @@
         }
       ]
     },
+    "USS": {
+      "related": [
+        "TSS",
+        "VisualElement",
+        "Cascade",
+        "Cell",
+        "ModalCoordinator"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        }
+      ]
+    },
     "Utility building": {
       "related": [
         "Building",
@@ -6788,6 +7069,42 @@
           "spec": "managers-reference",
           "section_id": "world-features",
           "section_title": "World features"
+        }
+      ]
+    },
+    "UXML": {
+      "related": [
+        "UIDocument",
+        "RCI",
+        "Cascade",
+        "Cell",
+        "ModalCoordinator"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1",
+          "section_title": "1. Foundations"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1.3",
+          "section_title": "1.3 Spacing and layout"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "1.3.1",
+          "section_title": "1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)"
         }
       ]
     },
@@ -6822,13 +7139,34 @@
         }
       ]
     },
+    "VisualElement": {
+      "related": [
+        "TSS",
+        "USS",
+        "Cascade",
+        "Cell",
+        "ModalCoordinator"
+      ],
+      "cited_in": [
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
+        }
+      ]
+    },
     "Water body": {
       "related": [
         "Cell",
+        "Cascade",
         "HeightMap",
         "Cliff",
-        "River",
-        "Cascade"
+        "River"
       ],
       "cited_in": [
         {
@@ -7062,8 +7400,8 @@
         "Building",
         "Cell",
         "Happiness",
-        "Zone S",
-        "Gate"
+        "RCI",
+        "Zone S"
       ],
       "cited_in": [
         {
@@ -7160,6 +7498,11 @@
           "spec": "ui-design-system",
           "section_id": "codebase-inventory-ugui",
           "section_title": "Codebase inventory (uGUI)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ui-toolkit-overlay-iter-43-baseline",
+          "section_title": "Codebase inventory (UI Toolkit overlay — iter-43 baseline)"
         },
         {
           "spec": "ui-design-system",
@@ -7271,8 +7614,8 @@
         "Zone",
         "Zone S",
         "BudgetAllocationService",
-        "IMaintenanceContributor",
-        "ZoneSService"
+        "Cell",
+        "IMaintenanceContributor"
       ],
       "cited_in": [
         {

@@ -4,9 +4,17 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  UI Layer                                               │
+│  UI Layer (legacy uGUI — DEC-A24 prefab bake path)      │
 │  UIManager, CursorManager, GameNotificationManager,     │
 │  all Controllers (buttons, popups, sliders)             │
+├─────────────────────────────────────────────────────────┤
+│  UI Toolkit overlay layer (iter-43 baseline / DEC-A28)  │
+│  Per-panel Host MonoBehaviours: HudBarHost,             │
+│  BudgetPanelHost, MapPanelHost, StatsPanelHost,         │
+│  PauseMenuHost, MainMenuHost, NotificationsToastHost,   │
+│  HoverInfoHost, InfoPanelHost, ToolbarHost,             │
+│  ToolSubtypePickerHost, MiniMapController-Runtime.      │
+│  ModalCoordinator owns Show/HideMigrated routing.       │
 ├─────────────────────────────────────────────────────────┤
 │  Simulation Layer                                       │
 │  SimulationManager, AutoRoadBuilder, AutoZoningManager, │

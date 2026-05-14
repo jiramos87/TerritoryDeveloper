@@ -65,6 +65,56 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
+### Codebase inventory (UI Toolkit overlay — iter-43 baseline)
+
+*Per DEC-A28 strangler, in-game UI runs on UI Toolkit alongside the legacy uGUI prefab stack above. The iter-43 acceptance baseline (recovery plan §15.4, commit `c4ef2a25`) is the current shipping visual contract. Refresh this subsection when the Host catalogue or panel slug list changes.*
+
+**Stack:** **Unity UI Toolkit** — `UIDocument` Unity component hosts one `*.uxml` asset from `Assets/UI/Generated/`; the runtime tree is `VisualElement` + built-in controls (`Button`, `Label`, `Slider`, `Toggle`, `DropdownField`, `IntegerField`, `TextField`, `ScrollView`). Each panel has a dedicated `*Host` MonoBehaviour under `Assets/Scripts/UI/Hosts/` that owns the UIDocument ref, Q-lookups VEs by name, wires `Button.clicked` / `RegisterValueChangedCallback` to gameplay managers via `FindObjectOfType` fallback, and registers the panel root with `ModalCoordinator` (`Assets/Scripts/UI/Modals/`) for migrated-panel Show/Hide routing.
+
+**Per-panel Host catalogue (iter-43):**
+
+| Host | UXML / panel slug | Surface | Wiring |
+|------|-------------------|---------|--------|
+| `HudBarHost` | `hud-bar.uxml` | Top HUD strip (pause / speed1/2/3 / city-name / pop+money / surplus / zoom +/- / STATS / AUTO / MAP / BUDGET) | `TimeManager`, `CameraController`, `CityStats`, `EconomyManager`, `ModalCoordinator`, blip via `ToolkitBlipBinder` |
+| `ToolbarHost` | `toolbar.uxml` | Bottom-left tool tiles (zone-r/c/i / services / road / building-power/water / landmark / bulldoze) | `UIManager` tier methods (`OnLightResidentialButtonClicked` etc.) |
+| `ToolSubtypePickerHost` | `tool-subtype-picker.uxml` | 3-card tier picker opened on toolbar subtype tiles | `UIManager`, `ZoneManager` |
+| `PauseMenuHost` | `pause-menu.uxml` | Esc → Resume / Save / Load / Settings / Exit + 3 sub-views (Save / Load / Settings) | `GameSaveManager`, `BlipBootstrap`, `SceneManager` |
+| `StatsPanelHost` | `stats-panel.uxml` | HUD STATS → Population / Services / Economy tabs + chart + 2-col rows + RCI demand bars (iter-31) | `CityStats`, `StatsHistoryRecorder`, `DemandManager` |
+| `BudgetPanelHost` | `budget-panel.uxml` | HUD BUDGET → RCI tax sliders + auto-growth sliders + live treasury (iter-38) | `EconomyManager.SetTaxRate`, `GrowthBudgetManager.SetCategoryPercent`, `CityStats.money` |
+| `MapPanelHost` | `map-panel.uxml` (runtime VE fallback iter-39 + iter-42) | HUD MAP → bottom-right cream square + Zn/Rd/Fr/Ct top-strip toggle row | `MiniMapController.{MapTexture, ToggleLayer}` (spawned at runtime when scene UIDoc missing) |
+| `NotificationsToastHost` | `notifications-toast.uxml` | Top-right toast stack (success / warning / error / info) | `GameNotificationManager.Post*` routes through; 2.5s dedupe; max-5 stack |
+| `HoverInfoHost` | runtime VE only (iter-28) | Bottom-right per-frame cell readout (coords / type / occupied / ground H / water surface H) | `GridManager.mouseGridPosition`, `GridManager.GetCell`, `WaterManager.GetWaterMap` |
+| `InfoPanelHost` | `info-panel.uxml` | Left-click on occupied cell → cell inspect modal + Demolish action (iter-29) | `GridManager.selectedPoint` polling, `WorldSelectionResolver`, `GridManager.DemolishAt` |
+| `MainMenuHost` | `main-menu.uxml` | MainMenu scene: Continue / New Game / Load / Settings / Quit + 3 sub-views (Load / Settings / NewGame form) | `GameSaveManager`, `MainMenuController.StartNewGame`, `CityNamePoolService` |
+| `AlertsPanelHost`, `GlossaryPanelHost`, `BuildingInfoHost`, `TooltipHost`, `MiniMapHost`, `MapPanelHost`, `BudgetPanelHost`, `GrowthBudgetPanelHost`, `OnboardingHost`, `NewGameFormHost`, `SaveLoadViewHost`, `SettingsViewHost`, `CityStatsHost`, `ZoneOverlayHost` | Stage 4.0 / 5.0 migration surfaces — registered with `ModalCoordinator` per slug | various |
+
+**Disk layout:**
+
+```
+Assets/UI/
+  Generated/
+    {slug}.uxml           ← markup, hand-authored at iter-43; DB-emitted in Path B
+    {slug}.uss            ← per-panel rules, literal hex per plan-scope rule
+  Themes/
+    cream.tss             ← `:root { --ds-color-*: hex }` for cream theme
+    dark.tss              ← `:root { --ds-color-*: hex }` for dark theme
+Assets/Scripts/UI/
+  Hosts/{*}Host.cs        ← per-panel MonoBehaviour (owns UIDocument ref + Q-lookups + click wiring)
+  Hosts/ToolkitBlipBinder.cs ← shared hover/click blip binding helper
+  Modals/ModalCoordinator.cs ← migrated-panel Show/HideMigrated facade
+  ViewModels/{*}VM.cs     ← POCO ViewModels with INotifyPropertyChanged (limited compat in Unity 2022)
+```
+
+**Bake state.** `UxmlBakeHandler` + `UxmlEmissionService` (DEC-A28 emitter sidecar at `Assets/Scripts/Editor/Bridge/`) are present but currently shell stubs — `BuildUxml` emits only the outer `<ui:VisualElement>` shell and `BuildUss` only the outer class. `unity:bake-ui` continues to dispatch the legacy `UiBakeHandler` prefab path (DEC-A24). Full DB→UXML/USS round-trip is the Path B work tracked by TECH-34678..TECH-34686 and the exploration seed at [`docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md`](../../docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md).
+
+**Theme rule.** Plan-scope `.uss` files use literal hex inline (no `var(--ds-*)` cascade) per the recovery plan §20 hard rule, so cream-cards render byte-equal without depending on token lookup. `cream.tss` / `dark.tss` are currently hand-authored — TECH-34681 moves them to DB-canonical token emission.
+
+**Architectural placement** (see also [`ia/specs/architecture/layers.md`](architecture/layers.md)): UI Toolkit overlay layer sits above the legacy uGUI UI layer; the two co-exist per DEC-A28 strangler. The data-flow narrative lives in [`ia/specs/architecture/data-flows.md §UI / UX design system`](architecture/data-flows.md).
+
+**Visual contract.** Pixel goldens for accepted iter-43 surfaces committed under [`tools/visual-baseline/golden/`](../../tools/visual-baseline/golden/). Any Path B emitter output that diverges from a locked golden is a regression.
+
+**Known pain points.** Per-panel `UIDocument` is not always wired in `CityScene.unity` (e.g. `map-panel-uidoc`, `MiniMapController` were absent before iter-39 + iter-42 runtime-spawn fix). Path B must add a wire-up step + DB schema for runtime-only surfaces (TECH-34683). Host Q-lookups bind to iter-43 disk UXML names which differ from DB `panel_child.slug` values — Path B requires either DB schema rewrite (TECH-34684) or alias support to keep Hosts compiling.
+
 ---
 
 ## Tokens
