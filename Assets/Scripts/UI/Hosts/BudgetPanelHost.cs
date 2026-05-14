@@ -189,6 +189,8 @@ namespace Territory.UI.Hosts
 
             slider = new Slider(0, 100) { value = Mathf.Clamp(initialPct, 0, 100) };
             slider.style.flexGrow = 1f;
+            slider.style.flexShrink = 1f;
+            slider.style.maxWidth = 260f;
             row.Add(slider);
 
             valueLabel = new Label($"{Mathf.RoundToInt(slider.value)}%");

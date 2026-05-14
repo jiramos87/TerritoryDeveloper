@@ -267,6 +267,7 @@ namespace Territory.UI.Hosts
 
         void OnMap()
         {
+            Debug.Log($"[HudBarHost] OnMap clicked. modalCoordinator={(_modalCoordinator!=null?"yes":"NULL")} isOpen.map-panel={_modalCoordinator?.IsOpen("map-panel")}");
             if (_modalCoordinator == null) return;
             if (_modalCoordinator.IsOpen("map-panel"))
             {

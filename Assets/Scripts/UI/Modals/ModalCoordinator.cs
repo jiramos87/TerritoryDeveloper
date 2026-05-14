@@ -88,6 +88,7 @@ namespace Territory.UI.Modals
         {
             if (string.IsNullOrEmpty(modalSlug)) return null;
 
+            UnityEngine.Debug.Log($"[ModalCoordinator] Show({modalSlug}) — migratedRegistered={_migratedPanels.ContainsKey(modalSlug)} totalRegistered={_migratedPanels.Count}");
             if (_migratedPanels.TryGetValue(modalSlug, out var ve))
             {
                 // Close other exclusive-group members first.
