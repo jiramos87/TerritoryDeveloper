@@ -106,9 +106,11 @@ public static class InterchangeJsonReportsMenu
     {
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
         TerrainManager terrain = grid != null ? grid.terrainManager : UnityEngine.Object.FindObjectOfType<TerrainManager>();
+        WaterManager waterManager = UnityEngine.Object.FindObjectOfType<WaterManager>();
         if (grid == null || !grid.isInitialized)
             throw new InvalidOperationException("GridManager missing or not initialized.");
         HeightMap hm = terrain != null ? terrain.GetHeightMap() : null;
+        WaterMap wm = waterManager != null ? waterManager.GetWaterMap() : null;
 
         x0 = Mathf.Clamp(x0, 0, grid.width - 1);
         y0 = Mathf.Clamp(y0, 0, grid.height - 1);
@@ -129,6 +131,8 @@ public static class InterchangeJsonReportsMenu
                 }
 
                 int exportHeight = hm != null && hm.IsValidPosition(x, y) ? heightMapValue : cellHeight;
+                int authoritativeBodyId = wm != null && wm.IsValidPosition(x, y) ? wm.GetWaterBodyId(x, y) : 0;
+                bool waterMapIsWater = wm != null && wm.IsValidPosition(x, y) && wm.IsWater(x, y);
                 cells.Add(new CellChunkCellDto
                 {
                     x = x,
@@ -136,21 +140,45 @@ public static class InterchangeJsonReportsMenu
                     height = exportHeight,
                     prefabName = cell != null ? cell.prefabName ?? "" : "",
                     waterBodyType = cell != null ? cell.waterBodyType.ToString() : "",
-                    waterBodyId = cell != null ? cell.waterBodyId : 0
+                    waterBodyId = cell != null ? cell.waterBodyId : 0,
+                    waterMapBodyId = authoritativeBodyId,
+                    waterMapIsWater = waterMapIsWater
                 });
             }
+        }
+
+        // Body inventory (TECH-debug 2026-05-15): per-body SurfaceHeight + Classification
+        // explicit, no longer inferable only from cell-level rows. Lets agents distinguish
+        // sea (surface=0) from elevated lake/cascade (surface≥1) without scanning cells.
+        var bodies = new List<WaterBodyEntryDto>();
+        if (wm != null)
+        {
+            foreach (var kv in wm.GetBodies())
+            {
+                WaterBody b = kv.Value;
+                if (b == null) continue;
+                bodies.Add(new WaterBodyEntryDto
+                {
+                    bodyId = b.Id,
+                    classification = b.Classification.ToString(),
+                    surfaceHeight = b.SurfaceHeight,
+                    cellCount = b.CellCount
+                });
+            }
+            bodies.Sort((a, c) => a.bodyId.CompareTo(c.bodyId));
         }
 
         var root = new CellChunkInterchangeRootDto
         {
             artifact = "terrain_cell_chunk",
-            schema_version = 1,
+            schema_version = 2,
             origin_x = x0,
             origin_y = y0,
             width = w,
             height = h,
             cells = cells.ToArray(),
-            notes = "Subset fields for tooling (TECH-41 G2). height is HeightMap when available, else CityCell.height."
+            bodies = bodies.ToArray(),
+            notes = "v2: + bodies[] (SurfaceHeight, Classification, cellCount), + cells[].waterMapBodyId / waterMapIsWater (authoritative WaterMap, distinct from CityCell-cached waterBodyId). height is HeightMap when available, else CityCell.height."
         };
 
         return JsonUtility.ToJson(root, true);
@@ -235,6 +263,7 @@ class CellChunkInterchangeRootDto
     public int width;
     public int height;
     public CellChunkCellDto[] cells;
+    public WaterBodyEntryDto[] bodies;
     public string notes;
 }
 
@@ -247,6 +276,17 @@ class CellChunkCellDto
     public string prefabName;
     public string waterBodyType;
     public int waterBodyId;
+    public int waterMapBodyId;
+    public bool waterMapIsWater;
+}
+
+[Serializable]
+class WaterBodyEntryDto
+{
+    public int bodyId;
+    public string classification;
+    public int surfaceHeight;
+    public int cellCount;
 }
 
 [Serializable]

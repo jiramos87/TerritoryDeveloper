@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Shared UI shell — IsoSceneCore Stage 1.2 -->
+  <Style src="iso-scene-ui-shell.uss"/>
+  <ui:VisualElement name="iso-scene-ui-shell" class="iso-shell">
+    <!-- hud-slot: top band — per-scene HUD elements (population, funds, time) -->
+    <ui:VisualElement name="hud-slot" class="iso-shell__slot iso-shell__slot--hud"/>
+    <!-- toolbar-slot: bottom band — per-scene tool tiles -->
+    <ui:VisualElement name="toolbar-slot" class="iso-shell__slot iso-shell__slot--toolbar"/>
+    <!-- subtype-slot: centered overlay — per-scene subtype picker -->
+    <ui:VisualElement name="subtype-slot" class="iso-shell__slot iso-shell__slot--subtype"/>
+    <!-- modal-slot: centered overlay — modals (budget, stats, pause) -->
+    <ui:VisualElement name="modal-slot" class="iso-shell__slot iso-shell__slot--modal"/>
+    <!-- toast-slot: top-right corner — notification toasts -->
+    <ui:VisualElement name="toast-slot" class="iso-shell__slot iso-shell__slot--toast"/>
+  </ui:VisualElement>
+</ui:UXML>

@@ -69,6 +69,7 @@ public partial class WaterManager : MonoBehaviour, IWaterManager
             else
                 waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
             waterMap.MergeSeaLevelDryCellsFromHeightMap(terrainManager.GetHeightMap(), seaLevel);
+            CollapseOneCellStripsAndMerge(terrainManager.GetHeightMap());
             if (useLakeDepressionFill && WaterService.TryGetLakeTerrainRefreshRegion(waterMap, gridManager.width, gridManager.height,
                     out int rMinX, out int rMinY, out int rMaxX, out int rMaxY))
                 terrainManager.ApplyHeightMapToRegion(rMinX, rMinY, rMaxX, rMaxY);
@@ -83,6 +84,7 @@ public partial class WaterManager : MonoBehaviour, IWaterManager
         if (waterMap == null || terrainManager == null || gridManager == null || terrainManager.GetHeightMap() == null) return;
         TestRiverGenerator.Generate(this, terrainManager, gridManager, segmentBedWidths);
         waterMap.MergeAdjacentBodiesWithSameSurface();
+        CollapseOneCellStripsAndMerge(terrainManager.GetHeightMap());
         UpdateWaterVisuals(expandShoreRefreshSecondRing: true, skipMultiBodySurfacePasses: true);
         gridManager.InvalidateRoadCache();
     }
@@ -95,8 +97,28 @@ public partial class WaterManager : MonoBehaviour, IWaterManager
         var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
         ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
         waterMap.MergeAdjacentBodiesWithSameSurface();
+        CollapseOneCellStripsAndMerge(terrainManager.GetHeightMap());
         UpdateWaterVisuals(expandShoreRefreshSecondRing: true);
         gridManager.InvalidateRoadCache();
+    }
+
+    /// <summary>
+    /// Bug fix (2026-05-15): post-merge pass — collapse any 1-cell-wide land strip that
+    /// still separates two same-surface mergeable bodies. <see cref="WaterMap.CollapseOneCellLandStripsBetweenSameSurfaceBodies"/>
+    /// carves the strip cell into water; <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/>
+    /// then absorbs the now-touching bodies. Repeats until no further collapses (defensive
+    /// fixed-point loop — typical scene converges in 1-2 iterations).
+    /// </summary>
+    private void CollapseOneCellStripsAndMerge(HeightMap heightMap)
+    {
+        if (waterMap == null || heightMap == null) return;
+        const int maxIterations = 8;
+        for (int i = 0; i < maxIterations; i++)
+        {
+            if (!waterMap.CollapseOneCellLandStripsBetweenSameSurfaceBodies(heightMap))
+                break;
+            waterMap.MergeAdjacentBodiesWithSameSurface();
+        }
     }
 
     public void RestoreWaterMapFromSaveData(WaterMapData data, int gridWidth, int gridHeight, List<CellData> gridData)

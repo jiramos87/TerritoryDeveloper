@@ -60,7 +60,7 @@ job_id=$(psql "$DATABASE_URL" -tAc "
   INSERT INTO agent_bridge_job (command_id, kind, status, request)
   VALUES (gen_random_uuid(), 'refresh_asset_database', 'pending', '{\"params\":{}}'::jsonb)
   RETURNING command_id
-" 2>/dev/null | tr -d '[:space:]' || true)
+" 2>/dev/null | grep -E '^[0-9a-f-]{36}$' | head -1 | tr -d '[:space:]' || true)
 
 if [[ -z "$job_id" ]]; then
   echo "maybe-refresh-asset-db: psql INSERT failed" >&2

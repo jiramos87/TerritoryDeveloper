@@ -3022,141 +3022,124 @@ public partial class TerrainManager
     /// </summary>
     private List<GameObject> SelectPerpendicularWaterCornerPrefabs(int x, int y, ShoreCornerQuadrant quadrant, bool forceCascadeJunctionSlopeWater = false)
     {
+        // User-stated semantic (Bug B/C, 2026-05-15):
+        //   slope-water    → isolated convex tip (peninsula end, single shore cell on the diagonal)
+        //   bay-slope      → concave corner of the water body (rectangle outer-corner)
+        //   up-slope-water → cell on a diagonal land edge composed of MULTIPLE adjacent cells
+        //                    (each with the same perpendicular-water pattern along the NW-SE / NE-SW axis)
+        // Previous routing forced Bay whenever HasLandSlopeIgnoringWater was true, which
+        // mis-classified every peninsula tip backed by a higher inland cell as a Bay.
         GameObject bayPrefab;
         GameObject slopePrefab;
+        GameObject upslopePrefab;
+        System.Func<int, int, bool> isAxisAligned;
         switch (quadrant)
         {
             case ShoreCornerQuadrant.SouthEast:
                 bayPrefab = southEastBayPrefab;
                 slopePrefab = southEastSlopeWaterPrefab;
-                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
-                    return ShoreList(slopePrefab);
-                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthEast))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.SouthEast))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsAxisAlignedRectangleCornerWaterSouthEast(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (HasLandSlopeIgnoringWater(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (slopePrefab != null) return ShoreList(slopePrefab);
-                if (bayPrefab != null) return ShoreList(bayPrefab);
-                return null;
+                upslopePrefab = southEastUpslopeWaterPrefab;
+                isAxisAligned = IsAxisAlignedRectangleCornerWaterSouthEast;
+                break;
             case ShoreCornerQuadrant.SouthWest:
                 bayPrefab = southWestBayPrefab;
                 slopePrefab = southWestSlopeWaterPrefab;
-                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
-                    return ShoreList(slopePrefab);
-                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthWest))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.SouthWest))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsAxisAlignedRectangleCornerWaterSouthWest(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (HasLandSlopeIgnoringWater(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (slopePrefab != null) return ShoreList(slopePrefab);
-                if (bayPrefab != null) return ShoreList(bayPrefab);
-                return null;
+                upslopePrefab = southWestUpslopeWaterPrefab;
+                isAxisAligned = IsAxisAlignedRectangleCornerWaterSouthWest;
+                break;
             case ShoreCornerQuadrant.NorthEast:
                 bayPrefab = northEastBayPrefab;
                 slopePrefab = northEastSlopeWaterPrefab;
-                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
-                    return ShoreList(slopePrefab);
-                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthEast))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.NorthEast))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsAxisAlignedRectangleCornerWaterNorthEast(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (HasLandSlopeIgnoringWater(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (slopePrefab != null) return ShoreList(slopePrefab);
-                if (bayPrefab != null) return ShoreList(bayPrefab);
-                return null;
+                upslopePrefab = northEastUpslopeWaterPrefab;
+                isAxisAligned = IsAxisAlignedRectangleCornerWaterNorthEast;
+                break;
             case ShoreCornerQuadrant.NorthWest:
                 bayPrefab = northWestBayPrefab;
                 slopePrefab = northWestSlopeWaterPrefab;
-                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
-                    return ShoreList(slopePrefab);
-                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthWest))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.NorthWest))
-                {
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    return null;
-                }
-                if (IsAxisAlignedRectangleCornerWaterNorthWest(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (HasLandSlopeIgnoringWater(x, y))
-                {
-                    if (bayPrefab != null) return ShoreList(bayPrefab);
-                    if (slopePrefab != null) return ShoreList(slopePrefab);
-                    return null;
-                }
-                if (slopePrefab != null) return ShoreList(slopePrefab);
-                if (bayPrefab != null) return ShoreList(bayPrefab);
+                upslopePrefab = northWestUpslopeWaterPrefab;
+                isAxisAligned = IsAxisAlignedRectangleCornerWaterNorthWest;
+                break;
+            default:
                 return null;
         }
 
+        if (forceCascadeJunctionSlopeWater && slopePrefab != null)
+            return ShoreList(slopePrefab);
+        if (IsMultiSurfacePerpendicularWaterCorner(x, y, quadrant))
+        {
+            if (slopePrefab != null) return ShoreList(slopePrefab);
+            if (bayPrefab != null) return ShoreList(bayPrefab);
+            return null;
+        }
+        if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, quadrant))
+        {
+            if (slopePrefab != null) return ShoreList(slopePrefab);
+            if (bayPrefab != null) return ShoreList(bayPrefab);
+            return null;
+        }
+        if (isAxisAligned(x, y))
+        {
+            if (bayPrefab != null) return ShoreList(bayPrefab);
+            if (slopePrefab != null) return ShoreList(slopePrefab);
+            return null;
+        }
+        if (IsMultiCellDiagonalLandEdge(x, y, quadrant))
+        {
+            if (upslopePrefab != null) return ShoreList(upslopePrefab);
+            if (slopePrefab != null) return ShoreList(slopePrefab);
+            if (bayPrefab != null) return ShoreList(bayPrefab);
+            return null;
+        }
+        if (slopePrefab != null) return ShoreList(slopePrefab);
+        if (bayPrefab != null) return ShoreList(bayPrefab);
         return null;
+    }
+
+    /// <summary>
+    /// True when this shore cell sits on a diagonal land edge of TWO+ cells along the
+    /// quadrant's NW-SE (or NE-SW) axis, where the next inland cell also matches the
+    /// same perpendicular-water cardinal pair. Used to pick <c>*UpslopeWaterPrefab</c>
+    /// instead of <c>*SlopeWaterPrefab</c> (isolated tip).
+    /// </summary>
+    private bool IsMultiCellDiagonalLandEdge(int x, int y, ShoreCornerQuadrant quadrant)
+    {
+        int cardA_X, cardA_Y, cardB_X, cardB_Y, landNbrX, landNbrY;
+        switch (quadrant)
+        {
+            case ShoreCornerQuadrant.SouthEast:
+                // S+E water pattern; multi-cell edge continues NW. NW-neighbor (x+1, y+1)
+                // has S-of-NW = (x, y+1), E-of-NW = (x+1, y).
+                cardA_X = x;     cardA_Y = y + 1;
+                cardB_X = x + 1; cardB_Y = y;
+                landNbrX = x + 1; landNbrY = y + 1;
+                break;
+            case ShoreCornerQuadrant.SouthWest:
+                // S+W water pattern; multi-cell edge continues NE. NE-neighbor (x+1, y-1)
+                // has S-of-NE = (x, y-1), W-of-NE = (x+1, y).
+                cardA_X = x;     cardA_Y = y - 1;
+                cardB_X = x + 1; cardB_Y = y;
+                landNbrX = x + 1; landNbrY = y - 1;
+                break;
+            case ShoreCornerQuadrant.NorthEast:
+                // N+E water pattern; multi-cell edge continues SW. SW-neighbor (x-1, y+1)
+                // has N-of-SW = (x-1, y), E-of-SW = (x, y+1).
+                cardA_X = x - 1; cardA_Y = y;
+                cardB_X = x;     cardB_Y = y + 1;
+                landNbrX = x - 1; landNbrY = y + 1;
+                break;
+            case ShoreCornerQuadrant.NorthWest:
+                // N+W water pattern; multi-cell edge continues SE. SE-neighbor (x-1, y-1)
+                // has N-of-SE = (x-1, y), W-of-SE = (x, y-1).
+                cardA_X = x - 1; cardA_Y = y;
+                cardB_X = x;     cardB_Y = y - 1;
+                landNbrX = x - 1; landNbrY = y - 1;
+                break;
+            default:
+                return false;
+        }
+        return WaterOrSeaAt(cardA_X, cardA_Y)
+            && WaterOrSeaAt(cardB_X, cardB_Y)
+            && !WaterOrSeaAt(landNbrX, landNbrY);
     }
 
     /// <summary>

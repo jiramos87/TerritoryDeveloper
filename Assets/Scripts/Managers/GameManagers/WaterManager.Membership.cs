@@ -321,7 +321,24 @@ namespace Territory.Terrain
             if (terrainManager == null || terrainManager.GetHeightMap() == null)
                 return false;
             if (waterMap.IsWater(nx, ny))
-                return waterMap.GetWaterBodyId(nx, ny) == ownerBodyId;
+            {
+                int neighborId = waterMap.GetWaterBodyId(nx, ny);
+                if (neighborId == ownerBodyId)
+                    return true;
+                // Same horizontal water plane: a Lake/River/Sea body adjacent to the shore
+                // cell's affiliated body at the IDENTICAL SurfaceHeight renders as one
+                // continuous water surface. Shore-prefab decisions must see them as one
+                // mass to pick corner-slope variants at body junctions (e.g. lake meets
+                // sea at sea level — without this, the single-body mask drops the off-body
+                // cardinal and the algorithm falls into the wrong single-cardinal branch).
+                // Different-surface cases (cascade / waterfall §12.7-§12.8) excluded
+                // — those are handled by IsMultiSurfacePerpendicularWaterCorner upstream.
+                WaterBody owner = waterMap.GetWaterBody(ownerBodyId);
+                WaterBody neighbor = waterMap.GetWaterBody(neighborId);
+                if (owner != null && neighbor != null && owner.SurfaceHeight == neighbor.SurfaceHeight)
+                    return true;
+                return false;
+            }
             int nh = terrainManager.GetHeightMap().GetHeight(nx, ny);
             if (nh != TerrainManager.SEA_LEVEL)
                 return false;

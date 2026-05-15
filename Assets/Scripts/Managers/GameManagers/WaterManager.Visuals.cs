@@ -174,6 +174,21 @@ namespace Territory.Terrain
                 }
             }
 
+            // Orphan-tile sweep: cells where waterMap.IsWater is false but the CityCell
+            // still carries water-zone markers (left over from upstream demotions like
+            // ApplyLakeHighToRiverLowContactFallback / junction reassignment that touch
+            // the map but not the visual). Without this sweep the stale water tile keeps
+            // rendering at the fallback seaLevel and intrudes on adjacent terrain.
+            for (int x = 0; x < gridManager.width; x++)
+                for (int y = 0; y < gridManager.height; y++)
+                {
+                    if (waterMap.IsWater(x, y)) continue;
+                    CityCell stale = gridManager.GetCell(x, y);
+                    if (stale == null) continue;
+                    if (stale.zoneType != Zone.ZoneType.Water && stale.waterBodyType == WaterBodyType.None) continue;
+                    CleanupOrphanWaterCell(x, y);
+                }
+
             for (int x = 0; x < gridManager.width; x++)
                 for (int y = 0; y < gridManager.height; y++)
                     if (waterMap.IsWater(x, y)) PlaceWater(x, y);
@@ -191,6 +206,41 @@ namespace Territory.Terrain
                 if (lakeRiverFallback && lakeRiverRimCells != null && lakeRiverRimCells.Count > 0)
                     ReapplyLakeRiverFallbackRimTerrain(lakeRiverRimCells, hm);
             }
+        }
+
+        /// <summary>
+        /// Restore a cell that the WaterMap has demoted (not IsWater) but whose CityCell
+        /// still carries water-zone markers + a water-tile child. Mirrors
+        /// <see cref="RemoveWater"/> body without the IsWater precondition, since upstream
+        /// already cleared the WaterMap entry.
+        /// </summary>
+        private void CleanupOrphanWaterCell(int x, int y)
+        {
+            GameObject cell = gridManager.gridArray[x, y];
+            CityCell cellComponent = gridManager.GetCell(x, y);
+            if (cell == null || cellComponent == null) return;
+
+            foreach (Transform child in cell.transform) GameObject.Destroy(child.gameObject);
+
+            cellComponent.zoneType = Zone.ZoneType.Grass;
+            cellComponent.waterBodyType = WaterBodyType.None;
+            cellComponent.waterBodyId = 0;
+            cellComponent.secondaryPrefabName = "";
+
+            GameObject grassPrefab = zoneManager != null ? zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass) : null;
+            if (grassPrefab == null) return;
+            Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+            GameObject grassTile = GameObject.Instantiate(grassPrefab, worldPos, Quaternion.identity);
+
+            Zone zone = grassTile.AddComponent<Zone>();
+            zone.zoneType = Zone.ZoneType.Grass;
+            zone.zoneCategory = Zone.ZoneCategory.Grass;
+
+            grassTile.transform.SetParent(cell.transform);
+            gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
+            cellComponent.prefabName = grassPrefab.name;
+            cellComponent.buildingType = grassPrefab.name;
+            OnLandCellHeightCommitted(x, y);
         }
 
         // ─── Lake-river fallback rim terrain reapplication (private — refs TerrainManager) ─────

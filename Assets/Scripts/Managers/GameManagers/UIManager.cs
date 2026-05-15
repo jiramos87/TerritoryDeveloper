@@ -15,6 +15,7 @@ using Territory.Forests;
 using Territory.Buildings;
 using Territory.Utilities;
 using Territory.UI.Registry;
+using Territory.IsoSceneCore.UI;
 
 namespace Territory.UI
 {
@@ -80,6 +81,9 @@ public partial class UIManager : MonoBehaviour
 
     [Header("Modal Coordination (Wave B4 — TECH-27095)")]
     [SerializeField] private Territory.UI.Modals.ModalCoordinator _modalCoordinator;
+
+    [Header("IsoSceneCore UI Shell (Stage 1.2 — optional)")]
+    [SerializeField] private IsoSceneUIShellHost _uiShell;
     #endregion
 
     #region State
@@ -244,6 +248,7 @@ public partial class UIManager : MonoBehaviour
         // Stage 11: RequestToolbarChromeRefresh() removed — toolbar tinting now baked into ThemedToolbarStrip.
         TryShowWelcomeBriefingAfterStart();
         RegisterAutoModeAction();
+        RegisterIntoUIShell();
     }
 
     /// <summary>
@@ -600,6 +605,43 @@ public partial class UIManager : MonoBehaviour
         // BUG-60: dropped `cityStats == null` guard — CellDataPanel debug text is grid-only,
         // does not depend on cityStats; pre-cityStats frames now still render hover coords.
         UpdateCellDataPanelText();
+    }
+
+    /// <summary>
+    /// Stage 1.2 — optional: when IsoSceneUIShellHost is present in the scene, forward
+    /// HudBarHost + ToolbarHost UIDocument roots into their corresponding shell slots.
+    /// Inspector serialization on HudBarHost / ToolbarHost is untouched; shell slots wrap them.
+    /// No-op when shell absent (CityScene without shell wiring).
+    /// </summary>
+    private void RegisterIntoUIShell()
+    {
+        if (_uiShell == null)
+            _uiShell = FindObjectOfType<IsoSceneUIShellHost>();
+        if (_uiShell == null) return;
+
+        // Forward HudBarHost UIDocument root into hud-slot.
+        var hudBarHost = FindObjectOfType<Territory.UI.Hosts.HudBarHost>();
+        if (hudBarHost != null)
+        {
+            var hudDoc = hudBarHost.GetComponent<UnityEngine.UIElements.UIDocument>();
+            if (hudDoc != null && hudDoc.rootVisualElement != null)
+            {
+                var slot = _uiShell.Slot("hud-slot");
+                if (slot != null) slot.Add(hudDoc.rootVisualElement);
+            }
+        }
+
+        // Forward ToolbarHost UIDocument root into toolbar-slot.
+        var toolbarHost = FindObjectOfType<Territory.UI.Hosts.ToolbarHost>();
+        if (toolbarHost != null)
+        {
+            var tbDoc = toolbarHost.GetComponent<UnityEngine.UIElements.UIDocument>();
+            if (tbDoc != null && tbDoc.rootVisualElement != null)
+            {
+                var slot = _uiShell.Slot("toolbar-slot");
+                if (slot != null) slot.Add(tbDoc.rootVisualElement);
+            }
+        }
     }
     #endregion
 

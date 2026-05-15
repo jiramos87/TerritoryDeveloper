@@ -437,6 +437,78 @@ namespace Territory.Terrain
         // Lake generation: see WaterMap.LakeGen.cs
         public void InitializeLakesFromDepressionFill(HeightMap heightMap, LakeFillSettings settings, int seaLevelForArtificialFallback = 0)
             => InitializeLakesFromDepressionFillImpl(heightMap, settings, seaLevelForArtificialFallback);
+
+        /// <summary>
+        /// Bug fix (2026-05-15): eliminate ambiguous 1-cell-wide land strips between two
+        /// same-surface mergeable water bodies. A dry cell at (x, y) with water on opposing
+        /// cardinals (E+W or N+S) where each cardinal belongs to a different body sharing the
+        /// same SurfaceHeight gets carved into water: the cell is registered to the lower-id
+        /// body and its terrain bed lowered to the body's SurfaceHeight. Caller follows up
+        /// with <see cref="RunMergeAdjacentBodiesWithSameSurface"/> to merge the now-touching
+        /// bodies.
+        /// Side cases preserved:
+        ///  - Cells flanked by THREE+ cardinal waters from different bodies still resolve
+        ///    (the strip pass picks the first matching axis; the merge pass cleans the rest).
+        ///  - Cells where one cardinal water has surface S and the other surface S' (cascade
+        ///    / waterfall) are NOT carved — different surfaces stay separate.
+        ///  - Bodies that already touch (0-cell separation) are handled by the existing
+        ///    <see cref="RunMergeAdjacentBodiesWithSameSurface"/> — this pass only adds the
+        ///    1-cell case.
+        /// </summary>
+        public bool CollapseOneCellLandStripsBetweenSameSurfaceBodies(HeightMap heightMap)
+        {
+            if (heightMap == null) return false;
+            var carved = new List<(int x, int y, int targetBodyId)>();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (waterBodyIds[x, y] != 0) continue; // already water
+                    int targetBodyId = ResolveStripCellTargetBody(x, y);
+                    if (targetBodyId == 0) continue;
+                    carved.Add((x, y, targetBodyId));
+                }
+            }
+            if (carved.Count == 0) return false;
+            foreach (var (x, y, targetBodyId) in carved)
+            {
+                if (waterBodyIds[x, y] != 0) continue;
+                if (!bodies.TryGetValue(targetBodyId, out WaterBody body)) continue;
+                int surface = body.SurfaceHeight;
+                int newBed = Mathf.Clamp(surface, HeightMap.MIN_HEIGHT, HeightMap.MAX_HEIGHT);
+                heightMap.SetHeight(x, y, newBed);
+                waterBodyIds[x, y] = targetBodyId;
+                body.AddCellIndex(ToFlat(x, y));
+            }
+            return true;
+        }
+
+        private int ResolveStripCellTargetBody(int x, int y)
+        {
+            // Check E+W cardinals (y-axis perpendicular pair)
+            int eId = (IsValidPosition(x, y - 1) && IsWater(x, y - 1)) ? waterBodyIds[x, y - 1] : 0;
+            int wId = (IsValidPosition(x, y + 1) && IsWater(x, y + 1)) ? waterBodyIds[x, y + 1] : 0;
+            if (eId != 0 && wId != 0 && eId != wId
+                && bodies.TryGetValue(eId, out WaterBody bE)
+                && bodies.TryGetValue(wId, out WaterBody bW)
+                && bE.SurfaceHeight == bW.SurfaceHeight
+                && CanMergeWaterBodies(bE, bW))
+            {
+                return Math.Min(eId, wId);
+            }
+            // Check N+S cardinals (x-axis perpendicular pair)
+            int nId = (IsValidPosition(x + 1, y) && IsWater(x + 1, y)) ? waterBodyIds[x + 1, y] : 0;
+            int sId = (IsValidPosition(x - 1, y) && IsWater(x - 1, y)) ? waterBodyIds[x - 1, y] : 0;
+            if (nId != 0 && sId != 0 && nId != sId
+                && bodies.TryGetValue(nId, out WaterBody bN)
+                && bodies.TryGetValue(sId, out WaterBody bS)
+                && bN.SurfaceHeight == bS.SurfaceHeight
+                && CanMergeWaterBodies(bN, bS))
+            {
+                return Math.Min(nId, sId);
+            }
+            return 0;
+        }
     }
 
     // WaterMapData, WaterBodySerialized: see WaterMap.Serialization.cs

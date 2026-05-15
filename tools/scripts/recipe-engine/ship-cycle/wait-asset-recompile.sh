@@ -110,9 +110,9 @@ while : ; do
   # a current read, not a cached pointer to an old response row.
   cmd_id=$(psql "$DATABASE_URL" -tAc "
     INSERT INTO agent_bridge_job (command_id, kind, status, request)
-    VALUES (gen_random_uuid(), 'get_compilation_status', 'pending', '{\"params\":{}}'::jsonb)
+    VALUES (gen_random_uuid(), 'get_compilation_status', 'pending', '{\"kind\":\"get_compilation_status\",\"params\":{}}'::jsonb)
     RETURNING command_id
-  " 2>/dev/null | tr -d '[:space:]' || true)
+  " 2>/dev/null | grep -E '^[0-9a-f-]{36}$' | head -1 | tr -d '[:space:]' || true)
 
   if [[ -z "$cmd_id" ]]; then
     echo "wait-asset-recompile: psql INSERT failed (compile poll)" >&2

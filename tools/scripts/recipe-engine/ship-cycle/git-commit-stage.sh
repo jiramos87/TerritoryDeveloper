@@ -40,9 +40,9 @@ fi
 cd "$REPO_ROOT"
 
 TRACKED=()
-while IFS= read -r line; do [[ -n "$line" ]] && TRACKED+=("$line"); done < <(git diff HEAD --name-only 2>/dev/null || true)
+while IFS= read -r -d '' line; do [[ -n "$line" ]] && TRACKED+=("$line"); done < <(git diff HEAD --name-only -z 2>/dev/null || true)
 UNTRACKED=()
-while IFS= read -r line; do [[ -n "$line" ]] && UNTRACKED+=("$line"); done < <(git ls-files --others --exclude-standard 2>/dev/null || true)
+while IFS= read -r -d '' line; do [[ -n "$line" ]] && UNTRACKED+=("$line"); done < <(git ls-files --others --exclude-standard -z 2>/dev/null || true)
 ALL_PATHS=("${TRACKED[@]}" "${UNTRACKED[@]}")
 
 if [[ ${#ALL_PATHS[@]} -eq 0 ]]; then

@@ -88,7 +88,7 @@ Record `command_id` values in chat/spec. For Game view: `capture_screenshot` wit
 | `unity_bridge_command` | Insert `agent_bridge_job`, poll until completed/failed or `timeout_ms` (default 30000, max 120000 — use 40000 initial; on timeout → escalation protocol) |
 | `unity_bridge_get` | Read response by `command_id` (optional `wait_ms`) |
 | `unity_compile` | Alias: `unity_bridge_command` with `kind: get_compilation_status` |
-| `unity_export_cell_chunk` | **Sugar:** enqueue + poll for `kind: export_cell_chunk` only — `origin_x`, `origin_y`, `chunk_width`, `chunk_height`, optional `timeout_ms`, `agent_id`. Same response shape as `unity_bridge_command` when completed. |
+| `unity_export_cell_chunk` | **Sugar:** enqueue + poll for `kind: export_cell_chunk` only — `origin_x`, `origin_y`, `chunk_width`, `chunk_height`, optional `timeout_ms`, `agent_id`. **Payload v2** in Postgres row `editor_export_terrain_cell_chunk.document`: `cells[].{height, prefabName, waterBodyType, waterBodyId, waterMapBodyId, waterMapIsWater}` (last two WaterMap-authoritative) + `bodies[].{bodyId, classification, surfaceHeight, cellCount}` (per-WaterBody inventory). Recipe: [`debug-geography-water`](../debug-geography-water/SKILL.md). |
 | `unity_export_sorting_debug` | **Sugar:** enqueue + poll for `kind: export_sorting_debug` — optional `seed_cell` `"x,y"`, `timeout_ms`, `agent_id`. Same response shape as parameterized `unity_bridge_command`. |
 
 Prefer **`unity_bridge_command`** when you need arbitrary `kind`, `debug_context_bundle`, Play Mode lease workflows, or explicit `command_id` before wait. See [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md) **Bridge export sugar tools**.
@@ -111,7 +111,7 @@ Synchronous compile snapshot (Edit Mode). `compilation_status`: `compiling`, `co
 Reports → Export Agent Context; optional `seed_cell "x,y"` for Moore center.
 
 ### `export_cell_chunk` / `export_sorting_debug`
-**Edit Mode** parameterized registry exports (bounded **`params`**). Optional: use **`unity_export_cell_chunk`** / **`unity_export_sorting_debug`** sugar tools instead of raw **`unity_bridge_command`** to skip manual enqueue + poll. Sorting diagnosis recipe: [`debug-sorting-order`](../debug-sorting-order/SKILL.md).
+**Edit Mode** parameterized registry exports (bounded **`params`**). Optional: use **`unity_export_cell_chunk`** / **`unity_export_sorting_debug`** sugar tools instead of raw **`unity_bridge_command`** to skip manual enqueue + poll. Sorting diagnosis recipe: [`debug-sorting-order`](../debug-sorting-order/SKILL.md). Geography / water diagnosis recipe (heightmap + body inventory + orphan-cell detection): [`debug-geography-water`](../debug-geography-water/SKILL.md). `export_cell_chunk` payload v2 surfaces `cells[].waterMapBodyId` / `cells[].waterMapIsWater` (WaterMap-authoritative, distinct from CityCell-cached `waterBodyId` / `waterBodyType`) + top-level `bodies[]` with per-body `surfaceHeight` + `classification` + `cellCount`.
 
 ### `get_console_logs`
 Buffered Console lines (`response.log_lines`). Optional: `since_utc`, `severity_filter` (all|log|warning|error), `tag_filter`, `max_lines` (1–2000).

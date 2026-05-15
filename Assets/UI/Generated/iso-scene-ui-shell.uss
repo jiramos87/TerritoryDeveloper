@@ -1,0 +1,53 @@
+/* Shared UI shell — IsoSceneCore Stage 1.2 */
+
+.iso-shell {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Base slot: full-width strip; pointer passes through unless content picks */
+.iso-shell__slot {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+/* hud-slot: top band — height accommodates hud-bar (108px + 8px gap) */
+.iso-shell__slot--hud {
+    top: 0;
+    height: 124px;
+}
+
+/* toolbar-slot: bottom band — height accommodates toolbar strip (80px + 8px gap) */
+.iso-shell__slot--toolbar {
+    bottom: 0;
+    height: 96px;
+}
+
+/* subtype-slot: centered overlay — auto-size to content */
+.iso-shell__slot--subtype {
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+/* modal-slot: centered overlay — stacks above subtype */
+.iso-shell__slot--modal {
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+/* toast-slot: top-right corner — 240px wide strip */
+.iso-shell__slot--toast {
+    top: 8px;
+    right: 8px;
+    width: 240px;
+    align-items: flex-end;
+}
