@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using Territory.Audio;
 using Territory.Persistence;
+using Territory.RegionScene;
 using Territory.UI.Registry;
 
 namespace Territory.UI
@@ -105,6 +106,8 @@ public class MainMenuController : MonoBehaviour
         actionRegistry.Register("mainmenu.quit",         _ => OnQuitClicked());
         actionRegistry.Register("mainmenu.quit.confirm", _ => OnQuitConfirmed());
         actionRegistry.Register("mainmenu.back",         _ => OnBackClicked());
+        // Stage 4.0: Region unlock gate — action only fires if bind allows it
+        actionRegistry.Register("mainmenu.openRegion",   _ => OnOpenRegionClicked());
 
         if (bindRegistry != null)
         {
@@ -118,6 +121,29 @@ public class MainMenuController : MonoBehaviour
         if (bindRegistry == null) return;
         bool hasSave = GameSaveManager.HasAnySave(Application.persistentDataPath);
         bindRegistry.Set("mainmenu.continue.disabled", !hasSave);
+        UpdateRegionButtonStateBaked();
+    }
+
+    /// <summary>Drive mainmenu.openRegion.disabled bind from RegionUnlockGate. Tooltip set when locked.</summary>
+    private void UpdateRegionButtonStateBaked()
+    {
+        if (bindRegistry == null) return;
+        bool unlocked = false;
+        try
+        {
+            string lastPath = PlayerPrefs.GetString("LastSavePath", "");
+            if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+            {
+                string json = File.ReadAllText(lastPath);
+                var save    = UnityEngine.JsonUtility.FromJson<GameSaveData>(json);
+                unlocked    = RegionUnlockGate.IsUnlocked(save);
+            }
+        }
+        catch { /* best-effort; locked if save unreadable */ }
+
+        bindRegistry.Set("mainmenu.openRegion.disabled", !unlocked);
+        bindRegistry.Set("mainmenu.openRegion.tooltip",
+            unlocked ? "" : "Reach city pop 1000 to unlock region view");
     }
 
     private static GameObject FindContentSlotInScene()
@@ -263,6 +289,34 @@ public class MainMenuController : MonoBehaviour
         // screenId == Generated prefab filename so Editor fallback at OnContentScreenChanged
         // resolves Assets/UI/Prefabs/Generated/{screenId}.prefab when subPanelPrefabs[] empty.
         bindRegistry?.Set("mainmenu.contentScreen", "save-load-view");
+    }
+
+    /// <summary>Stage 4.0: Open Region view — only reachable when RegionUnlockGate.IsUnlocked.</summary>
+    public void OnOpenRegionClicked()
+    {
+        BlipEngine.Play(BlipId.UiButtonClick);
+        // Guard: re-check gate at click time (bind may have been stale).
+        bool unlocked = false;
+        try
+        {
+            string lastPath = PlayerPrefs.GetString("LastSavePath", "");
+            if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+            {
+                string json = File.ReadAllText(lastPath);
+                var save    = UnityEngine.JsonUtility.FromJson<GameSaveData>(json);
+                unlocked    = RegionUnlockGate.IsUnlocked(save);
+            }
+        }
+        catch { }
+
+        if (!unlocked)
+        {
+            Debug.LogWarning("[MainMenuController] Region not unlocked — action blocked.");
+            return;
+        }
+
+        const int RegionSceneBuildIndex = 2;  // Stage 5.0 will move to build settings constant
+        SceneManager.LoadScene(RegionSceneBuildIndex);
     }
 
     public void OnOptionsClicked()

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Domains.Registry;
 using Territory.IsoSceneCore;
+using Territory.RegionScene.Evolution;
 using Territory.RegionScene.Terrain;
 using Territory.RegionScene.UI;
 
@@ -27,12 +28,23 @@ namespace Territory.RegionScene
         private RegionWaterMap _waterMap;
         private RegionCliffMap _cliffMap;
         private RegionCellRenderer _cellRenderer;
+        private RegionData _regionData;
 
         private void Awake()
         {
             _registry = FindObjectOfType<ServiceRegistry>();
             if (_registry == null)
+            {
                 Debug.LogWarning("[RegionManager] ServiceRegistry not found in scene.");
+                return;
+            }
+
+            // Register RegionData in Awake so evolution + save services can resolve in Start (invariant #12).
+            _regionData = new RegionData(RegionHeightMap.RegionGridSize);
+            _registry.Register<RegionData>(_regionData);
+
+            // Register IsoSceneTickBus so tick subscribers can resolve in Start.
+            _registry.Register<IsoSceneTickBus>(new IsoSceneTickBus());
         }
 
         private void Start()

@@ -38,12 +38,14 @@ public class GameSaveData
     public GrowthBudgetData growthBudget;
     public List<UrbanizationProposal> pendingProposals;
     public int minimapActiveLayers;
-    public const int CurrentSchemaVersion = 6;
+    public const int CurrentSchemaVersion = 7;  // Stage 4.0: added regionUnlocked field
     public List<NeighborCityStub> neighborStubs = new List<NeighborCityStub>();
     public List<NeighborCityBinding> neighborCityBindings = new List<NeighborCityBinding>();
     public BudgetAllocationData budgetAllocation;
     public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();
     public List<bool> overlayActive = new List<bool>();
+    /// <summary>True once city pop crossed RegionUnlockGate threshold (or cheat flag). Default false for legacy saves (schema migration).</summary>
+    public bool regionUnlocked;
 }
 
 /// <summary>Lightweight save-file descriptor returned by GameSaveManager discovery APIs.</summary>
